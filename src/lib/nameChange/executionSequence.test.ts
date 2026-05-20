@@ -374,6 +374,7 @@ describe('name change execution sequence snapshot', () => {
         display_name: 'Passport',
         storage_mode: 'metadata_only',
         intake_status: 'uploaded',
+        expires_on: '2034-06-01',
       },
     ];
 
@@ -574,6 +575,7 @@ describe('name change execution sequence snapshot', () => {
         display_name: 'Passport',
         storage_mode: 'metadata_only',
         intake_status: 'uploaded',
+        expires_on: '2034-06-01',
       },
     ];
     const profile = makeCase({ structured_intake: { spouseLastName: 'Jordan', travelBookedSoon: true, wantsDocumentIntakeHelp: true } });

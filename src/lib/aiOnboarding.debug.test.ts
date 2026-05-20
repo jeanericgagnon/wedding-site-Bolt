@@ -6,7 +6,7 @@ describe('aiOnboarding follow-up gating', () => {
   const draftReadyAnswers: InitialSetupAnswers = {
     names: 'Eric & Kara',
     labelPreference: 'names-only',
-    whenWhere: 'January 17, 2027 — Sayulita, Mexico',
+    whenWhere: '2027-01-17 — Sayulita, Mexico',
     venueNameOrTbd: 'Amor Boutique Hotel',
     style: 'Tropical, relaxed',
     weekendEventsRaw: 'Friday welcome drinks, Saturday wedding, Sunday brunch',

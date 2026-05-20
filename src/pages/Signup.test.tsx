@@ -73,7 +73,7 @@ describe('Signup quick start handoff', () => {
 
     await waitFor(() => {
       const stored = JSON.parse(window.localStorage.getItem(QUICK_START_STORAGE_KEY) || '{}');
-      expect(stored.currentIndex).toBe(0);
+      expect(stored.currentIndex).toBe(2);
       expect(stored.followUpAnswers).toEqual({});
       expect(stored.showFollowUps).toBe(false);
       expect(stored.viewState).toBe('question');
@@ -106,7 +106,7 @@ describe('Signup quick start handoff', () => {
 
     await waitFor(() => {
       const stored = JSON.parse(window.localStorage.getItem(QUICK_START_STORAGE_KEY) || '{}');
-      expect(stored.currentIndex).toBe(0);
+      expect(stored.currentIndex).toBe(2);
     });
 
     fireEvent.click(screen.getByRole('button', { name: 'Sign in' }));
@@ -114,7 +114,7 @@ describe('Signup quick start handoff', () => {
     expect(navigateMock).toHaveBeenCalledWith('/login', {
       state: {
         quickStartDraft: expect.objectContaining({
-          currentIndex: 0,
+          currentIndex: 2,
           followUpAnswers: {},
           showFollowUps: false,
           viewState: 'question',

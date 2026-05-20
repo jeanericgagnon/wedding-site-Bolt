@@ -561,7 +561,7 @@ describe('quickStartStateTransfer', () => {
         registryIntent: '',
         optionalStory: '',
       },
-      currentIndex: 0,
+      currentIndex: 2,
       followUpAnswers: {},
       showFollowUps: false,
       clarifyingState: null,

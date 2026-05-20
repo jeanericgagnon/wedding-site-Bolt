@@ -359,6 +359,22 @@ function registerDefinition<T>(def: SectionDefinition<T>): void {
   SECTION_REGISTRY.set(makeKey(def.type, def.variant), def as SectionDefinition<any>);
 }
 
+function cloneSectionDefinitionValue<T>(value: T): T {
+  if (value === null || typeof value !== 'object') return value;
+  return JSON.parse(JSON.stringify(value)) as T;
+}
+
+function cloneSectionDefinition(definition: SectionDefinition): SectionDefinition {
+  return {
+    ...definition,
+    defaultData: cloneSectionDefinitionValue(definition.defaultData),
+  };
+}
+
+function getCanonicalSectionDefinition(type: string, variant: string): SectionDefinition | null {
+  return SECTION_REGISTRY.get(makeKey(type, variant)) ?? null;
+}
+
 registerDefinition(heroFullBleedDefinition);
 registerDefinition(storyTwoColumnDefinition);
 registerDefinition(venueCardDefinition);
@@ -419,7 +435,8 @@ registerDefinition(videoInlineDefinition);
 
 export function getDefinition(type: string, variant: unknown): SectionDefinition | null {
   const canonicalSection = resolveCanonicalRegistrySectionInput(type, variant);
-  return SECTION_REGISTRY.get(makeKey(canonicalSection.type, canonicalSection.variant)) ?? null;
+  const definition = getCanonicalSectionDefinition(canonicalSection.type, canonicalSection.variant);
+  return definition ? cloneSectionDefinition(definition) : null;
 }
 
 export function getDefinitionOrThrow(type: string, variant: unknown): SectionDefinition {
@@ -430,7 +447,7 @@ export function getDefinitionOrThrow(type: string, variant: unknown): SectionDef
 }
 
 export function getAllDefinitions(): SectionDefinition[] {
-  return Array.from(SECTION_REGISTRY.values());
+  return Array.from(SECTION_REGISTRY.values()).map(cloneSectionDefinition);
 }
 
 export function getVariantsForType(type: string): SectionDefinition[] {

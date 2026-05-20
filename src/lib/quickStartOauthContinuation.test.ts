@@ -73,7 +73,7 @@ describe('quick start oauth continuation', () => {
     persistQuickStartDraftSnapshot(carriedDraft);
     writeSignupReturnPath(buildQuickStartEntryPath());
 
-    expect(readQuickStartDraftSnapshot()?.currentIndex).toBe(4);
+    expect(readQuickStartDraftSnapshot()?.currentIndex).toBe(14);
     expect(readQuickStartDraftSnapshot()?.showFollowUps).toBe(true);
     expect(readQuickStartDraftSnapshot()?.viewState).toBe('followups');
     expect(readSignupReturnPath()).toBe(buildQuickStartEntryPath());
