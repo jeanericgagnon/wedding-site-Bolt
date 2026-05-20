@@ -3208,6 +3208,27 @@ describe('name change target execution snapshot', () => {
     expect(snapshot.statusVault.lastTouchedAt).toBe('2026-04-24T22:10:00.000Z');
     expect(snapshot.statusVault.lastTouchedSource).toBe('execution');
     expect(snapshot.statusVault.notes[0]).toBe('SSA packet already filed and waiting on receipt.');
+
+    const impossibleDateSnapshot = buildNameChangeTargetExecutionSnapshot(
+      'ssa',
+      makeCase(),
+      [],
+      [],
+      plan,
+      [{
+        reminder_key: 'ssa-follow-up',
+        label: 'SSA follow-up',
+        reason: 'Receipt still missing',
+        trigger_type: 'manual',
+        status: 'pending',
+        urgency: 'high',
+        focus_target_id: 'ssa',
+        updated_at: '2027-02-30',
+      }],
+    );
+
+    expect(impossibleDateSnapshot.statusVault.lastTouchedAt).toBe('2026-04-24T22:10:00.000Z');
+    expect(impossibleDateSnapshot.statusVault.lastTouchedSource).toBe('execution');
   });
 
   it('keeps execution notes ahead of reminder notes when execution is newer', () => {

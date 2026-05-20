@@ -16,6 +16,7 @@ interface SectionRendererProps {
   weddingData: WeddingDataV1;
   isPreview?: boolean;
   siteSlug?: string;
+  publicRsvpHref?: string | null;
   globalAnimationPreset?: BuilderSectionStyleOverrides['animationPreset'];
   strictVariantMatching?: boolean;
   surface?: 'builder' | 'public';
@@ -79,6 +80,20 @@ const SIZE_TO_CLASS: Record<string, string> = {
 
 function sanitizePublicAnchorId(value: unknown, fallback: string): string {
   return normalizeSectionAnchorId(value) || normalizeSectionAnchorId(fallback) || 'section';
+}
+
+function rewritePublicRsvpAnchorLinks(value: unknown, publicRsvpHref?: string | null): unknown {
+  if (!publicRsvpHref) return value;
+  if (typeof value === 'string') return value.trim() === '#rsvp' ? publicRsvpHref : value;
+  if (Array.isArray(value)) return value.map((item) => rewritePublicRsvpAnchorLinks(item, publicRsvpHref));
+  if (!value || typeof value !== 'object') return value;
+
+  return Object.fromEntries(
+    Object.entries(value as Record<string, unknown>).map(([key, nestedValue]) => [
+      key,
+      rewritePublicRsvpAnchorLinks(nestedValue, publicRsvpHref),
+    ])
+  );
 }
 
 interface SideImageWrapperProps {
@@ -189,7 +204,7 @@ class SectionErrorBoundary extends React.Component<
   }
 }
 
-export const SectionRenderer: React.FC<SectionRendererProps> = ({ section, weddingData, isPreview, siteSlug, globalAnimationPreset, strictVariantMatching, surface = 'builder' }) => {
+export const SectionRenderer: React.FC<SectionRendererProps> = ({ section, weddingData, isPreview, siteSlug, publicRsvpHref, globalAnimationPreset, strictVariantMatching, surface = 'builder' }) => {
   const [preferLegacyRenderer, setPreferLegacyRenderer] = React.useState(false);
 
   const styleOverrides = section.styleOverrides ?? {};
@@ -205,12 +220,12 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({ section, weddi
     animationDelay: effectivePreset === 'stagger' ? `${Math.min(section.orderIndex * 70, 420)}ms` : undefined,
   } as React.CSSProperties;
 
-  const boundSettings = sanitizePublicSectionDataDeep(applyWeddingDataBindings({
+  const boundSettings = sanitizePublicSectionDataDeep(rewritePublicRsvpAnchorLinks(applyWeddingDataBindings({
     type: section.type,
     variant: section.variant,
     data: section.settings as Record<string, unknown>,
     bindings: section.bindings,
-  }, weddingData));
+  }, weddingData), surface === 'public' ? publicRsvpHref : null)) as Record<string, unknown>;
 
   const shouldUseResolvedRenderer = surface === 'public' || isPreview || strictVariantMatching;
 

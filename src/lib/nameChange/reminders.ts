@@ -4,8 +4,21 @@ import type { NameChangePlan, NameChangeReminderAttentionItem, NameChangeReminde
 const REMINDER_STALE_AFTER_MS = 1000 * 60 * 60 * 72;
 
 function getReminderTimestamp(value: string | null | undefined): number | null {
-  if (!value) return null;
-  const parsed = new Date(value);
+  const trimmed = value?.trim();
+  if (!trimmed) return null;
+
+  const dateOnlyMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(trimmed);
+  const parsed = dateOnlyMatch
+    ? new Date(Number(dateOnlyMatch[1]), Number(dateOnlyMatch[2]) - 1, Number(dateOnlyMatch[3]))
+    : new Date(trimmed);
+  if (
+    dateOnlyMatch
+    && (parsed.getFullYear() !== Number(dateOnlyMatch[1])
+      || parsed.getMonth() !== Number(dateOnlyMatch[2]) - 1
+      || parsed.getDate() !== Number(dateOnlyMatch[3]))
+  ) {
+    return null;
+  }
   const time = parsed.getTime();
   return Number.isNaN(time) ? null : time;
 }

@@ -21,8 +21,21 @@ import type {
 } from './types';
 
 function getNameChangeTargetExecutionTimestamp(value: string | null | undefined): number {
-  if (!value) return Number.NEGATIVE_INFINITY;
-  const date = new Date(value);
+  const trimmed = value?.trim();
+  if (!trimmed) return Number.NEGATIVE_INFINITY;
+
+  const dateOnlyMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(trimmed);
+  const date = dateOnlyMatch
+    ? new Date(Number(dateOnlyMatch[1]), Number(dateOnlyMatch[2]) - 1, Number(dateOnlyMatch[3]))
+    : new Date(trimmed);
+  if (
+    dateOnlyMatch
+    && (date.getFullYear() !== Number(dateOnlyMatch[1])
+      || date.getMonth() !== Number(dateOnlyMatch[2]) - 1
+      || date.getDate() !== Number(dateOnlyMatch[3]))
+  ) {
+    return Number.NEGATIVE_INFINITY;
+  }
   return Number.isNaN(date.getTime()) ? Number.NEGATIVE_INFINITY : date.getTime();
 }
 

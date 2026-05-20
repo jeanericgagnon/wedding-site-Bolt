@@ -8,9 +8,17 @@ import { getSectionManifest } from '../registry/sectionManifests';
 import { BuilderSectionInstance } from '../../types/builder/section';
 import { selectActivePage } from '../state/builderSelectors';
 import { getTemplatePreviewSource } from '../constants/templatePreviewSource';
+import {
+  TEMPLATE_READINESS_LABELS,
+  templateCatalog,
+  templateCatalogSummary,
+  type TemplateReadinessLabel,
+} from '../constants/templateCatalog';
 import { SectionRenderer } from './SectionRenderer';
 import { createEmptyWeddingData } from '../../types/weddingData';
 import { bumpTemplateUsage, readTemplateUsage } from './templateUsageStorage';
+import { readSetupDraft } from '../../lib/setupDraft';
+import { getRecommendedTemplateMatches } from '../../lib/setupDraftRecommendations';
 import { BuilderPage } from '../../types/builder/project';
 import {
   buildTemplatePageInstances as buildTemplatePageInstancesFromTemplate,
@@ -71,6 +79,18 @@ export const summarizeTemplatePages = (template: BuilderTemplateDefinition): str
 const PAGE_STRUCTURE_FILTERS = ['all', 'single', 'multi'] as const;
 type PageStructureFilter = (typeof PAGE_STRUCTURE_FILTERS)[number];
 export type { TemplateApplyPageMode };
+type TemplateCatalogItem = (typeof templateCatalog)[number];
+const TEMPLATE_SORT_OPTIONS = ['recommended', 'readiness', 'pages', 'name'] as const;
+type TemplateSortOption = (typeof TEMPLATE_SORT_OPTIONS)[number];
+
+const TEMPLATE_QUICK_SEARCHES = [
+  { label: 'Weekend', query: 'weekend /schedule /travel /rsvp' },
+  { label: 'Black tie', query: 'black tie formal dress code menu' },
+  { label: 'Destination', query: 'destination travel hotel coastal' },
+  { label: 'Interactive', query: 'music guestbook song photo' },
+] as const;
+
+const catalogByTemplateId = new Map(templateCatalog.map((item) => [item.id, item]));
 
 export const templateMatchesPageStructure = (
   template: BuilderTemplateDefinition,
@@ -103,8 +123,51 @@ export const summarizeCollapsedTemplateAnchors = (template: BuilderTemplateDefin
     .map(({ slug }, index) => `#${makeUniqueTemplatePageSlug(slug, usedAnchorSlugs, index + 1)}`);
 };
 
+export const summarizeDedicatedTemplateRoutes = (template: BuilderTemplateDefinition): string[] => {
+  const usedPageSlugs = new Set<string>();
+
+  return normalizeTemplatePageSlots(template)
+    .filter((page) => page.isHidden !== true)
+    .map((page, index) => {
+      const pageSlug = getTemplatePageSlotSlug(page);
+      const wantsHomePage = page.isHome === true || index === 0 || pageSlug === 'home';
+      const isHomePage = wantsHomePage && !usedPageSlugs.has('home');
+      const normalizedSlug = isHomePage
+        ? makeUniqueTemplatePageSlug('home', usedPageSlugs, index + 1)
+        : makeUniqueTemplatePageSlug(pageSlug, usedPageSlugs, index + 1);
+
+      return isHomePage || normalizedSlug === 'home' ? '/' : `/${normalizedSlug}`;
+    });
+};
+
+export const summarizeTemplateGuestDestinations = (
+  template: BuilderTemplateDefinition,
+  pageMode: TemplateApplyPageMode,
+): { label: string; destinations: string[] } => {
+  if (pageMode === 'single') {
+    return {
+      label: 'Anchor links',
+      destinations: summarizeCollapsedTemplateAnchors(template),
+    };
+  }
+
+  return {
+    label: 'Guest URLs',
+    destinations: summarizeDedicatedTemplateRoutes(template),
+  };
+};
+
+function getSinglePageTemplateSectionSlots(template: BuilderTemplateDefinition) {
+  const pageSlots = normalizeTemplatePageSlots(template);
+  const pageSectionSlots = pageSlots.flatMap((page) => page.sectionComposition);
+  const pageSectionSlotSet = new Set(pageSectionSlots);
+  const canPreserveCompositionOrder = template.sectionComposition.length === pageSectionSlots.length
+    && template.sectionComposition.every((slot) => pageSectionSlotSet.has(slot));
+  return canPreserveCompositionOrder ? template.sectionComposition : pageSectionSlots;
+}
+
 export const summarizeSinglePageTemplateSections = (template: BuilderTemplateDefinition, limit = 4): string => {
-  const sections = normalizeTemplatePageSlots(template).flatMap((page) => page.sectionComposition);
+  const sections = getSinglePageTemplateSectionSlots(template);
   const sectionLabels = sections.slice(0, limit).map((section) => getSectionManifest(section.type).label);
   const suffix = sections.length > sectionLabels.length ? ` + ${sections.length - sectionLabels.length} more` : '';
   return `Home: ${sectionLabels.join(', ')}${suffix}`;
@@ -148,6 +211,8 @@ interface ApplyResult {
   templateName: string;
   pageTitles: string[];
   pageModeLabel: string;
+  destinationLabel: string;
+  guestDestinations: string[];
   newSections: string[];
   preservedSections: string[];
 }
@@ -507,7 +572,7 @@ const TEMPLATE_PREVIEWS: Record<string, React.FC> = {
 
 function TemplatePreview({ templateId, fallbackSrc }: { templateId: string; fallbackSrc?: string }) {
   const preview = getTemplatePreviewSource(templateId);
-  const initial = preview.src;
+  const initial = preview.src === preview.fallbackSrc && fallbackSrc ? fallbackSrc : preview.src;
   const fallback = fallbackSrc || preview.fallbackSrc;
   const [src, setSrc] = useState(initial);
 
@@ -542,6 +607,10 @@ const THEME_DOTS: Record<string, string[]> = {
   'floral-garden': ['#4E7C5F', '#C47A4A', '#F6F8F3'],
   'floral-garden-sage': ['#537B61', '#C58A63', '#F3F7F1'],
   'floral-garden-rose': ['#8D5966', '#C98A8E', '#FBF3F4'],
+  'coastal-weekend': ['#155E75', '#67C3D0', '#F3FBFC'],
+  'black-tie-ballroom': ['#111827', '#C6A15B', '#F8F4EA'],
+  'rustic-vineyard': ['#6F432D', '#C07A4A', '#F8EFE5'],
+  'playful-color': ['#FF5F2B', '#2A9D8F', '#FFF4E8'],
 };
 
 const FONT_LABELS: Record<string, string> = {
@@ -560,6 +629,8 @@ export const TemplateGalleryPanel: React.FC<TemplateGalleryPanelProps> = ({ onSa
   const [activeColorFilter, setActiveColorFilter] = useState<ColorFilter>('all');
   const [activeSeasonFilter, setActiveSeasonFilter] = useState<SeasonFilter>('all');
   const [activePageStructureFilter, setActivePageStructureFilter] = useState<PageStructureFilter>('all');
+  const [activeReadinessFilter, setActiveReadinessFilter] = useState<TemplateReadinessLabel | 'all'>('all');
+  const [activeSort, setActiveSort] = useState<TemplateSortOption>('recommended');
   const [searchQuery, setSearchQuery] = useState('');
   const [applyingTemplateId, setApplyingTemplateId] = useState<string | null>(null);
   const [confirmTemplate, setConfirmTemplate] = useState<BuilderTemplateDefinition | null>(null);
@@ -571,6 +642,15 @@ export const TemplateGalleryPanel: React.FC<TemplateGalleryPanelProps> = ({ onSa
 
   const templates = getLaunchTemplatePacks();
 
+  const recommendedTemplateMatches = useMemo(
+    () => getRecommendedTemplateMatches(readSetupDraft(storageScope), templateCatalog, 4),
+    [storageScope]
+  );
+  const recommendedTemplateReasonById = useMemo(
+    () => new Map(recommendedTemplateMatches.map((match) => [match.template.id, match.reasons[0] ?? 'Good starting point'])),
+    [recommendedTemplateMatches]
+  );
+
   const recommendedTemplates = useMemo(() => {
     const usage = readTemplateUsage(storageScope);
 
@@ -578,19 +658,24 @@ export const TemplateGalleryPanel: React.FC<TemplateGalleryPanelProps> = ({ onSa
       .filter((t) => (usage[t.id] || 0) > 0)
       .sort((a, b) => (usage[b.id] || 0) - (usage[a.id] || 0));
 
+    const bySetup = recommendedTemplateMatches
+      .map((match) => templates.find(t => t.id === match.template.id))
+      .filter((t): t is BuilderTemplateDefinition => Boolean(t));
+
     const fallback = RECOMMENDED_TEMPLATE_IDS
       .map(id => templates.find(t => t.id === id))
       .filter((t): t is BuilderTemplateDefinition => Boolean(t));
 
-    const merged = [...byUsage, ...fallback].reduce<BuilderTemplateDefinition[]>((acc, t) => {
+    const merged = [...byUsage, ...bySetup, ...fallback].reduce<BuilderTemplateDefinition[]>((acc, t) => {
       if (!acc.find(x => x.id === t.id)) acc.push(t);
       return acc;
     }, []);
 
     return (merged.length > 0 ? merged : templates).slice(0, 4);
-  }, [storageScope, templates]);
+  }, [recommendedTemplateMatches, storageScope, templates]);
 
   const filtered = templates.filter((t) => {
+    const catalogItem = catalogByTemplateId.get(t.id);
     const moodOk = activeFilter === 'all' || t.moodTags.includes(activeFilter);
     const firstDot = (THEME_DOTS[t.id] || ['#999999'])[0];
     const colorClass = classifyColor(firstDot);
@@ -598,21 +683,49 @@ export const TemplateGalleryPanel: React.FC<TemplateGalleryPanelProps> = ({ onSa
     const seasonClass = inferSeason(t);
     const seasonOk = activeSeasonFilter === 'all' || seasonClass === activeSeasonFilter;
     const pageStructureOk = templateMatchesPageStructure(t, activePageStructureFilter);
+    const readinessOk = activeReadinessFilter === 'all' || catalogItem?.readinessLabel === activeReadinessFilter;
 
     const searchNeedle = searchQuery.trim().toLowerCase();
     const searchableText = [
       t.displayName,
       t.description ?? '',
       t.moodTags.join(' '),
+      catalogItem?.readinessLabel ?? '',
+      catalogItem?.readinessGaps.join(' ') ?? '',
+      catalogItem?.useCaseIds.join(' ') ?? '',
+      catalogItem?.guestRoutes.join(' ') ?? '',
+      catalogItem?.pageBlueprints.map((page) => `${page.title} ${page.route} ${page.sections.join(' ')}`).join(' ') ?? '',
       normalizeTemplatePageSlots(t).map((page) => page.title).join(' '),
+      summarizeDedicatedTemplateRoutes(t).join(' '),
       summarizeTemplatePages(t).join(' '),
+      t.bestFor?.join(' ') ?? '',
+      t.structureFocus,
       t.id,
     ]
       .join(' ')
       .toLowerCase();
 
-    const searchOk = searchNeedle.length === 0 || searchableText.includes(searchNeedle);
-    return moodOk && colorOk && seasonOk && pageStructureOk && searchOk;
+    const searchTokens = searchNeedle.split(/\s+/).filter(Boolean);
+    const searchOk = searchTokens.length === 0 || searchTokens.every((token) => searchableText.includes(token));
+    return moodOk && colorOk && seasonOk && pageStructureOk && readinessOk && searchOk;
+  }).sort((a, b) => {
+    if (activeSort === 'name') return a.displayName.localeCompare(b.displayName);
+    if (activeSort === 'pages') {
+      return normalizeTemplatePageSlots(b).length - normalizeTemplatePageSlots(a).length
+        || a.displayName.localeCompare(b.displayName);
+    }
+    if (activeSort === 'readiness') {
+      return (catalogByTemplateId.get(b.id)?.readinessScore ?? 0) - (catalogByTemplateId.get(a.id)?.readinessScore ?? 0)
+        || a.displayName.localeCompare(b.displayName);
+    }
+
+    const aRecommendedIndex = RECOMMENDED_TEMPLATE_IDS.indexOf(a.id);
+    const bRecommendedIndex = RECOMMENDED_TEMPLATE_IDS.indexOf(b.id);
+    const aRank = aRecommendedIndex >= 0 ? aRecommendedIndex : RECOMMENDED_TEMPLATE_IDS.length + 1;
+    const bRank = bRecommendedIndex >= 0 ? bRecommendedIndex : RECOMMENDED_TEMPLATE_IDS.length + 1;
+    return aRank - bRank
+      || (catalogByTemplateId.get(b.id)?.readinessScore ?? 0) - (catalogByTemplateId.get(a.id)?.readinessScore ?? 0)
+      || a.displayName.localeCompare(b.displayName);
   });
 
   const currentTemplateId = state.project?.templateId;
@@ -694,6 +807,7 @@ export const TemplateGalleryPanel: React.FC<TemplateGalleryPanelProps> = ({ onSa
       const mergedSections = preserveContentAcrossTemplate(existingSections, baseSections);
       const templatePages = buildTemplatePageInstances(template, existingSections, pageMode);
       const pageCount = templatePages.length;
+      const guestDestinationSummary = summarizeTemplateGuestDestinations(template, pageMode);
 
       const newSectionTypes = template.sectionComposition
         .filter(slot => !existingTypes.has(slot.type))
@@ -710,6 +824,8 @@ export const TemplateGalleryPanel: React.FC<TemplateGalleryPanelProps> = ({ onSa
         templateName: template.displayName,
         pageTitles: templatePages.map((page) => page.title),
         pageModeLabel: describeTemplateApplyPageMode(template, pageMode),
+        destinationLabel: guestDestinationSummary.label,
+        guestDestinations: guestDestinationSummary.destinations,
         newSections: pageCount > 1 ? [`${pageCount} dedicated pages`, ...newSectionTypes] : newSectionTypes,
         preservedSections: preservedTypes,
       });
@@ -742,6 +858,19 @@ export const TemplateGalleryPanel: React.FC<TemplateGalleryPanelProps> = ({ onSa
                 {applyResult.pageTitles.map((title) => (
                   <span key={title} className="rounded-xl bg-[var(--color-surface-subtle)] px-2 py-0.5 text-[11px] text-[var(--color-text-secondary)]">
                     {title}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {applyResult.guestDestinations.length > 0 && (
+            <div className="mb-3 rounded-xl border border-[var(--color-border-subtle)] bg-white p-4 text-left">
+              <p className="mb-2 text-xs font-semibold text-[var(--color-text-primary)]">{applyResult.destinationLabel}:</p>
+              <div className="flex flex-wrap gap-1.5">
+                {applyResult.guestDestinations.map((destination) => (
+                  <span key={destination} className="rounded border border-[var(--color-border-subtle)] bg-[var(--color-surface-subtle)] px-1.5 py-0.5 font-mono text-[11px] text-[var(--color-text-secondary)]">
+                    {destination}
                   </span>
                 ))}
               </div>
@@ -817,6 +946,12 @@ export const TemplateGalleryPanel: React.FC<TemplateGalleryPanelProps> = ({ onSa
             <span>•</span>
             <span>{filtered.length} shown</span>
             <span>•</span>
+            <span>{templateCatalogSummary.guestReadyTemplates} guest-ready</span>
+            <span>•</span>
+            <span>{templateCatalogSummary.multiPageTemplates} multi-page</span>
+            <span>•</span>
+            <span>{templateCatalogSummary.averageReadinessScore}% avg readiness</span>
+            <span>•</span>
             <span className="truncate">Current design: {templates.find(t => t.id === currentTemplateId)?.displayName ?? '—'}</span>
           </div>
         </div>
@@ -847,6 +982,23 @@ export const TemplateGalleryPanel: React.FC<TemplateGalleryPanelProps> = ({ onSa
                 }`}
               >
                 {f.label}
+              </button>
+            ))}
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2 text-xs">
+            <span className="text-gray-500">Fast find</span>
+            {TEMPLATE_QUICK_SEARCHES.map((item) => (
+              <button
+                key={item.label}
+                type="button"
+                onClick={() => {
+                  setSearchQuery(item.query);
+                  setActivePageStructureFilter(item.label === 'Weekend' ? 'multi' : activePageStructureFilter);
+                }}
+                className="rounded-xl border border-gray-200 bg-white px-2.5 py-1 text-gray-600 transition-colors hover:bg-gray-50"
+              >
+                {item.label}
               </button>
             ))}
           </div>
@@ -901,6 +1053,47 @@ export const TemplateGalleryPanel: React.FC<TemplateGalleryPanelProps> = ({ onSa
               </button>
             ))}
           </div>
+
+          <div className="flex flex-wrap items-center gap-2 text-xs">
+            <span className="text-gray-500">Readiness</span>
+            {(['all', ...TEMPLATE_READINESS_LABELS] as const).map((f) => (
+              <button
+                key={`readiness-${f}`}
+                onClick={() => setActiveReadinessFilter(f)}
+                className={`rounded-xl border px-2.5 py-1 transition-colors ${
+                  activeReadinessFilter === f
+                    ? 'bg-[var(--color-accent-soft)] border-[var(--color-border-subtle)] text-[var(--color-accent)]'
+                    : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
+                }`}
+              >
+                {f === 'all' ? 'Any readiness' : f}
+              </button>
+            ))}
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2 text-xs">
+            <span className="text-gray-500">Sort</span>
+            {TEMPLATE_SORT_OPTIONS.map((option) => (
+              <button
+                key={`sort-${option}`}
+                type="button"
+                onClick={() => setActiveSort(option)}
+                className={`rounded-xl border px-2.5 py-1 transition-colors ${
+                  activeSort === option
+                    ? 'bg-gray-900 border-gray-900 text-white'
+                    : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
+                }`}
+              >
+                {option === 'recommended'
+                  ? 'Recommended'
+                  : option === 'readiness'
+                    ? 'Readiness'
+                    : option === 'pages'
+                      ? 'Most pages'
+                      : 'Name'}
+              </button>
+            ))}
+          </div>
         </div>
 
         <div className="flex-1 overflow-y-auto p-7">
@@ -911,13 +1104,19 @@ export const TemplateGalleryPanel: React.FC<TemplateGalleryPanelProps> = ({ onSa
                 <button
                   key={`recommended-${template.id}`}
                   onClick={() => openTemplateConfirm(template)}
-                  className={`rounded-xl border px-3 py-1.5 text-xs transition-colors ${
+                  title={recommendedTemplateReasonById.get(template.id) ?? 'Recommended starting design'}
+                  className={`rounded-xl border px-3 py-1.5 text-left text-xs transition-colors ${
                     template.id === currentTemplateId
                       ? 'bg-[var(--color-accent-soft)] border-[var(--color-border-subtle)] text-[var(--color-accent)]'
                       : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50'
                   }`}
                 >
-                  {template.displayName}
+                  <span className="block font-semibold">{template.displayName}</span>
+                  {recommendedTemplateReasonById.has(template.id) && (
+                    <span className="mt-0.5 block max-w-[190px] truncate text-[10px] font-normal opacity-70">
+                      {recommendedTemplateReasonById.get(template.id)}
+                    </span>
+                  )}
                 </button>
               ))}
             </div>
@@ -960,6 +1159,7 @@ export const TemplateGalleryPanel: React.FC<TemplateGalleryPanelProps> = ({ onSa
                 onApply={() => openTemplateConfirm(template)}
                 onDetails={() => setDetailsTemplate(template)}
                 onCompare={() => toggleCompareTemplate(template.id)}
+                catalogItem={catalogByTemplateId.get(template.id)}
               />
             ))}
           </div>
@@ -974,6 +1174,8 @@ export const TemplateGalleryPanel: React.FC<TemplateGalleryPanelProps> = ({ onSa
                   setActiveColorFilter('all');
                   setActiveSeasonFilter('all');
                   setActivePageStructureFilter('all');
+                  setActiveReadinessFilter('all');
+                  setActiveSort('recommended');
                 }}
                 className="mt-3 inline-flex items-center rounded-xl border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-50"
               >
@@ -1030,16 +1232,18 @@ interface TemplateCardProps {
   isCurrent: boolean;
   isApplying: boolean;
   isCompared: boolean;
+  catalogItem?: TemplateCatalogItem;
   onApply: () => void;
   onDetails: () => void;
   onCompare: () => void;
 }
 
-const TemplateCard: React.FC<TemplateCardProps> = ({ template, isCurrent, isApplying, isCompared, onApply, onDetails, onCompare }) => {
+const TemplateCard: React.FC<TemplateCardProps> = ({ template, isCurrent, isApplying, isCompared, catalogItem, onApply, onDetails, onCompare }) => {
   const [hovered, setHovered] = useState(false);
   const dots = THEME_DOTS[template.id] || ['#999', '#ccc', '#fff'];
   const fontLabel = FONT_LABELS[template.suggestedFonts.heading] || template.suggestedFonts.heading;
   const pageCount = normalizeTemplatePageSlots(template).length;
+  const blueprintPreview = catalogItem?.pageBlueprints.slice(0, 2) ?? [];
 
   return (
     <div
@@ -1102,6 +1306,39 @@ const TemplateCard: React.FC<TemplateCardProps> = ({ template, isCurrent, isAppl
         </div>
 
         <p className="text-xs text-gray-400 line-clamp-2 leading-relaxed mb-3">{template.description}</p>
+
+        {catalogItem && (
+          <div className="mb-3 space-y-2">
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span className="rounded-xl border border-emerald-100 bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">
+                {catalogItem.readinessLabel} · {catalogItem.readinessScore}
+              </span>
+              {catalogItem.useCaseIds.slice(0, 2).map((useCaseId) => (
+                <span key={useCaseId} className="rounded-xl border border-gray-100 bg-white px-2 py-0.5 text-[10px] text-gray-500">
+                  {useCaseId.replace(/-/g, ' ')}
+                </span>
+              ))}
+            </div>
+            {catalogItem.guestRoutes.length > 0 && (
+              <div className="flex flex-wrap gap-1">
+                {catalogItem.guestRoutes.slice(0, 4).map((route) => (
+                  <span key={route} className="rounded border border-gray-200 bg-gray-50 px-1.5 py-0.5 font-mono text-[10px] text-gray-500">
+                    {route}
+                  </span>
+                ))}
+              </div>
+            )}
+            {blueprintPreview.length > 0 && (
+              <div className="rounded-xl border border-gray-100 bg-gray-50 p-2">
+                {blueprintPreview.map((page) => (
+                  <p key={`${page.title}-${page.route}`} className="truncate text-[10px] text-gray-500">
+                    <span className="font-semibold text-gray-600">{page.title}:</span> {page.sections.slice(0, 3).join(', ')}
+                  </p>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
         <div className="flex items-center justify-between">
           <div className="flex gap-1 flex-wrap">
@@ -1179,38 +1416,76 @@ const TemplateCompareModal: React.FC<TemplateCompareModalProps> = ({ leftTemplat
           {[
             { template: leftTemplate, dots: leftDots, onApply: onApplyLeft },
             { template: rightTemplate, dots: rightDots, onApply: onApplyRight },
-          ].map(({ template, dots, onApply }) => (
-            <div key={template.id} className="rounded-xl border border-gray-200 p-3">
-              <div className="aspect-[4/3] rounded-xl border border-gray-100 overflow-hidden bg-gray-50 mb-3">
-                <TemplatePreview templateId={template.id} fallbackSrc={template.previewThumbnailPath} />
-              </div>
-              <div className="flex items-start justify-between gap-2">
-                <div>
-                  <h4 className="text-sm font-semibold text-gray-900">{template.displayName}</h4>
-                  <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{template.description}</p>
+          ].map(({ template, dots, onApply }) => {
+            const catalogItem = catalogByTemplateId.get(template.id);
+
+            return (
+              <div key={template.id} className="rounded-xl border border-gray-200 p-3">
+                <div className="aspect-[4/3] rounded-xl border border-gray-100 overflow-hidden bg-gray-50 mb-3">
+                  <TemplatePreview templateId={template.id} fallbackSrc={template.previewThumbnailPath} />
                 </div>
-                <div className="flex items-center gap-1 mt-0.5">
-                  {dots.map((c, i) => <div key={i} className="h-2.5 w-2.5 rounded-sm border border-gray-200" style={{ background: c }} />)}
+                <div className="flex items-start justify-between gap-2">
+                  <div>
+                    <h4 className="text-sm font-semibold text-gray-900">{template.displayName}</h4>
+                    <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{template.description}</p>
+                  </div>
+                  <div className="flex items-center gap-1 mt-0.5">
+                    {dots.map((c, i) => <div key={i} className="h-2.5 w-2.5 rounded-sm border border-gray-200" style={{ background: c }} />)}
+                  </div>
                 </div>
+                <div className="mt-2 flex flex-wrap gap-1">
+                  <span className="rounded-xl bg-gray-100 px-2 py-0.5 text-[10px] text-gray-600">
+                    {normalizeTemplatePageSlots(template).length} pages
+                  </span>
+                  {catalogItem && (
+                    <span className="rounded-xl bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">
+                      {catalogItem.readinessLabel} · {catalogItem.readinessScore}
+                    </span>
+                  )}
+                  {template.moodTags.slice(0, 3).map((tag) => (
+                    <span key={tag} className="rounded-xl bg-gray-100 px-2 py-0.5 text-[10px] capitalize text-gray-600">{tag}</span>
+                  ))}
+                </div>
+                {catalogItem && catalogItem.useCaseIds.length > 0 && (
+                  <div className="mt-2 flex flex-wrap gap-1">
+                    {catalogItem.useCaseIds.slice(0, 4).map((useCaseId) => (
+                      <span key={useCaseId} className="rounded-xl border border-gray-100 bg-white px-2 py-0.5 text-[10px] text-gray-500">
+                        {useCaseId.replace(/-/g, ' ')}
+                      </span>
+                    ))}
+                  </div>
+                )}
+                {summarizeDedicatedTemplateRoutes(template).length > 0 && (
+                  <div className="mt-2 rounded-xl border border-gray-100 bg-white p-2">
+                    <div className="mb-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-gray-400">Guest URLs</div>
+                    <div className="flex flex-wrap gap-1">
+                      {summarizeDedicatedTemplateRoutes(template).slice(0, 6).map((route) => (
+                        <span key={route} className="rounded border border-gray-200 bg-gray-50 px-1.5 py-0.5 font-mono text-[10px] text-gray-500">
+                          {route}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                <div className="mt-2 space-y-1 rounded-xl border border-gray-100 bg-gray-50 p-2">
+                  {summarizeTemplatePages(template).slice(0, 3).map((summary) => (
+                    <p key={summary} className="truncate text-[11px] text-gray-500">{summary}</p>
+                  ))}
+                </div>
+                {catalogItem && catalogItem.readinessGaps.length > 0 && (
+                  <div className="mt-2 rounded-xl border border-amber-100 bg-amber-50 p-2">
+                    <div className="mb-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-amber-700">Still refine</div>
+                    {catalogItem.readinessGaps.slice(0, 2).map((gap) => (
+                      <p key={gap} className="text-[10px] text-amber-700">{gap}</p>
+                    ))}
+                  </div>
+                )}
+                <button onClick={onApply} className="mt-3 w-full py-2 rounded-xl bg-gray-900 text-white text-xs font-semibold hover:bg-gray-800">
+                  Start with this design
+                </button>
               </div>
-              <div className="mt-2 flex flex-wrap gap-1">
-                <span className="rounded-xl bg-gray-100 px-2 py-0.5 text-[10px] text-gray-600">
-                  {normalizeTemplatePageSlots(template).length} pages
-                </span>
-                {template.moodTags.slice(0, 3).map((tag) => (
-                  <span key={tag} className="rounded-xl bg-gray-100 px-2 py-0.5 text-[10px] capitalize text-gray-600">{tag}</span>
-                ))}
-              </div>
-              <div className="mt-2 space-y-1 rounded-xl border border-gray-100 bg-gray-50 p-2">
-                {summarizeTemplatePages(template).slice(0, 3).map((summary) => (
-                  <p key={summary} className="truncate text-[11px] text-gray-500">{summary}</p>
-                ))}
-              </div>
-              <button onClick={onApply} className="mt-3 w-full py-2 rounded-xl bg-gray-900 text-white text-xs font-semibold hover:bg-gray-800">
-                Start with this design
-              </button>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </div>
@@ -1225,7 +1500,9 @@ interface TemplateDetailsModalProps {
 
 const TemplateDetailsModal: React.FC<TemplateDetailsModalProps> = ({ template, onApply, onClose }) => {
   const dots = THEME_DOTS[template.id] || ['#999', '#ccc', '#fff'];
+  const catalogItem = catalogByTemplateId.get(template.id);
   const previewPages = useMemo(() => normalizeTemplatePageSlots(template), [template]);
+  const previewRoutes = useMemo(() => summarizeDedicatedTemplateRoutes(template), [template]);
   const [selectedPreviewPageIndex, setSelectedPreviewPageIndex] = useState(0);
   const previewSections = useMemo(
     () => previewPages[selectedPreviewPageIndex]?.sectionComposition.map((s, idx) => createSectionFromTemplateSlot(s, idx)) ?? [],
@@ -1284,6 +1561,11 @@ const TemplateDetailsModal: React.FC<TemplateDetailsModalProps> = ({ template, o
             <h3 className="text-lg font-semibold text-gray-900">{template.displayName}</h3>
             <p className="text-sm text-gray-500 mt-1">{template.description}</p>
             <div className="mt-2 flex flex-wrap gap-1">
+              {catalogItem && (
+                <span className="rounded-xl bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-700">
+                  {catalogItem.readinessLabel} · {catalogItem.readinessScore}
+                </span>
+              )}
               {template.moodTags.map((tag) => (
                 <span key={tag} className="rounded-xl bg-gray-100 px-2 py-0.5 text-[11px] capitalize text-gray-600">{tag}</span>
               ))}
@@ -1324,6 +1606,23 @@ const TemplateDetailsModal: React.FC<TemplateDetailsModalProps> = ({ template, o
               <div className="text-xs text-gray-500 mb-1">Palette</div>
               <div className="flex gap-1.5">{dots.map((c, i) => <div key={i} className="h-5 w-5 rounded-xl border border-gray-200" style={{ background: c }} />)}</div>
             </div>
+            {catalogItem && (
+              <div className="rounded-xl border border-emerald-100 bg-emerald-50 p-3">
+                <div className="mb-1 text-xs font-semibold text-emerald-800">Launch readiness</div>
+                <p className="text-xs text-emerald-700">
+                  {catalogItem.readinessLabel} · {catalogItem.readinessScore}/100 · {catalogItem.pageCount > 1 ? `${catalogItem.pageCount} dedicated pages` : 'One page'}
+                </p>
+                {catalogItem.useCaseIds.length > 0 && (
+                  <div className="mt-2 flex flex-wrap gap-1">
+                    {catalogItem.useCaseIds.map((useCaseId) => (
+                      <span key={useCaseId} className="rounded-xl bg-white/70 px-2 py-0.5 text-[10px] text-emerald-700">
+                        {useCaseId.replace(/-/g, ' ')}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
             <div>
               <div className="text-xs text-gray-500 mb-1">Pages</div>
               <div className="mb-3 flex flex-wrap gap-1.5">
@@ -1342,6 +1641,18 @@ const TemplateDetailsModal: React.FC<TemplateDetailsModalProps> = ({ template, o
                   </button>
                 ))}
               </div>
+              {previewRoutes.length > 0 && (
+                <div className="mb-3 rounded-xl border border-gray-100 bg-gray-50 p-2">
+                  <div className="mb-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-gray-400">Guest URLs</div>
+                  <div className="flex flex-wrap gap-1">
+                    {previewRoutes.map((route) => (
+                      <span key={route} className="rounded border border-gray-200 bg-white px-1.5 py-0.5 font-mono text-[10px] text-gray-500">
+                        {route}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
               <div className="text-xs text-gray-500 mb-1">{selectedPreviewPage?.title ?? 'Page'} sections</div>
               <div className="space-y-1">
                 {(selectedPreviewPage?.sectionComposition ?? []).map((s, i) => (
@@ -1356,6 +1667,31 @@ const TemplateDetailsModal: React.FC<TemplateDetailsModalProps> = ({ template, o
                 ))}
               </div>
             </div>
+            {catalogItem && (
+              <div className="rounded-xl border border-gray-100 bg-gray-50 p-3">
+                <div className="mb-2 text-xs font-semibold text-gray-700">Page blueprint</div>
+                <div className="space-y-1.5">
+                  {catalogItem.pageBlueprints.map((page) => (
+                    <p key={`${page.title}-${page.route}`} className="text-[11px] text-gray-500">
+                      <span className="font-semibold text-gray-700">{page.title}</span>
+                      <span className="font-mono text-gray-400"> {page.route}</span>
+                      <br />
+                      {page.sections.slice(0, 4).join(', ')}
+                    </p>
+                  ))}
+                </div>
+              </div>
+            )}
+            {catalogItem && catalogItem.readinessGaps.length > 0 && (
+              <div className="rounded-xl border border-amber-100 bg-amber-50 p-3">
+                <div className="mb-1 text-xs font-semibold text-amber-800">Still refine</div>
+                <ul className="space-y-1">
+                  {catalogItem.readinessGaps.map((gap) => (
+                    <li key={gap} className="text-xs text-amber-700">{gap}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
             <div className="rounded-xl border border-green-100 bg-green-50 px-3 py-2 text-xs text-green-700">
               Your names, date, photos, and details map into this layout automatically.
             </div>
@@ -1377,6 +1713,8 @@ interface TemplateConfirmModalProps {
 
 const TemplateConfirmModal: React.FC<TemplateConfirmModalProps> = ({ template, selectedPageMode, onPageModeChange, isApplying, onConfirm, onCancel }) => {
   const collapsedAnchors = summarizeCollapsedTemplateAnchors(template);
+  const dedicatedRoutes = summarizeDedicatedTemplateRoutes(template);
+  const catalogItem = catalogByTemplateId.get(template.id);
 
   return (
   <div className="absolute inset-0 z-10 flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(4px)' }}>
@@ -1393,6 +1731,16 @@ const TemplateConfirmModal: React.FC<TemplateConfirmModalProps> = ({ template, s
         </div>
       </div>
       <div className="space-y-2">
+        {catalogItem && (
+          <div className="rounded-xl border border-emerald-100 bg-emerald-50 p-3">
+            <p className="text-xs font-semibold text-emerald-800">
+              {catalogItem.readinessLabel} · {catalogItem.readinessScore}/100
+            </p>
+            <p className="mt-1 text-[11px] text-emerald-700">
+              {catalogItem.pageCount} page{catalogItem.pageCount === 1 ? '' : 's'} · {catalogItem.guestRoutes.join(', ')}
+            </p>
+          </div>
+        )}
         {normalizeTemplatePageSlots(template).length > 1 && (
           <div className="rounded-xl border border-[var(--color-border-subtle)] bg-[var(--color-surface-subtle)] p-1">
             {(['multi', 'single'] as const).map((mode) => (
@@ -1429,6 +1777,11 @@ const TemplateConfirmModal: React.FC<TemplateConfirmModalProps> = ({ template, s
               summarizeTemplatePages(template).map((summary) => (
                 <p key={summary} className="text-[11px] text-[var(--color-text-secondary)]">{summary}</p>
               ))
+            )}
+            {selectedPageMode === 'multi' && dedicatedRoutes.length > 0 && (
+              <p className="mt-1.5 text-[11px] text-[var(--color-text-tertiary)]">
+                Creates URLs: {dedicatedRoutes.join(', ')}
+              </p>
             )}
           </div>
         </div>
