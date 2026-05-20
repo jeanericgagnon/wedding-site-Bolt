@@ -181,7 +181,7 @@ export const BuilderVariantGallery: React.FC = () => {
                           <p className="text-sm font-semibold text-text-primary">{variant.label}</p>
                           <p className="mt-1 min-h-10 text-xs leading-relaxed text-text-secondary">{variant.description}</p>
                         </div>
-                        <div className="rounded-lg bg-surface-subtle/50 px-2.5 py-2">
+                        <div className="rounded-xl bg-surface-subtle/50 px-2.5 py-2">
                           <p className="text-[10px] font-semibold text-text-tertiary">Best for</p>
                           <p className="mt-1 text-xs leading-relaxed text-text-secondary">{variant.bestFor || 'A flexible choice for a polished wedding page.'}</p>
                           <div className="mt-2 flex flex-wrap gap-1">
@@ -198,13 +198,13 @@ export const BuilderVariantGallery: React.FC = () => {
                               to={captureUrl}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="inline-flex items-center gap-1 rounded-lg border border-border-subtle px-2.5 py-1.5 text-xs font-medium text-text-secondary hover:bg-surface-subtle"
+                              className="inline-flex items-center gap-1 rounded-xl border border-border-subtle px-2.5 py-1.5 text-xs font-medium text-text-secondary hover:bg-surface-subtle"
                             >
                               Preview
                               <ExternalLink size={12} />
                             </Link>
                           ) : (
-                            <span className="inline-flex items-center gap-1 rounded-lg border border-border-subtle px-2.5 py-1.5 text-xs font-medium text-text-tertiary">
+                            <span className="inline-flex items-center gap-1 rounded-xl border border-border-subtle px-2.5 py-1.5 text-xs font-medium text-text-tertiary">
                               Internal preview
                             </span>
                           )}

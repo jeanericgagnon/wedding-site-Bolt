@@ -10,6 +10,8 @@ function requireRpcRecord<T>(data: unknown, functionName: string): T {
 }
 
 const PLANNING_TASK_SELECT = 'id, wedding_site_id, title, description, category, due_date, status, priority, owner_name, linked_event_id, linked_vendor_id, sort_order, created_at, updated_at' as const;
+const PLANNING_VENDOR_SELECT = 'id, wedding_site_id, vendor_type, name, contact_name, email, phone, website, contract_total, amount_paid, balance_due, next_payment_due, document_url, document_label, notes, internal_rating, rating_status, rating_notes, created_at, updated_at' as const;
+const PLANNING_BUDGET_ITEM_SELECT = 'id, wedding_site_id, category, item_name, estimated_amount, actual_amount, paid_amount, due_date, vendor_id, notes, created_at, updated_at' as const;
 const PLANNING_SITE_META_SELECT = 'wedding_data, venue_name, is_destination_wedding' as const;
 const PLANNING_TOTAL_BUDGET_SELECT = 'wedding_data' as const;
 const SEATING_READINESS_EVENT_SELECT = 'id' as const;
@@ -103,6 +105,18 @@ function normalizeBudgetItemCompatibilityRecord(
     ...item,
     due_date: options.missingDueDate ? null : (item.due_date as string | null | undefined) ?? null,
   } as PlanningBudgetItem;
+}
+
+function isMissingColumnError(error: unknown, column: string): boolean {
+  if (!error || typeof error !== 'object') {
+    return false;
+  }
+  const message = 'message' in error && typeof error.message === 'string' ? error.message : '';
+  const details = 'details' in error && typeof error.details === 'string' ? error.details : '';
+  const hint = 'hint' in error && typeof error.hint === 'string' ? error.hint : '';
+  const code = 'code' in error && typeof error.code === 'string' ? error.code : '';
+  const text = `${message} ${details} ${hint}`;
+  return code === '42703' && text.includes(column);
 }
 
 export interface PlanningSiteMeta {
@@ -455,12 +469,31 @@ export async function deleteTask(id: string): Promise<void> {
 }
 
 export async function loadVendors(weddingSiteId: string): Promise<PlanningVendor[]> {
-  const { data, error } = await supabase
-    .from('planning_vendors')
-    .select('*')
-    .eq('wedding_site_id', weddingSiteId)
-    .order('name', { ascending: true })
-    .limit(MAX_PLANNING_VENDOR_ROWS);
+  const query = (select: string) =>
+    supabase
+      .from('planning_vendors')
+      .select(select)
+      .eq('wedding_site_id', weddingSiteId)
+      .order('name', { ascending: true })
+      .limit(MAX_PLANNING_VENDOR_ROWS);
+  const { data, error } = await query(PLANNING_VENDOR_SELECT);
+  const missingPhone = isMissingColumnError(error, 'phone');
+  const missingRatingFields =
+    isMissingColumnError(error, 'internal_rating') ||
+    isMissingColumnError(error, 'rating_status') ||
+    isMissingColumnError(error, 'rating_notes');
+
+  if (error && (missingPhone || missingRatingFields)) {
+    const fallbackSelect = missingPhone
+      ? PLANNING_VENDOR_SELECT.replace(', phone', '')
+      : PLANNING_VENDOR_SELECT.replace(', internal_rating, rating_status, rating_notes', '');
+    const fallback = await query(fallbackSelect);
+    if (fallback.error) throw fallback.error;
+    return (((fallback.data ?? []) as unknown) as Array<Record<string, unknown>>).map((vendor) =>
+      normalizeVendorCompatibilityRecord(vendor, { missingPhone, missingRatingFields }),
+    );
+  }
+
   if (error) throw error;
   return (((data ?? []) as unknown) as Array<Record<string, unknown>>).map((vendor) => normalizeVendorCompatibilityRecord(vendor));
 }
@@ -492,13 +525,25 @@ export async function deleteVendor(id: string): Promise<void> {
 }
 
 export async function loadBudgetItems(weddingSiteId: string): Promise<PlanningBudgetItem[]> {
-  const { data, error } = await supabase
-    .from('planning_budget_items')
-    .select('*')
-    .eq('wedding_site_id', weddingSiteId)
-    .order('category', { ascending: true })
-    .order('item_name', { ascending: true })
-    .limit(MAX_PLANNING_BUDGET_ITEM_ROWS);
+  const query = (select: string) =>
+    supabase
+      .from('planning_budget_items')
+      .select(select)
+      .eq('wedding_site_id', weddingSiteId)
+      .order('category', { ascending: true })
+      .order('item_name', { ascending: true })
+      .limit(MAX_PLANNING_BUDGET_ITEM_ROWS);
+  const { data, error } = await query(PLANNING_BUDGET_ITEM_SELECT);
+  const missingDueDate = isMissingColumnError(error, 'due_date');
+
+  if (error && missingDueDate) {
+    const fallback = await query(PLANNING_BUDGET_ITEM_SELECT.replace(', due_date', ''));
+    if (fallback.error) throw fallback.error;
+    return (((fallback.data ?? []) as unknown) as Array<Record<string, unknown>>).map((item) =>
+      normalizeBudgetItemCompatibilityRecord(item, { missingDueDate }),
+    );
+  }
+
   if (error) throw error;
   return (((data ?? []) as unknown) as Array<Record<string, unknown>>).map((item) => normalizeBudgetItemCompatibilityRecord(item));
 }

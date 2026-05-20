@@ -647,20 +647,21 @@ const aiPhotoColumnMigrationAppearsApplied = liveBackend.enabled === true
   && (liveBackend.restTables ?? [])
     .filter((result) => aiPhotoProtectedTables.has(result.table))
     .every((result) => result.status === 'protected');
+const prereqsOk =
+  missingRequiredEnv.length === 0 &&
+  invalidOptionalEnv.length === 0 &&
+  playwrightBrowser.ok &&
+  nodeModulesPresent &&
+  missingMigrations.length === 0 &&
+  missingLocalFunctions.length === 0 &&
+  failedProofScripts.length === 0 &&
+  failedFunctionSourceChecks.length === 0 &&
+  failedRestTables.length === 0 &&
+  failedStorageBuckets.length === 0 &&
+  failedEdgeFunctions.length === 0;
 
 const output = {
-  ok:
-    missingRequiredEnv.length === 0 &&
-    invalidOptionalEnv.length === 0 &&
-    playwrightBrowser.ok &&
-    nodeModulesPresent &&
-    missingMigrations.length === 0 &&
-    missingLocalFunctions.length === 0 &&
-    failedProofScripts.length === 0 &&
-    failedFunctionSourceChecks.length === 0 &&
-    failedRestTables.length === 0 &&
-    failedStorageBuckets.length === 0 &&
-    failedEdgeFunctions.length === 0,
+  ok: prereqsOk,
   generatedAt: new Date().toISOString(),
   summary: {
     requiredEnvMissing: missingRequiredEnv.length,
@@ -680,6 +681,9 @@ const output = {
     playwrightChromiumReady: playwrightBrowser.ok,
     loadedEnvFiles: envFiles.filter((filePath) => existsSync(filePath)),
   },
+  contractSummary: prereqsOk
+    ? 'Prereqs proof is green: this readiness lane confirms the local/live foundations for later proof bundles without acting like a shipped-feature or launch-truth artifact source.'
+    : 'Prereqs proof is not green: fix missing local/live readiness foundations before leaning on downstream proof bundles.',
   localProofReadiness: {
     nodeModulesPresent,
     distPresent,

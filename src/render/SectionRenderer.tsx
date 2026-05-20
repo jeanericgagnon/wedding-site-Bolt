@@ -78,7 +78,7 @@ class SectionErrorBoundary extends React.Component<
           <p className="text-sm text-text-secondary">This part of the wedding site is taking a moment to load.</p>
           <button
             onClick={() => this.setState({ hasError: false })}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-surface border border-border-subtle hover:bg-background text-text-secondary text-xs font-medium rounded-lg"
+            className="flex items-center gap-1.5 rounded-xl border border-border-subtle bg-surface px-3 py-1.5 text-xs font-medium text-text-secondary hover:bg-background"
           >
             <RefreshCw className="w-3 h-3" />
             Retry

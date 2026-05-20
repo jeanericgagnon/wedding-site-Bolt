@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { z } from 'zod';
 import { Music, Play, ExternalLink, Plus } from 'lucide-react';
 import { SectionDefinition, SectionComponentProps } from '../../types';
@@ -78,6 +78,9 @@ export const defaultMusicPlaylistData: MusicPlaylistData = {
 
 const MusicPlaylist: React.FC<SectionComponentProps<MusicPlaylistData>> = ({ data }) => {
   const [activeTab, setActiveTab] = useState(0);
+  useEffect(() => {
+    setActiveTab(0);
+  }, [data.playlists]);
   const active = data.playlists[activeTab];
   const safeSpotifyUrl = getSafePublicWebUrl(active?.spotifyUrl);
   const safeAppleMusicUrl = getSafePublicWebUrl(active?.appleMusicUrl);

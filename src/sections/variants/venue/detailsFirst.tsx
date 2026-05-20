@@ -122,7 +122,7 @@ const VenueDetailsFirst: React.FC<SectionComponentProps<VenueDetailsFirstData>> 
                       const Icon = ICONS[detail.icon] ?? MapPin;
                       return (
                         <div key={detail.id} className="flex items-start gap-3 p-3 bg-stone-50 rounded-xl">
-                          <div className="w-7 h-7 rounded-lg bg-white border border-stone-100 flex items-center justify-center flex-shrink-0 shadow-sm">
+                          <div className="w-7 h-7 rounded-xl bg-white border border-stone-100 flex items-center justify-center flex-shrink-0 shadow-sm">
                             <Icon size={13} className="text-stone-400" />
                           </div>
                           <div className="min-w-0">

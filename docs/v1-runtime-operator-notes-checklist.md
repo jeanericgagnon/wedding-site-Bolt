@@ -125,5 +125,8 @@ This checklist is complete when:
 - the team explicitly decides that the current automated proof is sufficient and marks the section intentionally skipped for launch day
 
 This checklist does **not** override the secure launch blockers:
+- `npm run proof:v1:board` remains the machine-readable current proof board when a structured snapshot is needed
+- `npm run proof:v1:board:freshness` must pass before either `npm run proof:v1:board` or `npm run proof:v1:board:md` is treated as current launch truth
+- `ci-hardpass` and `Release Launch Gate` intentionally stop at `npm run proof:v1:board:freshness`; local/helper proof paths regenerate the raw and markdown board outputs when a refreshed board artifact is needed
 - `SUPABASE_SERVICE_ROLE_KEY` is still required for `npm run proof:v1:launch-closeout`
 - launch stays `HOLD` until that secure closeout bundle is green

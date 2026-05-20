@@ -6,7 +6,7 @@ import {
   readRsvpContinuityUpdatedAt,
   writeRsvpContinuityStoragePing,
 } from './rsvpContinuityStorage';
-import { RSVP_CONTINUITY_STORAGE_KEY } from './rsvpTypes';
+import { RSVP_CONTINUITY_STORAGE_KEY, buildRsvpContinuityStorageKey } from './rsvpTypes';
 
 describe('rsvpContinuityStorage', () => {
   beforeEach(() => {
@@ -26,6 +26,13 @@ describe('rsvpContinuityStorage', () => {
       savedAtISO: '2026-05-06T16:00:00.000Z',
       updatedAt: '2026-05-06T16:00:00.000Z',
     });
+  });
+
+  it('builds site-scoped RSVP continuity storage keys', () => {
+    expect(buildRsvpContinuityStorageKey('alex-jordan')).toBe('dayof.rsvp.updatedAt:alex-jordan');
+    expect(buildRsvpContinuityStorageKey('  MAYA-NOAH  ')).toBe('dayof.rsvp.updatedAt:maya-noah');
+    expect(buildRsvpContinuityStorageKey('')).toBe(RSVP_CONTINUITY_STORAGE_KEY);
+    expect(buildRsvpContinuityStorageKey(null)).toBe(RSVP_CONTINUITY_STORAGE_KEY);
   });
 
   it('accepts active legacy and envelope continuity values', () => {

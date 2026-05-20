@@ -139,7 +139,7 @@ export function buildCoordinatorDashboardDerivedState(args: Args) {
     activeDraftStateLabel: activeQnaDraftStateLabel,
   });
 
-  const roleCapabilities = buildCoordinatorRoleCapabilities(args.coordinatorRole);
+  const roleCapabilities = buildCoordinatorRoleCapabilities(args.coordinatorRole, args.coordinatorPermissions);
   const liveEventId = getCoordinatorLiveEventId(args.events as CoordinatorTimelineEventLite[], args.timelineState);
   const upNextEventId = getCoordinatorUpNextEventId(args.events as CoordinatorTimelineEventLite[], args.timelineState);
   const checkInEventId = resolveOperationalEventId({

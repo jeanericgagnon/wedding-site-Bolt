@@ -55,4 +55,19 @@ describe('setupService', () => {
       draft,
     );
   });
+
+  it('clears stale setup-shell validation copy when navigating backward', () => {
+    const page = readFileSync(join(process.cwd(), 'src/pages/setup/SetupShell.tsx'), 'utf8');
+
+    expect(page).toContain('const goPrev = () => {');
+    expect(page).toContain("setError('');");
+  });
+
+  it('routes setup-shell reset through React Router instead of forcing a full page reload', () => {
+    const page = readFileSync(join(process.cwd(), 'src/pages/setup/SetupShell.tsx'), 'utf8');
+
+    expect(page).toContain("const navigate = useNavigate();");
+    expect(page).toContain("navigate('/setup/names');");
+    expect(page).not.toContain("window.location.href = '/setup/names';");
+  });
 });

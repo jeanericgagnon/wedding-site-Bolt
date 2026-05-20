@@ -19,6 +19,7 @@ export const buildCoordinatorRoleBoard = ({
 }): CoordinatorRoleBoard => {
   const enabled = capabilities.filter((item) => item.enabled);
   const blocked = capabilities.filter((item) => !item.enabled);
+  const enabledKeys = new Set(enabled.map((item) => item.key));
 
   const modeLabel = role === 'viewer'
     ? 'Read-only observer'
@@ -40,10 +41,17 @@ export const buildCoordinatorRoleBoard = ({
     blockedLabel: blocked.length
       ? blocked.map((item) => item.label).join(' · ')
       : 'No day-of blocks',
-    guidanceLabel: role === 'viewer'
+    guidanceLabel: enabled.length === 0
       ? 'Use this view to track handoffs and escalate decisions without changing the board.'
       : role === 'coordinator'
-        ? 'Run guest movement, live timing, answers, and urgent sends without drifting into planner-only work.'
-        : 'You can help with day-of movement and planner-only scheduling decisions when needed.',
+        ? [
+            enabledKeys.has('check-in') ? 'guest movement' : null,
+            enabledKeys.has('timeline') ? 'live timing' : null,
+            enabledKeys.has('qna') ? 'guest answers' : null,
+            enabledKeys.has('alerts-now') ? 'urgent sends' : null,
+          ].filter(Boolean).join(', ')
+        : enabledKeys.has('alerts-later')
+          ? 'You can help with day-of movement and planner-only scheduling decisions when needed.'
+          : 'You can help with the enabled day-of lanes while scheduling stays with the couple.',
   };
 };

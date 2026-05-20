@@ -28,6 +28,12 @@ export const Signup: React.FC = () => {
   const inviteRole = searchParams.get('inviteRole');
   const inviteSite = searchParams.get('inviteSite');
   const hasInviteContext = Boolean(inviteToken && inviteEmail);
+  const signupStorageScope = (inviteEmail || formData.email || '').trim().toLowerCase() || null;
+
+  const clearSignupFeedback = () => {
+    setLoading(false);
+    setError('');
+  };
 
 
   const explicitReturnPath = (location.state as { returnTo?: string } | null)?.returnTo || null;
@@ -39,14 +45,14 @@ export const Signup: React.FC = () => {
 
   useEffect(() => {
     if (!explicitReturnPath && !normalizedQuickStartDraft && !hasInviteContext) {
-      clearAuthEntryReturnPath();
+      clearAuthEntryReturnPath(signupStorageScope);
     }
-  }, [explicitReturnPath, normalizedQuickStartDraft, hasInviteContext]);
+  }, [explicitReturnPath, normalizedQuickStartDraft, hasInviteContext, signupStorageScope]);
 
   useEffect(() => {
-    if (explicitReturnPath) writeSignupReturnPath(explicitReturnPath);
-    if (normalizedQuickStartDraft) persistQuickStartDraftSnapshot(normalizedQuickStartDraft);
-  }, [explicitReturnPath, normalizedQuickStartDraft]);
+    if (explicitReturnPath) writeSignupReturnPath(explicitReturnPath, signupStorageScope);
+    if (normalizedQuickStartDraft) persistQuickStartDraftSnapshot(normalizedQuickStartDraft, signupStorageScope);
+  }, [explicitReturnPath, normalizedQuickStartDraft, signupStorageScope]);
 
   const inviteReturnSearch = useMemo(() => {
     if (!inviteToken) return '';
@@ -54,26 +60,29 @@ export const Signup: React.FC = () => {
   }, [inviteToken]);
 
   useEffect(() => {
-    if (inviteEmail) {
-      setFormData((prev) => ({ ...prev, email: inviteEmail }));
-    }
-  }, [inviteEmail]);
+    clearSignupFeedback();
+    setFormData({
+      email: inviteEmail ?? '',
+      password: '',
+      confirmPassword: '',
+    });
+  }, [inviteEmail, inviteRole, inviteSite, inviteToken]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    clearSignupFeedback();
     setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
-    setError('');
   };
 
   const handleGoogleSignIn = async () => {
     setLoading(true);
     setError('');
     try {
-      if (explicitReturnPath) writeSignupReturnPath(explicitReturnPath);
-      if (normalizedQuickStartDraft) persistQuickStartDraftSnapshot(normalizedQuickStartDraft);
+      if (explicitReturnPath) writeSignupReturnPath(explicitReturnPath, signupStorageScope);
+      if (normalizedQuickStartDraft) persistQuickStartDraftSnapshot(normalizedQuickStartDraft, signupStorageScope);
       const fallbackRedirectPath = paymentGateEnabled ? '/payment-required?oauth=google' : '/onboarding?oauth=google';
       const redirectPath = hasInviteContext
         ? `/accept-collaborator-invite${inviteReturnSearch}&oauth=google`
-        : resolveSignupReturnPath(explicitReturnPath, fallbackRedirectPath);
+        : resolveSignupReturnPath(explicitReturnPath, fallbackRedirectPath, signupStorageScope);
 
       await startSignupWithGoogle(`${window.location.origin}${redirectPath}`);
     } catch (err: unknown) {
@@ -108,7 +117,7 @@ export const Signup: React.FC = () => {
       }
 
       await ensureMinimalWeddingSite(userId, formData.email);
-      navigate(consumeSignupReturnPath() || resolveSignupReturnPath(explicitReturnPath, paymentGateEnabled ? '/payment-required?signup=1' : '/onboarding?signup=1'));
+      navigate(consumeSignupReturnPath(formData.email) || resolveSignupReturnPath(explicitReturnPath, paymentGateEnabled ? '/payment-required?signup=1' : '/onboarding?signup=1', formData.email));
     } catch (err: unknown) {
       setError(safeAuthError(err, 'Couldn’t create your account right now. Please try again.'));
     } finally {
@@ -132,7 +141,7 @@ export const Signup: React.FC = () => {
 
         <Card variant="default" padding="lg">
           {hasInviteContext && (
-            <div className="mb-5 rounded-lg border border-border-subtle bg-surface-subtle/30 p-4 text-left">
+            <div className="mb-5 rounded-xl border border-border-subtle bg-surface-subtle/30 p-4 text-left">
               <p className="text-xs font-medium text-text-tertiary">Wedding invite</p>
               <p className="mt-2 text-base font-semibold text-text-primary">{inviteSite || 'Wedding access'}</p>
               <div className="mt-3 flex flex-wrap gap-2 text-xs text-text-secondary">
@@ -197,7 +206,7 @@ export const Signup: React.FC = () => {
             />
 
             {error && (
-              <div className="p-3 rounded-lg text-sm bg-surface-secondary border border-border-subtle text-text-secondary">
+              <div className="p-3 rounded-xl text-sm bg-surface-secondary border border-border-subtle text-text-secondary">
                 {error}
               </div>
             )}

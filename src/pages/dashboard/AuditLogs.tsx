@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { Card } from '../../components/ui/Card';
 import { useAuth } from '../../hooks/useAuth';
@@ -52,39 +52,63 @@ export const DashboardAuditLogs: React.FC = () => {
   const [logsLoading, setLogsLoading] = useState(true);
   const [actionFilter, setActionFilter] = useState<'all' | 'insert' | 'update' | 'delete' | 'app_action'>('all');
   const [searchText, setSearchText] = useState('');
+  const previousUserIdRef = useRef<string | null>(null);
+  const auditLogsRequestIdRef = useRef(0);
+
+  const resetAuditLogsState = useCallback(() => {
+    setRows([]);
+    setActionRows([]);
+    setError(null);
+    setActionFilter('all');
+    setSearchText('');
+  }, []);
 
   useEffect(() => {
     let mounted = true;
+    const requestId = ++auditLogsRequestIdRef.current;
+    const isCurrentRequest = () => mounted && requestId === auditLogsRequestIdRef.current;
     (async () => {
       if (!user?.id) {
-        if (mounted) setLogsLoading(false);
+        if (isCurrentRequest()) {
+          resetAuditLogsState();
+          setLogsLoading(false);
+        }
         return;
       }
       if (isDemoMode) {
-        if (mounted) {
-          setRows([]);
-          setActionRows([]);
+        if (isCurrentRequest()) {
+          resetAuditLogsState();
           setLogsLoading(false);
         }
         return;
       }
       try {
+        setLogsLoading(true);
+        setError(null);
         const { guestRows, actionRows: loadedActionRows } = await loadDashboardAuditLogs(user.id);
-        if (mounted) {
+        if (isCurrentRequest()) {
           setRows(guestRows);
           setActionRows(loadedActionRows);
         }
       } catch {
-        if (mounted) setError('Couldn’t load activity history right now.');
+        if (isCurrentRequest()) setError('Couldn’t load activity history right now.');
       } finally {
-        if (mounted) setLogsLoading(false);
+        if (isCurrentRequest()) setLogsLoading(false);
       }
     })();
 
     return () => {
       mounted = false;
     };
-  }, [isDemoMode, user?.id]);
+  }, [isDemoMode, resetAuditLogsState, user?.id]);
+
+  useEffect(() => {
+    const userId = user?.id ?? null;
+    if (previousUserIdRef.current && userId && previousUserIdRef.current !== userId) {
+      resetAuditLogsState();
+    }
+    previousUserIdRef.current = userId;
+  }, [resetAuditLogsState, user?.id]);
 
   const unifiedRows: UnifiedAuditRow[] = [
     ...rows.map((row): UnifiedAuditRow => ({
@@ -135,7 +159,7 @@ export const DashboardAuditLogs: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
               <label className="block text-xs text-text-tertiary mb-1">Change</label>
-              <select value={actionFilter} onChange={(e) => setActionFilter(e.target.value as 'all' | 'insert' | 'update' | 'delete' | 'app_action')} className="w-full px-3 py-2 rounded-lg border border-border bg-surface text-sm text-text-primary">
+              <select value={actionFilter} onChange={(e) => setActionFilter(e.target.value as 'all' | 'insert' | 'update' | 'delete' | 'app_action')} className="w-full rounded-xl border border-border bg-surface px-3 py-2 text-sm text-text-primary">
                 <option value="all">All changes</option>
                 <option value="insert">Added</option>
                 <option value="update">Updated</option>
@@ -145,7 +169,7 @@ export const DashboardAuditLogs: React.FC = () => {
             </div>
             <div>
               <label className="block text-xs text-text-tertiary mb-1">Search</label>
-              <input value={searchText} onChange={(e) => setSearchText(e.target.value)} placeholder="Search by area, change, person, or detail" className="w-full px-3 py-2 rounded-lg border border-border bg-surface text-sm text-text-primary" />
+              <input value={searchText} onChange={(e) => setSearchText(e.target.value)} placeholder="Search by area, change, person, or detail" className="w-full rounded-xl border border-border bg-surface px-3 py-2 text-sm text-text-primary" />
             </div>
           </div>
         </Card>
@@ -160,7 +184,7 @@ export const DashboardAuditLogs: React.FC = () => {
           <Card padding="lg">
             <div className="space-y-3">
               {filteredRows.map((row) => (
-                <div key={row.id} className="rounded-lg border border-border-subtle bg-white px-4 py-3">
+                <div key={row.id} className="rounded-2xl border border-border-subtle bg-white px-4 py-3">
                   <div className="flex items-center justify-between gap-3">
                     <div>
                       <p className="text-sm font-medium text-text-primary">{row.title}</p>

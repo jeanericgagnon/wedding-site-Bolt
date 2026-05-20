@@ -48,7 +48,7 @@ export default function GalleryCarousel({ section }: GalleryCarouselProps) {
 
         <div className="grid grid-cols-4 gap-4 mt-8">
           {images.map((image, index) => (
-            <div key={index} className="aspect-square bg-gray-800 rounded-lg overflow-hidden cursor-pointer hover:opacity-75 transition-opacity">
+            <div key={index} className="aspect-square bg-gray-800 rounded-xl overflow-hidden cursor-pointer hover:opacity-75 transition-opacity">
               <img src={image} alt={`Thumbnail ${index + 1}`} className="w-full h-full object-cover" />
             </div>
           ))}

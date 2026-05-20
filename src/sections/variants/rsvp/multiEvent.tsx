@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { z } from 'zod';
 import { CheckCircle, Loader2 } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
 import { SectionDefinition, SectionComponentProps } from '../../types';
 import { supabase } from '../../../lib/supabase';
 import { getSafePublicImageUrl, getSafePublicWebUrl } from '../../publicLinks';
@@ -61,6 +62,7 @@ export const defaultRsvpMultiEventData: RsvpMultiEventData = {
 type RsvpStatus = 'idle' | 'submitting' | 'success' | 'error';
 
 const RsvpMultiEvent: React.FC<SectionComponentProps<RsvpMultiEventData>> = ({ data, siteSlug }) => {
+  const [searchParams] = useSearchParams();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [attending, setAttending] = useState<'yes' | 'no' | null>(null);
@@ -73,6 +75,23 @@ const RsvpMultiEvent: React.FC<SectionComponentProps<RsvpMultiEventData>> = ({ d
   const illustratedImageUrl = getSafePublicImageUrl(data.imageUrl);
   const safeEmbedUrl = getSafePublicWebUrl(data.embedUrl);
 
+  useEffect(() => {
+    setName('');
+    setEmail('');
+    setAttending(null);
+    setGuestCount(1);
+    setDietary('');
+    setStatus('idle');
+    setErrorMsg('');
+  }, [siteSlug, searchParams.toString(), headline, deadline, safeEmbedUrl, illustratedImageUrl, data.layoutStyle]);
+
+  const clearRsvpError = () => {
+    if (status === 'error') {
+      setStatus('idle');
+    }
+    setErrorMsg('');
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name || attending === null) return;
@@ -83,7 +102,7 @@ const RsvpMultiEvent: React.FC<SectionComponentProps<RsvpMultiEventData>> = ({ d
     try {
       const slug = siteSlug ?? '';
       const { inviteToken, passwordSession } = slug
-        ? buildPublicAccessArtifacts(slug, new URLSearchParams(window.location.search))
+        ? buildPublicAccessArtifacts(slug, searchParams)
         : { inviteToken: null, passwordSession: null };
       const { error } = await supabase.functions.invoke('public-site-rsvp-submit', {
         body: {
@@ -215,7 +234,10 @@ const RsvpMultiEvent: React.FC<SectionComponentProps<RsvpMultiEventData>> = ({ d
             <input
               type="text"
               value={name}
-              onChange={e => setName(e.target.value)}
+              onChange={e => {
+                clearRsvpError();
+                setName(e.target.value);
+              }}
               required
               placeholder="Your full name"
               className="w-full border border-stone-200 rounded-xl px-4 py-3 text-base text-stone-800 placeholder:text-stone-300 focus:outline-none focus:ring-2 focus:ring-rose-300 focus:border-transparent transition-all bg-stone-50 focus:bg-white"
@@ -227,7 +249,10 @@ const RsvpMultiEvent: React.FC<SectionComponentProps<RsvpMultiEventData>> = ({ d
             <input
               type="email"
               value={email}
-              onChange={e => setEmail(e.target.value)}
+              onChange={e => {
+                clearRsvpError();
+                setEmail(e.target.value);
+              }}
               placeholder="your@email.com"
               className="w-full border border-stone-200 rounded-xl px-4 py-3 text-base text-stone-800 placeholder:text-stone-300 focus:outline-none focus:ring-2 focus:ring-rose-300 focus:border-transparent transition-all bg-stone-50 focus:bg-white"
             />
@@ -242,7 +267,10 @@ const RsvpMultiEvent: React.FC<SectionComponentProps<RsvpMultiEventData>> = ({ d
                 <button
                   key={option}
                   type="button"
-                  onClick={() => setAttending(option)}
+                  onClick={() => {
+                    clearRsvpError();
+                    setAttending(option);
+                  }}
                   className={`min-h-[46px] py-3 px-4 rounded-xl border-2 text-sm font-medium transition-all ${
                     attending === option
                       ? option === 'yes'
@@ -265,7 +293,10 @@ const RsvpMultiEvent: React.FC<SectionComponentProps<RsvpMultiEventData>> = ({ d
                 </label>
                 <select
                   value={guestCount}
-                  onChange={e => setGuestCount(Number(e.target.value))}
+                  onChange={e => {
+                    clearRsvpError();
+                    setGuestCount(Number(e.target.value));
+                  }}
                   className="w-full border border-stone-200 rounded-xl px-4 py-3 text-base text-stone-800 focus:outline-none focus:ring-2 focus:ring-rose-300 focus:border-transparent transition-all bg-stone-50 focus:bg-white appearance-none"
                 >
                   {[1, 2, 3, 4].map(n => (
@@ -280,7 +311,10 @@ const RsvpMultiEvent: React.FC<SectionComponentProps<RsvpMultiEventData>> = ({ d
                 </label>
                 <textarea
                   value={dietary}
-                  onChange={e => setDietary(e.target.value)}
+                  onChange={e => {
+                    clearRsvpError();
+                    setDietary(e.target.value);
+                  }}
                   placeholder="Vegetarian, vegan, gluten-free, allergies..."
                   rows={3}
                   className="w-full border border-stone-200 rounded-xl px-4 py-3 text-base text-stone-800 placeholder:text-stone-300 focus:outline-none focus:ring-2 focus:ring-rose-300 focus:border-transparent transition-all resize-none bg-stone-50 focus:bg-white"

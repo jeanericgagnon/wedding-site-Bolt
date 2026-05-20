@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { z } from 'zod';
 import { Heart, Send } from 'lucide-react';
 import { SectionDefinition, SectionComponentProps } from '../../types';
@@ -67,6 +67,14 @@ function buildLocalGuestbookPayload(entries: LocalGuestbookEntry[]): string {
   } satisfies LocalGuestbookEnvelope);
 }
 
+export function buildLocalGuestbookStorageKey(siteSlug: string | undefined, headline: string | undefined): string {
+  const normalizedSiteSlug = String(siteSlug ?? '').trim().toLowerCase();
+  const normalizedHeadline = String(headline ?? 'guestbook').trim().toLowerCase().replace(/\s+/g, '_') || 'guestbook';
+  return normalizedSiteSlug
+    ? `dayof_guestbook_${normalizedSiteSlug}_${normalizedHeadline}`
+    : `dayof_guestbook_${normalizedHeadline}`;
+}
+
 export function readLocalGuestbookEntries(storageKey: string): LocalGuestbookEntry[] {
   if (typeof window === 'undefined') return [];
   try {
@@ -113,11 +121,17 @@ function writeLocalGuestbookEntries(storageKey: string, entries: LocalGuestbookE
   }
 }
 
-const QuotesGuestbook: React.FC<SectionComponentProps<QuotesGuestbookData>> = ({ data }) => {
-  const storageKey = useMemo(() => `dayof_guestbook_${(data.headline || 'guestbook').toLowerCase().replace(/\s+/g, '_')}`, [data.headline]);
+const QuotesGuestbook: React.FC<SectionComponentProps<QuotesGuestbookData>> = ({ data, siteSlug }) => {
+  const storageKey = useMemo(() => buildLocalGuestbookStorageKey(siteSlug, data.headline), [data.headline, siteSlug]);
   const [name, setName] = useState('');
   const [message, setMessage] = useState('');
   const [localEntries, setLocalEntries] = useState<LocalGuestbookEntry[]>(() => readLocalGuestbookEntries(storageKey));
+
+  useEffect(() => {
+    setName('');
+    setMessage('');
+    setLocalEntries(readLocalGuestbookEntries(storageKey));
+  }, [storageKey]);
 
   const allEntries = [...(data.entries || []), ...localEntries];
 
@@ -150,20 +164,20 @@ const QuotesGuestbook: React.FC<SectionComponentProps<QuotesGuestbookData>> = ({
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Your name"
-              className="px-3 py-2 rounded-lg border border-border bg-surface text-sm"
+              className="px-3 py-2 rounded-xl border border-border bg-surface text-sm"
             />
             <input
               value={message}
               onChange={(e) => setMessage(e.target.value)}
               placeholder="Write a short wish"
-              className="md:col-span-2 px-3 py-2 rounded-lg border border-border bg-surface text-sm"
+              className="md:col-span-2 px-3 py-2 rounded-xl border border-border bg-surface text-sm"
             />
           </div>
           <div className="mt-3 flex justify-end">
             <button
               type="button"
               onClick={addEntry}
-              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-primary text-white text-sm hover:bg-primary/90"
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-primary text-white text-sm hover:bg-primary/90"
             >
               <Send className="w-4 h-4" />
               Add wish

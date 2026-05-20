@@ -24,7 +24,7 @@ export default function GalleryMasonry({ section }: GalleryMasonryProps) {
               <img
                 src={image.src}
                 alt={`Gallery ${index + 1}`}
-                className="w-full rounded-lg hover:opacity-80 transition-opacity"
+                className="w-full rounded-xl hover:opacity-80 transition-opacity"
               />
             </div>
           ))}

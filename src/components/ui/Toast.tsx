@@ -68,7 +68,7 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         {toasts.map(t => (
           <div
             key={t.id}
-            className={`pointer-events-auto flex max-w-sm items-start gap-3 rounded-lg border px-4 py-3 text-sm font-medium ${STYLES[t.type]}`}
+            className={`pointer-events-auto flex max-w-sm items-start gap-3 rounded-xl border px-4 py-3 text-sm font-medium ${STYLES[t.type]}`}
             role="alert"
           >
             {ICONS[t.type]}

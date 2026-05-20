@@ -4,6 +4,7 @@ import {
   PUBLIC_SECTION_SETTING_ALIAS_EXCEPTIONS,
   PUBLIC_SECTION_SETTINGS_ALLOWLIST,
   sanitizePublicSectionSettings,
+  toPublicPageDTO,
 } from './publicRenderContract';
 
 describe('publicRenderContract', () => {
@@ -43,6 +44,63 @@ describe('publicRenderContract', () => {
     expect(settings).not.toHaveProperty('monogram');
   });
 
+  it('preserves page hidden metadata in the public page DTO', () => {
+    expect(toPublicPageDTO({
+      id: 'travel-page',
+      title: 'Travel',
+      slug: 'travel',
+      orderIndex: 1,
+      sections: [],
+      meta: { isHome: false, isHidden: true },
+    }).meta).toEqual({
+      isHome: false,
+      isHidden: true,
+    });
+  });
+
+  it('unwraps builder provenance page fields and numeric-string order values in the public page DTO', () => {
+    const page = toPublicPageDTO({
+      id: 'travel-page',
+      title: { value: 'Guest Travel', source: 'user-edited' } as unknown as string,
+      slug: { value: 'Guest Travel', source: 'user-edited' } as unknown as string,
+      orderIndex: '2' as unknown as number,
+      sections: [{
+        id: 'travel-section',
+        type: 'travel',
+        variant: 'list',
+        enabled: true,
+        locked: false,
+        orderIndex: '3' as unknown as number,
+        settings: { headline: 'Travel' },
+        bindings: {},
+        styleOverrides: {},
+        meta: { createdAtISO: '2026-05-01T00:00:00.000Z', updatedAtISO: '2026-05-01T00:00:00.000Z' },
+      }],
+      meta: { isHome: false, isHidden: false },
+    });
+
+    expect(page).toMatchObject({
+      title: 'Guest Travel',
+      slug: 'Guest Travel',
+      orderIndex: 2,
+    });
+    expect(page.sections[0]).toMatchObject({
+      id: 'travel-section',
+      orderIndex: 3,
+    });
+  });
+
+  it('preserves public section anchors without broadening section setting allowlists', () => {
+    const settings = sanitizePublicSectionSettings('travel', 'list', {
+      headline: 'Travel',
+      anchorId: 'travel',
+      privateToken: 'secret',
+    });
+
+    expect(settings.anchorId).toBe('travel');
+    expect(settings).not.toHaveProperty('privateToken');
+  });
+
   it('normalizes hero legacy title/subtitle fields into the resolved public hero renderer contract', () => {
     const settings = sanitizePublicSectionSettings('hero', 'fullBleed', {
       title: 'We are getting married',
@@ -64,6 +122,27 @@ describe('publicRenderContract', () => {
     expect(settings).not.toHaveProperty('title');
     expect(settings).not.toHaveProperty('subtitle');
     expect(settings).not.toHaveProperty('showTitle');
+    expect(settings).not.toHaveProperty('privateToken');
+  });
+
+  it('normalizes builder provenance-wrapped section fields before public alias mapping', () => {
+    const settings = sanitizePublicSectionSettings('hero', 'fullBleed', {
+      title: { value: 'Together in Sayulita', source: 'user-edited' },
+      subtitle: { value: 'June 14, 2026', source: 'generated' },
+      anchorId: { value: 'Welcome', source: 'user-edited' },
+      ctaLabel: { value: 'RSVP', source: 'user-edited' },
+      privateToken: 'secret',
+    });
+
+    expect(settings).toEqual({
+      eyebrow: 'Together in Sayulita',
+      subheadline: 'June 14, 2026',
+      overlayOpacity: 40,
+      ctaLabel: 'RSVP',
+      anchorId: 'Welcome',
+    });
+    expect(settings).not.toHaveProperty('title');
+    expect(settings).not.toHaveProperty('subtitle');
     expect(settings).not.toHaveProperty('privateToken');
   });
 

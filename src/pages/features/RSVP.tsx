@@ -24,7 +24,7 @@ export const RSVPFeature: React.FC = () => {
       <section className="py-16 md:py-24 bg-gradient-to-b from-paper to-white">
         <div className="container-custom">
           <div className="max-w-4xl mx-auto text-center">
-            <div className="inline-flex items-center justify-center p-4 bg-brand/10 rounded-lg mb-6">
+            <div className="inline-flex items-center justify-center p-4 bg-brand/10 rounded-xl mb-6">
               <CheckCircle2 className="w-12 h-12 text-brand" />
             </div>
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-serif font-bold text-ink mb-6 leading-tight">
@@ -61,8 +61,8 @@ Built to keep things clear
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            <div className="bg-paper rounded-lg p-8">
-              <div className="p-3 bg-brand/10 rounded-lg w-fit mb-4">
+            <div className="bg-paper rounded-xl p-8">
+              <div className="p-3 bg-brand/10 rounded-xl w-fit mb-4">
                 <Users className="w-6 h-6 text-brand" />
               </div>
               <h3 className="text-xl font-serif font-bold text-ink mb-3">Household-Aware Flow</h3>
@@ -76,8 +76,8 @@ Built to keep things clear
               </ul>
             </div>
 
-            <div className="bg-paper rounded-lg p-8">
-              <div className="p-3 bg-brand/10 rounded-lg w-fit mb-4">
+            <div className="bg-paper rounded-xl p-8">
+              <div className="p-3 bg-brand/10 rounded-xl w-fit mb-4">
                 <Calendar className="w-6 h-6 text-brand" />
               </div>
               <h3 className="text-xl font-serif font-bold text-ink mb-3">Multi-Event RSVP</h3>
@@ -91,8 +91,8 @@ Built to keep things clear
               </ul>
             </div>
 
-            <div className="bg-paper rounded-lg p-8">
-              <div className="p-3 bg-brand/10 rounded-lg w-fit mb-4">
+            <div className="bg-paper rounded-xl p-8">
+              <div className="p-3 bg-brand/10 rounded-xl w-fit mb-4">
                 <Utensils className="w-6 h-6 text-brand" />
               </div>
               <h3 className="text-xl font-serif font-bold text-ink mb-3">Meal Selection</h3>
@@ -106,8 +106,8 @@ Built to keep things clear
               </ul>
             </div>
 
-            <div className="bg-paper rounded-lg p-8">
-              <div className="p-3 bg-brand/10 rounded-lg w-fit mb-4">
+            <div className="bg-paper rounded-xl p-8">
+              <div className="p-3 bg-brand/10 rounded-xl w-fit mb-4">
                 <MessageSquare className="w-6 h-6 text-brand" />
               </div>
               <h3 className="text-xl font-serif font-bold text-ink mb-3">Custom Questions</h3>
@@ -121,8 +121,8 @@ Built to keep things clear
               </ul>
             </div>
 
-            <div className="bg-paper rounded-lg p-8">
-              <div className="p-3 bg-brand/10 rounded-lg w-fit mb-4">
+            <div className="bg-paper rounded-xl p-8">
+              <div className="p-3 bg-brand/10 rounded-xl w-fit mb-4">
                 <Clock className="w-6 h-6 text-brand" />
               </div>
               <h3 className="text-xl font-serif font-bold text-ink mb-3">Deadline Handling</h3>
@@ -136,8 +136,8 @@ Built to keep things clear
               </ul>
             </div>
 
-            <div className="bg-paper rounded-lg p-8">
-              <div className="p-3 bg-brand/10 rounded-lg w-fit mb-4">
+            <div className="bg-paper rounded-xl p-8">
+              <div className="p-3 bg-brand/10 rounded-xl w-fit mb-4">
                 <BarChart className="w-6 h-6 text-brand" />
               </div>
               <h3 className="text-xl font-serif font-bold text-ink mb-3">Current RSVP visibility</h3>
@@ -164,9 +164,9 @@ Built to keep things clear
             </div>
 
             <div className="space-y-8">
-              <div className="bg-white rounded-lg p-8 border border-brand/20">
+              <div className="bg-white rounded-xl p-8 border border-brand/20">
                 <div className="flex items-start gap-6">
-                  <div className="p-3 bg-brand/10 rounded-lg flex-shrink-0">
+                  <div className="p-3 bg-brand/10 rounded-xl flex-shrink-0">
                     <Mail className="w-6 h-6 text-brand" />
                   </div>
                   <div>
@@ -178,9 +178,9 @@ Built to keep things clear
                 </div>
               </div>
 
-              <div className="bg-white rounded-lg p-8 border border-brand/20">
+              <div className="bg-white rounded-xl p-8 border border-brand/20">
                 <div className="flex items-start gap-6">
-                  <div className="p-3 bg-brand/10 rounded-lg flex-shrink-0">
+                  <div className="p-3 bg-brand/10 rounded-xl flex-shrink-0">
                     <Shield className="w-6 h-6 text-brand" />
                   </div>
                   <div>
@@ -192,9 +192,9 @@ Built to keep things clear
                 </div>
               </div>
 
-              <div className="bg-white rounded-lg p-8 border border-brand/20">
+              <div className="bg-white rounded-xl p-8 border border-brand/20">
                 <div className="flex items-start gap-6">
-                  <div className="p-3 bg-brand/10 rounded-lg flex-shrink-0">
+                  <div className="p-3 bg-brand/10 rounded-xl flex-shrink-0">
                     <Users className="w-6 h-6 text-brand" />
                   </div>
                   <div>
@@ -206,9 +206,9 @@ Built to keep things clear
                 </div>
               </div>
 
-              <div className="bg-white rounded-lg p-8 border border-brand/20">
+              <div className="bg-white rounded-xl p-8 border border-brand/20">
                 <div className="flex items-start gap-6">
-                  <div className="p-3 bg-brand/10 rounded-lg flex-shrink-0">
+                  <div className="p-3 bg-brand/10 rounded-xl flex-shrink-0">
                     <AlertCircle className="w-6 h-6 text-brand" />
                   </div>
                   <div>

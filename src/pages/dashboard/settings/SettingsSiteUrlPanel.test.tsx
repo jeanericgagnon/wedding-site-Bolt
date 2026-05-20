@@ -6,6 +6,7 @@ describe('SettingsSiteUrlPanel', () => {
   it('keeps draft sites from advertising the public link as guest-ready', () => {
     render(
       <SettingsSiteUrlPanel
+        canEditSettings
         isPublished={false}
         onSiteSlugChange={vi.fn()}
         onSubmit={vi.fn((event) => event.preventDefault())}
@@ -26,6 +27,7 @@ describe('SettingsSiteUrlPanel', () => {
   it('shows the public link and qr panel once the site is live', () => {
     render(
       <SettingsSiteUrlPanel
+        canEditSettings
         isPublished
         onSiteSlugChange={vi.fn()}
         onSubmit={vi.fn((event) => event.preventDefault())}
@@ -45,6 +47,7 @@ describe('SettingsSiteUrlPanel', () => {
   it('keeps draft invite-only sites on the reserved-url warning instead of hinting they are already guest-live', () => {
     render(
       <SettingsSiteUrlPanel
+        canEditSettings
         isPublished={false}
         onSiteSlugChange={vi.fn()}
         onSubmit={vi.fn((event) => event.preventDefault())}
@@ -66,6 +69,7 @@ describe('SettingsSiteUrlPanel', () => {
   it('does not advertise guest-facing access before a site slug exists at all', () => {
     render(
       <SettingsSiteUrlPanel
+        canEditSettings
         isPublished
         onSiteSlugChange={vi.fn()}
         onSubmit={vi.fn((event) => event.preventDefault())}

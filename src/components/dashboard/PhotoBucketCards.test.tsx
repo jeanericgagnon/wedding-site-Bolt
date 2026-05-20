@@ -12,6 +12,8 @@ describe('PhotoBucketCards', () => {
 
   it('can disable album upload buttons while the site is still loading', () => {
     render(<PhotoBucketCards buckets={createEmptyPhotoBuckets()} uploadDisabled />);
-    expect(screen.getAllByRole('button', { name: 'Upload to this album' }).every((button) => button.hasAttribute('disabled'))).toBe(true);
+    screen.getAllByRole('button', { name: 'Upload to this album' }).forEach((button) => {
+      expect(button).toBeDisabled();
+    });
   });
 });

@@ -18,7 +18,7 @@ export const Badge = React.forwardRef<HTMLSpanElement, BadgeProps>(
     return (
       <span
         ref={ref}
-        className={`inline-flex items-center rounded-md border px-2.5 py-0.5 text-xs font-medium ${variantStyles[variant]} ${className}`}
+        className={`inline-flex items-center rounded-xl border px-2.5 py-0.5 text-xs font-medium ${variantStyles[variant]} ${className}`}
         {...props}
       >
         {children}

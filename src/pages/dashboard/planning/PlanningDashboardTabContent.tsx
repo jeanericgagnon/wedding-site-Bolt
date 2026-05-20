@@ -126,11 +126,11 @@ export function PlanningDashboardTabContent({
     return (
       <div className="space-y-4 animate-pulse" aria-hidden="true">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="h-24 rounded-lg bg-surface-subtle border border-border-subtle" />
-          <div className="h-24 rounded-lg bg-surface-subtle border border-border-subtle" />
-          <div className="h-24 rounded-lg bg-surface-subtle border border-border-subtle" />
+          <div className="h-24 rounded-2xl border border-border-subtle bg-surface-subtle" />
+          <div className="h-24 rounded-2xl border border-border-subtle bg-surface-subtle" />
+          <div className="h-24 rounded-2xl border border-border-subtle bg-surface-subtle" />
         </div>
-        <div className="h-56 rounded-lg bg-surface-subtle border border-border-subtle" />
+        <div className="h-56 rounded-2xl border border-border-subtle bg-surface-subtle" />
       </div>
     );
   }
@@ -214,6 +214,7 @@ export function PlanningDashboardTabContent({
       )}
       {activeTab === 'nameChange' && (
         <NameChangePlannerTab
+          storageScope={siteId}
           draft={nameChangeDraft}
           documents={nameChangeDocuments}
           extractedFields={nameChangeExtractedFields}

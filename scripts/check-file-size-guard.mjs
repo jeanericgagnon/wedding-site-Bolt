@@ -30,7 +30,17 @@ function walk(dir) {
 }
 
 function lineCount(path) {
-  const source = readFileSync(path, 'utf8');
+  const stats = statSync(path);
+  let source = '';
+  try {
+    source = readFileSync(path, 'utf8');
+  } catch (error) {
+    if (stats.size > 0 && stats.blocks === 0) {
+      return null;
+    }
+    throw error;
+  }
+
   if (source.length === 0) return 0;
   return (source.match(/\n/g) ?? []).length + (source.endsWith('\n') ? 0 : 1);
 }
@@ -38,9 +48,15 @@ function lineCount(path) {
 const files = walk('src/pages').sort();
 const failures = [];
 const oversized = [];
+const datalessFiles = [];
 
 for (const file of files) {
   const lines = lineCount(file);
+  if (lines === null) {
+    datalessFiles.push(file);
+    continue;
+  }
+
   const baseline = baselineLimits.get(file);
   if (baseline) {
     oversized.push({ file, lines, baseline, status: lines <= baseline ? 'within_baseline' : 'grew_past_baseline' });
@@ -53,11 +69,20 @@ for (const file of files) {
   }
 }
 
+if (datalessFiles.length > 0) {
+  failures.push(`${datalessFiles.length} src/pages files are dataless/offloaded locally, so the file-size guard cannot read them. Hydrate those files and rerun this guard.`);
+}
+
 const result = {
   ok: failures.length === 0,
   maxNewPageLines: MAX_NEW_PAGE_LINES,
   baselineTrackedFiles: Array.from(baselineLimits.keys()),
   oversized,
+  datalessUnreadable: {
+    count: datalessFiles.length,
+    sample: datalessFiles.slice(0, 25),
+    truncated: datalessFiles.length > 25,
+  },
   failures,
 };
 

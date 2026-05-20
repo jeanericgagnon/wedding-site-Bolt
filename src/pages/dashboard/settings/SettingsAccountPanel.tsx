@@ -3,6 +3,7 @@ import type { FormEvent } from 'react';
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Input } from '../../../components/ui';
 
 type SettingsAccountPanelProps = {
+  canEditWeddingAccountInfo: boolean;
   coupleNames: string;
   accountEmail: string;
   accountSaving: boolean;
@@ -30,6 +31,7 @@ type SettingsAccountPanelProps = {
 };
 
 export function SettingsAccountPanel({
+  canEditWeddingAccountInfo,
   coupleNames,
   accountEmail,
   accountSaving,
@@ -65,25 +67,26 @@ export function SettingsAccountPanel({
         <CardContent>
           <form onSubmit={onSaveAccount} className="space-y-4">
             {accountSuccess && (
-              <div className="p-3 bg-success-light border border-success/20 rounded-lg text-success text-sm">{accountSuccess}</div>
+              <div className="rounded-xl border border-success/20 bg-success-light p-3 text-sm text-success">{accountSuccess}</div>
             )}
             {accountError && (
-              <div className="p-3 bg-surface-subtle border border-border-subtle rounded-lg text-text-secondary text-sm">{accountError}</div>
+              <div className="rounded-xl border border-border-subtle bg-surface-subtle p-3 text-sm text-text-secondary">{accountError}</div>
             )}
             <Input
               label="Partner names"
               value={coupleNames}
               onChange={(e) => onCoupleNamesChange(e.target.value)}
+              disabled={!canEditWeddingAccountInfo}
               placeholder="e.g. Alex & Jordan"
               helperText="Separate names with &"
             />
             <div>
               <label className="block text-sm font-medium text-text-primary mb-1">Email</label>
-              <p className="text-sm text-text-secondary px-3 py-2 bg-surface-subtle border border-border rounded-lg">{accountEmail}</p>
+              <p className="rounded-xl border border-border bg-surface-subtle px-3 py-2 text-sm text-text-secondary">{accountEmail}</p>
               <p className="text-xs text-text-tertiary mt-1">Contact support to change your email address.</p>
             </div>
             <div className="flex justify-end pt-2">
-              <Button variant="primary" size="md" type="submit" disabled={accountSaving}>
+              <Button variant="primary" size="md" type="submit" disabled={accountSaving || !canEditWeddingAccountInfo}>
                 {accountSaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
                 Save Changes
               </Button>
@@ -100,10 +103,10 @@ export function SettingsAccountPanel({
         <CardContent>
           <form onSubmit={onUpdatePassword} className="space-y-4">
             {passwordSuccess && (
-              <div className="p-3 bg-success-light border border-success/20 rounded-lg text-success text-sm">{passwordSuccess}</div>
+              <div className="rounded-xl border border-success/20 bg-success-light p-3 text-sm text-success">{passwordSuccess}</div>
             )}
             {passwordError && (
-              <div className="p-3 bg-surface-subtle border border-border-subtle rounded-lg text-text-secondary text-sm">{passwordError}</div>
+              <div className="rounded-xl border border-border-subtle bg-surface-subtle p-3 text-sm text-text-secondary">{passwordError}</div>
             )}
             <div className="relative">
               <Input

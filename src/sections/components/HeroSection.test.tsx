@@ -106,8 +106,8 @@ describe('HeroSection', () => {
       />
     );
 
-    expect(container.querySelector('img')).not.toBeInTheDocument();
-    expect(container.innerHTML).not.toContain('javascript:alert');
+    expect(screen.queryByRole('img')).not.toBeInTheDocument();
+    expect(container.querySelector('img[src^="javascript:"]')).toBeNull();
   });
 
   it('falls back to a truthful hero display name when couple names are missing', () => {

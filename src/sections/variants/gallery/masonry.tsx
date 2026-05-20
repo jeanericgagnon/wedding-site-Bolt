@@ -123,6 +123,10 @@ const GalleryMasonry: React.FC<SectionComponentProps<GalleryMasonryData>> = ({ d
     span: data.images.find((candidate) => candidate.id === image.id)?.span,
   }));
 
+  useEffect(() => {
+    setLightboxIndex(null);
+  }, [data.images]);
+
   const closeLightbox = () => setLightboxIndex(null);
   const prevImage = () => setLightboxIndex(i => i === null ? null : (i - 1 + images.length) % images.length);
   const nextImage = () => setLightboxIndex(i => i === null ? null : (i + 1) % images.length);
@@ -192,7 +196,7 @@ const GalleryMasonry: React.FC<SectionComponentProps<GalleryMasonryData>> = ({ d
             <img
               src={images[lightboxIndex]?.url}
               alt={images[lightboxIndex]?.alt ?? 'Gallery photo'}
-              className="max-w-full max-h-[85vh] object-contain rounded-lg"
+              className="max-w-full max-h-[85vh] object-contain rounded-xl"
             />
             {data.showCaptions && images[lightboxIndex]?.caption && (
               <p className="text-white/70 text-sm text-center mt-3">{images[lightboxIndex]?.caption}</p>

@@ -99,7 +99,7 @@ export const AddressInput: React.FC<AddressInputProps> = ({
             onChange={(e) => onChange(e.target.value)}
             placeholder={placeholder || 'Start typing an address...'}
             required={required}
-            className="w-full px-4 py-2.5 pl-10 text-base rounded-lg border border-border bg-background text-text-primary placeholder-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+            className="w-full px-4 py-2.5 pl-10 text-base rounded-xl border border-border bg-background text-text-primary placeholder-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
           />
           <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-text-tertiary" />
         </div>
@@ -111,7 +111,7 @@ export const AddressInput: React.FC<AddressInputProps> = ({
       </div>
 
       {showMap && coordinates && (
-        <div className="rounded-lg overflow-hidden border border-border shadow-sm">
+        <div className="rounded-xl overflow-hidden border border-border shadow-sm">
           <div
             ref={mapRef}
             className="w-full h-64"

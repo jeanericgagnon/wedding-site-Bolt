@@ -12,6 +12,14 @@ const commands = [
     command: ['npm', 'run', 'proof:v1:email-messaging-authorization'],
   },
   {
+    id: 'board-freshness',
+    command: ['npm', 'run', 'proof:v1:board:freshness'],
+  },
+  {
+    id: 'board-raw',
+    command: ['npm', 'run', 'proof:v1:board'],
+  },
+  {
     id: 'board-markdown',
     command: ['npm', 'run', 'proof:v1:board:md'],
   },
@@ -64,6 +72,12 @@ console.log(JSON.stringify({
   generatedAt: new Date().toISOString(),
   mode: 'launch_closeout_bundle',
   blocked: blockedBySecret.length > 0,
+  summary: blockedBySecret.length > 0
+    ? 'Launch closeout is blocked on secure proof secrets; this helper/local bundle is the path that refreshes board artifacts after the secure authorization checks clear.'
+    : 'Launch closeout stays aligned: secure authorization proofs run first, then this helper/local bundle refreshes board freshness plus the raw and markdown board outputs.',
+  contractSummary: blockedBySecret.length > 0
+    ? 'Launch closeout is the helper/local secure closeout lane, but it cannot establish final secure launch truth until the required service-role proof environment exists.'
+    : 'Launch closeout is the helper/local secure closeout lane that refreshes canonical board artifacts after the secure authorization proofs pass; it complements the proof board rather than replacing it.',
   blockers: blockedBySecret,
   steps: steps.map((step) => ({
     id: step.id,

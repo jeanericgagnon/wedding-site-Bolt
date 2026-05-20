@@ -46,6 +46,7 @@ function useCountdown(targetDate: string) {
 
   const [time, setTime] = useState(getTime);
   useEffect(() => {
+    setTime(getTime());
     const id = setInterval(() => setTime(getTime()), 1000);
     return () => clearInterval(id);
   }, [targetDate]);

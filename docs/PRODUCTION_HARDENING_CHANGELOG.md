@@ -4,6 +4,7 @@ _Archived on:_ 2026-05-08 10:56 AM PT
 _Source:_ previous `BACKLOG.md` chronological hardening log before control-board rewrite
 
 This file preserves timestamped historical entries, extraction batches, and no-deploy work notes that were removed from the active control board. The operational launch status now lives in [BACKLOG.md](/Users/ericgagnon/Documents/DayOfLove/wedding-site-Bolt/BACKLOG.md).
+When historical entries below mention only `npm run proof:v1:board:md`, read that as a timestamped record of what was run at the time, not the current launch-truth contract. Current launch-truth handling now requires `npm run proof:v1:board:freshness` before either `npm run proof:v1:board` or `npm run proof:v1:board:md` is treated as canonical. Workflow gates stay narrower on purpose: `ci-hardpass` and `Release Launch Gate` enforce freshness, while helper/local closeout paths regenerate the raw and markdown board outputs when a refreshed artifact is needed.
 
 ---
 
@@ -21,6 +22,8 @@ This file preserves timestamped historical entries, extraction batches, and no-d
   - `npm run build`
   - `npm run proof:v1:strict-pocket`
   - `npm test -- --run src/lib/strictPocketTypecheck.test.ts src/pages/Onboarding.test.tsx src/pages/PhotoUpload.test.ts src/pages/RSVP.test.tsx src/pages/SiteView.test.ts src/lib/proofBoardFreshness.test.ts src/lib/launchControlMatrices.test.ts`
+  - `npm run proof:v1:board:freshness`
+  - `npm run proof:v1:board`
   - `npm run proof:v1:board:md`
   - `git diff --check`
 - Result:
@@ -47,6 +50,8 @@ This file preserves timestamped historical entries, extraction batches, and no-d
   - `npm run typecheck -- --pretty false`
   - `npm run lint -- --quiet`
   - `npm run build`
+  - `npm run proof:v1:board:freshness`
+  - `npm run proof:v1:board`
   - `npm run proof:v1:board:md`
   - `npm test -- --run src/lib/proofBoardFreshness.test.ts src/lib/launchControlMatrices.test.ts src/lib/guestLookupScopeProofScript.test.ts src/lib/securityAutomationProof.test.ts`
   - `git diff --check`
@@ -573,6 +578,8 @@ This file preserves timestamped historical entries, extraction batches, and no-d
   - `npm run typecheck -- --pretty false` -> `PASS`
   - `npm run lint -- --quiet` -> `PASS`
   - `npm run build` -> `PASS`
+  - `npm run proof:v1:board:freshness` -> `PASS`
+  - `npm run proof:v1:board` -> `PASS`
   - `npm run proof:v1:board:md` -> `PASS`
   - `git diff --check` -> `PASS`
 - Launch effect:
@@ -1783,6 +1790,8 @@ Launch claim is intentionally conservative: the first P0 execution batch improve
 - `npm run smoke:rsvp`: PASS after network escalation, `ok: true`, 0 failures.
 - `npm run proof:v1:ai-exposure`: PASS static-only, 53/53; live mode not run.
 - `npm run guard:file-size`: PASS.
+- `npm run proof:v1:board:freshness`: PASS.
+- `npm run proof:v1:board`: PASS; machine-readable proof board reflects the current backlog-derived launch map.
 - `npm run proof:v1:board:md`: PASS; proof board now lists the strict P0 blockers instead of claiming none.
 - `npm test -- --run src/lib/proofBoardFreshness.test.ts`: PASS, 1/1.
 - `git diff --check`: PASS.
@@ -4225,7 +4234,8 @@ Write a short architecture note after the highest-risk hardening lanes are imple
 - Launch status did not change. This is local-only hardening and no deploy was run.
 # 2026-05-11 09:00 AM PT - Secure Launch Closeout Bundle Added
 
-- Added `scripts/v1-proof-launch-closeout.mjs` and package script `npm run proof:v1:launch-closeout` to run the final secure service-role proof, secure email proof, board refresh, and `git diff --check` as one closeout bundle.
+- Added `scripts/v1-proof-launch-closeout.mjs` and package script `npm run proof:v1:launch-closeout` to run the final secure service-role proof, secure email proof, board-freshness check, raw/markdown board refresh, and `git diff --check` as one closeout bundle.
+- Kept workflow/runtime responsibilities explicit: `ci-hardpass` and `Release Launch Gate` stay freshness-only for the board contract, while `npm run proof:v1:launch-closeout` is one of the helper/local paths that regenerates the raw and markdown board outputs.
 - Updated `scripts/v1-proof-service-role-authorization.mjs` so it now reports the missing `SUPABASE_SERVICE_ROLE_KEY` blocker explicitly, matching the queue/email proof lane.
 - Updated `docs/v1-final-gated-unblock-runbook.md`, `BACKLOG.md`, `docs/PRODUCTION_HARDENING_REPORT.md`, and `docs/v1-smoke-proof-log.md` so the last-mile launch steps point to the exact secure closeout command instead of an implicit checklist.
 - Verified locally that `npm run proof:v1:launch-closeout` exits blocked only on the expected `missing_service_role_key` blockers while still keeping the board and diff checks green.

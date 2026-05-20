@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { copyTextOrDownload } from '../../../lib/copyText';
 import { renderGuestHubQrPrintHtml } from '../../../lib/guestHubQrAssets';
 import {
@@ -110,9 +111,46 @@ export function useGuestPhotoExportActions({
   uploadAnalyses,
   uploads,
 }: UseGuestPhotoExportActionsArgs) {
+  const navigate = useNavigate();
   const [bulkRegenerating, setBulkRegenerating] = useState(false);
-  const [copied, setCopied] = useState('');
+  const [copyNotice, setCopyNotice] = useState<{ key: string; mode: 'copied' | 'downloaded' } | null>(null);
   const [copyFallbackValue, setCopyFallbackValue] = useState('');
+  const copyNoticeTimeoutRef = useRef<number | null>(null);
+  const copyRequestIdRef = useRef(0);
+  const mountedRef = useRef(true);
+  const copyContextKey = useMemo(() => JSON.stringify({
+    siteId,
+    siteSlug,
+    bucketUploadLinks,
+    buckets: buckets.map((bucket) => [bucket.id, bucket.name, bucket.is_active]),
+    uploads: uploads.map((upload) => [
+      upload.id,
+      upload.photo_album_id,
+      upload.original_filename,
+      upload.is_hidden,
+      upload.is_flagged,
+      upload.uploaded_at,
+    ]),
+    slideshowBucketFilter,
+    slideshowFrames,
+    slideshowOrder,
+    slideshowTheme,
+  }), [bucketUploadLinks, buckets, siteId, siteSlug, slideshowBucketFilter, slideshowFrames, slideshowOrder, slideshowTheme, uploads]);
+  const copyContextKeyRef = useRef(copyContextKey);
+  copyContextKeyRef.current = copyContextKey;
+
+  useEffect(() => () => {
+    mountedRef.current = false;
+    copyRequestIdRef.current += 1;
+    if (copyNoticeTimeoutRef.current) window.clearTimeout(copyNoticeTimeoutRef.current);
+  }, []);
+
+  useEffect(() => {
+    copyRequestIdRef.current += 1;
+    setCopyNotice(null);
+    setCopyFallbackValue('');
+    if (copyNoticeTimeoutRef.current) window.clearTimeout(copyNoticeTimeoutRef.current);
+  }, [copyContextKey]);
 
   const downloadTextFile = (filename: string, content: string, type = 'text/csv;charset=utf-8') => {
     const blob = new Blob([content], { type });
@@ -129,21 +167,42 @@ export function useGuestPhotoExportActions({
   };
 
   const copyText = async (value: string, key: string) => {
+    const requestId = ++copyRequestIdRef.current;
+    const requestContextKey = copyContextKeyRef.current;
+    const isCurrentCopyRequest = () => (
+      mountedRef.current &&
+      requestId === copyRequestIdRef.current &&
+      requestContextKey === copyContextKeyRef.current
+    );
     try {
       const result = await copyTextOrDownload(value, `dayof-photo-${key}.txt`);
-      setCopied(key);
+      if (!isCurrentCopyRequest()) return null;
+      setCopyNotice({ key, mode: result });
       setCopyFallbackValue('');
-      setTimeout(() => setCopied(''), 1400);
+      if (copyNoticeTimeoutRef.current) window.clearTimeout(copyNoticeTimeoutRef.current);
+      copyNoticeTimeoutRef.current = window.setTimeout(() => {
+        if (isCurrentCopyRequest()) setCopyNotice((current) => (current?.key === key ? null : current));
+      }, 1400);
       if (result === 'downloaded') {
         setSuccess('Clipboard was blocked, so I saved a small text file instead.');
       }
+      return result;
     } catch {
+      if (!isCurrentCopyRequest()) return null;
       setCopyFallbackValue(value);
       setError('Clipboard access is blocked here. The text is ready below so you can select it.');
+      return null;
     }
   };
 
   const exportSlideshowPlan = async () => {
+    const requestId = ++copyRequestIdRef.current;
+    const requestContextKey = copyContextKeyRef.current;
+    const isCurrentCopyRequest = () => (
+      mountedRef.current &&
+      requestId === copyRequestIdRef.current &&
+      requestContextKey === copyContextKeyRef.current
+    );
     const payload = {
       generatedAt: new Date().toISOString(),
       theme: slideshowTheme,
@@ -161,16 +220,28 @@ export function useGuestPhotoExportActions({
         : null,
     };
 
-    const result = await copyTextOrDownload(
-      JSON.stringify(payload, null, 2),
-      'dayof-slideshow-plan.json',
-      'application/json;charset=utf-8'
-    );
-    setCopied('slideshow-plan');
-    setCopyFallbackValue('');
-    setTimeout(() => setCopied(''), 1400);
-    if (result === 'downloaded') {
-      setSuccess('Clipboard was blocked, so I saved the slideshow notes instead.');
+    try {
+      const result = await copyTextOrDownload(
+        JSON.stringify(payload, null, 2),
+        'dayof-slideshow-plan.json',
+        'application/json;charset=utf-8'
+      );
+      if (!isCurrentCopyRequest()) return;
+      setCopyNotice({ key: 'slideshow-plan', mode: result });
+      setCopyFallbackValue('');
+      if (copyNoticeTimeoutRef.current) window.clearTimeout(copyNoticeTimeoutRef.current);
+      copyNoticeTimeoutRef.current = window.setTimeout(() => {
+        if (isCurrentCopyRequest()) setCopyNotice((current) => (current?.key === 'slideshow-plan' ? null : current));
+      }, 1400);
+      if (result === 'copied') {
+        setSuccess('Copied the slideshow notes.');
+      } else {
+        setSuccess('Clipboard was blocked, so I saved the slideshow notes instead.');
+      }
+    } catch {
+      if (!isCurrentCopyRequest()) return;
+      setCopyFallbackValue(JSON.stringify(payload, null, 2));
+      setError('Clipboard access is blocked here. The slideshow notes are ready below so you can select them.');
     }
   };
 
@@ -348,7 +419,7 @@ export function useGuestPhotoExportActions({
     }
     const subject = encodeURIComponent('Photo upload links');
     const body = encodeURIComponent(lines.join('\n\n'));
-    window.location.href = `/dashboard/messages?prefillSubject=${subject}&prefillBody=${body}`;
+    navigate(`/dashboard/messages?prefillSubject=${subject}&prefillBody=${body}`);
   };
 
   const copyAllShareMessages = async () => {
@@ -357,8 +428,10 @@ export function useGuestPhotoExportActions({
       setError('No share messages are ready yet. Create links first.');
       return;
     }
-    await copyText(lines.join('\n\n'), 'all-share-messages');
-    setSuccess(`Copied ${lines.length} share message(s).`);
+    const result = await copyText(lines.join('\n\n'), 'all-share-messages');
+    if (result === 'copied') {
+      setSuccess(`Copied ${lines.length} share message(s).`);
+    }
   };
 
   const copyAllKnownLinks = async () => {
@@ -367,8 +440,10 @@ export function useGuestPhotoExportActions({
       setError('No upload links are ready yet. Create or refresh links first.');
       return;
     }
-    await copyText(links.join('\n'), 'all-links');
-    setSuccess(`Copied ${links.length} link(s).`);
+    const result = await copyText(links.join('\n'), 'all-links');
+    if (result === 'copied') {
+      setSuccess(`Copied ${links.length} link(s).`);
+    }
   };
 
   const regenerateAllKnownBucketLinks = async () => {
@@ -414,7 +489,7 @@ export function useGuestPhotoExportActions({
 
   return {
     bulkRegenerating,
-    copied,
+    copyNotice,
     copyAllKnownLinks,
     copyAllShareMessages,
     copyFallbackValue,

@@ -45,7 +45,7 @@ describe('TravelSection', () => {
   it('shows default titles when showTitle is unset across travel variants', () => {
     const data = createWeddingData();
 
-    const { rerender } = render(
+    const { container, rerender } = render(
       <TravelSection
         data={data}
         instance={makeInstance({})}
@@ -111,7 +111,7 @@ describe('TravelSection', () => {
   it('restores the default public travel heading when the saved title is blank whitespace', () => {
     const data = createWeddingData();
 
-    const { rerender } = render(
+    const { container, rerender } = render(
       <TravelSection
         data={data}
         instance={makeInstance({ showTitle: true, title: '   ' })}
@@ -168,7 +168,7 @@ describe('TravelSection', () => {
       culturalTips: ['Bring a light layer for the waterfront.'],
     };
 
-    const { rerender } = render(
+    const { container, rerender } = render(
       <TravelSection
         data={data}
         instance={makeInstance({})}
@@ -196,7 +196,7 @@ describe('TravelSection', () => {
     const Compact = travelCompactDefinition.Component;
     const MapPins = travelMapPinsDefinition.Component;
 
-    const { rerender } = render(
+    const { container, rerender } = render(
       <Compact
         data={{
           eyebrow: 'Travel',
@@ -213,7 +213,7 @@ describe('TravelSection', () => {
     );
 
     expect(screen.getByText('Bad Hotel')).toBeInTheDocument();
-    expect(document.querySelector('a[href^="javascript:"]')).not.toBeInTheDocument();
+    expect(container.querySelector('a[href^="javascript:"]')).toBeNull();
     expect(screen.getByRole('link')).toHaveAttribute('href', 'https://example.com/stay');
 
     rerender(
@@ -231,7 +231,7 @@ describe('TravelSection', () => {
     );
 
     expect(screen.getByText('Bad Pin')).toBeInTheDocument();
-    expect(document.querySelector('a[href^="ftp:"]')).not.toBeInTheDocument();
+    expect(container.querySelector('a[href^="ftp:"]')).toBeNull();
     expect(screen.getByRole('link', { name: /open good pin location link/i })).toHaveAttribute('href', 'https://example.com/place');
   });
 

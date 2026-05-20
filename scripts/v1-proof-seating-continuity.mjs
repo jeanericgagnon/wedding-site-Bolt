@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
-import { execSync, spawn } from 'node:child_process';
+import { execSync } from 'node:child_process';
+import { resolvePreviewRuntime, stopPreviewRuntime } from './proofPreviewRuntime.mjs';
 
 const PREVIEW_URL = 'http://127.0.0.1:4176';
 const baseUrl = process.env.PLAYWRIGHT_BASE_URL || PREVIEW_URL;
@@ -25,24 +26,6 @@ const steps = [
     required: true,
   },
 ];
-
-function sleep(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-async function waitForPreview(url, timeoutMs = 20_000) {
-  const startedAt = Date.now();
-  while (Date.now() - startedAt < timeoutMs) {
-    try {
-      const response = await fetch(url, { signal: AbortSignal.timeout(1_500) });
-      if (response.ok) return;
-    } catch {
-      // keep waiting
-    }
-    await sleep(500);
-  }
-  throw new Error(`Preview server did not become ready at ${url} within ${timeoutMs}ms`);
-}
 
 function runStep(step) {
   const startedAt = new Date().toISOString();
@@ -86,24 +69,16 @@ function runStep(step) {
 const results = steps.map(runStep);
 
 let previewProcess = null;
-let previewStdout = '';
-let previewStderr = '';
+let previewOutput = { stdout: '', stderr: '' };
 try {
   if (baseUrl === PREVIEW_URL) {
-    previewProcess = spawn('npm', ['run', 'preview', '--', '--host', '127.0.0.1', '--port', '4176'], {
+    const previewRuntime = await resolvePreviewRuntime({
+      preferredPort: 4176,
+      requestedBaseUrl: baseUrl,
       cwd: process.cwd(),
-      env: process.env,
-      stdio: ['ignore', 'pipe', 'pipe'],
     });
-
-    previewProcess.stdout.on('data', (chunk) => {
-      previewStdout += chunk.toString('utf8');
-    });
-    previewProcess.stderr.on('data', (chunk) => {
-      previewStderr += chunk.toString('utf8');
-    });
-
-    await waitForPreview(PREVIEW_URL);
+    previewProcess = previewRuntime.previewProcess;
+    previewOutput = previewRuntime.previewOutput;
   }
 
   results.push(runStep({
@@ -113,7 +88,7 @@ try {
     required: true,
   }));
 
-  if (previewStdout.trim()) {
+  if (previewOutput.stdout.trim()) {
     results.push({
       id: 'preview-server-log',
       label: 'Preview server log',
@@ -122,8 +97,8 @@ try {
       ok: true,
       startedAt: new Date().toISOString(),
       finishedAt: new Date().toISOString(),
-      stdout: previewStdout.trim(),
-      stderr: previewStderr.trim() || undefined,
+      stdout: previewOutput.stdout.trim(),
+      stderr: previewOutput.stderr.trim() || undefined,
     });
   }
 } catch (error) {
@@ -135,14 +110,10 @@ try {
     ok: false,
     startedAt: new Date().toISOString(),
     finishedAt: new Date().toISOString(),
-    stderr: [previewStderr.trim(), error instanceof Error ? error.message : 'Seating preview server failed to start.'].filter(Boolean).join('\n'),
+    stderr: [previewOutput.stderr.trim(), error instanceof Error ? error.message : 'Seating preview server failed to start.'].filter(Boolean).join('\n'),
   });
 } finally {
-  if (previewProcess) {
-    previewProcess.kill('SIGTERM');
-    await sleep(300);
-    if (!previewProcess.killed) previewProcess.kill('SIGKILL');
-  }
+  await stopPreviewRuntime(previewProcess);
 }
 
 const failedRequired = results.filter((result) => result.required && !result.ok);
@@ -156,6 +127,7 @@ const output = {
     passed: results.filter((result) => result.ok).length,
     failed: results.filter((result) => !result.ok).length,
   },
+  contractSummary: 'Seating continuity proof is green: this lane validates seating packet, lookup, and assignment continuity as shipped feature evidence while still deferring the final launch call to the proof-board flow.',
   automatedCoverage: [
     'Event-scoped attendance interpretation',
     'Invited-only seating counters and valid-assignment counting',

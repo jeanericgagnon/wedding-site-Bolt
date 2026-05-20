@@ -3,6 +3,7 @@ import { Badge, Button, Card, CardContent, CardDescription, CardHeader, CardTitl
 import { getAllTemplates } from '../../../templates/registry';
 
 type SettingsTemplatePanelProps = {
+  canEditSettings: boolean;
   changingTemplate: boolean;
   currentTemplate: string;
   onTemplateChange: (templateId: string) => void;
@@ -13,6 +14,7 @@ type SettingsTemplatePanelProps = {
 };
 
 export function SettingsTemplatePanel({
+  canEditSettings,
   changingTemplate,
   currentTemplate,
   onTemplateChange,
@@ -39,18 +41,18 @@ export function SettingsTemplatePanel({
       </CardHeader>
       <CardContent className="space-y-4">
         {!showTemplateSettings ? (
-          <div className="rounded-lg border border-border-subtle bg-surface-subtle/40 p-4 text-sm text-text-secondary">
+          <div className="rounded-2xl border border-border-subtle bg-surface-subtle/40 p-4 text-sm text-text-secondary">
             Hidden by default to keep things calm. Open it when you want to change how your site looks.
           </div>
         ) : (
           <>
             {templateSuccess && (
-              <div className="rounded-lg border border-primary/20 bg-primary/10 p-3 text-sm text-primary">
+              <div className="rounded-2xl border border-primary/20 bg-primary/10 p-3 text-sm text-primary">
                 {templateSuccess}
               </div>
             )}
             {templateError && (
-              <div className="rounded-lg border border-border-subtle bg-surface-subtle p-3 text-sm text-text-secondary">
+              <div className="rounded-2xl border border-border-subtle bg-surface-subtle p-3 text-sm text-text-secondary">
                 {templateError}
               </div>
             )}
@@ -64,12 +66,12 @@ export function SettingsTemplatePanel({
                     key={template.id}
                     type="button"
                     onClick={() => onTemplateChange(template.id)}
-                    disabled={changingTemplate || currentTemplate === template.id}
-                    className={`rounded-lg border-2 p-4 text-left transition-all ${
+                    disabled={changingTemplate || currentTemplate === template.id || !canEditSettings}
+                    className={`rounded-2xl border-2 p-4 text-left transition-all ${
                       currentTemplate === template.id
                         ? 'border-primary bg-primary/10'
                         : 'border-border hover:border-primary/50 hover:bg-surface-subtle'
-                    } ${changingTemplate ? 'cursor-not-allowed opacity-50' : ''}`}
+                    } ${changingTemplate || !canEditSettings ? 'cursor-not-allowed opacity-50' : ''}`}
                   >
                     <h3 className="mb-1 font-semibold text-text-primary">
                       {template.name}

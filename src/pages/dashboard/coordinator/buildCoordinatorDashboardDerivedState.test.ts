@@ -119,4 +119,23 @@ describe('buildCoordinatorDashboardDerivedState', () => {
     expect(state.checkInQueue.map((guest) => guest.id)).toEqual(['guest-next']);
     expect(state.checkInBoard.eventLabel).toBe('Reception door');
   });
+
+  it('keeps the visible role capability board aligned to explicit collaborator permissions', () => {
+    const state = buildCoordinatorDashboardDerivedState(makeArgs({
+      canEditTimeline: false,
+      canScheduleAlerts: false,
+      coordinatorPermissions: ['guests'],
+      coordinatorRole: 'coordinator',
+    }));
+
+    expect(state.roleCapabilities.map((item) => [item.key, item.enabled])).toEqual([
+      ['check-in', true],
+      ['timeline', false],
+      ['qna', false],
+      ['alerts-now', false],
+      ['alerts-later', false],
+    ]);
+    expect(state.roleBoard.enabledLabel).toBe('Check-in');
+    expect(state.roleBoard.blockedLabel).toBe('Timeline · Guest Q&A · Send now · Schedule');
+  });
 });

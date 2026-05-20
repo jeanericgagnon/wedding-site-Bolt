@@ -70,7 +70,7 @@ export const SectionTypePreview: React.FC<{ sectionType: string; compact?: boole
       <div className="w-full h-16 flex flex-col justify-center gap-1 px-3 bg-gray-50">
         <div className="text-[7px] text-gray-400st">Registry</div>
         {[0,1].map(i => (
-          <div key={i} className="h-5 rounded-lg flex items-center px-2 gap-2 bg-white border border-gray-200">
+          <div key={i} className="h-5 rounded-xl flex items-center px-2 gap-2 bg-white border border-gray-200">
             <div className="w-2.5 h-2.5 rounded-sm bg-gray-200 flex-shrink-0" />
             <div className="flex-1 h-1 rounded-sm bg-gray-200" />
             <div className="w-8 h-3 rounded text-[6px] flex items-center justify-center font-semibold bg-gray-700 text-white">View</div>
@@ -91,20 +91,20 @@ export const SectionTypePreview: React.FC<{ sectionType: string; compact?: boole
     ),
     rsvp: (
       <div className="w-full h-16 flex flex-col justify-center gap-1 px-3 bg-gray-50">
-        <div className="h-4 rounded-md border border-gray-200 bg-white flex items-center px-2">
+        <div className="h-4 rounded-xl border border-gray-200 bg-white flex items-center px-2">
           <div className="flex-1 h-0.5 rounded-sm bg-gray-200" />
         </div>
         <div className="flex gap-1">
-          <div className="flex-1 h-4 rounded-md border border-gray-200 bg-white flex items-center px-1.5 gap-1">
+          <div className="flex-1 h-4 rounded-xl border border-gray-200 bg-white flex items-center px-1.5 gap-1">
             <div className="w-1 h-1 rounded-full bg-gray-300" />
             <div className="text-[6px] text-gray-500 font-medium">Yes</div>
           </div>
-          <div className="flex-1 h-4 rounded-md border border-gray-200 bg-white flex items-center px-1.5 gap-1">
+          <div className="flex-1 h-4 rounded-xl border border-gray-200 bg-white flex items-center px-1.5 gap-1">
             <div className="w-1 h-1 rounded-full bg-gray-300" />
             <div className="text-[6px] text-gray-400 font-medium">No</div>
           </div>
         </div>
-        <div className="h-4 rounded-md bg-gray-700 flex items-center justify-center">
+        <div className="h-4 rounded-xl bg-gray-700 flex items-center justify-center">
           <div className="text-[7px] text-white font-semibold">SEND RSVP</div>
         </div>
       </div>
@@ -131,7 +131,7 @@ export const SectionTypePreview: React.FC<{ sectionType: string; compact?: boole
         <div className="flex items-end gap-1.5">
           {[{n:'47',l:'Days'},{n:'12',l:'Hrs'},{n:'38',l:'Min'}].map(({n,l}) => (
             <div key={l} className="flex flex-col items-center">
-              <div className="w-6 h-6 rounded-md flex items-center justify-center text-[10px] font-bold bg-gray-800 text-white">{n}</div>
+              <div className="w-6 h-6 rounded-xl flex items-center justify-center text-[10px] font-bold bg-gray-800 text-white">{n}</div>
               <div className="text-[5px] mt-0.5 text-gray-400 font-medium">{l}</div>
             </div>
           ))}
@@ -184,7 +184,7 @@ export const SectionTypePreview: React.FC<{ sectionType: string; compact?: boole
         <div className="text-[7px] text-gray-400st">Need help?</div>
         <div className="flex gap-2">
           {[0,1].map(i => (
-            <div key={i} className="flex-1 h-8 rounded-lg p-1.5 flex flex-col gap-0.5 bg-gray-50 border border-gray-100">
+            <div key={i} className="flex-1 h-8 rounded-xl p-1.5 flex flex-col gap-0.5 bg-gray-50 border border-gray-100">
               <div className="w-3 h-3 rounded-full bg-gray-200" />
               <div className="h-0.5 rounded-sm bg-gray-300 w-full" />
             </div>
@@ -281,7 +281,7 @@ export const SectionTypePreview: React.FC<{ sectionType: string; compact?: boole
     video: (
       <div className="w-full h-16 flex flex-col items-center justify-center gap-1 bg-gray-900">
         <div className="text-[7px] text-gray-400st">Video</div>
-        <div className="w-8 h-8 rounded-md bg-gray-700 flex items-center justify-center border border-gray-600">
+        <div className="w-8 h-8 rounded-xl bg-gray-700 flex items-center justify-center border border-gray-600">
           <div className="w-0 h-0 border-t-[5px] border-t-transparent border-b-[5px] border-b-transparent border-l-[8px] border-l-white/70 ml-0.5" />
         </div>
       </div>

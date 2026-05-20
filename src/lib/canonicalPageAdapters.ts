@@ -13,12 +13,20 @@ const layoutSectionToCanonical = (section: LayoutConfigV1['pages'][number]['sect
   meta: { source: 'layoutConfigV1' },
 });
 
+const getCanonicalTitle = (value: unknown, fallback: string): string => {
+  if (typeof value === 'string') return value.trim() || fallback;
+  if (value && typeof value === 'object' && 'value' in value && typeof (value as { value?: unknown }).value === 'string') {
+    return (value as { value: string }).value.trim() || fallback;
+  }
+  return fallback;
+};
+
 export const layoutConfigToCanonicalPageDocument = (layout: LayoutConfigV1): CanonicalPageDocument => ({
   version: 'canonical-page-v1',
   templateId: layout.templateId,
-  pages: layout.pages.map((page) => ({
+  pages: layout.pages.map((page, index) => ({
     id: page.id,
-    title: page.title,
+    title: getCanonicalTitle(page.title, `Page ${index + 1}`),
     sections: page.sections.map(layoutSectionToCanonical),
   })),
   meta: {

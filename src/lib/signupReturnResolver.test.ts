@@ -22,6 +22,12 @@ describe('signupReturnResolver', () => {
     expect(resolveSignupReturnPath('', '/onboarding?signup=1')).toBe(buildQuickStartEntryPath());
   });
 
+  it('falls back to scoped signup return path when no explicit path is provided', () => {
+    writeSignupReturnPath(buildQuickStartEntryPath(), 'alex@example.com');
+
+    expect(resolveSignupReturnPath('', '/onboarding?signup=1', 'alex@example.com')).toBe(buildQuickStartEntryPath());
+  });
+
   it('uses the generic fallback when nothing else exists', () => {
     expect(resolveSignupReturnPath(null, '/onboarding?signup=1')).toBe('/onboarding?signup=1');
   });

@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   VENDOR_META_STORAGE_KEY,
+  buildVendorMetaStorageKey,
   normalizeVendorMeta,
   readVendorMetaStorage,
   writeVendorMetaStorage,
@@ -94,5 +95,35 @@ describe('vendorMetaStorage', () => {
     const normalized = normalizeVendorMeta(rows);
     expect(Object.keys(normalized)).toHaveLength(200);
     expect(Object.keys(normalized)[0]).toHaveLength(120);
+  });
+
+  it('keeps vendor metadata scoped by wedding site when a site scope is provided', () => {
+    const siteAKey = buildVendorMetaStorageKey('site-a');
+    const siteBKey = buildVendorMetaStorageKey('site-b');
+
+    writeVendorMetaStorage({ 'vendor-a': { reminderChannel: 'email', reminderLeadDays: 3 } }, siteAKey);
+    writeVendorMetaStorage({ 'vendor-b': { reminderChannel: 'phone', reminderLeadDays: 7 } }, siteBKey);
+
+    expect(readVendorMetaStorage(siteAKey)).toEqual({
+      'vendor-a': { reminderChannel: 'email', reminderLeadDays: 3 },
+    });
+    expect(readVendorMetaStorage(siteBKey)).toEqual({
+      'vendor-b': { reminderChannel: 'phone', reminderLeadDays: 7 },
+    });
+  });
+
+  it('migrates legacy vendor metadata into the active wedding site scope', () => {
+    const siteAKey = buildVendorMetaStorageKey('site-a');
+    window.localStorage.setItem(VENDOR_META_STORAGE_KEY, JSON.stringify({
+      savedAtISO: '2026-05-06T16:00:00.000Z',
+      vendors: {
+        'vendor-legacy': { reminderChannel: 'email', reminderLeadDays: 3 },
+      },
+    }));
+
+    expect(readVendorMetaStorage(siteAKey)).toEqual({
+      'vendor-legacy': { reminderChannel: 'email', reminderLeadDays: 3 },
+    });
+    expect(window.localStorage.getItem(siteAKey)).toContain('vendor-legacy');
   });
 });

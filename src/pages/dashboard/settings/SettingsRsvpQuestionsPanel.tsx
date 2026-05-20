@@ -4,6 +4,7 @@ import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Inpu
 import type { RSVPQuestionSetting } from './settingsDashboardTypes';
 
 type SettingsRsvpQuestionsPanelProps = {
+  canEditSettings: boolean;
   collapsedQuestionIds: Set<string>;
   musicPlaylistUrl: string;
   onAddChoice: (questionId: string) => void;
@@ -30,6 +31,7 @@ type SettingsRsvpQuestionsPanelProps = {
 };
 
 export function SettingsRsvpQuestionsPanel({
+  canEditSettings,
   collapsedQuestionIds,
   musicPlaylistUrl,
   onAddChoice,
@@ -69,20 +71,20 @@ export function SettingsRsvpQuestionsPanel({
       </CardHeader>
       <CardContent>
         {!showAdvancedRsvp ? (
-          <div className="rounded-lg border border-border-subtle bg-surface-subtle/40 p-4 text-sm text-text-secondary">
+          <div className="rounded-xl border border-border-subtle bg-surface-subtle/40 p-4 text-sm text-text-secondary">
             Hidden by default to keep RSVP setup simple. Open this section if you want to ask extra questions or let guests share song requests.
           </div>
         ) : (
           <form onSubmit={onSave} className="space-y-4">
             {rsvpQuestionsSuccess && (
-              <div className="rounded-lg border border-success/20 bg-success-light p-3 text-sm text-success">{rsvpQuestionsSuccess}</div>
+              <div className="rounded-xl border border-success/20 bg-success-light p-3 text-sm text-success">{rsvpQuestionsSuccess}</div>
             )}
             {rsvpQuestionsError && (
-              <div className="rounded-lg border border-border-subtle bg-surface-subtle p-3 text-sm text-text-secondary">{rsvpQuestionsError}</div>
+              <div className="rounded-xl border border-border-subtle bg-surface-subtle p-3 text-sm text-text-secondary">{rsvpQuestionsError}</div>
             )}
 
             <div className="space-y-3">
-              <div className="rounded-lg border border-border-subtle bg-surface-subtle/40 p-3 text-sm text-text-secondary">
+              <div className="rounded-xl border border-border-subtle bg-surface-subtle/40 p-3 text-sm text-text-secondary">
                 Generated guest-facing translations now carry these custom questions and meal-choice wording into RSVP too. Review the live RSVP page after you generate a language.
               </div>
               {questions.length === 0 && (
@@ -93,7 +95,7 @@ export function SettingsRsvpQuestionsPanel({
                 const isCollapsed = collapsedQuestionIds.has(question.id);
 
                 return (
-                  <div key={question.id} className="space-y-3 rounded-lg border border-border bg-surface-subtle p-4">
+                  <div key={question.id} className="space-y-3 rounded-xl border border-border bg-surface-subtle p-4">
                     <div className="flex items-center justify-between">
                       <button
                         type="button"
@@ -106,7 +108,8 @@ export function SettingsRsvpQuestionsPanel({
                       <button
                         type="button"
                         onClick={() => onRemoveQuestion(question.id)}
-                        className="text-text-tertiary hover:text-text-primary"
+                        disabled={!canEditSettings}
+                        className="text-text-tertiary hover:text-text-primary disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:text-text-tertiary"
                         aria-label="Remove question"
                       >
                         <Trash2 className="h-4 w-4" />
@@ -119,6 +122,7 @@ export function SettingsRsvpQuestionsPanel({
                           label="Prompt"
                           value={question.label}
                           onChange={(event) => onPromptChange(question.id, event.target.value)}
+                          disabled={!canEditSettings}
                           placeholder="e.g., Song request"
                         />
 
@@ -127,6 +131,7 @@ export function SettingsRsvpQuestionsPanel({
                             label="Type"
                             value={question.type}
                             onChange={(event) => onTypeChange(question.id, event.target.value as RSVPQuestionSetting['type'])}
+                            disabled={!canEditSettings}
                             options={[
                               { value: 'short_text', label: 'Short text' },
                               { value: 'long_text', label: 'Long text' },
@@ -139,6 +144,7 @@ export function SettingsRsvpQuestionsPanel({
                             label="Applies to"
                             value={question.appliesTo}
                             onChange={(event) => onAppliesToChange(question.id, event.target.value as RSVPQuestionSetting['appliesTo'])}
+                            disabled={!canEditSettings}
                             options={[
                               { value: 'all', label: 'All attendees' },
                               { value: 'ceremony', label: 'Ceremony attendees' },
@@ -151,6 +157,7 @@ export function SettingsRsvpQuestionsPanel({
                               type="checkbox"
                               checked={question.required}
                               onChange={(event) => onRequiredChange(question.id, event.target.checked)}
+                              disabled={!canEditSettings}
                               className="h-4 w-4 rounded border-border text-primary"
                             />
                             Required
@@ -165,6 +172,7 @@ export function SettingsRsvpQuestionsPanel({
                                 <Input
                                   value={option}
                                   onChange={(event) => onUpdateChoice(question.id, optionIndex, event.target.value)}
+                                  disabled={!canEditSettings}
                                   placeholder={`Option ${optionIndex + 1}`}
                                 />
                                 <Button
@@ -172,13 +180,14 @@ export function SettingsRsvpQuestionsPanel({
                                   variant="ghost"
                                   size="sm"
                                   onClick={() => onRemoveChoice(question.id, optionIndex)}
+                                  disabled={!canEditSettings}
                                   aria-label="Remove choice"
                                 >
                                   <Trash2 className="h-4 w-4" />
                                 </Button>
                               </div>
                             ))}
-                            <Button type="button" variant="outline" size="sm" onClick={() => onAddChoice(question.id)}>
+                            <Button type="button" variant="outline" size="sm" onClick={() => onAddChoice(question.id)} disabled={!canEditSettings}>
                               <Plus className="mr-1 h-4 w-4" />
                               Add choice
                             </Button>
@@ -192,16 +201,17 @@ export function SettingsRsvpQuestionsPanel({
               })}
             </div>
 
-            <div className="space-y-3 rounded-lg border border-border-subtle bg-surface-subtle/40 p-4">
+            <div className="space-y-3 rounded-xl border border-border-subtle bg-surface-subtle/40 p-4">
               <p className="text-sm font-medium text-text-primary">Song request playlist (Spotify collaborative)</p>
               <Input
                 label="Playlist URL"
                 value={musicPlaylistUrl}
                 onChange={(event) => onMusicPlaylistUrlChange(event.target.value)}
+                disabled={!canEditSettings}
                 placeholder="https://open.spotify.com/playlist/..."
               />
               <div className="flex gap-2">
-                <Button type="button" variant="outline" size="sm" onClick={onSaveMusicPlaylist}>
+                <Button type="button" variant="outline" size="sm" onClick={onSaveMusicPlaylist} disabled={!canEditSettings}>
                   Save playlist link
                 </Button>
                 {safeMusicPlaylistUrl && (
@@ -213,12 +223,12 @@ export function SettingsRsvpQuestionsPanel({
             </div>
 
             <div className="flex flex-wrap justify-between gap-2 pt-2">
-              <Button type="button" variant="outline" onClick={onAddQuestion}>
+              <Button type="button" variant="outline" onClick={onAddQuestion} disabled={!canEditSettings}>
                 <Plus className="mr-2 h-4 w-4" />
                 Add Question
               </Button>
 
-              <Button variant="primary" size="md" type="submit" disabled={rsvpQuestionsSaving}>
+              <Button variant="primary" size="md" type="submit" disabled={rsvpQuestionsSaving || !canEditSettings}>
                 {rsvpQuestionsSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                 Save RSVP Settings
               </Button>

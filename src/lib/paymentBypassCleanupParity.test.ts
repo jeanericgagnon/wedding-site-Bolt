@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { clearAllOnboardingDraftStorage, ONBOARDING_DRAFT_STORAGE_KEY } from './onboardingDraftCleanup';
-import { clearOnboardingResumeStorage, ONBOARDING_RESUME_HINT_STORAGE_KEY, ONBOARDING_RESUME_INDEX_STORAGE_KEY } from './onboardingResumeStorage';
+import { buildOnboardingDraftStorageKey, clearAllOnboardingDraftStorage, ONBOARDING_DRAFT_STORAGE_KEY } from './onboardingDraftCleanup';
+import { buildOnboardingResumeStorageKey, clearOnboardingResumeStorage, ONBOARDING_RESUME_HINT_STORAGE_KEY, ONBOARDING_RESUME_INDEX_STORAGE_KEY } from './onboardingResumeStorage';
 import { writeSignupReturnPath, readSignupReturnPath } from './signupContinuation';
 
 describe('payment bypass cleanup parity', () => {
@@ -21,5 +21,18 @@ describe('payment bypass cleanup parity', () => {
     expect(window.localStorage.getItem(ONBOARDING_RESUME_HINT_STORAGE_KEY)).toBeNull();
     expect(window.localStorage.getItem(ONBOARDING_RESUME_INDEX_STORAGE_KEY)).toBeNull();
     expect(readSignupReturnPath()).toBeNull();
+  });
+
+  it('can clear scoped drafts and resume keys before bypass redirect too', () => {
+    window.localStorage.setItem(buildOnboardingDraftStorageKey('user-a'), '1');
+    window.localStorage.setItem(buildOnboardingResumeStorageKey(ONBOARDING_RESUME_HINT_STORAGE_KEY, 'user-a'), 'first-incomplete');
+    window.localStorage.setItem(buildOnboardingResumeStorageKey(ONBOARDING_RESUME_INDEX_STORAGE_KEY, 'user-a'), '9');
+
+    clearAllOnboardingDraftStorage('user-a');
+    clearOnboardingResumeStorage('user-a');
+
+    expect(window.localStorage.getItem(buildOnboardingDraftStorageKey('user-a'))).toBeNull();
+    expect(window.localStorage.getItem(buildOnboardingResumeStorageKey(ONBOARDING_RESUME_HINT_STORAGE_KEY, 'user-a'))).toBeNull();
+    expect(window.localStorage.getItem(buildOnboardingResumeStorageKey(ONBOARDING_RESUME_INDEX_STORAGE_KEY, 'user-a'))).toBeNull();
   });
 });

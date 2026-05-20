@@ -65,6 +65,7 @@ export interface BuilderContextValue {
   dispatch: React.Dispatch<BuilderAction>;
   activePage: BuilderPage | null;
   selectedSection: BuilderSectionInstance | null;
+  publicSiteSlug: string | null;
 }
 
 export const BuilderContext = createContext<BuilderContextValue>({
@@ -72,6 +73,7 @@ export const BuilderContext = createContext<BuilderContextValue>({
   dispatch: () => undefined,
   activePage: null,
   selectedSection: null,
+  publicSiteSlug: null,
 });
 
 export function useBuilderContext(): BuilderContextValue {
@@ -93,11 +95,12 @@ export type BuilderAction =
   | { type: 'SET_PREVIEW_VIEWPORT'; payload: PreviewViewport }
   | { type: 'ADD_SECTION'; payload: { pageId: string; section: BuilderSectionInstance; insertAfterIndex?: number } }
   | { type: 'REMOVE_SECTION'; payload: { pageId: string; sectionId: string } }
+  | { type: 'CREATE_PAGE_FROM_SECTION'; payload: { pageId: string; sectionId: string; title?: string } }
   | { type: 'REORDER_SECTIONS'; payload: { pageId: string; orderedIds: string[] } }
   | { type: 'UPDATE_SECTION'; payload: { pageId: string; sectionId: string; patch: Partial<BuilderSectionInstance> } }
   | { type: 'TOGGLE_SECTION_VISIBILITY'; payload: { pageId: string; sectionId: string } }
   | { type: 'DUPLICATE_SECTION'; payload: { pageId: string; sectionId: string } }
-  | { type: 'APPLY_TEMPLATE'; payload: { templateId: string; sections: BuilderSectionInstance[] } }
+  | { type: 'APPLY_TEMPLATE'; payload: { templateId: string; sections: BuilderSectionInstance[]; pages?: BuilderPage[] } }
   | { type: 'APPLY_THEME'; payload: string }
   | { type: 'SET_GLOBAL_ANIMATION_PRESET'; payload: 'none' | 'fade-in' | 'fade-up' | 'slide-up' | 'zoom-in' | 'stagger' | 'reveal-left' | 'reveal-right' | 'blur-in' | 'float-in' | 'scale-up' | null }
   | { type: 'SET_SAVING'; payload: boolean }

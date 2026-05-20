@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Check } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 import { ConfirmDialog, type ConfirmDialogProps } from '../../components/ui/ConfirmDialog';
@@ -21,16 +21,22 @@ interface EventGuestManagerModalProps {
 
 export function EventGuestManagerModal({ eventId, onClose, onUpdate }: EventGuestManagerModalProps) {
   const { toast } = useToast();
+  const eventGuestManagerContextVersionRef = useRef(0);
+  const pendingConfirmationResolveRef = useRef<((confirmed: boolean) => void) | null>(null);
   const [confirmDialog, setConfirmDialog] = useState<null | Omit<ConfirmDialogProps, 'open'>>(null);
   const requestConfirmation = (options: Pick<ConfirmDialogProps, 'title' | 'description' | 'confirmLabel' | 'tone'>) =>
     new Promise<boolean>((resolve) => {
+      pendingConfirmationResolveRef.current?.(false);
+      pendingConfirmationResolveRef.current = resolve;
       setConfirmDialog({
         ...options,
         onCancel: () => {
+          pendingConfirmationResolveRef.current = null;
           setConfirmDialog(null);
           resolve(false);
         },
         onConfirm: () => {
+          pendingConfirmationResolveRef.current = null;
           setConfirmDialog(null);
           resolve(true);
         },
@@ -42,79 +48,122 @@ export function EventGuestManagerModal({ eventId, onClose, onUpdate }: EventGues
   const [bulkLoading, setBulkLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
-  useEffect(() => {
-    void loadGuests();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [eventId]);
+  const resetEventGuestManagerState = useCallback(() => {
+    pendingConfirmationResolveRef.current?.(false);
+    pendingConfirmationResolveRef.current = null;
+    setConfirmDialog(null);
+    setAllGuests([]);
+    setInvitedGuestIds(new Set());
+    setLoading(true);
+    setBulkLoading(false);
+    setSearchQuery('');
+  }, []);
 
-  async function loadGuests() {
+  useEffect(() => {
+    const contextVersion = ++eventGuestManagerContextVersionRef.current;
+    resetEventGuestManagerState();
+    void loadGuests(eventId, contextVersion);
+    return () => {
+      eventGuestManagerContextVersionRef.current += 1;
+      resetEventGuestManagerState();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [eventId, resetEventGuestManagerState]);
+
+  function isCurrentEventGuestManagerContext(contextVersion: number) {
+    return contextVersion === eventGuestManagerContextVersionRef.current;
+  }
+
+  async function loadGuests(targetEventId: string, contextVersion: number) {
     try {
-      const snapshot = await loadItineraryEventGuestManagerSnapshot(eventId);
+      const snapshot = await loadItineraryEventGuestManagerSnapshot(targetEventId);
+      if (!isCurrentEventGuestManagerContext(contextVersion)) return;
       setAllGuests(snapshot.guests);
       setInvitedGuestIds(snapshot.invitedGuestIds);
     } catch {
+      if (!isCurrentEventGuestManagerContext(contextVersion)) return;
       setAllGuests([]);
       setInvitedGuestIds(new Set());
       toast('Couldn’t load this event’s guest list. Please try again.', 'error');
     } finally {
-      setLoading(false);
+      if (isCurrentEventGuestManagerContext(contextVersion)) {
+        setLoading(false);
+      }
     }
   }
 
   async function toggleGuestInvitation(guestId: string) {
+    const contextVersion = eventGuestManagerContextVersionRef.current;
+    const targetEventId = eventId;
     try {
       if (invitedGuestIds.has(guestId)) {
-        await removeItineraryEventGuestInvitation(eventId, guestId);
+        await removeItineraryEventGuestInvitation(targetEventId, guestId);
+        if (!isCurrentEventGuestManagerContext(contextVersion)) return;
         setInvitedGuestIds((prev) => {
           const next = new Set(prev);
           next.delete(guestId);
           return next;
         });
       } else {
-        await addItineraryEventGuestInvitation(eventId, guestId);
+        await addItineraryEventGuestInvitation(targetEventId, guestId);
+        if (!isCurrentEventGuestManagerContext(contextVersion)) return;
         setInvitedGuestIds((prev) => new Set(prev).add(guestId));
       }
 
       onUpdate();
     } catch {
+      if (!isCurrentEventGuestManagerContext(contextVersion)) return;
       toast('Couldn’t update invitation. Please try again.', 'error');
     }
   }
 
   async function inviteAll() {
+    const contextVersion = eventGuestManagerContextVersionRef.current;
+    const targetEventId = eventId;
     setBulkLoading(true);
     try {
       const uninvited = allGuests.filter((guest) => !invitedGuestIds.has(guest.id));
       if (uninvited.length === 0) return;
 
-      await inviteAllGuestsToItineraryEvent(eventId, uninvited.map((guest) => guest.id));
+      await inviteAllGuestsToItineraryEvent(targetEventId, uninvited.map((guest) => guest.id));
+      if (!isCurrentEventGuestManagerContext(contextVersion)) return;
 
       setInvitedGuestIds(new Set(allGuests.map((guest) => guest.id)));
       onUpdate();
     } catch {
+      if (!isCurrentEventGuestManagerContext(contextVersion)) return;
       toast('Couldn’t invite all guests. Please try again.', 'error');
     } finally {
-      setBulkLoading(false);
+      if (isCurrentEventGuestManagerContext(contextVersion)) {
+        setBulkLoading(false);
+      }
     }
   }
 
   async function removeAll() {
+    const contextVersion = eventGuestManagerContextVersionRef.current;
+    const targetEventId = eventId;
     const confirmed = await requestConfirmation({
       title: 'Remove all guests from this event?',
       description: 'This removes every invitation for this itinerary event. If something does not finish, the guest responses are kept safe.',
       confirmLabel: 'Remove all',
       tone: 'danger',
     });
+    if (!isCurrentEventGuestManagerContext(contextVersion)) return;
     if (!confirmed) return;
     setBulkLoading(true);
     try {
-      await removeAllGuestsFromItineraryEvent(eventId);
+      await removeAllGuestsFromItineraryEvent(targetEventId);
+      if (!isCurrentEventGuestManagerContext(contextVersion)) return;
       setInvitedGuestIds(new Set());
       onUpdate();
     } catch {
+      if (!isCurrentEventGuestManagerContext(contextVersion)) return;
       toast('Couldn’t remove all guests. Please try again.', 'error');
     } finally {
-      setBulkLoading(false);
+      if (isCurrentEventGuestManagerContext(contextVersion)) {
+        setBulkLoading(false);
+      }
     }
   }
 
@@ -145,19 +194,19 @@ export function EventGuestManagerModal({ eventId, onClose, onUpdate }: EventGues
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search guests"
-              className="flex-1 px-3 py-2 text-sm border border-border-subtle rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40"
+              className="flex-1 rounded-xl border border-border-subtle px-3 py-2 text-sm focus:border-primary/40 focus:outline-none focus:ring-2 focus:ring-primary/20"
             />
             <button
               onClick={inviteAll}
               disabled={bulkLoading || invitedCount === totalCount}
-              className="px-3 py-2 text-sm font-medium bg-surface-subtle text-text-primary border border-border-subtle rounded-lg hover:bg-primary-light disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              className="rounded-xl border border-border-subtle bg-surface-subtle px-3 py-2 text-sm font-medium text-text-primary transition-colors hover:bg-primary-light disabled:cursor-not-allowed disabled:opacity-40"
             >
               Invite all
             </button>
             <button
               onClick={removeAll}
               disabled={bulkLoading || invitedCount === 0}
-              className="px-3 py-2 text-sm font-medium bg-neutral-50 text-neutral-600 border border-neutral-200 rounded-lg hover:bg-neutral-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              className="rounded-xl border border-neutral-200 bg-neutral-50 px-3 py-2 text-sm font-medium text-neutral-600 transition-colors hover:bg-neutral-100 disabled:cursor-not-allowed disabled:opacity-40"
             >
               Remove all
             </button>
@@ -182,7 +231,7 @@ export function EventGuestManagerModal({ eventId, onClose, onUpdate }: EventGues
                 return (
                   <div
                     key={guest.id}
-                    className={`flex items-center justify-between p-3 rounded-lg border transition-colors cursor-pointer ${
+                    className={`flex cursor-pointer items-center justify-between rounded-xl border p-3 transition-colors ${
                       isInvited
                         ? 'bg-surface-subtle border-border-subtle'
                         : 'border-border-subtle hover:bg-surface-subtle/50'
@@ -194,7 +243,7 @@ export function EventGuestManagerModal({ eventId, onClose, onUpdate }: EventGues
                       {guest.email && <p className="text-sm text-neutral-500">{guest.email}</p>}
                     </div>
                     <div
-                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                      className={`flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-sm font-medium transition-colors ${
                         isInvited
                           ? 'bg-surface text-text-primary border border-border-subtle'
                           : 'bg-neutral-100 text-neutral-600'

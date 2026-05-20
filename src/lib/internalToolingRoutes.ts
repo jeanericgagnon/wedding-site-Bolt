@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { isAdminUser } from './adminUsers';
 
@@ -15,11 +16,9 @@ export function isInternalToolingRouteFlagEnabled(
 export function isInternalToolingCaptureRouteFlagEnabled(
   value = import.meta.env.VITE_ENABLE_INTERNAL_TOOLING_ROUTES,
   dev = import.meta.env.DEV,
+  pathname = typeof window === 'undefined' ? '' : window.location.pathname,
 ): boolean {
   if (isInternalToolingRouteFlagEnabled(value, dev)) return true;
-  if (typeof window === 'undefined') return false;
-
-  const { pathname } = window.location;
   return pathname === '/variant-preview-capture' || pathname === '/template-scroll-capture';
 }
 
@@ -33,9 +32,14 @@ export function useInternalToolingRouteAccess(): {
   internalToolingRoutesLoading: boolean;
   internalToolingRouteFlagEnabled: boolean;
 } {
+  const location = useLocation();
   const { user, loading, isDemoMode } = useAuth();
   const flagEnabled = isInternalToolingRouteFlagEnabled();
-  const captureFlagEnabled = isInternalToolingCaptureRouteFlagEnabled();
+  const captureFlagEnabled = isInternalToolingCaptureRouteFlagEnabled(
+    import.meta.env.VITE_ENABLE_INTERNAL_TOOLING_ROUTES,
+    import.meta.env.DEV,
+    location.pathname,
+  );
   const [isAdmin, setIsAdmin] = useState(false);
   const [adminLoading, setAdminLoading] = useState(false);
 

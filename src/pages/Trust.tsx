@@ -138,10 +138,10 @@ export const Trust: React.FC = () => {
               The bar here is simple: say what is real, ship the parts couples actually need, and avoid the wedding-tech trap where basic functionality turns into upsells and surprise gotchas.
             </p>
             <div className="mt-8 flex flex-wrap gap-3 text-sm text-text-secondary">
-              <span className="rounded-lg border border-border bg-surface px-3 py-1.5">No surprise renewals</span>
-              <span className="rounded-lg border border-border bg-surface px-3 py-1.5">Truth over marketing fluff</span>
-              <span className="rounded-lg border border-border bg-surface px-3 py-1.5">Review before sending</span>
-              <span className="rounded-lg border border-border bg-surface px-3 py-1.5">Guest details that actually matter</span>
+              <span className="rounded-xl border border-border bg-surface px-3 py-1.5">No surprise renewals</span>
+              <span className="rounded-xl border border-border bg-surface px-3 py-1.5">Truth over marketing fluff</span>
+              <span className="rounded-xl border border-border bg-surface px-3 py-1.5">Review before sending</span>
+              <span className="rounded-xl border border-border bg-surface px-3 py-1.5">Guest details that actually matter</span>
             </div>
           </div>
         </section>
@@ -150,7 +150,7 @@ export const Trust: React.FC = () => {
           <div className="mx-auto max-w-5xl">
             <div className="grid gap-4 md:grid-cols-2">
               {TRUST_PILLARS.map((item) => (
-                <div key={item.title} className="rounded-lg border border-border-subtle bg-white p-6 shadow-sm">
+                <div key={item.title} className="rounded-xl border border-border-subtle bg-white p-6 shadow-sm">
                   <h2 className="text-xl font-semibold text-text-primary">{item.title}</h2>
                   <p className="mt-3 text-sm leading-6 text-text-secondary">{item.body}</p>
                 </div>
@@ -169,7 +169,7 @@ export const Trust: React.FC = () => {
               </p>
             </div>
 
-            <div className="mt-8 rounded-lg border border-border-subtle bg-white p-6 shadow-sm">
+            <div className="mt-8 rounded-xl border border-border-subtle bg-white p-6 shadow-sm">
               <ul className="space-y-3 text-sm leading-6 text-text-secondary">
                 {SAFETY_NOTES.map((item) => (
                   <li key={item} className="flex items-start gap-3">
@@ -206,10 +206,10 @@ export const Trust: React.FC = () => {
                     : 'border border-border-subtle bg-surface text-text-secondary';
 
                 return (
-                  <div key={item.title} className={`rounded-lg border p-6 shadow-sm ${toneClasses}`}>
+                  <div key={item.title} className={`rounded-xl border p-6 shadow-sm ${toneClasses}`}>
                     <div className="flex items-center justify-between gap-3">
                       <h3 className="text-lg font-semibold text-text-primary">{item.title}</h3>
-                    <span className={`rounded-lg px-2.5 py-1 text-[11px] font-semibold ${badgeClasses}`}>{item.badge}</span>
+                    <span className={`rounded-xl px-2.5 py-1 text-[11px] font-semibold ${badgeClasses}`}>{item.badge}</span>
                     </div>
                     <p className="mt-3 text-sm leading-6 text-text-secondary">{item.body}</p>
                   </div>
@@ -221,11 +221,11 @@ export const Trust: React.FC = () => {
               <button
                 type="button"
                 onClick={handleStartDraft}
-                className="rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-primary/90"
+                className="rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-primary/90"
               >
                 {user ? 'Continue your site' : 'Start your draft'}
               </button>
-              <Link to={user ? '/dashboard/planning' : '/product'} className="rounded-lg border border-border bg-surface px-4 py-2.5 text-sm font-medium text-text-primary transition hover:border-primary/30 hover:text-primary">
+              <Link to={user ? '/dashboard/planning' : '/product'} className="rounded-xl border border-border bg-surface px-4 py-2.5 text-sm font-medium text-text-primary transition hover:border-primary/30 hover:text-primary">
                 {user ? 'Continue planning' : 'See product tour'}
               </Link>
             </div>
@@ -248,10 +248,10 @@ export const Trust: React.FC = () => {
                     : 'border border-border-subtle bg-surface text-text-secondary';
 
                 return (
-                  <div key={item.name} className={`rounded-lg border p-6 shadow-sm ${toneClasses}`}>
+                  <div key={item.name} className={`rounded-xl border p-6 shadow-sm ${toneClasses}`}>
                     <div className="flex items-center justify-between gap-3">
                       <h3 className="text-lg font-semibold text-text-primary">{item.name}</h3>
-                      <span className={`rounded-lg px-2.5 py-1 text-[11px] font-semibold ${badgeClasses}`}>{item.status}</span>
+                      <span className={`rounded-xl px-2.5 py-1 text-[11px] font-semibold ${badgeClasses}`}>{item.status}</span>
                     </div>
                     <div className="mt-4 space-y-2 text-sm leading-6 text-text-secondary">
                       <p><span className="font-semibold text-text-primary">Covers:</span> {item.done}</p>
@@ -265,7 +265,7 @@ export const Trust: React.FC = () => {
         </section>
 
         <section className="px-6 py-14 md:py-16">
-          <div className="mx-auto max-w-4xl rounded-lg border border-border-subtle bg-white p-7 shadow-sm md:p-8">
+          <div className="mx-auto max-w-4xl rounded-xl border border-border-subtle bg-white p-7 shadow-sm md:p-8">
               <p className="text-xs font-semibold text-text-tertiary">Need the legal docs?</p>
               <h2 className="mt-3 text-3xl font-semibold text-text-primary">Cool. Those should be easy to find too.</h2>
             <p className="mt-3 text-sm leading-6 text-text-secondary">
@@ -278,56 +278,56 @@ export const Trust: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => navigate('/settings')}
-                    className="rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-primary/90"
+                    className="rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-primary/90"
                   >
                     Account settings
                   </button>
                   <button
                     type="button"
                     onClick={() => navigate('/dashboard/builder')}
-                    className="rounded-lg border border-border bg-surface px-4 py-2.5 text-sm font-medium text-text-primary transition hover:border-primary/30 hover:text-primary"
+                    className="rounded-xl border border-border bg-surface px-4 py-2.5 text-sm font-medium text-text-primary transition hover:border-primary/30 hover:text-primary"
                   >
                     Edit your site
                   </button>
                   <button
                     type="button"
                     onClick={() => navigate('/dashboard/planning')}
-                    className="rounded-lg border border-border bg-surface px-4 py-2.5 text-sm font-medium text-text-primary transition hover:border-primary/30 hover:text-primary"
+                    className="rounded-xl border border-border bg-surface px-4 py-2.5 text-sm font-medium text-text-primary transition hover:border-primary/30 hover:text-primary"
                   >
                     Continue planning
                   </button>
                   <button
                     type="button"
                     onClick={() => navigate('/dashboard/coordinator')}
-                    className="rounded-lg border border-border bg-surface px-4 py-2.5 text-sm font-medium text-text-primary transition hover:border-primary/30 hover:text-primary"
+                    className="rounded-xl border border-border bg-surface px-4 py-2.5 text-sm font-medium text-text-primary transition hover:border-primary/30 hover:text-primary"
                   >
                     Day-of view
                   </button>
                   <button
                     type="button"
                     onClick={() => navigate('/dashboard/guests')}
-                    className="rounded-lg border border-border bg-surface px-4 py-2.5 text-sm font-medium text-text-primary transition hover:border-primary/30 hover:text-primary"
+                    className="rounded-xl border border-border bg-surface px-4 py-2.5 text-sm font-medium text-text-primary transition hover:border-primary/30 hover:text-primary"
                   >
                     Manage guests
                   </button>
                   <button
                     type="button"
                     onClick={() => navigate('/dashboard/messages')}
-                    className="rounded-lg border border-border bg-surface px-4 py-2.5 text-sm font-medium text-text-primary transition hover:border-primary/30 hover:text-primary"
+                    className="rounded-xl border border-border bg-surface px-4 py-2.5 text-sm font-medium text-text-primary transition hover:border-primary/30 hover:text-primary"
                   >
                     Guest messages
                   </button>
                   <button
                     type="button"
                     onClick={() => navigate('/dashboard/rsvp-board')}
-                    className="rounded-lg border border-border bg-surface px-4 py-2.5 text-sm font-medium text-text-primary transition hover:border-primary/30 hover:text-primary"
+                    className="rounded-xl border border-border bg-surface px-4 py-2.5 text-sm font-medium text-text-primary transition hover:border-primary/30 hover:text-primary"
                   >
                     Open RSVP board
                   </button>
                   <button
                     type="button"
                     onClick={() => navigate('/dashboard/overview')}
-                    className="rounded-lg border border-border bg-surface px-4 py-2.5 text-sm font-medium text-text-primary transition hover:border-primary/30 hover:text-primary"
+                    className="rounded-xl border border-border bg-surface px-4 py-2.5 text-sm font-medium text-text-primary transition hover:border-primary/30 hover:text-primary"
                   >
                     Open wedding home
                   </button>
@@ -336,15 +336,15 @@ export const Trust: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => navigate('/signup')}
-                  className="rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-primary/90"
+                  className="rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-primary/90"
                 >
                   Start your draft
                 </button>
               )}
-              <Link to="/privacy" className="rounded-lg border border-border bg-surface px-4 py-2.5 text-sm font-medium text-text-primary transition hover:border-primary/30 hover:text-primary">
+              <Link to="/privacy" className="rounded-xl border border-border bg-surface px-4 py-2.5 text-sm font-medium text-text-primary transition hover:border-primary/30 hover:text-primary">
                 Privacy policy
               </Link>
-              <Link to="/terms" className="rounded-lg border border-border bg-surface px-4 py-2.5 text-sm font-medium text-text-primary transition hover:border-primary/30 hover:text-primary">
+              <Link to="/terms" className="rounded-xl border border-border bg-surface px-4 py-2.5 text-sm font-medium text-text-primary transition hover:border-primary/30 hover:text-primary">
                 Terms of service
               </Link>
             </div>

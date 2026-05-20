@@ -117,7 +117,7 @@ export const MAX_VENDOR_PROFILE_INQUIRIES = 50;
 
 export type VendorAccentId = 'champagne' | 'sage' | 'rose' | 'ink';
 export type VendorGalleryLayoutId = 'editorial-grid' | 'stacked' | 'mosaic';
-export type VendorSectionId = 'proof' | 'fit' | 'gallery' | 'about' | 'packages' | 'testimonials' | 'faq' | 'links' | 'inquiry';
+export type VendorSectionId = 'proof' | 'facts' | 'fit' | 'gallery' | 'about' | 'packages' | 'testimonials' | 'faq' | 'links' | 'inquiry';
 
 export interface VendorProfilePackage {
   title: string;
@@ -133,6 +133,14 @@ export interface VendorProfileFaq {
 export interface VendorProfileTestimonial {
   quote: string;
   attribution: string | null;
+}
+
+export type VendorCategoryFactGroup = 'overview' | 'logistics' | 'style' | 'service' | 'policy';
+
+export interface VendorProfileCategoryFact {
+  label: string;
+  value: string;
+  group: VendorCategoryFactGroup | null;
 }
 
 export interface VendorProfileRatingCategory {
@@ -167,6 +175,7 @@ export interface VendorProfileCustomization {
   proof_points: string[];
   section_order: VendorSectionId[];
   hidden_sections: VendorSectionId[];
+  category_facts: VendorProfileCategoryFact[];
   packages: VendorProfilePackage[];
   faqs: VendorProfileFaq[];
   testimonials: VendorProfileTestimonial[];
@@ -177,19 +186,19 @@ export interface VendorProfileCustomization {
 
 export const VENDOR_ACCENT_IDS: VendorAccentId[] = ['champagne', 'sage', 'rose', 'ink'];
 export const VENDOR_GALLERY_LAYOUT_IDS: VendorGalleryLayoutId[] = ['editorial-grid', 'stacked', 'mosaic'];
-export const VENDOR_SECTION_IDS: VendorSectionId[] = ['proof', 'fit', 'gallery', 'about', 'packages', 'testimonials', 'faq', 'links', 'inquiry'];
+export const VENDOR_SECTION_IDS: VendorSectionId[] = ['proof', 'facts', 'fit', 'gallery', 'about', 'packages', 'testimonials', 'faq', 'links', 'inquiry'];
 
 export const VENDOR_ACCENT_OPTIONS: Array<{ id: VendorAccentId; name: string; detail: string }> = [
-  { id: 'champagne', name: 'Champagne', detail: 'Warm, editorial, and broad-fit for premium vendors.' },
-  { id: 'sage', name: 'Sage', detail: 'Calm, botanical, and ideal for floral, venues, and planners.' },
-  { id: 'rose', name: 'Rose', detail: 'Soft, romantic, and polished for beauty, attire, and photo teams.' },
-  { id: 'ink', name: 'Ink', detail: 'High-contrast, modern, and strong for photo, music, and luxury services.' },
+  { id: 'champagne', name: 'Champagne', detail: 'Warm neutral accent for broad wedding help.' },
+  { id: 'sage', name: 'Sage', detail: 'Green accent for floral, venue, planner, and travel pages.' },
+  { id: 'rose', name: 'Rose', detail: 'Soft accent for beauty, attire, and photo teams.' },
+  { id: 'ink', name: 'Ink', detail: 'High-contrast accent for photo, music, and simple note pages.' },
 ];
 
 export const VENDOR_GALLERY_LAYOUT_OPTIONS: Array<{ id: VendorGalleryLayoutId; name: string }> = [
-  { id: 'editorial-grid', name: 'Editorial grid' },
-  { id: 'stacked', name: 'Stacked story' },
-  { id: 'mosaic', name: 'Mosaic board' },
+  { id: 'editorial-grid', name: 'Mixed grid' },
+  { id: 'stacked', name: 'Stacked' },
+  { id: 'mosaic', name: 'Mosaic' },
 ];
 
 function normalizeVendorAccentId(value: unknown, templateId?: VendorTemplateId): VendorAccentId {
@@ -265,6 +274,26 @@ function normalizeTestimonials(value: unknown): VendorProfileTestimonial[] {
       attribution: normalizeCustomizationText(row.attribution, 64),
     };
   }).filter((item): item is VendorProfileTestimonial => Boolean(item)).slice(0, 3);
+}
+
+const VENDOR_CATEGORY_FACT_GROUPS: VendorCategoryFactGroup[] = ['overview', 'logistics', 'style', 'service', 'policy'];
+
+function normalizeCategoryFacts(value: unknown): VendorProfileCategoryFact[] {
+  if (!Array.isArray(value)) return [];
+  return value.map((item) => {
+    if (!item || typeof item !== 'object' || Array.isArray(item)) return null;
+    const row = item as Record<string, unknown>;
+    const label = normalizeCustomizationText(row.label, 44);
+    const factValue = normalizeCustomizationText(row.value, 96);
+    if (!label || !factValue) return null;
+    return {
+      label,
+      value: factValue,
+      group: VENDOR_CATEGORY_FACT_GROUPS.includes(row.group as VendorCategoryFactGroup)
+        ? row.group as VendorCategoryFactGroup
+        : null,
+    };
+  }).filter((item): item is VendorProfileCategoryFact => Boolean(item)).slice(0, 8);
 }
 
 function normalizeRatingScore(value: unknown): number | null {
@@ -372,6 +401,7 @@ export function normalizeVendorProfileCustomization(sourcePayload: Record<string
     proof_points: proofPoints,
     section_order: normalizeSectionOrder(customization.section_order),
     hidden_sections: normalizeHiddenSections(customization.hidden_sections),
+    category_facts: normalizeCategoryFacts(customization.category_facts),
     packages: normalizePackages(customization.packages),
     faqs: normalizeFaqs(customization.faqs),
     testimonials: normalizeTestimonials(customization.testimonials),
@@ -391,7 +421,7 @@ const SAMPLE_VENDOR_PROFILES: Record<string, VendorProfile> = {
     id: 'sample-everlight',
     slug: 'everlight',
     vendor_name: 'Everlight Studio',
-    descriptor: 'Documentary wedding photography with an editorial finish',
+    descriptor: 'Documentary wedding photography with a clean finish',
     about: 'Everlight Studio photographs weddings with a calm, observant style built around real emotion, clean composition, and the small in-between moments couples actually remember.',
     hero_image_url: 'https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=1400&q=80',
     image_urls: [
@@ -407,10 +437,30 @@ const SAMPLE_VENDOR_PROFILES: Record<string, VendorProfile> = {
       sampleProfile: true,
       vendor_customization: {
         accent_id: 'ink',
-        cta_label: 'Check date availability',
+        cta_label: 'Check the date',
         service_area: 'New York, Hudson Valley, and destination weekends',
-        pricing_note: 'Full-weekend collections begin with planning and timeline support.',
-        proof_points: ['Film-toned edits', 'Calm timeline presence', 'Fast preview gallery'],
+        pricing_note: 'Full weekend photos begin with planning and timeline help.',
+        proof_points: ['Film-toned edits', 'Calm timeline presence', 'Preview gallery'],
+        category_facts: [
+          { label: 'Style', value: 'Documentary photos with a clean finish', group: 'style' },
+          { label: 'Day plan', value: 'Full wedding days and weekend events', group: 'service' },
+          { label: 'Final files', value: 'Online gallery, print rights, and preview set', group: 'service' },
+          { label: 'Second photographer', value: 'Helpful for larger timelines', group: 'logistics' },
+          { label: 'Travel', value: 'Hudson Valley, NYC, and destination weekends', group: 'logistics' },
+          { label: 'Helpful when', value: 'Calm direction and real moments matter', group: 'overview' },
+        ],
+        packages: [
+          { title: 'Wedding day photos', detail: 'Documentary photo time with timeline help, preview images, and an online gallery.', price: 'First note' },
+          { title: 'Weekend story', detail: 'Welcome party, rehearsal, wedding day, and next morning moments in one gallery.', price: 'Event count note' },
+        ],
+        testimonials: [
+          { quote: 'They made the day feel calm and still caught everything we cared about.', attribution: 'Sample couple note' },
+        ],
+        faqs: [
+          { question: 'Do you help with photo timeline planning?', answer: 'Yes. Timeline notes and family photo pacing can be included before the wedding day.' },
+          { question: 'Can we add engagement photos?', answer: 'Engagement sessions can be added when the schedule and location make sense.' },
+        ],
+        inquiry_questions: ['Wedding date', 'Venue or location', 'Photo needs'],
       },
     },
   },
@@ -418,7 +468,7 @@ const SAMPLE_VENDOR_PROFILES: Record<string, VendorProfile> = {
     id: 'sample-photography',
     slug: 'dayof-sample-photography',
     vendor_name: 'Everlight Studio',
-    descriptor: 'Documentary wedding photography with an editorial finish',
+    descriptor: 'Documentary wedding photography with a clean finish',
     about: 'Everlight Studio photographs weddings with a calm, observant style built around real emotion, clean composition, and the small in-between moments couples actually remember.',
     hero_image_url: 'https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=1400&q=80',
     image_urls: [
@@ -434,10 +484,30 @@ const SAMPLE_VENDOR_PROFILES: Record<string, VendorProfile> = {
       sampleProfile: true,
       vendor_customization: {
         accent_id: 'ink',
-        cta_label: 'Check date availability',
+        cta_label: 'Check the date',
         service_area: 'New York, Hudson Valley, and destination weekends',
-        pricing_note: 'Full-weekend collections begin with planning and timeline support.',
-        proof_points: ['Film-toned edits', 'Calm timeline presence', 'Fast preview gallery'],
+        pricing_note: 'Full weekend photos begin with planning and timeline help.',
+        proof_points: ['Film-toned edits', 'Calm timeline presence', 'Preview gallery'],
+        category_facts: [
+          { label: 'Style', value: 'Documentary photos with a clean finish', group: 'style' },
+          { label: 'Day plan', value: 'Full wedding days and weekend events', group: 'service' },
+          { label: 'Final files', value: 'Online gallery, print rights, and preview set', group: 'service' },
+          { label: 'Second photographer', value: 'Helpful for larger timelines', group: 'logistics' },
+          { label: 'Travel', value: 'Hudson Valley, NYC, and destination weekends', group: 'logistics' },
+          { label: 'Helpful when', value: 'Calm direction and real moments matter', group: 'overview' },
+        ],
+        packages: [
+          { title: 'Wedding day photos', detail: 'Documentary photo time with timeline help, preview images, and an online gallery.', price: 'First note' },
+          { title: 'Weekend story', detail: 'Welcome party, rehearsal, wedding day, and next morning moments in one gallery.', price: 'Event count note' },
+        ],
+        testimonials: [
+          { quote: 'They made the day feel calm and still caught everything we cared about.', attribution: 'Sample couple note' },
+        ],
+        faqs: [
+          { question: 'Do you help with photo timeline planning?', answer: 'Yes. Timeline notes and family photo pacing can be included before the wedding day.' },
+          { question: 'Can we add engagement photos?', answer: 'Engagement sessions can be added when the schedule and location make sense.' },
+        ],
+        inquiry_questions: ['Wedding date', 'Venue or location', 'Photo needs'],
       },
     },
   },
@@ -446,7 +516,7 @@ const SAMPLE_VENDOR_PROFILES: Record<string, VendorProfile> = {
     slug: 'dayof-sample-floral',
     vendor_name: 'Marigold Floral House',
     descriptor: 'Sculptural florals for warm, high-texture celebrations',
-    about: 'Marigold Floral House designs wedding flowers that feel garden-gathered, seasonal, and dimensional, from ceremony installations to reception tablescapes.',
+    about: 'Marigold Floral House builds wedding flowers that feel garden-gathered, seasonal, and dimensional, from ceremony installations to reception tablescapes.',
     hero_image_url: 'https://images.unsplash.com/photo-1526047932273-341f2a7631f9?auto=format&fit=crop&w=1400&q=80',
     image_urls: [
       'https://images.unsplash.com/photo-1509223197845-458d87318791?auto=format&fit=crop&w=900&q=80',
@@ -461,42 +531,42 @@ const SAMPLE_VENDOR_PROFILES: Record<string, VendorProfile> = {
       sampleProfile: true,
       vendor_customization: {
         accent_id: 'sage',
-        cta_label: 'Ask about floral availability',
+        cta_label: 'Write about florals',
         gallery_layout: 'mosaic',
         logo_text: 'MFH',
-        service_area: 'Garden, tented, and estate celebrations across the Northeast',
-        pricing_note: 'Best fit for ceremony installs, reception flowers, and full visual direction.',
-        proof_points: ['Seasonal palette', 'Large-scale installs', 'Rental coordination'],
+        service_area: 'Garden, tented, and venue celebrations across the Northeast',
+        pricing_note: 'Helpful for ceremony installs, reception flowers, and visual direction.',
+        proof_points: ['Seasonal palette', 'Large-scale installs', 'Rental timing'],
+        category_facts: [
+          { label: 'Install scale', value: 'Ceremony pieces, bars, lounges, and reception tables', group: 'service' },
+          { label: 'Palette', value: 'Seasonal color direction built from venue and attire', group: 'style' },
+          { label: 'Repurposing', value: 'Ceremony flowers can be planned for reception reuse', group: 'logistics' },
+          { label: 'Breakdown', value: 'Strike and rental timing can be included', group: 'service' },
+          { label: 'Helpful when', value: 'A clear visual direction is already forming', group: 'overview' },
+        ],
         external_credibility: {
           enabled: true,
           source_label: 'Google',
           rating: 4.9,
           review_count: 86,
           profile_url: 'https://www.google.com/maps',
-          place_id: 'sample-google-place-marigold',
-          last_synced_at: 'sample data',
         },
         rating: {
           enabled: true,
-          overall_score: 9.4,
-          summary: 'Best fit for couples who want seasonal color, installation presence, and a floral team that can coordinate rentals calmly.',
-          categories: [
-            { label: 'Style match', score: 9.7 },
-            { label: 'Logistics', score: 9.2 },
-            { label: 'Responsiveness', score: 9.1 },
-            { label: 'Guest impact', score: 9.5 },
-          ],
+          overall_score: null,
+          summary: 'Helpful for seasonal color, installation presence, and rental timing.',
+          categories: [],
         },
         packages: [
-          { title: 'Ceremony install', detail: 'Statement aisle flowers, altar moment, strike plan, and repurpose notes.', price: 'Custom quote' },
-          { title: 'Reception flowers', detail: 'Tablescape florals, candles, personal flowers, and delivery coordination.', price: 'Scoped by guest count' },
+          { title: 'Ceremony install', detail: 'Statement aisle flowers, altar moment, strike plan, and repurpose notes.', price: 'First note' },
+          { title: 'Reception flowers', detail: 'Tablescape florals, candles, personal flowers, and delivery timing.', price: 'Guest count note' },
         ],
         testimonials: [
-          { quote: 'The florals felt abundant, personal, and perfectly in season.', attribution: 'Sample couple note' },
+          { quote: 'The florals felt abundant, personal, and right for the season.', attribution: 'Sample couple note' },
         ],
         faqs: [
           { question: 'Can you work from a color palette?', answer: 'Yes. Share inspiration, venue photos, and seasonality notes and the studio will translate them into a floral direction.' },
-          { question: 'Do you handle setup and breakdown?', answer: 'Installation, strike, and rental coordination can be included in the floral scope.' },
+          { question: 'Do you handle setup and breakdown?', answer: 'Installation, strike, and rental timing can be included in the floral details.' },
         ],
         inquiry_questions: ['Estimated guest count', 'Color palette or inspiration', 'Install moments you care about'],
       },
@@ -506,8 +576,8 @@ const SAMPLE_VENDOR_PROFILES: Record<string, VendorProfile> = {
     id: 'sample-venue',
     slug: 'dayof-sample-venue',
     vendor_name: 'Stonehouse Estate',
-    descriptor: 'Historic estate venue with gardens, tented lawns, and guest flow',
-    about: 'Stonehouse Estate hosts wedding weekends with a ceremony garden, indoor dinner space, and enough property detail to make logistics feel organized from arrival to sendoff.',
+    descriptor: 'Historic venue with gardens, tented lawns, and guest flow',
+    about: 'Stonehouse Estate hosts wedding weekends with a ceremony garden, indoor dinner space, and enough property detail to make the day feel organized from arrival to sendoff.',
     hero_image_url: 'https://images.unsplash.com/photo-1519167758481-83f550bb49b3?auto=format&fit=crop&w=1400&q=80',
     image_urls: [
       'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=900&q=80',
@@ -522,10 +592,30 @@ const SAMPLE_VENDOR_PROFILES: Record<string, VendorProfile> = {
       sampleProfile: true,
       vendor_customization: {
         accent_id: 'sage',
-        cta_label: 'Request a private tour',
-        service_area: 'Full-property wedding weekends with indoor and outdoor rain plans',
-        pricing_note: 'Site fee varies by season, guest count, and weekend scope.',
-        proof_points: ['Ceremony garden', 'Rain plan ready', 'Guest parking'],
+        cta_label: 'Write about a tour',
+        service_area: 'Full property wedding weekends with indoor and outdoor rain plans',
+        pricing_note: 'Site notes can cover season, guest count, and weekend plans.',
+        proof_points: ['Ceremony garden', 'Rain plan details', 'Guest parking'],
+        category_facts: [
+          { label: 'Capacity', value: 'Up to 180 seated guests', group: 'overview' },
+          { label: 'Ceremony', value: 'Garden ceremony with indoor backup', group: 'service' },
+          { label: 'Reception', value: 'Indoor dinner room or tented lawn', group: 'service' },
+          { label: 'Rain plan', value: 'On-property backup flow can be planned', group: 'logistics' },
+          { label: 'Parking', value: 'Guest parking and load in path', group: 'logistics' },
+          { label: 'Helpful when', value: 'The weekend has multiple guest moments', group: 'overview' },
+        ],
+        packages: [
+          { title: 'Site walkthrough', detail: 'Walk the ceremony, cocktail, dinner, and rain plan spaces with the venue team.', price: 'Tour note' },
+          { title: 'Wedding weekend plans', detail: 'Site use, load in windows, guest flow, and property timing planned together.', price: 'Season note' },
+        ],
+        testimonials: [
+          { quote: 'The property made the whole weekend feel easy to understand.', attribution: 'Sample couple note' },
+        ],
+        faqs: [
+          { question: 'Is there an indoor backup plan?', answer: 'Yes. Indoor and tented backup flows can be planned around the guest count and season.' },
+          { question: 'Can teams set up before the wedding day?', answer: 'Setup windows can be planned with the venue team based on event details.' },
+        ],
+        inquiry_questions: ['Estimated guest count', 'Preferred season', 'Indoor or outdoor priorities'],
       },
     },
   },
@@ -533,8 +623,8 @@ const SAMPLE_VENDOR_PROFILES: Record<string, VendorProfile> = {
     id: 'sample-catering',
     slug: 'dayof-sample-catering',
     vendor_name: 'Sage Table Catering',
-    descriptor: 'Seasonal wedding menus, passed bites, late-night snacks, and polished bar support',
-    about: 'Sage Table builds menus around regional ingredients, guest flow, and service timing, from welcome cocktails to family-style dinners and cake service coordination.',
+    descriptor: 'Seasonal wedding menus, passed bites, late night snacks, and bar plans',
+    about: 'Sage Table builds menus around regional ingredients, guest flow, and timing, from welcome cocktails to family style dinners and cake cutting.',
     hero_image_url: 'https://images.unsplash.com/photo-1519225421980-715cb0215aed?auto=format&fit=crop&w=1400&q=80',
     image_urls: [
       'https://images.unsplash.com/photo-1555244162-803834f70033?auto=format&fit=crop&w=900&q=80',
@@ -549,10 +639,30 @@ const SAMPLE_VENDOR_PROFILES: Record<string, VendorProfile> = {
       sampleProfile: true,
       vendor_customization: {
         accent_id: 'champagne',
-        cta_label: 'Request a tasting path',
-        service_area: 'Cocktail hour, dinner service, dessert, bar, and late-night support',
-        pricing_note: 'Menus are scoped by guest count, service style, rentals, and staffing.',
-        proof_points: ['Seasonal menu', 'Service staffing', 'Bar coordination'],
+        cta_label: 'Write about tasting',
+        service_area: 'Cocktail hour, dinner, dessert, bar, and late night plans',
+        pricing_note: 'Menu notes can cover guest count, dinner style, rentals, and team size.',
+        proof_points: ['Seasonal menu', 'Dinner team', 'Bar timing'],
+        category_facts: [
+          { label: 'Dinner style', value: 'Plated, family style, stations, and cocktail receptions', group: 'service' },
+          { label: 'Tastings', value: 'Tasting path can follow first details', group: 'service' },
+          { label: 'Bar', value: 'Bar team and batch cocktails', group: 'service' },
+          { label: 'Dietary needs', value: 'Vegetarian, vegan, gluten-free, and allergy notes', group: 'policy' },
+          { label: 'Rentals', value: 'Tabletop rentals can be planned', group: 'logistics' },
+          { label: 'Helpful when', value: 'Seasonal menus and steady guest flow matter', group: 'overview' },
+        ],
+        packages: [
+          { title: 'Cocktail and dinner', detail: 'Passed bites, dinner, dessert timing, and team plan.', price: 'Guest count note' },
+          { title: 'Bar and late night', detail: 'Bar team, batch cocktails, coffee, and late night snacks.', price: 'Add-on note' },
+        ],
+        testimonials: [
+          { quote: 'The food felt personal without slowing down the party.', attribution: 'Sample couple note' },
+        ],
+        faqs: [
+          { question: 'Can you handle dietary notes?', answer: 'Yes. Dietary notes are collected during menu planning and checked before final counts.' },
+          { question: 'Do you handle rentals?', answer: 'Rental timing can be planned alongside menu and team needs.' },
+        ],
+        inquiry_questions: ['Guest count', 'Dinner style', 'Dietary needs'],
       },
     },
   },
@@ -560,8 +670,8 @@ const SAMPLE_VENDOR_PROFILES: Record<string, VendorProfile> = {
     id: 'sample-modern-events',
     slug: 'modern-events',
     vendor_name: 'Modern Events',
-    descriptor: 'Wedding planning, production calm, and polished event design',
-    about: 'Modern Events pairs planning structure with a warm guest experience, covering logistics, vendor coordination, design direction, and wedding-weekend flow from kickoff through sendoff.',
+    descriptor: 'Wedding planning, calm pacing, and visual direction',
+    about: 'Modern Events pairs planning structure with a warm guest experience, covering team notes, visual direction, and wedding weekend flow from kickoff through sendoff.',
     hero_image_url: 'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?auto=format&fit=crop&w=1400&q=80',
     image_urls: [
       'https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=900&q=80',
@@ -576,10 +686,10 @@ const SAMPLE_VENDOR_PROFILES: Record<string, VendorProfile> = {
       sampleProfile: true,
       vendor_customization: {
         accent_id: 'sage',
-        cta_label: 'Ask about your date',
-        service_area: 'Weekend planning, production, and day-of support for modern celebrations',
-        pricing_note: 'Planning scopes are tailored to guest count, event count, and logistics complexity.',
-        proof_points: ['Weekend flow', 'Vendor coordination', 'Guest calm'],
+        cta_label: 'Write about your date',
+        service_area: 'Weekend planning, day-of help, and final schedules for modern celebrations',
+        pricing_note: 'Planning help is tailored to guest count, event count, and moving pieces.',
+        proof_points: ['Weekend flow', 'Team notes', 'Guest calm'],
       },
     },
   },
@@ -719,8 +829,8 @@ function buildFallbackVendorProfileDraft(input: { vendorName: string; instagramU
   return {
     slug: normalizeSlugPart(vendorName),
     vendor_name: vendorName,
-    descriptor: websiteLabel ? `${websiteLabel} wedding vendor profile` : 'Wedding vendor profile',
-    about: `${vendorName} is ready for a clean public vendor page with core links, a direct inquiry path, and room for polished images as the profile is refined.`,
+    descriptor: websiteLabel ? `${websiteLabel} wedding notes` : 'Wedding notes',
+    about: `${vendorName} has a simple notes page with useful links, a direct note path, and room for stronger images as details are added.`,
     hero_image_url: null,
     image_urls: [],
     instagram_url: instagramUrl,

@@ -36,13 +36,13 @@ export function GuestPhotoMomentAlbumsCard({
           </p>
         </div>
         <div className="text-xs text-text-secondary">
-          <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">{suggestions.length} suggestions</span>
+          <span className="rounded-xl border border-border-subtle bg-surface-subtle px-3 py-1">{suggestions.length} suggestions</span>
         </div>
       </div>
       {suggestions.length > 0 ? (
         <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
           {suggestions.slice(0, 9).map((suggestion) => (
-            <div key={`${suggestion.eventId}-${suggestion.tag}`} className="rounded-lg border border-border-subtle bg-surface-subtle p-4">
+            <div key={`${suggestion.eventId}-${suggestion.tag}`} className="rounded-2xl border border-border-subtle bg-surface-subtle p-4">
               <p className="text-sm font-semibold text-text-primary">{suggestion.label}</p>
               <p className="mt-1 text-xs text-text-secondary">
                 {suggestion.parentBucket ? `${suggestion.parentBucket.name} / ${suggestion.label}` : suggestion.eventName}
@@ -63,7 +63,7 @@ export function GuestPhotoMomentAlbumsCard({
           ))}
         </div>
       ) : (
-        <div className="mt-4 rounded-lg border border-border-subtle bg-surface-subtle px-4 py-5 text-sm text-text-secondary">
+        <div className="mt-4 rounded-2xl border border-border-subtle bg-surface-subtle px-4 py-5 text-sm text-text-secondary">
           No new moment album suggestions right now. Add itinerary events or sort photos after uploads to unlock more.
         </div>
       )}

@@ -1,3 +1,4 @@
+import { useRef } from 'react';
 import { customerSafeErrorMessage } from '../../lib/customerSafeError';
 import { toValidItineraryEventDateOrNull } from './itineraryEventDate';
 import {
@@ -94,8 +95,15 @@ export function useItineraryTimelineActions({
   templateStart,
   toast,
 }: UseItineraryTimelineActionsInput) {
+  const saveEventRequestIdRef = useRef(0);
+  const deleteEventRequestIdRef = useRef(0);
+  const timelineUpdateRequestIdRef = useRef(0);
+  const smartTemplateRequestIdRef = useRef(0);
+
   async function handleSaveEvent(e: React.FormEvent) {
     e.preventDefault();
+    const requestId = ++saveEventRequestIdRef.current;
+    const isCurrentSaveEvent = () => requestId === saveEventRequestIdRef.current;
 
     setSaveError(null);
     setSaveNotice(null);
@@ -142,6 +150,7 @@ export function useItineraryTimelineActions({
             pending_count: 60,
           }] as EventWithInvites[]));
         }
+        if (!isCurrentSaveEvent()) return;
         setShowEventForm(false);
         setSaveNotice(editingEvent ? 'Event updated.' : 'Event created.');
         return;
@@ -152,55 +161,74 @@ export function useItineraryTimelineActions({
         autoCreateAlbum,
         formData,
       });
+      if (!isCurrentSaveEvent()) return;
 
       setShowEventForm(false);
       setSaveNotice(editingEvent ? 'Event updated.' : 'Event created.');
       await loadEvents();
+      if (!isCurrentSaveEvent()) return;
     } catch (err: unknown) {
+      if (!isCurrentSaveEvent()) return;
       setSaveError(customerSafeErrorMessage(err, 'Couldn’t save event. Please try again.'));
     } finally {
-      setIsSavingEvent(false);
+      if (isCurrentSaveEvent()) {
+        setIsSavingEvent(false);
+      }
     }
   }
 
   async function handleDeleteEvent(eventId: string) {
+    const requestId = ++deleteEventRequestIdRef.current;
+    const isCurrentDeleteEvent = () => requestId === deleteEventRequestIdRef.current;
     const confirmed = await requestConfirmation({
       title: 'Delete this itinerary event?',
       description: 'This removes the event from your timeline and guest-facing schedule.',
       confirmLabel: 'Delete event',
       tone: 'danger',
     });
+    if (!isCurrentDeleteEvent()) return;
     if (!confirmed) return;
 
     try {
       if (isDemoMode) {
+        if (!isCurrentDeleteEvent()) return;
         setEvents((prev) => prev.filter((event) => event.id !== eventId));
         return;
       }
       await deleteItineraryEvent(eventId);
+      if (!isCurrentDeleteEvent()) return;
       await loadEvents();
+      if (!isCurrentDeleteEvent()) return;
     } catch {
+      if (!isCurrentDeleteEvent()) return;
       toast('Couldn’t delete event. Please try again.', 'error');
     }
   }
 
   async function updateEventsInPlace(nextEvents: EventWithInvites[], notice: string) {
+    const requestId = ++timelineUpdateRequestIdRef.current;
+    const isCurrentTimelineUpdate = () => requestId === timelineUpdateRequestIdRef.current;
     setTimelineBusy(notice);
     setSaveError(null);
     try {
       if (isDemoMode) {
+        if (!isCurrentTimelineUpdate()) return;
         setEvents(nextEvents);
         setSaveNotice(notice);
         return;
       }
 
       await persistItineraryTimeline(nextEvents);
+      if (!isCurrentTimelineUpdate()) return;
       setEvents(nextEvents);
       setSaveNotice(notice);
     } catch (err: unknown) {
+      if (!isCurrentTimelineUpdate()) return;
       setSaveError(customerSafeErrorMessage(err, 'Couldn’t update the timeline.'));
     } finally {
-      setTimelineBusy(null);
+      if (isCurrentTimelineUpdate()) {
+        setTimelineBusy(null);
+      }
     }
   }
 
@@ -225,6 +253,8 @@ export function useItineraryTimelineActions({
   }
 
   async function handleCreateSmartTemplate() {
+    const requestId = ++smartTemplateRequestIdRef.current;
+    const isCurrentSmartTemplate = () => requestId === smartTemplateRequestIdRef.current;
     const base = timeToMinutes(templateStart) ?? 660;
     const existing = new Set(events.map((event) => `${event.event_date}:${event.event_name.toLowerCase()}`));
     const template = [
@@ -268,19 +298,26 @@ export function useItineraryTimelineActions({
     setSaveError(null);
     try {
       if (isDemoMode) {
+        if (!isCurrentSmartTemplate()) return;
         setEvents((prev) => [...prev, ...newEvents]);
         setSaveNotice(`Added ${newEvents.length} template events.`);
         return;
       }
       const siteId = await resolveItinerarySiteId();
+      if (!isCurrentSmartTemplate()) return;
       if (!siteId) throw new Error('Please log in again and retry.');
       await createItineraryTemplateEvents(siteId, newEvents);
+      if (!isCurrentSmartTemplate()) return;
       await loadEvents();
+      if (!isCurrentSmartTemplate()) return;
       setSaveNotice(`Added ${newEvents.length} template events.`);
     } catch (err: unknown) {
+      if (!isCurrentSmartTemplate()) return;
       setSaveError(customerSafeErrorMessage(err, 'Couldn’t build the template.'));
     } finally {
-      setTimelineBusy(null);
+      if (isCurrentSmartTemplate()) {
+        setTimelineBusy(null);
+      }
     }
   }
 

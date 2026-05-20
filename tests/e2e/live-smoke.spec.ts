@@ -9,19 +9,25 @@ test.describe('public v1 trust smoke', () => {
     await page.goto(baseURL || 'https://dayof.love', { waitUntil: 'domcontentloaded' });
 
     await expect(page).toHaveTitle(/WeddingSite|Dayof|DayOf/i);
-    await expect(page.getByRole('heading', { name: /a calmer wedding operating system/i })).toBeVisible();
-    await expect(page.getByText(/Most wedding websites stop at publish\./i)).toBeVisible();
-    await expect(page.getByText(/One place for the details, people, and memories that matter\./i)).toBeVisible();
-    await expect(page.getByText(/Simple, honest pricing\./i)).toBeVisible();
+    await expect(page.getByRole('heading', { name: /A calmer wedding operating system\./i })).toBeVisible();
+    await expect(page.getByText(/Build the wedding site, manage the guest list, run RSVP and messages, collect photos/i)).toBeVisible();
+    await expect(page.getByRole('heading', { name: /Most wedding websites stop at publish\. dayof stays useful through the rest\./i })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /Site, guests, and day-of work in the same rhythm\./i })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /One place for the details, people, and memories that matter\./i })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /Built for launch truth, not wedding-tech theater\./i })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /Simple, honest pricing\./i })).toBeVisible();
     await expect(page.getByRole('button', { name: /sign up for your wedding site|start your wedding site draft|start your draft/i }).first()).toBeVisible();
   });
 
   test('product page exposes the current product shape', async ({ page }) => {
     await gotoDom(page, '/product');
 
-    await expect(page.getByRole('heading', { name: /start with the website\. keep the rest close\./i })).toBeVisible();
-    await expect(page.getByRole('heading', { name: /current product shape/i })).toBeVisible();
-    await expect(page.getByRole('heading', { name: /what couples can rely on right now/i })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /Start with the website\. Keep the rest close\./i })).toBeVisible();
+    await expect(page.getByText(/Build a beautiful site, then handle guests, RSVPs, messaging, seating, and the wedding-day plan/i)).toBeVisible();
+    await expect(page.getByRole('heading', { name: /If you already started elsewhere, dayof is strongest when you move the core wedding spine\./i })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /The wedding day should keep unfolding without taking over the planning flow\./i })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /Current product shape/i })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /What couples can rely on right now/i })).toBeVisible();
     await expect(page.getByText(/Public site \+ trust/i)).toBeVisible();
     await expect(page.getByText(/Messages/i).first()).toBeVisible();
     await expect(page.getByRole('heading', { name: /^Registry$/i })).toBeVisible();
@@ -30,8 +36,10 @@ test.describe('public v1 trust smoke', () => {
   test('trust page shows both the claim line and per-slice reality', async ({ page }) => {
     await gotoDom(page, '/trust');
 
-    await expect(page.getByRole('heading', { name: /built to make wedding planning feel calmer, not more manipulative/i })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /Built to make wedding planning feel calmer, not more manipulative\./i })).toBeVisible();
+    await expect(page.getByText(/say what is real, ship the parts couples actually need/i)).toBeVisible();
     await expect(page.getByText(/Current promise/i)).toBeVisible();
+    await expect(page.getByRole('heading', { name: /Trust gets a lot easier when the promise is narrow and real\./i })).toBeVisible();
     await expect(page.getByText(/Core promise/i)).toBeVisible();
     await expect(page.getByText(/Future or limited today/i)).toBeVisible();
     await expect(page.getByText(/Feature-by-feature read/i)).toBeVisible();

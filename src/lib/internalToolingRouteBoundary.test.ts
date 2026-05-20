@@ -14,11 +14,20 @@ describe('internal tooling route boundary', () => {
     expect(app).toContain('internalToolingCaptureRoutesEnabled,');
     expect(app).toContain('internalToolingRoutesLoading,');
     expect(app).toContain('} = useInternalToolingRouteAccess();');
-    expect(app).toContain('<InternalToolingRoutes');
+    expect(app).toContain('InternalToolingRoutes({');
     expect(internalRoutes).toContain('function internalToolingFallback');
     expect(internalRoutes).toContain('path="/builder-v2-lab" element={internalToolingRoutesEnabled ? <BuilderV2Lab /> : fallback}');
     expect(internalRoutes).toContain('path="/variant-preview-capture" element={internalToolingCaptureRoutesEnabled ? <VariantPreviewCapture /> : fallback}');
     expect(internalRoutes).toContain('path="/template-scroll-capture" element={internalToolingCaptureRoutesEnabled ? <TemplateScrollCapture /> : fallback}');
+  });
+
+  it('derives capture-route access from the active router pathname', () => {
+    const source = read('src/lib/internalToolingRoutes.ts');
+
+    expect(source).toContain("import { useLocation } from 'react-router-dom';");
+    expect(source).toContain('const location = useLocation();');
+    expect(source).toContain('location.pathname,');
+    expect(source).not.toContain('const { pathname } = window.location;');
   });
 
   it('uses the capture-route helper for static preview links', () => {

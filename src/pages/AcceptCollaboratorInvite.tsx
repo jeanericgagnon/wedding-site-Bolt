@@ -49,6 +49,9 @@ export const AcceptCollaboratorInvite: React.FC = () => {
   const [claimStep, setClaimStep] = useState<string | null>(null);
   const [claimTrace, setClaimTrace] = useState<string[]>([]);
   const claimAttemptKeyRef = useRef<string | null>(null);
+  const claimRunRef = useRef(0);
+  const authRunRef = useRef(0);
+  const activeInviteTokenRef = useRef<string | null>(token);
   const [inviteLookupDebug, setInviteLookupDebug] = useState<string | null>(null);
   const [authMode, setAuthMode] = useState<AuthMode>('signin');
   const [authLoading, setAuthLoading] = useState(false);
@@ -58,6 +61,42 @@ export const AcceptCollaboratorInvite: React.FC = () => {
 
   const inviteeLabel = useMemo(() => inviteInfo?.invite_name || inviteInfo?.invite_email || 'your collaborator', [inviteInfo]);
   const siteLabel = useMemo(() => getInviteSiteLabel(inviteInfo), [inviteInfo]);
+
+  const clearTransientAuthState = () => {
+    setAuthError(null);
+    setClaimError(null);
+    setClaimMessage(null);
+  };
+
+  useEffect(() => {
+    activeInviteTokenRef.current = token;
+    claimRunRef.current += 1;
+    authRunRef.current += 1;
+    setInviteInfo(null);
+    setInviteState('loading');
+    setClaiming(false);
+    setClaimMessage(null);
+    setClaimError(null);
+    setClaimStep(null);
+    setClaimTrace([]);
+    claimAttemptKeyRef.current = null;
+    setInviteLookupDebug(null);
+    setAuthMode('signin');
+    setAuthLoading(false);
+    setAuthError(null);
+    setSignInForm(initialSignInForm);
+    setSignUpForm(initialSignUpForm);
+  }, [token]);
+
+  const updateSignInForm = (patch: Partial<typeof initialSignInForm>) => {
+    clearTransientAuthState();
+    setSignInForm((prev) => ({ ...prev, ...patch }));
+  };
+
+  const updateSignUpForm = (patch: Partial<typeof initialSignUpForm>) => {
+    clearTransientAuthState();
+    setSignUpForm((prev) => ({ ...prev, ...patch }));
+  };
 
   useEffect(() => {
     if (authMode === 'signup' && !authLoading && !claiming) {
@@ -103,8 +142,15 @@ export const AcceptCollaboratorInvite: React.FC = () => {
       const resolvedState = resolveInviteValidationState(nextInviteInfo);
       setInviteInfo(nextInviteInfo);
       setAuthMode((prev) => prev === 'signin' ? 'signup' : prev);
-      setSignInForm((prev) => ({ ...prev, email: nextInviteInfo.invite_email }));
-      setSignUpForm((prev) => ({ ...prev, email: nextInviteInfo.invite_email, fullName: prev.fullName || nextInviteInfo.invite_name || '' }));
+      setSignInForm({
+        ...initialSignInForm,
+        email: nextInviteInfo.invite_email,
+      });
+      setSignUpForm({
+        ...initialSignUpForm,
+        email: nextInviteInfo.invite_email,
+        fullName: nextInviteInfo.invite_name || '',
+      });
       setInviteLookupDebug(`Invite loaded: status=${nextInviteInfo.status}`);
       setInviteState(resolvedState);
     };
@@ -119,7 +165,7 @@ export const AcceptCollaboratorInvite: React.FC = () => {
     setClaimTrace((prev) => [...prev.slice(-11), `${new Date().toISOString()} ${msg}`]);
   };
 
-  const claimInvite = async (authUser: AuthUser, currentInvite: InviteInfo) => {
+  const claimInvite = async (authUser: AuthUser, currentInvite: InviteInfo, isActiveClaim: () => boolean = () => true) => {
     if (!currentInvite?.id || !currentInvite.wedding_site_id || !token) {
       throw new Error('Invite details are incomplete.');
     }
@@ -131,15 +177,18 @@ export const AcceptCollaboratorInvite: React.FC = () => {
     const rpcStart = Date.now();
     trace('claimInvite:rpc:start');
     const hasSession = await hasCollaboratorInviteSession();
+    if (!isActiveClaim()) return;
     trace(`claimInvite:session:${hasSession ? 'yes' : 'no'}`);
     try {
       await claimCollaboratorInviteByToken(token);
     } catch (error) {
+      if (!isActiveClaim()) return;
       const message = error instanceof Error ? error.message : String(error);
       trace(`claimInvite:rpc:error:${message}`);
       throw new Error('Couldn’t accept this invite right now. Please try again.');
     }
 
+    if (!isActiveClaim()) return;
     const rpcMs = Date.now() - rpcStart;
     trace(`claimInvite:rpc:done:${rpcMs}ms`);
     void logAppAction({
@@ -157,7 +206,11 @@ export const AcceptCollaboratorInvite: React.FC = () => {
     setClaimStep(`Invite claimed in ${rpcMs}ms.`);
   };
 
-  const finishClaim = async (authUser: AuthUser, currentInvite: InviteInfo) => {
+  const finishClaim = async (authUser: AuthUser, currentInvite: InviteInfo, currentToken = token) => {
+    const claimRun = claimRunRef.current + 1;
+    claimRunRef.current = claimRun;
+    const isActiveClaim = () => claimRunRef.current === claimRun && activeInviteTokenRef.current === currentToken;
+
     trace('finishClaim:start');
     setClaiming(true);
     setClaimError(null);
@@ -166,7 +219,8 @@ export const AcceptCollaboratorInvite: React.FC = () => {
 
     try {
       setClaimStep('Adding collaborator membership…');
-      await claimInvite(authUser, currentInvite);
+      await claimInvite(authUser, currentInvite, isActiveClaim);
+      if (!isActiveClaim()) return;
       trace('finishClaim:accepted');
       setInviteState('accepted');
       setClaimStep('Invite accepted. Opening…');
@@ -174,13 +228,14 @@ export const AcceptCollaboratorInvite: React.FC = () => {
       trace(`finishClaim:navigate:${getCollaboratorRedirectPath(currentInvite.role)}`);
       navigate(getCollaboratorRedirectPath(currentInvite.role), { replace: true });
     } catch (err) {
+      if (!isActiveClaim()) return;
       trace('finishClaim:error:invite-claim-needs-retry');
       setClaimError(safeCollaboratorInviteError(err));
       setClaimStep(null);
       setClaimMessage(null);
       throw err;
     } finally {
-      setClaiming(false);
+      if (isActiveClaim()) setClaiming(false);
     }
   };
 
@@ -210,6 +265,10 @@ export const AcceptCollaboratorInvite: React.FC = () => {
 
   const handleEmailSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
+    const authRun = authRunRef.current + 1;
+    authRunRef.current = authRun;
+    const submitToken = token;
+    const isActiveAuth = () => authRunRef.current === authRun && activeInviteTokenRef.current === submitToken;
     setAuthLoading(true);
     setAuthError(null);
     setClaimError(null);
@@ -217,6 +276,7 @@ export const AcceptCollaboratorInvite: React.FC = () => {
 
     try {
       const authResult = await signInCollaboratorInviteAccount(signInForm.email, signInForm.password);
+      if (!isActiveAuth()) return;
 
       if (!inviteInfo) throw new Error('Invite details are incomplete.');
       await finishClaim({
@@ -225,14 +285,18 @@ export const AcceptCollaboratorInvite: React.FC = () => {
         name: authResult.user.user_metadata?.name as string | undefined || authResult.user.email || signInForm.email,
       }, inviteInfo);
     } catch (err) {
-      setAuthError(safeAuthError(err, 'Couldn’t sign you in right now.'));
+      if (isActiveAuth()) setAuthError(safeAuthError(err, 'Couldn’t sign you in right now.'));
     } finally {
-      setAuthLoading(false);
+      if (isActiveAuth()) setAuthLoading(false);
     }
   };
 
   const handleEmailSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
+    const authRun = authRunRef.current + 1;
+    authRunRef.current = authRun;
+    const submitToken = token;
+    const isActiveAuth = () => authRunRef.current === authRun && activeInviteTokenRef.current === submitToken;
     setAuthLoading(true);
     setAuthError(null);
     setClaimError(null);
@@ -256,6 +320,7 @@ export const AcceptCollaboratorInvite: React.FC = () => {
         signUpForm.password,
         signUpForm.fullName,
       );
+      if (!isActiveAuth()) return;
 
       if (!inviteInfo) throw new Error('Invite details are incomplete.');
       await finishClaim({
@@ -264,9 +329,9 @@ export const AcceptCollaboratorInvite: React.FC = () => {
         name: signedInUser.user_metadata?.name as string | undefined || signUpForm.fullName.trim() || signedInUser.email || signUpForm.email,
       }, inviteInfo);
     } catch (err) {
-      setAuthError(safeCollaboratorInviteError(err, 'Couldn’t create your account right now.'));
+      if (isActiveAuth()) setAuthError(safeCollaboratorInviteError(err, 'Couldn’t create your account right now.'));
     } finally {
-      setAuthLoading(false);
+      if (isActiveAuth()) setAuthLoading(false);
     }
   };
 
@@ -295,7 +360,7 @@ export const AcceptCollaboratorInvite: React.FC = () => {
             <Heart className="w-8 h-8 text-accent" aria-hidden="true" />
             <span className="text-2xl font-semibold text-text-primary">dayof</span>
           </Link>
-          <div className="rounded-lg border border-border-subtle bg-white/70 px-4 py-2 text-sm font-medium text-text-tertiary">
+          <div className="rounded-xl border border-border-subtle bg-white/70 px-4 py-2 text-sm font-medium text-text-tertiary">
             Collaborator access
           </div>
         </div>
@@ -303,7 +368,7 @@ export const AcceptCollaboratorInvite: React.FC = () => {
         <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
           <Card variant="default" padding="lg">
             <div className="flex items-start gap-3">
-              <div className="rounded-lg bg-surface-secondary p-3 text-primary">
+              <div className="rounded-xl bg-surface-secondary p-3 text-primary">
                 <ShieldCheck className="h-6 w-6" aria-hidden="true" />
               </div>
               <div>
@@ -316,24 +381,24 @@ export const AcceptCollaboratorInvite: React.FC = () => {
             </div>
 
             <div className="mt-8 grid gap-4 md:grid-cols-3">
-              <div className="rounded-lg border border-border-subtle bg-surface-subtle/30 p-4">
+              <div className="rounded-xl border border-border-subtle bg-surface-subtle/30 p-4">
                 <p className="text-xs font-medium text-text-tertiary">Step 1</p>
                 <p className="mt-2 text-sm font-semibold text-text-primary">Check invite</p>
                 <p className="mt-2 text-sm text-text-secondary">We’ll confirm the invite and invited email.</p>
               </div>
-              <div className="rounded-lg border border-border-subtle bg-surface-subtle/30 p-4">
+              <div className="rounded-xl border border-border-subtle bg-surface-subtle/30 p-4">
                 <p className="text-xs font-medium text-text-tertiary">Step 2</p>
                 <p className="mt-2 text-sm font-semibold text-text-primary">Sign in or create account</p>
                 <p className="mt-2 text-sm text-text-secondary">Use the invited email to join this wedding.</p>
               </div>
-              <div className="rounded-lg border border-border-subtle bg-surface-subtle/30 p-4">
+              <div className="rounded-xl border border-border-subtle bg-surface-subtle/30 p-4">
                 <p className="text-xs font-medium text-text-tertiary">Step 3</p>
                 <p className="mt-2 text-sm font-semibold text-text-primary">Join wedding</p>
                 <p className="mt-2 text-sm text-text-secondary">We’ll add you to the wedding and take you there.</p>
               </div>
             </div>
 
-            <div className="mt-8 rounded-lg border border-border-subtle bg-surface-subtle/20 p-6">
+            <div className="mt-8 rounded-xl border border-border-subtle bg-surface-subtle/20 p-6">
               {inviteState === 'loading' && (
                 <div className="flex items-center gap-3 text-text-secondary">
                   <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
@@ -382,19 +447,19 @@ export const AcceptCollaboratorInvite: React.FC = () => {
                   </div>
 
                   <dl className="grid gap-4 sm:grid-cols-2">
-                    <div className="rounded-lg bg-white p-4">
+                    <div className="rounded-xl bg-white p-4">
                       <dt className="text-xs font-medium text-text-tertiary">Invite name</dt>
                       <dd className="mt-2 text-sm font-medium text-text-primary">{inviteeLabel}</dd>
                     </div>
-                    <div className="rounded-lg bg-white p-4">
+                    <div className="rounded-xl bg-white p-4">
                       <dt className="text-xs font-medium text-text-tertiary">Invited email</dt>
                       <dd className="mt-2 text-sm font-medium text-text-primary">{inviteInfo.invite_email}</dd>
                     </div>
-                    <div className="rounded-lg bg-white p-4">
+                    <div className="rounded-xl bg-white p-4">
                       <dt className="text-xs font-medium text-text-tertiary">Role</dt>
                       <dd className="mt-2 text-sm font-medium text-text-primary">{formatRole(inviteInfo.role)}</dd>
                     </div>
-                    <div className="rounded-lg bg-white p-4">
+                    <div className="rounded-xl bg-white p-4">
                       <dt className="text-xs font-medium text-text-tertiary">Billing</dt>
                       <dd className="mt-2 text-sm font-medium text-text-primary">No payment required</dd>
                     </div>
@@ -404,7 +469,7 @@ export const AcceptCollaboratorInvite: React.FC = () => {
             </div>
 
             {claimMessage && (
-              <div className="mt-4 rounded-lg border border-primary/20 bg-primary/5 px-4 py-3 text-sm text-text-primary">
+              <div className="mt-4 rounded-xl border border-primary/20 bg-primary/5 px-4 py-3 text-sm text-text-primary">
                 <div>{claimMessage}</div>
                 {showInviteDebug && claimStep && <div className="mt-1 text-xs text-text-tertiary">Claim stage: {claimStep}</div>}
                 {showInviteDebug && claimTrace.length > 0 && (
@@ -416,7 +481,7 @@ export const AcceptCollaboratorInvite: React.FC = () => {
             )}
 
             {claimError && (
-              <div className="mt-4 flex items-start gap-2 rounded-lg border border-border-subtle bg-surface-secondary px-4 py-3 text-sm text-text-secondary">
+              <div className="mt-4 flex items-start gap-2 rounded-xl border border-border-subtle bg-surface-secondary px-4 py-3 text-sm text-text-secondary">
                 <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0" aria-hidden="true" />
                 <span>{claimError}</span>
               </div>
@@ -428,7 +493,7 @@ export const AcceptCollaboratorInvite: React.FC = () => {
                   Continue to your wedding
                 </Button>
               )}
-              <Link to="/" className="inline-flex items-center rounded-lg border border-border-subtle px-4 py-2 text-sm font-medium text-text-primary hover:bg-surface-subtle">
+              <Link to="/" className="inline-flex items-center rounded-xl border border-border-subtle px-4 py-2 text-sm font-medium text-text-primary hover:bg-surface-subtle">
                 Back to dayof
               </Link>
             </div>
@@ -463,7 +528,7 @@ export const AcceptCollaboratorInvite: React.FC = () => {
             ) : (
               <>
                 <div className="mb-6 flex items-center gap-3">
-                  <div className="rounded-lg bg-surface-secondary p-3 text-primary">
+                  <div className="rounded-xl bg-surface-secondary p-3 text-primary">
                     {authMode === 'signin' ? <ShieldCheck className="h-5 w-5" aria-hidden="true" /> : <UserPlus className="h-5 w-5" aria-hidden="true" />}
                   </div>
                   <div>
@@ -472,24 +537,24 @@ export const AcceptCollaboratorInvite: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="flex rounded-lg bg-surface-subtle p-1 mb-6">
+                <div className="flex rounded-xl bg-surface-subtle p-1 mb-6">
                   <button
                     type="button"
-                    onClick={() => { setAuthMode('signin'); setAuthError(null); }}
-                    className={`flex-1 rounded-lg px-4 py-2 text-sm font-medium transition-colors ${authMode === 'signin' ? 'bg-white text-text-primary border border-border-subtle' : 'text-text-secondary hover:text-text-primary'}`}
+                    onClick={() => { setAuthMode('signin'); clearTransientAuthState(); }}
+                    className={`flex-1 rounded-xl px-4 py-2 text-sm font-medium transition-colors ${authMode === 'signin' ? 'bg-white text-text-primary border border-border-subtle' : 'text-text-secondary hover:text-text-primary'}`}
                   >
                     Sign in
                   </button>
                   <button
                     type="button"
-                    onClick={() => { setAuthMode('signup'); setAuthError(null); }}
-                    className={`flex-1 rounded-lg px-4 py-2 text-sm font-medium transition-colors ${authMode === 'signup' ? 'bg-white text-text-primary border border-border-subtle' : 'text-text-secondary hover:text-text-primary'}`}
+                    onClick={() => { setAuthMode('signup'); clearTransientAuthState(); }}
+                    className={`flex-1 rounded-xl px-4 py-2 text-sm font-medium transition-colors ${authMode === 'signup' ? 'bg-white text-text-primary border border-border-subtle' : 'text-text-secondary hover:text-text-primary'}`}
                   >
                     Create account
                   </button>
                 </div>
 
-                <div className="mb-5 rounded-lg border border-border-subtle bg-surface-subtle/30 p-4">
+                <div className="mb-5 rounded-xl border border-border-subtle bg-surface-subtle/30 p-4">
                   <p className="text-sm text-text-secondary">
                     {authMode === 'signin'
                       ? 'Use the invited email and password below. We’ll add you to the wedding right away.'
@@ -498,15 +563,15 @@ export const AcceptCollaboratorInvite: React.FC = () => {
                   {showInviteDebug && <div className="mt-4 text-[11px] text-text-tertiary">{debugFlags}</div>}
                   {inviteIsClaimable && inviteInfo && (
                     <div className="mt-4 flex flex-wrap gap-2 text-xs text-text-secondary">
-                      <span className="rounded-lg bg-white px-3 py-1 border border-border-subtle">{formatRole(inviteInfo.role)}</span>
-                      <span className="rounded-lg bg-white px-3 py-1 border border-border-subtle">{inviteInfo.invite_email}</span>
-                      <span className="rounded-lg bg-white px-3 py-1 border border-border-subtle">No payment</span>
+                      <span className="rounded-xl bg-white px-3 py-1 border border-border-subtle">{formatRole(inviteInfo.role)}</span>
+                      <span className="rounded-xl bg-white px-3 py-1 border border-border-subtle">{inviteInfo.invite_email}</span>
+                      <span className="rounded-xl bg-white px-3 py-1 border border-border-subtle">No payment</span>
                     </div>
                   )}
                 </div>
 
                 {authError && (
-                  <div className="mb-5 flex items-start gap-2 rounded-lg border border-border-subtle bg-surface-secondary px-4 py-3 text-sm text-text-secondary">
+                  <div className="mb-5 flex items-start gap-2 rounded-xl border border-border-subtle bg-surface-secondary px-4 py-3 text-sm text-text-secondary">
                     <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0" aria-hidden="true" />
                     <span>{authError}</span>
                   </div>
@@ -518,7 +583,7 @@ export const AcceptCollaboratorInvite: React.FC = () => {
                       label="Invited email"
                       type="email"
                       value={signInForm.email}
-                      onChange={(e) => setSignInForm((prev) => ({ ...prev, email: e.target.value }))}
+                      onChange={(e) => updateSignInForm({ email: e.target.value })}
                       placeholder="planner@email.com"
                       required
                       autoComplete="email"
@@ -528,7 +593,7 @@ export const AcceptCollaboratorInvite: React.FC = () => {
                       label="Password"
                       type="password"
                       value={signInForm.password}
-                      onChange={(e) => setSignInForm((prev) => ({ ...prev, password: e.target.value }))}
+                      onChange={(e) => updateSignInForm({ password: e.target.value })}
                       placeholder="Enter your password"
                       required
                       autoComplete="current-password"
@@ -544,7 +609,7 @@ export const AcceptCollaboratorInvite: React.FC = () => {
                       label="Full name"
                       type="text"
                       value={signUpForm.fullName}
-                      onChange={(e) => setSignUpForm((prev) => ({ ...prev, fullName: e.target.value }))}
+                      onChange={(e) => updateSignUpForm({ fullName: e.target.value })}
                       placeholder="Your name"
                       required
                       autoComplete="name"
@@ -554,7 +619,7 @@ export const AcceptCollaboratorInvite: React.FC = () => {
                       label="Invited email"
                       type="email"
                       value={signUpForm.email}
-                      onChange={(e) => setSignUpForm((prev) => ({ ...prev, email: e.target.value }))}
+                      onChange={(e) => updateSignUpForm({ email: e.target.value })}
                       placeholder="planner@email.com"
                       required
                       autoComplete="email"
@@ -564,7 +629,7 @@ export const AcceptCollaboratorInvite: React.FC = () => {
                       label="Create password"
                       type="password"
                       value={signUpForm.password}
-                      onChange={(e) => setSignUpForm((prev) => ({ ...prev, password: e.target.value }))}
+                      onChange={(e) => updateSignUpForm({ password: e.target.value })}
                       placeholder="Create a password"
                       required
                       autoComplete="new-password"
@@ -575,7 +640,7 @@ export const AcceptCollaboratorInvite: React.FC = () => {
                       label="Confirm password"
                       type="password"
                       value={signUpForm.confirmPassword}
-                      onChange={(e) => setSignUpForm((prev) => ({ ...prev, confirmPassword: e.target.value }))}
+                      onChange={(e) => updateSignUpForm({ confirmPassword: e.target.value })}
                       placeholder="Repeat your password"
                       required
                       autoComplete="new-password"

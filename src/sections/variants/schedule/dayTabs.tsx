@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { z } from 'zod';
 import { MapPin } from 'lucide-react';
 import { SectionDefinition, SectionComponentProps } from '../../types';
@@ -67,6 +67,9 @@ export const defaultScheduleDayTabsData: ScheduleDayTabsData = {
 
 const ScheduleDayTabs: React.FC<SectionComponentProps<ScheduleDayTabsData>> = ({ data }) => {
   const [activeDay, setActiveDay] = useState(data.days[0]?.id ?? '');
+  useEffect(() => {
+    setActiveDay(data.days[0]?.id ?? '');
+  }, [data.days]);
   const currentDay = data.days.find(d => d.id === activeDay) ?? data.days[0];
 
   return (

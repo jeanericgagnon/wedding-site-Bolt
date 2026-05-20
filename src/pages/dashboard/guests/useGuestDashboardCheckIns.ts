@@ -1,4 +1,5 @@
 import type React from 'react';
+import { useEffect, useRef } from 'react';
 import type { ConfirmDialogProps } from '../../../components/ui/ConfirmDialog';
 import type { ToastType } from '../../../components/ui/Toast';
 import type { GuestWithRSVP } from './guestDashboardTypes';
@@ -36,18 +37,35 @@ export function useGuestDashboardCheckIns({
   toast,
   weddingSiteId,
 }: UseGuestDashboardCheckInsInput) {
+  const guestCheckInContextVersionRef = useRef(0);
+
+  useEffect(() => {
+    guestCheckInContextVersionRef.current += 1;
+    setLastCheckIn(null);
+  }, [isDemoMode, setLastCheckIn, weddingSiteId]);
+
+  function isCurrentGuestCheckInContext(contextVersion: number) {
+    return contextVersion === guestCheckInContextVersionRef.current;
+  }
+
   const handleUndoLastCheckIn = async () => {
     if (isGuestsReadOnly) {
       toast('Your collaborator role cannot update guest check-in.', 'info');
       return;
     }
     if (!weddingSiteId || !lastCheckIn || isDemoMode) return;
+    const contextVersion = guestCheckInContextVersionRef.current;
+    const targetWeddingSiteId = weddingSiteId;
+    const targetLastCheckIn = lastCheckIn;
     try {
-      await updateGuestForSite(weddingSiteId, lastCheckIn.guestId, { checked_in_at: null });
+      await updateGuestForSite(targetWeddingSiteId, targetLastCheckIn.guestId, { checked_in_at: null });
+      if (!isCurrentGuestCheckInContext(contextVersion)) return;
       await fetchGuests();
-      toast(`Undid check-in for ${lastCheckIn.guestName}`, 'success');
+      if (!isCurrentGuestCheckInContext(contextVersion)) return;
+      toast(`Undid check-in for ${targetLastCheckIn.guestName}`, 'success');
       setLastCheckIn(null);
     } catch {
+      if (!isCurrentGuestCheckInContext(contextVersion)) return;
       toast('Couldn’t undo last check-in.', 'error');
     }
   };
@@ -58,13 +76,18 @@ export function useGuestDashboardCheckIns({
       return;
     }
     if (!weddingSiteId || isDemoMode) return;
+    const contextVersion = guestCheckInContextVersionRef.current;
+    const targetWeddingSiteId = weddingSiteId;
     try {
       const current = guest.thank_you_sent_at;
       const nextValue = current ? null : new Date().toISOString();
-      await updateGuestForSite(weddingSiteId, guest.id, { thank_you_sent_at: nextValue });
+      await updateGuestForSite(targetWeddingSiteId, guest.id, { thank_you_sent_at: nextValue });
+      if (!isCurrentGuestCheckInContext(contextVersion)) return;
       await fetchGuests();
+      if (!isCurrentGuestCheckInContext(contextVersion)) return;
       toast(nextValue ? 'Marked thank-you sent' : 'Cleared thank-you status', 'success');
     } catch {
+      if (!isCurrentGuestCheckInContext(contextVersion)) return;
       toast('Couldn’t update thank-you status.', 'error');
     }
   };
@@ -80,17 +103,23 @@ export function useGuestDashboardCheckIns({
       toast('No guests currently due for thank-you.', 'error');
       return;
     }
+    const contextVersion = guestCheckInContextVersionRef.current;
+    const targetWeddingSiteId = weddingSiteId;
     const confirmed = await requestConfirmation({
       title: 'Mark thank-you notes sent?',
       description: `This will mark thank-you sent for ${ids.length} ${ids.length === 1 ? 'guest' : 'guests'}.`,
       confirmLabel: 'Mark sent',
     });
+    if (!isCurrentGuestCheckInContext(contextVersion)) return;
     if (!confirmed) return;
     try {
-      await updateGuestsForSite(weddingSiteId, ids, { thank_you_sent_at: new Date().toISOString() });
+      await updateGuestsForSite(targetWeddingSiteId, ids, { thank_you_sent_at: new Date().toISOString() });
+      if (!isCurrentGuestCheckInContext(contextVersion)) return;
       await fetchGuests();
+      if (!isCurrentGuestCheckInContext(contextVersion)) return;
       toast(`Marked ${ids.length} thank-you sent`, 'success');
     } catch {
+      if (!isCurrentGuestCheckInContext(contextVersion)) return;
       toast('Couldn’t mark thank-you notes sent.', 'error');
     }
   };
@@ -106,19 +135,25 @@ export function useGuestDashboardCheckIns({
       toast('No checked-in guests to clear.', 'error');
       return;
     }
+    const contextVersion = guestCheckInContextVersionRef.current;
+    const targetWeddingSiteId = weddingSiteId;
     const confirmed = await requestConfirmation({
       title: 'Clear all check-ins?',
       description: `This will clear check-in status and notes for ${checkedInCount} ${checkedInCount === 1 ? 'guest' : 'guests'}.`,
       confirmLabel: 'Clear check-ins',
       tone: 'danger',
     });
+    if (!isCurrentGuestCheckInContext(contextVersion)) return;
     if (!confirmed) return;
     try {
-      await clearGuestCheckInsForSite(weddingSiteId);
+      await clearGuestCheckInsForSite(targetWeddingSiteId);
+      if (!isCurrentGuestCheckInContext(contextVersion)) return;
       await fetchGuests();
+      if (!isCurrentGuestCheckInContext(contextVersion)) return;
       setLastCheckIn(null);
       toast('Cleared all check-ins', 'success');
     } catch {
+      if (!isCurrentGuestCheckInContext(contextVersion)) return;
       toast('Couldn’t clear check-ins.', 'error');
     }
   };
@@ -134,13 +169,17 @@ export function useGuestDashboardCheckIns({
     }
 
     const nextValue = guest.checked_in_at ? null : new Date().toISOString();
+    const contextVersion = guestCheckInContextVersionRef.current;
+    const targetWeddingSiteId = weddingSiteId;
     const updateCheckin = async () => {
-      await updateGuestForSite(weddingSiteId, guest.id, { checked_in_at: nextValue });
+      await updateGuestForSite(targetWeddingSiteId, guest.id, { checked_in_at: nextValue });
     };
 
     try {
       await updateCheckin();
+      if (!isCurrentGuestCheckInContext(contextVersion)) return;
       await fetchGuests();
+      if (!isCurrentGuestCheckInContext(contextVersion)) return;
       if (nextValue) {
         setLastCheckIn({ guestId: guest.id, guestName: getGuestDisplayName(guest), at: Date.now() });
       }
@@ -151,14 +190,18 @@ export function useGuestDashboardCheckIns({
       if (authish) {
         try {
           await refreshGuestDashboardSession();
+          if (!isCurrentGuestCheckInContext(contextVersion)) return;
           await updateCheckin();
+          if (!isCurrentGuestCheckInContext(contextVersion)) return;
           await fetchGuests();
+          if (!isCurrentGuestCheckInContext(contextVersion)) return;
           toast(nextValue ? 'Guest checked in' : 'Guest check-in cleared', 'success');
           return;
         } catch {
           // fall through to canonical error toast
         }
       }
+      if (!isCurrentGuestCheckInContext(contextVersion)) return;
       toast('Couldn’t update check-in status.', 'error');
     }
   };

@@ -72,6 +72,9 @@ const output = {
   summary: result.ok
     ? 'No direct client .insert/.update/.upsert/.delete calls remain in tracked src runtime files.'
     : 'Direct client write calls still exist in tracked src runtime files and must be removed or moved behind RPC/Edge paths.',
+  contractSummary: result.ok
+    ? 'Client write inventory is green: this source-level guard proves shipped runtime files are not using direct client write chains, but it remains supporting inventory evidence rather than a runtime permission proof by itself.'
+    : 'Client write inventory is not green: source-level direct client writes still exist and must be removed before stronger runtime permission claims stay credible.',
   automatedCoverage: [
     'Scans tracked src runtime files for direct Supabase .insert/.update/.upsert/.delete calls, including multiline chains and single/double/backtick table names',
     'Excludes test files and untracked local duplicates so the guard stays focused on shipped runtime code paths',

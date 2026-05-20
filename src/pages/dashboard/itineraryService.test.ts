@@ -335,6 +335,7 @@ describe('buildItineraryTemplateInsertRows', () => {
         pending_count: 0,
       }],
       hasEventRsvpsTable: true,
+      hasActiveSite: true,
     });
   });
 

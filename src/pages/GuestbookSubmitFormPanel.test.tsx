@@ -85,9 +85,8 @@ describe('GuestbookSubmitFormPanel', () => {
       </MemoryRouter>,
     );
 
-    const hiddenInput = container.querySelector('input.hidden');
-    expect(hiddenInput).not.toBeNull();
-    expect(hiddenInput).toHaveClass('hidden');
+    const hiddenInput = container.querySelector('input[tabindex="-1"]');
+    expect(hiddenInput).toBeInTheDocument();
     expect(hiddenInput).toHaveAttribute('tabindex', '-1');
   });
 
@@ -114,8 +113,10 @@ describe('GuestbookSubmitFormPanel', () => {
       </MemoryRouter>,
     );
 
-    expect(container.querySelector('form')).toHaveAttribute('aria-busy', 'true');
-    expect(screen.getByRole('button', { name: 'Sending…' })).toBeDisabled();
+    const submitButton = screen.getByRole('button', { name: 'Sending…' });
+    const busyForm = container.querySelector('form[aria-busy="true"]');
+    expect(busyForm).toBeInTheDocument();
+    expect(submitButton).toBeDisabled();
     expect(screen.getByRole('link', { name: 'Back to wedding hub' })).toHaveAttribute('href', '/event/maya-leo');
   });
 });

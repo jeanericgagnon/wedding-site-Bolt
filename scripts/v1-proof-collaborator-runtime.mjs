@@ -70,6 +70,7 @@ function runRuntimeInviteFlow() {
   const command = 'node scripts/playwright-owner-create-invite-and-claim.mjs [baseUrl] [ownerEmail] [ownerPassword] [collaboratorEmail] [collaboratorPassword]';
   const timeoutMs = 120_000;
 
+  console.error(`[collaborator-runtime-proof] starting invite-accept-runtime: ${command}`);
   try {
     const stdout = execFileSync('node', [
       'scripts/playwright-owner-create-invite-and-claim.mjs',
@@ -79,9 +80,9 @@ function runRuntimeInviteFlow() {
       collaboratorEmail,
       collaboratorPassword,
     ], {
-      stdio: ['ignore', 'pipe', 'pipe'],
+      stdio: ['ignore', 'pipe', 'inherit'],
       encoding: 'utf8',
-      env: process.env,
+      env: { ...process.env, ...fileEnv },
       maxBuffer: 20 * 1024 * 1024,
       timeout: timeoutMs,
     });
@@ -95,6 +96,7 @@ function runRuntimeInviteFlow() {
 
     const failedSteps = Array.isArray(parsed?.steps) ? parsed.steps.filter((step) => !step.ok) : [];
 
+    console.error('[collaborator-runtime-proof] passed invite-accept-runtime');
     return {
       id: 'invite-accept-runtime',
       label: 'Owner invite -> collaborator accept runtime flow',
@@ -109,6 +111,7 @@ function runRuntimeInviteFlow() {
       timeoutMs,
     };
   } catch (error) {
+    console.error('[collaborator-runtime-proof] failed invite-accept-runtime');
     const stdout = typeof error?.stdout === 'string' ? error.stdout : Buffer.isBuffer(error?.stdout) ? error.stdout.toString('utf8') : '';
     const stderr = typeof error?.stderr === 'string' ? error.stderr : Buffer.isBuffer(error?.stderr) ? error.stderr.toString('utf8') : '';
 
@@ -148,6 +151,7 @@ function runCollaboratorRoleProof() {
   const command = 'LIVE_COLLABORATOR_PERMISSION_RLS=1 npx playwright test --workers=1 tests/e2e/collaborator-permission-rls.spec.ts';
   const timeoutMs = 180_000;
 
+  console.error(`[collaborator-runtime-proof] starting forbidden-action-permission-rls: ${command}`);
   try {
     const stdout = execFileSync('npx', [
       'playwright',
@@ -155,9 +159,10 @@ function runCollaboratorRoleProof() {
       '--workers=1',
       'tests/e2e/collaborator-permission-rls.spec.ts',
     ], {
-      stdio: ['ignore', 'pipe', 'pipe'],
+      stdio: ['ignore', 'pipe', 'inherit'],
       encoding: 'utf8',
       env: {
+        ...fileEnv,
         ...process.env,
         PLAYWRIGHT_BASE_URL: baseUrl,
         LIVE_COLLABORATOR_PERMISSION_RLS: '1',
@@ -168,6 +173,7 @@ function runCollaboratorRoleProof() {
       timeout: timeoutMs,
     });
 
+    console.error('[collaborator-runtime-proof] passed forbidden-action-permission-rls');
     return {
       id: 'forbidden-action-permission-rls',
       label: 'Viewer deny + planner/coordinator allow collaborator runtime proof',
@@ -181,6 +187,7 @@ function runCollaboratorRoleProof() {
       timeoutMs,
     };
   } catch (error) {
+    console.error('[collaborator-runtime-proof] failed forbidden-action-permission-rls');
     const stdout = typeof error?.stdout === 'string' ? error.stdout : Buffer.isBuffer(error?.stdout) ? error.stdout.toString('utf8') : '';
     const stderr = typeof error?.stderr === 'string' ? error.stderr : Buffer.isBuffer(error?.stderr) ? error.stderr.toString('utf8') : '';
 
@@ -215,6 +222,7 @@ const output = blocker.blocked
       slice: 'collaborator-runtime-proof',
       generatedAt: new Date().toISOString(),
       summary: { total: 1, passed: 0, failed: 0, blocked: 1 },
+      contractSummary: 'Collaborator runtime proof is blocked: this live permission lane is the deeper runtime complement to static collaborator access checks, and it needs its external fixtures before it can close runtime truth.',
       automatedCoverage: [
         'Owner invite creation in settings',
         'Collaborator accept flow',
@@ -246,6 +254,9 @@ const output = blocker.blocked
         slice: 'collaborator-runtime-proof',
         generatedAt: new Date().toISOString(),
         summary: { total: results.length, passed, failed, blocked: 0 },
+        contractSummary: ok
+          ? 'Collaborator runtime proof is green: this live permission lane closes invite acceptance and role-scoped runtime behavior beyond the static collaborator access boundary proof.'
+          : 'Collaborator runtime proof is not green yet: invite acceptance or role-scoped runtime permission evidence is still failing.',
         automatedCoverage: [
           'Owner invite creation in settings',
           'Collaborator accept flow',

@@ -50,6 +50,35 @@ describe('guest dashboard storage helpers', () => {
     expect(localStorage.getItem(RSVP_CAMPAIGN_PRESET_KEY)).toBeNull();
   });
 
+  it('scopes guest dashboard campaign presets by wedding site', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-05-06T12:00:00.000Z'));
+    writeStoredCampaignPreset('missing-meal', 'site-a');
+    writeStoredCampaignPreset('pending-no-email', 'site-b');
+
+    expect(readStoredCampaignPreset('site-a')).toBe('missing-meal');
+    expect(readStoredCampaignPreset('site-b')).toBe('pending-no-email');
+    expect(localStorage.getItem(`${RSVP_CAMPAIGN_PRESET_KEY}::site-a`)).toContain('missing-meal');
+    expect(localStorage.getItem(`${RSVP_CAMPAIGN_PRESET_KEY}::site-b`)).toContain('pending-no-email');
+  });
+
+  it('migrates legacy guest dashboard storage into the active wedding site scope', () => {
+    localStorage.setItem(RSVP_CAMPAIGN_PRESET_KEY, JSON.stringify({
+      savedAtISO: '2026-05-06T12:00:00.000Z',
+      value: 'missing-meal',
+    }));
+    localStorage.setItem(RSVP_FOLLOWUP_TASKS_KEY, JSON.stringify([{
+      id: 1,
+      text: 'Legacy task',
+      createdAt: '2026-05-01',
+    }]));
+
+    expect(readStoredCampaignPreset('site-a')).toBe('missing-meal');
+    expect(readStoredFollowUpTasks('site-a')).toEqual([{ id: 1, text: 'Legacy task', createdAt: '2026-05-01' }]);
+    expect(localStorage.getItem(`${RSVP_CAMPAIGN_PRESET_KEY}::site-a`)).toContain('missing-meal');
+    expect(localStorage.getItem(`${RSVP_FOLLOWUP_TASKS_KEY}::site-a`)).toContain('Legacy task');
+  });
+
   it('defensively reads invalid array storage as empty lists', () => {
     localStorage.setItem(RSVP_FOLLOWUP_TASKS_KEY, '{broken');
     localStorage.setItem(RSVP_SAVED_SEGMENTS_KEY, JSON.stringify({ bad: true }));
@@ -130,6 +159,22 @@ describe('guest dashboard storage helpers', () => {
     expect(readStoredFollowUpTasks()[0]?.id).toBe(0);
     expect(readStoredSavedSegments().at(-1)?.id).toBe(11);
     expect(readStoredCampaignLog().at(-1)?.id).toBe(11);
+  });
+
+  it('keeps follow-up tasks, saved segments, and campaign logs isolated per wedding site', () => {
+    writeStoredFollowUpTasks([{ id: 1, text: 'Site A task', createdAt: '2026-05-01' }], 'site-a');
+    writeStoredFollowUpTasks([{ id: 2, text: 'Site B task', createdAt: '2026-05-02' }], 'site-b');
+    writeStoredSavedSegments([{ id: 3, label: 'VIPs', filter: 'vip', createdAt: '2026-05-03' }], 'site-a');
+    writeStoredSavedSegments([{ id: 4, label: 'No Contact', filter: 'no-contact', createdAt: '2026-05-04' }], 'site-b');
+    writeStoredCampaignLog([{ id: 5, segment: 'Pending', count: 8, sentAt: '2026-05-05' }], 'site-a');
+    writeStoredCampaignLog([{ id: 6, segment: 'Missing meal', count: 2, sentAt: '2026-05-06' }], 'site-b');
+
+    expect(readStoredFollowUpTasks('site-a')).toEqual([{ id: 1, text: 'Site A task', createdAt: '2026-05-01' }]);
+    expect(readStoredFollowUpTasks('site-b')).toEqual([{ id: 2, text: 'Site B task', createdAt: '2026-05-02' }]);
+    expect(readStoredSavedSegments('site-a')).toEqual([{ id: 3, label: 'VIPs', filter: 'vip', createdAt: '2026-05-03' }]);
+    expect(readStoredSavedSegments('site-b')).toEqual([{ id: 4, label: 'No Contact', filter: 'no-contact', createdAt: '2026-05-04' }]);
+    expect(readStoredCampaignLog('site-a')).toEqual([{ id: 5, segment: 'Pending', count: 8, sentAt: '2026-05-05' }]);
+    expect(readStoredCampaignLog('site-b')).toEqual([{ id: 6, segment: 'Missing meal', count: 2, sentAt: '2026-05-06' }]);
   });
 
   it('bounds text fields before writing guest dashboard arrays', () => {

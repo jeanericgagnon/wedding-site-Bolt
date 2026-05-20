@@ -190,7 +190,7 @@ export const Product: React.FC = () => {
       return (
         <div className="space-y-4">
           <p className="text-sm text-ink/70">Template: Modern Luxe • Website: starter draft is ready to review before sharing it with guests</p>
-          <button onClick={handleLaunchStepReview} className="px-5 py-2.5 rounded-lg bg-brand text-paper font-semibold">Review draft privacy + share settings</button>
+          <button onClick={handleLaunchStepReview} className="px-5 py-2.5 rounded-xl bg-brand text-paper font-semibold">Review draft privacy + share settings</button>
         </div>
       );
     }
@@ -199,7 +199,7 @@ export const Product: React.FC = () => {
       return (
         <div className="space-y-4">
           <p className="text-sm text-ink/70">Guests in list: <strong>{guestCount}</strong></p>
-          <button onClick={() => setGuestCount((v) => v + 2)} className="px-4 py-2 rounded-lg border border-brand/40 hover:bg-brand/5">Add household (+2)</button>
+          <button onClick={() => setGuestCount((v) => v + 2)} className="px-4 py-2 rounded-xl border border-brand/40 hover:bg-brand/5">Add household (+2)</button>
         </div>
       );
     }
@@ -208,7 +208,7 @@ export const Product: React.FC = () => {
       return (
         <div className="space-y-4">
           <p className="text-sm text-ink/70">RSVP yes: <strong>{rsvpYes}</strong> • pending: {Math.max(guestCount - rsvpYes, 0)}</p>
-          <button onClick={() => setRsvpYes((v) => Math.min(v + 1, guestCount))} className="px-4 py-2 rounded-lg border border-brand/40 hover:bg-brand/5">Mark one attending</button>
+          <button onClick={() => setRsvpYes((v) => Math.min(v + 1, guestCount))} className="px-4 py-2 rounded-xl border border-brand/40 hover:bg-brand/5">Mark one attending</button>
         </div>
       );
     }
@@ -217,7 +217,7 @@ export const Product: React.FC = () => {
       return (
         <div className="space-y-4">
           <p className="text-sm text-ink/70">Status: <strong>{messageState === 'draft' ? 'Draft prepared for review' : 'Sent to 86 guests'}</strong></p>
-          <button onClick={() => setMessageState((s) => (s === 'draft' ? 'sent' : 'draft'))} className="px-4 py-2 rounded-lg border border-brand/40 hover:bg-brand/5">
+          <button onClick={() => setMessageState((s) => (s === 'draft' ? 'sent' : 'draft'))} className="px-4 py-2 rounded-xl border border-brand/40 hover:bg-brand/5">
             {messageState === 'draft' ? 'Send update' : 'Reset draft state'}
           </button>
         </div>
@@ -228,7 +228,7 @@ export const Product: React.FC = () => {
       return (
         <div className="space-y-4">
           <p className="text-sm text-ink/70">Guests seated: <strong>{seated}</strong> / {guestCount}</p>
-          <button onClick={() => setSeated((v) => Math.min(v + 3, guestCount))} className="px-4 py-2 rounded-lg border border-brand/40 hover:bg-brand/5">Seat next table (+3)</button>
+          <button onClick={() => setSeated((v) => Math.min(v + 3, guestCount))} className="px-4 py-2 rounded-xl border border-brand/40 hover:bg-brand/5">Seat next table (+3)</button>
         </div>
       );
     }
@@ -239,14 +239,14 @@ export const Product: React.FC = () => {
         <div className="flex flex-wrap gap-2">
           <button
             onClick={user ? () => navigate('/dashboard/planning') : handleSignUp}
-            className="px-4 py-2 rounded-lg border border-brand/40 hover:bg-brand/5"
+            className="px-4 py-2 rounded-xl border border-brand/40 hover:bg-brand/5"
           >
             {user ? 'Continue planning' : 'Start your draft'}
           </button>
           {user && (
             <button
               onClick={() => navigate('/settings')}
-              className="px-4 py-2 rounded-lg border border-brand/40 hover:bg-brand/5"
+              className="px-4 py-2 rounded-xl border border-brand/40 hover:bg-brand/5"
             >
               Manage collaborators
             </button>
@@ -266,7 +266,7 @@ export const Product: React.FC = () => {
           {user ? (
             <button
               onClick={() => navigate('/dashboard/builder')}
-              className="px-4 py-1.5 rounded-lg bg-white text-brand font-semibold hover:bg-white/90"
+              className="px-4 py-1.5 rounded-xl bg-white text-brand font-semibold hover:bg-white/90"
             >
               Edit your site
             </button>
@@ -274,7 +274,7 @@ export const Product: React.FC = () => {
             <button
               onClick={handleDemoLogin}
               disabled={demoLoading}
-              className="px-4 py-1.5 rounded-lg bg-white text-brand font-semibold hover:bg-white/90 disabled:opacity-60"
+              className="px-4 py-1.5 rounded-xl bg-white text-brand font-semibold hover:bg-white/90 disabled:opacity-60"
             >
               {demoLoading ? 'Opening demo...' : 'Try product demo'}
             </button>
@@ -290,13 +290,13 @@ export const Product: React.FC = () => {
           </SlideReveal>
 
           <div className="grid grid-cols-1 lg:grid-cols-[260px,1fr,260px] gap-4 lg:gap-5">
-            <div className="rounded-lg border border-border-subtle bg-surface p-3 h-fit overflow-x-auto lg:sticky lg:top-24">
+            <div className="rounded-xl border border-border-subtle bg-surface p-3 h-fit overflow-x-auto lg:sticky lg:top-24">
               <div className="flex gap-2 lg:block min-w-max lg:min-w-0">
               {STEPS.map((step) => (
                 <button
                   key={step.id}
                   onClick={() => setActiveStep(step.id)}
-                  className={`w-[220px] lg:w-full text-left rounded-lg p-3 mb-0 lg:mb-2 border transition-all shrink-0 ${activeStep === step.id ? 'bg-brand text-paper border-brand' : 'bg-white text-ink border-border-subtle hover:border-brand/45'}`}
+                  className={`w-[220px] lg:w-full text-left rounded-xl p-3 mb-0 lg:mb-2 border transition-all shrink-0 ${activeStep === step.id ? 'bg-brand text-paper border-brand' : 'bg-white text-ink border-border-subtle hover:border-brand/45'}`}
                 >
                   <p className={`text-[11px] font-semibold ${activeStep === step.id ? 'text-paper/80' : 'text-brand'}`}>{step.kicker}</p>
                   <p className="font-semibold text-sm">{step.title}</p>
@@ -305,25 +305,25 @@ export const Product: React.FC = () => {
               </div>
             </div>
 
-            <div className="rounded-lg border border-border-subtle bg-white p-5 md:p-7 text-ink">
+            <div className="rounded-xl border border-border-subtle bg-white p-5 md:p-7 text-ink">
               <p className="text-xs font-semibold text-brand mb-2">{current.kicker}</p>
               <h3 className="text-[1.45rem] font-serif font-bold mb-2">{current.title}</h3>
               <p className="text-ink/80 mb-1">{current.outcome}</p>
               <p className="text-sm text-ink/65 mb-6">{current.detail}</p>
 
-              <div className="rounded-lg border border-border-subtle bg-surface p-5 mb-6 min-h-[160px]">
+              <div className="rounded-xl border border-border-subtle bg-surface p-5 mb-6 min-h-[160px]">
                 {renderCanvas()}
               </div>
 
               <div className="flex flex-wrap gap-3">
-                <button onClick={handleSignUp} className="px-5 py-2.5 bg-brand text-paper rounded-lg font-semibold">{user ? 'Continue your site' : 'Start your draft'}</button>
+                <button onClick={handleSignUp} className="px-5 py-2.5 bg-brand text-paper rounded-xl font-semibold">{user ? 'Continue your site' : 'Start your draft'}</button>
                 {user ? (
-                  <button onClick={() => navigate('/dashboard/builder')} className="group px-5 py-2.5 border-2 border-brand text-brand rounded-lg font-semibold inline-flex items-center gap-2">
+                  <button onClick={() => navigate('/dashboard/builder')} className="group px-5 py-2.5 border-2 border-brand text-brand rounded-xl font-semibold inline-flex items-center gap-2">
                     Edit your site
                     <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
                   </button>
                 ) : (
-                  <button onClick={handleDemoLogin} disabled={demoLoading} className="group px-5 py-2.5 border-2 border-brand text-brand rounded-lg font-semibold inline-flex items-center gap-2 disabled:opacity-60">
+                  <button onClick={handleDemoLogin} disabled={demoLoading} className="group px-5 py-2.5 border-2 border-brand text-brand rounded-xl font-semibold inline-flex items-center gap-2 disabled:opacity-60">
                     {demoLoading ? 'Opening demo...' : 'Try full demo'}
                     <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
                   </button>
@@ -331,7 +331,7 @@ export const Product: React.FC = () => {
               </div>
             </div>
 
-            <div className="rounded-lg border border-border-subtle bg-surface p-4 text-ink h-fit lg:sticky lg:top-24">
+            <div className="rounded-xl border border-border-subtle bg-surface p-4 text-ink h-fit lg:sticky lg:top-24">
               <p className="text-sm text-ink/65 mb-2">What updates as you go</p>
               <ul className="space-y-3 text-sm">
                 <li>• Guests tracked: <strong>{guestCount}</strong></li>
@@ -347,7 +347,7 @@ export const Product: React.FC = () => {
 
       <section className="section-shell bg-white border-t border-border-subtle">
         <div className="container-custom max-w-6xl">
-          <div className="rounded-lg border border-border-subtle bg-surface p-6 md:p-7">
+          <div className="rounded-xl border border-border-subtle bg-surface p-6 md:p-7">
             <div className="max-w-3xl">
               <p className="text-sm text-brand font-semibold">Switching story</p>
               <h2 className="text-2xl md:text-3xl font-serif font-bold text-ink mt-2">If you already started elsewhere, dayof is strongest when you move the core wedding spine.</h2>
@@ -355,7 +355,7 @@ export const Product: React.FC = () => {
             </div>
             <div className="mt-5 grid grid-cols-1 md:grid-cols-3 gap-3">
               {['Move your guest list and essential wedding details', 'Keep the website polished while you tighten guest details', 'Add RSVP, seating, messaging, and wedding-day planning when you are ready'].map((item) => (
-                <div key={item} className="rounded-lg border border-border bg-white p-4 text-sm text-ink/75">• {item}</div>
+                <div key={item} className="rounded-xl border border-border bg-white p-4 text-sm text-ink/75">• {item}</div>
               ))}
             </div>
           </div>
@@ -365,20 +365,20 @@ export const Product: React.FC = () => {
 
       <section className="section-shell bg-white border-t border-border-subtle">
         <div className="container-custom max-w-6xl">
-          <div className="rounded-lg border border-border-subtle bg-surface p-6 md:p-7">
+          <div className="rounded-xl border border-border-subtle bg-surface p-6 md:p-7">
             <p className="text-sm text-ink/70 font-semibold">Memories after the wedding</p>
             <h2 className="text-2xl md:text-3xl font-serif font-bold text-ink mt-2">The wedding day should keep unfolding without taking over the planning flow.</h2>
             <p className="mt-3 max-w-3xl text-ink/75">Vaults, photo return paths, and anniversary memories are thoughtful additions. The heart of dayof is still {SITE_TRUST_COPY.launchStoryCore}.</p>
             <div className="mt-5 grid grid-cols-1 md:grid-cols-3 gap-3">
-              <div className="rounded-lg border border-border-subtle bg-white p-4">
+              <div className="rounded-xl border border-border-subtle bg-white p-4">
                 <p className="text-sm font-medium text-ink">Archive mode</p>
                 <p className="mt-1 text-sm text-ink/70">A private place for notes and keepsakes that open later.</p>
               </div>
-              <div className="rounded-lg border border-border-subtle bg-white p-4">
+              <div className="rounded-xl border border-border-subtle bg-white p-4">
                 <p className="text-sm font-medium text-ink">Photo return path</p>
                 <p className="mt-1 text-sm text-ink/70">A simple way to bring guest photos back to the couple.</p>
               </div>
-              <div className="rounded-lg border border-border-subtle bg-white p-4">
+              <div className="rounded-xl border border-border-subtle bg-white p-4">
                 <p className="text-sm font-medium text-ink">Anniversary memories</p>
                 <p className="mt-1 text-sm text-ink/70">A quieter way to revisit the day over time.</p>
               </div>
@@ -389,7 +389,7 @@ export const Product: React.FC = () => {
 
       <section className="section-shell bg-white">
         <div className="container-custom max-w-6xl mb-6 space-y-4">
-          <div className="rounded-lg border border-border-subtle bg-surface p-6 md:p-7">
+          <div className="rounded-xl border border-border-subtle bg-surface p-6 md:p-7">
             <p className="text-sm text-brand font-semibold">Couple-led collaboration</p>
             <h2 className="text-2xl md:text-3xl font-serif font-bold text-ink mt-2">Invite your planner gracefully, without turning your wedding into a back office.</h2>
             <p className="mt-3 max-w-3xl text-ink/75">dayof should let the couple bring in a planner or coordinator from a calm, tasteful settings flow, share the right planning surfaces, and keep ownership where it belongs.</p>
@@ -399,42 +399,42 @@ export const Product: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => navigate('/settings')}
-                    className="rounded-lg bg-brand px-4 py-2.5 text-sm font-semibold text-paper transition hover:bg-brand/90"
+                    className="rounded-xl bg-brand px-4 py-2.5 text-sm font-semibold text-paper transition hover:bg-brand/90"
                   >
                     Manage collaborators
                   </button>
                   <button
                     type="button"
                     onClick={() => navigate('/dashboard/planning')}
-                    className="rounded-lg border border-border bg-white px-4 py-2.5 text-sm font-medium text-ink transition hover:border-brand/30 hover:text-brand"
+                    className="rounded-xl border border-border bg-white px-4 py-2.5 text-sm font-medium text-ink transition hover:border-brand/30 hover:text-brand"
                   >
                     Continue planning
                   </button>
                   <button
                     type="button"
                     onClick={() => navigate('/dashboard/coordinator')}
-                    className="rounded-lg border border-border bg-white px-4 py-2.5 text-sm font-medium text-ink transition hover:border-brand/30 hover:text-brand"
+                    className="rounded-xl border border-border bg-white px-4 py-2.5 text-sm font-medium text-ink transition hover:border-brand/30 hover:text-brand"
                   >
                     Day-of view
                   </button>
                 </>
               ) : (
-                <Link to="/trust" className="rounded-lg border border-border bg-white px-4 py-2.5 text-sm font-medium text-ink transition hover:border-brand/30 hover:text-brand">
+                <Link to="/trust" className="rounded-xl border border-border bg-white px-4 py-2.5 text-sm font-medium text-ink transition hover:border-brand/30 hover:text-brand">
                   See collaboration trust notes
                 </Link>
               )}
             </div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            <div className="rounded-lg border border-border-subtle bg-white p-4">
+            <div className="rounded-xl border border-border-subtle bg-white p-4">
               <p className="text-sm font-medium text-ink">Starts from the couple</p>
               <p className="mt-1 text-sm text-ink/70">Planner access begins in Settings with a named invite, role preset, and a clean access preview. One final role-boundary pass keeps that trust tight.</p>
             </div>
-            <div className="rounded-lg border border-border-subtle bg-white p-4">
+            <div className="rounded-xl border border-border-subtle bg-white p-4">
               <p className="text-sm font-medium text-ink">Planner space is real</p>
               <p className="mt-1 text-sm text-ink/70">Guests, planning, messages, and day-of view now carry planner-specific framing instead of forcing every collaborator through a couple-only view.</p>
             </div>
-            <div className="rounded-lg border border-border-subtle bg-white p-4">
+            <div className="rounded-xl border border-border-subtle bg-white p-4">
               <p className="text-sm font-medium text-ink">Access actually differs</p>
               <p className="mt-1 text-sm text-ink/70">Budget and vendor editing stay more protected than coordination work, so collaboration stays intentional.</p>
             </div>
@@ -499,10 +499,10 @@ export const Product: React.FC = () => {
                   : 'border border-border-subtle bg-surface text-text-secondary';
 
               return (
-                  <div key={slice.name} className={`rounded-lg border p-5 ${toneClasses}`}>
+                  <div key={slice.name} className={`rounded-xl border p-5 ${toneClasses}`}>
                   <div className="flex items-center justify-between gap-3 mb-3">
                     <h3 className="font-semibold text-ink">{slice.name}</h3>
-                    <span className={`inline-flex items-center rounded-lg px-2.5 py-1 text-[11px] font-semibold ${badgeClasses}`}>{slice.status}</span>
+                    <span className={`inline-flex items-center rounded-xl px-2.5 py-1 text-[11px] font-semibold ${badgeClasses}`}>{slice.status}</span>
                   </div>
                   <div className="space-y-2 text-sm text-ink/80">
                     <p><span className="font-semibold text-ink">Covers:</span> {slice.done}</p>
@@ -528,10 +528,10 @@ export const Product: React.FC = () => {
               const badgeText = group.tone === 'must' ? 'Included' : group.tone === 'should' ? 'Helpful' : 'Future';
 
               return (
-                <div key={group.title} className={`rounded-lg border p-5 ${toneClasses}`}>
+                <div key={group.title} className={`rounded-xl border p-5 ${toneClasses}`}>
                   <div className="flex items-center justify-between gap-3 mb-3">
                     <h3 className="font-semibold text-ink">{group.title}</h3>
-                    <span className={`inline-flex items-center rounded-lg px-2.5 py-1 text-[11px] font-semibold ${badgeClasses}`}>{badgeText}</span>
+                    <span className={`inline-flex items-center rounded-xl px-2.5 py-1 text-[11px] font-semibold ${badgeClasses}`}>{badgeText}</span>
                   </div>
                   <p className="text-sm text-ink/70 mb-4">{group.intro}</p>
                   <ul className="space-y-2 text-sm text-ink/80">
@@ -553,28 +553,28 @@ export const Product: React.FC = () => {
         <div className="container-custom max-w-4xl text-center">
           <h2 className="section-title mb-3">A beautiful website first. Calm planning underneath.</h2>
           <div className="flex flex-col sm:flex-row gap-3 justify-center mb-4 w-full max-w-xl mx-auto">
-            <button onClick={handleSignUp} className="w-full sm:w-auto px-7 py-3.5 bg-brand text-paper font-semibold rounded-lg hover:bg-brand/90 transition-all">{user ? 'Continue your site' : 'Start your draft'}</button>
+            <button onClick={handleSignUp} className="w-full sm:w-auto px-7 py-3.5 bg-brand text-paper font-semibold rounded-xl hover:bg-brand/90 transition-all">{user ? 'Continue your site' : 'Start your draft'}</button>
             {user ? (
               <>
-                <button onClick={() => navigate('/dashboard/builder')} className="group w-full sm:w-auto px-7 py-3.5 border-2 border-brand text-brand font-semibold rounded-lg hover:bg-brand/5 transition-all inline-flex items-center justify-center gap-2">
+                <button onClick={() => navigate('/dashboard/builder')} className="group w-full sm:w-auto px-7 py-3.5 border-2 border-brand text-brand font-semibold rounded-xl hover:bg-brand/5 transition-all inline-flex items-center justify-center gap-2">
                   Edit your site
                   <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
                 </button>
-                <button onClick={() => navigate('/dashboard/guests')} className="group w-full sm:w-auto px-7 py-3.5 border-2 border-brand text-brand font-semibold rounded-lg hover:bg-brand/5 transition-all inline-flex items-center justify-center gap-2">
+                <button onClick={() => navigate('/dashboard/guests')} className="group w-full sm:w-auto px-7 py-3.5 border-2 border-brand text-brand font-semibold rounded-xl hover:bg-brand/5 transition-all inline-flex items-center justify-center gap-2">
                   Manage guests
                   <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
                 </button>
-                <button onClick={() => navigate('/dashboard/messages')} className="group w-full sm:w-auto px-7 py-3.5 border-2 border-brand text-brand font-semibold rounded-lg hover:bg-brand/5 transition-all inline-flex items-center justify-center gap-2">
+                <button onClick={() => navigate('/dashboard/messages')} className="group w-full sm:w-auto px-7 py-3.5 border-2 border-brand text-brand font-semibold rounded-xl hover:bg-brand/5 transition-all inline-flex items-center justify-center gap-2">
                   Guest messages
                   <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
                 </button>
-                <button onClick={() => navigate('/dashboard/rsvp-board')} className="group w-full sm:w-auto px-7 py-3.5 border-2 border-brand text-brand font-semibold rounded-lg hover:bg-brand/5 transition-all inline-flex items-center justify-center gap-2">
+                <button onClick={() => navigate('/dashboard/rsvp-board')} className="group w-full sm:w-auto px-7 py-3.5 border-2 border-brand text-brand font-semibold rounded-xl hover:bg-brand/5 transition-all inline-flex items-center justify-center gap-2">
                   Open RSVP board
                   <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
                 </button>
               </>
             ) : (
-              <button onClick={handleDemoLogin} disabled={demoLoading} className="group w-full sm:w-auto px-7 py-3.5 border-2 border-brand text-brand font-semibold rounded-lg hover:bg-brand/5 transition-all disabled:opacity-60 inline-flex items-center justify-center gap-2">
+              <button onClick={handleDemoLogin} disabled={demoLoading} className="group w-full sm:w-auto px-7 py-3.5 border-2 border-brand text-brand font-semibold rounded-xl hover:bg-brand/5 transition-all disabled:opacity-60 inline-flex items-center justify-center gap-2">
                 {demoLoading ? 'Opening demo...' : 'Try product demo'}
                 <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
               </button>

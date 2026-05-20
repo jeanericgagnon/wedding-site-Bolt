@@ -1,9 +1,21 @@
-import { fireEvent, render, screen } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { GuestItineraryDrawer } from './GuestItineraryDrawer';
 import type { GuestWithRSVP, ItineraryEvent, WeddingSiteInfo } from './guestDashboardTypes';
 
+const { copyTextOrDownload } = vi.hoisted(() => ({
+  copyTextOrDownload: vi.fn(),
+}));
+
+vi.mock('../../../lib/copyText', () => ({
+  copyTextOrDownload: (...args: unknown[]) => copyTextOrDownload(...args),
+}));
+
 describe('GuestItineraryDrawer', () => {
+  beforeEach(() => {
+    copyTextOrDownload.mockReset();
+  });
+
   it('shows private guest RSVP and contact-update QRs without exposing the raw token in normal UI', () => {
     const guest: GuestWithRSVP = {
       id: 'guest-1',
@@ -165,6 +177,202 @@ describe('GuestItineraryDrawer', () => {
     expect(onRotateGuestInviteToken).toHaveBeenCalledTimes(1);
     expect(onRevokeGuestInviteToken).toHaveBeenCalledTimes(1);
     confirmSpy.mockRestore();
+  });
+
+  it('ignores stale private RSVP copy completions after switching guests', async () => {
+    let finishCopy: ((value: 'copied') => void) | undefined;
+    copyTextOrDownload.mockReturnValueOnce(new Promise((resolve) => {
+      finishCopy = resolve;
+    }));
+    const onToast = vi.fn();
+    const guestOne: GuestWithRSVP = {
+      id: 'guest-1',
+      first_name: 'Maya',
+      last_name: 'Lee',
+      name: 'Maya Lee',
+      email: 'maya@example.com',
+      phone: null,
+      plus_one_allowed: false,
+      plus_one_name: null,
+      invited_to_ceremony: true,
+      invited_to_reception: true,
+      invite_token: 'token-one',
+      rsvp_status: 'pending',
+      rsvp_received_at: null,
+      household_id: null,
+      invited_event_ids: ['event-1'],
+      rsvp: { attending: true, meal_choice: null, plus_one_name: null, notes: null },
+    };
+    const guestTwo: GuestWithRSVP = {
+      ...guestOne,
+      id: 'guest-2',
+      first_name: 'Rowan',
+      last_name: 'Kim',
+      name: 'Rowan Kim',
+      email: 'rowan@example.com',
+      invite_token: 'token-two',
+    };
+    const props = {
+      guestAuditEntries: [],
+      guestEventIds: new Set(['event-1']),
+      guests: [guestOne, guestTwo],
+      itineraryEvents: [{ id: 'event-1', event_name: 'Ceremony', event_date: '2026-06-20', start_time: '16:00:00', location_name: 'Garden' }] as ItineraryEvent[],
+      loadingDrawer: false,
+      rotatingInviteToken: false,
+      togglingEventId: null,
+      weddingSiteInfo: null,
+      onAddFollowUpTask: vi.fn(),
+      onClose: vi.fn(),
+      onCopyContactRequestLink: vi.fn(),
+      onFocusGuestSearch: vi.fn(),
+      onRevokeGuestInviteToken: vi.fn(),
+      onRotateGuestInviteToken: vi.fn(),
+      onToast,
+      onToggleEventInvite: vi.fn(),
+    };
+
+    const { rerender } = render(<GuestItineraryDrawer {...props} guest={guestOne} />);
+
+    fireEvent.click(screen.getByRole('button', { name: /Copy private RSVP access link/i }));
+    rerender(<GuestItineraryDrawer {...props} guest={guestTwo} />);
+    await act(async () => {
+      finishCopy?.('copied');
+    });
+
+    expect(screen.getByRole('button', { name: /Copy private RSVP access link/i })).toBeEnabled();
+    expect(screen.queryByRole('button', { name: /Copied private RSVP access link/i })).not.toBeInTheDocument();
+    expect(onToast).not.toHaveBeenCalledWith('Copied RSVP link', 'success');
+  });
+
+  it('ignores stale guest-preview copy completions after the preview context changes', async () => {
+    let finishCopy: ((value: 'copied') => void) | undefined;
+    copyTextOrDownload.mockReturnValueOnce(new Promise((resolve) => {
+      finishCopy = resolve;
+    }));
+    const onToast = vi.fn();
+    const guest: GuestWithRSVP = {
+      id: 'guest-1',
+      first_name: 'Maya',
+      last_name: 'Lee',
+      name: 'Maya Lee',
+      email: 'maya@example.com',
+      phone: null,
+      plus_one_allowed: false,
+      plus_one_name: null,
+      invited_to_ceremony: true,
+      invited_to_reception: true,
+      invite_token: 'secret-token',
+      rsvp_status: 'pending',
+      rsvp_received_at: null,
+      household_id: null,
+      invited_event_ids: ['event-1'],
+      rsvp: { attending: true, meal_choice: null, plus_one_name: null, notes: null },
+    };
+    const itineraryEvents = [{ id: 'event-1', event_name: 'Ceremony', event_date: '2026-06-20', start_time: '16:00:00', location_name: 'Garden' }] as ItineraryEvent[];
+    const siteInfo: WeddingSiteInfo = {
+      id: 'site-1',
+      couple_name_1: 'Maya',
+      couple_name_2: 'Rowan',
+      is_published: true,
+      wedding_date: '2026-06-20',
+      venue_name: 'Garden',
+      venue_address: null,
+      site_url: 'https://dayof.love/site/maya-and-rowan',
+      site_slug: 'maya-and-rowan',
+    };
+    const props = {
+      guest,
+      guestAuditEntries: [],
+      guestEventIds: new Set(['event-1']),
+      guests: [guest],
+      itineraryEvents,
+      loadingDrawer: false,
+      rotatingInviteToken: false,
+      togglingEventId: null,
+      weddingSiteInfo: siteInfo,
+      onAddFollowUpTask: vi.fn(),
+      onClose: vi.fn(),
+      onCopyContactRequestLink: vi.fn(),
+      onFocusGuestSearch: vi.fn(),
+      onRevokeGuestInviteToken: vi.fn(),
+      onRotateGuestInviteToken: vi.fn(),
+      onToast,
+      onToggleEventInvite: vi.fn(),
+    };
+
+    const { rerender } = render(<GuestItineraryDrawer {...props} />);
+
+    fireEvent.click(screen.getByRole('button', { name: /Copy guest preview route link/i }));
+    rerender(<GuestItineraryDrawer {...props} weddingSiteInfo={{ ...siteInfo, site_slug: 'maya-rowan-new' }} />);
+
+    await act(async () => {
+      finishCopy?.('copied');
+    });
+
+    expect(screen.getByRole('button', { name: /Copy guest preview route link/i })).toBeEnabled();
+    expect(screen.queryByRole('button', { name: /Copied guest preview route link/i })).not.toBeInTheDocument();
+    expect(onToast).not.toHaveBeenCalledWith('Copied guest preview link', 'success');
+  });
+
+  it('keeps event and private-access actions disabled for read-only collaborators', () => {
+    const guest: GuestWithRSVP = {
+      id: 'guest-1',
+      first_name: 'Maya',
+      last_name: 'Lee',
+      name: 'Maya Lee',
+      email: 'maya@example.com',
+      phone: null,
+      plus_one_allowed: false,
+      plus_one_name: null,
+      invited_to_ceremony: true,
+      invited_to_reception: true,
+      invite_token: 'secret-token',
+      rsvp_status: 'pending',
+      rsvp_received_at: null,
+      household_id: null,
+      invited_event_ids: ['event-1'],
+      rsvp: {
+        attending: true,
+        meal_choice: null,
+        plus_one_name: null,
+        notes: null,
+      },
+    };
+    const events: ItineraryEvent[] = [{
+      id: 'event-1',
+      event_name: 'Ceremony',
+      event_date: '2026-06-20',
+      start_time: '16:00:00',
+      location_name: 'Garden',
+    }];
+
+    render(
+      <GuestItineraryDrawer
+        guest={guest}
+        guestAuditEntries={[]}
+        guestEventIds={new Set(['event-1'])}
+        guests={[guest]}
+        isGuestsReadOnly
+        itineraryEvents={events}
+        loadingDrawer={false}
+        rotatingInviteToken={false}
+        togglingEventId={null}
+        weddingSiteInfo={null}
+        onAddFollowUpTask={vi.fn()}
+        onClose={vi.fn()}
+        onCopyContactRequestLink={vi.fn()}
+        onFocusGuestSearch={vi.fn()}
+        onRevokeGuestInviteToken={vi.fn()}
+        onRotateGuestInviteToken={vi.fn()}
+        onToast={vi.fn()}
+        onToggleEventInvite={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByRole('button', { name: /Rotate private RSVP access/i })).toBeDisabled();
+    expect(screen.getByRole('button', { name: /Revoke private RSVP access/i })).toBeDisabled();
+    expect(screen.getByRole('button', { name: /Save follow-up task/i })).toBeDisabled();
+    expect(screen.getByRole('button', { name: /Ceremony/i })).toBeDisabled();
   });
 
   it('surfaces the main preview gap when private access is not ready yet', () => {
@@ -559,5 +767,190 @@ describe('GuestItineraryDrawer', () => {
     expect(screen.getByText('9 guest routes ready · 6 guest-specific · 3 public shell · 1 visible event · 0 hidden events')).toBeInTheDocument();
     expect(screen.getByText('67% guest-specific coverage · 33% public-shell coverage')).toBeInTheDocument();
     expect(screen.getByText('100% preview-route coverage · 9 routes ready · No preview routes missing')).toBeInTheDocument();
+  });
+
+  it('reports an error when copying the RSVP link fails', async () => {
+    copyTextOrDownload.mockRejectedValueOnce(new Error('copy failed'));
+    const onToast = vi.fn();
+    const guest: GuestWithRSVP = {
+      id: 'guest-1',
+      first_name: 'Maya',
+      last_name: 'Lee',
+      name: 'Maya Lee',
+      email: 'maya@example.com',
+      phone: null,
+      plus_one_allowed: false,
+      plus_one_name: null,
+      invited_to_ceremony: true,
+      invited_to_reception: true,
+      invite_token: 'secret-token',
+      rsvp_status: 'pending',
+      rsvp_received_at: null,
+      household_id: null,
+      invited_event_ids: ['event-1'],
+      rsvp: {
+        attending: true,
+        meal_choice: null,
+        plus_one_name: null,
+        notes: null,
+      },
+    };
+
+    render(
+      <GuestItineraryDrawer
+        guest={guest}
+        guestAuditEntries={[]}
+        guestEventIds={new Set(['event-1'])}
+        guests={[guest]}
+        itineraryEvents={[{ id: 'event-1', event_name: 'Ceremony', event_date: '2026-06-20', start_time: '16:00:00', location_name: 'Garden' }]}
+        loadingDrawer={false}
+        rotatingInviteToken={false}
+        togglingEventId={null}
+        weddingSiteInfo={null}
+        onAddFollowUpTask={vi.fn()}
+        onClose={vi.fn()}
+        onCopyContactRequestLink={vi.fn()}
+        onFocusGuestSearch={vi.fn()}
+        onRevokeGuestInviteToken={vi.fn()}
+        onRotateGuestInviteToken={vi.fn()}
+        onToast={onToast}
+        onToggleEventInvite={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /copy private rsvp access link/i }));
+
+    await waitFor(() => expect(onToast).toHaveBeenCalledWith('Couldn’t copy the RSVP link right now.', 'error'));
+  });
+
+  it('reports an error when copying the guest preview link fails', async () => {
+    copyTextOrDownload.mockRejectedValueOnce(new Error('copy failed'));
+    const onToast = vi.fn();
+    const guest: GuestWithRSVP = {
+      id: 'guest-1',
+      first_name: 'Maya',
+      last_name: 'Lee',
+      name: 'Maya Lee',
+      email: 'maya@example.com',
+      phone: null,
+      plus_one_allowed: false,
+      plus_one_name: null,
+      invited_to_ceremony: true,
+      invited_to_reception: true,
+      invite_token: 'secret-token',
+      rsvp_status: 'pending',
+      rsvp_received_at: null,
+      household_id: null,
+      invited_event_ids: ['event-1'],
+      rsvp: {
+        attending: true,
+        meal_choice: null,
+        plus_one_name: null,
+        notes: null,
+      },
+    };
+
+    render(
+      <GuestItineraryDrawer
+        guest={guest}
+        guestAuditEntries={[]}
+        guestEventIds={new Set(['event-1'])}
+        guests={[guest]}
+        itineraryEvents={[{ id: 'event-1', event_name: 'Ceremony', event_date: '2026-06-20', start_time: '16:00:00', location_name: 'Garden' }]}
+        loadingDrawer={false}
+        rotatingInviteToken={false}
+        togglingEventId={null}
+        weddingSiteInfo={{
+          id: 'site-1',
+          couple_name_1: 'Maya',
+          couple_name_2: 'Rowan',
+          is_published: true,
+          wedding_date: '2026-06-20',
+          venue_name: 'Garden',
+          venue_address: null,
+          site_url: 'https://dayof.love/site/maya-and-rowan',
+          site_slug: 'maya-and-rowan',
+        }}
+        onAddFollowUpTask={vi.fn()}
+        onClose={vi.fn()}
+        onCopyContactRequestLink={vi.fn()}
+        onFocusGuestSearch={vi.fn()}
+        onRevokeGuestInviteToken={vi.fn()}
+        onRotateGuestInviteToken={vi.fn()}
+        onToast={onToast}
+        onToggleEventInvite={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /copy guest preview route link/i }));
+
+    await waitFor(() => expect(onToast).toHaveBeenCalledWith('Couldn’t copy the guest preview link right now.', 'error'));
+  });
+
+  it('shows downloaded fallback labels for RSVP and preview link copy actions', async () => {
+    copyTextOrDownload
+      .mockResolvedValueOnce('downloaded')
+      .mockResolvedValueOnce('downloaded');
+    const guest: GuestWithRSVP = {
+      id: 'guest-1',
+      first_name: 'Maya',
+      last_name: 'Lee',
+      name: 'Maya Lee',
+      email: 'maya@example.com',
+      phone: null,
+      plus_one_allowed: false,
+      plus_one_name: null,
+      invited_to_ceremony: true,
+      invited_to_reception: true,
+      invite_token: 'secret-token',
+      rsvp_status: 'pending',
+      rsvp_received_at: null,
+      household_id: null,
+      invited_event_ids: ['event-1'],
+      rsvp: {
+        attending: true,
+        meal_choice: null,
+        plus_one_name: null,
+        notes: null,
+      },
+    };
+
+    render(
+      <GuestItineraryDrawer
+        guest={guest}
+        guestAuditEntries={[]}
+        guestEventIds={new Set(['event-1'])}
+        guests={[guest]}
+        itineraryEvents={[{ id: 'event-1', event_name: 'Ceremony', event_date: '2026-06-20', start_time: '16:00:00', location_name: 'Garden' }]}
+        loadingDrawer={false}
+        rotatingInviteToken={false}
+        togglingEventId={null}
+        weddingSiteInfo={{
+          id: 'site-1',
+          couple_name_1: 'Maya',
+          couple_name_2: 'Rowan',
+          is_published: true,
+          wedding_date: '2026-06-20',
+          venue_name: 'Garden',
+          venue_address: null,
+          site_url: 'https://dayof.love/site/maya-and-rowan',
+          site_slug: 'maya-and-rowan',
+        }}
+        onAddFollowUpTask={vi.fn()}
+        onClose={vi.fn()}
+        onCopyContactRequestLink={vi.fn()}
+        onFocusGuestSearch={vi.fn()}
+        onRevokeGuestInviteToken={vi.fn()}
+        onRotateGuestInviteToken={vi.fn()}
+        onToast={vi.fn()}
+        onToggleEventInvite={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /copy private rsvp access link/i }));
+    expect(await screen.findByRole('button', { name: 'Downloaded private RSVP access link' })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /copy guest preview route link/i }));
+    expect(await screen.findByRole('button', { name: 'Downloaded guest preview route link' })).toBeInTheDocument();
   });
 });

@@ -58,7 +58,7 @@ async function expectRegistrySurface(page: Page) {
     await page.reload({ waitUntil: 'domcontentloaded', timeout: 30_000 });
     await expect(page.getByRole('heading', { name: 'Registry' }).first()).toBeVisible({ timeout: 20_000 });
   });
-  await expect(page.getByText(/keep gifts helpful, optional, and easy for guests/i)).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Gifts and funds, clearly shared.' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Add gift' })).toBeVisible();
   await page.getByRole('button', { name: 'Add gift' }).click();
   await expect(page.getByRole('heading', { name: 'Add Registry Item' })).toBeVisible();

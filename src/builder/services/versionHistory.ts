@@ -59,19 +59,20 @@ function normalizeRevision(value: unknown): BuilderRevision | null {
   };
 }
 
-function normalizeRevisions(value: unknown): BuilderRevision[] {
+function normalizeRevisions(value: unknown, expectedWeddingId?: string): BuilderRevision[] {
   if (!Array.isArray(value)) return [];
   return value
     .map(normalizeRevision)
     .filter((revision): revision is BuilderRevision => Boolean(revision))
+    .filter((revision) => !expectedWeddingId || revision.weddingId === expectedWeddingId)
     .sort((a, b) => Date.parse(b.createdAtISO) - Date.parse(a.createdAtISO))
     .slice(0, MAX_REVISIONS);
 }
 
-function buildEnvelope(revisions: BuilderRevision[]): BuilderRevisionEnvelope {
+function buildEnvelope(revisions: BuilderRevision[], weddingId?: string): BuilderRevisionEnvelope {
   return {
     savedAtISO: new Date().toISOString(),
-    revisions: normalizeRevisions(revisions),
+    revisions: normalizeRevisions(revisions, weddingId),
   };
 }
 
@@ -85,14 +86,14 @@ function readRaw(weddingId: string): BuilderRevision[] {
   try {
     const parsed = JSON.parse(raw) as BuilderRevision[] | BuilderRevisionEnvelope;
     const revisions = Array.isArray(parsed)
-      ? normalizeRevisions(parsed)
-      : normalizeRevisions(parsed?.revisions);
+      ? normalizeRevisions(parsed, weddingId)
+      : normalizeRevisions(parsed?.revisions, weddingId);
     if (revisions.length === 0) {
       window.localStorage.removeItem(keyForWedding(weddingId));
       return [];
     }
     if (Array.isArray(parsed) || JSON.stringify((parsed as BuilderRevisionEnvelope).revisions) !== JSON.stringify(revisions)) {
-      window.localStorage.setItem(keyForWedding(weddingId), JSON.stringify(buildEnvelope(revisions)));
+      window.localStorage.setItem(keyForWedding(weddingId), JSON.stringify(buildEnvelope(revisions, weddingId)));
     }
     return revisions;
   } catch {
@@ -102,7 +103,7 @@ function readRaw(weddingId: string): BuilderRevision[] {
 }
 
 function writeRaw(weddingId: string, revisions: BuilderRevision[]) {
-  const normalized = normalizeRevisions(revisions);
+  const normalized = normalizeRevisions(revisions, weddingId);
   if (!hasUsableLocalStorage()) {
     memoryStore.set(weddingId, clone(normalized));
     return;
@@ -111,7 +112,7 @@ function writeRaw(weddingId: string, revisions: BuilderRevision[]) {
     window.localStorage.removeItem(keyForWedding(weddingId));
     return;
   }
-  window.localStorage.setItem(keyForWedding(weddingId), JSON.stringify(buildEnvelope(normalized)));
+  window.localStorage.setItem(keyForWedding(weddingId), JSON.stringify(buildEnvelope(normalized, weddingId)));
 }
 
 export function recordBuilderRevision(params: {

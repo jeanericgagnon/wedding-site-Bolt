@@ -106,7 +106,7 @@ export const BuilderCanvas: React.FC = () => {
         onDragEnd={handleDragEnd}
       >
         <div
-          className={`builder-themed-canvas ${isPreview ? '' : 'max-w-[1320px] mx-auto shadow-sm rounded-lg overflow-hidden border border-[var(--color-border-subtle)]'} bg-[var(--color-surface)] min-h-full`}
+          className={`builder-themed-canvas ${isPreview ? '' : 'max-w-[1320px] mx-auto shadow-sm rounded-xl overflow-hidden border border-[var(--color-border-subtle)]'} bg-[var(--color-surface)] min-h-full`}
           style={isPreview
             ? previewViewport === 'mobile'
               ? { maxWidth: 390, margin: '0 auto', boxShadow: '0 8px 28px rgba(15,23,42,0.14)', borderRadius: 18, overflow: 'hidden' }
@@ -129,7 +129,7 @@ export const BuilderCanvas: React.FC = () => {
 
         <DragOverlay>
           {dragActiveSection && (
-            <div className="bg-white shadow-sm rounded-lg opacity-90 p-4 text-sm font-medium text-gray-700">
+            <div className="bg-white shadow-sm rounded-xl opacity-90 p-4 text-sm font-medium text-gray-700">
               Moving: {getSectionManifest(dragActiveSection.type).label}
             </div>
           )}

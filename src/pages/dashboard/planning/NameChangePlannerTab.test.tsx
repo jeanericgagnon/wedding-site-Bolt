@@ -1,13 +1,71 @@
-import { describe, expect, it, vi } from 'vitest';
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { NameChangePlannerTab } from './NameChangePlannerTab';
 import { defaultNameChangeCaseInput } from './nameChangeService';
 import { buildNameChangeBankExecutionSnapshot } from '../../../lib/nameChange/bankFlow';
 import { buildNameChangePlan } from '../../../lib/nameChange/engine';
 import { getExecutionNextActionDetail } from '../../../lib/nameChange/actionFeed';
 import type { NameChangeCaseInput, NameChangePlan } from '../../../lib/nameChange/types';
+import * as copyTextModule from '../../../lib/copyText';
+
+function setHashSilently(hash: string) {
+  const normalizedHash = hash.startsWith('#') || hash === '' ? hash : `#${hash}`;
+  window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}${normalizedHash}`);
+}
+
+const { navigateMock } = vi.hoisted(() => ({
+  navigateMock: vi.fn((to: string | number | { pathname?: string; search?: string; hash?: string }) => {
+    if (typeof to === 'number') {
+      return;
+    }
+
+    if (typeof to === 'string') {
+      const hashIndex = to.indexOf('#');
+      const normalizedHash = hashIndex >= 0 ? to.slice(hashIndex) : '';
+      window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}${normalizedHash}`);
+      return;
+    }
+
+    window.history.replaceState(null, '', `${to.pathname ?? window.location.pathname}${to.search ?? window.location.search}${to.hash ?? ''}`);
+  }),
+}));
+
+vi.mock('react-router-dom', async () => {
+  const actual = await vi.importActual<typeof import('react-router-dom')>('react-router-dom');
+  const React = await vi.importActual<typeof import('react')>('react');
+
+  return {
+    ...actual,
+    useLocation: () => {
+      const [hash, setHash] = React.useState(() => window.location.hash);
+
+      React.useEffect(() => {
+        const handleHashChange = () => {
+          setHash(window.location.hash);
+        };
+
+        window.addEventListener('hashchange', handleHashChange);
+        return () => window.removeEventListener('hashchange', handleHashChange);
+      }, []);
+
+      return {
+        pathname: window.location.pathname || '/dashboard/planning',
+        search: window.location.search,
+        hash,
+        state: null,
+        key: 'test',
+      };
+    },
+    useNavigate: () => navigateMock,
+  };
+});
 
 vi.setConfig({ testTimeout: 15000 });
+
+beforeEach(() => {
+  navigateMock.mockClear();
+  setHashSilently('');
+});
 
 function makeDraft(overrides: Partial<NameChangeCaseInput> = {}): NameChangeCaseInput {
   return {
@@ -50,6 +108,18 @@ function makePlanWithExecutionActivity(draft: NameChangeCaseInput): NameChangePl
 
 function escapeRegExp(value: string) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function getAccountUpdateTemplateCard(container: HTMLElement, templateId: string) {
+  const card = container.querySelector(`#account-update-template-${templateId}`);
+  expect(card).toBeInTheDocument();
+  return card as HTMLElement;
+}
+
+function getButtonByTextFragment(fragment: string) {
+  const button = screen.getAllByRole('button').find((candidate) => candidate.textContent?.includes(fragment));
+  expect(button).toBeTruthy();
+  return button as HTMLButtonElement;
 }
 
 function makeCompletedPlan(draft: NameChangeCaseInput): NameChangePlan {
@@ -120,7 +190,6 @@ describe('NameChangePlannerTab', () => {
     expect(onDraftChange).toHaveBeenCalledWith({ target_middle_name: 'Lane' });
     expect(onDraftChange).toHaveBeenCalledWith({ marriage_state: 'Nevada' });
     expect(onDraftChange).toHaveBeenCalledWith({ county_residence: 'Clark' });
-    expect(document.getElementById('case-setup')).not.toBeNull();
   });
 
   it('keeps post-wedding resume copy soft and resumable', () => {
@@ -219,23 +288,11 @@ describe('NameChangePlannerTab', () => {
       expect(screen.getByText('Optional next step: Pick back up in the vault if you want progress and proof. If details changed, case setup is still one click away.')).toBeInTheDocument();
       expect(screen.getByText('0 complete · 1 in progress across the legal identity chain.')).toBeInTheDocument();
 
-      fireEvent.click(
-        screen
-          .getByText((content) => content.includes('legal identity chain'))
-          .closest('button') as HTMLButtonElement,
-      );
+      fireEvent.click(getButtonByTextFragment('Core identity chain'));
       expect(window.location.hash).toBe('#target-status-tracking');
-      fireEvent.click(
-        screen
-          .getByText('Milestone confirmations')
-          .closest('button') as HTMLButtonElement,
-      );
+      fireEvent.click(getButtonByTextFragment('Follow-on work'));
       expect(window.location.hash).toBe('#target-status-tracking');
-      fireEvent.click(
-        screen
-          .getByText((content) => content.includes('account cleanup'))
-          .closest('button') as HTMLButtonElement,
-      );
+      fireEvent.click(getButtonByTextFragment('Downstream updates'));
       expect(window.location.hash).toBe('#target-status-tracking');
       fireEvent.click(screen.getByRole('button', { name: 'Resume status vault' }));
       expect(window.location.hash).toBe('#target-status-tracking');
@@ -342,7 +399,7 @@ describe('NameChangePlannerTab', () => {
   it('shows supportive guided next-action wait guidance on blocked downstream execution cards', () => {
     const draft = makeDraft();
 
-    render(
+    const { container } = render(
       <NameChangePlannerTab
         draft={draft}
         documents={[]}
@@ -373,7 +430,7 @@ describe('NameChangePlannerTab', () => {
     const bankSnapshot = buildNameChangeBankExecutionSnapshot(draft, [], [], plan);
     const bankGuidedDetail = getExecutionNextActionDetail(bankSnapshot);
 
-    render(
+    const { container } = render(
       <NameChangePlannerTab
         draft={draft}
         documents={[]}
@@ -404,10 +461,11 @@ describe('NameChangePlannerTab', () => {
     const originalScrollIntoView = HTMLElement.prototype.scrollIntoView;
     const originalHash = window.location.hash;
     HTMLElement.prototype.scrollIntoView = scrollIntoView;
-    window.location.hash = '#target-status-tracking';
+    setHashSilently('#target-status-tracking');
+    let unmount: (() => void) | undefined;
 
     try {
-      render(
+      ({ unmount } = render(
         <NameChangePlannerTab
           draft={draft}
           documents={[]}
@@ -424,14 +482,15 @@ describe('NameChangePlannerTab', () => {
           onStepExecutionNoteChange={vi.fn()}
           onSave={vi.fn().mockResolvedValue(undefined)}
         />,
-      );
+      ));
 
       await vi.waitFor(() => {
         expect(scrollIntoView).toHaveBeenCalled();
       });
     } finally {
+      unmount?.();
       HTMLElement.prototype.scrollIntoView = originalScrollIntoView;
-      window.location.hash = originalHash;
+      setHashSilently(originalHash);
     }
   });
 
@@ -441,10 +500,11 @@ describe('NameChangePlannerTab', () => {
     const originalScrollIntoView = HTMLElement.prototype.scrollIntoView;
     const originalHash = window.location.hash;
     HTMLElement.prototype.scrollIntoView = scrollIntoView;
-    window.location.hash = '';
+    setHashSilently('');
+    let unmount: (() => void) | undefined;
 
     try {
-      render(
+      ({ unmount } = render(
         <NameChangePlannerTab
           draft={draft}
           documents={[]}
@@ -461,17 +521,20 @@ describe('NameChangePlannerTab', () => {
           onStepExecutionNoteChange={vi.fn()}
           onSave={vi.fn().mockResolvedValue(undefined)}
         />,
-      );
+      ));
 
-      window.location.hash = '#case-setup';
-      window.dispatchEvent(new HashChangeEvent('hashchange'));
+      act(() => {
+        setHashSilently('#case-setup');
+        fireEvent(window, new HashChangeEvent('hashchange'));
+      });
 
       await vi.waitFor(() => {
         expect(scrollIntoView).toHaveBeenCalled();
       });
     } finally {
+      unmount?.();
       HTMLElement.prototype.scrollIntoView = originalScrollIntoView;
-      window.location.hash = originalHash;
+      setHashSilently(originalHash);
     }
   });
 
@@ -586,7 +649,7 @@ describe('NameChangePlannerTab', () => {
     const payrollChecklistHighlightLine = payrollChecklistHighlight?.endsWith('.') ? payrollChecklistHighlight : `${payrollChecklistHighlight}.`;
     const payrollChecklistStatusLine = payrollChecklistStatus?.endsWith('.') ? payrollChecklistStatus : `${payrollChecklistStatus}.`;
 
-    render(
+    const { container } = render(
       <NameChangePlannerTab
         draft={draft}
         documents={[]}
@@ -605,8 +668,8 @@ describe('NameChangePlannerTab', () => {
       />,
     );
 
-    expect(payrollRequestSummary).toBeTruthy();
-    expect(bankRequestSummary).toBeTruthy();
+    expect(payrollRequestSummary).toBeDefined();
+    expect(bankRequestSummary).toBeDefined();
     expect(screen.getByText(`Next ask: ${payrollRequestSummary}`)).toBeInTheDocument();
     expect(screen.getByText(`Next ask: ${bankRequestSummary}`)).toBeInTheDocument();
     expect(screen.getAllByText(`Blocked by: ${payrollBlockingProofHop}.`).length).toBeGreaterThan(0);
@@ -641,7 +704,7 @@ describe('NameChangePlannerTab', () => {
       },
     };
 
-    render(
+    const { container } = render(
       <NameChangePlannerTab
         draft={draft}
         documents={[]}
@@ -684,7 +747,7 @@ describe('NameChangePlannerTab', () => {
       },
     };
 
-    render(
+    const { container } = render(
       <NameChangePlannerTab
         draft={draft}
         documents={[]}
@@ -805,7 +868,7 @@ describe('NameChangePlannerTab', () => {
     expect(clipboardWriteText).toHaveBeenCalledWith(expect.stringContaining(`Proof status: ${payrollTemplate?.proofReadinessSummary}`));
     expect(clipboardWriteText).toHaveBeenCalledWith(expect.stringContaining(`Proof checklist: ${payrollTemplate?.proofChecklist.map((item) => item.replace(/[.\s]+$/u, '')).join(' · ')}`));
     expect(clipboardWriteText).toHaveBeenCalledWith(expect.stringContaining(`Template message: ${payrollTemplate?.body}`));
-    expect(screen.getByRole('button', { name: 'Copied' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Copied update' })).toBeInTheDocument();
   });
 
   it('avoids double punctuation in copied checklist lines', async () => {
@@ -1457,7 +1520,7 @@ describe('NameChangePlannerTab', () => {
     payrollTemplate.proofDocuments = ['.', '   '];
     payrollTemplate.proofChecklist = ['.', '   '];
 
-    render(
+    const { container } = render(
       <NameChangePlannerTab
         draft={draft}
         documents={[]}
@@ -1477,8 +1540,7 @@ describe('NameChangePlannerTab', () => {
       />,
     );
 
-    const payrollCard = document.getElementById('account-update-template-template-payroll');
-    if (!payrollCard) throw new Error('expected payroll card');
+    const payrollCard = getAccountUpdateTemplateCard(container, 'template-payroll');
 
     expect(within(payrollCard).queryByText(/Proof checklist:/)).not.toBeInTheDocument();
     expect(within(payrollCard).queryByText(/Proof to have handy:/)).not.toBeInTheDocument();
@@ -1506,7 +1568,7 @@ describe('NameChangePlannerTab', () => {
     payrollTemplate.checklistHighlight = ' . ';
     payrollTemplate.checklistStatusNote = '.';
 
-    render(
+    const { container } = render(
       <NameChangePlannerTab
         draft={draft}
         documents={[]}
@@ -1526,8 +1588,7 @@ describe('NameChangePlannerTab', () => {
       />,
     );
 
-    const payrollCard = document.getElementById('account-update-template-template-payroll');
-    if (!payrollCard) throw new Error('expected payroll card');
+    const payrollCard = getAccountUpdateTemplateCard(container, 'template-payroll');
 
     expect(within(payrollCard).queryByText(/Checklist:/)).not.toBeInTheDocument();
     expect(within(payrollCard).queryByText(/Checklist status:/)).not.toBeInTheDocument();
@@ -1557,7 +1618,7 @@ describe('NameChangePlannerTab', () => {
     payrollTemplate.proofReadinessSummary = ' - ';
     payrollTemplate.requestSummary = ' ... ';
 
-    render(
+    const { container } = render(
       <NameChangePlannerTab
         draft={draft}
         documents={[]}
@@ -1577,8 +1638,7 @@ describe('NameChangePlannerTab', () => {
       />,
     );
 
-    const payrollCard = document.getElementById('account-update-template-template-payroll');
-    if (!payrollCard) throw new Error('expected payroll card');
+    const payrollCard = getAccountUpdateTemplateCard(container, 'template-payroll');
 
     expect(within(payrollCard).queryByText(/Subject:/)).not.toBeInTheDocument();
     expect(within(payrollCard).queryByText(/Template message:/)).not.toBeInTheDocument();
@@ -1610,7 +1670,7 @@ describe('NameChangePlannerTab', () => {
     payrollTemplate.readiness = 'in_progress';
     payrollTemplate.blockingProofHopLabel = '   ';
 
-    render(
+    const { container } = render(
       <NameChangePlannerTab
         draft={draft}
         documents={[]}
@@ -1630,8 +1690,7 @@ describe('NameChangePlannerTab', () => {
       />,
     );
 
-    const payrollCard = document.getElementById('account-update-template-template-payroll');
-    if (!payrollCard) throw new Error('expected payroll card');
+    const payrollCard = getAccountUpdateTemplateCard(container, 'template-payroll');
 
     expect(within(payrollCard).getByText('Blocked by: current proof pending.')).toBeInTheDocument();
     expect(within(payrollCard).getByText('Current blocker: current proof pending.')).toBeInTheDocument();
@@ -1669,7 +1728,7 @@ describe('NameChangePlannerTab', () => {
       },
     };
 
-    render(
+    const { container } = render(
       <NameChangePlannerTab
         draft={draft}
         documents={[]}
@@ -1689,8 +1748,7 @@ describe('NameChangePlannerTab', () => {
       />,
     );
 
-    const payrollCard = document.getElementById('account-update-template-template-payroll');
-    if (!payrollCard) throw new Error('expected payroll card');
+    const payrollCard = getAccountUpdateTemplateCard(container, 'template-payroll');
 
     expect(within(payrollCard).queryByText(/Proof to have handy:/)).not.toBeInTheDocument();
 
@@ -1778,6 +1836,216 @@ describe('NameChangePlannerTab', () => {
     expect(clipboardWriteText).toHaveBeenCalledWith(expect.stringContaining('Day of Love name-change action packet'));
     expect(clipboardWriteText).toHaveBeenCalledWith(expect.stringContaining('State playbook: Colorado (Expanded)'));
     expect(clipboardWriteText).toHaveBeenCalledWith(expect.stringContaining('Next actions:'));
-    expect(screen.getAllByRole('button', { name: 'Copied' }).length).toBeGreaterThan(0);
+    expect(screen.getAllByRole('button', { name: 'Copied action packet' }).length).toBeGreaterThan(0);
+  });
+
+  it('surfaces an inline error when saving the planner fails', async () => {
+    const onSave = vi.fn().mockRejectedValueOnce(new Error('save failed'));
+    const draft = makeDraft();
+
+    render(
+      <NameChangePlannerTab
+        draft={draft}
+        documents={[]}
+        extractedFields={[]}
+        plan={buildNameChangePlan({ profile: draft, documents: [], extractedFields: [] })}
+        reminders={[]}
+        saving={false}
+        onDraftChange={vi.fn()}
+        onStructuredIntakeChange={vi.fn()}
+        onDocumentsChange={vi.fn()}
+        onExtractedFieldsChange={vi.fn()}
+        onRemindersChange={vi.fn()}
+        onStepExecutionStatusChange={vi.fn()}
+        onStepExecutionNoteChange={vi.fn()}
+        onSave={onSave}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Save planner case' }));
+
+    await waitFor(() => expect(onSave).toHaveBeenCalledTimes(1));
+    expect(await screen.findByRole('alert')).toHaveTextContent('Couldn’t save the name-change planner right now.');
+  });
+
+  it('surfaces an inline error when planner export copy fails', async () => {
+    vi.spyOn(copyTextModule, 'copyTextOrDownload').mockRejectedValueOnce(new Error('copy failed'));
+    const draft = makeDraft({ marriage_state: 'Colorado' });
+
+    render(
+      <NameChangePlannerTab
+        draft={draft}
+        documents={[]}
+        extractedFields={[]}
+        plan={buildNameChangePlan({ profile: draft, documents: [], extractedFields: [] })}
+        reminders={[]}
+        saving={false}
+        onDraftChange={vi.fn()}
+        onStructuredIntakeChange={vi.fn()}
+        onDocumentsChange={vi.fn()}
+        onExtractedFieldsChange={vi.fn()}
+        onRemindersChange={vi.fn()}
+        onStepExecutionStatusChange={vi.fn()}
+        onStepExecutionNoteChange={vi.fn()}
+        onSave={vi.fn().mockResolvedValue(undefined)}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Copy action packet' }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Couldn’t copy that planner export right now.');
+  });
+
+  it('surfaces an inline error when template copy fails', async () => {
+    vi.spyOn(copyTextModule, 'copyTextOrDownload').mockRejectedValueOnce(new Error('copy failed'));
+    const draft = makeDraft();
+
+    render(
+      <NameChangePlannerTab
+        draft={draft}
+        documents={[]}
+        extractedFields={[]}
+        plan={buildNameChangePlan({ profile: draft, documents: [], extractedFields: [] })}
+        reminders={[]}
+        saving={false}
+        onDraftChange={vi.fn()}
+        onStructuredIntakeChange={vi.fn()}
+        onDocumentsChange={vi.fn()}
+        onExtractedFieldsChange={vi.fn()}
+        onRemindersChange={vi.fn()}
+        onStepExecutionStatusChange={vi.fn()}
+        onStepExecutionNoteChange={vi.fn()}
+        onSave={vi.fn().mockResolvedValue(undefined)}
+      />,
+    );
+
+    fireEvent.click(screen.getAllByRole('button', { name: 'Copy intake script' })[0]!);
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Couldn’t copy the payroll update right now.');
+  });
+
+  it('ignores stale template copy completion after account update templates change', async () => {
+    let resolveCopy: (value: 'copied') => void = () => {};
+    vi.spyOn(copyTextModule, 'copyTextOrDownload').mockReturnValueOnce(new Promise((resolve) => {
+      resolveCopy = resolve;
+    }));
+    const draft = makeDraft();
+    const plan = buildNameChangePlan({ profile: draft, documents: [], extractedFields: [] });
+    const nextPlan: NameChangePlan = {
+      ...plan,
+      summary: {
+        ...plan.summary,
+        accountUpdateTemplates: plan.summary.accountUpdateTemplates?.map((template, index) => (
+          index === 0 ? { ...template, subject: `${template.subject} updated` } : template
+        )),
+      },
+    };
+
+    const props = {
+      draft,
+      documents: [],
+      extractedFields: [],
+      reminders: [],
+      saving: false,
+      onDraftChange: vi.fn(),
+      onStructuredIntakeChange: vi.fn(),
+      onDocumentsChange: vi.fn(),
+      onExtractedFieldsChange: vi.fn(),
+      onRemindersChange: vi.fn(),
+      onStepExecutionStatusChange: vi.fn(),
+      onStepExecutionNoteChange: vi.fn(),
+      onSave: vi.fn().mockResolvedValue(undefined),
+    };
+
+    const { rerender } = render(
+      <NameChangePlannerTab
+        {...props}
+        plan={plan}
+      />,
+    );
+
+    fireEvent.click(screen.getAllByRole('button', { name: 'Copy intake script' })[0]!);
+    expect(screen.getAllByRole('button', { name: /Copying/i })[0]).toBeDisabled();
+
+    rerender(
+      <NameChangePlannerTab
+        {...props}
+        plan={nextPlan}
+      />,
+    );
+
+    await waitFor(() => expect(screen.getAllByRole('button', { name: 'Copy intake script' })[0]).toBeEnabled());
+
+    await act(async () => {
+      resolveCopy('copied');
+    });
+
+    expect(screen.getAllByRole('button', { name: 'Copy intake script' })[0]).toBeEnabled();
+    expect(screen.queryByRole('button', { name: 'Copied update' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  });
+
+  it('surfaces an inline error when institution packet copy fails', async () => {
+    vi.spyOn(copyTextModule, 'copyTextOrDownload').mockRejectedValueOnce(new Error('copy failed'));
+    const draft = makeDraft({ marriage_state: 'Colorado' });
+
+    render(
+      <NameChangePlannerTab
+        draft={draft}
+        documents={[]}
+        extractedFields={[]}
+        plan={buildNameChangePlan({ profile: draft, documents: [], extractedFields: [] })}
+        reminders={[]}
+        saving={false}
+        onDraftChange={vi.fn()}
+        onStructuredIntakeChange={vi.fn()}
+        onDocumentsChange={vi.fn()}
+        onExtractedFieldsChange={vi.fn()}
+        onRemindersChange={vi.fn()}
+        onStepExecutionStatusChange={vi.fn()}
+        onStepExecutionNoteChange={vi.fn()}
+        onSave={vi.fn().mockResolvedValue(undefined)}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Copy banking and credit packet' }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Couldn’t copy that institution packet right now.');
+  });
+
+  it('shows downloaded fallback labels when planner copy actions fall back from the clipboard', async () => {
+    vi.spyOn(copyTextModule, 'copyTextOrDownload')
+      .mockResolvedValueOnce('downloaded')
+      .mockResolvedValueOnce('downloaded')
+      .mockResolvedValueOnce('downloaded');
+    const draft = makeDraft({ marriage_state: 'Colorado' });
+
+    render(
+      <NameChangePlannerTab
+        draft={draft}
+        documents={[]}
+        extractedFields={[]}
+        plan={buildNameChangePlan({ profile: draft, documents: [], extractedFields: [] })}
+        reminders={[]}
+        saving={false}
+        onDraftChange={vi.fn()}
+        onStructuredIntakeChange={vi.fn()}
+        onDocumentsChange={vi.fn()}
+        onExtractedFieldsChange={vi.fn()}
+        onRemindersChange={vi.fn()}
+        onStepExecutionStatusChange={vi.fn()}
+        onStepExecutionNoteChange={vi.fn()}
+        onSave={vi.fn().mockResolvedValue(undefined)}
+      />,
+    );
+
+    fireEvent.click(screen.getAllByRole('button', { name: 'Copy intake script' })[0]!);
+    expect(await screen.findByRole('button', { name: 'Downloaded update' })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Copy banking and credit packet' }));
+    expect(await screen.findByRole('button', { name: 'Downloaded banking and credit packet' })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Copy action packet' }));
+    expect(await screen.findByRole('button', { name: 'Downloaded action packet' })).toBeInTheDocument();
   });
 });

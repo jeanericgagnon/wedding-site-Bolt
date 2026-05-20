@@ -19,9 +19,9 @@ describe('dashboard accessibility labels', () => {
     expect(source).toContain('aria-label={`Delete ${event.event_name}`}');
   });
 
-  it('keeps the coordinator proof surface anchored on a Day-of view heading', () => {
+  it('keeps the coordinator proof surface anchored on the wedding-day helper heading', () => {
     const source = readFileSync(join(process.cwd(), 'src/pages/dashboard/coordinator/CoordinatorDashboardRouteContent.tsx'), 'utf8');
 
-    expect(source).toContain('title="Day-of view"');
+    expect(source).toContain('title="Everything helpers need on the wedding day."');
   });
 });

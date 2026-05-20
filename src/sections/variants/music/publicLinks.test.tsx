@@ -1,13 +1,22 @@
-import { render, screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { defaultMusicPlaylistData, musicPlaylistDefinition } from './playlist';
 import { defaultMusicRequestFormData, musicRequestFormDefinition } from './requestForm';
 
 const Playlist = musicPlaylistDefinition.Component;
 const RequestForm = musicRequestFormDefinition.Component;
+const submitInteractiveSuggestionMock = vi.fn();
+
+vi.mock('../../interactiveSectionService', () => ({
+  submitInteractiveSuggestion: (...args: unknown[]) => submitInteractiveSuggestionMock(...args),
+}));
 
 describe('music public links', () => {
+  beforeEach(() => {
+    submitInteractiveSuggestionMock.mockReset();
+  });
+
   it('hides unsafe platform links in playlist variants', () => {
     render(
       <Playlist
@@ -52,5 +61,25 @@ describe('music public links', () => {
       'href',
       'https://open.spotify.com/playlist/dayof',
     );
+  });
+
+  it('keeps the song suggestion visible and retryable when submit fails', async () => {
+    submitInteractiveSuggestionMock.mockRejectedValueOnce(new Error('submit failed'));
+
+    render(
+      <RequestForm
+        data={defaultMusicRequestFormData}
+        siteSlug="preview"
+      />,
+    );
+
+    fireEvent.change(screen.getByPlaceholderText('Song title and artist'), { target: { value: 'Dancing Queen - ABBA' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Send song' }));
+
+    await waitFor(() => {
+      expect(screen.getByRole('alert')).toHaveTextContent('Couldn’t send that song right now. Please try again.');
+    });
+    expect(screen.getByDisplayValue('Dancing Queen - ABBA')).toBeInTheDocument();
+    expect(screen.queryByText('Got it. Thank you for the song idea.')).not.toBeInTheDocument();
   });
 });

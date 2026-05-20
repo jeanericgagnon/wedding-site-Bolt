@@ -11,7 +11,7 @@ describe('GuestPhotoHubQrCard', () => {
         isPublished
         guestHubActionSummary="RSVP, photo upload, and guestbook"
         guestHubActions={[{ id: 'rsvp', titleKey: '', detailKey: '', href: '/site/maya-and-leo#rsvp' }]}
-        copied=""
+        copyNotice={null}
         guestHubQrAssetCount={0}
         getBucketQrUrl={() => 'https://api.qrserver.com/v1/create-qr-code/?size=512x512&data=https%3A%2F%2Fdayof.love%2Fevent%2Fmaya-and-leo'}
         onCopyText={vi.fn()}
@@ -37,7 +37,7 @@ describe('GuestPhotoHubQrCard', () => {
           { id: 'rsvp', titleKey: '', detailKey: '', href: '/site/maya-and-leo#rsvp' },
           { id: 'photos', titleKey: '', detailKey: '', href: '/photos/upload?site=maya-and-leo&hub=1' },
         ]}
-        copied=""
+        copyNotice={null}
         guestHubQrAssetCount={4}
         getBucketQrUrl={() => 'https://api.qrserver.com/v1/create-qr-code/?size=512x512&data=https%3A%2F%2Fdayof.love%2Fevent%2Fmaya-and-leo'}
         onCopyText={vi.fn()}
@@ -67,7 +67,7 @@ describe('GuestPhotoHubQrCard', () => {
           { id: 'rsvp', titleKey: '', detailKey: '', href: '/site/maya-and-leo#rsvp' },
           { id: 'photos', titleKey: '', detailKey: '', href: '/photos/upload?site=maya-and-leo&hub=1' },
         ]}
-        copied=""
+        copyNotice={null}
         guestHubQrAssetCount={4}
         getBucketQrUrl={() => 'https://api.qrserver.com/v1/create-qr-code/?size=512x512&data=https%3A%2F%2Fdayof.love%2Fevent%2Fmaya-and-leo'}
         onCopyText={onCopyText}
@@ -98,7 +98,7 @@ describe('GuestPhotoHubQrCard', () => {
         isPublished={false}
         guestHubActionSummary="RSVP, photo upload, and guestbook"
         guestHubActions={[{ id: 'rsvp', titleKey: '', detailKey: '', href: '/site/maya-and-leo#rsvp' }]}
-        copied=""
+        copyNotice={null}
         guestHubQrAssetCount={4}
         getBucketQrUrl={() => 'https://api.qrserver.com/v1/create-qr-code/?size=512x512&data=https%3A%2F%2Fdayof.love%2Fevent%2Fmaya-and-leo'}
         onCopyText={vi.fn()}
@@ -127,7 +127,7 @@ describe('GuestPhotoHubQrCard', () => {
           { id: 'rsvp', titleKey: '', detailKey: '', href: '/site/maya-and-leo#rsvp' },
           { id: 'photos', titleKey: '', detailKey: '', href: '/photos/upload?site=maya-and-leo&hub=1' },
         ]}
-        copied=""
+        copyNotice={null}
         guestHubQrAssetCount={4}
         getBucketQrUrl={() => 'https://api.qrserver.com/v1/create-qr-code/?size=512x512&data=https%3A%2F%2Fdayof.love%2Fevent%2Fmaya-and-leo'}
         onCopyText={vi.fn()}
@@ -156,7 +156,7 @@ describe('GuestPhotoHubQrCard', () => {
           { id: 'rsvp', titleKey: '', detailKey: '', href: '/site/maya-and-leo#rsvp' },
           { id: 'photos', titleKey: '', detailKey: '', href: '/photos/upload?site=maya-and-leo&hub=1' },
         ]}
-        copied=""
+        copyNotice={null}
         guestHubQrAssetCount={2}
         getBucketQrUrl={() => 'https://api.qrserver.com/v1/create-qr-code/?size=512x512&data=https%3A%2F%2Fdayof.love%2Fevent%2Fmaya-and-leo'}
         onCopyText={onCopyText}
@@ -187,7 +187,7 @@ describe('GuestPhotoHubQrCard', () => {
           { id: 'rsvp', titleKey: '', detailKey: '', href: '/site/maya-and-leo#rsvp' },
           { id: 'photos', titleKey: '', detailKey: '', href: '/photos/upload?site=maya-and-leo&hub=1' },
         ]}
-        copied="guest-hub"
+        copyNotice={{ key: 'guest-hub', mode: 'copied' }}
         guestHubQrAssetCount={4}
         getBucketQrUrl={() => 'https://api.qrserver.com/v1/create-qr-code/?size=512x512&data=https%3A%2F%2Fdayof.love%2Fevent%2Fmaya-and-leo'}
         onCopyText={vi.fn()}
@@ -210,7 +210,7 @@ describe('GuestPhotoHubQrCard', () => {
           { id: 'rsvp', titleKey: '', detailKey: '', href: '/site/maya-and-leo#rsvp' },
           { id: 'photos', titleKey: '', detailKey: '', href: '/photos/upload?site=maya-and-leo&hub=1' },
         ]}
-        copied="guest-recap"
+        copyNotice={{ key: 'guest-recap', mode: 'copied' }}
         guestHubQrAssetCount={4}
         getBucketQrUrl={() => 'https://api.qrserver.com/v1/create-qr-code/?size=512x512&data=https%3A%2F%2Fdayof.love%2Fevent%2Fmaya-and-leo'}
         onCopyText={vi.fn()}

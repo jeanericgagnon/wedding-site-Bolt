@@ -171,4 +171,22 @@ describe('RsvpSection', () => {
     expect(invokeMock).not.toHaveBeenCalledWith('site_rsvps', expect.anything());
     expect(await screen.findByText('Your reply has been saved.')).toBeInTheDocument();
   });
+
+  it('clears stale submit errors once the guest edits the RSVP form again', async () => {
+    invokeMock.mockResolvedValueOnce({ data: null, error: new Error('resolve failed') });
+
+    const data = createWeddingData();
+    render(<RsvpSection data={data} instance={makeInstance({})} />);
+
+    fireEvent.change(screen.getByLabelText('Your name'), { target: { value: 'Taylor Guest' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Send RSVP' }));
+
+    expect(await screen.findByText('Unable to find this wedding website right now. Please try again.')).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText(/Dietary notes/), { target: { value: 'Vegetarian' } });
+
+    await waitFor(() => {
+      expect(screen.queryByText('Unable to find this wedding website right now. Please try again.')).not.toBeInTheDocument();
+    });
+  });
 });

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Button } from '../../components/ui';
 import { X, Loader2 } from 'lucide-react';
 import { customerSafeErrorMessage } from '../../lib/customerSafeError';
@@ -39,6 +39,15 @@ export function EditVaultModal({ config, hasEntries, onSave, onClose }: EditVaul
   const [labelManuallyEdited, setLabelManuallyEdited] = useState(false);
   const [saving, setSaving] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
+  const clearLocalError = () => setLocalError(null);
+
+  useEffect(() => {
+    setLabel(config.label);
+    setDurationYears(config.duration_years);
+    setLabelManuallyEdited(false);
+    setSaving(false);
+    setLocalError(null);
+  }, [config.duration_years, config.id, config.label]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -60,17 +69,17 @@ export function EditVaultModal({ config, hasEntries, onSave, onClose }: EditVaul
     <>
       <div className="fixed inset-0 bg-black/50 z-40" onClick={onClose} />
       <div className="fixed inset-0 flex items-center justify-center z-50 p-4">
-        <div className="bg-surface rounded-lg max-w-md w-full p-6 border border-border">
+        <div className="bg-surface rounded-2xl max-w-md w-full p-6 border border-border">
           <div className="flex items-center justify-between mb-5">
             <h2 className="text-lg font-semibold text-text-primary">Edit Vault Settings</h2>
-            <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-surface-subtle text-text-secondary transition-colors">
+            <button onClick={onClose} className="p-1.5 rounded-xl hover:bg-surface-subtle text-text-secondary transition-colors">
               <X className="w-5 h-5" />
             </button>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             {localError && (
-              <div className="p-3 rounded-lg border border-border-subtle bg-surface-subtle text-text-primary text-sm font-semibold">
+              <div className="rounded-xl border border-border-subtle bg-surface-subtle p-3 text-sm font-semibold text-text-primary">
                 {localError}
               </div>
             )}
@@ -79,10 +88,10 @@ export function EditVaultModal({ config, hasEntries, onSave, onClose }: EditVaul
               <input
                 type="text"
                 value={label}
-                onChange={(e) => { setLabel(e.target.value); setLabelManuallyEdited(true); }}
+                onChange={(e) => { clearLocalError(); setLabel(e.target.value); setLabelManuallyEdited(true); }}
                 placeholder="e.g. 1st Anniversary"
                 maxLength={60}
-                className="w-full px-3 py-2.5 text-sm bg-surface border border-border rounded-lg text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary"
+                className="w-full px-3 py-2.5 text-sm bg-surface border border-border rounded-xl text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary"
               />
             </div>
 
@@ -92,6 +101,7 @@ export function EditVaultModal({ config, hasEntries, onSave, onClose }: EditVaul
                 value={isCustom ? 'custom' : String(durationYears)}
                 disabled={hasEntries}
                 onChange={(e) => {
+                  clearLocalError();
                   if (e.target.value !== 'custom') {
                     const newYears = Number(e.target.value);
                     setDurationYears(newYears);
@@ -100,7 +110,7 @@ export function EditVaultModal({ config, hasEntries, onSave, onClose }: EditVaul
                     }
                   }
                 }}
-                className="w-full px-3 py-2.5 text-sm bg-surface border border-border rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-60 disabled:cursor-not-allowed"
+                className="w-full px-3 py-2.5 text-sm bg-surface border border-border rounded-xl text-text-primary focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 {DURATION_OPTIONS.map((option) => (
                   <option key={option.value} value={String(option.value)}>{option.label}</option>
@@ -115,8 +125,11 @@ export function EditVaultModal({ config, hasEntries, onSave, onClose }: EditVaul
                     max={100}
                     value={durationYears}
                     disabled={hasEntries}
-                    onChange={(e) => setDurationYears(Math.max(1, Math.min(100, Number(e.target.value))))}
-                    className="w-24 px-3 py-2 text-sm bg-surface border border-border rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-60 disabled:cursor-not-allowed"
+                    onChange={(e) => {
+                      clearLocalError();
+                      setDurationYears(Math.max(1, Math.min(100, Number(e.target.value))));
+                    }}
+                    className="w-24 px-3 py-2 text-sm bg-surface border border-border rounded-xl text-text-primary focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-60 disabled:cursor-not-allowed"
                   />
                   <span className="text-sm text-text-secondary">years after wedding date</span>
                 </div>

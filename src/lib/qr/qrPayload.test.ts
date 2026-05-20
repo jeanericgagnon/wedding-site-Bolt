@@ -167,6 +167,15 @@ describe('resolveCoordinatorQrPayload', () => {
     expect(resolution).toMatchObject({ status: 'wrong-event' });
   });
 
+  it('routes unresolved RSVP guests into review instead of direct check-in', () => {
+    const resolution = resolveCoordinatorQrPayload('guest-token-2', baseArgs);
+    expect(resolution).toMatchObject({
+      status: 'needs-review',
+      guest: { id: 'guest-2' },
+      warnings: expect.arrayContaining(['RSVP unresolved', 'Unassigned seat']),
+    });
+  });
+
   it('rejects wrong-site payloads', () => {
     const resolution = resolveCoordinatorQrPayload('https://other-couple.dayof.love/rsvp?token=guest-token-1', baseArgs);
     expect(resolution).toMatchObject({ status: 'wrong-site' });

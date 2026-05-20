@@ -1,3 +1,4 @@
+import { useMemo, useRef } from 'react';
 import { isAttendingRsvpStatus, isDeclinedRsvpStatus, isPendingRsvpStatus, hasRespondedRsvpStatus } from '../../../lib/rsvpStatus';
 import { copyTextOrDownload } from '../../../lib/copyText';
 import { resolvePublicSiteSlugFromRow } from '../../../lib/publicSiteSlug';
@@ -30,6 +31,8 @@ interface UseGuestDashboardExportsInput {
   weddingSiteInfo: WeddingSiteInfo | null;
 }
 
+type CopyActionResult = 'copied' | 'downloaded';
+
 export function useGuestDashboardExports({
   dueThankYouGuestIds,
   effectiveItineraryEvents,
@@ -44,56 +47,93 @@ export function useGuestDashboardExports({
   weddingSiteId,
   weddingSiteInfo,
 }: UseGuestDashboardExportsInput) {
+  const exportCopyRequestIdRef = useRef(0);
+  const exportCopyContextKey = useMemo(() => JSON.stringify({
+    weddingSiteId,
+    publicSlug: weddingSiteInfo ? resolvePublicSiteSlugFromRow(weddingSiteInfo as unknown as Record<string, unknown>) : null,
+    siteSlug: weddingSiteInfo?.site_slug ?? null,
+    reminderGuestIds: reminderCandidates.map((guest) => [guest.id, guest.invite_token ?? null]),
+  }), [reminderCandidates, weddingSiteId, weddingSiteInfo]);
+  const exportCopyContextKeyRef = useRef(exportCopyContextKey);
+  exportCopyContextKeyRef.current = exportCopyContextKey;
+
+  const beginExportCopyAction = () => {
+    const requestId = ++exportCopyRequestIdRef.current;
+    const requestContextKey = exportCopyContextKeyRef.current;
+    return () => (
+      requestId === exportCopyRequestIdRef.current &&
+      requestContextKey === exportCopyContextKeyRef.current
+    );
+  };
+
   const exportCSV = (rowsSource: GuestWithRSVP[] = guests, suffix = 'guests') => {
     downloadGuestCsv(buildGuestExportCsv({ guests: rowsSource, origin: window.location.origin }), suffix);
   };
 
-  const copyContactRequestLink = async () => {
-    if (!weddingSiteId || !weddingSiteInfo) {
-      toast('Missing wedding site context', 'error');
-      return;
-    }
+  const copyContactRequestLink = async (): Promise<CopyActionResult | null> => {
+    const isCurrentExportCopyAction = beginExportCopyAction();
+    try {
+      if (!weddingSiteId || !weddingSiteInfo) {
+        toast('Missing wedding site context', 'error');
+        return null;
+      }
 
-    const publicSlug = loadPublicSlug
-      ? await loadPublicSlug(weddingSiteId)
-      : resolvePublicSiteSlugFromRow(weddingSiteInfo as unknown as Record<string, unknown>);
-    if (!publicSlug) {
-      toast('Set a public site slug before sharing the guest update link', 'error');
-      return;
-    }
+      const publicSlug = loadPublicSlug
+        ? await loadPublicSlug(weddingSiteId)
+        : resolvePublicSiteSlugFromRow(weddingSiteInfo as unknown as Record<string, unknown>);
+      if (!publicSlug) {
+        toast('Set a public site slug before sharing the guest update link', 'error');
+        return null;
+      }
 
-    const url = `https://${publicSlug}.dayof.love/guest-contact/${publicSlug}`;
-    const result = await copyTextOrDownload(url, 'dayof-guest-update-link.txt');
-    toast(result === 'copied' ? 'Guest update link copied' : 'Clipboard was blocked, so the guest update link downloaded.', 'success');
+      const url = `https://${publicSlug}.dayof.love/guest-contact/${publicSlug}`;
+      const result = await copyTextOrDownload(url, 'dayof-guest-update-link.txt');
+      if (!isCurrentExportCopyAction()) return null;
+      toast(result === 'copied' ? 'Guest update link copied' : 'Clipboard was blocked, so the guest update link downloaded.', 'success');
+      return result;
+    } catch {
+      if (!isCurrentExportCopyAction()) return null;
+      toast('Couldn’t copy the guest update link right now.', 'error');
+      return null;
+    }
   };
 
-  const copySmsRsvpLinksForFiltered = async () => {
-    if (!weddingSiteId) {
-      toast('Missing wedding site context', 'error');
-      return;
-    }
+  const copySmsRsvpLinksForFiltered = async (): Promise<CopyActionResult | null> => {
+    const isCurrentExportCopyAction = beginExportCopyAction();
+    try {
+      if (!weddingSiteId) {
+        toast('Missing wedding site context', 'error');
+        return null;
+      }
 
-    const siteSlug = loadSiteSlug
-      ? await loadSiteSlug(weddingSiteId)
-      : weddingSiteInfo?.site_slug ?? null;
-    if (!siteSlug) {
-      toast('Missing site slug', 'error');
-      return;
-    }
+      const siteSlug = loadSiteSlug
+        ? await loadSiteSlug(weddingSiteId)
+        : weddingSiteInfo?.site_slug ?? null;
+      if (!siteSlug) {
+        toast('Missing site slug', 'error');
+        return null;
+      }
 
-    const rows = buildGuestSmsRsvpLinkRows({ guests: reminderCandidates, siteSlug });
-    if (rows.length === 0) {
-      toast('No RSVP links available for this segment.', 'error');
-      return;
-    }
+      const rows = buildGuestSmsRsvpLinkRows({ guests: reminderCandidates, siteSlug });
+      if (rows.length === 0) {
+        toast('No RSVP links available for this segment.', 'error');
+        return null;
+      }
 
-    const result = await copyTextOrDownload(rows.join('\n'), 'dayof-text-rsvp-links.txt');
-    toast(
-      result === 'copied'
-        ? `Copied ${rows.length} text RSVP link${rows.length === 1 ? '' : 's'}`
-        : 'Clipboard was blocked, so the text RSVP links downloaded.',
-      'success',
-    );
+      const result = await copyTextOrDownload(rows.join('\n'), 'dayof-text-rsvp-links.txt');
+      if (!isCurrentExportCopyAction()) return null;
+      toast(
+        result === 'copied'
+          ? `Copied ${rows.length} text RSVP link${rows.length === 1 ? '' : 's'}`
+          : 'Clipboard was blocked, so the text RSVP links downloaded.',
+        'success',
+      );
+      return result;
+    } catch {
+      if (!isCurrentExportCopyAction()) return null;
+      toast('Couldn’t copy the text RSVP links right now.', 'error');
+      return null;
+    }
   };
 
   return {

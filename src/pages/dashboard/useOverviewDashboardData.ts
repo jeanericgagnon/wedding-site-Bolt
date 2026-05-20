@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { ACTIVE_SITE_STORAGE_CHANGED_EVENT } from '../../lib/activeSiteStorage';
 import { readSetupDraft, setupDraftProgress } from '../../lib/setupDraft';
 import { resolvePublicSiteSlugFromRow } from '../../lib/publicSiteSlug';
@@ -37,6 +38,7 @@ export function useOverviewDashboardData({
   storageKey,
   userId,
 }: Args) {
+  const [searchParams] = useSearchParams();
   const [stats, setStats] = useState<OverviewStatsState | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -53,13 +55,39 @@ export function useOverviewDashboardData({
   const [activeSiteSyncVersion, setActiveSiteSyncVersion] = useState(0);
   const [nameChangeOverviewState, setNameChangeOverviewState] = useState<{ hasWorkspace: boolean; workflowStatus: 'draft' | 'ready' | 'in_progress' | 'complete' | null; hasExecutionActivity: boolean; }>({ hasWorkspace: false, workflowStatus: null, hasExecutionActivity: false });
   const [nameChangeInsights, setNameChangeInsights] = useState<NameChangeOverviewInsights>(DEFAULT_NAME_CHANGE_INSIGHTS);
-  const [showMoreDetail, setShowMoreDetail] = useState(() => {
-    if (typeof window === 'undefined') return false;
-    return new URLSearchParams(window.location.search).get('details') === '1';
-  });
+  const [showMoreDetail, setShowMoreDetail] = useState(() => searchParams.get('details') === '1');
+  const loadStatsRequestIdRef = useRef(0);
+
+  useEffect(() => {
+    setShowMoreDetail(searchParams.get('details') === '1');
+  }, [searchParams]);
+
+  const resetOverviewDashboardState = useCallback(() => {
+    setStats(null);
+    setError(null);
+    setSetupDraftProgressPercent(0);
+    setInteractiveSuggestions([]);
+    setInteractiveVoteSummaries([]);
+    setInteractiveLoading(false);
+    setRecentSiteActivity([]);
+    setDraftBrief([]);
+    setBriefUpdatedAt(null);
+    setRefreshingBrief(false);
+    setDraftRefineTargets([]);
+    setDraftBriefDebug('init');
+    setNameChangeOverviewState({ hasWorkspace: false, workflowStatus: null, hasExecutionActivity: false });
+    setNameChangeInsights(DEFAULT_NAME_CHANGE_INSIGHTS);
+  }, []);
 
   const loadStats = useCallback(async () => {
-    if (!userId) return;
+    const requestId = ++loadStatsRequestIdRef.current;
+    const isCurrentRequest = () => requestId === loadStatsRequestIdRef.current;
+
+    if (!userId) {
+      resetOverviewDashboardState();
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     setError(null);
 
@@ -75,6 +103,8 @@ export function useOverviewDashboardData({
       }
 
       const overviewSnapshot = await loadOverviewDashboardSnapshot(userId);
+      if (!isCurrentRequest()) return;
+
       const { activeSite, site } = overviewSnapshot;
       const siteDraftState = buildOverviewSiteDraftState(site);
       if (siteDraftState.persistedDismissals.length > 0) {
@@ -92,9 +122,11 @@ export function useOverviewDashboardData({
       setBriefUpdatedAt(site?.updated_at ?? null);
 
       const siteActivity = site?.id ? await listBuilderRevisions(site.id) : [];
+      if (!isCurrentRequest()) return;
       setRecentSiteActivity(siteActivity.slice(0, 6));
 
       const workspace = site?.id ? await loadNameChangeWorkspace(site.id) : null;
+      if (!isCurrentRequest()) return;
       const nameChangeSnapshot = buildNameChangeOverviewSnapshotState(workspace);
       setNameChangeOverviewState(nameChangeSnapshot.nameChangeOverviewState);
       setNameChangeInsights(nameChangeSnapshot.nameChangeInsights);
@@ -143,16 +175,23 @@ export function useOverviewDashboardData({
         weddingDate: siteDraftState.weddingDate,
       }));
     } catch {
+      if (!isCurrentRequest()) return;
       setError('Couldn’t load your overview right now.');
     } finally {
-      setLoading(false);
+      if (isCurrentRequest()) {
+        setLoading(false);
+      }
     }
-  }, [activeSiteSyncVersion, isDemoMode, setDismissedIntelligenceIds, storageKey, userId]);
+  }, [activeSiteSyncVersion, isDemoMode, resetOverviewDashboardState, setDismissedIntelligenceIds, storageKey, userId]);
 
   useEffect(() => {
-    if (!userId) return;
+    if (!userId) {
+      resetOverviewDashboardState();
+      setLoading(false);
+      return;
+    }
     void loadStats();
-  }, [loadStats, userId]);
+  }, [loadStats, resetOverviewDashboardState, userId]);
 
   useEffect(() => {
     const handleActiveSiteChanged = () => {
@@ -168,11 +207,11 @@ export function useOverviewDashboardData({
   }, []);
 
   useEffect(() => {
-    const refreshProgress = () => setSetupDraftProgressPercent(setupDraftProgress(readSetupDraft()));
+    const refreshProgress = () => setSetupDraftProgressPercent(setupDraftProgress(readSetupDraft(userId)));
     refreshProgress();
     window.addEventListener('focus', refreshProgress);
     return () => window.removeEventListener('focus', refreshProgress);
-  }, []);
+  }, [userId]);
 
   useEffect(() => {
     const slug = stats?.siteSlug;
@@ -195,6 +234,7 @@ export function useOverviewDashboardData({
         setInteractiveSuggestions([]);
         setInteractiveVoteSummaries([]);
       }
+      if (!mounted) return;
       setInteractiveLoading(false);
     };
 

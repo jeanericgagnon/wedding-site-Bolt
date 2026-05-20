@@ -13,6 +13,7 @@ import { callValidateRsvpToken, hasRsvpFunctionRuntime } from './rsvpFunctionSer
 import { trackGuestHubEvent } from './guestHubPublicService';
 import { EventRsvpRouteView } from './EventRsvpRouteView';
 import { EventRsvpLiveContent } from './EventRsvpLiveContent';
+import { RSVP_CONTINUITY_EVENT, buildRsvpContinuityStorageKey } from './rsvpTypes';
 
 const CAN_USE_EVENT_RSVP_FUNCTION = hasRsvpFunctionRuntime();
 
@@ -67,9 +68,6 @@ function buildDefaultEventRsvpFormState(): EventRsvpFormState {
   };
 }
 
-const RSVP_CONTINUITY_EVENT = 'dayof:rsvp-updated';
-const RSVP_CONTINUITY_STORAGE_KEY = 'dayof.rsvp.updatedAt';
-
 const INVALID_EVENT_INVITATION_MESSAGE =
   "This invitation link isn't valid. Please use the link from your invitation email, or ask the couple for a new one.";
 
@@ -81,10 +79,17 @@ export function safeEventRsvpGuestError(value: string | null | undefined, fallba
   return cleaned;
 }
 
-function notifyRsvpContinuityUpdate() {
-  const updatedAt = writeRsvpContinuityStoragePing(RSVP_CONTINUITY_STORAGE_KEY);
+function notifyRsvpContinuityUpdate(siteSlug?: string | null) {
+  const storageKey = buildRsvpContinuityStorageKey(siteSlug);
+  const updatedAt = writeRsvpContinuityStoragePing(storageKey);
 
-  window.dispatchEvent(new CustomEvent(RSVP_CONTINUITY_EVENT, { detail: { updatedAt } }));
+  window.dispatchEvent(new CustomEvent(RSVP_CONTINUITY_EVENT, {
+    detail: {
+      updatedAt,
+      siteSlug: String(siteSlug ?? '').trim().toLowerCase() || null,
+      storageKey,
+    },
+  }));
 }
 
 function resetEventRsvpModalTransientState(
@@ -123,6 +128,7 @@ export default function EventRSVP() {
 
   const [guest, setGuest] = useState<Guest | null>(null);
   const [rsvpSessionToken, setRsvpSessionToken] = useState<string | null>(null);
+  const [continuitySiteSlug, setContinuitySiteSlug] = useState<string | null>(null);
   const [invitations, setInvitations] = useState<EventInvitation[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -141,6 +147,11 @@ export default function EventRSVP() {
   const tokenLinkedSessionRef = useRef(false);
   const loadInFlightRef = useRef(false);
   const trackedInviteAnalyticsKeyRef = useRef<string | null>(null);
+  const continuityStorageKeyRef = useRef<string>(buildRsvpContinuityStorageKey(null));
+
+  useEffect(() => {
+    continuityStorageKeyRef.current = buildRsvpContinuityStorageKey(continuitySiteSlug);
+  }, [continuitySiteSlug]);
 
   useEffect(() => {
     if (token) {
@@ -160,6 +171,7 @@ export default function EventRSVP() {
       }
       setGuest(null);
       setRsvpSessionToken(null);
+      setContinuitySiteSlug(null);
       setInvitations([]);
       setSelectedEvent(null);
       setRsvpForm({ attending: true, dietary_restrictions: '', notes: '' });
@@ -242,6 +254,7 @@ export default function EventRSVP() {
         tokenLinkedSessionRef.current = false;
         setGuest(null);
         setRsvpSessionToken(null);
+        setContinuitySiteSlug(null);
         setInvitations([]);
         setSelectedEvent(null);
         setRsvpForm(buildDefaultEventRsvpFormState());
@@ -258,11 +271,14 @@ export default function EventRSVP() {
       const invitationsData = Array.isArray(data.invitations) ? data.invitations : [];
       const trackedSiteSlug = typeof lookupData.siteSlug === 'string' ? lookupData.siteSlug.trim() : '';
       if (trackedSiteSlug) {
+        setContinuitySiteSlug(trackedSiteSlug);
         const analyticsKey = `${trackedSiteSlug}:${token}`;
         if (trackedInviteAnalyticsKeyRef.current !== analyticsKey) {
           trackedInviteAnalyticsKeyRef.current = analyticsKey;
           trackGuestHubEvent(trackedSiteSlug, 'view', '/rsvp-event/invite', { inviteToken: token }).catch(() => {});
         }
+      } else {
+        setContinuitySiteSlug(null);
       }
       setGuest(guestData);
       setRsvpSessionToken(lookupData.rsvpSession ?? null);
@@ -330,16 +346,18 @@ export default function EventRSVP() {
   useEffect(() => {
     if (!token) return undefined;
 
-    const handleRsvpContinuityUpdate = () => {
+    const handleRsvpContinuityUpdate = (event: Event) => {
       if (ignoreNextLocalContinuityEventRef.current) {
         ignoreNextLocalContinuityEventRef.current = false;
         return;
       }
+      const continuityEvent = event as CustomEvent<{ storageKey?: string | null }>;
+      if (continuityEvent.detail?.storageKey && continuityEvent.detail.storageKey !== continuityStorageKeyRef.current) return;
       refreshGuestAndEventsForContinuity();
     };
 
     const handleStorage = (event: StorageEvent) => {
-      if (event.key !== RSVP_CONTINUITY_STORAGE_KEY || !isFreshRsvpContinuityStorageValue(event.newValue)) return;
+      if (event.key !== continuityStorageKeyRef.current || !isFreshRsvpContinuityStorageValue(event.newValue)) return;
       refreshGuestAndEventsForContinuity();
     };
 
@@ -536,7 +554,7 @@ export default function EventRSVP() {
       setRsvpForm(normalizedForm);
       applyInvitationRsvp(selectedEvent, normalizedForm);
       ignoreNextLocalContinuityEventRef.current = true;
-      notifyRsvpContinuityUpdate();
+      notifyRsvpContinuityUpdate(continuitySiteSlug);
       setSubmitSuccess(true);
       submittedSuccessfully = true;
       if (postSubmitResetTimeoutRef.current !== null) {
@@ -574,7 +592,7 @@ export default function EventRSVP() {
     <div className="min-h-screen bg-background">
       <Header />
       <div className="max-w-2xl mx-auto px-4 py-20 text-center">
-        <div className="mx-auto mb-6 flex h-14 w-14 items-center justify-center rounded-lg border border-border-subtle bg-surface-secondary">
+        <div className="mx-auto mb-6 flex h-14 w-14 items-center justify-center rounded-xl border border-border-subtle bg-surface-secondary">
           <AlertCircle className="w-8 h-8 text-text-tertiary" />
         </div>
         <h1 className="text-2xl font-bold text-neutral-900 mb-3">Link Not Recognized</h1>
@@ -609,7 +627,7 @@ export default function EventRSVP() {
           <Card className="w-full max-w-lg">
             {submitSuccess ? (
               <div className="p-8 text-center">
-                <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-lg border border-border-subtle bg-surface-secondary">
+                <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-xl border border-border-subtle bg-surface-secondary">
                   <Check className="w-9 h-9 text-primary" />
                 </div>
                 <h3 className="text-2xl font-bold text-neutral-900 mb-2">
@@ -644,7 +662,7 @@ export default function EventRSVP() {
                       <button
                         type="button"
                         onClick={() => updateRsvpForm((current) => ({ ...current, attending: true }))}
-                        className={`flex items-center justify-center gap-2 py-3 px-4 rounded-lg font-medium transition-colors ${
+                        className={`flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-medium transition-colors ${
                           rsvpForm.attending
                             ? 'bg-primary text-white'
                             : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
@@ -656,7 +674,7 @@ export default function EventRSVP() {
                       <button
                         type="button"
                         onClick={() => updateRsvpForm((current) => ({ ...current, attending: false }))}
-                        className={`flex items-center justify-center gap-2 py-3 px-4 rounded-lg font-medium transition-colors ${
+                        className={`flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-medium transition-colors ${
                           !rsvpForm.attending
                             ? 'bg-neutral-700 text-white border border-neutral-700'
                             : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
@@ -698,7 +716,7 @@ export default function EventRSVP() {
                   )}
 
                   {submitError && (
-                    <div className="flex items-start gap-2 p-3 bg-surface-secondary border border-border-subtle rounded-lg text-sm text-text-secondary">
+                    <div className="flex items-start gap-2 p-3 bg-surface-secondary border border-border-subtle rounded-xl text-sm text-text-secondary">
                       <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
                       {submitError}
                     </div>

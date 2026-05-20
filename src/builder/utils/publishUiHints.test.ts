@@ -5,7 +5,9 @@ import {
   getPublishProgressLabel,
   getPublishStatusLabel,
   shouldAutoPublishFromSearch,
+  shouldOpenDesignPanelFromSearch,
   shouldOpenPhotoTipsFromSearch,
+  shouldOpenPublishChecklistFromSearch,
 } from './publishUiHints';
 
 describe('publishUiHints', () => {
@@ -709,6 +711,19 @@ describe('publishUiHints', () => {
     expect(shouldOpenPhotoTipsFromSearch('?photoTips=1#ignored')).toBe(false);
     expect(shouldOpenPhotoTipsFromSearch('?photoTips=1&photoTips=0')).toBe(true);
     expect(shouldOpenPhotoTipsFromSearch('')).toBe(false);
+  });
+
+  it('detects publish checklist tool landings from querystring', () => {
+    expect(shouldOpenPublishChecklistFromSearch('?tool=share')).toBe(true);
+    expect(shouldOpenPublishChecklistFromSearch('?tool=qr-codes')).toBe(true);
+    expect(shouldOpenPublishChecklistFromSearch('?tool=video')).toBe(false);
+    expect(shouldOpenPublishChecklistFromSearch('')).toBe(false);
+  });
+
+  it('detects design panel landings from querystring', () => {
+    expect(shouldOpenDesignPanelFromSearch('?panel=design')).toBe(true);
+    expect(shouldOpenDesignPanelFromSearch('?tool=share')).toBe(false);
+    expect(shouldOpenDesignPanelFromSearch('')).toBe(false);
   });
 
   it('labels publish CTA across draft and live states', () => {

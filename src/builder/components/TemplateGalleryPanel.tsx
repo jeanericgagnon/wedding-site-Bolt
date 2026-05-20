@@ -4,18 +4,31 @@ import { useBuilderContext } from '../state/builderStore';
 import { builderActions } from '../state/builderActions';
 import { getLaunchTemplatePacks } from '../constants/builderTemplatePacks';
 import { BuilderTemplateDefinition, TemplateMoodTag } from '../../types/builder/template';
-import { createBuilderSectionFromLibrary } from '../adapters/layoutAdapter';
 import { getSectionManifest } from '../registry/sectionManifests';
 import { BuilderSectionInstance } from '../../types/builder/section';
 import { selectActivePage } from '../state/builderSelectors';
 import { getTemplatePreviewSource } from '../constants/templatePreviewSource';
 import { SectionRenderer } from './SectionRenderer';
 import { createEmptyWeddingData } from '../../types/weddingData';
+import { bumpTemplateUsage, readTemplateUsage } from './templateUsageStorage';
+import { BuilderPage } from '../../types/builder/project';
+import {
+  buildTemplatePageInstances as buildTemplatePageInstancesFromTemplate,
+  createSectionFromTemplateSlot,
+  getTemplatePageSlotSlug,
+  makeUniqueTemplatePageSlug,
+  normalizeTemplatePageSlots,
+  type TemplateApplyPageMode,
+} from '../utils/templatePages';
 
 function preserveContentAcrossTemplate(
   existingSections: BuilderSectionInstance[],
   newSections: BuilderSectionInstance[]
 ): BuilderSectionInstance[] {
+  return createTemplateContentPreserver(existingSections)(newSections);
+}
+
+function createTemplateContentPreserver(existingSections: BuilderSectionInstance[]) {
   const existingByType = new Map<string, BuilderSectionInstance[]>();
   for (const sec of existingSections) {
     if (!existingByType.has(sec.type)) {
@@ -24,7 +37,7 @@ function preserveContentAcrossTemplate(
     existingByType.get(sec.type)!.push(sec);
   }
 
-  return newSections.map(newSec => {
+  return (newSections: BuilderSectionInstance[]): BuilderSectionInstance[] => newSections.map(newSec => {
     const bucket = existingByType.get(newSec.type);
     const existing = bucket && bucket.length ? bucket.shift() : undefined;
     if (!existing) return newSec;
@@ -42,6 +55,70 @@ function preserveContentAcrossTemplate(
   });
 }
 
+const titleizeSectionType = (type: string) => type.charAt(0).toUpperCase() + type.slice(1).replace(/-/g, ' ');
+
+export const summarizeTemplatePages = (template: BuilderTemplateDefinition): string[] => (
+  normalizeTemplatePageSlots(template).map((page) => {
+    const sectionLabels = page.sectionComposition
+      .slice(0, 3)
+      .map((section) => getSectionManifest(section.type).label);
+    const extraCount = Math.max(page.sectionComposition.length - sectionLabels.length, 0);
+    const suffix = extraCount > 0 ? ` + ${extraCount} more` : '';
+    return `${page.title}: ${sectionLabels.join(', ')}${suffix}`;
+  })
+);
+
+const PAGE_STRUCTURE_FILTERS = ['all', 'single', 'multi'] as const;
+type PageStructureFilter = (typeof PAGE_STRUCTURE_FILTERS)[number];
+export type { TemplateApplyPageMode };
+
+export const templateMatchesPageStructure = (
+  template: BuilderTemplateDefinition,
+  filter: PageStructureFilter,
+): boolean => {
+  if (filter === 'all') return true;
+  const pageCount = normalizeTemplatePageSlots(template).length;
+  return filter === 'single' ? pageCount === 1 : pageCount > 1;
+};
+
+export const getRecommendedTemplateApplyPageMode = (template: BuilderTemplateDefinition): TemplateApplyPageMode => (
+  normalizeTemplatePageSlots(template).length > 1 ? 'multi' : 'single'
+);
+
+export const describeTemplateApplyPageMode = (
+  template: BuilderTemplateDefinition,
+  pageMode: TemplateApplyPageMode,
+): string => {
+  const pageCount = normalizeTemplatePageSlots(template).length;
+  if (pageMode === 'single') return 'One page with anchor sections';
+  return pageCount === 1 ? 'One page' : `${pageCount} dedicated pages`;
+};
+
+export const summarizeCollapsedTemplateAnchors = (template: BuilderTemplateDefinition): string[] => {
+  const usedAnchorSlugs = new Set<string>();
+
+  return normalizeTemplatePageSlots(template)
+    .map((page) => ({ page, slug: getTemplatePageSlotSlug(page) }))
+    .filter(({ page, slug }) => !page.isHome && slug.length > 0 && slug !== 'home' && page.sectionComposition.length > 0)
+    .map(({ slug }, index) => `#${makeUniqueTemplatePageSlug(slug, usedAnchorSlugs, index + 1)}`);
+};
+
+export const summarizeSinglePageTemplateSections = (template: BuilderTemplateDefinition, limit = 4): string => {
+  const sections = normalizeTemplatePageSlots(template).flatMap((page) => page.sectionComposition);
+  const sectionLabels = sections.slice(0, limit).map((section) => getSectionManifest(section.type).label);
+  const suffix = sections.length > sectionLabels.length ? ` + ${sections.length - sectionLabels.length} more` : '';
+  return `Home: ${sectionLabels.join(', ')}${suffix}`;
+};
+
+export const buildTemplatePageInstances = (
+  template: BuilderTemplateDefinition,
+  existingSections: BuilderSectionInstance[],
+  pageMode: TemplateApplyPageMode = getRecommendedTemplateApplyPageMode(template),
+): BuilderPage[] => {
+  const preserveTemplateContent = createTemplateContentPreserver(existingSections);
+  return buildTemplatePageInstancesFromTemplate(template, pageMode, preserveTemplateContent);
+};
+
 const MOOD_FILTERS: { id: TemplateMoodTag | 'all'; label: string }[] = [
   { id: 'all', label: 'All styles' },
   { id: 'modern', label: 'Modern' },
@@ -56,16 +133,6 @@ const MOOD_FILTERS: { id: TemplateMoodTag | 'all'; label: string }[] = [
 ];
 
 const RECOMMENDED_TEMPLATE_IDS = ['modern-luxe', 'editorial-romance', 'timeless-classic', 'destination-minimal'];
-const TEMPLATE_USAGE_KEY = 'dayof_template_usage_v1';
-export const TEMPLATE_USAGE_RETENTION_MS = 1000 * 60 * 60 * 24 * 180;
-const MAX_TEMPLATE_USAGE_ROWS = 80;
-const MAX_TEMPLATE_ID_LENGTH = 120;
-
-type TemplateUsageEnvelope = {
-  savedAtISO: string;
-  usage: Record<string, number>;
-};
-
 const COLOR_FILTERS = ['all', 'light', 'dark', 'neutral'] as const;
 type ColorFilter = (typeof COLOR_FILTERS)[number];
 
@@ -74,70 +141,16 @@ type SeasonFilter = (typeof SEASON_FILTERS)[number];
 
 interface TemplateGalleryPanelProps {
   onSaveRequest?: () => void;
+  storageScope?: string | null;
 }
 
 interface ApplyResult {
   templateName: string;
+  pageTitles: string[];
+  pageModeLabel: string;
   newSections: string[];
   preservedSections: string[];
 }
-
-function normalizeTemplateUsage(value: unknown): Record<string, number> {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
-  return Object.entries(value as Record<string, unknown>).slice(0, MAX_TEMPLATE_USAGE_ROWS).reduce<Record<string, number>>((acc, [rawTemplateId, rawCount]) => {
-    const templateId = rawTemplateId.trim().slice(0, MAX_TEMPLATE_ID_LENGTH);
-    const count = Math.min(Math.max(Math.floor(Number(rawCount) || 0), 0), 9999);
-    if (templateId && count > 0) acc[templateId] = count;
-    return acc;
-  }, {});
-}
-
-function isFreshTemplateUsage(savedAtISO: unknown): boolean {
-  if (typeof savedAtISO !== 'string') return false;
-  const savedAt = Date.parse(savedAtISO);
-  return Number.isFinite(savedAt) && Date.now() - savedAt <= TEMPLATE_USAGE_RETENTION_MS;
-}
-
-function writeTemplateUsageEnvelope(usage: Record<string, number>) {
-  localStorage.setItem(TEMPLATE_USAGE_KEY, JSON.stringify({
-    savedAtISO: new Date().toISOString(),
-    usage: normalizeTemplateUsage(usage),
-  } satisfies TemplateUsageEnvelope));
-}
-
-export const readTemplateUsage = (): Record<string, number> => {
-  try {
-    const raw = localStorage.getItem(TEMPLATE_USAGE_KEY);
-    if (!raw) return {};
-    const parsed = JSON.parse(raw) as Record<string, number> | TemplateUsageEnvelope;
-    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed) && 'savedAtISO' in parsed) {
-      if (!isFreshTemplateUsage(parsed.savedAtISO)) {
-        localStorage.removeItem(TEMPLATE_USAGE_KEY);
-        return {};
-      }
-      return normalizeTemplateUsage(parsed.usage);
-    }
-    const usage = normalizeTemplateUsage(parsed);
-    if (Object.keys(usage).length > 0) writeTemplateUsageEnvelope(usage);
-    else localStorage.removeItem(TEMPLATE_USAGE_KEY);
-    return usage;
-  } catch {
-    try { localStorage.removeItem(TEMPLATE_USAGE_KEY); } catch { /* non-blocking */ }
-    return {};
-  }
-};
-
-export const bumpTemplateUsage = (templateId: string) => {
-  try {
-    const usage = readTemplateUsage();
-    const normalizedTemplateId = templateId.trim().slice(0, MAX_TEMPLATE_ID_LENGTH);
-    if (!normalizedTemplateId) return;
-    usage[normalizedTemplateId] = Math.min((usage[normalizedTemplateId] || 0) + 1, 9999);
-    writeTemplateUsageEnvelope(usage);
-  } catch {
-    // non-blocking
-  }
-};
 
 const hexToRgb = (hex: string) => {
   const normalized = hex.replace('#', '');
@@ -331,13 +344,13 @@ const DestinationMinimalPreview = () => (
     <div className="flex-1 px-4 py-3 flex flex-col justify-center gap-2">
       <div className="grid grid-cols-3 gap-2">
         {['Venue', 'Travel', 'Stay'].map((x, i) => (
-          <div key={x} className="rounded-lg py-1.5 flex flex-col items-center gap-0.5" style={{ background: i===1 ? '#DDEEF2' : '#E6F2F5' }}>
+          <div key={x} className="rounded-xl py-1.5 flex flex-col items-center gap-0.5" style={{ background: i===1 ? '#DDEEF2' : '#E6F2F5' }}>
             <div className="w-4 h-3 rounded-sm" style={{ background: i===1 ? '#1F6F82' : '#49A5B8' }} />
             <span className="text-[5.5px]" style={{ color: '#2C5D68' }}>{x}</span>
           </div>
         ))}
       </div>
-      <div className="rounded-lg h-6 flex items-center justify-center" style={{ background: '#124B59' }}>
+      <div className="rounded-xl h-6 flex items-center justify-center" style={{ background: '#124B59' }}>
         <span className="text-[6px] text-white">Explore itinerary</span>
       </div>
     </div>
@@ -379,7 +392,7 @@ const PhotoStorytellingPreview = () => (
           <div className="absolute inset-0" style={{
             background: 'radial-gradient(circle at 70% 20%, rgba(255,255,255,0.18) 0%, transparent 45%)',
           }} />
-          <div className="absolute left-3 right-3 bottom-3 rounded-lg px-2.5 py-2" style={{ background: 'rgba(249,244,240,0.95)' }}>
+          <div className="absolute left-3 right-3 bottom-3 rounded-xl px-2.5 py-2" style={{ background: 'rgba(249,244,240,0.95)' }}>
             <div className="font-serif text-[11px]" style={{ color: '#2E1D1A' }}>Ava &amp; Noah</div>
             <div className="text-[6px] mt-0.5" style={{ color: '#8D6661' }}>October 2026 · Carmel</div>
           </div>
@@ -541,14 +554,16 @@ const FONT_LABELS: Record<string, string> = {
   'Gilda Display': 'Gilda',
 };
 
-export const TemplateGalleryPanel: React.FC<TemplateGalleryPanelProps> = ({ onSaveRequest }) => {
+export const TemplateGalleryPanel: React.FC<TemplateGalleryPanelProps> = ({ onSaveRequest, storageScope }) => {
   const { state, dispatch } = useBuilderContext();
   const [activeFilter, setActiveFilter] = useState<TemplateMoodTag | 'all'>('all');
   const [activeColorFilter, setActiveColorFilter] = useState<ColorFilter>('all');
   const [activeSeasonFilter, setActiveSeasonFilter] = useState<SeasonFilter>('all');
+  const [activePageStructureFilter, setActivePageStructureFilter] = useState<PageStructureFilter>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [applyingTemplateId, setApplyingTemplateId] = useState<string | null>(null);
   const [confirmTemplate, setConfirmTemplate] = useState<BuilderTemplateDefinition | null>(null);
+  const [confirmPageMode, setConfirmPageMode] = useState<TemplateApplyPageMode>('multi');
   const [detailsTemplate, setDetailsTemplate] = useState<BuilderTemplateDefinition | null>(null);
   const [compareTemplateIds, setCompareTemplateIds] = useState<string[]>([]);
   const [showCompareModal, setShowCompareModal] = useState(false);
@@ -557,7 +572,7 @@ export const TemplateGalleryPanel: React.FC<TemplateGalleryPanelProps> = ({ onSa
   const templates = getLaunchTemplatePacks();
 
   const recommendedTemplates = useMemo(() => {
-    const usage = readTemplateUsage();
+    const usage = readTemplateUsage(storageScope);
 
     const byUsage = templates
       .filter((t) => (usage[t.id] || 0) > 0)
@@ -573,7 +588,7 @@ export const TemplateGalleryPanel: React.FC<TemplateGalleryPanelProps> = ({ onSa
     }, []);
 
     return (merged.length > 0 ? merged : templates).slice(0, 4);
-  }, [templates]);
+  }, [storageScope, templates]);
 
   const filtered = templates.filter((t) => {
     const moodOk = activeFilter === 'all' || t.moodTags.includes(activeFilter);
@@ -582,19 +597,22 @@ export const TemplateGalleryPanel: React.FC<TemplateGalleryPanelProps> = ({ onSa
     const colorOk = activeColorFilter === 'all' || colorClass === activeColorFilter;
     const seasonClass = inferSeason(t);
     const seasonOk = activeSeasonFilter === 'all' || seasonClass === activeSeasonFilter;
+    const pageStructureOk = templateMatchesPageStructure(t, activePageStructureFilter);
 
     const searchNeedle = searchQuery.trim().toLowerCase();
     const searchableText = [
       t.displayName,
       t.description ?? '',
       t.moodTags.join(' '),
+      normalizeTemplatePageSlots(t).map((page) => page.title).join(' '),
+      summarizeTemplatePages(t).join(' '),
       t.id,
     ]
       .join(' ')
       .toLowerCase();
 
     const searchOk = searchNeedle.length === 0 || searchableText.includes(searchNeedle);
-    return moodOk && colorOk && seasonOk && searchOk;
+    return moodOk && colorOk && seasonOk && pageStructureOk && searchOk;
   });
 
   const currentTemplateId = state.project?.templateId;
@@ -657,32 +675,42 @@ export const TemplateGalleryPanel: React.FC<TemplateGalleryPanelProps> = ({ onSa
     });
   }, []);
 
-  const handleApplyTemplate = useCallback(async (template: BuilderTemplateDefinition) => {
+  const openTemplateConfirm = useCallback((template: BuilderTemplateDefinition) => {
+    setConfirmPageMode(getRecommendedTemplateApplyPageMode(template));
+    setConfirmTemplate(template);
+  }, []);
+
+  const handleApplyTemplate = useCallback(async (template: BuilderTemplateDefinition, pageMode: TemplateApplyPageMode) => {
     if (!activePage) return;
     setApplyingTemplateId(template.id);
 
     try {
-      const existingTypes = new Set(activePage.sections.map(s => s.type));
+      const existingSections = state.project?.pages.flatMap((page) => page.sections) ?? activePage.sections;
+      const existingTypes = new Set(existingSections.map(s => s.type));
       const baseSections = template.sectionComposition.map((slot, idx) =>
-        createBuilderSectionFromLibrary(slot.type, slot.variant, idx)
+        createSectionFromTemplateSlot(slot, idx)
       );
 
-      const mergedSections = preserveContentAcrossTemplate(activePage.sections, baseSections);
+      const mergedSections = preserveContentAcrossTemplate(existingSections, baseSections);
+      const templatePages = buildTemplatePageInstances(template, existingSections, pageMode);
+      const pageCount = templatePages.length;
 
       const newSectionTypes = template.sectionComposition
         .filter(slot => !existingTypes.has(slot.type))
-        .map(slot => slot.type.charAt(0).toUpperCase() + slot.type.slice(1));
+        .map(slot => titleizeSectionType(slot.type));
       const preservedTypes = template.sectionComposition
         .filter(slot => existingTypes.has(slot.type))
-        .map(slot => slot.type.charAt(0).toUpperCase() + slot.type.slice(1));
+        .map(slot => titleizeSectionType(slot.type));
 
-      dispatch(builderActions.applyTemplate(template.id, mergedSections));
+      dispatch(builderActions.applyTemplate(template.id, mergedSections, templatePages));
       dispatch(builderActions.applyTheme(template.defaultThemeId));
-      bumpTemplateUsage(template.id);
+      bumpTemplateUsage(template.id, storageScope);
       setConfirmTemplate(null);
       setApplyResult({
         templateName: template.displayName,
-        newSections: newSectionTypes,
+        pageTitles: templatePages.map((page) => page.title),
+        pageModeLabel: describeTemplateApplyPageMode(template, pageMode),
+        newSections: pageCount > 1 ? [`${pageCount} dedicated pages`, ...newSectionTypes] : newSectionTypes,
         preservedSections: preservedTypes,
       });
 
@@ -692,7 +720,7 @@ export const TemplateGalleryPanel: React.FC<TemplateGalleryPanelProps> = ({ onSa
     } finally {
       setApplyingTemplateId(null);
     }
-  }, [activePage, dispatch, onSaveRequest]);
+  }, [activePage, dispatch, onSaveRequest, state.project?.pages, storageScope]);
 
   if (!state.templateGalleryOpen && !applyResult) return null;
 
@@ -705,7 +733,20 @@ export const TemplateGalleryPanel: React.FC<TemplateGalleryPanelProps> = ({ onSa
             <CheckCircle2 className="h-7 w-7 text-[var(--color-accent)]" />
           </div>
           <h3 className="text-base font-semibold text-gray-900 mb-1">"{applyResult.templateName}" applied</h3>
-          <p className="text-sm text-gray-500 mb-5">Your site layout and theme have been updated.</p>
+          <p className="text-sm text-gray-500 mb-5">Your site layout and theme have been updated as {applyResult.pageModeLabel.toLowerCase()}.</p>
+
+          {applyResult.pageTitles.length > 0 && (
+            <div className="mb-3 rounded-xl border border-[var(--color-border-subtle)] bg-white p-4 text-left">
+              <p className="mb-2 text-xs font-semibold text-[var(--color-text-primary)]">Pages created:</p>
+              <div className="flex flex-wrap gap-1.5">
+                {applyResult.pageTitles.map((title) => (
+                  <span key={title} className="rounded-xl bg-[var(--color-surface-subtle)] px-2 py-0.5 text-[11px] text-[var(--color-text-secondary)]">
+                    {title}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
 
           {applyResult.preservedSections.length > 0 && (
             <div className="mb-3 rounded-xl bg-[var(--color-surface-subtle)] p-4 text-left">
@@ -766,7 +807,7 @@ export const TemplateGalleryPanel: React.FC<TemplateGalleryPanelProps> = ({ onSa
             </div>
             <button
               onClick={handleCloseGallery}
-              className="p-2 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors"
+              className="p-2 rounded-xl hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors"
             >
               <X size={20} />
             </button>
@@ -789,7 +830,7 @@ export const TemplateGalleryPanel: React.FC<TemplateGalleryPanelProps> = ({ onSa
               placeholder="Search designs by name, style, or description"
               className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-700 placeholder:text-gray-400 focus:border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-200"
             />
-            <span className="shrink-0 rounded-lg border border-gray-200 bg-gray-50 px-2.5 py-1.5 text-xs font-semibold text-gray-700">
+            <span className="shrink-0 rounded-xl border border-gray-200 bg-gray-50 px-2.5 py-1.5 text-xs font-semibold text-gray-700">
               {filtered.length}
             </span>
           </div>
@@ -799,7 +840,7 @@ export const TemplateGalleryPanel: React.FC<TemplateGalleryPanelProps> = ({ onSa
               <button
                 key={f.id}
                 onClick={() => setActiveFilter(f.id)}
-                className={`px-3.5 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors ${
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-medium whitespace-nowrap transition-colors ${
                   activeFilter === f.id
                     ? 'bg-[var(--color-accent)] text-white'
                     : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
@@ -816,7 +857,7 @@ export const TemplateGalleryPanel: React.FC<TemplateGalleryPanelProps> = ({ onSa
               <button
                 key={`color-${f}`}
                 onClick={() => setActiveColorFilter(f)}
-                className={`rounded-lg border px-2.5 py-1 transition-colors ${
+                className={`rounded-xl border px-2.5 py-1 transition-colors ${
                   activeColorFilter === f
                     ? 'bg-[var(--color-accent-soft)] border-[var(--color-border-subtle)] text-[var(--color-accent)]'
                     : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
@@ -833,13 +874,30 @@ export const TemplateGalleryPanel: React.FC<TemplateGalleryPanelProps> = ({ onSa
               <button
                 key={`season-${f}`}
                 onClick={() => setActiveSeasonFilter(f)}
-                className={`rounded-lg border px-2.5 py-1 transition-colors ${
+                className={`rounded-xl border px-2.5 py-1 transition-colors ${
                   activeSeasonFilter === f
                     ? 'bg-[var(--color-accent-soft)] border-[var(--color-border-subtle)] text-[var(--color-accent)]'
                     : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
                 }`}
               >
                 {f === 'all' ? 'Any season' : f.charAt(0).toUpperCase() + f.slice(1)}
+              </button>
+            ))}
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2 text-xs">
+            <span className="text-gray-500">Pages</span>
+            {PAGE_STRUCTURE_FILTERS.map((f) => (
+              <button
+                key={`pages-${f}`}
+                onClick={() => setActivePageStructureFilter(f)}
+                className={`rounded-xl border px-2.5 py-1 transition-colors ${
+                  activePageStructureFilter === f
+                    ? 'bg-[var(--color-accent-soft)] border-[var(--color-border-subtle)] text-[var(--color-accent)]'
+                    : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
+                }`}
+              >
+                {f === 'all' ? 'Any pages' : f === 'single' ? 'Single page' : 'Multi-page'}
               </button>
             ))}
           </div>
@@ -852,8 +910,8 @@ export const TemplateGalleryPanel: React.FC<TemplateGalleryPanelProps> = ({ onSa
               {recommendedTemplates.map((template) => (
                 <button
                   key={`recommended-${template.id}`}
-                  onClick={() => setConfirmTemplate(template)}
-                  className={`rounded-lg border px-3 py-1.5 text-xs transition-colors ${
+                  onClick={() => openTemplateConfirm(template)}
+                  className={`rounded-xl border px-3 py-1.5 text-xs transition-colors ${
                     template.id === currentTemplateId
                       ? 'bg-[var(--color-accent-soft)] border-[var(--color-border-subtle)] text-[var(--color-accent)]'
                       : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50'
@@ -899,7 +957,7 @@ export const TemplateGalleryPanel: React.FC<TemplateGalleryPanelProps> = ({ onSa
                 isCurrent={template.id === currentTemplateId}
                 isApplying={applyingTemplateId === template.id}
                 isCompared={compareTemplateIds.includes(template.id)}
-                onApply={() => setConfirmTemplate(template)}
+                onApply={() => openTemplateConfirm(template)}
                 onDetails={() => setDetailsTemplate(template)}
                 onCompare={() => toggleCompareTemplate(template.id)}
               />
@@ -915,8 +973,9 @@ export const TemplateGalleryPanel: React.FC<TemplateGalleryPanelProps> = ({ onSa
                   setActiveFilter('all');
                   setActiveColorFilter('all');
                   setActiveSeasonFilter('all');
+                  setActivePageStructureFilter('all');
                 }}
-                className="mt-3 inline-flex items-center rounded-md border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-50"
+                className="mt-3 inline-flex items-center rounded-xl border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-50"
               >
                 Clear filters
               </button>
@@ -931,11 +990,11 @@ export const TemplateGalleryPanel: React.FC<TemplateGalleryPanelProps> = ({ onSa
           rightTemplate={compareTemplates[1]}
           onApplyLeft={() => {
             setShowCompareModal(false);
-            setConfirmTemplate(compareTemplates[0]);
+            openTemplateConfirm(compareTemplates[0]);
           }}
           onApplyRight={() => {
             setShowCompareModal(false);
-            setConfirmTemplate(compareTemplates[1]);
+            openTemplateConfirm(compareTemplates[1]);
           }}
           onClose={() => setShowCompareModal(false)}
         />
@@ -946,7 +1005,7 @@ export const TemplateGalleryPanel: React.FC<TemplateGalleryPanelProps> = ({ onSa
           template={detailsTemplate}
           onApply={() => {
             setDetailsTemplate(null);
-            setConfirmTemplate(detailsTemplate);
+            openTemplateConfirm(detailsTemplate);
           }}
           onClose={() => setDetailsTemplate(null)}
         />
@@ -955,8 +1014,10 @@ export const TemplateGalleryPanel: React.FC<TemplateGalleryPanelProps> = ({ onSa
       {confirmTemplate && (
         <TemplateConfirmModal
           template={confirmTemplate}
+          selectedPageMode={confirmPageMode}
+          onPageModeChange={setConfirmPageMode}
           isApplying={applyingTemplateId === confirmTemplate.id}
-          onConfirm={() => handleApplyTemplate(confirmTemplate)}
+          onConfirm={() => handleApplyTemplate(confirmTemplate, confirmPageMode)}
           onCancel={() => setConfirmTemplate(null)}
         />
       )}
@@ -978,6 +1039,7 @@ const TemplateCard: React.FC<TemplateCardProps> = ({ template, isCurrent, isAppl
   const [hovered, setHovered] = useState(false);
   const dots = THEME_DOTS[template.id] || ['#999', '#ccc', '#fff'];
   const fontLabel = FONT_LABELS[template.suggestedFonts.heading] || template.suggestedFonts.heading;
+  const pageCount = normalizeTemplatePageSlots(template).length;
 
   return (
     <div
@@ -1002,19 +1064,19 @@ const TemplateCard: React.FC<TemplateCardProps> = ({ template, isCurrent, isAppl
         />
 
         {isCurrent && (
-          <div className="absolute right-2.5 top-2.5 flex h-6 w-6 items-center justify-center rounded-lg bg-primary text-white shadow-sm">
+          <div className="absolute right-2.5 top-2.5 flex h-6 w-6 items-center justify-center rounded-xl bg-primary text-white shadow-sm">
             <Check size={11} />
           </div>
         )}
         {template.isPremium && !template.isNew && (
-          <div className="absolute left-2.5 top-2.5 flex items-center gap-1 rounded-lg px-2 py-0.5 text-[10px] font-semibold shadow-sm"
+          <div className="absolute left-2.5 top-2.5 flex items-center gap-1 rounded-xl px-2 py-0.5 text-[10px] font-semibold shadow-sm"
             style={{ background: 'rgba(200,169,110,0.95)', color: '#2D1F00' }}>
             <Crown size={8} />
             Premium
           </div>
         )}
         {template.isNew && (
-          <div className="absolute left-2.5 top-2.5 flex items-center gap-1 rounded-lg bg-primary px-2 py-0.5 text-[10px] font-semibold text-white shadow-sm">
+          <div className="absolute left-2.5 top-2.5 flex items-center gap-1 rounded-xl bg-primary px-2 py-0.5 text-[10px] font-semibold text-white shadow-sm">
             <Zap size={8} />
             New
           </div>
@@ -1022,7 +1084,7 @@ const TemplateCard: React.FC<TemplateCardProps> = ({ template, isCurrent, isAppl
 
         {hovered && !isCurrent && (
           <div className="absolute inset-0 flex items-center justify-center">
-            <div className="bg-white/95 text-gray-900 text-xs font-semibold px-4 py-2 rounded-lg shadow-sm">
+            <div className="bg-white/95 text-gray-900 text-xs font-semibold px-4 py-2 rounded-xl shadow-sm">
               See design
             </div>
           </div>
@@ -1043,8 +1105,11 @@ const TemplateCard: React.FC<TemplateCardProps> = ({ template, isCurrent, isAppl
 
         <div className="flex items-center justify-between">
           <div className="flex gap-1 flex-wrap">
+            <span className="rounded-xl bg-gray-100 px-2 py-0.5 text-[10px] text-gray-500">
+              {pageCount} page{pageCount === 1 ? '' : 's'}
+            </span>
             {template.moodTags.slice(0, 2).map(tag => (
-              <span key={tag} className="rounded-md bg-gray-100 px-2 py-0.5 text-[10px] capitalize text-gray-500">
+              <span key={tag} className="rounded-xl bg-gray-100 px-2 py-0.5 text-[10px] capitalize text-gray-500">
                 {tag}
               </span>
             ))}
@@ -1107,7 +1172,7 @@ const TemplateCompareModal: React.FC<TemplateCompareModalProps> = ({ leftTemplat
       <div className="bg-white rounded-xl shadow-sm border border-[var(--color-border-subtle)] p-5 max-w-5xl w-full mx-4">
         <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold text-gray-900">Compare designs</h3>
-          <button onClick={onClose} className="p-2 rounded-lg hover:bg-gray-100 text-gray-500"><X size={16} /></button>
+          <button onClick={onClose} className="p-2 rounded-xl hover:bg-gray-100 text-gray-500"><X size={16} /></button>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1116,7 +1181,7 @@ const TemplateCompareModal: React.FC<TemplateCompareModalProps> = ({ leftTemplat
             { template: rightTemplate, dots: rightDots, onApply: onApplyRight },
           ].map(({ template, dots, onApply }) => (
             <div key={template.id} className="rounded-xl border border-gray-200 p-3">
-              <div className="aspect-[4/3] rounded-lg border border-gray-100 overflow-hidden bg-gray-50 mb-3">
+              <div className="aspect-[4/3] rounded-xl border border-gray-100 overflow-hidden bg-gray-50 mb-3">
                 <TemplatePreview templateId={template.id} fallbackSrc={template.previewThumbnailPath} />
               </div>
               <div className="flex items-start justify-between gap-2">
@@ -1129,11 +1194,19 @@ const TemplateCompareModal: React.FC<TemplateCompareModalProps> = ({ leftTemplat
                 </div>
               </div>
               <div className="mt-2 flex flex-wrap gap-1">
+                <span className="rounded-xl bg-gray-100 px-2 py-0.5 text-[10px] text-gray-600">
+                  {normalizeTemplatePageSlots(template).length} pages
+                </span>
                 {template.moodTags.slice(0, 3).map((tag) => (
-                  <span key={tag} className="rounded-md bg-gray-100 px-2 py-0.5 text-[10px] capitalize text-gray-600">{tag}</span>
+                  <span key={tag} className="rounded-xl bg-gray-100 px-2 py-0.5 text-[10px] capitalize text-gray-600">{tag}</span>
                 ))}
               </div>
-              <button onClick={onApply} className="mt-3 w-full py-2 rounded-lg bg-gray-900 text-white text-xs font-semibold hover:bg-gray-800">
+              <div className="mt-2 space-y-1 rounded-xl border border-gray-100 bg-gray-50 p-2">
+                {summarizeTemplatePages(template).slice(0, 3).map((summary) => (
+                  <p key={summary} className="truncate text-[11px] text-gray-500">{summary}</p>
+                ))}
+              </div>
+              <button onClick={onApply} className="mt-3 w-full py-2 rounded-xl bg-gray-900 text-white text-xs font-semibold hover:bg-gray-800">
                 Start with this design
               </button>
             </div>
@@ -1152,18 +1225,28 @@ interface TemplateDetailsModalProps {
 
 const TemplateDetailsModal: React.FC<TemplateDetailsModalProps> = ({ template, onApply, onClose }) => {
   const dots = THEME_DOTS[template.id] || ['#999', '#ccc', '#fff'];
+  const previewPages = useMemo(() => normalizeTemplatePageSlots(template), [template]);
+  const [selectedPreviewPageIndex, setSelectedPreviewPageIndex] = useState(0);
   const previewSections = useMemo(
-    () => template.sectionComposition.map((s, idx) => createBuilderSectionFromLibrary(s.type, s.variant, idx)),
-    [template]
+    () => previewPages[selectedPreviewPageIndex]?.sectionComposition.map((s, idx) => createSectionFromTemplateSlot(s, idx)) ?? [],
+    [previewPages, selectedPreviewPageIndex]
   );
+  const selectedPreviewPage = previewPages[selectedPreviewPageIndex] ?? previewPages[0];
   const previewScrollRef = React.useRef<HTMLDivElement | null>(null);
   const [previewLoading, setPreviewLoading] = useState(true);
 
   React.useEffect(() => {
+    setSelectedPreviewPageIndex(0);
     setPreviewLoading(true);
     const t = setTimeout(() => setPreviewLoading(false), 280);
     return () => clearTimeout(t);
   }, [template.id]);
+
+  React.useEffect(() => {
+    setPreviewLoading(true);
+    const t = setTimeout(() => setPreviewLoading(false), 160);
+    return () => clearTimeout(t);
+  }, [selectedPreviewPageIndex]);
 
   const jumpToSection = (idx: number) => {
     const root = previewScrollRef.current;
@@ -1202,13 +1285,13 @@ const TemplateDetailsModal: React.FC<TemplateDetailsModalProps> = ({ template, o
             <p className="text-sm text-gray-500 mt-1">{template.description}</p>
             <div className="mt-2 flex flex-wrap gap-1">
               {template.moodTags.map((tag) => (
-                <span key={tag} className="rounded-md bg-gray-100 px-2 py-0.5 text-[11px] capitalize text-gray-600">{tag}</span>
+                <span key={tag} className="rounded-xl bg-gray-100 px-2 py-0.5 text-[11px] capitalize text-gray-600">{tag}</span>
               ))}
             </div>
           </div>
           <div className="flex items-center gap-2">
             <button onClick={onApply} className="px-4 py-2 rounded-xl text-sm bg-gray-900 text-white hover:bg-gray-800">Start with this design</button>
-            <button onClick={onClose} className="p-2 rounded-lg hover:bg-gray-100 text-gray-500"><X size={16} /></button>
+            <button onClick={onClose} className="p-2 rounded-xl hover:bg-gray-100 text-gray-500"><X size={16} /></button>
           </div>
         </div>
 
@@ -1217,9 +1300,9 @@ const TemplateDetailsModal: React.FC<TemplateDetailsModalProps> = ({ template, o
             <div className="mx-auto my-4 w-full max-w-[980px] rounded-xl border border-gray-200 bg-white overflow-hidden">
               {previewLoading ? (
                 <div className="p-4 space-y-3">
-                  <div className="h-56 rounded-lg bg-gray-100 animate-pulse" />
-                  <div className="h-40 rounded-lg bg-gray-100 animate-pulse" />
-                  <div className="h-64 rounded-lg bg-gray-100 animate-pulse" />
+                  <div className="h-56 rounded-xl bg-gray-100 animate-pulse" />
+                  <div className="h-40 rounded-xl bg-gray-100 animate-pulse" />
+                  <div className="h-64 rounded-xl bg-gray-100 animate-pulse" />
                 </div>
               ) : (
                 previewSections.map((section, idx) => (
@@ -1239,24 +1322,41 @@ const TemplateDetailsModal: React.FC<TemplateDetailsModalProps> = ({ template, o
           <div className="col-span-4 overflow-y-auto p-4 space-y-3">
             <div>
               <div className="text-xs text-gray-500 mb-1">Palette</div>
-              <div className="flex gap-1.5">{dots.map((c, i) => <div key={i} className="h-5 w-5 rounded-md border border-gray-200" style={{ background: c }} />)}</div>
+              <div className="flex gap-1.5">{dots.map((c, i) => <div key={i} className="h-5 w-5 rounded-xl border border-gray-200" style={{ background: c }} />)}</div>
             </div>
             <div>
-              <div className="text-xs text-gray-500 mb-1">Sections</div>
+              <div className="text-xs text-gray-500 mb-1">Pages</div>
+              <div className="mb-3 flex flex-wrap gap-1.5">
+                {previewPages.map((page, index) => (
+                  <button
+                    key={`${page.slug}-${index}`}
+                    type="button"
+                    onClick={() => setSelectedPreviewPageIndex(index)}
+                    className={`rounded-xl border px-2 py-1 text-[11px] transition-colors ${
+                      selectedPreviewPageIndex === index
+                        ? 'border-gray-900 bg-gray-900 text-white'
+                        : 'border-gray-200 bg-gray-50 text-gray-600 hover:bg-white'
+                    }`}
+                  >
+                    {page.title}
+                  </button>
+                ))}
+              </div>
+              <div className="text-xs text-gray-500 mb-1">{selectedPreviewPage?.title ?? 'Page'} sections</div>
               <div className="space-y-1">
-                {template.sectionComposition.map((s, i) => (
+                {(selectedPreviewPage?.sectionComposition ?? []).map((s, i) => (
                   <button
                     key={`${s.type}-${i}`}
                     type="button"
                     onClick={() => jumpToSection(i)}
-                    className="w-full text-left text-sm text-gray-700 rounded-md border border-gray-200 px-2.5 py-1.5 hover:bg-gray-50"
+                    className="w-full text-left text-sm text-gray-700 rounded-xl border border-gray-200 px-2.5 py-1.5 hover:bg-gray-50"
                   >
                     {i + 1}. {getSectionManifest(s.type).label}
                   </button>
                 ))}
               </div>
             </div>
-            <div className="rounded-lg border border-green-100 bg-green-50 px-3 py-2 text-xs text-green-700">
+            <div className="rounded-xl border border-green-100 bg-green-50 px-3 py-2 text-xs text-green-700">
               Your names, date, photos, and details map into this layout automatically.
             </div>
           </div>
@@ -1268,12 +1368,17 @@ const TemplateDetailsModal: React.FC<TemplateDetailsModalProps> = ({ template, o
 
 interface TemplateConfirmModalProps {
   template: BuilderTemplateDefinition;
+  selectedPageMode: TemplateApplyPageMode;
+  onPageModeChange: (mode: TemplateApplyPageMode) => void;
   isApplying: boolean;
   onConfirm: () => void;
   onCancel: () => void;
 }
 
-const TemplateConfirmModal: React.FC<TemplateConfirmModalProps> = ({ template, isApplying, onConfirm, onCancel }) => (
+const TemplateConfirmModal: React.FC<TemplateConfirmModalProps> = ({ template, selectedPageMode, onPageModeChange, isApplying, onConfirm, onCancel }) => {
+  const collapsedAnchors = summarizeCollapsedTemplateAnchors(template);
+
+  return (
   <div className="absolute inset-0 z-10 flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(4px)' }}>
     <div className="bg-white rounded-xl shadow-sm border border-[var(--color-border-subtle)] p-6 max-w-sm w-full mx-4">
       <div className="flex items-center gap-3 mb-4">
@@ -1288,6 +1393,45 @@ const TemplateConfirmModal: React.FC<TemplateConfirmModalProps> = ({ template, i
         </div>
       </div>
       <div className="space-y-2">
+        {normalizeTemplatePageSlots(template).length > 1 && (
+          <div className="rounded-xl border border-[var(--color-border-subtle)] bg-[var(--color-surface-subtle)] p-1">
+            {(['multi', 'single'] as const).map((mode) => (
+              <button
+                key={mode}
+                type="button"
+                onClick={() => onPageModeChange(mode)}
+                className={`w-1/2 rounded-xl px-2.5 py-2 text-xs font-semibold transition-colors ${
+                  selectedPageMode === mode
+                    ? 'bg-white text-[var(--color-text-primary)] shadow-sm'
+                    : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]'
+                }`}
+              >
+                {mode === 'multi' ? 'Multi-page' : 'One page'}
+              </button>
+            ))}
+          </div>
+        )}
+        <div className="rounded-xl border border-[var(--color-border-subtle)] bg-white p-3">
+          <p className="mb-2 text-xs font-semibold text-[var(--color-text-primary)]">
+            {describeTemplateApplyPageMode(template, selectedPageMode)}
+          </p>
+          <div className="space-y-1">
+            {selectedPageMode === 'single' ? (
+              <>
+                <p className="text-[11px] text-[var(--color-text-secondary)]">{summarizeSinglePageTemplateSections(template)}</p>
+                {collapsedAnchors.length > 0 && (
+                  <p className="mt-1.5 text-[11px] text-[var(--color-text-tertiary)]">
+                    Creates anchors: {collapsedAnchors.join(', ')}
+                  </p>
+                )}
+              </>
+            ) : (
+              summarizeTemplatePages(template).map((summary) => (
+                <p key={summary} className="text-[11px] text-[var(--color-text-secondary)]">{summary}</p>
+              ))
+            )}
+          </div>
+        </div>
         <div className="flex items-start gap-2.5 p-3 bg-green-50 rounded-xl">
           <CheckCircle2 className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
           <div className="text-xs text-green-700">
@@ -1322,6 +1466,7 @@ const TemplateConfirmModal: React.FC<TemplateConfirmModalProps> = ({ template, i
           ) : 'Start with this design'}
         </button>
       </div>
+      </div>
     </div>
-  </div>
-);
+  );
+};

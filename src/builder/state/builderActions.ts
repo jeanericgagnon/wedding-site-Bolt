@@ -1,6 +1,6 @@
 import { BuilderAction } from './builderStore';
 import { BuilderSectionInstance, BuilderSectionType } from '../../types/builder/section';
-import { BuilderProject } from '../../types/builder/project';
+import { BuilderPage, BuilderProject } from '../../types/builder/project';
 import { BuilderMediaAsset } from '../../types/builder/media';
 import { WeddingDataV1 } from '../../types/weddingData';
 import { ThemeTokens } from '../../lib/themePresets';
@@ -34,6 +34,11 @@ export const builderActions = {
     payload: { pageId, sectionId },
   }),
 
+  createPageFromSection: (pageId: string, sectionId: string, title?: string): BuilderAction => ({
+    type: 'CREATE_PAGE_FROM_SECTION',
+    payload: { pageId, sectionId, title },
+  }),
+
   duplicateSection: (pageId: string, sectionId: string): BuilderAction => ({
     type: 'DUPLICATE_SECTION',
     payload: { pageId, sectionId },
@@ -54,9 +59,9 @@ export const builderActions = {
     payload: { pageId, sectionId },
   }),
 
-  applyTemplate: (templateId: string, sections: BuilderSectionInstance[]): BuilderAction => ({
+  applyTemplate: (templateId: string, sections: BuilderSectionInstance[], pages?: BuilderPage[]): BuilderAction => ({
     type: 'APPLY_TEMPLATE',
-    payload: { templateId, sections },
+    payload: { templateId, sections, pages },
   }),
 
   applyTheme: (themeId: string): BuilderAction => ({ type: 'APPLY_THEME', payload: themeId }),

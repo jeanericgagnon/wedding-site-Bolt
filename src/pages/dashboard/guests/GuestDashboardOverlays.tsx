@@ -56,6 +56,7 @@ export interface GuestDashboardOverlaysProps {
   guestAuditEntries: GuestAuditEntry[];
   guestEventIds: Set<string>;
   guests: GuestWithRSVP[];
+  isGuestsReadOnly: boolean;
   itineraryDrawerGuest: GuestWithRSVP | null;
   itineraryEvents: ItineraryEvent[];
   itineraryFilterEventCount: number;
@@ -69,6 +70,7 @@ export interface GuestDashboardOverlaysProps {
   onBuildCsvPreview: (headers: string[], dataRows: string[][], fieldMap: CsvFieldMap) => void;
   onCloseAddModal: () => void;
   onCloseAssistedRsvp: () => void;
+  onCloseCsvMapper: () => void;
   onCloseDeleteAllModal: () => void;
   onCloseEditModal: () => void;
   onCloseItineraryDrawer: () => void;
@@ -84,7 +86,6 @@ export interface GuestDashboardOverlaysProps {
   onSetAssistedRsvpSource: React.Dispatch<React.SetStateAction<AssistedRsvpSource>>;
   onSetAssistedRsvpStatus: React.Dispatch<React.SetStateAction<AssistedRsvpStatus>>;
   onSetCsvFieldMap: React.Dispatch<React.SetStateAction<CsvFieldMap | null>>;
-  onSetCsvShowMapper: React.Dispatch<React.SetStateAction<boolean>>;
   onSetDeleteAllConfirmInput: React.Dispatch<React.SetStateAction<string>>;
   onSetFormData: React.Dispatch<React.SetStateAction<GuestFormData>>;
   onSetFormEventInviteIds: React.Dispatch<React.SetStateAction<Set<string>>>;
@@ -124,6 +125,7 @@ export function GuestDashboardOverlays({
   guestAuditEntries,
   guestEventIds,
   guests,
+  isGuestsReadOnly,
   itineraryDrawerGuest,
   itineraryEvents,
   itineraryFilterEventCount,
@@ -137,6 +139,7 @@ export function GuestDashboardOverlays({
   onBuildCsvPreview,
   onCloseAddModal,
   onCloseAssistedRsvp,
+  onCloseCsvMapper,
   onCloseDeleteAllModal,
   onCloseEditModal,
   onCloseItineraryDrawer,
@@ -152,7 +155,6 @@ export function GuestDashboardOverlays({
   onSetAssistedRsvpSource,
   onSetAssistedRsvpStatus,
   onSetCsvFieldMap,
-  onSetCsvShowMapper,
   onSetDeleteAllConfirmInput,
   onSetFormData,
   onSetFormEventInviteIds,
@@ -161,9 +163,11 @@ export function GuestDashboardOverlays({
   onToast,
   onToggleEventInvite,
 }: GuestDashboardOverlaysProps) {
+  const canRenderGuestWriteOverlays = !isGuestsReadOnly;
+
   return (
     <>
-      {assistedRsvpGuest && (
+      {canRenderGuestWriteOverlays && assistedRsvpGuest && (
         <AssistedRsvpModal
           guest={assistedRsvpGuest}
           notes={assistedRsvpNotes}
@@ -178,7 +182,7 @@ export function GuestDashboardOverlays({
         />
       )}
 
-      {showAddModal && (
+      {canRenderGuestWriteOverlays && showAddModal && (
         <GuestFormModal
           effectiveItineraryEvents={effectiveItineraryEvents}
           formData={formData}
@@ -193,7 +197,7 @@ export function GuestDashboardOverlays({
         />
       )}
 
-      {editingGuest && (
+      {canRenderGuestWriteOverlays && editingGuest && (
         <GuestFormModal
           effectiveItineraryEvents={effectiveItineraryEvents}
           formData={formData}
@@ -214,6 +218,7 @@ export function GuestDashboardOverlays({
           guestAuditEntries={guestAuditEntries}
           guestEventIds={guestEventIds}
           guests={guests}
+          isGuestsReadOnly={isGuestsReadOnly}
           itineraryEvents={itineraryEvents}
           loadingDrawer={loadingDrawer}
           rotatingInviteToken={rotatingInviteToken}
@@ -230,7 +235,7 @@ export function GuestDashboardOverlays({
         />
       )}
 
-      {showDeleteAllModal && (
+      {canRenderGuestWriteOverlays && showDeleteAllModal && (
         <DeleteAllGuestsModal
           busy={deleteAllBusy}
           confirmInput={deleteAllConfirmInput}
@@ -241,7 +246,7 @@ export function GuestDashboardOverlays({
         />
       )}
 
-      {csvShowMapper && csvFieldMap && (
+      {canRenderGuestWriteOverlays && csvShowMapper && csvFieldMap && (
         <GuestCsvMapperModal
           columnSamples={csvColumnSamples}
           dataRows={csvDataRows}
@@ -251,12 +256,12 @@ export function GuestDashboardOverlays({
           nameMappingValid={csvNameMappingValid}
           selectedFilename={csvSelectedFilename}
           onBuildPreview={onBuildCsvPreview}
-          onClose={() => onSetCsvShowMapper(false)}
+          onClose={onCloseCsvMapper}
           onSetFieldMap={onSetCsvFieldMap}
         />
       )}
 
-      {csvPreview && (
+      {canRenderGuestWriteOverlays && csvPreview && (
         <GuestCsvReviewModal
           duplicateNames={csvDuplicateNames}
           householdWarnings={csvHouseholdWarnings}
@@ -270,7 +275,7 @@ export function GuestDashboardOverlays({
         />
       )}
 
-      {confirmDialog && (
+      {canRenderGuestWriteOverlays && confirmDialog && (
         <ConfirmDialog
           open
           title={confirmDialog.title}

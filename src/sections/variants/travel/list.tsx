@@ -85,7 +85,7 @@ const TravelList: React.FC<SectionComponentProps<TravelListData>> = ({ data }) =
             {travelItems.map(({ icon: Icon, label, content }) => (
               <div key={label} className="bg-white rounded-[1.5rem] p-7 border border-stone-100 shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all">
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="w-8 h-8 rounded-lg bg-stone-50 border border-stone-100 flex items-center justify-center">
+                  <div className="w-8 h-8 rounded-xl bg-stone-50 border border-stone-100 flex items-center justify-center">
                     <Icon size={15} className="text-stone-500" />
                   </div>
                   <h3 className="text-sm font-medium text-stone-700">{label}</h3>

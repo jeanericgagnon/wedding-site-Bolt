@@ -39,7 +39,7 @@ const ToastList: React.FC<{ toasts: Toast[] }> = ({ toasts }) => (
     {toasts.map((toast) => (
       <div
         key={toast.id}
-        className={`rounded-lg border bg-white px-4 py-3 text-sm font-medium text-text-primary ${
+        className={`rounded-2xl border bg-white px-4 py-3 text-sm font-medium text-text-primary ${
           toast.type === 'error' ? 'border-border-subtle' : 'border-success/20'
         }`}
       >
@@ -66,6 +66,8 @@ export const DashboardRegistry: React.FC = () => {
   const [, setSavingRefreshPolicy] = useState(false);
   const [registryThankYouSyncing, setRegistryThankYouSyncing] = useState(false);
   const [registryThankYouBusyItemId, setRegistryThankYouBusyItemId] = useState<string | null>(null);
+  const toastTimeoutsRef = useRef<number[]>([]);
+  const previousWeddingSiteIdRef = useRef<string | null>(null);
 
   const {
     autoRefreshEnabled,
@@ -91,6 +93,7 @@ export const DashboardRegistry: React.FC = () => {
     registryThankYouLedger,
     setRefreshWindowDraft,
     setRegistryThankYouLedger,
+    siteSlug,
     weddingDate,
     weddingSiteId,
   } = useRegistryDashboardData({
@@ -101,6 +104,20 @@ export const DashboardRegistry: React.FC = () => {
 
   const normalizedItems = items.map(normalizeOwnerDashboardRegistryItem);
   const registryActionsRef = useRef<HTMLDivElement>(null);
+
+  const resetRegistryDashboardInteractionState = React.useCallback(() => {
+    setSearch('');
+    setFilter('all');
+    setShowForm(false);
+    setEditItem(null);
+    setShowAlertsOnly(false);
+    setShowImageIssuesOnly(false);
+    setBulkImportOpen(false);
+    setBulkUrls('');
+    setRegistryActionsOpen(false);
+    setRegistryThankYouSyncing(false);
+    setRegistryThankYouBusyItemId(null);
+  }, []);
 
   useEffect(() => {
     const onPointerDown = (event: MouseEvent) => {
@@ -118,10 +135,36 @@ export const DashboardRegistry: React.FC = () => {
     };
   }, [registryActionsOpen]);
 
+  useEffect(() => () => {
+    toastTimeoutsRef.current.forEach((timer) => window.clearTimeout(timer));
+    toastTimeoutsRef.current = [];
+  }, []);
+
+  useEffect(() => {
+    if (
+      previousWeddingSiteIdRef.current &&
+      weddingSiteId &&
+      previousWeddingSiteIdRef.current !== weddingSiteId
+    ) {
+      resetRegistryDashboardInteractionState();
+    }
+    previousWeddingSiteIdRef.current = weddingSiteId;
+  }, [resetRegistryDashboardInteractionState, weddingSiteId]);
+
+  useEffect(() => {
+    if (!weddingSiteId && !isDemoMode) {
+      resetRegistryDashboardInteractionState();
+    }
+  }, [isDemoMode, resetRegistryDashboardInteractionState, weddingSiteId]);
+
   function toast(message: string, type: 'success' | 'error' = 'success') {
     const id = Date.now();
     setToasts((prev) => [...prev, { id, message, type }]);
-    setTimeout(() => setToasts((prev) => prev.filter((item) => item.id !== id)), 4000);
+    const timer = window.setTimeout(() => {
+      setToasts((prev) => prev.filter((item) => item.id !== id));
+      toastTimeoutsRef.current = toastTimeoutsRef.current.filter((entry) => entry !== timer);
+    }, 4000);
+    toastTimeoutsRef.current.push(timer);
   }
 
   function logRegistryAction(type: string, summary: string, metadata?: Record<string, unknown>, targetId?: string | null, targetLabel?: string | null) {
@@ -424,6 +467,7 @@ export const DashboardRegistry: React.FC = () => {
         setShowImageIssuesOnly={setShowImageIssuesOnly}
         showAlertsOnly={showAlertsOnly}
         showImageIssuesOnly={showImageIssuesOnly}
+        siteSlug={siteSlug}
         topRegistryItems={topRegistryItems}
         weddingSiteId={weddingSiteId}
       />
@@ -439,7 +483,7 @@ export const DashboardRegistry: React.FC = () => {
 
       {bulkImportOpen && (
         <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="w-full max-w-2xl space-y-4 rounded-lg border border-border bg-surface p-5">
+          <div className="w-full max-w-2xl space-y-4 rounded-2xl border border-border bg-surface p-5">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-semibold text-text-primary">Add gift links</h3>
               <button className="text-text-tertiary hover:text-text-primary" onClick={() => setBulkImportOpen(false)}>Close</button>
@@ -451,7 +495,7 @@ export const DashboardRegistry: React.FC = () => {
               onChange={(event) => setBulkUrls(event.target.value)}
               rows={10}
               placeholder="https://www.amazon.com/...\nhttps://www.target.com/..."
-              className="w-full px-3 py-2 bg-surface-subtle border border-border rounded-lg text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+              className="w-full rounded-xl border border-border bg-surface-subtle px-3 py-2 text-sm text-text-primary placeholder:text-text-tertiary focus:border-transparent focus:outline-none focus:ring-2 focus:ring-primary"
             />
             <div className="flex items-center justify-end gap-2">
               <Button variant="ghost" size="sm" onClick={() => setBulkImportOpen(false)}>Cancel</Button>

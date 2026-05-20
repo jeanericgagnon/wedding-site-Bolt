@@ -185,4 +185,70 @@ describe('useMessageDashboardData', () => {
     expect(result.current.eventGuestIds).toEqual({});
     expect(toast).toHaveBeenCalledWith('Couldn’t load your messages right now. Please try again.', 'error');
   });
+
+  it('loads demo messages before clearing the messages dashboard loading shell', async () => {
+    readDemoMessagesMock.mockReturnValue([
+      {
+        id: 'demo-message-1',
+        subject: 'Demo message',
+        body: 'Loaded from demo storage.',
+        sent_at: null,
+        scheduled_for: null,
+        status: 'draft',
+        channel: 'email',
+        audience_filter: 'all',
+        recipient_filter: { audience: 'all' },
+        recipient_count: 1,
+        delivered_count: 0,
+        failed_count: 0,
+      },
+    ] as any);
+
+    const toast = vi.fn();
+    const { result } = renderHook(() => {
+      const [weddingSite, setWeddingSite] = useState<WeddingSite | null>(null);
+      const [messages, setMessages] = useState<Message[]>([]);
+      const [deliveries, setDeliveries] = useState<DeliveryRow[]>([]);
+      const [guests, setGuests] = useState<Guest[]>([]);
+      const [loading, setLoading] = useState(true);
+      const [smsTransactions, setSmsTransactions] = useState<SmsCreditTransaction[]>([]);
+      const [smsExpiringSoon, setSmsExpiringSoon] = useState(0);
+      const [itineraryAudienceOptions, setItineraryAudienceOptions] = useState<AudienceOption[]>([]);
+      const [eventGuestIds, setEventGuestIds] = useState<Record<string, Set<string>>>({});
+      const [messagesRole, setMessagesRole] = useState<'owner' | 'planner' | 'coordinator' | 'viewer'>('owner');
+      const [activeSiteRole, setActiveSiteRole] = useState<'owner' | 'planner' | 'coordinator' | 'viewer'>('owner');
+      const [messagesPermissions, setMessagesPermissions] = useState<PlannerPermissionKey[] | null>(null);
+
+      useMessageDashboardData({
+        userId: 'demo-local-user',
+        isDemoMode: true,
+        viewingMessage: null,
+        messages,
+        weddingSite,
+        toast,
+        setWeddingSite,
+        setMessages,
+        setDeliveries,
+        setGuests,
+        setLoading,
+        setSmsTransactions,
+        setSmsExpiringSoon,
+        setItineraryAudienceOptions,
+        setEventGuestIds,
+        setMessagesRole,
+        setActiveSiteRole,
+        setMessagesPermissions,
+      });
+
+      return {
+        loading,
+        messages,
+        weddingSite,
+      };
+    });
+
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(result.current.weddingSite?.id).toBeTruthy();
+    expect(result.current.messages.map((message) => message.subject)).toEqual(['Demo message']);
+  });
 });

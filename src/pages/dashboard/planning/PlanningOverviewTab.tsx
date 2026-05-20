@@ -1,7 +1,9 @@
 import React from 'react';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { AlertTriangle, Clock, DollarSign, Users, CheckCircle, HeartHandshake } from 'lucide-react';
 import { Card } from '../../../components/ui/Card';
 import { Button } from '../../../components/ui/Button';
+import { useToast } from '../../../components/ui/Toast';
 import type { NameChangePlan } from '../../../lib/nameChange/types';
 import {
   buildNameChangeReminderSuggestions,
@@ -47,16 +49,6 @@ function fmt(n: number) {
   return n.toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
 }
 
-function routeToNameChangeLane(primaryHref: string, onTabChange: (tab: string) => void) {
-  const [, hash = ''] = primaryHref.split('#');
-  if (typeof window !== 'undefined') {
-    const nextHash = `#${hash || 'name-change-roadmap'}`;
-    const { pathname, search } = window.location;
-    window.history.replaceState(null, '', `${pathname}${search}${nextHash}`);
-  }
-  onTabChange('nameChange');
-}
-
 export const PlanningOverviewTab: React.FC<Props> = ({
   tasks,
   budgetItems,
@@ -72,6 +64,10 @@ export const PlanningOverviewTab: React.FC<Props> = ({
   onUndoStarterSuite,
   undoingStarterSuite = false,
 }) => {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const { toast } = useToast();
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const in7Days = new Date(today);
@@ -108,6 +104,18 @@ export const PlanningOverviewTab: React.FC<Props> = ({
     hasExecutionActivity: nameChangeHasExecutionActivity,
   });
   const nameChangeInsights = buildNameChangeOverviewInsights({ plan: nameChangePlan, reminders: [] });
+  const routeToNameChangeLane = (primaryHref: string) => {
+    const [, hash = ''] = primaryHref.split('#');
+    navigate(
+      {
+        pathname: location.pathname,
+        search: location.search,
+        hash: `#${hash || 'name-change-roadmap'}`,
+      },
+      { replace: true },
+    );
+    onTabChange('nameChange');
+  };
   const milestoneStatusLabels = {
     ready: 'ready',
     upcoming: 'up next',
@@ -153,14 +161,31 @@ export const PlanningOverviewTab: React.FC<Props> = ({
   const shouldShowStarterSuiteQa = Boolean(
     starterSuite &&
     onApplyStarterSuite &&
-    typeof window !== 'undefined' &&
-    new URLSearchParams(window.location.search).has('starterSuiteQa'),
+    searchParams.has('starterSuiteQa'),
   );
   const applyStarterSuite = onApplyStarterSuite;
   const undoStarterSuite = onUndoStarterSuite;
   const starterUndoCount = lastStarterSuiteRun
     ? lastStarterSuiteRun.taskIds.length + lastStarterSuiteRun.budgetItemIds.length + lastStarterSuiteRun.vendorIds.length
     : 0;
+
+  async function handleApplyStarterSuite() {
+    if (!applyStarterSuite) return;
+    try {
+      await applyStarterSuite();
+    } catch {
+      toast('Couldn’t add the starter suite right now.', 'error');
+    }
+  }
+
+  async function handleUndoStarterSuite() {
+    if (!undoStarterSuite) return;
+    try {
+      await undoStarterSuite();
+    } catch {
+      toast('Couldn’t undo the starter suite right now.', 'error');
+    }
+  }
 
   return (
     <div className="space-y-6">
@@ -173,7 +198,7 @@ export const PlanningOverviewTab: React.FC<Props> = ({
                 {lastStarterSuiteRun.taskIds.length} tasks, {lastStarterSuiteRun.budgetItemIds.length} budget lines, and {lastStarterSuiteRun.vendorIds.length} vendors were created from your wedding details.
               </p>
             </div>
-            <Button type="button" variant="outline" onClick={() => void undoStarterSuite()} disabled={undoingStarterSuite}>
+            <Button type="button" variant="outline" onClick={() => void handleUndoStarterSuite()} disabled={undoingStarterSuite}>
               {undoingStarterSuite ? 'Undoing...' : 'Undo starter suite'}
             </Button>
           </div>
@@ -190,23 +215,23 @@ export const PlanningOverviewTab: React.FC<Props> = ({
                 This adds editable tasks, budget lines, vendor notes, and guest details from the wedding information already on your site.
               </p>
               <div className="mt-3 grid gap-2 text-xs text-text-secondary sm:grid-cols-3">
-                <span className="rounded-lg border border-border-subtle bg-white px-3 py-2">{starterSuite.tasks.length} checklist items</span>
-                <span className="rounded-lg border border-border-subtle bg-white px-3 py-2">{starterSuite.budgetItems.length} budget lines</span>
-                <span className="rounded-lg border border-border-subtle bg-white px-3 py-2">{starterSuite.vendors.length} vendor notes</span>
-                <span className="rounded-lg border border-border-subtle bg-white px-3 py-2">{starterSuite.timelineSeeds.length} timeline ideas</span>
-                <span className="rounded-lg border border-border-subtle bg-white px-3 py-2">{starterSuite.rsvpQuestionSeeds.length} RSVP questions</span>
-                <span className="rounded-lg border border-border-subtle bg-white px-3 py-2">{starterSuite.photoBucketSeeds.length} photo albums</span>
+                <span className="rounded-xl border border-border-subtle bg-white px-3 py-2">{starterSuite.tasks.length} checklist items</span>
+                <span className="rounded-xl border border-border-subtle bg-white px-3 py-2">{starterSuite.budgetItems.length} budget lines</span>
+                <span className="rounded-xl border border-border-subtle bg-white px-3 py-2">{starterSuite.vendors.length} vendor notes</span>
+                <span className="rounded-xl border border-border-subtle bg-white px-3 py-2">{starterSuite.timelineSeeds.length} timeline ideas</span>
+                <span className="rounded-xl border border-border-subtle bg-white px-3 py-2">{starterSuite.rsvpQuestionSeeds.length} RSVP questions</span>
+                <span className="rounded-xl border border-border-subtle bg-white px-3 py-2">{starterSuite.photoBucketSeeds.length} photo albums</span>
               </div>
               <div className="mt-3 grid gap-3 text-xs text-text-secondary lg:grid-cols-3">
-                <div className="rounded-lg border border-border-subtle bg-white/80 p-3">
+                <div className="rounded-xl border border-border-subtle bg-white/80 p-3">
                   <p className="font-semibold text-text-primary">Schedule ideas</p>
                   <p className="mt-1">{starterSuite.timelineSeeds.slice(0, 3).map((item) => item.title).join(', ')}</p>
                 </div>
-                <div className="rounded-lg border border-border-subtle bg-white/80 p-3">
+                <div className="rounded-xl border border-border-subtle bg-white/80 p-3">
                   <p className="font-semibold text-text-primary">Guest setup</p>
                   <p className="mt-1">{starterSuite.rsvpQuestionSeeds.length} RSVP prompts and {starterSuite.guestImportSuggestions.length} import checks.</p>
                 </div>
-                <div className="rounded-lg border border-border-subtle bg-white/80 p-3">
+                <div className="rounded-xl border border-border-subtle bg-white/80 p-3">
                   <p className="font-semibold text-text-primary">Photo albums</p>
                   <p className="mt-1">{starterSuite.photoBucketSeeds.slice(0, 3).map((item) => item.name).join(', ')}</p>
                 </div>
@@ -218,7 +243,7 @@ export const PlanningOverviewTab: React.FC<Props> = ({
               </div>
             </div>
             <div className="flex flex-col gap-2 sm:flex-row lg:flex-col">
-              <Button type="button" onClick={() => void applyStarterSuite()} disabled={applyingStarterSuite}>
+              <Button type="button" onClick={() => void handleApplyStarterSuite()} disabled={applyingStarterSuite}>
                 {applyingStarterSuite ? 'Adding starter set...' : 'Add starter set'}
               </Button>
               <Button type="button" variant="outline" onClick={() => onTabChange('tasks')}>
@@ -236,7 +261,7 @@ export const PlanningOverviewTab: React.FC<Props> = ({
         >
           <Card padding="md" className={`h-full transition-colors hover:border-primary/25 ${overdueTasks.length > 0 ? 'border-error/40 bg-error/5' : ''}`}>
             <div className="flex items-start gap-3">
-              <div className={`p-2 rounded-lg ${overdueTasks.length > 0 ? 'bg-error/10' : 'bg-surface-subtle'}`}>
+              <div className={`rounded-xl p-2 ${overdueTasks.length > 0 ? 'bg-error/10' : 'bg-surface-subtle'}`}>
                 <AlertTriangle className={`w-5 h-5 ${overdueTasks.length > 0 ? 'text-error' : 'text-text-tertiary'}`} />
               </div>
               <div>
@@ -250,7 +275,7 @@ export const PlanningOverviewTab: React.FC<Props> = ({
         <button onClick={() => onTabChange('tasks')} className="text-left">
           <Card padding="md" className="h-full transition-colors hover:border-primary/25">
             <div className="flex items-start gap-3">
-              <div className="p-2 rounded-lg bg-warning/10">
+              <div className="rounded-xl bg-warning/10 p-2">
                 <Clock className="w-5 h-5 text-warning" />
               </div>
               <div>
@@ -264,7 +289,7 @@ export const PlanningOverviewTab: React.FC<Props> = ({
         <button onClick={() => onTabChange('budget')} className="text-left">
           <Card padding="md" className="h-full transition-colors hover:border-primary/25">
             <div className="flex items-start gap-3">
-              <div className="p-2 rounded-lg bg-primary-light">
+              <div className="rounded-xl bg-primary-light p-2">
                 <DollarSign className="w-5 h-5 text-primary" />
               </div>
               <div>
@@ -278,7 +303,7 @@ export const PlanningOverviewTab: React.FC<Props> = ({
         <button onClick={() => onTabChange('vendors')} className="text-left">
           <Card padding="md" className={`h-full transition-colors hover:border-primary/25 ${unpaidVendorBalance > 0 ? 'border-warning/40' : ''}`}>
             <div className="flex items-start gap-3">
-              <div className={`p-2 rounded-lg ${unpaidVendorBalance > 0 ? 'bg-warning/10' : 'bg-surface-subtle'}`}>
+              <div className={`rounded-xl p-2 ${unpaidVendorBalance > 0 ? 'bg-warning/10' : 'bg-surface-subtle'}`}>
                 <DollarSign className={`w-5 h-5 ${unpaidVendorBalance > 0 ? 'text-warning' : 'text-text-tertiary'}`} />
               </div>
               <div>
@@ -294,11 +319,11 @@ export const PlanningOverviewTab: React.FC<Props> = ({
         <div
           role="button"
           tabIndex={0}
-          onClick={() => routeToNameChangeLane(nameChangeCard.plannerHref, onTabChange)}
+          onClick={() => routeToNameChangeLane(nameChangeCard.plannerHref)}
           onKeyDown={(event) => {
             if (event.key === 'Enter' || event.key === ' ') {
               event.preventDefault();
-              routeToNameChangeLane(nameChangeCard.plannerHref, onTabChange);
+              routeToNameChangeLane(nameChangeCard.plannerHref);
             }
           }}
           className="block w-full text-left"
@@ -319,17 +344,17 @@ export const PlanningOverviewTab: React.FC<Props> = ({
                   </p>
                   <p className="mt-2 text-xs text-text-secondary">{nameChangeCard.statusLabel}</p>
                   <div className="mt-3 flex flex-wrap gap-2 text-xs">
-                    <span className="rounded-lg border border-border-subtle bg-white px-2 py-1 text-text-secondary">
+                    <span className="rounded-xl border border-border-subtle bg-white px-2 py-1 text-text-secondary">
                       {nameChangeReminderAttention.actionableNow} reminder{nameChangeReminderAttention.actionableNow === 1 ? '' : 's'} actionable now
                     </span>
-                    <span className="rounded-lg border border-border-subtle bg-white px-2 py-1 text-text-secondary">
+                    <span className="rounded-xl border border-border-subtle bg-white px-2 py-1 text-text-secondary">
                       {blockedNameChangeMilestones} milestone{blockedNameChangeMilestones === 1 ? '' : 's'} waiting on details
                     </span>
-                    <span className="rounded-lg border border-border-subtle bg-white px-2 py-1 text-text-secondary">
+                    <span className="rounded-xl border border-border-subtle bg-white px-2 py-1 text-text-secondary">
                       {downstreamReadyCount} place{downstreamReadyCount === 1 ? '' : 's'} ready · {downstreamInProgressCount} started · {downstreamUpcomingCount} later
                     </span>
                     {nameChangeReminderAttention.stale > 0 ? (
-                      <span className="rounded-lg border border-primary/20 bg-primary-light px-2 py-1 text-primary">
+                      <span className="rounded-xl border border-primary/20 bg-primary-light px-2 py-1 text-primary">
                         {nameChangeReminderAttention.stale} follow-up{nameChangeReminderAttention.stale === 1 ? '' : 's'} worth checking
                       </span>
                     ) : null}
@@ -337,7 +362,7 @@ export const PlanningOverviewTab: React.FC<Props> = ({
                   {milestoneHighlights.length > 0 ? (
                     <div className="mt-3 flex flex-wrap gap-2 text-xs">
                       {milestoneHighlights.map((milestone) => (
-                        <span key={milestone.id} className="rounded-lg border border-border-subtle bg-white px-2 py-1 text-text-secondary">
+                        <span key={milestone.id} className="rounded-xl border border-border-subtle bg-white px-2 py-1 text-text-secondary">
                           {milestone.label}: <span className="font-medium text-text-primary">{milestoneStatusLabels[milestone.status]}</span>
                         </span>
                       ))}
@@ -351,7 +376,7 @@ export const PlanningOverviewTab: React.FC<Props> = ({
                         className="font-medium text-text-primary underline underline-offset-2"
                         onClick={(event) => {
                           event.stopPropagation();
-                          routeToNameChangeLane(nameChangeCard.plannerHref, onTabChange);
+                          routeToNameChangeLane(nameChangeCard.plannerHref);
                         }}
                       >
                         {nextNameChangeMilestone.label}
@@ -367,7 +392,7 @@ export const PlanningOverviewTab: React.FC<Props> = ({
                         className="font-medium text-text-primary underline underline-offset-2"
                         onClick={(event) => {
                           event.stopPropagation();
-                          routeToNameChangeLane(nameChangeCard.plannerHref, onTabChange);
+                          routeToNameChangeLane(nameChangeCard.plannerHref);
                         }}
                       >
                         {nameChangeInsights.concreteResumeLabel}
@@ -377,20 +402,20 @@ export const PlanningOverviewTab: React.FC<Props> = ({
                   <div className="mt-3 flex flex-wrap gap-2 text-[11px] text-text-secondary">
                     <button
                       type="button"
-                      className="rounded-lg border border-border-subtle bg-white px-2 py-1 text-text-secondary transition-colors hover:border-primary/25 hover:text-text-primary"
+                      className="rounded-xl border border-border-subtle bg-white px-2 py-1 text-text-secondary transition-colors hover:border-primary/25 hover:text-text-primary"
                       onClick={(event) => {
                         event.stopPropagation();
-                        routeToNameChangeLane(nameChangeInsights.milestoneSummaryHref, onTabChange);
+                        routeToNameChangeLane(nameChangeInsights.milestoneSummaryHref);
                       }}
                     >
                       {nameChangeInsights.milestoneSummaryLabel}
                     </button>
                     <button
                       type="button"
-                      className="rounded-lg border border-border-subtle bg-white px-2 py-1 text-text-secondary transition-colors hover:border-primary/25 hover:text-text-primary"
+                      className="rounded-xl border border-border-subtle bg-white px-2 py-1 text-text-secondary transition-colors hover:border-primary/25 hover:text-text-primary"
                       onClick={(event) => {
                         event.stopPropagation();
-                        routeToNameChangeLane(nameChangeInsights.reminderSummaryHref, onTabChange);
+                        routeToNameChangeLane(nameChangeInsights.reminderSummaryHref);
                       }}
                     >
                       {nameChangeInsights.reminderSummaryLabel}
@@ -402,7 +427,7 @@ export const PlanningOverviewTab: React.FC<Props> = ({
                 </div>
               </div>
               <div className="flex flex-col items-end gap-2">
-                <span className="rounded-lg border border-primary/20 bg-white px-3 py-1 text-xs font-medium text-primary">{nameChangeCard.primaryLabel}</span>
+                <span className="rounded-xl border border-primary/20 bg-white px-3 py-1 text-xs font-medium text-primary">{nameChangeCard.primaryLabel}</span>
                 <span className="text-[11px] text-text-secondary">{nameChangeCard.badgeLabel}</span>
               </div>
             </div>
@@ -437,9 +462,9 @@ export const PlanningOverviewTab: React.FC<Props> = ({
                   <span>Seating progress</span>
                   <span>{seatingReadiness.attending > 0 ? Math.round((seatingReadiness.seated / seatingReadiness.attending) * 100) : 0}%</span>
                 </div>
-                <div className="h-2 overflow-hidden rounded-lg bg-surface-subtle">
+                <div className="h-2 overflow-hidden rounded-xl bg-surface-subtle">
                   <div
-                    className="h-full rounded-lg bg-primary transition-all"
+                    className="h-full rounded-xl bg-primary transition-all"
                     style={{ width: `${seatingReadiness.attending > 0 ? (seatingReadiness.seated / seatingReadiness.attending) * 100 : 0}%` }}
                   />
                 </div>
@@ -477,9 +502,9 @@ export const PlanningOverviewTab: React.FC<Props> = ({
                   <span>Completed</span>
                   <span>{Math.round((tasks.filter(t => t.status === 'done').length / tasks.length) * 100)}%</span>
                 </div>
-                <div className="h-2 overflow-hidden rounded-lg bg-surface-subtle">
+                <div className="h-2 overflow-hidden rounded-xl bg-surface-subtle">
                   <div
-                    className="h-full rounded-lg bg-success transition-all"
+                    className="h-full rounded-xl bg-success transition-all"
                     style={{ width: `${(tasks.filter(t => t.status === 'done').length / tasks.length) * 100}%` }}
                   />
                 </div>

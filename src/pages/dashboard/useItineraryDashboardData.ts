@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { demoEvents } from '../../lib/demoData';
 import { readDemoItineraryEvents, writeDemoItineraryEvents } from './itineraryDemoStorage';
 import {
@@ -40,11 +40,18 @@ function buildDemoItineraryEvents(): EventWithInvites[] {
 
 export function useItineraryDashboardData({ isDemoMode, toast }: Args) {
   const [events, setEvents] = useState<EventWithInvites[]>([]);
+  const [hasActiveSite, setHasActiveSite] = useState(isDemoMode);
   const [loading, setLoading] = useState(true);
+  const loadEventsRequestIdRef = useRef(0);
 
   const loadEvents = useCallback(async () => {
+    const requestId = ++loadEventsRequestIdRef.current;
+    const isCurrentRequest = () => requestId === loadEventsRequestIdRef.current;
+    setLoading(true);
     try {
       if (isDemoMode) {
+        if (!isCurrentRequest()) return;
+        setHasActiveSite(true);
         const seeded = buildDemoItineraryEvents();
         const storedEvents = readDemoItineraryEvents(seeded);
         if (storedEvents.length > 0) {
@@ -62,13 +69,19 @@ export function useItineraryDashboardData({ isDemoMode, toast }: Args) {
       }
 
       const snapshot = await loadItineraryDashboardEvents(hasEventRsvpsTable);
+      if (!isCurrentRequest()) return;
       hasEventRsvpsTable = snapshot.hasEventRsvpsTable;
+      setHasActiveSite(snapshot.hasActiveSite);
       setEvents(snapshot.events);
     } catch {
+      if (!isCurrentRequest()) return;
+      setHasActiveSite(false);
       setEvents([]);
       toast('Couldn’t load itinerary events. Please try again.', 'error');
     } finally {
-      setLoading(false);
+      if (isCurrentRequest()) {
+        setLoading(false);
+      }
     }
   }, [isDemoMode, toast]);
 
@@ -85,6 +98,7 @@ export function useItineraryDashboardData({ isDemoMode, toast }: Args) {
 
   return {
     events,
+    hasActiveSite,
     loadEvents,
     loading,
     setEvents,

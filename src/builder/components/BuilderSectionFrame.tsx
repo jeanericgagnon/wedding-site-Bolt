@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { GripVertical, Eye, EyeOff, Settings2, Trash2, Copy, ChevronDown, ChevronUp, Pencil } from 'lucide-react';
+import { GripVertical, Eye, EyeOff, Settings2, Trash2, Copy, ChevronDown, ChevronUp, Pencil, FilePlus2 } from 'lucide-react';
 import { DeleteSectionModal } from './DeleteSectionModal';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -24,6 +24,28 @@ const INLINE_FIELD_KEYS_BY_SECTION: Partial<Record<BuilderSectionInstance['type'
 };
 
 const INLINE_CTA_FIELD_PATTERN = /(?:^|_)(buttonLabel|ctaLabel|ctaText|label)$/i;
+
+const DEDICATED_PAGE_TITLE_BY_SECTION: Partial<Record<BuilderSectionInstance['type'], string>> = {
+  accommodations: 'Accommodations',
+  contact: 'Contact',
+  directions: 'Directions',
+  faq: 'FAQ',
+  menu: 'Menu',
+  music: 'Music',
+  registry: 'Registry',
+  rsvp: 'RSVP',
+  schedule: 'Schedule',
+  travel: 'Travel',
+  venue: 'Venue',
+};
+
+function getDedicatedPageTitle(section: BuilderSectionInstance, fallbackLabel: string): string {
+  const customTitle = readBuilderValue(
+    section.settings?.title as string | { value: string } | undefined,
+    '',
+  ).trim();
+  return customTitle || DEDICATED_PAGE_TITLE_BY_SECTION[section.type] || fallbackLabel;
+}
 
 function getInlineCanvasFields(sectionType: BuilderSectionInstance['type'], fields: BuilderSettingsField[]): BuilderSettingsField[] {
   const keyPriority = INLINE_FIELD_KEYS_BY_SECTION[sectionType] ?? [];
@@ -50,7 +72,7 @@ export const BuilderSectionFrame: React.FC<BuilderSectionFrameProps> = ({
   isHovered,
   isPreview,
 }) => {
-  const { dispatch } = useBuilderContext();
+  const { state, dispatch } = useBuilderContext();
   const [inlineEditOpen, setInlineEditOpen] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const manifest = getSectionManifest(section.type);
@@ -82,6 +104,11 @@ export const BuilderSectionFrame: React.FC<BuilderSectionFrameProps> = ({
     dispatch(builderActions.duplicateSection(pageId, section.id));
   };
 
+  const handleMakeDedicatedPage = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    dispatch(builderActions.createPageFromSection(pageId, section.id, getDedicatedPageTitle(section, manifest.label)));
+  };
+
   const handleDelete = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (section.locked || !manifest.capabilities.deletable) return;
@@ -98,6 +125,8 @@ export const BuilderSectionFrame: React.FC<BuilderSectionFrameProps> = ({
 
   const inlineCanvasFields = getInlineCanvasFields(section.type, manifest.settingsSchema.fields);
   const hasInlineFields = inlineCanvasFields.length > 0;
+  const sourcePageSectionCount = state.project?.pages.find((page) => page.id === pageId)?.sections.length ?? 0;
+  const canMakeDedicatedPage = !section.locked && sourcePageSectionCount > 1;
 
   if (isPreview) {
     return (
@@ -238,6 +267,17 @@ export const BuilderSectionFrame: React.FC<BuilderSectionFrameProps> = ({
                 <Copy size={12} />
               </button>
             )}
+            {canMakeDedicatedPage && (
+              <button
+                onClick={handleMakeDedicatedPage}
+                title={`Move ${manifest.label} to a dedicated page`}
+                aria-label={`Move ${manifest.label} to a dedicated page`}
+                className="flex items-center gap-1 px-2 py-1 rounded text-[11px] font-medium transition-colors hover:bg-white/10"
+              >
+                <FilePlus2 size={11} />
+                Page
+              </button>
+            )}
             <button
               onClick={handleSelect}
               title="Section settings"
@@ -308,7 +348,7 @@ const InlineEditPanel: React.FC<{
         </div>
         <button
           onClick={onClose}
-          className="text-text-tertiary hover:text-text-primary transition-colors p-1 rounded hover:bg-white"
+          className="rounded-xl p-1 text-text-tertiary transition-colors hover:bg-white hover:text-text-primary"
         >
           <ChevronUp size={14} />
         </button>
@@ -328,7 +368,7 @@ const InlineEditPanel: React.FC<{
                   onChange={e => handleChange(field.key, e.target.value)}
                   placeholder={field.placeholder ?? `Enter ${field.label.toLowerCase()}...`}
                   rows={3}
-                  className="w-full border border-border-subtle rounded-lg px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/25 resize-none bg-surface-subtle focus:bg-white transition-colors"
+                  className="w-full rounded-xl border border-border-subtle bg-surface-subtle px-3 py-2 text-sm text-text-primary transition-colors focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/25 resize-none"
                   autoFocus={fields[0].key === field.key}
                 />
               ) : (
@@ -338,7 +378,7 @@ const InlineEditPanel: React.FC<{
                   value={readBuilderValue(section.settings[field.key] as string | { value: string } | undefined, (field.defaultValue as string) ?? '')}
                   onChange={e => handleChange(field.key, e.target.value)}
                   placeholder={field.placeholder ?? `Enter ${field.label.toLowerCase()}...`}
-                  className="w-full border border-border-subtle rounded-lg px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/25 bg-surface-subtle focus:bg-white transition-colors"
+                  className="w-full rounded-xl border border-border-subtle bg-surface-subtle px-3 py-2 text-sm text-text-primary transition-colors focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/25"
                   autoFocus={fields[0].key === field.key}
                 />
               )}

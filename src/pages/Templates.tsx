@@ -6,12 +6,15 @@ import { TEMPLATE_USE_CASE_PACKS } from '../builder/constants/templateUseCasePac
 import { useInternalToolingRouteAccess } from '../lib/internalToolingRoutes';
 import { readSetupDraft, selectSetupDraftTemplate } from '../lib/setupDraft';
 import { getRecommendedTemplates } from '../lib/setupDraftRecommendations';
+import { useAuth } from '../hooks/useAuth';
 
 type Facet = 'all' | string;
 
 export const Templates: React.FC = () => {
   const navigate = useNavigate();
   const { internalToolingCaptureRoutesEnabled } = useInternalToolingRouteAccess();
+  const { user } = useAuth();
+  const setupDraftStorageScope = user?.id ?? null;
 
   const [style, setStyle] = useState<Facet>('all');
   const [season, setSeason] = useState<Facet>('all');
@@ -19,12 +22,12 @@ export const Templates: React.FC = () => {
   const [sortBy, setSortBy] = useState<'recommended' | 'name' | 'style'>('recommended');
   const [groupByStyle, setGroupByStyle] = useState(false);
   const [compareIds, setCompareIds] = useState<string[]>([]);
-  const selectedTemplateId = readSetupDraft().selectedTemplateId;
+  const selectedTemplateId = readSetupDraft(setupDraftStorageScope).selectedTemplateId;
 
   const recommendedTemplateIds = useMemo(() => {
-    const draft = readSetupDraft();
+    const draft = readSetupDraft(setupDraftStorageScope);
     return getRecommendedTemplates(draft, templateCatalog).map((template) => template.id);
-  }, []);
+  }, [setupDraftStorageScope]);
 
   const filtered = useMemo(() => {
     const rows = templateCatalog.filter((t) => {
@@ -82,14 +85,14 @@ export const Templates: React.FC = () => {
   }, [groupByStyle, filtered]);
 
   const handleUseTemplate = (templateId: string) => {
-    selectSetupDraftTemplate(templateId);
+    selectSetupDraftTemplate(templateId, setupDraftStorageScope);
     navigate('/setup/names');
   };
 
   const renderTemplateCard = (tpl: typeof templateCatalog[number]) => {
     const manifest = getTemplateSupportManifest(tpl.id);
     return (
-    <div key={tpl.id} className={`rounded-lg border bg-white overflow-hidden shadow-sm ${recommendedTemplateIds.includes(tpl.id) ? 'border-primary/35 ring-1 ring-primary/10' : 'border-neutral-200'}`}>
+    <div key={tpl.id} className={`rounded-xl border bg-white overflow-hidden shadow-sm ${recommendedTemplateIds.includes(tpl.id) ? 'border-primary/35 ring-1 ring-primary/10' : 'border-neutral-200'}`}>
       <img
         src={tpl.previewImage}
         alt={tpl.name}
@@ -122,9 +125,9 @@ export const Templates: React.FC = () => {
           <span className="rounded bg-brand/5 border border-brand/20 px-2 py-0.5 text-xs text-brand">Best for {tpl.bestFor[0] ?? (tpl.styleTags[0] ?? 'all styles')}</span>
         </div>
         {manifest && (
-          <div className="mt-3 rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2">
+          <div className="mt-3 rounded-xl border border-neutral-200 bg-neutral-50 px-3 py-2">
             <div className="flex flex-wrap items-center gap-2 text-[11px]">
-              <span className={`rounded-lg border px-2 py-0.5 font-medium ${manifest.previewStatus === 'verified' ? 'border-primary/20 bg-primary/5 text-primary' : 'border-neutral-200 bg-white text-neutral-700'}`}>{manifest.previewLabel}</span>
+              <span className={`rounded-xl border px-2 py-0.5 font-medium ${manifest.previewStatus === 'verified' ? 'border-primary/20 bg-primary/5 text-primary' : 'border-neutral-200 bg-white text-neutral-700'}`}>{manifest.previewLabel}</span>
               <span className="text-neutral-600">{manifest.sectionsIncluded} starter sections</span>
               <span className="text-neutral-600">{manifest.modulesIncluded} features</span>
             </div>
@@ -177,11 +180,11 @@ Start with this
             <h1 className="text-3xl font-bold text-neutral-900">Choose your starting design</h1>
             <p className="mt-2 text-sm text-neutral-600">Pick a strong starting point for your wedding website, then personalize it inside the editor.</p>
             <p className="mt-1 text-xs text-neutral-500">Your choice carries into setup and your first site defaults.</p>
-            <div className="mt-4 rounded-lg border border-neutral-200 bg-white p-4">
+            <div className="mt-4 rounded-xl border border-neutral-200 bg-white p-4">
               <p className="text-sm font-semibold text-neutral-600">Ways to shape the design</p>
               <div className="mt-3 grid grid-cols-1 md:grid-cols-3 gap-3">
                 {TEMPLATE_USE_CASE_PACKS.map((pack) => (
-                  <div key={pack.id} className="rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-3">
+                  <div key={pack.id} className="rounded-xl border border-neutral-200 bg-neutral-50 px-3 py-3">
                     <p className="text-sm font-medium text-neutral-900">{pack.label}</p>
                     <p className="mt-1 text-xs text-neutral-600">{pack.description}</p>
                     <ul className="mt-2 space-y-1 text-[11px] text-neutral-600">
@@ -193,11 +196,11 @@ Start with this
             </div>
 
             <div className="mt-3 flex flex-wrap gap-2">
-              <button onClick={() => { setStyle('all'); setSeason('all'); setColorway('all'); }} className="rounded-lg border border-neutral-300 bg-white px-3 py-1 text-xs text-neutral-700 hover:bg-neutral-100">All templates</button>
-              <button onClick={() => { setStyle('Modern'); setSeason('all'); }} className="rounded-lg border border-neutral-300 bg-white px-3 py-1 text-xs text-neutral-700 hover:bg-neutral-100">Modern</button>
-              <button onClick={() => { setStyle('Floral'); setSeason('Spring'); }} className="rounded-lg border border-neutral-300 bg-white px-3 py-1 text-xs text-neutral-700 hover:bg-neutral-100">Spring Floral</button>
-              <button onClick={() => { setStyle('Destination'); setSeason('Summer'); }} className="rounded-lg border border-neutral-300 bg-white px-3 py-1 text-xs text-neutral-700 hover:bg-neutral-100">Destination</button>
-              <button onClick={() => { setStyle('Classic'); setSeason('all'); }} className="rounded-lg border border-neutral-300 bg-white px-3 py-1 text-xs text-neutral-700 hover:bg-neutral-100">Classic Formal</button>
+              <button onClick={() => { setStyle('all'); setSeason('all'); setColorway('all'); }} className="rounded-xl border border-neutral-300 bg-white px-3 py-1 text-xs text-neutral-700 hover:bg-neutral-100">All templates</button>
+              <button onClick={() => { setStyle('Modern'); setSeason('all'); }} className="rounded-xl border border-neutral-300 bg-white px-3 py-1 text-xs text-neutral-700 hover:bg-neutral-100">Modern</button>
+              <button onClick={() => { setStyle('Floral'); setSeason('Spring'); }} className="rounded-xl border border-neutral-300 bg-white px-3 py-1 text-xs text-neutral-700 hover:bg-neutral-100">Spring Floral</button>
+              <button onClick={() => { setStyle('Destination'); setSeason('Summer'); }} className="rounded-xl border border-neutral-300 bg-white px-3 py-1 text-xs text-neutral-700 hover:bg-neutral-100">Destination</button>
+              <button onClick={() => { setStyle('Classic'); setSeason('all'); }} className="rounded-xl border border-neutral-300 bg-white px-3 py-1 text-xs text-neutral-700 hover:bg-neutral-100">Classic Formal</button>
             </div>
             <p className="mt-2 text-xs text-neutral-500">Destination, bilingual, and interfaith are the first three focused packs we are deepening here. Destination is currently the most behaviorally mature of the three.</p>
           </div>
@@ -266,14 +269,14 @@ Start with this
         </div>
 
         {comparedTemplates.length > 0 && (
-          <div className="mt-4 rounded-lg border border-primary/15 bg-primary/5 p-3 shadow-sm">
+          <div className="mt-4 rounded-xl border border-primary/15 bg-primary/5 p-3 shadow-sm">
             <div className="flex items-center justify-between mb-2">
               <p className="text-sm font-semibold text-primary">Quick compare</p>
               <button onClick={() => setCompareIds([])} className="text-[11px] font-medium text-primary hover:underline">Clear</button>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {comparedTemplates.map((tpl) => (
-                <div key={`cmp-${tpl.id}`} className="rounded-lg border border-primary/15 bg-white p-2">
+                <div key={`cmp-${tpl.id}`} className="rounded-xl border border-primary/15 bg-white p-2">
                   <p className="text-sm font-semibold text-neutral-900">{tpl.name}</p>
                   <p className="text-[11px] text-neutral-500 mt-0.5">{tpl.designFamily}</p>
                   <p className="text-[11px] text-neutral-700 mt-1">Features: {tpl.includedModules.length} • Sections: {tpl.defaultSectionOrder.length}</p>
@@ -292,13 +295,13 @@ Start with this
               ))}
             </div>
             {!sectionDiff && comparedTemplates.length === 1 && (
-              <div className="mt-2 rounded-lg border border-primary/15 bg-white px-2.5 py-2 text-[11px] text-primary">
+              <div className="mt-2 rounded-xl border border-primary/15 bg-white px-2.5 py-2 text-[11px] text-primary">
                 Select one more design to compare the section flow side by side.
               </div>
             )}
 
             {sectionDiff && (
-              <div className="mt-3 rounded-lg border border-primary/15 bg-white p-2.5">
+              <div className="mt-3 rounded-xl border border-primary/15 bg-white p-2.5">
                 <p className="text-[11px] font-semibold text-primary mb-1">Section flow comparison</p>
                 <div className="mb-2 flex flex-wrap gap-1.5 text-[10px]">
                   <span className="rounded border border-primary/15 bg-primary/5 px-1.5 py-0.5 text-primary">Shared</span>
@@ -361,7 +364,7 @@ Start with this
         )}
 
         {recommendedTemplateIds.length > 0 && (
-          <div className="mt-4 rounded-lg border border-primary/15 bg-white p-3">
+          <div className="mt-4 rounded-xl border border-primary/15 bg-white p-3">
             <p className="text-sm font-semibold text-primary mb-2">Recommended for you</p>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               {templateCatalog
@@ -372,7 +375,7 @@ Start with this
                     key={`rec-${tpl.id}`}
                     type="button"
                     onClick={() => handleUseTemplate(tpl.id)}
-                    className="text-left rounded-lg border border-neutral-200 bg-white p-2 hover:border-primary/35"
+                    className="text-left rounded-xl border border-neutral-200 bg-white p-2 hover:border-primary/35"
                   >
                     <img src={tpl.previewImage} alt={tpl.name} className="h-20 w-full object-cover rounded" />
                     <p className="mt-1 text-xs font-medium text-neutral-900">{tpl.name}</p>

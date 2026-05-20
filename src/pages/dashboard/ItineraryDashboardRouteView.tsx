@@ -14,10 +14,10 @@ export function ItineraryDashboardRouteView({
     <DashboardLayout currentPage="itinerary">
       {loading ? (
         <div className="space-y-4 animate-pulse" aria-hidden="true">
-          <div className="h-12 w-64 rounded-lg border border-border-subtle bg-surface-subtle" />
-          <div className="h-24 rounded-lg border border-border-subtle bg-surface-subtle" />
-          <div className="h-24 rounded-lg border border-border-subtle bg-surface-subtle" />
-          <div className="h-24 rounded-lg border border-border-subtle bg-surface-subtle" />
+          <div className="h-12 w-64 rounded-2xl border border-border-subtle bg-surface-subtle" />
+          <div className="h-24 rounded-2xl border border-border-subtle bg-surface-subtle" />
+          <div className="h-24 rounded-2xl border border-border-subtle bg-surface-subtle" />
+          <div className="h-24 rounded-2xl border border-border-subtle bg-surface-subtle" />
         </div>
       ) : (
         children

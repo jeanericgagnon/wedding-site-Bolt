@@ -64,6 +64,17 @@ describe('guestLanguagePreference', () => {
     expect(readStoredGuestLanguage()).toBe('es');
   });
 
+  it('keeps stored guest language preferences scoped to the active wedding context', () => {
+    writeStoredGuestLanguage('es', 'alex-jordan');
+    writeStoredGuestLanguage('fr', 'maya-noah');
+
+    expect(readStoredGuestLanguage('alex-jordan')).toBe('es');
+    expect(readStoredGuestLanguage('maya-noah')).toBe('fr');
+    expect(readStoredGuestLanguage('another-site')).toBeNull();
+    expect(window.localStorage.getItem(`${GUEST_LANGUAGE_STORAGE_KEY}:alex-jordan`)).toBeTruthy();
+    expect(window.localStorage.getItem(`${GUEST_LANGUAGE_STORAGE_KEY}:maya-noah`)).toBeTruthy();
+  });
+
   it('migrates legacy language preferences and clears stale or malformed values', () => {
     window.localStorage.setItem(GUEST_LANGUAGE_STORAGE_KEY, 'fr');
     expect(readStoredGuestLanguage()).toBe('fr');

@@ -60,7 +60,7 @@ const TravelCompact: React.FC<SectionComponentProps<TravelCompactData>> = ({ dat
                 {data.hotels.map((hotel) => {
                   const safeHotelUrl = getSafePublicWebUrl(hotel.url);
                   return (
-                  <li key={hotel.id} className="flex items-center justify-between gap-3 rounded-lg border border-border/35 bg-white px-3 py-2">
+                  <li key={hotel.id} className="flex items-center justify-between gap-3 rounded-xl border border-border/35 bg-white px-3 py-2">
                     <div>
                       <p className="text-sm text-text-primary">{hotel.name}</p>
                       {hotel.distance ? <p className="text-xs text-text-secondary">{hotel.distance}</p> : null}

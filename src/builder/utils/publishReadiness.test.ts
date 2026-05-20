@@ -31,6 +31,22 @@ describe('publishReadiness', () => {
     expect(getPublishValidationError(project)).toBe('Add at least one page before sharing with guests.');
   });
 
+  it('returns no-pages when all persisted pages are hidden from guests', () => {
+    const project = createEmptyBuilderProject('w1', 'classic');
+    project.pages[0].meta.isHidden = true;
+    project.pages[0].sections = [makeSection({ id: 'hidden-live', enabled: true })];
+
+    const issue = getPublishIssue(project);
+
+    expect(issue?.kind).toBe('no-pages');
+    expect(buildPublishReadiness(project).find((item) => item.id === 'page')).toEqual({
+      id: 'page',
+      label: 'A page exists',
+      done: false,
+      detail: 'Add a page or apply a starting design.',
+    });
+  });
+
   it('returns no-enabled-sections issue when sections are all disabled', () => {
     const project = createEmptyBuilderProject('w1', 'classic');
     const pageId = project.pages[0].id;
@@ -44,6 +60,34 @@ describe('publishReadiness', () => {
       expect(issue.firstSectionId).toBe('sec1');
     }
     expect(getPublishValidationError(project)).toBe('Turn on at least one section before sharing with guests.');
+  });
+
+  it('ignores enabled sections on hidden pages when checking publish content', () => {
+    const project = createEmptyBuilderProject('w1', 'classic');
+    const visiblePageId = project.pages[0].id;
+    project.pages[0].sections = [makeSection({ id: 'visible-disabled', enabled: false })];
+    project.pages.push({
+      ...project.pages[0],
+      id: 'hidden-page',
+      slug: 'hidden',
+      orderIndex: 1,
+      meta: { isHome: false, isHidden: true },
+      sections: [makeSection({ id: 'hidden-live', enabled: true })],
+    });
+
+    const issue = getPublishIssue(project);
+
+    expect(issue?.kind).toBe('no-enabled-sections');
+    if (issue?.kind === 'no-enabled-sections') {
+      expect(issue.firstPageId).toBe(visiblePageId);
+      expect(issue.firstSectionId).toBe('visible-disabled');
+    }
+    expect(buildPublishReadiness(project).find((item) => item.id === 'sections')).toEqual({
+      id: 'sections',
+      label: 'At least one section is turned on',
+      done: false,
+      detail: 'Turn on a section before sharing with guests.',
+    });
   });
 
   it('treats non-boolean enabled section flags as disabled for publish truth', () => {
@@ -1096,6 +1140,26 @@ describe('publishReadiness', () => {
     });
   });
 
+  it('counts only guest-visible pages in page readiness copy', () => {
+    const project = createEmptyBuilderProject('w1', 'classic');
+    project.pages.push({
+      ...project.pages[0],
+      id: 'hidden-page',
+      title: 'Hidden',
+      slug: 'hidden',
+      orderIndex: 1,
+      meta: { isHome: false, isHidden: true },
+      sections: [makeSection({ id: 'hidden-live', enabled: true })],
+    });
+
+    expect(buildPublishReadiness(project).find((item) => item.id === 'page')).toEqual({
+      id: 'page',
+      label: 'A page exists',
+      done: true,
+      detail: '1 page ready',
+    });
+  });
+
   it('keeps current-page readiness tied to the requested active page even when another page is empty', () => {
     const project = createEmptyBuilderProject('w1', 'classic');
     project.pages = [
@@ -1120,6 +1184,35 @@ describe('publishReadiness', () => {
       label: 'Current page has visible content',
       done: false,
       detail: 'Turn on content for Travel.',
+    });
+  });
+
+  it('falls back to the first visible page when the active page is hidden', () => {
+    const project = createEmptyBuilderProject('w1', 'classic');
+    project.pages = [
+      {
+        ...project.pages[0],
+        id: 'home-page',
+        title: 'Home',
+        orderIndex: 0,
+        sections: [makeSection({ id: 'home-live', enabled: true })],
+      },
+      {
+        ...project.pages[0],
+        id: 'hidden-details',
+        title: 'Hidden Details',
+        slug: 'hidden-details',
+        orderIndex: 1,
+        meta: { isHome: false, isHidden: true },
+        sections: [makeSection({ id: 'hidden-live', enabled: true })],
+      },
+    ];
+
+    expect(buildPublishReadiness(project, undefined, { activePageId: 'hidden-details' }).find((item) => item.id === 'current-page')).toEqual({
+      id: 'current-page',
+      label: 'Current page has visible content',
+      done: true,
+      detail: 'Home has visible sections.',
     });
   });
 
@@ -1715,6 +1808,21 @@ describe('publishReadiness', () => {
       label: 'Current page has visible content',
       done: false,
       detail: 'Turn on content for the current page.',
+    });
+  });
+
+  it('uses builder value page titles in current-page guidance', () => {
+    const project = createEmptyBuilderProject('w1', 'classic');
+    project.pages[0].title = { value: 'Travel Details', source: 'user-edited' } as unknown as string;
+    project.pages[0].sections = [makeSection({ id: 'travel-hidden', enabled: false })];
+
+    const readiness = buildPublishReadiness(project, undefined, { activePageId: project.pages[0].id });
+
+    expect(readiness.find((item) => item.id === 'current-page')).toEqual({
+      id: 'current-page',
+      label: 'Current page has visible content',
+      done: false,
+      detail: 'Turn on content for Travel Details.',
     });
   });
 });

@@ -41,7 +41,7 @@ function makeInstance(settings: SectionInstance['settings']): SectionInstance {
 
 describe('ContactSection', () => {
   it('renders builder-wrapped contact copy and mailto subjects', () => {
-    render(
+    const { container } = render(
       <ContactSection
         data={createEmptyWeddingData()}
         instance={makeInstance({
@@ -134,7 +134,7 @@ describe('ContactSection', () => {
   });
 
   it('drops unsafe contact hrefs before public render', () => {
-    render(
+    const { container } = render(
       <ContactSection
         data={createEmptyWeddingData()}
         instance={makeInstance({
@@ -150,15 +150,15 @@ describe('ContactSection', () => {
 
     expect(screen.getByText('Bad Email')).toBeInTheDocument();
     expect(screen.getByText('Bad Phone')).toBeInTheDocument();
-    expect(document.querySelector('a[href^="mailto:bad"]')).not.toBeInTheDocument();
-    expect(document.querySelector('a[href^="javascript:"]')).not.toBeInTheDocument();
+    expect(container.querySelector('a[href^="mailto:bad"]')).toBeNull();
+    expect(container.querySelector('a[href^="javascript:"]')).toBeNull();
     expect(screen.getByRole('link', { name: '+1 (212) 555-0102' })).toHaveAttribute('href', 'tel:+12125550102');
   });
 
   it('drops unsafe contact variant email, phone, and Instagram hrefs', () => {
     const VariantContact = contactFormDefinition.Component;
 
-    render(
+    const { container } = render(
       <VariantContact
         data={{
           eyebrow: 'Help',
@@ -176,9 +176,9 @@ describe('ContactSection', () => {
     );
 
     expect(screen.getByText('Bad Contact')).toBeInTheDocument();
-    expect(document.querySelector('a[href^="mailto:bad"]')).not.toBeInTheDocument();
-    expect(document.querySelector('a[href="tel:555"]')).not.toBeInTheDocument();
-    expect(document.querySelector('a[href*="../bad"]')).not.toBeInTheDocument();
+    expect(container.querySelector('a[href^="mailto:bad"]')).toBeNull();
+    expect(container.querySelector('a[href="tel:555"]')).toBeNull();
+    expect(container.querySelector('a[href*="../bad"]')).toBeNull();
     expect(screen.getByRole('link', { name: 'safe@example.com' })).toHaveAttribute('href', 'mailto:safe@example.com?subject=Wedding%20question');
     expect(screen.getByRole('link', { name: '+1 (212) 555-0102' })).toHaveAttribute('href', 'tel:+12125550102');
     expect(screen.getByRole('link', { name: '@dayof.love' })).toHaveAttribute('href', 'https://instagram.com/dayof.love');

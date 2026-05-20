@@ -52,6 +52,10 @@ const QuotesCarousel: React.FC<SectionComponentProps<QuotesCarouselData>> = ({ d
   const go = (dir: 1 | -1) => setCurrent(i => (i + dir + total) % total);
 
   useEffect(() => {
+    setCurrent(0);
+  }, [data.quotes]);
+
+  useEffect(() => {
     if (!data.autoplay || total < 2) return;
     timerRef.current = setInterval(() => go(1), data.autoplayInterval);
     return () => { if (timerRef.current) clearInterval(timerRef.current); };

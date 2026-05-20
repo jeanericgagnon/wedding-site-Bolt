@@ -10,6 +10,8 @@ This is the backlog for getting DayOf from "the repo builds and tests pass" to "
 
 Green unit tests do not mean the product is done. They mean the codebase is stable enough to finish deliberately.
 
+Historical-note: this document preserves an older status snapshot from 2026-04-28. Current launch truth now lives in [BACKLOG.md](/Users/ericgagnon/Documents/DayOfLove/wedding-site-Bolt/BACKLOG.md), and the current proof-board contract requires `npm run proof:v1:board:freshness` before `npm run proof:v1:board` or `npm run proof:v1:board:md` is treated as canonical launch status. Workflow gates stay narrower on purpose: `ci-hardpass` and `Release Launch Gate` enforce freshness, but they do not regenerate the raw or markdown board outputs.
+
 ## Current Truth
 
 ### Done locally
@@ -20,6 +22,7 @@ Green unit tests do not mean the product is done. They mean the codebase is stab
 - `npm run build` passes when run by itself.
 - `npm run lint` now passes with 0 errors. Existing broad codebase debt remains as warnings.
 - `npm audit --audit-level=moderate` now passes with 0 vulnerabilities after removing `xlsx`, applying non-breaking audit fixes, and upgrading Vite / the React plugin.
+- `npm run proof:v1:board:freshness` now passes before either `npm run proof:v1:board` or `npm run proof:v1:board:md` is treated as current launch truth.
 - `npm run proof:v1:board` passes.
 - `npm run smoke:csvmapper` passes.
 - `npm run smoke:checkin` passes.

@@ -37,11 +37,12 @@ export const defaultQuotesGridData: QuotesGridData = {
   ],
 };
 
-function useIntersection(ref: React.RefObject<Element | null>, threshold = 0.1) {
+function useIntersection(ref: React.RefObject<Element | null>, resetKey: string, threshold = 0.1) {
   const [visible, setVisible] = useState(false);
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
+    setVisible(false);
     if (typeof IntersectionObserver === 'undefined') {
       setVisible(true);
       return;
@@ -52,13 +53,14 @@ function useIntersection(ref: React.RefObject<Element | null>, threshold = 0.1) 
     );
     obs.observe(el);
     return () => obs.disconnect();
-  }, []);
+  }, [resetKey, threshold]);
   return visible;
 }
 
 const QuoteCard: React.FC<{ q: QuotesGridData['quotes'][number]; idx: number }> = ({ q, idx }) => {
   const ref = useRef<HTMLDivElement>(null);
-  const visible = useIntersection(ref);
+  const visibilityKey = `${q.id}|${q.text}|${q.author}|${q.role}|${q.photo}`;
+  const visible = useIntersection(ref, visibilityKey);
   const photo = getSafePublicImageUrl(q.photo);
 
   return (

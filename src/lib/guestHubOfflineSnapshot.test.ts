@@ -7,7 +7,7 @@ describe('guestHubOfflineSnapshot', () => {
   });
 
   it('writes and reads a guest-safe offline snapshot', () => {
-    const snapshot = writeGuestHubOfflineSnapshot('maya-and-leo', {
+    const snapshot = writeGuestHubOfflineSnapshot('  MAYA-and-Leo  ', {
       settings: {
         rsvp_enabled: true,
         photos_enabled: true,
@@ -19,7 +19,7 @@ describe('guestHubOfflineSnapshot', () => {
         language_default: 'en',
       },
       siteSummary: {
-        slug: 'maya-and-leo',
+        slug: 'wrong-wedding',
         coupleName1: 'Maya',
         coupleName2: 'Leo',
         weddingDate: '2026-06-15',
@@ -52,6 +52,7 @@ describe('guestHubOfflineSnapshot', () => {
     });
 
     expect(snapshot?.savedAt).toBe('2026-05-14T11:00:00.000Z');
+    expect(snapshot?.siteSummary?.slug).toBe('maya-and-leo');
     expect(readGuestHubOfflineSnapshot('maya-and-leo')).toMatchObject({
       settings: expect.objectContaining({ photos_enabled: true }),
       siteSummary: expect.objectContaining({ slug: 'maya-and-leo' }),
@@ -71,5 +72,20 @@ describe('guestHubOfflineSnapshot', () => {
 
     localStorage.setItem(getGuestHubOfflineSnapshotKey('maya-and-leo'), '{broken');
     expect(readGuestHubOfflineSnapshot('maya-and-leo')).toBeNull();
+  });
+
+  it('drops snapshots whose embedded site summary belongs to another wedding', () => {
+    localStorage.setItem(getGuestHubOfflineSnapshotKey('maya-and-leo'), JSON.stringify({
+      savedAt: new Date().toISOString(),
+      settings: { photos_enabled: true, rsvp_enabled: true },
+      siteSummary: {
+        slug: 'alex-and-jordan',
+        coupleName1: 'Alex',
+        coupleName2: 'Jordan',
+      },
+    }));
+
+    expect(readGuestHubOfflineSnapshot('maya-and-leo')).toBeNull();
+    expect(localStorage.getItem(getGuestHubOfflineSnapshotKey('maya-and-leo'))).toBeNull();
   });
 });

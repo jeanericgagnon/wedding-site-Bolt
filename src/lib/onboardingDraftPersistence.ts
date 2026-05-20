@@ -1,9 +1,9 @@
 import { createEmptyInitialSetupAnswers, type InitialSetupAnswers } from './initialSetupAnswers';
 import { createEmptyInitialSetupFollowUps, type InitialSetupFollowUpAnswers } from './initialSetupFollowUps';
 import { createEmptyWeddingProfile, isWeddingProfile, type WeddingProfile } from './weddingProfile';
-import { ONBOARDING_DRAFT_STORAGE_KEY } from './onboardingDraftCleanup';
+import { buildOnboardingDraftStorageKey, ONBOARDING_DRAFT_STORAGE_KEY } from './onboardingDraftCleanup';
 
-export type OnboardingStep = 'choice' | 'quick-1' | 'quick-2' | 'quick-3' | 'complete';
+export type OnboardingStep = 'choice' | 'quick-1' | 'quick-2' | 'quick-3' | 'details' | 'customize' | 'complete';
 
 export type OnboardingDraftSnapshot = {
   step: OnboardingStep;
@@ -117,41 +117,66 @@ const isEmptyOnboardingDraftSnapshot = (snapshot: OnboardingDraftSnapshot) => (
   JSON.stringify(withoutOnboardingSavedAt(snapshot)) === JSON.stringify(createEmptyOnboardingDraftSnapshot())
 );
 
-export const readOnboardingDraftSnapshot = (): OnboardingDraftSnapshot | null => {
+const readScopedOnboardingDraftRaw = (storageScope?: string | null): {
+  storageKey: string;
+  sourceKey: string;
+  raw: string | null;
+  shouldMigrate: boolean;
+} => {
+  const storageKey = buildOnboardingDraftStorageKey(storageScope);
+  const hasScopedKey = window.localStorage.getItem(storageKey) !== null;
+  const sourceKey = !hasScopedKey && storageKey !== ONBOARDING_DRAFT_STORAGE_KEY ? ONBOARDING_DRAFT_STORAGE_KEY : storageKey;
+  return {
+    storageKey,
+    sourceKey,
+    raw: window.localStorage.getItem(sourceKey),
+    shouldMigrate: sourceKey !== storageKey,
+  };
+};
+
+export const readOnboardingDraftSnapshot = (storageScope?: string | null): OnboardingDraftSnapshot | null => {
   if (typeof window === 'undefined') return null;
 
   try {
-    const raw = window.localStorage.getItem(ONBOARDING_DRAFT_STORAGE_KEY);
+    const { raw, sourceKey, storageKey, shouldMigrate } = readScopedOnboardingDraftRaw(storageScope);
     if (!raw) return null;
     const parsed = JSON.parse(raw);
     if (parsed && typeof parsed === 'object' && !Array.isArray(parsed) && typeof parsed.savedAtISO === 'string' && !isFreshOnboardingDraftTimestamp(parsed.savedAtISO)) {
-      window.localStorage.removeItem(ONBOARDING_DRAFT_STORAGE_KEY);
+      window.localStorage.removeItem(sourceKey);
       return null;
     }
 
     const normalized = normalizeOnboardingDraftSnapshot(parsed);
     const normalizedRaw = JSON.stringify(normalized);
-    if (raw !== normalizedRaw) window.localStorage.setItem(ONBOARDING_DRAFT_STORAGE_KEY, normalizedRaw);
+    if (raw !== normalizedRaw || shouldMigrate) {
+      window.localStorage.setItem(storageKey, normalizedRaw);
+      if (shouldMigrate) window.localStorage.removeItem(sourceKey);
+    }
     return normalized;
   } catch {
-    window.localStorage.removeItem(ONBOARDING_DRAFT_STORAGE_KEY);
+    try {
+      const { sourceKey } = readScopedOnboardingDraftRaw(storageScope);
+      window.localStorage.removeItem(sourceKey);
+    } catch {
+      // ignore cleanup failures after malformed drafts
+    }
     return null;
   }
 };
 
-export const hasStoredOnboardingDraftPayload = (): boolean => {
+export const hasStoredOnboardingDraftPayload = (storageScope?: string | null): boolean => {
   if (typeof window === 'undefined') return false;
 
   try {
-    return window.localStorage.getItem(ONBOARDING_DRAFT_STORAGE_KEY) !== null;
+    return readScopedOnboardingDraftRaw(storageScope).raw !== null;
   } catch {
     return false;
   }
 };
 
-export const hasActiveOnboardingDraftSnapshot = (): boolean => readOnboardingDraftSnapshot() !== null;
+export const hasActiveOnboardingDraftSnapshot = (storageScope?: string | null): boolean => readOnboardingDraftSnapshot(storageScope) !== null;
 
-export const persistOnboardingDraftSnapshot = (value: unknown): OnboardingDraftSnapshot | null => {
+export const persistOnboardingDraftSnapshot = (value: unknown, storageScope?: string | null): OnboardingDraftSnapshot | null => {
   if (typeof window === 'undefined') return null;
 
   try {
@@ -159,7 +184,9 @@ export const persistOnboardingDraftSnapshot = (value: unknown): OnboardingDraftS
       ...withoutOnboardingSavedAt(normalizeOnboardingDraftSnapshot(value)),
       savedAtISO: new Date().toISOString(),
     };
-    window.localStorage.setItem(ONBOARDING_DRAFT_STORAGE_KEY, JSON.stringify(normalized));
+    const storageKey = buildOnboardingDraftStorageKey(storageScope);
+    window.localStorage.setItem(storageKey, JSON.stringify(normalized));
+    if (storageKey !== ONBOARDING_DRAFT_STORAGE_KEY) window.localStorage.removeItem(ONBOARDING_DRAFT_STORAGE_KEY);
     return isEmptyOnboardingDraftSnapshot(normalized) ? null : normalized;
   } catch {
     return null;

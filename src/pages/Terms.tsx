@@ -8,7 +8,7 @@ export const Terms: React.FC = () => {
 
       <main className="flex-1 px-6 py-14 md:py-16">
         <div className="mx-auto max-w-4xl space-y-6">
-          <div className="rounded-lg border border-border-subtle bg-white/86 p-7 shadow-sm sm:p-8">
+          <div className="rounded-xl border border-border-subtle bg-white/86 p-7 shadow-sm sm:p-8">
             <p className="text-xs font-medium text-text-tertiary">dayof legal</p>
             <h1 className="mt-3 text-4xl font-semibold leading-tight text-text-primary">Terms of service</h1>
             <p className="mt-3 text-text-secondary">Last updated April 16, 2026</p>
@@ -18,7 +18,7 @@ export const Terms: React.FC = () => {
             </p>
           </div>
 
-          <section className="rounded-lg border border-border-subtle bg-white/72 p-6 shadow-sm">
+          <section className="rounded-xl border border-border-subtle bg-white/72 p-6 shadow-sm">
             <h2 className="text-2xl font-semibold text-text-primary">Use of the service</h2>
             <ul className="mt-4 list-disc space-y-2 pl-6 text-text-secondary">
               <li>You must provide accurate information when creating an account and using the product.</li>
@@ -27,7 +27,7 @@ export const Terms: React.FC = () => {
             </ul>
           </section>
 
-          <section className="rounded-lg border border-border-subtle bg-white/72 p-6 shadow-sm">
+          <section className="rounded-xl border border-border-subtle bg-white/72 p-6 shadow-sm">
             <h2 className="text-2xl font-semibold text-text-primary">Wedding and guest data</h2>
             <p className="mt-3 text-text-secondary">
               You are responsible for the wedding, guest, RSVP, and event information you upload or publish through dayof.
@@ -35,7 +35,7 @@ export const Terms: React.FC = () => {
             </p>
           </section>
 
-          <section className="rounded-lg border border-border-subtle bg-white/72 p-6 shadow-sm">
+          <section className="rounded-xl border border-border-subtle bg-white/72 p-6 shadow-sm">
             <h2 className="text-2xl font-semibold text-text-primary">Draft content</h2>
             <p className="mt-3 text-text-secondary">
               dayof may generate draft copy, structure, or setup suggestions. Draft output is provided for convenience.
@@ -43,7 +43,7 @@ export const Terms: React.FC = () => {
             </p>
           </section>
 
-          <section className="rounded-lg border border-border-subtle bg-white/72 p-6 shadow-sm">
+          <section className="rounded-xl border border-border-subtle bg-white/72 p-6 shadow-sm">
             <h2 className="text-2xl font-semibold text-text-primary">Billing</h2>
             <p className="mt-3 text-text-secondary">
               Paid features may require an active subscription or completed purchase. Fees, billing terms, and access rules may change over time.
@@ -51,7 +51,7 @@ export const Terms: React.FC = () => {
             </p>
           </section>
 
-          <section className="rounded-lg border border-border-subtle bg-white/72 p-6 shadow-sm">
+          <section className="rounded-xl border border-border-subtle bg-white/72 p-6 shadow-sm">
             <h2 className="text-2xl font-semibold text-text-primary">Availability and changes</h2>
             <p className="mt-3 text-text-secondary">
               We may update, improve, suspend, or remove features at any time. We do not guarantee uninterrupted availability,
@@ -59,7 +59,7 @@ export const Terms: React.FC = () => {
             </p>
           </section>
 
-          <section className="rounded-lg border border-border-subtle bg-white/72 p-6 shadow-sm">
+          <section className="rounded-xl border border-border-subtle bg-white/72 p-6 shadow-sm">
             <h2 className="text-2xl font-semibold text-text-primary">Limitation of liability</h2>
             <p className="mt-3 text-text-secondary">
               To the fullest extent allowed by law, dayof is provided on an as-is and as-available basis without warranties of any kind.
@@ -67,7 +67,7 @@ export const Terms: React.FC = () => {
             </p>
           </section>
 
-          <section className="rounded-lg border border-border-subtle bg-white/72 p-6 shadow-sm">
+          <section className="rounded-xl border border-border-subtle bg-white/72 p-6 shadow-sm">
             <h2 className="text-2xl font-semibold text-text-primary">Contact</h2>
             <p className="mt-3 text-text-secondary">
               For questions about these Terms, contact <a className="text-primary underline" href="mailto:support@dayof.love">support@dayof.love</a>.

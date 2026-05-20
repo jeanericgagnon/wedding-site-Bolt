@@ -34,15 +34,15 @@ function usesLiveOwnerSession(baseURL: string | undefined) {
 }
 
 async function enterRsvpSettings(page: Page, runId: string, baseURL: string | undefined) {
+  const rsvpSettingsPath = `/dashboard/guests?tab=rsvp-settings&bypassPayment=1&rsvpAccessQa=${runId}`;
   if (usesLiveOwnerSession(baseURL)) {
     await signInAsOwner(page);
-    await page.goto(`/dashboard/guests?bypassPayment=1&rsvpAccessQa=${runId}`, { waitUntil: 'domcontentloaded' });
-    await page.getByRole('button', { name: /rsvp settings/i }).click();
+    await page.goto(rsvpSettingsPath, { waitUntil: 'domcontentloaded' });
     await expect(page.getByRole('heading', { name: /ask only what you truly need from guests/i })).toBeVisible();
     return;
   }
 
-  await page.goto(`/dashboard/guests?bypassPayment=1&rsvpAccessQa=${runId}`, { waitUntil: 'domcontentloaded' });
+  await page.goto(rsvpSettingsPath, { waitUntil: 'domcontentloaded' });
 
   const tryDemo = page.getByRole('button', { name: /try demo/i });
   if (await tryDemo.isVisible().catch(() => false)) {
@@ -50,10 +50,9 @@ async function enterRsvpSettings(page: Page, runId: string, baseURL: string | un
       page.waitForURL(/\/dashboard/),
       tryDemo.click(),
     ]);
-    await page.goto(`/dashboard/guests?bypassPayment=1&rsvpAccessQa=${runId}`, { waitUntil: 'domcontentloaded' });
+    await page.goto(rsvpSettingsPath, { waitUntil: 'domcontentloaded' });
   }
 
-  await page.getByRole('button', { name: /rsvp settings/i }).click();
   await expect(page.getByRole('heading', { name: /ask only what you truly need from guests/i })).toBeVisible();
 }
 
@@ -128,8 +127,7 @@ test('guest RSVP settings persist supported access truth while future modes stay
       });
   }
 
-  await page.reload({ waitUntil: 'domcontentloaded' });
-  await page.getByRole('button', { name: /rsvp settings/i }).click();
+  await page.goto(`/dashboard/guests?tab=rsvp-settings&bypassPayment=1&rsvpAccessQa=${runId}`, { waitUntil: 'domcontentloaded' });
   await expect(page.getByRole('heading', { name: /ask only what you truly need from guests/i })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Selected as primary' })).toBeVisible();
   await expect(page.getByRole('checkbox', { name: /Keep name lookup as the backup/i })).toBeChecked();

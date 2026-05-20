@@ -79,6 +79,10 @@ function trimString(value: unknown, max = 240): string | null {
   return trimmed ? trimmed.slice(0, max) : null;
 }
 
+function normalizeSnapshotSlug(slug: string): string {
+  return slug.trim().toLowerCase();
+}
+
 function sanitizeTravelContext(value: unknown): GuestHubOfflineTravelContext {
   if (!isRecord(value)) return { schedule: [], venues: [] };
   const schedule = Array.isArray(value.schedule)
@@ -107,7 +111,7 @@ function sanitizeTravelContext(value: unknown): GuestHubOfflineTravelContext {
 }
 
 export function getGuestHubOfflineSnapshotKey(slug: string): string {
-  return `${SNAPSHOT_PREFIX}${slug.trim().toLowerCase()}`;
+  return `${SNAPSHOT_PREFIX}${normalizeSnapshotSlug(slug)}`;
 }
 
 export function sanitizeGuestHubOfflineSnapshot(value: unknown): GuestHubOfflineSnapshot | null {
@@ -188,8 +192,15 @@ export function sanitizeGuestHubOfflineSnapshot(value: unknown): GuestHubOffline
 
 export function writeGuestHubOfflineSnapshot(slug: string, snapshot: GuestHubOfflineSnapshotWriteInput): GuestHubOfflineSnapshot | null {
   if (typeof window === 'undefined') return null;
+  const normalizedSlug = normalizeSnapshotSlug(slug);
   const savedSnapshot = sanitizeGuestHubOfflineSnapshot({
     ...snapshot,
+    siteSummary: snapshot.siteSummary
+      ? {
+          ...snapshot.siteSummary,
+          slug: normalizedSlug,
+        }
+      : snapshot.siteSummary,
     savedAt: snapshot.savedAt ?? new Date().toISOString(),
   });
   if (!savedSnapshot) return null;
@@ -205,6 +216,12 @@ export function readGuestHubOfflineSnapshot(slug: string): GuestHubOfflineSnapsh
     if (!raw) return null;
     const snapshot = sanitizeGuestHubOfflineSnapshot(JSON.parse(raw));
     if (!snapshot) {
+      window.localStorage.removeItem(key);
+      return null;
+    }
+    const normalizedSlug = normalizeSnapshotSlug(slug);
+    const snapshotSlug = snapshot.siteSummary?.slug ? normalizeSnapshotSlug(snapshot.siteSummary.slug) : null;
+    if (snapshotSlug && snapshotSlug !== normalizedSlug) {
       window.localStorage.removeItem(key);
       return null;
     }

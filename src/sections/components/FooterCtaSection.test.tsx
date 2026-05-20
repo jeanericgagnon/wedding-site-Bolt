@@ -142,7 +142,7 @@ describe('FooterCtaSection', () => {
     );
 
     expect(screen.getByRole('link', { name: /send rsvp/i })).toHaveAttribute('href', '#rsvp');
-    expect(container.innerHTML).not.toContain('javascript:alert');
+    expect(container.querySelector('a[href^="javascript:"]')).toBeNull();
 
     rerender(
       <FooterCtaMinimal
@@ -152,7 +152,7 @@ describe('FooterCtaSection', () => {
     );
 
     expect(screen.getByRole('link', { name: /send rsvp/i })).toHaveAttribute('href', '#rsvp');
-    expect(container.innerHTML).not.toContain('ftp://example.com/rsvp');
+    expect(container.querySelector('a[href^="ftp:"]')).toBeNull();
   });
 
   it('keeps safe legacy footer RSVP links', () => {

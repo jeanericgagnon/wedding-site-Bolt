@@ -40,10 +40,13 @@ npm run proof:v1:coordinator-dayof
 npm run proof:v1:registry
 npm run proof:v1:seating-continuity
 npm test -- src/pages/dashboard/registry/registryService.test.ts
-node scripts/v1-proof-board.mjs --markdown
+npm run proof:v1:board:freshness
+npm run proof:v1:board
+npm run proof:v1:board:md
 ```
 
-Use `node scripts/v1-proof-board.mjs` for the machine-readable version of the current proof board.
+Run `npm run proof:v1:board:freshness` before treating either board output as current truth.
+Workflow gates are intentionally narrower: `ci-hardpass` and `Release Launch Gate` enforce `npm run proof:v1:board:freshness`, but they do not regenerate `npm run proof:v1:board` or `npm run proof:v1:board:md`.
 That board now also carries the explicit real v1 line plus the ruthless next-3 queue, so the next finish move is executable instead of buried in prose.
 
 ---

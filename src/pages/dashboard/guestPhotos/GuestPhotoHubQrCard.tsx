@@ -10,7 +10,7 @@ type GuestPhotoHubQrCardProps = {
   isPublished: boolean;
   guestHubActionSummary: string;
   guestHubActions: GuestHubAction[];
-  copied: string;
+  copyNotice: { key: string; mode: 'copied' | 'downloaded' } | null;
   guestHubQrAssetCount: number;
   getBucketQrUrl: (uploadUrl: string) => string;
   onCopyText: (text: string, key: string) => void;
@@ -25,7 +25,7 @@ export function GuestPhotoHubQrCard({
   isPublished,
   guestHubActionSummary,
   guestHubActions,
-  copied,
+  copyNotice,
   guestHubQrAssetCount,
   getBucketQrUrl,
   onCopyText,
@@ -54,14 +54,14 @@ export function GuestPhotoHubQrCard({
           )}
           <div className="mt-3 flex flex-wrap gap-1.5">
             {guestHubActions.map((action) => (
-              <span key={action.id} className="rounded-lg border border-neutral-200 bg-neutral-50 px-2 py-1 text-[11px] font-medium text-neutral-600">
+              <span key={action.id} className="rounded-xl border border-neutral-200 bg-neutral-50 px-2 py-1 text-[11px] font-medium text-neutral-600">
                 {action.id === 'rsvp' ? 'RSVP' : action.id.replace(/^\w/, (char) => char.toUpperCase())}
               </span>
             ))}
           </div>
           <div className="mt-4 flex flex-wrap gap-2">
             <Button variant="outline" onClick={() => onCopyText(guestHubUrl, 'guest-hub')} disabled={publicShareDisabled}>
-              <Copy className="w-4 h-4 mr-2" /> {copied === 'guest-hub' ? 'Copied guest hub link' : 'Copy guest hub link'}
+              <Copy className="w-4 h-4 mr-2" /> {copyNotice?.key === 'guest-hub' ? copyNotice.mode === 'downloaded' ? 'Downloaded guest hub link' : 'Copied guest hub link' : 'Copy guest hub link'}
             </Button>
             <Button variant="outline" onClick={() => onOpenAppUrl(guestHubUrl)} disabled={publicShareDisabled}>
               <ExternalLink className="w-4 h-4 mr-2" /> Open hub
@@ -75,7 +75,7 @@ export function GuestPhotoHubQrCard({
             {guestRecapUrl && (
               <>
                 <Button variant="outline" onClick={() => onCopyText(guestRecapUrl, 'guest-recap')} disabled={publicShareDisabled}>
-                  <Sparkles className="w-4 h-4 mr-2" /> {copied === 'guest-recap' ? 'Copied guest recap link' : 'Copy guest recap link'}
+                  <Sparkles className="w-4 h-4 mr-2" /> {copyNotice?.key === 'guest-recap' ? copyNotice.mode === 'downloaded' ? 'Downloaded guest recap link' : 'Copied guest recap link' : 'Copy guest recap link'}
                 </Button>
                 <Button variant="outline" onClick={() => onOpenAppUrl(guestRecapUrl)} disabled={publicShareDisabled}>
                   <ExternalLink className="w-4 h-4 mr-2" /> Open recap

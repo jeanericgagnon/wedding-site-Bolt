@@ -34,11 +34,24 @@ function parseSongRequest(request: PlanningSongRequest): ParsedSongRequest {
 export const SongRequestsTab: React.FC<Props> = ({ siteId, isDemoMode = false, canEdit = true }) => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
+  const [savingPlaylist, setSavingPlaylist] = useState(false);
+  const [addingQuestion, setAddingQuestion] = useState(false);
+  const [copyingDjList, setCopyingDjList] = useState(false);
+  const [djListCopyNotice, setDjListCopyNotice] = useState<'copied' | 'downloaded' | null>(null);
   const [playlistUrl, setPlaylistUrl] = useState('');
   const [requests, setRequests] = useState<PlanningSongRequest[]>([]);
   const [hasQuestion, setHasQuestion] = useState(false);
   const playlistDirtyRef = useRef(false);
+  const djListCopyNoticeTimeoutRef = useRef<number | null>(null);
+  const djListCopyRequestIdRef = useRef(0);
+  const mountedRef = useRef(true);
   const safePlaylistUrl = getSafePublicWebUrl(playlistUrl);
+
+  useEffect(() => () => {
+    mountedRef.current = false;
+    djListCopyRequestIdRef.current += 1;
+    if (djListCopyNoticeTimeoutRef.current) window.clearTimeout(djListCopyNoticeTimeoutRef.current);
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -81,49 +94,106 @@ export const SongRequestsTab: React.FC<Props> = ({ siteId, isDemoMode = false, c
     });
   }, [requests]);
   const parsedRequests = useMemo(() => uniqueRequests.map(parseSongRequest), [uniqueRequests]);
+  const djListContextKey = useMemo(() => JSON.stringify(parsedRequests.map((request) => [
+    request.guestName,
+    request.title,
+    request.artist,
+    request.answer,
+    request.respondedAt,
+  ])), [parsedRequests]);
+  const djListContextKeyRef = useRef(djListContextKey);
+  djListContextKeyRef.current = djListContextKey;
+
+  useEffect(() => {
+    djListCopyRequestIdRef.current += 1;
+    setCopyingDjList(false);
+    setDjListCopyNotice(null);
+    if (djListCopyNoticeTimeoutRef.current) {
+      window.clearTimeout(djListCopyNoticeTimeoutRef.current);
+      djListCopyNoticeTimeoutRef.current = null;
+    }
+  }, [djListContextKey]);
+
   const spotifySearchUrl = (request: ParsedSongRequest) => `https://open.spotify.com/search/${encodeURIComponent(`${request.title} ${request.artist}`.trim())}`;
 
   async function savePlaylist() {
-    if (!siteId) return;
+    if (!siteId || savingPlaylist) return;
+    setSavingPlaylist(true);
     if (isDemoMode) {
       playlistDirtyRef.current = false;
       toast('Playlist link saved for demo mode.', 'success');
+      setSavingPlaylist(false);
       return;
     }
     try {
       await savePlanningPlaylistUrl(siteId, playlistUrl);
     } catch {
       toast('Couldn’t save the playlist link right now.', 'error');
+      setSavingPlaylist(false);
       return;
     }
     playlistDirtyRef.current = false;
     toast('Playlist link saved.', 'success');
+    setSavingPlaylist(false);
   }
 
   async function addSongQuestion() {
-    if (!siteId) return;
+    if (!siteId || hasQuestion || addingQuestion) return;
+    setAddingQuestion(true);
     if (isDemoMode) {
       setHasQuestion(true);
       toast('Song request question enabled for demo mode.', 'success');
+      setAddingQuestion(false);
       return;
     }
     try {
       await ensurePlanningSongRequestQuestion(siteId);
     } catch {
       toast('Couldn’t enable the song request question right now.', 'error');
+      setAddingQuestion(false);
       return;
     }
     setHasQuestion(true);
     toast('Song request question added to RSVP.', 'success');
+    setAddingQuestion(false);
   }
 
   async function copyDjList() {
+    if (copyingDjList) return;
+
+    const requestId = djListCopyRequestIdRef.current + 1;
+    djListCopyRequestIdRef.current = requestId;
+    const requestContextKey = djListContextKeyRef.current;
+    const isCurrentDjListCopy = () => (
+      mountedRef.current &&
+      requestId === djListCopyRequestIdRef.current &&
+      requestContextKey === djListContextKeyRef.current
+    );
+
+    setCopyingDjList(true);
+    setDjListCopyNotice(null);
     const text = parsedRequests.map((request, index) => `${index + 1}. ${request.title}${request.artist ? ` — ${request.artist}` : ''} (${request.guestName})`).join('\n');
-    const result = await copyTextOrDownload(text || 'No song requests yet.', 'dayof-dj-song-list.txt');
-    if (result === 'copied') {
-      toast('DJ-ready song list copied.', 'success');
-    } else {
-      toast('Clipboard was blocked, so the DJ list downloaded.', 'success');
+    try {
+      const result = await copyTextOrDownload(text || 'No song requests yet.', 'dayof-dj-song-list.txt');
+      if (!isCurrentDjListCopy()) return;
+      setDjListCopyNotice(result);
+      if (result === 'copied') {
+        toast('DJ-ready song list copied.', 'success');
+      } else {
+        toast('Clipboard was blocked, so the DJ list downloaded.', 'success');
+      }
+      if (djListCopyNoticeTimeoutRef.current) window.clearTimeout(djListCopyNoticeTimeoutRef.current);
+      djListCopyNoticeTimeoutRef.current = window.setTimeout(() => {
+        if (!isCurrentDjListCopy()) return;
+        setDjListCopyNotice((current) => (current === result ? null : current));
+      }, 1800);
+    } catch {
+      if (!isCurrentDjListCopy()) return;
+      toast('Couldn’t copy the DJ list right now.', 'error');
+    } finally {
+      if (isCurrentDjListCopy()) {
+        setCopyingDjList(false);
+      }
     }
   }
 
@@ -145,7 +215,7 @@ export const SongRequestsTab: React.FC<Props> = ({ siteId, isDemoMode = false, c
     <div className="space-y-4">
       <Card padding="md" className="space-y-3">
         <div className="flex items-start gap-3">
-          <div className="rounded-lg bg-primary-light p-2">
+          <div className="rounded-xl bg-primary-light p-2">
             <Music2 className="w-5 h-5 text-primary" />
           </div>
           <div className="flex-1">
@@ -162,29 +232,29 @@ export const SongRequestsTab: React.FC<Props> = ({ siteId, isDemoMode = false, c
             }}
             disabled={!canEdit}
             placeholder="https://open.spotify.com/playlist/..."
-            className="flex-1 px-3 py-2 text-sm bg-surface border border-border rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50"
+            className="flex-1 px-3 py-2 text-sm bg-surface border border-border rounded-xl text-text-primary focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50"
           />
-          <Button size="sm" onClick={savePlaylist} disabled={!canEdit}>
+          <Button size="sm" onClick={savePlaylist} disabled={!canEdit || savingPlaylist}>
             <Save className="w-4 h-4 mr-1" />
-            Save
+            {savingPlaylist ? 'Saving...' : 'Save'}
           </Button>
           {safePlaylistUrl && (
-            <a href={safePlaylistUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center rounded-lg border border-border px-3 py-2 text-sm text-text-secondary hover:text-primary">
+            <a href={safePlaylistUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center rounded-xl border border-border px-3 py-2 text-sm text-text-secondary hover:text-primary">
               <ExternalLink className="w-4 h-4 mr-1" />
               Open
             </a>
           )}
         </div>
-        <Button size="sm" variant={hasQuestion ? 'outline' : 'primary'} onClick={addSongQuestion} disabled={!canEdit || hasQuestion}>
+        <Button size="sm" variant={hasQuestion ? 'outline' : 'primary'} onClick={addSongQuestion} disabled={!canEdit || hasQuestion || addingQuestion}>
           <Plus className="w-4 h-4 mr-1" />
-          {hasQuestion ? 'RSVP song question enabled' : 'Add RSVP song question'}
+          {hasQuestion ? 'RSVP song question enabled' : addingQuestion ? 'Adding RSVP song question...' : 'Add RSVP song question'}
         </Button>
       </Card>
 
       <Card padding="sm" className="space-y-3">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
           <div className="flex items-start gap-3">
-            <div className="rounded-lg border border-primary/20 bg-primary-light p-2">
+            <div className="rounded-xl border border-primary/20 bg-primary-light p-2">
               <Sparkles className="w-5 h-5 text-primary" />
             </div>
             <div>
@@ -193,9 +263,15 @@ export const SongRequestsTab: React.FC<Props> = ({ siteId, isDemoMode = false, c
             </div>
           </div>
           <div className="flex flex-wrap gap-2">
-            <Button size="sm" variant="outline" onClick={copyDjList}>
+            <Button size="sm" variant="outline" onClick={() => void copyDjList()} disabled={copyingDjList}>
               <Copy className="w-4 h-4 mr-1" />
-              Copy list
+              {copyingDjList
+                ? 'Copying...'
+                : djListCopyNotice === 'downloaded'
+                  ? 'Downloaded DJ list'
+                  : djListCopyNotice === 'copied'
+                    ? 'Copied DJ list'
+                    : 'Copy list'}
             </Button>
             <Button size="sm" variant="outline" onClick={exportCsv}>
               <Download className="w-4 h-4 mr-1" />

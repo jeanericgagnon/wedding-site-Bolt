@@ -108,6 +108,11 @@ const output = {
     passed: [localRollout, staticExposure, deployedRollout, liveExposure].filter((result) => result.ok).length,
     failed: [localRollout, staticExposure, deployedRollout, liveExposure].filter((result) => !result.ok).length,
   },
+  contractSummary: migrationAlreadyApplied
+    ? 'AI migration-readiness proof is green after migration: this lane confirms deployed rollout plus live readback compatibility for the hardened AI/photo column split.'
+    : rolloutReady && migrationPending
+      ? 'AI migration-readiness proof is green for apply readiness: this lane confirms the frontend and live readback are ready for the AI/photo column migration, but it is not the post-migration clearance proof by itself.'
+      : 'AI migration-readiness proof is not green: do not treat the AI/photo column migration as safe to apply until this rollout/readback lane is fixed.',
   results: [localRollout, staticExposure, deployedRollout, liveExposure],
   state: migrationAlreadyApplied
     ? 'migration_applied_and_readback_green'

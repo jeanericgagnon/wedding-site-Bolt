@@ -31,6 +31,11 @@ type GuestDashboardStorageEnvelope<T> = {
   value: T;
 };
 
+function buildGuestDashboardStorageKey(key: string, storageScope?: string | null): string {
+  const scope = typeof storageScope === 'string' ? storageScope.trim() : '';
+  return scope ? `${key}::${scope}` : key;
+}
+
 function normalizeStoredText(value: unknown, maxLength = MAX_STORED_GUEST_TEXT_LENGTH): string {
   return typeof value === 'string' ? value.trim().slice(0, maxLength) : '';
 }
@@ -69,6 +74,17 @@ function writeStoredValue<T>(key: string, value: T): void {
   } satisfies GuestDashboardStorageEnvelope<T>));
 }
 
+function readScopedStoredValue<T>(key: string, storageScope: string | null | undefined, fallback: T): { value: T; shouldMigrate: boolean } {
+  const storageKey = buildGuestDashboardStorageKey(key, storageScope);
+  const hasScopedKey = localStorage.getItem(storageKey) !== null;
+  const targetKey = !hasScopedKey && storageKey !== key ? key : storageKey;
+  const stored = readStoredValue<T>(targetKey, fallback);
+  return {
+    value: stored.value,
+    shouldMigrate: stored.shouldMigrate || targetKey !== storageKey,
+  };
+}
+
 function normalizeCampaignPreset(value: unknown): RsvpCampaignPreset | null {
   if (
     value === 'pending'
@@ -83,24 +99,25 @@ function normalizeCampaignPreset(value: unknown): RsvpCampaignPreset | null {
   return null;
 }
 
-export function readStoredCampaignPreset(): RsvpCampaignPreset | null {
+export function readStoredCampaignPreset(storageScope?: string | null): RsvpCampaignPreset | null {
+  const storageKey = buildGuestDashboardStorageKey(RSVP_CAMPAIGN_PRESET_KEY, storageScope);
   try {
-    const stored = readStoredValue<unknown>(RSVP_CAMPAIGN_PRESET_KEY, null);
+    const stored = readScopedStoredValue<unknown>(RSVP_CAMPAIGN_PRESET_KEY, storageScope, null);
     const normalized = normalizeCampaignPreset(stored.value);
-    if (normalized && stored.shouldMigrate) writeStoredValue(RSVP_CAMPAIGN_PRESET_KEY, normalized);
-    if (!normalized && localStorage.getItem(RSVP_CAMPAIGN_PRESET_KEY)) localStorage.removeItem(RSVP_CAMPAIGN_PRESET_KEY);
+    if (normalized && stored.shouldMigrate) writeStoredValue(storageKey, normalized);
+    if (!normalized && localStorage.getItem(storageKey)) localStorage.removeItem(storageKey);
     return normalized;
   } catch {
     try {
-      localStorage.removeItem(RSVP_CAMPAIGN_PRESET_KEY);
+      localStorage.removeItem(storageKey);
     } catch {}
   }
   return null;
 }
 
-export function writeStoredCampaignPreset(campaignPreset: RsvpCampaignPreset): void {
+export function writeStoredCampaignPreset(campaignPreset: RsvpCampaignPreset, storageScope?: string | null): void {
   try {
-    writeStoredValue(RSVP_CAMPAIGN_PRESET_KEY, campaignPreset);
+    writeStoredValue(buildGuestDashboardStorageKey(RSVP_CAMPAIGN_PRESET_KEY, storageScope), campaignPreset);
   } catch {}
 }
 
@@ -144,35 +161,36 @@ function normalizeStoredArray<T>(value: unknown, normalizeItem: (item: unknown) 
     .slice(0, STORAGE_CAP);
 }
 
-function readStoredArray<T>(key: string, normalizeItem: (item: unknown) => T | null): T[] {
+function readStoredArray<T>(key: string, normalizeItem: (item: unknown) => T | null, storageScope?: string | null): T[] {
+  const storageKey = buildGuestDashboardStorageKey(key, storageScope);
   try {
-    const stored = readStoredValue<unknown>(key, []);
+    const stored = readScopedStoredValue<unknown>(key, storageScope, []);
     const normalized = normalizeStoredArray(stored.value, normalizeItem);
-    if (stored.shouldMigrate && normalized.length > 0) writeStoredValue(key, normalized);
-    if (stored.shouldMigrate && normalized.length === 0 && localStorage.getItem(key)) localStorage.removeItem(key);
+    if (stored.shouldMigrate && normalized.length > 0) writeStoredValue(storageKey, normalized);
+    if (stored.shouldMigrate && normalized.length === 0 && localStorage.getItem(storageKey)) localStorage.removeItem(storageKey);
     return normalized;
   } catch {
     try {
-      localStorage.removeItem(key);
+      localStorage.removeItem(storageKey);
     } catch {}
     return [];
   }
 }
 
-function writeStoredArray<T>(key: string, items: T[], normalizeItem: (item: unknown) => T | null): void {
+function writeStoredArray<T>(key: string, items: T[], normalizeItem: (item: unknown) => T | null, storageScope?: string | null): void {
   try {
-    writeStoredValue(key, normalizeStoredArray(items, normalizeItem));
+    writeStoredValue(buildGuestDashboardStorageKey(key, storageScope), normalizeStoredArray(items, normalizeItem));
   } catch {}
 }
 
-export const readStoredFollowUpTasks = () => readStoredArray<RsvpFollowUpTask>(RSVP_FOLLOWUP_TASKS_KEY, normalizeStoredFollowUpTask);
-export const writeStoredFollowUpTasks = (items: RsvpFollowUpTask[]) => writeStoredArray(RSVP_FOLLOWUP_TASKS_KEY, items, normalizeStoredFollowUpTask);
+export const readStoredFollowUpTasks = (storageScope?: string | null) => readStoredArray<RsvpFollowUpTask>(RSVP_FOLLOWUP_TASKS_KEY, normalizeStoredFollowUpTask, storageScope);
+export const writeStoredFollowUpTasks = (items: RsvpFollowUpTask[], storageScope?: string | null) => writeStoredArray(RSVP_FOLLOWUP_TASKS_KEY, items, normalizeStoredFollowUpTask, storageScope);
 
-export const readStoredSavedSegments = () => readStoredArray<RsvpSavedSegment>(RSVP_SAVED_SEGMENTS_KEY, normalizeStoredSavedSegment);
-export const writeStoredSavedSegments = (items: RsvpSavedSegment[]) => writeStoredArray(RSVP_SAVED_SEGMENTS_KEY, items, normalizeStoredSavedSegment);
+export const readStoredSavedSegments = (storageScope?: string | null) => readStoredArray<RsvpSavedSegment>(RSVP_SAVED_SEGMENTS_KEY, normalizeStoredSavedSegment, storageScope);
+export const writeStoredSavedSegments = (items: RsvpSavedSegment[], storageScope?: string | null) => writeStoredArray(RSVP_SAVED_SEGMENTS_KEY, items, normalizeStoredSavedSegment, storageScope);
 
-export const readStoredCampaignLog = () => readStoredArray<RsvpCampaignLogEntry>(RSVP_CAMPAIGN_LOG_KEY, normalizeStoredCampaignLogEntry);
-export const writeStoredCampaignLog = (items: RsvpCampaignLogEntry[]) => writeStoredArray(RSVP_CAMPAIGN_LOG_KEY, items, normalizeStoredCampaignLogEntry);
+export const readStoredCampaignLog = (storageScope?: string | null) => readStoredArray<RsvpCampaignLogEntry>(RSVP_CAMPAIGN_LOG_KEY, normalizeStoredCampaignLogEntry, storageScope);
+export const writeStoredCampaignLog = (items: RsvpCampaignLogEntry[], storageScope?: string | null) => writeStoredArray(RSVP_CAMPAIGN_LOG_KEY, items, normalizeStoredCampaignLogEntry, storageScope);
 
 function normalizeDemoRsvpQuestions(value: unknown): RSVPQuestionSetting[] {
   if (!Array.isArray(value)) return [];

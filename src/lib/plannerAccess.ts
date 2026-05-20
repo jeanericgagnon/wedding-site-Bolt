@@ -1,5 +1,7 @@
 export type PlannerAccessRole = 'owner' | 'planner' | 'coordinator' | 'viewer';
 export type PlannerSurface = 'planning' | 'guests' | 'messages' | 'coordinator';
+const PLANNER_ACCESS_ROLES: PlannerAccessRole[] = ['owner', 'planner', 'coordinator', 'viewer'];
+const PLANNER_COLLABORATOR_ROLES: Array<Exclude<PlannerAccessRole, 'owner'>> = ['planner', 'coordinator', 'viewer'];
 
 export interface PlannerRoleOption {
   value: PlannerAccessRole;
@@ -58,6 +60,14 @@ export function writePlannerAccessRole(surface: PlannerSurface, siteId: string |
 
 export function canEditPlannerSurface(role: PlannerAccessRole): boolean {
   return role !== 'viewer';
+}
+
+export function isPlannerAccessRole(value: unknown): value is PlannerAccessRole {
+  return typeof value === 'string' && PLANNER_ACCESS_ROLES.includes(value as PlannerAccessRole);
+}
+
+export function isPlannerCollaboratorRole(value: unknown): value is Exclude<PlannerAccessRole, 'owner'> {
+  return typeof value === 'string' && PLANNER_COLLABORATOR_ROLES.includes(value as Exclude<PlannerAccessRole, 'owner'>);
 }
 
 export function hasPlannerPermission(
@@ -126,6 +136,7 @@ export interface PlannerInviteRecord {
 
 export const MAX_PLANNER_INVITE_STORAGE_AGE_MS = 1000 * 60 * 60 * 24 * 30;
 export const PLANNER_INVITE_EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/i;
+const PLANNER_INVITE_STATUSES: PlannerInviteRecord['status'][] = ['draft', 'pending', 'active'];
 
 export function getPlannerInviteStorageKey(siteId: string | null | undefined): string | null {
   if (!siteId) return null;
@@ -136,17 +147,21 @@ export function normalizePlannerInvite(value: unknown): PlannerInviteRecord | nu
   if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
   const invite = value as Partial<PlannerInviteRecord>;
   if (!invite.name || !invite.email || !invite.role || !invite.invitedAtISO) return null;
+  if (!isPlannerCollaboratorRole(invite.role)) return null;
+  const status = invite.status ?? 'draft';
+  if (!PLANNER_INVITE_STATUSES.includes(status)) return null;
   if (!PLANNER_INVITE_EMAIL_PATTERN.test(invite.email.trim())) return null;
   const invitedAt = Date.parse(invite.invitedAtISO);
   if (Number.isNaN(invitedAt)) return null;
   if (Date.now() - invitedAt > MAX_PLANNER_INVITE_STORAGE_AGE_MS) return null;
+  const permissions = Array.isArray(invite.permissions) ? normalizePlannerPermissions(invite.permissions) : undefined;
   return {
     name: invite.name,
     email: invite.email.trim(),
     role: invite.role,
-    status: invite.status ?? 'draft',
+    status,
     invitedAtISO: invite.invitedAtISO,
-    permissions: Array.isArray(invite.permissions) ? invite.permissions : undefined,
+    permissions,
   };
 }
 
@@ -213,6 +228,13 @@ export const PLANNER_PERMISSION_GROUPS: Array<{
   { key: 'registry', label: 'Registry', description: 'View or manage registry tools.' },
   { key: 'settings', label: 'Settings', description: 'Access site settings (not billing).' },
 ];
+
+export function normalizePlannerPermissions(value: unknown): PlannerPermissionKey[] {
+  if (!Array.isArray(value)) return [];
+  const known = new Set(PLANNER_PERMISSION_GROUPS.map((group) => group.key));
+  return value.filter((permission): permission is PlannerPermissionKey =>
+    typeof permission === 'string' && known.has(permission as PlannerPermissionKey));
+}
 
 export const PLANNER_PERMISSION_PRESETS: PlannerPermissionPreset[] = [
   {

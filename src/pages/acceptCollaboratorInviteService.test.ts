@@ -7,6 +7,7 @@ import {
   COLLABORATOR_INVITE_SITE_SELECT,
   createCollaboratorInviteAccount,
   hasCollaboratorInviteSession,
+  normalizeCollaboratorInviteEmail,
   signInCollaboratorInviteAccount,
 } from './acceptCollaboratorInviteService';
 
@@ -46,6 +47,10 @@ describe('accept collaborator invite data boundary', () => {
     expect(COLLABORATOR_INVITE_SITE_SELECT).toBe('site_slug, couple_name_1, couple_name_2');
   });
 
+  it('normalizes collaborator invite emails at the auth service boundary', () => {
+    expect(normalizeCollaboratorInviteEmail(' Planner@Example.COM ')).toBe('planner@example.com');
+  });
+
   it('keeps invite page lookup reads behind the service', () => {
     const page = readFileSync(join(process.cwd(), 'src/pages/AcceptCollaboratorInvite.tsx'), 'utf8');
     const service = readFileSync(join(process.cwd(), 'src/pages/acceptCollaboratorInviteService.ts'), 'utf8');
@@ -70,6 +75,33 @@ describe('accept collaborator invite data boundary', () => {
     expect(service).not.toContain(".select('*')");
   });
 
+  it('guards collaborator invite claims against stale token contexts', () => {
+    const page = readFileSync(join(process.cwd(), 'src/pages/AcceptCollaboratorInvite.tsx'), 'utf8');
+
+    expect(page).toContain('const claimRunRef = useRef(0);');
+    expect(page).toContain('const activeInviteTokenRef = useRef<string | null>(token);');
+    expect(page).toContain('activeInviteTokenRef.current = token;');
+    expect(page).toContain('claimRunRef.current += 1;');
+    expect(page).toContain('const isActiveClaim = () => claimRunRef.current === claimRun && activeInviteTokenRef.current === currentToken;');
+    expect(page).toContain('await claimInvite(authUser, currentInvite, isActiveClaim);');
+    expect(page).toContain('const hasSession = await hasCollaboratorInviteSession();\n    if (!isActiveClaim()) return;');
+    expect(page).toContain('if (!isActiveClaim()) return;\n    const rpcMs = Date.now() - rpcStart;');
+    expect(page).toContain('if (!isActiveClaim()) return;');
+    expect(page).toContain('if (isActiveClaim()) setClaiming(false);');
+  });
+
+  it('guards collaborator invite auth submits against stale token contexts', () => {
+    const page = readFileSync(join(process.cwd(), 'src/pages/AcceptCollaboratorInvite.tsx'), 'utf8');
+
+    expect(page).toContain('const authRunRef = useRef(0);');
+    expect(page).toContain('authRunRef.current += 1;');
+    expect(page).toContain('const isActiveAuth = () => authRunRef.current === authRun && activeInviteTokenRef.current === submitToken;');
+    expect(page).toContain('if (!isActiveAuth()) return;');
+    expect(page).toContain("if (isActiveAuth()) setAuthError(safeAuthError(err, 'Couldn’t sign you in right now.'));");
+    expect(page).toContain("if (isActiveAuth()) setAuthError(safeCollaboratorInviteError(err, 'Couldn’t create your account right now.'));");
+    expect(page).toContain('if (isActiveAuth()) setAuthLoading(false);');
+  });
+
   it('exports the invite-claim helper', () => {
     expect(typeof claimCollaboratorInviteByToken).toBe('function');
   });
@@ -88,7 +120,7 @@ describe('accept collaborator invite data boundary', () => {
       error: null,
     });
 
-    const result = await signInCollaboratorInviteAccount('invite@example.com', 'hunter22');
+    const result = await signInCollaboratorInviteAccount(' Invite@Example.COM ', 'hunter22');
 
     expect(signInWithPasswordMock).toHaveBeenCalledWith({
       email: 'invite@example.com',
@@ -109,7 +141,7 @@ describe('accept collaborator invite data boundary', () => {
       error: null,
     });
 
-    const user = await createCollaboratorInviteAccount('invite@example.com', 'secret888', 'Avery Lane');
+    const user = await createCollaboratorInviteAccount(' Invite@Example.COM ', 'secret888', 'Avery Lane');
 
     expect(signUpMock).toHaveBeenCalledWith({
       email: 'invite@example.com',

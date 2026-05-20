@@ -4,7 +4,7 @@ import { Input } from '../../../components/ui/Input';
 type GuestPhotoAlbumControlsProps = {
   visibleAlbumCount: number;
   totalUploadCount: number;
-  copied: string;
+  copyNotice: { key: string; mode: 'copied' | 'downloaded' } | null;
   bulkRegenerating: boolean;
   bulkModerating: boolean;
   showFlaggedOnly: boolean;
@@ -33,7 +33,7 @@ type GuestPhotoAlbumControlsProps = {
 export function GuestPhotoAlbumControls({
   visibleAlbumCount,
   totalUploadCount,
-  copied,
+  copyNotice,
   bulkRegenerating,
   bulkModerating,
   showFlaggedOnly,
@@ -66,15 +66,23 @@ export function GuestPhotoAlbumControls({
           <div className="text-xs text-neutral-500">{visibleAlbumCount} visible</div>
         </div>
         <div className="grid gap-3 lg:grid-cols-[1.4fr_1fr]">
-          <div className="rounded-lg border border-border-subtle bg-surface-subtle p-4">
+          <div className="rounded-2xl border border-border-subtle bg-surface-subtle p-4">
             <p className="text-xs font-semibold text-text-tertiary">Sharing home</p>
             <p className="mt-2 text-sm text-neutral-700">Copy links, QR codes, and guest-facing prompts without digging through menus.</p>
             <div className="mt-3 flex flex-wrap gap-2">
               <Button size="sm" variant="outline" onClick={onCopyAllKnownLinks}>
-                {copied === 'all-links' ? 'Copied all links' : 'Copy all album links'}
+                {copyNotice?.key === 'all-links'
+                  ? copyNotice.mode === 'downloaded'
+                    ? 'Downloaded all links'
+                    : 'Copied all links'
+                  : 'Copy all album links'}
               </Button>
               <Button size="sm" variant="outline" onClick={onCopyAllShareMessages}>
-                {copied === 'all-share-messages' ? 'Copied prompts' : 'Copy all share prompts'}
+                {copyNotice?.key === 'all-share-messages'
+                  ? copyNotice.mode === 'downloaded'
+                    ? 'Downloaded prompts'
+                    : 'Copied prompts'
+                  : 'Copy all share prompts'}
               </Button>
               <Button size="sm" variant="outline" onClick={onSendAllActiveBucketRequests}>
                 Send all active album requests
@@ -84,7 +92,7 @@ export function GuestPhotoAlbumControls({
               </Button>
             </div>
           </div>
-          <div className="rounded-lg border border-border-subtle bg-white p-4">
+          <div className="rounded-2xl border border-border-subtle bg-white p-4">
             <p className="text-xs font-medium text-text-tertiary">Owner controls</p>
             <div className="mt-3 flex flex-wrap gap-2">
               <Button size="sm" variant="outline" onClick={onExportBucketLinksCsv}>Save album link sheet</Button>
@@ -97,7 +105,7 @@ export function GuestPhotoAlbumControls({
               <select
                 value={tagFilter}
                 onChange={(event) => onTagFilterChange(event.target.value)}
-                className="h-9 rounded-lg border border-neutral-300 bg-white px-3 text-xs text-neutral-700"
+                className="h-9 rounded-xl border border-neutral-300 bg-white px-3 text-xs text-neutral-700"
               >
                 <option value="all">All tags</option>
                 {availableAiTags.map(([tag, count]) => (
@@ -126,7 +134,7 @@ export function GuestPhotoAlbumControls({
         <select
           value={statusFilter}
           onChange={(event) => onStatusFilterChange(event.target.value as 'all' | 'active' | 'paused')}
-          className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm"
+          className="w-full rounded-xl border border-neutral-300 px-3 py-2 text-sm"
         >
           <option value="all">All statuses</option>
           <option value="active">Active only</option>

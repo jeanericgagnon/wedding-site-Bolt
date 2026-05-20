@@ -126,6 +126,15 @@ describe('DashboardAuditLogs', () => {
     expect(screen.queryByText('Loading activity…')).not.toBeInTheDocument();
   });
 
+  it('sets activity history back to loading before each owner log request', () => {
+    loadDashboardAuditLogs.mockImplementation(() => new Promise(() => {}));
+
+    render(<DashboardAuditLogs />);
+
+    expect(screen.getByText('Loading activity…')).toBeInTheDocument();
+    expect(loadDashboardAuditLogs).toHaveBeenCalledWith('user-1');
+  });
+
   it('shows a recoverable owner-facing error when activity history fails to load', async () => {
     loadDashboardAuditLogs.mockRejectedValue(new Error('temporary failure'));
 
@@ -192,5 +201,58 @@ describe('DashboardAuditLogs', () => {
 
     expect(await screen.findByText(/You · guest photos/)).toBeInTheDocument();
     expect(screen.queryByText(/You · guest_photos/)).not.toBeInTheDocument();
+  });
+
+  it('ignores stale activity history responses after the signed-in user changes', async () => {
+    let resolveFirstLogs: (value: { guestRows: never[]; actionRows: Array<{
+      id: string;
+      action_area: string;
+      summary: string;
+      actor_user_id: string;
+      target_label: null;
+      created_at: string;
+    }> }) => void = () => {};
+    loadDashboardAuditLogs
+      .mockImplementationOnce(() => new Promise((resolve) => { resolveFirstLogs = resolve as typeof resolveFirstLogs; }))
+      .mockResolvedValueOnce({
+        guestRows: [],
+        actionRows: [
+          {
+            id: 'current-action-log',
+            action_area: 'settings',
+            summary: 'Updated current site',
+            actor_user_id: 'user-2',
+            target_label: null,
+            created_at: '2026-05-15T15:00:00.000Z',
+          },
+        ],
+      });
+
+    const { rerender } = render(<DashboardAuditLogs />);
+
+    await waitFor(() => expect(loadDashboardAuditLogs).toHaveBeenCalledWith('user-1'));
+
+    authState.user = { id: 'user-2' };
+    rerender(<DashboardAuditLogs />);
+
+    expect(await screen.findByText(/Updated current site/)).toBeInTheDocument();
+
+    resolveFirstLogs({
+      guestRows: [],
+      actionRows: [
+        {
+          id: 'stale-action-log',
+          action_area: 'registry',
+          summary: 'Stale old site update',
+          actor_user_id: 'user-1',
+          target_label: null,
+          created_at: '2026-05-15T16:00:00.000Z',
+        },
+      ],
+    });
+
+    await waitFor(() => expect(screen.queryByText(/Stale old site update/)).not.toBeInTheDocument());
+    expect(screen.getByText(/Updated current site/)).toBeInTheDocument();
+    authState.user = { id: 'user-1' };
   });
 });

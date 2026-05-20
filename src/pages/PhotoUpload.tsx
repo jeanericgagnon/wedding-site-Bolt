@@ -1,8 +1,10 @@
 import React, { useEffect, useLayoutEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Camera, Check, ImagePlus, UploadCloud } from 'lucide-react';
 import { OwnerPreviewBanner } from '../components/site/OwnerPreviewBanner';
 import { LanguageSwitcher } from '../components/ui/LanguageSwitcher';
+import { resolveCurrentSearchParams } from '../lib/currentSearchParams';
 import { readStoredGuestLanguage, resolveGuestLanguagePreference, writeStoredGuestLanguage } from '../lib/guestLanguagePreference';
 import {
   buildPublicAccessArtifacts,
@@ -83,14 +85,21 @@ export const safePhotoUploadMessage = (message?: string, translate?: PhotoUpload
   return normalizedMessage && safeMessages.includes(normalizedMessage) ? normalizedMessage : fallback;
 };
 
-export const buildPhotoUploadAccessPayload = (slug: string) => buildPublicAccessArtifacts(slug, new URLSearchParams(window.location.search));
-export const buildPhotoUploadIdentityPayload = (slug: string) => buildGuestIdentityArtifacts(slug, new URLSearchParams(window.location.search));
+export const buildPhotoUploadAccessPayload = (
+  slug: string,
+  searchParams?: URLSearchParams,
+) => buildPublicAccessArtifacts(slug, resolveCurrentSearchParams(searchParams));
+export const buildPhotoUploadIdentityPayload = (
+  slug: string,
+  searchParams?: URLSearchParams,
+) => buildGuestIdentityArtifacts(slug, resolveCurrentSearchParams(searchParams));
 
 const DEMO_PHOTO_MEMORY_FLOW_SITE_SLUG = 'alex-jordan-demo';
 
 export const PhotoUpload: React.FC = () => {
   const { t, i18n } = useTranslation();
-  const params = useMemo(() => new URLSearchParams(window.location.search), []);
+  const [searchParams] = useSearchParams();
+  const params = useMemo(() => new URLSearchParams(searchParams), [searchParams]);
   const initialToken = params.get('t')?.trim() ?? '';
   const siteSlug = params.get('site')?.trim().toLowerCase() ?? '';
   const fromHub = params.get('hub') === '1';
@@ -110,7 +119,7 @@ export const PhotoUpload: React.FC = () => {
   const [uploadedNames, setUploadedNames] = useState<string[]>([]);
   const [failedNames, setFailedNames] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const inputClassName = 'w-full rounded-lg border border-stone-200 bg-white px-4 py-3 text-base text-stone-900 outline-none transition focus:border-stone-400 focus:ring-4 focus:ring-stone-200/70';
+  const inputClassName = 'w-full rounded-xl border border-stone-200 bg-white px-4 py-3 text-base text-stone-900 outline-none transition focus:border-stone-400 focus:ring-4 focus:ring-stone-200/70';
   const labelClassName = 'mb-2 block text-sm font-medium text-stone-800';
 
   useLayoutEffect(() => {
@@ -120,23 +129,43 @@ export const PhotoUpload: React.FC = () => {
     }
     const languagePreference = resolveGuestLanguagePreference({
       search: params,
-      storedLanguage: readStoredGuestLanguage(),
+      storedLanguage: readStoredGuestLanguage(siteSlug),
     });
     if (languagePreference.language !== i18n.language?.split('-')[0]?.toLowerCase()) {
       void i18n.changeLanguage(languagePreference.language);
     }
     if (languagePreference.source === 'guest-link') {
-      writeStoredGuestLanguage(languagePreference.language);
+      writeStoredGuestLanguage(languagePreference.language, siteSlug);
     }
   }, [i18n, params, siteSlug]);
 
   useEffect(() => {
     if (!siteSlug) return;
     trackGuestHubEvent(siteSlug, 'view', '/photos/upload/invite', {
-      ...buildPhotoUploadAccessPayload(siteSlug),
-      ...buildPhotoUploadIdentityPayload(siteSlug),
+      ...buildPhotoUploadAccessPayload(siteSlug, params),
+      ...buildPhotoUploadIdentityPayload(siteSlug, params),
     }).catch(() => {});
-  }, [siteSlug]);
+  }, [params, siteSlug]);
+
+  const clearUploadFeedback = () => {
+    setError(null);
+    setMessage(null);
+    setUploadedNames([]);
+    setFailedNames([]);
+  };
+
+  useEffect(() => {
+    setToken(initialToken);
+    setGuestName('');
+    setGuestEmail('');
+    setGuestPhone('');
+    setNote('');
+    setFiles([]);
+    setWantsPhotoUpdates(true);
+    setWantsOwnEventInfo(false);
+    setIsUploading(false);
+    clearUploadFeedback();
+  }, [initialToken, siteSlug]);
 
   const onSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -172,8 +201,8 @@ export const PhotoUpload: React.FC = () => {
     try {
       setIsUploading(true);
       const form = new FormData();
-      const access = siteSlug ? buildPhotoUploadAccessPayload(siteSlug) : null;
-      const identity = siteSlug ? buildPhotoUploadIdentityPayload(siteSlug) : null;
+      const access = siteSlug ? buildPhotoUploadAccessPayload(siteSlug, params) : null;
+      const identity = siteSlug ? buildPhotoUploadIdentityPayload(siteSlug, params) : null;
       if (token.trim()) form.append('token', token.trim());
       if (siteSlug) form.append('siteSlug', siteSlug);
       if (siteSlug && access) {
@@ -249,7 +278,7 @@ export const PhotoUpload: React.FC = () => {
     <div className="min-h-screen bg-[#fbf7f1] px-4 py-6 text-stone-950 sm:py-10">
       <OwnerPreviewBanner />
       <main className="mx-auto grid max-w-5xl gap-6 lg:grid-cols-[0.9fr_1.1fr] lg:items-start">
-        <section className="overflow-hidden rounded-lg border border-stone-200 bg-white">
+        <section className="overflow-hidden rounded-xl border border-stone-200 bg-white">
           <div className="relative min-h-[260px] bg-stone-900">
             <img
               src="/preview-photos/header-anchor.jpg"
@@ -259,7 +288,7 @@ export const PhotoUpload: React.FC = () => {
             />
             <div className="absolute inset-0 bg-gradient-to-t from-stone-950/75 via-stone-950/15 to-transparent" />
             <div className="relative flex min-h-[260px] flex-col justify-end p-6 text-white sm:p-8">
-              <div className="mb-4 inline-flex h-11 w-11 items-center justify-center rounded-lg bg-white/18 backdrop-blur">
+              <div className="mb-4 inline-flex h-11 w-11 items-center justify-center rounded-xl bg-white/18 backdrop-blur">
                 <Camera className="h-5 w-5" aria-hidden="true" />
               </div>
               <p className="text-xs font-semibold text-white/80">Wedding memories</p>
@@ -289,12 +318,12 @@ export const PhotoUpload: React.FC = () => {
           </div>
         </section>
 
-        <section className="rounded-lg border border-stone-200 bg-white p-5 sm:p-7">
+        <section className="rounded-xl border border-stone-200 bg-white p-5 sm:p-7">
           <div className="mb-4 flex justify-end">
             <LanguageSwitcher />
           </div>
         {siteSlug && !token && (
-          <p className="rounded-lg border border-stone-200 bg-stone-50 px-4 py-3 text-sm text-stone-700">
+          <p className="rounded-xl border border-stone-200 bg-stone-50 px-4 py-3 text-sm text-stone-700">
             {t('photo_upload.uploading_to', { site: siteSlug })}
           </p>
         )}
@@ -306,7 +335,10 @@ export const PhotoUpload: React.FC = () => {
               <input
                 id="photo-upload-token"
                 value={token}
-                onChange={(e) => setToken(e.target.value)}
+                onChange={(e) => {
+                  clearUploadFeedback();
+                  setToken(e.target.value);
+                }}
                 className={inputClassName}
                 placeholder={t('photo_upload.token_placeholder')}
                 aria-invalid={error === t('photo_upload.token_required') || error === t('photo_upload.token_and_file_required') ? 'true' : 'false'}
@@ -323,7 +355,10 @@ export const PhotoUpload: React.FC = () => {
             <input
               id="photo-upload-guest-name"
               value={guestName}
-              onChange={(e) => setGuestName(e.target.value)}
+              onChange={(e) => {
+                clearUploadFeedback();
+                setGuestName(e.target.value);
+              }}
               className={inputClassName}
               placeholder={t('photo_upload.name_placeholder')}
             />
@@ -335,7 +370,10 @@ export const PhotoUpload: React.FC = () => {
               id="photo-upload-guest-email"
               type="email"
               value={guestEmail}
-              onChange={(e) => setGuestEmail(e.target.value)}
+              onChange={(e) => {
+                clearUploadFeedback();
+                setGuestEmail(e.target.value);
+              }}
               className={inputClassName}
               placeholder={t('photo_upload.email_placeholder')}
             />
@@ -346,19 +384,25 @@ export const PhotoUpload: React.FC = () => {
             <input
               id="photo-upload-guest-phone"
               value={guestPhone}
-              onChange={(e) => setGuestPhone(e.target.value)}
+              onChange={(e) => {
+                clearUploadFeedback();
+                setGuestPhone(e.target.value);
+              }}
               className={inputClassName}
               placeholder={t('photo_upload.phone_placeholder')}
             />
           </div>
 
           {siteSlug && (
-            <div className="space-y-2 rounded-lg border border-stone-200 bg-stone-50/70 p-4">
+            <div className="space-y-2 rounded-xl border border-stone-200 bg-stone-50/70 p-4">
               <label className="flex items-start gap-3 text-sm text-stone-700">
                 <input
                   type="checkbox"
                   checked={wantsPhotoUpdates}
-                  onChange={(e) => setWantsPhotoUpdates(e.target.checked)}
+                  onChange={(e) => {
+                    clearUploadFeedback();
+                    setWantsPhotoUpdates(e.target.checked);
+                  }}
                   className="mt-1 accent-stone-900"
                 />
                 <span>{t('photo_upload.send_updates')}</span>
@@ -367,7 +411,10 @@ export const PhotoUpload: React.FC = () => {
                 <input
                   type="checkbox"
                   checked={wantsOwnEventInfo}
-                  onChange={(e) => setWantsOwnEventInfo(e.target.checked)}
+                  onChange={(e) => {
+                    clearUploadFeedback();
+                    setWantsOwnEventInfo(e.target.checked);
+                  }}
                   className="mt-1 accent-stone-900"
                 />
                 <span>{t('photo_upload.own_event')}</span>
@@ -380,16 +427,19 @@ export const PhotoUpload: React.FC = () => {
             <textarea
               id="photo-upload-note"
               value={note}
-              onChange={(e) => setNote(e.target.value)}
+              onChange={(e) => {
+                clearUploadFeedback();
+                setNote(e.target.value);
+              }}
               className={inputClassName}
               rows={3}
               placeholder={t('photo_upload.note_placeholder')}
             />
           </div>
 
-          <div className="rounded-lg border border-dashed border-stone-300 bg-stone-50/60 p-4">
+          <div className="rounded-xl border border-dashed border-stone-300 bg-stone-50/60 p-4">
             <div className="mb-3 flex items-center gap-3">
-              <span className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-stone-200 bg-white text-stone-700">
+              <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-stone-200 bg-white text-stone-700">
                 <ImagePlus className="h-5 w-5" aria-hidden="true" />
               </span>
               <div>
@@ -403,8 +453,11 @@ export const PhotoUpload: React.FC = () => {
               multiple
               accept="image/*,video/*"
               aria-describedby="photo-upload-files-hint photo-upload-status"
-              onChange={(e) => setFiles(Array.from(e.target.files ?? []))}
-              className="w-full rounded-lg border border-stone-200 bg-white px-4 py-3 text-base text-stone-700 file:mr-4 file:rounded-lg file:border-0 file:bg-stone-900 file:px-4 file:py-2 file:text-sm file:font-medium file:text-white"
+              onChange={(e) => {
+                clearUploadFeedback();
+                setFiles(Array.from(e.target.files ?? []));
+              }}
+              className="w-full rounded-xl border border-stone-200 bg-white px-4 py-3 text-base text-stone-700 file:mr-4 file:rounded-xl file:border-0 file:bg-stone-900 file:px-4 file:py-2 file:text-sm file:font-medium file:text-white"
             />
             <p
               id="photo-upload-status"
@@ -430,7 +483,7 @@ export const PhotoUpload: React.FC = () => {
           <button
             type="submit"
             disabled={isUploading}
-            className="inline-flex min-h-[54px] w-full items-center justify-center gap-2 rounded-lg bg-stone-950 px-4 py-3 text-base font-semibold text-white hover:bg-stone-800 disabled:opacity-60"
+            className="inline-flex min-h-[54px] w-full items-center justify-center gap-2 rounded-xl bg-stone-950 px-4 py-3 text-base font-semibold text-white hover:bg-stone-800 disabled:opacity-60"
           >
             <UploadCloud className="h-4 w-4" aria-hidden="true" />
             {isUploading ? t('photo_upload.uploading') : t('photo_upload.upload_files')}

@@ -119,6 +119,10 @@ const GalleryPolaroid: React.FC<SectionComponentProps<GalleryPolaroidData>> = ({
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const images = sanitizePublicGalleryImages(data.images);
 
+  useEffect(() => {
+    setLightboxIndex(null);
+  }, [data.images]);
+
   const closeLightbox = () => setLightboxIndex(null);
   const prevImage = () => setLightboxIndex(i => i === null ? null : (i - 1 + images.length) % images.length);
   const nextImage = () => setLightboxIndex(i => i === null ? null : (i + 1) % images.length);
@@ -174,7 +178,7 @@ const GalleryPolaroid: React.FC<SectionComponentProps<GalleryPolaroidData>> = ({
             <ChevronLeft size={20} />
           </button>
           <div className="max-w-5xl max-h-[85vh] px-16" onClick={e => e.stopPropagation()}>
-            <img src={images[lightboxIndex]?.url} alt={images[lightboxIndex]?.alt ?? 'Gallery photo'} className="max-w-full max-h-[85vh] object-contain rounded-lg" />
+            <img src={images[lightboxIndex]?.url} alt={images[lightboxIndex]?.alt ?? 'Gallery photo'} className="max-w-full max-h-[85vh] object-contain rounded-xl" />
             {data.showCaptions && images[lightboxIndex]?.caption && (
               <p className="text-white/70 text-sm text-center mt-3 italic">{images[lightboxIndex]?.caption}</p>
             )}

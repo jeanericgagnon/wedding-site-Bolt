@@ -141,7 +141,7 @@ export default function TemplateScrollCapture() {
   if (!template) {
     return (
       <div id="template-scroll-root" data-template-scroll-ready="true" className="min-h-screen bg-white px-6 py-10">
-        <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-amber-900">
+        <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-amber-900">
           That design preview is not available right now.
         </div>
       </div>

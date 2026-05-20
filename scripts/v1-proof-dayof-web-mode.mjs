@@ -77,8 +77,7 @@ function runStep(step) {
 const results = steps.map(runStep);
 
 let previewProcess = null;
-let previewStdout = '';
-let previewStderr = '';
+let previewOutput = { stdout: '', stderr: '' };
 try {
   const previewRuntime = await resolvePreviewRuntime({
     preferredPort: PREVIEW_PORT,
@@ -88,8 +87,7 @@ try {
   baseUrl = previewRuntime.baseUrl;
   isLiveBaseUrl = baseUrl !== DEFAULT_PREVIEW_URL;
   previewProcess = previewRuntime.previewProcess;
-  previewStdout = previewRuntime.previewStdout ?? '';
-  previewStderr = previewRuntime.previewStderr ?? '';
+  previewOutput = previewRuntime.previewOutput ?? { stdout: '', stderr: '' };
 
   results.push(runStep({
     id: 'dayof-web-mode-browser-proof',
@@ -100,7 +98,7 @@ try {
     required: true,
   }));
 
-  if (previewStdout.trim()) {
+  if (previewOutput.stdout.trim()) {
     results.push({
       id: 'preview-server-log',
       label: 'Preview server log',
@@ -109,8 +107,8 @@ try {
       ok: true,
       startedAt: new Date().toISOString(),
       finishedAt: new Date().toISOString(),
-      stdout: previewStdout.trim(),
-      stderr: previewStderr.trim() || undefined,
+      stdout: previewOutput.stdout.trim(),
+      stderr: previewOutput.stderr.trim() || undefined,
     });
   }
 } catch (error) {
@@ -124,7 +122,7 @@ try {
     ok: false,
     startedAt: new Date().toISOString(),
     finishedAt: new Date().toISOString(),
-    stderr: [previewStderr.trim(), error instanceof Error ? error.message : 'Day-of web-mode preview server failed to start.'].filter(Boolean).join('\n'),
+    stderr: [previewOutput.stderr.trim(), error instanceof Error ? error.message : 'Day-of web-mode preview server failed to start.'].filter(Boolean).join('\n'),
   });
 } finally {
   await stopPreviewRuntime(previewProcess);
@@ -141,6 +139,9 @@ const output = {
     passed: results.filter((result) => result.ok).length,
     failed: results.filter((result) => !result.ok).length,
   },
+  contractSummary: isLiveBaseUrl
+    ? 'Day-of web-mode live proof is green: this read-only guest-hub lane validates invite-scoped day-of visibility without claiming the separate guest-hub write/read mutation lane.'
+    : 'Day-of web-mode local proof is green: this lane validates offline guest-hub continuity locally and still leaves shipped-runtime invite-state truth to the dedicated live rerun.',
   automatedCoverage: [
     ...(isLiveBaseUrl
       ? []

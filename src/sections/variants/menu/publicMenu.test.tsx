@@ -14,8 +14,8 @@ describe('public menu media', () => {
       />,
     );
 
-    expect(container.innerHTML).not.toContain('javascript:alert');
-    expect(container.querySelector('[style*="background-image"]')).not.toBeInTheDocument();
+    const backgroundLayer = container.querySelector('div[style]');
+    expect(backgroundLayer).toBeNull();
   });
 
   it('keeps safe same-origin menu background images', () => {
@@ -29,6 +29,8 @@ describe('public menu media', () => {
       />,
     );
 
-    expect(container.innerHTML).toContain('/preview-photos/header-anchor.jpg');
+    const backgroundLayer = container.querySelector('div[style]') as HTMLDivElement | null;
+    expect(backgroundLayer).not.toBeNull();
+    expect(backgroundLayer?.style.backgroundImage).toContain('/preview-photos/header-anchor.jpg');
   });
 });

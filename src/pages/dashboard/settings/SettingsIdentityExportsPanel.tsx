@@ -40,13 +40,13 @@ export function SettingsIdentityExportsPanel({
         <div className="space-y-4">
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {weddingIdentityExportKit.items.map((item) => (
-              <div key={item.id} className="rounded-lg border border-border-subtle bg-white p-3">
+              <div key={item.id} className="rounded-2xl border border-border-subtle bg-white p-3">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <p className="text-sm font-semibold text-text-primary">{item.label}</p>
                     <p className="mt-1 text-xs text-text-secondary">{item.description}</p>
                   </div>
-                  <span className={`shrink-0 rounded-lg px-2 py-0.5 text-[11px] font-medium ${
+                  <span className={`shrink-0 rounded-xl px-2 py-0.5 text-[11px] font-medium ${
                     item.status === 'ready'
                       ? 'bg-success/10 text-success'
                       : item.status === 'needs-info'
@@ -64,7 +64,7 @@ export function SettingsIdentityExportsPanel({
             ))}
           </div>
 
-          <div className="rounded-lg border border-border-subtle bg-surface-subtle/40 p-4">
+          <div className="rounded-2xl border border-border-subtle bg-surface-subtle/40 p-4">
             <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
               {weddingIdentityExportKit.manifest.map((entry) => (
                 <div key={entry.label}>
@@ -81,7 +81,7 @@ export function SettingsIdentityExportsPanel({
               </div>
             )}
             {!isPublished && (
-              <div className="mt-3 rounded-lg border border-border-subtle bg-surface-subtle p-3 text-xs text-text-secondary">
+              <div className="mt-3 rounded-2xl border border-border-subtle bg-surface-subtle p-3 text-xs text-text-secondary">
                 Publish the site before saving QR-based print assets or the story graphic so guests do not get draft-only links.
               </div>
             )}

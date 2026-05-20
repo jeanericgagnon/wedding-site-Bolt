@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
+  buildOverviewDismissalStorageKey,
   buildPublishReadinessItems,
   buildSetupChecklist,
   getChecklistProgress,
@@ -120,6 +121,13 @@ describe('overviewUtils', () => {
     expect(readOverviewDismissalIds(key)).toEqual(ids);
   });
 
+  it('scopes overview intelligence dismissal keys to the active site when provided', () => {
+    expect(buildOverviewDismissalStorageKey('site-a')).toBe('dayof_intelligence_dismissed_v1::site-a');
+    expect(buildOverviewDismissalStorageKey('  SITE-B  ')).toBe('dayof_intelligence_dismissed_v1::site-b');
+    expect(buildOverviewDismissalStorageKey('')).toBe('dayof_intelligence_dismissed_v1');
+    expect(buildOverviewDismissalStorageKey(null)).toBe('dayof_intelligence_dismissed_v1');
+  });
+
   it('migrates legacy overview intelligence dismissals and clears stale or malformed values', () => {
     const key = 'overview-dismissals-test';
     window.localStorage.setItem(key, JSON.stringify(['legacy-a', 'legacy-a', 'legacy-b']));
@@ -136,5 +144,15 @@ describe('overviewUtils', () => {
     window.localStorage.setItem(key, '{broken');
     expect(readOverviewDismissalIds(key)).toEqual([]);
     expect(window.localStorage.getItem(key)).toBeNull();
+  });
+
+  it('migrates legacy overview dismissals into the active site scope', () => {
+    window.localStorage.setItem('dayof_intelligence_dismissed_v1', JSON.stringify({
+      savedAtISO: '2026-05-06T12:00:00.000Z',
+      ids: ['legacy-a'],
+    }));
+
+    expect(readOverviewDismissalIds('dayof_intelligence_dismissed_v1::site-a')).toEqual(['legacy-a']);
+    expect(window.localStorage.getItem('dayof_intelligence_dismissed_v1::site-a')).toContain('legacy-a');
   });
 });

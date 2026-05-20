@@ -58,6 +58,9 @@ jobs:
       - name: Security regression tests
         run: npm run test:security
 
+      - name: Proof-board freshness
+        run: npm run proof:v1:board:freshness
+
       - name: Guests / RSVP launch slice
         run: npm run proof:v1:guests-rsvp-ops
 

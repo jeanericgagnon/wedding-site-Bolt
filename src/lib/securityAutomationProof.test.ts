@@ -14,6 +14,9 @@ describe('security automation proof', () => {
 
     expect(packageJson.scripts?.['proof:v1:security-automation']).toBe('node scripts/v1-proof-security-automation.mjs');
     expect(packageJson.scripts?.['test:launch']).toContain('npm run proof:v1:security-automation');
+    expect(packageJson.scripts?.['test:launch']).toContain('npm run proof:v1:board:freshness');
+    expect(packageJson.scripts?.['test:launch']).toContain('npm run proof:v1:board');
+    expect(packageJson.scripts?.['test:launch']).toContain('npm run proof:v1:board:md');
     expect(packageJson.scripts?.['test:launch']).toContain('LIVE_GUEST_DASHBOARD_SETTINGS_RPCS=1 npm run proof:v1:client-rls-matrix -- --require-live');
     expect(dependabot).toContain('package-ecosystem: "npm"');
     expect(dependabot).toContain('package-ecosystem: "github-actions"');
@@ -24,6 +27,12 @@ describe('security automation proof', () => {
     expect(codeqlWorkflow).toContain('github/codeql-action/analyze@v4');
     expect(gitleaksWorkflow).toContain('gitleaks/gitleaks-action@v2');
     expect(ciHardpass).toContain('npm run proof:v1:security-automation');
+    expect(ciHardpass).toContain('npm run proof:v1:board:freshness');
+    expect(ciHardpass).not.toContain('npm run proof:v1:board\n');
+    expect(ciHardpass).not.toContain('npm run proof:v1:board:md');
     expect(releaseGate).toContain('npm run proof:v1:security-automation');
+    expect(releaseGate).toContain('npm run proof:v1:board:freshness');
+    expect(releaseGate).not.toContain('npm run proof:v1:board\n');
+    expect(releaseGate).not.toContain('npm run proof:v1:board:md');
   });
 });

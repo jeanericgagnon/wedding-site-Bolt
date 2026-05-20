@@ -16,12 +16,13 @@ const REGISTRY_DELETE_ERROR_COPY = 'Couldn’t remove that gift. Please try agai
 const REGISTRY_PURCHASE_ERROR_COPY = 'Couldn’t update that gift right now. Please try again.';
 
 const REGISTRY_ITEM_SELECT = 'id, wedding_site_id, item_type, item_name, price_label, price_amount, store_name, merchant, source_type, barcode, item_url, canonical_url, image_url, selected_retailer, selected_product_url, estimated_price_cents, product_metadata, description, notes, quantity_needed, quantity_purchased, purchaser_name, purchase_status, hide_when_purchased, sort_order, priority, availability, metadata_last_checked_at, metadata_fetch_status, metadata_confidence_score, metadata_source_method, metadata_retailer, previous_price_amount, price_last_changed_at, next_refresh_at, last_auto_refreshed_at, refresh_fail_count, fund_goal_amount, fund_received_amount, fund_venmo_url, fund_paypal_url, fund_zelle_handle, fund_custom_url, fund_custom_label, created_at, updated_at' as const;
-export const REGISTRY_DASHBOARD_SITE_SELECT = 'id, wedding_date, registry_refresh_enabled_until, registry_monthly_refresh_cap, registry_monthly_refresh_count, registry_monthly_refresh_month, registry_auto_refresh_enabled, registry_refresh_include_purchased, registry_refresh_policy_updated_at, registry_refresh_policy_updated_by' as const;
+export const REGISTRY_DASHBOARD_SITE_SELECT = 'id, site_slug, wedding_date, registry_refresh_enabled_until, registry_monthly_refresh_cap, registry_monthly_refresh_count, registry_monthly_refresh_month, registry_auto_refresh_enabled, registry_refresh_include_purchased, registry_refresh_policy_updated_at, registry_refresh_policy_updated_by' as const;
 export const MAX_REGISTRY_ITEMS = 500;
 export const MAX_REGISTRY_SORT_LOOKUP_ROWS = 1;
 
 export interface RegistryDashboardSiteRow {
   id: string;
+  site_slug: string | null;
   wedding_date: string | null;
   registry_refresh_enabled_until: string | null;
   registry_monthly_refresh_cap: number | null;

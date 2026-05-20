@@ -127,6 +127,46 @@ describe('DashboardSeatingLookup', () => {
     expect(loadSeatingLookupRowsForUser).toHaveBeenNthCalledWith(2, 'user-1', 'event-2');
   });
 
+  it('ignores stale lookup rows after a newer event load starts', async () => {
+    let resolveFirstRows: (rows: Array<{
+      itinerary_event_id: string;
+      event_name: string;
+      guest_id: string;
+      full_name: string;
+      email: string;
+      table_name: string;
+      seat_index: number;
+      checked_in_at: string | null;
+    }>) => void = () => {};
+    getWeddingSiteId.mockResolvedValue('site-1');
+    loadItineraryEvents.mockResolvedValue([
+      { id: 'event-1', event_name: 'Ceremony', event_date: '2026-05-20', start_time: '16:00:00', location_name: 'Garden' },
+      { id: 'event-2', event_name: 'Reception', event_date: '2026-05-20', start_time: '19:00:00', location_name: 'Hall' },
+    ]);
+    loadSeatingLookupRowsForUser
+      .mockImplementationOnce(() => new Promise((resolve) => { resolveFirstRows = resolve; }))
+      .mockResolvedValueOnce([
+        { itinerary_event_id: 'event-2', event_name: 'Reception', guest_id: 'guest-current', full_name: 'Current Guest', email: 'current@example.com', table_name: 'Table 4', seat_index: 1, checked_in_at: null },
+      ]);
+
+    render(
+      <MemoryRouter>
+        <DashboardSeatingLookup />
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => expect(loadSeatingLookupRowsForUser).toHaveBeenCalledWith('user-1', 'event-1'));
+    fireEvent.change(screen.getByRole('combobox'), { target: { value: 'event-2' } });
+
+    await screen.findByText('Current Guest');
+    resolveFirstRows([
+      { itinerary_event_id: 'event-1', event_name: 'Ceremony', guest_id: 'guest-stale', full_name: 'Stale Guest', email: 'stale@example.com', table_name: 'Table 1', seat_index: 2, checked_in_at: null },
+    ]);
+
+    await waitFor(() => expect(screen.queryByText('Stale Guest')).not.toBeInTheDocument());
+    expect(screen.getByText('Current Guest')).toBeInTheDocument();
+  });
+
   it('handles an empty event list without trying to load rows', async () => {
     getWeddingSiteId.mockResolvedValue('site-1');
     loadItineraryEvents.mockResolvedValue([]);

@@ -7,8 +7,8 @@ import { getSafePublicWebUrl } from '../sections/publicLinks';
 import { normalizeGuestLanguageCode, readStoredGuestLanguage, resolveGuestLanguagePreference, writeStoredGuestLanguage } from '../lib/guestLanguagePreference';
 import {
   DEFAULT_MEAL_CONFIG,
+  buildRsvpContinuityStorageKey,
   RSVP_CONTINUITY_EVENT,
-  RSVP_CONTINUITY_STORAGE_KEY,
   normalizeRsvpGuestError,
   normalizeRsvpSubmitError,
   type ExistingRSVP,
@@ -50,12 +50,19 @@ import { runRsvpTokenLookup } from './runRsvpTokenLookup';
 
 const USE_DEMO_RSVP = DEMO_MODE && !SUPABASE_CONFIGURED;
 
-function notifyRsvpContinuityUpdate() {
+function notifyRsvpContinuityUpdate(siteSlug?: string | null) {
   if (typeof window === 'undefined') return;
 
-  const updatedAt = writeRsvpContinuityStoragePing(RSVP_CONTINUITY_STORAGE_KEY);
+  const storageKey = buildRsvpContinuityStorageKey(siteSlug);
+  const updatedAt = writeRsvpContinuityStoragePing(storageKey);
 
-  window.dispatchEvent(new CustomEvent(RSVP_CONTINUITY_EVENT, { detail: { updatedAt } }));
+  window.dispatchEvent(new CustomEvent(RSVP_CONTINUITY_EVENT, {
+    detail: {
+      updatedAt,
+      siteSlug: String(siteSlug ?? '').trim().toLowerCase() || null,
+      storageKey,
+    },
+  }));
 }
 
 function getLegacyTestRsvpSessionToken(value: unknown): string | null {
@@ -368,6 +375,7 @@ export default function RSVP() {
   const [searchValue, setSearchValue] = useState('');
   const [guest, setGuest] = useState<Guest | null>(null);
   const [rsvpSessionToken, setRsvpSessionToken] = useState<string | null>(null);
+  const [continuitySiteSlug, setContinuitySiteSlug] = useState<string | null>(null);
   const [ambiguousGuests, setAmbiguousGuests] = useState<Guest[]>([]);
   const [existingRsvp, setExistingRsvp] = useState<ExistingRSVP | null>(null);
   const [rsvpDeadline, setRsvpDeadline] = useState<string | null>(null);
@@ -395,19 +403,23 @@ export default function RSVP() {
   const [applyToHousehold, setApplyToHousehold] = useState(true);
   const [selectedHouseholdGuestIds, setSelectedHouseholdGuestIds] = useState<string[]>([]);
   const currentGuestLanguage = normalizeGuestLanguageCode(i18n.resolvedLanguage ?? i18n.language) ?? 'en';
+  const continuityStorageKey = useMemo(
+    () => buildRsvpContinuityStorageKey(continuitySiteSlug),
+    [continuitySiteSlug],
+  );
 
   useEffect(() => {
     const languagePreference = resolveGuestLanguagePreference({
       search: searchParams,
-      storedLanguage: readStoredGuestLanguage(),
+      storedLanguage: readStoredGuestLanguage(activeToken),
     });
     if (languagePreference.language !== i18n.language?.split('-')[0]?.toLowerCase()) {
       void i18n.changeLanguage(languagePreference.language);
     }
     if (languagePreference.source === 'guest-link') {
-      writeStoredGuestLanguage(languagePreference.language);
+      writeStoredGuestLanguage(languagePreference.language, activeToken);
     }
-  }, [i18n, searchParams]);
+  }, [activeToken, i18n, searchParams]);
 
   const invalidateActiveSubmit = useCallback(() => {
     invalidateRsvpSubmitState(activeSubmitRequestRef, submitInFlightRef, setLoading, setSubmitting);
@@ -449,6 +461,7 @@ export default function RSVP() {
       searchValue: preserveToken ? (activeToken ?? '') : '',
     });
     tokenLinkedSessionRef.current = false;
+    setContinuitySiteSlug(null);
     if (!preserveToken && activeToken) {
       navigate('/rsvp', { replace: true });
     }
@@ -595,6 +608,7 @@ export default function RSVP() {
       loadInFlightRef,
       normalizeRsvpGuestError,
       onInviteRouteResolved: (siteSlug) => {
+        setContinuitySiteSlug(siteSlug);
         const analyticsKey = `${siteSlug}:${token}`;
         if (trackedInviteAnalyticsKeyRef.current === analyticsKey) return;
         trackedInviteAnalyticsKeyRef.current = analyticsKey;
@@ -641,16 +655,18 @@ export default function RSVP() {
   useEffect(() => {
     if (!activeToken) return undefined;
 
-    const handleRsvpContinuityUpdate = () => {
+    const handleRsvpContinuityUpdate = (event: Event) => {
       if (ignoreNextLocalContinuityEventRef.current) {
         ignoreNextLocalContinuityEventRef.current = false;
         return;
       }
+      const continuityEvent = event as CustomEvent<{ storageKey?: string | null }>;
+      if (continuityEvent.detail?.storageKey && continuityEvent.detail.storageKey !== continuityStorageKey) return;
       refreshTokenLinkedRsvpForContinuity();
     };
 
     const handleStorage = (event: StorageEvent) => {
-      if (event.key !== RSVP_CONTINUITY_STORAGE_KEY || !isFreshRsvpContinuityStorageValue(event.newValue)) return;
+      if (event.key !== continuityStorageKey || !isFreshRsvpContinuityStorageValue(event.newValue)) return;
       refreshTokenLinkedRsvpForContinuity();
     };
 
@@ -670,7 +686,7 @@ export default function RSVP() {
       window.removeEventListener('storage', handleStorage);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [activeToken, refreshTokenLinkedRsvpForContinuity]);
+  }, [activeToken, continuityStorageKey, refreshTokenLinkedRsvpForContinuity]);
 
   useEffect(() => {
     if (!pendingContinuityRefreshRef.current || !activeToken || !tokenLinkedSessionRef.current) return;
@@ -717,6 +733,7 @@ export default function RSVP() {
       language: currentGuestLanguage,
       lookupSource: 'search',
       normalizeRsvpGuestError,
+      onLookupSiteResolved: setContinuitySiteSlug,
       requestId,
       searchValue,
       selectGuest,
@@ -818,6 +835,7 @@ export default function RSVP() {
       language: currentGuestLanguage,
       lookupSource: 'pick',
       normalizeRsvpGuestError,
+      onLookupSiteResolved: setContinuitySiteSlug,
       requestId,
       rsvpSessionToken,
       selectGuest,
@@ -865,7 +883,7 @@ export default function RSVP() {
       normalizeCustomAnswers,
       normalizeRsvpSubmitError,
       normalizeSelectedHouseholdGuestIds,
-      notifyRsvpContinuityUpdate,
+      notifyRsvpContinuityUpdate: () => notifyRsvpContinuityUpdate(continuitySiteSlug),
       requestId,
       rsvpDeadline,
       rsvpQuestions,
@@ -946,6 +964,12 @@ export default function RSVP() {
     setSelectedHouseholdGuestIds((current) => updater(current));
   }, [invalidateSubmitFromEdit]);
 
+  const updateSearchValue = useCallback((value: string) => {
+    invalidateActiveSubmit();
+    setError('');
+    setSearchValue(value);
+  }, [invalidateActiveSubmit]);
+
 
   const goToNextFormStep = () => {
     const result = validateRsvpFormAdvance({
@@ -1025,7 +1049,7 @@ export default function RSVP() {
     onPickGuest: handlePickGuest,
     onSearchAgain: liveContentActions.onSearchAgain,
     onSearchSubmit: handleSearch,
-    onSearchValueChange: setSearchValue,
+    onSearchValueChange: updateSearchValue,
     onStepAnswerChange: updateCustomAnswers,
     onStepDataChange: updateFormData,
     onSubmitAnother: liveContentActions.onSubmitAnother,

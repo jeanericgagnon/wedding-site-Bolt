@@ -4,6 +4,7 @@ import { normalizeAnalyticsSettings, safeSettingsError } from './settingsDashboa
 import { loadSettingsDashboardSnapshot } from './loadSettingsDashboardSnapshot';
 import type { RSVPQuestionSetting, SiteLanguageCode, TranslationStatusRow } from './settingsDashboardTypes';
 import type { SettingsCollaboratorInviteRow } from './settingsSiteData';
+import type { PlannerPermissionKey } from '../../../lib/plannerAccess';
 
 interface DraftHydrationGuard {
   shouldHydrate: () => boolean;
@@ -42,6 +43,7 @@ interface UseSettingsDashboardSnapshotHydrationArgs {
   setRsvpMealOptions: React.Dispatch<React.SetStateAction<string[]>>;
   setRsvpQuestions: React.Dispatch<React.SetStateAction<RSVPQuestionSetting[]>>;
   setSettingsRole: React.Dispatch<React.SetStateAction<'owner' | 'planner' | 'coordinator' | 'viewer'>>;
+  setSettingsPermissions: React.Dispatch<React.SetStateAction<PlannerPermissionKey[] | null>>;
   setSiteSlug: React.Dispatch<React.SetStateAction<string>>;
   setSettingsWeddingData: React.Dispatch<React.SetStateAction<Record<string, unknown> | null>>;
   setTranslationStatuses: React.Dispatch<React.SetStateAction<TranslationStatusRow[]>>;
@@ -86,6 +88,7 @@ export function useSettingsDashboardSnapshotHydration({
   setRsvpMealOptions,
   setRsvpQuestions,
   setSettingsRole,
+  setSettingsPermissions,
   setSiteSlug,
   setSettingsWeddingData,
   setTranslationStatuses,
@@ -96,7 +99,7 @@ export function useSettingsDashboardSnapshotHydration({
   userId,
   visibilityDraftGuard,
 }: UseSettingsDashboardSnapshotHydrationArgs) {
-  const loadSiteData = useCallback(async () => {
+  const loadSiteData = useCallback(async (shouldCancel?: () => boolean) => {
     try {
       const snapshot = await loadSettingsDashboardSnapshot({
         isDemoMode,
@@ -104,7 +107,10 @@ export function useSettingsDashboardSnapshotHydration({
         userId,
       });
 
+      if (shouldCancel?.()) return;
+
       setSettingsRole(snapshot.settingsRole);
+      setSettingsPermissions(snapshot.settingsPermissions);
       setWeddingSiteId(snapshot.weddingSiteId);
       setAccountEmail(snapshot.accountEmail);
       setCoupleNames(snapshot.coupleNames);
@@ -151,6 +157,7 @@ export function useSettingsDashboardSnapshotHydration({
         setRsvpMealOptions(snapshot.rsvpMealOptions);
       }
     } catch (err) {
+      if (shouldCancel?.()) return;
       setAccountError(safeSettingsError(err, 'Couldn’t load settings right now.'));
     }
   }, [
@@ -186,6 +193,7 @@ export function useSettingsDashboardSnapshotHydration({
     setRsvpMealOptions,
     setRsvpQuestions,
     setSettingsRole,
+    setSettingsPermissions,
     setSiteSlug,
     setSettingsWeddingData,
     setTranslationStatuses,
@@ -198,7 +206,11 @@ export function useSettingsDashboardSnapshotHydration({
   ]);
 
   useEffect(() => {
-    void loadSiteData();
+    let cancelled = false;
+    void loadSiteData(() => cancelled);
+    return () => {
+      cancelled = true;
+    };
   }, [loadSiteData]);
 
   return {

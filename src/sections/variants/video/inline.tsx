@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { z } from 'zod';
 import { Play, Film } from 'lucide-react';
 import { SectionDefinition, SectionComponentProps } from '../../types';
@@ -32,6 +32,10 @@ const VideoInline: React.FC<SectionComponentProps<VideoInlineData>> = ({ data })
   const thumbnailUrl = getSafePublicImageUrl(data.thumbnailUrl);
   const safeDirectVideoUrl = data.videoType === 'direct' ? getSafePublicVideoEmbedUrl(data.videoUrl, 'direct') : '';
   const isLeft = data.contentPosition === 'left';
+
+  useEffect(() => {
+    setPlaying(false);
+  }, [data.contentPosition, data.videoType, data.videoUrl, data.thumbnailUrl]);
 
   const content = (
     <div className="flex flex-col justify-center">

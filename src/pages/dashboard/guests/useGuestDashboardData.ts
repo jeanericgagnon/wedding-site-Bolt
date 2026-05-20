@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, type Dispatch, type MutableRefObject, type SetStateAction } from 'react';
+import { useCallback, useEffect, useRef, useState, type Dispatch, type MutableRefObject, type SetStateAction } from 'react';
 
 import { demoGuests, demoRSVPs, demoWeddingSite } from '../../../lib/demoData';
 import { deriveDefaultRsvpAccessSelection } from '../../../lib/rsvpAccessPlanner';
@@ -63,19 +63,52 @@ export function useGuestDashboardData({
   const [rsvpAuditFeed, setRsvpAuditFeed] = useState<GuestAuditEntry[]>([]);
   const [rsvpAuditLoading, setRsvpAuditLoading] = useState(false);
   const [activeSiteSyncVersion, setActiveSiteSyncVersion] = useState(0);
+  const siteSettingsRequestIdRef = useRef(0);
+  const currentGuestWeddingSiteIdRef = useRef<string | null>(weddingSiteId);
   const demoItinerarySnapshot = buildDemoGuestItinerarySnapshot();
 
+  useEffect(() => {
+    currentGuestWeddingSiteIdRef.current = weddingSiteId;
+  }, [weddingSiteId]);
+
+  const isCurrentGuestWeddingSite = useCallback((siteId: string) => currentGuestWeddingSiteIdRef.current === siteId, []);
+
+  const resetGuestDashboardState = useCallback(() => {
+    setGuests([]);
+    setWeddingSiteId(null);
+    setWeddingSiteInfo(null);
+    setGuestsRole('owner');
+    setGuestsPermissions(null);
+    setRsvpQuestions([]);
+    setRsvpMealEnabled(true);
+    setRsvpMealOptions(['Chicken', 'Beef', 'Fish', 'Vegetarian', 'Vegan']);
+    setRsvpAccessSelection(deriveDefaultRsvpAccessSelection({
+      guestCount: 0,
+      inviteTokenCount: 0,
+    }));
+    setRsvpConflicts([]);
+    setRsvpConflictHistory([]);
+    setItineraryFilterEvents([]);
+    setEventInviteGuestMap(new Map());
+    setItineraryEvents([]);
+    setRsvpAuditFeed([]);
+    setRsvpAuditLoading(false);
+  }, []);
+
   const fetchWeddingSite = useCallback(async () => {
+    const requestId = ++siteSettingsRequestIdRef.current;
     if (!userId) {
-      setWeddingSiteId(null);
-      setWeddingSiteInfo(null);
-      setGuests([]);
+      resetGuestDashboardState();
       setLoading(false);
       return;
     }
 
     if (isDemoMode) {
       setWeddingSiteId(demoWeddingSite.id);
+      setGuestsRole('owner');
+      setGuestsPermissions(null);
+      setReminderCadenceDays(3);
+      setAutoRemindersEnabled(false);
       setWeddingSiteInfo({
         id: demoWeddingSite.id,
         couple_name_1: demoWeddingSite.couple_name_1,
@@ -99,6 +132,7 @@ export function useGuestDashboardData({
 
     try {
       const snapshot = await loadGuestDashboardSiteSettings(userId);
+      if (requestId !== siteSettingsRequestIdRef.current) return;
       setGuestsRole(snapshot.role);
       setGuestsPermissions(snapshot.permissions);
 
@@ -113,19 +147,16 @@ export function useGuestDashboardData({
         setAutoRemindersEnabled(snapshot.autoRemindersEnabled);
         rsvpConfigLoadedRef.current = true;
       } else {
-        setWeddingSiteId(null);
-        setWeddingSiteInfo(null);
-        setGuests([]);
+        resetGuestDashboardState();
         setLoading(false);
       }
     } catch {
-      setWeddingSiteId(null);
-      setWeddingSiteInfo(null);
-      setGuests([]);
+      if (requestId !== siteSettingsRequestIdRef.current) return;
+      resetGuestDashboardState();
       setLoading(false);
       toast("Couldn’t load guest site settings right now. Please try again.", 'error');
     }
-  }, [activeSiteSyncVersion, isDemoMode, rsvpConfigLoadedRef, setAutoRemindersEnabled, setReminderCadenceDays, toast, userId]);
+  }, [activeSiteSyncVersion, isDemoMode, resetGuestDashboardState, rsvpConfigLoadedRef, setAutoRemindersEnabled, setReminderCadenceDays, toast, userId]);
 
   const fetchGuests = useCallback(async () => {
     if (!weddingSiteId) return;
@@ -150,18 +181,20 @@ export function useGuestDashboardData({
       }
 
       const snapshot = await loadGuestDashboardSnapshot(weddingSiteId);
+      if (!isCurrentGuestWeddingSite(weddingSiteId)) return;
       setGuests(snapshot.guests);
       setRsvpConflicts(snapshot.conflicts);
       setRsvpConflictHistory(snapshot.conflictHistory);
     } catch {
+      if (!isCurrentGuestWeddingSite(weddingSiteId)) return;
       setGuests([]);
       setRsvpConflicts([]);
       setRsvpConflictHistory([]);
       toast("Couldn’t load guest records right now. Please try again.", 'error');
     } finally {
-      setLoading(false);
+      if (isCurrentGuestWeddingSite(weddingSiteId)) setLoading(false);
     }
-  }, [isDemoMode, toast, weddingSiteId]);
+  }, [isCurrentGuestWeddingSite, isDemoMode, toast, weddingSiteId]);
 
   useEffect(() => {
     void fetchWeddingSite();

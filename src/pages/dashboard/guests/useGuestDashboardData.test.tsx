@@ -130,4 +130,30 @@ describe('useGuestDashboardData', () => {
     expect(result.current.guests).toEqual([]);
     expect(toast).toHaveBeenCalledWith("Couldn’t load guest site settings right now. Please try again.", 'error');
   });
+
+  it('resets real-site role, permissions, and reminder settings when loading demo mode', async () => {
+    const toast = vi.fn();
+    const rsvpConfigLoadedRef = { current: false };
+    const setAutoRemindersEnabled = vi.fn();
+    const setReminderCadenceDays = vi.fn();
+    const { result } = renderHook(() =>
+      useGuestDashboardData({
+        guestsTab: 'ops',
+        isDemoMode: true,
+        rsvpConfigLoadedRef,
+        setAutoRemindersEnabled,
+        setReminderCadenceDays,
+        toast,
+        userId: 'demo-user',
+      }),
+    );
+
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(result.current.weddingSiteId).toBe('demo-site-id');
+    expect(result.current.guestsRole).toBe('owner');
+    expect(result.current.guestsPermissions).toBeNull();
+    expect(setReminderCadenceDays).toHaveBeenCalledWith(3);
+    expect(setAutoRemindersEnabled).toHaveBeenCalledWith(false);
+    expect(rsvpConfigLoadedRef.current).toBe(true);
+  });
 });

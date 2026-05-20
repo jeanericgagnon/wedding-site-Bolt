@@ -1,13 +1,14 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { getGuestOpsTimestamp } from '../guestOpsTime';
 import type { RsvpConflict, RsvpConflictStats } from './guestDashboardTypes';
 import { resolveGuestDashboardConflict, resolveGuestDashboardConflicts } from './guestService';
 
-type ToastFn = (message: string, tone?: 'success' | 'error' | 'warning') => void;
+type ToastFn = (message: string, tone?: 'success' | 'error' | 'warning' | 'info') => void;
 
 type UseGuestDashboardConflictActionsArgs = {
   conflictFilter: 'all' | 'error' | 'warning';
   isDemoMode: boolean;
+  isGuestsReadOnly: boolean;
   rsvpConflictHistory: RsvpConflict[];
   rsvpConflicts: RsvpConflict[];
   setRsvpConflictHistory: React.Dispatch<React.SetStateAction<RsvpConflict[]>>;
@@ -18,13 +19,26 @@ type UseGuestDashboardConflictActionsArgs = {
 export function useGuestDashboardConflictActions({
   conflictFilter,
   isDemoMode,
+  isGuestsReadOnly,
   rsvpConflictHistory,
   rsvpConflicts,
   setRsvpConflictHistory,
   setRsvpConflicts,
   toast,
 }: UseGuestDashboardConflictActionsArgs) {
+  const guestConflictContextVersionRef = useRef(0);
+  const conflictResolveRequestIdRef = useRef(0);
   const [resolvingConflictId, setResolvingConflictId] = useState<string | null>(null);
+
+  useEffect(() => {
+    guestConflictContextVersionRef.current += 1;
+    conflictResolveRequestIdRef.current += 1;
+    setResolvingConflictId(null);
+  }, [isDemoMode, rsvpConflictHistory, rsvpConflicts]);
+
+  function isCurrentGuestConflictContext(contextVersion: number) {
+    return contextVersion === guestConflictContextVersionRef.current;
+  }
 
   const visibleRsvpConflicts = useMemo(
     () => rsvpConflicts.filter((conflict) => (conflictFilter === 'all' ? true : conflict.severity === conflictFilter)),
@@ -62,9 +76,19 @@ export function useGuestDashboardConflictActions({
   }, [rsvpConflictHistory, rsvpConflicts]);
 
   const resolveConflict = useCallback(async (conflictId: string) => {
+    if (isGuestsReadOnly) {
+      toast('Viewer mode is read-only.', 'info');
+      return;
+    }
+
+    const contextVersion = guestConflictContextVersionRef.current;
+    const requestId = ++conflictResolveRequestIdRef.current;
+    const isCurrentConflictResolve = () =>
+      isCurrentGuestConflictContext(contextVersion) && requestId === conflictResolveRequestIdRef.current;
     setResolvingConflictId(conflictId);
     try {
       if (isDemoMode) {
+        if (!isCurrentConflictResolve()) return;
         setRsvpConflicts((prev) => prev.filter((conflict) => conflict.id !== conflictId));
         setRsvpConflictHistory((prev) =>
           prev.map((conflict) => (conflict.id === conflictId ? { ...conflict, resolved: true, resolved_at: new Date().toISOString() } : conflict))
@@ -74,41 +98,58 @@ export function useGuestDashboardConflictActions({
 
       const resolvedAt = new Date().toISOString();
       await resolveGuestDashboardConflict(conflictId, resolvedAt);
+      if (!isCurrentConflictResolve()) return;
       setRsvpConflicts((prev) => prev.filter((conflict) => conflict.id !== conflictId));
       setRsvpConflictHistory((prev) =>
         prev.map((conflict) => (conflict.id === conflictId ? { ...conflict, resolved: true, resolved_at: resolvedAt } : conflict))
       );
       toast('RSVP item marked done', 'success');
     } catch {
+      if (!isCurrentConflictResolve()) return;
       toast('Couldn’t mark that RSVP item done.', 'error');
     } finally {
-      setResolvingConflictId(null);
+      if (isCurrentConflictResolve()) {
+        setResolvingConflictId(null);
+      }
     }
-  }, [isDemoMode, setRsvpConflictHistory, setRsvpConflicts, toast]);
+  }, [isDemoMode, isGuestsReadOnly, setRsvpConflictHistory, setRsvpConflicts, toast]);
 
   const resolveAllVisibleConflicts = useCallback(async () => {
     if (visibleRsvpConflicts.length === 0) return;
+    if (isGuestsReadOnly) {
+      toast('Viewer mode is read-only.', 'info');
+      return;
+    }
 
+    const contextVersion = guestConflictContextVersionRef.current;
+    const requestId = ++conflictResolveRequestIdRef.current;
+    const isCurrentConflictResolve = () =>
+      isCurrentGuestConflictContext(contextVersion) && requestId === conflictResolveRequestIdRef.current;
+    const ids = visibleRsvpConflicts.map((conflict) => conflict.id);
     setResolvingConflictId('all');
     try {
-      const ids = visibleRsvpConflicts.map((conflict) => conflict.id);
       const resolvedAt = new Date().toISOString();
 
       if (!isDemoMode) {
         await resolveGuestDashboardConflicts(ids, resolvedAt);
+        if (!isCurrentConflictResolve()) return;
       }
 
+      if (!isCurrentConflictResolve()) return;
       setRsvpConflictHistory((prev) =>
         prev.map((conflict) => (ids.includes(conflict.id) ? { ...conflict, resolved: true, resolved_at: resolvedAt } : conflict))
       );
       setRsvpConflicts((prev) => prev.filter((conflict) => !ids.includes(conflict.id)));
       toast(`${ids.length} RSVP item${ids.length === 1 ? '' : 's'} marked done`, 'success');
     } catch {
+      if (!isCurrentConflictResolve()) return;
       toast('Couldn’t mark those RSVP items done.', 'error');
     } finally {
-      setResolvingConflictId(null);
+      if (isCurrentConflictResolve()) {
+        setResolvingConflictId(null);
+      }
     }
-  }, [isDemoMode, setRsvpConflictHistory, setRsvpConflicts, toast, visibleRsvpConflicts]);
+  }, [isDemoMode, isGuestsReadOnly, setRsvpConflictHistory, setRsvpConflicts, toast, visibleRsvpConflicts]);
 
   return {
     resolveAllVisibleConflicts,

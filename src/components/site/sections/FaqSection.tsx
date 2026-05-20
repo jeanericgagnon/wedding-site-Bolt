@@ -19,7 +19,7 @@ export const FaqSection: React.FC<FaqSectionProps> = ({ content }) => {
 
         <div className="space-y-6">
           {content.items.map((item) => (
-            <div key={item.id} className="bg-background rounded-lg p-6">
+            <div key={item.id} className="bg-background rounded-xl p-6">
               <h3 className="font-semibold text-text-primary mb-3 text-lg">
                 {item.question}
               </h3>

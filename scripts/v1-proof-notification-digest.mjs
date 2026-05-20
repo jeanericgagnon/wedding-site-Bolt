@@ -10,6 +10,7 @@ function runStep(step) {
       encoding: 'utf8',
       shell: '/bin/zsh',
       env: process.env,
+      timeout: step.timeoutMs ?? 180_000,
       maxBuffer: 20 * 1024 * 1024,
     });
 
@@ -45,12 +46,14 @@ const results = [
   runStep({
     id: 'digest-tests',
     label: 'Notification digest truth tests',
-    command: 'npm test -- --run src/lib/calmOwnerDigest.test.ts src/lib/calmDigestEmail.test.ts src/pages/dashboard/buildOverviewSnapshotState.test.ts src/pages/dashboard/buildOverviewDashboardModel.test.ts src/pages/dashboard/overviewService.test.ts src/pages/dashboard/settings/SettingsNotificationsPanel.test.tsx',
+    command: 'node_modules/.bin/vitest run src/lib/calmOwnerDigest.test.ts src/lib/calmDigestEmail.test.ts src/pages/dashboard/buildOverviewSnapshotState.test.ts src/pages/dashboard/buildOverviewDashboardModel.test.ts src/pages/dashboard/overviewService.test.ts src/pages/dashboard/settings/SettingsNotificationsPanel.test.tsx --config scripts/notification-digest-vitest.config.mjs --environment jsdom --pool=threads --maxWorkers=1 --no-file-parallelism --reporter=verbose',
+    timeoutMs: 240_000,
   }),
   runStep({
     id: 'build',
     label: 'Build integrity check',
     command: 'npm run build',
+    timeoutMs: 900_000,
   }),
 ];
 
@@ -64,6 +67,9 @@ const output = {
     passed: results.filter((result) => result.ok).length,
     failed: results.filter((result) => !result.ok).length,
   },
+  contractSummary: failedRequired.length === 0
+    ? 'Notification digest proof is green: this owner-summary lane validates digest wording and dashboard-count continuity as shipped feature evidence while still leaving live inbox delivery truth to its own downstream pipeline proof.'
+    : 'Notification digest proof is not green yet: required digest unit or build evidence is still failing.',
   automatedCoverage: [
     'Digest delivery preview wording stays honest about scheduled state versus actual inbox connectivity',
     'Overview snapshot-to-stats-to-model continuity preserves real message, task, payment, photo, and seating counts',

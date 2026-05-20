@@ -162,6 +162,9 @@ const output = {
     failed: results.filter((result) => !result.ok).length,
     blocked: blockedRequired.length + blockers.length,
   },
+  contractSummary: requireLive
+    ? 'Client RLS matrix live proof is the strongest collaborator/client permission-boundary lane: it closes live runtime access truth for shipped client writes and denials while still rolling up into the broader proof-board launch call.'
+    : 'Client RLS matrix local proof is green: it validates permission-boundary expectations locally and leaves strongest live collaborator/client access truth to the required live rerun.',
   automatedCoverage: [
     'Anonymous guest-contact lookup denies partial and mismatched names, then scopes signed household updates',
     'Public RSVP strict smoke proves guest-facing RSVP/token boundaries',

@@ -48,10 +48,10 @@ export function GuestFormModal({
     <>
       <div className="fixed inset-0 bg-black/50 z-40" onClick={onClose} aria-hidden="true" />
       <div className="fixed inset-0 flex items-center justify-center z-50 p-4" role="dialog" aria-modal="true" aria-labelledby="guest-modal-title">
-        <div className="bg-surface rounded-lg max-w-md w-full p-6 max-h-[90vh] overflow-y-auto border border-border-subtle">
+        <div className="bg-surface rounded-2xl max-w-md w-full p-6 max-h-[90vh] overflow-y-auto border border-border-subtle">
           <div className="flex justify-between items-center mb-5">
             <h2 id="guest-modal-title" className="text-xl font-semibold text-text-primary">{title}</h2>
-            <button onClick={onClose} className="p-1.5 text-text-secondary hover:text-text-primary hover:bg-surface-subtle rounded-lg transition-colors" aria-label="Close">
+            <button onClick={onClose} className="p-1.5 text-text-secondary hover:text-text-primary hover:bg-surface-subtle rounded-xl transition-colors" aria-label="Close">
               <X className="w-5 h-5" aria-hidden="true" />
             </button>
           </div>
@@ -201,18 +201,18 @@ export function AssistedRsvpModal({
     <>
       <div className="fixed inset-0 z-40 bg-black/30" onClick={() => !saving && onClose()} />
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-        <div className="w-full max-w-lg rounded-lg border border-border bg-white">
+        <div className="w-full max-w-lg rounded-2xl border border-border bg-white">
           <div className="flex items-center justify-between border-b border-border px-5 py-4">
             <div>
               <h3 className="text-lg font-semibold text-text-primary">Record RSVP for guest</h3>
               <p className="text-sm text-text-secondary mt-1">Save a response that came in by phone, text, family relay, or in person.</p>
             </div>
-            <button onClick={() => !saving && onClose()} className="p-2 rounded-lg hover:bg-surface-subtle text-text-secondary">
+            <button onClick={() => !saving && onClose()} className="p-2 rounded-xl hover:bg-surface-subtle text-text-secondary">
               <X className="w-4 h-4" />
             </button>
           </div>
           <div className="p-5 space-y-4">
-            <div className="rounded-lg border border-border-subtle bg-surface-subtle/30 p-4">
+            <div className="rounded-2xl border border-border-subtle bg-surface-subtle/30 p-4">
               <p className="text-sm font-medium text-text-primary">{guestName}</p>
               <p className="mt-1 text-xs text-text-secondary">This keeps assisted responses clear without pretending the guest submitted it themselves.</p>
             </div>
@@ -264,13 +264,13 @@ export function DeleteAllGuestsModal({
     <>
       <div className="fixed inset-0 bg-black/50 z-40" onClick={() => !busy && onCancel()} />
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-        <div className="bg-surface rounded-lg border border-border-subtle w-full max-w-md">
+        <div className="bg-surface rounded-2xl border border-border-subtle w-full max-w-md">
           <div className="p-6 border-b border-border-subtle">
             <h2 className="text-lg font-semibold text-text-primary">Delete all guests</h2>
             <p className="text-sm text-text-secondary mt-1">This permanently deletes every guest in this site.</p>
           </div>
           <div className="p-6 space-y-3">
-            <div className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-2 text-sm text-text-secondary">
+            <div className="rounded-xl border border-border-subtle bg-surface-subtle px-3 py-2 text-sm text-text-secondary">
               Type <span className="font-semibold">{guestCount}</span> to confirm deletion.
             </div>
             <input
@@ -278,7 +278,7 @@ export function DeleteAllGuestsModal({
               value={confirmInput}
               onChange={(event) => onSetConfirmInput(event.target.value)}
               placeholder={`Type ${guestCount}`}
-              className="w-full rounded-md border border-border px-3 py-2 text-sm"
+              className="w-full rounded-xl border border-border px-3 py-2 text-sm"
               disabled={busy}
             />
           </div>

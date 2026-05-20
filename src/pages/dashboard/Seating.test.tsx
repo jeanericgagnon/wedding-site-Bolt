@@ -4,6 +4,14 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { DashboardSeating } from './Seating';
 
+const { navigate } = vi.hoisted(() => ({
+  navigate: vi.fn(),
+}));
+
+vi.mock('react-router-dom', () => ({
+  useNavigate: () => navigate,
+}));
+
 const seatingState = {
   allGuests: [],
   assignments: [],
@@ -232,20 +240,11 @@ describe('DashboardSeating', () => {
   });
 
   it('keeps the itinerary CTA wired to the itinerary dashboard', () => {
-    const originalLocation = window.location;
-    Object.defineProperty(window, 'location', {
-      value: { href: '' },
-      writable: true,
-    });
+    navigate.mockReset();
 
     render(<DashboardSeating />);
     fireEvent.click(screen.getByRole('button', { name: 'Go to Itinerary' }));
 
-    expect(window.location.href).toBe('/dashboard/itinerary');
-
-    Object.defineProperty(window, 'location', {
-      value: originalLocation,
-      writable: true,
-    });
+    expect(navigate).toHaveBeenCalledWith('/dashboard/itinerary');
   });
 });

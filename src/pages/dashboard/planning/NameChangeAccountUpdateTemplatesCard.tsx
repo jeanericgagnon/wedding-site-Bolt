@@ -32,7 +32,7 @@ export function NameChangeAccountUpdateTemplatesCard({
           <h3 className="text-lg font-semibold text-text-primary">Prewritten update templates</h3>
           <p className="mt-1 text-sm text-text-secondary">Copy, stage, or send when the proof chain is ready. Payroll, bank, insurance, and other downstream updates should not require fresh writing every time.</p>
         </div>
-        <span className="rounded-md bg-surface-subtle px-2 py-1 text-xs text-text-secondary">{templates.length} templates</span>
+        <span className="rounded-xl bg-surface-subtle px-2 py-1 text-xs text-text-secondary">{templates.length} templates</span>
       </div>
 
       <div className="mt-4 space-y-3">
@@ -41,14 +41,14 @@ export function NameChangeAccountUpdateTemplatesCard({
           const bodyText = getAccountUpdateTemplateBodyText(template);
 
           return (
-            <div id={`account-update-template-${template.id}`} key={template.id} className="scroll-mt-24 rounded-lg border border-border-subtle p-4">
+            <div id={`account-update-template-${template.id}`} key={template.id} className="scroll-mt-24 rounded-2xl border border-border-subtle p-4">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <p className="text-xs text-text-tertiary">{template.audience}</p>
                   {subjectText ? <p className="mt-2 text-sm font-semibold text-text-primary">{subjectText}</p> : null}
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className={`rounded-md px-2 py-1 text-xs ${getExecutionSummaryTone(template.readiness)}`}>
+                  <span className={`rounded-xl px-2 py-1 text-xs ${getExecutionSummaryTone(template.readiness)}`}>
                     {getAccountUpdateTemplateStatusChip(template)}
                   </span>
                   <Button size="sm" variant="outline" onClick={() => onCopyTemplate(template)}>

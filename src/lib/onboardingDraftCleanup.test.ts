@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { clearAllOnboardingDraftStorage, clearOnboardingDraftSnapshot, ONBOARDING_DRAFT_STORAGE_KEY } from './onboardingDraftCleanup';
+import { buildOnboardingDraftStorageKey, clearAllOnboardingDraftStorage, clearOnboardingDraftSnapshot, ONBOARDING_DRAFT_STORAGE_KEY } from './onboardingDraftCleanup';
 import { readSignupReturnPath, writeSignupReturnPath } from './signupContinuation';
-import { GUIDED_SETUP_STORAGE_KEY } from './guidedSetupPersistence';
-import { QUICK_START_STORAGE_KEY } from './quickStartStateTransfer';
+import { buildGuidedSetupDraftStorageKey, GUIDED_SETUP_STORAGE_KEY } from './guidedSetupPersistence';
+import { buildQuickStartDraftStorageKey, QUICK_START_STORAGE_KEY } from './quickStartStateTransfer';
 
 describe('onboardingDraftCleanup', () => {
   beforeEach(() => {
@@ -20,6 +20,22 @@ describe('onboardingDraftCleanup', () => {
     expect(window.localStorage.getItem(ONBOARDING_DRAFT_STORAGE_KEY)).toBeNull();
     expect(window.localStorage.getItem(QUICK_START_STORAGE_KEY)).toBeNull();
     expect(window.localStorage.getItem(GUIDED_SETUP_STORAGE_KEY)).toBeNull();
+    expect(readSignupReturnPath()).toBeNull();
+  });
+
+  it('clears scoped onboarding draft keys without leaving legacy siblings behind', () => {
+    window.localStorage.setItem(buildOnboardingDraftStorageKey('user-a'), '1');
+    window.localStorage.setItem(buildQuickStartDraftStorageKey('user-a'), '1');
+    window.localStorage.setItem(buildGuidedSetupDraftStorageKey('user-a'), '1');
+    writeSignupReturnPath('/onboarding/quick-start', 'user-a');
+    writeSignupReturnPath('/onboarding/quick-start');
+
+    clearAllOnboardingDraftStorage('user-a');
+
+    expect(window.localStorage.getItem(buildOnboardingDraftStorageKey('user-a'))).toBeNull();
+    expect(window.localStorage.getItem(buildQuickStartDraftStorageKey('user-a'))).toBeNull();
+    expect(window.localStorage.getItem(buildGuidedSetupDraftStorageKey('user-a'))).toBeNull();
+    expect(readSignupReturnPath('user-a')).toBeNull();
     expect(readSignupReturnPath()).toBeNull();
   });
 
@@ -74,6 +90,16 @@ describe('onboardingDraftCleanup', () => {
     });
 
     expect(() => clearOnboardingDraftSnapshot()).not.toThrow();
+    removeItemSpy.mockRestore();
+  });
+
+  it('tolerates scoped onboarding draft cleanup failures', () => {
+    window.localStorage.setItem(buildOnboardingDraftStorageKey('user-a'), 'stale');
+    const removeItemSpy = vi.spyOn(Storage.prototype, 'removeItem').mockImplementation(() => {
+      throw new Error('blocked');
+    });
+
+    expect(() => clearOnboardingDraftSnapshot('user-a')).not.toThrow();
     removeItemSpy.mockRestore();
   });
 

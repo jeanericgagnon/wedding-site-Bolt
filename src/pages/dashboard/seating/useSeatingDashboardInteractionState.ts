@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   PointerSensor,
   useSensor,
@@ -14,7 +14,10 @@ type BusyAction = 'auto-create' | 'auto-seat' | 'reset' | null;
 export function useSeatingDashboardInteractionState(args: {
   allGuests: EligibleGuest[];
   assignments: SeatingAssignment[];
+  isDemoMode: boolean;
+  siteId: string | null;
 }) {
+  const previousSiteIdRef = useRef<string | null>(null);
   const [addingTable, setAddingTable] = useState(false);
   const [editingTable, setEditingTable] = useState<SeatingTable | null>(null);
   const [activeGuest, setActiveGuest] = useState<EligibleGuest | null>(null);
@@ -34,6 +37,28 @@ export function useSeatingDashboardInteractionState(args: {
   const [canvasFullscreen, setCanvasFullscreen] = useState(false);
   const [confirmDialog, setConfirmDialog] = useState<null | Omit<ConfirmDialogProps, 'open'>>(null);
   const tableDragRef = useRef<{ id: string; startX: number; startY: number; originX: number; originY: number } | null>(null);
+
+  const resetSeatingDashboardInteractionState = useCallback(() => {
+    setAddingTable(false);
+    setEditingTable(null);
+    setActiveGuest(null);
+    setShowResetConfirm(false);
+    setShowAutoTablesModal(false);
+    setAutoCapacity(8);
+    setSeatingBusyAction(null);
+    setCheckInMode(false);
+    setCheckInQuery('');
+    setCheckInFilter('not_arrived');
+    setLayoutMode('visual');
+    setMovingTableId(null);
+    setSelectedTableId(null);
+    setSeatPicker(null);
+    setSeatPickerQuery('');
+    setCanvasZoom(1);
+    setCanvasFullscreen(false);
+    setConfirmDialog(null);
+    tableDragRef.current = null;
+  }, []);
 
   const activeSeatAssignment = seatPicker
     ? args.assignments.find((assignment) => assignment.table_id === seatPicker.tableId && assignment.seat_index === seatPicker.seatIndex) ?? null
@@ -89,6 +114,19 @@ export function useSeatingDashboardInteractionState(args: {
     setSeatPickerQuery('');
   }, []);
 
+  useEffect(() => {
+    if (previousSiteIdRef.current && args.siteId && previousSiteIdRef.current !== args.siteId) {
+      resetSeatingDashboardInteractionState();
+    }
+    previousSiteIdRef.current = args.siteId;
+  }, [args.siteId, resetSeatingDashboardInteractionState]);
+
+  useEffect(() => {
+    if (!args.siteId && !args.isDemoMode) {
+      resetSeatingDashboardInteractionState();
+    }
+  }, [args.isDemoMode, args.siteId, resetSeatingDashboardInteractionState]);
+
   return {
     activeGuest,
     activeSeatGuest,
@@ -107,6 +145,7 @@ export function useSeatingDashboardInteractionState(args: {
     movingTableId,
     openSeatPicker,
     requestConfirmation,
+    resetSeatingDashboardInteractionState,
     seatPicker,
     seatPickerOptions,
     seatPickerQuery,

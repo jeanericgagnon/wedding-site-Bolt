@@ -40,6 +40,10 @@ export type CollaboratorInviteAuthResult = {
 export const COLLABORATOR_INVITE_LOOKUP_SELECT = 'id, wedding_site_id, invite_email, invite_name, role, status, expires_at';
 export const COLLABORATOR_INVITE_SITE_SELECT = 'site_slug, couple_name_1, couple_name_2';
 
+export function normalizeCollaboratorInviteEmail(email: string): string {
+  return email.trim().toLowerCase();
+}
+
 export async function fetchCollaboratorInviteByToken(token: string): Promise<CollaboratorInviteLookupRow | null> {
   const { data: inviteRows, error } = await supabase
     .from('wedding_site_collaborator_invites')
@@ -88,8 +92,9 @@ export async function hasCollaboratorInviteSession(): Promise<boolean> {
 }
 
 export async function signInCollaboratorInviteAccount(email: string, password: string): Promise<CollaboratorInviteAuthResult> {
+  const normalizedEmail = normalizeCollaboratorInviteEmail(email);
   const { data, error } = await supabase.auth.signInWithPassword({
-    email,
+    email: normalizedEmail,
     password,
   });
 
@@ -109,9 +114,10 @@ export async function createCollaboratorInviteAccount(
   password: string,
   fullName: string,
 ): Promise<CollaboratorInviteAuthUser> {
+  const normalizedEmail = normalizeCollaboratorInviteEmail(email);
   const trimmedFullName = fullName.trim();
   const { data: authData, error: signUpError } = await supabase.auth.signUp({
-    email,
+    email: normalizedEmail,
     password,
     options: {
       data: {
@@ -126,7 +132,7 @@ export async function createCollaboratorInviteAccount(
   let signedInUser = authData.user as CollaboratorInviteAuthUser | null;
   if (!authData.session) {
     try {
-      const signInResult = await signInCollaboratorInviteAccount(email, password);
+      const signInResult = await signInCollaboratorInviteAccount(normalizedEmail, password);
       signedInUser = signInResult.user;
     } catch (error) {
       const message = getErrorMessage(error).toLowerCase();
@@ -134,7 +140,7 @@ export async function createCollaboratorInviteAccount(
         throw new Error('Account creation did not complete cleanly. Please press Create account and join team once more, or use a fresh invited email.');
       }
       if (message.includes('email not confirmed') || message.includes('email_not_confirmed')) {
-        throw new Error(`Account created for ${email}. Check your email to confirm your address, then come back to this invite link to finish joining.`);
+        throw new Error(`Account created for ${normalizedEmail}. Check your email to confirm your address, then come back to this invite link to finish joining.`);
       }
       throw error;
     }

@@ -80,7 +80,7 @@ describe('public site access client contract', () => {
             settings: { headline: 'Welcome', overlayOpacity: 40 },
             styleOverrides: { backgroundColor: '#ffffff' },
           }],
-          meta: { isHome: true },
+          meta: { isHome: true, isHidden: false },
         }],
         wedding: {
           couple: { displayName: 'Maya & Leo' },
@@ -111,7 +111,7 @@ describe('public site access client contract', () => {
         settings: { headline: 'Welcome', overlayOpacity: 40 },
         styleOverrides: { backgroundColor: '#ffffff' },
       }],
-      meta: { isHome: true },
+      meta: { isHome: true, isHidden: false },
     }]);
     expect(site?.render_model.wedding).toEqual({
       couple: { displayName: 'Maya & Leo' },
@@ -142,6 +142,54 @@ describe('public site access client contract', () => {
     expect(site).not.toHaveProperty('published_json');
     expect(site).not.toHaveProperty('wedding_data');
     expect(site).not.toHaveProperty('layout_config');
+  });
+
+  it('unwraps builder value page fields and numeric-string section order in client-safe render models', () => {
+    const site = sanitizePublicSiteSafeRow({
+      id: 'site-wrapped-page',
+      site_slug: 'maya-leo',
+      is_published: true,
+      privacy_mode: 'public',
+      render_model: {
+        pages: [{
+          id: 'travel-page',
+          slug: { value: 'Guest Travel', source: 'user-edited' },
+          title: { value: 'Guest Travel', source: 'user-edited' },
+          orderIndex: '2',
+          sections: [{
+            id: 'travel-section',
+            type: 'travel',
+            variant: 'list',
+            enabled: true,
+            orderIndex: '3',
+            settings: {
+              title: { value: 'Guest Travel', source: 'user-edited' },
+              anchorId: { value: 'Guest Travel', source: 'user-edited' },
+              privateToken: 'hide-me',
+            },
+          }],
+          meta: { isHome: false, isHidden: false },
+        }],
+        wedding: null,
+        theme: { preset: null, tokens: null },
+      },
+    });
+
+    expect(site?.render_model.pages[0]).toMatchObject({
+      id: 'travel-page',
+      title: 'Guest Travel',
+      slug: 'Guest Travel',
+      orderIndex: 2,
+    });
+    expect(site?.render_model.pages[0]?.sections[0]).toMatchObject({
+      id: 'travel-section',
+      orderIndex: 3,
+      settings: {
+        headline: 'Guest Travel',
+        anchorId: 'Guest Travel',
+      },
+    });
+    expect(JSON.stringify(site)).not.toContain('privateToken');
   });
 
   it('normalizes hero settings into the client-safe resolved public hero contract', () => {

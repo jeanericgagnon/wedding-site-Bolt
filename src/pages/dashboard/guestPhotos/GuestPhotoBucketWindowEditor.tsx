@@ -36,14 +36,14 @@ export function GuestPhotoBucketWindowEditor({
   const isWorking = workingBucketId === bucket.id;
 
   return (
-    <div className="rounded-lg border border-border-subtle p-3 bg-surface-subtle">
+    <div className="rounded-2xl border border-border-subtle bg-surface-subtle p-3">
       <div className="mb-3">
         <label className="block text-xs text-neutral-500 mb-1">Parent album</label>
         <select
           value={bucket.parent_album_id ?? ''}
           onChange={(event) => onParentChange(bucket.id, event.target.value)}
           disabled={isWorking}
-          className="w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm"
+          className="w-full rounded-xl border border-neutral-300 bg-white px-3 py-2 text-sm"
         >
           <option value="">Top-level album</option>
           {buckets

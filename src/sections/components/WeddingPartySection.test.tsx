@@ -90,8 +90,8 @@ describe('WeddingPartySection', () => {
       />,
     );
 
-    expect(container.querySelector('img')).not.toBeInTheDocument();
-    expect(container.innerHTML).not.toContain('javascript:alert');
+    expect(screen.queryByRole('img')).not.toBeInTheDocument();
+    expect(container.querySelector('img[src^="javascript:"]')).toBeNull();
     expect(screen.getByText('S')).toBeInTheDocument();
   });
 });

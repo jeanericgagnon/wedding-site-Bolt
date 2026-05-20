@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, type Dispatch, type SetStateAction } from 'react';
+import { useCallback, useEffect, useRef, useState, type Dispatch, type SetStateAction } from 'react';
 import { ACTIVE_SITE_STORAGE_CHANGED_EVENT } from '../../../lib/activeSiteStorage';
 import { demoEvents, demoGuests, demoWeddingSite } from '../../../lib/demoData';
 import type { PlannerAccessRole, PlannerPermissionKey } from '../../../lib/plannerAccess';
@@ -64,8 +64,43 @@ export function useMessageDashboardData({
   setMessagesPermissions,
 }: UseMessageDashboardDataArgs) {
   const [activeSiteSyncVersion, setActiveSiteSyncVersion] = useState(0);
+  const weddingSiteRequestIdRef = useRef(0);
+  const currentWeddingSiteIdRef = useRef<string | null>(weddingSite?.id ?? null);
+
+  useEffect(() => {
+    currentWeddingSiteIdRef.current = weddingSite?.id ?? null;
+  }, [weddingSite?.id]);
+
+  const isCurrentWeddingSite = useCallback((siteId: string) => currentWeddingSiteIdRef.current === siteId, []);
+
+  const resetMessageDashboardState = useCallback(() => {
+    setWeddingSite(null);
+    setMessages([]);
+    setDeliveries([]);
+    setGuests([]);
+    setSmsTransactions([]);
+    setSmsExpiringSoon(0);
+    setItineraryAudienceOptions([]);
+    setEventGuestIds({});
+    setMessagesRole('owner');
+    setActiveSiteRole('owner');
+    setMessagesPermissions(null);
+  }, [
+    setActiveSiteRole,
+    setDeliveries,
+    setEventGuestIds,
+    setGuests,
+    setItineraryAudienceOptions,
+    setMessages,
+    setMessagesPermissions,
+    setMessagesRole,
+    setSmsExpiringSoon,
+    setSmsTransactions,
+    setWeddingSite,
+  ]);
 
   const fetchWeddingSite = useCallback(async () => {
+    const requestId = ++weddingSiteRequestIdRef.current;
     if (isDemoMode) {
       setWeddingSite({
         id: demoWeddingSite.id,
@@ -79,63 +114,35 @@ export function useMessageDashboardData({
     }
 
     if (!userId) {
-      setWeddingSite(null);
-      setMessages([]);
-      setDeliveries([]);
-      setGuests([]);
-      setSmsTransactions([]);
-      setSmsExpiringSoon(0);
-      setItineraryAudienceOptions([]);
-      setEventGuestIds({});
+      resetMessageDashboardState();
       setLoading(false);
       return;
     }
 
     try {
       const { activeSite, weddingSite: loadedWeddingSite } = await loadMessagesActiveSite(userId);
+      if (requestId !== weddingSiteRequestIdRef.current) return;
       setActiveSiteRole(activeSite?.role ?? 'owner');
       setMessagesRole(activeSite?.role ?? 'owner');
       setMessagesPermissions(activeSite?.permissions ?? null);
       if (loadedWeddingSite) {
         setWeddingSite(loadedWeddingSite);
       } else {
-        setWeddingSite(null);
-        setMessages([]);
-        setDeliveries([]);
-        setGuests([]);
-        setSmsTransactions([]);
-        setSmsExpiringSoon(0);
-        setItineraryAudienceOptions([]);
-        setEventGuestIds({});
+        resetMessageDashboardState();
         setLoading(false);
       }
     } catch {
+      if (requestId !== weddingSiteRequestIdRef.current) return;
       toast('Couldn’t load your messages right now. Please try again.', 'error');
-      setWeddingSite(null);
-      setMessages([]);
-      setDeliveries([]);
-      setGuests([]);
-      setSmsTransactions([]);
-      setSmsExpiringSoon(0);
-      setItineraryAudienceOptions([]);
-      setEventGuestIds({});
+      resetMessageDashboardState();
       setLoading(false);
     }
   }, [
     activeSiteSyncVersion,
     isDemoMode,
+    resetMessageDashboardState,
     setActiveSiteRole,
-    setDeliveries,
-    setEventGuestIds,
-    setGuests,
-    setItineraryAudienceOptions,
     setLoading,
-    setMessages,
-    setMessagesPermissions,
-    setMessagesRole,
-    setSmsExpiringSoon,
-    setSmsTransactions,
-    setWeddingSite,
     toast,
     userId,
   ]);
@@ -155,24 +162,29 @@ export function useMessageDashboardData({
 
   const fetchMessages = useCallback(async () => {
     if (!weddingSite) return;
+    const siteId = weddingSite.id;
     if (isDemoMode) {
       setMessages(readDemoMessages());
       setLoading(false);
       return;
     }
     try {
-      setMessages(await loadDashboardMessages(weddingSite.id));
+      const data = await loadDashboardMessages(siteId);
+      if (!isCurrentWeddingSite(siteId)) return;
+      setMessages(data);
     } catch {
+      if (!isCurrentWeddingSite(siteId)) return;
       setMessages([]);
       setDeliveries([]);
       toast('Couldn’t load message history right now. Please try again.', 'error');
     } finally {
-      setLoading(false);
+      if (isCurrentWeddingSite(siteId)) setLoading(false);
     }
-  }, [isDemoMode, setDeliveries, setLoading, setMessages, toast, weddingSite]);
+  }, [isCurrentWeddingSite, isDemoMode, setDeliveries, setLoading, setMessages, toast, weddingSite]);
 
   const fetchGuests = useCallback(async () => {
     if (!weddingSite) return;
+    const siteId = weddingSite.id;
     if (isDemoMode) {
       setGuests(demoGuests.map((g) => ({
         id: g.id,
@@ -195,15 +207,19 @@ export function useMessageDashboardData({
       return;
     }
     try {
-      setGuests(await loadMessageGuests(weddingSite.id));
+      const data = await loadMessageGuests(siteId);
+      if (!isCurrentWeddingSite(siteId)) return;
+      setGuests(data);
     } catch {
+      if (!isCurrentWeddingSite(siteId)) return;
       toast('Couldn’t load guest recipients right now. Please try again.', 'error');
       setGuests([]);
     }
-  }, [isDemoMode, setGuests, toast, weddingSite]);
+  }, [isCurrentWeddingSite, isDemoMode, setGuests, toast, weddingSite]);
 
   const fetchDeliveries = useCallback(async () => {
     if (!weddingSite) return;
+    const siteId = weddingSite.id;
     if (isDemoMode) {
       setDeliveries([]);
       return;
@@ -226,9 +242,11 @@ export function useMessageDashboardData({
 
     try {
       const data = await loadMessageDeliveries(messageIds);
+      if (!isCurrentWeddingSite(siteId)) return;
       hasMessageDeliveriesTable = true;
       setDeliveries(data || []);
     } catch (error) {
+      if (!isCurrentWeddingSite(siteId)) return;
       if (isMissingMessageDeliveriesTable(error)) {
         hasMessageDeliveriesTable = false;
       } else {
@@ -236,10 +254,11 @@ export function useMessageDashboardData({
       }
       setDeliveries([]);
     }
-  }, [isDemoMode, messages, setDeliveries, toast, viewingMessage, weddingSite]);
+  }, [isCurrentWeddingSite, isDemoMode, messages, setDeliveries, toast, viewingMessage, weddingSite]);
 
   const fetchItinerarySegments = useCallback(async () => {
     if (!weddingSite) return;
+    const siteId = weddingSite.id;
     try {
       if (isDemoMode) {
         const total = demoGuests.length;
@@ -266,18 +285,21 @@ export function useMessageDashboardData({
         return;
       }
 
-      const { options, guestIdsByEvent } = await loadMessageItineraryAudience(weddingSite.id);
+      const { options, guestIdsByEvent } = await loadMessageItineraryAudience(siteId);
+      if (!isCurrentWeddingSite(siteId)) return;
       setEventGuestIds(guestIdsByEvent);
       setItineraryAudienceOptions(options);
     } catch {
+      if (!isCurrentWeddingSite(siteId)) return;
       toast('Couldn’t load itinerary audience segments right now. Please try again.', 'error');
       setItineraryAudienceOptions([]);
       setEventGuestIds({});
     }
-  }, [isDemoMode, setEventGuestIds, setItineraryAudienceOptions, toast, weddingSite]);
+  }, [isCurrentWeddingSite, isDemoMode, setEventGuestIds, setItineraryAudienceOptions, toast, weddingSite]);
 
   const fetchSmsExpiryPreview = useCallback(async () => {
     if (!weddingSite) return;
+    const siteId = weddingSite.id;
     if (isDemoMode) {
       setSmsExpiringSoon(40);
       setSmsTransactions([
@@ -289,15 +311,17 @@ export function useMessageDashboardData({
 
     try {
       const cutoff = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
-      const { expiringSoon, transactions } = await loadSmsCreditPreview(weddingSite.id, cutoff);
+      const { expiringSoon, transactions } = await loadSmsCreditPreview(siteId, cutoff);
+      if (!isCurrentWeddingSite(siteId)) return;
       setSmsExpiringSoon(expiringSoon);
       setSmsTransactions(transactions);
     } catch {
+      if (!isCurrentWeddingSite(siteId)) return;
       toast('Couldn’t load text credit activity right now. Please try again.', 'error');
       setSmsExpiringSoon(0);
       setSmsTransactions([]);
     }
-  }, [isDemoMode, setSmsExpiringSoon, setSmsTransactions, toast, weddingSite]);
+  }, [isCurrentWeddingSite, isDemoMode, setSmsExpiringSoon, setSmsTransactions, toast, weddingSite]);
 
   useEffect(() => {
     void fetchWeddingSite();

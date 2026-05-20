@@ -1,5 +1,5 @@
 import React, { useRef, useEffect } from 'react';
-import { X, ChevronDown, ImageIcon, Eye, EyeOff, Pencil, Palette, Database, Image, Plus, Trash2, Compass, Ruler } from 'lucide-react';
+import { X, ChevronDown, ImageIcon, Eye, EyeOff, Pencil, Palette, Database, Image, Plus, Trash2, Compass, Ruler, Link2, Copy } from 'lucide-react';
 import { useBuilderContext } from '../state/builderStore';
 import { builderActions } from '../state/builderActions';
 import { markFieldAsUserEdited, readBuilderValue } from '../../lib/weddingProfile';
@@ -10,6 +10,7 @@ import { BuilderSectionRail } from './BuilderSectionRail';
 import { BuilderSectionInstance, BuilderSettingsField } from '../../types/builder/section';
 import { CustomBlock } from '../../sections/variants/custom/skeletons';
 import { sanitizeBuilderCustomCss, sanitizeCustomClassName } from '../utils/customCss';
+import { copyTextOrDownload } from '../../lib/copyText';
 import { getVariantQualityScore } from '../utils/variantQuality';
 import {
   applyBuilderStyleRecipe,
@@ -18,6 +19,7 @@ import {
   type BuilderStyleRecipeId,
 } from '../utils/styleRecipes';
 import { getVariantRecommendation, sortVariantsByRecommendation } from '../utils/variantRecommendations';
+import { getDefaultSectionAnchorId, isSectionAnchorRedundantWithPage, normalizePageAnchorSlug, normalizeSectionAnchorId } from '../utils/sectionAnchors';
 import {
   analyzeBuilderCopy,
   cleanBuilderCopy,
@@ -28,12 +30,50 @@ import {
 type InspectorTab = 'guide' | 'content' | 'style' | 'layout' | 'data';
 type CustomizationLevel = 'basic' | 'design' | 'expert';
 
+export function sanitizeSectionAnchorId(value: string): string {
+  return normalizeSectionAnchorId(value);
+}
+
+export function buildSectionAnchorPath(
+  siteSlug: string | null | undefined,
+  page: { id?: string | null; slug: unknown; title?: unknown; meta: { isHome: boolean; isHidden?: boolean } },
+  anchorId: string
+): string | null {
+  const cleanAnchorId = sanitizeSectionAnchorId(anchorId);
+  if (!cleanAnchorId || page.meta.isHidden || isSectionAnchorRedundantWithPage(cleanAnchorId, page)) {
+    return null;
+  }
+
+  const cleanSiteSlug = siteSlug?.trim();
+
+  if (!cleanSiteSlug) {
+    return `#${encodeURIComponent(cleanAnchorId)}`;
+  }
+
+  const encodedSiteSlug = encodeURIComponent(cleanSiteSlug);
+  const normalizedPageSlug = normalizePageAnchorSlug(page.slug) || normalizePageAnchorSlug(page.id ?? '');
+  const pageSegment = page.meta.isHome || normalizedPageSlug === 'home'
+    ? ''
+    : `/${encodeURIComponent(normalizedPageSlug || 'page')}`;
+
+  return `/site/${encodedSiteSlug}${pageSegment}#${encodeURIComponent(cleanAnchorId)}`;
+}
+
+export function resolveSectionAnchorId(
+  section: Pick<BuilderSectionInstance, 'id' | 'type' | 'settings'>,
+): string {
+  const sectionAnchorValue = readBuilderValue(section.settings.anchorId as string | { value: string } | undefined, '');
+  return sanitizeSectionAnchorId(sectionAnchorValue || getDefaultSectionAnchorId(section.type) || section.id) || section.id;
+}
+
 export const BuilderInspectorPanel: React.FC = () => {
-  const { state, dispatch } = useBuilderContext();
+  const { state, dispatch, publicSiteSlug } = useBuilderContext();
   const [activeTab, setActiveTab] = React.useState<InspectorTab>('content');
   const [customizationLevel, setCustomizationLevel] = React.useState<CustomizationLevel>('basic');
   const [showVariantPicker, setShowVariantPicker] = React.useState(false);
   const [variantSearch, setVariantSearch] = React.useState('');
+  const [copiedAnchorLink, setCopiedAnchorLink] = React.useState<'copied' | 'downloaded' | null>(null);
+  const anchorCopyRequestIdRef = useRef(0);
   const selectedSection = selectSelectedSection(state);
   const activePage = selectActivePage(state);
   const activeSections = selectActivePageSections(state);
@@ -58,6 +98,12 @@ export const BuilderInspectorPanel: React.FC = () => {
       setActiveTab('content');
     }
   }, [simpleMode, activeTab]);
+
+  useEffect(() => {
+    if (!copiedAnchorLink) return;
+    const timeout = window.setTimeout(() => setCopiedAnchorLink(null), 1800);
+    return () => window.clearTimeout(timeout);
+  }, [copiedAnchorLink]);
 
   const selectedIndex = activeSections.findIndex((s) => s.id === state.selectedSectionId);
 
@@ -166,6 +212,29 @@ export const BuilderInspectorPanel: React.FC = () => {
     dispatch(builderActions.toggleSectionVisibility(activePage.id, selectedSection.id));
   };
 
+  const sectionAnchorValue = readBuilderValue(selectedSection.settings.anchorId as string | { value: string } | undefined, '');
+  const defaultSectionAnchorId = getDefaultSectionAnchorId(selectedSection.type);
+  const resolvedSectionAnchorId = resolveSectionAnchorId(selectedSection);
+  const sectionAnchorPath = selectedSection.enabled === false ? null : buildSectionAnchorPath(publicSiteSlug, activePage, resolvedSectionAnchorId);
+  const handleCopySectionAnchor = async () => {
+    if (!sectionAnchorPath) return;
+    const requestId = ++anchorCopyRequestIdRef.current;
+    const copyText = sectionAnchorPath.startsWith('/') && typeof window !== 'undefined'
+      ? new URL(sectionAnchorPath, window.location.origin).toString()
+      : sectionAnchorPath;
+
+    try {
+      const result = await copyTextOrDownload(copyText, 'dayof-section-anchor-link.txt');
+      if (requestId === anchorCopyRequestIdRef.current) {
+        setCopiedAnchorLink(result);
+      }
+    } catch {
+      if (requestId === anchorCopyRequestIdRef.current) {
+        dispatch(builderActions.setError('Couldn’t copy that section link right now.'));
+      }
+    }
+  };
+
   const tabs: { id: InspectorTab; icon: React.ComponentType<{ size?: string | number; className?: string }>; label: string; show: boolean }[] = [
     { id: 'guide' as InspectorTab, icon: Compass, label: 'Guide', show: true },
     { id: 'content' as InspectorTab, icon: Pencil, label: 'Content', show: manifest.settingsSchema.fields.length > 0 },
@@ -193,14 +262,14 @@ export const BuilderInspectorPanel: React.FC = () => {
                 setActiveTab('layout');
                 setShowVariantPicker(true);
               }}
-              className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2.5 text-[13px] font-medium text-[var(--color-text-primary)] hover:bg-[var(--color-surface-subtle)]"
+              className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2.5 text-[13px] font-medium text-[var(--color-text-primary)] hover:bg-[var(--color-surface-subtle)]"
             >
             Change section layout
             </button>
         </div>
         <div className="px-4 py-2 border-b border-[var(--color-border-subtle)] bg-[var(--color-surface)]">
           <p className="mb-1.5 text-[10px] font-semibold text-[var(--color-text-tertiary)]">Customization level</p>
-          <div className="grid grid-cols-3 gap-1 rounded-lg border border-[var(--color-border-subtle)] bg-[var(--color-surface-subtle)] p-1">
+          <div className="grid grid-cols-3 gap-1 rounded-xl border border-[var(--color-border-subtle)] bg-[var(--color-surface-subtle)] p-1">
             {([
               ['basic', 'Basic', 'Content and layout'],
               ['design', 'Design', 'Style controls'],
@@ -215,7 +284,7 @@ export const BuilderInspectorPanel: React.FC = () => {
                   if (level === 'basic' && (activeTab === 'style' || activeTab === 'data' || activeTab === 'guide')) setActiveTab('content');
                   if (level !== 'basic' && activeTab === 'content') setActiveTab('style');
                 }}
-                className={`rounded-md px-2 py-1.5 text-[11px] font-medium transition-colors ${
+                className={`rounded-xl px-2 py-1.5 text-[11px] font-medium transition-colors ${
                   customizationLevel === level
                     ? 'bg-white text-[var(--color-text-primary)] shadow-sm'
                     : 'text-[var(--color-text-tertiary)] hover:text-[var(--color-text-primary)]'
@@ -253,7 +322,7 @@ export const BuilderInspectorPanel: React.FC = () => {
               }
               setActiveTab(nextAction.tab);
             }}
-            className="mt-2 inline-flex items-center rounded-lg border border-[var(--color-border-subtle)] bg-white px-3 py-1.5 text-xs font-medium text-[var(--color-text-primary)] hover:border-[var(--color-primary)]/25 hover:bg-[var(--color-surface)]"
+            className="mt-2 inline-flex items-center rounded-xl border border-[var(--color-border-subtle)] bg-white px-3 py-1.5 text-xs font-medium text-[var(--color-text-primary)] hover:border-[var(--color-primary)]/25 hover:bg-[var(--color-surface)]"
           >
             {nextAction.cta}
           </button>
@@ -267,7 +336,7 @@ export const BuilderInspectorPanel: React.FC = () => {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-1 px-2.5 py-1.5 text-[11px] font-medium rounded-md border transition-colors ${
+                className={`flex items-center gap-1 px-2.5 py-1.5 text-[11px] font-medium rounded-xl border transition-colors ${
                   activeTab === tab.id
                     ? 'border-[var(--color-accent)] text-[var(--color-accent)] bg-[var(--color-accent-light)]'
                     : 'border-[var(--color-border-subtle)] text-[var(--color-text-tertiary)] hover:text-[var(--color-text-secondary)]'
@@ -298,7 +367,7 @@ export const BuilderInspectorPanel: React.FC = () => {
             value={variantSearch}
             onChange={(event) => setVariantSearch(event.target.value)}
             placeholder="Search layouts by vibe or structure"
-            className="w-full rounded-lg border border-[var(--color-border-subtle)] bg-[var(--color-surface-subtle)] px-3 py-2 text-xs text-[var(--color-text-primary)] outline-none focus:bg-white focus:ring-2 focus:ring-[var(--color-accent)]"
+            className="w-full rounded-xl border border-[var(--color-border-subtle)] bg-[var(--color-surface-subtle)] px-3 py-2 text-xs text-[var(--color-text-primary)] outline-none focus:bg-white focus:ring-2 focus:ring-[var(--color-accent)]"
           />
           <p className="text-[10px] text-[var(--color-text-tertiary)]">Switching layouts preserves the content, photos, RSVP links, and connected data for this section.</p>
           <div className="grid grid-cols-2 gap-2">
@@ -312,9 +381,9 @@ export const BuilderInspectorPanel: React.FC = () => {
                   key={v.id}
                   type="button"
                   onClick={() => handleChangeVariant(v.id)}
-                  className={`text-left rounded-lg border px-2.5 py-2 ${active ? 'border-[var(--color-primary)] bg-[var(--color-primary-light)]' : 'border-[var(--color-border-subtle)] bg-[var(--color-surface)] hover:bg-[var(--color-surface-subtle)]'}`}
+                  className={`text-left rounded-xl border px-2.5 py-2 ${active ? 'border-[var(--color-primary)] bg-[var(--color-primary-light)]' : 'border-[var(--color-border-subtle)] bg-[var(--color-surface)] hover:bg-[var(--color-surface-subtle)]'}`}
                 >
-                  <div className="mb-2 h-20 overflow-hidden rounded-md border border-[var(--color-border-subtle)] bg-white">
+                  <div className="mb-2 h-20 overflow-hidden rounded-xl border border-[var(--color-border-subtle)] bg-white">
                     <img
                       src={`/variant-previews/${selectedSection.type}__${getVariantPreviewSource(selectedSection.type, v.id)}.webp`}
                       alt={`${manifest.label} ${v.label} preview`}
@@ -330,24 +399,24 @@ export const BuilderInspectorPanel: React.FC = () => {
                   <div className="flex items-start justify-between gap-1.5">
                     <p className="text-xs font-medium text-[var(--color-text-primary)]">{v.label}</p>
                     {recommendation.label && (
-                      <span className="shrink-0 rounded-md border border-[var(--color-border-subtle)] bg-white px-1.5 py-0.5 text-[9px] font-semibold text-[var(--color-text-secondary)]">{recommendation.label}</span>
+                      <span className="shrink-0 rounded-xl border border-[var(--color-border-subtle)] bg-white px-1.5 py-0.5 text-[9px] font-semibold text-[var(--color-text-secondary)]">{recommendation.label}</span>
                     )}
                   </div>
                   <p className="text-[10px] text-[var(--color-text-tertiary)] line-clamp-2">{v.description || 'Layout option'}</p>
                   {recommendation.reasons[0] ? (
-                    <p className="mt-1 rounded-md bg-white px-1.5 py-1 text-[10px] leading-snug text-[var(--color-text-secondary)]">{recommendation.reasons[0]}</p>
+                    <p className="mt-1 rounded-xl bg-white px-1.5 py-1 text-[10px] leading-snug text-[var(--color-text-secondary)]">{recommendation.reasons[0]}</p>
                   ) : v.bestFor && (
                     <p className="mt-1 text-[10px] leading-snug text-[var(--color-text-secondary)] line-clamp-2">Best for {v.bestFor}</p>
                   )}
                   <div className="mt-1.5 flex flex-wrap gap-1">
                     {v.recommended && (
-                      <span className="rounded-md border border-[var(--color-border-subtle)] bg-white px-1.5 py-0.5 text-[9px] font-semibold text-[var(--color-text-secondary)]">Recommended</span>
+                      <span className="rounded-xl border border-[var(--color-border-subtle)] bg-white px-1.5 py-0.5 text-[9px] font-semibold text-[var(--color-text-secondary)]">Recommended</span>
                     )}
                     {v.effort && (
-                      <span className="rounded-md border border-[var(--color-border-subtle)] bg-white px-1.5 py-0.5 text-[9px] font-medium text-[var(--color-text-tertiary)]">{v.effort}</span>
+                      <span className="rounded-xl border border-[var(--color-border-subtle)] bg-white px-1.5 py-0.5 text-[9px] font-medium text-[var(--color-text-tertiary)]">{v.effort}</span>
                     )}
                     {mobileRisk && (
-                      <span className="rounded-md border border-[var(--color-border-subtle)] bg-white px-1.5 py-0.5 text-[9px] font-medium text-[var(--color-text-secondary)]">Check mobile</span>
+                      <span className="rounded-xl border border-[var(--color-border-subtle)] bg-white px-1.5 py-0.5 text-[9px] font-medium text-[var(--color-text-secondary)]">Check mobile</span>
                     )}
                   </div>
                   <p className="text-[10px] text-[var(--color-primary)] mt-1 font-medium">Use this layout</p>
@@ -355,7 +424,7 @@ export const BuilderInspectorPanel: React.FC = () => {
               );
             })}
             {filteredVariantMeta.length === 0 && (
-              <div className="col-span-2 rounded-lg border border-dashed border-[var(--color-border-subtle)] bg-[var(--color-surface-subtle)] px-3 py-6 text-center text-xs text-[var(--color-text-tertiary)]">
+              <div className="col-span-2 rounded-xl border border-dashed border-[var(--color-border-subtle)] bg-[var(--color-surface-subtle)] px-3 py-6 text-center text-xs text-[var(--color-text-tertiary)]">
                 No layouts match that search.
               </div>
             )}
@@ -383,7 +452,7 @@ export const BuilderInspectorPanel: React.FC = () => {
                   key={step.id}
                   onClick={() => !step.optional && setActiveTab(step.id === 'visibility' ? 'layout' : (step.id as InspectorTab))}
                   disabled={step.optional}
-                  className={`w-full rounded-lg border px-3 py-2 text-left text-xs transition-colors ${step.done ? 'border-[var(--color-border-subtle)] bg-[var(--color-surface-subtle)] text-[var(--color-text-secondary)]' : 'border-[var(--color-border-subtle)] bg-white text-[var(--color-text-primary)] hover:border-[var(--color-border)] hover:bg-[var(--color-surface-subtle)] hover:text-[var(--color-text-primary)]'} ${step.optional ? 'opacity-60 cursor-default' : ''}`}
+                  className={`w-full rounded-xl border px-3 py-2 text-left text-xs transition-colors ${step.done ? 'border-[var(--color-border-subtle)] bg-[var(--color-surface-subtle)] text-[var(--color-text-secondary)]' : 'border-[var(--color-border-subtle)] bg-white text-[var(--color-text-primary)] hover:border-[var(--color-border)] hover:bg-[var(--color-surface-subtle)] hover:text-[var(--color-text-primary)]'} ${step.optional ? 'opacity-60 cursor-default' : ''}`}
                 >
                   <span className="font-medium">{step.label}</span>
                   <span className="ml-2 text-[10px]">{step.optional ? 'optional' : step.done ? 'done' : 'next'}</span>
@@ -401,7 +470,7 @@ export const BuilderInspectorPanel: React.FC = () => {
                   }
                   setActiveTab(nextAction.tab);
                 }}
-                className="mt-3 inline-flex items-center rounded-lg border border-[var(--color-border-subtle)] bg-[var(--color-surface-subtle)] px-3 py-2 text-xs font-medium text-[var(--color-text-primary)] hover:border-[var(--color-border)] hover:bg-white"
+                className="mt-3 inline-flex items-center rounded-xl border border-[var(--color-border-subtle)] bg-[var(--color-surface-subtle)] px-3 py-2 text-xs font-medium text-[var(--color-text-primary)] hover:border-[var(--color-border)] hover:bg-white"
               >
                 {nextAction.cta}
               </button>
@@ -422,7 +491,7 @@ export const BuilderInspectorPanel: React.FC = () => {
                     }
                     setActiveTab(view.id as InspectorTab);
                   }}
-                  className="rounded-lg border border-[var(--color-border-subtle)] bg-white px-3 py-2 text-xs font-medium text-[var(--color-text-primary)] hover:border-[var(--color-border)] hover:bg-[var(--color-surface-subtle)] hover:text-[var(--color-text-primary)] transition-colors"
+                  className="rounded-xl border border-[var(--color-border-subtle)] bg-white px-3 py-2 text-xs font-medium text-[var(--color-text-primary)] hover:border-[var(--color-border)] hover:bg-[var(--color-surface-subtle)] hover:text-[var(--color-text-primary)] transition-colors"
                 >
                   {view.label}
                 </button>
@@ -435,19 +504,19 @@ export const BuilderInspectorPanel: React.FC = () => {
               <div className="flex flex-wrap gap-1.5 pt-1">
                 <button
                   onClick={() => dispatch(builderActions.setPreviewViewport('desktop'))}
-                  className="rounded-lg border border-[var(--color-border-subtle)] bg-white px-2 py-1 text-[10px] font-medium text-[var(--color-text-secondary)] hover:border-[var(--color-border)] hover:text-[var(--color-text-primary)]"
+                  className="rounded-xl border border-[var(--color-border-subtle)] bg-white px-2 py-1 text-[10px] font-medium text-[var(--color-text-secondary)] hover:border-[var(--color-border)] hover:text-[var(--color-text-primary)]"
                 >
                   Check desktop
                 </button>
                 <button
                   onClick={() => dispatch(builderActions.setPreviewViewport('tablet'))}
-                  className="rounded-lg border border-[var(--color-border-subtle)] bg-white px-2 py-1 text-[10px] font-medium text-[var(--color-text-secondary)] hover:border-[var(--color-border)] hover:text-[var(--color-text-primary)]"
+                  className="rounded-xl border border-[var(--color-border-subtle)] bg-white px-2 py-1 text-[10px] font-medium text-[var(--color-text-secondary)] hover:border-[var(--color-border)] hover:text-[var(--color-text-primary)]"
                 >
                   Check tablet
                 </button>
                 <button
                   onClick={() => dispatch(builderActions.setPreviewViewport('mobile'))}
-                  className="rounded-lg border border-[var(--color-border-subtle)] bg-white px-2 py-1 text-[10px] font-medium text-[var(--color-text-secondary)] hover:border-[var(--color-border)] hover:text-[var(--color-text-primary)]"
+                  className="rounded-xl border border-[var(--color-border-subtle)] bg-white px-2 py-1 text-[10px] font-medium text-[var(--color-text-secondary)] hover:border-[var(--color-border)] hover:text-[var(--color-text-primary)]"
                 >
                   Check mobile
                 </button>
@@ -458,6 +527,56 @@ export const BuilderInspectorPanel: React.FC = () => {
 
         {activeTab === 'content' && (
           <div className="p-4 space-y-1">
+            <div className="mb-3 rounded-xl border border-[var(--color-border-subtle)] bg-[var(--color-surface-subtle)] px-3 py-3">
+              <label htmlFor={`section-anchor-${selectedSection.id}`} className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold text-[var(--color-text-primary)]">
+                <Link2 size={12} />
+                Section anchor
+              </label>
+              <div className="flex items-center rounded-xl border border-[var(--color-border-subtle)] bg-white px-2.5 py-2 text-sm">
+                <span className="mr-1 text-[var(--color-text-tertiary)]">#</span>
+                <input
+                  id={`section-anchor-${selectedSection.id}`}
+                  value={sectionAnchorValue}
+                  onChange={(event) => handleUpdateSetting('anchorId', sanitizeSectionAnchorId(event.target.value))}
+                  placeholder={defaultSectionAnchorId ?? selectedSection.id}
+                  className="min-w-0 flex-1 bg-transparent text-[var(--color-text-primary)] outline-none"
+                />
+              </div>
+              <div className="mt-2 flex min-w-0 items-center gap-2">
+                {sectionAnchorPath ? (
+                  <>
+                    <code className="min-w-0 flex-1 truncate rounded-xl border border-[var(--color-border-subtle)] bg-white px-2.5 py-1.5 text-[11px] text-[var(--color-text-secondary)]">
+                      {sectionAnchorPath}
+                    </code>
+                    <button
+                      type="button"
+                      aria-label={`Copy section anchor link ${sectionAnchorPath}`}
+                      title={`Copy ${sectionAnchorPath}`}
+                      onClick={handleCopySectionAnchor}
+                      className="inline-flex shrink-0 items-center gap-1 rounded-xl border border-[var(--color-border-subtle)] bg-white px-2.5 py-1.5 text-[11px] font-medium text-[var(--color-text-primary)] hover:border-[var(--color-border)] hover:bg-[var(--color-surface)]"
+                    >
+                      <Copy size={12} />
+                      {copiedAnchorLink === 'downloaded' ? 'Downloaded' : copiedAnchorLink === 'copied' ? 'Copied' : 'Copy'}
+                    </button>
+                  </>
+                ) : (
+                  <p className="min-w-0 flex-1 rounded-xl border border-[var(--color-border-subtle)] bg-white px-2.5 py-1.5 text-[11px] text-[var(--color-text-tertiary)]">
+                    This section uses the page link or is hidden from guests.
+                  </p>
+                )}
+                {defaultSectionAnchorId && sectionAnchorValue !== defaultSectionAnchorId ? (
+                  <button
+                    type="button"
+                    aria-label={`Use default anchor ${defaultSectionAnchorId}`}
+                    title={`Use #${defaultSectionAnchorId}`}
+                    onClick={() => handleUpdateSetting('anchorId', defaultSectionAnchorId)}
+                    className="inline-flex shrink-0 items-center rounded-xl border border-[var(--color-border-subtle)] bg-white px-2.5 py-1.5 text-[11px] font-medium text-[var(--color-text-primary)] hover:border-[var(--color-border)] hover:bg-[var(--color-surface)]"
+                  >
+                    Use default
+                  </button>
+                ) : null}
+              </div>
+            </div>
             {(copyHealth.flags.length > 0 || copyHealth.missingDetails.length > 0 || copyHealth.duplicateSignals.length > 0) && (
               <div className="mb-3 rounded-xl border border-[var(--color-border-subtle)] bg-[var(--color-surface-subtle)] px-3 py-3">
                 <div className="flex items-start justify-between gap-3">
@@ -469,7 +588,7 @@ export const BuilderInspectorPanel: React.FC = () => {
                         : copyHealth.duplicateSignals[0] ?? copyHealth.flags[0]}
                     </p>
                   </div>
-                  <span className="rounded-lg border border-[var(--color-border-subtle)] bg-white px-2 py-0.5 text-[11px] font-semibold text-[var(--color-text-secondary)]">
+                  <span className="rounded-xl border border-[var(--color-border-subtle)] bg-white px-2 py-0.5 text-[11px] font-semibold text-[var(--color-text-secondary)]">
                     {copyHealth.score}%
                   </span>
                 </div>
@@ -523,7 +642,7 @@ export const BuilderInspectorPanel: React.FC = () => {
                       onChange={e => dispatch(builderActions.updateSection(activePage.id, selectedSection.id, {
                         styleOverrides: { ...selectedSection.styleOverrides, backgroundColor: e.target.value },
                       }))}
-                      className="w-8 h-8 rounded-md cursor-pointer border border-[var(--color-border-subtle)] p-0.5 flex-shrink-0"
+                      className="w-8 h-8 rounded-xl cursor-pointer border border-[var(--color-border-subtle)] p-0.5 flex-shrink-0"
                     />
                     <input
                       type="text"
@@ -532,7 +651,7 @@ export const BuilderInspectorPanel: React.FC = () => {
                         styleOverrides: { ...selectedSection.styleOverrides, backgroundColor: e.target.value },
                       }))}
                       placeholder="inherit"
-                      className="flex-1 border border-[var(--color-border-subtle)] rounded-lg px-3 py-2 text-xs text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] font-mono bg-[var(--color-surface-subtle)] focus:bg-white transition-colors"
+                      className="flex-1 border border-[var(--color-border-subtle)] rounded-xl px-3 py-2 text-xs text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] font-mono bg-[var(--color-surface-subtle)] focus:bg-white transition-colors"
                     />
                     {selectedSection.styleOverrides?.backgroundColor && (
                       <button
@@ -556,7 +675,7 @@ export const BuilderInspectorPanel: React.FC = () => {
                       onChange={e => dispatch(builderActions.updateSection(activePage.id, selectedSection.id, {
                         styleOverrides: { ...selectedSection.styleOverrides, textColor: e.target.value },
                       }))}
-                      className="w-8 h-8 rounded-md cursor-pointer border border-[var(--color-border-subtle)] p-0.5 flex-shrink-0"
+                      className="w-8 h-8 rounded-xl cursor-pointer border border-[var(--color-border-subtle)] p-0.5 flex-shrink-0"
                     />
                     <input
                       type="text"
@@ -565,7 +684,7 @@ export const BuilderInspectorPanel: React.FC = () => {
                         styleOverrides: { ...selectedSection.styleOverrides, textColor: e.target.value },
                       }))}
                       placeholder="inherit"
-                      className="flex-1 border border-[var(--color-border-subtle)] rounded-lg px-3 py-2 text-xs text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] font-mono bg-[var(--color-surface-subtle)] focus:bg-white transition-colors"
+                      className="flex-1 border border-[var(--color-border-subtle)] rounded-xl px-3 py-2 text-xs text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] font-mono bg-[var(--color-surface-subtle)] focus:bg-white transition-colors"
                     />
                     {selectedSection.styleOverrides?.textColor && (
                       <button
@@ -604,7 +723,7 @@ export const BuilderInspectorPanel: React.FC = () => {
                     onClick={() => dispatch(builderActions.updateSection(activePage.id, selectedSection.id, {
                       styleOverrides: { ...selectedSection.styleOverrides, animationPreset: id as NonNullable<typeof selectedSection.styleOverrides.animationPreset> },
                     }))}
-                    className={`rounded-md px-2 py-1.5 text-[11px] font-medium transition-colors ${
+                    className={`rounded-xl px-2 py-1.5 text-[11px] font-medium transition-colors ${
                       (selectedSection.styleOverrides?.animationPreset ?? 'none') === id
                         ? 'bg-[var(--color-text-primary)] text-[var(--color-text-inverse)]'
                         : 'bg-gray-100 text-[var(--color-text-secondary)] hover:bg-gray-200'
@@ -654,7 +773,7 @@ export const BuilderInspectorPanel: React.FC = () => {
                           onClick={() => dispatch(builderActions.updateSection(activePage.id, selectedSection.id, {
                             styleOverrides: { ...selectedSection.styleOverrides, sideImagePosition: pos },
                           }))}
-                          className={`flex-1 py-1.5 rounded-md text-xs font-medium transition-colors capitalize ${
+                          className={`flex-1 py-1.5 rounded-xl text-xs font-medium transition-colors capitalize ${
                             (selectedSection.styleOverrides?.sideImagePosition ?? 'right') === pos
                               ? 'bg-[var(--color-text-primary)] text-[var(--color-text-inverse)]'
                               : 'bg-[var(--color-surface-subtle)] text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)]'
@@ -675,7 +794,7 @@ export const BuilderInspectorPanel: React.FC = () => {
                           onClick={() => dispatch(builderActions.updateSection(activePage.id, selectedSection.id, {
                             styleOverrides: { ...selectedSection.styleOverrides, sideImageSize: key },
                           }))}
-                          className={`flex-1 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                          className={`flex-1 py-1.5 rounded-xl text-xs font-medium transition-colors ${
                             (selectedSection.styleOverrides?.sideImageSize ?? 'md') === key
                               ? 'bg-[var(--color-text-primary)] text-[var(--color-text-inverse)]'
                               : 'bg-[var(--color-surface-subtle)] text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)]'
@@ -696,7 +815,7 @@ export const BuilderInspectorPanel: React.FC = () => {
                           onClick={() => dispatch(builderActions.updateSection(activePage.id, selectedSection.id, {
                             styleOverrides: { ...selectedSection.styleOverrides, sideImageFit: fit },
                           }))}
-                          className={`flex-1 py-1.5 rounded-md text-xs font-medium transition-colors capitalize ${
+                          className={`flex-1 py-1.5 rounded-xl text-xs font-medium transition-colors capitalize ${
                             (selectedSection.styleOverrides?.sideImageFit ?? 'cover') === fit
                               ? 'bg-[var(--color-text-primary)] text-[var(--color-text-inverse)]'
                               : 'bg-[var(--color-surface-subtle)] text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)]'
@@ -733,7 +852,7 @@ export const BuilderInspectorPanel: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setCustomizationLevel('expert')}
-                  className="mt-2 rounded-lg border border-[var(--color-border)] bg-white px-3 py-1.5 text-xs font-medium text-[var(--color-text-primary)] hover:bg-[var(--color-surface)]"
+                  className="mt-2 rounded-xl border border-[var(--color-border)] bg-white px-3 py-1.5 text-xs font-medium text-[var(--color-text-primary)] hover:bg-[var(--color-surface)]"
                 >
                   Open Expert controls
                 </button>
@@ -751,7 +870,7 @@ export const BuilderInspectorPanel: React.FC = () => {
                 <select
                   value={selectedSection.variant}
                   onChange={e => handleChangeVariant(e.target.value)}
-                  className="w-full appearance-none border border-[var(--color-border-subtle)] rounded-lg px-3 py-2 text-sm bg-[var(--color-surface-subtle)] text-[var(--color-text-primary)] pr-8 focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] focus:bg-white transition-colors"
+                  className="w-full appearance-none border border-[var(--color-border-subtle)] rounded-xl px-3 py-2 text-sm bg-[var(--color-surface-subtle)] text-[var(--color-text-primary)] pr-8 focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] focus:bg-white transition-colors"
                 >
                   {manifest.variantMeta.map(v => (
                     <option key={v.id} value={v.id}>{v.label} — {v.description}</option>
@@ -831,7 +950,7 @@ const InspectorField: React.FC<InspectorFieldProps> = ({ field, value, onChange,
           key={tone}
           type="button"
           onClick={() => applyCopyAction(tone)}
-          className="rounded-lg border border-[var(--color-border-subtle)] bg-white px-2 py-1 text-[10px] font-semibold text-[var(--color-text-secondary)] transition hover:border-[var(--color-accent)] hover:text-[var(--color-text-primary)]"
+          className="rounded-xl border border-[var(--color-border-subtle)] bg-white px-2 py-1 text-[10px] font-semibold text-[var(--color-text-secondary)] transition hover:border-[var(--color-accent)] hover:text-[var(--color-text-primary)]"
         >
           {label}
         </button>
@@ -904,7 +1023,7 @@ const InspectorField: React.FC<InspectorFieldProps> = ({ field, value, onChange,
               type="color"
               value={(value as string) ?? '#000000'}
               onChange={e => onChange(e.target.value)}
-              className="w-9 h-9 rounded-lg cursor-pointer border border-[var(--color-border-subtle)] p-0.5"
+              className="w-9 h-9 rounded-xl cursor-pointer border border-[var(--color-border-subtle)] p-0.5"
             />
             <input
               type="text"
@@ -927,7 +1046,7 @@ const InspectorField: React.FC<InspectorFieldProps> = ({ field, value, onChange,
               <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                 <button
                   onClick={() => onChange('')}
-                  className="px-3 py-1.5 bg-white rounded-lg text-xs font-medium text-[var(--color-text-primary)] hover:bg-red-50 hover:text-red-600 transition-colors"
+                  className="px-3 py-1.5 bg-white rounded-xl text-xs font-medium text-[var(--color-text-primary)] hover:bg-red-50 hover:text-red-600 transition-colors"
                 >
                   Remove
                 </button>
@@ -1043,14 +1162,14 @@ const GalleryImageEditor: React.FC<{ sectionId: string; pageId: string; images: 
               <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
                 <button
                   onClick={() => dispatch(builderActions.openImageArrayPicker(sectionId, i))}
-                  className="flex items-center gap-1 px-2.5 py-1.5 bg-white rounded-lg text-xs font-medium text-[var(--color-text-primary)] hover:bg-[var(--color-surface-subtle)] hover:text-[var(--color-accent)] transition-colors"
+                  className="flex items-center gap-1 px-2.5 py-1.5 bg-white rounded-xl text-xs font-medium text-[var(--color-text-primary)] hover:bg-[var(--color-surface-subtle)] hover:text-[var(--color-accent)] transition-colors"
                 >
                   <Image size={12} />
                   Change
                 </button>
                 <button
                   onClick={() => handleRemoveImage(i)}
-                  className="p-1.5 bg-white rounded-lg text-[var(--color-text-tertiary)] hover:bg-red-50 hover:text-red-600 transition-colors"
+                  className="p-1.5 bg-white rounded-xl text-[var(--color-text-tertiary)] hover:bg-red-50 hover:text-red-600 transition-colors"
                 >
                   <Trash2 size={12} />
                 </button>
@@ -1065,14 +1184,14 @@ const GalleryImageEditor: React.FC<{ sectionId: string; pageId: string; images: 
                 value={readBuilderValue(img.alt as string | { value: string } | undefined, '')}
                 onChange={e => handleUpdateImage(i, { alt: markFieldAsUserEdited(e.target.value) as unknown as string })}
                 placeholder="Describe the image"
-                className="w-full border border-[var(--color-border-subtle)] rounded-lg px-2.5 py-1.5 text-xs text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] bg-white transition-colors"
+                className="w-full border border-[var(--color-border-subtle)] rounded-xl px-2.5 py-1.5 text-xs text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] bg-white transition-colors"
               />
               <input
                 type="text"
                 value={readBuilderValue(img.caption as string | { value: string } | undefined, '')}
                 onChange={e => handleUpdateImage(i, { caption: markFieldAsUserEdited(e.target.value) as unknown as string })}
                 placeholder="Caption (optional)"
-                className="w-full border border-[var(--color-border-subtle)] rounded-lg px-2.5 py-1.5 text-xs text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] bg-white transition-colors"
+                className="w-full border border-[var(--color-border-subtle)] rounded-xl px-2.5 py-1.5 text-xs text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] bg-white transition-colors"
               />
             </div>
           </div>
@@ -1164,7 +1283,7 @@ const CustomBlockImageEditor: React.FC<{ sectionId: string; blocks: CustomBlock[
                 ));
               }}
               placeholder="Describe the image (optional)"
-              className="w-full border border-[var(--color-border-subtle)] rounded-lg px-3 py-1.5 text-xs text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] bg-[var(--color-surface-subtle)] focus:bg-white transition-colors"
+              className="w-full border border-[var(--color-border-subtle)] rounded-xl px-3 py-1.5 text-xs text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] bg-[var(--color-surface-subtle)] focus:bg-white transition-colors"
             />
           </div>
         ))}
@@ -1193,7 +1312,7 @@ const StyleRecipePicker: React.FC<{
           <button
             type="button"
             onClick={() => onChange(clearBuilderStyleRecipe(overrides))}
-            className="shrink-0 rounded-lg border border-[var(--color-border-subtle)] bg-white px-2.5 py-1.5 text-[11px] font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-subtle)]"
+            className="shrink-0 rounded-xl border border-[var(--color-border-subtle)] bg-white px-2.5 py-1.5 text-[11px] font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-subtle)]"
           >
             Reset
           </button>
@@ -1215,8 +1334,8 @@ const StyleRecipePicker: React.FC<{
               }`}
             >
               <div className="mb-2 flex gap-1">
-                <span className="h-4 w-4 rounded-md border border-black/10" style={{ backgroundColor: recipe.backgroundColor }} />
-                <span className="h-4 w-4 rounded-md border border-black/10" style={{ backgroundColor: recipe.textColor }} />
+                <span className="h-4 w-4 rounded-xl border border-black/10" style={{ backgroundColor: recipe.backgroundColor }} />
+                <span className="h-4 w-4 rounded-xl border border-black/10" style={{ backgroundColor: recipe.textColor }} />
               </div>
               <p className="text-xs font-semibold text-[var(--color-text-primary)]">{recipe.label}</p>
               <p className="mt-1 text-[10px] leading-snug text-[var(--color-text-tertiary)]">{recipe.description}</p>
@@ -1279,7 +1398,7 @@ const ExpertCssEditor: React.FC<{
           <button
             type="button"
             onClick={() => update({ customCss: undefined, customClassName: undefined })}
-            className="rounded-lg border border-red-100 bg-red-50 px-3 py-1.5 text-xs font-medium text-red-700 hover:bg-red-100"
+            className="rounded-xl border border-red-100 bg-red-50 px-3 py-1.5 text-xs font-medium text-red-700 hover:bg-red-100"
           >
             Reset Expert CSS
           </button>
@@ -1317,7 +1436,7 @@ const SpacingControl: React.FC<{
           <button
             key={preset.value}
             onClick={() => onChange(preset.value === value ? '' : preset.value)}
-            className={`flex-1 py-1.5 rounded-md text-[11px] font-medium transition-colors ${
+            className={`flex-1 py-1.5 rounded-xl text-[11px] font-medium transition-colors ${
               activePreset?.value === preset.value
                 ? 'bg-[var(--color-text-primary)] text-[var(--color-text-inverse)]'
                 : 'bg-[var(--color-surface-subtle)] text-[var(--color-text-secondary)] hover:bg-[var(--color-border-subtle)]'
@@ -1332,7 +1451,7 @@ const SpacingControl: React.FC<{
         value={value}
         onChange={e => onChange(e.target.value)}
         placeholder="e.g. 4rem, 64px, 10%"
-        className="w-full border border-[var(--color-border-subtle)] rounded-lg px-3 py-2 text-xs text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] font-mono bg-[var(--color-surface-subtle)] focus:bg-white transition-colors"
+        className="w-full border border-[var(--color-border-subtle)] rounded-xl px-3 py-2 text-xs text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] font-mono bg-[var(--color-surface-subtle)] focus:bg-white transition-colors"
       />
     </div>
   );

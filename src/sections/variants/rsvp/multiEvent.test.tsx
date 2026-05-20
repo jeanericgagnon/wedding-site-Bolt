@@ -52,8 +52,8 @@ describe('RSVP multi-event variant', () => {
       />,
     );
 
-    expect(container.querySelector('iframe')).not.toBeInTheDocument();
-    expect(container.innerHTML).not.toContain('javascript:alert');
+    expect(container.querySelector('iframe')).toBeNull();
+    expect(container.querySelector('iframe[src^="javascript:"]')).toBeNull();
     expect(screen.getByRole('button', { name: 'Send RSVP' })).toBeInTheDocument();
   });
 
@@ -70,13 +70,13 @@ describe('RSVP multi-event variant', () => {
       />,
     );
 
-    expect(container.querySelector('img')).not.toBeInTheDocument();
-    expect(container.innerHTML).not.toContain('image.thum.io');
+    expect(screen.queryByRole('img')).not.toBeInTheDocument();
+    expect(container.querySelector('img[src*="image.thum.io"]')).toBeNull();
   });
 
   it('keeps safe same-origin illustrated RSVP images', () => {
     const Component = rsvpDefaultDefinition.Component;
-    const { container } = render(
+    render(
       <Component
         siteSlug="alex-jordan-demo"
         data={{
@@ -87,7 +87,7 @@ describe('RSVP multi-event variant', () => {
       />,
     );
 
-    expect(container.querySelector('img')?.getAttribute('src')).toBe('/preview-photos/header-anchor.jpg');
+    expect(screen.getByRole('img')).toHaveAttribute('src', '/preview-photos/header-anchor.jpg');
   });
 
   it('submits through the gated public-site RSVP function with stored access state', async () => {
@@ -129,5 +129,32 @@ describe('RSVP multi-event variant', () => {
     });
 
     expect(await screen.findByText('We got your RSVP!')).toBeInTheDocument();
+  });
+
+  it('clears stale RSVP submission errors as soon as the guest edits the form again', async () => {
+    invokeMock.mockResolvedValueOnce({ data: null, error: new Error('submit failed') });
+
+    const Component = rsvpDefaultDefinition.Component;
+    render(
+      <Component
+        siteSlug="alex-jordan-demo"
+        data={{
+          ...rsvpDefaultDefinition.defaultData,
+          mode: 'form',
+        }}
+      />,
+    );
+
+    fireEvent.change(screen.getByPlaceholderText('Your full name'), { target: { value: 'Taylor Guest' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Joyfully accepts' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Send RSVP' }));
+
+    expect(await screen.findByText('Something went wrong. Please try again or contact us directly.')).toBeInTheDocument();
+
+    fireEvent.change(screen.getByPlaceholderText('Vegetarian, vegan, gluten-free, allergies...'), { target: { value: 'Vegetarian' } });
+
+    await waitFor(() => {
+      expect(screen.queryByText('Something went wrong. Please try again or contact us directly.')).not.toBeInTheDocument();
+    });
   });
 });

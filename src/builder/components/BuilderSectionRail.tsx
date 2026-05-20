@@ -94,7 +94,7 @@ export const BuilderSectionRail: React.FC<BuilderSectionRailProps> = ({
           return (
             <div
               key={section.id}
-              className={`w-full rounded-lg border transition-colors text-left ${
+              className={`w-full rounded-xl border transition-colors text-left ${
                 isActive
                   ? 'border-[var(--color-primary)] bg-[var(--color-primary-light)]'
                   : 'border-[var(--color-border)] bg-[var(--color-surface)] hover:bg-[var(--color-surface-subtle)]'
@@ -104,7 +104,7 @@ export const BuilderSectionRail: React.FC<BuilderSectionRailProps> = ({
                 <button
                   type="button"
                   onClick={selectSection}
-                  className="flex min-w-0 flex-1 items-center gap-2.5 rounded-lg px-3 py-2.5 text-left"
+                  className="flex min-w-0 flex-1 items-center gap-2.5 rounded-xl px-3 py-2.5 text-left"
                   aria-current={isActive ? 'true' : undefined}
                 >
                   <span className="inline-flex items-center justify-center text-[var(--color-text-tertiary)]" title="Reorder section">
@@ -117,7 +117,7 @@ export const BuilderSectionRail: React.FC<BuilderSectionRailProps> = ({
                     type="button"
                     onClick={() => moveSection(idx, idx - 1)}
                     disabled={idx === 0}
-                    className="inline-flex items-center justify-center rounded-md p-1 text-[var(--color-text-tertiary)] hover:bg-[var(--color-surface-subtle)] hover:text-[var(--color-text-primary)] disabled:cursor-not-allowed disabled:opacity-35 disabled:hover:bg-transparent disabled:hover:text-[var(--color-text-tertiary)]"
+                    className="inline-flex items-center justify-center rounded-xl p-1 text-[var(--color-text-tertiary)] hover:bg-[var(--color-surface-subtle)] hover:text-[var(--color-text-primary)] disabled:cursor-not-allowed disabled:opacity-35 disabled:hover:bg-transparent disabled:hover:text-[var(--color-text-tertiary)]"
                     title="Move up"
                   >
                     <ArrowUp size={13} />
@@ -126,7 +126,7 @@ export const BuilderSectionRail: React.FC<BuilderSectionRailProps> = ({
                     type="button"
                     onClick={() => moveSection(idx, idx + 1)}
                     disabled={idx === activeSections.length - 1}
-                    className="inline-flex items-center justify-center rounded-md p-1 text-[var(--color-text-tertiary)] hover:bg-[var(--color-surface-subtle)] hover:text-[var(--color-text-primary)] disabled:cursor-not-allowed disabled:opacity-35 disabled:hover:bg-transparent disabled:hover:text-[var(--color-text-tertiary)]"
+                    className="inline-flex items-center justify-center rounded-xl p-1 text-[var(--color-text-tertiary)] hover:bg-[var(--color-surface-subtle)] hover:text-[var(--color-text-primary)] disabled:cursor-not-allowed disabled:opacity-35 disabled:hover:bg-transparent disabled:hover:text-[var(--color-text-tertiary)]"
                     title="Move down"
                   >
                     <ArrowDown size={13} />
@@ -144,7 +144,7 @@ export const BuilderSectionRail: React.FC<BuilderSectionRailProps> = ({
           <button
             type="button"
             onClick={onSwitchTemplate}
-            className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-3 text-[13px] font-medium text-[var(--color-text-primary)] hover:bg-[var(--color-surface-subtle)]"
+            className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-3 text-[13px] font-medium text-[var(--color-text-primary)] hover:bg-[var(--color-surface-subtle)]"
           >
             Change design
           </button>
@@ -155,7 +155,7 @@ export const BuilderSectionRail: React.FC<BuilderSectionRailProps> = ({
             setShowAddSectionPicker(true);
             setAddSectionType(null);
           }}
-          className="w-full rounded-lg border border-dashed border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-3 text-[13px] font-medium text-[var(--color-text-primary)] hover:bg-[var(--color-surface-subtle)]"
+          className="w-full rounded-xl border border-dashed border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-3 text-[13px] font-medium text-[var(--color-text-primary)] hover:bg-[var(--color-surface-subtle)]"
         >
           + Add section
         </button>
@@ -163,7 +163,7 @@ export const BuilderSectionRail: React.FC<BuilderSectionRailProps> = ({
 
       {showAddSectionPicker && (
         <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/45 backdrop-blur-sm p-4">
-          <div className="w-[94vw] h-[90vh] max-w-6xl bg-[var(--color-surface)] rounded-xl border border-[var(--color-border-subtle)] shadow-sm overflow-hidden flex flex-col">
+          <div className="flex h-[90vh] w-[94vw] max-w-6xl flex-col overflow-hidden rounded-2xl border border-[var(--color-border-subtle)] bg-[var(--color-surface)] shadow-sm">
             <div className="px-5 py-4 border-b border-[var(--color-border-subtle)] flex items-center justify-between">
               <div>
                 <h3 className="text-base font-semibold text-[var(--color-text-primary)]">
@@ -179,7 +179,7 @@ export const BuilderSectionRail: React.FC<BuilderSectionRailProps> = ({
                   <button
                     type="button"
                     onClick={() => setAddSectionType(null)}
-                    className="px-3 py-1.5 rounded-lg border border-[var(--color-border-subtle)] text-xs text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-subtle)]"
+                    className="rounded-xl border border-[var(--color-border-subtle)] px-3 py-1.5 text-xs text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-subtle)]"
                   >
                     Back
                   </button>
@@ -190,7 +190,7 @@ export const BuilderSectionRail: React.FC<BuilderSectionRailProps> = ({
                     setShowAddSectionPicker(false);
                     setAddSectionType(null);
                   }}
-                  className="px-3 py-1.5 rounded-lg border border-[var(--color-border-subtle)] text-xs text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-subtle)]"
+                  className="rounded-xl border border-[var(--color-border-subtle)] px-3 py-1.5 text-xs text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-subtle)]"
                 >
                   Close
                 </button>
@@ -255,7 +255,7 @@ export const BuilderSectionRail: React.FC<BuilderSectionRailProps> = ({
                         }}
                         className="w-full text-left rounded-xl border border-[var(--color-border-subtle)] bg-[var(--color-surface-subtle)] px-3 py-3 hover:border-[var(--color-border)]"
                       >
-                        <div className="mb-2 h-28 overflow-hidden rounded-md border border-[var(--color-border-subtle)] bg-white">
+                        <div className="mb-2 h-28 overflow-hidden rounded-xl border border-[var(--color-border-subtle)] bg-white">
                           <img
                             src={`/variant-previews/${addTypeManifest.type}__${getVariantPreviewSource(addTypeManifest.type, v.id)}.webp`}
                             alt={`${addTypeManifest.label} ${v.label} preview`}
@@ -276,7 +276,7 @@ export const BuilderSectionRail: React.FC<BuilderSectionRailProps> = ({
                         </div>
                         <p className="text-xs text-[var(--color-text-tertiary)] mt-1 line-clamp-2">{v.description || 'Clean layout option'}</p>
                         {recommendation.reasons[0] ? (
-                          <p className="mt-2 rounded-lg bg-white px-2 py-1.5 text-[11px] leading-relaxed text-[var(--color-text-secondary)]">{recommendation.reasons[0]}</p>
+                          <p className="mt-2 rounded-xl bg-white px-2 py-1.5 text-[11px] leading-relaxed text-[var(--color-text-secondary)]">{recommendation.reasons[0]}</p>
                         ) : v.bestFor ? (
                           <p className="mt-2 text-[11px] leading-relaxed text-[var(--color-text-secondary)] line-clamp-2">Best for {v.bestFor}</p>
                         ) : null}

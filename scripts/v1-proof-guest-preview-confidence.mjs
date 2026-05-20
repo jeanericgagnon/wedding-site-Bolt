@@ -1,10 +1,12 @@
 #!/usr/bin/env node
 
-import { execSync, spawn } from 'node:child_process';
+import { execSync } from 'node:child_process';
+import { resolvePreviewRuntime, stopPreviewRuntime } from './proofPreviewRuntime.mjs';
 
 const PREVIEW_URL = 'http://127.0.0.1:4173';
-const baseUrl = process.env.PLAYWRIGHT_BASE_URL || PREVIEW_URL;
-const isLiveBaseUrl = baseUrl !== PREVIEW_URL;
+const requestedBaseUrl = process.env.PLAYWRIGHT_BASE_URL || PREVIEW_URL;
+let browserBaseUrl = requestedBaseUrl;
+const isLiveBaseUrl = requestedBaseUrl !== PREVIEW_URL;
 const desktopSpec = isLiveBaseUrl
   ? 'tests/e2e/guest-preview-live.spec.ts'
   : 'tests/e2e/guest-preview-flow.spec.ts';
@@ -12,26 +14,9 @@ const mobileSpec = isLiveBaseUrl
   ? 'tests/e2e/guest-preview-mobile-live.spec.ts'
   : 'tests/e2e/guest-preview-mobile.spec.ts';
 
-function sleep(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-async function waitForPreview(url, timeoutMs = 20_000) {
-  const startedAt = Date.now();
-  while (Date.now() - startedAt < timeoutMs) {
-    try {
-      const response = await fetch(url, { signal: AbortSignal.timeout(1_500) });
-      if (response.ok) return;
-    } catch {
-      // keep waiting
-    }
-    await sleep(500);
-  }
-  throw new Error(`Preview server did not become ready at ${url} within ${timeoutMs}ms`);
-}
-
 function runStep(step) {
   const startedAt = new Date().toISOString();
+  console.error(`[guest-preview-proof] starting ${step.id}: ${step.command}`);
   try {
     const stdout = execSync(step.command, {
       stdio: ['ignore', 'pipe', 'pipe'],
@@ -39,8 +24,10 @@ function runStep(step) {
       shell: '/bin/zsh',
       env: process.env,
       maxBuffer: 20 * 1024 * 1024,
+      timeout: step.timeoutMs ?? 180_000,
     });
 
+    console.error(`[guest-preview-proof] passed ${step.id}`);
     return {
       id: step.id,
       label: step.label,
@@ -52,6 +39,7 @@ function runStep(step) {
       stdout: stdout.trim(),
     };
   } catch (error) {
+    console.error(`[guest-preview-proof] failed ${step.id}`);
     const stdout = typeof error?.stdout === 'string' ? error.stdout : Buffer.isBuffer(error?.stdout) ? error.stdout.toString('utf8') : '';
     const stderr = typeof error?.stderr === 'string' ? error.stderr : Buffer.isBuffer(error?.stderr) ? error.stderr.toString('utf8') : '';
     return {
@@ -63,6 +51,7 @@ function runStep(step) {
       startedAt,
       finishedAt: new Date().toISOString(),
       exitCode: typeof error?.status === 'number' ? error.status : 1,
+      timedOut: error?.signal === 'SIGTERM' || error?.code === 'ETIMEDOUT' || error?.killed === true,
       stdout: stdout.trim() || undefined,
       stderr: stderr.trim() || undefined,
     };
@@ -88,39 +77,35 @@ const results = [
     id: 'guest-preview-unit-tests',
     label: 'Guest preview confidence unit tests',
     command: 'npm test -- --run src/lib/guestPreviewRoutes.test.ts src/lib/guestVisibilityPreview.test.ts src/pages/dashboard/guests/GuestItineraryDrawer.test.tsx src/pages/dashboard/guests/demoGuestItinerary.test.ts src/pages/dashboard/guests/GuestListPanel.test.tsx src/pages/dashboard/guests/GuestHouseholdPanel.test.tsx',
+    timeoutMs: 120_000,
   }),
   runStep({
     id: 'build',
     label: 'Build integrity check',
     command: 'npm run build',
+    timeoutMs: 300_000,
   }),
 ];
 
 let previewProcess = null;
-let previewStdout = '';
-let previewStderr = '';
+let previewOutput = { stdout: '', stderr: '' };
 try {
-  if (baseUrl === PREVIEW_URL) {
-    previewProcess = spawn('npm', ['run', 'preview', '--', '--host', '127.0.0.1', '--port', '4173'], {
+  if (requestedBaseUrl === PREVIEW_URL) {
+    const previewRuntime = await resolvePreviewRuntime({
+      preferredPort: 4173,
+      requestedBaseUrl,
       cwd: process.cwd(),
-      env: process.env,
-      stdio: ['ignore', 'pipe', 'pipe'],
     });
-
-    previewProcess.stdout.on('data', (chunk) => {
-      previewStdout += chunk.toString('utf8');
-    });
-    previewProcess.stderr.on('data', (chunk) => {
-      previewStderr += chunk.toString('utf8');
-    });
-
-    await waitForPreview(PREVIEW_URL);
+    browserBaseUrl = previewRuntime.baseUrl;
+    previewProcess = previewRuntime.previewProcess;
+    previewOutput = previewRuntime.previewOutput;
   }
 
   results.push(runStep({
     id: 'guest-preview-browser-proof',
     label: 'Guest drawer desktop preview browser proof',
-    command: `PLAYWRIGHT_BASE_URL=${baseUrl} npx playwright test --workers=1 ${desktopSpec}`,
+    command: `PLAYWRIGHT_BASE_URL=${browserBaseUrl} npx playwright test --workers=1 ${desktopSpec}`,
+    timeoutMs: 180_000,
   }));
 
   results.push(runStep({
@@ -128,39 +113,36 @@ try {
     label: isLiveBaseUrl
       ? 'Guest drawer mobile live preview browser proof'
       : 'Guest drawer mobile preview browser proof',
-    command: `PLAYWRIGHT_BASE_URL=${baseUrl} npx playwright test --workers=1 ${mobileSpec}`,
+    command: `PLAYWRIGHT_BASE_URL=${browserBaseUrl} npx playwright test --workers=1 ${mobileSpec}`,
+    timeoutMs: 180_000,
   }));
 
-  if (previewStdout.trim()) {
+  if (previewOutput.stdout.trim()) {
     results.push({
       id: 'preview-server-log',
       label: 'Preview server log',
-      command: 'npm run preview -- --host 127.0.0.1 --port 4173',
+      command: `npm run preview -- --host 127.0.0.1 --port ${new URL(browserBaseUrl).port || '4173'}`,
       required: false,
       ok: true,
       startedAt: new Date().toISOString(),
       finishedAt: new Date().toISOString(),
-      stdout: previewStdout.trim(),
-      stderr: previewStderr.trim() || undefined,
+      stdout: previewOutput.stdout.trim(),
+      stderr: previewOutput.stderr.trim() || undefined,
     });
   }
 } catch (error) {
   results.push({
     id: 'guest-preview-browser-proof',
     label: 'Guest drawer browser proof',
-    command: `PLAYWRIGHT_BASE_URL=${baseUrl} npx playwright test --workers=1 ${desktopSpec}${isLiveBaseUrl ? '' : ` ${mobileSpec}`}`,
+    command: `PLAYWRIGHT_BASE_URL=${browserBaseUrl} npx playwright test --workers=1 ${desktopSpec}${isLiveBaseUrl ? '' : ` ${mobileSpec}`}`,
     required: true,
     ok: false,
     startedAt: new Date().toISOString(),
     finishedAt: new Date().toISOString(),
-    stderr: [previewStderr.trim(), error instanceof Error ? error.message : 'Guest preview proof failed to start.'].filter(Boolean).join('\n'),
+    stderr: [previewOutput.stderr.trim(), error instanceof Error ? error.message : 'Guest preview proof failed to start.'].filter(Boolean).join('\n'),
   });
 } finally {
-  if (previewProcess) {
-    previewProcess.kill('SIGTERM');
-    await sleep(300);
-    if (!previewProcess.killed) previewProcess.kill('SIGKILL');
-  }
+  await stopPreviewRuntime(previewProcess);
 }
 
 const failedRequired = results.filter((result) => result.required && !result.ok);
@@ -173,6 +155,9 @@ const output = {
     passed: results.filter((result) => result.ok).length,
     failed: results.filter((result) => !result.ok).length,
   },
+  contractSummary: isLiveBaseUrl
+    ? 'Guest preview live proof is green: this guest-preview lane validates shipped preview-route visibility and navigation on live runtime without replacing the broader launch-truth flow.'
+    : 'Guest preview local proof is green: this lane validates preview-route confidence locally and leaves shipped-runtime guest-preview truth to the dedicated production rerun.',
   automatedCoverage: [
     'Guest preview route generation and token-safe visibility summary truth',
     'Guest drawer private QR surfaces without raw-token display leakage',

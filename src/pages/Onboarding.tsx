@@ -19,14 +19,17 @@ import { clearOnboardingResumeStorage, readOnboardingResumeState } from '../lib/
 import { clearAllOnboardingContinuationState } from '../lib/onboardingContinuationCleanup';
 import { buildCoupleDisplayName } from '../lib/coupleDisplayName';
 import {
+  getOnboardingStepForQuestionIndex,
+  onboardingConciergeQuestions,
+  optionalOnboardingQuestionKeys,
+} from './onboarding/onboardingConciergeContent';
+import {
   createOnboardingWeddingSite,
   fetchExistingOnboardingSite,
   mergeOnboardingSeedsIntoWeddingData,
   syncOnboardingEventSeeds,
   updateExistingOnboardingSite,
 } from './onboarding/onboardingService';
-
-type ConciergeQuestion = 'partnerNames' | 'partnerLabels' | 'venueLocation' | 'venueName' | 'theme' | 'weekendEvents' | 'ceremonyTime' | 'guestCount' | 'plusOnePolicy' | 'childrenAllowed' | 'rsvpDeadline' | 'mealChoice' | 'story';
 
 export function parsePartnerNames(value: string): string[] {
   return value
@@ -62,6 +65,7 @@ export const Onboarding: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { user, isDemoMode } = useAuth();
+  const onboardingStorageScope = user?.id ?? null;
   const { toast } = useToast();
   const [step, setStep] = useState<OnboardingStep>('choice');
   const [conversationIndex, setConversationIndex] = useState(0);
@@ -77,37 +81,14 @@ export const Onboarding: React.FC = () => {
   const formData = initialSetupAnswersToOnboardingFormShape(initialSetupAnswers);
   const forceShowChooser = searchParams.get('showChooser') === '1';
 
-  const conciergeQuestions: Array<{
-    key: ConciergeQuestion;
-    label: string;
-    prompt: string;
-    helper?: string;
-    type?: 'text' | 'date' | 'time' | 'textarea';
-    placeholder?: string;
-  }> = [
-    { key: 'partnerNames', label: 'Who’s getting married?', prompt: 'Who’s getting married?', helper: 'Use the names exactly how you want guests to see them on the site.', placeholder: 'Alex & Jordan' },
-    { key: 'partnerLabels', label: 'Labels', prompt: 'How should we refer to each of you on the site?', helper: 'Choose the simplest option that fits best.', placeholder: 'groom|bride' },
-    { key: 'venueLocation', label: 'When and where', prompt: 'When and where are you getting married?', helper: 'Use the date and city or region together so we can anchor the whole site in one step.', placeholder: 'January 17, 2027 in Sayulita, Mexico' },
-    { key: 'venueName', label: 'Venue', prompt: 'What venue are you getting married at?', helper: 'Use the venue name or write TBD if you are still deciding.', placeholder: 'Amor Boutique Hotel or TBD' },
-    { key: 'theme', label: 'Style', prompt: 'What style should the site lean into?', helper: 'A few words is enough. Tropical, modern, editorial, classic, relaxed.', placeholder: 'Tropical, relaxed' },
-    { key: 'weekendEvents', label: 'Events', prompt: 'What events are happening over the wedding weekend?', type: 'textarea', helper: 'Use one short line or sentence. We will turn it into structured events.', placeholder: 'Friday pickleball tournament and welcome dinner, Saturday rehearsal dinner, Sunday wedding' },
-    { key: 'ceremonyTime', label: 'Ceremony arrival', prompt: 'What time should guests arrive for the ceremony?', helper: 'A simple arrival time is enough.', placeholder: '4:30 PM' },
-    { key: 'guestCount', label: 'Guest count', prompt: 'About how many guests are you inviting?', helper: 'Pick the closest range.', placeholder: '50-100' },
-    { key: 'plusOnePolicy', label: 'Plus-ones', prompt: 'What’s your plus-one policy?', helper: 'Choose the policy you want the RSVP flow to follow.', placeholder: 'some' },
-    { key: 'childrenAllowed', label: 'Children', prompt: 'Are children invited?', helper: 'Choose yes, no, or unsure for now.', placeholder: 'unsure' },
-    { key: 'rsvpDeadline', label: 'RSVP', prompt: 'When do you want guests to RSVP by?', helper: 'This drives the RSVP setup immediately.', type: 'date' },
-    { key: 'mealChoice', label: 'Meals', prompt: 'Do you want to collect meal choices?', helper: 'Choose yes or no.', placeholder: 'yes' },
-    { key: 'story', label: 'Story', prompt: 'Want to add your story? (totally optional)', type: 'textarea', helper: 'Optional, but helpful for stronger copy.', placeholder: 'We met on Hinge, texted for a month, then finally met up for a concert...' },
-  ];
+  const conciergeQuestions = onboardingConciergeQuestions;
 
   const currentQuestion = conciergeQuestions[conversationIndex] ?? null;
-  const optionalQuestionKeys: ConciergeQuestion[] = ['venueName', 'story'];
+  const optionalQuestionKeys = optionalOnboardingQuestionKeys;
   const isCurrentQuestionOptional = currentQuestion ? optionalQuestionKeys.includes(currentQuestion.key) : false;
 
   const getStepForIndex = (index: number): OnboardingStep => {
-    if (index < 4) return 'quick-1';
-    if (index < 7) return 'quick-2';
-    return 'quick-3';
+    return getOnboardingStepForQuestionIndex(index);
   };
 
   const getQuestionIndexByKey = (key: string | null) => {
@@ -240,11 +221,11 @@ export const Onboarding: React.FC = () => {
       return;
     }
 
-    const hadSavedDraft = hasStoredOnboardingDraftPayload();
-    const parsed = readOnboardingDraftSnapshot();
+    const hadSavedDraft = hasStoredOnboardingDraftPayload(onboardingStorageScope);
+    const parsed = readOnboardingDraftSnapshot(onboardingStorageScope);
     if (!parsed) {
       setHasSavedDraftNotice(false);
-      if (hadSavedDraft) clearAllOnboardingContinuationState();
+      if (hadSavedDraft) clearAllOnboardingContinuationState(onboardingStorageScope);
       setHasHydratedDraft(true);
       return;
     }
@@ -257,11 +238,11 @@ export const Onboarding: React.FC = () => {
       setShowFollowUpReview(parsed.showFollowUpReview);
       setHasSavedDraftNotice(true);
       setWeddingProfile(isWeddingProfile(parsed.weddingProfile) ? parsed.weddingProfile : applyInitialSetupAnswersToWeddingProfile(hydratedAnswers));
-      const { hint: resumeHint, index: resumeIndex } = readOnboardingResumeState();
+      const { hint: resumeHint, index: resumeIndex } = readOnboardingResumeState(onboardingStorageScope);
       if (forceShowChooser) {
         setConversationIndex(0);
         setStep('choice');
-        clearOnboardingResumeStorage();
+        clearOnboardingResumeStorage(onboardingStorageScope);
       } else if (resumeHint === 'question' && resumeIndex !== null) {
         const nextResumeIndex = resolveOnboardingResumeIndex({
           savedIndex: resumeIndex,
@@ -270,7 +251,7 @@ export const Onboarding: React.FC = () => {
         });
         setConversationIndex(nextResumeIndex);
         setStep(getStepForIndex(nextResumeIndex));
-        clearOnboardingResumeStorage();
+        clearOnboardingResumeStorage(onboardingStorageScope);
       } else if (resumeHint === 'first-incomplete') {
         const firstIncompleteIndex = getFirstIncompleteQuestionIndex();
         const resumeIndex = resolveOnboardingResumeIndex({
@@ -280,7 +261,7 @@ export const Onboarding: React.FC = () => {
         });
         setConversationIndex(resumeIndex);
         setStep(getStepForIndex(resumeIndex));
-        clearOnboardingResumeStorage();
+        clearOnboardingResumeStorage(onboardingStorageScope);
       } else if (typeof parsed.conversationIndex === 'number') {
         const resumeIndex = resolveOnboardingResumeIndex({
           savedIndex: parsed.conversationIndex,
@@ -293,11 +274,11 @@ export const Onboarding: React.FC = () => {
         setStep(parsed.step);
       }
     } catch {
-      clearAllOnboardingContinuationState();
+      clearAllOnboardingContinuationState(onboardingStorageScope);
     } finally {
       setHasHydratedDraft(true);
     }
-  }, [forceShowChooser, isDemoMode]);
+  }, [forceShowChooser, isDemoMode, onboardingStorageScope]);
 
   useEffect(() => {
     if (!forceShowChooser) return;
@@ -317,12 +298,12 @@ export const Onboarding: React.FC = () => {
       initialSetupFollowUps,
       followUpAnswers,
       showFollowUpReview,
-    });
+    }, onboardingStorageScope);
     setHasSavedDraftNotice(Boolean(persisted));
-  }, [conversationIndex, followUpAnswers, hasHydratedDraft, initialSetupAnswers, initialSetupFollowUps, isDemoMode, showFollowUpReview, step, weddingProfile]);
+  }, [conversationIndex, followUpAnswers, hasHydratedDraft, initialSetupAnswers, initialSetupFollowUps, isDemoMode, onboardingStorageScope, showFollowUpReview, step, weddingProfile]);
 
   const clearSavedOnboardingDraft = () => {
-    clearAllOnboardingContinuationState();
+    clearAllOnboardingContinuationState(onboardingStorageScope);
     setHasSavedDraftNotice(false);
   };
 
@@ -368,7 +349,7 @@ export const Onboarding: React.FC = () => {
 
   useEffect(() => {
     void (async () => {
-      const hasLocalDraft = hasActiveOnboardingDraftSnapshot();
+      const hasLocalDraft = hasActiveOnboardingDraftSnapshot(onboardingStorageScope);
       if (hasLocalDraft) return;
 
       const data = await fetchExistingSite();
@@ -376,7 +357,7 @@ export const Onboarding: React.FC = () => {
         setWeddingProfile(data.onboarding_answers);
       }
     })();
-  }, [fetchExistingSite]);
+  }, [fetchExistingSite, onboardingStorageScope]);
 
   useEffect(() => {
     if (!isDemoMode || hasSeededDemoDraftRef.current) return;
@@ -818,10 +799,10 @@ export const Onboarding: React.FC = () => {
         </div>
         <span className="text-sm font-medium text-primary">{conversationProgress}%</span>
       </div>
-      <div className="h-2 rounded-lg bg-border overflow-hidden mb-4">
-        <div className="h-full rounded-lg bg-primary transition-all" style={{ width: `${conversationProgress}%` }} />
+      <div className="h-2 rounded-xl bg-border overflow-hidden mb-4">
+        <div className="h-full rounded-xl bg-primary transition-all" style={{ width: `${conversationProgress}%` }} />
       </div>
-      <div className="mb-4 rounded-lg border border-border bg-surface px-4 py-3">
+      <div className="mb-4 rounded-xl border border-border bg-surface px-4 py-3">
         <div className="flex items-center justify-between gap-3">
           <div>
             <p className="text-sm text-text-tertiary">Draft detail</p>
@@ -836,7 +817,7 @@ export const Onboarding: React.FC = () => {
           {fieldStatuses.map((field) => (
             <span
               key={field.path}
-              className={`rounded-md px-2.5 py-1 text-[11px] font-medium ${field.complete ? 'bg-surface-secondary text-text-primary border border-border-subtle' : field.requiredForDraft ? 'bg-surface text-text-secondary border border-border' : 'bg-surface text-text-secondary border border-border'}`}
+              className={`rounded-xl px-2.5 py-1 text-[11px] font-medium ${field.complete ? 'bg-surface-secondary text-text-primary border border-border-subtle' : field.requiredForDraft ? 'bg-surface text-text-secondary border border-border' : 'bg-surface text-text-secondary border border-border'}`}
             >
               {field.label}
             </span>
@@ -878,15 +859,15 @@ export const Onboarding: React.FC = () => {
               <h3 className="mt-2 text-2xl font-bold text-text-primary">A few smart follow-ups before we build</h3>
               <p className="mt-2 text-text-secondary">We already have enough to generate a strong baseline site. These are the highest-leverage details that would make it feel more personal.</p>
               <div className="mt-4 grid gap-3 sm:grid-cols-3">
-                <div className="rounded-lg bg-surface px-4 py-3 border border-border">
+                <div className="rounded-xl bg-surface px-4 py-3 border border-border">
                   <p className="text-xs text-text-tertiary mb-1">This round</p>
                   <p className="text-sm font-medium text-text-primary">Up to {Math.min(3, remainingFollowUpBudget)} questions</p>
                 </div>
-                <div className="rounded-lg bg-surface px-4 py-3 border border-border">
+                <div className="rounded-xl bg-surface px-4 py-3 border border-border">
                   <p className="text-xs text-text-tertiary mb-1">Asked so far</p>
                   <p className="text-sm font-medium text-text-primary">{answeredFollowUpCount} of 5</p>
                 </div>
-                <div className="rounded-lg bg-surface px-4 py-3 border border-border">
+                <div className="rounded-xl bg-surface px-4 py-3 border border-border">
                   <p className="text-xs text-text-tertiary mb-1">When we stop</p>
                   <p className="text-sm font-medium text-text-primary">Build once it feels ready</p>
                 </div>
@@ -894,11 +875,11 @@ export const Onboarding: React.FC = () => {
             </div>
             <div className="space-y-3">
               {onboardingSession.suggestedFollowUps.slice(0, 3).map((question, index) => (
-                <div key={question.key} className="rounded-lg border border-border bg-surface px-4 py-4">
+                <div key={question.key} className="rounded-xl border border-border bg-surface px-4 py-4">
                   <p className="text-sm font-medium text-text-primary">{index + 1}. {question.variants[0]}</p>
                   <p className="mt-1 text-xs text-text-secondary">Other gentle ways to ask: {question.variants[1]} / {question.variants[2]}</p>
                   <Textarea
-                    className="mt-3 min-h-[132px] rounded-lg border-border/70 bg-white/90 text-base"
+                    className="mt-3 min-h-[132px] rounded-xl border-border/70 bg-white/90 text-base"
                     placeholder="Optional answer"
                     value={followUpAnswers[question.key] || ''}
                     onChange={(event) => {
@@ -954,11 +935,11 @@ export const Onboarding: React.FC = () => {
               <h3 className="mt-2 text-2xl font-bold text-text-primary">{currentQuestion.prompt}</h3>
               {currentQuestion.helper && <p className="mt-2 text-text-secondary">{currentQuestion.helper}</p>}
               <div className="mt-4 space-y-3">
-                <div className="rounded-lg bg-surface-secondary border border-border-subtle px-4 py-3">
+                <div className="rounded-xl bg-surface-secondary border border-border-subtle px-4 py-3">
                   <p className="text-xs text-text-tertiary mb-1">What this shapes</p>
                   <p className="text-sm text-text-primary">{getQuestionPreview()}</p>
                 </div>
-                <div className="rounded-lg border border-border bg-surface px-4 py-3">
+                <div className="rounded-xl border border-border bg-surface px-4 py-3">
                   <p className="text-xs text-text-tertiary mb-1">Draft guidance</p>
                   <p className="text-sm text-text-primary">Focus: {onboardingSession.currentIntent}</p>
                   <p className="mt-1 text-xs text-text-secondary">Enough detail to draft: {Math.round(onboardingSession.confidence * 100)}%</p>
@@ -966,7 +947,7 @@ export const Onboarding: React.FC = () => {
                     <p className="mt-1 text-xs text-text-secondary">Suggested next ask: {onboardingSession.suggestedPrompt}</p>
                   )}
                   {onboardingSession.suggestedFollowUps.length > 0 && (
-                    <div className="mt-3 rounded-lg bg-surface-secondary border border-border-subtle px-3 py-3">
+                    <div className="mt-3 rounded-xl bg-surface-secondary border border-border-subtle px-3 py-3">
                       <p className="text-xs text-text-tertiary mb-2">Helpful follow-ups</p>
                       <ul className="space-y-2">
                         {onboardingSession.suggestedFollowUps.map((question, index) => (
@@ -981,13 +962,13 @@ export const Onboarding: React.FC = () => {
                   )}
                 </div>
                 {currentQuestion.key === 'partnerNames' && (
-                  <div className="rounded-lg bg-surface px-4 py-3 border border-border">
+                  <div className="rounded-xl bg-surface px-4 py-3 border border-border">
                     <p className="text-xs text-text-tertiary mb-1">Suggested URL</p>
                     <p className="text-sm font-medium text-text-primary">{suggestedSiteSlug}.dayof.love</p>
                   </div>
                 )}
                 {currentQuestion.key === 'theme' && getThemeHint() !== formData.theme && (
-                  <div className="rounded-lg bg-surface px-4 py-3 border border-border">
+                  <div className="rounded-xl bg-surface px-4 py-3 border border-border">
                     <p className="text-xs text-text-tertiary mb-1">Suggested starting point</p>
                     <p className="text-sm text-text-primary">Based on the venue details so far, <span className="font-medium">{getThemeHint()}</span> looks like the best starting direction.</p>
                   </div>
@@ -1004,10 +985,10 @@ export const Onboarding: React.FC = () => {
                   const parts = (formData.partnerLabels || 'none|none').split('|');
                   const value = parts[index] || 'none';
                   return (
-                    <label key={field.key} className="rounded-lg border border-border bg-surface p-4">
+                    <label key={field.key} className="rounded-xl border border-border bg-surface p-4">
                       <p className="mb-2 text-sm font-medium text-text-primary">{field.label}</p>
                       <select
-                        className="w-full rounded-lg border border-border/70 bg-white/90 px-4 py-3 text-sm text-text-primary"
+                        className="w-full rounded-xl border border-border/70 bg-white/90 px-4 py-3 text-sm text-text-primary"
                         value={value}
                         onChange={(event) => {
                           const next = [...parts];
@@ -1026,7 +1007,7 @@ export const Onboarding: React.FC = () => {
               </div>
             ) : currentQuestion.type === 'textarea' ? (
               <Textarea
-                className="min-h-[132px] rounded-lg border-border/70 bg-white/90 text-base"
+                className="min-h-[132px] rounded-xl border-border/70 bg-white/90 text-base"
                 name={currentQuestion.key}
                 placeholder={currentQuestion.key === 'story' ? getStoryPrompt() : (currentQuestion.placeholder || '')}
                 value={formData[currentQuestion.key as keyof typeof formData]}
@@ -1035,7 +1016,7 @@ export const Onboarding: React.FC = () => {
               />
             ) : (
               <Input
-                className="h-14 rounded-lg border-border/70 bg-white/90 text-base"
+                className="h-14 rounded-xl border-border/70 bg-white/90 text-base"
                 type={currentQuestion.type === 'date' || currentQuestion.type === 'time' ? currentQuestion.type : 'text'}
                 name={currentQuestion.key}
                 placeholder={currentQuestion.placeholder || ''}
@@ -1105,7 +1086,7 @@ export const Onboarding: React.FC = () => {
 
     return (
       <div className="max-w-2xl mx-auto text-center">
-        <div className="inline-flex items-center justify-center w-16 h-16 bg-surface-secondary border border-border-subtle rounded-lg mb-6">
+        <div className="inline-flex items-center justify-center w-16 h-16 bg-surface-secondary border border-border-subtle rounded-xl mb-6">
           <Check className="w-8 h-8 text-primary" aria-hidden="true" />
         </div>
 

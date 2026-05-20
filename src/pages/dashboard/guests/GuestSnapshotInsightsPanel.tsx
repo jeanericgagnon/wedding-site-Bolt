@@ -82,10 +82,16 @@ export function GuestSnapshotInsightsPanel({
   onFocusReceptionNo,
 }: GuestSnapshotInsightsPanelProps) {
   return (
-    <details className="rounded-lg border border-border-subtle bg-surface-subtle/40 p-3">
-      <summary className="cursor-pointer list-none flex items-center justify-between gap-3">
-        <span className="text-sm font-semibold text-text-primary">Snapshot & RSVP insights</span>
-        <span className="text-xs text-text-tertiary">View details</span>
+    <details className="rounded-2xl border border-border-subtle bg-white p-4 shadow-sm">
+      <summary className="cursor-pointer list-none">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary/75">Snapshot</p>
+            <p className="mt-3 text-sm font-semibold text-text-primary">RSVP insights and guest detail rollups</p>
+            <p className="mt-2 text-sm leading-6 text-text-secondary">Open the broader counts, meal coverage, event-level replies, and custom-answer patterns when you want the fuller picture.</p>
+          </div>
+          <span className="rounded-xl border border-border-subtle bg-surface-subtle/30 px-3 py-1 text-xs text-text-tertiary">View details</span>
+        </div>
       </summary>
       <div className="mt-3 space-y-4">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -158,7 +164,7 @@ export function GuestSnapshotInsightsPanel({
                 {eventReport.length === 0 ? (
                   <p className="text-sm text-text-secondary">No event-level reporting yet.</p>
                 ) : eventReport.map((event) => (
-                  <div key={event.id} className="rounded-lg border border-border-subtle bg-white px-3 py-2.5">
+                  <div key={event.id} className="rounded-2xl border border-border-subtle bg-white px-3 py-2.5">
                     <div className="flex items-center justify-between gap-3">
                       <p className="text-sm font-medium text-text-primary">{event.name}</p>
                       <span className="text-xs text-text-tertiary">Invited {event.invited}</span>
@@ -175,7 +181,7 @@ export function GuestSnapshotInsightsPanel({
                 {mealChoiceRollup.length === 0 ? (
                   <p className="text-sm text-text-secondary">No meal data yet.</p>
                 ) : mealChoiceRollup.slice(0, 6).map(([meal, count]) => (
-                  <div key={meal} className="flex items-center justify-between gap-3 rounded-lg border border-border-subtle bg-white px-3 py-2.5">
+                  <div key={meal} className="flex items-center justify-between gap-3 rounded-2xl border border-border-subtle bg-white px-3 py-2.5">
                     <span className="text-sm text-text-primary">{meal}</span>
                     <span className="text-sm font-semibold text-text-primary">{count}</span>
                   </div>
@@ -189,7 +195,7 @@ export function GuestSnapshotInsightsPanel({
                 {customAnswerRollup.length === 0 ? (
                   <p className="text-sm text-text-secondary">No custom answers captured yet.</p>
                 ) : customAnswerRollup.map((entry, index) => (
-                  <div key={`${entry.question}-${entry.answer}-${index}`} className="rounded-lg border border-border-subtle bg-white px-3 py-2.5">
+                  <div key={`${entry.question}-${entry.answer}-${index}`} className="rounded-2xl border border-border-subtle bg-white px-3 py-2.5">
                     <p className="text-xs text-text-tertiary">{entry.question}</p>
                     <div className="mt-1 flex items-center justify-between gap-3">
                       <span className="text-sm text-text-primary">{entry.answer}</span>
@@ -206,7 +212,7 @@ export function GuestSnapshotInsightsPanel({
                 {songRequestEntries.length === 0 ? (
                   <p className="text-sm text-text-secondary">No song requests captured yet.</p>
                 ) : songRequestEntries.map((entry, index) => (
-                  <div key={`${entry.guestName}-${entry.answer}-${index}`} className="rounded-lg border border-border-subtle bg-white px-3 py-2.5">
+                  <div key={`${entry.guestName}-${entry.answer}-${index}`} className="rounded-2xl border border-border-subtle bg-white px-3 py-2.5">
                     <div className="flex items-center justify-between gap-3">
                       <p className="text-sm font-medium text-text-primary">{entry.answer}</p>
                       <span className="text-xs text-text-tertiary">{entry.guestName}</span>
@@ -220,31 +226,32 @@ export function GuestSnapshotInsightsPanel({
         )}
 
         <div className="grid grid-cols-2 lg:grid-cols-3 gap-2.5">
-          <button onClick={onFocusMissingMeal} className="text-left p-2.5 rounded-lg border border-border-subtle hover:border-primary/40 hover:bg-primary/5 transition-colors">
+          <button onClick={onFocusMissingMeal} className="text-left rounded-2xl border border-border-subtle p-2.5 transition-colors hover:border-primary/40 hover:bg-primary/5">
             <p className="text-xs text-text-tertiary">Missing meal</p>
             <p className="text-base font-semibold text-text-primary">{rsvpOps.missingMeal}</p>
           </button>
-          <button onClick={onFocusPlusOneMissing} className="text-left p-2.5 rounded-lg border border-border-subtle hover:border-primary/40 hover:bg-primary/5 transition-colors">
+          <button onClick={onFocusPlusOneMissing} className="text-left rounded-2xl border border-border-subtle p-2.5 transition-colors hover:border-primary/40 hover:bg-primary/5">
             <p className="text-xs text-text-tertiary">Plus-one missing</p>
             <p className="text-base font-semibold text-text-primary">{rsvpOps.plusOneMissingName}</p>
           </button>
-          <button onClick={onFocusNoResponse} className="text-left p-2.5 rounded-lg border border-border-subtle hover:border-primary/40 hover:bg-primary/5 transition-colors">
+          <button onClick={onFocusNoResponse} className="text-left rounded-2xl border border-border-subtle p-2.5 transition-colors hover:border-primary/40 hover:bg-primary/5">
             <p className="text-xs text-text-tertiary">No response</p>
             <p className="text-base font-semibold text-text-primary">{rsvpOps.noResponse}</p>
           </button>
-          <button onClick={onFocusPendingNoEmail} className="text-left p-2.5 rounded-lg border border-border-subtle hover:border-primary/40 hover:bg-primary/5 transition-colors">
+          <button onClick={onFocusPendingNoEmail} className="text-left rounded-2xl border border-border-subtle p-2.5 transition-colors hover:border-primary/40 hover:bg-primary/5">
             <p className="text-xs text-text-tertiary">Pending, no email</p>
             <p className="text-base font-semibold text-text-primary">{rsvpOps.pendingNoEmail}</p>
           </button>
-          <button onClick={onFocusCeremonyNo} className="text-left p-2.5 rounded-lg border border-border-subtle hover:border-primary/40 hover:bg-primary/5 transition-colors">
+          <button onClick={onFocusCeremonyNo} className="text-left rounded-2xl border border-border-subtle p-2.5 transition-colors hover:border-primary/40 hover:bg-primary/5">
             <p className="text-xs text-text-tertiary">Ceremony: No</p>
             <p className="text-base font-semibold text-text-primary">{rsvpOps.ceremonyNo}</p>
           </button>
-          <button onClick={onFocusReceptionNo} className="text-left p-2.5 rounded-lg border border-border-subtle hover:border-primary/40 hover:bg-primary/5 transition-colors">
+          <button onClick={onFocusReceptionNo} className="text-left rounded-2xl border border-border-subtle p-2.5 transition-colors hover:border-primary/40 hover:bg-primary/5">
             <p className="text-xs text-text-tertiary">Reception: No</p>
             <p className="text-base font-semibold text-text-primary">{rsvpOps.receptionNo}</p>
           </button>
         </div>
+        <p className="text-xs text-text-tertiary">These quick counts are shortcuts into the guest workspace below when you want to resolve the specific people behind the numbers.</p>
       </div>
     </details>
   );

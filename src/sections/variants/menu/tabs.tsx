@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { z } from 'zod';
 import { Utensils, Leaf, AlertCircle } from 'lucide-react';
 import { SectionDefinition, SectionComponentProps } from '../../types';
@@ -82,6 +82,9 @@ const DIETARY_LABELS: Record<string, { label: string; color: string }> = {
 
 const MenuTabs: React.FC<SectionComponentProps<MenuTabsData>> = ({ data }) => {
   const [activeTab, setActiveTab] = useState(0);
+  useEffect(() => {
+    setActiveTab(0);
+  }, [data.courses]);
   const activeCourse = data.courses[activeTab];
 
   return (

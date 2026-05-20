@@ -32,7 +32,7 @@ export function GuestImportMapperModal({
     <>
       <div className="fixed inset-0 z-40 bg-black/50" onClick={() => { if (!csvImporting) onClose(); }} />
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-        <div className="flex max-h-[80vh] w-full max-w-2xl flex-col rounded-lg border border-border-subtle bg-surface">
+        <div className="flex max-h-[80vh] w-full max-w-2xl flex-col rounded-2xl border border-border-subtle bg-surface">
           <div className="flex items-center justify-between border-b border-border-subtle p-6">
             <div>
               <h2 className="text-lg font-semibold text-text-primary">Match columns</h2>
@@ -40,13 +40,13 @@ export function GuestImportMapperModal({
                 Confirm how this file should become your guest list{csvSelectedFilename ? ` · ${csvSelectedFilename}` : ''}
               </p>
             </div>
-            <button onClick={onClose} className="rounded-lg p-2 transition-colors hover:bg-surface-subtle">
+            <button onClick={onClose} className="rounded-xl p-2 transition-colors hover:bg-surface-subtle">
               <X className="h-5 w-5 text-text-secondary" />
             </button>
           </div>
           <div className="flex-1 space-y-3 overflow-y-auto p-6">
             {!csvNameMappingValid && (
-              <div className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-2 text-xs text-text-secondary">
+              <div className="rounded-xl border border-border-subtle bg-surface-subtle px-3 py-2 text-xs text-text-secondary">
                 Map First Name + Last Name, or use Full Name instead.
               </div>
             )}
@@ -80,7 +80,7 @@ export function GuestImportMapperModal({
                       onChange={(event) => {
                         onInvitedEventsChange(Array.from(event.currentTarget.selectedOptions).map((option) => Number(option.value)));
                       }}
-                      className="min-h-[110px] w-full rounded-md border border-border bg-surface px-3 py-2 text-sm"
+                      className="min-h-[110px] w-full rounded-xl border border-border bg-surface px-3 py-2 text-sm"
                     >
                       {csvHeaders.map((header, index) => (
                         <option key={`${key}-${index}`} value={index}>
@@ -92,7 +92,7 @@ export function GuestImportMapperModal({
                     <select
                       value={csvFieldMap[key] as number}
                       onChange={(event) => onFieldMapChange(key, Number(event.target.value))}
-                      className="w-full rounded-md border border-border bg-surface px-3 py-2 text-sm"
+                      className="w-full rounded-xl border border-border bg-surface px-3 py-2 text-sm"
                     >
                       <option value={-1}>— Not mapped —</option>
                       {csvHeaders.map((header, index) => (

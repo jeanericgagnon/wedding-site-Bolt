@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 
 import { mediaRepository } from '../../../builder/services/mediaRepository';
 import { createEmptyPhotoBuckets, type PhotoBucketKind } from '../../../lib/aiPhotoBuckets';
@@ -25,6 +25,15 @@ export function useGuestPhotoBucketWorkspace({
   const bucketFileInputRef = useRef<HTMLInputElement | null>(null);
   const pendingBucketRef = useRef<PhotoBucketKind | null>(null);
   const [pendingBucket, setPendingBucket] = useState<PhotoBucketKind | null>(null);
+
+  const resetGuestPhotoBucketWorkspace = useCallback(() => {
+    setPhotoBuckets(createEmptyPhotoBuckets());
+    pendingBucketRef.current = null;
+    setPendingBucket(null);
+    if (bucketFileInputRef.current) {
+      bucketFileInputRef.current.value = '';
+    }
+  }, []);
 
   const persistPhotoBuckets = async (nextBuckets: GuestPhotoBucketsState) => {
     if (!siteId) return;
@@ -104,6 +113,7 @@ export function useGuestPhotoBucketWorkspace({
     handleBucketRemoveClick,
     handleBucketUploadClick,
     photoBuckets,
+    resetGuestPhotoBucketWorkspace,
     setPhotoBuckets,
   };
 }

@@ -2,7 +2,7 @@
 
 import fs from 'node:fs';
 
-const BACKLOG_PATH = 'BACKLOG.md';
+const BACKLOG_PATH = process.env.V1_PROOF_BOARD_BACKLOG_PATH || 'BACKLOG.md';
 
 const formatPacificTimestamp = (date = new Date()) => {
   const parts = new Intl.DateTimeFormat('en-US', {
@@ -20,7 +20,60 @@ const formatPacificTimestamp = (date = new Date()) => {
   return `${byType.year}-${byType.month}-${byType.day} ${byType.hour}:${byType.minute} ${byType.dayPeriod} ${zone}`;
 };
 
-const readBacklog = () => fs.readFileSync(BACKLOG_PATH, 'utf8');
+const readBacklog = () => {
+  try {
+    return fs.readFileSync(BACKLOG_PATH, 'utf8');
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Unknown backlog read failure.';
+    console.error(`[proof:v1:board] Failed to read backlog source \`${BACKLOG_PATH}\`: ${message}`);
+    process.exit(1);
+  }
+};
+
+const parseBacklogTimestamp = (value) => {
+  if (!value) return null;
+  const cleaned = value.replace(/`/g, '').trim();
+  const match = cleaned.match(
+    /^(\d{4})-(\d{2})-(\d{2}) (\d{1,2}):(\d{2}) (AM|PM) (PT|PDT|PST)$/,
+  );
+  if (!match) return null;
+
+  const [, year, month, day, rawHour, minute, dayPeriod] = match;
+  let hour = Number(rawHour);
+  if (dayPeriod === 'AM' && hour === 12) hour = 0;
+  if (dayPeriod === 'PM' && hour !== 12) hour += 12;
+
+  const isoLike = `${year}-${month}-${day}T${String(hour).padStart(2, '0')}:${minute}:00`;
+  const parsed = new Date(isoLike);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+};
+
+const describeStateFreshness = (currentState, generatedAt) => {
+  const reportedAt = parseBacklogTimestamp(currentState['Current date/time']);
+  const generatedAtDate = parseBacklogTimestamp(generatedAt);
+
+  if (!reportedAt || !generatedAtDate) {
+    return {
+      status: 'UNKNOWN',
+      warning: 'Current state freshness could not be evaluated from the backlog timestamp.',
+    };
+  }
+
+  const ageHours = Math.round(((generatedAtDate.getTime() - reportedAt.getTime()) / 36e5) * 10) / 10;
+  if (ageHours <= 24) {
+    return {
+      status: 'FRESH',
+      warning: '',
+      ageHours,
+    };
+  }
+
+  return {
+    status: 'STALE',
+    warning: `Current state snapshot in \`${BACKLOG_PATH}\` is ${ageHours} hours older than this generated board.`,
+    ageHours,
+  };
+};
 
 const parseCurrentStateTable = (text) => {
   const lines = text.split(/\r?\n/);
@@ -99,17 +152,23 @@ const slugify = (value) => value
 const backlogText = readBacklog();
 const currentState = parseCurrentStateTable(backlogText);
 const sections = extractSections(backlogText);
+const generatedAt = formatPacificTimestamp();
+const currentStateFreshness = describeStateFreshness(currentState, generatedAt);
 const activeUngatedLaunchBlockers = extractSubheadings(sections['Current Launch Blockers'])
   .map((title) => title.replace(/^Critical \d+:\s*/, ''));
 const nextThree = extractNumberedList(sections['Next 10 Tasks']).slice(0, 3);
 
 const proofBoard = {
-  generatedAt: formatPacificTimestamp(),
+  generatedAt,
   source: BACKLOG_PATH,
   currentState,
+  currentStateFreshness,
   readinessScore: currentState['Current readiness score'] ?? 'unknown',
   launchVerdict: currentState['Current launch verdict'] ?? 'unknown',
   productionReady: currentState['Production-ready'] ?? 'unknown',
+  contractSummary: currentStateFreshness.status === 'FRESH'
+    ? 'Proof board is current: this canonical launch-truth artifact depends on a fresh BACKLOG.md current-state block, while workflows only gate freshness and helper/local bundles regenerate the raw and markdown board outputs.'
+    : 'Proof board is generated from stale current-state metadata: update BACKLOG.md before treating either proof:v1:board output as canonical launch truth.',
   activeUngatedLaunchBlockers,
   blockedOrApprovalGatedLaunchItems: currentState['Current blockers']
     ? [currentState['Current blockers']]
@@ -141,10 +200,20 @@ const orderedMarkdownSections = [
   'What Changed In This Final Closeout',
 ];
 
-if (process.argv.includes('--markdown')) {
+const markdownMode = process.argv.includes('--markdown');
+const requireFreshCurrentState = process.argv.includes('--require-fresh-current-state');
+const freshnessOnlyMode = process.argv.includes('--freshness-only');
+
+if (freshnessOnlyMode) {
+  const freshnessLine = currentStateFreshness.warning || 'Current state metadata is fresh.';
+  console.log(`[proof:v1:board] ${currentStateFreshness.status}: ${freshnessLine}`);
+} else if (markdownMode) {
   console.log('# V1 Proof Board\n');
   console.log(`_Generated:_ ${proofBoard.generatedAt}`);
   console.log(`_Source:_ \`${BACKLOG_PATH}\`\n`);
+  if (currentStateFreshness.warning) {
+    console.log(`> Warning: ${currentStateFreshness.warning}\n`);
+  }
   console.log('## Current State');
   for (const [key, value] of Object.entries(currentState)) {
     console.log(`- ${key}: ${value}`);
@@ -159,4 +228,11 @@ if (process.argv.includes('--markdown')) {
   }
 } else {
   console.log(JSON.stringify(proofBoard, null, 2));
+}
+
+if (requireFreshCurrentState && currentStateFreshness.status !== 'FRESH') {
+  console.error(
+    `[proof:v1:board] Current state metadata is ${currentStateFreshness.status.toLowerCase()}; update BACKLOG.md before treating either proof:v1:board output as fresh launch truth.`,
+  );
+  process.exitCode = 1;
 }

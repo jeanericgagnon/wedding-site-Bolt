@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { isGuestFacingSiteRowReady, isPublicRenderModelGuestReady, pickGuestFacingReadinessRow } from './publicSiteReadiness';
+import type { PublicWeddingRenderModel } from './publicSiteRenderModel';
 
 describe('public site readiness', () => {
   it('treats sparse published public rows as not guest-ready', () => {
@@ -133,6 +134,140 @@ describe('public site readiness', () => {
       },
       theme: { preset: null, tokens: null },
     })).toBe(false);
+  });
+
+  it('ignores hidden pages when checking render model guest readiness', () => {
+    const readyWedding: PublicWeddingRenderModel = {
+      version: '1',
+      couple: {
+        partner1Name: 'Maya',
+        partner2Name: 'Leo',
+        displayName: 'Maya and Leo',
+        story: 'We met on a rainy Wednesday, stayed for dinner, and never really stopped building a life together.',
+      },
+      event: {
+        weddingDateISO: '2026-06-15T12:00:00.000Z',
+      },
+      venues: [{ id: 'venue-1', name: 'Sunset Gardens', address: '123 Coast Highway' }],
+      schedule: [{ id: 'event-1', label: 'Ceremony' }],
+      rsvp: { enabled: true },
+      travel: {},
+      registry: { links: [] },
+      faq: [],
+      media: { gallery: [], heroImageUrl: 'https://example.com/hero.jpg' },
+      theme: {},
+    };
+
+    expect(isPublicRenderModelGuestReady({
+      pages: [
+        {
+          id: 'hidden-home',
+          title: 'Home',
+          slug: 'home',
+          orderIndex: 0,
+          meta: { isHome: true, isHidden: true },
+          sections: [
+            {
+              id: 'hidden-hero',
+              type: 'hero',
+              variant: 'default',
+              enabled: true,
+              orderIndex: 0,
+              settings: {},
+            },
+          ],
+        },
+      ],
+      wedding: readyWedding,
+      theme: { preset: null, tokens: null },
+    })).toBe(false);
+
+    expect(isPublicRenderModelGuestReady({
+      pages: [
+        {
+          id: 'hidden-home',
+          title: 'Home',
+          slug: 'home',
+          orderIndex: 0,
+          meta: { isHome: true, isHidden: true },
+          sections: [],
+        },
+        {
+          id: 'welcome',
+          title: 'Welcome',
+          slug: 'welcome',
+          orderIndex: 1,
+          meta: { isHome: false, isHidden: false },
+          sections: [
+            {
+              id: 'welcome-hero',
+              type: 'hero',
+              variant: 'default',
+              enabled: true,
+              orderIndex: 0,
+              settings: {},
+            },
+          ],
+        },
+      ],
+      wedding: readyWedding,
+      theme: { preset: null, tokens: null },
+    })).toBe(true);
+  });
+
+  it('normalizes home-like public page slugs before choosing the readiness page', () => {
+    const readyWedding: PublicWeddingRenderModel = {
+      version: '1',
+      couple: {
+        partner1Name: 'Maya',
+        partner2Name: 'Leo',
+        displayName: 'Maya and Leo',
+        story: 'We met on a rainy Wednesday, stayed for dinner, and never really stopped building a life together.',
+      },
+      event: {
+        weddingDateISO: '2026-06-15T12:00:00.000Z',
+      },
+      venues: [{ id: 'venue-1', name: 'Sunset Gardens', address: '123 Coast Highway' }],
+      schedule: [{ id: 'event-1', label: 'Ceremony' }],
+      rsvp: { enabled: true },
+      travel: {},
+      registry: { links: [] },
+      faq: [],
+      media: { gallery: [], heroImageUrl: 'https://example.com/hero.jpg' },
+      theme: {},
+    };
+
+    expect(isPublicRenderModelGuestReady({
+      pages: [
+        {
+          id: 'travel',
+          title: 'Travel',
+          slug: 'travel',
+          orderIndex: 0,
+          meta: { isHome: false },
+          sections: [],
+        },
+        {
+          id: 'legacy-home',
+          title: 'Home',
+          slug: '/Home%20/',
+          orderIndex: 1,
+          meta: { isHome: false },
+          sections: [
+            {
+              id: 'home-hero',
+              type: 'hero',
+              variant: 'default',
+              enabled: true,
+              orderIndex: 0,
+              settings: {},
+            },
+          ],
+        },
+      ],
+      wedding: readyWedding,
+      theme: { preset: null, tokens: null },
+    })).toBe(true);
   });
 
   it('treats home pages with only content-empty guest sections as not guest-ready', () => {

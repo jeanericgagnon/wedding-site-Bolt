@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
-import { execSync, spawn } from 'node:child_process';
+import { execSync } from 'node:child_process';
+import { resolvePreviewRuntime, stopPreviewRuntime } from './proofPreviewRuntime.mjs';
 
 const scriptShell =
   process.platform === 'win32'
@@ -51,24 +52,6 @@ const steps = [
     required: true,
   },
 ];
-
-function sleep(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-async function waitForPreview(url, timeoutMs = 20_000) {
-  const startedAt = Date.now();
-  while (Date.now() - startedAt < timeoutMs) {
-    try {
-      const response = await fetch(url, { signal: AbortSignal.timeout(1_500) });
-      if (response.ok) return;
-    } catch {
-      // keep waiting
-    }
-    await sleep(500);
-  }
-  throw new Error(`Preview server did not become ready at ${url} within ${timeoutMs}ms`);
-}
 
 function extractJsonBlob(text) {
   if (!text || typeof text !== 'string') return null;
@@ -162,25 +145,17 @@ const browserStep = steps.find((step) => step.id === 'rsvp-access-browser-proof'
 const results = initialSteps.map(runStep);
 
 let previewProcess = null;
-let previewStdout = '';
-let previewStderr = '';
+let previewOutput = { stdout: '', stderr: '' };
 
 try {
   if (baseUrl === PREVIEW_URL) {
-    previewProcess = spawn('npm', ['run', 'preview', '--', '--host', '127.0.0.1', '--port', '4178'], {
+    const previewRuntime = await resolvePreviewRuntime({
+      preferredPort: 4178,
+      requestedBaseUrl: baseUrl,
       cwd: process.cwd(),
-      env: process.env,
-      stdio: ['ignore', 'pipe', 'pipe'],
     });
-
-    previewProcess.stdout.on('data', (chunk) => {
-      previewStdout += chunk.toString('utf8');
-    });
-    previewProcess.stderr.on('data', (chunk) => {
-      previewStderr += chunk.toString('utf8');
-    });
-
-    await waitForPreview(PREVIEW_URL);
+    previewProcess = previewRuntime.previewProcess;
+    previewOutput = previewRuntime.previewOutput;
   }
 
   if (!browserStep) {
@@ -198,14 +173,10 @@ try {
     ok: false,
     startedAt: new Date().toISOString(),
     finishedAt: new Date().toISOString(),
-    stderr: [previewStderr.trim(), error instanceof Error ? error.message : 'RSVP settings preview server failed to start.'].filter(Boolean).join('\n'),
+    stderr: [previewOutput.stderr.trim(), error instanceof Error ? error.message : 'RSVP settings preview server failed to start.'].filter(Boolean).join('\n'),
   });
 } finally {
-  if (previewProcess) {
-    previewProcess.kill('SIGTERM');
-    await sleep(300);
-    if (!previewProcess.killed) previewProcess.kill('SIGKILL');
-  }
+  await stopPreviewRuntime(previewProcess);
 }
 
 const blockedRequired = results.filter((result) => result.required && result.blocked);
@@ -222,6 +193,9 @@ const output = {
     failed: results.filter((result) => !result.ok).length,
     blocked: blockedRequired.length,
   },
+  contractSummary: isLiveBaseUrl
+    ? 'Guests/RSVP ops live proof is green: this owner-plus-guest lane closes shipped RSVP settings, token, and household/runtime truth while still rolling up into the broader proof-board launch call.'
+    : 'Guests/RSVP ops local proof is green: this lane validates owner RSVP-settings and guest-ops behavior locally and leaves shipped-runtime RSVP truth to the dedicated live rerun.',
   automatedCoverage: [
     'RSVP access-mode recovery + household-scope + verification-input truth',
     isLiveBaseUrl

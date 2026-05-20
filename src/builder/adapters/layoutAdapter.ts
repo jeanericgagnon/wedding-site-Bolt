@@ -2,6 +2,34 @@ import { LayoutConfigV1, SectionInstance } from '../../types/layoutConfig';
 import { BuilderProject, BuilderPage, createEmptyBuilderProject, generateBuilderId } from '../../types/builder/project';
 import { BuilderSectionInstance } from '../../types/builder/section';
 
+function getComparableOrderIndex(orderIndex: unknown, fallback: number): number {
+  const numericOrderIndex = typeof orderIndex === 'number'
+    ? orderIndex
+    : typeof orderIndex === 'string' && orderIndex.trim()
+      ? Number(orderIndex)
+      : NaN;
+  return Number.isFinite(numericOrderIndex) ? numericOrderIndex : fallback;
+}
+
+function sortByOrderIndex<T extends { orderIndex?: unknown }>(items: T[]): T[] {
+  return items
+    .map((item, originalIndex) => ({ item, originalIndex }))
+    .sort((a, b) => {
+      const aOrder = getComparableOrderIndex(a.item.orderIndex, a.originalIndex);
+      const bOrder = getComparableOrderIndex(b.item.orderIndex, b.originalIndex);
+      return aOrder - bOrder || a.originalIndex - b.originalIndex;
+    })
+    .map(({ item }) => item);
+}
+
+function getBuilderString(value: unknown): string {
+  if (typeof value === 'string') return value;
+  if (value && typeof value === 'object' && 'value' in value && typeof (value as { value?: unknown }).value === 'string') {
+    return (value as { value: string }).value;
+  }
+  return '';
+}
+
 export function fromExistingLayoutToBuilderProject(
   weddingId: string,
   layout: LayoutConfigV1
@@ -11,7 +39,7 @@ export function fromExistingLayoutToBuilderProject(
   project.pages = layout.pages.map((page, pageIndex) => {
     const builderPage: BuilderPage = {
       id: page.id,
-      title: page.title,
+      title: getBuilderString(page.title).trim() || (pageIndex === 0 ? 'Home' : `Page ${pageIndex + 1}`),
       slug: page.id,
       orderIndex: pageIndex,
       sections: page.sections.map((sec, idx) => fromSectionInstanceToBuilderSection(sec, idx)),
@@ -36,11 +64,10 @@ export function fromBuilderProjectToExistingLayout(project: BuilderProject): Lay
   return {
     version: '1',
     templateId: project.templateId,
-    pages: project.pages.map(page => ({
+    pages: sortByOrderIndex([...project.pages]).map(page => ({
       id: page.id,
-      title: page.title,
-      sections: page.sections
-        .sort((a, b) => a.orderIndex - b.orderIndex)
+      title: getBuilderString(page.title).trim() || 'Untitled page',
+      sections: sortByOrderIndex([...page.sections])
         .map(fromBuilderSectionToSectionInstance),
     })),
     meta: {

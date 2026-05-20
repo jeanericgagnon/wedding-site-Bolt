@@ -62,19 +62,19 @@ export function GuestCsvMapperModal({
     <>
       <div className="fixed inset-0 bg-black/50 z-40" onClick={() => { if (!importing) onClose(); }} />
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-        <div className="bg-surface rounded-lg border border-border-subtle w-full max-w-2xl max-h-[80vh] flex flex-col">
+        <div className="flex max-h-[80vh] w-full max-w-2xl flex-col rounded-3xl border border-border-subtle bg-surface">
           <div className="flex items-center justify-between p-6 border-b border-border-subtle">
             <div>
               <h2 className="text-lg font-semibold text-text-primary">Match columns</h2>
               <p className="text-sm text-text-secondary mt-0.5">Confirm how this file should become your guest list{selectedFilename ? ` · ${selectedFilename}` : ''}</p>
             </div>
-            <button onClick={onClose} className="p-2 hover:bg-surface-subtle rounded-lg transition-colors">
+            <button onClick={onClose} className="rounded-xl p-2 transition-colors hover:bg-surface-subtle">
               <X className="w-5 h-5 text-text-secondary" />
             </button>
           </div>
           <div className="overflow-y-auto flex-1 p-6 space-y-3">
             {!nameMappingValid && (
-              <div className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-2 text-xs text-text-secondary">
+              <div className="rounded-xl border border-border-subtle bg-surface-subtle px-3 py-2 text-xs text-text-secondary">
                 Map First Name + Last Name, or use Full Name instead.
               </div>
             )}
@@ -90,7 +90,7 @@ export function GuestCsvMapperModal({
                         const vals = Array.from(event.currentTarget.selectedOptions).map((option) => Number(option.value));
                         onSetFieldMap((prev) => prev ? { ...prev, invited_events: vals } : prev);
                       }}
-                      className="w-full rounded-md border border-border px-3 py-2 text-sm bg-surface min-h-[110px]"
+                      className="min-h-[110px] w-full rounded-xl border border-border bg-surface px-3 py-2 text-sm"
                     >
                       {headers.map((header, idx) => (
                         <option key={`${key}-${idx}`} value={idx}>
@@ -102,7 +102,7 @@ export function GuestCsvMapperModal({
                     <select
                       value={fieldMap[key] as number}
                       onChange={(event) => onSetFieldMap((prev) => prev ? { ...prev, [key]: Number(event.target.value) } : prev)}
-                      className="w-full rounded-md border border-border px-3 py-2 text-sm bg-surface"
+                      className="w-full rounded-xl border border-border bg-surface px-3 py-2 text-sm"
                     >
                       <option value={-1}>— Not mapped —</option>
                       {headers.map((header, idx) => (
@@ -163,7 +163,7 @@ export function GuestCsvReviewModal({
     <>
       <div className="fixed inset-0 bg-black/50 z-40" onClick={() => { if (!importing) onCancel(); }} />
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-        <div className="bg-surface rounded-lg border border-border-subtle w-full max-w-2xl max-h-[80vh] flex flex-col">
+        <div className="flex max-h-[80vh] w-full max-w-2xl flex-col rounded-3xl border border-border-subtle bg-surface">
           <div className="flex items-center justify-between p-6 border-b border-border-subtle">
             <div>
               <h2 className="text-lg font-semibold text-text-primary">Review Import</h2>
@@ -173,7 +173,7 @@ export function GuestCsvReviewModal({
               </p>
             </div>
             {!importing && (
-              <button onClick={onCancel} className="p-2 hover:bg-surface-subtle rounded-lg transition-colors">
+              <button onClick={onCancel} className="rounded-xl p-2 transition-colors hover:bg-surface-subtle">
                 <X className="w-5 h-5 text-text-secondary" />
               </button>
             )}
@@ -201,7 +201,7 @@ export function GuestCsvReviewModal({
             <div className="divide-y divide-border-subtle">
               {preview.slice(0, 50).map((guest, index) => (
                 <div key={index} className="py-2.5 flex items-center gap-4">
-                  <div className="w-7 h-7 rounded-lg bg-surface-subtle flex items-center justify-center text-xs font-medium text-text-secondary flex-shrink-0">
+                  <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-xl bg-surface-subtle text-xs font-medium text-text-secondary">
                     {index + 1}
                   </div>
                   <div className="flex-1 min-w-0">
@@ -211,15 +211,15 @@ export function GuestCsvReviewModal({
                     {Boolean(guest.email) && <p className="text-xs text-text-secondary truncate">{String(guest.email)}</p>}
                     {Boolean(guest.group_name) && <p className="text-[11px] text-text-tertiary truncate">Household: {String(guest.group_name)}</p>}
                     <div className="mt-1 flex flex-wrap gap-1">
-                      {Boolean(guest.rsvp_status) && <span className="text-[10px] px-1.5 py-0.5 rounded-lg border border-border text-text-tertiary">{String(guest.rsvp_status)}</span>}
-                      {Boolean(guest.__meal_choice) && <span className="text-[10px] px-1.5 py-0.5 rounded-lg border border-border text-text-tertiary">Meal: {String(guest.__meal_choice)}</span>}
-                      {Boolean(guest.__plus_one_name) && <span className="text-[10px] px-1.5 py-0.5 rounded-lg border border-border text-text-tertiary">+1: {String(guest.__plus_one_name)}</span>}
-                      {Number(guest.__children_count ?? 0) > 0 && <span className="text-[10px] px-1.5 py-0.5 rounded-lg border border-border text-text-tertiary">Children: {String(guest.__children_count)}</span>}
-                      {Array.isArray(guest.__invited_event_ids) && (guest.__invited_event_ids as unknown[]).length > 0 && <span className="text-[10px] px-1.5 py-0.5 rounded-lg border border-primary/30 text-primary">{(guest.__invited_event_ids as unknown[]).length} event invites</span>}
+                      {Boolean(guest.rsvp_status) && <span className="rounded-xl border border-border px-1.5 py-0.5 text-[10px] text-text-tertiary">{String(guest.rsvp_status)}</span>}
+                      {Boolean(guest.__meal_choice) && <span className="rounded-xl border border-border px-1.5 py-0.5 text-[10px] text-text-tertiary">Meal: {String(guest.__meal_choice)}</span>}
+                      {Boolean(guest.__plus_one_name) && <span className="rounded-xl border border-border px-1.5 py-0.5 text-[10px] text-text-tertiary">+1: {String(guest.__plus_one_name)}</span>}
+                      {Number(guest.__children_count ?? 0) > 0 && <span className="rounded-xl border border-border px-1.5 py-0.5 text-[10px] text-text-tertiary">Children: {String(guest.__children_count)}</span>}
+                      {Array.isArray(guest.__invited_event_ids) && (guest.__invited_event_ids as unknown[]).length > 0 && <span className="rounded-xl border border-primary/30 px-1.5 py-0.5 text-[10px] text-primary">{(guest.__invited_event_ids as unknown[]).length} event invites</span>}
                     </div>
                   </div>
                   {Boolean(guest.plus_one_allowed) && (
-                    <span className="text-xs px-2 py-0.5 bg-surface-subtle rounded-lg text-text-secondary flex-shrink-0">+1</span>
+                    <span className="flex-shrink-0 rounded-xl bg-surface-subtle px-2 py-0.5 text-xs text-text-secondary">+1</span>
                   )}
                 </div>
               ))}
@@ -257,7 +257,7 @@ function CsvMappingSummaryBlock({ mappingSummary }: { mappingSummary: CsvMapping
   }
 
   return (
-    <div className="mb-4 p-3 bg-surface-subtle border border-border rounded-lg space-y-2">
+    <div className="mb-4 space-y-2 rounded-2xl border border-border bg-surface-subtle p-3">
       <p className="text-xs font-medium text-text-primary">Detected mapping</p>
       {mappingSummary.core.length > 0 && <p className="text-xs text-text-secondary"><span className="font-medium text-text-primary">Core:</span> {mappingSummary.core.join(', ')}</p>}
       {mappingSummary.rsvp.length > 0 && <p className="text-xs text-text-secondary"><span className="font-medium text-text-primary">RSVP:</span> {mappingSummary.rsvp.join(', ')}</p>}
@@ -281,7 +281,7 @@ function CsvWarningList({
   if (items.length === 0) return null;
 
   return (
-    <div className="mb-4 p-3 bg-surface-subtle border border-border-subtle rounded-lg">
+    <div className="mb-4 rounded-2xl border border-border-subtle bg-surface-subtle p-3">
       <p className="text-xs font-medium text-text-primary mb-1">{title}</p>
       {detail && <p className="text-xs text-text-secondary mb-1">{detail}</p>}
       <ul className="space-y-0.5">

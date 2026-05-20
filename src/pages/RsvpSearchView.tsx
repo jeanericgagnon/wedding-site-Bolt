@@ -47,7 +47,7 @@ export function RsvpSearchView({
       </div>
       <div className="container relative z-10 mx-auto max-w-6xl px-4 pb-14 pt-8 md:pt-12">
         <div className="grid items-stretch gap-6 lg:grid-cols-[1.05fr_0.95fr]">
-          <div className="relative min-h-[360px] overflow-hidden rounded-lg bg-stone-900">
+          <div className="relative min-h-[360px] overflow-hidden rounded-xl bg-stone-900">
             <img
               src="/preview-photos/header-anchor.jpg"
               alt=""
@@ -127,7 +127,7 @@ export function RsvpSearchView({
                     id={predictionListId}
                     role="listbox"
                     aria-label="Suggested guests"
-                    className="mt-2 border border-gray-200 rounded-lg bg-white overflow-hidden"
+                    className="mt-2 border border-gray-200 rounded-xl bg-white overflow-hidden"
                   >
                     {guestPredictions.map((name, index) => (
                       <button
@@ -152,7 +152,7 @@ export function RsvpSearchView({
               </div>
 
               {error && (
-                <div className="p-4 bg-surface-subtle/50 border border-border-subtle rounded-lg text-text-secondary text-sm space-y-2">
+                <div className="p-4 bg-surface-subtle/50 border border-border-subtle rounded-xl text-text-secondary text-sm space-y-2">
                   <div className="flex items-start gap-2">
                     <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
                     <span>{error}</span>

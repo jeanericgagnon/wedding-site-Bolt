@@ -40,9 +40,9 @@ export function RsvpGuestPickerView({
               key={guest.id}
               onClick={() => onPickGuest(guest)}
               disabled={loading}
-              className="w-full flex items-center gap-3 p-3.5 border border-gray-200 rounded-lg hover:border-gray-300 hover:bg-gray-50 transition-colors text-left group"
+              className="w-full flex items-center gap-3 p-3.5 border border-gray-200 rounded-xl hover:border-gray-300 hover:bg-gray-50 transition-colors text-left group"
             >
-              <div className="w-10 h-10 rounded-lg bg-gray-100 group-hover:bg-gray-200 flex items-center justify-center flex-shrink-0 transition-colors">
+              <div className="w-10 h-10 rounded-xl bg-gray-100 group-hover:bg-gray-200 flex items-center justify-center flex-shrink-0 transition-colors">
                 <User className="w-5 h-5 text-gray-500 group-hover:text-gray-700 transition-colors" />
               </div>
               <div className="flex-1 min-w-0">

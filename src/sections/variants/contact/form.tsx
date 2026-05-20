@@ -92,7 +92,7 @@ const ContactForm: React.FC<SectionComponentProps<ContactFormData>> = ({ data })
                       href={safeEmailHref}
                       className="flex items-center gap-3 text-sm text-stone-600 hover:text-stone-900 group transition-colors"
                     >
-                      <div className="w-7 h-7 rounded-lg bg-stone-50 border border-stone-100 flex items-center justify-center group-hover:border-stone-300 transition-colors flex-shrink-0">
+                      <div className="w-7 h-7 rounded-xl bg-stone-50 border border-stone-100 flex items-center justify-center group-hover:border-stone-300 transition-colors flex-shrink-0">
                         <Mail size={13} className="text-stone-400" />
                       </div>
                       {contact.email}
@@ -103,7 +103,7 @@ const ContactForm: React.FC<SectionComponentProps<ContactFormData>> = ({ data })
                       href={safeTelHref}
                       className="flex items-center gap-3 text-sm text-stone-600 hover:text-stone-900 group transition-colors"
                     >
-                      <div className="w-7 h-7 rounded-lg bg-stone-50 border border-stone-100 flex items-center justify-center group-hover:border-stone-300 transition-colors flex-shrink-0">
+                      <div className="w-7 h-7 rounded-xl bg-stone-50 border border-stone-100 flex items-center justify-center group-hover:border-stone-300 transition-colors flex-shrink-0">
                         <Phone size={13} className="text-stone-400" />
                       </div>
                       {contact.phone}
@@ -116,7 +116,7 @@ const ContactForm: React.FC<SectionComponentProps<ContactFormData>> = ({ data })
                       rel="noopener noreferrer"
                       className="flex items-center gap-3 text-sm text-stone-600 hover:text-stone-900 group transition-colors"
                     >
-                      <div className="w-7 h-7 rounded-lg bg-stone-50 border border-stone-100 flex items-center justify-center group-hover:border-stone-300 transition-colors flex-shrink-0">
+                      <div className="w-7 h-7 rounded-xl bg-stone-50 border border-stone-100 flex items-center justify-center group-hover:border-stone-300 transition-colors flex-shrink-0">
                         <Instagram size={13} className="text-stone-400" />
                       </div>
                       {contact.instagram}

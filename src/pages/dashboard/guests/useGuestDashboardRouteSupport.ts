@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   buildRsvpAccessModePlan,
   buildRsvpQuestionTemplateCoverage,
@@ -8,6 +8,8 @@ import {
 import { type PlannerAccessRole, readPlannerAccessRole, writePlannerAccessRole } from '../../../lib/plannerAccess';
 import type { ConfirmDialogProps } from '../../../components/ui/ConfirmDialog';
 import type { Guest, ItineraryEvent, RSVPQuestionSetting } from './guestDashboardTypes';
+
+type ConfirmationOptions = Pick<ConfirmDialogProps, 'title' | 'description' | 'confirmLabel' | 'tone'>;
 
 type Args = {
   guests: Guest[];
@@ -33,32 +35,45 @@ export function useGuestDashboardRouteSupport({
   weddingSiteId,
 }: Args) {
   const [confirmDialog, setConfirmDialog] = useState<null | Omit<ConfirmDialogProps, 'open'>>(null);
-  const requestConfirmation = (options: Pick<ConfirmDialogProps, 'title' | 'description' | 'confirmLabel' | 'tone'>) =>
+  const pendingConfirmationResolveRef = useRef<((confirmed: boolean) => void) | null>(null);
+  const settleConfirmation = useCallback((confirmed: boolean) => {
+    const resolve = pendingConfirmationResolveRef.current;
+    pendingConfirmationResolveRef.current = null;
+    setConfirmDialog(null);
+    resolve?.(confirmed);
+  }, []);
+  const requestConfirmation = useCallback((options: ConfirmationOptions) =>
     new Promise<boolean>((resolve) => {
+      pendingConfirmationResolveRef.current?.(false);
+      pendingConfirmationResolveRef.current = resolve;
       setConfirmDialog({
         ...options,
-        onCancel: () => {
-          setConfirmDialog(null);
-          resolve(false);
-        },
-        onConfirm: () => {
-          setConfirmDialog(null);
-          resolve(true);
-        },
+        onCancel: () => settleConfirmation(false),
+        onConfirm: () => settleConfirmation(true),
       });
-    });
+    }), [settleConfirmation]);
+
+  useEffect(() => () => {
+    settleConfirmation(false);
+  }, [settleConfirmation]);
+
   useEffect(() => {
+    if (!weddingSiteId) {
+      settleConfirmation(false);
+      return;
+    }
     try {
-      const rawRole = readPlannerAccessRole('guests', weddingSiteId ?? 'global');
+      const rawRole = readPlannerAccessRole('guests', weddingSiteId);
       if (rawRole) setGuestsRole(rawRole);
     } catch {
       // noop
     }
-  }, [setGuestsRole, weddingSiteId]);
+  }, [setGuestsRole, settleConfirmation, weddingSiteId]);
 
   useEffect(() => {
+    if (!weddingSiteId) return;
     try {
-      writePlannerAccessRole('guests', weddingSiteId ?? 'global', guestsRole);
+      writePlannerAccessRole('guests', weddingSiteId, guestsRole);
     } catch {
       // noop
     }

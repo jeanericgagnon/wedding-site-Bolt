@@ -11,6 +11,7 @@ type SettingsSiteTabContentProps = {
   analyticsEnabled: boolean;
   analyticsRetentionDays: AnalyticsRetentionDays;
   analyticsGuestNotice: string;
+  canEditSettings: boolean;
   currentTemplate: string;
   defaultLanguage: SiteLanguageCode;
   hasWeddingIdentityStoryGraphic: boolean;
@@ -39,7 +40,7 @@ type SettingsSiteTabContentProps = {
   onTogglePrivacySettings: () => void;
   onToggleShowSitePassword: () => void;
   onToggleTemplateSettings: () => void;
-  privacyCopied: boolean;
+  privacyCopyNotice: 'copied' | 'downloaded' | null;
   privacyMode: 'public' | 'password_protected' | 'invite_only';
   publicSiteUrl: string;
   showPrivacySettings: boolean;
@@ -67,6 +68,7 @@ export function SettingsSiteTabContent({
   analyticsEnabled,
   analyticsRetentionDays,
   analyticsGuestNotice,
+  canEditSettings,
   changingTemplate,
   currentTemplate,
   defaultLanguage,
@@ -96,7 +98,7 @@ export function SettingsSiteTabContent({
   onTogglePrivacySettings,
   onToggleShowSitePassword,
   onToggleTemplateSettings,
-  privacyCopied,
+  privacyCopyNotice,
   privacyMode,
   publicSiteUrl,
   showPrivacySettings,
@@ -119,73 +121,84 @@ export function SettingsSiteTabContent({
 }: SettingsSiteTabContentProps) {
   return (
     <>
-      <SettingsSiteUrlPanel
-        isPublished={isPublished}
-        onSiteSlugChange={onSiteSlugChange}
-        onSubmit={onSubmitSiteSlug}
-        privacyMode={privacyMode}
-        publicSiteUrl={publicSiteUrl}
-        siteSlug={siteSlug}
-        slugError={slugError}
-        slugSaving={slugSaving}
-        slugSuccess={slugSuccess}
-      />
+      <div id="settings-site-url">
+        <SettingsSiteUrlPanel
+          canEditSettings={canEditSettings}
+          isPublished={isPublished}
+          onSiteSlugChange={onSiteSlugChange}
+          onSubmit={onSubmitSiteSlug}
+          privacyMode={privacyMode}
+          publicSiteUrl={publicSiteUrl}
+          siteSlug={siteSlug}
+          slugError={slugError}
+          slugSaving={slugSaving}
+          slugSuccess={slugSuccess}
+        />
+      </div>
 
-      <SettingsIdentityExportsPanel
-        isPublished={isPublished}
-        hasStoryGraphic={hasWeddingIdentityStoryGraphic}
-        onCopyIdentityManifest={onCopyIdentityManifest}
-        onCopyIdentityStyleKit={onCopyIdentityStyleKit}
-        onDownloadIdentityStoryGraphic={onDownloadIdentityStoryGraphic}
-        onDownloadIdentityPrintPack={onDownloadIdentityPrintPack}
-        weddingIdentityExportKit={weddingIdentityExportKit}
-        weddingIdentityPrintAssets={weddingIdentityPrintAssets}
-      />
+      <div id="settings-identity-exports">
+        <SettingsIdentityExportsPanel
+          isPublished={isPublished}
+          hasStoryGraphic={hasWeddingIdentityStoryGraphic}
+          onCopyIdentityManifest={onCopyIdentityManifest}
+          onCopyIdentityStyleKit={onCopyIdentityStyleKit}
+          onDownloadIdentityStoryGraphic={onDownloadIdentityStoryGraphic}
+          onDownloadIdentityPrintPack={onDownloadIdentityPrintPack}
+          weddingIdentityExportKit={weddingIdentityExportKit}
+          weddingIdentityPrintAssets={weddingIdentityPrintAssets}
+        />
+      </div>
 
-      <SettingsPrivacyPanel
-        allowedLanguages={allowedLanguages}
-        analyticsEnabled={analyticsEnabled}
-        analyticsRetentionDays={analyticsRetentionDays}
-        analyticsGuestNotice={analyticsGuestNotice}
-        defaultLanguage={defaultLanguage}
-        guestAccessToken={guestAccessToken}
-        hideFromSearch={hideFromSearch}
-        onAutoTranslateLanguage={onAutoTranslateLanguage}
-        onAllowedLanguagesChange={onAllowedLanguagesChange}
-        onCopyInviteLink={onCopyInviteLink}
-        onDefaultLanguageChange={onDefaultLanguageChange}
-        onHideFromSearchChange={onHideFromSearchChange}
-        onAnalyticsEnabledChange={onAnalyticsEnabledChange}
-        onAnalyticsRetentionDaysChange={onAnalyticsRetentionDaysChange}
-        onAnalyticsGuestNoticeChange={onAnalyticsGuestNoticeChange}
-        onRegenerateToken={onRegenerateToken}
-        onSavePrivacy={onSavePrivacy}
-        onSitePasswordChange={onSitePasswordChange}
-        onToggleShowPrivacySettings={onTogglePrivacySettings}
-        onToggleShowSitePassword={onToggleShowSitePassword}
-        onVisibilityModeChange={onPrivacyModeChange}
-        privacyCopied={privacyCopied}
-        privacyMode={privacyMode}
-        showPrivacySettings={showPrivacySettings}
-        showSitePassword={showSitePassword}
-        sitePassword={sitePassword}
-        siteSlug={siteSlug}
-        translatingLanguage={translatingLanguage}
-        translationStatuses={translationStatuses}
-        visibilityError={visibilityError}
-        visibilitySaving={visibilitySaving}
-        visibilitySuccess={visibilitySuccess}
-      />
+      <div id="settings-privacy">
+        <SettingsPrivacyPanel
+          allowedLanguages={allowedLanguages}
+          analyticsEnabled={analyticsEnabled}
+          analyticsRetentionDays={analyticsRetentionDays}
+          analyticsGuestNotice={analyticsGuestNotice}
+          canEditSettings={canEditSettings}
+          defaultLanguage={defaultLanguage}
+          guestAccessToken={guestAccessToken}
+          hideFromSearch={hideFromSearch}
+          onAutoTranslateLanguage={onAutoTranslateLanguage}
+          onAllowedLanguagesChange={onAllowedLanguagesChange}
+          onCopyInviteLink={onCopyInviteLink}
+          onDefaultLanguageChange={onDefaultLanguageChange}
+          onHideFromSearchChange={onHideFromSearchChange}
+          onAnalyticsEnabledChange={onAnalyticsEnabledChange}
+          onAnalyticsRetentionDaysChange={onAnalyticsRetentionDaysChange}
+          onAnalyticsGuestNoticeChange={onAnalyticsGuestNoticeChange}
+          onRegenerateToken={onRegenerateToken}
+          onSavePrivacy={onSavePrivacy}
+          onSitePasswordChange={onSitePasswordChange}
+          onToggleShowPrivacySettings={onTogglePrivacySettings}
+          onToggleShowSitePassword={onToggleShowSitePassword}
+          onVisibilityModeChange={onPrivacyModeChange}
+          privacyCopyNotice={privacyCopyNotice}
+          privacyMode={privacyMode}
+          showPrivacySettings={showPrivacySettings}
+          showSitePassword={showSitePassword}
+          sitePassword={sitePassword}
+          siteSlug={siteSlug}
+          translatingLanguage={translatingLanguage}
+          translationStatuses={translationStatuses}
+          visibilityError={visibilityError}
+          visibilitySaving={visibilitySaving}
+          visibilitySuccess={visibilitySuccess}
+        />
+      </div>
 
-      <SettingsTemplatePanel
-        changingTemplate={changingTemplate}
-        currentTemplate={currentTemplate}
-        onTemplateChange={onTemplateChange}
-        onToggleVisibility={onToggleTemplateSettings}
-        showTemplateSettings={showTemplateSettings}
-        templateError={templateError}
-        templateSuccess={templateSuccess}
-      />
+      <div id="settings-template">
+        <SettingsTemplatePanel
+          canEditSettings={canEditSettings}
+          changingTemplate={changingTemplate}
+          currentTemplate={currentTemplate}
+          onTemplateChange={onTemplateChange}
+          onToggleVisibility={onToggleTemplateSettings}
+          showTemplateSettings={showTemplateSettings}
+          templateError={templateError}
+          templateSuccess={templateSuccess}
+        />
+      </div>
     </>
   );
 }

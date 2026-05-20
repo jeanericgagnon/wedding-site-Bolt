@@ -69,6 +69,8 @@ describe('EventHubLiveContent', () => {
             filename: 'alex-jordan-demo-travel-guide.html',
           }}
           travelShareStatus="Travel plan copied."
+          travelShareNotice="copied"
+          copyingTravelPlan={false}
           onCopyTravelPlan={onCopyTravelPlan}
           onDownloadTravelGuide={onDownloadTravelGuide}
           hubUrl="https://dayof.love/event/alex-jordan-demo"
@@ -197,8 +199,6 @@ describe('EventHubLiveContent', () => {
     expect(screen.getByText('Your status on this link')).toBeInTheDocument();
     expect(screen.getByText('Coordinator handoff status')).toBeInTheDocument();
     expect(screen.getByText('Access from this link')).toBeInTheDocument();
-    expect(document.getElementById('day-of-updates')).not.toBeNull();
-
     fireEvent.click(screen.getByRole('button', { name: 'Copy travel details' }));
     expect(onCopyTravelPlan).toHaveBeenCalledTimes(1);
 

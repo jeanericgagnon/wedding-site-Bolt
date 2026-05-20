@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useRef } from 'react';
 
 import { resolveActiveSiteForUser } from '../../../lib/activeSite';
 import { logAppAction } from '../../../lib/actionAudit';
@@ -20,8 +20,14 @@ export function useSettingsDashboardSupport({
   userId,
   weddingSiteId,
 }: UseSettingsDashboardSupportArgs) {
+  const collaboratorInvitesRequestIdRef = useRef(0);
+  const translationStatusesRequestIdRef = useRef(0);
+
   const loadCollaboratorInvites = useCallback(async (siteId: string) => {
-    setCollaboratorInvites(await loadSettingsCollaboratorInvites(siteId));
+    const requestId = ++collaboratorInvitesRequestIdRef.current;
+    const invites = await loadSettingsCollaboratorInvites(siteId);
+    if (requestId !== collaboratorInvitesRequestIdRef.current) return;
+    setCollaboratorInvites(invites);
   }, [setCollaboratorInvites]);
 
   const resolveSettingsSiteId = useCallback(async () => {
@@ -55,11 +61,13 @@ export function useSettingsDashboardSupport({
   }, [weddingSiteId]);
 
   const loadTranslationStatuses = useCallback(async (siteId: string) => {
+    const requestId = ++translationStatusesRequestIdRef.current;
     try {
       const rows = await loadSettingsTranslationStatuses(
         siteId,
         ['es', 'fr', 'it', 'de', 'pt'],
       );
+      if (requestId !== translationStatusesRequestIdRef.current) return;
       setTranslationStatuses(
         rows
           .filter((row): row is TranslationStatusRow => row.status === 'ready' || row.status === 'failed')
@@ -70,6 +78,7 @@ export function useSettingsDashboardSupport({
           })),
       );
     } catch {
+      if (requestId !== translationStatusesRequestIdRef.current) return;
       setTranslationStatuses([]);
     }
   }, [setTranslationStatuses]);

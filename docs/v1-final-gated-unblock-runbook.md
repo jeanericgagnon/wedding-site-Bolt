@@ -76,7 +76,7 @@ Exit bar:
 
 Gate: secure `SUPABASE_SERVICE_ROLE_KEY` or `V1_SUPABASE_SERVICE_ROLE_KEY` proof environment.
 
-Why it remains: the launch board should flip only after the two remaining authorization lanes and the final board refresh run as one closeout package.
+Why it remains: the launch board should flip only after the two remaining authorization lanes plus the board-freshness check and both board outputs run as one closeout package.
 
 Approved path:
 
@@ -87,8 +87,14 @@ npm run proof:v1:launch-closeout
 What it runs:
 - `npm run proof:v1:service-role-authorization`
 - `npm run proof:v1:email-messaging-authorization`
+- `npm run proof:v1:board:freshness`
+- `npm run proof:v1:board`
 - `npm run proof:v1:board:md`
 - `git diff --check`
+
+Workflow note:
+- `ci-hardpass` and `Release Launch Gate` stay freshness-only for this contract.
+- Local/helper closeout paths are the ones that regenerate `npm run proof:v1:board` and `npm run proof:v1:board:md`.
 
 Exit bar:
 - The bundle returns `ok: true`.
@@ -120,6 +126,8 @@ Exit bar:
 After any gated item is cleared:
 
 ```bash
+npm run proof:v1:board:freshness
+npm run proof:v1:board
 npm run proof:v1:board:md
 npm test -- --run src/lib/proofBoardFreshness.test.ts
 git diff --check

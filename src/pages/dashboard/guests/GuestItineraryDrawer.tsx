@@ -1,3 +1,4 @@
+import React, { useEffect, useRef, useState } from 'react';
 import { CalendarDays, CheckCircle2, Copy, ExternalLink, Eye, Loader2, X } from 'lucide-react';
 import { ShareQrPanel } from '../../../components/ui/ShareQrPanel';
 import { copyTextOrDownload } from '../../../lib/copyText';
@@ -22,6 +23,7 @@ export interface GuestItineraryDrawerProps {
   guestAuditEntries: GuestAuditEntry[];
   guestEventIds: Set<string>;
   guests: GuestWithRSVP[];
+  isGuestsReadOnly?: boolean;
   itineraryEvents: ItineraryEvent[];
   loadingDrawer: boolean;
   rotatingInviteToken: boolean;
@@ -42,6 +44,7 @@ export function GuestItineraryDrawer({
   guestAuditEntries,
   guestEventIds,
   guests,
+  isGuestsReadOnly = false,
   itineraryEvents,
   loadingDrawer,
   rotatingInviteToken,
@@ -57,6 +60,50 @@ export function GuestItineraryDrawer({
   onToggleEventInvite,
 }: GuestItineraryDrawerProps) {
   const guestName = getGuestName(guest);
+  const [copyingKey, setCopyingKey] = useState<'rsvp' | 'preview' | null>(null);
+  const [copyNotice, setCopyNotice] = useState<{ key: 'rsvp' | 'preview'; mode: 'copied' | 'downloaded' } | null>(null);
+  const copyNoticeTimeoutRef = useRef<number | null>(null);
+  const copyActionRequestIdRef = useRef(0);
+  const mountedRef = useRef(true);
+  const copyContextKey = JSON.stringify({
+    guestId: guest.id,
+    inviteToken: guest.invite_token ?? null,
+    siteSlug: weddingSiteInfo?.site_slug ?? null,
+    siteUrl: weddingSiteInfo?.site_url ?? null,
+    isPublished: weddingSiteInfo?.is_published ?? false,
+    guestEventIds: Array.from(guestEventIds).sort(),
+    events: itineraryEvents.map((event) => [
+      event.id,
+      event.event_name,
+      event.event_date,
+      event.start_time,
+    ]),
+  });
+  const copyContextRef = useRef(copyContextKey);
+
+  useEffect(() => () => {
+    mountedRef.current = false;
+    copyActionRequestIdRef.current += 1;
+    if (copyNoticeTimeoutRef.current) window.clearTimeout(copyNoticeTimeoutRef.current);
+  }, []);
+  copyContextRef.current = copyContextKey;
+
+  useEffect(() => {
+    copyActionRequestIdRef.current += 1;
+    setCopyingKey(null);
+    setCopyNotice(null);
+    if (copyNoticeTimeoutRef.current) window.clearTimeout(copyNoticeTimeoutRef.current);
+  }, [copyContextKey]);
+
+  const beginGuestCopyAction = () => {
+    const requestId = ++copyActionRequestIdRef.current;
+    const requestContextKey = copyContextRef.current;
+    return () => (
+      mountedRef.current &&
+      requestId === copyActionRequestIdRef.current &&
+      copyContextRef.current === requestContextKey
+    );
+  };
 
   return (
     <>
@@ -74,7 +121,7 @@ export function GuestItineraryDrawer({
             <div className="mt-2 flex flex-wrap gap-2">
               <button
                 onClick={onCopyContactRequestLink}
-                className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs rounded-lg border border-border hover:border-primary hover:text-primary transition-colors"
+                className="inline-flex items-center gap-1.5 rounded-xl border border-border px-2.5 py-1.5 text-xs transition-colors hover:border-primary hover:text-primary"
               >
                 <Copy className="w-3.5 h-3.5" />
                 Copy guest update link
@@ -82,22 +129,54 @@ export function GuestItineraryDrawer({
               {guest.invite_token && (
                 <button
                   onClick={async () => {
-                    const inviteToken = guest.invite_token ?? '';
-                    const inviteLink = `${window.location.origin}/rsvp?token=${encodeURIComponent(inviteToken)}`;
+                  if (copyingKey) return;
+                  const isCurrentCopyAction = beginGuestCopyAction();
+                  const inviteToken = guest.invite_token ?? '';
+                  const inviteLink = `${window.location.origin}/rsvp?token=${encodeURIComponent(inviteToken)}`;
+                  setCopyingKey('rsvp');
+                  try {
                     const result = await copyTextOrDownload(inviteLink, 'dayof-rsvp-link.txt');
+                    if (!isCurrentCopyAction()) return;
+                    setCopyNotice({ key: 'rsvp', mode: result });
                     onToast(result === 'copied' ? 'Copied RSVP link' : 'Clipboard was blocked, so the RSVP link downloaded.', 'success');
-                  }}
-                  className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs rounded-lg border border-border hover:border-primary hover:text-primary transition-colors"
+                    if (copyNoticeTimeoutRef.current) window.clearTimeout(copyNoticeTimeoutRef.current);
+                    copyNoticeTimeoutRef.current = window.setTimeout(() => setCopyNotice((current) => (current?.key === 'rsvp' ? null : current)), 1800);
+                  } catch {
+                    if (!isCurrentCopyAction()) return;
+                    onToast('Couldn’t copy the RSVP link right now.', 'error');
+                  } finally {
+                    if (isCurrentCopyAction()) {
+                      setCopyingKey((current) => (current === 'rsvp' ? null : current));
+                    }
+                  }
+                }}
+                  disabled={Boolean(copyingKey)}
+                  aria-label={
+                    copyingKey === 'rsvp'
+                      ? 'Copying private RSVP access link'
+                      : copyNotice?.key === 'rsvp'
+                        ? copyNotice.mode === 'downloaded'
+                          ? 'Downloaded private RSVP access link'
+                          : 'Copied private RSVP access link'
+                        : 'Copy private RSVP access link'
+                  }
+                  className="inline-flex items-center gap-1.5 rounded-xl border border-border px-2.5 py-1.5 text-xs transition-colors hover:border-primary hover:text-primary"
                 >
                   <Copy className="w-3.5 h-3.5" />
-                  Copy RSVP link
+                  {copyingKey === 'rsvp'
+                    ? 'Copying RSVP link...'
+                    : copyNotice?.key === 'rsvp'
+                      ? copyNotice.mode === 'downloaded'
+                        ? 'Downloaded RSVP link'
+                        : 'Copied RSVP link'
+                      : 'Copy RSVP link'}
                 </button>
               )}
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-lg hover:bg-surface-subtle text-text-secondary transition-colors"
+            className="rounded-xl p-2 text-text-secondary transition-colors hover:bg-surface-subtle"
             aria-label="Close guest drawer"
           >
             <X className="w-5 h-5" />
@@ -109,6 +188,7 @@ export function GuestItineraryDrawer({
             guest={guest}
             guestEventIds={guestEventIds}
             guests={guests}
+            isGuestsReadOnly={isGuestsReadOnly}
             itineraryEvents={itineraryEvents}
             rotatingInviteToken={rotatingInviteToken}
             weddingSiteInfo={weddingSiteInfo}
@@ -117,6 +197,12 @@ export function GuestItineraryDrawer({
             onRevokeGuestInviteToken={onRevokeGuestInviteToken}
             onRotateGuestInviteToken={onRotateGuestInviteToken}
             onToast={onToast}
+            copyNotice={copyNotice}
+            copyingKey={copyingKey}
+            copyNoticeTimeoutRef={copyNoticeTimeoutRef}
+            beginGuestCopyAction={beginGuestCopyAction}
+            setCopyNotice={setCopyNotice}
+            setCopyingKey={setCopyingKey}
           />
 
           <GuestAuditPanel entries={guestAuditEntries} />
@@ -134,6 +220,7 @@ export function GuestItineraryDrawer({
           ) : (
             <GuestEventInviteList
               guestEventIds={guestEventIds}
+              isGuestsReadOnly={isGuestsReadOnly}
               itineraryEvents={itineraryEvents}
               togglingEventId={togglingEventId}
               onToggleEventInvite={onToggleEventInvite}
@@ -157,6 +244,7 @@ function GuestDrawerDetails({
   guest,
   guestEventIds,
   guests,
+  isGuestsReadOnly,
   itineraryEvents,
   rotatingInviteToken,
   weddingSiteInfo,
@@ -165,10 +253,17 @@ function GuestDrawerDetails({
   onRevokeGuestInviteToken,
   onRotateGuestInviteToken,
   onToast,
+  copyNotice,
+  copyingKey,
+  copyNoticeTimeoutRef,
+  beginGuestCopyAction,
+  setCopyNotice,
+  setCopyingKey,
 }: {
   guest: GuestWithRSVP;
   guestEventIds: Set<string>;
   guests: GuestWithRSVP[];
+  isGuestsReadOnly: boolean;
   itineraryEvents: ItineraryEvent[];
   rotatingInviteToken: boolean;
   weddingSiteInfo: WeddingSiteInfo | null;
@@ -177,6 +272,12 @@ function GuestDrawerDetails({
   onRevokeGuestInviteToken: () => void;
   onRotateGuestInviteToken: () => void;
   onToast: (message: string, type?: 'success' | 'error' | 'info') => void;
+  copyNotice: { key: 'rsvp' | 'preview'; mode: 'copied' | 'downloaded' } | null;
+  copyingKey: 'rsvp' | 'preview' | null;
+  copyNoticeTimeoutRef: React.MutableRefObject<number | null>;
+  beginGuestCopyAction: () => () => boolean;
+  setCopyNotice: React.Dispatch<React.SetStateAction<{ key: 'rsvp' | 'preview'; mode: 'copied' | 'downloaded' } | null>>;
+  setCopyingKey: React.Dispatch<React.SetStateAction<'rsvp' | 'preview' | null>>;
 }) {
   const entries = getCustomAnswerEntries(guest.rsvp?.custom_answers || null);
   const status = guest.rsvp_status;
@@ -271,14 +372,14 @@ function GuestDrawerDetails({
 
   return (
     <>
-      <div className="mb-4 p-4 bg-surface-subtle border border-border rounded-lg space-y-3">
+      <div className="mb-4 rounded-2xl border border-border bg-surface-subtle p-4 space-y-3">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <p className="text-xs text-text-tertiary">Visibility preview</p>
             <p className="text-sm font-medium text-text-primary">{visibilityPreview.bannerLabel}</p>
             <p className="text-sm text-text-secondary">{visibilityPreview.accessSummary}</p>
           </div>
-          <span className="inline-flex items-center gap-1 rounded-lg border border-primary/20 bg-primary/5 px-2 py-1 text-[10px] font-medium text-primary">
+          <span className="inline-flex items-center gap-1 rounded-xl border border-primary/20 bg-primary/5 px-2 py-1 text-[10px] font-medium text-primary">
             <Eye className="w-3 h-3" />
             Guest view
           </span>
@@ -338,12 +439,12 @@ function GuestDrawerDetails({
           <>
             <div className="flex flex-wrap gap-1.5">
               {visibilityPreview.visibleEvents.slice(0, 4).map((event) => (
-                <span key={event.id} className="rounded-lg border border-primary/20 bg-white px-2 py-1 text-[11px] text-primary">
+                <span key={event.id} className="rounded-xl border border-primary/20 bg-white px-2 py-1 text-[11px] text-primary">
                   {event.eventName}
                 </span>
               ))}
               {visibilityPreview.visibleEvents.length > 4 && (
-                <span className="rounded-lg border border-border bg-white px-2 py-1 text-[11px] text-text-tertiary">
+                <span className="rounded-xl border border-border bg-white px-2 py-1 text-[11px] text-text-tertiary">
                   +{visibilityPreview.visibleEvents.length - 4} more
                 </span>
               )}
@@ -368,7 +469,7 @@ function GuestDrawerDetails({
               <button
                 key={`${link.kind}-${link.href}`}
                 onClick={() => window.open(link.href, '_blank', 'noopener,noreferrer')}
-                className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs rounded-lg border border-border bg-white hover:border-primary hover:text-primary transition-colors"
+                className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-white px-2.5 py-1.5 text-xs transition-colors hover:border-primary hover:text-primary"
               >
                 <ExternalLink className="w-3.5 h-3.5" />
                 {link.label}
@@ -377,15 +478,47 @@ function GuestDrawerDetails({
             {visibilityPreview.links.find((link) => link.kind === 'rsvp') && (
               <button
                 onClick={async () => {
+                  if (copyingKey) return;
                   const rsvpLink = visibilityPreview.links.find((link) => link.kind === 'rsvp');
                   if (!rsvpLink) return;
-                  const result = await copyTextOrDownload(`${window.location.origin}${rsvpLink.href}`, 'dayof-guest-preview-link.txt');
-                  onToast(result === 'copied' ? 'Copied guest preview link' : 'Clipboard was blocked, so the preview link downloaded.', 'success');
+                  const isCurrentCopyAction = beginGuestCopyAction();
+                  setCopyingKey('preview');
+                  try {
+                    const result = await copyTextOrDownload(`${window.location.origin}${rsvpLink.href}`, 'dayof-guest-preview-link.txt');
+                    if (!isCurrentCopyAction()) return;
+                    setCopyNotice({ key: 'preview', mode: result });
+                    onToast(result === 'copied' ? 'Copied guest preview link' : 'Clipboard was blocked, so the preview link downloaded.', 'success');
+                    if (copyNoticeTimeoutRef.current) window.clearTimeout(copyNoticeTimeoutRef.current);
+                    copyNoticeTimeoutRef.current = window.setTimeout(() => setCopyNotice((current) => (current?.key === 'preview' ? null : current)), 1800);
+                  } catch {
+                    if (!isCurrentCopyAction()) return;
+                    onToast('Couldn’t copy the guest preview link right now.', 'error');
+                  } finally {
+                    if (isCurrentCopyAction()) {
+                      setCopyingKey((current) => (current === 'preview' ? null : current));
+                    }
+                  }
                 }}
-                className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs rounded-lg border border-border bg-white hover:border-primary hover:text-primary transition-colors"
+                disabled={Boolean(copyingKey)}
+                aria-label={
+                  copyingKey === 'preview'
+                    ? 'Copying guest preview route link'
+                    : copyNotice?.key === 'preview'
+                      ? copyNotice.mode === 'downloaded'
+                        ? 'Downloaded guest preview route link'
+                        : 'Copied guest preview route link'
+                      : 'Copy guest preview route link'
+                }
+                className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-white px-2.5 py-1.5 text-xs transition-colors hover:border-primary hover:text-primary"
               >
                 <Copy className="w-3.5 h-3.5" />
-                Copy preview link
+                {copyingKey === 'preview'
+                  ? 'Copying preview link...'
+                  : copyNotice?.key === 'preview'
+                    ? copyNotice.mode === 'downloaded'
+                      ? 'Downloaded preview link'
+                      : 'Copied preview link'
+                    : 'Copy preview link'}
               </button>
             )}
           </div>
@@ -426,8 +559,8 @@ function GuestDrawerDetails({
         <div className="flex flex-wrap gap-2 pt-1">
           <button
             onClick={() => void onRotateGuestInviteToken()}
-            disabled={rotatingInviteToken}
-            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs rounded-lg border border-border bg-white hover:border-primary hover:text-primary transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+            disabled={rotatingInviteToken || isGuestsReadOnly}
+            className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-white px-2.5 py-1.5 text-xs transition-colors hover:border-primary hover:text-primary disabled:cursor-not-allowed disabled:opacity-60"
           >
             {rotatingInviteToken ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <ExternalLink className="w-3.5 h-3.5" />}
             Rotate private RSVP access
@@ -440,8 +573,8 @@ function GuestDrawerDetails({
                 }
                 void onRevokeGuestInviteToken();
               }}
-              disabled={rotatingInviteToken}
-              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs rounded-lg border border-border bg-white hover:border-primary hover:text-primary transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+              disabled={rotatingInviteToken || isGuestsReadOnly}
+              className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-white px-2.5 py-1.5 text-xs transition-colors hover:border-primary hover:text-primary disabled:cursor-not-allowed disabled:opacity-60"
             >
               Revoke private RSVP access
             </button>
@@ -459,7 +592,7 @@ function GuestDrawerDetails({
         )}
       </div>
 
-      <div className="mb-4 p-4 bg-surface-subtle border border-border rounded-lg space-y-2">
+      <div className="mb-4 rounded-2xl border border-border bg-surface-subtle p-4 space-y-2">
         <p className="text-xs text-text-tertiary">RSVP details</p>
         <div className="text-sm text-text-primary">
           <span className="font-medium">Status:</span>{' '}
@@ -503,7 +636,7 @@ function GuestDrawerDetails({
         )}
       </div>
 
-      <div className="mb-4 p-4 bg-surface-subtle border border-border rounded-lg space-y-2">
+      <div className="mb-4 rounded-2xl border border-border bg-surface-subtle p-4 space-y-2">
         <p className="text-xs text-text-tertiary">Per-event RSVP structure</p>
         {(() => {
           const eventState = getPerEventRsvpState({ invitedToCeremony: guest.invited_to_ceremony, invitedToReception: guest.invited_to_reception, invitedEventIds: guest.invited_event_ids as string[] | null | undefined });
@@ -516,7 +649,7 @@ function GuestDrawerDetails({
         })()}
       </div>
 
-      <div className="mb-4 p-4 bg-surface-subtle border border-border rounded-lg space-y-2">
+      <div className="mb-4 rounded-2xl border border-border bg-surface-subtle p-4 space-y-2">
         <p className="text-xs text-text-tertiary">Plus-one truth</p>
         {(() => {
           const plusOneState = getPlusOneState({ plusOneAllowed: guest.plus_one_allowed, plusOneName: guest.rsvp?.plus_one_name, attending: guest.rsvp?.attending });
@@ -529,7 +662,7 @@ function GuestDrawerDetails({
         })()}
       </div>
 
-      <div className="mb-4 p-4 bg-surface-subtle border border-border rounded-lg space-y-2">
+      <div className="mb-4 rounded-2xl border border-border bg-surface-subtle p-4 space-y-2">
         <p className="text-xs text-text-tertiary">RSVP exceptions</p>
         {(() => {
           const states = getRsvpExceptionStates({
@@ -544,15 +677,21 @@ function GuestDrawerDetails({
             ? <div className="space-y-2">
                 {states.map((state) => <p key={state} className="text-sm text-text-primary">• {state}</p>)}
                 <div className="flex flex-wrap gap-2 pt-1">
-                  <button onClick={() => onAddFollowUpTask(`Resolve RSVP exception for ${guestName}`)} className="px-2 py-1 rounded-md border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary">Save follow-up task</button>
-                  <button onClick={() => onFocusGuestSearch(guestName)} className="px-2 py-1 rounded-md border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary">Focus this guest</button>
+                  <button
+                    onClick={() => onAddFollowUpTask(`Resolve RSVP exception for ${guestName}`)}
+                    disabled={isGuestsReadOnly}
+                    className="rounded-xl border border-border bg-white px-2 py-1 text-text-secondary hover:border-primary/40 hover:text-primary disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    Save follow-up task
+                  </button>
+                  <button onClick={() => onFocusGuestSearch(guestName)} className="rounded-xl border border-border bg-white px-2 py-1 text-text-secondary hover:border-primary/40 hover:text-primary">Focus this guest</button>
                 </div>
               </div>
             : <p className="text-sm text-text-secondary">No active exception states for this guest.</p>;
         })()}
       </div>
 
-      <div className="mb-4 p-4 bg-surface-subtle border border-border rounded-lg space-y-2">
+      <div className="mb-4 rounded-2xl border border-border bg-surface-subtle p-4 space-y-2">
         <p className="text-xs text-text-tertiary">Household context</p>
         {householdMembers.length > 1 ? (
           <>
@@ -574,7 +713,7 @@ function GuestDrawerDetails({
 
 function GuestAuditPanel({ entries }: { entries: GuestAuditEntry[] }) {
   return (
-    <div className="mb-4 p-4 bg-surface-subtle border border-border rounded-lg">
+    <div className="mb-4 rounded-2xl border border-border bg-surface-subtle p-4">
       <div className="flex items-center justify-between mb-2">
         <p className="text-xs text-text-tertiary">Recent guest updates</p>
         <span className="text-[11px] text-text-tertiary">Last {entries.length} updates</span>
@@ -588,7 +727,7 @@ function GuestAuditPanel({ entries }: { entries: GuestAuditEntry[] }) {
             const relative = formatGuestOpsRelativeTime(entry.changed_at);
             const Icon = getAuditActionIcon(entry.action);
             return (
-              <div key={entry.id} className="text-xs text-text-primary border border-border-subtle rounded-lg p-2.5 bg-surface">
+              <div key={entry.id} className="rounded-xl border border-border-subtle bg-surface p-2.5 text-xs text-text-primary">
                 <div className="flex items-start justify-between gap-3">
                   <span className={`capitalize px-2 py-0.5 rounded border inline-flex items-center gap-1.5 ${getAuditActionTone(entry.action)}`}>
                     <Icon className="w-3 h-3" />
@@ -611,11 +750,13 @@ function GuestAuditPanel({ entries }: { entries: GuestAuditEntry[] }) {
 
 function GuestEventInviteList({
   guestEventIds,
+  isGuestsReadOnly,
   itineraryEvents,
   togglingEventId,
   onToggleEventInvite,
 }: {
   guestEventIds: Set<string>;
+  isGuestsReadOnly: boolean;
   itineraryEvents: ItineraryEvent[];
   togglingEventId: string | null;
   onToggleEventInvite: (eventId: string, currentlyInvited: boolean) => void;
@@ -632,12 +773,14 @@ function GuestEventInviteList({
           <button
             key={event.id}
             onClick={() => onToggleEventInvite(event.id, invited)}
-            disabled={isToggling}
-            className={`w-full flex items-center gap-3 p-3.5 rounded-lg border text-left transition-all ${
+            disabled={isToggling || isGuestsReadOnly}
+            className={`w-full flex items-center gap-3 rounded-2xl border p-3.5 text-left transition-all ${
               invited
                 ? 'border-primary/30 bg-primary/5'
-                : 'border-border hover:border-border hover:bg-surface-subtle'
-            } ${isToggling ? 'opacity-50' : ''}`}
+                : isGuestsReadOnly
+                  ? 'border-border'
+                  : 'border-border hover:border-border hover:bg-surface-subtle'
+            } ${isToggling || isGuestsReadOnly ? 'opacity-50' : ''}`}
           >
             <div className={`w-5 h-5 rounded-sm border-2 flex-shrink-0 flex items-center justify-center transition-colors ${
               invited ? 'border-primary bg-primary' : 'border-border'

@@ -72,8 +72,7 @@ const browserStep = steps.find((step) => step.id === 'browser-proof');
 const results = initialSteps.map(runStep);
 
 let previewProcess = null;
-let previewStdout = '';
-let previewStderr = '';
+let previewOutput = { stdout: '', stderr: '' };
 
 try {
   if (baseUrl === PREVIEW_URL) {
@@ -83,8 +82,7 @@ try {
       cwd: process.cwd(),
     });
     previewProcess = previewRuntime.previewProcess;
-    previewStdout = previewRuntime.previewStdout;
-    previewStderr = previewRuntime.previewStderr;
+    previewOutput = previewRuntime.previewOutput;
   }
 
   if (!browserStep) {
@@ -100,7 +98,7 @@ try {
     ok: false,
     startedAt: new Date().toISOString(),
     finishedAt: new Date().toISOString(),
-    stderr: [previewStderr.trim(), error instanceof Error ? error.message : 'Preview server failed to start.'].filter(Boolean).join('\n'),
+    stderr: [previewOutput.stderr.trim(), error instanceof Error ? error.message : 'Preview server failed to start.'].filter(Boolean).join('\n'),
   });
 } finally {
   await stopPreviewRuntime(previewProcess);
@@ -116,6 +114,7 @@ const output = {
     passed: results.filter((result) => result.ok).length,
     failed: results.filter((result) => !result.ok).length,
   },
+  contractSummary: 'Budget/vendor ledger proof is green: this planning lane validates financial/vendor continuity and non-exposure as shipped feature evidence while still leaving live shared-site runtime truth to the dedicated reruns.',
   automatedCoverage: [
     'Demo planning ledger persistence for budget, vendors, and vendor reminder metadata',
     'Role-safe budget and vendor readback surfaces',

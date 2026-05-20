@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Heart, ArrowRight, ArrowLeft, Check, Sparkles, Palette, Layout, Download, Upload, Users, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { Button, Card, Input, Textarea } from '../../components/ui';
@@ -6,48 +6,27 @@ import { buildOnboardingUpdateWithClarifying } from '../../lib/buildOnboardingUp
 import { buildSuggestedFaqDrafts } from '../../lib/faqDraftHelper';
 import { buildWelcomeNoteDraft } from '../../lib/welcomeNoteHelper';
 import { findCsvHeaderIndex, normalizeCsvHeader } from '../../lib/csvHeaderMatcher';
-import { clearGuidedSetupDraftSnapshot, persistGuidedSetupDraftSnapshot, readGuidedSetupDraftSnapshot, type GuidedSetupDraftSnapshot } from '../../lib/guidedSetupPersistence';
+import { clearGuidedSetupDraftSnapshot, persistGuidedSetupDraftSnapshot, readGuidedSetupDraftSnapshot } from '../../lib/guidedSetupPersistence';
 import { clearAllOnboardingContinuationState } from '../../lib/onboardingContinuationCleanup';
 import { resolvePrimaryWeddingSiteId } from '../../lib/guidedSetupSiteResolver';
 import { writeSignupReturnPath } from '../../lib/signupContinuation';
 import { clearOnboardingEntryReturnPath } from '../../lib/onboardingEntryCleanup';
 import { buildGuidedSetupHydrationErrorMessage, buildGuidedSetupSaveErrorMessage } from '../../lib/guidedSetupErrorCopy';
 import { customerSafeErrorMessage } from '../../lib/customerSafeError';
+import { useAuth } from '../../hooks/useAuth';
+import {
+  createEmptyGuidedSetupFormData,
+  createGuidedSetupDraftDefaults,
+  guidedSetupSteps,
+  type GuidedSetupFormData,
+  type GuidedSetupStep,
+} from './guidedSetupContent';
 import {
   fetchGuidedSetupSite,
   requireAuthenticatedOnboardingUser,
   updateGuidedSetupSite,
   upsertGuidedSetupGuestFromCsv,
 } from './onboardingService';
-
-type Step =
-  | 'welcome'
-  | 'basics'
-  | 'events'
-  | 'travel'
-  | 'rsvp'
-  | 'faq'
-  | 'design'
-  | 'guests'
-  | 'complete';
-
-interface FormData {
-  weddingDate: string;
-  venue: string;
-  city: string;
-  ourStory: string;
-  ceremonyTime: string;
-  receptionTime: string;
-  attire: string;
-  hotelRecommendations: string;
-  parking: string;
-  rsvpDeadline: string;
-  mealOptions: string;
-  registryLinks: string;
-  customFaqs: string;
-  template: string;
-  colorScheme: string;
-}
 
 const deriveCityFromAddress = (address?: string | null): string => {
   if (!address) return '';
@@ -75,27 +54,13 @@ export const safeGuidedSetupCsvError = (err: unknown): string => {
 
 export const GuidedSetup: React.FC = () => {
   const navigate = useNavigate();
-  const [currentStep, setCurrentStep] = useState<Step>('welcome');
+  const { user } = useAuth();
+  const guidedSetupStorageScope = user?.id ?? null;
+  const [currentStep, setCurrentStep] = useState<GuidedSetupStep>('welcome');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [coupleNames, setCoupleNames] = useState({ name1: '', name2: '' });
-  const [formData, setFormData] = useState<FormData>({
-    weddingDate: '',
-    venue: '',
-    city: '',
-    ourStory: '',
-    ceremonyTime: '',
-    receptionTime: '',
-    attire: '',
-    hotelRecommendations: '',
-    parking: '',
-    rsvpDeadline: '',
-    mealOptions: '',
-    registryLinks: '',
-    customFaqs: '',
-    template: 'modern',
-    colorScheme: 'romantic',
-  });
+  const [formData, setFormData] = useState<GuidedSetupFormData>(createEmptyGuidedSetupFormData());
 
   const [csvImportResult, setCsvImportResult] = useState<{ created: number; updated: number; invalid: number } | null>(null);
   const [csvImporting, setCsvImporting] = useState(false);
@@ -104,7 +69,7 @@ export const GuidedSetup: React.FC = () => {
   const [siteId, setSiteId] = useState<string | null>(null);
   const [hasLocalDraft, setHasLocalDraft] = useState(false);
 
-  const steps: Step[] = ['welcome', 'basics', 'events', 'travel', 'rsvp', 'faq', 'design', 'guests', 'complete'];
+  const steps = guidedSetupSteps;
 
 
   const activeUseCasePacks = [
@@ -133,31 +98,11 @@ export const GuidedSetup: React.FC = () => {
   const currentStepIndex = steps.indexOf(currentStep);
   const progress = ((currentStepIndex + 1) / steps.length) * 100;
 
-  const guidedSetupDefaults: GuidedSetupDraftSnapshot = {
-    currentStep: 'welcome',
-    coupleNames: { name1: '', name2: '' },
-    formData: {
-      weddingDate: '',
-      venue: '',
-      city: '',
-      ourStory: '',
-      ceremonyTime: '',
-      receptionTime: '',
-      attire: '',
-      hotelRecommendations: '',
-      parking: '',
-      rsvpDeadline: '',
-      mealOptions: '',
-      registryLinks: '',
-      customFaqs: '',
-      template: 'modern',
-      colorScheme: 'romantic',
-    },
-  };
+  const guidedSetupDefaults = useMemo(() => createGuidedSetupDraftDefaults(), []);
 
   useEffect(() => {
-    clearOnboardingEntryReturnPath();
-  }, []);
+    clearOnboardingEntryReturnPath(guidedSetupStorageScope);
+  }, [guidedSetupStorageScope]);
 
   useEffect(() => {
     if (typeof window === 'undefined') {
@@ -165,7 +110,7 @@ export const GuidedSetup: React.FC = () => {
       return;
     }
 
-    const saved = readGuidedSetupDraftSnapshot(guidedSetupDefaults);
+    const saved = readGuidedSetupDraftSnapshot(guidedSetupDefaults, guidedSetupStorageScope);
     if (!saved) {
       setHasLocalDraft(false);
       setHasHydratedDraft(true);
@@ -178,16 +123,16 @@ export const GuidedSetup: React.FC = () => {
       setCoupleNames(saved.coupleNames);
       setFormData(saved.formData);
     } catch {
-      clearGuidedSetupDraftSnapshot();
+      clearGuidedSetupDraftSnapshot(guidedSetupStorageScope);
     } finally {
       setHasHydratedDraft(true);
     }
-  }, []);
+  }, [guidedSetupDefaults, guidedSetupStorageScope]);
 
   useEffect(() => {
     if (typeof window === 'undefined' || !hasHydratedDraft || currentStep === 'complete') return;
-    persistGuidedSetupDraftSnapshot({ currentStep, coupleNames, formData }, guidedSetupDefaults);
-  }, [currentStep, coupleNames, formData, hasHydratedDraft]);
+    persistGuidedSetupDraftSnapshot({ currentStep, coupleNames, formData }, guidedSetupDefaults, guidedSetupStorageScope);
+  }, [currentStep, coupleNames, formData, guidedSetupDefaults, guidedSetupStorageScope, hasHydratedDraft]);
 
   useEffect(() => {
     const fetchWeddingSite = async () => {
@@ -228,7 +173,7 @@ export const GuidedSetup: React.FC = () => {
 
 
   const clearGuidedSetupDraft = () => {
-    clearGuidedSetupDraftSnapshot();
+    clearGuidedSetupDraftSnapshot(guidedSetupStorageScope);
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -250,6 +195,11 @@ export const GuidedSetup: React.FC = () => {
       [name]: value
     }));
     setError('');
+  };
+
+  const updateFormData = (patch: Partial<typeof formData>) => {
+    setError('');
+    setFormData((prev) => ({ ...prev, ...patch }));
   };
 
   const persistSectionProgress = async () => {
@@ -301,6 +251,7 @@ export const GuidedSetup: React.FC = () => {
   };
 
   const handleBack = () => {
+    setError('');
     const prevIndex = currentStepIndex - 1;
     if (prevIndex >= 0) {
       setCurrentStep(steps[prevIndex]);
@@ -342,7 +293,7 @@ export const GuidedSetup: React.FC = () => {
 
       await updateGuidedSetupSite({ siteId: resolvedSiteId, userId: user.id, updateData });
 
-      clearAllOnboardingContinuationState();
+      clearAllOnboardingContinuationState(guidedSetupStorageScope);
       navigate('/dashboard', {
         state: {
           showWelcome: true,
@@ -481,7 +432,7 @@ export const GuidedSetup: React.FC = () => {
         return (
           <div className="space-y-6">
             <div className="text-center">
-              <div className="inline-flex h-16 w-16 items-center justify-center rounded-lg border border-border-subtle bg-surface-raised mb-4">
+              <div className="inline-flex h-16 w-16 items-center justify-center rounded-xl border border-border-subtle bg-surface-raised mb-4">
                 <Heart className="w-8 h-8 text-primary" fill="currentColor" aria-hidden="true" />
               </div>
               <h2 className="text-2xl font-bold text-text-primary mb-3">
@@ -492,11 +443,11 @@ export const GuidedSetup: React.FC = () => {
               </p>
             </div>
 
-            <div className="bg-surface-subtle rounded-lg border border-border-subtle p-6">
+            <div className="bg-surface-subtle rounded-xl border border-border-subtle p-6">
               <h3 className="font-semibold text-text-primary mb-4">What we'll cover:</h3>
               <div className="space-y-3">
                 <div className="flex items-start gap-3">
-                  <div className="w-6 h-6 rounded-lg bg-surface-raised border border-border-subtle flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <div className="w-6 h-6 rounded-xl bg-surface-raised border border-border-subtle flex items-center justify-center flex-shrink-0 mt-0.5">
                     <span className="text-xs font-bold text-primary">1</span>
                   </div>
                   <div>
@@ -505,7 +456,7 @@ export const GuidedSetup: React.FC = () => {
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
-                  <div className="w-6 h-6 rounded-lg bg-surface-raised border border-border-subtle flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <div className="w-6 h-6 rounded-xl bg-surface-raised border border-border-subtle flex items-center justify-center flex-shrink-0 mt-0.5">
                     <span className="text-xs font-bold text-primary">2</span>
                   </div>
                   <div>
@@ -514,7 +465,7 @@ export const GuidedSetup: React.FC = () => {
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
-                  <div className="w-6 h-6 rounded-lg bg-surface-raised border border-border-subtle flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <div className="w-6 h-6 rounded-xl bg-surface-raised border border-border-subtle flex items-center justify-center flex-shrink-0 mt-0.5">
                     <span className="text-xs font-bold text-primary">3</span>
                   </div>
                   <div>
@@ -523,7 +474,7 @@ export const GuidedSetup: React.FC = () => {
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
-                  <div className="w-6 h-6 rounded-lg bg-surface-raised border border-border-subtle flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <div className="w-6 h-6 rounded-xl bg-surface-raised border border-border-subtle flex items-center justify-center flex-shrink-0 mt-0.5">
                     <span className="text-xs font-bold text-primary">4</span>
                   </div>
                   <div>
@@ -532,7 +483,7 @@ export const GuidedSetup: React.FC = () => {
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
-                  <div className="w-6 h-6 rounded-lg bg-surface-raised border border-border-subtle flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <div className="w-6 h-6 rounded-xl bg-surface-raised border border-border-subtle flex items-center justify-center flex-shrink-0 mt-0.5">
                     <span className="text-xs font-bold text-primary">5</span>
                   </div>
                   <div>
@@ -541,7 +492,7 @@ export const GuidedSetup: React.FC = () => {
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
-                  <div className="w-6 h-6 rounded-lg bg-surface-raised border border-border-subtle flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <div className="w-6 h-6 rounded-xl bg-surface-raised border border-border-subtle flex items-center justify-center flex-shrink-0 mt-0.5">
                     <span className="text-xs font-bold text-primary">6</span>
                   </div>
                   <div>
@@ -550,7 +501,7 @@ export const GuidedSetup: React.FC = () => {
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
-                  <div className="w-6 h-6 rounded-lg bg-surface-raised border border-border-subtle flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <div className="w-6 h-6 rounded-xl bg-surface-raised border border-border-subtle flex items-center justify-center flex-shrink-0 mt-0.5">
                     <span className="text-xs font-bold text-primary">7</span>
                   </div>
                   <div>
@@ -559,7 +510,7 @@ export const GuidedSetup: React.FC = () => {
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
-                  <div className="w-6 h-6 rounded-lg bg-surface-raised border border-border-subtle flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <div className="w-6 h-6 rounded-xl bg-surface-raised border border-border-subtle flex items-center justify-center flex-shrink-0 mt-0.5">
                     <span className="text-xs font-bold text-primary">8</span>
                   </div>
                   <div>
@@ -585,7 +536,7 @@ export const GuidedSetup: React.FC = () => {
               <p className="text-text-secondary">Tell us about your big day</p>
             </div>
 
-            <div className="p-4 bg-surface-subtle rounded-lg">
+            <div className="p-4 bg-surface-subtle rounded-xl">
               <p className="text-sm font-medium text-text-primary mb-1">Getting married:</p>
               <p className="text-lg font-semibold text-accent">
                 {coupleNames.name1} & {coupleNames.name2}
@@ -620,14 +571,14 @@ export const GuidedSetup: React.FC = () => {
               helperText="Optional"
             />
 
-            <div className="rounded-lg border border-border bg-surface-subtle/30 p-3 text-xs text-text-secondary">
+            <div className="rounded-xl border border-border bg-surface-subtle/30 p-3 text-xs text-text-secondary">
               Grounded draft help: this uses the details you already entered and gives you a starting point. It does not overwrite anything unless you insert it.
             </div>
 
             <div className="flex justify-end">
               <button
                 type="button"
-                onClick={() => setFormData((prev) => ({ ...prev, ourStory: welcomeNoteDraft }))}
+                onClick={() => updateFormData({ ourStory: welcomeNoteDraft })}
                 className="rounded border border-border px-3 py-2 text-sm text-text-secondary hover:border-primary/40 hover:text-primary"
               >
                 Insert welcome note draft
@@ -682,7 +633,7 @@ export const GuidedSetup: React.FC = () => {
               helperText="Optional"
             />
 
-            <div className="p-4 bg-surface-subtle rounded-lg border border-border-subtle">
+            <div className="p-4 bg-surface-subtle rounded-xl border border-border-subtle">
               <p className="text-sm text-text-secondary">
                 <span className="font-medium text-primary">Tip:</span> You can add more events and details from Schedule later
               </p>
@@ -718,7 +669,7 @@ export const GuidedSetup: React.FC = () => {
               helperText="Optional"
             />
 
-            <div className="p-4 bg-primary/5 rounded-lg border border-primary/20">
+            <div className="p-4 bg-primary/5 rounded-xl border border-primary/20">
               <p className="text-sm text-text-secondary">
                 <span className="font-medium text-primary">Note:</span> You can add airport info, transportation options, and local favorites from Travel later
               </p>
@@ -753,7 +704,7 @@ export const GuidedSetup: React.FC = () => {
               helperText="Leave blank if not offering meal choices"
             />
 
-            <div className="p-4 bg-primary/5 rounded-lg border border-primary/20">
+            <div className="p-4 bg-primary/5 rounded-xl border border-primary/20">
               <p className="text-sm text-text-secondary">
                 <span className="font-medium text-primary">Tip:</span> You can manage RSVPs and review the latest responses from Guests later
               </p>
@@ -770,11 +721,11 @@ export const GuidedSetup: React.FC = () => {
               <p className="text-text-secondary">Answer the questions guests are most likely to ask</p>
             </div>
 
-            <div className="rounded-lg border border-border bg-surface-subtle/30 p-3 text-xs text-text-secondary">
+            <div className="rounded-xl border border-border bg-surface-subtle/30 p-3 text-xs text-text-secondary">
               Grounded draft help: these suggestions come from your venue, travel, RSVP, and use-case setup details. Insert them, then edit freely.
             </div>
 
-            <div className="p-4 bg-surface-subtle rounded-lg">
+            <div className="p-4 bg-surface-subtle rounded-xl">
               <h3 className="font-semibold text-text-primary mb-3 flex items-center gap-2">
                 <Sparkles className="w-4 h-4 text-primary" aria-hidden="true" />
                 Suggested FAQs we'll add:
@@ -792,7 +743,7 @@ export const GuidedSetup: React.FC = () => {
             <div className="flex justify-end">
               <button
                 type="button"
-                onClick={() => setFormData((prev) => ({ ...prev, customFaqs: suggestedFaqDrafts.map((item) => `${item.question}::${item.answer}`).join('\n') }))}
+                onClick={() => updateFormData({ customFaqs: suggestedFaqDrafts.map((item) => `${item.question}::${item.answer}`).join('\n') })}
                 className="rounded border border-border px-3 py-2 text-sm text-text-secondary hover:border-primary/40 hover:text-primary"
               >
                 Insert suggested FAQs
@@ -834,14 +785,14 @@ export const GuidedSetup: React.FC = () => {
                   <button
                     key={tpl.id}
                     type="button"
-                    onClick={() => setFormData(prev => ({ ...prev, template: tpl.id }))}
-                    className={`p-4 rounded-lg border-2 text-left transition-all ${
+                    onClick={() => updateFormData({ template: tpl.id })}
+                    className={`p-4 rounded-xl border-2 text-left transition-all ${
                       formData.template === tpl.id
                         ? 'border-primary bg-primary/10'
                         : 'border-border hover:border-primary/50'
                     }`}
                   >
-                    <div className="aspect-[3/4] bg-surface-subtle rounded-lg mb-3 flex items-center justify-center overflow-hidden">
+                    <div className="aspect-[3/4] bg-surface-subtle rounded-xl mb-3 flex items-center justify-center overflow-hidden">
                       <div className="space-y-1.5 w-full px-3">
                         <div className="h-2 bg-primary/20 rounded w-full" />
                         <div className="h-1.5 bg-border rounded w-3/4" />
@@ -875,8 +826,8 @@ export const GuidedSetup: React.FC = () => {
                   <button
                     key={scheme.id}
                     type="button"
-                    onClick={() => setFormData(prev => ({ ...prev, colorScheme: scheme.id }))}
-                    className={`p-4 rounded-lg border-2 transition-all ${
+                    onClick={() => updateFormData({ colorScheme: scheme.id })}
+                    className={`p-4 rounded-xl border-2 transition-all ${
                       formData.colorScheme === scheme.id
                         ? 'border-primary bg-primary/10'
                         : 'border-border hover:border-primary/50'
@@ -897,7 +848,7 @@ export const GuidedSetup: React.FC = () => {
                 ))}
               </div>
               {formData.colorScheme === 'custom' && (
-                <div className="mt-3 p-3 bg-primary/5 rounded-lg border border-primary/20">
+                <div className="mt-3 p-3 bg-primary/5 rounded-xl border border-primary/20">
                   <p className="text-sm text-text-secondary">
                     <span className="font-medium text-primary">Custom palette:</span> You'll be able to choose your own colors from the site editor after setup
                   </p>
@@ -915,7 +866,7 @@ export const GuidedSetup: React.FC = () => {
               <p className="text-text-secondary">Start with a CSV, or skip and add guests yourself later</p>
             </div>
 
-            <div className="p-4 bg-surface-subtle rounded-lg space-y-3">
+            <div className="p-4 bg-surface-subtle rounded-xl space-y-3">
               <h3 className="font-semibold text-text-primary flex items-center gap-2">
                 <Users className="w-4 h-4 text-primary" aria-hidden="true" />
                 Step 1: Download the template
@@ -923,7 +874,7 @@ export const GuidedSetup: React.FC = () => {
               <p className="text-sm text-text-secondary">
                 Fill in guest names, emails, phone numbers, group names, and which events they're invited to.
               </p>
-              <div className="bg-surface rounded-lg border border-border p-3 font-mono text-xs text-text-tertiary overflow-x-auto">
+              <div className="bg-surface rounded-xl border border-border p-3 font-mono text-xs text-text-tertiary overflow-x-auto">
                 first_name, last_name, email, phone, group_name, plus_one_allowed, invited_to_ceremony, invited_to_reception
               </div>
               <Button variant="outline" size="sm" onClick={downloadCsvTemplate}>
@@ -938,7 +889,7 @@ export const GuidedSetup: React.FC = () => {
                 Step 2: Upload your guest file (CSV)
               </h3>
               {csvImportResult ? (
-                <div className="p-4 bg-surface-secondary border border-border-subtle rounded-lg space-y-2">
+                <div className="p-4 bg-surface-secondary border border-border-subtle rounded-xl space-y-2">
                   <div className="flex items-center gap-2 font-medium text-text-primary">
                     <CheckCircle2 className="w-5 h-5" aria-hidden="true" />
                     Import complete
@@ -958,10 +909,10 @@ export const GuidedSetup: React.FC = () => {
                 </div>
               ) : (
                 <label className="block">
-                  <div className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${csvImporting ? 'border-primary/50 bg-primary/5' : 'border-border hover:border-primary/50'}`}>
+                  <div className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-colors ${csvImporting ? 'border-primary/50 bg-primary/5' : 'border-border hover:border-primary/50'}`}>
                     {csvImporting ? (
                       <div className="space-y-2">
-                        <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-lg animate-spin mx-auto" />
+                        <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-xl animate-spin mx-auto" />
                         <p className="text-sm text-text-secondary">Importing guests...</p>
                       </div>
                     ) : (
@@ -982,14 +933,14 @@ export const GuidedSetup: React.FC = () => {
                 </label>
               )}
               {csvError && (
-                <div className="flex items-start gap-2 p-3 bg-surface-secondary border border-border-subtle rounded-lg text-sm text-text-secondary">
+                <div className="flex items-start gap-2 p-3 bg-surface-secondary border border-border-subtle rounded-xl text-sm text-text-secondary">
                   <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5 text-text-tertiary" aria-hidden="true" />
                   {csvError}
                 </div>
               )}
             </div>
 
-            <div className="p-4 bg-primary/5 rounded-lg border border-primary/20">
+            <div className="p-4 bg-primary/5 rounded-xl border border-primary/20">
               <p className="text-sm text-text-secondary">
                 <span className="font-medium text-text-primary">Skip this step</span> if you’re not ready. You can always add and manage guests later from Guests.
               </p>
@@ -1000,7 +951,7 @@ export const GuidedSetup: React.FC = () => {
       case 'complete':
         return (
           <div className="space-y-6 text-center">
-            <div className="inline-flex h-16 w-16 items-center justify-center rounded-lg border border-border-subtle bg-surface-raised mb-4">
+            <div className="inline-flex h-16 w-16 items-center justify-center rounded-xl border border-border-subtle bg-surface-raised mb-4">
               <Check className="w-8 h-8 text-primary" aria-hidden="true" />
             </div>
             <h2 className="text-2xl font-bold text-text-primary mb-3">
@@ -1010,11 +961,11 @@ export const GuidedSetup: React.FC = () => {
               We drafted the core pages from what you shared. Review the starter draft in your wedding home, tighten the details, and only publish once you're ready to share it with guests.
             </p>
 
-            <div className="bg-surface-subtle rounded-lg p-6 text-left">
+            <div className="bg-surface-subtle rounded-xl p-6 text-left">
               <h3 className="font-semibold text-text-primary mb-4">What's next?</h3>
               <ul className="space-y-3">
                 <li className="flex items-start gap-3">
-                  <div className="w-6 h-6 rounded-lg bg-surface-raised border border-border-subtle flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <div className="w-6 h-6 rounded-xl bg-surface-raised border border-border-subtle flex items-center justify-center flex-shrink-0 mt-0.5">
                     <span className="text-xs font-bold text-primary">1</span>
                   </div>
                   <div>
@@ -1023,7 +974,7 @@ export const GuidedSetup: React.FC = () => {
                   </div>
                 </li>
                 <li className="flex items-start gap-3">
-                  <div className="w-6 h-6 rounded-lg bg-surface-raised border border-border-subtle flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <div className="w-6 h-6 rounded-xl bg-surface-raised border border-border-subtle flex items-center justify-center flex-shrink-0 mt-0.5">
                     <span className="text-xs font-bold text-primary">2</span>
                   </div>
                   <div>
@@ -1032,7 +983,7 @@ export const GuidedSetup: React.FC = () => {
                   </div>
                 </li>
                 <li className="flex items-start gap-3">
-                  <div className="w-6 h-6 rounded-lg bg-surface-raised border border-border-subtle flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <div className="w-6 h-6 rounded-xl bg-surface-raised border border-border-subtle flex items-center justify-center flex-shrink-0 mt-0.5">
                     <span className="text-xs font-bold text-primary">3</span>
                   </div>
                   <div>
@@ -1044,7 +995,7 @@ export const GuidedSetup: React.FC = () => {
             </div>
 
             {error && (
-              <div className="p-3 bg-surface-secondary border border-border-subtle text-text-secondary rounded-lg text-sm">
+              <div className="p-3 bg-surface-secondary border border-border-subtle text-text-secondary rounded-xl text-sm">
                 {error}
               </div>
             )}
@@ -1104,7 +1055,7 @@ export const GuidedSetup: React.FC = () => {
                 {Math.round(progress)}% complete
               </span>
             </div>
-            <div className="w-full h-2 bg-surface-subtle rounded-lg overflow-hidden">
+            <div className="w-full h-2 bg-surface-subtle rounded-xl overflow-hidden">
               <div
                 className="h-full bg-primary transition-all duration-300"
                 style={{ width: `${progress}%` }}

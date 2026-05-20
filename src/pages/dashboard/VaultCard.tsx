@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Card, Button } from '../../components/ui';
 import {
   Lock,
@@ -138,14 +138,30 @@ interface EntryFormProps {
   safeVaultDashboardError: (err: unknown, fallback: string) => string;
 }
 
+function getDefaultVaultEntryTitle(durationYears: number) {
+  return `A note for our ${durationYears}${durationYears === 1 ? 'st' : durationYears === 2 ? 'nd' : durationYears === 3 ? 'rd' : 'th'} anniversary`;
+}
+
 function EntryForm({ vaultConfigId, durationYears, onSave, onCancel, safeVaultDashboardError }: EntryFormProps) {
-  const [title, setTitle] = useState(`A note for our ${durationYears}${durationYears === 1 ? 'st' : durationYears === 2 ? 'nd' : durationYears === 3 ? 'rd' : 'th'} anniversary`);
+  const [title, setTitle] = useState(() => getDefaultVaultEntryTitle(durationYears));
   const [content, setContent] = useState('');
   const [authorName, setAuthorName] = useState('You');
   const [attachmentUrl, setAttachmentUrl] = useState('');
   const [attachmentName, setAttachmentName] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const clearEntryError = () => setError(null);
+
+  useEffect(() => {
+    setTitle(getDefaultVaultEntryTitle(durationYears));
+    setContent('');
+    setAuthorName('You');
+    setAttachmentUrl('');
+    setAttachmentName('');
+    setSaving(false);
+    setError(null);
+  }, [vaultConfigId, durationYears]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -169,20 +185,20 @@ function EntryForm({ vaultConfigId, durationYears, onSave, onCancel, safeVaultDa
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 p-5 bg-surface-subtle rounded-lg border border-border mt-3">
+    <form onSubmit={handleSubmit} className="space-y-4 p-5 bg-surface-subtle rounded-2xl border border-border mt-3">
       <div className="grid grid-cols-2 gap-3">
         <div>
           <label className="block text-xs font-medium text-text-primary mb-1">Title (optional)</label>
-          <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="For example: A note to remember" className="w-full px-3 py-2 text-sm bg-surface border border-border rounded-lg text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary" />
+          <input type="text" value={title} onChange={(e) => { clearEntryError(); setTitle(e.target.value); }} placeholder="For example: A note to remember" className="w-full px-3 py-2 text-sm bg-surface border border-border rounded-xl text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary" />
         </div>
         <div>
           <label className="block text-xs font-medium text-text-primary mb-1">From</label>
-          <input type="text" value={authorName} onChange={(e) => setAuthorName(e.target.value)} placeholder="Your name" className="w-full px-3 py-2 text-sm bg-surface border border-border rounded-lg text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary" />
+          <input type="text" value={authorName} onChange={(e) => { clearEntryError(); setAuthorName(e.target.value); }} placeholder="Your name" className="w-full px-3 py-2 text-sm bg-surface border border-border rounded-xl text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary" />
         </div>
       </div>
       <div>
         <label className="block text-xs font-medium text-text-primary mb-1">Message <span className="text-text-tertiary">*</span></label>
-        <textarea value={content} onChange={(e) => setContent(e.target.value)} required rows={5} placeholder="Write something meaningful to be opened in the future…" className="w-full px-3 py-2 text-sm bg-surface border border-border rounded-lg text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary resize-none" />
+        <textarea value={content} onChange={(e) => { clearEntryError(); setContent(e.target.value); }} required rows={5} placeholder="Write something meaningful to be opened in the future…" className="w-full px-3 py-2 text-sm bg-surface border border-border rounded-xl text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary resize-none" />
         <p className="text-xs text-text-tertiary mt-1">{content.length} characters</p>
       </div>
       <div>
@@ -191,12 +207,12 @@ function EntryForm({ vaultConfigId, durationYears, onSave, onCancel, safeVaultDa
           <label className="text-xs font-medium text-text-primary">Attachment URL (optional)</label>
         </div>
         <div className="grid grid-cols-2 gap-2">
-          <input type="url" value={attachmentUrl} onChange={(e) => setAttachmentUrl(e.target.value)} placeholder="https://…" className="w-full px-3 py-2 text-sm bg-surface border border-border rounded-lg text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary" />
-          <input type="text" value={attachmentName} onChange={(e) => setAttachmentName(e.target.value)} placeholder="Label (e.g. Our first photo)" className="w-full px-3 py-2 text-sm bg-surface border border-border rounded-lg text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary" />
+          <input type="url" value={attachmentUrl} onChange={(e) => { clearEntryError(); setAttachmentUrl(e.target.value); }} placeholder="https://…" className="w-full px-3 py-2 text-sm bg-surface border border-border rounded-xl text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary" />
+          <input type="text" value={attachmentName} onChange={(e) => { clearEntryError(); setAttachmentName(e.target.value); }} placeholder="Label (e.g. Our first photo)" className="w-full px-3 py-2 text-sm bg-surface border border-border rounded-xl text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary" />
         </div>
       </div>
       {error && (
-        <div className="flex items-center gap-2 p-3 bg-surface rounded-lg text-sm text-text-primary border border-border-subtle">
+        <div className="flex items-center gap-2 p-3 bg-surface rounded-xl text-sm text-text-primary border border-border-subtle">
           <AlertCircle className="w-4 h-4 flex-shrink-0" />
           {error}
         </div>
@@ -246,8 +262,10 @@ export function VaultCard({
 }: VaultCardProps) {
   const [expanded, setExpanded] = useState(true);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
-  const [copied, setCopied] = useState(false);
-  const [recapCopied, setRecapCopied] = useState(false);
+  const [shareLinkNotice, setShareLinkNotice] = useState<'copied' | 'downloaded' | null>(null);
+  const [recapLinkNotice, setRecapLinkNotice] = useState<'copied' | 'downloaded' | null>(null);
+  const [copyingShareLink, setCopyingShareLink] = useState(false);
+  const [copyingRecapLink, setCopyingRecapLink] = useState(false);
   const [toggling, setToggling] = useState(false);
   const [generatingRecap, setGeneratingRecap] = useState(false);
   const [recapStyle, setRecapStyle] = useState<'classic' | 'playful' | 'cinematic'>('classic');
@@ -256,6 +274,26 @@ export function VaultCard({
   const [resolvedEntryLinks, setResolvedEntryLinks] = useState<Record<string, string>>({});
   const [resolvingEntryId, setResolvingEntryId] = useState<string | null>(null);
   const [entryOverrides, setEntryOverrides] = useState<Record<string, Partial<VaultEntry>>>({});
+  const clearRecapLinkNotice = () => setRecapLinkNotice(null);
+  const shareLinkNoticeTimeoutRef = useRef<number | null>(null);
+  const recapLinkNoticeTimeoutRef = useRef<number | null>(null);
+  const confirmDeleteTimeoutRef = useRef<number | null>(null);
+  const shareCopyRequestIdRef = useRef(0);
+  const recapCopyRequestIdRef = useRef(0);
+  const mountedRef = useRef(true);
+
+  useEffect(() => {
+    clearRecapLinkNotice();
+  }, [recapStyle, recapLength, photosOnlyRecap]);
+
+  useEffect(() => () => {
+    mountedRef.current = false;
+    shareCopyRequestIdRef.current += 1;
+    recapCopyRequestIdRef.current += 1;
+    if (shareLinkNoticeTimeoutRef.current) window.clearTimeout(shareLinkNoticeTimeoutRef.current);
+    if (recapLinkNoticeTimeoutRef.current) window.clearTimeout(recapLinkNoticeTimeoutRef.current);
+    if (confirmDeleteTimeoutRef.current) window.clearTimeout(confirmDeleteTimeoutRef.current);
+  }, []);
 
   const displayEntries = entries.map((entry) => ({ ...entry, ...(entryOverrides[entry.id] ?? {}) }));
   const unlockDate = getVaultUnlockDate(weddingDate, config.duration_years);
@@ -305,11 +343,23 @@ export function VaultCard({
 
   async function handleCopyLink() {
     const url = buildVaultShareUrl();
-    if (!url) return;
-    const result = await copyTextOrDownload(url, 'dayof-vault-link.txt');
-    if (result === 'copied') {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+    if (!url || copyingShareLink) return;
+    const requestId = ++shareCopyRequestIdRef.current;
+    const isCurrentShareCopy = () => mountedRef.current && requestId === shareCopyRequestIdRef.current && buildVaultShareUrl() === url;
+    setCopyingShareLink(true);
+    try {
+      const result = await copyTextOrDownload(url, 'dayof-vault-link.txt');
+      if (!isCurrentShareCopy()) return;
+      setShareLinkNotice(result);
+      if (shareLinkNoticeTimeoutRef.current) window.clearTimeout(shareLinkNoticeTimeoutRef.current);
+      shareLinkNoticeTimeoutRef.current = window.setTimeout(() => setShareLinkNotice(null), 2000);
+    } catch (err) {
+      if (!isCurrentShareCopy()) return;
+      onError(safeVaultDashboardError(err, 'Couldn’t copy that vault share link right now.'));
+    } finally {
+      if (isCurrentShareCopy()) {
+        setCopyingShareLink(false);
+      }
     }
   }
 
@@ -324,6 +374,7 @@ export function VaultCard({
 
   async function handleGenerateRecap() {
     if (displayEntries.length === 0 || generatingRecap) return;
+    clearRecapLinkNotice();
     setGeneratingRecap(true);
     try {
       await onSaveEntry({
@@ -342,6 +393,7 @@ export function VaultCard({
 
   async function handleRegenerateLatestRecap() {
     if (generatingRecap) return;
+    clearRecapLinkNotice();
     const latestRecap = [...displayEntries]
       .filter((entry) => (entry.title || '').toLowerCase().includes('recap'))
       .sort((a, b) => getVaultEntryTimestamp(b.created_at) - getVaultEntryTimestamp(a.created_at))[0];
@@ -382,14 +434,38 @@ export function VaultCard({
     .sort((a, b) => getVaultEntryTimestamp(b.created_at) - getVaultEntryTimestamp(a.created_at))[0];
   const hasRecap = !!latestRecap;
 
+  useEffect(() => {
+    shareCopyRequestIdRef.current += 1;
+    recapCopyRequestIdRef.current += 1;
+    setShareLinkNotice(null);
+    setRecapLinkNotice(null);
+    setCopyingShareLink(false);
+    setCopyingRecapLink(false);
+    if (shareLinkNoticeTimeoutRef.current) window.clearTimeout(shareLinkNoticeTimeoutRef.current);
+    if (recapLinkNoticeTimeoutRef.current) window.clearTimeout(recapLinkNoticeTimeoutRef.current);
+  }, [siteSlug, config.id, config.is_enabled, latestRecap?.id]);
+
   async function handleCopyRecapLink() {
     const base = buildVaultShareUrl();
-    if (!base || !latestRecap) return;
+    if (!base || !latestRecap || copyingRecapLink) return;
     const url = `${base}?entry=${latestRecap.id}`;
-    const result = await copyTextOrDownload(url, 'dayof-vault-recap-link.txt');
-    if (result === 'copied') {
-      setRecapCopied(true);
-      setTimeout(() => setRecapCopied(false), 2000);
+    const requestId = ++recapCopyRequestIdRef.current;
+    const requestEntryId = latestRecap.id;
+    const isCurrentRecapCopy = () => mountedRef.current && requestId === recapCopyRequestIdRef.current && latestRecap?.id === requestEntryId && buildVaultShareUrl() === base;
+    setCopyingRecapLink(true);
+    try {
+      const result = await copyTextOrDownload(url, 'dayof-vault-recap-link.txt');
+      if (!isCurrentRecapCopy()) return;
+      setRecapLinkNotice(result);
+      if (recapLinkNoticeTimeoutRef.current) window.clearTimeout(recapLinkNoticeTimeoutRef.current);
+      recapLinkNoticeTimeoutRef.current = window.setTimeout(() => setRecapLinkNotice(null), 2000);
+    } catch (err) {
+      if (!isCurrentRecapCopy()) return;
+      onError(safeVaultDashboardError(err, 'Couldn’t copy that vault recap link right now.'));
+    } finally {
+      if (isCurrentRecapCopy()) {
+        setCopyingRecapLink(false);
+      }
     }
   }
 
@@ -397,14 +473,14 @@ export function VaultCard({
     <Card variant="bordered" padding="lg" className={`transition-colors border border-border-subtle ${!config.is_enabled ? 'opacity-60' : ''}`}>
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-1">
         <div className="flex items-start gap-3 flex-1 min-w-0">
-          <div className={`p-2.5 rounded-lg flex-shrink-0 ${isUnlocked && config.is_enabled ? 'bg-surface-subtle' : 'bg-surface-subtle'}`}>
+          <div className={`p-2.5 rounded-xl flex-shrink-0 ${isUnlocked && config.is_enabled ? 'bg-surface-subtle' : 'bg-surface-subtle'}`}>
             {isUnlocked && config.is_enabled ? <Unlock className="w-5 h-5 text-primary" /> : <Lock className="w-5 h-5 text-text-tertiary" />}
           </div>
           <div className="min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
               <h3 className="font-semibold text-text-primary truncate">{config.label || `Vault ${config.vault_index}`}</h3>
-              <span className="text-[11px] px-2 py-0.5 rounded-lg bg-surface-subtle text-text-secondary border border-border-subtle flex-shrink-0">{config.duration_years}yr</span>
-              {!config.is_enabled && <span className="text-xs bg-surface-subtle text-text-tertiary px-2 py-0.5 rounded-lg border border-border flex-shrink-0">Disabled</span>}
+              <span className="text-[11px] px-2 py-0.5 rounded-xl bg-surface-subtle text-text-secondary border border-border-subtle flex-shrink-0">{config.duration_years}yr</span>
+              {!config.is_enabled && <span className="text-xs bg-surface-subtle text-text-tertiary px-2 py-0.5 rounded-xl border border-border flex-shrink-0">Disabled</span>}
             </div>
             <p className="text-xs text-text-secondary mt-0.5">
               {config.is_enabled ? (isUnlocked ? 'Unlocked — you can read and add entries' : `Locked until ${unlockLabel} (${config.duration_years}yr)`) : 'This vault is disabled and hidden from guests'}
@@ -413,22 +489,29 @@ export function VaultCard({
         </div>
 
         <div className="flex items-center gap-1.5 flex-wrap sm:flex-nowrap self-start sm:self-auto">
-          <span className="text-xs text-text-tertiary px-2 py-1 rounded-md bg-surface-subtle border border-border">{displayEntries.length} {displayEntries.length === 1 ? 'entry' : 'entries'}</span>
+          <span className="text-xs text-text-tertiary px-2 py-1 rounded-xl bg-surface-subtle border border-border">{displayEntries.length} {displayEntries.length === 1 ? 'entry' : 'entries'}</span>
           {siteSlug && config.is_enabled && (
             <button
-              onClick={handleCopyLink}
+              onClick={() => void handleCopyLink()}
+              disabled={copyingShareLink}
               aria-label={`Share ${config.label || `Vault ${config.vault_index}`}`}
-              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-xs font-medium transition-colors ${copied ? 'border-border-subtle bg-surface-subtle text-text-primary' : 'border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary hover:bg-primary/5'}`}
+              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border text-xs font-medium transition-colors ${shareLinkNotice ? 'border-border-subtle bg-surface-subtle text-text-primary' : 'border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary hover:bg-primary/5'}`}
               title={`Copy share link for ${config.label || `Vault ${config.vault_index}`}`}
             >
-              {copied ? <Check className="w-3 h-3" /> : <Link2 className="w-3 h-3" />}
-              {copied ? 'Copied!' : 'Share'}
+              {shareLinkNotice ? <Check className="w-3 h-3" /> : <Link2 className="w-3 h-3" />}
+              {shareLinkNotice === 'copied'
+                ? 'Copied share link'
+                : shareLinkNotice === 'downloaded'
+                  ? 'Downloaded share link'
+                  : copyingShareLink
+                    ? 'Copying share link...'
+                    : 'Share'}
             </button>
           )}
           <button
             onClick={() => onEdit(config)}
             aria-label={`Edit ${config.label || `Vault ${config.vault_index}`}`}
-            className="p-1.5 rounded-lg hover:bg-surface-subtle text-text-tertiary hover:text-text-primary transition-colors"
+            className="p-1.5 rounded-xl hover:bg-surface-subtle text-text-tertiary hover:text-text-primary transition-colors"
             title={`Edit ${config.label || `Vault ${config.vault_index}`}`}
           >
             <Settings2 className="w-4 h-4" />
@@ -437,7 +520,7 @@ export function VaultCard({
             onClick={handleToggle}
             disabled={toggling}
             aria-label={`${config.is_enabled ? 'Disable' : 'Enable'} ${config.label || `Vault ${config.vault_index}`}`}
-            className="p-1.5 rounded-lg hover:bg-surface-subtle transition-colors"
+            className="p-1.5 rounded-xl hover:bg-surface-subtle transition-colors"
             title={config.is_enabled ? 'Disable vault' : 'Enable vault'}
           >
             {toggling ? <Loader2 className="w-4 h-4 animate-spin text-text-tertiary" /> : config.is_enabled ? <ToggleRight className="w-5 h-5 text-primary" /> : <ToggleLeft className="w-5 h-5 text-text-tertiary" />}
@@ -445,7 +528,7 @@ export function VaultCard({
           <button
             onClick={() => setExpanded(!expanded)}
             aria-label={`${expanded ? 'Collapse' : 'Expand'} ${config.label || `Vault ${config.vault_index}`}`}
-            className="p-1.5 rounded-lg hover:bg-surface-subtle text-text-tertiary transition-colors"
+            className="p-1.5 rounded-xl hover:bg-surface-subtle text-text-tertiary transition-colors"
           >
             {expanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
           </button>
@@ -464,17 +547,17 @@ export function VaultCard({
                   <Button variant="outline" size="sm" onClick={() => void handleRegenerateLatestRecap()} disabled={generatingRecap}>
                     Refresh recap
                   </Button>
-                  <Button variant="outline" size="sm" onClick={() => void handleCopyRecapLink()}>
-                    {recapCopied ? 'Copied recap link' : 'Copy recap link'}
+                  <Button variant="outline" size="sm" onClick={() => void handleCopyRecapLink()} disabled={copyingRecapLink}>
+                    {recapLinkNotice === 'copied' ? 'Copied recap link' : recapLinkNotice === 'downloaded' ? 'Downloaded recap link' : copyingRecapLink ? 'Copying recap link...' : 'Copy recap link'}
                   </Button>
                 </>
               )}
-              <select value={recapStyle} onChange={(e) => setRecapStyle(e.target.value as 'classic' | 'playful' | 'cinematic')} className="rounded-lg border border-border px-2 py-1 text-xs">
+              <select value={recapStyle} onChange={(e) => setRecapStyle(e.target.value as 'classic' | 'playful' | 'cinematic')} className="rounded-xl border border-border px-2 py-1 text-xs">
                 <option value="classic">Classic</option>
                 <option value="playful">Playful</option>
                 <option value="cinematic">Cinematic</option>
               </select>
-              <select value={recapLength} onChange={(e) => setRecapLength(e.target.value as 'short' | 'medium' | 'long')} className="rounded-lg border border-border px-2 py-1 text-xs">
+              <select value={recapLength} onChange={(e) => setRecapLength(e.target.value as 'short' | 'medium' | 'long')} className="rounded-xl border border-border px-2 py-1 text-xs">
                 <option value="short">Short</option>
                 <option value="medium">Medium</option>
                 <option value="long">Long</option>
@@ -487,7 +570,7 @@ export function VaultCard({
           )}
 
           {displayEntries.length === 0 && !showForm && (
-            <div className="text-center py-6 border border-dashed border-border rounded-lg">
+            <div className="text-center py-6 border border-dashed border-border rounded-2xl">
               <p className="text-sm text-text-secondary mb-1">No entries yet</p>
               <p className="text-xs text-text-tertiary">Add a note, photo, video, voice note, or link for this anniversary.</p>
             </div>
@@ -499,7 +582,7 @@ export function VaultCard({
             const entryUnlockLabel = entryUnlockDate ? formatVaultUnlockDate(entryUnlockDate) : unlockLabel;
 
             return (
-              <div key={entry.id} className="p-4 bg-surface-subtle rounded-lg border border-border">
+              <div key={entry.id} className="p-4 bg-surface-subtle rounded-2xl border border-border">
                 <div className="flex items-start justify-between gap-2 mb-2">
                   <div className="flex-1 min-w-0">
                     {entry.title && <p className="font-semibold text-text-primary text-sm mb-0.5">{entry.title}</p>}
@@ -513,17 +596,18 @@ export function VaultCard({
                         setConfirmDeleteId(null);
                       } else {
                         setConfirmDeleteId(entry.id);
-                        setTimeout(() => setConfirmDeleteId(null), 3000);
+                        if (confirmDeleteTimeoutRef.current) window.clearTimeout(confirmDeleteTimeoutRef.current);
+                        confirmDeleteTimeoutRef.current = window.setTimeout(() => setConfirmDeleteId(null), 3000);
                       }
                     }}
-                    className={`flex-shrink-0 p-1.5 rounded-lg border text-xs transition-colors ${confirmDeleteId === entry.id ? 'border-border-subtle text-text-primary bg-surface' : 'border-transparent text-text-tertiary hover:border-border-subtle hover:text-text-primary'}`}
+                    className={`flex-shrink-0 p-1.5 rounded-xl border text-xs transition-colors ${confirmDeleteId === entry.id ? 'border-border-subtle text-text-primary bg-surface' : 'border-transparent text-text-tertiary hover:border-border-subtle hover:text-text-primary'}`}
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
                 </div>
 
                 {!unlocked ? (
-                  <div className="p-3 rounded-lg border border-dashed border-border bg-surface text-center">
+                  <div className="p-3 rounded-xl border border-dashed border-border bg-surface text-center">
                     <Lock className="w-4 h-4 text-text-tertiary mx-auto mb-1" />
                     <p className="text-xs text-text-secondary">Entry sealed until {entryUnlockLabel}</p>
                   </div>
@@ -545,8 +629,8 @@ export function VaultCard({
                       const kind = inferAttachmentKind(attachmentUrl, entry.attachment_name, entry.media_type);
                       return (
                         <div className="mt-2 space-y-2">
-                          {kind === 'image' && <a href={attachmentUrl} target="_blank" rel="noopener noreferrer" className="block"><img src={attachmentUrl} alt={entry.attachment_name || 'Vault image'} className="max-h-52 rounded-lg border border-border" loading="lazy" /></a>}
-                          {kind === 'video' && <video controls preload="metadata" className="w-full max-h-56 rounded-lg border border-border bg-black/80"><source src={attachmentUrl} /></video>}
+                          {kind === 'image' && <a href={attachmentUrl} target="_blank" rel="noopener noreferrer" className="block"><img src={attachmentUrl} alt={entry.attachment_name || 'Vault image'} className="max-h-52 rounded-xl border border-border" loading="lazy" /></a>}
+                          {kind === 'video' && <video controls preload="metadata" className="w-full max-h-56 rounded-xl border border-border bg-black/80"><source src={attachmentUrl} /></video>}
                           {kind === 'audio' && <audio controls preload="metadata" className="w-full"><source src={attachmentUrl} /></audio>}
                           <a href={attachmentUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline">
                             <Paperclip className="w-3 h-3" />
@@ -562,7 +646,7 @@ export function VaultCard({
           })}
 
           {displayEntries.length > 0 && displayEntries.every((entry) => !isEntryUnlocked(entry)) && (
-            <div className="p-4 bg-surface-subtle rounded-lg border border-dashed border-border text-center space-y-1">
+            <div className="p-4 bg-surface-subtle rounded-2xl border border-dashed border-border text-center space-y-1">
               <Lock className="w-5 h-5 text-text-tertiary mx-auto mb-1" />
               <p className="text-sm font-medium text-text-secondary">{displayEntries.length} {displayEntries.length === 1 ? 'entry' : 'entries'} sealed</p>
               <p className="text-xs text-text-tertiary">{config.is_enabled ? `These messages are locked until ${unlockLabel}.` : 'Enable this vault to add or read entries.'}</p>
@@ -574,7 +658,7 @@ export function VaultCard({
           )}
 
           {!showForm && config.is_enabled && (
-            <button onClick={() => onAddEntry(config.id)} className="w-full flex items-center justify-center gap-1.5 py-2.5 text-sm font-medium text-text-secondary border border-dashed border-border rounded-lg hover:border-primary hover:text-primary hover:bg-primary/5 transition-colors">
+            <button onClick={() => onAddEntry(config.id)} className="w-full flex items-center justify-center gap-1.5 py-2.5 text-sm font-medium text-text-secondary border border-dashed border-border rounded-xl hover:border-primary hover:text-primary hover:bg-primary/5 transition-colors">
               <Plus className="w-4 h-4" />
               Add entry to {config.label || `Vault ${config.vault_index}`}
             </button>

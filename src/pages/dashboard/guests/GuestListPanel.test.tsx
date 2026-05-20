@@ -4,6 +4,42 @@ import { GuestListPanel } from './GuestListPanel';
 import type { GuestWithRSVP } from './guestDashboardTypes';
 
 describe('GuestListPanel', () => {
+  it('keeps check-in mode row actions disabled for read-only collaborators', () => {
+    const guest = {
+      id: 'guest-1',
+      first_name: 'Maya',
+      last_name: 'Lee',
+      name: 'Maya Lee',
+      email: 'maya@example.com',
+      rsvp_status: 'pending',
+      rsvp: null,
+    } as unknown as GuestWithRSVP;
+
+    render(
+      <GuestListPanel
+        checkInMode
+        confirmDeleteId={null}
+        deletingGuestId={null}
+        displayedGuests={[guest]}
+        filteredGuestCount={1}
+        getStatusBadge={() => <span>Status</span>}
+        isGuestsReadOnly
+        onOpenItineraryDrawer={vi.fn()}
+        publicSiteSlug={null}
+        searchQuery=""
+        sendingInviteId={null}
+        onDeleteGuest={vi.fn()}
+        onMarkThankYouSent={vi.fn()}
+        onOpenAssistedRsvpModal={vi.fn()}
+        onOpenEditModal={vi.fn()}
+        onSendInvitation={vi.fn()}
+        onToggleCheckIn={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByRole('button', { name: /^check in$/i })).toBeDisabled();
+  });
+
   it('uses the public guest-view preview when a public site slug exists', () => {
     const openSpy = vi.spyOn(window, 'open').mockImplementation(() => null);
     const openItineraryDrawer = vi.fn();

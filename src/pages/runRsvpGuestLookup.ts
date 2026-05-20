@@ -18,6 +18,7 @@ export async function runRsvpGuestLookup({
   language,
   lookupSource,
   normalizeRsvpGuestError,
+  onLookupSiteResolved,
   requestId,
   rsvpSessionToken,
   searchValue,
@@ -71,6 +72,7 @@ export async function runRsvpGuestLookup({
   lookupErrorMessage?: string;
   lookupSource: 'search' | 'pick';
   normalizeRsvpGuestError: (value: string | undefined) => string;
+  onLookupSiteResolved?: (siteSlug: string) => void;
   requestId: number;
   rsvpSessionToken?: string | null;
   searchValue?: string;
@@ -110,6 +112,13 @@ export async function runRsvpGuestLookup({
     });
 
     if (activeLookupRequestRef.current !== requestId) return;
+
+    const trackedSiteSlug = !lookupResp.error && lookupResp.data && typeof (lookupResp.data as { siteSlug?: unknown }).siteSlug === 'string'
+      ? String((lookupResp.data as { siteSlug?: string }).siteSlug).trim()
+      : '';
+    if (trackedSiteSlug) {
+      onLookupSiteResolved?.(trackedSiteSlug);
+    }
 
     applyManualRsvpLookupResult({
       data: lookupResp.data,

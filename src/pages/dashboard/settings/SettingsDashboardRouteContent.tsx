@@ -3,7 +3,7 @@ import type { FormEvent } from 'react';
 import { renderCalmDigestEmail } from '../../../lib/calmDigestEmail';
 import { buildCalmDigestDeliveryPreview, buildCalmOwnerDigest } from '../../../lib/calmOwnerDigest';
 import type { DigestCadence } from '../../../lib/notificationPrefs';
-import { getPlannerPermissionPreset, type PlannerPermissionKey, type PlannerInviteRecord, type PlannerRoleOption } from '../../../lib/plannerAccess';
+import { canManageSettings, getPlannerPermissionPreset, type PlannerPermissionKey, type PlannerInviteRecord, type PlannerRoleOption } from '../../../lib/plannerAccess';
 import type { BillingInfo } from '../../../lib/stripeService';
 import type { WeddingIdentityExportKit, WeddingIdentityPrintAsset } from '../../../lib/weddingIdentityExports';
 import type { SettingsCollaboratorInviteRow } from './settingsSiteData';
@@ -18,6 +18,8 @@ import { SettingsSiteTabContent } from './SettingsSiteTabContent';
 import { SettingsTabContent } from './SettingsTabContent';
 import { SettingsTeamAccessPanel } from './SettingsTeamAccessPanel';
 import type { SettingsTab, SettingsTabId } from './SettingsNavigation';
+
+type CopyActionResult = 'copied' | 'downloaded';
 
 type Props = {
   accountEmail: string;
@@ -44,14 +46,14 @@ type Props = {
   defaultLanguage: SiteLanguageCode;
   guestAccessToken: string | null;
   hasWeddingIdentityStoryGraphic: boolean;
-  handleCopyCollaboratorInviteLink: (inviteToken: string) => void | Promise<void>;
+  handleCopyCollaboratorInviteLink: (inviteToken: string | undefined) => Promise<CopyActionResult | null>;
   handleCreateCollaboratorInvite: () => Promise<void>;
   handleAllowedLanguagesChange: (languages: SiteLanguageCode[]) => void;
   handleDefaultLanguageChange: (language: SiteLanguageCode) => Promise<void>;
   handleLogout: () => Promise<void>;
   handleRegenerateToken: () => Promise<void>;
   handleRemovePlannerInvite: () => void;
-  handleResendCollaboratorInvite: (inviteToken: string | undefined) => Promise<void>;
+  handleResendCollaboratorInvite: (inviteToken: string | undefined) => Promise<CopyActionResult | null>;
   handleRevokeCollaboratorInvite: (inviteId: string) => Promise<void>;
   handleSaveAccount: (e: FormEvent) => Promise<void>;
   handleSaveMusicPlaylist: () => Promise<void>;
@@ -91,7 +93,7 @@ type Props = {
   plannerInviteRole: 'planner' | 'coordinator' | 'viewer';
   plannerInviteSuccess: string | null;
   plannerRoleOptions: PlannerRoleOption[];
-  privacyCopied: boolean;
+  privacyCopyNotice: 'copied' | 'downloaded' | null;
   privacyMode: 'public' | 'password_protected' | 'invite_only';
   isPublished: boolean;
   publicSiteUrl: string;
@@ -142,6 +144,7 @@ type Props = {
   setSitePassword: (value: string) => void;
   setSiteSlug: (value: string) => void;
   settingsRole: 'owner' | 'planner' | 'coordinator' | 'viewer';
+  settingsPermissions: PlannerPermissionKey[] | null;
   showAdvancedRsvp: boolean;
   showConfirmPw: boolean;
   showCurrentPw: boolean;
@@ -179,6 +182,19 @@ type Props = {
 };
 
 export function SettingsDashboardRouteContent(props: Props) {
+  const canEditSettings = canManageSettings(props.settingsRole, props.settingsPermissions);
+  const canManageOwnerSettings = props.settingsRole === 'owner';
+  const blockSettingsSubmit = (event: FormEvent) => {
+    event.preventDefault();
+  };
+  const runSettingsWrite = (callback: () => void) => {
+    if (!canEditSettings) return;
+    callback();
+  };
+  const runOwnerSettingsWrite = (callback: () => void) => {
+    if (!canManageOwnerSettings) return;
+    callback();
+  };
   const digestPreview = buildCalmDigestDeliveryPreview({
     digest: buildCalmOwnerDigest({
       role: 'owner',
@@ -208,8 +224,10 @@ export function SettingsDashboardRouteContent(props: Props) {
     >
       <SettingsTabContent
         activeTab={props.activeTab}
+        tabs={props.tabs}
         accountContent={(
           <SettingsAccountPanel
+            canEditWeddingAccountInfo={canEditSettings}
             coupleNames={props.coupleNames}
             accountEmail={props.accountEmail}
             accountSaving={props.accountSaving}
@@ -224,38 +242,42 @@ export function SettingsDashboardRouteContent(props: Props) {
             passwordSaving={props.passwordSaving}
             passwordSuccess={props.passwordSuccess}
             passwordError={props.passwordError}
-            onCoupleNamesChange={props.setCoupleNames}
+            onCoupleNamesChange={(value) => runSettingsWrite(() => props.setCoupleNames(value))}
             onCurrentPasswordChange={props.setCurrentPassword}
             onNewPasswordChange={props.setNewPassword}
             onConfirmPasswordChange={props.setConfirmPassword}
             onToggleCurrentPassword={() => props.setShowCurrentPw((value) => !value)}
             onToggleNewPassword={() => props.setShowNewPw((value) => !value)}
             onToggleConfirmPassword={() => props.setShowConfirmPw((value) => !value)}
-            onSaveAccount={props.handleSaveAccount}
+            onSaveAccount={canEditSettings ? props.handleSaveAccount : blockSettingsSubmit}
             onUpdatePassword={props.handleUpdatePassword}
             onLogout={props.handleLogout}
           />
         )}
         teamContent={(
           <SettingsTeamAccessPanel
+            canManageOwnerSettings={canManageOwnerSettings}
             collaboratorInvites={props.collaboratorInvites}
             creatingCollaboratorInvite={props.creatingCollaboratorInvite}
             onCopyCollaboratorInviteLink={(inviteToken) => {
-              if (!inviteToken) return;
-              void props.handleCopyCollaboratorInviteLink(inviteToken);
+              if (!canManageOwnerSettings) return Promise.resolve(null);
+              if (!inviteToken) return Promise.resolve(null);
+              return props.handleCopyCollaboratorInviteLink(inviteToken);
             }}
-            onCreateCollaboratorInvite={() => { void props.handleCreateCollaboratorInvite(); }}
-            onPlannerInviteEmailChange={props.setPlannerInviteEmail}
-            onPlannerInviteNameChange={props.setPlannerInviteName}
+            onCreateCollaboratorInvite={() => runOwnerSettingsWrite(() => { void props.handleCreateCollaboratorInvite(); })}
+            onPlannerInviteEmailChange={(value) => runOwnerSettingsWrite(() => props.setPlannerInviteEmail(value))}
+            onPlannerInviteNameChange={(value) => runOwnerSettingsWrite(() => props.setPlannerInviteName(value))}
             onPlannerInviteRoleChange={(nextRole) => {
-              props.setPlannerInviteRole(nextRole);
-              props.setPlannerInvitePermissions(getPlannerPermissionPreset(nextRole));
+              runOwnerSettingsWrite(() => {
+                props.setPlannerInviteRole(nextRole);
+                props.setPlannerInvitePermissions(getPlannerPermissionPreset(nextRole));
+              });
             }}
-            onRemovePlannerInvite={props.handleRemovePlannerInvite}
-            onResendCollaboratorInvite={(inviteToken) => { void props.handleResendCollaboratorInvite(inviteToken); }}
-            onRevokeCollaboratorInvite={(inviteId) => { void props.handleRevokeCollaboratorInvite(inviteId); }}
-            onSavePlannerInvite={props.handleSavePlannerInvite}
-            onTogglePlannerPermission={props.togglePlannerPermission}
+            onRemovePlannerInvite={() => runOwnerSettingsWrite(props.handleRemovePlannerInvite)}
+            onResendCollaboratorInvite={(inviteToken) => canManageOwnerSettings ? props.handleResendCollaboratorInvite(inviteToken) : Promise.resolve(null)}
+            onRevokeCollaboratorInvite={(inviteId) => runOwnerSettingsWrite(() => { void props.handleRevokeCollaboratorInvite(inviteId); })}
+            onSavePlannerInvite={() => runOwnerSettingsWrite(props.handleSavePlannerInvite)}
+            onTogglePlannerPermission={(permission) => runOwnerSettingsWrite(() => props.togglePlannerPermission(permission))}
             plannerInvite={props.plannerInvite}
             plannerInviteEmail={props.plannerInviteEmail}
             plannerInviteError={props.plannerInviteError}
@@ -269,6 +291,7 @@ export function SettingsDashboardRouteContent(props: Props) {
         )}
         siteContent={(
           <SettingsSiteTabContent
+            canEditSettings={canEditSettings}
             changingTemplate={props.changingTemplate}
             currentTemplate={props.currentTemplate}
             allowedLanguages={props.allowedLanguages}
@@ -280,50 +303,64 @@ export function SettingsDashboardRouteContent(props: Props) {
             guestAccessToken={props.guestAccessToken}
             hideFromSearch={props.hideFromSearch}
             isPublished={props.isPublished}
-            onAutoTranslateLanguage={(language) => { void props.onAutoTranslateLanguage(language); }}
+            onAutoTranslateLanguage={(language) => runSettingsWrite(() => { void props.onAutoTranslateLanguage(language); })}
             onAllowedLanguagesChange={(languages) => {
-              props.visibilityDraftMarkDirty();
-              props.handleAllowedLanguagesChange(languages);
+              runSettingsWrite(() => {
+                props.visibilityDraftMarkDirty();
+                props.handleAllowedLanguagesChange(languages);
+              });
             }}
             onCopyIdentityManifest={() => { void props.onCopyIdentityManifest(); }}
             onCopyIdentityStyleKit={() => { void props.onCopyIdentityStyleKit(); }}
             onCopyInviteLink={props.onCopyInviteLink}
-            onDefaultLanguageChange={(language) => { void props.handleDefaultLanguageChange(language); }}
+            onDefaultLanguageChange={(language) => runSettingsWrite(() => { void props.handleDefaultLanguageChange(language); })}
             onDownloadIdentityStoryGraphic={() => { void props.onDownloadIdentityStoryGraphic(); }}
             onDownloadIdentityPrintPack={() => { void props.onDownloadIdentityPrintPack(); }}
             onHideFromSearchChange={(checked) => {
-              props.visibilityDraftMarkDirty();
-              props.setHideFromSearch(checked);
+              runSettingsWrite(() => {
+                props.visibilityDraftMarkDirty();
+                props.setHideFromSearch(checked);
+              });
             }}
             onAnalyticsEnabledChange={(checked) => {
-              props.visibilityDraftMarkDirty();
-              props.setAnalyticsEnabled(checked);
+              runSettingsWrite(() => {
+                props.visibilityDraftMarkDirty();
+                props.setAnalyticsEnabled(checked);
+              });
             }}
             onAnalyticsRetentionDaysChange={(days) => {
-              props.visibilityDraftMarkDirty();
-              props.setAnalyticsRetentionDays(days);
+              runSettingsWrite(() => {
+                props.visibilityDraftMarkDirty();
+                props.setAnalyticsRetentionDays(days);
+              });
             }}
             onAnalyticsGuestNoticeChange={(value) => {
-              props.visibilityDraftMarkDirty();
-              props.setAnalyticsGuestNotice(value);
+              runSettingsWrite(() => {
+                props.visibilityDraftMarkDirty();
+                props.setAnalyticsGuestNotice(value);
+              });
             }}
             onPrivacyModeChange={(mode) => {
-              props.visibilityDraftMarkDirty();
-              props.setPrivacyMode(mode);
+              runSettingsWrite(() => {
+                props.visibilityDraftMarkDirty();
+                props.setPrivacyMode(mode);
+              });
             }}
-            onRegenerateToken={() => { void props.handleRegenerateToken(); }}
-            onSavePrivacy={props.handleSavePrivacy}
+            onRegenerateToken={() => runSettingsWrite(() => { void props.handleRegenerateToken(); })}
+            onSavePrivacy={canEditSettings ? props.handleSavePrivacy : blockSettingsSubmit}
             onSitePasswordChange={(value) => {
-              props.visibilityDraftMarkDirty();
-              props.setSitePassword(value);
+              runSettingsWrite(() => {
+                props.visibilityDraftMarkDirty();
+                props.setSitePassword(value);
+              });
             }}
-            onSiteSlugChange={(value) => props.setSiteSlug(value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
-            onSubmitSiteSlug={props.handleUpdateSlug}
-            onTemplateChange={(templateId) => { void props.handleTemplateChange(templateId); }}
+            onSiteSlugChange={(value) => runSettingsWrite(() => props.setSiteSlug(value.toLowerCase().replace(/[^a-z0-9-]/g, '')))}
+            onSubmitSiteSlug={canEditSettings ? props.handleUpdateSlug : blockSettingsSubmit}
+            onTemplateChange={(templateId) => runSettingsWrite(() => { void props.handleTemplateChange(templateId); })}
             onTogglePrivacySettings={() => props.setShowPrivacySettings((value) => !value)}
             onToggleShowSitePassword={() => props.setShowSitePassword((value) => !value)}
             onToggleTemplateSettings={() => props.setShowTemplateSettings((value) => !value)}
-            privacyCopied={props.privacyCopied}
+            privacyCopyNotice={props.privacyCopyNotice}
             privacyMode={props.privacyMode}
             publicSiteUrl={props.publicSiteUrl}
             showPrivacySettings={props.showPrivacySettings}
@@ -347,82 +384,105 @@ export function SettingsDashboardRouteContent(props: Props) {
         )}
         rsvpContent={(
           <SettingsRsvpTabContent
+            canEditSettings={canEditSettings}
             collapsedQuestionIds={props.collapsedQuestionIds}
             mealOptions={props.rsvpMealOptions}
             musicPlaylistUrl={props.musicPlaylistUrl}
             onAddChoice={(questionId) => {
-              props.rsvpDraftMarkDirty();
-              props.setRsvpQuestions((prev) => prev.map((item) => item.id === questionId ? { ...item, options: [...(item.options ?? []), ''] } : item));
+              runSettingsWrite(() => {
+                props.rsvpDraftMarkDirty();
+                props.setRsvpQuestions((prev) => prev.map((item) => item.id === questionId ? { ...item, options: [...(item.options ?? []), ''] } : item));
+              });
             }}
             onAddMealOption={() => {
-              props.rsvpDraftMarkDirty();
-              props.setRsvpMealOptions((prev) => [...prev, '']);
+              runSettingsWrite(() => {
+                props.rsvpDraftMarkDirty();
+                props.setRsvpMealOptions((prev) => [...prev, '']);
+              });
             }}
             onAddQuestion={() => {
-              props.rsvpDraftMarkDirty();
-              const question = makeQuestion();
-              props.setRsvpQuestions((prev) => [...prev, question]);
-              props.setCollapsedQuestionIds((prev) => {
-                const next = new Set(prev);
-                next.delete(question.id);
-                return next;
+              runSettingsWrite(() => {
+                props.rsvpDraftMarkDirty();
+                const question = makeQuestion();
+                props.setRsvpQuestions((prev) => [...prev, question]);
+                props.setCollapsedQuestionIds((prev) => {
+                  const next = new Set(prev);
+                  next.delete(question.id);
+                  return next;
+                });
               });
             }}
             onAppliesToChange={(questionId, value) => {
-              props.rsvpDraftMarkDirty();
-              props.setRsvpQuestions((prev) => prev.map((item) => item.id === questionId ? { ...item, appliesTo: value } : item));
-            }}
-            onMealChoiceEnabledChange={(enabled) => {
-              props.rsvpDraftMarkDirty();
-              props.setRsvpMealEnabled(enabled);
-            }}
-            onMealOptionChange={(index, value) => {
-              props.rsvpDraftMarkDirty();
-              props.setRsvpMealOptions((prev) => {
-                const next = [...prev];
-                next[index] = value;
-                return next;
+              runSettingsWrite(() => {
+                props.rsvpDraftMarkDirty();
+                props.setRsvpQuestions((prev) => prev.map((item) => item.id === questionId ? { ...item, appliesTo: value } : item));
               });
             }}
-            onMusicPlaylistUrlChange={props.setMusicPlaylistUrl}
+            onMealChoiceEnabledChange={(enabled) => {
+              runSettingsWrite(() => {
+                props.rsvpDraftMarkDirty();
+                props.setRsvpMealEnabled(enabled);
+              });
+            }}
+            onMealOptionChange={(index, value) => {
+              runSettingsWrite(() => {
+                props.rsvpDraftMarkDirty();
+                props.setRsvpMealOptions((prev) => {
+                  const next = [...prev];
+                  next[index] = value;
+                  return next;
+                });
+              });
+            }}
+            onMusicPlaylistUrlChange={(value) => runSettingsWrite(() => props.setMusicPlaylistUrl(value))}
             onOpenPlaylist={() => {
               if (props.safeMusicPlaylistUrl) {
                 window.open(props.safeMusicPlaylistUrl, '_blank', 'noopener,noreferrer');
               }
             }}
             onPromptChange={(questionId, value) => {
-              props.rsvpDraftMarkDirty();
-              props.setRsvpQuestions((prev) => prev.map((item) => item.id === questionId ? { ...item, label: value } : item));
+              runSettingsWrite(() => {
+                props.rsvpDraftMarkDirty();
+                props.setRsvpQuestions((prev) => prev.map((item) => item.id === questionId ? { ...item, label: value } : item));
+              });
             }}
             onRemoveChoice={(questionId, optionIndex) => {
-              props.rsvpDraftMarkDirty();
-              props.setRsvpQuestions((prev) => prev.map((item) => {
-                if (item.id !== questionId) return item;
-                const next = [...(item.options ?? [])];
-                next.splice(optionIndex, 1);
-                return { ...item, options: next };
-              }));
+              runSettingsWrite(() => {
+                props.rsvpDraftMarkDirty();
+                props.setRsvpQuestions((prev) => prev.map((item) => {
+                  if (item.id !== questionId) return item;
+                  const next = [...(item.options ?? [])];
+                  next.splice(optionIndex, 1);
+                  return { ...item, options: next };
+                }));
+              });
             }}
             onRemoveMealOption={(index) => {
-              props.rsvpDraftMarkDirty();
-              props.setRsvpMealOptions((prev) => prev.filter((_, optionIndex) => optionIndex !== index));
+              runSettingsWrite(() => {
+                props.rsvpDraftMarkDirty();
+                props.setRsvpMealOptions((prev) => prev.filter((_, optionIndex) => optionIndex !== index));
+              });
             }}
             onRemoveQuestion={(questionId) => {
-              props.rsvpDraftMarkDirty();
-              props.setRsvpQuestions((prev) => prev.filter((item) => item.id !== questionId));
-              props.setCollapsedQuestionIds((prev) => {
-                const next = new Set(prev);
-                next.delete(questionId);
-                return next;
+              runSettingsWrite(() => {
+                props.rsvpDraftMarkDirty();
+                props.setRsvpQuestions((prev) => prev.filter((item) => item.id !== questionId));
+                props.setCollapsedQuestionIds((prev) => {
+                  const next = new Set(prev);
+                  next.delete(questionId);
+                  return next;
+                });
               });
             }}
             onRequiredChange={(questionId, checked) => {
-              props.rsvpDraftMarkDirty();
-              props.setRsvpQuestions((prev) => prev.map((item) => item.id === questionId ? { ...item, required: checked } : item));
+              runSettingsWrite(() => {
+                props.rsvpDraftMarkDirty();
+                props.setRsvpQuestions((prev) => prev.map((item) => item.id === questionId ? { ...item, required: checked } : item));
+              });
             }}
-            onSaveMealSettings={() => { void props.saveRsvpSettings(); }}
-            onSaveMusicPlaylist={() => { void props.handleSaveMusicPlaylist(); }}
-            onSaveQuestions={props.handleSaveRsvpQuestions}
+            onSaveMealSettings={() => runSettingsWrite(() => { void props.saveRsvpSettings(); })}
+            onSaveMusicPlaylist={() => runSettingsWrite(() => { void props.handleSaveMusicPlaylist(); })}
+            onSaveQuestions={canEditSettings ? props.handleSaveRsvpQuestions : blockSettingsSubmit}
             onToggleAdvancedVisibility={() => props.setShowAdvancedRsvp((value) => !value)}
             onToggleCollapse={(questionId) => {
               props.setCollapsedQuestionIds((prev) => {
@@ -434,24 +494,28 @@ export function SettingsDashboardRouteContent(props: Props) {
             }}
             onToggleMealVisibility={() => props.setShowMealChoiceSettings((value) => !value)}
             onTypeChange={(questionId, value) => {
-              props.rsvpDraftMarkDirty();
-              props.setRsvpQuestions((prev) => prev.map((item) => {
-                if (item.id !== questionId) return item;
-                if (value === 'single_choice' || value === 'multi_choice') {
-                  const current = item.options ?? [];
-                  return { ...item, type: value, options: current.length > 0 ? current : ['', ''] };
-                }
-                return { ...item, type: value, options: [] };
-              }));
+              runSettingsWrite(() => {
+                props.rsvpDraftMarkDirty();
+                props.setRsvpQuestions((prev) => prev.map((item) => {
+                  if (item.id !== questionId) return item;
+                  if (value === 'single_choice' || value === 'multi_choice') {
+                    const current = item.options ?? [];
+                    return { ...item, type: value, options: current.length > 0 ? current : ['', ''] };
+                  }
+                  return { ...item, type: value, options: [] };
+                }));
+              });
             }}
             onUpdateChoice={(questionId, optionIndex, value) => {
-              props.rsvpDraftMarkDirty();
-              props.setRsvpQuestions((prev) => prev.map((item) => {
-                if (item.id !== questionId) return item;
-                const next = [...(item.options ?? [])];
-                next[optionIndex] = value;
-                return { ...item, options: next };
-              }));
+              runSettingsWrite(() => {
+                props.rsvpDraftMarkDirty();
+                props.setRsvpQuestions((prev) => prev.map((item) => {
+                  if (item.id !== questionId) return item;
+                  const next = [...(item.options ?? [])];
+                  next[optionIndex] = value;
+                  return { ...item, options: next };
+                }));
+              });
             }}
             questions={props.rsvpQuestions}
             rsvpMealEnabled={props.rsvpMealEnabled}
@@ -465,6 +529,7 @@ export function SettingsDashboardRouteContent(props: Props) {
         )}
         notificationsContent={(
           <SettingsNotificationsPanel
+            canEditSettings={canEditSettings}
             showNotificationSettings={props.showNotificationSettings}
             notifRsvp={props.notifRsvp}
             notifPhotos={props.notifPhotos}
@@ -482,29 +547,32 @@ export function SettingsDashboardRouteContent(props: Props) {
             digestPreview={digestPreview}
             digestEmailText={digestEmail.text}
             onToggleVisibility={() => props.setShowNotificationSettings((value) => !value)}
-            onRsvpChange={(value) => { props.notifDraftMarkDirty(); props.setNotifRsvp(value); }}
-            onPhotosChange={(value) => { props.notifDraftMarkDirty(); props.setNotifPhotos(value); }}
+            onRsvpChange={(value) => runSettingsWrite(() => { props.notifDraftMarkDirty(); props.setNotifRsvp(value); })}
+            onPhotosChange={(value) => runSettingsWrite(() => { props.notifDraftMarkDirty(); props.setNotifPhotos(value); })}
             onDigestChange={(value) => {
-              props.notifDraftMarkDirty();
-              props.setNotifDigest(value);
-              if (value && props.notifDigestCadence === 'paused') props.setNotifDigestCadence('weekly');
-              if (!value) props.setNotifDigestCadence('paused');
+              runSettingsWrite(() => {
+                props.notifDraftMarkDirty();
+                props.setNotifDigest(value);
+                if (value && props.notifDigestCadence === 'paused') props.setNotifDigestCadence('weekly');
+                if (!value) props.setNotifDigestCadence('paused');
+              });
             }}
-            onDigestCadenceChange={(value) => { props.notifDraftMarkDirty(); props.setNotifDigestCadence(value); }}
-            onDigestIncludePlannerChange={(value) => { props.notifDraftMarkDirty(); props.setNotifDigestIncludePlanner(value); }}
-            onDigestQuietUntilLabelChange={(value) => { props.notifDraftMarkDirty(); props.setNotifDigestQuietUntilLabel(value); }}
-            onUpdatesChange={(value) => { props.notifDraftMarkDirty(); props.setNotifUpdates(value); }}
-            onSaveNotifications={props.handleSaveNotifications}
+            onDigestCadenceChange={(value) => runSettingsWrite(() => { props.notifDraftMarkDirty(); props.setNotifDigestCadence(value); })}
+            onDigestIncludePlannerChange={(value) => runSettingsWrite(() => { props.notifDraftMarkDirty(); props.setNotifDigestIncludePlanner(value); })}
+            onDigestQuietUntilLabelChange={(value) => runSettingsWrite(() => { props.notifDraftMarkDirty(); props.setNotifDigestQuietUntilLabel(value); })}
+            onUpdatesChange={(value) => runSettingsWrite(() => { props.notifDraftMarkDirty(); props.setNotifUpdates(value); })}
+            onSaveNotifications={canEditSettings ? props.handleSaveNotifications : blockSettingsSubmit}
           />
         )}
         billingContent={(
           <SettingsBillingPanel
+            canManageOwnerSettings={canManageOwnerSettings}
             billingInfo={props.billingInfo}
             billingLoading={props.billingLoading}
             billingError={props.billingError}
             subscribeError={props.subscribeError}
             subscribeLoading={props.subscribeLoading}
-            onSubscribe={() => { void props.handleSubscribe(); }}
+            onSubscribe={() => runOwnerSettingsWrite(() => { void props.handleSubscribe(); })}
           />
         )}
       />

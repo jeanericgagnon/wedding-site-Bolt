@@ -5,6 +5,7 @@ import type { DigestCadence } from '../../../lib/notificationPrefs';
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../../components/ui';
 
 type SettingsNotificationsPanelProps = {
+  canEditSettings: boolean;
   showNotificationSettings: boolean;
   notifRsvp: boolean;
   notifPhotos: boolean;
@@ -33,6 +34,7 @@ type SettingsNotificationsPanelProps = {
 };
 
 export function SettingsNotificationsPanel({
+  canEditSettings,
   showNotificationSettings,
   notifRsvp,
   notifPhotos,
@@ -74,22 +76,23 @@ export function SettingsNotificationsPanel({
       </CardHeader>
       <CardContent>
         {!showNotificationSettings ? (
-          <div className="rounded-lg border border-border-subtle bg-surface-subtle/40 p-4 text-sm text-text-secondary">
+          <div className="rounded-2xl border border-border-subtle bg-surface-subtle/40 p-4 text-sm text-text-secondary">
             Hidden by default to keep this page easy to scan. Open it when you want to choose which updates you get.
           </div>
         ) : (
           <form onSubmit={onSaveNotifications} className="space-y-4">
             {notifSuccess && (
-              <div className="p-3 bg-success-light border border-success/20 rounded-lg text-success text-sm">{notifSuccess}</div>
+              <div className="rounded-2xl border border-success/20 bg-success-light p-3 text-sm text-success">{notifSuccess}</div>
             )}
             {notifError && (
-              <div className="p-3 bg-surface-subtle border border-border-subtle rounded-lg text-text-secondary text-sm">{notifError}</div>
+              <div className="rounded-2xl border border-border-subtle bg-surface-subtle p-3 text-sm text-text-secondary">{notifError}</div>
             )}
             <label className="flex items-start gap-3 cursor-pointer">
               <input
                 type="checkbox"
                 checked={notifRsvp}
                 onChange={(e) => onRsvpChange(e.target.checked)}
+                disabled={!canEditSettings}
                 className="mt-1 w-5 h-5 rounded border-border text-primary focus:ring-2 focus:ring-primary focus:ring-offset-2"
               />
               <div className="flex-1">
@@ -103,6 +106,7 @@ export function SettingsNotificationsPanel({
                 type="checkbox"
                 checked={notifPhotos}
                 onChange={(e) => onPhotosChange(e.target.checked)}
+                disabled={!canEditSettings}
                 className="mt-1 w-5 h-5 rounded border-border text-primary focus:ring-2 focus:ring-primary focus:ring-offset-2"
               />
               <div className="flex-1">
@@ -116,6 +120,7 @@ export function SettingsNotificationsPanel({
                 type="checkbox"
                 checked={notifDigest}
                 onChange={(e) => onDigestChange(e.target.checked)}
+                disabled={!canEditSettings}
                 className="mt-1 w-5 h-5 rounded border-border text-primary focus:ring-2 focus:ring-primary focus:ring-offset-2"
               />
               <div className="flex-1">
@@ -124,7 +129,7 @@ export function SettingsNotificationsPanel({
               </div>
             </label>
 
-            <div id="digest" className={`space-y-4 rounded-lg border border-border-subtle bg-surface-subtle/35 p-4 ${notifDigest ? '' : 'opacity-70'}`}>
+            <div id="digest" className={`space-y-4 rounded-2xl border border-border-subtle bg-surface-subtle/35 p-4 ${notifDigest ? '' : 'opacity-70'}`}>
               <div className="space-y-2">
                 <label htmlFor="digest-cadence" className="text-sm font-medium text-text-primary">
                   Digest cadence
@@ -132,9 +137,9 @@ export function SettingsNotificationsPanel({
                 <select
                   id="digest-cadence"
                   value={notifDigest ? notifDigestCadence : 'paused'}
-                  disabled={!notifDigest}
+                  disabled={!notifDigest || !canEditSettings}
                   onChange={(e) => onDigestCadenceChange(e.target.value as DigestCadence)}
-                  className="w-full rounded-lg border border-border bg-white px-3 py-2 text-sm text-text-primary focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15"
+                  className="w-full rounded-xl border border-border bg-white px-3 py-2 text-sm text-text-primary focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15"
                 >
                   <option value="daily">Daily</option>
                   <option value="weekly">Weekly</option>
@@ -149,7 +154,7 @@ export function SettingsNotificationsPanel({
                 <input
                   type="checkbox"
                   checked={notifDigestIncludePlanner}
-                  disabled={!notifDigest}
+                  disabled={!notifDigest || !canEditSettings}
                   onChange={(e) => onDigestIncludePlannerChange(e.target.checked)}
                   className="mt-1 w-5 h-5 rounded border-border text-primary focus:ring-2 focus:ring-primary focus:ring-offset-2"
                 />
@@ -167,33 +172,33 @@ export function SettingsNotificationsPanel({
                   id="digest-quiet-until"
                   type="text"
                   value={notifDigestQuietUntilLabel}
-                  disabled={!notifDigest}
+                  disabled={!notifDigest || !canEditSettings}
                   onChange={(e) => onDigestQuietUntilLabelChange(e.target.value)}
                   placeholder="After the rehearsal dinner"
-                  className="w-full rounded-lg border border-border bg-white px-3 py-2 text-sm text-text-primary placeholder:text-text-tertiary focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15"
+                  className="w-full rounded-xl border border-border bg-white px-3 py-2 text-sm text-text-primary placeholder:text-text-tertiary focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15"
                 />
                 <p className="text-xs leading-5 text-text-secondary">
                   Use a plain-language note so the overview can reflect when you want this lane to stay quiet.
                 </p>
               </div>
 
-              <div className="rounded-lg border border-border-subtle bg-white p-4 space-y-3">
+              <div className="rounded-2xl border border-border-subtle bg-white p-4 space-y-3">
                 <div>
                   <p className="text-sm font-medium text-text-primary">Digest delivery status</p>
                   <p className="mt-1 text-sm text-text-secondary">{digestPreview.statusLabel}</p>
                 </div>
                 <div className="grid gap-2 md:grid-cols-2">
-                  <p className="rounded-lg border border-border-subtle bg-surface-subtle/35 px-3 py-2 text-xs leading-5 text-text-secondary">
+                  <p className="rounded-xl border border-border-subtle bg-surface-subtle/35 px-3 py-2 text-xs leading-5 text-text-secondary">
                     {digestPreview.nextDeliveryLabel ?? 'No scheduled digest yet.'}
                   </p>
-                  <p className="rounded-lg border border-border-subtle bg-surface-subtle/35 px-3 py-2 text-xs leading-5 text-text-secondary">
+                  <p className="rounded-xl border border-border-subtle bg-surface-subtle/35 px-3 py-2 text-xs leading-5 text-text-secondary">
                     {digestPreview.lastReviewedLabel ?? 'No saved review yet.'}
                   </p>
                 </div>
                 {notifDigestLastDeliveredAt && digestPreview.lastDeliveredLabel && (
                   <p className="text-xs leading-5 text-text-secondary">{digestPreview.lastDeliveredLabel}</p>
                 )}
-                <div className="rounded-lg border border-border-subtle bg-surface-subtle/35 p-3">
+                <div className="rounded-2xl border border-border-subtle bg-surface-subtle/35 p-3">
                   <p className="text-xs font-medium text-text-tertiary">Sample email preview</p>
                   <p className="mt-2 text-sm font-medium text-text-primary">{digestPreview.subject}</p>
                   <p className="mt-1 text-xs leading-5 text-text-secondary">
@@ -201,12 +206,12 @@ export function SettingsNotificationsPanel({
                   </p>
                   <div className="mt-3 grid gap-2 md:grid-cols-2">
                     {digestPreview.previewLines.slice(0, 4).map((line) => (
-                      <p key={line} className="rounded-lg border border-border-subtle bg-white px-3 py-2 text-xs leading-5 text-text-secondary">{line}</p>
+                      <p key={line} className="rounded-xl border border-border-subtle bg-white px-3 py-2 text-xs leading-5 text-text-secondary">{line}</p>
                     ))}
                   </div>
                   <details className="mt-3">
                     <summary className="cursor-pointer text-xs font-medium text-text-secondary">Plain-text readback</summary>
-                    <pre className="mt-2 whitespace-pre-wrap rounded-lg border border-border-subtle bg-white p-3 text-[11px] leading-5 text-text-secondary">{digestEmailText}</pre>
+                    <pre className="mt-2 whitespace-pre-wrap rounded-2xl border border-border-subtle bg-white p-3 text-[11px] leading-5 text-text-secondary">{digestEmailText}</pre>
                   </details>
                 </div>
                 {(notifDigestNextDeliveryAt || notifDigestLastReviewedAt) && (
@@ -222,6 +227,7 @@ export function SettingsNotificationsPanel({
                 type="checkbox"
                 checked={notifUpdates}
                 onChange={(e) => onUpdatesChange(e.target.checked)}
+                disabled={!canEditSettings}
                 className="mt-1 w-5 h-5 rounded border-border text-primary focus:ring-2 focus:ring-primary focus:ring-offset-2"
               />
               <div className="flex-1">
@@ -231,7 +237,7 @@ export function SettingsNotificationsPanel({
             </label>
 
             <div className="flex justify-end pt-2">
-              <Button variant="primary" size="md" type="submit" disabled={notifSaving}>
+              <Button variant="primary" size="md" type="submit" disabled={notifSaving || !canEditSettings}>
                 {notifSaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
                 Save Preferences
               </Button>

@@ -6,6 +6,7 @@ import {
   NAME_CHANGE_EXTRACTION_FIELD_PLACEHOLDERS,
   NAME_CHANGE_SECTION_PREFS_STORAGE_KEY,
   TARGET_STATUS_VAULT_STATUS_PRIORITY,
+  buildNameChangePreferenceStorageKey,
   ensureDocument,
   findContractDocument,
   findContractExtractedField,
@@ -95,6 +96,32 @@ describe('nameChangePlannerUi', () => {
 
     localStorage.setItem(NAME_CHANGE_SECTION_PREFS_STORAGE_KEY, '{broken');
     expect(readNameChangeCollapsedSections()).toEqual({});
+  });
+
+  it('scopes local planner preferences by wedding site when a storage scope is provided', () => {
+    localStorage.clear();
+
+    writeNameChangeAdminPreference(true, 'site-a');
+    writeNameChangeAdminPreference(false, 'site-b');
+    writeNameChangeCollapsedSections({ roadmap: true }, 'site-a');
+    writeNameChangeCollapsedSections({ admin: true }, 'site-b');
+
+    expect(buildNameChangePreferenceStorageKey(NAME_CHANGE_ADMIN_PREFS_STORAGE_KEY, 'site-a')).toBe(`${NAME_CHANGE_ADMIN_PREFS_STORAGE_KEY}::site-a`);
+    expect(readNameChangeAdminPreference('site-a')).toBe(true);
+    expect(readNameChangeAdminPreference('site-b')).toBe(false);
+    expect(readNameChangeCollapsedSections('site-a')).toEqual({ roadmap: true });
+    expect(readNameChangeCollapsedSections('site-b')).toEqual({ admin: true });
+  });
+
+  it('migrates legacy planner preferences into the active site scope when needed', () => {
+    localStorage.clear();
+    localStorage.setItem(NAME_CHANGE_ADMIN_PREFS_STORAGE_KEY, 'true');
+    localStorage.setItem(NAME_CHANGE_SECTION_PREFS_STORAGE_KEY, JSON.stringify({ roadmap: true }));
+
+    expect(readNameChangeAdminPreference('site-a')).toBe(true);
+    expect(readNameChangeCollapsedSections('site-a')).toEqual({ roadmap: true });
+    expect(localStorage.getItem(`${NAME_CHANGE_ADMIN_PREFS_STORAGE_KEY}::site-a`)).toBe('true');
+    expect(localStorage.getItem(`${NAME_CHANGE_SECTION_PREFS_STORAGE_KEY}::site-a`)).toBe(JSON.stringify({ roadmap: true }));
   });
 
   it('keeps document intake metadata and helpers out of the large page component', () => {

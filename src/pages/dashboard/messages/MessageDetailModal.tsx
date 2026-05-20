@@ -77,6 +77,10 @@ export const MessageDetailModal: React.FC<MessageDetailModalProps> = ({
   const [scheduleInput, setScheduleInput] = React.useState(initialScheduleInput);
 
   React.useEffect(() => {
+    setRetrying(false);
+    setSendingScheduledNow(false);
+    setRescheduling(false);
+    setCancellingSchedule(false);
     setScheduleInput(initialScheduleInput);
   }, [initialScheduleInput, message.id]);
 
@@ -137,12 +141,12 @@ export const MessageDetailModal: React.FC<MessageDetailModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-      <div className="bg-surface rounded-lg w-full max-w-2xl max-h-[90vh] flex flex-col border border-border">
+      <div className="bg-surface rounded-2xl w-full max-w-2xl max-h-[90vh] flex flex-col border border-border">
         <div className="flex items-center justify-between px-6 py-4 border-b border-border flex-shrink-0">
           <div className="flex items-center gap-3">
             <button
               onClick={onClose}
-              className="p-1.5 rounded-lg hover:bg-surface-subtle text-text-tertiary hover:text-text-primary transition-colors"
+              className="p-1.5 rounded-xl hover:bg-surface-subtle text-text-tertiary hover:text-text-primary transition-colors"
               aria-label="Back"
             >
               <ArrowLeft className="w-4 h-4" />
@@ -172,7 +176,7 @@ export const MessageDetailModal: React.FC<MessageDetailModalProps> = ({
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg hover:bg-surface-subtle text-text-tertiary hover:text-text-primary transition-colors"
+            className="p-1.5 rounded-xl hover:bg-surface-subtle text-text-tertiary hover:text-text-primary transition-colors"
             aria-label="Close"
           >
             <X className="w-4 h-4" />
@@ -237,7 +241,7 @@ export const MessageDetailModal: React.FC<MessageDetailModalProps> = ({
 
         <div className="flex-1 overflow-y-auto px-6 py-5 space-y-4">
           <div className="prose prose-sm max-w-none">
-            <div className="bg-surface-subtle rounded-lg border border-border p-5">
+            <div className="bg-surface-subtle rounded-2xl border border-border p-5">
               <p className="text-xs font-medium text-text-tertiary mb-3">Message body</p>
               <div className="text-text-primary text-sm leading-relaxed whitespace-pre-wrap font-sans">
                 {message.body}
@@ -246,54 +250,54 @@ export const MessageDetailModal: React.FC<MessageDetailModalProps> = ({
           </div>
 
           {(recipientCount > 0 || recipientReviewPlan || (message.delivered_count ?? 0) > 0 || (message.failed_count ?? 0) > 0 || skippedCount > 0 || unreachedCount > 0) && (
-            <div className="rounded-lg border border-primary/20 bg-primary-light/30 p-4">
+            <div className="rounded-2xl border border-primary/20 bg-primary-light/30 p-4">
               <p className="text-sm font-semibold text-text-primary">Next-send review plan</p>
               {recipientReviewPlan && (
                 <p className="mt-1 text-xs text-text-secondary">{recipientReviewPlan}.</p>
               )}
               <div className="mt-3 flex flex-wrap gap-2 text-xs text-text-tertiary">
-                <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">
+                <span className="rounded-xl border border-border-subtle bg-white px-3 py-1">
                   {deliveredRecipientsLabel}
                 </span>
-                <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">{targetedRecipients} targeted recipients</span>
-                <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">
+                <span className="rounded-xl border border-border-subtle bg-white px-3 py-1">{targetedRecipients} targeted recipients</span>
+                <span className="rounded-xl border border-border-subtle bg-white px-3 py-1">
                   {deliveredRecipients} of {targetedRecipients} targeted recipients have been delivered
                 </span>
-                <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">Targeted {targetedRecipients}</span>
-                <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">Delivered {message.delivered_count ?? 0}</span>
-                <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">Needs review {message.failed_count ?? 0}</span>
-                <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">{skippedCount} of {targetedRecipients} targeted recipients need contact details</span>
-                <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">Needs contact {skippedCount}</span>
-                <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">{unreachedCount} of {targetedRecipients} targeted recipients were not reached yet</span>
-                <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">Not reached {unreachedCount}</span>
+                <span className="rounded-xl border border-border-subtle bg-white px-3 py-1">Targeted {targetedRecipients}</span>
+                <span className="rounded-xl border border-border-subtle bg-white px-3 py-1">Delivered {message.delivered_count ?? 0}</span>
+                <span className="rounded-xl border border-border-subtle bg-white px-3 py-1">Needs review {message.failed_count ?? 0}</span>
+                <span className="rounded-xl border border-border-subtle bg-white px-3 py-1">{skippedCount} of {targetedRecipients} targeted recipients need contact details</span>
+                <span className="rounded-xl border border-border-subtle bg-white px-3 py-1">Needs contact {skippedCount}</span>
+                <span className="rounded-xl border border-border-subtle bg-white px-3 py-1">{unreachedCount} of {targetedRecipients} targeted recipients were not reached yet</span>
+                <span className="rounded-xl border border-border-subtle bg-white px-3 py-1">Not reached {unreachedCount}</span>
                 {deliveredCoverageRate != null && reviewCoverageRate != null && contactCoverageRate != null && unreachedCoverageRate != null && (
-                  <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">
+                  <span className="rounded-xl border border-border-subtle bg-white px-3 py-1">
                     {deliveredCoverageRate}% delivered coverage · {reviewCoverageRate}% review coverage · {contactCoverageRate}% needs contact · {unreachedCoverageRate}% unreached
                   </span>
                 )}
                 {cleanupCoverageRate != null && (
-                  <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">{cleanupCoverageRate}% cleanup still pending</span>
+                  <span className="rounded-xl border border-border-subtle bg-white px-3 py-1">{cleanupCoverageRate}% cleanup still pending</span>
                 )}
                 {cleanupReadyCoverageRate != null && (
-                  <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">{cleanupReadyCoverageRate}% follow-through ready</span>
+                  <span className="rounded-xl border border-border-subtle bg-white px-3 py-1">{cleanupReadyCoverageRate}% follow-through ready</span>
                 )}
-                <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">
+                <span className="rounded-xl border border-border-subtle bg-white px-3 py-1">
                   {followThroughReadyRecipientCount} of {targetedRecipients} targeted recipients are already closed out
                 </span>
-                <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">
+                <span className="rounded-xl border border-border-subtle bg-white px-3 py-1">
                   {closedOutRecipientsLabel}
                 </span>
-                <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">
+                <span className="rounded-xl border border-border-subtle bg-white px-3 py-1">
                   {cleanupRecipientCount} of {targetedRecipients} targeted recipients still need cleanup
                 </span>
-                <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">
+                <span className="rounded-xl border border-border-subtle bg-white px-3 py-1">
                   {cleanupRecipientsLabel}
                 </span>
                 {followThroughFocusLabel && (
-                  <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">{followThroughFocusLabel}</span>
+                  <span className="rounded-xl border border-border-subtle bg-white px-3 py-1">{followThroughFocusLabel}</span>
                 )}
                 {targetedRecipients > 0 && (
-                  <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">{openRate ?? 0}% open · {clickRate ?? 0}% click · {replyRate ?? 0}% reply</span>
+                  <span className="rounded-xl border border-border-subtle bg-white px-3 py-1">{openRate ?? 0}% open · {clickRate ?? 0}% click · {replyRate ?? 0}% reply</span>
                 )}
               </div>
               <p className="mt-3 text-[11px] text-text-tertiary">
@@ -309,14 +313,14 @@ export const MessageDetailModal: React.FC<MessageDetailModalProps> = ({
           )}
 
           {message.status === 'scheduled' && (
-            <div className="rounded-lg border border-border bg-surface-subtle p-4">
+            <div className="rounded-2xl border border-border bg-surface-subtle p-4">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <p className="text-sm font-semibold text-text-primary">Scheduled send control</p>
                   <p className="mt-1 text-xs text-text-tertiary">Adjust the send time here or drop it back to draft without leaving the comms center.</p>
                 </div>
                 {message.scheduled_for && isPastScheduledTime(message.scheduled_for) && (
-                  <span className="rounded-lg border border-warning/20 bg-warning-light px-2 py-0.5 text-[11px] font-medium text-warning">Due now</span>
+                  <span className="rounded-xl border border-warning/20 bg-warning-light px-2 py-0.5 text-[11px] font-medium text-warning">Due now</span>
                 )}
               </div>
               <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-end">
@@ -326,7 +330,7 @@ export const MessageDetailModal: React.FC<MessageDetailModalProps> = ({
                     type="datetime-local"
                     value={scheduleInput}
                     onChange={(e) => setScheduleInput(e.target.value)}
-                    className="w-full px-3 py-2.5 border border-border rounded-lg bg-white text-sm text-text-primary"
+                    className="w-full px-3 py-2.5 border border-border rounded-xl bg-white text-sm text-text-primary"
                   />
                   {scheduleInputIsPast && (
                     <p className="mt-2 text-[11px] text-warning">Pick a future time here. If you want it to go now, use “Send scheduled now” instead.</p>
@@ -372,20 +376,20 @@ export const MessageDetailModal: React.FC<MessageDetailModalProps> = ({
           )}
 
           {failedDeliveries.length > 0 && (
-            <div className="rounded-lg border border-border-subtle bg-surface-subtle p-4">
+            <div className="rounded-2xl border border-border-subtle bg-surface-subtle p-4">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <p className="text-sm font-semibold text-text-primary">Delivery needs attention</p>
                   <p className="mt-1 text-xs text-text-secondary">These recipients need a closer look before another send.</p>
                   <p className="mt-1 text-[11px] text-text-tertiary">{failedDeliveries.length} of {targetedRecipients} targeted recipients currently need review.</p>
                 </div>
-                <span className="rounded-lg border border-border-subtle bg-white px-2 py-0.5 text-[11px] font-medium text-primary">{failedDeliveries.length} need review</span>
+                <span className="rounded-xl border border-border-subtle bg-white px-2 py-0.5 text-[11px] font-medium text-primary">{failedDeliveries.length} need review</span>
               </div>
 
               {topFailureReasons.length > 0 && (
                 <div className="mt-3 space-y-1">
                   {topFailureReasons.map(([reason, count]) => (
-                    <div key={reason} className="flex items-start justify-between gap-3 rounded-lg border border-border-subtle bg-white px-3 py-2 text-xs">
+                    <div key={reason} className="flex items-start justify-between gap-3 rounded-xl border border-border-subtle bg-white px-3 py-2 text-xs">
                       <span className="text-text-primary">{reason}</span>
                       <span className="shrink-0 text-primary">{count}</span>
                     </div>
@@ -393,7 +397,7 @@ export const MessageDetailModal: React.FC<MessageDetailModalProps> = ({
                 </div>
               )}
 
-              <div className="mt-3 rounded-lg border border-border-subtle bg-white">
+              <div className="mt-3 rounded-2xl border border-border-subtle bg-white">
                 <div className="flex items-center justify-between px-3 py-2 border-b border-border-subtle">
                   <p className="text-xs font-medium text-text-primary">Recipients to review</p>
                   <p className="text-[11px] text-text-tertiary">Most recent first</p>
@@ -435,20 +439,20 @@ export const MessageDetailModal: React.FC<MessageDetailModalProps> = ({
           )}
 
           {skippedDeliveries.length > 0 && (
-            <div className="rounded-lg border border-border-subtle bg-surface-subtle/70 p-4">
+            <div className="rounded-2xl border border-border-subtle bg-surface-subtle/70 p-4">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <p className="text-sm font-semibold text-primary">Needs contact details</p>
                   <p className="mt-1 text-xs text-text-secondary">These recipients were part of the audience but still need usable contact details.</p>
                   <p className="mt-1 text-[11px] text-text-tertiary">{skippedDeliveries.length} of {targetedRecipients} targeted recipients still need contact details.</p>
                 </div>
-                <span className="rounded-lg border border-border-subtle bg-white px-2 py-0.5 text-[11px] font-medium text-text-secondary">{skippedDeliveries.length} need contact</span>
+                <span className="rounded-xl border border-border-subtle bg-white px-2 py-0.5 text-[11px] font-medium text-text-secondary">{skippedDeliveries.length} need contact</span>
               </div>
 
               {topSkipReasons.length > 0 && (
                 <div className="mt-3 space-y-1">
                   {topSkipReasons.map(([reason, count]) => (
-                    <div key={reason} className="flex items-start justify-between gap-3 rounded-lg border border-border-subtle bg-white/85 px-3 py-2 text-xs">
+                    <div key={reason} className="flex items-start justify-between gap-3 rounded-xl border border-border-subtle bg-white/85 px-3 py-2 text-xs">
                       <span className="text-text-secondary">{reason}</span>
                       <span className="shrink-0 text-text-tertiary">{count}</span>
                     </div>
@@ -456,7 +460,7 @@ export const MessageDetailModal: React.FC<MessageDetailModalProps> = ({
                 </div>
               )}
 
-              <div className="mt-3 rounded-lg border border-border-subtle bg-white/85">
+              <div className="mt-3 rounded-2xl border border-border-subtle bg-white/85">
                 <div className="flex items-center justify-between px-3 py-2 border-b border-border-subtle">
                   <p className="text-xs font-medium text-text-primary">Recipients needing contact details</p>
                   <p className="text-[11px] text-text-tertiary">Most recent first</p>

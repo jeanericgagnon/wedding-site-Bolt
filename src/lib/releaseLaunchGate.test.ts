@@ -14,7 +14,11 @@ describe('release launch gate workflow', () => {
     expect(source).toContain('LIVE_GUEST_DASHBOARD_SETTINGS_RPCS: 1');
     expect(source).toContain('npm run proof:v1:guests-rsvp-ops');
     expect(source).toContain('npm run proof:v1:ast-security');
+    expect(source).toContain('npm run proof:v1:security-automation');
     expect(source).toContain('npm run proof:v1:client-rls-matrix -- --require-live');
+    expect(source).toContain('npm run proof:v1:board:freshness');
+    expect(source).not.toContain('npm run proof:v1:board');
+    expect(source).not.toContain('npm run proof:v1:board:md');
     expect(source).toContain('npm run proof:v1:registry-preview-ssrf -- --require-live');
     expect(source).toContain('npm run smoke:rsvp:strict');
     expect(source).not.toContain('Skipping smoke:rsvp:strict');

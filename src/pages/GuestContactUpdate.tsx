@@ -1,6 +1,7 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { useParams, useSearchParams } from 'react-router-dom';
 import { OwnerPreviewBanner } from '../components/site/OwnerPreviewBanner';
+import { resolveCurrentSearchParams } from '../lib/currentSearchParams';
 import { demoGuests, demoWeddingSite } from '../lib/demoData';
 import { customerSafeErrorMessage } from '../lib/customerSafeError';
 import {
@@ -34,14 +35,12 @@ export const safeGuestContactFunctionError = (value: unknown, fallback: string) 
   return friendlyGuestContactError(typeof value === 'string' ? value : '', fallback);
 };
 
-export const buildGuestContactAccessPayload = (siteRef: string) => {
-  const searchParams = new URLSearchParams(window.location.search);
-  return buildPublicAccessArtifacts(siteRef, searchParams);
+export const buildGuestContactAccessPayload = (siteRef: string, searchParams?: URLSearchParams) => {
+  return buildPublicAccessArtifacts(siteRef, resolveCurrentSearchParams(searchParams));
 };
 
-export const buildGuestContactIdentityPayload = (siteRef: string) => {
-  const searchParams = new URLSearchParams(window.location.search);
-  return buildGuestIdentityArtifacts(siteRef, searchParams);
+export const buildGuestContactIdentityPayload = (siteRef: string, searchParams?: URLSearchParams) => {
+  return buildGuestIdentityArtifacts(siteRef, resolveCurrentSearchParams(searchParams));
 };
 
 function hasFullNameQuery(value: string) {
@@ -63,6 +62,7 @@ function hasGuestInviteToken(value: string | null | undefined) {
 
 export const GuestContactUpdate: React.FC = () => {
   const { token = '' } = useParams<{ token: string }>();
+  const [searchParams] = useSearchParams();
   const siteRef = token; // now interpreted as site id/slug
   const isDemoSiteRef = siteRef === demoWeddingSite.id || siteRef.toLowerCase() === 'demo';
 
@@ -88,6 +88,8 @@ export const GuestContactUpdate: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [searching, setSearching] = useState(false);
   const [result, setResult] = useState<{ ok: boolean; message: string } | null>(null);
+  const activeLookupRequestRef = useRef(0);
+  const activeSubmitRequestRef = useRef(0);
 
   const canSubmit = useMemo(() => !!selectedContactSession && (
     !!email.trim() ||
@@ -100,23 +102,47 @@ export const GuestContactUpdate: React.FC = () => {
   ), [selectedContactSession, email, phone, rsvpStatus, mailingAddressLine1, mailingCity, mailingPostalCode, mailingCountry]);
 
   useEffect(() => {
+    activeLookupRequestRef.current += 1;
+    activeSubmitRequestRef.current += 1;
+    setQuery('');
+    setVerifier('');
+    setHouseholdVerifier('');
+    setMatches([]);
+    setSelectedContactSession('');
+    setSelectedHouseholdSize(1);
+    setSelectedHouseholdAllowed(false);
+    setApplyHousehold(false);
+    setEmail('');
+    setPhone('');
+    setRsvpStatus('');
+    setSmsConsent(false);
+    setMailingAddressLine1('');
+    setMailingAddressLine2('');
+    setMailingCity('');
+    setMailingState('');
+    setMailingPostalCode('');
+    setMailingCountry('');
+    setLoading(false);
+    setSearching(false);
+    setResult(null);
     if (siteRef) {
-      const searchParams = new URLSearchParams(window.location.search);
       capturePublicInviteTokenFromSearch(siteRef, searchParams);
       captureGuestInviteTokenFromSearch(siteRef, searchParams);
     }
-  }, [siteRef]);
+  }, [searchParams, siteRef]);
 
   useEffect(() => {
     if (!siteRef) return;
     trackGuestHubEvent(siteRef, 'view', '/guest-contact/invite', {
-      ...buildGuestContactAccessPayload(siteRef),
-      ...buildGuestContactIdentityPayload(siteRef),
+      ...buildGuestContactAccessPayload(siteRef, searchParams),
+      ...buildGuestContactIdentityPayload(siteRef, searchParams),
     }).catch(() => {});
-  }, [siteRef]);
+  }, [searchParams, siteRef]);
 
   async function handleSearch() {
-    const guestIdentity = buildGuestContactIdentityPayload(siteRef);
+    const requestId = activeLookupRequestRef.current + 1;
+    activeLookupRequestRef.current = requestId;
+    const guestIdentity = buildGuestContactIdentityPayload(siteRef, searchParams);
     const hasTokenVerifier = hasGuestInviteToken(guestIdentity.guestInviteToken);
     if (!hasFullNameQuery(query) || (!hasTokenVerifier && !hasGuestContactVerifier(verifier))) {
       setResult({ ok: false, message: hasTokenVerifier
@@ -137,9 +163,10 @@ export const GuestContactUpdate: React.FC = () => {
         query: query.trim(),
         verifier: verifier.trim(),
         household_verifier: normalizeHouseholdVerifier(householdVerifier),
-        ...buildGuestContactAccessPayload(siteRef),
+        ...buildGuestContactAccessPayload(siteRef, searchParams),
         ...guestIdentity,
       });
+      if (activeLookupRequestRef.current !== requestId) return;
       const rows = ((data as any)?.matches ?? []) as Match[];
       setMatches(rows);
       if (rows.length > 0) {
@@ -150,6 +177,7 @@ export const GuestContactUpdate: React.FC = () => {
         setResult({ ok: false, message: 'No guest record matched that search. Try your full name as it appears on the invitation.' });
       }
     } catch (err) {
+      if (activeLookupRequestRef.current !== requestId) return;
       if (isDemoSiteRef) {
         const q = query.trim().toLowerCase();
         const rows = demoGuests
@@ -173,13 +201,15 @@ export const GuestContactUpdate: React.FC = () => {
         setResult({ ok: false, message: friendlyGuestContactError(err, 'Couldn’t complete that search. Please try again.') });
       }
     } finally {
-      setSearching(false);
+      if (activeLookupRequestRef.current === requestId) setSearching(false);
     }
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!canSubmit) return;
+    const requestId = activeSubmitRequestRef.current + 1;
+    activeSubmitRequestRef.current = requestId;
     if (applyHousehold && !selectedHouseholdAllowed) {
       setResult({ ok: false, message: 'Add the last 4 digits of the phone number on file before updating your whole party.' });
       return;
@@ -204,19 +234,42 @@ export const GuestContactUpdate: React.FC = () => {
           mailing_country: mailingCountry.trim() || null,
         });
       }
+      if (activeSubmitRequestRef.current !== requestId) return;
       setResult({ ok: true, message: 'Thanks! Your information has been updated.' });
     } catch (err) {
+      if (activeSubmitRequestRef.current !== requestId) return;
       setResult({ ok: false, message: friendlyGuestContactError(err, 'Couldn’t send your update right now.') });
     } finally {
-      setLoading(false);
+      if (activeSubmitRequestRef.current === requestId) setLoading(false);
     }
   }
+
+  const clearResult = () => setResult(null);
+  const resetLookupSelection = () => {
+    setMatches([]);
+    setSelectedContactSession('');
+    setSelectedHouseholdSize(1);
+    setSelectedHouseholdAllowed(false);
+    setApplyHousehold(false);
+  };
+  const resetContactDraft = () => {
+    setEmail('');
+    setPhone('');
+    setRsvpStatus('');
+    setSmsConsent(false);
+    setMailingAddressLine1('');
+    setMailingAddressLine2('');
+    setMailingCity('');
+    setMailingState('');
+    setMailingPostalCode('');
+    setMailingCountry('');
+  };
 
   return (
     <div className="min-h-screen bg-background">
       <OwnerPreviewBanner />
       <div className="flex items-center justify-center p-4">
-        <div className="w-full max-w-xl bg-surface border border-border rounded-lg p-6 space-y-4">
+        <div className="w-full max-w-xl bg-surface border border-border rounded-xl p-6 space-y-4">
         <h1 className="text-xl font-semibold text-text-primary">Update contact & RSVP</h1>
         <p className="text-sm text-text-secondary">Search your name, choose your record, then update details for yourself or your party.</p>
 
@@ -230,63 +283,68 @@ export const GuestContactUpdate: React.FC = () => {
           selectedHouseholdSize={selectedHouseholdSize}
           selectedHouseholdAllowed={selectedHouseholdAllowed}
           applyHousehold={applyHousehold}
-          onQueryChange={setQuery}
-          onVerifierChange={setVerifier}
-          onHouseholdVerifierChange={setHouseholdVerifier}
+          onQueryChange={(value) => { clearResult(); resetLookupSelection(); resetContactDraft(); setQuery(value); }}
+          onVerifierChange={(value) => { clearResult(); resetLookupSelection(); resetContactDraft(); setVerifier(value); }}
+          onHouseholdVerifierChange={(value) => { clearResult(); resetLookupSelection(); resetContactDraft(); setHouseholdVerifier(value); }}
           onSearch={handleSearch}
           onSelectContactSession={(contactSession) => {
+            clearResult();
+            resetContactDraft();
             setSelectedContactSession(contactSession);
             const hit = matches.find((match) => match.contact_session === contactSession);
             setSelectedHouseholdSize(hit?.household_size ?? 1);
             setSelectedHouseholdAllowed(hit?.household_updates_allowed === true);
             if (hit?.household_updates_allowed !== true) setApplyHousehold(false);
           }}
-          onToggleApplyHousehold={setApplyHousehold}
-          canSearch={hasFullNameQuery(query) && (hasGuestContactVerifier(verifier) || hasGuestInviteToken(buildGuestContactIdentityPayload(siteRef).guestInviteToken))}
+          onToggleApplyHousehold={(value) => {
+            clearResult();
+            setApplyHousehold(value);
+          }}
+          canSearch={hasFullNameQuery(query) && (hasGuestContactVerifier(verifier) || hasGuestInviteToken(buildGuestContactIdentityPayload(siteRef, searchParams).guestInviteToken))}
         />
 
         <form onSubmit={handleSubmit} className="space-y-4" aria-busy={loading}>
           <div>
             <label htmlFor="guest-contact-email" className="block text-sm font-medium text-text-primary mb-1">Email (optional)</label>
-            <input id="guest-contact-email" value={email} onChange={(e) => setEmail(e.target.value)} type="email" className="w-full px-3 py-2 border border-border rounded-lg bg-surface-subtle" placeholder="you@example.com" />
+            <input id="guest-contact-email" value={email} onChange={(e) => { clearResult(); setEmail(e.target.value); }} type="email" className="w-full px-3 py-2 border border-border rounded-xl bg-surface-subtle" placeholder="you@example.com" />
           </div>
 
           <div>
             <label htmlFor="guest-contact-phone" className="block text-sm font-medium text-text-primary mb-1">Phone (optional)</label>
-            <input id="guest-contact-phone" value={phone} onChange={(e) => setPhone(e.target.value)} type="tel" className="w-full px-3 py-2 border border-border rounded-lg bg-surface-subtle" placeholder="(555) 123-4567" />
+            <input id="guest-contact-phone" value={phone} onChange={(e) => { clearResult(); setPhone(e.target.value); }} type="tel" className="w-full px-3 py-2 border border-border rounded-xl bg-surface-subtle" placeholder="(555) 123-4567" />
           </div>
 
-          <fieldset className="rounded-lg border border-border-subtle bg-surface-subtle/40 p-3 space-y-2">
+          <fieldset className="rounded-xl border border-border-subtle bg-surface-subtle/40 p-3 space-y-2">
             <legend className="text-sm font-medium text-text-primary">Mailing address (optional)</legend>
             <label className="sr-only" htmlFor="guest-contact-address-line-1">Address line 1</label>
-            <input id="guest-contact-address-line-1" value={mailingAddressLine1} onChange={(e) => setMailingAddressLine1(e.target.value)} type="text" className="w-full px-3 py-2 border border-border rounded-lg bg-surface" placeholder="Address line 1" />
+            <input id="guest-contact-address-line-1" value={mailingAddressLine1} onChange={(e) => { clearResult(); setMailingAddressLine1(e.target.value); }} type="text" className="w-full px-3 py-2 border border-border rounded-xl bg-surface" placeholder="Address line 1" />
             <label className="sr-only" htmlFor="guest-contact-address-line-2">Address line 2</label>
-            <input id="guest-contact-address-line-2" value={mailingAddressLine2} onChange={(e) => setMailingAddressLine2(e.target.value)} type="text" className="w-full px-3 py-2 border border-border rounded-lg bg-surface" placeholder="Address line 2" />
+            <input id="guest-contact-address-line-2" value={mailingAddressLine2} onChange={(e) => { clearResult(); setMailingAddressLine2(e.target.value); }} type="text" className="w-full px-3 py-2 border border-border rounded-xl bg-surface" placeholder="Address line 2" />
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               <div>
                 <label className="sr-only" htmlFor="guest-contact-city">City</label>
-                <input id="guest-contact-city" value={mailingCity} onChange={(e) => setMailingCity(e.target.value)} type="text" className="w-full px-3 py-2 border border-border rounded-lg bg-surface" placeholder="City" />
+                <input id="guest-contact-city" value={mailingCity} onChange={(e) => { clearResult(); setMailingCity(e.target.value); }} type="text" className="w-full px-3 py-2 border border-border rounded-xl bg-surface" placeholder="City" />
               </div>
               <div>
                 <label className="sr-only" htmlFor="guest-contact-state">State / Province</label>
-                <input id="guest-contact-state" value={mailingState} onChange={(e) => setMailingState(e.target.value)} type="text" className="w-full px-3 py-2 border border-border rounded-lg bg-surface" placeholder="State / Province" />
+                <input id="guest-contact-state" value={mailingState} onChange={(e) => { clearResult(); setMailingState(e.target.value); }} type="text" className="w-full px-3 py-2 border border-border rounded-xl bg-surface" placeholder="State / Province" />
               </div>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               <div>
                 <label className="sr-only" htmlFor="guest-contact-postal-code">ZIP / Postal code</label>
-                <input id="guest-contact-postal-code" value={mailingPostalCode} onChange={(e) => setMailingPostalCode(e.target.value)} type="text" className="w-full px-3 py-2 border border-border rounded-lg bg-surface" placeholder="ZIP / Postal code" />
+                <input id="guest-contact-postal-code" value={mailingPostalCode} onChange={(e) => { clearResult(); setMailingPostalCode(e.target.value); }} type="text" className="w-full px-3 py-2 border border-border rounded-xl bg-surface" placeholder="ZIP / Postal code" />
               </div>
               <div>
                 <label className="sr-only" htmlFor="guest-contact-country">Country</label>
-                <input id="guest-contact-country" value={mailingCountry} onChange={(e) => setMailingCountry(e.target.value)} type="text" className="w-full px-3 py-2 border border-border rounded-lg bg-surface" placeholder="Country" />
+                <input id="guest-contact-country" value={mailingCountry} onChange={(e) => { clearResult(); setMailingCountry(e.target.value); }} type="text" className="w-full px-3 py-2 border border-border rounded-xl bg-surface" placeholder="Country" />
               </div>
             </div>
           </fieldset>
 
           <div>
             <label htmlFor="guest-contact-rsvp" className="block text-sm font-medium text-text-primary mb-1">RSVP (optional)</label>
-            <select id="guest-contact-rsvp" value={rsvpStatus} onChange={(e) => setRsvpStatus(e.target.value as any)} className="w-full px-3 py-2 border border-border rounded-lg bg-surface-subtle">
+            <select id="guest-contact-rsvp" value={rsvpStatus} onChange={(e) => { clearResult(); setRsvpStatus(e.target.value as any); }} className="w-full px-3 py-2 border border-border rounded-xl bg-surface-subtle">
               <option value="">No change</option>
               <option value="confirmed">Attending</option>
               <option value="declined">Can’t attend</option>
@@ -295,17 +353,17 @@ export const GuestContactUpdate: React.FC = () => {
           </div>
 
           <label className="flex items-center gap-2 text-sm text-text-secondary">
-            <input type="checkbox" checked={smsConsent} onChange={(e) => setSmsConsent(e.target.checked)} />
+            <input type="checkbox" checked={smsConsent} onChange={(e) => { clearResult(); setSmsConsent(e.target.checked); }} />
             I agree to receive wedding updates by SMS (if phone provided).
           </label>
 
-          <button type="submit" disabled={!canSubmit || loading} className="w-full px-4 py-2 rounded-lg bg-primary text-white disabled:opacity-50">
+          <button type="submit" disabled={!canSubmit || loading} className="w-full px-4 py-2 rounded-xl bg-primary text-white disabled:opacity-50">
             {loading ? 'Saving…' : 'Save update'}
           </button>
         </form>
 
         {result && (
-          <p role={result.ok ? 'status' : 'alert'} className="rounded-lg border border-border-subtle bg-surface-secondary px-3 py-2 text-sm text-text-secondary">{result.message}</p>
+          <p role={result.ok ? 'status' : 'alert'} className="rounded-xl border border-border-subtle bg-surface-secondary px-3 py-2 text-sm text-text-secondary">{result.message}</p>
         )}
         </div>
       </div>

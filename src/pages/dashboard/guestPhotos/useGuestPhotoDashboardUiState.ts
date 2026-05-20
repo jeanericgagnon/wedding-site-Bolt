@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { type AiPhotoOpsPlan } from '../../../lib/aiPhotoOps';
 import {
   DEFAULT_HUB_SETTINGS,
@@ -23,6 +23,9 @@ type Args = {
 export type GuestPhotoDashboardUiState = ReturnType<typeof useGuestPhotoDashboardUiState>;
 
 export function useGuestPhotoDashboardUiState({ search }: Args) {
+  const routeEventName = search.get('eventName') ?? '';
+  const routeEventId = search.get('eventId') ?? '';
+  const routeParentBucketId = search.get('parentBucket') ?? '';
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -44,14 +47,15 @@ export function useGuestPhotoDashboardUiState({ search }: Args) {
   const [showFlaggedOnly, setShowFlaggedOnly] = useState(false);
   const [tagFilter, setTagFilter] = useState('all');
 
-  const [name, setName] = useState(search.get('eventName') ?? '');
-  const [itineraryEventId, setItineraryEventId] = useState(search.get('eventId') ?? '');
-  const [parentAlbumId, setParentAlbumId] = useState(search.get('parentBucket') ?? '');
+  const [name, setName] = useState(routeEventName);
+  const [itineraryEventId, setItineraryEventId] = useState(routeEventId);
+  const [parentAlbumId, setParentAlbumId] = useState(routeParentBucketId);
   const [bucketSearch, setBucketSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'paused'>('all');
 
   const [latestUploadUrl, setLatestUploadUrl] = useState('');
-  const [bucketUploadLinks, setBucketUploadLinks] = useState<Record<string, string>>(() => readStoredBucketLinks());
+  const [bucketUploadLinks, setBucketUploadLinks] = useState<Record<string, string>>({});
+  const [storageScope, setStorageScope] = useState<string | null>(null);
   const [workingBucketId, setWorkingBucketId] = useState('');
 
   const [windowDrafts, setWindowDrafts] = useState<Record<string, { opensAt: string; closesAt: string }>>({});
@@ -61,6 +65,52 @@ export function useGuestPhotoDashboardUiState({ search }: Args) {
   const [slideshowTheme, setSlideshowTheme] = useState<SlideshowTheme>('classic');
   const [slideshowPreviewOpen, setSlideshowPreviewOpen] = useState(false);
   const [aiPhotoOpsPlan, setAiPhotoOpsPlan] = useState<AiPhotoOpsPlan | null>(null);
+  const normalizedStorageScope = useMemo(() => {
+    const scope = typeof storageScope === 'string' ? storageScope.trim() : '';
+    return scope || null;
+  }, [storageScope]);
+
+  useEffect(() => {
+    if (!normalizedStorageScope) {
+      setBucketUploadLinks({});
+      return;
+    }
+
+    setBucketUploadLinks(readStoredBucketLinks(normalizedStorageScope));
+  }, [normalizedStorageScope]);
+
+  useEffect(() => {
+    setSubmitting(false);
+    setError(null);
+    setSuccess(null);
+    setName(routeEventName);
+    setItineraryEventId(routeEventId);
+    setParentAlbumId(routeParentBucketId);
+    setLatestUploadUrl('');
+    setWorkingBucketId('');
+    setBulkCreating(false);
+  }, [routeEventId, routeEventName, routeParentBucketId]);
+
+  const resetGuestPhotoDashboardInteractionState = useCallback(() => {
+    setSubmitting(false);
+    setError(null);
+    setSuccess(null);
+    setShowHidden(false);
+    setShowFlaggedOnly(false);
+    setTagFilter('all');
+    setName(routeEventName);
+    setItineraryEventId(routeEventId);
+    setParentAlbumId(routeParentBucketId);
+    setBucketSearch('');
+    setStatusFilter('all');
+    setLatestUploadUrl('');
+    setWorkingBucketId('');
+    setBulkCreating(false);
+    setSlideshowOrder('newest');
+    setSlideshowBucketFilter('all');
+    setSlideshowTheme('classic');
+    setSlideshowPreviewOpen(false);
+  }, [routeEventId, routeEventName, routeParentBucketId]);
 
   return {
     aiBucketCorrections,
@@ -118,6 +168,7 @@ export function useGuestPhotoDashboardUiState({ search }: Args) {
     setShowHidden,
     setSiteId,
     setSiteSlug,
+    setStorageScope,
     setSlideshowBucketFilter,
     setSlideshowOrder,
     setSlideshowPreviewOpen,
@@ -131,5 +182,6 @@ export function useGuestPhotoDashboardUiState({ search }: Args) {
     setUploads,
     setWindowDrafts,
     setWorkingBucketId,
+    resetGuestPhotoDashboardInteractionState,
   };
 }

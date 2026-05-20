@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { readBuilderCoachmarkSeen, writeBuilderCoachmarkSeen } from './builderCoachmarkStorage';
+import { buildBuilderCoachmarkStorageKey, readBuilderCoachmarkSeen, writeBuilderCoachmarkSeen } from './builderCoachmarkStorage';
 
 describe('builderCoachmarkStorage', () => {
   beforeEach(() => {
@@ -14,30 +14,32 @@ describe('builderCoachmarkStorage', () => {
 
   it('stores coachmark state as a timestamped envelope', () => {
     const key = 'builder-coachmark-test';
-    writeBuilderCoachmarkSeen(key);
+    writeBuilderCoachmarkSeen(key, true, 'user-a');
 
-    expect(JSON.parse(window.localStorage.getItem(key) || '{}')).toMatchObject({
+    expect(JSON.parse(window.localStorage.getItem(buildBuilderCoachmarkStorageKey(key, 'user-a')) || '{}')).toMatchObject({
       savedAtISO: '2026-05-06T12:00:00.000Z',
       seen: true,
     });
-    expect(readBuilderCoachmarkSeen(key)).toBe(true);
+    expect(window.localStorage.getItem(key)).toBeNull();
+    expect(readBuilderCoachmarkSeen(key, 'user-a')).toBe(true);
   });
 
   it('migrates legacy flags and clears stale or malformed values', () => {
     const key = 'builder-coachmark-test';
     window.localStorage.setItem(key, '1');
-    expect(readBuilderCoachmarkSeen(key)).toBe(true);
-    expect(JSON.parse(window.localStorage.getItem(key) || '{}')).toHaveProperty('savedAtISO');
+    expect(readBuilderCoachmarkSeen(key, 'user-a')).toBe(true);
+    expect(JSON.parse(window.localStorage.getItem(buildBuilderCoachmarkStorageKey(key, 'user-a')) || '{}')).toHaveProperty('savedAtISO');
+    expect(window.localStorage.getItem(key)).toBeNull();
 
-    window.localStorage.setItem(key, JSON.stringify({
+    window.localStorage.setItem(buildBuilderCoachmarkStorageKey(key, 'user-a'), JSON.stringify({
       savedAtISO: '2025-01-01T00:00:00.000Z',
       seen: true,
     }));
-    expect(readBuilderCoachmarkSeen(key)).toBe(false);
-    expect(window.localStorage.getItem(key)).toBeNull();
+    expect(readBuilderCoachmarkSeen(key, 'user-a')).toBe(false);
+    expect(window.localStorage.getItem(buildBuilderCoachmarkStorageKey(key, 'user-a'))).toBeNull();
 
-    window.localStorage.setItem(key, '{broken');
-    expect(readBuilderCoachmarkSeen(key)).toBe(false);
-    expect(window.localStorage.getItem(key)).toBeNull();
+    window.localStorage.setItem(buildBuilderCoachmarkStorageKey(key, 'user-a'), '{broken');
+    expect(readBuilderCoachmarkSeen(key, 'user-a')).toBe(false);
+    expect(window.localStorage.getItem(buildBuilderCoachmarkStorageKey(key, 'user-a'))).toBeNull();
   });
 });

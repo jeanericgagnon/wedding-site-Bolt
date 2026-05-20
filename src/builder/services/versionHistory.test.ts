@@ -241,6 +241,44 @@ describe('versionHistory', () => {
     });
   });
 
+  it('drops revisions that do not belong to the requested wedding key', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-05-06T21:12:00.000Z'));
+    const weddingId = 'site-a';
+    const otherWeddingId = 'site-b';
+    const project = createEmptyBuilderProject(weddingId, 'modern-luxe');
+    const otherProject = createEmptyBuilderProject(otherWeddingId, 'modern-luxe');
+    window.localStorage.setItem(`builder:revisions:${weddingId}`, JSON.stringify({
+      savedAtISO: '2026-05-06T21:10:00.000Z',
+      revisions: [
+        {
+          id: 'belongs-here',
+          weddingId,
+          action: 'save',
+          actor: 'tester',
+          createdAtISO: '2026-05-06T21:10:00.000Z',
+          project,
+        },
+        {
+          id: 'wrong-site',
+          weddingId: otherWeddingId,
+          action: 'publish',
+          actor: 'tester',
+          createdAtISO: '2026-05-06T21:11:00.000Z',
+          project: otherProject,
+        },
+      ],
+    }));
+
+    expect(listBuilderRevisions(weddingId).map((revision) => revision.id)).toEqual(['belongs-here']);
+    expect(JSON.parse(window.localStorage.getItem(`builder:revisions:${weddingId}`) || '{}')).toMatchObject({
+      revisions: [{
+        id: 'belongs-here',
+        weddingId,
+      }],
+    });
+  });
+
   it('drops stale or malformed builder revision storage', () => {
     const weddingId = `w_${Date.now()}_stale`;
     const project = createEmptyBuilderProject(weddingId, 'modern-luxe');

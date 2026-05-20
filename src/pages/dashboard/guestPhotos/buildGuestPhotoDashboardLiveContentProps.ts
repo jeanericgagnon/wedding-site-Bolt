@@ -27,7 +27,7 @@ type BuildGuestPhotoDashboardLiveContentPropsParams = {
   bulkRegenerating: boolean;
   childBucketsByParent: LiveContentProps['bucketListProps']['childBucketsByParent'];
   chronologicalUploads: LiveContentProps['reviewCardProps']['chronologicalUploads'];
-  copied: string;
+  copyNotice: { key: string; mode: 'copied' | 'downloaded' } | null;
   copyFallbackValue: string;
   countsByBucket: LiveContentProps['bucketListProps']['countsByBucket'];
   descendantBucketIdsByParent: LiveContentProps['bucketListProps']['descendantBucketIdsByParent'];
@@ -205,7 +205,7 @@ export function buildGuestPhotoDashboardLiveContentProps({
   bulkRegenerating,
   childBucketsByParent,
   chronologicalUploads,
-  copied,
+  copyNotice,
   copyFallbackValue,
   countsByBucket,
   descendantBucketIdsByParent,
@@ -361,7 +361,7 @@ export function buildGuestPhotoDashboardLiveContentProps({
     albumControlsProps: {
       visibleAlbumCount: filteredBucketCount,
       totalUploadCount,
-      copied,
+      copyNotice,
       bulkRegenerating,
       bulkModerating,
       showFlaggedOnly,
@@ -395,7 +395,7 @@ export function buildGuestPhotoDashboardLiveContentProps({
       submitting,
       loading,
       latestUploadUrl,
-      copied,
+      copyNotice,
       missingItineraryEventCount,
       bulkCreating,
       error,
@@ -435,7 +435,7 @@ export function buildGuestPhotoDashboardLiveContentProps({
       analysisByUploadId,
       latestUploadUrl,
       workingBucketId,
-      copied,
+      copyNotice,
       uploadCountWithChildren,
       bucketTone: bucketCardTone,
       bucketDisplayName,
@@ -488,7 +488,7 @@ export function buildGuestPhotoDashboardLiveContentProps({
       isPublished,
       guestHubActionSummary,
       guestHubActions,
-      copied,
+      copyNotice,
       guestHubQrAssetCount,
       getBucketQrUrl,
       onCopyText,
@@ -531,7 +531,7 @@ export function buildGuestPhotoDashboardLiveContentProps({
       aiSlideshowFrameCount,
       aiPhotoMovesBusy,
       aiHighConfidenceMoveCount,
-      copied,
+      copyNotice,
       onApplyHighConfidencePhotoMoves,
       onCopyOrganizerNotes,
     },
@@ -591,7 +591,7 @@ export function buildGuestPhotoDashboardLiveContentProps({
       slideshowFrames,
       slideshowReadyBucketCount,
       slideshowPreviewOpen,
-      copied,
+      copyNotice,
       onBucketFilterChange,
       onOrderChange,
       onThemeChange,

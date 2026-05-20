@@ -32,6 +32,8 @@ export function PublicRoutes({ isWeddingSubdomainHost }: PublicRoutesProps) {
       <Route path="/templates" element={<Templates />} />
       <Route path="/templates/:templateId" element={<TemplateDetail />} />
       <Route path="/site/:slug" element={<SiteView />} />
+      <Route path="/site/:slug/:pageSlug" element={<SiteView />} />
+      {isWeddingSubdomainHost ? <Route path="/:pageSlug" element={<SiteView />} /> : null}
       <Route path="/vendor/:slug" element={<VendorProfilePage />} />
       <Route path="/features/guests" element={<GuestsFeature />} />
       <Route path="/features/rsvp" element={<RSVPFeature />} />

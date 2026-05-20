@@ -1,4 +1,4 @@
-import { useState, type Dispatch, type SetStateAction } from 'react';
+import { useEffect, useRef, useState, type Dispatch, type SetStateAction } from 'react';
 
 import type { ToastType } from '../../../components/ui/Toast';
 import { isDeclinedRsvpStatus } from '../../../lib/rsvpStatus';
@@ -39,6 +39,11 @@ export function useGuestDashboardGuestDetailActions({
   toast,
   weddingSiteId,
 }: UseGuestDashboardGuestDetailActionsInput) {
+  const guestDetailContextVersionRef = useRef(0);
+  const itineraryDrawerRequestIdRef = useRef(0);
+  const inviteTokenRequestIdRef = useRef(0);
+  const assistedRsvpRequestIdRef = useRef(0);
+  const detailCheckInRequestIdRef = useRef(0);
   const demoItinerarySnapshot = buildDemoGuestItinerarySnapshot();
   const [householdBusy, setHouseholdBusy] = useState(false);
   const [itineraryDrawerGuest, setItineraryDrawerGuest] = useState<GuestWithRSVP | null>(null);
@@ -54,6 +59,38 @@ export function useGuestDashboardGuestDetailActions({
   const [assistedRsvpSaving, setAssistedRsvpSaving] = useState(false);
   const [lastCheckIn, setLastCheckIn] = useState<{ guestId: string; guestName: string; at: number } | null>(null);
   const [rotatingInviteToken, setRotatingInviteToken] = useState(false);
+
+  function resetGuestDetailState() {
+    itineraryDrawerRequestIdRef.current += 1;
+    inviteTokenRequestIdRef.current += 1;
+    assistedRsvpRequestIdRef.current += 1;
+    detailCheckInRequestIdRef.current += 1;
+    setHouseholdBusy(false);
+    setItineraryDrawerGuest(null);
+    setDrawerItineraryEvents([]);
+    setGuestEventIds(new Set());
+    setLoadingDrawer(false);
+    setTogglingEventId(null);
+    setGuestAuditEntries([]);
+    setAssistedRsvpGuest(null);
+    setAssistedRsvpStatus('confirmed');
+    setAssistedRsvpSource('phone');
+    setAssistedRsvpNotes('');
+    setAssistedRsvpSaving(false);
+    setLastCheckIn(null);
+    setRotatingInviteToken(false);
+  }
+
+  useEffect(() => {
+    guestDetailContextVersionRef.current += 1;
+    if (!weddingSiteId && !isDemoMode) {
+      resetGuestDetailState();
+    }
+  }, [isDemoMode, weddingSiteId]);
+
+  function isCurrentGuestDetailContext(contextVersion: number) {
+    return contextVersion === guestDetailContextVersionRef.current;
+  }
 
   function applyInviteTokenLocally(guestId: string, inviteToken: string | null) {
     setGuests((prev) =>
@@ -71,43 +108,74 @@ export function useGuestDashboardGuestDetailActions({
   }
 
   async function handleMergeIntoHousehold(selectedGuestIds: Set<string>, onMerged?: () => void) {
+    if (isGuestsReadOnly) {
+      toast('Viewer mode is read-only.', 'info');
+      return;
+    }
     if (selectedGuestIds.size < 2 || !weddingSiteId || isDemoMode) return;
+    const contextVersion = guestDetailContextVersionRef.current;
+    const targetWeddingSiteId = weddingSiteId;
     setHouseholdBusy(true);
     try {
       const ids = [...selectedGuestIds];
       const householdId = ids[0];
-      await assignGuestsToHouseholdForSite(weddingSiteId, ids, householdId);
+      await assignGuestsToHouseholdForSite(targetWeddingSiteId, ids, householdId);
+      if (!isCurrentGuestDetailContext(contextVersion)) return;
       await fetchGuests();
+      if (!isCurrentGuestDetailContext(contextVersion)) return;
       onMerged?.();
       toast(`${ids.length} guests merged into one household`, 'success');
     } catch {
+      if (!isCurrentGuestDetailContext(contextVersion)) return;
       toast('Couldn’t merge guests.', 'error');
     } finally {
-      setHouseholdBusy(false);
+      if (isCurrentGuestDetailContext(contextVersion)) {
+        setHouseholdBusy(false);
+      }
     }
   }
 
   async function handleSplitFromHousehold(guestId: string) {
+    if (isGuestsReadOnly) {
+      toast('Viewer mode is read-only.', 'info');
+      return;
+    }
     if (!weddingSiteId || isDemoMode) return;
+    const contextVersion = guestDetailContextVersionRef.current;
+    const targetWeddingSiteId = weddingSiteId;
     setHouseholdBusy(true);
     try {
-      await updateGuestHouseholdForSite(weddingSiteId, guestId, null);
+      await updateGuestHouseholdForSite(targetWeddingSiteId, guestId, null);
+      if (!isCurrentGuestDetailContext(contextVersion)) return;
       await fetchGuests();
+      if (!isCurrentGuestDetailContext(contextVersion)) return;
       toast('Guest removed from household', 'success');
     } catch {
+      if (!isCurrentGuestDetailContext(contextVersion)) return;
       toast('Couldn’t remove guest from household.', 'error');
     } finally {
-      setHouseholdBusy(false);
+      if (isCurrentGuestDetailContext(contextVersion)) {
+        setHouseholdBusy(false);
+      }
     }
   }
 
   async function handleReassignHousehold(guestId: string, newHouseholdId: string) {
+    if (isGuestsReadOnly) {
+      toast('Viewer mode is read-only.', 'info');
+      return;
+    }
     if (!weddingSiteId || isDemoMode) return;
+    const contextVersion = guestDetailContextVersionRef.current;
+    const targetWeddingSiteId = weddingSiteId;
     try {
-      await updateGuestHouseholdForSite(weddingSiteId, guestId, newHouseholdId || null);
+      await updateGuestHouseholdForSite(targetWeddingSiteId, guestId, newHouseholdId || null);
+      if (!isCurrentGuestDetailContext(contextVersion)) return;
       await fetchGuests();
+      if (!isCurrentGuestDetailContext(contextVersion)) return;
       toast('Guest reassigned', 'success');
     } catch {
+      if (!isCurrentGuestDetailContext(contextVersion)) return;
       toast('Couldn’t move guest to that household.', 'error');
     }
   }
@@ -117,12 +185,20 @@ export function useGuestDashboardGuestDetailActions({
     preferredLanguage: string,
     onApplied?: () => void,
   ) {
+    if (isGuestsReadOnly) {
+      toast('Viewer mode is read-only.', 'info');
+      return;
+    }
     if (selectedGuestIds.size < 1 || !weddingSiteId || isDemoMode) return;
+    const contextVersion = guestDetailContextVersionRef.current;
+    const targetWeddingSiteId = weddingSiteId;
     setHouseholdBusy(true);
     try {
       const ids = [...selectedGuestIds];
-      await setGuestsPreferredLanguageForSite(weddingSiteId, ids, preferredLanguage || null);
+      await setGuestsPreferredLanguageForSite(targetWeddingSiteId, ids, preferredLanguage || null);
+      if (!isCurrentGuestDetailContext(contextVersion)) return;
       await fetchGuests();
+      if (!isCurrentGuestDetailContext(contextVersion)) return;
       onApplied?.();
       toast(
         preferredLanguage
@@ -131,59 +207,87 @@ export function useGuestDashboardGuestDetailActions({
         'success',
       );
     } catch {
+      if (!isCurrentGuestDetailContext(contextVersion)) return;
       toast('Couldn’t update guest language right now.', 'error');
     } finally {
-      setHouseholdBusy(false);
+      if (isCurrentGuestDetailContext(contextVersion)) {
+        setHouseholdBusy(false);
+      }
     }
   }
 
   async function openItineraryDrawer(guest: GuestWithRSVP) {
     if (!weddingSiteId) return;
+    const contextVersion = guestDetailContextVersionRef.current;
+    const requestId = ++itineraryDrawerRequestIdRef.current;
+    const isCurrentItineraryDrawer = () =>
+      isCurrentGuestDetailContext(contextVersion) && requestId === itineraryDrawerRequestIdRef.current;
+    const targetWeddingSiteId = weddingSiteId;
+    const targetGuest = guest;
     setItineraryDrawerGuest(guest);
     setLoadingDrawer(true);
     try {
       if (isDemoMode) {
         const now = Date.now();
+        if (!isCurrentItineraryDrawer()) return;
         setDrawerItineraryEvents(demoItinerarySnapshot.itineraryEvents);
         setGuestAuditEntries([
-          { id: `${guest.id}-a1`, action: 'update', changed_at: new Date(now - 1000 * 60 * 90).toISOString(), changed_by: null, old_data: { rsvp_status: 'pending' }, new_data: { rsvp_status: guest.rsvp_status } },
-          { id: `${guest.id}-a2`, action: 'update', changed_at: new Date(now - 1000 * 60 * 60 * 26).toISOString(), changed_by: null, old_data: { invited_to_reception: false }, new_data: { invited_to_reception: guest.invited_to_reception } },
+          { id: `${targetGuest.id}-a1`, action: 'update', changed_at: new Date(now - 1000 * 60 * 90).toISOString(), changed_by: null, old_data: { rsvp_status: 'pending' }, new_data: { rsvp_status: targetGuest.rsvp_status } },
+          { id: `${targetGuest.id}-a2`, action: 'update', changed_at: new Date(now - 1000 * 60 * 60 * 26).toISOString(), changed_by: null, old_data: { invited_to_reception: false }, new_data: { invited_to_reception: targetGuest.invited_to_reception } },
         ]);
-        setGuestEventIds(new Set(demoItinerarySnapshot.guestInvitedEventIds.get(guest.id) ?? []));
+        setGuestEventIds(new Set(demoItinerarySnapshot.guestInvitedEventIds.get(targetGuest.id) ?? []));
       }
 
       if (!isDemoMode) {
-        const snapshot = await loadGuestItineraryDrawerSnapshot(weddingSiteId, guest.id);
+        const snapshot = await loadGuestItineraryDrawerSnapshot(targetWeddingSiteId, targetGuest.id);
+        if (!isCurrentItineraryDrawer()) return;
         setDrawerItineraryEvents(snapshot.events);
         setGuestEventIds(snapshot.guestEventIds);
         setGuestAuditEntries(snapshot.auditEntries);
       }
     } catch {
+      if (!isCurrentItineraryDrawer()) return;
       toast('Couldn’t load guest itinerary details right now. Please try again.', 'error');
     } finally {
-      setLoadingDrawer(false);
+      if (isCurrentItineraryDrawer()) {
+        setLoadingDrawer(false);
+      }
     }
   }
 
   async function handleToggleEventInvite(eventId: string, currentlyInvited: boolean) {
+    if (isGuestsReadOnly) {
+      toast('Viewer mode is read-only.', 'info');
+      return;
+    }
     if (!itineraryDrawerGuest || togglingEventId) return;
+    const contextVersion = guestDetailContextVersionRef.current;
+    const requestId = itineraryDrawerRequestIdRef.current;
+    const isCurrentItineraryDrawer = () =>
+      isCurrentGuestDetailContext(contextVersion) && requestId === itineraryDrawerRequestIdRef.current;
+    const targetGuestId = itineraryDrawerGuest.id;
     setTogglingEventId(eventId);
     try {
       if (currentlyInvited) {
-        await removeGuestEventInvitation(eventId, itineraryDrawerGuest.id);
+        await removeGuestEventInvitation(eventId, targetGuestId);
+        if (!isCurrentItineraryDrawer()) return;
         setGuestEventIds((prev) => {
           const next = new Set(prev);
           next.delete(eventId);
           return next;
         });
       } else {
-        await addGuestEventInvitation(eventId, itineraryDrawerGuest.id);
+        await addGuestEventInvitation(eventId, targetGuestId);
+        if (!isCurrentItineraryDrawer()) return;
         setGuestEventIds((prev) => new Set([...prev, eventId]));
       }
     } catch {
+      if (!isCurrentItineraryDrawer()) return;
       toast('Couldn’t update that event invite.', 'error');
     } finally {
-      setTogglingEventId(null);
+      if (isCurrentItineraryDrawer()) {
+        setTogglingEventId(null);
+      }
     }
   }
 
@@ -195,25 +299,37 @@ export function useGuestDashboardGuestDetailActions({
     }
     if (!weddingSiteId && !isDemoMode) return;
 
+    const contextVersion = guestDetailContextVersionRef.current;
+    const requestId = ++inviteTokenRequestIdRef.current;
+    const isCurrentInviteTokenRequest = () =>
+      isCurrentGuestDetailContext(contextVersion) && requestId === inviteTokenRequestIdRef.current;
+    const targetWeddingSiteId = weddingSiteId;
+    const targetGuestId = itineraryDrawerGuest.id;
     setRotatingInviteToken(true);
     try {
       const nextToken = isDemoMode
-        ? `demo-guest-${itineraryDrawerGuest.id}-${Date.now().toString(36)}`
+        ? `demo-guest-${targetGuestId}-${Date.now().toString(36)}`
         : await generateSecureGuestInviteToken();
+      if (!isCurrentInviteTokenRequest()) return;
 
       if (isDemoMode) {
-        applyInviteTokenLocally(itineraryDrawerGuest.id, nextToken);
-      } else if (weddingSiteId) {
-        await updateGuestForSite(weddingSiteId, itineraryDrawerGuest.id, { invite_token: nextToken });
+        applyInviteTokenLocally(targetGuestId, nextToken);
+      } else if (targetWeddingSiteId) {
+        await updateGuestForSite(targetWeddingSiteId, targetGuestId, { invite_token: nextToken });
+        if (!isCurrentInviteTokenRequest()) return;
         await fetchGuests();
-        applyInviteTokenLocally(itineraryDrawerGuest.id, nextToken);
+        if (!isCurrentInviteTokenRequest()) return;
+        applyInviteTokenLocally(targetGuestId, nextToken);
       }
 
       toast('Private RSVP access rotated for this guest', 'success');
     } catch {
+      if (!isCurrentInviteTokenRequest()) return;
       toast('Couldn’t rotate guest access right now.', 'error');
     } finally {
-      setRotatingInviteToken(false);
+      if (isCurrentInviteTokenRequest()) {
+        setRotatingInviteToken(false);
+      }
     }
   }
 
@@ -225,25 +341,41 @@ export function useGuestDashboardGuestDetailActions({
     }
     if (!weddingSiteId && !isDemoMode) return;
 
+    const contextVersion = guestDetailContextVersionRef.current;
+    const requestId = ++inviteTokenRequestIdRef.current;
+    const isCurrentInviteTokenRequest = () =>
+      isCurrentGuestDetailContext(contextVersion) && requestId === inviteTokenRequestIdRef.current;
+    const targetWeddingSiteId = weddingSiteId;
+    const targetGuestId = itineraryDrawerGuest.id;
     setRotatingInviteToken(true);
     try {
       if (isDemoMode) {
-        applyInviteTokenLocally(itineraryDrawerGuest.id, null);
-      } else if (weddingSiteId) {
-        await updateGuestForSite(weddingSiteId, itineraryDrawerGuest.id, { invite_token: null });
+        applyInviteTokenLocally(targetGuestId, null);
+      } else if (targetWeddingSiteId) {
+        await updateGuestForSite(targetWeddingSiteId, targetGuestId, { invite_token: null });
+        if (!isCurrentInviteTokenRequest()) return;
         await fetchGuests();
-        applyInviteTokenLocally(itineraryDrawerGuest.id, null);
+        if (!isCurrentInviteTokenRequest()) return;
+        applyInviteTokenLocally(targetGuestId, null);
       }
 
       toast('Private RSVP access revoked for this guest', 'success');
     } catch {
+      if (!isCurrentInviteTokenRequest()) return;
       toast('Couldn’t revoke guest access right now.', 'error');
     } finally {
-      setRotatingInviteToken(false);
+      if (isCurrentInviteTokenRequest()) {
+        setRotatingInviteToken(false);
+      }
     }
   }
 
   function openAssistedRsvpModal(guest: GuestWithRSVP) {
+    if (isGuestsReadOnly) {
+      toast('Viewer mode is read-only.', 'info');
+      return;
+    }
+
     setAssistedRsvpGuest(guest);
     setAssistedRsvpStatus(isDeclinedRsvpStatus(guest.rsvp_status) ? 'declined' : 'confirmed');
     setAssistedRsvpSource('phone');
@@ -256,22 +388,31 @@ export function useGuestDashboardGuestDetailActions({
       return;
     }
     if (!assistedRsvpGuest) return;
+    const contextVersion = guestDetailContextVersionRef.current;
+    const requestId = ++assistedRsvpRequestIdRef.current;
+    const isCurrentAssistedRsvpRequest = () =>
+      isCurrentGuestDetailContext(contextVersion) && requestId === assistedRsvpRequestIdRef.current;
+    const targetAssistedRsvpGuest = assistedRsvpGuest;
+    const targetAssistedRsvpStatus = assistedRsvpStatus;
+    const targetAssistedRsvpSource = assistedRsvpSource;
+    const targetAssistedRsvpNotes = assistedRsvpNotes;
     try {
       setAssistedRsvpSaving(true);
 
       if (isDemoMode) {
         const demoRecordedAt = new Date().toISOString();
-        const demoManualTag = `[Manual RSVP source:${assistedRsvpSource} recorded:${demoRecordedAt}]`;
-        const nextNotes = [demoManualTag, assistedRsvpNotes.trim()].filter(Boolean).join(' ');
+        const demoManualTag = `[Manual RSVP source:${targetAssistedRsvpSource} recorded:${demoRecordedAt}]`;
+        const nextNotes = [demoManualTag, targetAssistedRsvpNotes.trim()].filter(Boolean).join(' ');
+        if (!isCurrentAssistedRsvpRequest()) return;
         setGuests((prev) =>
           prev.map((guest) =>
-            guest.id === assistedRsvpGuest.id
+            guest.id === targetAssistedRsvpGuest.id
               ? {
                   ...guest,
-                  rsvp_status: assistedRsvpStatus,
+                  rsvp_status: targetAssistedRsvpStatus,
                   rsvp_received_at: new Date().toISOString(),
                   notes: nextNotes,
-                  rsvp: assistedRsvpStatus === 'confirmed'
+                  rsvp: targetAssistedRsvpStatus === 'confirmed'
                     ? guest.rsvp
                       ? {
                           ...guest.rsvp,
@@ -301,19 +442,24 @@ export function useGuestDashboardGuestDetailActions({
       }
 
       await saveAssistedGuestRsvp({
-        guest: assistedRsvpGuest,
-        status: assistedRsvpStatus,
-        source: assistedRsvpSource,
-        notes: assistedRsvpNotes,
+        guest: targetAssistedRsvpGuest,
+        status: targetAssistedRsvpStatus,
+        source: targetAssistedRsvpSource,
+        notes: targetAssistedRsvpNotes,
       });
+      if (!isCurrentAssistedRsvpRequest()) return;
 
       await fetchGuests();
+      if (!isCurrentAssistedRsvpRequest()) return;
       setAssistedRsvpGuest(null);
       toast('RSVP recorded for guest', 'success');
     } catch {
+      if (!isCurrentAssistedRsvpRequest()) return;
       toast('Couldn’t save assisted RSVP.', 'error');
     } finally {
-      setAssistedRsvpSaving(false);
+      if (isCurrentAssistedRsvpRequest()) {
+        setAssistedRsvpSaving(false);
+      }
     }
   }
 
@@ -328,11 +474,18 @@ export function useGuestDashboardGuestDetailActions({
     }
 
     const nextValue = guest.checked_in_at ? null : new Date().toISOString();
-    const updateCheckin = async () => updateGuestCheckInForSite(weddingSiteId, guest.id, nextValue);
+    const contextVersion = guestDetailContextVersionRef.current;
+    const requestId = ++detailCheckInRequestIdRef.current;
+    const isCurrentDetailCheckInRequest = () =>
+      isCurrentGuestDetailContext(contextVersion) && requestId === detailCheckInRequestIdRef.current;
+    const targetWeddingSiteId = weddingSiteId;
+    const updateCheckin = async () => updateGuestCheckInForSite(targetWeddingSiteId, guest.id, nextValue);
 
     try {
       await updateCheckin();
+      if (!isCurrentDetailCheckInRequest()) return;
       await fetchGuests();
+      if (!isCurrentDetailCheckInRequest()) return;
       if (nextValue) {
         const guestName = (guest.first_name || guest.last_name)
           ? `${guest.first_name ?? ''} ${guest.last_name ?? ''}`.trim()
@@ -346,14 +499,18 @@ export function useGuestDashboardGuestDetailActions({
       if (authish) {
         try {
           await refreshGuestDashboardSession();
+          if (!isCurrentDetailCheckInRequest()) return;
           await updateCheckin();
+          if (!isCurrentDetailCheckInRequest()) return;
           await fetchGuests();
+          if (!isCurrentDetailCheckInRequest()) return;
           toast(nextValue ? 'Guest checked in' : 'Guest check-in cleared', 'success');
           return;
         } catch {
           // fall through
         }
       }
+      if (!isCurrentDetailCheckInRequest()) return;
       toast('Couldn’t update check-in status.', 'error');
     }
   }

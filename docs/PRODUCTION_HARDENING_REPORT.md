@@ -80,6 +80,10 @@ Fresh local proof:
 - `npm run test:launch` -> `PASS`
   - branch wiring self-sets `LIVE_GUEST_DASHBOARD_SETTINGS_RPCS=1`
   - the stronger guest-contact invite-token / household-verifier path is now deployed and live-green
+- `npm run proof:v1:board` -> `PASS`
+  - machine-readable board output is current and derives directly from `BACKLOG.md`
+- `npm run proof:v1:board:freshness` -> `PASS`
+  - canonical backlog launch-state metadata is fresh before either board output is treated as current launch truth
 - `npm test -- --run src/lib/clientWriteInventoryProofScript.test.ts src/lib/collaboratorPermissionRlsProof.test.ts src/lib/clientRlsMatrixProofScript.test.ts` -> `PASS`
 - `npm run proof:v1:board:md` -> `PASS`
 - `npm run guard:file-size` -> `PASS`
@@ -220,6 +224,8 @@ Those remain future product scope. The `.dayof.love` host-routing lane itself is
 - Proved the release gate twice in Actions:
   - `25705386070` green with the broader workflow shape
   - `25705683563` green with the focused launch-critical proof shape
+- Kept the workflow board contract narrow on purpose: `ci-hardpass` and `Release Launch Gate` enforce `npm run proof:v1:board:freshness`, but they do not regenerate `npm run proof:v1:board` or `npm run proof:v1:board:md`.
+- Kept the complementary helper/runtime story explicit too: local closeout paths such as `npm run proof:v1:launch-closeout` are the places that regenerate the raw and markdown board outputs when a refreshed artifact is actually needed.
 - Removed the last generic-CI RSVP skip by making `.github/workflows/ci-hardpass.yml` fail if `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY` are missing and always run `npm run smoke:rsvp:strict`
 - Removed the `SKIP_POSTDEPLOY_PROOF` bypass path from `scripts/deploy_prod_guarded.mjs`; guarded production deploys now fail instead of silently skipping postdeploy proof
 - Added workflow/proof guards so those two operational hardening guarantees stay test-covered (`ciHardpassWorkflow.test.ts`, `aiExposureProofScript.test.ts`, `proof:v1:test-lanes`)

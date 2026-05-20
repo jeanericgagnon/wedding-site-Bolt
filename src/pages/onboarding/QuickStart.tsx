@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   createEmptyInitialSetupAnswers,
@@ -18,7 +18,7 @@ import { applyQuickStartAnswer, mergeClarifyingAnswer, type ConciergeQuestion } 
 import { writeSignupReturnPath } from '../../lib/signupContinuation';
 import { clearOnboardingEntryReturnPath } from '../../lib/onboardingEntryCleanup';
 import { normalizeQuickStartDraftSnapshot } from '../../lib/quickStartPersistence';
-import { clearQuickStartDraftSnapshot, normalizeMeaningfulQuickStartDraftSnapshot, persistQuickStartDraftSnapshot, readQuickStartDraftSnapshot } from '../../lib/quickStartStateTransfer';
+import { clearQuickStartDraftSnapshot, migrateQuickStartDraftSnapshotScope, normalizeMeaningfulQuickStartDraftSnapshot, persistQuickStartDraftSnapshot, readQuickStartDraftSnapshot } from '../../lib/quickStartStateTransfer';
 import { buildQuickStartEntryPath, buildQuickStartGuestsPath } from '../../lib/quickStartContinuation';
 import { clearAllOnboardingContinuationState } from '../../lib/onboardingContinuationCleanup';
 import { hasMeaningfulQuickStartAnswers, mergeQuickStartSeedIntoDraft } from '../../lib/quickStartHydration';
@@ -33,6 +33,14 @@ import { generateDraftFromWeddingProfile, mergeGeneratedDraftIntoWeddingData } f
 import { createCanonicalContentFromDraft } from '../../lib/aiCanonicalContent';
 import { mergeGeneratedDraftIntoBuilderProject } from '../../lib/aiBuilderProjectPatch';
 import { customerSafeErrorMessage } from '../../lib/customerSafeError';
+import { useAuth } from '../../hooks/useAuth';
+import {
+  QUICK_START_PROCESSING_FINAL_STEP_MS,
+  QUICK_START_PROCESSING_STEP_MS,
+  quickStartProcessingSteps,
+  quickStartQuestions,
+  quickStartTheme,
+} from './quickStartContent';
 import {
   fetchQuickStartPersistSite,
   fetchQuickStartSeedSite,
@@ -40,118 +48,33 @@ import {
   updateQuickStartPersistSite,
 } from './onboardingService';
 
-type QuestionDef = {
-  key: ConciergeQuestion;
-  label: string;
-  prompt: string;
-  helper?: string;
-  type?: 'text' | 'date' | 'textarea' | 'choice';
-  placeholder?: string;
-  choices?: Array<{ label: string; value: string }>;
-  optional?: boolean;
-};
-
-const questions: QuestionDef[] = [
-  { key: 'partnerNames', label: 'Who’s getting married?', prompt: 'Who’s getting married?', helper: 'Use the names exactly how you want guests to see them on the site.', placeholder: 'Alex & Jordan' },
-  {
-    key: 'partnerLabels',
-    label: 'Labels',
-    prompt: 'How should we refer to each of you on the site?',
-    helper: 'Choose the simplest option that fits best.',
-    type: 'choice',
-    choices: [
-      { label: 'Just our names', value: 'none|none' },
-      { label: 'Bride & Groom', value: 'bride|groom' },
-      { label: 'Bride & Bride', value: 'bride|bride' },
-      { label: 'Groom & Groom', value: 'groom|groom' },
-    ],
-  },
-  { key: 'venueLocation', label: 'When and where', prompt: 'When and where are you getting married?', helper: 'Use the date and city or region together so we can anchor the whole site in one step.', placeholder: 'January 17, 2027 in Sayulita, Mexico' },
-  { key: 'venueName', label: 'Venue', prompt: 'What venue are you getting married at?', helper: 'Use the venue name or write TBD if you are still deciding.', placeholder: 'Amor Boutique Hotel or TBD', optional: true },
-  { key: 'theme', label: 'Style', prompt: 'What style should the site lean into?', helper: 'A few words is enough. Tropical, modern, editorial, classic, relaxed.', placeholder: 'Tropical, relaxed' },
-  { key: 'guestFeel', label: 'Tone', prompt: 'If someone lands on your site, what should they feel right away?', helper: 'Think tone, not a perfect sentence. Warm, excited, relaxed, elegant, fun, emotional, welcoming, intimate. Anything like that works.', placeholder: 'Warm, excited, relaxed' },
-  { key: 'weekendEvents', label: 'Events', prompt: 'What events are happening over the wedding weekend?', type: 'textarea', helper: 'Use one short line or sentence. We will turn it into structured events.', placeholder: 'Friday welcome drinks, Saturday wedding, Sunday brunch' },
-  { key: 'ceremonyTime', label: 'Ceremony arrival', prompt: 'What time should guests arrive for the ceremony?', helper: 'A simple arrival time is enough.', placeholder: '4:30 PM' },
-  {
-    key: 'guestCount',
-    label: 'Guest count',
-    prompt: 'About how many guests are you inviting?',
-    helper: 'Pick the closest range.',
-    type: 'choice',
-    choices: [
-      { label: 'Under 50', value: 'under-50' },
-      { label: '50–100', value: '50-100' },
-      { label: '100–150', value: '100-150' },
-      { label: '150–250', value: '150-250' },
-      { label: '250+', value: '250-plus' },
-    ],
-  },
-  {
-    key: 'plusOnePolicy',
-    label: 'Plus-ones',
-    prompt: 'What’s your plus-one policy?',
-    helper: 'Choose the policy you want the RSVP flow to follow.',
-    type: 'choice',
-    choices: [
-      { label: 'No plus-ones', value: 'none' },
-      { label: 'Some plus-ones', value: 'some' },
-      { label: 'Everyone gets one', value: 'all' },
-    ],
-  },
-  {
-    key: 'childrenAllowed',
-    label: 'Children',
-    prompt: 'Are children invited?',
-    helper: 'Choose yes, no, or unsure for now.',
-    type: 'choice',
-    choices: [
-      { label: 'Yes', value: 'yes' },
-      { label: 'No', value: 'no' },
-      { label: 'Unsure', value: 'unsure' },
-    ],
-  },
-  { key: 'rsvpDeadline', label: 'RSVP', prompt: 'When do you want guests to RSVP by?', helper: 'This drives the RSVP setup immediately.', type: 'date' },
-  {
-    key: 'mealChoice',
-    label: 'Meals',
-    prompt: 'Do you want to collect meal choices?',
-    helper: 'Choose yes or no.',
-    type: 'choice',
-    choices: [
-      { label: 'Yes', value: 'yes' },
-      { label: 'No', value: 'no' },
-    ],
-  },
-  { key: 'story', label: 'Story', prompt: 'Want to add your story? (totally optional)', type: 'textarea', helper: 'Optional, but helpful for stronger copy.', placeholder: 'We met on Hinge, texted for a month, then finally met up for a concert...', optional: true },
-];
-
-const PAGE_BG = '#FAF9F7';
-const TEXT = '#2B2B2B';
-const MUTED = '#A0A0A0';
-const TRANSCRIPT = '#B0B0B0';
-const TRANSCRIPT_VALUE = '#909090';
-const WARM = '#8B7355';
-const SOFT = '#F5F4F2';
-const SOFT_HOVER = '#EEEDEB';
-const BORDER = '#E0DED9';
 function safeQuickStartError(err: unknown, fallback: string): string {
   return customerSafeErrorMessage(err, fallback);
 }
 
-const PROCESSING_STEPS = [
-  'Aggregating your answers',
-  'Mapping wedding details',
-  'Checking for missing guest-facing info',
-  'Shaping the first draft structure',
-  'Tuning tone and style',
-  'Deciding if we need anything else',
-  'Preparing your next step',
-];
-const PROCESSING_STEP_MS = 90;
-const PROCESSING_FINAL_STEP_MS = 140;
+const {
+  pageBg: PAGE_BG,
+  text: TEXT,
+  muted: MUTED,
+  transcript: TRANSCRIPT,
+  transcriptValue: TRANSCRIPT_VALUE,
+  warm: WARM,
+  soft: SOFT,
+  softHover: SOFT_HOVER,
+  border: BORDER,
+} = quickStartTheme;
+const questions = quickStartQuestions;
+const PROCESSING_STEPS = quickStartProcessingSteps;
+const PROCESSING_STEP_MS = QUICK_START_PROCESSING_STEP_MS;
+const PROCESSING_FINAL_STEP_MS = QUICK_START_PROCESSING_FINAL_STEP_MS;
 
 export const QuickStart: React.FC = () => {
+  const location = useLocation();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const { user } = useAuth();
+  const quickStartTransferSourceScope = user?.email?.trim().toLowerCase() || null;
+  const quickStartStorageScope = user?.id ?? null;
   const [currentIndex, setCurrentIndex] = useState(0);
   const [inputValue, setInputValue] = useState('');
   const [loading, setLoading] = useState(false);
@@ -178,7 +101,7 @@ export const QuickStart: React.FC = () => {
   const currentQuestion = questions[safeCurrentIndex];
   const formData = initialSetupAnswersToOnboardingFormShape(initialSetupAnswers);
   const activeClarifyingQuestions = clarifyingState?.clarifying.questions ?? [];
-  const showAiDebug = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('quickStartDebug') === '1';
+  const showAiDebug = searchParams.get('quickStartDebug') === '1';
 
   useEffect(() => {
     if (currentIndex !== safeCurrentIndex) {
@@ -187,18 +110,30 @@ export const QuickStart: React.FC = () => {
   }, [currentIndex, safeCurrentIndex]);
 
   useEffect(() => {
-    clearOnboardingEntryReturnPath();
-  }, []);
+    clearOnboardingEntryReturnPath(quickStartStorageScope);
+  }, [quickStartStorageScope]);
 
   useEffect(() => {
-    const shouldReset = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('resetQuickStart') === '1';
+    if (!quickStartTransferSourceScope || !quickStartStorageScope) return;
+    migrateQuickStartDraftSnapshotScope(quickStartTransferSourceScope, quickStartStorageScope);
+  }, [quickStartStorageScope, quickStartTransferSourceScope]);
+
+  useEffect(() => {
+    const shouldReset = searchParams.get('resetQuickStart') === '1';
     if (shouldReset) {
       const emptyAnswers = createEmptyInitialSetupAnswers();
-      const nextUrl = new URL(window.location.href);
-      nextUrl.searchParams.delete('resetQuickStart');
-      window.history.replaceState(window.history.state, '', `${nextUrl.pathname}${nextUrl.search}${nextUrl.hash}`);
+      const nextParams = new URLSearchParams(searchParams);
+      nextParams.delete('resetQuickStart');
+      navigate(
+        {
+          pathname: location.pathname,
+          search: nextParams.toString() ? `?${nextParams.toString()}` : '',
+          hash: location.hash,
+        },
+        { replace: true },
+      );
       setIsResettingDraft(true);
-      clearQuickStartDraftSnapshot();
+      clearQuickStartDraftSnapshot(quickStartStorageScope);
       initialSetupAnswersRef.current = emptyAnswers;
       setInitialSetupAnswers(emptyAnswers);
       followUpAnswersRef.current = {};
@@ -217,7 +152,7 @@ export const QuickStart: React.FC = () => {
       return;
     }
 
-    const parsed = readQuickStartDraftSnapshot();
+    const parsed = readQuickStartDraftSnapshot(quickStartStorageScope);
     if (!parsed) {
       setHasHydratedDraft(true);
       return;
@@ -245,12 +180,12 @@ export const QuickStart: React.FC = () => {
       setHasHydratedDraft(true);
       setIsResettingDraft(false);
     }
-  }, [hasLocalDraftHydration]);
+  }, [hasLocalDraftHydration, location.hash, location.pathname, navigate, quickStartStorageScope, searchParams]);
 
   useEffect(() => {
     if (!hasHydratedDraft || isResettingDraft) return;
-    persistQuickStartDraftSnapshot({ initialSetupAnswers, currentIndex: safeCurrentIndex, followUpAnswers, showFollowUps, clarifyingState, viewState });
-  }, [initialSetupAnswers, safeCurrentIndex, followUpAnswers, showFollowUps, clarifyingState, viewState, hasHydratedDraft, isResettingDraft]);
+    persistQuickStartDraftSnapshot({ initialSetupAnswers, currentIndex: safeCurrentIndex, followUpAnswers, showFollowUps, clarifyingState, viewState }, quickStartStorageScope);
+  }, [initialSetupAnswers, safeCurrentIndex, followUpAnswers, showFollowUps, clarifyingState, viewState, hasHydratedDraft, isResettingDraft, quickStartStorageScope]);
 
   useEffect(() => {
     followUpAnswersRef.current = followUpAnswers;
@@ -272,7 +207,7 @@ export const QuickStart: React.FC = () => {
       } catch {
         return;
       }
-      clearOnboardingEntryReturnPath();
+      clearOnboardingEntryReturnPath(quickStartStorageScope);
       const data = await fetchQuickStartSeedSite(user.id);
       setSiteId(data?.id ?? null);
       if (data?.onboarding_answers && typeof data.onboarding_answers === 'object') {
@@ -300,7 +235,7 @@ export const QuickStart: React.FC = () => {
       }
     };
     void fetchWeddingSite();
-  }, []);
+  }, [searchParams]);
 
   useEffect(() => {
     if (!currentQuestion) return;
@@ -386,8 +321,8 @@ export const QuickStart: React.FC = () => {
           clarifyingState: clarifyingOverride,
           viewState,
         });
-        persistQuickStartDraftSnapshot(carriedQuickStartDraft);
-        writeSignupReturnPath(buildQuickStartEntryPath());
+        persistQuickStartDraftSnapshot(carriedQuickStartDraft, quickStartStorageScope);
+        writeSignupReturnPath(buildQuickStartEntryPath(), quickStartStorageScope);
         setLoading(false);
         navigate('/signup?bypassPayment=1', {
           replace: true,
@@ -500,8 +435,8 @@ export const QuickStart: React.FC = () => {
           },
         });
       }
-      clearQuickStartDraftSnapshot();
-      clearOnboardingEntryReturnPath();
+      clearQuickStartDraftSnapshot(quickStartStorageScope);
+      clearOnboardingEntryReturnPath(quickStartStorageScope);
       navigate(buildQuickStartGuestsPath(), {
         state: { showWelcome: true, nextStep: 'guest-import' },
       });
@@ -643,6 +578,23 @@ export const QuickStart: React.FC = () => {
     }
   };
 
+  const handleQuestionInputChange = (value: string) => {
+    setInputValue(value);
+    setError('');
+  };
+
+  const handleFollowUpInputChange = (questionId: string, value: string) => {
+    setError('');
+    const nextFollowUps = { ...followUpAnswersRef.current, [questionId]: value };
+    followUpAnswersRef.current = nextFollowUps;
+    setFollowUpAnswers(nextFollowUps);
+    const nextClarifying = mergeClarifyingAnswer(clarifyingStateRef.current, questionId, value);
+    clarifyingStateRef.current = nextClarifying;
+    if (nextClarifying) {
+      setClarifyingState(nextClarifying);
+    }
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center px-6 py-12" style={{ backgroundColor: PAGE_BG }}>
       <div className="w-full max-w-[560px]">
@@ -685,7 +637,7 @@ export const QuickStart: React.FC = () => {
                 {PROCESSING_STEPS.map((step, index) => {
                   const active = index <= processingStep;
                   return (
-                    <div key={step} className="flex items-center gap-3 rounded-lg px-4 py-3" style={{ backgroundColor: active ? SOFT : 'transparent', border: active ? `1px solid ${BORDER}` : '1px solid transparent' }}>
+                    <div key={step} className="flex items-center gap-3 rounded-xl px-4 py-3" style={{ backgroundColor: active ? SOFT : 'transparent', border: active ? `1px solid ${BORDER}` : '1px solid transparent' }}>
                       <div className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: active ? WARM : BORDER }} />
                       <p className="text-[14px]" style={{ color: active ? TEXT : MUTED }}>{step}</p>
                     </div>
@@ -709,7 +661,7 @@ export const QuickStart: React.FC = () => {
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.12 }}
-                      className="w-full rounded-lg px-6 py-5 text-left transition-all duration-100"
+                      className="w-full rounded-xl px-6 py-5 text-left transition-all duration-100"
                       style={{ backgroundColor: SOFT, fontSize: '17px', color: TEXT, border: '1px solid transparent' }}
                       onMouseEnter={(event) => {
                         event.currentTarget.style.backgroundColor = SOFT_HOVER;
@@ -726,25 +678,25 @@ export const QuickStart: React.FC = () => {
                 </div>
               ) : currentQuestion?.type === 'textarea' ? (
                 <div className="space-y-4">
-                  <textarea value={inputValue} onChange={(event) => setInputValue(event.target.value)} onKeyDown={(event) => {
+                  <textarea value={inputValue} onChange={(event) => handleQuestionInputChange(event.target.value)} onKeyDown={(event) => {
                     if (event.key === 'Enter' && !event.shiftKey && !loading) {
                       event.preventDefault();
                       void goNext(inputValue);
                     }
-                  }} placeholder={currentQuestion.placeholder} rows={5} className="w-full rounded-lg border-0 px-6 py-5 outline-none transition-all duration-200 resize-none" style={{ backgroundColor: SOFT, fontSize: '17px', color: TEXT }} />
+                  }} placeholder={currentQuestion.placeholder} rows={5} className="w-full rounded-xl border-0 px-6 py-5 outline-none transition-all duration-200 resize-none" style={{ backgroundColor: SOFT, fontSize: '17px', color: TEXT }} />
                   <div className="flex gap-3">
-                    {currentQuestion.optional && <button type="button" onClick={() => void goNext('')} className="rounded-lg px-6 py-4" style={{ backgroundColor: SOFT, color: TEXT }}>Skip</button>}
-                    <button type="button" onClick={() => void goNext(inputValue)} disabled={loading || (!inputValue.trim() && !currentQuestion.optional)} className="rounded-lg px-8 py-4 transition-all duration-200 disabled:opacity-30" style={{ backgroundColor: TEXT, color: '#FFFFFF', fontSize: '15px', fontWeight: 500 }}>
+                    {currentQuestion.optional && <button type="button" onClick={() => void goNext('')} className="rounded-xl px-6 py-4" style={{ backgroundColor: SOFT, color: TEXT }}>Skip</button>}
+                    <button type="button" onClick={() => void goNext(inputValue)} disabled={loading || (!inputValue.trim() && !currentQuestion.optional)} className="rounded-xl px-8 py-4 transition-all duration-200 disabled:opacity-30" style={{ backgroundColor: TEXT, color: '#FFFFFF', fontSize: '15px', fontWeight: 500 }}>
                       {loading ? 'Building...' : safeCurrentIndex === questions.length - 1 && !showFollowUps ? 'Build my draft' : 'Continue'}
                     </button>
                   </div>
                 </div>
               ) : (
                 <div className="space-y-4">
-                  <input type="text" value={inputValue} onChange={(event) => setInputValue(event.target.value)} onKeyDown={(event) => event.key === 'Enter' && !loading && void goNext(inputValue)} placeholder={currentQuestion?.type === 'date' ? 'YYYY-MM-DD or a clear date like 2026-12-01' : currentQuestion?.placeholder} autoFocus className="w-full rounded-lg border-0 px-6 py-5 outline-none transition-all duration-200" style={{ backgroundColor: SOFT, fontSize: '17px', color: TEXT }} />
+                  <input type="text" value={inputValue} onChange={(event) => handleQuestionInputChange(event.target.value)} onKeyDown={(event) => event.key === 'Enter' && !loading && void goNext(inputValue)} placeholder={currentQuestion?.type === 'date' ? 'YYYY-MM-DD or a clear date like 2026-12-01' : currentQuestion?.placeholder} autoFocus className="w-full rounded-xl border-0 px-6 py-5 outline-none transition-all duration-200" style={{ backgroundColor: SOFT, fontSize: '17px', color: TEXT }} />
                   <div className="flex gap-3">
-                    {currentQuestion?.optional && <button type="button" onClick={() => void goNext('')} className="rounded-lg px-6 py-4" style={{ backgroundColor: SOFT, color: TEXT }}>Skip</button>}
-                    <button type="button" onClick={() => void goNext(inputValue)} disabled={loading || (!inputValue.trim() && !currentQuestion?.optional)} className="rounded-lg px-8 py-4 transition-all duration-200 disabled:opacity-30" style={{ backgroundColor: TEXT, color: '#FFFFFF', fontSize: '15px', fontWeight: 500 }}>
+                    {currentQuestion?.optional && <button type="button" onClick={() => void goNext('')} className="rounded-xl px-6 py-4" style={{ backgroundColor: SOFT, color: TEXT }}>Skip</button>}
+                    <button type="button" onClick={() => void goNext(inputValue)} disabled={loading || (!inputValue.trim() && !currentQuestion?.optional)} className="rounded-xl px-8 py-4 transition-all duration-200 disabled:opacity-30" style={{ backgroundColor: TEXT, color: '#FFFFFF', fontSize: '15px', fontWeight: 500 }}>
                       {loading ? 'Building...' : safeCurrentIndex === questions.length - 1 && !showFollowUps ? 'Build my draft' : 'Continue'}
                     </button>
                   </div>
@@ -764,28 +716,18 @@ export const QuickStart: React.FC = () => {
                 {activeClarifyingQuestions.slice(0, 3).map((question) => (
                   <div key={question.id}>
                     <p className="mb-2 text-[14px]" style={{ color: TEXT }}>{question.question}</p>
-                    <textarea value={followUpAnswers[question.id] || ''} onChange={(event) => {
-                      const nextValue = event.target.value;
-                      const nextFollowUps = { ...followUpAnswersRef.current, [question.id]: nextValue };
-                      followUpAnswersRef.current = nextFollowUps;
-                      setFollowUpAnswers(nextFollowUps);
-                      const nextClarifying = mergeClarifyingAnswer(clarifyingStateRef.current, question.id, nextValue);
-                      clarifyingStateRef.current = nextClarifying;
-                      if (nextClarifying) {
-                        setClarifyingState(nextClarifying);
-                      }
-                    }} rows={3} className="w-full rounded-lg border-0 px-6 py-4 outline-none resize-none" style={{ backgroundColor: SOFT, fontSize: '16px', color: TEXT }} />
+                    <textarea value={followUpAnswers[question.id] || ''} onChange={(event) => handleFollowUpInputChange(question.id, event.target.value)} rows={3} className="w-full rounded-xl border-0 px-6 py-4 outline-none resize-none" style={{ backgroundColor: SOFT, fontSize: '16px', color: TEXT }} />
                   </div>
                 ))}
               </div>
               <div className="mt-6 flex gap-3">
-                <button type="button" onClick={() => void continueAiLoopFromFollowUps()} disabled={loading} className="rounded-lg px-8 py-4 transition-all duration-200 disabled:opacity-30" style={{ backgroundColor: TEXT, color: '#FFFFFF', fontSize: '15px', fontWeight: 500 }}>
+                <button type="button" onClick={() => void continueAiLoopFromFollowUps()} disabled={loading} className="rounded-xl px-8 py-4 transition-all duration-200 disabled:opacity-30" style={{ backgroundColor: TEXT, color: '#FFFFFF', fontSize: '15px', fontWeight: 500 }}>
                   {loading ? 'Building...' : 'Build my draft'}
                 </button>
                 <button type="button" onClick={() => {
                   setShowFollowUps(false);
                   setViewState('question');
-                }} className="rounded-lg px-6 py-4" style={{ backgroundColor: SOFT, color: TEXT }}>
+                }} className="rounded-xl px-6 py-4" style={{ backgroundColor: SOFT, color: TEXT }}>
                   Back
                 </button>
               </div>
@@ -797,12 +739,12 @@ export const QuickStart: React.FC = () => {
 
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }} className="mt-16 flex items-center gap-4">
           <button className="text-[13px] transition-opacity duration-200 hover:opacity-60" style={{ color: MUTED }} onClick={() => {
-            clearQuickStartDraftSnapshot();
-            window.location.href = `${buildQuickStartEntryPath()}&resetQuickStart=1`;
+            clearQuickStartDraftSnapshot(quickStartStorageScope);
+            navigate(`${buildQuickStartEntryPath()}&resetQuickStart=1`);
           }}>
             Start over
           </button>
-          <button className="text-[13px] transition-opacity duration-200 hover:opacity-60" style={{ color: MUTED }} onClick={() => { clearAllOnboardingContinuationState(); navigate('/dashboard?bypassPayment=1'); }}>
+          <button className="text-[13px] transition-opacity duration-200 hover:opacity-60" style={{ color: MUTED }} onClick={() => { clearAllOnboardingContinuationState(quickStartStorageScope); navigate('/dashboard?bypassPayment=1'); }}>
             Open the editor instead
           </button>
         </motion.div>

@@ -25,7 +25,7 @@ export const TravelSection: React.FC<TravelSectionProps> = ({ content }) => {
               {content.hotels.map((hotel, index) => {
                 const safeHotelUrl = getSafePublicWebUrl(hotel.url);
                 return (
-                <div key={index} className="bg-background rounded-lg p-6">
+                <div key={index} className="bg-background rounded-xl p-6">
                   <h4 className="font-semibold text-text-primary mb-2">{hotel.name}</h4>
                   {hotel.address && (
                     <p className="text-text-secondary text-sm mb-1">{hotel.address}</p>
@@ -59,14 +59,14 @@ export const TravelSection: React.FC<TravelSectionProps> = ({ content }) => {
               <Car className="w-6 h-6 text-primary" />
               <h3 className="text-2xl font-semibold text-text-primary">Parking</h3>
             </div>
-            <div className="bg-background rounded-lg p-6">
+            <div className="bg-background rounded-xl p-6">
               <p className="text-text-secondary">{content.parking}</p>
             </div>
           </div>
         )}
 
         {content.transportation && (
-          <div className="bg-background rounded-lg p-6">
+          <div className="bg-background rounded-xl p-6">
             <h3 className="text-xl font-semibold text-text-primary mb-3">Transportation</h3>
             <p className="text-text-secondary">{content.transportation}</p>
           </div>

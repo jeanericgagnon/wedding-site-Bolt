@@ -1,4 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ProtectedRoute } from './ProtectedRoute';
@@ -96,6 +98,40 @@ describe('ProtectedRoute', () => {
     );
 
     expect(await screen.findByText('secret dashboard')).toBeInTheDocument();
+  });
+
+  it('does not wait on billing or role lookups when the payment gate is skipped', async () => {
+    fetchBillingInfoMock.mockRejectedValue(new Error('billing down'));
+    resolveActiveSiteRoleForUserMock.mockRejectedValue(new Error('role down'));
+
+    render(
+      <MemoryRouter initialEntries={['/account']}>
+        <Routes>
+          <Route
+            path="/account"
+            element={(
+              <ProtectedRoute skipPaymentGate>
+                <div>account settings</div>
+              </ProtectedRoute>
+            )}
+          />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    expect(await screen.findByText('account settings')).toBeInTheDocument();
+    expect(fetchBillingInfoMock).not.toHaveBeenCalled();
+    expect(resolveActiveSiteRoleForUserMock).not.toHaveBeenCalled();
+  });
+
+  it('guards async billing and role lookup completions after route cleanup', () => {
+    const source = readFileSync(join(process.cwd(), 'src/components/auth/ProtectedRoute.tsx'), 'utf8');
+
+    expect(source).toContain('let cancelled = false;');
+    expect(source).toContain("setBillingInfo('loading');");
+    expect(source).toContain('if (!cancelled) setActiveSiteRole(role);');
+    expect(source).toContain("if (!cancelled) setBillingInfo('unavailable');");
+    expect(source).toContain('cancelled = true;');
   });
 
   it('waits for collaborator role resolution before applying the payment gate', async () => {

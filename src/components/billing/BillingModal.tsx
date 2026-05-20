@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { X, Check, Sparkles, Loader2, AlertCircle } from 'lucide-react';
 import { Button } from '../ui';
 import { useAuth } from '../../hooks/useAuth';
@@ -34,6 +34,11 @@ export const BillingModal: React.FC<BillingModalProps> = ({ onClose, currentPlan
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setLoading(false);
+    setError(null);
+  }, [currentPlan, user?.id]);
 
   const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (e.target === e.currentTarget) onClose();
@@ -81,7 +86,7 @@ export const BillingModal: React.FC<BillingModalProps> = ({ onClose, currentPlan
       aria-modal="true"
       aria-labelledby="billing-modal-title"
     >
-      <div className="bg-surface rounded-lg border border-border-subtle w-full max-w-lg max-h-[90vh] overflow-y-auto">
+      <div className="bg-surface rounded-xl border border-border-subtle w-full max-w-lg max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between p-6 border-b border-border-subtle">
           <div>
             <h2 id="billing-modal-title" className="text-xl font-bold text-text-primary">
@@ -93,7 +98,7 @@ export const BillingModal: React.FC<BillingModalProps> = ({ onClose, currentPlan
           </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-surface-subtle rounded-lg transition-colors"
+            className="p-2 hover:bg-surface-subtle rounded-xl transition-colors"
             aria-label="Close"
           >
             <X className="w-5 h-5 text-text-secondary" aria-hidden="true" />
@@ -101,9 +106,9 @@ export const BillingModal: React.FC<BillingModalProps> = ({ onClose, currentPlan
         </div>
 
         <div className="p-6 space-y-5">
-          <div className="rounded-lg border border-border-subtle bg-surface-secondary/40 p-5 relative">
+          <div className="rounded-xl border border-border-subtle bg-surface-secondary/40 p-5 relative">
             <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-              <span className="flex items-center gap-1 rounded-lg border border-primary/20 bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
+              <span className="flex items-center gap-1 rounded-xl border border-primary/20 bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
                 <Sparkles className="w-3.5 h-3.5" aria-hidden="true" />
                 One payment
               </span>
@@ -124,7 +129,7 @@ export const BillingModal: React.FC<BillingModalProps> = ({ onClose, currentPlan
           </div>
 
           {error && (
-            <div className="flex items-start gap-2 p-3 bg-surface-secondary border border-border-subtle rounded-lg text-text-secondary text-sm">
+            <div className="flex items-start gap-2 p-3 bg-surface-secondary border border-border-subtle rounded-xl text-text-secondary text-sm">
               <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5 text-text-tertiary" />
               <span>{error}</span>
             </div>

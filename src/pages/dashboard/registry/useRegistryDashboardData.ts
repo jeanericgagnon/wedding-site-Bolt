@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, type Dispatch, type SetStateAction } from 'react';
+import { useCallback, useEffect, useRef, useState, type Dispatch, type SetStateAction } from 'react';
 
 import type { RegistryThankYouLedger } from '../../../lib/registryLaunchReadiness';
 import { getCurrentMonthKey, resolveRegistryRefreshBudgetState } from './refreshBudget';
@@ -10,6 +10,19 @@ import type { RegistryItem } from './registryTypes';
 import { demoWeddingSite } from '../../../lib/demoData';
 
 const REGISTRY_DASHBOARD_LOAD_TIMEOUT_MS = 12000;
+
+async function runRegistryDashboardTimed<T>(task: Promise<T>, timeoutMs: number): Promise<T> {
+  let timeoutId: number | null = null;
+  const timeout = new Promise<never>((_, reject) => {
+    timeoutId = window.setTimeout(() => reject(new Error('Registry dashboard load timed out.')), timeoutMs);
+  });
+
+  try {
+    return await Promise.race([task, timeout]);
+  } finally {
+    if (timeoutId) window.clearTimeout(timeoutId);
+  }
+}
 
 function sanitizeRegistryQuantityState(quantityPurchased = 0, quantityNeeded = 1) {
   const safeNeeded = Math.max(1, Number.isFinite(quantityNeeded) ? quantityNeeded : 1);
@@ -45,6 +58,7 @@ export function useRegistryDashboardData(args: UseRegistryDashboardDataArgs) {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [weddingSiteId, setWeddingSiteId] = useState<string | null>(null);
+  const [siteSlug, setSiteSlug] = useState<string | null>(null);
   const [weddingDate, setWeddingDate] = useState<string | null>(null);
   const [refreshEnabledUntil, setRefreshEnabledUntil] = useState<string | null>(null);
   const [monthlyRefreshCap, setMonthlyRefreshCap] = useState(100);
@@ -58,6 +72,26 @@ export function useRegistryDashboardData(args: UseRegistryDashboardDataArgs) {
   const [policyUpdatedAt, setPolicyUpdatedAt] = useState<string | null>(null);
   const [policyUpdatedBy, setPolicyUpdatedBy] = useState<string | null>(null);
   const [registryThankYouLedgerState, setRegistryThankYouLedgerState] = useState<RegistryThankYouLedger>({});
+  const initRequestIdRef = useRef(0);
+
+  const resetRegistryDashboardState = useCallback(() => {
+    setWeddingSiteId(null);
+    setSiteSlug(null);
+    setWeddingDate(null);
+    setRefreshEnabledUntil(null);
+    setMonthlyRefreshCap(100);
+    setAutoRefreshEnabled(true);
+    setMonthlyRefreshCount(0);
+    setMonthlyRefreshMonth(null);
+    setRefreshCapDraft(100);
+    setRefreshWindowDraft('');
+    setRefreshPreset('balanced');
+    setRefreshIncludePurchased(false);
+    setPolicyUpdatedAt(null);
+    setPolicyUpdatedBy(null);
+    setItemsState([]);
+    setRegistryThankYouLedgerState({});
+  }, []);
 
   const setItems: Dispatch<SetStateAction<RegistryItem[]>> = useCallback((value) => {
     setItemsState((prev) => {
@@ -85,11 +119,13 @@ export function useRegistryDashboardData(args: UseRegistryDashboardDataArgs) {
     });
   }, [isDemoMode, itemsState]);
 
-  const loadItems = useCallback(async (siteId: string) => {
+  const loadItems = useCallback(async (siteId: string, shouldCancel?: () => boolean) => {
     try {
       const data = await fetchRegistryItems(siteId);
+      if (shouldCancel?.()) return;
       setItems(data.map(normalizeOwnerDashboardRegistryItem));
     } catch {
+      if (shouldCancel?.()) return;
       toast('Couldn’t load registry items right now. Please try again.', 'error');
       throw new Error('Registry items failed to load.');
     }
@@ -97,27 +133,48 @@ export function useRegistryDashboardData(args: UseRegistryDashboardDataArgs) {
 
   useEffect(() => {
     async function init() {
+      const requestId = ++initRequestIdRef.current;
+      const isCurrentInit = () => requestId === initRequestIdRef.current;
       setLoading(true);
       setLoadError(null);
       try {
         if (isDemoMode) {
           const demoState = readDemoRegistryState();
           setWeddingSiteId(demoWeddingSite.id);
+          setSiteSlug(demoWeddingSite.site_slug);
+          setWeddingDate(demoWeddingSite.wedding_date);
+          setRefreshEnabledUntil(null);
+          setMonthlyRefreshCap(100);
+          setAutoRefreshEnabled(true);
+          setMonthlyRefreshCount(0);
+          setMonthlyRefreshMonth(getCurrentMonthKey());
+          setRefreshCapDraft(100);
+          setRefreshWindowDraft('');
+          setRefreshPreset('balanced');
+          setRefreshIncludePurchased(false);
+          setPolicyUpdatedAt(null);
+          setPolicyUpdatedBy(null);
           setItemsState(demoState.items.map(normalizeOwnerDashboardRegistryItem));
           setRegistryThankYouLedgerState(demoState.thankYouLedger);
           return;
         }
 
-        if (!userId) return;
-        const site = await Promise.race([
+        if (!userId) {
+          resetRegistryDashboardState();
+          return;
+        }
+        const site = await runRegistryDashboardTimed(
           loadRegistryDashboardSite(userId),
-          new Promise<never>((_, reject) => {
-            window.setTimeout(() => reject(new Error('Registry dashboard load timed out.')), REGISTRY_DASHBOARD_LOAD_TIMEOUT_MS);
-          }),
-        ]);
-        if (!site?.id) return;
+          REGISTRY_DASHBOARD_LOAD_TIMEOUT_MS,
+        );
+        if (!isCurrentInit()) return;
+        if (!site?.id) {
+          resetRegistryDashboardState();
+          return;
+        }
 
         setWeddingSiteId(site.id);
+        setSiteSlug(site.site_slug ?? null);
         const budgetState = resolveRegistryRefreshBudgetState({
           storedMonthKey: site.registry_monthly_refresh_month ?? null,
           storedCount: site.registry_monthly_refresh_count ?? 0,
@@ -136,29 +193,27 @@ export function useRegistryDashboardData(args: UseRegistryDashboardDataArgs) {
         setRefreshCapDraft(loadedCap);
         setRefreshPreset(loadedCap <= 60 ? 'lean' : loadedCap <= 160 ? 'balanced' : 'aggressive');
         setMonthlyRefreshCount(budgetState.count);
-        const [_, ledger] = await Promise.race([
+        const [_, ledger] = await runRegistryDashboardTimed(
           Promise.all([
-            loadItems(site.id),
+            loadItems(site.id, () => !isCurrentInit()),
             loadRegistryThankYouLedger(site.id),
           ]),
-          new Promise<never>((_, reject) => {
-            window.setTimeout(() => reject(new Error('Registry dashboard load timed out.')), REGISTRY_DASHBOARD_LOAD_TIMEOUT_MS);
-          }),
-        ]);
+          REGISTRY_DASHBOARD_LOAD_TIMEOUT_MS,
+        );
+        if (!isCurrentInit()) return;
         setRegistryThankYouLedger(ledger);
       } catch {
-        setWeddingSiteId(null);
-        setItemsState([]);
-        setRegistryThankYouLedgerState({});
+        if (requestId !== initRequestIdRef.current) return;
+        resetRegistryDashboardState();
         setLoadError('Couldn’t load registry right now. Try again in a moment.');
         toast('Couldn’t finish setup right now. Please try again.', 'error');
       } finally {
-        setLoading(false);
+        if (requestId === initRequestIdRef.current) setLoading(false);
       }
     }
 
     void init();
-  }, [isDemoMode, loadItems, toast, userId]);
+  }, [isDemoMode, loadItems, resetRegistryDashboardState, toast, userId]);
 
   return {
     autoRefreshEnabled,
@@ -190,6 +245,7 @@ export function useRegistryDashboardData(args: UseRegistryDashboardDataArgs) {
     setRegistryThankYouLedger,
     setRefreshWindowDraft,
     weddingDate,
+    siteSlug,
     weddingSiteId,
     loadItems,
     registryThankYouLedger: registryThankYouLedgerState,

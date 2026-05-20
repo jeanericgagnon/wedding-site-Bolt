@@ -8,56 +8,65 @@ const steps = [
   {
     id: 'coordinator-role-access-tests',
     label: 'Coordinator role-access tests',
-    command: 'npm test -- src/lib/coordinatorRoleAccess.test.ts',
+    command: 'node_modules/.bin/vitest run src/lib/coordinatorRoleAccess.test.ts --config scripts/coordinator-dayof-vitest.config.mjs --environment jsdom --pool=threads --maxWorkers=1 --no-file-parallelism --reporter=verbose',
     required: true,
+    timeoutMs: 180_000,
   },
   {
     id: 'coordinator-checkin-queue-tests',
     label: 'Coordinator check-in queue tests',
-    command: 'npm test -- src/lib/coordinatorCheckInQueue.test.ts',
+    command: 'node_modules/.bin/vitest run src/lib/coordinatorCheckInQueue.test.ts --config scripts/coordinator-dayof-vitest.config.mjs --environment jsdom --pool=threads --maxWorkers=1 --no-file-parallelism --reporter=verbose',
     required: true,
+    timeoutMs: 180_000,
   },
   {
     id: 'coordinator-qr-tests',
     label: 'Coordinator QR parser and scanner tests',
-    command: 'npm test -- --run src/lib/qr/qrPayload.test.ts src/components/qr/QrScanner.test.tsx',
+    command: 'node_modules/.bin/vitest run src/lib/qr/qrPayload.test.ts src/components/qr/QrScanner.test.tsx --config scripts/coordinator-dayof-vitest.config.mjs --environment jsdom --pool=threads --maxWorkers=1 --no-file-parallelism --reporter=verbose',
     required: true,
+    timeoutMs: 180_000,
   },
   {
     id: 'coordinator-event-awareness-tests',
     label: 'Coordinator event-awareness and seating-scope tests',
-    command: 'npm test -- --run src/lib/operationalEvent.test.ts src/pages/dashboard/coordinator/buildCoordinatorDashboardDerivedState.test.ts src/pages/dashboard/seating/seatingService.test.ts src/lib/coordinatorEventAwarenessProof.test.ts',
+    command: 'node_modules/.bin/vitest run src/lib/operationalEvent.test.ts src/pages/dashboard/coordinator/buildCoordinatorDashboardDerivedState.test.ts src/pages/dashboard/seating/seatingService.test.ts src/lib/coordinatorEventAwarenessProof.test.ts --config scripts/coordinator-dayof-vitest.config.mjs --environment jsdom --pool=threads --maxWorkers=1 --no-file-parallelism --reporter=verbose',
     required: true,
+    timeoutMs: 180_000,
   },
   {
     id: 'coordinator-timeline-state-tests',
     label: 'Coordinator timeline state tests',
-    command: 'npm test -- src/lib/coordinatorTimelineState.test.ts',
+    command: 'node_modules/.bin/vitest run src/lib/coordinatorTimelineState.test.ts --config scripts/coordinator-dayof-vitest.config.mjs --environment jsdom --pool=threads --maxWorkers=1 --no-file-parallelism --reporter=verbose',
     required: true,
+    timeoutMs: 180_000,
   },
   {
     id: 'coordinator-service-tests',
     label: 'Coordinator service and persistence tests',
-    command: 'npm test -- src/pages/dashboard/coordinator/coordinatorService.test.ts',
+    command: 'node_modules/.bin/vitest run src/pages/dashboard/coordinator/coordinatorService.test.ts --config scripts/coordinator-dayof-vitest.config.mjs --environment jsdom --pool=threads --maxWorkers=1 --no-file-parallelism --reporter=verbose',
     required: true,
+    timeoutMs: 180_000,
   },
   {
     id: 'coordinator-full-suite-tests',
     label: 'Coordinator full-suite continuity and export tests',
-    command: 'npm test -- src/pages/dashboard/coordinator/coordinatorFullSuiteUtils.test.ts',
+    command: 'node_modules/.bin/vitest run src/pages/dashboard/coordinator/coordinatorFullSuiteUtils.test.ts --config scripts/coordinator-dayof-vitest.config.mjs --environment jsdom --pool=threads --maxWorkers=1 --no-file-parallelism --reporter=verbose',
     required: true,
+    timeoutMs: 180_000,
   },
   {
     id: 'checkin-guard',
     label: 'Check-in guard',
     command: 'npm run smoke:checkin',
     required: true,
+    timeoutMs: 60_000,
   },
   {
     id: 'build',
     label: 'Build integrity check',
     command: 'npm run build',
     required: true,
+    timeoutMs: 900_000,
   },
 ];
 
@@ -77,15 +86,18 @@ if (requireLive && !liveEnabled) {
 
 function runStep(step) {
   const startedAt = new Date().toISOString();
+  console.error(`[coordinator-dayof-proof] starting ${step.id}: ${step.command}`);
   try {
     const stdout = execSync(step.command, {
       stdio: ['ignore', 'pipe', 'pipe'],
       encoding: 'utf8',
       shell: '/bin/zsh',
       env: process.env,
+      timeout: step.timeoutMs ?? 180_000,
       maxBuffer: 20 * 1024 * 1024,
     });
 
+    console.error(`[coordinator-dayof-proof] passed ${step.id}`);
     return {
       id: step.id,
       label: step.label,
@@ -99,6 +111,7 @@ function runStep(step) {
   } catch (error) {
     const stdout = typeof error?.stdout === 'string' ? error.stdout : Buffer.isBuffer(error?.stdout) ? error.stdout.toString('utf8') : '';
     const stderr = typeof error?.stderr === 'string' ? error.stderr : Buffer.isBuffer(error?.stderr) ? error.stderr.toString('utf8') : '';
+    console.error(`[coordinator-dayof-proof] failed ${step.id}`);
     return {
       id: step.id,
       label: step.label,
@@ -121,6 +134,7 @@ if (liveEnabled) {
     label: 'Coordinator live runtime smoke',
     command: 'npx playwright test --workers=1 tests/e2e/coordinator-dayof-live.spec.ts',
     required: true,
+    timeoutMs: 420_000,
   }));
 }
 const failedRequired = results.filter((result) => result.required && !result.ok);
@@ -134,6 +148,11 @@ const output = {
     passed: results.filter((result) => result.ok).length,
     failed: results.filter((result) => !result.ok).length,
   },
+  contractSummary: failedRequired.length === 0
+    ? liveEnabled
+      ? 'Coordinator day-of live proof is green: this lane closes coordinator runtime truth for the shipped ops surface while still rolling up into the broader proof-board launch call.'
+      : 'Coordinator day-of local proof is green: this lane validates coordinator ops behavior locally and leaves real event-floor runtime truth to the dedicated live rerun plus the broader proof-board flow.'
+    : 'Coordinator day-of proof is not green yet: required role, check-in, QR, event-awareness, service, full-suite, guard, build, or live runtime evidence is still failing.',
   automatedCoverage: [
     'Role-aware coordinator live-ops boundaries',
     'Check-in queue filtering behavior',

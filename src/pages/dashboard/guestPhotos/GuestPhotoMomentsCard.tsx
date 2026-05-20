@@ -61,15 +61,15 @@ export function GuestPhotoMomentsCard({
             Sort new guest photos into the moments they belong to, then reuse that work for albums, slideshow order, captions, and quality checks.
           </p>
           <div className="mt-3 flex flex-wrap gap-2 text-xs text-text-secondary">
-            <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">{uploadAnalyses.length} reviewed</span>
-            <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">{visionReadyCount} ready</span>
-            <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">{visionFallbackCount} waiting</span>
-            <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">{unanalyzedUploadCount} new photos</span>
-            <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">{metadataExifCount} with time details</span>
-            <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">{metadataGpsCount} with private place details</span>
-            <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">{metadataEventMatchCount} matched to the day</span>
-            <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">{aiAcceptedCorrectionCount} accepted changes</span>
-            <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">{aiRejectedCorrectionCount} kept as-is</span>
+            <span className="rounded-xl border border-border-subtle bg-surface-subtle px-3 py-1">{uploadAnalyses.length} reviewed</span>
+            <span className="rounded-xl border border-border-subtle bg-surface-subtle px-3 py-1">{visionReadyCount} ready</span>
+            <span className="rounded-xl border border-border-subtle bg-surface-subtle px-3 py-1">{visionFallbackCount} waiting</span>
+            <span className="rounded-xl border border-border-subtle bg-surface-subtle px-3 py-1">{unanalyzedUploadCount} new photos</span>
+            <span className="rounded-xl border border-border-subtle bg-surface-subtle px-3 py-1">{metadataExifCount} with time details</span>
+            <span className="rounded-xl border border-border-subtle bg-surface-subtle px-3 py-1">{metadataGpsCount} with private place details</span>
+            <span className="rounded-xl border border-border-subtle bg-surface-subtle px-3 py-1">{metadataEventMatchCount} matched to the day</span>
+            <span className="rounded-xl border border-border-subtle bg-surface-subtle px-3 py-1">{aiAcceptedCorrectionCount} accepted changes</span>
+            <span className="rounded-xl border border-border-subtle bg-surface-subtle px-3 py-1">{aiRejectedCorrectionCount} kept as-is</span>
           </div>
         </div>
         <div className="flex flex-col sm:flex-row gap-2">
@@ -92,13 +92,13 @@ export function GuestPhotoMomentsCard({
             const upload = uploads.find((entry) => entry.id === analysis.upload_id);
             const metadata = metadataByUploadId.get(analysis.upload_id);
             return (
-              <div key={analysis.id} className="rounded-lg border border-border-subtle bg-surface-subtle px-4 py-4">
+              <div key={analysis.id} className="rounded-2xl border border-border-subtle bg-surface-subtle px-4 py-4">
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <p className="text-sm font-semibold text-text-primary">{safePhotoAnalysisText(analysis.detected_moment, 'Photo')}</p>
                     <p className="mt-1 text-xs text-text-tertiary">{upload?.original_filename ?? 'Upload'} · {analysisSourceLabel(analysis)}</p>
                   </div>
-                  <span className="rounded-lg border border-border-subtle bg-white px-2 py-0.5 text-xs font-medium text-text-secondary">{Math.round(analysis.bucket_confidence * 100)}% sure</span>
+                  <span className="rounded-xl border border-border-subtle bg-white px-2 py-0.5 text-xs font-medium text-text-secondary">{Math.round(analysis.bucket_confidence * 100)}% sure</span>
                 </div>
                 <p className="mt-2 text-sm leading-5 text-neutral-700">{safePhotoAnalysisText(analysis.caption, 'No caption yet.')}</p>
                 {safeOptionalPhotoAnalysisText(analysis.suggested_bucket_name) && (

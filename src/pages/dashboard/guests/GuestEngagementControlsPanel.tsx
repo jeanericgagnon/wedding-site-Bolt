@@ -19,6 +19,8 @@ type GuestRsvpOps = {
   receptionNo: number;
 };
 
+type CopyActionResult = 'copied' | 'downloaded';
+
 interface GuestEngagementControlsPanelProps {
   activeSegmentLabel: string;
   autoRemindersEnabled: boolean;
@@ -65,13 +67,13 @@ interface GuestEngagementControlsPanelProps {
   onClearAllCheckIns: () => void;
   onClearFilters: () => void;
   onClearSelection: () => void;
-  onCopyAddressCollectionLink: () => void;
+  onCopyAddressCollectionLink: () => Promise<CopyActionResult | null>;
   onCopyChecklist: () => void;
-  onCopyContactRequestLink: () => void;
-  onCopyExceptionChecklist: () => void;
+  onCopyContactRequestLink: () => Promise<CopyActionResult | null>;
+  onCopyExceptionChecklist: () => Promise<CopyActionResult | null>;
   onCopyFilteredEmails: () => void;
-  onCopyMissingContactList: () => void;
-  onCopyMissingMealChecklist: () => void;
+  onCopyMissingContactList: () => Promise<CopyActionResult | null>;
+  onCopyMissingMealChecklist: () => Promise<CopyActionResult | null>;
   onCopyTextRsvpLinks: () => void;
   onCreateChecklist: () => void;
   onDeleteAllGuests: () => void;
@@ -275,6 +277,7 @@ export function GuestEngagementControlsPanel({
         <GuestCampaignReminderPanel
           campaignPreset={campaignPreset}
           campaignReadiness={campaignReadiness}
+          canEditGuests={canEditGuests}
           contactNoContactCount={contactNoContactCount}
           daysToWedding={daysToWedding}
           manualFollowUpCount={manualFollowUpCount}
@@ -302,6 +305,7 @@ export function GuestEngagementControlsPanel({
 
       <GuestSegmentControlsPanel
         activeSegmentLabel={activeSegmentLabel}
+        canEditGuests={canEditGuests}
         checkInMode={checkInMode}
         checkedInCount={checkedInCount}
         extraFilterCount={extraFilterCount}

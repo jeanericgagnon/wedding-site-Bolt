@@ -1,5 +1,6 @@
 import React from 'react';
 import { Trash2 } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { DashboardLayout } from '../../../components/dashboard/DashboardLayout';
 import { DashboardPageHero } from '../../../components/dashboard/DashboardPageHero';
 import { Badge, Button, Card, Input, Select } from '../../../components/ui';
@@ -23,6 +24,10 @@ import {
 import { makeRsvpQuestion, toTitleCase } from './guestDashboardUtils';
 import type { GuestAuditEntry, RSVPQuestionSetting } from './guestDashboardTypes';
 
+type RequestConfirmation = (
+  options: Pick<ConfirmDialogProps, 'title' | 'description' | 'confirmLabel' | 'tone'>,
+) => Promise<boolean>;
+
 interface GuestRsvpStats {
   confirmed: number;
   declined: number;
@@ -43,9 +48,10 @@ interface GuestRsvpSettingsViewProps {
   rsvpQuestions: RSVPQuestionSetting[];
   rsvpSetupChecklist: RsvpSetupChecklistItem[];
   stats: GuestRsvpStats;
+  isGuestsReadOnly: boolean;
   onAddRsvpQuestionTemplate: (template: RsvpQuestionTemplate) => void;
+  onRequestConfirmation: RequestConfirmation;
   onSaveRsvpConfig: () => void;
-  onSetConfirmDialog: React.Dispatch<React.SetStateAction<null | Omit<ConfirmDialogProps, 'open'>>>;
   onSetGuestsTab: (tab: 'ops' | 'rsvp-config') => void;
   onSetRsvpAccessSelection: React.Dispatch<React.SetStateAction<PersistedRsvpAccessSelection>>;
   onSetRsvpConfigDirty: (dirty: boolean) => void;
@@ -95,9 +101,10 @@ export function GuestRsvpSettingsView({
   rsvpQuestions,
   rsvpSetupChecklist,
   stats,
+  isGuestsReadOnly,
   onAddRsvpQuestionTemplate,
+  onRequestConfirmation,
   onSaveRsvpConfig,
-  onSetConfirmDialog,
   onSetGuestsTab,
   onSetRsvpAccessSelection,
   onSetRsvpConfigDirty,
@@ -118,6 +125,7 @@ export function GuestRsvpSettingsView({
   const safeRsvpQuestions = Array.isArray(rsvpQuestions) ? rsvpQuestions : [];
   const safeRsvpMealOptions = Array.isArray(rsvpMealOptions) ? rsvpMealOptions : [];
   const safeRsvpSetupChecklist = Array.isArray(rsvpSetupChecklist) ? rsvpSetupChecklist : [];
+  const canEditRsvpSettings = !isGuestsReadOnly;
   const supportedRsvpAccessModeCount = safeRsvpAccessModePlan.filter((mode) => mode.status !== 'future').length;
   const plannedRsvpAccessModeCount = safeRsvpAccessModePlan.filter((mode) => mode.status === 'future').length;
   const verificationInputsChecklistItem = safeRsvpSetupChecklist.find((item) => item.id === 'verification_inputs') ?? null;
@@ -187,7 +195,11 @@ export function GuestRsvpSettingsView({
     ? Math.round((rsvpSetupReadyCount / safeRsvpSetupChecklist.length) * 100)
     : 0;
   const rsvpSetupMainGapLabel = safeRsvpSetupChecklist.find((item) => item.status === 'needs-setup')?.label ?? null;
-  const markRsvpConfigDirty = () => onSetRsvpConfigDirty(true);
+  const markRsvpConfigDirty = () => {
+    if (!canEditRsvpSettings) return false;
+    onSetRsvpConfigDirty(true);
+    return true;
+  };
   const rsvpAccessSummary = safeRsvpAccessSelection.primaryMode === 'private_link'
     ? safeRsvpAccessSelection.allowNameLookupBackup
       ? 'Guests reply through private RSVP links, with name lookup kept on as the backup for misplaced invites.'
@@ -195,14 +207,15 @@ export function GuestRsvpSettingsView({
     : 'Guests can find their RSVP by name or email, while private invite links still stay available per guest.';
 
   const selectPrimaryMode = (primaryMode: SupportedRsvpAccessModeId) => {
+    if (!markRsvpConfigDirty()) return;
     onSetRsvpAccessSelection((prev) => ({
       primaryMode,
       allowNameLookupBackup: primaryMode === 'name_lookup' ? false : prev.allowNameLookupBackup,
     }));
-    markRsvpConfigDirty();
   };
 
   const updateMealOption = (index: number, value: string) => {
+    if (!markRsvpConfigDirty()) return;
     onSetRsvpMealOptions((prev) => {
       const next = [...prev];
       next[index] = toTitleCase(value);
@@ -211,28 +224,28 @@ export function GuestRsvpSettingsView({
   };
 
   const updateQuestion = (questionId: string, patch: Partial<RSVPQuestionSetting>) => {
+    if (!markRsvpConfigDirty()) return;
     onSetRsvpQuestions((prev) => prev.map((question) => question.id === questionId ? { ...question, ...patch } : question));
-    markRsvpConfigDirty();
   };
 
   const updateQuestionOption = (questionId: string, optionIndex: number, value: string) => {
+    if (!markRsvpConfigDirty()) return;
     onSetRsvpQuestions((prev) => prev.map((question) => {
       if (question.id !== questionId) return question;
       const options = [...(question.options ?? [])];
       options[optionIndex] = toTitleCase(value);
       return { ...question, options };
     }));
-    markRsvpConfigDirty();
   };
 
   const removeQuestionOption = (questionId: string, optionIndex: number) => {
+    if (!markRsvpConfigDirty()) return;
     onSetRsvpQuestions((prev) => prev.map((question) => {
       if (question.id !== questionId) return question;
       const options = [...(question.options ?? [])];
       options.splice(optionIndex, 1);
       return { ...question, options };
     }));
-    markRsvpConfigDirty();
   };
 
   return (
@@ -247,11 +260,11 @@ export function GuestRsvpSettingsView({
             { label: 'Meal choices', value: rsvpMealEnabled ? safeRsvpMealOptions.length : 'Off', detail: rsvpMealEnabled ? 'shown on RSVP' : 'hidden from guests' },
             { label: 'Responses', value: safeStats.confirmed + safeStats.declined, detail: `${safeStats.pending} still pending` },
           ]}
-          actions={<a href="/dashboard/rsvp-board" className="rounded-lg bg-primary px-3 py-2 text-sm font-medium text-white no-underline hover:bg-primary/90">Open RSVP view</a>}
+          actions={<Link to="/dashboard/rsvp-board" className="rounded-xl bg-primary px-3 py-2 text-sm font-medium text-white no-underline hover:bg-primary/90">Open RSVP view</Link>}
         >
-          <div className="inline-flex rounded-lg border border-border-subtle bg-white p-1">
-            <button className="px-3 py-1.5 text-sm rounded-md text-text-secondary" onClick={() => onSetGuestsTab('ops')}>Guests</button>
-            <button className="px-3 py-1.5 text-sm rounded-md bg-surface-subtle text-text-primary border border-border-subtle" onClick={() => onSetGuestsTab('rsvp-config')}>RSVP questions</button>
+          <div className="inline-flex rounded-xl border border-border-subtle bg-white p-1">
+            <button className="rounded-xl px-3 py-1.5 text-sm text-text-secondary" onClick={() => onSetGuestsTab('ops')}>Guests</button>
+            <button className="rounded-xl border border-border-subtle bg-surface-subtle px-3 py-1.5 text-sm text-text-primary" onClick={() => onSetGuestsTab('rsvp-config')}>RSVP questions</button>
           </div>
         </DashboardPageHero>
 
@@ -269,7 +282,7 @@ export function GuestRsvpSettingsView({
               {safeRsvpAccessModePlan.map((mode) => (
                 <div
                   key={mode.id}
-                  className={`rounded-lg border p-4 ${
+                  className={`rounded-2xl border p-4 ${
                     mode.status === 'recommended'
                       ? 'border-primary/40 bg-primary/5'
                       : mode.status === 'future'
@@ -302,7 +315,7 @@ export function GuestRsvpSettingsView({
                         type="button"
                         variant={mode.selected ? 'secondary' : 'outline'}
                         size="sm"
-                        disabled={mode.selected}
+                        disabled={mode.selected || !canEditRsvpSettings}
                         onClick={() => selectPrimaryMode(mode.id as SupportedRsvpAccessModeId)}
                       >
                         {mode.selected ? 'Selected as primary' : 'Use as primary access'}
@@ -313,18 +326,18 @@ export function GuestRsvpSettingsView({
               ))}
             </div>
 
-            <div className="rounded-lg border border-border-subtle bg-surface-subtle/30 p-4">
+            <div className="rounded-2xl border border-border-subtle bg-surface-subtle/30 p-4">
               <label className="flex items-start gap-3 text-sm text-text-primary">
                 <input
                   type="checkbox"
                   checked={safeRsvpAccessSelection.allowNameLookupBackup}
-                  disabled={safeRsvpAccessSelection.primaryMode !== 'private_link'}
+                  disabled={safeRsvpAccessSelection.primaryMode !== 'private_link' || !canEditRsvpSettings}
                   onChange={(event) => {
+                    if (!markRsvpConfigDirty()) return;
                     onSetRsvpAccessSelection((prev) => ({
                       ...prev,
                       allowNameLookupBackup: event.target.checked,
                     }));
-                    markRsvpConfigDirty();
                   }}
                   className="mt-0.5 h-4 w-4"
                 />
@@ -359,7 +372,7 @@ export function GuestRsvpSettingsView({
             </p>
 
             {verificationInputsChecklistItem ? (
-              <div className="rounded-lg border border-border-subtle bg-surface-subtle/30 p-4">
+              <div className="rounded-2xl border border-border-subtle bg-surface-subtle/30 p-4">
                 <div className="mb-2 flex items-center justify-between gap-3">
                   <div>
                     <p className="text-sm font-semibold text-text-primary">Phone or email recovery plan</p>
@@ -374,24 +387,24 @@ export function GuestRsvpSettingsView({
                   </span>
                 </div>
                 <div className="mb-3 grid gap-2 sm:grid-cols-4">
-                  <div className="rounded-md border border-border-subtle bg-white/80 p-3">
+                  <div className="rounded-xl border border-border-subtle bg-white/80 p-3">
                     <p className="text-[11px] font-medium uppercase tracking-wide text-text-tertiary">Recovery inputs</p>
                     <p className="mt-1 text-sm font-semibold text-text-primary">{verificationReadyLabel}</p>
                     {verificationInputsChecklistItem.supportLabel && (
                       <p className="mt-1 text-[11px] text-text-tertiary">{verificationInputsChecklistItem.supportLabel}</p>
                     )}
                   </div>
-                  <div className="rounded-md border border-border-subtle bg-white/80 p-3">
+                  <div className="rounded-xl border border-border-subtle bg-white/80 p-3">
                     <p className="text-[11px] font-medium uppercase tracking-wide text-text-tertiary">Recovery channels</p>
                     <p className="mt-1 text-sm font-semibold text-text-primary">{verificationChannelCoverageRate}% ready</p>
                     <p className="mt-1 text-[11px] text-text-tertiary">{verificationChannelLabel}</p>
                   </div>
-                  <div className="rounded-md border border-border-subtle bg-white/80 p-3">
+                  <div className="rounded-xl border border-border-subtle bg-white/80 p-3">
                     <p className="text-[11px] font-medium uppercase tracking-wide text-text-tertiary">Guest emails</p>
                     <p className="mt-1 text-sm font-semibold text-text-primary">{verificationEmailCount}</p>
                     <p className="mt-1 text-[11px] text-text-tertiary">{verificationEmailCount > 0 ? 'Ready for email recovery' : 'Still missing'}</p>
                   </div>
-                  <div className="rounded-md border border-border-subtle bg-white/80 p-3">
+                  <div className="rounded-xl border border-border-subtle bg-white/80 p-3">
                     <p className="text-[11px] font-medium uppercase tracking-wide text-text-tertiary">Phone numbers</p>
                     <p className="mt-1 text-sm font-semibold text-text-primary">{verificationPhoneCount}</p>
                     <p className="mt-1 text-[11px] text-text-tertiary">{verificationPhoneCount > 0 ? 'Ready for text recovery' : 'Still missing'}</p>
@@ -410,7 +423,7 @@ export function GuestRsvpSettingsView({
               <p className="text-sm text-text-secondary">Choose what guests answer when they reply on the RSVP page.</p>
             </div>
 
-            <div className="rounded-lg border border-border-subtle bg-white p-4">
+            <div className="rounded-2xl border border-border-subtle bg-white p-4">
               <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                 <div>
                   <p className="text-sm font-semibold text-text-primary">Setup proof checklist</p>
@@ -419,14 +432,14 @@ export function GuestRsvpSettingsView({
                 <Badge variant="neutral">Owner readback</Badge>
               </div>
               <div className="mb-3 grid gap-2 sm:grid-cols-2">
-                <div className="rounded-md border border-border-subtle bg-white/80 p-3">
+                <div className="rounded-xl border border-border-subtle bg-white/80 p-3">
                   <p className="text-[11px] font-medium uppercase tracking-wide text-text-tertiary">Setup coverage</p>
                   <p className="mt-1 text-sm font-semibold text-text-primary">{rsvpSetupCoverageRate}% ready</p>
                   <p className="mt-1 text-[11px] text-text-tertiary">
                     {rsvpSetupReadyCount} of {safeRsvpSetupChecklist.length} checklist item{safeRsvpSetupChecklist.length === 1 ? '' : 's'} ready
                   </p>
                 </div>
-                <div className="rounded-md border border-border-subtle bg-white/80 p-3">
+                <div className="rounded-xl border border-border-subtle bg-white/80 p-3">
                   <p className="text-[11px] font-medium uppercase tracking-wide text-text-tertiary">Real blockers</p>
                   <p className="mt-1 text-sm font-semibold text-text-primary">
                     {rsvpSetupBlockingCount === 0 ? 'No blockers open' : `${rsvpSetupBlockingCount} blocker${rsvpSetupBlockingCount === 1 ? '' : 's'} open`}
@@ -438,7 +451,7 @@ export function GuestRsvpSettingsView({
               </div>
               <div className="grid gap-2 md:grid-cols-2">
                 {safeRsvpSetupChecklist.map((item) => (
-                  <div key={item.id} className="rounded-md border border-border-subtle bg-surface-subtle/30 p-3">
+                  <div key={item.id} className="rounded-xl border border-border-subtle bg-surface-subtle/30 p-3">
                     <div className="mb-1 flex items-center justify-between gap-3">
                       <p className="text-sm font-medium text-text-primary">{item.label}</p>
                       <span className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium ${
@@ -460,13 +473,13 @@ export function GuestRsvpSettingsView({
               )}
             </div>
 
-            <div className="rounded-lg border border-border-subtle bg-surface-subtle/40 p-4">
+            <div className="rounded-2xl border border-border-subtle bg-surface-subtle/40 p-4">
               <div className="mb-3">
                 <p className="text-sm font-semibold text-text-primary">Question templates</p>
                 <p className="text-sm text-text-secondary">Add common wedding questions, then edit the wording before guests see them.</p>
               </div>
               <div className="mb-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-7">
-                <div className="rounded-md border border-border-subtle bg-white/80 p-3">
+                <div className="rounded-xl border border-border-subtle bg-white/80 p-3">
                   <p className="text-[11px] font-medium uppercase tracking-wide text-text-tertiary">Optional setup</p>
                   <p className="mt-1 text-sm font-semibold text-text-primary">{optionalSetupCoverageRate}% covered</p>
                   <p className="mt-1 text-[11px] text-text-tertiary">
@@ -494,38 +507,38 @@ export function GuestRsvpSettingsView({
                     <p className="mt-1 text-[11px] text-text-tertiary">First optional gap: {optionalSetupGapLabel}</p>
                   )}
                 </div>
-                <div className="rounded-md border border-border-subtle bg-white/80 p-3">
+                <div className="rounded-xl border border-border-subtle bg-white/80 p-3">
                   <p className="text-[11px] font-medium uppercase tracking-wide text-text-tertiary">Templates added</p>
                   <p className="mt-1 text-sm font-semibold text-text-primary">
                     {addedTemplateCount} of {templateCoverageTotal}
                   </p>
                   <p className="mt-1 text-[11px] text-text-tertiary">{templateCoverageRate}% coverage</p>
                 </div>
-                <div className="rounded-md border border-border-subtle bg-white/80 p-3">
+                <div className="rounded-xl border border-border-subtle bg-white/80 p-3">
                   <p className="text-[11px] font-medium uppercase tracking-wide text-text-tertiary">Still available</p>
                   <p className="mt-1 text-sm font-semibold text-text-primary">{missingTemplateCount}</p>
                   <p className="mt-1 text-[11px] text-text-tertiary">
                     {missingTemplateCount === 0 ? 'All core templates are live' : `${missingTemplateCount} template${missingTemplateCount === 1 ? '' : 's'} still available`}
                   </p>
                 </div>
-                <div className="rounded-md border border-border-subtle bg-white/80 p-3">
+                <div className="rounded-xl border border-border-subtle bg-white/80 p-3">
                   <p className="text-[11px] font-medium uppercase tracking-wide text-text-tertiary">Custom questions</p>
                   <p className="mt-1 text-sm font-semibold text-text-primary">{customQuestionCount}</p>
                   <p className="mt-1 text-[11px] text-text-tertiary">{safeRsvpQuestions.length} total live question{safeRsvpQuestions.length === 1 ? '' : 's'}</p>
                 </div>
-                <div className="rounded-md border border-border-subtle bg-white/80 p-3">
+                <div className="rounded-xl border border-border-subtle bg-white/80 p-3">
                   <p className="text-[11px] font-medium uppercase tracking-wide text-text-tertiary">Required now</p>
                   <p className="mt-1 text-sm font-semibold text-text-primary">{requiredQuestionCount}</p>
                 </div>
-                <div className="rounded-md border border-border-subtle bg-white/80 p-3">
+                <div className="rounded-xl border border-border-subtle bg-white/80 p-3">
                   <p className="text-[11px] font-medium uppercase tracking-wide text-text-tertiary">Event-specific</p>
                   <p className="mt-1 text-sm font-semibold text-text-primary">{eventSpecificQuestionCount}</p>
                 </div>
-                <div className="rounded-md border border-border-subtle bg-white/80 p-3">
+                <div className="rounded-xl border border-border-subtle bg-white/80 p-3">
                   <p className="text-[11px] font-medium uppercase tracking-wide text-text-tertiary">Choice questions</p>
                   <p className="mt-1 text-sm font-semibold text-text-primary">{choiceQuestionCount}</p>
                 </div>
-                <div className="rounded-md border border-border-subtle bg-white/80 p-3">
+                <div className="rounded-xl border border-border-subtle bg-white/80 p-3">
                   <p className="text-[11px] font-medium uppercase tracking-wide text-text-tertiary">Meal choices</p>
                   <p className="mt-1 text-sm font-semibold text-text-primary">
                     {rsvpMealEnabled ? `${safeRsvpMealOptions.length} saved` : 'Optional'}
@@ -571,7 +584,7 @@ export function GuestRsvpSettingsView({
                       type="button"
                       variant="outline"
                       size="sm"
-                      disabled={templateAdded}
+                      disabled={templateAdded || !canEditRsvpSettings}
                       onClick={() => onAddRsvpQuestionTemplate(template)}
                     >
                       {templateAdded ? `${templateLabel} added` : templateLabel}
@@ -581,14 +594,15 @@ export function GuestRsvpSettingsView({
               </div>
             </div>
 
-            <div className="space-y-3 p-4 border border-border rounded-lg">
+            <div className="space-y-3 rounded-2xl border border-border p-4">
               <label className="flex items-center gap-2 text-sm text-text-primary">
                 <input
                   type="checkbox"
                   checked={rsvpMealEnabled}
+                  disabled={!canEditRsvpSettings}
                   onChange={(event) => {
+                    if (!markRsvpConfigDirty()) return;
                     onSetRsvpMealEnabled(event.target.checked);
-                    markRsvpConfigDirty();
                   }}
                   className="w-4 h-4"
                 />
@@ -598,14 +612,15 @@ export function GuestRsvpSettingsView({
                 <div className="space-y-2">
                   {safeRsvpMealOptions.map((option, index) => (
                     <div key={`meal-${index}`} className="flex items-center gap-2">
-                      <Input value={option} onChange={(event) => updateMealOption(index, event.target.value)} placeholder={`Meal option ${index + 1}`} />
+                      <Input value={option} onChange={(event) => updateMealOption(index, event.target.value)} placeholder={`Meal option ${index + 1}`} disabled={!canEditRsvpSettings} />
                       <Button
                         type="button"
                         variant="ghost"
                         size="sm"
+                        disabled={!canEditRsvpSettings}
                         onClick={() => {
+                          if (!markRsvpConfigDirty()) return;
                           onSetRsvpMealOptions((prev) => prev.filter((_, optionIndex) => optionIndex !== index));
-                          markRsvpConfigDirty();
                         }}
                       >
                         Remove
@@ -616,9 +631,10 @@ export function GuestRsvpSettingsView({
                     type="button"
                     variant="outline"
                     size="sm"
+                    disabled={!canEditRsvpSettings}
                     onClick={() => {
+                      if (!markRsvpConfigDirty()) return;
                       onSetRsvpMealOptions((prev) => [...prev, '']);
-                      markRsvpConfigDirty();
                     }}
                   >
                     Add meal choice
@@ -629,27 +645,28 @@ export function GuestRsvpSettingsView({
 
             <div className="space-y-3">
               {safeRsvpQuestions.map((question, index) => (
-                <div key={question.id} className="p-4 border border-border rounded-lg space-y-3">
+                <div key={question.id} className="space-y-3 rounded-2xl border border-border p-4">
                   <div className="flex items-center justify-between">
                     <p className="text-sm font-semibold">Question {index + 1}</p>
                     <button
                       type="button"
                       aria-label="Delete question"
                       title="Delete question"
-                      className="p-1.5 rounded-md text-text-tertiary hover:text-text-primary hover:bg-surface-subtle"
+                      className="rounded-xl p-1.5 text-text-tertiary hover:bg-surface-subtle hover:text-text-primary"
+                      disabled={!canEditRsvpSettings}
                       onClick={() => {
-                        onSetConfirmDialog({
-                          title: 'Delete this RSVP question?',
-                          description: 'Guests will no longer see this question. Existing saved answers stay in response history.',
-                          confirmLabel: 'Delete question',
-                          tone: 'danger',
-                          onCancel: () => onSetConfirmDialog(null),
-                          onConfirm: () => {
-                            onSetRsvpQuestions((prev) => prev.filter((item) => item.id !== question.id));
-                            markRsvpConfigDirty();
-                            onSetConfirmDialog(null);
-                          },
-                        });
+                        if (!canEditRsvpSettings) return;
+                        void (async () => {
+                          const confirmed = await onRequestConfirmation({
+                            title: 'Delete this RSVP question?',
+                            description: 'Guests will no longer see this question. Existing saved answers stay in response history.',
+                            confirmLabel: 'Delete question',
+                            tone: 'danger',
+                          });
+                          if (!confirmed) return;
+                          if (!markRsvpConfigDirty()) return;
+                          onSetRsvpQuestions((prev) => prev.filter((item) => item.id !== question.id));
+                        })();
                       }}
                     >
                       <Trash2 className="w-4 h-4" />
@@ -659,6 +676,7 @@ export function GuestRsvpSettingsView({
                     value={question.label}
                     onChange={(event) => updateQuestion(question.id, { label: event.target.value })}
                     placeholder="Question prompt"
+                    disabled={!canEditRsvpSettings}
                   />
                   <div className="grid md:grid-cols-3 gap-3">
                     <Select
@@ -668,16 +686,19 @@ export function GuestRsvpSettingsView({
                         options: (event.target.value === 'single_choice' || event.target.value === 'multi_choice') ? (question.options?.length ? question.options : ['', '']) : [],
                       })}
                       options={RSVP_QUESTION_TYPE_OPTIONS}
+                      disabled={!canEditRsvpSettings}
                     />
                     <Select
                       value={question.appliesTo}
                       onChange={(event) => updateQuestion(question.id, { appliesTo: event.target.value as RSVPQuestionSetting['appliesTo'] })}
                       options={RSVP_QUESTION_APPLIES_TO_OPTIONS}
+                      disabled={!canEditRsvpSettings}
                     />
                     <label className="flex items-center gap-2 text-sm">
                       <input
                         type="checkbox"
                         checked={question.required}
+                        disabled={!canEditRsvpSettings}
                         onChange={(event) => updateQuestion(question.id, { required: event.target.checked })}
                       />
                       Required
@@ -691,14 +712,16 @@ export function GuestRsvpSettingsView({
                             value={option}
                             onChange={(event) => updateQuestionOption(question.id, optionIndex, event.target.value)}
                             placeholder={`Option ${optionIndex + 1}`}
+                            disabled={!canEditRsvpSettings}
                           />
-                          <Button type="button" variant="ghost" size="sm" onClick={() => removeQuestionOption(question.id, optionIndex)}>Remove</Button>
+                          <Button type="button" variant="ghost" size="sm" disabled={!canEditRsvpSettings} onClick={() => removeQuestionOption(question.id, optionIndex)}>Remove</Button>
                         </div>
                       ))}
                       <Button
                         type="button"
                         variant="outline"
                         size="sm"
+                        disabled={!canEditRsvpSettings}
                         onClick={() => updateQuestion(question.id, { options: [...(question.options ?? []), ''] })}
                       >
                         Add choice
@@ -711,15 +734,16 @@ export function GuestRsvpSettingsView({
                 <Button
                   type="button"
                   variant="outline"
+                  disabled={!canEditRsvpSettings}
                   onClick={() => {
+                    if (!markRsvpConfigDirty()) return;
                     onSetRsvpQuestions((prev) => [...prev, makeRsvpQuestion()]);
-                    markRsvpConfigDirty();
                   }}
                 >
                   Add question
                 </Button>
                 <div className="flex items-center gap-3">
-                  <Button type="button" variant="primary" onClick={onSaveRsvpConfig} disabled={rsvpConfigSaving}>
+                  <Button type="button" variant="primary" onClick={onSaveRsvpConfig} disabled={rsvpConfigSaving || !canEditRsvpSettings}>
                     {rsvpConfigSaving ? 'Saving...' : 'Save Now'}
                   </Button>
                   <span className="text-xs text-text-tertiary">
@@ -748,14 +772,14 @@ export function GuestRsvpSettingsView({
                 <div className="text-sm text-text-secondary">No recent guest changes yet.</div>
               ) : (
                 rsvpAuditFeed.slice(0, 8).map((entry) => (
-                  <div key={entry.id} className="rounded-lg border border-border-subtle bg-surface-subtle/40 px-3 py-2.5">
+                  <div key={entry.id} className="rounded-2xl border border-border-subtle bg-surface-subtle/40 px-3 py-2.5">
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
                         <div className="flex items-center gap-2 mb-1">
                           {(() => {
                             const ActionIcon = getAuditActionIcon(entry.action);
                             return (
-                              <span className={`inline-flex items-center gap-1 px-2 py-0.5 text-[11px] font-medium rounded-lg border ${getAuditActionTone(entry.action)}`}>
+                              <span className={`inline-flex items-center gap-1 rounded-xl border px-2 py-0.5 text-[11px] font-medium ${getAuditActionTone(entry.action)}`}>
                                 <ActionIcon className="w-3 h-3" />
                                 <span>{entry.action === 'insert' ? 'Created' : entry.action === 'delete' ? 'Removed' : 'Updated'}</span>
                               </span>

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { demoWeddingSite, demoGuests } from '../../../lib/demoData';
 import { resolveOperationalEventId } from '../../../lib/operationalEvent';
 import { isAttendingRsvpStatus } from '../../../lib/rsvpStatus';
@@ -34,6 +34,7 @@ export function useSeatingDashboardData(args: {
   isDemoMode: boolean;
   toast: (message: string, type?: 'success' | 'error' | 'warning' | 'info') => void;
 }) {
+  const { isDemoMode, toast } = args;
   const [siteId, setSiteId] = useState<string | null>(null);
   const [itineraryEvents, setItineraryEvents] = useState<ItineraryEvent[]>([]);
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
@@ -46,12 +47,31 @@ export function useSeatingDashboardData(args: {
   const [loadingSeating, setLoadingSeating] = useState(false);
   const [invalidCount, setInvalidCount] = useState(0);
   const [versions, setVersions] = useState<SeatingLayoutVersion[]>([]);
+  const initialLoadRequestIdRef = useRef(0);
+  const seatingLoadRequestIdRef = useRef(0);
 
-  async function loadSeatingData() {
+  const resetSeatingDashboardState = useCallback(() => {
+    seatingLoadRequestIdRef.current += 1;
+    setSiteId(null);
+    setItineraryEvents([]);
+    setSelectedEventId(null);
+    setSeatingEvent(null);
+    setTables([]);
+    setAssignments([]);
+    setAllGuests([]);
+    setCounters(null);
+    setLoadingSeating(false);
+    setInvalidCount(0);
+    setVersions([]);
+  }, []);
+
+  const loadSeatingData = useCallback(async () => {
     if (!siteId || !selectedEventId) return;
+    const requestId = ++seatingLoadRequestIdRef.current;
+    const isCurrentRequest = () => requestId === seatingLoadRequestIdRef.current;
     setLoadingSeating(true);
     try {
-      if (args.isDemoMode) {
+      if (isDemoMode) {
         const se: SeatingEvent = {
           id: DEMO_SEATING_EVENT_ID,
           wedding_site_id: siteId,
@@ -60,6 +80,7 @@ export function useSeatingDashboardData(args: {
           notes: '',
           created_at: new Date().toISOString(),
         };
+        if (!isCurrentRequest()) return;
         setSeatingEvent(se);
 
         const guestsData: EligibleGuest[] = demoGuests.map((g, idx) => {
@@ -86,33 +107,46 @@ export function useSeatingDashboardData(args: {
       }
 
       const se = await getOrCreateSeatingEvent(siteId, selectedEventId);
+      if (!isCurrentRequest()) return;
       setSeatingEvent(se);
       const [tablesData, assignmentsData, guestsData] = await Promise.all([
         loadTables(se.id),
         loadAssignments(se.id),
         getEligibleGuests(siteId, selectedEventId),
       ]);
+      if (!isCurrentRequest()) return;
       setTables(tablesData);
       setAssignments(assignmentsData);
       setAllGuests(guestsData);
-      setCounters(await getEventCounters(siteId, selectedEventId, se.id));
+      const eventCounters = await getEventCounters(siteId, selectedEventId, se.id);
+      if (!isCurrentRequest()) return;
+      setCounters(eventCounters);
       setInvalidCount(assignmentsData.filter((assignment) => !assignment.is_valid).length);
       try {
-        setVersions(await loadSeatingVersions(se.id));
+        const seatingVersions = await loadSeatingVersions(se.id);
+        if (isCurrentRequest()) setVersions(seatingVersions);
       } catch {
-        setVersions([]);
+        if (isCurrentRequest()) setVersions([]);
       }
     } catch {
-      args.toast('Couldn’t load seating data right now. Please try again.', 'error');
+      if (isCurrentRequest()) {
+        toast('Couldn’t load seating data right now. Please try again.', 'error');
+      }
     } finally {
-      setLoadingSeating(false);
+      if (isCurrentRequest()) {
+        setLoadingSeating(false);
+      }
     }
-  }
+  }, [isDemoMode, selectedEventId, siteId, toast]);
 
   useEffect(() => {
+    const requestId = ++initialLoadRequestIdRef.current;
+    const isCurrentRequest = () => requestId === initialLoadRequestIdRef.current;
     void (async () => {
+      setLoading(true);
       try {
-        if (args.isDemoMode) {
+        if (isDemoMode) {
+          if (!isCurrentRequest()) return;
           setSiteId(demoWeddingSite.id);
           const usableEvents = loadDemoItineraryEventsFromStorage();
           setItineraryEvents(usableEvents);
@@ -121,21 +155,30 @@ export function useSeatingDashboardData(args: {
         }
 
         const id = await getWeddingSiteId();
-        if (!id) return;
+        if (!isCurrentRequest()) return;
+        if (!id) {
+          resetSeatingDashboardState();
+          return;
+        }
         setSiteId(id);
         const events = await loadItineraryEvents(id);
+        if (!isCurrentRequest()) return;
         setItineraryEvents(events);
         setSelectedEventId(resolveOperationalEventId({ events }));
       } catch {
-        args.toast('Couldn’t load events right now. Please try again.', 'error');
+        if (!isCurrentRequest()) return;
+        resetSeatingDashboardState();
+        toast('Couldn’t load events right now. Please try again.', 'error');
       } finally {
-        setLoading(false);
+        if (isCurrentRequest()) {
+          setLoading(false);
+        }
       }
     })();
-  }, [args]);
+  }, [isDemoMode, resetSeatingDashboardState, toast]);
 
   useEffect(() => {
-    if (!args.isDemoMode) return;
+    if (!isDemoMode) return;
 
     const syncDemoItinerary = () => {
       const events = loadDemoItineraryEventsFromStorage();
@@ -158,7 +201,7 @@ export function useSeatingDashboardData(args: {
       window.removeEventListener('focus', onFocus);
       document.removeEventListener('visibilitychange', onFocus);
     };
-  }, [args.isDemoMode]);
+  }, [isDemoMode]);
 
   useEffect(() => {
     if (!itineraryEvents.length) return;
@@ -171,22 +214,22 @@ export function useSeatingDashboardData(args: {
     if (siteId && selectedEventId) {
       void loadSeatingData();
     }
-  }, [siteId, selectedEventId]);
+  }, [loadSeatingData, selectedEventId, siteId]);
 
   useEffect(() => {
-    if (!args.isDemoMode || !selectedEventId) return;
+    if (!isDemoMode || !selectedEventId) return;
     writeDemoSeatingState(selectedEventId, tables, assignments);
-  }, [args.isDemoMode, assignments, selectedEventId, tables]);
+  }, [isDemoMode, assignments, selectedEventId, tables]);
 
   useEffect(() => {
     if (!selectedEventId) {
       setVersions([]);
       return;
     }
-    if (args.isDemoMode) {
+    if (isDemoMode) {
       setVersions(readSeatingVersions().filter((version) => version.itinerary_event_id === selectedEventId));
     }
-  }, [args.isDemoMode, selectedEventId]);
+  }, [isDemoMode, selectedEventId]);
 
   return {
     allGuests,

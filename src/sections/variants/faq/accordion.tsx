@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { z } from 'zod';
 import { Car, Gift, HelpCircle, MapPin, Minus, Plus, Shirt, UtensilsCrossed, Users } from 'lucide-react';
 import { SectionDefinition, SectionComponentProps } from '../../types';
@@ -62,6 +62,10 @@ const FaqAccordion: React.FC<SectionComponentProps<FaqAccordionData>> = ({ data 
   const categorizedItems = data.items.map((item) => ({ ...item, category: getFaqCategory(item.question, item.answer) }));
   const categories = Array.from(new Set(categorizedItems.map((item) => item.category)));
   const [activeCategory, setActiveCategory] = useState(categories[0] ?? 'Details');
+  useEffect(() => {
+    setOpenId(data.expandFirstByDefault && data.items[0] ? data.items[0].id : null);
+    setActiveCategory(categories[0] ?? 'Details');
+  }, [categories, data.expandFirstByDefault, data.items]);
 
   const toggle = (id: string) => setOpenId(prev => (prev === id ? null : id));
 

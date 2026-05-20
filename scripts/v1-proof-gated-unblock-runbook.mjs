@@ -25,6 +25,8 @@ const requiredPhrases = [
   'npm run proof:v1:launch-closeout',
   'External OpenAI Key Rotation',
   'V1_AI_EXPOSURE_LIVE=1 npm run proof:v1:ai-exposure',
+  'npm run proof:v1:board:freshness',
+  'npm run proof:v1:board',
   'npm run proof:v1:board:md',
   'docs/v1-smoke-proof-log.md',
   'docs/full-suite-launch-backlog-2026-04-30.md',
@@ -37,6 +39,14 @@ const result = {
   generatedAt: new Date().toISOString(),
   status: missingPhrases.length === 0 && packageScriptPresent ? 'pass' : 'fail',
   runbookPath,
+  summary:
+    missingPhrases.length === 0 && packageScriptPresent
+      ? 'Gated unblock runbook stays aligned: approval-gated workflow notes remain separate from helper/local closeout paths that regenerate board artifacts.'
+      : 'Gated unblock runbook drifted from the required approval-gate and closeout-path contract.',
+  contractSummary:
+    missingPhrases.length === 0 && packageScriptPresent
+      ? 'This checker guards the approval-gated/operator runbook contract; it does not itself establish launch truth, but it keeps the human unblock path aligned with the proof-board and closeout flow.'
+      : 'This checker found drift in the approval-gated/operator runbook contract and the unblock path should not be trusted until the runbook is repaired.',
   checks: {
     requiredPhrases: requiredPhrases.length,
     missingPhrases,

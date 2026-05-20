@@ -38,6 +38,10 @@ export const GUIDED_SETUP_STORAGE_KEY = 'dayoflove:guided-setup-draft';
 export const GUIDED_SETUP_DRAFT_RETENTION_MS = 30 * 24 * 60 * 60 * 1000;
 export const MAX_GUIDED_SETUP_TEXT_LENGTH = 2000;
 export const MAX_GUIDED_SETUP_NAME_LENGTH = 120;
+export const buildGuidedSetupDraftStorageKey = (storageScope?: string | null): string => {
+  const scope = typeof storageScope === 'string' ? storageScope.trim() : '';
+  return scope ? `${GUIDED_SETUP_STORAGE_KEY}::${scope}` : GUIDED_SETUP_STORAGE_KEY;
+};
 
 const VALID_GUIDED_SETUP_STEPS: GuidedSetupStep[] = ['welcome', 'basics', 'events', 'travel', 'rsvp', 'faq', 'design', 'guests', 'complete'];
 
@@ -125,34 +129,54 @@ const isDefaultGuidedSetupDraft = (snapshot: GuidedSetupDraftSnapshot, defaults:
   })
 );
 
-export const readGuidedSetupDraftSnapshot = (defaults: GuidedSetupDraftSnapshot): GuidedSetupDraftSnapshot | null => {
+const readScopedGuidedSetupRaw = (storageScope?: string | null): {
+  storageKey: string;
+  sourceKey: string;
+  raw: string | null;
+  shouldMigrate: boolean;
+} => {
+  const storageKey = buildGuidedSetupDraftStorageKey(storageScope);
+  const hasScopedKey = window.localStorage.getItem(storageKey) !== null;
+  const sourceKey = !hasScopedKey && storageKey !== GUIDED_SETUP_STORAGE_KEY ? GUIDED_SETUP_STORAGE_KEY : storageKey;
+  return {
+    storageKey,
+    sourceKey,
+    raw: window.localStorage.getItem(sourceKey),
+    shouldMigrate: sourceKey !== storageKey,
+  };
+};
+
+export const readGuidedSetupDraftSnapshot = (defaults: GuidedSetupDraftSnapshot, storageScope?: string | null): GuidedSetupDraftSnapshot | null => {
   if (typeof window === 'undefined') return null;
 
   try {
-    const raw = window.localStorage.getItem(GUIDED_SETUP_STORAGE_KEY);
+    const { raw, sourceKey, storageKey, shouldMigrate } = readScopedGuidedSetupRaw(storageScope);
     if (!raw) return null;
     const parsed = JSON.parse(raw);
     if (parsed && typeof parsed === 'object' && !Array.isArray(parsed) && typeof parsed.savedAtISO === 'string' && !isFreshGuidedSetupTimestamp(parsed.savedAtISO)) {
-      clearGuidedSetupDraftSnapshot();
+      window.localStorage.removeItem(sourceKey);
       return null;
     }
 
     const normalized = normalizeGuidedSetupDraftSnapshot(parsed, defaults);
     if (isDefaultGuidedSetupDraft(normalized, defaults)) {
-      clearGuidedSetupDraftSnapshot();
+      clearGuidedSetupDraftSnapshot(storageScope);
       return null;
     }
 
     const normalizedRaw = JSON.stringify(normalized);
-    if (raw !== normalizedRaw) window.localStorage.setItem(GUIDED_SETUP_STORAGE_KEY, normalizedRaw);
+    if (raw !== normalizedRaw || shouldMigrate) {
+      window.localStorage.setItem(storageKey, normalizedRaw);
+      if (shouldMigrate) window.localStorage.removeItem(sourceKey);
+    }
     return normalized;
   } catch {
-    clearGuidedSetupDraftSnapshot();
+    clearGuidedSetupDraftSnapshot(storageScope);
     return null;
   }
 };
 
-export const persistGuidedSetupDraftSnapshot = (value: unknown, defaults: GuidedSetupDraftSnapshot): GuidedSetupDraftSnapshot | null => {
+export const persistGuidedSetupDraftSnapshot = (value: unknown, defaults: GuidedSetupDraftSnapshot, storageScope?: string | null): GuidedSetupDraftSnapshot | null => {
   if (typeof window === 'undefined') return null;
 
   try {
@@ -162,22 +186,28 @@ export const persistGuidedSetupDraftSnapshot = (value: unknown, defaults: Guided
     };
 
     if (isDefaultGuidedSetupDraft(normalized, defaults)) {
-      clearGuidedSetupDraftSnapshot();
+      clearGuidedSetupDraftSnapshot(storageScope);
       return null;
     }
 
-    window.localStorage.setItem(GUIDED_SETUP_STORAGE_KEY, JSON.stringify(normalized));
+    const storageKey = buildGuidedSetupDraftStorageKey(storageScope);
+    window.localStorage.setItem(storageKey, JSON.stringify(normalized));
+    if (storageKey !== GUIDED_SETUP_STORAGE_KEY) window.localStorage.removeItem(GUIDED_SETUP_STORAGE_KEY);
     return normalized;
   } catch {
     return null;
   }
 };
 
-export const clearGuidedSetupDraftSnapshot = () => {
+export const clearGuidedSetupDraftSnapshot = (storageScope?: string | null) => {
   if (typeof window === 'undefined') return;
 
   try {
-    if (window.localStorage.getItem(GUIDED_SETUP_STORAGE_KEY) !== null) {
+    const storageKey = buildGuidedSetupDraftStorageKey(storageScope);
+    if (window.localStorage.getItem(storageKey) !== null) {
+      window.localStorage.removeItem(storageKey);
+    }
+    if (storageKey !== GUIDED_SETUP_STORAGE_KEY && window.localStorage.getItem(GUIDED_SETUP_STORAGE_KEY) !== null) {
       window.localStorage.removeItem(GUIDED_SETUP_STORAGE_KEY);
     }
   } catch {

@@ -56,24 +56,26 @@ const ALIGN_ITEMS_CLASS = {
   right: 'items-end',
 };
 
-function useScrollReveal(ref: React.RefObject<Element | null>) {
+function useScrollReveal(ref: React.RefObject<Element | null>, resetKey: string) {
   const [visible, setVisible] = useState(false);
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
+    setVisible(false);
     const obs = new IntersectionObserver(
       ([entry]) => { if (entry.isIntersecting) { setVisible(true); obs.disconnect(); } },
       { threshold: 0.1 }
     );
     obs.observe(el);
     return () => obs.disconnect();
-  }, []);
+  }, [resetKey]);
   return visible;
 }
 
 const BlockRenderer: React.FC<{ block: CustomBlock; dark?: boolean }> = ({ block, dark }) => {
   const ref = useRef<HTMLDivElement>(null);
-  const visible = useScrollReveal(ref);
+  const visibilityKey = JSON.stringify(block);
+  const visible = useScrollReveal(ref, visibilityKey);
   const isLight = block.variant === 'light' || dark;
 
   const baseTransition = 'transition-[opacity,transform] duration-700 ease-[cubic-bezier(0.16,1,0.3,1)]';

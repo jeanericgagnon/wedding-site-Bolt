@@ -54,7 +54,7 @@ export function GuestContactLookupPanel({
             onChange={(e) => onQueryChange(e.target.value)}
             placeholder="Search your full name"
             aria-describedby="guest-contact-search-helper"
-            className="w-full px-3 py-2 border border-border rounded-lg bg-surface-subtle"
+            className="w-full px-3 py-2 border border-border rounded-xl bg-surface-subtle"
           />
           <input
             id="guest-contact-verifier"
@@ -63,7 +63,7 @@ export function GuestContactLookupPanel({
             placeholder="First few letters of your email"
             aria-label="Confirm your email"
             aria-describedby="guest-contact-verifier-helper"
-            className="w-full px-3 py-2 border border-border rounded-lg bg-surface-subtle"
+            className="w-full px-3 py-2 border border-border rounded-xl bg-surface-subtle"
           />
           <input
             id="guest-contact-household-verifier"
@@ -73,10 +73,10 @@ export function GuestContactLookupPanel({
             aria-label="Confirm your phone last 4"
             aria-describedby="guest-contact-household-verifier-helper"
             inputMode="numeric"
-            className="w-full px-3 py-2 border border-border rounded-lg bg-surface-subtle"
+            className="w-full px-3 py-2 border border-border rounded-xl bg-surface-subtle"
           />
           <div className="flex justify-end">
-            <button onClick={onSearch} disabled={searching || !canSearch} className="px-4 py-2 rounded-lg bg-primary text-white disabled:opacity-50">
+            <button onClick={onSearch} disabled={searching || !canSearch} className="px-4 py-2 rounded-xl bg-primary text-white disabled:opacity-50">
               {searching ? 'Searching…' : 'Find'}
             </button>
           </div>
@@ -93,7 +93,7 @@ export function GuestContactLookupPanel({
             id="guest-contact-match"
             value={selectedContactSession}
             onChange={(e) => onSelectContactSession(e.target.value)}
-            className="w-full px-3 py-2 border border-border rounded-lg bg-surface-subtle"
+            className="w-full px-3 py-2 border border-border rounded-xl bg-surface-subtle"
           >
             {matches.map((match) => (
               <option key={match.contact_session} value={match.contact_session}>

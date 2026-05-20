@@ -46,6 +46,14 @@ export type CoordinatorQrResolution =
     warnings: string[];
   }
   | {
+    status: 'needs-review';
+    source: string;
+    guest: GuestLiteForCoordinator;
+    title: string;
+    detail: string;
+    warnings: string[];
+  }
+  | {
     status: 'wrong-site' | 'malformed' | 'expired-invalid-token';
     source: string;
     title: string;
@@ -224,6 +232,21 @@ export function resolveCoordinatorQrPayload(
       detail: `${guest.name} is already checked in${tableName ? ` at ${tableName}` : ''}.`,
       warnings,
       checkedInAt,
+    };
+  }
+
+  if (warnings.length > 0) {
+    return {
+      status: 'needs-review',
+      source: parsed.source,
+      guest,
+      title: `${guest.name} needs review before check-in`,
+      detail: [
+        args.currentEventName ? `${args.currentEventName}` : null,
+        guest.rsvp_status ? `RSVP ${guest.rsvp_status}` : null,
+        tableName ? tableName : 'Needs seating/help desk',
+      ].filter(Boolean).join(' · '),
+      warnings,
     };
   }
 

@@ -24,10 +24,10 @@ export function GuestPhotoFollowupCard({
           <h2 className="text-xl font-semibold text-neutral-900">Guest follow-up</h2>
           <p className="mt-1 text-sm text-neutral-600">Guests who asked for recap updates or want to hear about using dayof later.</p>
           <div className="mt-3 flex flex-wrap gap-2 text-xs text-neutral-700">
-            <span className="rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-1">{guestProspects.length} captured</span>
-            <span className="rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-1">{guestProspects.filter((entry) => entry.wants_photo_updates).length} want recap updates</span>
-            <span className="rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-1">{guestProspects.filter((entry) => entry.wants_own_event_info).length} want their own event link</span>
-            <span className="rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-1">{guestProspects.filter((entry) => entry.recap_email_queued_at).length} recap prepared</span>
+            <span className="rounded-xl border border-neutral-200 bg-neutral-50 px-3 py-1">{guestProspects.length} captured</span>
+            <span className="rounded-xl border border-neutral-200 bg-neutral-50 px-3 py-1">{guestProspects.filter((entry) => entry.wants_photo_updates).length} want recap updates</span>
+            <span className="rounded-xl border border-neutral-200 bg-neutral-50 px-3 py-1">{guestProspects.filter((entry) => entry.wants_own_event_info).length} want their own event link</span>
+            <span className="rounded-xl border border-neutral-200 bg-neutral-50 px-3 py-1">{guestProspects.filter((entry) => entry.recap_email_queued_at).length} recap prepared</span>
           </div>
         </div>
         <div className="flex flex-wrap gap-2 lg:justify-end">
@@ -42,7 +42,7 @@ export function GuestPhotoFollowupCard({
       </div>
       <div className="mt-4 grid gap-2 md:grid-cols-2">
         {guestProspects.slice(0, 6).map((entry) => (
-          <div key={entry.id} className="rounded-lg border border-border-subtle bg-surface-subtle px-4 py-3">
+          <div key={entry.id} className="rounded-2xl border border-border-subtle bg-surface-subtle px-4 py-3">
             <p className="text-sm font-medium text-neutral-900">{entry.guest_name || 'Guest'}</p>
             <p className="mt-1 text-xs text-neutral-600">{entry.email || entry.phone || 'Contact info not added'} · {entry.source}</p>
             <p className="mt-2 text-xs text-neutral-500">

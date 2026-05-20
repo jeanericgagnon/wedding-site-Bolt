@@ -37,6 +37,7 @@ describe('GuestHouseholdPanel', () => {
           ungrouped: [ungroupedGuest as any],
         }}
         isDemoMode={false}
+        isGuestsReadOnly={false}
         onApplySelectedGuestLanguage={applyLanguage}
         publicSiteSlug="maya-and-rowan"
         selectedGuestLanguageDraft="es"
@@ -66,6 +67,7 @@ describe('GuestHouseholdPanel', () => {
         householdBusy={false}
         households={{ grouped: [], ungrouped: [] }}
         isDemoMode={false}
+        isGuestsReadOnly={false}
         onApplySelectedGuestLanguage={vi.fn()}
         publicSiteSlug="maya-and-rowan"
         selectedGuestLanguageDraft="fr"
@@ -78,5 +80,45 @@ describe('GuestHouseholdPanel', () => {
 
     expect(screen.getByText('1 guests selected')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /save language/i })).toBeInTheDocument();
+  });
+
+  it('keeps household write controls inert for read-only collaborators', () => {
+    const setSelectedGuestIds = vi.fn();
+
+    render(
+      <GuestHouseholdPanel
+        getStatusBadge={() => <span>Status</span>}
+        householdBusy={false}
+        households={{
+          grouped: [],
+          ungrouped: [{
+            id: 'guest-1',
+            first_name: 'Maya',
+            last_name: 'Lee',
+            name: 'Maya Lee',
+            email: 'maya@example.com',
+            preferred_language: 'es',
+            invite_token: 'private-token',
+            rsvp_status: 'pending',
+          } as any],
+        }}
+        isDemoMode={false}
+        isGuestsReadOnly
+        onApplySelectedGuestLanguage={vi.fn()}
+        publicSiteSlug="maya-and-rowan"
+        selectedGuestLanguageDraft="fr"
+        selectedGuestIds={new Set(['guest-1', 'guest-2'])}
+        onMergeIntoHousehold={vi.fn()}
+        onSetSelectedGuestLanguageDraft={vi.fn()}
+        onSetSelectedGuestIds={setSelectedGuestIds}
+      />,
+    );
+
+    expect(screen.getByRole('combobox')).toBeDisabled();
+    expect(screen.getByRole('button', { name: /save language/i })).toBeDisabled();
+    expect(screen.getByRole('button', { name: /merge into household/i })).toBeDisabled();
+
+    screen.getByText('Maya Lee').click();
+    expect(setSelectedGuestIds).not.toHaveBeenCalled();
   });
 });

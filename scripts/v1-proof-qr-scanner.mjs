@@ -6,26 +6,30 @@ const steps = [
   {
     id: 'qr-parser-tests',
     label: 'QR parsing, security, and third-party generation tests',
-    command: 'npm test -- --run src/lib/qr/qrPayload.test.ts src/lib/guestHubQrAssets.test.ts',
+    command: 'node_modules/.bin/vitest run src/lib/qr/qrPayload.test.ts src/lib/guestHubQrAssets.test.ts --config scripts/qr-scanner-vitest.config.mjs --environment jsdom --pool=threads --maxWorkers=1 --no-file-parallelism --reporter=verbose',
     required: true,
+    timeoutMs: 180_000,
   },
   {
     id: 'qr-scanner-component-tests',
     label: 'QR scanner camera/manual fallback tests',
-    command: 'npm test -- --run src/components/qr/QrScanner.test.tsx',
+    command: 'node_modules/.bin/vitest run src/components/qr/QrScanner.test.tsx --config scripts/qr-scanner-vitest.config.mjs --environment jsdom --pool=threads --maxWorkers=1 --no-file-parallelism --reporter=verbose',
     required: true,
+    timeoutMs: 180_000,
   },
   {
     id: 'coordinator-qr-integration-tests',
     label: 'Coordinator QR scanner integration tests',
-    command: 'npm test -- --run src/pages/dashboard/coordinator/CoordinatorQrScannerIntegration.test.tsx',
+    command: 'node_modules/.bin/vitest run src/pages/dashboard/coordinator/CoordinatorQrScannerIntegration.test.tsx --config scripts/qr-scanner-vitest.config.mjs --environment jsdom --pool=threads --maxWorkers=1 --no-file-parallelism --reporter=verbose',
     required: true,
+    timeoutMs: 240_000,
   },
   {
     id: 'build',
     label: 'Build integrity check',
     command: 'npm run build',
     required: true,
+    timeoutMs: 900_000,
   },
 ];
 
@@ -37,6 +41,7 @@ function runStep(step) {
       encoding: 'utf8',
       shell: '/bin/zsh',
       env: process.env,
+      timeout: step.timeoutMs ?? 180_000,
       maxBuffer: 20 * 1024 * 1024,
     });
 
@@ -80,6 +85,9 @@ const output = {
     passed: results.filter((result) => result.ok).length,
     failed: results.filter((result) => !result.ok).length,
   },
+  contractSummary: failedRequired.length === 0
+    ? 'QR scanner proof is green: this supporting ops-security lane validates payload safety, parsing, and fallback behavior without acting like a broader launch-truth artifact source.'
+    : 'QR scanner proof is not green yet: required parser, scanner, coordinator integration, or build evidence is still failing.',
   automatedCoverage: [
     'Approved host and private-network QR payload blocking',
     'Guest invite / RSVP token parsing and wrong-site rejection',

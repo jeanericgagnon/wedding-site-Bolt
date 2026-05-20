@@ -75,12 +75,20 @@ interface PurchaseConfirmProps {
   busy: boolean;
 }
 
+function getInitialPurchaseQty(remaining: number) {
+  return Math.min(1, remaining);
+}
+
 const PurchaseConfirmPanel: React.FC<PurchaseConfirmProps> = ({ item, onConfirm, onCancel, busy }) => {
   const remaining = item.quantity_needed - item.quantity_purchased;
-  const [qty, setQty] = useState(Math.min(1, remaining));
+  const [qty, setQty] = useState(() => getInitialPurchaseQty(remaining));
+
+  useEffect(() => {
+    setQty(getInitialPurchaseQty(remaining));
+  }, [item.id, remaining]);
 
   return (
-    <div className="absolute inset-0 z-10 bg-surface/95 backdrop-blur-sm rounded-lg flex flex-col items-center justify-center p-4 gap-3">
+    <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 rounded-2xl bg-surface/95 p-4 backdrop-blur-sm">
       <div className="text-center">
         <p className="font-semibold text-text-primary text-sm leading-snug mb-1">Mark as purchased?</p>
         <p className="text-xs text-text-secondary">This lets guests know it's been bought.</p>
@@ -94,7 +102,7 @@ const PurchaseConfirmPanel: React.FC<PurchaseConfirmProps> = ({ item, onConfirm,
             max={remaining}
             value={qty}
             onChange={e => setQty(Math.max(1, Math.min(remaining, parseInt(e.target.value) || 1)))}
-            className="w-16 px-2 py-1 text-sm border border-border rounded-lg bg-surface-subtle text-center focus:outline-none focus:ring-2 focus:ring-primary"
+            className="w-16 rounded-xl border border-border bg-surface-subtle px-2 py-1 text-center text-sm focus:outline-none focus:ring-2 focus:ring-primary"
           />
           <span className="text-xs text-text-tertiary">of {remaining} left</span>
         </div>
@@ -103,14 +111,14 @@ const PurchaseConfirmPanel: React.FC<PurchaseConfirmProps> = ({ item, onConfirm,
         <button
           onClick={onCancel}
           disabled={busy}
-          className="flex-1 py-1.5 text-xs font-medium text-text-secondary border border-border rounded-lg hover:bg-surface-subtle transition-colors"
+          className="flex-1 rounded-xl border border-border py-1.5 text-xs font-medium text-text-secondary transition-colors hover:bg-surface-subtle"
         >
           Cancel
         </button>
         <button
           onClick={() => onConfirm(qty)}
           disabled={busy}
-          className="flex-1 py-1.5 text-xs font-medium text-white bg-success hover:bg-success/90 rounded-lg transition-colors disabled:opacity-50 flex items-center justify-center gap-1"
+          className="flex flex-1 items-center justify-center gap-1 rounded-xl bg-success py-1.5 text-xs font-medium text-white transition-colors hover:bg-success/90 disabled:opacity-50"
         >
           {busy ? (
             <span className="w-3 h-3 border-2 border-white/40 border-t-white rounded-full animate-spin" />
@@ -131,9 +139,35 @@ export const RegistryItemCard: React.FC<Props> = ({ item, onEdit, onDelete, onMa
   const [purchaseBusy, setPurchaseBusy] = useState(false);
   const [refetching, setRefetching] = useState(false);
   const [copiedHint, setCopiedHint] = useState<string | null>(null);
+  const [copyNotice, setCopyNotice] = useState<{ key: 'zelle' | 'payout-details'; mode: 'copied' | 'downloaded' } | null>(null);
+  const [copyingKey, setCopyingKey] = useState<'zelle' | 'payout-details' | null>(null);
   const [imgFailed, setImgFailed] = useState(false);
   const [imgSrc, setImgSrc] = useState<string | null>(null);
   const cooldownRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const copiedHintTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const copyRequestIdRef = useRef(0);
+  const mountedRef = useRef(true);
+
+  useEffect(() => () => {
+    mountedRef.current = false;
+    copyRequestIdRef.current += 1;
+    if (cooldownRef.current) clearTimeout(cooldownRef.current);
+    if (copiedHintTimeoutRef.current) clearTimeout(copiedHintTimeoutRef.current);
+  }, []);
+
+  useEffect(() => {
+    if (cooldownRef.current) clearTimeout(cooldownRef.current);
+    if (copiedHintTimeoutRef.current) clearTimeout(copiedHintTimeoutRef.current);
+    cooldownRef.current = null;
+    copiedHintTimeoutRef.current = null;
+    setConfirmDelete(false);
+    setShowPurchaseConfirm(false);
+    setPurchaseBusy(false);
+    setRefetching(false);
+    setCopiedHint(null);
+    setCopyNotice(null);
+    setCopyingKey(null);
+  }, [normalizedItem.id]);
 
   const isCashFund = normalizedItem.item_type === 'cash_fund';
   const displayPrice = normalizedItem.price_amount != null
@@ -188,6 +222,27 @@ export const RegistryItemCard: React.FC<Props> = ({ item, onEdit, onDelete, onMa
   const paypalUrl = normalizedItem.fund_paypal_url;
   const customFundUrl = normalizedItem.fund_custom_url;
   const displayTitle = getOwnerRegistryDisplayTitle(normalizedItem.item_name);
+  const copyContextKey = JSON.stringify([
+    normalizedItem.id,
+    venmoUrl,
+    paypalUrl,
+    normalizedItem.fund_zelle_handle,
+    customFundUrl,
+    normalizedItem.fund_custom_label,
+  ]);
+  const copyContextKeyRef = useRef(copyContextKey);
+  copyContextKeyRef.current = copyContextKey;
+
+  useEffect(() => {
+    copyRequestIdRef.current += 1;
+    setCopiedHint(null);
+    setCopyNotice(null);
+    setCopyingKey(null);
+    if (copiedHintTimeoutRef.current) {
+      clearTimeout(copiedHintTimeoutRef.current);
+      copiedHintTimeoutRef.current = null;
+    }
+  }, [copyContextKey]);
 
   function handleDeleteClick() {
     if (confirmDelete) {
@@ -220,15 +275,41 @@ export const RegistryItemCard: React.FC<Props> = ({ item, onEdit, onDelete, onMa
     }
   }
 
-  async function copyText(label: string, text: string) {
-    if (!text) return;
+  async function copyText(copyKey: 'zelle' | 'payout-details', label: string, text: string) {
+    if (!text || copyingKey) return;
+    const requestId = copyRequestIdRef.current + 1;
+    copyRequestIdRef.current = requestId;
+    const requestContextKey = copyContextKeyRef.current;
+    const isCurrentCopy = () => (
+      mountedRef.current &&
+      requestId === copyRequestIdRef.current &&
+      requestContextKey === copyContextKeyRef.current
+    );
+    setCopyNotice(null);
+    setCopyingKey(copyKey);
     try {
       const result = await copyTextOrDownload(text, `${label.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'registry'}-link.txt`);
+      if (!isCurrentCopy()) return;
       setCopiedHint(result === 'copied' ? `${label} copied` : `${label} downloaded`);
-      setTimeout(() => setCopiedHint(null), 1800);
+      setCopyNotice({ key: copyKey, mode: result });
+      if (copiedHintTimeoutRef.current) clearTimeout(copiedHintTimeoutRef.current);
+      copiedHintTimeoutRef.current = setTimeout(() => {
+        if (!isCurrentCopy()) return;
+        setCopiedHint(null);
+      }, 1800);
     } catch {
-      setCopiedHint('Copy needs retry');
-      setTimeout(() => setCopiedHint(null), 1800);
+      if (!isCurrentCopy()) return;
+      setCopiedHint(`Couldn’t copy ${label.toLowerCase()} right now.`);
+      setCopyNotice(null);
+      if (copiedHintTimeoutRef.current) clearTimeout(copiedHintTimeoutRef.current);
+      copiedHintTimeoutRef.current = setTimeout(() => {
+        if (!isCurrentCopy()) return;
+        setCopiedHint(null);
+      }, 1800);
+    } finally {
+      if (isCurrentCopy()) {
+        setCopyingKey(null);
+      }
     }
   }
 
@@ -239,55 +320,74 @@ export const RegistryItemCard: React.FC<Props> = ({ item, onEdit, onDelete, onMa
 
   if (isCashFund) {
     return (
-      <div data-testid="owner-registry-item-card" className="group relative flex flex-col gap-3 overflow-hidden rounded-lg border border-border bg-surface p-4">
+      <div data-testid="owner-registry-item-card" className="group relative flex flex-col gap-3 overflow-hidden rounded-2xl border border-border bg-surface p-4">
         <div className="flex items-start justify-between">
           <h3 className="font-semibold text-text-primary leading-snug">{item.item_name}</h3>
           <Badge variant="neutral">Cash Fund</Badge>
         </div>
         {item.notes && <p className="text-sm text-text-secondary">{item.notes}</p>}
         <div className="grid grid-cols-2 gap-2 text-sm">
-          <div className="p-2 rounded-lg bg-surface-subtle border border-border">
+          <div className="rounded-xl border border-border bg-surface-subtle p-2">
             <p className="text-xs text-text-tertiary">Goal</p>
             <p className="font-semibold text-text-primary">{goal > 0 ? `$${goal.toFixed(0)}` : '—'}</p>
           </div>
-          <div className="p-2 rounded-lg bg-surface-subtle border border-border">
+          <div className="rounded-xl border border-border bg-surface-subtle p-2">
             <p className="text-xs text-text-tertiary">Received</p>
             <p className="font-semibold text-text-primary">${received.toFixed(0)}</p>
           </div>
         </div>
         {fundPct != null && (
           <div>
-            <div className="h-2 w-full overflow-hidden rounded-lg border border-border bg-surface-subtle">
-              <div className="h-full rounded-lg bg-primary" style={{ width: `${fundPct}%` }} />
+            <div className="h-2 w-full overflow-hidden rounded-xl border border-border bg-surface-subtle">
+              <div className="h-full rounded-xl bg-primary" style={{ width: `${fundPct}%` }} />
             </div>
             <p className="text-xs text-text-tertiary mt-1">{fundPct}% funded</p>
           </div>
         )}
         <div className="grid grid-cols-2 gap-2">
           <input type="number" min="0" step="0.01" value={received} onChange={() => {}} readOnly className="hidden" />
-          <button onClick={() => onEdit(normalizedItem)} className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium text-text-secondary border border-border rounded-lg hover:border-primary hover:text-primary transition-colors"><Pencil className="w-3.5 h-3.5" />Edit</button>
-          <button onClick={handleDeleteClick} className={`inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium border rounded-lg transition-colors ${confirmDelete ? 'text-text-primary border-border bg-surface-subtle' : 'text-text-secondary border-border hover:border-text-tertiary hover:text-text-primary'}`}>
+          <button onClick={() => onEdit(normalizedItem)} className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-border px-3 py-1.5 text-xs font-medium text-text-secondary transition-colors hover:border-primary hover:text-primary"><Pencil className="w-3.5 h-3.5" />Edit</button>
+          <button onClick={handleDeleteClick} className={`inline-flex items-center justify-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-medium transition-colors ${confirmDelete ? 'text-text-primary border-border bg-surface-subtle' : 'text-text-secondary border-border hover:border-text-tertiary hover:text-text-primary'}`}>
             <Trash2 className="w-3.5 h-3.5" />{confirmDelete ? 'Confirm' : 'Delete'}
           </button>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
-          {venmoUrl && <a href={venmoUrl} target="_blank" rel="noopener noreferrer" className="text-xs px-2 py-1 border rounded-lg">Venmo</a>}
-          {paypalUrl && <a href={paypalUrl} target="_blank" rel="noopener noreferrer" className="text-xs px-2 py-1 border rounded-lg">PayPal</a>}
-          {item.fund_zelle_handle && <span className="text-xs px-2 py-1 border rounded-lg">Zelle: {item.fund_zelle_handle}</span>}
-          {customFundUrl && <a href={customFundUrl} target="_blank" rel="noopener noreferrer" className="text-xs px-2 py-1 border rounded-lg">{item.fund_custom_label || 'Link'}</a>}
+          {venmoUrl && <a href={venmoUrl} target="_blank" rel="noopener noreferrer" className="rounded-xl border px-2 py-1 text-xs">Venmo</a>}
+          {paypalUrl && <a href={paypalUrl} target="_blank" rel="noopener noreferrer" className="rounded-xl border px-2 py-1 text-xs">PayPal</a>}
+          {item.fund_zelle_handle && <span className="rounded-xl border px-2 py-1 text-xs">Zelle: {item.fund_zelle_handle}</span>}
+          {customFundUrl && <a href={customFundUrl} target="_blank" rel="noopener noreferrer" className="rounded-xl border px-2 py-1 text-xs">{item.fund_custom_label || 'Link'}</a>}
           {item.fund_zelle_handle && (
-            <button onClick={() => copyText('Zelle', item.fund_zelle_handle || '')} className="text-xs px-2 py-1 border rounded-lg hover:border-primary hover:text-primary">Copy Zelle</button>
+            <button
+              onClick={() => void copyText('zelle', 'Zelle', item.fund_zelle_handle || '')}
+              disabled={copyingKey !== null}
+              className="rounded-xl border px-2 py-1 text-xs hover:border-primary hover:text-primary disabled:opacity-60"
+            >
+              {copyingKey === 'zelle'
+                ? 'Copying...'
+                : copyNotice?.key === 'zelle'
+                  ? copyNotice.mode === 'downloaded'
+                    ? 'Downloaded Zelle'
+                    : 'Copied Zelle'
+                  : 'Copy Zelle'}
+            </button>
           )}
           <button
-            onClick={() => copyText('Payout details', [
+            onClick={() => void copyText('payout-details', 'Payout details', [
               venmoUrl ? `Venmo: ${venmoUrl}` : null,
               paypalUrl ? `PayPal: ${paypalUrl}` : null,
               item.fund_zelle_handle ? `Zelle: ${item.fund_zelle_handle}` : null,
               customFundUrl ? `${item.fund_custom_label || 'Link'}: ${customFundUrl}` : null,
             ].filter(Boolean).join('\n'))}
-            className="text-xs px-2 py-1 border rounded-lg hover:border-primary hover:text-primary"
+            disabled={copyingKey !== null}
+            className="rounded-xl border px-2 py-1 text-xs hover:border-primary hover:text-primary disabled:opacity-60"
           >
-            Copy all
+            {copyingKey === 'payout-details'
+              ? 'Copying...'
+              : copyNotice?.key === 'payout-details'
+                ? copyNotice.mode === 'downloaded'
+                  ? 'Downloaded payout details'
+                  : 'Copied payout details'
+                : 'Copy all'}
           </button>
         </div>
         {copiedHint && <p className="text-[11px] text-text-tertiary">{copiedHint}</p>}
@@ -296,7 +396,7 @@ export const RegistryItemCard: React.FC<Props> = ({ item, onEdit, onDelete, onMa
   }
 
   return (
-    <div data-testid="owner-registry-item-card" className="group relative flex flex-col overflow-hidden rounded-lg border border-border bg-surface">
+    <div data-testid="owner-registry-item-card" className="group relative flex flex-col overflow-hidden rounded-2xl border border-border bg-surface">
       {showPurchaseConfirm && (
         <PurchaseConfirmPanel
           item={item}
@@ -321,7 +421,7 @@ export const RegistryItemCard: React.FC<Props> = ({ item, onEdit, onDelete, onMa
         )}
         {isPurchased && (
           <div className="absolute inset-0 flex items-center justify-center">
-            <div className="flex items-center gap-1.5 rounded-lg bg-success/90 px-3 py-1.5 text-xs font-semibold text-white">
+            <div className="flex items-center gap-1.5 rounded-xl bg-success/90 px-3 py-1.5 text-xs font-semibold text-white">
               <CheckCircle2 className="w-3.5 h-3.5" />
               Purchased
             </div>
@@ -333,14 +433,14 @@ export const RegistryItemCard: React.FC<Props> = ({ item, onEdit, onDelete, onMa
           </div>
         )}
         <button
-          className="absolute top-2 left-2 cursor-grab opacity-0 group-hover:opacity-100 transition-opacity p-1.5 bg-surface/80 rounded-md border border-border"
+          className="absolute top-2 left-2 cursor-grab rounded-xl border border-border bg-surface/80 p-1.5 opacity-0 transition-opacity group-hover:opacity-100"
           aria-label="Drag to reorder"
         >
           <GripVertical className="w-4 h-4 text-text-tertiary" />
         </button>
       </div>
 
-      <div className="p-4 flex flex-col gap-2 flex-1">
+      <div className="p-4 flex flex-col gap-3 flex-1">
         <div className="flex-1 min-w-0">
           <h3 className="font-semibold text-text-primary leading-snug line-clamp-2">{displayTitle}</h3>
           {merchant && (
@@ -398,7 +498,8 @@ export const RegistryItemCard: React.FC<Props> = ({ item, onEdit, onDelete, onMa
           </div>
         )}
         {(asOfLabel || nextCheckLabel || priceChanged || failCount > 0) && (
-          <div className="space-y-1 text-[11px] text-text-tertiary">
+          <div className="rounded-xl border border-border-subtle bg-surface-subtle/20 p-3 space-y-1 text-[11px] text-text-tertiary">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-primary/75">Detail health</p>
             {(asOfLabel || nextCheckLabel) && (
               <p>
                 {asOfLabel ? `Checked ${asOfLabel}` : 'Not checked yet'}
@@ -420,80 +521,83 @@ export const RegistryItemCard: React.FC<Props> = ({ item, onEdit, onDelete, onMa
           <p className="text-xs text-text-secondary">{getOwnerRegistryPurchaserLabel(normalizedItem)}</p>
         )}
 
-        {canMarkPurchased && (
-          <button
-            onClick={() => setShowPurchaseConfirm(true)}
-            className="w-full py-1.5 text-xs font-medium text-text-secondary border border-border rounded-lg hover:border-success hover:text-success hover:bg-success/5 transition-colors flex items-center justify-center gap-1.5"
-          >
-            <ShoppingBag className="w-3.5 h-3.5" />
-            Mark as purchased
-          </button>
-        )}
-        {!canMarkPurchased && normalizedItem.purchase_status !== 'available' && onResetPurchaseState && (
-          <button
-            onClick={() => void onResetPurchaseState(normalizedItem)}
-            className="w-full py-1.5 text-xs font-medium text-text-secondary border border-border rounded-lg hover:border-primary hover:text-primary transition-colors flex items-center justify-center gap-1.5"
-          >
-            Clear purchase state
-          </button>
-        )}
+        <div className="rounded-xl border border-border-subtle bg-surface-subtle/20 p-3 space-y-2">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-primary/75">Quick actions</p>
+          {canMarkPurchased && (
+            <button
+              onClick={() => setShowPurchaseConfirm(true)}
+              className="flex w-full items-center justify-center gap-1.5 rounded-xl border border-border bg-white py-1.5 text-xs font-medium text-text-secondary transition-colors hover:border-success hover:bg-success/5 hover:text-success"
+            >
+              <ShoppingBag className="w-3.5 h-3.5" />
+              Mark as purchased
+            </button>
+          )}
+          {!canMarkPurchased && normalizedItem.purchase_status !== 'available' && onResetPurchaseState && (
+            <button
+              onClick={() => void onResetPurchaseState(normalizedItem)}
+              className="flex w-full items-center justify-center gap-1.5 rounded-xl border border-border bg-white py-1.5 text-xs font-medium text-text-secondary transition-colors hover:border-primary hover:text-primary"
+            >
+              Clear purchase state
+            </button>
+          )}
 
-        <div className="flex items-center gap-2 pt-1 flex-wrap">
-          {displayUrl && (
-            <a
-              href={displayUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-text-secondary border border-border rounded-lg hover:border-primary hover:text-primary transition-colors"
-            >
-              <ExternalLink className="w-3.5 h-3.5" />
-              View
-            </a>
-          )}
-          <button
-            onClick={() => onEdit(normalizedItem)}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-text-secondary border border-border rounded-lg hover:border-primary hover:text-primary transition-colors"
-          >
-            <Pencil className="w-3.5 h-3.5" />
-            Edit
-          </button>
-          {onRefetchMetadata && displayUrl && (
-            <>
+          <div className="flex items-center gap-2 flex-wrap">
+            {displayUrl && (
+              <a
+                href={displayUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-white px-3 py-1.5 text-xs font-medium text-text-secondary transition-colors hover:border-primary hover:text-primary"
+              >
+                <ExternalLink className="w-3.5 h-3.5" />
+                View
+              </a>
+            )}
             <button
-              onClick={handleRefetch}
-              disabled={refetching}
-              title="Refresh gift details from the store"
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-text-secondary border border-border rounded-lg hover:border-primary hover:text-primary transition-colors disabled:opacity-50"
+              onClick={() => onEdit(normalizedItem)}
+              className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-white px-3 py-1.5 text-xs font-medium text-text-secondary transition-colors hover:border-primary hover:text-primary"
             >
-              {refetching ? (
-                <span className="w-3.5 h-3.5 border-2 border-text-tertiary/30 border-t-primary rounded-full animate-spin" />
-              ) : (
+              <Pencil className="w-3.5 h-3.5" />
+              Edit
+            </button>
+            {onRefetchMetadata && displayUrl && (
+              <>
+              <button
+                onClick={handleRefetch}
+                disabled={refetching}
+                title="Refresh gift details from the store"
+                className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-white px-3 py-1.5 text-xs font-medium text-text-secondary transition-colors hover:border-primary hover:text-primary disabled:opacity-50"
+              >
+                {refetching ? (
+                  <span className="w-3.5 h-3.5 border-2 border-text-tertiary/30 border-t-primary rounded-full animate-spin" />
+                ) : (
+                  <RefreshCw className="w-3.5 h-3.5" />
+                )}
+                Refresh
+              </button>
+              <button
+                onClick={() => { if (!refetching) { setRefetching(true); Promise.resolve(onRefetchMetadata?.(item, false, true)).finally(() => setRefetching(false)); } }}
+                disabled={refetching}
+                title="Re-import this item from the source link and replace weak details"
+                className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-white px-3 py-1.5 text-xs font-medium text-text-secondary transition-colors hover:border-primary hover:text-primary disabled:opacity-50"
+              >
                 <RefreshCw className="w-3.5 h-3.5" />
-              )}
-              Refresh
-            </button>
+                Re-import
+              </button>
+              </>
+            )}
             <button
-              onClick={() => { if (!refetching) { setRefetching(true); Promise.resolve(onRefetchMetadata?.(item, false, true)).finally(() => setRefetching(false)); } }}
-              disabled={refetching}
-              title="Re-import this item from the source link and replace weak details"
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-text-secondary border border-border rounded-lg hover:border-primary hover:text-primary transition-colors disabled:opacity-50"
+              onClick={handleDeleteClick}
+              className={`ml-auto inline-flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-medium transition-colors ${
+                confirmDelete
+                  ? 'border-border bg-surface-subtle text-text-primary'
+                  : 'text-text-tertiary border-transparent hover:border-text-tertiary hover:text-text-primary'
+              }`}
             >
-              <RefreshCw className="w-3.5 h-3.5" />
-              Re-import
+              <Trash2 className="w-3.5 h-3.5" />
+              {confirmDelete ? 'Confirm' : 'Delete'}
             </button>
-            </>
-          )}
-          <button
-            onClick={handleDeleteClick}
-            className={`ml-auto inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors ${
-              confirmDelete
-                ? 'border-border bg-surface-subtle text-text-primary'
-                : 'text-text-tertiary border-transparent hover:border-text-tertiary hover:text-text-primary'
-            }`}
-          >
-            <Trash2 className="w-3.5 h-3.5" />
-            {confirmDelete ? 'Confirm' : 'Delete'}
-          </button>
+          </div>
         </div>
       </div>
     </div>

@@ -4,6 +4,7 @@ import { daysUntilExpiry, type BillingInfo } from '../../../lib/stripeService';
 import { formatSettingsDate } from '../settingsDate';
 
 type SettingsBillingPanelProps = {
+  canManageOwnerSettings: boolean;
   billingInfo: BillingInfo | null;
   billingLoading: boolean;
   billingError: string | null;
@@ -13,6 +14,7 @@ type SettingsBillingPanelProps = {
 };
 
 export function SettingsBillingPanel({
+  canManageOwnerSettings,
   billingInfo,
   billingLoading,
   billingError,
@@ -29,7 +31,7 @@ export function SettingsBillingPanel({
       )}
 
       {billingError && (
-        <div className="flex items-start gap-2 p-4 bg-surface-subtle border border-border-subtle rounded-lg text-text-secondary text-sm">
+        <div className="flex items-start gap-2 rounded-2xl border border-border-subtle bg-surface-subtle p-4 text-sm text-text-secondary">
           <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
           <span>{billingError}</span>
         </div>
@@ -52,8 +54,8 @@ export function SettingsBillingPanel({
             <CardContent className="space-y-5">
               {billingInfo.billing_type === 'one_time' ? (
                 <>
-                  <div className="flex items-start gap-4 p-4 bg-surface-subtle rounded-lg border border-border">
-                    <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                  <div className="flex items-start gap-4 rounded-2xl border border-border bg-surface-subtle p-4">
+                    <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-primary/10">
                       <Calendar className="w-5 h-5 text-primary" />
                     </div>
                     <div className="flex-1 min-w-0">
@@ -62,7 +64,7 @@ export function SettingsBillingPanel({
                     </div>
                   </div>
 
-                  <div className="border border-border rounded-lg overflow-hidden">
+                  <div className="overflow-hidden rounded-2xl border border-border">
                     <div className="px-5 py-4 bg-surface-subtle/45 border-b border-border">
                       <div className="flex items-center gap-2 mb-1">
                         <Repeat className="w-4 h-4 text-accent" />
@@ -81,7 +83,7 @@ export function SettingsBillingPanel({
                       </div>
 
                       {subscribeError && (
-                        <div className="flex items-start gap-2 p-3 bg-surface-subtle border border-border-subtle rounded-lg text-text-secondary text-sm">
+                        <div className="flex items-start gap-2 rounded-xl border border-border-subtle bg-surface-subtle p-3 text-sm text-text-secondary">
                           <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
                           <span>{subscribeError}</span>
                         </div>
@@ -91,7 +93,7 @@ export function SettingsBillingPanel({
                         variant="accent"
                         size="md"
                         onClick={onSubscribe}
-                        disabled={subscribeLoading}
+                        disabled={subscribeLoading || !canManageOwnerSettings}
                       >
                         {subscribeLoading ? (
                           <>
@@ -109,8 +111,8 @@ export function SettingsBillingPanel({
                   </div>
                 </>
               ) : (
-                <div className="flex items-start gap-4 p-4 bg-surface-subtle rounded-lg border border-border">
-                  <div className="w-10 h-10 rounded-lg bg-success/10 flex items-center justify-center flex-shrink-0">
+                <div className="flex items-start gap-4 rounded-2xl border border-border bg-surface-subtle p-4">
+                  <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-success/10">
                     <Repeat className="w-5 h-5 text-success" />
                   </div>
                   <div className="flex-1 min-w-0">

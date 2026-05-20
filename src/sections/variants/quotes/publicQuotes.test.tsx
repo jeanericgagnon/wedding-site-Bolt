@@ -4,7 +4,13 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { defaultQuotesCarouselData, quotesCarouselDefinition } from './carousel';
 import { defaultQuotesFeaturedData, quotesFeaturedDefinition } from './featured';
 import { defaultQuotesGridData, quotesGridDefinition } from './grid';
-import { QUOTES_GUESTBOOK_RETENTION_MS, readLocalGuestbookEntries } from './guestbook';
+import {
+  buildLocalGuestbookStorageKey,
+  defaultQuotesGuestbookData,
+  QUOTES_GUESTBOOK_RETENTION_MS,
+  quotesGuestbookDefinition,
+  readLocalGuestbookEntries,
+} from './guestbook';
 
 const unsafeQuote = {
   id: 'unsafe',
@@ -30,8 +36,8 @@ describe('public quote media', () => {
       />,
     );
 
-    expect(container.querySelector('img')).not.toBeInTheDocument();
-    expect(container.innerHTML).not.toContain('javascript:alert');
+    expect(screen.queryByRole('img')).not.toBeInTheDocument();
+    expect(container.querySelector('img[src^="javascript:"]')).toBeNull();
     expect(screen.getByText('S')).toBeInTheDocument();
   });
 
@@ -45,12 +51,12 @@ describe('public quote media', () => {
       />,
     );
 
-    expect(container.querySelector('img')).not.toBeInTheDocument();
-    expect(container.innerHTML).not.toContain('javascript:alert');
+    expect(screen.queryByRole('img')).not.toBeInTheDocument();
+    expect(container.querySelector('img[src^="javascript:"]')).toBeNull();
   });
 
   it('keeps safe same-origin quote carousel photos', () => {
-    const { container } = render(
+    render(
       <quotesCarouselDefinition.Component
         data={{
           ...defaultQuotesCarouselData,
@@ -60,7 +66,7 @@ describe('public quote media', () => {
       />,
     );
 
-    expect(container.querySelector('img')?.getAttribute('src')).toBe('/preview-photos/header-anchor.jpg');
+    expect(screen.getByRole('img')).toHaveAttribute('src', '/preview-photos/header-anchor.jpg');
   });
 
   it('migrates and bounds local public guestbook entries', () => {
@@ -97,5 +103,36 @@ describe('public quote media', () => {
     window.localStorage.setItem(storageKey, '{broken');
     expect(readLocalGuestbookEntries(storageKey)).toEqual([]);
     expect(window.localStorage.getItem(storageKey)).toBeNull();
+  });
+
+  it('keeps local public guestbook memory scoped to the active site slug and rehydrates on site change', () => {
+    const alphaKey = buildLocalGuestbookStorageKey('alex-jordan', defaultQuotesGuestbookData.headline);
+    const betaKey = buildLocalGuestbookStorageKey('maya-noah', defaultQuotesGuestbookData.headline);
+    window.localStorage.setItem(alphaKey, JSON.stringify([
+      { id: 'alpha-note', text: 'Alpha blessing', author: 'Alpha Guest' },
+    ]));
+    window.localStorage.setItem(betaKey, JSON.stringify([
+      { id: 'beta-note', text: 'Beta blessing', author: 'Beta Guest' },
+    ]));
+
+    const { rerender } = render(
+      <quotesGuestbookDefinition.Component
+        data={defaultQuotesGuestbookData}
+        siteSlug="alex-jordan"
+      />,
+    );
+
+    expect(screen.getByText(/Alpha blessing/)).toBeInTheDocument();
+    expect(screen.queryByText(/Beta blessing/)).not.toBeInTheDocument();
+
+    rerender(
+      <quotesGuestbookDefinition.Component
+        data={defaultQuotesGuestbookData}
+        siteSlug="maya-noah"
+      />,
+    );
+
+    expect(screen.getByText(/Beta blessing/)).toBeInTheDocument();
+    expect(screen.queryByText(/Alpha blessing/)).not.toBeInTheDocument();
   });
 });

@@ -6,14 +6,28 @@ import { BuilderShell } from './components/BuilderShell';
 import { builderProjectService } from './services/builderProjectService';
 import { publishService } from './services/publishService';
 import { BuilderProject, createEmptyBuilderProject } from '../types/builder/project';
+import type { BuilderPage as BuilderProjectPage } from '../types/builder/project';
 import { WeddingDataV1, createEmptyWeddingData } from '../types/weddingData';
-import { createDefaultSectionInstance } from '../types/builder/section';
 import { demoWeddingSite } from '../lib/demoData';
 import { buildCoupleDisplayName } from '../lib/coupleDisplayName';
 import { getTemplatePack } from './constants/builderTemplatePacks';
+import type { BuilderTemplateDefinition } from '../types/builder/template';
 import { readSetupDraft } from '../lib/setupDraft';
 import { resolveActiveSiteForUser } from '../lib/activeSite';
 import { applySetupDraftToWeddingData, hasMeaningfulSetupDraft } from './utils/setupDraftHydration';
+import { assignDefaultSectionAnchors, stripRedundantPageSectionAnchor } from './utils/sectionAnchors';
+import { buildTemplatePageInstances } from './utils/templatePages';
+
+export function withDefaultSectionAnchors(project: BuilderProject): BuilderProject {
+  return {
+    ...project,
+    pages: project.pages.map((page) => ({
+      ...page,
+      sections: assignDefaultSectionAnchors(page.sections)
+        .map((section) => stripRedundantPageSectionAnchor(section, page)),
+    })),
+  };
+}
 
 function createDemoBuilderProject(): BuilderProject {
   const templateId = 'modern-luxe';
@@ -22,26 +36,24 @@ function createDemoBuilderProject(): BuilderProject {
 
   if (template) {
     project.themeId = template.defaultThemeId;
-    project.pages[0].sections = template.sectionComposition.map((section, index) => ({
-      ...createDefaultSectionInstance(section.type, section.variant, index),
-      enabled: section.enabled,
-      locked: section.locked,
-      settings: { ...section.settings },
-    }));
+    project.pages = buildInitialTemplatePages(template);
   }
 
   return project;
 }
 
-function applyTemplateDefaultsToProject(project: BuilderProject, templateId: string): BuilderProject {
+export function buildInitialTemplatePages(template: BuilderTemplateDefinition): BuilderProjectPage[] {
+  return buildTemplatePageInstances(template, 'multi');
+}
+
+export function applyTemplateDefaultsToProject(project: BuilderProject, templateId: string): BuilderProject {
   const template = getTemplatePack(templateId);
   if (!template) return { ...project, templateId };
 
-  const firstPage = project.pages[0];
-  if (!firstPage) return { ...project, templateId, themeId: template.defaultThemeId };
-
-  const hasExistingSections = firstPage.sections.some((section) =>
-    section.enabled || Object.keys(section.settings ?? {}).length > 1 || Object.keys(section.bindings ?? {}).length > 0
+  const hasExistingSections = project.pages.some((page) =>
+    page.sections.some((section) =>
+      section.enabled || Object.keys(section.settings ?? {}).length > 1 || Object.keys(section.bindings ?? {}).length > 0
+    )
   );
 
   if (hasExistingSections) {
@@ -56,18 +68,7 @@ function applyTemplateDefaultsToProject(project: BuilderProject, templateId: str
     ...project,
     templateId,
     themeId: template.defaultThemeId,
-    pages: project.pages.map((page, pageIndex) => {
-      if (pageIndex !== 0) return page;
-      return {
-        ...page,
-        sections: template.sectionComposition.map((section, index) => ({
-          ...createDefaultSectionInstance(section.type, section.variant, index),
-          enabled: section.enabled,
-          locked: section.locked,
-          settings: { ...section.settings },
-        })),
-      };
-    }),
+    pages: buildInitialTemplatePages(template),
   };
 }
 
@@ -151,6 +152,7 @@ export const BuilderPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [coupleName, setCoupleName] = useState<string>('');
+  const [publicSiteSlug, setPublicSiteSlug] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -166,9 +168,10 @@ export const BuilderPage: React.FC = () => {
         const demoProject = createDemoBuilderProject();
         const demoWedding = createDemoWeddingDataFromSite();
 
-        setProject(demoProject);
+        setProject(withDefaultSectionAnchors(demoProject));
         setWeddingData(demoWedding);
         setCoupleName(demoWedding.couple.displayName || 'My Wedding');
+        setPublicSiteSlug(demoWeddingSite.site_slug ?? demoWeddingSite.site_url ?? null);
         return;
       }
 
@@ -181,6 +184,7 @@ export const BuilderPage: React.FC = () => {
       }
 
       const siteId = siteData.id as string;
+      setPublicSiteSlug(siteData.site_slug ?? siteData.site_url ?? null);
       const name1 = siteData.couple_name_1 || siteData.couple_first_name || '';
       const name2 = siteData.couple_name_2 || siteData.couple_second_name || '';
       setCoupleName(name1 && name2 ? `${name1} & ${name2}` : name1 || name2 || 'My Wedding');
@@ -192,7 +196,7 @@ export const BuilderPage: React.FC = () => {
 
       let nextWeddingData = loadedWeddingData;
       let nextProject = loadedProject;
-      const setupDraft = readSetupDraft();
+      const setupDraft = readSetupDraft(user?.id ?? null);
       const hasNoCoupleNames = !loadedWeddingData.couple.partner1Name && !loadedWeddingData.couple.partner2Name;
 
       if (hasMeaningfulSetupDraft(setupDraft) && hasNoCoupleNames) {
@@ -211,7 +215,7 @@ export const BuilderPage: React.FC = () => {
         setCoupleName(nextWeddingData.couple.displayName);
       }
 
-      setProject(nextProject);
+      setProject(nextProject ? withDefaultSectionAnchors(nextProject) : nextProject);
       setWeddingData(nextWeddingData);
     } catch {
       setError('Couldn’t load the site editor right now. Please refresh and try again.');
@@ -257,7 +261,7 @@ export const BuilderPage: React.FC = () => {
     return (
       <div className="h-screen flex items-center justify-center bg-surface-subtle">
         <div className="text-center max-w-sm px-4">
-          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-lg border border-border-subtle bg-white">
+          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-xl border border-border-subtle bg-white">
             <LayoutTemplate size={24} className="text-primary" />
           </div>
           <h2 className="text-lg font-semibold text-text-primary mb-2">No website yet</h2>
@@ -267,7 +271,7 @@ export const BuilderPage: React.FC = () => {
           <p className="text-xs text-text-tertiary mb-6">That first draft will give you something real to refine instead of a blank editor.</p>
           <button
             onClick={() => navigate('/setup/names')}
-            className="inline-flex items-center rounded-lg bg-primary px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-primary-hover"
+            className="inline-flex items-center rounded-xl bg-primary px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-primary-hover"
           >
             Start setup
           </button>
@@ -287,7 +291,7 @@ export const BuilderPage: React.FC = () => {
     return (
       <div className="h-screen flex items-center justify-center bg-surface-subtle">
         <div className="text-center max-w-sm px-4">
-          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-lg border border-border-subtle bg-white">
+          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl border border-border-subtle bg-white">
             <AlertCircle size={24} className="text-primary" />
           </div>
           <h2 className="text-base font-semibold text-text-primary mb-2">Site editor unavailable</h2>
@@ -296,7 +300,7 @@ export const BuilderPage: React.FC = () => {
           <div className="flex flex-col items-center gap-3">
             <button
               onClick={() => user && loadBuilderProject(user.id)}
-              className="inline-flex items-center gap-1.5 px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-primary-hover transition-colors"
+              className="inline-flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-hover"
             >
               <RefreshCw size={14} />
               Try again
@@ -319,7 +323,9 @@ export const BuilderPage: React.FC = () => {
       initialProject={project}
       initialWeddingData={weddingData ?? undefined}
       projectName={coupleName}
+      publicSiteSlug={publicSiteSlug}
       isDemoMode={isDemoMode}
+      storageScope={user?.id ?? null}
       onSave={handleSave}
       onPublish={handlePublish}
     />

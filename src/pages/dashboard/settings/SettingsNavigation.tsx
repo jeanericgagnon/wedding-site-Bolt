@@ -1,5 +1,5 @@
 import { Bell, ClipboardList, CreditCard, Globe, User, Users, type LucideIcon } from 'lucide-react';
-import type { PlannerAccessRole } from '../../../lib/plannerAccess';
+import { canManageSettings, type PlannerAccessRole, type PlannerPermissionKey } from '../../../lib/plannerAccess';
 
 export type SettingsTabId = 'account' | 'team' | 'site' | 'rsvp' | 'notifications' | 'billing';
 
@@ -9,7 +9,11 @@ export type SettingsTab = {
   icon: LucideIcon;
 };
 
-export function getSettingsTabs(settingsRole: PlannerAccessRole): SettingsTab[] {
+export function getSettingsTabs(
+  settingsRole: PlannerAccessRole,
+  settingsPermissions?: PlannerPermissionKey[] | null,
+): SettingsTab[] {
+  const canAccessSiteSettings = canManageSettings(settingsRole, settingsPermissions);
   const tabs: SettingsTab[] = [
     { id: 'account', label: 'Account', icon: User },
     { id: 'team', label: 'Team Access', icon: Users },
@@ -18,7 +22,12 @@ export function getSettingsTabs(settingsRole: PlannerAccessRole): SettingsTab[] 
     { id: 'notifications', label: 'Notifications', icon: Bell },
     { id: 'billing', label: 'Billing', icon: CreditCard },
   ];
-  return tabs.filter((tab) => settingsRole === 'owner' || (tab.id !== 'team' && tab.id !== 'billing'));
+  return tabs.filter((tab) => {
+    if (settingsRole === 'owner') return true;
+    if (tab.id === 'team' || tab.id === 'billing') return false;
+    if (tab.id === 'account') return true;
+    return canAccessSiteSettings;
+  });
 }
 
 export interface SettingsNavigationProps {
@@ -30,7 +39,11 @@ export interface SettingsNavigationProps {
 export function SettingsNavigation({ activeTab, tabs, onTabChange }: SettingsNavigationProps) {
   return (
     <nav className="md:w-56 flex-shrink-0" aria-label="Settings navigation">
-      <div className="rounded-lg border border-border-subtle bg-white/80 p-2">
+      <div className="rounded-2xl border border-border-subtle bg-white p-3 shadow-sm">
+        <div className="px-2 pb-3">
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary/75">Sections</p>
+          <p className="mt-2 text-sm leading-6 text-text-secondary">Open one area at a time so access, billing, and privacy changes stay easy to scan.</p>
+        </div>
         {tabs.map((tab) => {
           const Icon = tab.icon;
           return (
@@ -38,9 +51,9 @@ export function SettingsNavigation({ activeTab, tabs, onTabChange }: SettingsNav
               key={tab.id}
               onClick={() => onTabChange(tab.id)}
               className={`
-                w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-colors
+                w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-colors
                 ${activeTab === tab.id
-                  ? 'bg-primary/10 text-text-primary font-medium'
+                  ? 'bg-primary/10 text-text-primary font-medium shadow-sm'
                   : 'text-text-secondary hover:bg-surface-subtle hover:text-text-primary'
                 }
               `}

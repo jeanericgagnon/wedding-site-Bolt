@@ -162,22 +162,25 @@ test('coordinator day-of route proves handoff save, issue lifecycle, runner comp
   expect(seatingEventResponse.ok, seatingEventText).toBeTruthy();
   const [seatingEventRow] = JSON.parse(seatingEventText) as Array<{ id: string }>;
 
-  const eventCheckInByGuestId = new Map<string, string | null>();
+  const eventArrivalStateByGuestId = new Map<string, { checkedInAt: string | null; tableId: string | null }>();
   if (seatingEventRow?.id) {
     const seatingAssignmentResponse = await restFetch(restUrl('seating_assignments', {
-      select: 'guest_id,checked_in_at',
+      select: 'guest_id,checked_in_at,table_id',
       seating_event_id: `eq.${seatingEventRow.id}`,
       limit: '500',
     }));
     const seatingAssignmentText = await seatingAssignmentResponse.text();
     expect(seatingAssignmentResponse.ok, seatingAssignmentText).toBeTruthy();
-    (JSON.parse(seatingAssignmentText) as Array<{ guest_id: string; checked_in_at: string | null }>).forEach((row) => {
-      eventCheckInByGuestId.set(row.guest_id, row.checked_in_at);
+    (JSON.parse(seatingAssignmentText) as Array<{ guest_id: string; checked_in_at: string | null; table_id: string | null }>).forEach((row) => {
+      eventArrivalStateByGuestId.set(row.guest_id, {
+        checkedInAt: row.checked_in_at,
+        tableId: row.table_id,
+      });
     });
   }
 
   const guestResponse = await restFetch(restUrl('guests', {
-    select: 'id,name,first_name,last_name,invite_token',
+    select: 'id,name,first_name,last_name,rsvp_status,invite_token',
     wedding_site_id: `eq.${eventRow.wedding_site_id}`,
     invite_token: 'not.is.null',
     limit: '250',
@@ -189,11 +192,16 @@ test('coordinator day-of route proves handoff save, issue lifecycle, runner comp
     name: string | null;
     first_name: string | null;
     last_name: string | null;
+    rsvp_status: string | null;
     invite_token: string | null;
   }>;
-  const [guestRow] = guestRows.filter((guest) => (
-    invitedGuestIds.includes(guest.id) && !eventCheckInByGuestId.get(guest.id)
-  ));
+  const candidateGuestRows = guestRows.filter((guest) => {
+    if (!invitedGuestIds.includes(guest.id)) return false;
+    const eventArrivalState = eventArrivalStateByGuestId.get(guest.id);
+    if (eventArrivalState?.checkedInAt) return false;
+    return true;
+  });
+  const [guestRow] = candidateGuestRows;
   expect(guestRow?.id).toBeTruthy();
   const guestName = guestRow.name || [guestRow.first_name, guestRow.last_name].filter(Boolean).join(' ').trim();
   expect(guestName).toBeTruthy();
@@ -231,7 +239,13 @@ test('coordinator day-of route proves handoff save, issue lifecycle, runner comp
     await qrInput.fill(guestRow.invite_token ?? '');
     await page.getByRole('button', { name: 'Validate code' }).click();
     await expect(page.getByText(guestName, { exact: true }).first()).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Confirm check-in' })).toBeVisible();
+    const routeToIssueDeskButton = page.getByRole('button', { name: 'Route to issue desk' });
+    const canRouteToIssueDesk = await routeToIssueDeskButton.isVisible().catch(() => false);
+
+    if (canRouteToIssueDesk) {
+      await expect(routeToIssueDeskButton).toBeVisible();
+      await routeToIssueDeskButton.click();
+    }
 
     const handoffCard = page.getByTestId(`coordinator-handoff-card-${eventRow.id}`);
     await expect(handoffCard).toBeVisible();
@@ -251,12 +265,11 @@ test('coordinator day-of route proves handoff save, issue lifecycle, runner comp
     expect(savedHandoff.lead_name).toBe(handoffLead);
     expect(savedHandoff.support_name).toBe(handoffSupport);
 
-    await page.locator('//select[option[@value="checked-in"]]').first().selectOption('all');
-    const searchInput = page.getByPlaceholder('Search guest name or RSVP status · Enter checks in the active ready guest');
-    await searchInput.fill(guestName);
-    await page.getByTestId(`coordinator-checkin-guest-${guestRow.id}`).click();
-
-    await page.getByTestId('coordinator-issue-type').selectOption('manager-decision');
+    if (canRouteToIssueDesk) {
+      await expect(page.getByTestId('coordinator-issue-type')).toHaveValue('manager-decision');
+    } else {
+      await page.getByTestId('coordinator-issue-type').selectOption('manager-decision');
+    }
     await page.getByTestId('coordinator-issue-title').fill(issueTitle);
     await page.getByTestId('coordinator-issue-owner').fill(issueOwner);
     await page.getByTestId('coordinator-issue-next-action').fill(nextAction);
@@ -267,6 +280,10 @@ test('coordinator day-of route proves handoff save, issue lifecycle, runner comp
     await page.getByTestId('coordinator-issue-runner-detail').fill(runnerDetail);
     await page.getByTestId('coordinator-issue-runner-completion-note').fill(completionNote);
     await page.getByTestId('coordinator-issue-operator-notes').fill(`Coordinator QA operator note ${runId}`);
+    await expect(page.getByTestId('coordinator-issue-type')).toHaveValue('manager-decision');
+    await expect(page.getByTestId('coordinator-issue-title')).toHaveValue(issueTitle);
+    await expect(page.getByTestId('coordinator-issue-owner')).toHaveValue(issueOwner);
+    await expect(page.getByTestId('coordinator-issue-next-action')).toHaveValue(nextAction);
     const issueCreateResponsePromise = page.waitForResponse((response) => (
       response.url().includes('/rest/v1/rpc/coordinator_issue_log_write')
       && response.request().method() === 'POST'

@@ -75,15 +75,28 @@ export function GuestPhotoReviewCard({
           </p>
         </div>
         <div className="grid grid-cols-2 gap-2 text-xs text-text-secondary sm:grid-cols-4">
-          <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">{highlightUploads.length} highlights</span>
-          <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">{chronologicalUploads.length} with times</span>
-          <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">{similarPhotoGroups.length} similar sets</span>
-          <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">{reviewUploads.length} to check</span>
-          <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">{hiddenUploadCount} hidden</span>
-          <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">{flaggedUploadCount} flagged</span>
-          <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">{recapFeaturedCount} featured</span>
-          <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">{recapStoryCount} in recap story</span>
-          <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">{recapHiddenCount} recap hidden</span>
+          <span className="rounded-xl border border-border-subtle bg-surface-subtle px-3 py-1">{highlightUploads.length} highlights</span>
+          <span className="rounded-xl border border-border-subtle bg-surface-subtle px-3 py-1">{chronologicalUploads.length} with times</span>
+          <span className="rounded-xl border border-border-subtle bg-surface-subtle px-3 py-1">{similarPhotoGroups.length} similar sets</span>
+          <span className="rounded-xl border border-border-subtle bg-surface-subtle px-3 py-1">{reviewUploads.length} to check</span>
+          <span className="rounded-xl border border-border-subtle bg-surface-subtle px-3 py-1">{hiddenUploadCount} hidden</span>
+          <span className="rounded-xl border border-border-subtle bg-surface-subtle px-3 py-1">{flaggedUploadCount} flagged</span>
+          <span className="rounded-xl border border-border-subtle bg-surface-subtle px-3 py-1">{recapFeaturedCount} featured</span>
+          <span className="rounded-xl border border-border-subtle bg-surface-subtle px-3 py-1">{recapStoryCount} in recap story</span>
+          <span className="rounded-xl border border-border-subtle bg-surface-subtle px-3 py-1">{recapHiddenCount} recap hidden</span>
+        </div>
+      </div>
+      <div className="mt-5 rounded-2xl border border-border-subtle bg-surface-subtle/20 p-4">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary/75">Review workspace</p>
+            <p className="mt-2 text-sm leading-6 text-text-secondary">Highlights, timeline order, similar-photo cleanup, and recap moderation all live together here so the memory story stays easy to shape.</p>
+          </div>
+          <div className="flex flex-wrap gap-2 text-xs text-text-tertiary">
+            <span className="rounded-xl border border-border-subtle bg-white px-3 py-1">{reviewUploads.length} to check</span>
+            <span className="rounded-xl border border-border-subtle bg-white px-3 py-1">{similarPhotoGroups.length} similar sets</span>
+            <span className="rounded-xl border border-border-subtle bg-white px-3 py-1">{recapFeaturedCount} featured</span>
+          </div>
         </div>
       </div>
       <div className="mt-4 flex flex-wrap gap-2">
@@ -97,10 +110,10 @@ export function GuestPhotoReviewCard({
           Export review sheet
         </Button>
         <Button size="sm" variant="outline" onClick={onExportMemoryChapters} disabled={memoryChapters.length === 0}>
-          Copy chapter notes
+          Download chapter notes
         </Button>
         <Button size="sm" variant="outline" onClick={onExportCuratedRecap} disabled={uploadCount === 0}>
-          Copy recap notes
+          Download recap notes
         </Button>
         <Button size="sm" variant="outline" onClick={onHideReviewUploads} disabled={bulkModerating || reviewUploads.length === 0}>
           Hide review items
@@ -113,11 +126,12 @@ export function GuestPhotoReviewCard({
         </Button>
       </div>
       <div className="mt-5 grid gap-3 lg:grid-cols-4">
-        <div className="rounded-lg border border-border-subtle bg-surface-subtle px-4 py-4">
-          <p className="text-sm font-semibold text-text-primary">Highlights</p>
+        <div className="rounded-2xl border border-border-subtle bg-surface-subtle/30 px-4 py-4 shadow-sm">
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary/75">Highlights</p>
+          <p className="mt-2 text-sm text-text-secondary">The photos most likely to carry the memory story forward.</p>
           <div className="mt-3 space-y-2">
             {highlightUploads.slice(0, 3).map(({ upload, analysis }) => (
-              <div key={upload.id} className="rounded-lg bg-neutral-50 px-3 py-2">
+              <div key={upload.id} className="rounded-xl bg-white px-3 py-2 ring-1 ring-border-subtle">
                 <p className="truncate text-sm font-medium text-neutral-900">{safePhotoAnalysisText(analysis?.caption, upload.original_filename)}</p>
                 <p className="mt-1 text-xs text-neutral-500">{safePhotoAnalysisText(analysis?.suggested_bucket_name, 'Reviewed')} · {analysis ? Math.round(analysis.slideshow_priority) : 0}/100</p>
                 <div className="mt-2 flex flex-wrap gap-1">
@@ -136,11 +150,12 @@ export function GuestPhotoReviewCard({
             {highlightUploads.length === 0 && <p className="text-xs text-neutral-500">Review a few photos to fill this.</p>}
           </div>
         </div>
-        <div className="rounded-lg border border-border-subtle bg-surface-subtle px-4 py-4">
-          <p className="text-sm font-semibold text-text-primary">Timeline</p>
+        <div className="rounded-2xl border border-border-subtle bg-surface-subtle/30 px-4 py-4 shadow-sm">
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary/75">Timeline</p>
+          <p className="mt-2 text-sm text-text-secondary">Saved capture times help the day read in the order it actually unfolded.</p>
           <div className="mt-3 space-y-2">
             {chronologicalUploads.slice(0, 3).map(({ upload, metadata }) => (
-              <div key={upload.id} className="rounded-lg bg-neutral-50 px-3 py-2">
+              <div key={upload.id} className="rounded-xl bg-white px-3 py-2 ring-1 ring-border-subtle">
                 <p className="truncate text-sm font-medium text-neutral-900">{upload.original_filename}</p>
                 <p className="mt-1 text-xs text-neutral-500">{metadata?.taken_at ? formatDateTime(metadata.taken_at) : 'Time not available'}</p>
               </div>
@@ -148,11 +163,12 @@ export function GuestPhotoReviewCard({
             {chronologicalUploads.length === 0 && <p className="text-xs text-neutral-500">Capture times appear when photos include saved time details.</p>}
           </div>
         </div>
-        <div className="rounded-lg border border-border-subtle bg-surface-subtle px-4 py-4">
-          <p className="text-sm font-semibold text-text-primary">Similar sets</p>
+        <div className="rounded-2xl border border-border-subtle bg-surface-subtle/30 px-4 py-4 shadow-sm">
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary/75">Similar sets</p>
+          <p className="mt-2 text-sm text-text-secondary">Useful for tucking away near-duplicates before the recap gets crowded.</p>
           <div className="mt-3 space-y-2">
             {similarPhotoGroups.slice(0, 3).map((group) => (
-              <div key={group.key} className="rounded-lg bg-neutral-50 px-3 py-2">
+              <div key={group.key} className="rounded-xl bg-white px-3 py-2 ring-1 ring-border-subtle">
                 <p className="text-sm font-medium text-neutral-900">{group.entries.length} matching uploads · keep 1</p>
                 <p className="mt-1 truncate text-xs text-neutral-500">{group.entries.map((entry) => entry.upload.original_filename).join(', ')}</p>
               </div>
@@ -161,11 +177,12 @@ export function GuestPhotoReviewCard({
             {duplicateExtraCount > 0 && <p className="text-xs text-primary">{duplicateExtraCount} similar photo{duplicateExtraCount === 1 ? '' : 's'} can be tucked away.</p>}
           </div>
         </div>
-        <div className="rounded-lg border border-border-subtle bg-surface-subtle px-4 py-4">
-          <p className="text-sm font-semibold text-text-primary">Worth checking</p>
+        <div className="rounded-2xl border border-border-subtle bg-surface-subtle/30 px-4 py-4 shadow-sm">
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary/75">Worth checking</p>
+          <p className="mt-2 text-sm text-text-secondary">These are the uploads that still need a quick human pass before you trust the recap.</p>
           <div className="mt-3 space-y-2">
             {reviewUploads.slice(0, 3).map(({ upload, analysis }) => (
-              <div key={upload.id} className="rounded-lg bg-neutral-50 px-3 py-2">
+              <div key={upload.id} className="rounded-xl bg-white px-3 py-2 ring-1 ring-border-subtle">
                 <p className="truncate text-sm font-medium text-neutral-900">{upload.original_filename}</p>
                 <p className="mt-1 text-xs text-neutral-500">{analysisDisplayStatus(analysis)}{analysis?.bucket_confidence ? ` · ${Math.round(analysis.bucket_confidence * 100)}%` : ''}</p>
               </div>
@@ -175,11 +192,12 @@ export function GuestPhotoReviewCard({
         </div>
       </div>
       {memoryChapters.length > 0 && (
-        <div className="mt-5 rounded-lg border border-border-subtle bg-surface-subtle px-4 py-4">
-          <p className="text-sm font-semibold text-text-primary">Memory chapters</p>
+        <div className="mt-5 rounded-2xl border border-border-subtle bg-surface-subtle/30 px-4 py-4 shadow-sm">
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary/75">Memory chapters</p>
+          <p className="mt-2 text-sm text-text-secondary">These give you a rough editorial arc for the day before you turn the best photos into a recap.</p>
           <div className="mt-3 grid gap-2 md:grid-cols-3">
             {memoryChapters.map((chapter) => (
-              <div key={chapter.date} className="rounded-lg bg-neutral-50 px-3 py-2">
+              <div key={chapter.date} className="rounded-xl bg-white px-3 py-2 ring-1 ring-border-subtle">
                 <p className="text-sm font-medium text-neutral-900">{formatGuestPhotoDate(chapter.date)}</p>
                 <p className="mt-1 text-xs text-neutral-500">{chapter.entries.length} timed upload{chapter.entries.length === 1 ? '' : 's'} · {chapter.highlights} highlight{chapter.highlights === 1 ? '' : 's'}</p>
                 {chapter.bucketNames.length > 0 && <p className="mt-1 truncate text-xs text-neutral-500">{chapter.bucketNames.join(' · ')}</p>}

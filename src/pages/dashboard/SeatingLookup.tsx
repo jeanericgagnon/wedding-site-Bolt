@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { buildGuestPreviewRoutes } from '../../lib/guestPreviewRoutes';
@@ -14,18 +14,35 @@ export const DashboardSeatingLookup: React.FC = () => {
   const [rowsLoading, setRowsLoading] = useState(false);
   const [rows, setRows] = useState<SeatingLookupRow[]>([]);
   const [itineraryEvents, setItineraryEvents] = useState<ItineraryEvent[]>([]);
+  const [siteId, setSiteId] = useState<string | null>(null);
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [query, setQuery] = useState('');
+  const previousSiteIdRef = useRef<string | null>(null);
+  const eventsRequestIdRef = useRef(0);
+  const rowsRequestIdRef = useRef(0);
   const loading = eventsLoading || rowsLoading;
+
+  const resetSeatingLookupState = useCallback(() => {
+    rowsRequestIdRef.current += 1;
+    setSiteId(null);
+    setRows([]);
+    setItineraryEvents([]);
+    setSelectedEventId(null);
+    setQuery('');
+  }, []);
+
+  const resetSeatingLookupInteractionState = useCallback(() => {
+    setQuery('');
+  }, []);
 
   useEffect(() => {
     let mounted = true;
+    const requestId = ++eventsRequestIdRef.current;
+    const isCurrentRequest = () => mounted && requestId === eventsRequestIdRef.current;
     const run = async () => {
       if (!user) {
-        if (mounted) {
-          setRows([]);
-          setItineraryEvents([]);
-          setSelectedEventId(null);
+        if (isCurrentRequest()) {
+          resetSeatingLookupState();
           setEventsLoading(false);
         }
         return;
@@ -34,7 +51,8 @@ export const DashboardSeatingLookup: React.FC = () => {
         setEventsLoading(true);
         if (isDemoMode) {
           const demoEvents = loadDemoItineraryEventsFromStorage();
-          if (mounted) {
+          if (isCurrentRequest()) {
+            setSiteId('demo-site-id');
             setItineraryEvents(demoEvents);
             setSelectedEventId(resolveOperationalEventId({ events: demoEvents }));
           }
@@ -43,33 +61,47 @@ export const DashboardSeatingLookup: React.FC = () => {
 
         const siteId = await getWeddingSiteId();
         if (!siteId) {
-          if (mounted) {
-            setRows([]);
-            setItineraryEvents([]);
-            setSelectedEventId(null);
+          if (isCurrentRequest()) {
+            resetSeatingLookupState();
           }
           return;
         }
         const events = await loadItineraryEvents(siteId);
-        if (mounted) {
+        if (isCurrentRequest()) {
+          setSiteId(siteId);
           setItineraryEvents(events);
           setSelectedEventId(resolveOperationalEventId({ events }));
         }
       } catch {
-        if (mounted) setRows([]);
+        if (isCurrentRequest()) resetSeatingLookupState();
       } finally {
-        if (mounted) setEventsLoading(false);
+        if (isCurrentRequest()) setEventsLoading(false);
       }
     };
     void run();
     return () => { mounted = false; };
-  }, [user, isDemoMode]);
+  }, [user, isDemoMode, resetSeatingLookupState]);
+
+  useEffect(() => {
+    if (previousSiteIdRef.current && siteId && previousSiteIdRef.current !== siteId) {
+      resetSeatingLookupInteractionState();
+    }
+    previousSiteIdRef.current = siteId;
+  }, [resetSeatingLookupInteractionState, siteId]);
+
+  useEffect(() => {
+    if (!siteId && !isDemoMode) {
+      resetSeatingLookupInteractionState();
+    }
+  }, [isDemoMode, resetSeatingLookupInteractionState, siteId]);
 
   useEffect(() => {
     let mounted = true;
+    const requestId = ++rowsRequestIdRef.current;
+    const isCurrentRequest = () => mounted && requestId === rowsRequestIdRef.current;
     const run = async () => {
       if (!user || !selectedEventId) {
-        if (mounted) {
+        if (isCurrentRequest()) {
           setRows([]);
           setRowsLoading(false);
         }
@@ -80,11 +112,11 @@ export const DashboardSeatingLookup: React.FC = () => {
         const mapped = isDemoMode
           ? loadDemoSeatingLookupRows(selectedEventId)
           : await loadSeatingLookupRowsForUser(user.id, selectedEventId);
-        if (mounted) setRows(mapped);
+        if (isCurrentRequest()) setRows(mapped);
       } catch {
-        if (mounted) setRows([]);
+        if (isCurrentRequest()) setRows([]);
       } finally {
-        if (mounted) setRowsLoading(false);
+        if (isCurrentRequest()) setRowsLoading(false);
       }
     };
     void run();
@@ -112,7 +144,7 @@ export const DashboardSeatingLookup: React.FC = () => {
   return (
     <DashboardLayout currentPage="seating">
       <div className="max-w-5xl mx-auto space-y-5">
-        <div className="rounded-lg border border-border-subtle bg-white p-5">
+        <div className="rounded-xl border border-border-subtle bg-white p-5">
           <h1 className="text-2xl font-semibold text-text-primary">Find a guest seat</h1>
           <p className="text-sm text-text-secondary mt-1">Search a guest’s table and seat when someone asks.</p>
           <div className="mt-3 flex flex-wrap gap-2">
@@ -120,36 +152,36 @@ export const DashboardSeatingLookup: React.FC = () => {
             <Link to="/dashboard/coordinator" className="rounded border border-border px-3 py-1.5 text-xs text-text-secondary hover:border-primary/40 hover:text-primary">Day-of view</Link>
           </div>
           <div className="mt-3 grid grid-cols-2 md:grid-cols-4 gap-2">
-            <div className="rounded-lg border border-border-subtle bg-surface-subtle/30 px-3 py-2">
+            <div className="rounded-xl border border-border-subtle bg-surface-subtle/30 px-3 py-2">
               <p className="text-[11px] text-text-tertiary">Guests listed</p>
               <p className="text-sm font-semibold text-text-primary">{loading ? '—' : stats.total}</p>
             </div>
-            <div className="rounded-lg border border-border-subtle bg-surface-subtle/30 px-3 py-2">
+            <div className="rounded-xl border border-border-subtle bg-surface-subtle/30 px-3 py-2">
               <p className="text-[11px] text-text-tertiary">At a table</p>
               <p className="text-sm font-semibold text-text-primary">{loading ? '—' : stats.assigned}</p>
             </div>
-            <div className="rounded-lg border border-border-subtle bg-surface-subtle/30 px-3 py-2">
+            <div className="rounded-xl border border-border-subtle bg-surface-subtle/30 px-3 py-2">
               <p className="text-[11px] text-text-tertiary">Checked in</p>
               <p className="text-sm font-semibold text-text-primary">{loading ? '—' : stats.arrived}</p>
             </div>
-            <div className="rounded-lg border border-border-subtle bg-surface-subtle/30 px-3 py-2">
+            <div className="rounded-xl border border-border-subtle bg-surface-subtle/30 px-3 py-2">
               <p className="text-[11px] text-text-tertiary">Needs seat</p>
               <p className="text-sm font-semibold text-text-primary">{loading ? '—' : stats.missingSeat}</p>
             </div>
           </div>
 
-          <div className="mt-3 rounded-lg border border-border-subtle bg-surface-subtle/20 px-3 py-2 text-[11px] text-text-secondary">
+          <div className="mt-3 rounded-xl border border-border-subtle bg-surface-subtle/20 px-3 py-2 text-[11px] text-text-secondary">
             Search a guest, answer table and seat questions, then jump back into seating or day-of view if something changes.
           </div>
 
           <div className="mt-3 grid gap-3 md:grid-cols-[minmax(0,1fr)_220px]">
-            <div className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-2 text-[11px] text-text-primary">
+            <div className="rounded-xl border border-border-subtle bg-surface-subtle px-3 py-2 text-[11px] text-text-primary">
               Data is for <span className="font-semibold">{selectedEvent?.event_name ?? 'the selected event'}</span>. Keep this matched to the live or next event so rehearsal and reception seating do not get mixed.
             </div>
             <select
               value={selectedEventId ?? ''}
               onChange={(event) => setSelectedEventId(event.target.value || null)}
-              className="rounded-lg border border-border bg-white px-3 py-2 text-sm text-text-primary"
+              className="rounded-xl border border-border bg-white px-3 py-2 text-sm text-text-primary"
             >
               <option value="" disabled>
                 {eventsLoading ? 'Loading events…' : 'Choose an event'}
@@ -160,7 +192,7 @@ export const DashboardSeatingLookup: React.FC = () => {
             </select>
           </div>
 
-          <div className="mt-3 rounded-lg border border-border-subtle bg-surface-subtle px-3 py-2 text-[11px] text-text-primary">
+          <div className="mt-3 rounded-xl border border-border-subtle bg-surface-subtle px-3 py-2 text-[11px] text-text-primary">
             For arrival questions, use day-of view. For table changes, open seating. This page stays focused on quick answers.
           </div>
 
@@ -168,11 +200,11 @@ export const DashboardSeatingLookup: React.FC = () => {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search guest name, email, or table"
-            className="mt-3 w-full px-3 py-2 border border-border rounded-lg bg-surface"
+            className="mt-3 w-full px-3 py-2 border border-border rounded-xl bg-surface"
           />
         </div>
 
-        <div className="overflow-hidden rounded-lg border border-border-subtle bg-white">
+        <div className="overflow-hidden rounded-xl border border-border-subtle bg-white">
           <table className="w-full text-sm">
             <thead className="bg-surface-subtle border-b border-border">
               <tr>
@@ -222,7 +254,7 @@ export const DashboardSeatingLookup: React.FC = () => {
                         <div>{r.checked_in_at ? 'Yes' : 'No'}</div>
                         {(() => {
                           const states = getCheckInExceptionStates({ checkedInAt: r.checked_in_at, rsvpStatus: r.rsvp_status, tableName: r.table_name });
-                          return states.length ? <div className="flex flex-wrap gap-1">{states.map((state) => <span key={state} className="inline-flex items-center rounded-lg border border-border-subtle bg-surface-subtle px-2 py-0.5 text-[10px] font-medium text-text-primary">{getCheckInExceptionLabel(state)}</span>)}</div> : null;
+                          return states.length ? <div className="flex flex-wrap gap-1">{states.map((state) => <span key={state} className="inline-flex items-center rounded-xl border border-border-subtle bg-surface-subtle px-2 py-0.5 text-[10px] font-medium text-text-primary">{getCheckInExceptionLabel(state)}</span>)}</div> : null;
                         })()}
                         {(() => {
                           const states = getCheckInExceptionStates({ checkedInAt: r.checked_in_at, rsvpStatus: r.rsvp_status, tableName: r.table_name });

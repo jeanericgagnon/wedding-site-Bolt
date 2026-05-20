@@ -113,6 +113,7 @@ export function buildGuestDashboardViewProps(args: any) {
     householdBusy: args.householdBusy,
     households: args.households,
     isDemoMode: args.isDemoMode,
+    isGuestsReadOnly: args.isGuestsReadOnly,
     publicSiteSlug: args.publicSiteSlug,
     selectedGuestIds: args.selectedGuestIds,
     selectedGuestLanguageDraft: args.selectedGuestLanguageDraft,
@@ -163,6 +164,7 @@ export function buildGuestDashboardViewProps(args: any) {
   const guestConflictProps = {
     conflictFilter: args.conflictFilter,
     guests: args.guests,
+    isGuestsReadOnly: args.isGuestsReadOnly,
     resolvingConflictId: args.resolvingConflictId,
     rsvpConflicts: args.rsvpConflicts,
     rsvpConflictStats: args.rsvpConflictStats,
@@ -176,15 +178,22 @@ export function buildGuestDashboardViewProps(args: any) {
   };
 
   const guestOpsSummaryProps = {
+    canEditGuests: args.canEditGuests,
     cleanGuestsView: args.cleanGuestsView,
+    contactCoverage: args.contactStats.contactCoverage,
     fromQuickStart: args.fromQuickStart,
     nextStep: args.nextStep,
     opsQueue: args.opsQueue,
     plannerHandoff: args.plannerHandoff,
+    pendingCount: args.stats.pending,
     recommendedAction: args.recommendedAction,
+    totalCount: args.stats.total,
+    onAddGuest: args.onHeaderAddGuest,
     onAddFollowUpTask: args.onAddFollowUpTask,
+    onCopyAddressCollectionLink: args.onCopyAddressCollectionLink,
     onFocusQueueItem: args.onFocusQueueItem,
     onFocusRecommendedAction: args.onFocusRecommendedAction,
+    onOpenRsvpSettings: () => args.onSetGuestsTab('rsvp-config'),
     onSkipToPhotos: args.onSkipToPhotos,
   };
 
@@ -237,9 +246,10 @@ export function buildGuestDashboardViewProps(args: any) {
     rsvpQuestions: args.rsvpQuestions,
     rsvpSetupChecklist: args.rsvpSetupChecklist,
     stats: args.stats,
+    isGuestsReadOnly: args.isGuestsReadOnly,
     onAddRsvpQuestionTemplate: args.onAddRsvpQuestionTemplate,
+    onRequestConfirmation: args.requestConfirmation,
     onSaveRsvpConfig: args.onSaveRsvpConfig,
-    onSetConfirmDialog: args.onSetConfirmDialog,
     onSetGuestsTab: args.onSetGuestsTab,
     onSetRsvpAccessSelection: args.onSetRsvpAccessSelection,
     onSetRsvpConfigDirty: args.onSetRsvpConfigDirty,

@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 
 import { FaqAccordion, FaqIconGrid, FaqSection } from './FaqSection';
@@ -151,15 +151,20 @@ describe('FaqSection', () => {
       ],
     };
 
-    const { container, rerender } = render(<faqTabbedDefinition.Component data={faqData} />);
+    const { rerender } = render(<faqTabbedDefinition.Component data={faqData} />);
 
     expect(screen.getByRole('button', { name: 'Attire' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Travel' })).toBeInTheDocument();
-    expect(container.querySelector('.lg\\:sticky')).toBeInTheDocument();
+    expect(screen.getByText('Cocktail attire.')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Travel' }));
+    expect(screen.getByText('Use valet or rideshare.')).toBeInTheDocument();
+    expect(screen.queryByText('Cocktail attire.')).not.toBeInTheDocument();
 
     rerender(<faqIconGridDefinition.Component data={{ ...faqData, layoutStyle: 'iconGrid' }} />);
 
-    expect(container.querySelector('.bg-stone-950')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Attire' })).not.toBeInTheDocument();
+    expect(screen.getByText('Cocktail attire.')).toBeInTheDocument();
+    expect(screen.getByText('Use valet or rideshare.')).toBeInTheDocument();
 
     rerender(<faqNumberedDefinition.Component data={{ ...faqData, layoutStyle: 'numbered' }} />);
 

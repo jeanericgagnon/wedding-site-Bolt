@@ -15,7 +15,7 @@ export const DetailsSection: React.FC<DetailsSectionProps> = ({ content }) => {
         </h2>
 
         <div className="grid md:grid-cols-2 gap-8">
-          <div className="bg-background rounded-lg p-6">
+          <div className="bg-background rounded-xl p-6">
             <div className="flex items-start gap-4">
               <MapPin className="w-6 h-6 text-primary flex-shrink-0 mt-1" />
               <div>
@@ -26,7 +26,7 @@ export const DetailsSection: React.FC<DetailsSectionProps> = ({ content }) => {
             </div>
           </div>
 
-          <div className="bg-background rounded-lg p-6">
+          <div className="bg-background rounded-xl p-6">
             <div className="flex items-start gap-4">
               <Clock className="w-6 h-6 text-primary flex-shrink-0 mt-1" />
               <div>
@@ -38,7 +38,7 @@ export const DetailsSection: React.FC<DetailsSectionProps> = ({ content }) => {
           </div>
 
           {content.attire && (
-            <div className="bg-background rounded-lg p-6">
+            <div className="bg-background rounded-xl p-6">
               <div className="flex items-start gap-4">
                 <Shirt className="w-6 h-6 text-primary flex-shrink-0 mt-1" />
                 <div>
@@ -51,7 +51,7 @@ export const DetailsSection: React.FC<DetailsSectionProps> = ({ content }) => {
         </div>
 
         {content.notes && (
-          <div className="mt-8 bg-primary/5 rounded-lg p-6">
+          <div className="mt-8 bg-primary/5 rounded-xl p-6">
             <h3 className="font-semibold text-text-primary mb-3">Our Story</h3>
             <p className="text-text-secondary whitespace-pre-line">{content.notes}</p>
           </div>

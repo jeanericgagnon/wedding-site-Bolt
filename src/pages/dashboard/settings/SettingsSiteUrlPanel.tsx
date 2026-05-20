@@ -5,6 +5,7 @@ import { ShareQrPanel } from '../../../components/ui/ShareQrPanel';
 import { getSiteVisibilityState, type SitePrivacyMode } from '../../../lib/siteVisibilityState';
 
 type SettingsSiteUrlPanelProps = {
+  canEditSettings: boolean;
   isPublished: boolean;
   onSiteSlugChange: (value: string) => void;
   onSubmit: (event: FormEvent) => void;
@@ -17,6 +18,7 @@ type SettingsSiteUrlPanelProps = {
 };
 
 export function SettingsSiteUrlPanel({
+  canEditSettings,
   isPublished,
   onSiteSlugChange,
   onSubmit,
@@ -38,10 +40,10 @@ export function SettingsSiteUrlPanel({
       <CardContent>
         <form onSubmit={onSubmit} className="space-y-4">
           {slugSuccess && (
-            <div className="rounded-lg border border-success/20 bg-success-light p-3 text-sm text-success">{slugSuccess}</div>
+            <div className="rounded-2xl border border-success/20 bg-success-light p-3 text-sm text-success">{slugSuccess}</div>
           )}
           {slugError && (
-            <div className="rounded-lg border border-border-subtle bg-surface-subtle p-3 text-sm text-text-secondary">{slugError}</div>
+            <div className="rounded-2xl border border-border-subtle bg-surface-subtle p-3 text-sm text-text-secondary">{slugError}</div>
           )}
           <div>
             <label className="mb-2 block text-sm font-medium text-text-primary">
@@ -51,6 +53,7 @@ export function SettingsSiteUrlPanel({
               <Input
                 value={siteSlug}
                 onChange={(e) => onSiteSlugChange(e.target.value)}
+                disabled={!canEditSettings}
                 className="flex-1"
                 placeholder="yournames"
               />
@@ -81,7 +84,7 @@ export function SettingsSiteUrlPanel({
                     />
                   </>
                 ) : (
-                  <div className="rounded-lg border border-border-subtle bg-surface-subtle p-3 text-sm text-text-secondary">
+                  <div className="rounded-2xl border border-border-subtle bg-surface-subtle p-3 text-sm text-text-secondary">
                     <p className="font-medium text-text-primary">This URL is reserved for your site, but guests cannot open it yet.</p>
                     <p className="mt-1">
                       {visibility.explainer} Publish the site before sharing the public link or printing a QR code.
@@ -92,7 +95,7 @@ export function SettingsSiteUrlPanel({
             )}
           </div>
           <div className="flex justify-end pt-2">
-            <Button variant="primary" size="md" type="submit" disabled={slugSaving}>
+            <Button variant="primary" size="md" type="submit" disabled={slugSaving || !canEditSettings}>
               {slugSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
               Update URL
             </Button>

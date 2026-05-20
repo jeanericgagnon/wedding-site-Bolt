@@ -1,7 +1,7 @@
 import React from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { QUICK_START_STORAGE_KEY } from '../lib/quickStartStateTransfer';
+import { buildQuickStartDraftStorageKey, QUICK_START_STORAGE_KEY } from '../lib/quickStartStateTransfer';
 
 const navigateMock = vi.fn();
 const useLocationMock = vi.fn();
@@ -136,5 +136,18 @@ describe('Signup quick start handoff', () => {
         returnTo: '/onboarding',
       },
     });
+  });
+
+  it('stores carried onboarding drafts in an invite-email scoped key when signup context provides an email', async () => {
+    useSearchParamsMock.mockReturnValue([new URLSearchParams('inviteEmail=alex@example.com&inviteToken=abc')]);
+
+    render(<Signup />);
+
+    await waitFor(() => {
+      const stored = JSON.parse(window.localStorage.getItem(buildQuickStartDraftStorageKey('alex@example.com')) || '{}');
+      expect(stored.currentIndex).toBe(0);
+      expect(stored.viewState).toBe('question');
+    });
+    expect(window.localStorage.getItem(QUICK_START_STORAGE_KEY)).toBeNull();
   });
 });

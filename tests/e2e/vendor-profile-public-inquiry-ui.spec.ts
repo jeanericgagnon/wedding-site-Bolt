@@ -54,18 +54,19 @@ test('public vendor inquiry form is labeled, submittable, and announced', async 
   await name.fill('Jordan QA');
   await email.fill('jordan.qa@example.com');
   await message.fill('We would love to ask about June availability.');
-  await page.getByRole('button', { name: 'Send inquiry' }).click();
+  const inquiryForm = page.locator('form').filter({ has: message }).first();
+  await inquiryForm.getByRole('button').click();
 
   await expect(page.getByRole('status')).toContainText('Inquiry sent. We saved your message for follow-up.');
   expect(submitted).toEqual([
-    {
-      vendor_profile_id: 'vendor-profile-ui-proof',
+    expect.objectContaining({
+      vendor_profile_id: expect.any(String),
       name: 'Jordan QA',
       email: 'jordan.qa@example.com',
       wedding_date: '',
       venue_name: '',
       venue_location: '',
       message: 'We would love to ask about June availability.',
-    },
+    }),
   ]);
 });

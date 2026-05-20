@@ -47,7 +47,7 @@ describe('registryLaunchReadiness', () => {
 
     expect(readiness.status).toBe('ready');
     expect(readiness.reviewCount).toBe(0);
-    expect(readiness.summary).toContain('Guest gift links and fund paths are ready');
+    expect(readiness.summary).toContain('Gift links, fund links, and purchase-state basics look ready');
     expect(readiness.items.find((entry) => entry.id === 'external-links')?.detail).toContain('100% coverage');
     expect(readiness.items.find((entry) => entry.id === 'cash-funds')).toMatchObject({
       tone: 'ready',
@@ -85,7 +85,7 @@ describe('registryLaunchReadiness', () => {
       tone: 'ready',
       count: 1,
     });
-    expect(readiness.items.find((entry) => entry.id === 'thank-you-follow-up')?.detail).toContain('100% purchaser attribution coverage');
+    expect(readiness.items.find((entry) => entry.id === 'thank-you-follow-up')?.detail).toContain('100% already have a purchaser named');
     expect(readiness.items.find((entry) => entry.id === 'hide-purchased')?.detail).toContain('hide after purchase');
   });
 
@@ -101,7 +101,7 @@ describe('registryLaunchReadiness', () => {
     expect(plan.missingPurchaserCount).toBe(1);
     expect(plan.completedCount).toBe(0);
     expect(plan.items.find((entry) => entry.id === 'plates')).toMatchObject({
-      purchaserLabel: 'Purchased by Alex',
+      purchaserLabel: 'Purchaser: Alex',
       taskStatus: 'todo',
     });
     expect(plan.items.find((entry) => entry.id === 'towels')).toMatchObject({
@@ -112,9 +112,9 @@ describe('registryLaunchReadiness', () => {
   it('keeps the thank-you preview quiet before gifts are purchased', () => {
     const plan = buildRegistryThankYouPlanWithLedger([item()], {});
 
-    expect(plan.headline).toBe('Thank-you follow-up is quiet');
+    expect(plan.headline).toBe('Thank-you follow-up is quiet right now');
     expect(plan.items).toEqual([]);
-    expect(plan.summary).toContain('Purchased gifts will appear here');
+    expect(plan.summary).toContain('No purchased gifts need thank-you follow-up right now');
   });
 
   it('normalizes and syncs persisted thank-you ledger entries', () => {

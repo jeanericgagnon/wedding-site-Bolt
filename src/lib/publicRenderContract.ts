@@ -128,12 +128,36 @@ function asString(value: unknown): string | undefined {
   return typeof value === 'string' ? value : undefined;
 }
 
+function asBuilderString(value: unknown): string | undefined {
+  if (typeof value === 'string') return value;
+  const record = asRecord(value);
+  return typeof record?.value === 'string' ? record.value : undefined;
+}
+
+function asFiniteNumber(value: unknown): number | undefined {
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+  if (typeof value === 'string' && value.trim()) {
+    const parsed = Number(value);
+    if (Number.isFinite(parsed)) return parsed;
+  }
+  return undefined;
+}
+
 function hasNonEmptyString(value: unknown): value is string {
   return typeof value === 'string' && value.trim().length > 0;
 }
 
 function asRecord(value: unknown): Record<string, unknown> | null {
   return value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : null;
+}
+
+function unwrapTopLevelBuilderSettingValues(source: Record<string, unknown>): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(source)) {
+    const record = asRecord(value);
+    out[key] = record && 'value' in record ? record.value : value;
+  }
+  return out;
 }
 
 function pickStringArray(value: unknown): string[] | undefined {
@@ -675,9 +699,10 @@ export function sanitizePublicSectionSettings(
   const rawSource = asRecord(
     rewriteSignedMediaUrlsToPublicDeep(value ?? {}),
   ) ?? {};
+  const unwrappedSource = unwrapTopLevelBuilderSettingValues(rawSource);
   const source = asRecord(
     sanitizePublicSectionDataDeep(
-      rawSource,
+      unwrappedSource,
     ),
   ) ?? {};
   const allowedKeys = new Set(PUBLIC_SECTION_SETTINGS_ALLOWLIST[type as SectionType] ?? []);
@@ -685,20 +710,20 @@ export function sanitizePublicSectionSettings(
   const normalizedSource = { ...source };
 
   if (type === 'footer-cta') {
-    if (!hasNonEmptyString(normalizedSource.buttonLabel) && hasNonEmptyString(rawSource.ctaLabel)) {
-      normalizedSource.buttonLabel = rawSource.ctaLabel;
+    if (!hasNonEmptyString(normalizedSource.buttonLabel) && hasNonEmptyString(unwrappedSource.ctaLabel)) {
+      normalizedSource.buttonLabel = unwrappedSource.ctaLabel;
     }
-    if (!hasNonEmptyString(normalizedSource.rsvpUrl) && hasNonEmptyString(normalizedSource.ctaHref)) {
+    if (!hasNonEmptyString(normalizedSource.rsvpUrl) && hasNonEmptyString(unwrappedSource.ctaHref)) {
       normalizedSource.rsvpUrl = normalizedSource.ctaHref;
     }
   }
 
   if (type === 'hero') {
-    if (!hasNonEmptyString(normalizedSource.eyebrow) && hasNonEmptyString(rawSource.title)) {
-      normalizedSource.eyebrow = rawSource.title;
+    if (!hasNonEmptyString(normalizedSource.eyebrow) && hasNonEmptyString(unwrappedSource.title)) {
+      normalizedSource.eyebrow = unwrappedSource.title;
     }
-    if (!hasNonEmptyString(normalizedSource.subheadline) && hasNonEmptyString(rawSource.subtitle)) {
-      normalizedSource.subheadline = rawSource.subtitle;
+    if (!hasNonEmptyString(normalizedSource.subheadline) && hasNonEmptyString(unwrappedSource.subtitle)) {
+      normalizedSource.subheadline = unwrappedSource.subtitle;
     }
     delete normalizedSource.title;
     delete normalizedSource.subtitle;
@@ -706,16 +731,16 @@ export function sanitizePublicSectionSettings(
   }
 
   if (type === 'story') {
-    if (!hasNonEmptyString(normalizedSource.headline) && hasNonEmptyString(rawSource.title)) {
-      normalizedSource.headline = rawSource.title;
+    if (!hasNonEmptyString(normalizedSource.headline) && hasNonEmptyString(unwrappedSource.title)) {
+      normalizedSource.headline = unwrappedSource.title;
     }
-    if (!hasNonEmptyString(normalizedSource.body) && hasNonEmptyString(rawSource.storyText)) {
-      normalizedSource.body = rawSource.storyText;
+    if (!hasNonEmptyString(normalizedSource.body) && hasNonEmptyString(unwrappedSource.storyText)) {
+      normalizedSource.body = unwrappedSource.storyText;
     }
-    if (!hasNonEmptyString(normalizedSource.image) && hasNonEmptyString(rawSource.photo)) {
-      normalizedSource.image = rawSource.photo;
+    if (!hasNonEmptyString(normalizedSource.image) && hasNonEmptyString(unwrappedSource.photo)) {
+      normalizedSource.image = unwrappedSource.photo;
     }
-    if (typeof normalizedSource.showDivider !== 'boolean' && rawSource.showTitle === false) {
+    if (typeof normalizedSource.showDivider !== 'boolean' && unwrappedSource.showTitle === false) {
       normalizedSource.showDivider = false;
     }
     delete normalizedSource.title;
@@ -725,11 +750,11 @@ export function sanitizePublicSectionSettings(
   }
 
   if (type === 'venue') {
-    if (!hasNonEmptyString(normalizedSource.headline) && hasNonEmptyString(rawSource.title)) {
-      normalizedSource.headline = rawSource.title;
+    if (!hasNonEmptyString(normalizedSource.headline) && hasNonEmptyString(unwrappedSource.title)) {
+      normalizedSource.headline = unwrappedSource.title;
     }
-    if (!hasNonEmptyString(normalizedSource.subheadline) && hasNonEmptyString(rawSource.subtitle)) {
-      normalizedSource.subheadline = rawSource.subtitle;
+    if (!hasNonEmptyString(normalizedSource.subheadline) && hasNonEmptyString(unwrappedSource.subtitle)) {
+      normalizedSource.subheadline = unwrappedSource.subtitle;
     }
     delete normalizedSource.title;
     delete normalizedSource.subtitle;
@@ -737,21 +762,21 @@ export function sanitizePublicSectionSettings(
   }
 
   if (type === 'schedule') {
-    if (!hasNonEmptyString(normalizedSource.headline) && hasNonEmptyString(rawSource.title)) {
-      normalizedSource.headline = rawSource.title;
+    if (!hasNonEmptyString(normalizedSource.headline) && hasNonEmptyString(unwrappedSource.title)) {
+      normalizedSource.headline = unwrappedSource.title;
     }
     delete normalizedSource.title;
     delete normalizedSource.showTitle;
   }
 
   if (type === 'contact' && variant !== 'interactiveHub') {
-    if (!hasNonEmptyString(normalizedSource.headline) && hasNonEmptyString(rawSource.title)) {
-      normalizedSource.headline = rawSource.title;
+    if (!hasNonEmptyString(normalizedSource.headline) && hasNonEmptyString(unwrappedSource.title)) {
+      normalizedSource.headline = unwrappedSource.title;
     }
-    if (!hasNonEmptyString(normalizedSource.subheadline) && hasNonEmptyString(rawSource.subtitle)) {
-      normalizedSource.subheadline = rawSource.subtitle;
+    if (!hasNonEmptyString(normalizedSource.subheadline) && hasNonEmptyString(unwrappedSource.subtitle)) {
+      normalizedSource.subheadline = unwrappedSource.subtitle;
     }
-    const contacts = sanitizePublicContactPeople(rawSource.contacts);
+    const contacts = sanitizePublicContactPeople(unwrappedSource.contacts);
     if (contacts) {
       normalizedSource.contacts = contacts;
     }
@@ -760,8 +785,8 @@ export function sanitizePublicSectionSettings(
   }
 
   if (type === 'travel') {
-    if (!hasNonEmptyString(normalizedSource.headline) && hasNonEmptyString(rawSource.title)) {
-      normalizedSource.headline = rawSource.title;
+    if (!hasNonEmptyString(normalizedSource.headline) && hasNonEmptyString(unwrappedSource.title)) {
+      normalizedSource.headline = unwrappedSource.title;
     }
     delete normalizedSource.title;
     delete normalizedSource.showTitle;
@@ -771,19 +796,19 @@ export function sanitizePublicSectionSettings(
   }
 
   if (type === 'registry') {
-    if (!hasNonEmptyString(normalizedSource.headline) && hasNonEmptyString(rawSource.title)) {
-      normalizedSource.headline = rawSource.title;
+    if (!hasNonEmptyString(normalizedSource.headline) && hasNonEmptyString(unwrappedSource.title)) {
+      normalizedSource.headline = unwrappedSource.title;
     }
     delete normalizedSource.title;
     delete normalizedSource.showTitle;
   }
 
   if (type === 'faq') {
-    if (!hasNonEmptyString(normalizedSource.headline) && hasNonEmptyString(rawSource.title)) {
-      normalizedSource.headline = rawSource.title;
+    if (!hasNonEmptyString(normalizedSource.headline) && hasNonEmptyString(unwrappedSource.title)) {
+      normalizedSource.headline = unwrappedSource.title;
     }
-    if (!hasNonEmptyString(normalizedSource.subheadline) && hasNonEmptyString(rawSource.subtitle)) {
-      normalizedSource.subheadline = rawSource.subtitle;
+    if (!hasNonEmptyString(normalizedSource.subheadline) && hasNonEmptyString(unwrappedSource.subtitle)) {
+      normalizedSource.subheadline = unwrappedSource.subtitle;
     }
     delete normalizedSource.title;
     delete normalizedSource.subtitle;
@@ -791,14 +816,14 @@ export function sanitizePublicSectionSettings(
   }
 
   if (type === 'gallery') {
-    if (!hasNonEmptyString(normalizedSource.headline) && hasNonEmptyString(rawSource.title)) {
-      normalizedSource.headline = rawSource.title;
+    if (!hasNonEmptyString(normalizedSource.headline) && hasNonEmptyString(unwrappedSource.title)) {
+      normalizedSource.headline = unwrappedSource.title;
     }
-    if (!Array.isArray(normalizedSource.images) && Array.isArray(rawSource.galleryImages)) {
-      normalizedSource.images = rawSource.galleryImages;
+    if (!Array.isArray(normalizedSource.images) && Array.isArray(unwrappedSource.galleryImages)) {
+      normalizedSource.images = unwrappedSource.galleryImages;
     }
-    if (!Array.isArray(normalizedSource.images) && Array.isArray(rawSource.photos)) {
-      normalizedSource.images = rawSource.photos;
+    if (!Array.isArray(normalizedSource.images) && Array.isArray(unwrappedSource.photos)) {
+      normalizedSource.images = unwrappedSource.photos;
     }
     delete normalizedSource.title;
     delete normalizedSource.showTitle;
@@ -807,33 +832,33 @@ export function sanitizePublicSectionSettings(
   }
 
   if (type === 'countdown') {
-    if (!hasNonEmptyString(normalizedSource.headline) && hasNonEmptyString(rawSource.title)) {
-      normalizedSource.headline = rawSource.title;
+    if (!hasNonEmptyString(normalizedSource.headline) && hasNonEmptyString(unwrappedSource.title)) {
+      normalizedSource.headline = unwrappedSource.title;
     }
     delete normalizedSource.title;
     delete normalizedSource.showTitle;
   }
 
   if (type === 'rsvp') {
-    if (!hasNonEmptyString(normalizedSource.headline) && hasNonEmptyString(rawSource.title)) {
-      normalizedSource.headline = rawSource.title;
+    if (!hasNonEmptyString(normalizedSource.headline) && hasNonEmptyString(unwrappedSource.title)) {
+      normalizedSource.headline = unwrappedSource.title;
     }
     delete normalizedSource.title;
     delete normalizedSource.showTitle;
   }
 
   if (type === 'wedding-party') {
-    if (!hasNonEmptyString(normalizedSource.headline) && hasNonEmptyString(rawSource.title)) {
-      normalizedSource.headline = rawSource.title;
+    if (!hasNonEmptyString(normalizedSource.headline) && hasNonEmptyString(unwrappedSource.title)) {
+      normalizedSource.headline = unwrappedSource.title;
     }
-    if (!hasNonEmptyString(normalizedSource.subheadline) && hasNonEmptyString(rawSource.subtitle)) {
-      normalizedSource.subheadline = rawSource.subtitle;
+    if (!hasNonEmptyString(normalizedSource.subheadline) && hasNonEmptyString(unwrappedSource.subtitle)) {
+      normalizedSource.subheadline = unwrappedSource.subtitle;
     }
-    if (!hasNonEmptyString(normalizedSource.partner1Label) && hasNonEmptyString(rawSource.bridalTitle)) {
-      normalizedSource.partner1Label = rawSource.bridalTitle;
+    if (!hasNonEmptyString(normalizedSource.partner1Label) && hasNonEmptyString(unwrappedSource.bridalTitle)) {
+      normalizedSource.partner1Label = unwrappedSource.bridalTitle;
     }
-    if (!hasNonEmptyString(normalizedSource.partner2Label) && hasNonEmptyString(rawSource.groomTitle)) {
-      normalizedSource.partner2Label = rawSource.groomTitle;
+    if (!hasNonEmptyString(normalizedSource.partner2Label) && hasNonEmptyString(unwrappedSource.groomTitle)) {
+      normalizedSource.partner2Label = unwrappedSource.groomTitle;
     }
     delete normalizedSource.title;
     delete normalizedSource.subtitle;
@@ -843,16 +868,16 @@ export function sanitizePublicSectionSettings(
   }
 
   if (type === 'dress-code') {
-    if (!hasNonEmptyString(normalizedSource.headline) && hasNonEmptyString(rawSource.title)) {
-      normalizedSource.headline = rawSource.title;
+    if (!hasNonEmptyString(normalizedSource.headline) && hasNonEmptyString(unwrappedSource.title)) {
+      normalizedSource.headline = unwrappedSource.title;
     }
     delete normalizedSource.title;
     delete normalizedSource.showTitle;
   }
 
   if (type === 'menu') {
-    if (!hasNonEmptyString(normalizedSource.headline) && hasNonEmptyString(rawSource.title)) {
-      normalizedSource.headline = rawSource.title;
+    if (!hasNonEmptyString(normalizedSource.headline) && hasNonEmptyString(unwrappedSource.title)) {
+      normalizedSource.headline = unwrappedSource.title;
     }
     delete normalizedSource.title;
     delete normalizedSource.showTitle;
@@ -863,6 +888,9 @@ export function sanitizePublicSectionSettings(
   }
   for (const [key, settingValue] of Object.entries(normalizedSource)) {
     if (allowedKeys.has(key)) out[key] = settingValue;
+  }
+  if (hasNonEmptyString(normalizedSource.anchorId)) {
+    out.anchorId = normalizedSource.anchorId;
   }
 
   if (type === 'contact') {
@@ -1248,7 +1276,7 @@ export function toPublicSectionDTO(
     type: section.type,
     variant: typeof section.variant === 'string' ? section.variant : 'default',
     enabled: section.enabled === true,
-    orderIndex: typeof section.orderIndex === 'number' ? section.orderIndex : 0,
+    orderIndex: asFiniteNumber(section.orderIndex) ?? 0,
     settings: sanitizePublicSectionSettings(section.type, section.variant ?? 'default', section.settings ?? {}),
     ...(publicBindings ? { bindings: publicBindings } : {}),
     ...(publicStyleOverrides ? { styleOverrides: publicStyleOverrides } : {}),
@@ -1267,9 +1295,9 @@ export function toPublicPageDTO(
 ): PublicPageDTO {
   return {
     id: page.id,
-    title: typeof page.title === 'string' ? page.title : '',
-    slug: typeof page.slug === 'string' ? page.slug : '',
-    orderIndex: typeof page.orderIndex === 'number' ? page.orderIndex : 0,
+    title: asBuilderString(page.title) ?? '',
+    slug: asBuilderString(page.slug) ?? '',
+    orderIndex: asFiniteNumber(page.orderIndex) ?? 0,
     sections: Array.isArray(page.sections) ? page.sections.map((section) => toPublicSectionDTO({
       id: section.id,
       type: section.type,
@@ -1282,7 +1310,7 @@ export function toPublicPageDTO(
     })) : [],
     meta: {
       isHome: asRecord(page.meta)?.isHome === true,
-      isHidden: false,
+      isHidden: asRecord(page.meta)?.isHidden === true,
     },
   };
 }

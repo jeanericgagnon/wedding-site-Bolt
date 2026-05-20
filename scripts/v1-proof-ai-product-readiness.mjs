@@ -199,6 +199,9 @@ const report = {
   ok,
   generatedAt: new Date().toISOString(),
   summary: `${checks.filter((check) => check.ok).length}/${checks.length} AI product-readiness checks passed`,
+  contractSummary: ok
+    ? 'AI product-readiness proof is green: this launch-scope lane validates audited AI product posture and labeling, but it still depends on the dedicated secure-model and AI-clearance gates for deeper runtime truth.'
+    : 'AI product-readiness proof is not green: audited AI product posture or launch-scope distinctions drifted and need correction before stronger AI readiness claims remain credible.',
   checks,
   launchScope: {
     modelBackedServerRoutes: ['onboarding-ai-orchestrate', 'photo-analyze-batch', 'translate-site-content'],

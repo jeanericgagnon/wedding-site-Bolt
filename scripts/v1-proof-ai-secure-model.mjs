@@ -435,6 +435,9 @@ console.log(JSON.stringify({
   projectRef: PROJECT_REF,
   secretHandling: 'Supabase service-role/OpenAI values are used only in memory by live services or CLI and are not printed, pasted, committed, or written.',
   summary: `${checks.filter((check) => check.ok).length}/${checks.length} secure model-backed AI checks passed`,
+  contractSummary: ok
+    ? 'Secure model-backed AI proof is green: this live secure-env lane closes deeper model/runtime truth for retained AI routes and complements, rather than replaces, AI product-readiness and AI-clearance gates.'
+    : 'Secure model-backed AI proof is not green: live secure-env model/runtime behavior drifted and stronger AI launch claims should pause until this lane is repaired.',
   checks,
 }, null, 2));
 process.exit(ok ? 0 : 1);

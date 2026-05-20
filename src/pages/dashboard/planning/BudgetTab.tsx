@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Plus, Edit2, Trash2, Sparkles, AlertTriangle, CheckCircle2, Download } from 'lucide-react';
 import { Card } from '../../../components/ui/Card';
 import { Button } from '../../../components/ui/Button';
+import { useToast } from '../../../components/ui/Toast';
 import { PlanningBudgetItem, PlanningVendor } from './planningService';
 import { buildBudgetQuickCheck } from '../../../lib/invisibleIntelligence';
 import { budgetVendorLedgerToCsv, buildBudgetPaymentReview, buildBudgetVendorLedgerReadiness, buildBudgetVendorReconciliation } from '../../../lib/budgetVendorLedgerReadiness';
@@ -17,6 +18,13 @@ interface Props {
   onUpdate: (id: string, updates: Partial<PlanningBudgetItem>) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
   canEdit?: boolean;
+}
+
+interface BudgetFormProps {
+  initial?: Partial<PlanningBudgetItem>;
+  vendors: PlanningVendor[];
+  onSave: (item: Partial<PlanningBudgetItem>) => Promise<void>;
+  onCancel: () => void;
 }
 
 const BUDGET_CATEGORIES = [
@@ -38,12 +46,8 @@ function paymentStatusLabel(status: string) {
   }
 }
 
-function BudgetForm({ initial, vendors, onSave, onCancel }: {
-  initial?: Partial<PlanningBudgetItem>;
-  vendors: PlanningVendor[];
-  onSave: (item: Partial<PlanningBudgetItem>) => Promise<void>;
-  onCancel: () => void;
-}) {
+function BudgetForm({ initial, vendors, onSave, onCancel }: BudgetFormProps) {
+  const { toast } = useToast();
   const fieldId = (name: string) => `budget-form-${name}`;
   const [form, setForm] = useState({
     category: initial?.category ?? '',
@@ -60,25 +64,30 @@ function BudgetForm({ initial, vendors, onSave, onCancel }: {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setSaving(true);
-    await onSave({
-      ...form,
-      due_date: form.due_date || null,
-      vendor_id: form.vendor_id || null,
-      estimated_amount: Number(form.estimated_amount),
-      actual_amount: Number(form.actual_amount),
-      paid_amount: Number(form.paid_amount),
-    });
-    setSaving(false);
+    try {
+      await onSave({
+        ...form,
+        due_date: form.due_date || null,
+        vendor_id: form.vendor_id || null,
+        estimated_amount: Number(form.estimated_amount),
+        actual_amount: Number(form.actual_amount),
+        paid_amount: Number(form.paid_amount),
+      });
+    } catch {
+      toast('Couldn’t save that budget item right now.', 'error');
+    } finally {
+      setSaving(false);
+    }
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 rounded-lg border border-border-subtle bg-surface-subtle p-4">
+    <form onSubmit={handleSubmit} className="space-y-4 rounded-2xl border border-border-subtle bg-surface-subtle p-4">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
           <label htmlFor={fieldId('category')} className="block text-xs font-medium text-text-secondary mb-1">Category *</label>
           <select
             id={fieldId('category')}
-            className="w-full px-3 py-2 text-sm bg-surface border border-border rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+            className="w-full px-3 py-2 text-sm bg-surface border border-border rounded-xl text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
             value={form.category}
             onChange={e => setForm(f => ({ ...f, category: e.target.value }))}
             required
@@ -91,7 +100,7 @@ function BudgetForm({ initial, vendors, onSave, onCancel }: {
           <label htmlFor={fieldId('item-name')} className="block text-xs font-medium text-text-secondary mb-1">Item Name *</label>
           <input
             id={fieldId('item-name')}
-            className="w-full px-3 py-2 text-sm bg-surface border border-border rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+            className="w-full px-3 py-2 text-sm bg-surface border border-border rounded-xl text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
             value={form.item_name}
             onChange={e => setForm(f => ({ ...f, item_name: e.target.value }))}
             placeholder="e.g. Venue deposit"
@@ -105,7 +114,7 @@ function BudgetForm({ initial, vendors, onSave, onCancel }: {
             type="number"
             min="0"
             step="0.01"
-            className="w-full px-3 py-2 text-sm bg-surface border border-border rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+            className="w-full px-3 py-2 text-sm bg-surface border border-border rounded-xl text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
             value={form.estimated_amount}
             onChange={e => setForm(f => ({ ...f, estimated_amount: Number(e.target.value) }))}
           />
@@ -117,7 +126,7 @@ function BudgetForm({ initial, vendors, onSave, onCancel }: {
             type="number"
             min="0"
             step="0.01"
-            className="w-full px-3 py-2 text-sm bg-surface border border-border rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+            className="w-full px-3 py-2 text-sm bg-surface border border-border rounded-xl text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
             value={form.actual_amount}
             onChange={e => setForm(f => ({ ...f, actual_amount: Number(e.target.value) }))}
           />
@@ -129,7 +138,7 @@ function BudgetForm({ initial, vendors, onSave, onCancel }: {
             type="number"
             min="0"
             step="0.01"
-            className="w-full px-3 py-2 text-sm bg-surface border border-border rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+            className="w-full px-3 py-2 text-sm bg-surface border border-border rounded-xl text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
             value={form.paid_amount}
             onChange={e => setForm(f => ({ ...f, paid_amount: Number(e.target.value) }))}
           />
@@ -139,7 +148,7 @@ function BudgetForm({ initial, vendors, onSave, onCancel }: {
           <input
             id={fieldId('due-date')}
             type="date"
-            className="w-full px-3 py-2 text-sm bg-surface border border-border rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+            className="w-full px-3 py-2 text-sm bg-surface border border-border rounded-xl text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
             value={form.due_date ?? ''}
             onChange={e => setForm(f => ({ ...f, due_date: e.target.value }))}
           />
@@ -149,7 +158,7 @@ function BudgetForm({ initial, vendors, onSave, onCancel }: {
             <label htmlFor={fieldId('vendor')} className="block text-xs font-medium text-text-secondary mb-1">Vendor</label>
             <select
               id={fieldId('vendor')}
-              className="w-full px-3 py-2 text-sm bg-surface border border-border rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+              className="w-full px-3 py-2 text-sm bg-surface border border-border rounded-xl text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
               value={form.vendor_id}
               onChange={e => setForm(f => ({ ...f, vendor_id: e.target.value }))}
             >
@@ -162,7 +171,7 @@ function BudgetForm({ initial, vendors, onSave, onCancel }: {
           <label htmlFor={fieldId('notes')} className="block text-xs font-medium text-text-secondary mb-1">Notes</label>
           <input
             id={fieldId('notes')}
-            className="w-full px-3 py-2 text-sm bg-surface border border-border rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+            className="w-full px-3 py-2 text-sm bg-surface border border-border rounded-xl text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
             value={form.notes}
             onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
             placeholder="Optional notes"
@@ -178,36 +187,56 @@ function BudgetForm({ initial, vendors, onSave, onCancel }: {
 }
 
 export const BudgetTab: React.FC<Props> = ({ items, vendors, vendorMeta = {}, totalBudget, onTotalBudgetChange, onAdd, onUpdate, onDelete, canEdit = true }) => {
+  const { toast } = useToast();
   const [showAdd, setShowAdd] = useState(false);
   const [editingItem, setEditingItem] = useState<PlanningBudgetItem | null>(null);
   const [viewMode, setViewMode] = useState<'cards' | 'sheet'>('cards');
+  const [pendingDeleteIds, setPendingDeleteIds] = useState<Set<string>>(new Set());
   const [budgetInput, setBudgetInput] = useState<number>(totalBudget || 0);
   const [budgetSaving, setBudgetSaving] = useState(false);
   const [budgetSavedAt, setBudgetSavedAt] = useState<number | null>(null);
   const budgetAutoSaveTimer = useRef<number | null>(null);
+  const latestBudgetInputRef = useRef<number>(totalBudget || 0);
+  const latestBudgetSaveRequestRef = useRef(0);
 
   useEffect(() => {
     setBudgetInput(totalBudget || 0);
+    latestBudgetInputRef.current = totalBudget || 0;
   }, [totalBudget]);
 
   useEffect(() => {
     if (budgetInput === (totalBudget || 0)) return;
 
+    latestBudgetInputRef.current = budgetInput;
     if (budgetAutoSaveTimer.current) window.clearTimeout(budgetAutoSaveTimer.current);
     budgetAutoSaveTimer.current = window.setTimeout(async () => {
+      const saveRequestId = latestBudgetSaveRequestRef.current + 1;
+      latestBudgetSaveRequestRef.current = saveRequestId;
+      const pendingBudgetValue = budgetInput;
       setBudgetSaving(true);
       try {
-        await onTotalBudgetChange(budgetInput);
-        setBudgetSavedAt(Date.now());
+        await onTotalBudgetChange(pendingBudgetValue);
+        if (latestBudgetInputRef.current === pendingBudgetValue) {
+          setBudgetSavedAt(Date.now());
+        }
+      } catch {
+        if (latestBudgetInputRef.current === pendingBudgetValue) {
+          setBudgetSavedAt(null);
+        }
+        if (latestBudgetSaveRequestRef.current === saveRequestId) {
+          toast('Couldn’t save the budget goal right now.', 'error');
+        }
       } finally {
-        setBudgetSaving(false);
+        if (latestBudgetSaveRequestRef.current === saveRequestId) {
+          setBudgetSaving(false);
+        }
       }
     }, 700);
 
     return () => {
       if (budgetAutoSaveTimer.current) window.clearTimeout(budgetAutoSaveTimer.current);
     };
-  }, [budgetInput, totalBudget, onTotalBudgetChange]);
+  }, [budgetInput, totalBudget, onTotalBudgetChange, toast]);
 
   const totalEstimated = items.reduce((s, i) => s + (i.estimated_amount || 0), 0);
   const totalActual = items.reduce((s, i) => s + (i.actual_amount || 0), 0);
@@ -258,6 +287,23 @@ export const BudgetTab: React.FC<Props> = ({ items, vendors, vendorMeta = {}, to
     URL.revokeObjectURL(url);
   }
 
+  async function handleDeleteItem(itemId: string) {
+    if (pendingDeleteIds.has(itemId)) return;
+
+    setPendingDeleteIds((current) => new Set(current).add(itemId));
+    try {
+      await onDelete(itemId);
+    } catch {
+      toast('Couldn’t delete that budget item right now.', 'error');
+    } finally {
+      setPendingDeleteIds((current) => {
+        const next = new Set(current);
+        next.delete(itemId);
+        return next;
+      });
+    }
+  }
+
   return (
     <div className="space-y-4">
       {!canEdit && (
@@ -288,16 +334,16 @@ export const BudgetTab: React.FC<Props> = ({ items, vendors, vendorMeta = {}, to
           <span>Spent so far</span>
           <span>{usedPct.toFixed(0)}%</span>
         </div>
-        <div className="h-2 overflow-hidden rounded-lg bg-surface-subtle">
+        <div className="h-2 overflow-hidden rounded-xl bg-surface-subtle">
           <div
-            className={`h-full rounded-lg ${usedPct >= 100 ? 'bg-text-secondary' : usedPct >= 80 ? 'bg-primary' : 'bg-success'}`}
+            className={`h-full rounded-xl ${usedPct >= 100 ? 'bg-text-secondary' : usedPct >= 80 ? 'bg-primary' : 'bg-success'}`}
             style={{ width: `${usedPct}%` }}
           />
         </div>
       </Card>
 
       {overBudgetCategories.length > 0 && (
-        <div className="flex items-start gap-2 rounded-lg border border-border-subtle bg-white p-3 text-sm">
+        <div className="flex items-start gap-2 rounded-xl border border-border-subtle bg-white p-3 text-sm">
           <Sparkles className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />
           <span className="text-text-primary">
             Worth a second look: <span className="font-medium text-text-primary">{overBudgetCategories.join(', ')}</span>
@@ -314,7 +360,7 @@ export const BudgetTab: React.FC<Props> = ({ items, vendors, vendorMeta = {}, to
         </Card>
       )}
 
-      <div className={`rounded-lg border p-4 ${ledgerTone}`}>
+      <div className={`rounded-2xl border p-4 ${ledgerTone}`}>
         <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
           <div>
             <div className="flex items-center gap-2">
@@ -328,15 +374,15 @@ export const BudgetTab: React.FC<Props> = ({ items, vendors, vendorMeta = {}, to
             <p className="mt-1 text-sm text-text-secondary">{ledgerReadiness.summary}</p>
           </div>
           <div className="grid grid-cols-3 gap-2 text-center sm:min-w-[360px]">
-            <div className="rounded-lg border border-border-subtle bg-surface px-3 py-2">
+            <div className="rounded-xl border border-border-subtle bg-surface px-3 py-2">
               <p className="text-lg font-semibold text-text-primary">{ledgerReadiness.vendorCount}</p>
               <p className="text-[11px] text-text-tertiary">Vendors</p>
             </div>
-            <div className="rounded-lg border border-border-subtle bg-surface px-3 py-2">
+            <div className="rounded-xl border border-border-subtle bg-surface px-3 py-2">
               <p className="text-lg font-semibold text-text-primary">{fmt(ledgerReadiness.openBalance)}</p>
               <p className="text-[11px] text-text-tertiary">Open</p>
             </div>
-            <div className="rounded-lg border border-border-subtle bg-surface px-3 py-2">
+            <div className="rounded-xl border border-border-subtle bg-surface px-3 py-2">
               <p className="text-lg font-semibold text-text-primary">{ledgerReadiness.dueSoonCount}</p>
               <p className="text-[11px] text-text-tertiary">Due soon</p>
             </div>
@@ -350,7 +396,7 @@ export const BudgetTab: React.FC<Props> = ({ items, vendors, vendorMeta = {}, to
                 ? 'text-primary'
                 : 'text-text-tertiary';
             return (
-              <div key={item.id} className="flex gap-2 rounded-lg border border-border-subtle bg-surface px-3 py-2">
+              <div key={item.id} className="flex gap-2 rounded-xl border border-border-subtle bg-surface px-3 py-2">
                 {item.state === 'ready' ? (
                   <CheckCircle2 className={`mt-0.5 h-4 w-4 flex-shrink-0 ${iconClass}`} />
                 ) : (
@@ -373,15 +419,15 @@ export const BudgetTab: React.FC<Props> = ({ items, vendors, vendorMeta = {}, to
             <p className="mt-1 text-xs text-text-secondary">{paymentReview.summary}</p>
           </div>
           <div className="grid grid-cols-3 gap-2 text-center sm:min-w-[300px]">
-            <div className="rounded-lg border border-border-subtle bg-surface-subtle px-2 py-2">
+            <div className="rounded-xl border border-border-subtle bg-surface-subtle px-2 py-2">
               <p className="text-sm font-semibold text-text-primary">{fmt(paymentReview.openTotal)}</p>
               <p className="text-[11px] text-text-tertiary">Open</p>
             </div>
-            <div className="rounded-lg border border-border-subtle bg-surface-subtle px-2 py-2">
+            <div className="rounded-xl border border-border-subtle bg-surface-subtle px-2 py-2">
               <p className="text-sm font-semibold text-text-primary">{paymentReview.overdueCount}</p>
               <p className="text-[11px] text-text-tertiary">Overdue</p>
             </div>
-            <div className="rounded-lg border border-border-subtle bg-surface-subtle px-2 py-2">
+            <div className="rounded-xl border border-border-subtle bg-surface-subtle px-2 py-2">
               <p className="text-sm font-semibold text-text-primary">{paymentReview.dueSoonCount}</p>
               <p className="text-[11px] text-text-tertiary">Due soon</p>
             </div>
@@ -390,7 +436,7 @@ export const BudgetTab: React.FC<Props> = ({ items, vendors, vendorMeta = {}, to
         {paymentReview.rows.length > 0 ? (
           <div className="space-y-2">
             {paymentReview.rows.slice(0, 4).map((row) => (
-              <div key={row.id} className="grid gap-2 rounded-lg border border-border-subtle bg-surface-subtle px-3 py-2 text-xs sm:grid-cols-[1.2fr_0.7fr_0.7fr_0.7fr] sm:items-center">
+              <div key={row.id} className="grid gap-2 rounded-xl border border-border-subtle bg-surface-subtle px-3 py-2 text-xs sm:grid-cols-[1.2fr_0.7fr_0.7fr_0.7fr] sm:items-center">
                 <div className="min-w-0">
                   <p className="font-semibold text-text-primary truncate">{row.name}</p>
                   <p className="text-text-tertiary truncate">{row.vendorName || (row.source === 'budget' ? 'Budget line' : 'Vendor')}</p>
@@ -398,7 +444,7 @@ export const BudgetTab: React.FC<Props> = ({ items, vendors, vendorMeta = {}, to
                 <p className="text-text-secondary">{row.dueDate || 'No date'}</p>
                 <p className="font-medium text-text-primary">{fmt(row.open)}</p>
                 <div className="flex items-center gap-2 sm:justify-end">
-                  <span className="rounded-md border border-border-subtle bg-surface px-2 py-0.5 text-[11px] text-text-secondary">{paymentStatusLabel(row.status)}</span>
+                  <span className="rounded-xl border border-border-subtle bg-surface px-2 py-0.5 text-[11px] text-text-secondary">{paymentStatusLabel(row.status)}</span>
                   {!row.hasContact && <span className="text-[11px] text-primary">Contact</span>}
                   {!row.hasDocument && <span className="text-[11px] text-primary">Doc</span>}
                 </div>
@@ -406,7 +452,7 @@ export const BudgetTab: React.FC<Props> = ({ items, vendors, vendorMeta = {}, to
             ))}
           </div>
         ) : (
-          <p className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-2 text-xs text-text-secondary">Add vendor contracts or budget payment rows to review reminders.</p>
+          <p className="rounded-xl border border-border-subtle bg-surface-subtle px-3 py-2 text-xs text-text-secondary">Add vendor contracts or budget payment rows to review reminders.</p>
         )}
         <p className="text-[11px] text-text-tertiary">{paymentReview.privacyNote}</p>
       </Card>
@@ -418,23 +464,23 @@ export const BudgetTab: React.FC<Props> = ({ items, vendors, vendorMeta = {}, to
             <p className="mt-1 text-xs text-text-secondary">{reconciliation.summary}</p>
           </div>
           <div className="grid grid-cols-2 gap-2 text-center sm:min-w-[420px] lg:grid-cols-5">
-            <div className="rounded-lg border border-border-subtle bg-surface-subtle px-2 py-2">
+            <div className="rounded-xl border border-border-subtle bg-surface-subtle px-2 py-2">
               <p className="text-sm font-semibold text-text-primary">{reconciliation.mismatchedCount}</p>
               <p className="text-[11px] text-text-tertiary">Need review</p>
             </div>
-            <div className="rounded-lg border border-border-subtle bg-surface-subtle px-2 py-2">
+            <div className="rounded-xl border border-border-subtle bg-surface-subtle px-2 py-2">
               <p className="text-sm font-semibold text-text-primary">{reconciliation.contactReadyCount}/{vendors.length}</p>
               <p className="text-[11px] text-text-tertiary">Contact ready</p>
             </div>
-            <div className="rounded-lg border border-border-subtle bg-surface-subtle px-2 py-2">
+            <div className="rounded-xl border border-border-subtle bg-surface-subtle px-2 py-2">
               <p className="text-sm font-semibold text-text-primary">{reconciliation.dueDateReadyCount}/{vendors.length}</p>
               <p className="text-[11px] text-text-tertiary">Due dates saved</p>
             </div>
-            <div className="rounded-lg border border-border-subtle bg-surface-subtle px-2 py-2">
+            <div className="rounded-xl border border-border-subtle bg-surface-subtle px-2 py-2">
               <p className="text-sm font-semibold text-text-primary">{reconciliation.fileReadyCount}/{vendors.length}</p>
               <p className="text-[11px] text-text-tertiary">Files saved</p>
             </div>
-            <div className="rounded-lg border border-border-subtle bg-surface-subtle px-2 py-2">
+            <div className="rounded-xl border border-border-subtle bg-surface-subtle px-2 py-2">
               <p className="text-sm font-semibold text-text-primary">{reconciliation.milestoneReadyCount}/{vendors.length}</p>
               <p className="text-[11px] text-text-tertiary">Milestones</p>
             </div>
@@ -443,7 +489,7 @@ export const BudgetTab: React.FC<Props> = ({ items, vendors, vendorMeta = {}, to
         {reconciliation.rows.length > 0 ? (
           <div className="space-y-2">
             {reconciliation.rows.slice(0, 4).map((row) => (
-              <div key={row.vendorId} className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-2">
+              <div key={row.vendorId} className="rounded-xl border border-border-subtle bg-surface-subtle px-3 py-2">
                 <div className="flex items-center justify-between gap-2">
                   <p className="text-xs font-semibold text-text-primary">{row.vendorName}</p>
                   <p className="text-[11px] text-text-tertiary">{fmt(row.contractTotal)} contract</p>
@@ -453,11 +499,11 @@ export const BudgetTab: React.FC<Props> = ({ items, vendors, vendorMeta = {}, to
                 </p>
                 <div className="mt-2 flex flex-wrap gap-2">
                   {row.issues.length > 0 ? row.issues.map((issue) => (
-                    <span key={issue} className="rounded-md border border-border-subtle bg-surface px-2 py-0.5 text-[11px] text-text-secondary">
+                    <span key={issue} className="rounded-xl border border-border-subtle bg-surface px-2 py-0.5 text-[11px] text-text-secondary">
                       {issue}
                     </span>
                   )) : (
-                    <span className="rounded-md border border-success/20 bg-success/5 px-2 py-0.5 text-[11px] text-success">
+                    <span className="rounded-xl border border-success/20 bg-success/5 px-2 py-0.5 text-[11px] text-success">
                       Totals, files, and milestones are lined up
                     </span>
                   )}
@@ -466,7 +512,7 @@ export const BudgetTab: React.FC<Props> = ({ items, vendors, vendorMeta = {}, to
             ))}
           </div>
         ) : (
-          <p className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-2 text-xs text-text-secondary">
+          <p className="rounded-xl border border-border-subtle bg-surface-subtle px-3 py-2 text-xs text-text-secondary">
             Add vendors before reviewing contract and payment-schedule continuity.
           </p>
         )}
@@ -480,9 +526,14 @@ export const BudgetTab: React.FC<Props> = ({ items, vendors, vendorMeta = {}, to
               type="number"
               min="0"
               step="1"
-              className="w-40 px-3 py-2 text-sm bg-surface border border-border rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+              className="w-40 px-3 py-2 text-sm bg-surface border border-border rounded-xl text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
               value={budgetInput}
-              onChange={(e) => setBudgetInput(Number(e.target.value) || 0)}
+              onChange={(e) => {
+                setBudgetSavedAt(null);
+                const nextBudgetInput = Number(e.target.value) || 0;
+                latestBudgetInputRef.current = nextBudgetInput;
+                setBudgetInput(nextBudgetInput);
+              }}
               disabled={!canEdit}
             />
             <p className="mt-1 text-[11px] text-text-tertiary">
@@ -500,13 +551,13 @@ export const BudgetTab: React.FC<Props> = ({ items, vendors, vendorMeta = {}, to
         <div className="flex items-center gap-2">
           <button
             onClick={() => setViewMode('cards')}
-            className={`px-3 py-1.5 rounded-lg text-xs border ${viewMode === 'cards' ? 'bg-surface border-border text-text-primary' : 'bg-surface-subtle border-border-subtle text-text-secondary'}`}
+            className={`px-3 py-1.5 rounded-xl text-xs border ${viewMode === 'cards' ? 'bg-surface border-border text-text-primary' : 'bg-surface-subtle border-border-subtle text-text-secondary'}`}
           >
             Cards
           </button>
           <button
             onClick={() => setViewMode('sheet')}
-            className={`px-3 py-1.5 rounded-lg text-xs border ${viewMode === 'sheet' ? 'bg-surface border-border text-text-primary' : 'bg-surface-subtle border-border-subtle text-text-secondary'}`}
+            className={`px-3 py-1.5 rounded-xl text-xs border ${viewMode === 'sheet' ? 'bg-surface border-border text-text-primary' : 'bg-surface-subtle border-border-subtle text-text-secondary'}`}
           >
             Table
           </button>
@@ -555,10 +606,10 @@ export const BudgetTab: React.FC<Props> = ({ items, vendors, vendorMeta = {}, to
                   <td className="px-3 py-2 text-right text-success">{fmt(item.paid_amount)}</td>
                   <td className="px-3 py-2">
                     <div className="flex items-center justify-end gap-1">
-                      <button aria-label={`Edit budget item ${item.item_name}`} onClick={() => canEdit && setEditingItem(item)} disabled={!canEdit} className="p-1 hover:bg-surface-subtle rounded text-text-tertiary hover:text-text-primary transition-colors disabled:opacity-40">
+                      <button aria-label={`Edit budget item ${item.item_name}`} onClick={() => canEdit && !pendingDeleteIds.has(item.id) && setEditingItem(item)} disabled={!canEdit || pendingDeleteIds.has(item.id)} className="p-1 hover:bg-surface-subtle rounded text-text-tertiary hover:text-text-primary transition-colors disabled:opacity-40">
                         <Edit2 className="w-3.5 h-3.5" />
                       </button>
-                      <button aria-label={`Delete budget item ${item.item_name}`} onClick={() => canEdit && onDelete(item.id)} disabled={!canEdit} className="p-1 hover:bg-error/10 rounded text-text-tertiary hover:text-error transition-colors disabled:opacity-40">
+                      <button aria-label={`Delete budget item ${item.item_name}`} onClick={() => canEdit && !pendingDeleteIds.has(item.id) && void handleDeleteItem(item.id)} disabled={!canEdit || pendingDeleteIds.has(item.id)} className="p-1 hover:bg-error/10 rounded text-text-tertiary hover:text-error transition-colors disabled:opacity-40">
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
                     </div>
@@ -580,7 +631,7 @@ export const BudgetTab: React.FC<Props> = ({ items, vendors, vendorMeta = {}, to
                 <div className="flex items-center justify-between mb-2">
                   <h3 className="text-sm font-semibold text-text-primary">
                     {cat}
-                    {isOverBudget && <span className="ml-2 rounded-lg border border-primary/20 bg-primary-light px-2 py-0.5 text-[11px] font-medium text-primary">Worth checking</span>}
+                    {isOverBudget && <span className="ml-2 rounded-xl border border-primary/20 bg-primary-light px-2 py-0.5 text-[11px] font-medium text-primary">Worth checking</span>}
                   </h3>
                   <span className="text-xs text-text-tertiary">{fmt(catAct)} / {fmt(catEst)}</span>
                 </div>
@@ -595,7 +646,7 @@ export const BudgetTab: React.FC<Props> = ({ items, vendors, vendorMeta = {}, to
                           onCancel={() => setEditingItem(null)}
                         />
                       ) : (
-                        <div className="flex items-center gap-2 rounded-lg border border-border-subtle bg-white px-3 py-2.5 transition-colors hover:border-primary/25">
+                        <div className="flex items-center gap-2 rounded-xl border border-border-subtle bg-white px-3 py-2.5 transition-colors hover:border-primary/25">
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-medium text-text-primary truncate">{item.item_name}</p>
                             {item.notes && <p className="text-xs text-text-tertiary truncate">{item.notes}</p>}
@@ -606,10 +657,10 @@ export const BudgetTab: React.FC<Props> = ({ items, vendors, vendorMeta = {}, to
                             <span className="text-success hidden sm:block">{fmt(item.paid_amount)}</span>
                           </div>
                           <div className="flex items-center gap-1">
-                            <button aria-label={`Edit budget item ${item.item_name}`} onClick={() => canEdit && setEditingItem(item)} disabled={!canEdit} className="p-1 hover:bg-surface-subtle rounded text-text-tertiary hover:text-text-primary transition-colors disabled:opacity-40">
+                            <button aria-label={`Edit budget item ${item.item_name}`} onClick={() => canEdit && !pendingDeleteIds.has(item.id) && setEditingItem(item)} disabled={!canEdit || pendingDeleteIds.has(item.id)} className="p-1 hover:bg-surface-subtle rounded text-text-tertiary hover:text-text-primary transition-colors disabled:opacity-40">
                               <Edit2 className="w-3.5 h-3.5" />
                             </button>
-                            <button aria-label={`Delete budget item ${item.item_name}`} onClick={() => canEdit && onDelete(item.id)} disabled={!canEdit} className="p-1 hover:bg-error/10 rounded text-text-tertiary hover:text-error transition-colors disabled:opacity-40">
+                            <button aria-label={`Delete budget item ${item.item_name}`} onClick={() => canEdit && !pendingDeleteIds.has(item.id) && void handleDeleteItem(item.id)} disabled={!canEdit || pendingDeleteIds.has(item.id)} className="p-1 hover:bg-error/10 rounded text-text-tertiary hover:text-error transition-colors disabled:opacity-40">
                               <Trash2 className="w-3.5 h-3.5" />
                             </button>
                           </div>

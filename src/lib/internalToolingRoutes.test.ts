@@ -35,4 +35,32 @@ describe('internal tooling route gating', () => {
       }
     }
   });
+
+  it('can resolve capture route access from router pathname instead of global location', () => {
+    const originalWindow = globalThis.window;
+    Object.defineProperty(globalThis, 'window', {
+      configurable: true,
+      value: {
+        location: {
+          hostname: 'dayof.love',
+          pathname: '/',
+        },
+      },
+    });
+
+    try {
+      expect(isInternalToolingCaptureRouteFlagEnabled('', false, '/template-scroll-capture')).toBe(true);
+      expect(isInternalToolingCaptureRouteFlagEnabled('', false, '/dashboard')).toBe(false);
+    } finally {
+      if (originalWindow) {
+        Object.defineProperty(globalThis, 'window', {
+          configurable: true,
+          value: originalWindow,
+        });
+      } else {
+        // @ts-expect-error cleaning up test shim
+        delete globalThis.window;
+      }
+    }
+  });
 });

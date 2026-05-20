@@ -76,6 +76,9 @@ const result = {
     reviewCount: review.length,
     failureCount: failures.length,
   },
+  contractSummary: failures.length === 0
+    ? 'Performance budget proof is green: this build-artifact lane guards shipped asset weight and review thresholds, but it remains supporting release evidence rather than a feature-runtime truth source by itself.'
+    : 'Performance budget proof is not green: shipped asset weight or review thresholds regressed and must be fixed before broader release claims stay credible.',
   largestJs,
   largestCss,
   review,

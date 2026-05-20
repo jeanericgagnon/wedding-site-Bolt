@@ -68,6 +68,33 @@ describe('guestPhotoSharingUtils', () => {
     expect(readStoredBucketLinks()).toEqual({});
   });
 
+  it('scopes stored bucket links by wedding site', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-05-06T12:00:00.000Z'));
+    localStorage.clear();
+
+    writeStoredBucketLinks({ ceremony: 'https://example.com/site-a' }, 'site-a');
+    writeStoredBucketLinks({ toast: 'https://example.com/site-b' }, 'site-b');
+
+    expect(readStoredBucketLinks('site-a')).toEqual({ ceremony: 'https://example.com/site-a' });
+    expect(readStoredBucketLinks('site-b')).toEqual({ toast: 'https://example.com/site-b' });
+    expect(localStorage.getItem('dayof.photoBucketLinks::site-a')).toContain('site-a');
+    expect(localStorage.getItem('dayof.photoBucketLinks::site-b')).toContain('site-b');
+  });
+
+  it('migrates legacy bucket links into the active wedding site scope', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-05-06T12:00:00.000Z'));
+    localStorage.clear();
+    localStorage.setItem('dayof.photoBucketLinks', JSON.stringify({
+      savedAtISO: '2026-05-06T12:00:00.000Z',
+      value: { ceremony: 'https://example.com/legacy-ceremony' },
+    }));
+
+    expect(readStoredBucketLinks('site-a')).toEqual({ ceremony: 'https://example.com/legacy-ceremony' });
+    expect(localStorage.getItem('dayof.photoBucketLinks::site-a')).toContain('legacy-ceremony');
+  });
+
   it('migrates and expires stored bucket links', () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-05-06T12:00:00.000Z'));

@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { Copy, ExternalLink, FolderTree, Link as LinkIcon, Mail } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '../../../components/ui/Button';
 import { getSafePublicWebUrl } from '../../../sections/publicLinks';
 import { makePhotoShareMessage, type PhotoBucketRow } from '../guestPhotoSharingUtils';
@@ -16,7 +17,7 @@ type GuestPhotoBucketCardProps = {
   knownUploadLink: string;
   latestUploadUrl: string;
   workingBucketId: string;
-  copied: string;
+  copyNotice: { key: string; mode: 'copied' | 'downloaded' } | null;
   children: ReactNode;
   bucketTone: (bucketName: string) => string;
   formatDateTime: (value: string | null | undefined) => string;
@@ -42,7 +43,7 @@ export function GuestPhotoBucketCard({
   knownUploadLink,
   latestUploadUrl,
   workingBucketId,
-  copied,
+  copyNotice,
   children,
   bucketTone,
   formatDateTime,
@@ -55,18 +56,19 @@ export function GuestPhotoBucketCard({
   onExportBucketCsv,
   onBucketSearchChange,
 }: GuestPhotoBucketCardProps) {
+  const navigate = useNavigate();
   const hasLink = Boolean(knownUploadLink);
   const hasWindow = Boolean(bucket.opens_at || bucket.closes_at);
   const isWorking = workingBucketId === bucket.id;
   const backupUrl = getSafePublicWebUrl(bucket.drive_folder_url);
 
   return (
-    <div className="overflow-hidden rounded-lg border border-border-subtle bg-white">
+    <div className="overflow-hidden rounded-2xl border border-border-subtle bg-white">
       <div className="border-b border-border-subtle bg-surface-subtle px-5 py-4">
         <div className="flex items-start justify-between gap-3">
           <div className={depth > 0 ? 'pl-4 border-l-2 border-border-subtle' : ''}>
             {parentBucket && (
-              <p className="mb-1 inline-flex items-center rounded-lg bg-white px-2 py-0.5 text-xs font-medium text-text-secondary border border-border-subtle">
+              <p className="mb-1 inline-flex items-center rounded-xl border border-border-subtle bg-white px-2 py-0.5 text-xs font-medium text-text-secondary">
                 <FolderTree className="mr-1 h-3 w-3" /> {parentBucket.name}
               </p>
             )}
@@ -100,7 +102,11 @@ export function GuestPhotoBucketCard({
             </Button>
             <Button size="sm" variant="outline" disabled={!knownUploadLink} onClick={() => onCopyText(knownUploadLink, `uplink-${bucket.id}`)}>
               <Copy className="w-3 h-3 mr-1" />
-              {copied === `uplink-${bucket.id}` ? 'Copy ready' : 'Copy link'}
+              {copyNotice?.key === `uplink-${bucket.id}`
+                ? copyNotice.mode === 'downloaded'
+                  ? 'Downloaded upload link'
+                  : 'Copied upload link'
+                : 'Copy upload link'}
             </Button>
             <Button size="sm" variant="outline" disabled={!knownUploadLink} onClick={() => onOpenSafePublicUrl(getBucketQrUrl(knownUploadLink))}>
               QR code
@@ -117,7 +123,11 @@ export function GuestPhotoBucketCard({
               disabled={!knownUploadLink}
               onClick={() => onCopyText(makePhotoShareMessage(bucket.name, knownUploadLink), `share-msg-${bucket.id}`)}
             >
-              {copied === `share-msg-${bucket.id}` ? 'Copied share prompt' : 'Copy share prompt'}
+              {copyNotice?.key === `share-msg-${bucket.id}`
+                ? copyNotice.mode === 'downloaded'
+                  ? 'Downloaded share prompt'
+                  : 'Copied share prompt'
+                : 'Copy share prompt'}
             </Button>
             <Button
               size="sm"
@@ -126,7 +136,7 @@ export function GuestPhotoBucketCard({
                 const shareUrl = knownUploadLink || latestUploadUrl || `${window.location.origin}/photos/upload`;
                 const subject = encodeURIComponent(`${bucket.name} photos upload`);
                 const body = encodeURIComponent(makePhotoShareMessage(bucket.name, shareUrl));
-                window.location.href = `/dashboard/messages?prefillSubject=${subject}&prefillBody=${body}`;
+                navigate(`/dashboard/messages?prefillSubject=${subject}&prefillBody=${body}`);
               }}
             >
               <Mail className="w-3 h-3 mr-1" /> Send to messaging
@@ -137,7 +147,7 @@ export function GuestPhotoBucketCard({
 
       <div className="px-5 py-4 space-y-4">
         {childBuckets.length > 0 && (
-          <div className="rounded-lg border border-border-subtle bg-surface-subtle p-3">
+          <div className="rounded-2xl border border-border-subtle bg-surface-subtle p-3">
             <p className="text-xs font-semibold text-text-primary">Sub-albums</p>
             <div className="mt-2 flex flex-wrap gap-2">
               {childBuckets.map((child) => (
@@ -145,7 +155,7 @@ export function GuestPhotoBucketCard({
                   key={child.id}
                   type="button"
                   onClick={() => onBucketSearchChange(child.name)}
-                  className="rounded-lg border border-border-subtle bg-white px-3 py-1 text-xs font-medium text-text-primary"
+                  className="rounded-xl border border-border-subtle bg-white px-3 py-1 text-xs font-medium text-text-primary"
                 >
                   {child.name} · {getChildUploadCount(child.id)}
                 </button>
@@ -155,7 +165,7 @@ export function GuestPhotoBucketCard({
         )}
 
         {hasLink && (
-          <div className="rounded-lg border border-border-subtle bg-surface-subtle p-3">
+          <div className="rounded-2xl border border-border-subtle bg-surface-subtle p-3">
             <p className="text-xs font-semibold text-text-primary">Upload link ready</p>
             <p className="mt-1 text-sm text-text-primary">Share one clean upload destination for this album.</p>
             <p className="mt-2 truncate text-xs text-text-secondary">{knownUploadLink}</p>

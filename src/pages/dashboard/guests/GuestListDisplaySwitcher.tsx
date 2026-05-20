@@ -18,11 +18,13 @@ export function GuestListDisplaySwitcher({
 }: GuestListDisplaySwitcherProps) {
   if (filteredGuestCount === 0 && viewMode === 'list') {
     return (
-      <div className="p-6 border border-dashed border-border rounded-lg text-center bg-surface-subtle">
-        <p className="text-sm text-text-secondary">No guests in this segment right now.</p>
+      <div className="rounded-2xl border border-dashed border-border-subtle bg-surface-subtle/30 p-6 text-center shadow-sm">
+        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary/75">Guest view</p>
+        <p className="mt-3 text-sm font-semibold text-text-primary">No guests in this segment right now.</p>
+        <p className="mt-2 text-sm leading-6 text-text-secondary">This view is empty because the current filters or search are too narrow, not because the guest list is gone.</p>
         <button
           onClick={onClearFilters}
-          className="mt-2 text-xs text-primary hover:underline"
+          className="mt-4 text-xs font-semibold text-primary hover:underline"
         >
           Clear filters to view all guests
         </button>

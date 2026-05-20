@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { clearSignupReturnPath, consumeSignupReturnPath, readSignupReturnPath, resolvePostSignupPath, writeSignupReturnPath } from './signupContinuation';
+import { buildSignupReturnPathStorageKey, clearSignupReturnPath, consumeSignupReturnPath, readSignupReturnPath, resolvePostSignupPath, writeSignupReturnPath } from './signupContinuation';
 import { buildQuickStartEntryPath } from './quickStartContinuation';
 
 describe('signupContinuation', () => {
@@ -18,6 +18,13 @@ describe('signupContinuation', () => {
 
     expect(readSignupReturnPath()).toBe(buildQuickStartEntryPath());
     expect(resolvePostSignupPath('/onboarding?signup=1')).toBe(buildQuickStartEntryPath());
+  });
+
+  it('stores and resolves a scoped post-signup return path', () => {
+    writeSignupReturnPath(buildQuickStartEntryPath(), 'alex@example.com');
+
+    expect(readSignupReturnPath('alex@example.com')).toBe(buildQuickStartEntryPath());
+    expect(resolvePostSignupPath('/onboarding?signup=1', 'alex@example.com')).toBe(buildQuickStartEntryPath());
   });
 
   it('consumes the saved return path exactly once', () => {
@@ -88,6 +95,17 @@ describe('signupContinuation', () => {
     expect(window.localStorage.getItem('dayoflove:signup-return-path')).toBeNull();
   });
 
+  it('migrates legacy signup return paths into a scoped key on read', () => {
+    window.localStorage.setItem('dayoflove:signup-return-path', '  /onboarding/quick-start  ');
+
+    expect(readSignupReturnPath('alex@example.com')).toBe('/onboarding/quick-start');
+    expect(window.localStorage.getItem('dayoflove:signup-return-path')).toBeNull();
+    expect(JSON.parse(window.localStorage.getItem(buildSignupReturnPathStorageKey('alex@example.com')) || '{}')).toMatchObject({
+      savedAtISO: '2026-05-06T16:00:00.000Z',
+      path: '/onboarding/quick-start',
+    });
+  });
+
   it('skips redundant signup return path cleanup deletes when storage is already clear', () => {
     const removeItemSpy = vi.spyOn(Storage.prototype, 'removeItem');
 
@@ -105,6 +123,13 @@ describe('signupContinuation', () => {
 
     expect(() => clearSignupReturnPath()).not.toThrow();
     removeItemSpy.mockRestore();
+  });
+
+  it('can clear scoped signup return path state too', () => {
+    writeSignupReturnPath(buildQuickStartEntryPath(), 'alex@example.com');
+    clearSignupReturnPath('alex@example.com');
+
+    expect(readSignupReturnPath('alex@example.com')).toBeNull();
   });
 
 });

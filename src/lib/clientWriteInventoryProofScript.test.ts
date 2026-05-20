@@ -8,6 +8,8 @@ describe('client write inventory proof script', () => {
     expect(source).toContain("slice: 'client-write-inventory'");
     expect(source).toContain("const targetRoot = 'src'");
     expect(source).toContain("git', ['ls-files', targetRoot]");
+    expect(source).toContain("import { existsSync, readFileSync } from 'node:fs';");
+    expect(source).toContain('.filter((file) => existsSync(file))');
     expect(source).toContain(".filter((file) => !/\\.d\\.ts$/.test(file))");
     expect(source).toContain("const directWritePattern = /\\.from\\(\\s*(['\"`]).*?\\1\\s*\\)[\\s\\S]{0,400}?\\.(insert|update|upsert|delete)\\s*\\(/g;");
     expect(source).toContain('operation: match[2]');
@@ -15,5 +17,6 @@ describe('client write inventory proof script', () => {
     expect(source).toContain('single/double/backtick table names');
     expect(source).toContain('No direct client .insert/.update/.upsert/.delete calls remain in tracked src runtime files.');
     expect(source).toContain('Rerun this inventory guard after future runtime write-surface changes or RPC migration sweeps');
+    expect(source).not.toContain('src/pages/dashboard/messages/MessageDashboardComponents.tsx');
   });
 });

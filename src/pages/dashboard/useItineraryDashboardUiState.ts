@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { type ItineraryDashboardEvent } from './itineraryService';
 
 type EventWithInvites = ItineraryDashboardEvent;
@@ -32,7 +32,12 @@ function createEmptyItineraryFormData(): ItineraryFormData {
   };
 }
 
-export function useItineraryDashboardUiState() {
+type Args = {
+  hasActiveSite: boolean;
+  isDemoMode: boolean;
+};
+
+export function useItineraryDashboardUiState({ hasActiveSite, isDemoMode }: Args) {
   const [showEventForm, setShowEventForm] = useState(false);
   const [editingEvent, setEditingEvent] = useState<ItineraryEvent | null>(null);
   const [autoCreateAlbum, setAutoCreateAlbum] = useState(true);
@@ -47,6 +52,29 @@ export function useItineraryDashboardUiState() {
   const [timelineBusy, setTimelineBusy] = useState<string | null>(null);
   const [lastTimelineSnapshot, setLastTimelineSnapshot] = useState<EventWithInvites[] | null>(null);
   const [formData, setFormData] = useState<ItineraryFormData>(createEmptyItineraryFormData);
+
+  const resetItineraryDashboardUiState = useCallback(() => {
+    setShowEventForm(false);
+    setEditingEvent(null);
+    setAutoCreateAlbum(true);
+    setSelectedEventId(null);
+    setSaveError(null);
+    setSaveNotice(null);
+    setIsSavingEvent(false);
+    setTemplateDate(new Date().toISOString().slice(0, 10));
+    setTemplateStart('11:00');
+    setShiftMinutes(15);
+    setShiftFromEventId('all');
+    setTimelineBusy(null);
+    setLastTimelineSnapshot(null);
+    setFormData(createEmptyItineraryFormData());
+  }, []);
+
+  useEffect(() => {
+    if (!hasActiveSite && !isDemoMode) {
+      resetItineraryDashboardUiState();
+    }
+  }, [hasActiveSite, isDemoMode, resetItineraryDashboardUiState]);
 
   function openEventForm(event?: ItineraryEvent) {
     if (event) {

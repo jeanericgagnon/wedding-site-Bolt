@@ -158,7 +158,7 @@ describe('RegistryItemForm', () => {
       />,
     );
 
-    expect(container.querySelector('img[src^="javascript:"]')).not.toBeInTheDocument();
+    expect(container.querySelector('img[src^="javascript:"]')).toBeNull();
     expect(screen.getByDisplayValue('javascript:alert(1)')).toBeInTheDocument();
   });
 

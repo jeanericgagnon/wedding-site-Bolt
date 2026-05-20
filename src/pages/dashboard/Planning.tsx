@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useToast } from '../../components/ui/Toast';
 import { useAuth } from '../../hooks/useAuth';
 import { resolveActiveSiteForUser } from '../../lib/activeSite';
@@ -29,8 +30,6 @@ import { readDemoPlanningState, writeDemoPlanningState } from './planning/planni
 
 type Tab = 'overview' | 'tasks' | 'budget' | 'payments' | 'vendors' | 'songs' | 'addresses' | 'nameChange';
 
-let planningLocationEventsPatched = false;
-
 export function resolvePlanningTabFromSearch(search: string): Tab | null {
   const tabs: Tab[] = ['overview', 'tasks', 'budget', 'payments', 'vendors', 'songs', 'addresses', 'nameChange'];
   const params = new URLSearchParams(search);
@@ -38,30 +37,9 @@ export function resolvePlanningTabFromSearch(search: string): Tab | null {
   return tabs.includes(tab as Tab) ? (tab as Tab) : null;
 }
 
-export function ensurePlanningLocationEventsPatched() {
-  if (planningLocationEventsPatched || typeof window === 'undefined') return;
-
-  const dispatchLocationChange = () => {
-    window.dispatchEvent(new Event('dayof:locationchange'));
-  };
-
-  const originalPushState = window.history.pushState.bind(window.history);
-  window.history.pushState = ((...args: Parameters<History['pushState']>) => {
-    originalPushState(...args);
-    dispatchLocationChange();
-  }) as History['pushState'];
-
-  const originalReplaceState = window.history.replaceState.bind(window.history);
-  window.history.replaceState = ((...args: Parameters<History['replaceState']>) => {
-    originalReplaceState(...args);
-    dispatchLocationChange();
-  }) as History['replaceState'];
-
-  planningLocationEventsPatched = true;
-}
-
 export const DashboardPlanning: React.FC = () => {
   const { user, isDemoMode } = useAuth();
+  const [searchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState<Tab>('overview');
   const [siteId, setSiteId] = useState<string | null>(null);
   const [weddingDate, setWeddingDate] = useState<string | null>(null);
@@ -78,10 +56,9 @@ export const DashboardPlanning: React.FC = () => {
   const [planningRole, setPlanningRole] = useState<PlannerAccessRole>('owner');
   const [activeSiteRole, setActiveSiteRole] = useState<PlannerAccessRole>('owner');
   const [planningPermissions, setPlanningPermissions] = useState<PlannerPermissionKey[] | null>(null);
-  const [starterSuiteQaRunId] = useState(() => {
-    if (typeof window === 'undefined') return '';
-    return new URLSearchParams(window.location.search).get('starterSuiteQa') ?? '';
-  });
+  const starterSuiteQaRunId = searchParams.get('starterSuiteQa') ?? '';
+  const previousUserIdRef = useRef<string | null>(null);
+  const previousSiteIdRef = useRef<string | null>(null);
   const { toast } = useToast();
 
   const {
@@ -106,29 +83,56 @@ export const DashboardPlanning: React.FC = () => {
     toast,
   });
 
+  const resetPlanningDashboardState = useCallback(() => {
+    setSiteId(null);
+    setWeddingDate(null);
+    setTasks([]);
+    setBudgetItems([]);
+    setVendors([]);
+    setTotalBudget(0);
+    setSeatingReadiness({ attending: 0, seated: 0, unassigned: 0 });
+    setGuestCount(0);
+    setVenueName(null);
+    setDestinationWedding(false);
+    setVendorMeta({});
+    setPlanningRole('owner');
+    setActiveSiteRole('owner');
+    setPlanningPermissions(null);
+
+    const emptyCase: NameChangeCaseInput = {
+      ...defaultNameChangeCaseInput,
+      change_reasons: [...defaultNameChangeCaseInput.change_reasons],
+      structured_intake: { ...defaultNameChangeCaseInput.structured_intake },
+    };
+    const emptyWorkspace = buildNameChangeWorkspaceBundle(emptyCase, [], []);
+    hydrateNameChangeWorkspace({
+      draft: emptyCase,
+      documents: [],
+      extractedFields: [],
+      plan: mergeNameChangePlanExecutionState(emptyWorkspace.plan, null),
+      reminders: emptyWorkspace.reminders,
+    });
+  }, [hydrateNameChangeWorkspace]);
+
   useEffect(() => {
     loadAll();
   }, [isDemoMode, user]);
 
   useEffect(() => {
-    ensurePlanningLocationEventsPatched();
-
-    const syncTabFromLocation = () => {
-      const tabFromSearch = resolvePlanningTabFromSearch(window.location.search);
-      if (tabFromSearch) {
-        setActiveTab(tabFromSearch);
+    const userId = user?.id ?? null;
+    if (previousUserIdRef.current !== userId) {
+      if (previousUserIdRef.current) {
+        resetPlanningDashboardState();
+        previousSiteIdRef.current = null;
       }
-    };
+      previousUserIdRef.current = userId;
+    }
+  }, [resetPlanningDashboardState, user?.id]);
 
-    syncTabFromLocation();
-    window.addEventListener('popstate', syncTabFromLocation);
-    window.addEventListener('dayof:locationchange', syncTabFromLocation);
-
-    return () => {
-      window.removeEventListener('popstate', syncTabFromLocation);
-      window.removeEventListener('dayof:locationchange', syncTabFromLocation);
-    };
-  }, []);
+  useEffect(() => {
+    const tabFromSearch = resolvePlanningTabFromSearch(searchParams.toString());
+    setActiveTab(tabFromSearch ?? 'overview');
+  }, [searchParams]);
 
   useEffect(() => {
     if (!siteId) return;
@@ -148,14 +152,17 @@ export const DashboardPlanning: React.FC = () => {
 
   async function loadAll() {
     try {
+      setLoading(true);
       if (isDemoMode) {
         const demoPlanningState = readDemoPlanningState();
         const demoSiteId = demoWeddingSite.id;
         const storedRole = readPlannerAccessRole('planning', demoSiteId);
+        previousSiteIdRef.current = demoSiteId;
         setSiteId(demoWeddingSite.id);
         setWeddingDate(demoWeddingSite.wedding_date);
         setActiveSiteRole('owner');
         setPlanningRole(storedRole ?? 'owner');
+        setPlanningPermissions(null);
         setTasks(demoPlanningState.tasks);
         setBudgetItems(demoPlanningState.budgetItems);
         setVendors(demoPlanningState.vendors);
@@ -184,8 +191,22 @@ export const DashboardPlanning: React.FC = () => {
         return;
       }
 
+      if (!user) {
+        previousSiteIdRef.current = null;
+        resetPlanningDashboardState();
+        return;
+      }
+
       const id = await getWeddingSiteId();
-      if (!id) return;
+      if (!id) {
+        previousSiteIdRef.current = null;
+        resetPlanningDashboardState();
+        return;
+      }
+      if (previousSiteIdRef.current && previousSiteIdRef.current !== id) {
+        resetPlanningDashboardState();
+      }
+      previousSiteIdRef.current = id;
       setSiteId(id);
       if (user) {
         const activeSite = await resolveActiveSiteForUser(user.id);
@@ -222,8 +243,24 @@ export const DashboardPlanning: React.FC = () => {
       if (workspace.caseRecord) {
         const hydrated = hydrateLoadedNameChangeWorkspace(workspace);
         hydrateNameChangeWorkspace(hydrated);
+      } else {
+        const emptyCase: NameChangeCaseInput = {
+          ...defaultNameChangeCaseInput,
+          change_reasons: [...defaultNameChangeCaseInput.change_reasons],
+          structured_intake: { ...defaultNameChangeCaseInput.structured_intake },
+        };
+        const emptyWorkspace = buildNameChangeWorkspaceBundle(emptyCase, [], []);
+        hydrateNameChangeWorkspace({
+          draft: emptyCase,
+          documents: [],
+          extractedFields: [],
+          plan: mergeNameChangePlanExecutionState(emptyWorkspace.plan, null),
+          reminders: emptyWorkspace.reminders,
+        });
       }
     } catch {
+      previousSiteIdRef.current = null;
+      resetPlanningDashboardState();
       toast('Couldn’t load planning data right now. Please try again.', 'error');
     } finally {
       setLoading(false);

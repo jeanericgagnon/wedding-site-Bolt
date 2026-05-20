@@ -136,10 +136,19 @@ const isStaleEnvelope = (savedAtISO: unknown): boolean => {
   return !Number.isFinite(savedAt) || Date.now() - savedAt > VENDOR_META_RETENTION_MS;
 };
 
+export const buildVendorMetaStorageKey = (storageScope?: string | null): string => {
+  const scope = typeof storageScope === 'string' ? storageScope.trim() : '';
+  return scope ? `${VENDOR_META_STORAGE_KEY}::${scope}` : VENDOR_META_STORAGE_KEY;
+};
+
 export const readVendorMetaStorage = (storageKey = VENDOR_META_STORAGE_KEY): VendorMetaMap => {
   if (typeof window === 'undefined') return {};
   try {
-    const raw = window.localStorage.getItem(storageKey);
+    const raw = window.localStorage.getItem(storageKey) ?? (
+      storageKey !== VENDOR_META_STORAGE_KEY
+        ? window.localStorage.getItem(VENDOR_META_STORAGE_KEY)
+        : null
+    );
     if (!raw) return {};
     const parsed: unknown = JSON.parse(raw);
     if (!isRecord(parsed)) {

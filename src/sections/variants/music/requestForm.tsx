@@ -1,6 +1,7 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { z } from 'zod';
 import { ExternalLink, Music2, Send, Sparkles } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
 import { SectionDefinition, SectionComponentProps } from '../../types';
 import { submitInteractiveSuggestion } from '../../interactiveSectionService';
 import { getSafePublicWebUrl } from '../../publicLinks';
@@ -40,26 +41,47 @@ const shellClasses: Record<MusicRequestFormData['background'], string> = {
 };
 
 const MusicRequestForm: React.FC<SectionComponentProps<MusicRequestFormData>> = ({ data, siteSlug }) => {
+  const [searchParams] = useSearchParams();
   const [value, setValue] = useState('');
   const [sent, setSent] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
   const [recent, setRecent] = useState<string[]>([]);
   const isDark = data.background !== 'cream';
   const safePlaylistUrl = getSafePublicWebUrl(data.playlistUrl);
 
   const promptKey = useMemo(() => `song_request:${data.promptLabel}`, [data.promptLabel]);
 
+  useEffect(() => {
+    setValue('');
+    setSent(false);
+    setSaving(false);
+    setError('');
+    setRecent([]);
+  }, [promptKey, siteSlug]);
+
   async function submit() {
     const song = value.trim().slice(0, 160);
-    if (!song) return;
-    setRecent((prev) => [song, ...prev.filter((item) => item.toLowerCase() !== song.toLowerCase())].slice(0, 6));
-    setValue('');
-    setSent(true);
-    if (siteSlug) {
-      await submitInteractiveSuggestion({
-        siteSlug,
-        promptKey,
-        suggestionText: song,
-      });
+    if (!song || saving) return;
+    setError('');
+    try {
+      setSaving(true);
+      if (siteSlug) {
+        await submitInteractiveSuggestion({
+          siteSlug,
+          promptKey,
+          suggestionText: song,
+          searchParams,
+        });
+      }
+      setRecent((prev) => [song, ...prev.filter((item) => item.toLowerCase() !== song.toLowerCase())].slice(0, 6));
+      setValue('');
+      setSent(true);
+    } catch {
+      setSent(false);
+      setError('Couldn’t send that song right now. Please try again.');
+    } finally {
+      setSaving(false);
     }
   }
 
@@ -90,10 +112,15 @@ const MusicRequestForm: React.FC<SectionComponentProps<MusicRequestFormData>> = 
                 placeholder={data.placeholder}
                 className={`min-h-[52px] flex-1 rounded-2xl border px-4 text-base outline-none ${isDark ? 'border-white/15 bg-black/20 text-white placeholder:text-white/35 focus:border-white/45' : 'border-stone-200 bg-stone-50 text-stone-950 placeholder:text-stone-400 focus:border-stone-400'}`}
               />
-              <button onClick={submit} className={`inline-flex min-h-[52px] items-center justify-center gap-2 rounded-2xl px-5 text-sm font-semibold ${isDark ? 'bg-white text-stone-950 hover:bg-white/85' : 'bg-stone-950 text-white hover:bg-stone-800'}`}>
-                <Send size={15} /> {data.buttonLabel}
+              <button
+                onClick={() => { void submit(); }}
+                disabled={saving}
+                className={`inline-flex min-h-[52px] items-center justify-center gap-2 rounded-2xl px-5 text-sm font-semibold disabled:opacity-60 ${isDark ? 'bg-white text-stone-950 hover:bg-white/85' : 'bg-stone-950 text-white hover:bg-stone-800'}`}
+              >
+                <Send size={15} /> {saving ? 'Sending...' : data.buttonLabel}
               </button>
             </div>
+            {error && <p role="alert" className="mt-3 text-sm text-rose-400">{error}</p>}
             {sent && <p className="mt-3 text-sm text-emerald-500">Got it. Thank you for the song idea.</p>}
             {data.showRecentRequests && recent.length > 0 && (
               <div className="mt-6 space-y-2">

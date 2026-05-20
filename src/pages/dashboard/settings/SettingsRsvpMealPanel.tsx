@@ -2,6 +2,7 @@ import { Loader2, Plus, Save, Trash2 } from 'lucide-react';
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Input } from '../../../components/ui';
 
 type SettingsRsvpMealPanelProps = {
+  canEditSettings: boolean;
   mealOptions: string[];
   onAddMealOption: () => void;
   onMealChoiceEnabledChange: (enabled: boolean) => void;
@@ -18,6 +19,7 @@ type SettingsRsvpMealPanelProps = {
 };
 
 export function SettingsRsvpMealPanel({
+  canEditSettings,
   mealOptions,
   onAddMealOption,
   onMealChoiceEnabledChange,
@@ -47,7 +49,7 @@ export function SettingsRsvpMealPanel({
       </CardHeader>
       <CardContent className="space-y-3">
         {!showMealChoiceSettings ? (
-          <div className="rounded-lg border border-border-subtle bg-surface-subtle/40 p-4 text-sm text-text-secondary">
+          <div className="rounded-2xl border border-border-subtle bg-surface-subtle/40 p-4 text-sm text-text-secondary">
             Hidden by default to keep RSVP setup lighter. Open this section only if you want guests to choose a meal.
           </div>
         ) : (
@@ -57,6 +59,7 @@ export function SettingsRsvpMealPanel({
                 type="checkbox"
                 checked={rsvpMealEnabled}
                 onChange={(event) => onMealChoiceEnabledChange(event.target.checked)}
+                disabled={!canEditSettings}
                 className="h-4 w-4 rounded border-border text-primary"
               />
               Collect meal choice on RSVP form
@@ -69,19 +72,20 @@ export function SettingsRsvpMealPanel({
                     <Input
                       value={option}
                       onChange={(event) => onMealOptionChange(index, event.target.value)}
+                      disabled={!canEditSettings}
                       placeholder={`Meal option ${index + 1}`}
                     />
-                    <Button type="button" variant="ghost" size="sm" onClick={() => onRemoveMealOption(index)}>
+                    <Button type="button" variant="ghost" size="sm" onClick={() => onRemoveMealOption(index)} disabled={!canEditSettings}>
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
                 ))}
                 <div className="flex flex-wrap items-center gap-2">
-                  <Button type="button" variant="outline" size="sm" onClick={onAddMealOption}>
+                  <Button type="button" variant="outline" size="sm" onClick={onAddMealOption} disabled={!canEditSettings}>
                     <Plus className="mr-1 h-4 w-4" />
                     Add meal option
                   </Button>
-                  <Button type="button" variant="primary" size="sm" onClick={onSave} disabled={rsvpQuestionsSaving}>
+                  <Button type="button" variant="primary" size="sm" onClick={onSave} disabled={rsvpQuestionsSaving || !canEditSettings}>
                     {rsvpQuestionsSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                     Save meal choices
                   </Button>
@@ -91,10 +95,10 @@ export function SettingsRsvpMealPanel({
           </>
         )}
         {!showAdvancedRsvp && rsvpQuestionsSuccess && (
-          <div className="rounded-lg border border-success/20 bg-success-light p-3 text-sm text-success">{rsvpQuestionsSuccess}</div>
+          <div className="rounded-2xl border border-success/20 bg-success-light p-3 text-sm text-success">{rsvpQuestionsSuccess}</div>
         )}
         {!showAdvancedRsvp && rsvpQuestionsError && (
-          <div className="rounded-lg border border-border-subtle bg-surface-subtle p-3 text-sm text-text-secondary">{rsvpQuestionsError}</div>
+          <div className="rounded-2xl border border-border-subtle bg-surface-subtle p-3 text-sm text-text-secondary">{rsvpQuestionsError}</div>
         )}
       </CardContent>
     </Card>

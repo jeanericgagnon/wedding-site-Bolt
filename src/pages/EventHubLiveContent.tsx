@@ -121,6 +121,8 @@ type EventHubLiveContentProps = {
   travelGuestJourney: TravelGuestJourneyStep[];
   travelHubSpotlight: TravelHubSpotlight | null;
   travelShareStatus: string | null;
+  travelShareNotice: 'copied' | 'downloaded' | null;
+  copyingTravelPlan: boolean;
   onCopyTravelPlan: () => void;
   onDownloadTravelGuide: () => void;
   hubUrl: string;
@@ -156,6 +158,8 @@ export function EventHubLiveContent({
   travelGuestJourney,
   travelHubSpotlight,
   travelShareStatus,
+  travelShareNotice,
+  copyingTravelPlan,
   onCopyTravelPlan,
   onDownloadTravelGuide,
   hubUrl,
@@ -189,7 +193,7 @@ export function EventHubLiveContent({
     <div className="min-h-screen bg-[#fbf7f1] text-neutral-950">
       <OwnerPreviewBanner />
       <main className="mx-auto flex min-h-screen w-full max-w-6xl flex-col px-4 py-6 sm:px-6 sm:py-10">
-        <section className="overflow-hidden rounded-lg border border-[#eadfd2] bg-white">
+        <section className="overflow-hidden rounded-xl border border-[#eadfd2] bg-white">
           <div className="grid lg:grid-cols-[0.92fr_1.08fr]">
             <div className="relative min-h-[320px] bg-neutral-950 lg:min-h-full">
               <img
@@ -211,7 +215,7 @@ export function EventHubLiveContent({
             <div className="p-5 sm:p-8">
               <div className="flex flex-wrap items-center gap-3">
                 <LanguageSwitcher />
-                <div className="ml-auto inline-flex items-center gap-2 rounded-lg bg-[#f3eadf] px-3 py-2 text-xs font-semibold text-[#69513f]">
+                <div className="ml-auto inline-flex items-center gap-2 rounded-xl bg-[#f3eadf] px-3 py-2 text-xs font-semibold text-[#69513f]">
                   <QrCode className="h-4 w-4" />
                   {t('guest_hub.qr_target')}
                 </div>
@@ -241,13 +245,13 @@ export function EventHubLiveContent({
                       key={action.title}
                       to={action.href}
                       onClick={() => onTrackClick(action.href)}
-                      className={`group flex items-start gap-4 rounded-lg border p-4 transition-colors ${
+                      className={`group flex items-start gap-4 rounded-xl border p-4 transition-colors ${
                         action.primary
                           ? 'border-[#2f261d] bg-[#2f261d] text-white'
                           : 'border-[#eadfd2] bg-[#fffdf9] text-[#2f261d] hover:border-[#d8c8b6]'
                       }`}
                     >
-                      <span className={`rounded-lg p-3 ${action.primary ? 'bg-white/10 text-white' : 'bg-[#f5e9db] text-[#8b6f53]'}`}>
+                      <span className={`rounded-xl p-3 ${action.primary ? 'bg-white/10 text-white' : 'bg-[#f5e9db] text-[#8b6f53]'}`}>
                         <Icon className="h-5 w-5" />
                       </span>
                       <span className="min-w-0">
@@ -262,14 +266,14 @@ export function EventHubLiveContent({
               {(announcementCard || guestStateCard || coordinatorHandoffCard || linkAccessCard) && (
                 <div id="day-of-updates" className="mt-8 scroll-mt-24 grid gap-3 lg:grid-cols-2 2xl:grid-cols-4">
                   {announcementCard && (
-                    <div className="rounded-lg border border-[#eadfd2] bg-[#fffdf9] p-4">
+                    <div className="rounded-xl border border-[#eadfd2] bg-[#fffdf9] p-4">
                       <div className="flex items-start justify-between gap-3">
                         <div>
                           <p className="text-sm font-semibold text-[#2f261d]">Latest update for this link</p>
                           <p className="mt-1 text-xs font-medium text-[#8b6f53]">{announcementCard.stateLabel}</p>
                         </div>
                         {announcementCard.timingLabel && (
-                          <span className="rounded-lg bg-[#f3eadf] px-3 py-2 text-[11px] font-semibold text-[#69513f]">
+                          <span className="rounded-xl bg-[#f3eadf] px-3 py-2 text-[11px] font-semibold text-[#69513f]">
                             {announcementCard.timingLabel}
                           </span>
                         )}
@@ -280,19 +284,19 @@ export function EventHubLiveContent({
                     </div>
                   )}
                   {guestStateCard && (
-                    <div className="rounded-lg border border-[#eadfd2] bg-[#fffdf9] p-4">
+                    <div className="rounded-xl border border-[#eadfd2] bg-[#fffdf9] p-4">
                       <p className="text-sm font-semibold text-[#2f261d]">Your status on this link</p>
                       <p className="mt-1 text-sm leading-6 text-[#6f5843]">{guestStateCard.summary}</p>
                       <div className="mt-3 grid gap-2 sm:grid-cols-2">
-                        <div className="rounded-lg border border-[#eadfd2] bg-[#fbf7f1] px-3 py-2">
+                        <div className="rounded-xl border border-[#eadfd2] bg-[#fbf7f1] px-3 py-2">
                           <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#8b6f53]">Guest on this link</p>
                           <p className="mt-1 text-sm font-semibold text-[#2f261d]">{guestStateCard.guestLabel}</p>
                         </div>
-                        <div className="rounded-lg border border-[#eadfd2] bg-[#fbf7f1] px-3 py-2">
+                        <div className="rounded-xl border border-[#eadfd2] bg-[#fbf7f1] px-3 py-2">
                           <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#8b6f53]">RSVP on this link</p>
                           <p className="mt-1 text-sm font-semibold text-[#2f261d]">{guestStateCard.rsvpLabel}</p>
                         </div>
-                        <div className="rounded-lg border border-[#eadfd2] bg-[#fbf7f1] px-3 py-2 sm:col-span-2">
+                        <div className="rounded-xl border border-[#eadfd2] bg-[#fbf7f1] px-3 py-2 sm:col-span-2">
                           <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#8b6f53]">Check-in on this link</p>
                           <p className="mt-1 text-sm font-semibold text-[#2f261d]">{guestStateCard.checkInLabel}</p>
                         </div>
@@ -300,14 +304,14 @@ export function EventHubLiveContent({
                     </div>
                   )}
                   {coordinatorHandoffCard && (
-                    <div className="rounded-lg border border-[#eadfd2] bg-[#fffdf9] p-4">
+                    <div className="rounded-xl border border-[#eadfd2] bg-[#fffdf9] p-4">
                       <div className="flex items-start justify-between gap-3">
                         <div>
                           <p className="text-sm font-semibold text-[#2f261d]">Coordinator handoff status</p>
                           <p className="mt-1 text-xs font-medium text-[#8b6f53]">{coordinatorHandoffCard.statusLabel}</p>
                         </div>
                         {coordinatorHandoffCard.updatedLabel && (
-                          <span className="rounded-lg bg-[#f3eadf] px-3 py-2 text-[11px] font-semibold text-[#69513f]">
+                          <span className="rounded-xl bg-[#f3eadf] px-3 py-2 text-[11px] font-semibold text-[#69513f]">
                             {coordinatorHandoffCard.updatedLabel}
                           </span>
                         )}
@@ -315,11 +319,11 @@ export function EventHubLiveContent({
                       <p className="mt-3 text-sm font-semibold text-[#2f261d]">{coordinatorHandoffCard.eventLabel}</p>
                       <p className="mt-1 text-sm leading-6 text-[#6f5843]">{coordinatorHandoffCard.summary}</p>
                       <div className="mt-3 grid gap-2">
-                        <div className="rounded-lg border border-[#eadfd2] bg-[#fbf7f1] px-3 py-2">
+                        <div className="rounded-xl border border-[#eadfd2] bg-[#fbf7f1] px-3 py-2">
                           <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#8b6f53]">Assigned team</p>
                           <p className="mt-1 text-sm font-semibold text-[#2f261d]">{coordinatorHandoffCard.staffLabel}</p>
                         </div>
-                        <div className="rounded-lg border border-[#eadfd2] bg-[#fbf7f1] px-3 py-2">
+                        <div className="rounded-xl border border-[#eadfd2] bg-[#fbf7f1] px-3 py-2">
                           <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#8b6f53]">Guest handoff note</p>
                           <p className="mt-1 text-sm leading-6 text-[#2f261d]">{coordinatorHandoffCard.noteLabel}</p>
                         </div>
@@ -327,7 +331,7 @@ export function EventHubLiveContent({
                     </div>
                   )}
                   {linkAccessCard && (
-                    <div className="rounded-lg border border-[#eadfd2] bg-[#fffdf9] p-4">
+                    <div className="rounded-xl border border-[#eadfd2] bg-[#fffdf9] p-4">
                       <div className="flex items-start justify-between gap-3">
                         <div>
                           <p className="text-sm font-semibold text-[#2f261d]">Access from this link</p>
@@ -338,7 +342,7 @@ export function EventHubLiveContent({
                       <p className="mt-1 text-sm leading-6 text-[#6f5843]">{linkAccessCard.detail}</p>
                       <p className="mt-2 text-xs leading-5 text-[#8b6f53]">{linkAccessCard.summary}</p>
                       {(linkAccessCard.actionCountLabel || linkAccessCard.actionSummaryLabel) && (
-                        <div className="mt-3 rounded-lg border border-[#eadfd2] bg-[#fbf7f1] px-3 py-2">
+                        <div className="mt-3 rounded-xl border border-[#eadfd2] bg-[#fbf7f1] px-3 py-2">
                           <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#8b6f53]">Guest actions from this link</p>
                           {linkAccessCard.actionCountLabel && (
                             <p className="mt-1 text-sm font-semibold text-[#2f261d]">{linkAccessCard.actionCountLabel}</p>
@@ -349,7 +353,7 @@ export function EventHubLiveContent({
                         </div>
                       )}
                       {(linkAccessCard.readyCoreActionCountLabel || linkAccessCard.coreActionCoverageLabel || linkAccessCard.coreActionSummaryLabel) && (
-                        <div className="mt-3 rounded-lg border border-[#eadfd2] bg-[#fbf7f1] px-3 py-2">
+                        <div className="mt-3 rounded-xl border border-[#eadfd2] bg-[#fbf7f1] px-3 py-2">
                           <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#8b6f53]">Core readiness from this link</p>
                           {linkAccessCard.readyCoreActionCountLabel && (
                             <p className="mt-1 text-sm font-semibold text-[#2f261d]">{linkAccessCard.readyCoreActionCountLabel}</p>
@@ -370,7 +374,7 @@ export function EventHubLiveContent({
                 </div>
               )}
 
-              <div className="mt-8 rounded-lg border border-[#eadfd2] bg-[#fffdf9] p-4">
+              <div className="mt-8 rounded-xl border border-[#eadfd2] bg-[#fffdf9] p-4">
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                   <div>
                     <p className="text-sm font-semibold text-[#2f261d]">Travel path from this link</p>
@@ -393,7 +397,7 @@ export function EventHubLiveContent({
                       </p>
                     )}
                   </div>
-                  <div className="rounded-lg bg-[#f3eadf] px-3 py-2 text-xs font-semibold text-[#69513f]">
+                  <div className="rounded-xl bg-[#f3eadf] px-3 py-2 text-xs font-semibold text-[#69513f]">
                     {travelJourneyReadyCount} ready{travelJourneyNeedsInfoCount > 0 ? ` · ${travelJourneyNeedsInfoCount} needs setup` : ''}
                   </div>
                 </div>
@@ -404,7 +408,7 @@ export function EventHubLiveContent({
                       <>
                         <span className="flex items-center justify-between gap-3">
                           <span className="block text-xs font-semibold text-[#2f261d]">{step.label}</span>
-                          <span className="rounded-lg bg-white px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-[#8b6f53]">
+                          <span className="rounded-xl bg-white px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-[#8b6f53]">
                             {statusLabel}
                           </span>
                         </span>
@@ -418,12 +422,12 @@ export function EventHubLiveContent({
                         to={step.href}
                         aria-label={`${step.label} ${step.detail}`}
                         onClick={() => onTrackClick(step.href!)}
-                        className="rounded-lg border border-[#eadfd2] bg-[#fbf7f1] px-3 py-2 transition-colors hover:border-[#d8c8b6]"
+                        className="rounded-xl border border-[#eadfd2] bg-[#fbf7f1] px-3 py-2 transition-colors hover:border-[#d8c8b6]"
                       >
                         {stepContent}
                       </Link>
                     ) : (
-                      <div key={step.id} className="rounded-lg border border-[#eadfd2] bg-[#fbf7f1] px-3 py-2 opacity-70">
+                      <div key={step.id} className="rounded-xl border border-[#eadfd2] bg-[#fbf7f1] px-3 py-2 opacity-70">
                         {stepContent}
                       </div>
                     );
@@ -432,7 +436,7 @@ export function EventHubLiveContent({
               </div>
 
               {travelHubSpotlight && (
-                <div className="mt-5 rounded-lg border border-[#eadfd2] bg-[#fffdf9] p-4">
+                <div className="mt-5 rounded-xl border border-[#eadfd2] bg-[#fffdf9] p-4">
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     <div>
                       <p className="text-sm font-semibold text-[#2f261d]">Travel plan from this link</p>
@@ -445,21 +449,28 @@ export function EventHubLiveContent({
                       <Link
                         to={travelHubSpotlight.travelHref}
                         onClick={() => onTrackClick(travelHubSpotlight.travelHref)}
-                        className="rounded-lg border border-[#eadfd2] bg-[#fbf7f1] px-3 py-2 text-xs font-semibold text-[#2f261d] transition-colors hover:border-[#d8c8b6]"
+                        className="rounded-xl border border-[#eadfd2] bg-[#fbf7f1] px-3 py-2 text-xs font-semibold text-[#2f261d] transition-colors hover:border-[#d8c8b6]"
                       >
                         Open travel page
                       </Link>
                       <button
                         type="button"
                         onClick={onCopyTravelPlan}
-                        className="rounded-lg border border-[#eadfd2] bg-[#fbf7f1] px-3 py-2 text-xs font-semibold text-[#2f261d] transition-colors hover:border-[#d8c8b6]"
+                        disabled={copyingTravelPlan}
+                        className="rounded-xl border border-[#eadfd2] bg-[#fbf7f1] px-3 py-2 text-xs font-semibold text-[#2f261d] transition-colors hover:border-[#d8c8b6]"
                       >
-                        Copy travel details
+                        {copyingTravelPlan
+                          ? 'Copying travel details...'
+                          : travelShareNotice === 'downloaded'
+                            ? 'Downloaded travel details'
+                            : travelShareNotice === 'copied'
+                              ? 'Copied travel details'
+                              : 'Copy travel details'}
                       </button>
                       <button
                         type="button"
                         onClick={onDownloadTravelGuide}
-                        className="rounded-lg border border-[#eadfd2] bg-[#fbf7f1] px-3 py-2 text-xs font-semibold text-[#2f261d] transition-colors hover:border-[#d8c8b6]"
+                        className="rounded-xl border border-[#eadfd2] bg-[#fbf7f1] px-3 py-2 text-xs font-semibold text-[#2f261d] transition-colors hover:border-[#d8c8b6]"
                       >
                         Save travel details
                       </button>
@@ -475,7 +486,7 @@ export function EventHubLiveContent({
                             target="_blank"
                             rel="noreferrer"
                             onClick={() => onTrackClick(card.href!)}
-                            className="rounded-lg border border-[#eadfd2] bg-[#fbf7f1] px-3 py-2 transition-colors hover:border-[#d8c8b6]"
+                            className="rounded-xl border border-[#eadfd2] bg-[#fbf7f1] px-3 py-2 transition-colors hover:border-[#d8c8b6]"
                           >
                             <p className="text-xs font-semibold text-[#2f261d]">{card.label}</p>
                             <p className="mt-1 text-xs leading-5 text-[#6f5843]">{card.detail}</p>
@@ -485,14 +496,14 @@ export function EventHubLiveContent({
                             key={card.id}
                             to={card.href}
                             onClick={() => onTrackClick(card.href!)}
-                            className="rounded-lg border border-[#eadfd2] bg-[#fbf7f1] px-3 py-2 transition-colors hover:border-[#d8c8b6]"
+                            className="rounded-xl border border-[#eadfd2] bg-[#fbf7f1] px-3 py-2 transition-colors hover:border-[#d8c8b6]"
                           >
                             <p className="text-xs font-semibold text-[#2f261d]">{card.label}</p>
                             <p className="mt-1 text-xs leading-5 text-[#6f5843]">{card.detail}</p>
                           </Link>
                         )
                       ) : (
-                        <div key={card.id} className="rounded-lg border border-[#eadfd2] bg-[#fbf7f1] px-3 py-2">
+                        <div key={card.id} className="rounded-xl border border-[#eadfd2] bg-[#fbf7f1] px-3 py-2">
                           <p className="text-xs font-semibold text-[#2f261d]">{card.label}</p>
                           <p className="mt-1 text-xs leading-5 text-[#6f5843]">{card.detail}</p>
                         </div>
@@ -504,7 +515,7 @@ export function EventHubLiveContent({
                       {travelHubSpotlight.badges.map((badge) => (
                         <span
                           key={badge}
-                          className="rounded-lg bg-[#f3eadf] px-3 py-2 text-[11px] font-semibold text-[#69513f]"
+                          className="rounded-xl bg-[#f3eadf] px-3 py-2 text-[11px] font-semibold text-[#69513f]"
                         >
                           {badge}
                         </span>
@@ -515,7 +526,7 @@ export function EventHubLiveContent({
                 </div>
               )}
 
-              <div className="mt-8 rounded-lg border border-[#eadfd2] bg-[#fbf7f1] p-4">
+              <div className="mt-8 rounded-xl border border-[#eadfd2] bg-[#fbf7f1] p-4">
                 <div className="flex gap-3">
                   <MapPin className="mt-0.5 h-5 w-5 flex-shrink-0 text-[#8b6f53]" />
                   <div className="min-w-0">
@@ -526,14 +537,14 @@ export function EventHubLiveContent({
                 </div>
               </div>
 
-              <details open={shouldOpenHubDetailsByDefault(searchParams)} className="mt-5 rounded-lg border border-[#eadfd2] bg-[#fffdf9] p-4">
+              <details open={shouldOpenHubDetailsByDefault(searchParams)} className="mt-5 rounded-xl border border-[#eadfd2] bg-[#fffdf9] p-4">
                 <summary className="cursor-pointer list-none">
                   <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                     <div>
                       <p className="text-sm font-semibold text-[#2f261d]">Readiness from this link</p>
                       <p className="mt-1 text-sm leading-6 text-[#6f5843]">Check what is ready on this link before relying on it at the venue.</p>
                     </div>
-                    <span className="rounded-lg bg-[#f3eadf] px-3 py-2 text-xs font-semibold text-[#69513f]">
+                    <span className="rounded-xl bg-[#f3eadf] px-3 py-2 text-xs font-semibold text-[#69513f]">
                       {dayOfHubStatusBoard.readyCount} hub items ready
                     </span>
                   </div>
@@ -545,13 +556,13 @@ export function EventHubLiveContent({
                         <p className="text-sm font-semibold text-[#2f261d]">No-app guest-hub readiness</p>
                         <p className="mt-1 text-sm leading-6 text-[#6f5843]">{dayOfModeReadiness.summary}</p>
                       </div>
-                      <div className="rounded-lg bg-[#f3eadf] px-3 py-2 text-xs font-semibold text-[#69513f]">
+                      <div className="rounded-xl bg-[#f3eadf] px-3 py-2 text-xs font-semibold text-[#69513f]">
                         {dayOfModeReadiness.readyCount} mode items ready
                       </div>
                     </div>
                     <div className="mt-3 grid gap-2 sm:grid-cols-2">
                       {dayOfModeReadiness.signals.slice(0, 4).map((signal) => (
-                        <div key={signal.id} className="rounded-lg border border-[#eadfd2] bg-[#fbf7f1] px-3 py-2">
+                        <div key={signal.id} className="rounded-xl border border-[#eadfd2] bg-[#fbf7f1] px-3 py-2">
                           <div className="flex items-center justify-between gap-2">
                             <p className="text-xs font-semibold text-[#2f261d]">{signal.label}</p>
                             <span className="text-[11px] font-medium text-[#8b6f53]">
@@ -573,7 +584,7 @@ export function EventHubLiveContent({
                     </div>
                     <div className="mt-3 grid gap-2 sm:grid-cols-2">
                       {dayOfHubStatusBoard.items.map((item) => (
-                        <div key={item.id} className="rounded-lg border border-[#eadfd2] bg-[#fbf7f1] px-3 py-2">
+                        <div key={item.id} className="rounded-xl border border-[#eadfd2] bg-[#fbf7f1] px-3 py-2">
                           <div className="flex items-center justify-between gap-2">
                             <p className="text-xs font-semibold text-[#2f261d]">{item.label}</p>
                             <span className="text-[11px] font-medium text-[#8b6f53]">
@@ -588,7 +599,7 @@ export function EventHubLiveContent({
                 </div>
               </details>
 
-              <form onSubmit={onSubmitOptIn} className="mt-5 rounded-lg border border-[#eadfd2] bg-[#fffdf9] p-4">
+              <form onSubmit={onSubmitOptIn} className="mt-5 rounded-xl border border-[#eadfd2] bg-[#fffdf9] p-4">
                 <div className="flex flex-col gap-4 lg:flex-row lg:items-end">
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-semibold text-[#2f261d]">{t('guest_hub.recap_heading')}</p>
@@ -598,15 +609,15 @@ export function EventHubLiveContent({
                     value={guestName}
                     onChange={(event) => onGuestNameChange(event.target.value)}
                     placeholder={t('guest_hub.name_placeholder')}
-                    className="rounded-lg border border-[#eadfd2] bg-white px-4 py-3 text-sm outline-none lg:w-44"
+                    className="rounded-xl border border-[#eadfd2] bg-white px-4 py-3 text-sm outline-none lg:w-44"
                   />
                   <input
                     value={guestContact}
                     onChange={(event) => onGuestContactChange(event.target.value)}
                     placeholder={t('guest_hub.contact_placeholder')}
-                    className="rounded-lg border border-[#eadfd2] bg-white px-4 py-3 text-sm outline-none lg:w-56"
+                    className="rounded-xl border border-[#eadfd2] bg-white px-4 py-3 text-sm outline-none lg:w-56"
                   />
-                  <button disabled={savingOptIn} className="rounded-lg bg-[#2f261d] px-5 py-3 text-sm font-semibold text-white disabled:opacity-60">
+                  <button disabled={savingOptIn} className="rounded-xl bg-[#2f261d] px-5 py-3 text-sm font-semibold text-white disabled:opacity-60">
                     {savingOptIn ? t('guest_hub.saving') : t('guest_hub.send_recap')}
                   </button>
                 </div>

@@ -21,6 +21,14 @@ export interface TemplateSectionSlot {
   settings: Record<string, unknown>;
 }
 
+export interface TemplatePageSlot {
+  title: string;
+  slug: string;
+  isHome?: boolean;
+  isHidden?: boolean;
+  sectionComposition: TemplateSectionSlot[];
+}
+
 export interface BuilderTemplateDefinition {
   id: string;
   displayName: string;
@@ -29,6 +37,7 @@ export interface BuilderTemplateDefinition {
   previewThumbnailPath: string;
   defaultThemeId: string;
   sectionComposition: TemplateSectionSlot[];
+  pages?: TemplatePageSlot[];
   sectionVariantMap: Record<string, string>;
   suggestedFonts: {
     heading: string;

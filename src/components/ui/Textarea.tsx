@@ -27,7 +27,7 @@ export const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
           id={textareaId}
           className={`
             w-full px-3.5 py-2.5 text-base
-            bg-surface-raised border border-border rounded-lg
+            bg-surface-raised border border-border rounded-xl
             text-text-primary placeholder:text-text-tertiary
             hover:border-border-strong
             focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary

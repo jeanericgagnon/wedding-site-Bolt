@@ -46,6 +46,20 @@ describe('fromExistingLayoutToBuilderProject', () => {
     expect(project.pages[0].id).toBe('page-1');
   });
 
+  it('unwraps builder value page titles when importing legacy layout config', () => {
+    const project = fromExistingLayoutToBuilderProject('w1', makeLayout({
+      pages: [
+        {
+          id: 'travel',
+          title: { value: 'Guest Travel', source: 'user-edited' } as unknown as string,
+          sections: [],
+        },
+      ],
+    }));
+
+    expect(project.pages[0].title).toBe('Guest Travel');
+  });
+
   it('maps sections from page', () => {
     const project = fromExistingLayoutToBuilderProject('w1', makeLayout());
     expect(project.pages[0].sections).toHaveLength(1);
@@ -121,6 +135,54 @@ describe('fromBuilderProjectToExistingLayout', () => {
     const project = fromExistingLayoutToBuilderProject('w1', makeLayout());
     const result = fromBuilderProjectToExistingLayout(project);
     expect(result.version).toBe('1');
+  });
+
+  it('sorts pages and sections without mutating the builder project', () => {
+    const project = fromExistingLayoutToBuilderProject('w1', makeLayout({
+      pages: [
+        {
+          id: 'travel',
+          title: 'Travel',
+          sections: [
+            { id: 'travel-b', type: 'travel', variant: 'default', enabled: true, bindings: {}, settings: {} },
+            { id: 'travel-a', type: 'travel', variant: 'default', enabled: true, bindings: {}, settings: {} },
+          ],
+        },
+        {
+          id: 'home',
+          title: 'Home',
+          sections: [],
+        },
+      ],
+    }));
+    project.pages[0].orderIndex = 1;
+    project.pages[1].orderIndex = 0;
+    project.pages[0].sections[0].orderIndex = 2;
+    project.pages[0].sections[1].orderIndex = '1' as unknown as number;
+
+    const result = fromBuilderProjectToExistingLayout(project);
+
+    expect(result.pages.map((page) => page.id)).toEqual(['home', 'travel']);
+    expect(result.pages[1].sections.map((section) => section.id)).toEqual(['travel-a', 'travel-b']);
+    expect(project.pages.map((page) => page.id)).toEqual(['travel', 'home']);
+    expect(project.pages[0].sections.map((section) => section.id)).toEqual(['travel-b', 'travel-a']);
+  });
+
+  it('unwraps builder value page titles when exporting legacy layout config', () => {
+    const project = fromExistingLayoutToBuilderProject('w1', makeLayout({
+      pages: [
+        {
+          id: 'travel',
+          title: 'Travel',
+          sections: [],
+        },
+      ],
+    }));
+    project.pages[0].title = { value: 'Guest Travel', source: 'user-edited' } as unknown as string;
+
+    const result = fromBuilderProjectToExistingLayout(project);
+
+    expect(result.pages[0].title).toBe('Guest Travel');
   });
 });
 

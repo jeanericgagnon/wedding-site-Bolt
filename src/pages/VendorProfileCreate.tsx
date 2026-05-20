@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useEffect, useRef, useState } from 'react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   VENDOR_ACCENT_OPTIONS,
   VENDOR_GALLERY_LAYOUT_OPTIONS,
@@ -9,6 +9,7 @@ import {
   normalizeVendorProfileCustomization,
   normalizeVendorTemplateId,
   type VendorAccentId,
+  type VendorProfileCategoryFact,
   type VendorGalleryLayoutId,
   type VendorProfile,
   type VendorProfileDraft,
@@ -26,7 +27,7 @@ function normalizeImageLines(input: string): string[] {
     .map((item) => getSafePublicImageUrl(item))
     .filter(Boolean)
     .filter((item, index, arr) => arr.indexOf(item) === index)
-    .slice(0, 6);
+    .slice(0, 12);
 }
 
 function draftLinks(draft: VendorProfileDraft) {
@@ -48,34 +49,332 @@ function draftLinks(draft: VendorProfileDraft) {
 }
 
 const vendorTemplateOptions: Array<{ id: VendorTemplateId; name: string; detail: string }> = [
-  { id: 'photography', name: 'Photography portfolio', detail: 'Image-led story, gallery rhythm, and clear package inquiry for photo and video teams.' },
-  { id: 'floral', name: 'Floral lookbook', detail: 'Texture, palette, installation moments, and inquiry copy for florists and decor studios.' },
-  { id: 'venue', name: 'Venue estate', detail: 'Large location hero, event-flow details, capacity-style proof, and tour-first CTA.' },
-  { id: 'food', name: 'Food and beverage', detail: 'Menu confidence, service style, tasting CTA, and proof points for caterers, cakes, and bar teams.' },
-  { id: 'beauty', name: 'Beauty and attire', detail: 'Artist-led portfolio, service menu, trial-ready contact path, and fit for salons, glam, and jewelry.' },
-  { id: 'music', name: 'Music and entertainment', detail: 'Energy, sample-set proof, reception timing, and booking CTA for bands, DJs, and performers.' },
-  { id: 'planner', name: 'Planner concierge', detail: 'Process, trust, logistics calm, and premium inquiry copy for planners and coordinators.' },
-  { id: 'travel', name: 'Travel and logistics', detail: 'Route, room-block, shuttle, and guest-movement clarity for transportation and travel vendors.' },
-  { id: 'service', name: 'Service card', detail: 'Fast-contact layout for officiants, rentals, specialty vendors, and practical services.' },
+  { id: 'photography', name: 'Photography', detail: 'Photos, gallery rhythm, and a clear note path for photo and video teams.' },
+  { id: 'floral', name: 'Florals and decor', detail: 'Texture, palette, setup moments, and plain notes for florists and decor studios.' },
+  { id: 'venue', name: 'Venue', detail: 'Location photos, guest flow, capacity notes, and tour notes.' },
+  { id: 'food', name: 'Food and drinks', detail: 'Menu notes, dinner style, tasting path, and plain notes for food teams.' },
+  { id: 'beauty', name: 'Beauty and getting ready', detail: 'Work photos, trial notes, and prep timing for salons, beauty teams, and jewelry.' },
+  { id: 'music', name: 'Music and sound', detail: 'Music samples, reception timing, sound needs, and plain notes for bands, DJs, and performers.' },
+  { id: 'planner', name: 'Planning help', detail: 'Process, trust notes, timing, and planning notes for planners and coordinators.' },
+  { id: 'travel', name: 'Travel and guest movement', detail: 'Routes, room blocks, shuttles, and guest movement notes for travel teams.' },
+  { id: 'service', name: 'General help', detail: 'Simple note layout for officiants, rentals, specialty teams, and wedding-day help.' },
 ];
 
-function getDraftTemplateId(draft: VendorProfileDraft): VendorTemplateId {
-  return normalizeVendorTemplateId(draft.source_payload?.template_id);
+const vendorSectionLabels: Record<VendorSectionId, string> = {
+  proof: 'Quick notes',
+  facts: 'Good to know',
+  fit: 'Where and helpful note',
+  gallery: 'Images',
+  about: 'About',
+  packages: 'What to mention',
+  testimonials: 'Couple notes',
+  faq: 'Common questions',
+  links: 'Links',
+  inquiry: 'Note form',
+};
+
+type TemplateStarterCustomization = {
+  cta_label?: string;
+  service_area?: string;
+  pricing_note?: string;
+  proof_points?: string[];
+  category_facts?: VendorProfileCategoryFact[];
+  packages?: Array<{ title: string; detail: string; price?: string | null }>;
+  faqs?: Array<{ question: string; answer: string }>;
+  inquiry_questions?: string[];
+};
+
+const vendorTemplateStarterCustomizations: Partial<Record<VendorTemplateId, TemplateStarterCustomization>> = {
+  photography: {
+    cta_label: 'Check the date',
+    service_area: 'Local and destination wedding days',
+    pricing_note: 'Add time, events, travel, and final file notes.',
+    proof_points: ['Documentary eye', 'Timeline calm', 'Preview gallery'],
+    category_facts: [
+      { label: 'Style', value: 'Documentary photos with a clean finish', group: 'style' },
+      { label: 'Day plan', value: 'Wedding day and weekend events', group: 'service' },
+      { label: 'Final files', value: 'Online gallery, print rights, and preview set', group: 'service' },
+      { label: 'Second photographer', value: 'Can help with larger timelines', group: 'logistics' },
+      { label: 'Turnaround', value: 'Preview images first, full gallery after editing', group: 'service' },
+      { label: 'Travel', value: 'Local and destination weddings', group: 'logistics' },
+    ],
+    packages: [
+      { title: 'Wedding day photos', detail: 'Photo time, timeline help, preview images, and an online gallery.', price: 'First note' },
+      { title: 'Weekend story', detail: 'Welcome party, rehearsal, wedding day, and next morning photos.', price: 'Event count note' },
+    ],
+    faqs: [
+      { question: 'Do you help with the photo timeline?', answer: 'Yes. Timeline notes and family photo pacing can be planned before the wedding day.' },
+      { question: 'Can we add an engagement session?', answer: 'Engagement sessions can be added when the schedule and location make sense.' },
+    ],
+    inquiry_questions: ['Wedding date', 'Venue or location', 'Photo needs'],
+  },
+  floral: {
+    cta_label: 'Write about florals',
+    service_area: 'Ceremony, reception, and installation floral design',
+    pricing_note: 'Add season, install, rental, and wrap up notes.',
+    proof_points: ['Seasonal palette', 'Install scale', 'Rental timing'],
+    category_facts: [
+      { label: 'Install scale', value: 'Personal flowers, ceremony pieces, bars, lounges, and tables', group: 'service' },
+      { label: 'Palette', value: 'Seasonal color direction built from venue and attire', group: 'style' },
+      { label: 'Repurposing', value: 'Ceremony flowers can be planned for reception reuse', group: 'logistics' },
+      { label: 'Rentals', value: 'Vessels, candles, and tabletop details can be planned', group: 'service' },
+      { label: 'Wrap up', value: 'Breakdown and rental returns can be part of the plan', group: 'logistics' },
+      { label: 'Helpful when', value: 'A clear visual direction is already forming', group: 'overview' },
+    ],
+    packages: [
+      { title: 'Ceremony flowers', detail: 'Aisle, altar, personal flowers, wrap up notes, and repurpose plan.', price: 'First note' },
+      { title: 'Reception design', detail: 'Tablescape flowers, candles, bars, lounges, and delivery timing.', price: 'Guest count note' },
+    ],
+    faqs: [
+      { question: 'Can you work from a color palette?', answer: 'Yes. Inspiration, venue photos, seasonality, and attire can shape the floral direction.' },
+      { question: 'Do you handle setup and breakdown?', answer: 'Setup, wrap up, and rental timing can be part of the floral details.' },
+    ],
+    inquiry_questions: ['Estimated guest count', 'Color palette', 'Install moments'],
+  },
+  venue: {
+    cta_label: 'Write about a tour',
+    service_area: 'Ceremony, cocktail hour, reception, and rain plan flow',
+    pricing_note: 'Add season, guest count, and weekend plan notes.',
+    proof_points: ['Guest flow', 'Rain plan details', 'Setup path'],
+    category_facts: [
+      { label: 'Capacity', value: 'Add seated and standing guest count', group: 'overview' },
+      { label: 'Ceremony', value: 'Outdoor setting with indoor backup option', group: 'service' },
+      { label: 'Reception', value: 'Indoor room, tented lawn, or flexible layout', group: 'service' },
+      { label: 'Rain plan', value: 'Backup flow to talk through early', group: 'logistics' },
+      { label: 'Parking', value: 'Guest parking and setup path', group: 'logistics' },
+      { label: 'House notes', value: 'Curfew, catering, and decor notes to check', group: 'policy' },
+    ],
+    packages: [
+      { title: 'Site walkthrough', detail: 'Walk ceremony, cocktail, dinner, and rain plan spaces with the venue team.', price: 'Tour note' },
+      { title: 'Wedding weekend plans', detail: 'Site use, setup windows, guest flow, and property timing planned together.', price: 'Season note' },
+    ],
+    faqs: [
+      { question: 'Is there an indoor backup plan?', answer: 'Talk through the backup flow by guest count, season, and ceremony location.' },
+      { question: 'Can teams set up early?', answer: 'Setup windows should be planned with the venue team by event details.' },
+    ],
+    inquiry_questions: ['Estimated guest count', 'Preferred season', 'Indoor or outdoor priorities'],
+  },
+  food: {
+    cta_label: 'Write about tasting',
+    service_area: 'Cocktail hour, dinner, dessert, bar, and late night plans',
+    pricing_note: 'Add guest count, dinner style, rental, and team notes.',
+    proof_points: ['Seasonal menu', 'Dinner team', 'Bar timing'],
+    category_facts: [
+      { label: 'Dinner style', value: 'Plated, family style, stations, or cocktail reception', group: 'service' },
+      { label: 'Tastings', value: 'Tasting can follow the first note', group: 'service' },
+      { label: 'Bar', value: 'Bar team and batch cocktails', group: 'service' },
+      { label: 'Dietary needs', value: 'Vegetarian, vegan, gluten-free, and allergy notes', group: 'policy' },
+      { label: 'Rentals', value: 'Tabletop rentals can be planned', group: 'logistics' },
+      { label: 'Late night', value: 'Snack, coffee, and dessert options', group: 'service' },
+    ],
+    packages: [
+      { title: 'Cocktail and dinner', detail: 'Passed bites, dinner, dessert timing, and team plan.', price: 'Guest count note' },
+      { title: 'Bar and late night', detail: 'Bar team, batch cocktails, coffee, and late night snacks.', price: 'Can add later' },
+    ],
+    faqs: [
+      { question: 'Can you handle dietary notes?', answer: 'Dietary notes are collected during menu planning and checked before counts are final.' },
+      { question: 'Do you handle rentals?', answer: 'Rental timing can be planned alongside menu and team needs.' },
+    ],
+    inquiry_questions: ['Guest count', 'Dinner style', 'Dietary needs'],
+  },
+  beauty: {
+    cta_label: 'Write about the morning',
+    service_area: 'On-site wedding hair, makeup, trials, and touchups',
+    pricing_note: 'Add party size, start time, travel, and touchup notes.',
+    proof_points: ['Trial plan', 'Wedding morning', 'Party timing'],
+    category_facts: [
+      { label: 'Trial', value: 'Trial appointment can be scheduled before final look', group: 'service' },
+      { label: 'Party size', value: 'Confirm number of looks and artists needed', group: 'logistics' },
+      { label: 'Travel', value: 'On-site prep location and parking needed', group: 'logistics' },
+      { label: 'Timeline', value: 'Start time depends on party size and photo schedule', group: 'logistics' },
+      { label: 'Touchups', value: 'Optional ceremony or reception touchups', group: 'service' },
+      { label: 'Helpful when', value: 'The wedding morning needs a clear schedule', group: 'overview' },
+    ],
+    packages: [
+      { title: 'Wedding morning', detail: 'Hair, makeup, schedule planning, and on site setup for the wedding party.', price: 'Party size note' },
+      { title: 'Trial and touchups', detail: 'Pre wedding trial plus optional ceremony or reception touchups.', price: 'Can add later' },
+    ],
+    faqs: [
+      { question: 'Do you travel on site?', answer: 'Confirm prep address, parking, setup space, and start time before deciding.' },
+      { question: 'How many artists do we need?', answer: 'Artist count depends on party size, hair and makeup needs, and the photo timeline.' },
+    ],
+    inquiry_questions: ['Party size', 'Prep location', 'Trial timing'],
+  },
+  music: {
+    cta_label: 'Hear a set',
+    service_area: 'Ceremony, cocktail hour, reception, and after party sound',
+    pricing_note: 'Add set length, sound, lighting, and announcement notes.',
+    proof_points: ['Ceremony cues', 'Reception energy', 'Clean transitions'],
+    category_facts: [
+      { label: 'Event moments', value: 'Ceremony, cocktail hour, reception, or after party', group: 'service' },
+      { label: 'Emcee', value: 'Announcements and reception flow', group: 'service' },
+      { label: 'Sound', value: 'Check power, setup path, ceremony audio, and backup needs', group: 'logistics' },
+      { label: 'Lighting', value: 'Dance floor lighting can be added when needed', group: 'service' },
+      { label: 'Playlist', value: 'Must play and do not play notes welcome', group: 'style' },
+      { label: 'Insurance', value: 'Venue insurance notes should be checked', group: 'policy' },
+    ],
+    packages: [
+      { title: 'Reception set', detail: 'Dinner, dancing, announcements, and reception sound.', price: 'First note' },
+      { title: 'Ceremony and cocktail hour', detail: 'Ceremony cues, microphones, cocktail music, and transition timing.', price: 'Can add later' },
+    ],
+    faqs: [
+      { question: 'Can we share do not play songs?', answer: 'Yes. Must play and do not play notes can be part of planning.' },
+      { question: 'Do you provide ceremony sound?', answer: 'Ceremony audio can be part of the plan when power, location, and mic needs are clear.' },
+    ],
+    inquiry_questions: ['Event spaces', 'Music style', 'Sound needs'],
+  },
+  planner: {
+    cta_label: 'Write about planning',
+    service_area: 'Planning, visual direction, timing, team notes, and wedding week help',
+    pricing_note: 'Add event count, guest count, moving pieces, and planning stage.',
+    proof_points: ['Weekend flow', 'Team notes', 'Guest calm'],
+    category_facts: [
+      { label: 'Planning help', value: 'Full planning, partial planning, or wedding management', group: 'service' },
+      { label: 'Design', value: 'Visual direction, rentals, stationery, and guest experience', group: 'style' },
+      { label: 'Team map', value: 'Search, timing, team notes, and handoffs', group: 'logistics' },
+      { label: 'Wedding week', value: 'Final checks and final schedule', group: 'service' },
+      { label: 'Helpful when', value: 'Planning help, team notes, and wedding week handoffs matter', group: 'overview' },
+      { label: 'Planning stage', value: 'Share what is already decided before the first note', group: 'logistics' },
+    ],
+    packages: [
+      { title: 'Planning call', detail: 'Review planning stage, team map, guest count, and weekend moving pieces.', price: 'First conversation' },
+      { title: 'Wedding management', detail: 'Timeline, team communication, rehearsal, and wedding day help.', price: 'Scope note' },
+    ],
+    faqs: [
+      { question: 'Can you join midway through planning?', answer: 'Yes. Share booked teams, contracts, guest count, and open decisions.' },
+      { question: 'Do you help with visual direction?', answer: 'Visual direction can be planned with rentals, stationery, floor plans, and guest flow.' },
+    ],
+    inquiry_questions: ['Planning stage', 'Guest count', 'Confirmed teams'],
+  },
+  travel: {
+    cta_label: 'Check transportation',
+    service_area: 'Guest shuttles, room blocks, pickup windows, and weekend movement',
+    pricing_note: 'Add guest count, routes, timing, and vehicle needs.',
+    proof_points: ['Pickup windows', 'Guest movement', 'Day of contact'],
+    category_facts: [
+      { label: 'Routes', value: 'Hotel, ceremony, reception, after party, or airport routes', group: 'service' },
+      { label: 'Vehicles', value: 'Shuttles, sprinters, cars, or accessible vehicles', group: 'service' },
+      { label: 'Timing', value: 'Pickup windows tied to ceremony and reception flow', group: 'logistics' },
+      { label: 'Guest count', value: 'Passenger count and lodging map help', group: 'logistics' },
+      { label: 'Day-of contact', value: 'A point person is helpful', group: 'logistics' },
+      { label: 'Accessibility', value: 'Note accessible vehicle needs early', group: 'policy' },
+    ],
+    packages: [
+      { title: 'Guest shuttle plan', detail: 'Hotel pickup, ceremony/reception movement, return trips, and timing notes.', price: 'Route note' },
+      { title: 'Weekend travel plan', detail: 'Airport, welcome event, after party, and next day guest movement.', price: 'Can add later' },
+    ],
+    faqs: [
+      { question: 'What details do you need first?', answer: 'Guest count, hotel list, ceremony time, reception end time, and pickup locations.' },
+      { question: 'Can you handle accessible transportation?', answer: 'Accessible vehicle needs should be shared early so the right fleet can be planned.' },
+    ],
+    inquiry_questions: ['Guest count', 'Hotel map', 'Pickup windows'],
+  },
+  service: {
+    cta_label: 'Write about the date',
+    service_area: 'Specialty wedding help, rentals, officiants, and practical day-of needs',
+    pricing_note: 'Add date, location, setup notes, and moving pieces.',
+    proof_points: ['Clear reply path', 'Setup needs', 'Day-of help'],
+    category_facts: [
+      { label: 'Date check', value: 'Check date, location, and timing details', group: 'overview' },
+      { label: 'Setup', value: 'Power, access, timing, and setup notes', group: 'logistics' },
+      { label: 'Timing', value: 'Arrival, main time, wrap up, and backup timing', group: 'service' },
+      { label: 'Venue notes', value: 'Insurance, power, access, and placement notes to check', group: 'policy' },
+      { label: 'Helpful when', value: 'The need is clear and timing or setup details are known', group: 'overview' },
+      { label: 'Reply path', value: 'Share date, venue, guest count, and what you need', group: 'service' },
+    ],
+    packages: [
+      { title: 'Date check', detail: 'Check date, location, setup notes, and details.', price: 'Short note' },
+      { title: 'Wedding day help', detail: 'Arrival time, setup, main time, and wrap up plan.', price: 'Need note' },
+    ],
+    faqs: [
+      { question: 'What should we send first?', answer: 'Share the date, venue, timing, guest count, and what you need.' },
+      { question: 'Do you work with the venue?', answer: 'Venue access, setup, insurance, and power details should be checked before final details.' },
+    ],
+    inquiry_questions: ['Wedding date', 'Venue', 'Timing needs'],
+  },
+};
+
+const vendorTemplateStarterCustomizationValues = Object.values(vendorTemplateStarterCustomizations)
+  .filter((starter): starter is TemplateStarterCustomization => Boolean(starter));
+
+type StarterTextKey = 'cta_label' | 'service_area' | 'pricing_note';
+type StarterArrayKey = 'proof_points' | 'category_facts' | 'packages' | 'faqs' | 'inquiry_questions';
+type NormalizedVendorCustomization = ReturnType<typeof normalizeVendorProfileCustomization>;
+
+function sameStarterValue(left: unknown, right: unknown): boolean {
+  return JSON.stringify(left) === JSON.stringify(right);
 }
 
-function withTemplateId(draft: VendorProfileDraft, templateId: VendorTemplateId): VendorProfileDraft {
-  const customization = normalizeVendorProfileCustomization(draft.source_payload);
+function isEmptyOrStarterText(value: string | null, key: StarterTextKey): boolean {
+  if (!value) return true;
+  return vendorTemplateStarterCustomizationValues.some((starter) => starter[key] === value);
+}
+
+function isEmptyOrStarterArray(value: unknown[], key: StarterArrayKey): boolean {
+  if (value.length === 0) return true;
+  return vendorTemplateStarterCustomizationValues.some((starter) => sameStarterValue(value, starter[key] ?? []));
+}
+
+function normalizeCreateTemplateId(value: unknown): VendorTemplateId {
+  const templateId = normalizeVendorTemplateId(value);
+  return vendorTemplateOptions.some((option) => option.id === templateId) ? templateId : 'photography';
+}
+
+function applyTemplateStarterCustomization(draft: VendorProfileDraft, templateId: VendorTemplateId): VendorProfileDraft {
+  const starter = vendorTemplateStarterCustomizations[templateId] ?? {};
+  const current = normalizeVendorProfileCustomization({
+    ...draft.source_payload,
+    template_id: templateId,
+  });
+
   return {
     ...draft,
     source_payload: {
       ...draft.source_payload,
       template_id: templateId,
       vendor_customization: {
-        ...customization,
-        accent_id: customization.accent_id,
+        ...current,
+        cta_label: isEmptyOrStarterText(current.cta_label, 'cta_label') ? starter.cta_label ?? null : current.cta_label,
+        service_area: isEmptyOrStarterText(current.service_area, 'service_area') ? starter.service_area ?? null : current.service_area,
+        pricing_note: isEmptyOrStarterText(current.pricing_note, 'pricing_note') ? starter.pricing_note ?? null : current.pricing_note,
+        proof_points: isEmptyOrStarterArray(current.proof_points, 'proof_points') ? starter.proof_points ?? [] : current.proof_points,
+        category_facts: isEmptyOrStarterArray(current.category_facts, 'category_facts') ? starter.category_facts ?? [] : current.category_facts,
+        packages: isEmptyOrStarterArray(current.packages, 'packages') ? starter.packages ?? [] : current.packages,
+        faqs: isEmptyOrStarterArray(current.faqs, 'faqs') ? starter.faqs ?? [] : current.faqs,
+        inquiry_questions: isEmptyOrStarterArray(current.inquiry_questions, 'inquiry_questions') ? starter.inquiry_questions ?? [] : current.inquiry_questions,
+        rating: current.rating,
+        external_credibility: current.external_credibility,
       },
     },
   };
+}
+
+function getDraftTemplateId(draft: VendorProfileDraft): VendorTemplateId {
+  return normalizeVendorTemplateId(draft.source_payload?.template_id);
+}
+
+function getStarterDetailLabels(
+  customization: NormalizedVendorCustomization,
+  templateId: VendorTemplateId,
+): string[] {
+  const starter = vendorTemplateStarterCustomizations[templateId];
+  if (!starter) return [];
+
+  const labels: string[] = [];
+  if (starter.cta_label && customization.cta_label === starter.cta_label) labels.push('button label');
+  if (starter.service_area && customization.service_area === starter.service_area) labels.push('where they work');
+  if (starter.pricing_note && customization.pricing_note === starter.pricing_note) labels.push('helpful note');
+  if (sameStarterValue(customization.proof_points, starter.proof_points ?? [])) labels.push('highlights');
+  if (sameStarterValue(customization.category_facts, starter.category_facts ?? [])) labels.push('facts');
+  if (sameStarterValue(customization.packages, starter.packages ?? [])) labels.push('items');
+  if (sameStarterValue(customization.faqs, starter.faqs ?? [])) labels.push('questions');
+  if (sameStarterValue(customization.inquiry_questions, starter.inquiry_questions ?? [])) labels.push('questions to ask');
+
+  return labels;
+}
+
+function withTemplateId(draft: VendorProfileDraft, templateId: VendorTemplateId): VendorProfileDraft {
+  return applyTemplateStarterCustomization(draft, templateId);
 }
 
 function updateDraftCustomization(
@@ -88,6 +387,7 @@ function updateDraftCustomization(
     service_area: string;
     pricing_note: string;
     proof_points: string[];
+    category_facts: VendorProfileCategoryFact[];
     section_order: VendorSectionId[];
     hidden_sections: VendorSectionId[];
     packages: Array<{ title: string; detail: string; price?: string | null }>;
@@ -157,30 +457,113 @@ function sanitizeDraftForPublish(draft: VendorProfileDraft): VendorProfileDraft 
   };
 }
 
+function buildInitialVendorProfileCreateForm(searchParams: URLSearchParams) {
+  return {
+    vendorName: searchParams.get('vendorName') ?? '',
+    instagramUrl: searchParams.get('instagramUrl') ?? '',
+    websiteUrl: searchParams.get('websiteUrl') ?? '',
+    pinterestUrl: searchParams.get('pinterestUrl') ?? '',
+    tiktokUrl: searchParams.get('tiktokUrl') ?? '',
+    facebookUrl: searchParams.get('facebookUrl') ?? '',
+    youtubeUrl: searchParams.get('youtubeUrl') ?? '',
+    contactEmail: searchParams.get('contactEmail') ?? '',
+    templateId: normalizeCreateTemplateId(searchParams.get('template')),
+  };
+}
+
+function buildDraftReviewItems(
+  draft: VendorProfileDraft,
+  customization: ReturnType<typeof normalizeVendorProfileCustomization>,
+  safeImages: string[],
+): Array<{ label: string; detail: string; ready: boolean }> {
+  const links = draftLinks(draft);
+  const hasContactPath = links.length > 0 || Boolean(draft.contact_email);
+  const hasUsefulDetails = customization.proof_points.length > 0
+    || customization.category_facts.length > 0
+    || customization.packages.length > 0
+    || customization.faqs.length > 0
+    || customization.inquiry_questions.length > 0;
+
+  return [
+    {
+      label: 'Name and link',
+      detail: draft.vendor_name.trim() && draft.slug.trim() ? `/${draft.slug}` : 'Add the name and link.',
+      ready: Boolean(draft.vendor_name.trim() && draft.slug.trim()),
+    },
+    {
+      label: 'Images',
+      detail: safeImages.length > 0 ? `${safeImages.length} image${safeImages.length === 1 ? '' : 's'} saved.` : 'Add at least one image when you have one.',
+      ready: safeImages.length > 0,
+    },
+    {
+      label: 'About',
+      detail: draft.about.trim().length >= 40 ? 'Short description is in place.' : 'Add a short plain description.',
+      ready: draft.about.trim().length >= 40,
+    },
+    {
+      label: 'Reply path',
+      detail: hasContactPath ? 'Link or email is in place.' : 'Add a website, social link, or email.',
+      ready: hasContactPath,
+    },
+    {
+      label: 'Helpful notes',
+      detail: hasUsefulDetails ? 'Facts, items, questions, or helpful notes are present.' : 'Add at least one fact, item, or helpful note.',
+      ready: hasUsefulDetails,
+    },
+  ];
+}
+
 export const VendorProfileCreatePage: React.FC = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { toast } = useToast();
   const creationEnabled = isVendorProfileCreationEnabled();
-  const [form, setForm] = useState(() => {
-    const params = new URLSearchParams(window.location.search);
-    return {
-      vendorName: params.get('vendorName') ?? '',
-      instagramUrl: params.get('instagramUrl') ?? '',
-      websiteUrl: params.get('websiteUrl') ?? '',
-      pinterestUrl: params.get('pinterestUrl') ?? '',
-      tiktokUrl: params.get('tiktokUrl') ?? '',
-      facebookUrl: params.get('facebookUrl') ?? '',
-      youtubeUrl: params.get('youtubeUrl') ?? '',
-      contactEmail: params.get('contactEmail') ?? '',
-      templateId: normalizeVendorTemplateId(params.get('template')),
-    };
-  });
+  const [form, setForm] = useState(() => buildInitialVendorProfileCreateForm(searchParams));
   const [loading, setLoading] = useState(false);
   const [draft, setDraft] = useState<VendorProfileDraft | null>(null);
   const [saving, setSaving] = useState(false);
+  const [copyingLiveUrl, setCopyingLiveUrl] = useState(false);
+  const [liveUrlNotice, setLiveUrlNotice] = useState<'copied' | 'downloaded' | null>(null);
   const [imageEditor, setImageEditor] = useState('');
   const [createdProfile, setCreatedProfile] = useState<VendorProfile | null>(null);
   const draftCustomization = draft ? normalizeVendorProfileCustomization(draft.source_payload) : null;
+  const draftSafeImages = draft
+    ? [draft.hero_image_url, ...(draft.image_urls || [])].map((image) => getSafePublicImageUrl(image)).filter((image): image is string => Boolean(image))
+    : [];
+  const draftExtraImageCount = Math.max(0, draftSafeImages.length - 6);
+  const draftSectionEnabled = (sectionId: VendorSectionId) => !draftCustomization?.hidden_sections.includes(sectionId);
+  const draftReviewItems = draft && draftCustomization ? buildDraftReviewItems(draft, draftCustomization, draftSafeImages) : [];
+  const draftReviewReadyCount = draftReviewItems.filter((item) => item.ready).length;
+  const draftMissingReviewItems = draftReviewItems.filter((item) => !item.ready);
+  const draftStarterDetailLabels = draft && draftCustomization ? getStarterDetailLabels(draftCustomization, getDraftTemplateId(draft)) : [];
+  const liveUrlNoticeTimeoutRef = useRef<number | null>(null);
+  const liveUrlCopyRequestIdRef = useRef(0);
+
+  useEffect(() => {
+    const nextForm = buildInitialVendorProfileCreateForm(searchParams);
+    setForm(nextForm);
+    setLoading(false);
+    setDraft(null);
+    setSaving(false);
+    setCopyingLiveUrl(false);
+    setLiveUrlNotice(null);
+    setImageEditor('');
+    setCreatedProfile(null);
+    liveUrlCopyRequestIdRef.current += 1;
+    if (liveUrlNoticeTimeoutRef.current) window.clearTimeout(liveUrlNoticeTimeoutRef.current);
+  }, [searchParams]);
+
+  useEffect(() => {
+    if (!createdProfile && !liveUrlNotice) return;
+    setCreatedProfile(null);
+    setLiveUrlNotice(null);
+    liveUrlCopyRequestIdRef.current += 1;
+  }, [form, draft]);
+
+  useEffect(() => () => {
+    liveUrlCopyRequestIdRef.current += 1;
+    if (liveUrlNoticeTimeoutRef.current) window.clearTimeout(liveUrlNoticeTimeoutRef.current);
+  }, []);
 
   const handleGenerate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -191,9 +574,9 @@ export const VendorProfileCreatePage: React.FC = () => {
       setDraft(next);
       setCreatedProfile(null);
       setImageEditor([next.hero_image_url, ...next.image_urls].filter(Boolean).join('\n'));
-      toast('Vendor draft generated.', 'success');
+      toast('Page made.', 'success');
     } catch {
-      toast('Couldn’t prepare that vendor page yet.', 'error');
+      toast('Couldn’t make that page yet.', 'error');
     } finally {
       setLoading(false);
     }
@@ -205,36 +588,58 @@ export const VendorProfileCreatePage: React.FC = () => {
       setSaving(true);
       const created = await createVendorProfile(sanitizeDraftForPublish(draft));
       setCreatedProfile(created);
-      toast('Vendor page created.', 'success');
+      toast('Page saved.', 'success');
     } catch {
-      toast('Couldn’t create that vendor page yet.', 'error');
+      toast('Couldn’t save that page yet.', 'error');
     } finally {
       setSaving(false);
     }
   };
 
   const handleCopyLiveUrl = async () => {
-    if (!createdProfile) return;
+    if (!createdProfile || copyingLiveUrl) return;
+    const requestId = ++liveUrlCopyRequestIdRef.current;
+    const requestSlug = createdProfile.slug;
+    const isCurrentLiveUrlCopy = () => (
+      requestId === liveUrlCopyRequestIdRef.current &&
+      createdProfile?.slug === requestSlug
+    );
     const url = `${window.location.origin}/vendor/${createdProfile.slug}`;
-    const result = await copyTextOrDownload(url, 'dayof-vendor-profile-url.txt');
-    if (result === 'copied') {
-      toast('Live vendor URL copied.', 'success');
-    } else {
-      toast('Clipboard was blocked, so the vendor URL downloaded.', 'success');
+    try {
+      setCopyingLiveUrl(true);
+      setLiveUrlNotice(null);
+      const result = await copyTextOrDownload(url, 'dayof-vendor-page-url.txt');
+      if (!isCurrentLiveUrlCopy()) return;
+      if (result === 'copied') {
+        setLiveUrlNotice('copied');
+        toast('Link copied.', 'success');
+      } else {
+        setLiveUrlNotice('downloaded');
+        toast('The link was saved.', 'success');
+      }
+      if (liveUrlNoticeTimeoutRef.current) window.clearTimeout(liveUrlNoticeTimeoutRef.current);
+      liveUrlNoticeTimeoutRef.current = window.setTimeout(() => setLiveUrlNotice((current) => (current === result ? null : current)), 1800);
+    } catch {
+      if (!isCurrentLiveUrlCopy()) return;
+      toast('Couldn’t copy the link right now.', 'error');
+    } finally {
+      if (isCurrentLiveUrlCopy()) {
+        setCopyingLiveUrl(false);
+      }
     }
   };
 
   if (!creationEnabled) {
     return (
       <div className="min-h-screen bg-[#f6f1ea] px-4 py-8 text-[#2f261d] sm:px-6">
-        <div className="mx-auto max-w-3xl space-y-5 rounded-lg bg-white p-6 shadow-sm sm:p-8">
-          <p className="text-xs font-semibold text-[#8b6f53]">Vendor page studio</p>
-          <h1 className="text-3xl font-semibold">Vendor page generation is paused</h1>
+        <div className="mx-auto max-w-3xl space-y-5 rounded-xl bg-white p-6 shadow-sm sm:p-8">
+          <p className="text-xs font-semibold text-[#8b6f53]">Note page</p>
+          <h1 className="text-3xl font-semibold">Page editing is paused for now</h1>
           <p className="text-sm leading-6 text-[#6f5843]">
-            Vendor templates are still available for review. Turn on `VITE_ENABLE_VENDOR_PROFILE_CREATION=true` when profile generation is intentionally part of this launch.
+            Examples are still available. You can keep sharing off until the page is ready.
           </p>
-          <Link to="/vendor-templates" className="inline-flex rounded-lg bg-[#2f261d] px-4 py-2 text-sm font-semibold text-white">
-            Review vendor templates
+          <Link to="/vendor-templates" className="inline-flex rounded-xl bg-[#2f261d] px-4 py-2 text-sm font-semibold text-white">
+            View examples
           </Link>
         </div>
       </div>
@@ -245,56 +650,59 @@ export const VendorProfileCreatePage: React.FC = () => {
     <div className="min-h-screen bg-[#f6f1ea] text-[#2f261d] px-4 py-8 sm:px-6">
       <div className="max-w-3xl mx-auto space-y-6">
         <div className="space-y-2">
-          <p className="text-xs font-semibold text-[#8b6f53]">Vendor page studio</p>
-          <h1 className="text-3xl sm:text-5xl font-semibold">Generate a vendor page</h1>
-          <p className="text-[#6f5843] max-w-2xl">Start with a few details and turn them into a polished vendor page.</p>
+          <p className="text-xs font-semibold text-[#8b6f53]">Note page</p>
+          <h1 className="text-3xl sm:text-5xl font-semibold">Make a note page</h1>
+          <p className="text-[#6f5843] max-w-2xl">Add the name and links, then refine the helpful notes before saving.</p>
           <Link to="/vendor-templates" className="inline-flex text-sm font-semibold text-[#6f5843] underline underline-offset-4">
-            Browse vendor page designs
+            Browse examples
           </Link>
         </div>
 
-        <form onSubmit={handleGenerate} className="rounded-lg bg-white p-6 sm:p-8 shadow-sm space-y-4" aria-busy={loading}>
+        <form onSubmit={handleGenerate} className="rounded-xl bg-white p-6 sm:p-8 shadow-sm space-y-4" aria-busy={loading}>
           <div>
-            <label htmlFor="vendor-create-name" className="mb-1 block text-sm font-semibold text-[#4b3a2c]">Vendor name</label>
-            <input id="vendor-create-name" value={form.vendorName} onChange={(e) => setForm((prev) => ({ ...prev, vendorName: e.target.value }))} placeholder="Vendor name" className="w-full rounded-lg border border-[#eadfce] px-4 py-3 outline-none" required />
+            <label htmlFor="vendor-create-name" className="mb-1 block text-sm font-semibold text-[#4b3a2c]">Name</label>
+            <input id="vendor-create-name" value={form.vendorName} onChange={(e) => setForm((prev) => ({ ...prev, vendorName: e.target.value }))} placeholder="Name" className="w-full rounded-xl border border-[#eadfce] px-4 py-3 outline-none" required />
           </div>
           <div>
-            <label htmlFor="vendor-create-instagram" className="mb-1 block text-sm font-semibold text-[#4b3a2c]">Instagram URL (optional)</label>
-            <input id="vendor-create-instagram" value={form.instagramUrl} onChange={(e) => setForm((prev) => ({ ...prev, instagramUrl: e.target.value }))} placeholder="Instagram URL (optional)" className="w-full rounded-lg border border-[#eadfce] px-4 py-3 outline-none" />
+            <label htmlFor="vendor-create-instagram" className="mb-1 block text-sm font-semibold text-[#4b3a2c]">Instagram link</label>
+            <input id="vendor-create-instagram" value={form.instagramUrl} onChange={(e) => setForm((prev) => ({ ...prev, instagramUrl: e.target.value }))} placeholder="Instagram link" className="w-full rounded-xl border border-[#eadfce] px-4 py-3 outline-none" />
           </div>
           <div>
-            <label htmlFor="vendor-create-website" className="mb-1 block text-sm font-semibold text-[#4b3a2c]">Website URL (optional)</label>
-            <input id="vendor-create-website" value={form.websiteUrl} onChange={(e) => setForm((prev) => ({ ...prev, websiteUrl: e.target.value }))} placeholder="Website URL (optional)" className="w-full rounded-lg border border-[#eadfce] px-4 py-3 outline-none" />
+            <label htmlFor="vendor-create-website" className="mb-1 block text-sm font-semibold text-[#4b3a2c]">Website link</label>
+            <input id="vendor-create-website" value={form.websiteUrl} onChange={(e) => setForm((prev) => ({ ...prev, websiteUrl: e.target.value }))} placeholder="Website link" className="w-full rounded-xl border border-[#eadfce] px-4 py-3 outline-none" />
           </div>
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div>
-              <label htmlFor="vendor-create-pinterest" className="mb-1 block text-sm font-semibold text-[#4b3a2c]">Pinterest URL (optional)</label>
-              <input id="vendor-create-pinterest" value={form.pinterestUrl} onChange={(e) => setForm((prev) => ({ ...prev, pinterestUrl: e.target.value }))} placeholder="Pinterest URL (optional)" className="w-full rounded-lg border border-[#eadfce] px-4 py-3 outline-none" />
+          <details className="rounded-xl border border-[#eadfce] bg-[#fffaf3] p-4">
+            <summary className="cursor-pointer text-sm font-semibold text-[#4b3a2c]">Other links</summary>
+            <div className="mt-3 grid gap-3 sm:grid-cols-2">
+              <div>
+                <label htmlFor="vendor-create-pinterest" className="mb-1 block text-sm font-semibold text-[#4b3a2c]">Pinterest link</label>
+                <input id="vendor-create-pinterest" value={form.pinterestUrl} onChange={(e) => setForm((prev) => ({ ...prev, pinterestUrl: e.target.value }))} placeholder="Pinterest link" className="w-full rounded-xl border border-[#eadfce] px-4 py-3 outline-none" />
+              </div>
+              <div>
+                <label htmlFor="vendor-create-tiktok" className="mb-1 block text-sm font-semibold text-[#4b3a2c]">TikTok link</label>
+                <input id="vendor-create-tiktok" value={form.tiktokUrl} onChange={(e) => setForm((prev) => ({ ...prev, tiktokUrl: e.target.value }))} placeholder="TikTok link" className="w-full rounded-xl border border-[#eadfce] px-4 py-3 outline-none" />
+              </div>
+              <div>
+                <label htmlFor="vendor-create-facebook" className="mb-1 block text-sm font-semibold text-[#4b3a2c]">Facebook link</label>
+                <input id="vendor-create-facebook" value={form.facebookUrl} onChange={(e) => setForm((prev) => ({ ...prev, facebookUrl: e.target.value }))} placeholder="Facebook link" className="w-full rounded-xl border border-[#eadfce] px-4 py-3 outline-none" />
+              </div>
+              <div>
+                <label htmlFor="vendor-create-youtube" className="mb-1 block text-sm font-semibold text-[#4b3a2c]">YouTube link</label>
+                <input id="vendor-create-youtube" value={form.youtubeUrl} onChange={(e) => setForm((prev) => ({ ...prev, youtubeUrl: e.target.value }))} placeholder="YouTube link" className="w-full rounded-xl border border-[#eadfce] px-4 py-3 outline-none" />
+              </div>
             </div>
-            <div>
-              <label htmlFor="vendor-create-tiktok" className="mb-1 block text-sm font-semibold text-[#4b3a2c]">TikTok URL (optional)</label>
-              <input id="vendor-create-tiktok" value={form.tiktokUrl} onChange={(e) => setForm((prev) => ({ ...prev, tiktokUrl: e.target.value }))} placeholder="TikTok URL (optional)" className="w-full rounded-lg border border-[#eadfce] px-4 py-3 outline-none" />
-            </div>
-            <div>
-              <label htmlFor="vendor-create-facebook" className="mb-1 block text-sm font-semibold text-[#4b3a2c]">Facebook URL (optional)</label>
-              <input id="vendor-create-facebook" value={form.facebookUrl} onChange={(e) => setForm((prev) => ({ ...prev, facebookUrl: e.target.value }))} placeholder="Facebook URL (optional)" className="w-full rounded-lg border border-[#eadfce] px-4 py-3 outline-none" />
-            </div>
-            <div>
-              <label htmlFor="vendor-create-youtube" className="mb-1 block text-sm font-semibold text-[#4b3a2c]">YouTube URL (optional)</label>
-              <input id="vendor-create-youtube" value={form.youtubeUrl} onChange={(e) => setForm((prev) => ({ ...prev, youtubeUrl: e.target.value }))} placeholder="YouTube URL (optional)" className="w-full rounded-lg border border-[#eadfce] px-4 py-3 outline-none" />
-            </div>
+          </details>
+          <div>
+            <label htmlFor="vendor-create-contact-email" className="mb-1 block text-sm font-semibold text-[#4b3a2c]">Reply email</label>
+            <input id="vendor-create-contact-email" type="email" value={form.contactEmail} onChange={(e) => setForm((prev) => ({ ...prev, contactEmail: e.target.value }))} placeholder="Reply email" className="w-full rounded-xl border border-[#eadfce] px-4 py-3 outline-none" />
           </div>
           <div>
-            <label htmlFor="vendor-create-contact-email" className="mb-1 block text-sm font-semibold text-[#4b3a2c]">Contact email for inquiry CTA (optional)</label>
-            <input id="vendor-create-contact-email" type="email" value={form.contactEmail} onChange={(e) => setForm((prev) => ({ ...prev, contactEmail: e.target.value }))} placeholder="Contact email for inquiry CTA (optional)" className="w-full rounded-lg border border-[#eadfce] px-4 py-3 outline-none" />
-          </div>
-          <div>
-            <label htmlFor="vendor-create-template" className="mb-2 block text-sm font-semibold text-[#4b3a2c]">Design style</label>
+            <label htmlFor="vendor-create-template" className="mb-2 block text-sm font-semibold text-[#4b3a2c]">Page style</label>
             <select
               id="vendor-create-template"
               value={form.templateId}
               onChange={(e) => setForm((prev) => ({ ...prev, templateId: normalizeVendorTemplateId(e.target.value) }))}
-              className="w-full rounded-lg border border-[#eadfce] bg-white px-4 py-3 outline-none"
+              className="w-full rounded-xl border border-[#eadfce] bg-white px-4 py-3 outline-none"
             >
               {vendorTemplateOptions.map((option) => (
                 <option key={option.id} value={option.id}>{option.name}</option>
@@ -304,24 +712,24 @@ export const VendorProfileCreatePage: React.FC = () => {
               {vendorTemplateOptions.find((option) => option.id === form.templateId)?.detail}
             </p>
           </div>
-          <button disabled={loading} className="rounded-lg bg-[#2f261d] px-5 py-3 text-sm font-semibold text-white disabled:opacity-60">
-            {loading ? 'Generating…' : 'Generate vendor profile'}
+          <button disabled={loading} className="rounded-xl bg-[#2f261d] px-5 py-3 text-sm font-semibold text-white disabled:opacity-60">
+            {loading ? 'Making…' : 'Make draft'}
           </button>
         </form>
 
         {draft && (
           <div className="space-y-6">
-          <div className="rounded-lg bg-white p-6 sm:p-8 shadow-sm space-y-4">
+          <div className="rounded-xl bg-white p-6 sm:p-8 shadow-sm space-y-4">
             <div>
               <p className="text-xs font-semibold text-[#8b6f53]">Draft</p>
-              <h2 className="mt-2 text-2xl font-semibold">Vendor page details</h2>
-              <p className="mt-2 text-sm text-[#6f5843]">Everything below shapes the public page: hero, images, about, links, and contact.</p>
+              <h2 className="mt-2 text-2xl font-semibold">Check page</h2>
+              <p className="mt-2 text-sm text-[#6f5843]">Check the words, links, images, and reply path before saving.</p>
               {typeof draft.source_payload?.sourceLabel === 'string' && (
-                <p className="mt-3 text-xs font-medium text-[#8b6f53]">Started from {draft.source_payload.sourceLabel}</p>
+                <p className="mt-3 text-xs font-medium text-[#8b6f53]">Based on: {draft.source_payload.sourceLabel}</p>
               )}
             </div>
-            <div className="rounded-lg border border-[#eadfce] p-4 sm:p-5 space-y-3">
-              <p className="text-xs font-semibold text-[#8b6f53]">Design</p>
+            <div className="rounded-xl border border-[#eadfce] p-4 sm:p-5 space-y-3">
+              <p className="text-xs font-semibold text-[#8b6f53]">Page style</p>
               <div className="grid gap-3 sm:grid-cols-3">
                 {vendorTemplateOptions.map((option) => {
                   const selected = getDraftTemplateId(draft) === option.id;
@@ -330,7 +738,7 @@ export const VendorProfileCreatePage: React.FC = () => {
                       key={option.id}
                       type="button"
                       onClick={() => setDraft((prev) => prev ? withTemplateId(prev, option.id) : prev)}
-                      className={`rounded-lg border px-4 py-3 text-left transition ${selected ? 'border-[#2f261d] bg-[#2f261d] text-white' : 'border-[#eadfce] bg-white text-[#4b3a2c] hover:border-[#cbb395]'}`}
+                      className={`rounded-xl border px-4 py-3 text-left transition ${selected ? 'border-[#2f261d] bg-[#2f261d] text-white' : 'border-[#eadfce] bg-white text-[#4b3a2c] hover:border-[#cbb395]'}`}
                     >
                       <span className="block text-sm font-semibold">{option.name}</span>
                       <span className={`mt-1 block text-xs leading-5 ${selected ? 'text-[#efe4d8]' : 'text-[#8b6f53]'}`}>{option.detail}</span>
@@ -340,19 +748,101 @@ export const VendorProfileCreatePage: React.FC = () => {
               </div>
             </div>
             {draftCustomization && (
-              <div className="rounded-lg border border-[#eadfce] bg-[#fffaf3] p-4 sm:p-5 space-y-4">
+              <div className="rounded-xl border border-[#eadfce] bg-[#fbf8f3] p-4 sm:p-5 space-y-4">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <p className="text-xs font-semibold text-[#8b6f53]">Preview</p>
+                    <h3 className="mt-2 text-xl font-semibold">{draft.vendor_name}</h3>
+                    {draft.descriptor && <p className="mt-1 text-sm text-[#6f5843]">{draft.descriptor}</p>}
+                  </div>
+                  <span className="rounded-xl bg-[#2f261d] px-4 py-2 text-sm font-semibold text-white">
+                    {draftCustomization.cta_label || 'Write note'}
+                  </span>
+                </div>
+                {draftReviewItems.length > 0 && (
+                  <div className="rounded-xl bg-white p-3">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <p className="text-xs font-semibold text-[#8b6f53]">Basics</p>
+                      <span className="rounded-xl bg-[#f5e9db] px-3 py-1 text-xs font-semibold text-[#8b6f53]">
+                        {draftReviewReadyCount}/{draftReviewItems.length} ready
+                      </span>
+                    </div>
+                    {draftMissingReviewItems.length > 0 ? (
+                      <p className="mt-2 text-xs leading-5 text-[#8b6f53]">
+                        Add {draftMissingReviewItems.map((item) => item.label).join(', ')}
+                      </p>
+                    ) : (
+                      <p className="mt-2 text-xs leading-5 text-[#8b6f53]">Basics ready.</p>
+                    )}
+                    {draftStarterDetailLabels.length > 0 && (
+                      <p className="mt-2 text-xs leading-5 text-[#8b6f53]">
+                        Suggested notes: {draftStarterDetailLabels.join(', ')}
+                      </p>
+                    )}
+                  </div>
+                )}
+                {draftSectionEnabled('fit') && (draftCustomization.service_area || draftCustomization.pricing_note) && (
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    {draftCustomization.service_area && (
+                      <div className="rounded-xl bg-white p-3">
+                        <p className="text-xs font-semibold text-[#8b6f53]">Where they work</p>
+                        <p className="mt-1 text-sm font-semibold text-[#4b3a2c]">{draftCustomization.service_area}</p>
+                      </div>
+                    )}
+                    {draftCustomization.pricing_note && (
+                      <div className="rounded-xl bg-white p-3">
+                        <p className="text-xs font-semibold text-[#8b6f53]">Helpful note</p>
+                        <p className="mt-1 text-sm font-semibold text-[#4b3a2c]">{draftCustomization.pricing_note}</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+                {draftSectionEnabled('facts') && draftCustomization.category_facts.length > 0 && (
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    {draftCustomization.category_facts.slice(0, 4).map((fact) => (
+                      <div key={`${fact.label}-${fact.value}`} className="rounded-xl bg-white p-3">
+                        <p className="text-xs font-semibold text-[#8b6f53]">{fact.label}</p>
+                        <p className="mt-1 text-sm text-[#4b3a2c]">{fact.value}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {draftSectionEnabled('packages') && draftCustomization.packages.length > 0 && (
+                  <div className="rounded-xl bg-white p-3">
+                    <p className="text-xs font-semibold text-[#8b6f53]">What to mention</p>
+                    <div className="mt-2 grid gap-2">
+                      {draftCustomization.packages.slice(0, 2).map((item) => (
+                        <p key={`${item.title}-${item.detail}`} className="text-sm text-[#4b3a2c]">
+                          <span className="font-semibold">{item.title}</span>
+                          {item.price ? ` - ${item.price}` : ''}
+                        </p>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {draftSectionEnabled('inquiry') && draftCustomization.inquiry_questions.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {draftCustomization.inquiry_questions.map((item) => (
+                      <span key={item} className="rounded-xl bg-white px-3 py-1 text-xs font-semibold text-[#8b6f53]">{item}</span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+            {draftCustomization && (
+              <div className="rounded-xl border border-[#eadfce] bg-[#fffaf3] p-4 sm:p-5 space-y-4">
                 <div>
-                  <p className="text-xs font-semibold text-[#8b6f53]">Customization</p>
-                  <h3 className="mt-2 text-lg font-semibold">Make this vendor feel specific</h3>
-                  <p className="mt-1 text-sm text-[#6f5843]">These fields shape the public call-to-action, proof chips, and vendor fit panels.</p>
+                  <p className="text-xs font-semibold text-[#8b6f53]">Helpful notes</p>
+                  <h3 className="mt-2 text-lg font-semibold">Add helpful notes</h3>
+                  <p className="mt-1 text-sm text-[#6f5843]">Keep notes short and useful. The page should feel calm, not salesy.</p>
                 </div>
                 <div>
-                  <label htmlFor="vendor-draft-accent" className="mb-2 block text-sm font-semibold text-[#4b3a2c]">Accent style</label>
+                  <label htmlFor="vendor-draft-accent" className="mb-2 block text-sm font-semibold text-[#4b3a2c]">Color style</label>
                   <select
                     id="vendor-draft-accent"
                     value={draftCustomization.accent_id}
                     onChange={(e) => setDraft((prev) => prev ? updateDraftCustomization(prev, { accent_id: e.target.value as VendorAccentId }) : prev)}
-                    className="w-full rounded-lg border border-[#eadfce] bg-white px-4 py-3 outline-none"
+                    className="w-full rounded-xl border border-[#eadfce] bg-white px-4 py-3 outline-none"
                   >
                     {VENDOR_ACCENT_OPTIONS.map((option) => (
                       <option key={option.id} value={option.id}>{option.name}</option>
@@ -364,22 +854,22 @@ export const VendorProfileCreatePage: React.FC = () => {
                 </div>
                 <div className="grid gap-3 sm:grid-cols-2">
                   <div>
-                    <label htmlFor="vendor-draft-logo" className="mb-1 block text-sm font-semibold text-[#4b3a2c]">Logo or monogram text</label>
+                    <label htmlFor="vendor-draft-logo" className="mb-1 block text-sm font-semibold text-[#4b3a2c]">Short mark</label>
                     <input
                       id="vendor-draft-logo"
                       value={draftCustomization.logo_text ?? ''}
                       onChange={(e) => setDraft((prev) => prev ? updateDraftCustomization(prev, { logo_text: e.target.value }) : prev)}
                       placeholder="MFH"
-                      className="w-full rounded-lg border border-[#eadfce] bg-white px-4 py-3 text-sm outline-none"
+                      className="w-full rounded-xl border border-[#eadfce] bg-white px-4 py-3 text-sm outline-none"
                     />
                   </div>
                   <div>
-                    <label htmlFor="vendor-draft-gallery-layout" className="mb-1 block text-sm font-semibold text-[#4b3a2c]">Gallery layout</label>
+                    <label htmlFor="vendor-draft-gallery-layout" className="mb-1 block text-sm font-semibold text-[#4b3a2c]">Image style</label>
                     <select
                       id="vendor-draft-gallery-layout"
                       value={draftCustomization.gallery_layout}
                       onChange={(e) => setDraft((prev) => prev ? updateDraftCustomization(prev, { gallery_layout: e.target.value as VendorGalleryLayoutId }) : prev)}
-                      className="w-full rounded-lg border border-[#eadfce] bg-white px-4 py-3 text-sm outline-none"
+                      className="w-full rounded-xl border border-[#eadfce] bg-white px-4 py-3 text-sm outline-none"
                     >
                       {VENDOR_GALLERY_LAYOUT_OPTIONS.map((option) => (
                         <option key={option.id} value={option.id}>{option.name}</option>
@@ -389,40 +879,40 @@ export const VendorProfileCreatePage: React.FC = () => {
                 </div>
                 <div className="grid gap-3 sm:grid-cols-2">
                   <div>
-                    <label htmlFor="vendor-draft-cta-label" className="mb-1 block text-sm font-semibold text-[#4b3a2c]">Inquiry button label</label>
+                    <label htmlFor="vendor-draft-cta-label" className="mb-1 block text-sm font-semibold text-[#4b3a2c]">Button label</label>
                     <input
                       id="vendor-draft-cta-label"
                       value={draftCustomization.cta_label ?? ''}
                       onChange={(e) => setDraft((prev) => prev ? updateDraftCustomization(prev, { cta_label: e.target.value }) : prev)}
-                      placeholder="Check date availability"
-                      className="w-full rounded-lg border border-[#eadfce] bg-white px-4 py-3 text-sm outline-none"
+                      placeholder="Check the date"
+                      className="w-full rounded-xl border border-[#eadfce] bg-white px-4 py-3 text-sm outline-none"
                     />
                   </div>
                   <div>
-                    <label htmlFor="vendor-draft-service-area" className="mb-1 block text-sm font-semibold text-[#4b3a2c]">Service area or best fit</label>
+                    <label htmlFor="vendor-draft-service-area" className="mb-1 block text-sm font-semibold text-[#4b3a2c]">Where they work</label>
                     <input
                       id="vendor-draft-service-area"
                       value={draftCustomization.service_area ?? ''}
                       onChange={(e) => setDraft((prev) => prev ? updateDraftCustomization(prev, { service_area: e.target.value }) : prev)}
                       placeholder="Hudson Valley, NYC, and destination weekends"
-                      className="w-full rounded-lg border border-[#eadfce] bg-white px-4 py-3 text-sm outline-none"
+                      className="w-full rounded-xl border border-[#eadfce] bg-white px-4 py-3 text-sm outline-none"
                     />
                   </div>
                 </div>
                 <div>
-                  <label htmlFor="vendor-draft-pricing-note" className="mb-1 block text-sm font-semibold text-[#4b3a2c]">Pricing or planning note</label>
+                  <label htmlFor="vendor-draft-pricing-note" className="mb-1 block text-sm font-semibold text-[#4b3a2c]">Helpful note</label>
                   <input
                     id="vendor-draft-pricing-note"
                     value={draftCustomization.pricing_note ?? ''}
                     onChange={(e) => setDraft((prev) => prev ? updateDraftCustomization(prev, { pricing_note: e.target.value }) : prev)}
-                    placeholder="Best fit for full-service wedding weekends and custom scopes."
-                    className="w-full rounded-lg border border-[#eadfce] bg-white px-4 py-3 text-sm outline-none"
+                    placeholder="Wedding weekends and planning notes."
+                    className="w-full rounded-xl border border-[#eadfce] bg-white px-4 py-3 text-sm outline-none"
                   />
                 </div>
                 <div className="grid gap-3 sm:grid-cols-3">
                   {[0, 1, 2].map((index) => (
                     <div key={index}>
-                      <label htmlFor={`vendor-draft-proof-${index}`} className="mb-1 block text-sm font-semibold text-[#4b3a2c]">Proof point {index + 1}</label>
+                      <label htmlFor={`vendor-draft-proof-${index}`} className="mb-1 block text-sm font-semibold text-[#4b3a2c]">Quick note {index + 1}</label>
                       <input
                         id={`vendor-draft-proof-${index}`}
                         value={draftCustomization.proof_points[index] ?? ''}
@@ -431,30 +921,63 @@ export const VendorProfileCreatePage: React.FC = () => {
                           nextProofPoints[index] = e.target.value;
                           setDraft((prev) => prev ? updateDraftCustomization(prev, { proof_points: nextProofPoints }) : prev);
                         }}
-                        placeholder={index === 0 ? 'Fast previews' : index === 1 ? 'Rain plan ready' : 'Timeline support'}
-                        className="w-full rounded-lg border border-[#eadfce] bg-white px-4 py-3 text-sm outline-none"
+                        placeholder={index === 0 ? 'Preview photos' : index === 1 ? 'Rain plan details' : 'Timeline help'}
+                        className="w-full rounded-xl border border-[#eadfce] bg-white px-4 py-3 text-sm outline-none"
                       />
                     </div>
                   ))}
                 </div>
-                <div className="rounded-lg border border-[#eadfce] bg-white p-4 space-y-3">
-                  <p className="text-sm font-semibold text-[#4b3a2c]">Sections</p>
-                  <p className="text-xs text-[#8b6f53]">Choose what appears publicly. Sections keep a safe default order.</p>
-                  <label htmlFor="vendor-draft-section-order" className="block text-xs font-semibold text-[#8b6f53]">Section order</label>
-                  <input
-                    id="vendor-draft-section-order"
-                    value={draftCustomization.section_order.join(', ')}
-                    onChange={(e) => {
-                      const requested = e.target.value.split(',').map((item) => item.trim()).filter((item): item is VendorSectionId => VENDOR_SECTION_IDS.includes(item as VendorSectionId));
-                      setDraft((prev) => prev ? updateDraftCustomization(prev, { section_order: requested }) : prev);
-                    }}
-                    className="w-full rounded-lg border border-[#eadfce] px-3 py-2 text-sm outline-none"
-                  />
+                <details className="rounded-xl border border-[#eadfce] bg-white p-4">
+                  <summary className="cursor-pointer text-sm font-semibold text-[#4b3a2c]">Good to know</summary>
+                  <p className="mt-2 text-xs text-[#8b6f53]">Add the facts couples usually scan first.</p>
+                  <div className="mt-4 space-y-4">
+                <div className="rounded-xl border border-[#eadfce] bg-white p-4 space-y-3">
+                  <div>
+                    <p className="text-sm font-semibold text-[#4b3a2c]">Good to know</p>
+                    <p className="mt-1 text-xs text-[#8b6f53]">Short facts couples need before they reach out.</p>
+                  </div>
+                  <div className="grid gap-2">
+                    {[0, 1, 2, 3, 4, 5].map((index) => {
+                      const item = draftCustomization.category_facts[index] ?? { label: '', value: '', group: null };
+                      return (
+                        <div key={index} className="grid gap-2 rounded-xl bg-[#fffaf3] p-3 sm:grid-cols-[0.45fr_1fr]">
+                          <input
+                            value={item.label}
+                            onChange={(e) => setDraft((prev) => {
+                              if (!prev) return prev;
+                              const currentFacts = readRawCustomizationArray<VendorProfileCategoryFact>(prev, 'category_facts');
+                              return updateDraftCustomization(prev, {
+                                category_facts: updateArrayItem(currentFacts, index, { label: e.target.value }, { label: '', value: '', group: null }),
+                              });
+                            })}
+                            placeholder={index === 0 ? 'Capacity' : index === 1 ? 'Rain plan' : index === 2 ? 'Style' : 'Fact label'}
+                            className="w-full rounded-xl border border-[#eadfce] px-3 py-2 text-sm outline-none"
+                          />
+                          <input
+                            value={item.value}
+                            onChange={(e) => setDraft((prev) => {
+                              if (!prev) return prev;
+                              const currentFacts = readRawCustomizationArray<VendorProfileCategoryFact>(prev, 'category_facts');
+                              return updateDraftCustomization(prev, {
+                                category_facts: updateArrayItem(currentFacts, index, { value: e.target.value }, { label: '', value: '', group: null }),
+                              });
+                            })}
+                            placeholder={index === 0 ? 'Up to 180 seated guests' : index === 1 ? 'Indoor backup included' : index === 2 ? 'Documentary with a clean finish' : 'Short answer'}
+                            className="w-full rounded-xl border border-[#eadfce] px-3 py-2 text-sm outline-none"
+                          />
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+                <div className="rounded-xl border border-[#eadfce] bg-white p-4 space-y-3">
+                  <p className="text-sm font-semibold text-[#4b3a2c]">What shows</p>
+                  <p className="text-xs text-[#8b6f53]">Choose what should appear on the page.</p>
                   <div className="grid gap-2 sm:grid-cols-3">
                     {VENDOR_SECTION_IDS.map((sectionId) => {
                       const enabled = !draftCustomization.hidden_sections.includes(sectionId);
                       return (
-                        <label key={sectionId} className="flex items-center gap-2 rounded-lg border border-[#eadfce] px-3 py-2 text-sm">
+                        <label key={sectionId} className="flex items-center gap-2 rounded-xl border border-[#eadfce] px-3 py-2 text-sm text-[#4b3a2c]">
                           <input
                             type="checkbox"
                             checked={enabled}
@@ -465,18 +988,18 @@ export const VendorProfileCreatePage: React.FC = () => {
                               setDraft((prev) => prev ? updateDraftCustomization(prev, { hidden_sections: hidden }) : prev);
                             }}
                           />
-                          <span className="capitalize">{sectionId}</span>
+                          <span>{vendorSectionLabels[sectionId]}</span>
                         </label>
                       );
                     })}
                   </div>
                 </div>
-                <div className="rounded-lg border border-[#eadfce] bg-white p-4 space-y-3">
-                  <p className="text-sm font-semibold text-[#4b3a2c]">Packages or services</p>
+                <div className="rounded-xl border border-[#eadfce] bg-white p-4 space-y-3">
+                  <p className="text-sm font-semibold text-[#4b3a2c]">What to mention</p>
                   {[0, 1, 2].map((index) => {
                     const item = draftCustomization.packages[index] ?? { title: '', detail: '', price: '' };
                     return (
-                      <div key={index} className="grid gap-2 rounded-lg bg-[#fffaf3] p-3">
+                      <div key={index} className="grid gap-2 rounded-xl bg-[#fffaf3] p-3">
                         <input
                           value={item.title}
                           onChange={(e) => setDraft((prev) => {
@@ -484,8 +1007,8 @@ export const VendorProfileCreatePage: React.FC = () => {
                             const currentPackages = readRawCustomizationArray<{ title: string; detail: string; price?: string | null }>(prev, 'packages');
                             return updateDraftCustomization(prev, { packages: updateArrayItem(currentPackages, index, { title: e.target.value }, { title: '', detail: '', price: '' }) });
                           })}
-                          placeholder={`Service ${index + 1} title`}
-                          className="w-full rounded-lg border border-[#eadfce] px-3 py-2 text-sm outline-none"
+                          placeholder={`Item ${index + 1} title`}
+                          className="w-full rounded-xl border border-[#eadfce] px-3 py-2 text-sm outline-none"
                         />
                         <input
                           value={item.detail}
@@ -494,8 +1017,8 @@ export const VendorProfileCreatePage: React.FC = () => {
                             const currentPackages = readRawCustomizationArray<{ title: string; detail: string; price?: string | null }>(prev, 'packages');
                             return updateDraftCustomization(prev, { packages: updateArrayItem(currentPackages, index, { detail: e.target.value }, { title: '', detail: '', price: '' }) });
                           })}
-                          placeholder="Short service description"
-                          className="w-full rounded-lg border border-[#eadfce] px-3 py-2 text-sm outline-none"
+                          placeholder="Short item note"
+                          className="w-full rounded-xl border border-[#eadfce] px-3 py-2 text-sm outline-none"
                         />
                         <input
                           value={item.price ?? ''}
@@ -504,106 +1027,109 @@ export const VendorProfileCreatePage: React.FC = () => {
                             const currentPackages = readRawCustomizationArray<{ title: string; detail: string; price?: string | null }>(prev, 'packages');
                             return updateDraftCustomization(prev, { packages: updateArrayItem(currentPackages, index, { price: e.target.value }, { title: '', detail: '', price: '' }) });
                           })}
-                          placeholder="Price hint or custom quote"
-                          className="w-full rounded-lg border border-[#eadfce] px-3 py-2 text-sm outline-none"
+                          placeholder="Note or range"
+                          className="w-full rounded-xl border border-[#eadfce] px-3 py-2 text-sm outline-none"
                         />
                       </div>
                     );
                   })}
                 </div>
-                <div className="rounded-lg border border-[#eadfce] bg-white p-4 space-y-3">
-                  <div>
-                    <p className="text-sm font-semibold text-[#4b3a2c]">External credibility</p>
-                    <p className="mt-1 text-xs text-[#8b6f53]">Use this for Google-style public reputation. DayOf fit rating stays separate.</p>
                   </div>
-                  <div className="grid gap-3 sm:grid-cols-[0.7fr_0.35fr_0.35fr]">
-                    <input
-                      value={draftCustomization.external_credibility.source_label}
-                      onChange={(e) => setDraft((prev) => prev ? updateDraftCustomization(prev, { external_credibility: { ...draftCustomization.external_credibility, enabled: true, source_label: e.target.value } }) : prev)}
-                      placeholder="Google"
-                      className="w-full rounded-lg border border-[#eadfce] px-3 py-2 text-sm outline-none"
-                    />
-                    <input
-                      value={draftCustomization.external_credibility.rating ?? ''}
-                      onChange={(e) => setDraft((prev) => prev ? updateDraftCustomization(prev, { external_credibility: { ...draftCustomization.external_credibility, enabled: true, rating: e.target.value } }) : prev)}
-                      placeholder="4.8"
-                      className="w-full rounded-lg border border-[#eadfce] px-3 py-2 text-sm outline-none"
-                    />
-                    <input
-                      value={draftCustomization.external_credibility.review_count ?? ''}
-                      onChange={(e) => setDraft((prev) => prev ? updateDraftCustomization(prev, { external_credibility: { ...draftCustomization.external_credibility, enabled: true, review_count: e.target.value } }) : prev)}
-                      placeholder="126"
-                      className="w-full rounded-lg border border-[#eadfce] px-3 py-2 text-sm outline-none"
-                    />
-                  </div>
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <input
-                      value={draftCustomization.external_credibility.profile_url ?? ''}
-                      onChange={(e) => setDraft((prev) => prev ? updateDraftCustomization(prev, { external_credibility: { ...draftCustomization.external_credibility, enabled: true, profile_url: e.target.value } }) : prev)}
-                      placeholder="Google profile URL"
-                      className="w-full rounded-lg border border-[#eadfce] px-3 py-2 text-sm outline-none"
-                    />
-                    <input
-                      value={draftCustomization.external_credibility.place_id ?? ''}
-                      onChange={(e) => setDraft((prev) => prev ? updateDraftCustomization(prev, { external_credibility: { ...draftCustomization.external_credibility, enabled: true, place_id: e.target.value } }) : prev)}
-                      placeholder="Google place ID for future sync"
-                      className="w-full rounded-lg border border-[#eadfce] px-3 py-2 text-sm outline-none"
-                    />
-                  </div>
-                </div>
-                <div className="rounded-lg border border-[#eadfce] bg-white p-4 space-y-3">
-                  <div>
-                    <p className="text-sm font-semibold text-[#4b3a2c]">Vendor fit rating</p>
-                    <p className="mt-1 text-xs text-[#8b6f53]">A couple-facing score for fit, not a private planning note.</p>
-                  </div>
-                  <div className="grid gap-3 sm:grid-cols-[0.35fr_1fr]">
-                    <input
-                      value={draftCustomization.rating.overall_score ?? ''}
-                      onChange={(e) => setDraft((prev) => prev ? updateDraftCustomization(prev, { rating: { ...draftCustomization.rating, enabled: true, overall_score: e.target.value } }) : prev)}
-                      placeholder="9.2"
-                      className="w-full rounded-lg border border-[#eadfce] px-3 py-2 text-sm outline-none"
-                    />
-                    <input
-                      value={draftCustomization.rating.summary ?? ''}
-                      onChange={(e) => setDraft((prev) => prev ? updateDraftCustomization(prev, { rating: { ...draftCustomization.rating, enabled: true, summary: e.target.value } }) : prev)}
-                      placeholder="Why this vendor is a strong fit"
-                      className="w-full rounded-lg border border-[#eadfce] px-3 py-2 text-sm outline-none"
-                    />
-                  </div>
-                  <div className="grid gap-2 sm:grid-cols-2">
-                    {[0, 1, 2, 3].map((index) => {
-                      const item = draftCustomization.rating.categories[index] ?? { label: '', score: '' };
-                      return (
-                        <div key={index} className="grid grid-cols-[1fr_80px] gap-2">
+                </details>
+                <details className="rounded-xl border border-[#eadfce] bg-white p-4">
+                  <summary className="cursor-pointer text-sm font-semibold text-[#4b3a2c]">Reviews</summary>
+                  <p className="mt-2 text-xs text-[#8b6f53]">Add review context or a plain note only when it helps.</p>
+                  <div className="mt-4 grid gap-4 lg:grid-cols-2">
+                    <div className="rounded-xl bg-[#fffaf3] p-3 space-y-3">
+                      <p className="text-xs font-semibold text-[#8b6f53]">Review snapshot</p>
+                      <div className="grid gap-2 sm:grid-cols-[0.7fr_0.35fr_0.35fr] lg:grid-cols-1">
+                        <label className="grid gap-1 text-xs font-semibold text-[#8b6f53]">
+                          Review site
                           <input
-                            value={item.label}
-                            onChange={(e) => {
-                              const categories = updateArrayItem<Array<{ label: string; score: number | string }>[number]>(draftCustomization.rating.categories, index, { label: e.target.value }, { label: '', score: 0 });
-                              setDraft((prev) => prev ? updateDraftCustomization(prev, { rating: { ...draftCustomization.rating, enabled: true, categories } }) : prev);
-                            }}
-                            placeholder={index === 0 ? 'Style match' : index === 1 ? 'Logistics' : index === 2 ? 'Responsiveness' : 'Value'}
-                            className="w-full rounded-lg border border-[#eadfce] px-3 py-2 text-sm outline-none"
+                            value={draftCustomization.external_credibility.source_label}
+                            onChange={(e) => setDraft((prev) => prev ? updateDraftCustomization(prev, { external_credibility: { ...draftCustomization.external_credibility, enabled: true, source_label: e.target.value } }) : prev)}
+                            placeholder="Google"
+                            className="w-full rounded-xl border border-[#eadfce] px-3 py-2 text-sm font-normal text-[#4b3a2c] outline-none"
                           />
+                        </label>
+                        <label className="grid gap-1 text-xs font-semibold text-[#8b6f53]">
+                          Rating
                           <input
-                            value={item.score}
-                            onChange={(e) => {
-                              const categories = updateArrayItem<Array<{ label: string; score: number | string }>[number]>(draftCustomization.rating.categories, index, { score: e.target.value }, { label: '', score: 0 });
-                              setDraft((prev) => prev ? updateDraftCustomization(prev, { rating: { ...draftCustomization.rating, enabled: true, categories } }) : prev);
-                            }}
-                            placeholder="9"
-                            className="w-full rounded-lg border border-[#eadfce] px-3 py-2 text-sm outline-none"
+                            value={draftCustomization.external_credibility.rating ?? ''}
+                            onChange={(e) => setDraft((prev) => prev ? updateDraftCustomization(prev, { external_credibility: { ...draftCustomization.external_credibility, enabled: true, rating: e.target.value } }) : prev)}
+                            placeholder="4.8"
+                            className="w-full rounded-xl border border-[#eadfce] px-3 py-2 text-sm font-normal text-[#4b3a2c] outline-none"
                           />
-                        </div>
-                      );
-                    })}
+                        </label>
+                        <label className="grid gap-1 text-xs font-semibold text-[#8b6f53]">
+                          Review count
+                          <input
+                            value={draftCustomization.external_credibility.review_count ?? ''}
+                            onChange={(e) => setDraft((prev) => prev ? updateDraftCustomization(prev, { external_credibility: { ...draftCustomization.external_credibility, enabled: true, review_count: e.target.value } }) : prev)}
+                            placeholder="126"
+                            className="w-full rounded-xl border border-[#eadfce] px-3 py-2 text-sm font-normal text-[#4b3a2c] outline-none"
+                          />
+                        </label>
+                      </div>
+                      <label className="grid gap-1 text-xs font-semibold text-[#8b6f53]">
+                        Review page
+                        <input
+                          value={draftCustomization.external_credibility.profile_url ?? ''}
+                          onChange={(e) => setDraft((prev) => prev ? updateDraftCustomization(prev, { external_credibility: { ...draftCustomization.external_credibility, enabled: true, profile_url: e.target.value } }) : prev)}
+                          placeholder="Google or review page link"
+                          className="w-full rounded-xl border border-[#eadfce] px-3 py-2 text-sm font-normal text-[#4b3a2c] outline-none"
+                        />
+                      </label>
+                    </div>
+                    <div className="rounded-xl bg-[#fffaf3] p-3 space-y-3">
+                      <p className="text-xs font-semibold text-[#8b6f53]">Helpful notes</p>
+                      <label className="grid gap-1 text-xs font-semibold text-[#8b6f53]">
+                        Note
+                        <input
+                          value={draftCustomization.rating.summary ?? ''}
+                          onChange={(e) => setDraft((prev) => prev ? updateDraftCustomization(prev, { rating: { ...draftCustomization.rating, enabled: true, summary: e.target.value } }) : prev)}
+                          placeholder="Plain note on timing, style, or limits"
+                          className="w-full rounded-xl border border-[#eadfce] px-3 py-2 text-sm font-normal text-[#4b3a2c] outline-none"
+                        />
+                      </label>
+                      <div className="grid gap-2">
+                        {[0, 1, 2, 3].map((index) => {
+                          const item = draftCustomization.rating.categories[index] ?? { label: '', score: '' };
+                          return (
+                            <label key={index} className="grid gap-1 text-xs font-semibold text-[#8b6f53]">
+                              Note topic {index + 1}
+                              <input
+                              key={index}
+                              value={item.label}
+                              onChange={(e) => {
+                                const categories = updateArrayItem<Array<{ label: string; score: number | string }>[number]>(
+                                  draftCustomization.rating.categories,
+                                  index,
+                                  { label: e.target.value, score: item.score || 0 },
+                                  { label: '', score: 0 },
+                                );
+                                setDraft((prev) => prev ? updateDraftCustomization(prev, { rating: { ...draftCustomization.rating, enabled: true, categories } }) : prev);
+                              }}
+                              placeholder={index === 0 ? 'Visual style' : index === 1 ? 'Timing' : index === 2 ? 'Reply speed' : 'Budget notes'}
+                              className="w-full rounded-xl border border-[#eadfce] px-3 py-2 text-sm font-normal text-[#4b3a2c] outline-none"
+                              />
+                            </label>
+                          );
+                        })}
+                      </div>
+                    </div>
                   </div>
-                </div>
-                <div className="rounded-lg border border-[#eadfce] bg-white p-4 space-y-3">
-                  <p className="text-sm font-semibold text-[#4b3a2c]">Testimonials</p>
+                </details>
+                <details className="rounded-xl border border-[#eadfce] bg-white p-4">
+                  <summary className="cursor-pointer text-sm font-semibold text-[#4b3a2c]">Notes and questions</summary>
+                  <p className="mt-2 text-xs text-[#8b6f53]">Add couple notes, common questions, or questions to include when they are already known.</p>
+                  <div className="mt-4 space-y-4">
+                <div className="rounded-xl border border-[#eadfce] bg-white p-4 space-y-3">
+                  <p className="text-sm font-semibold text-[#4b3a2c]">Couple notes</p>
                   {[0, 1].map((index) => {
                     const item = draftCustomization.testimonials[index] ?? { quote: '', attribution: '' };
                     return (
-                      <div key={index} className="grid gap-2 rounded-lg bg-[#fffaf3] p-3">
+                      <div key={index} className="grid gap-2 rounded-xl bg-[#fffaf3] p-3">
                         <input
                           value={item.quote}
                           onChange={(e) => setDraft((prev) => {
@@ -611,8 +1137,8 @@ export const VendorProfileCreatePage: React.FC = () => {
                             const currentTestimonials = readRawCustomizationArray<{ quote: string; attribution?: string | null }>(prev, 'testimonials');
                             return updateDraftCustomization(prev, { testimonials: updateArrayItem(currentTestimonials, index, { quote: e.target.value }, { quote: '', attribution: '' }) });
                           })}
-                          placeholder="Short quote"
-                          className="w-full rounded-lg border border-[#eadfce] px-3 py-2 text-sm outline-none"
+                          placeholder="Short note"
+                          className="w-full rounded-xl border border-[#eadfce] px-3 py-2 text-sm outline-none"
                         />
                         <input
                           value={item.attribution ?? ''}
@@ -621,19 +1147,19 @@ export const VendorProfileCreatePage: React.FC = () => {
                             const currentTestimonials = readRawCustomizationArray<{ quote: string; attribution?: string | null }>(prev, 'testimonials');
                             return updateDraftCustomization(prev, { testimonials: updateArrayItem(currentTestimonials, index, { attribution: e.target.value }, { quote: '', attribution: '' }) });
                           })}
-                          placeholder="Attribution"
-                          className="w-full rounded-lg border border-[#eadfce] px-3 py-2 text-sm outline-none"
+                          placeholder="Who said it"
+                          className="w-full rounded-xl border border-[#eadfce] px-3 py-2 text-sm outline-none"
                         />
                       </div>
                     );
                   })}
                 </div>
-                <div className="rounded-lg border border-[#eadfce] bg-white p-4 space-y-3">
-                  <p className="text-sm font-semibold text-[#4b3a2c]">FAQ</p>
+                <div className="rounded-xl border border-[#eadfce] bg-white p-4 space-y-3">
+                  <p className="text-sm font-semibold text-[#4b3a2c]">Common questions</p>
                   {[0, 1, 2].map((index) => {
                     const item = draftCustomization.faqs[index] ?? { question: '', answer: '' };
                     return (
-                      <div key={index} className="grid gap-2 rounded-lg bg-[#fffaf3] p-3">
+                      <div key={index} className="grid gap-2 rounded-xl bg-[#fffaf3] p-3">
                         <input
                           value={item.question}
                           onChange={(e) => setDraft((prev) => {
@@ -642,7 +1168,7 @@ export const VendorProfileCreatePage: React.FC = () => {
                             return updateDraftCustomization(prev, { faqs: updateArrayItem(currentFaqs, index, { question: e.target.value }, { question: '', answer: '' }) });
                           })}
                           placeholder={`Question ${index + 1}`}
-                          className="w-full rounded-lg border border-[#eadfce] px-3 py-2 text-sm outline-none"
+                          className="w-full rounded-xl border border-[#eadfce] px-3 py-2 text-sm outline-none"
                         />
                         <input
                           value={item.answer}
@@ -652,14 +1178,14 @@ export const VendorProfileCreatePage: React.FC = () => {
                             return updateDraftCustomization(prev, { faqs: updateArrayItem(currentFaqs, index, { answer: e.target.value }, { question: '', answer: '' }) });
                           })}
                           placeholder="Answer"
-                          className="w-full rounded-lg border border-[#eadfce] px-3 py-2 text-sm outline-none"
+                          className="w-full rounded-xl border border-[#eadfce] px-3 py-2 text-sm outline-none"
                         />
                       </div>
                     );
                   })}
                 </div>
-                <div className="rounded-lg border border-[#eadfce] bg-white p-4 space-y-3">
-                  <p className="text-sm font-semibold text-[#4b3a2c]">Custom inquiry prompts</p>
+                <div className="rounded-xl border border-[#eadfce] bg-white p-4 space-y-3">
+                  <p className="text-sm font-semibold text-[#4b3a2c]">Questions to include</p>
                   <div className="grid gap-2 sm:grid-cols-2">
                     {[0, 1, 2, 3].map((index) => (
                       <input
@@ -674,48 +1200,84 @@ export const VendorProfileCreatePage: React.FC = () => {
                             return updateDraftCustomization(prev, { inquiry_questions: nextQuestions });
                           });
                         }}
-                        placeholder={index === 0 ? 'Estimated guest count' : index === 1 ? 'Budget range' : index === 2 ? 'Design inspiration' : 'Timing needs'}
-                        className="w-full rounded-lg border border-[#eadfce] px-3 py-2 text-sm outline-none"
+                        placeholder={index === 0 ? 'Guest count' : index === 1 ? 'Budget note' : index === 2 ? 'Style inspiration' : 'Timing needs'}
+                        className="w-full rounded-xl border border-[#eadfce] px-3 py-2 text-sm outline-none"
                       />
                     ))}
                   </div>
                 </div>
+                  </div>
+                </details>
               </div>
             )}
-            <div className="rounded-lg border border-[#eadfce] p-4 sm:p-5 space-y-3">
-              <p className="text-xs font-semibold text-[#8b6f53]">Hero</p>
+            {draft && draftCustomization && (
+              <div className="rounded-xl border border-[#eadfce] bg-white p-4 sm:p-5 space-y-3">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <p className="text-xs font-semibold text-[#8b6f53]">Check list</p>
+                    <h3 className="mt-2 text-lg font-semibold text-[#2f261d]">Check the basics</h3>
+                  </div>
+                  <span className="rounded-xl bg-[#f5e9db] px-3 py-1 text-xs font-semibold text-[#8b6f53]">
+                    {draftReviewReadyCount}/{draftReviewItems.length} ready
+                  </span>
+                </div>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  {draftStarterDetailLabels.length > 0 && (
+                    <div className="rounded-xl bg-[#fffaf3] px-3 py-3">
+                      <p className="text-sm font-semibold text-[#4b3a2c]">Check suggested notes</p>
+                      <p className="mt-1 text-xs leading-5 text-[#8b6f53]">
+                        Adjust {draftStarterDetailLabels.join(', ')} before saving.
+                      </p>
+                    </div>
+                  )}
+                  {draftReviewItems.map((item) => (
+                    <div key={item.label} className="rounded-xl bg-[#fffaf3] px-3 py-3">
+                      <p className="text-sm font-semibold text-[#4b3a2c]">
+                        {item.ready ? 'Ready' : 'Add'} {item.label}
+                      </p>
+                      <p className="mt-1 text-xs leading-5 text-[#8b6f53]">{item.detail}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            <div className="rounded-xl border border-[#eadfce] p-4 sm:p-5 space-y-3">
+              <p className="text-xs font-semibold text-[#8b6f53]">Basics</p>
               <div>
-                <label htmlFor="vendor-draft-name" className="mb-1 block text-sm font-semibold text-[#4b3a2c]">Public vendor name</label>
-                <input id="vendor-draft-name" value={draft.vendor_name} onChange={(e) => setDraft((prev) => prev ? { ...prev, vendor_name: e.target.value } : prev)} className="w-full rounded-lg border border-[#eadfce] px-4 py-3 text-2xl font-semibold outline-none" placeholder="Vendor name" />
+                <label htmlFor="vendor-draft-name" className="mb-1 block text-sm font-semibold text-[#4b3a2c]">Name on page</label>
+                <input id="vendor-draft-name" value={draft.vendor_name} onChange={(e) => setDraft((prev) => prev ? { ...prev, vendor_name: e.target.value } : prev)} className="w-full rounded-xl border border-[#eadfce] px-4 py-3 text-2xl font-semibold outline-none" placeholder="Name" />
               </div>
               <div>
-                <label htmlFor="vendor-draft-descriptor" className="mb-1 block text-sm font-semibold text-[#4b3a2c]">Short descriptor</label>
-                <input id="vendor-draft-descriptor" value={draft.descriptor ?? ''} onChange={(e) => setDraft((prev) => prev ? { ...prev, descriptor: e.target.value || null } : prev)} placeholder="Short descriptor under the vendor name" className="w-full rounded-lg border border-[#eadfce] px-4 py-3 text-[#6f5843] outline-none" />
+                <label htmlFor="vendor-draft-descriptor" className="mb-1 block text-sm font-semibold text-[#4b3a2c]">Short description</label>
+                <input id="vendor-draft-descriptor" value={draft.descriptor ?? ''} onChange={(e) => setDraft((prev) => prev ? { ...prev, descriptor: e.target.value || null } : prev)} placeholder="Short line under the name" className="w-full rounded-xl border border-[#eadfce] px-4 py-3 text-[#6f5843] outline-none" />
               </div>
               <div>
-                <label htmlFor="vendor-draft-slug" className="mb-1 block text-sm font-semibold text-[#4b3a2c]">Public URL slug</label>
-                <input id="vendor-draft-slug" value={draft.slug} onChange={(e) => setDraft((prev) => prev ? { ...prev, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-') } : prev)} placeholder="vendor-page-slug" className="w-full rounded-lg border border-[#eadfce] px-4 py-3 text-sm outline-none" />
+                <label htmlFor="vendor-draft-slug" className="mb-1 block text-sm font-semibold text-[#4b3a2c]">Link</label>
+                <input id="vendor-draft-slug" value={draft.slug} onChange={(e) => setDraft((prev) => prev ? { ...prev, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-') } : prev)} placeholder="page-link" className="w-full rounded-xl border border-[#eadfce] px-4 py-3 text-sm outline-none" />
               </div>
             </div>
-            <div className="rounded-lg border border-[#eadfce] p-4 sm:p-5 space-y-3">
+            <div className="rounded-xl border border-[#eadfce] p-4 sm:p-5 space-y-3">
               <label htmlFor="vendor-draft-about" className="block text-xs font-semibold text-[#8b6f53]">About</label>
-              <textarea id="vendor-draft-about" value={draft.about} onChange={(e) => setDraft((prev) => prev ? { ...prev, about: e.target.value } : prev)} className="min-h-[132px] w-full rounded-lg border border-[#eadfce] px-4 py-3 text-[#4b3a2c] leading-7 outline-none" placeholder="Short 2–3 sentence vendor description" />
+              <textarea id="vendor-draft-about" value={draft.about} onChange={(e) => setDraft((prev) => prev ? { ...prev, about: e.target.value } : prev)} className="min-h-[132px] w-full rounded-xl border border-[#eadfce] px-4 py-3 text-[#4b3a2c] leading-7 outline-none" placeholder="Short 2-3 sentence plain description" />
             </div>
-            <div className="rounded-lg border border-[#eadfce] p-4 sm:p-5 space-y-3">
+            <div className="rounded-xl border border-[#eadfce] p-4 sm:p-5 space-y-3">
               <p className="text-xs font-semibold text-[#8b6f53]">Links and contact</p>
-              <input value={draft.instagram_url ?? ''} onChange={(e) => setDraft((prev) => prev ? { ...prev, instagram_url: e.target.value || null } : prev)} placeholder="Instagram URL" className="w-full rounded-lg border border-[#eadfce] px-4 py-3 text-sm outline-none" />
-              <input value={draft.website_url ?? ''} onChange={(e) => setDraft((prev) => prev ? { ...prev, website_url: e.target.value || null } : prev)} placeholder="Website URL" className="w-full rounded-lg border border-[#eadfce] px-4 py-3 text-sm outline-none" />
-              <div className="grid gap-3 sm:grid-cols-2">
-                <input value={typeof draft.source_payload?.pinterest_url === 'string' ? draft.source_payload.pinterest_url : ''} onChange={(e) => setDraft((prev) => prev ? { ...prev, source_payload: { ...prev.source_payload, pinterest_url: e.target.value || null } } : prev)} placeholder="Pinterest URL" className="w-full rounded-lg border border-[#eadfce] px-4 py-3 text-sm outline-none" />
-                <input value={typeof draft.source_payload?.tiktok_url === 'string' ? draft.source_payload.tiktok_url : ''} onChange={(e) => setDraft((prev) => prev ? { ...prev, source_payload: { ...prev.source_payload, tiktok_url: e.target.value || null } } : prev)} placeholder="TikTok URL" className="w-full rounded-lg border border-[#eadfce] px-4 py-3 text-sm outline-none" />
-                <input value={typeof draft.source_payload?.facebook_url === 'string' ? draft.source_payload.facebook_url : ''} onChange={(e) => setDraft((prev) => prev ? { ...prev, source_payload: { ...prev.source_payload, facebook_url: e.target.value || null } } : prev)} placeholder="Facebook URL" className="w-full rounded-lg border border-[#eadfce] px-4 py-3 text-sm outline-none" />
-                <input value={typeof draft.source_payload?.youtube_url === 'string' ? draft.source_payload.youtube_url : ''} onChange={(e) => setDraft((prev) => prev ? { ...prev, source_payload: { ...prev.source_payload, youtube_url: e.target.value || null } } : prev)} placeholder="YouTube URL" className="w-full rounded-lg border border-[#eadfce] px-4 py-3 text-sm outline-none" />
-              </div>
-              <input type="email" value={draft.contact_email ?? ''} onChange={(e) => setDraft((prev) => prev ? { ...prev, contact_email: e.target.value || null } : prev)} placeholder="Contact email for direct inquiry CTA" className="w-full rounded-lg border border-[#eadfce] px-4 py-3 text-sm outline-none" />
+              <input value={draft.instagram_url ?? ''} onChange={(e) => setDraft((prev) => prev ? { ...prev, instagram_url: e.target.value || null } : prev)} placeholder="Instagram link" className="w-full rounded-xl border border-[#eadfce] px-4 py-3 text-sm outline-none" />
+              <input value={draft.website_url ?? ''} onChange={(e) => setDraft((prev) => prev ? { ...prev, website_url: e.target.value || null } : prev)} placeholder="Website link" className="w-full rounded-xl border border-[#eadfce] px-4 py-3 text-sm outline-none" />
+              <details className="rounded-xl border border-[#eadfce] bg-[#fffaf3] p-4">
+                <summary className="cursor-pointer text-sm font-semibold text-[#4b3a2c]">Other links</summary>
+                <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                  <input value={typeof draft.source_payload?.pinterest_url === 'string' ? draft.source_payload.pinterest_url : ''} onChange={(e) => setDraft((prev) => prev ? { ...prev, source_payload: { ...prev.source_payload, pinterest_url: e.target.value || null } } : prev)} placeholder="Pinterest link" className="w-full rounded-xl border border-[#eadfce] px-4 py-3 text-sm outline-none" />
+                  <input value={typeof draft.source_payload?.tiktok_url === 'string' ? draft.source_payload.tiktok_url : ''} onChange={(e) => setDraft((prev) => prev ? { ...prev, source_payload: { ...prev.source_payload, tiktok_url: e.target.value || null } } : prev)} placeholder="TikTok link" className="w-full rounded-xl border border-[#eadfce] px-4 py-3 text-sm outline-none" />
+                  <input value={typeof draft.source_payload?.facebook_url === 'string' ? draft.source_payload.facebook_url : ''} onChange={(e) => setDraft((prev) => prev ? { ...prev, source_payload: { ...prev.source_payload, facebook_url: e.target.value || null } } : prev)} placeholder="Facebook link" className="w-full rounded-xl border border-[#eadfce] px-4 py-3 text-sm outline-none" />
+                  <input value={typeof draft.source_payload?.youtube_url === 'string' ? draft.source_payload.youtube_url : ''} onChange={(e) => setDraft((prev) => prev ? { ...prev, source_payload: { ...prev.source_payload, youtube_url: e.target.value || null } } : prev)} placeholder="YouTube link" className="w-full rounded-xl border border-[#eadfce] px-4 py-3 text-sm outline-none" />
+                </div>
+              </details>
+              <input type="email" value={draft.contact_email ?? ''} onChange={(e) => setDraft((prev) => prev ? { ...prev, contact_email: e.target.value || null } : prev)} placeholder="Reply email" className="w-full rounded-xl border border-[#eadfce] px-4 py-3 text-sm outline-none" />
             </div>
-            <div className="rounded-lg border border-[#eadfce] p-4 sm:p-5 space-y-3">
+            <div className="rounded-xl border border-[#eadfce] p-4 sm:p-5 space-y-3">
               <label htmlFor="vendor-draft-images" className="block text-xs font-semibold text-[#8b6f53]">Images</label>
-              <p id="vendor-draft-images-help" className="text-xs text-[#8b6f53]">First line becomes the hero. Up to five more images fill the gallery.</p>
+              <p id="vendor-draft-images-help" className="text-xs text-[#8b6f53]">Put the main image first. Add up to 11 more; the page opens with six.</p>
               <textarea
                 id="vendor-draft-images"
                 value={imageEditor}
@@ -729,116 +1291,64 @@ export const VendorProfileCreatePage: React.FC = () => {
                     image_urls: images.slice(1),
                   } : prev);
                 }}
-                placeholder="One image URL per line"
+                placeholder="One image link per line"
                 aria-describedby="vendor-draft-images-help"
-                className="min-h-[120px] w-full rounded-lg border border-[#eadfce] px-4 py-3 text-sm outline-none"
+                className="min-h-[120px] w-full rounded-xl border border-[#eadfce] px-4 py-3 text-sm outline-none"
               />
-              {getSafePublicImageUrl(draft.hero_image_url) && <p className="text-xs text-[#8b6f53]">Current hero image: {getSafePublicImageUrl(draft.hero_image_url)}</p>}
+              {getSafePublicImageUrl(draft.hero_image_url) && <p className="text-xs text-[#8b6f53]">Main image is set.</p>}
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-              {[draft.hero_image_url, ...(draft.image_urls || [])].map((image) => getSafePublicImageUrl(image)).filter((image): image is string => Boolean(image)).slice(0, 6).map((image) => (
-                <img key={image} src={image} alt={draft.vendor_name} className="aspect-square w-full rounded-lg object-cover bg-[#f3eadf]" />
+              {draftSafeImages.slice(0, 6).map((image) => (
+                <img key={image} src={image} alt={draft.vendor_name} className="aspect-square w-full rounded-xl object-cover bg-[#f3eadf]" />
               ))}
             </div>
+            {draftExtraImageCount > 0 && (
+              <p className="text-xs text-[#8b6f53]">Showing first 6 here. The page can show {draftExtraImageCount} more.</p>
+            )}
             <div className="flex flex-wrap gap-3">
               {draftLinks(draft).map((link) => (
                 <a key={link.label} href={link.href} target="_blank" rel="noopener noreferrer" className="text-sm text-[#6f5843] underline">{link.label}</a>
               ))}
             </div>
-            <p className="text-xs text-[#8b6f53]">When a website has limited detail, the page can still use Instagram, Pinterest, and other social links for images and context.</p>
+            <p className="text-xs text-[#8b6f53]">Use social links for images or context when the website is thin.</p>
             <div className="flex flex-wrap gap-3">
-              <button type="button" onClick={handlePublish} disabled={saving} className="rounded-lg bg-[#2f261d] px-5 py-3 text-sm font-semibold text-white disabled:opacity-60">
-                {saving ? 'Publishing…' : 'Publish vendor page'}
+              <button type="button" onClick={handlePublish} disabled={saving} className="rounded-xl bg-[#2f261d] px-5 py-3 text-sm font-semibold text-white disabled:opacity-60">
+                {saving ? 'Saving...' : 'Save page'}
               </button>
-              <div className="text-sm text-[#8b6f53] self-center">Preferred path: /vendor/{draft.slug}</div>
+              <div className="text-sm text-[#8b6f53] self-center">/vendor/{draft.slug}</div>
             </div>
-            <p className="text-xs text-[#8b6f53]">If that slug is already taken, publish will automatically use the next clean available URL.</p>
+            <p className="text-xs text-[#8b6f53]">If that link is taken, DayOf will use the next clean one.</p>
           </div>
 
-          <div className="rounded-lg bg-white p-6 sm:p-8 shadow-sm space-y-5">
-            <div>
-              <p className="text-xs font-semibold text-[#8b6f53]">Design preview</p>
-              <h3 className="mt-2 text-xl font-semibold">How this draft becomes a vendor page</h3>
-              <p className="mt-1 text-sm text-[#6f5843]">{vendorTemplateOptions.find((option) => option.id === getDraftTemplateId(draft))?.name}</p>
-            </div>
-            <div className="overflow-hidden rounded-lg border border-[#eadfce] bg-[#f8f3ec]">
-              <div className="aspect-[16/10] bg-[#e9dfd2] flex items-center justify-center overflow-hidden">
-                {getSafePublicImageUrl(draft.hero_image_url) ? (
-                  <img src={getSafePublicImageUrl(draft.hero_image_url)} alt={draft.vendor_name} className="h-full w-full object-cover" />
-                ) : (
-                  <div className="flex h-20 w-20 items-center justify-center rounded-lg bg-white/70 text-xl font-semibold text-[#8b6f53]">
-                    {draft.vendor_name.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]?.toUpperCase()).join('') || 'VP'}
-                  </div>
-                )}
-              </div>
-              <div className="p-5 space-y-5">
-                <div className="space-y-2">
-                  <p className="text-xs font-semibold text-[#8b6f53]">Hero</p>
-                  <h4 className="text-2xl font-semibold leading-tight">{draft.vendor_name || 'Vendor name'}</h4>
-                  <p className="text-sm text-[#6f5843]">{draft.descriptor || 'Short descriptor will sit here if present.'}</p>
-                </div>
-
-                <div className="space-y-2">
-                  <p className="text-xs font-semibold text-[#8b6f53]">Images</p>
-                  {(draft.image_urls || []).map((image) => getSafePublicImageUrl(image)).filter(Boolean).length > 0 ? (
-                    <div className="grid grid-cols-3 gap-2">
-                      {draft.image_urls.map((image) => getSafePublicImageUrl(image)).filter((image): image is string => Boolean(image)).slice(0, 3).map((image) => (
-                        <img key={image} src={image} alt={draft.vendor_name} className="aspect-square w-full rounded-lg object-cover bg-white" />
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-sm text-[#6f5843]">Gallery images will appear here when present.</p>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <p className="text-xs font-semibold text-[#8b6f53]">About</p>
-                  <p className="text-sm leading-7 text-[#4b3a2c]">{draft.about || 'Short vendor description will render here.'}</p>
-                </div>
-
-                <div className="space-y-2">
-                  <p className="text-xs font-semibold text-[#8b6f53]">Links and contact</p>
-                  <div className="flex flex-wrap gap-2">
-                    {draftLinks(draft).length > 0 ? draftLinks(draft).map((link) => (
-                      <span key={link.label} className="rounded-lg bg-white px-3 py-1 text-xs text-[#6f5843] border border-[#eadfce]">{link.label}</span>
-                    )) : <span className="text-sm text-[#6f5843]">Links will render here if present.</span>}
-                    {draft.contact_email && <span className="rounded-lg bg-white px-3 py-1 text-xs text-[#6f5843] border border-[#eadfce]">Direct email CTA</span>}
-                    <span className="rounded-lg bg-white px-3 py-1 text-xs text-[#6f5843] border border-[#eadfce]">Inquiry form</span>
-                  </div>
-                </div>
-                {draftCustomization && (draftCustomization.cta_label || draftCustomization.service_area || draftCustomization.proof_points.length > 0) && (
-                  <div className="space-y-2">
-                    <p className="text-xs font-semibold text-[#8b6f53]">Customization</p>
-                    <div className="flex flex-wrap gap-2">
-                      {draftCustomization.cta_label && <span className="rounded-lg bg-[#2f261d] px-3 py-1 text-xs font-semibold text-white">{draftCustomization.cta_label}</span>}
-                      {draftCustomization.service_area && <span className="rounded-lg bg-white px-3 py-1 text-xs text-[#6f5843] border border-[#eadfce]">{draftCustomization.service_area}</span>}
-                      {draftCustomization.proof_points.map((point) => (
-                        <span key={point} className="rounded-lg bg-white px-3 py-1 text-xs text-[#6f5843] border border-[#eadfce]">{point}</span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
           </div>
         )}
 
         {createdProfile && (
-          <div role="status" className="rounded-lg bg-[#2f261d] p-6 sm:p-8 text-white shadow-sm space-y-4">
+          <div role="status" className="rounded-xl bg-[#2f261d] p-6 sm:p-8 text-white shadow-sm space-y-4">
             <div>
-              <p className="text-xs font-semibold text-[#d8c4ad]">Published</p>
+              <p className="text-xs font-semibold text-[#d8c4ad]">Ready to use</p>
               <h2 className="mt-2 text-2xl font-semibold">/{`vendor/${createdProfile.slug}`}</h2>
             </div>
             <div className="flex flex-wrap gap-3">
-              <Link to={`/vendor/${createdProfile.slug}`} className="rounded-lg bg-[#f5e9db] px-5 py-3 text-sm font-semibold text-[#2f261d]">
-                Open live page
+              <Link to={`/vendor/${createdProfile.slug}`} className="rounded-xl bg-[#f5e9db] px-5 py-3 text-sm font-semibold text-[#2f261d]">
+                Open page
               </Link>
-              <button type="button" onClick={handleCopyLiveUrl} className="rounded-lg border border-white/20 px-5 py-3 text-sm font-semibold text-white">
-                Copy live URL
+              <button
+                type="button"
+                onClick={() => void handleCopyLiveUrl()}
+                disabled={copyingLiveUrl}
+                className="rounded-xl border border-white/20 px-5 py-3 text-sm font-semibold text-white disabled:opacity-60"
+              >
+                {copyingLiveUrl
+                  ? 'Copying link...'
+                  : liveUrlNotice === 'copied'
+                    ? 'Link copied'
+                    : liveUrlNotice === 'downloaded'
+                      ? 'Link saved'
+                      : 'Copy link'}
               </button>
-              <button type="button" onClick={() => navigate(0)} className="rounded-lg border border-white/20 px-5 py-3 text-sm font-semibold text-white/80">
-                Start another vendor
+              <button type="button" onClick={() => navigate(0)} className="rounded-xl border border-white/20 px-5 py-3 text-sm font-semibold text-white/80">
+                Start another
               </button>
             </div>
           </div>

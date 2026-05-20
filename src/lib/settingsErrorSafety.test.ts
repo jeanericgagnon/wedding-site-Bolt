@@ -145,7 +145,7 @@ describe('settings error safety', () => {
     expect(snapshotSource).toContain('loadSettingsSite(activeSite.id)');
     expect(snapshotSource).toContain('loadSettingsCollaboratorInvites(siteId)');
     expect(snapshotSource).toContain('loadSettingsTranslationStatuses(');
-    expect(viewModelSource).toContain('getSettingsTabs(settingsRole)');
+    expect(viewModelSource).toContain('getSettingsTabs(settingsRole, settingsPermissions)');
     expect(viewModelSource).toContain('buildWeddingIdentityExportKit({');
     expect(viewModelSource).toContain('buildWeddingIdentityPrintAssets({');
     expect(source).toContain('function updateSettingsSite');
@@ -205,7 +205,8 @@ describe('settings error safety', () => {
     expect(routeContentPropsSource).toContain('type Props = ComponentProps<typeof SettingsDashboardRouteContent>;');
     expect(routeContentSource).toContain('<SettingsSiteTabContent');
     expect(routeContentSource).toContain('<SettingsRsvpTabContent');
-    expect(tabContentSource).toContain('switch (activeTab)');
+    expect(tabContentSource).toContain('const effectiveTab = tabs.some((tab) => tab.id === activeTab) ? activeTab : tabs[0]?.id;');
+    expect(tabContentSource).toContain('switch (effectiveTab)');
     expect(tabContentSource).toContain('case \'account\'');
     expect(tabContentSource).toContain('case \'team\'');
     expect(tabContentSource).toContain('case \'site\'');

@@ -52,7 +52,7 @@ export function GuestListPanel({
 }: GuestListPanelProps) {
   return (
     <>
-      <div className="border border-border rounded-lg overflow-hidden">
+      <div className="overflow-hidden rounded-2xl border border-border">
         <table className="w-full text-sm">
           <thead className="bg-surface-subtle border-b border-border">
             <tr>
@@ -148,6 +148,7 @@ export function GuestListPanel({
                           size="sm"
                           className={`px-3 py-1.5 text-xs ${checkedInAt ? 'text-success border-success/40' : ''}`}
                           onClick={() => onToggleCheckIn(guest)}
+                          disabled={isGuestsReadOnly}
                           title={checkedInAt ? 'Clear check-in' : 'Mark checked in'}
                         >
                           <CheckCircle2 className="w-4 h-4 mr-1" />
@@ -283,23 +284,23 @@ function GuestStatusStack({
           {formatGuestOpsDate(guest.rsvp_received_at)}
         </span>
       )}
-      <span className="text-[10px] px-2 py-0.5 rounded-lg border bg-surface-subtle text-text-tertiary border-border">
+      <span className="rounded-xl border border-border bg-surface-subtle px-2 py-0.5 text-[10px] text-text-tertiary">
         {lifecycle.label}
       </span>
       {issues > 0 && (
-        <span className={`text-[10px] px-2 py-0.5 rounded-lg border ${issues >= 3 ? 'bg-surface-subtle text-text-secondary border-border-subtle' : 'bg-primary/5 text-primary border-primary/20'}`}>
+        <span className={`rounded-xl border px-2 py-0.5 text-[10px] ${issues >= 3 ? 'bg-surface-subtle text-text-secondary border-border-subtle' : 'bg-primary/5 text-primary border-primary/20'}`}>
           {issues >= 3 ? 'High risk' : 'Needs review'} · {issues}
         </span>
       )}
       {events && (
         <div className="flex flex-wrap gap-1 pt-1">
           {typeof events.ceremony === 'boolean' && (
-            <span className={`text-[10px] px-2 py-0.5 rounded-lg border ${events.ceremony ? 'bg-success-light text-success border-success/20' : 'bg-surface-subtle text-text-tertiary border-border'}`}>
+            <span className={`rounded-xl border px-2 py-0.5 text-[10px] ${events.ceremony ? 'bg-success-light text-success border-success/20' : 'bg-surface-subtle text-text-tertiary border-border'}`}>
               Ceremony: {events.ceremony ? 'Yes' : 'No'}
             </span>
           )}
           {typeof events.reception === 'boolean' && (
-            <span className={`text-[10px] px-2 py-0.5 rounded-lg border ${events.reception ? 'bg-success-light text-success border-success/20' : 'bg-surface-subtle text-text-tertiary border-border'}`}>
+            <span className={`rounded-xl border px-2 py-0.5 text-[10px] ${events.reception ? 'bg-success-light text-success border-success/20' : 'bg-surface-subtle text-text-tertiary border-border'}`}>
               Reception: {events.reception ? 'Yes' : 'No'}
             </span>
           )}

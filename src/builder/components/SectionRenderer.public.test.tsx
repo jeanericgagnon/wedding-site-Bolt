@@ -115,6 +115,73 @@ describe('public builder SectionRenderer fallbacks', () => {
     expect(registryMocks.getSectionComponent).not.toHaveBeenCalled();
   });
 
+  it('adds stable section anchors on public builder sections', () => {
+    registryMocks.resolveAndParse.mockReturnValue({
+      def: { Component: () => <section>Resolved section</section> },
+      parsedData: {},
+    });
+
+    const { container } = render(
+      <SectionRenderer
+        section={makeSection({
+          id: 'schedule-anchor',
+          type: 'schedule',
+          variant: 'dayTabs',
+        })}
+        weddingData={createEmptyWeddingData()}
+        surface="public"
+      />,
+    );
+
+    const wrapper = container.querySelector('[data-public-section-anchor="schedule-anchor"]');
+    expect(wrapper).toHaveAttribute('id', 'schedule-anchor');
+  });
+
+  it('sanitizes fallback section ids before exposing public anchors', () => {
+    registryMocks.resolveAndParse.mockReturnValue({
+      def: { Component: () => <section>Resolved section</section> },
+      parsedData: {},
+    });
+
+    const { container } = render(
+      <SectionRenderer
+        section={makeSection({
+          id: 'Registry Section!!',
+          type: 'registry',
+          variant: 'featured',
+        })}
+        weddingData={createEmptyWeddingData()}
+        surface="public"
+      />,
+    );
+
+    const wrapper = container.querySelector('[data-public-section-anchor="registry-section"]');
+    expect(wrapper).toHaveAttribute('id', 'registry-section');
+  });
+
+  it('uses readable custom section anchors when configured', () => {
+    registryMocks.resolveAndParse.mockReturnValue({
+      def: { Component: () => <section>Resolved section</section> },
+      parsedData: {},
+    });
+
+    const { container } = render(
+      <SectionRenderer
+        section={makeSection({
+          id: 'registry-section',
+          type: 'registry',
+          variant: 'featured',
+          settings: { anchorId: 'Registry Gifts!' },
+        })}
+        weddingData={createEmptyWeddingData()}
+        surface="public"
+      />,
+    );
+
+    const wrapper = container.querySelector('[data-public-section-anchor="registry-gifts"]');
+    expect(wrapper).toHaveAttribute('id', 'registry-gifts');
+  });
+
   it('keeps public render errors guest-safe when a legacy section throws', () => {
     const BrokenSection = () => {
       throw new Error('database provider bucket failure');
@@ -151,8 +218,8 @@ describe('public builder SectionRenderer fallbacks', () => {
     );
 
     expect(screen.getByText('Safe legacy section')).toBeInTheDocument();
-    expect(container.querySelector('img')).not.toBeInTheDocument();
-    expect(container.innerHTML).not.toContain('javascript:alert');
+    expect(screen.queryByRole('img')).not.toBeInTheDocument();
+    expect(container.querySelector('img[src^="javascript:"]')).toBeNull();
 
     rerender(
       <SectionRenderer

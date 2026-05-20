@@ -1,5 +1,5 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { useToast } from '../../components/ui/Toast';
 import {
@@ -20,12 +20,15 @@ import { useSettingsExperienceActions } from './settings/useSettingsExperienceAc
 import { useSettingsDashboardSnapshotHydration } from './settings/useSettingsDashboardSnapshotHydration';
 import { useSettingsDashboardUiState } from './settings/useSettingsDashboardUiState';
 import { useSettingsDashboardRouteSupport } from './settings/useSettingsDashboardRouteSupport';
+import { resolveSettingsRouteState } from './settings/settingsRouteState';
 
 export const DashboardSettings: React.FC = () => {
   const { toast } = useToast();
+  const location = useLocation();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { user, isDemoMode, signOut } = useAuth();
-  const identityExportsQaMode = new URLSearchParams(window.location.search).get('identityExportsQa') === '1';
+  const identityExportsQaMode = searchParams.get('identityExportsQa') === '1';
   const {
     activeTab,
     accountEmail,
@@ -77,7 +80,7 @@ export const DashboardSettings: React.FC = () => {
     plannerInvitePermissions,
     plannerInviteRole,
     plannerInviteSuccess,
-    privacyCopied,
+    privacyCopyNotice,
     privacyMode,
     rsvpDraftGuard,
     rsvpMealEnabled,
@@ -88,6 +91,7 @@ export const DashboardSettings: React.FC = () => {
     rsvpQuestionsSuccess,
     revokingCollaboratorInviteId,
     settingsRole,
+    settingsPermissions,
     showAdvancedRsvp,
     showConfirmPw,
     showCurrentPw,
@@ -165,7 +169,7 @@ export const DashboardSettings: React.FC = () => {
     setPlannerInvitePermissions,
     setPlannerInviteRole,
     setPlannerInviteSuccess,
-    setPrivacyCopied,
+    setPrivacyCopyNotice,
     setPrivacyMode,
     setRsvpMealEnabled,
     setRsvpMealOptions,
@@ -175,6 +179,7 @@ export const DashboardSettings: React.FC = () => {
     setRsvpQuestionsSuccess,
     setRevokingCollaboratorInviteId,
     setSettingsRole,
+    setSettingsPermissions,
     setShowAdvancedRsvp,
     setShowConfirmPw,
     setShowCurrentPw,
@@ -204,6 +209,32 @@ export const DashboardSettings: React.FC = () => {
     setWeddingSiteId,
   } = useSettingsDashboardUiState({ userId: user?.id });
   const isPublishedForIdentityExports = isPublished || identityExportsQaMode;
+
+  React.useEffect(() => {
+    const routeState = resolveSettingsRouteState({
+      search: location.search,
+      settingsPermissions,
+      settingsRole,
+    });
+
+    const nextTab = routeState.activeTab ?? 'account';
+    if (nextTab !== activeTab) {
+      setActiveTab(nextTab);
+    }
+
+    if (routeState.activeTab !== 'site' || !routeState.focusTargetId) return;
+
+    const scrollToTarget = () => {
+      const target = document.getElementById(routeState.focusTargetId ?? '');
+      if (!target) return false;
+      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      return true;
+    };
+
+    if (scrollToTarget()) return;
+    const timeout = window.setTimeout(scrollToTarget, 50);
+    return () => window.clearTimeout(timeout);
+  }, [activeTab, location.search, setActiveTab, settingsPermissions, settingsRole]);
 
   const {
     downloadTextFile,
@@ -252,6 +283,7 @@ export const DashboardSettings: React.FC = () => {
     setRsvpMealOptions,
     setRsvpQuestions,
     setSettingsRole,
+    setSettingsPermissions,
     setSiteSlug,
     setSettingsWeddingData,
     setTranslationStatuses,
@@ -302,6 +334,7 @@ export const DashboardSettings: React.FC = () => {
     musicPlaylistUrl,
     navigate,
     settingsRole,
+    settingsPermissions,
     signOut,
     siteSlug,
     venueName,
@@ -371,7 +404,7 @@ export const DashboardSettings: React.FC = () => {
     setGuestAccessToken,
     setPlannerInviteError,
     setPlannerInviteSuccess,
-    setPrivacyCopied,
+    setPrivacyCopyNotice,
     setRevokingCollaboratorInviteId,
     setSitePassword,
     setSiteSlug,
@@ -431,6 +464,21 @@ export const DashboardSettings: React.FC = () => {
     setTemplateSuccess,
     setCurrentTemplate,
   });
+
+  const clearVisibilityFeedback = React.useCallback(() => {
+    setVisibilityError(null);
+    setVisibilitySuccess(null);
+  }, [setVisibilityError, setVisibilitySuccess]);
+
+  const clearRsvpFeedback = React.useCallback(() => {
+    setRsvpQuestionsError(null);
+    setRsvpQuestionsSuccess(null);
+  }, [setRsvpQuestionsError, setRsvpQuestionsSuccess]);
+
+  const clearNotificationFeedback = React.useCallback(() => {
+    setNotifError(null);
+    setNotifSuccess(null);
+  }, [setNotifError, setNotifSuccess]);
 
   const settingsDashboardRouteContentProps = buildSettingsDashboardRouteContentProps({
     accountEmail,
@@ -509,7 +557,7 @@ export const DashboardSettings: React.FC = () => {
     plannerInviteRole,
     plannerInviteSuccess,
     plannerRoleOptions,
-    privacyCopied,
+    privacyCopyNotice,
     privacyMode,
     publicSiteUrl,
     revokingCollaboratorInviteId,
@@ -524,30 +572,110 @@ export const DashboardSettings: React.FC = () => {
     saveRsvpSettings,
     setActiveTab,
     setCollapsedQuestionIds,
-    setConfirmPassword,
-    setCoupleNames,
-    setCurrentPassword,
-    setHideFromSearch,
-    setAnalyticsEnabled,
-    setAnalyticsRetentionDays,
-    setAnalyticsGuestNotice,
-    setMusicPlaylistUrl,
-    setNewPassword,
-    setNotifDigest,
-    setNotifDigestCadence,
-    setNotifDigestIncludePlanner,
-    setNotifDigestQuietUntilLabel,
-    setNotifPhotos,
-    setNotifRsvp,
-    setNotifUpdates,
-    setPlannerInviteEmail,
-    setPlannerInviteName,
-    setPlannerInvitePermissions,
-    setPlannerInviteRole,
-    setPrivacyMode,
-    setRsvpMealEnabled,
-    setRsvpMealOptions,
-    setRsvpQuestions,
+    setConfirmPassword: (value) => {
+      setPasswordError(null);
+      setPasswordSuccess(null);
+      setConfirmPassword(value);
+    },
+    setCoupleNames: (value) => {
+      setAccountError(null);
+      setAccountSuccess(null);
+      setCoupleNames(value);
+    },
+    setCurrentPassword: (value) => {
+      setPasswordError(null);
+      setPasswordSuccess(null);
+      setCurrentPassword(value);
+    },
+    setHideFromSearch: (value) => {
+      clearVisibilityFeedback();
+      setHideFromSearch(value);
+    },
+    setAnalyticsEnabled: (value) => {
+      clearVisibilityFeedback();
+      setAnalyticsEnabled(value);
+    },
+    setAnalyticsRetentionDays: (value) => {
+      clearVisibilityFeedback();
+      setAnalyticsRetentionDays(value);
+    },
+    setAnalyticsGuestNotice: (value) => {
+      clearVisibilityFeedback();
+      setAnalyticsGuestNotice(value);
+    },
+    setMusicPlaylistUrl: (value) => {
+      clearVisibilityFeedback();
+      setMusicPlaylistUrl(value);
+    },
+    setNewPassword: (value) => {
+      setPasswordError(null);
+      setPasswordSuccess(null);
+      setNewPassword(value);
+    },
+    setNotifDigest: (value) => {
+      clearNotificationFeedback();
+      setNotifDigest(value);
+    },
+    setNotifDigestCadence: (value) => {
+      clearNotificationFeedback();
+      setNotifDigestCadence(value);
+    },
+    setNotifDigestIncludePlanner: (value) => {
+      clearNotificationFeedback();
+      setNotifDigestIncludePlanner(value);
+    },
+    setNotifDigestQuietUntilLabel: (value) => {
+      clearNotificationFeedback();
+      setNotifDigestQuietUntilLabel(value);
+    },
+    setNotifPhotos: (value) => {
+      clearNotificationFeedback();
+      setNotifPhotos(value);
+    },
+    setNotifRsvp: (value) => {
+      clearNotificationFeedback();
+      setNotifRsvp(value);
+    },
+    setNotifUpdates: (value) => {
+      clearNotificationFeedback();
+      setNotifUpdates(value);
+    },
+    setPlannerInviteEmail: (value) => {
+      setPlannerInviteError(null);
+      setPlannerInviteSuccess(null);
+      setPlannerInviteEmail(value);
+    },
+    setPlannerInviteName: (value) => {
+      setPlannerInviteError(null);
+      setPlannerInviteSuccess(null);
+      setPlannerInviteName(value);
+    },
+    setPlannerInvitePermissions: (value) => {
+      setPlannerInviteError(null);
+      setPlannerInviteSuccess(null);
+      setPlannerInvitePermissions(value);
+    },
+    setPlannerInviteRole: (value) => {
+      setPlannerInviteError(null);
+      setPlannerInviteSuccess(null);
+      setPlannerInviteRole(value);
+    },
+    setPrivacyMode: (value) => {
+      clearVisibilityFeedback();
+      setPrivacyMode(value);
+    },
+    setRsvpMealEnabled: (value) => {
+      clearRsvpFeedback();
+      setRsvpMealEnabled(value);
+    },
+    setRsvpMealOptions: (value) => {
+      clearRsvpFeedback();
+      setRsvpMealOptions(value);
+    },
+    setRsvpQuestions: (value) => {
+      clearRsvpFeedback();
+      setRsvpQuestions(value);
+    },
     setShowAdvancedRsvp,
     setShowConfirmPw,
     setShowCurrentPw,
@@ -557,9 +685,17 @@ export const DashboardSettings: React.FC = () => {
     setShowPrivacySettings,
     setShowSitePassword,
     setShowTemplateSettings,
-    setSitePassword,
-    setSiteSlug,
+    setSitePassword: (value) => {
+      clearVisibilityFeedback();
+      setSitePassword(value);
+    },
+    setSiteSlug: (value) => {
+      setSlugError(null);
+      setSlugSuccess(null);
+      setSiteSlug(value);
+    },
     settingsRole,
+    settingsPermissions,
     showAdvancedRsvp,
     showConfirmPw,
     showCurrentPw,

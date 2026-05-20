@@ -57,9 +57,9 @@ describe('FooterCta public CTA links', () => {
       );
 
       expect(screen.getByRole('link', { name: /send rsvp/i })).toHaveAttribute('href', '#rsvp');
-      expect(container.innerHTML).not.toContain('javascript:alert');
-      expect(container.innerHTML).not.toContain('ftp://example.com/rsvp');
-      expect(container.innerHTML).not.toContain('image.thum.io');
+      expect(container.querySelector('a[href^="javascript:"]')).toBeNull();
+      expect(container.querySelector('a[href^="ftp:"]')).toBeNull();
+      expect(container.querySelector('img[src*="image.thum.io"]')).toBeNull();
       unmount();
     }
   });

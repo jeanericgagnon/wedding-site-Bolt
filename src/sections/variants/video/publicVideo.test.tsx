@@ -9,9 +9,15 @@ const VideoCard = videoCardDefinition.Component;
 const VideoFull = videoFullDefinition.Component;
 const VideoInline = videoInlineDefinition.Component;
 
+function getEmbeddedFrame(container: HTMLElement) {
+  const frame = container.querySelector('iframe');
+  expect(frame).not.toBeNull();
+  return frame;
+}
+
 describe('public video sections', () => {
   it('sanitizes card thumbnails and does not create embeds from spoofed video URLs', () => {
-    render(
+    const { container } = render(
       <VideoCard
         data={{
           ...defaultVideoCardData,
@@ -28,12 +34,12 @@ describe('public video sections', () => {
     );
 
     expect(screen.queryByRole('img', { name: 'Unsafe video' })).not.toBeInTheDocument();
-    expect(document.querySelector('iframe')).not.toBeInTheDocument();
-    expect(document.querySelector('img[src^="javascript:"]')).not.toBeInTheDocument();
+    expect(container.querySelector('iframe')).toBeNull();
+    expect(container.querySelector('img[src^="javascript:"]')).toBeNull();
   });
 
   it('uses only safe direct video and thumbnail URLs in full layouts', () => {
-    const { rerender } = render(
+    const { container, rerender } = render(
       <VideoFull
         data={{
           ...defaultVideoFullData,
@@ -45,8 +51,8 @@ describe('public video sections', () => {
       />,
     );
 
-    expect(document.querySelector('video')).not.toBeInTheDocument();
-    expect(document.querySelector('img')).not.toBeInTheDocument();
+    expect(container.querySelector('video')).toBeNull();
+    expect(screen.queryByRole('img')).not.toBeInTheDocument();
 
     rerender(
       <VideoFull
@@ -60,11 +66,11 @@ describe('public video sections', () => {
       />,
     );
 
-    expect(document.querySelector('img')).toHaveAttribute('src', 'https://example.com/poster.jpg');
+    expect(screen.getByRole('img')).toHaveAttribute('src', 'https://example.com/poster.jpg');
   });
 
   it('uses host-aware embed URLs in inline layouts', () => {
-    render(
+    const { container } = render(
       <VideoInline
         data={{
           ...defaultVideoInlineData,
@@ -75,7 +81,7 @@ describe('public video sections', () => {
       />,
     );
 
-    expect(document.querySelector('iframe')).toHaveAttribute(
+    expect(getEmbeddedFrame(container)).toHaveAttribute(
       'src',
       'https://player.vimeo.com/video/123456789?autoplay=0',
     );

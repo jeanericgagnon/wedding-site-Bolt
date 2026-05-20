@@ -43,7 +43,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const shouldUseLocalDemo = (DEMO_MODE && readLocalDemoAuthFlag()) || canUseE2EAuthBypass();
+    const shouldUseLocalE2EBypass = canUseE2EAuthBypass();
+    const shouldUseLocalDemo = DEMO_MODE && readLocalDemoAuthFlag();
+
+    if (shouldUseLocalE2EBypass) {
+      setUser({ id: 'demo-local-user', email: DEMO_EMAIL, name: 'Alex & Jordan (Demo)' });
+      setLoading(false);
+      return;
+    }
 
     if (!SUPABASE_CONFIGURED) {
       if (shouldUseLocalDemo) {

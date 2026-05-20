@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Users } from 'lucide-react';
 import { Badge, Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Input } from '../../../components/ui';
 import { PLANNER_PERMISSION_GROUPS, type PlannerInviteRecord, type PlannerPermissionKey } from '../../../lib/plannerAccess';
@@ -11,16 +12,24 @@ type PlannerRoleOption = {
   description: string;
 };
 
+type CopyActionResult = 'copied' | 'downloaded';
+type CollaboratorInviteCopyNotice = {
+  action: 'copy' | 'resend';
+  inviteId: string;
+  mode: CopyActionResult;
+} | null;
+
 type SettingsTeamAccessPanelProps = {
+  canManageOwnerSettings: boolean;
   collaboratorInvites: SettingsCollaboratorInviteRow[];
   creatingCollaboratorInvite: boolean;
-  onCopyCollaboratorInviteLink: (inviteToken: string | undefined) => void;
+  onCopyCollaboratorInviteLink: (inviteToken: string | undefined) => Promise<CopyActionResult | null>;
   onCreateCollaboratorInvite: () => void;
   onPlannerInviteEmailChange: (value: string) => void;
   onPlannerInviteNameChange: (value: string) => void;
   onPlannerInviteRoleChange: (role: 'planner' | 'coordinator' | 'viewer') => void;
   onRemovePlannerInvite: () => void;
-  onResendCollaboratorInvite: (inviteToken: string | undefined) => void;
+  onResendCollaboratorInvite: (inviteToken: string | undefined) => Promise<CopyActionResult | null>;
   onRevokeCollaboratorInvite: (inviteId: string) => void;
   onSavePlannerInvite: () => void;
   onTogglePlannerPermission: (key: PlannerPermissionKey) => void;
@@ -36,6 +45,7 @@ type SettingsTeamAccessPanelProps = {
 };
 
 export function SettingsTeamAccessPanel({
+  canManageOwnerSettings,
   collaboratorInvites,
   creatingCollaboratorInvite,
   onCopyCollaboratorInviteLink,
@@ -58,6 +68,32 @@ export function SettingsTeamAccessPanel({
   plannerRoleOptions,
   revokingCollaboratorInviteId,
 }: SettingsTeamAccessPanelProps) {
+  const [collaboratorInviteCopyNotice, setCollaboratorInviteCopyNotice] = useState<CollaboratorInviteCopyNotice>(null);
+  const [collaboratorInviteCopying, setCollaboratorInviteCopying] = useState<{
+    action: 'copy' | 'resend';
+    inviteId: string;
+  } | null>(null);
+
+  const runCollaboratorInviteCopy = async (
+    action: 'copy' | 'resend',
+    inviteId: string,
+    inviteToken: string | undefined,
+    handler: (inviteToken: string | undefined) => Promise<CopyActionResult | null>,
+  ) => {
+    setCollaboratorInviteCopyNotice(null);
+    setCollaboratorInviteCopying({ action, inviteId });
+    try {
+      const result = await handler(inviteToken);
+      if (result) {
+        setCollaboratorInviteCopyNotice({ action, inviteId, mode: result });
+      }
+    } finally {
+      setCollaboratorInviteCopying((current) => (
+        current?.inviteId === inviteId && current.action === action ? null : current
+      ));
+    }
+  };
+
   return (
     <Card variant="bordered" padding="lg">
       <CardHeader>
@@ -72,16 +108,16 @@ export function SettingsTeamAccessPanel({
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="space-y-2 rounded-lg border border-border-subtle bg-surface-subtle/40 p-4">
+        <div className="space-y-2 rounded-xl border border-border-subtle bg-surface-subtle/40 p-4">
           <p className="text-sm font-medium text-text-primary">Invite your planner, not a generic staff account</p>
           <p className="text-sm text-text-secondary">Keep ownership with the couple while sharing the parts of dayof that help someone run the event well. Helpers claim access from a secure invite link and do not touch billing.</p>
         </div>
 
         {plannerInviteSuccess && (
-          <div className="rounded-lg border border-success/20 bg-success-light p-3 text-sm text-success">{plannerInviteSuccess}</div>
+          <div className="rounded-xl border border-success/20 bg-success-light p-3 text-sm text-success">{plannerInviteSuccess}</div>
         )}
         {plannerInviteError && (
-          <div className="rounded-lg border border-border-subtle bg-surface-subtle p-3 text-sm text-text-secondary">{plannerInviteError}</div>
+          <div className="rounded-xl border border-border-subtle bg-surface-subtle p-3 text-sm text-text-secondary">{plannerInviteError}</div>
         )}
 
         <div className="grid gap-3 md:grid-cols-3">
@@ -90,7 +126,8 @@ export function SettingsTeamAccessPanel({
               key={option.value}
               type="button"
               onClick={() => onPlannerInviteRoleChange(option.value as 'planner' | 'coordinator' | 'viewer')}
-              className={`rounded-lg border p-4 text-left transition-colors ${plannerInviteRole === option.value ? 'border-primary bg-primary/5' : 'border-border-subtle bg-white hover:border-primary/35'}`}
+              disabled={!canManageOwnerSettings}
+              className={`rounded-xl border p-4 text-left transition-colors ${plannerInviteRole === option.value ? 'border-primary bg-primary/5' : 'border-border-subtle bg-white hover:border-primary/35'}`}
             >
               <p className="text-sm font-medium text-text-primary">{option.label}</p>
               <p className="mt-1 text-xs text-text-secondary">{option.description}</p>
@@ -101,15 +138,15 @@ export function SettingsTeamAccessPanel({
         <div className="grid gap-3 md:grid-cols-2">
           <div>
             <label htmlFor="planner-invite-name" className="mb-2 block text-sm font-medium text-text-primary">Planner name</label>
-            <Input id="planner-invite-name" value={plannerInviteName} onChange={(e) => onPlannerInviteNameChange(e.target.value)} placeholder="Your planner or coordinator" />
+            <Input id="planner-invite-name" value={plannerInviteName} onChange={(e) => onPlannerInviteNameChange(e.target.value)} disabled={!canManageOwnerSettings} placeholder="Your planner or coordinator" />
           </div>
           <div>
             <label htmlFor="planner-invite-email" className="mb-2 block text-sm font-medium text-text-primary">Planner email</label>
-            <Input id="planner-invite-email" value={plannerInviteEmail} onChange={(e) => onPlannerInviteEmailChange(e.target.value)} placeholder="planner@example.com" />
+            <Input id="planner-invite-email" value={plannerInviteEmail} onChange={(e) => onPlannerInviteEmailChange(e.target.value)} disabled={!canManageOwnerSettings} placeholder="planner@example.com" />
           </div>
         </div>
 
-        <div className="space-y-3 rounded-lg border border-dashed border-border bg-surface-subtle/20 p-4">
+        <div className="space-y-3 rounded-xl border border-dashed border-border bg-surface-subtle/20 p-4">
           <div>
             <p className="text-sm font-medium text-text-primary">Permissions</p>
             <p className="mt-1 text-sm text-text-secondary">Start with a role preset, then tighten or expand access simply before you send the invite.</p>
@@ -118,12 +155,13 @@ export function SettingsTeamAccessPanel({
             {PLANNER_PERMISSION_GROUPS.map((permission) => {
               const checked = plannerInvitePermissions.includes(permission.key);
               return (
-                <label key={permission.key} className={`cursor-pointer rounded-lg border p-3 transition-colors ${checked ? 'border-primary bg-primary/5' : 'border-border-subtle bg-white hover:border-primary/30'}`}>
+                <label key={permission.key} className={`cursor-pointer rounded-xl border p-3 transition-colors ${checked ? 'border-primary bg-primary/5' : 'border-border-subtle bg-white hover:border-primary/30'}`}>
                   <div className="flex items-start gap-3">
                     <input
                       type="checkbox"
                       checked={checked}
                       onChange={() => onTogglePlannerPermission(permission.key)}
+                      disabled={!canManageOwnerSettings}
                       className="mt-1 h-4 w-4 rounded border-border-subtle text-primary focus:ring-primary/30"
                     />
                     <div>
@@ -139,7 +177,7 @@ export function SettingsTeamAccessPanel({
         </div>
 
         {plannerInvite && (
-          <div className="rounded-lg border border-border-subtle bg-white p-4">
+          <div className="rounded-xl border border-border-subtle bg-white p-4">
             <div className="flex items-start justify-between gap-3">
               <div>
                 <p className="text-sm font-medium text-text-primary">Access setup saved for {plannerInvite.name}</p>
@@ -150,14 +188,14 @@ export function SettingsTeamAccessPanel({
           </div>
         )}
 
-        <div className="space-y-3 rounded-lg border border-border-subtle bg-surface-subtle/20 p-4">
+        <div className="space-y-3 rounded-xl border border-border-subtle bg-surface-subtle/20 p-4">
           <div>
             <p className="text-sm font-medium text-text-primary">Collaborator list</p>
             <p className="mt-1 text-xs text-text-secondary">Track pending and accepted access links, copy invite URLs, and revoke pending access before it is claimed.</p>
           </div>
 
           {plannerInvite ? (
-            <div className="rounded-lg border border-border-subtle bg-white px-4 py-3">
+            <div className="rounded-xl border border-border-subtle bg-white px-4 py-3">
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <p className="text-sm font-medium text-text-primary">{plannerInvite.name}</p>
@@ -170,7 +208,7 @@ export function SettingsTeamAccessPanel({
               </div>
             </div>
           ) : (
-            <div className="rounded-lg border border-dashed border-border-subtle bg-white px-4 py-3 text-sm text-text-secondary">
+            <div className="rounded-xl border border-dashed border-border-subtle bg-white px-4 py-3 text-sm text-text-secondary">
               No collaborator access setups saved yet.
             </div>
           )}
@@ -179,7 +217,7 @@ export function SettingsTeamAccessPanel({
             <div className="space-y-2">
               <p className="text-xs font-medium text-text-tertiary">Sent invite links</p>
               {collaboratorInvites.map((invite) => (
-                <div key={invite.id} className="rounded-lg border border-border-subtle bg-white px-4 py-3">
+                <div key={invite.id} className="rounded-xl border border-border-subtle bg-white px-4 py-3">
                   <div className="flex items-center justify-between gap-3">
                     <div>
                       <p className="text-sm font-medium text-text-primary">{invite.invite_name || invite.invite_email}</p>
@@ -189,17 +227,41 @@ export function SettingsTeamAccessPanel({
                     <div className="flex items-center gap-2">
                       <Badge variant={invite.status === 'accepted' ? 'success' : invite.status === 'pending' ? 'secondary' : 'warning'}>{invite.status}</Badge>
                       {invite.status === 'pending' && (
-                        <Button type="button" variant="outline" size="sm" onClick={() => onCopyCollaboratorInviteLink(invite.invite_token)}>
-                          Copy link
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          disabled={!canManageOwnerSettings || (collaboratorInviteCopying?.inviteId === invite.id && collaboratorInviteCopying.action === 'copy')}
+                          onClick={() => { void runCollaboratorInviteCopy('copy', invite.id, invite.invite_token, onCopyCollaboratorInviteLink); }}
+                        >
+                          {collaboratorInviteCopying?.inviteId === invite.id && collaboratorInviteCopying.action === 'copy'
+                            ? 'Copying link...'
+                            : collaboratorInviteCopyNotice?.inviteId === invite.id && collaboratorInviteCopyNotice.action === 'copy'
+                              ? collaboratorInviteCopyNotice.mode === 'downloaded'
+                                ? 'Downloaded invite link'
+                                : 'Copied invite link'
+                              : 'Copy link'}
                         </Button>
                       )}
                       {invite.status === 'pending' && (
-                        <Button type="button" variant="outline" size="sm" onClick={() => onResendCollaboratorInvite(invite.invite_token)}>
-                          Copy again
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          disabled={!canManageOwnerSettings || (collaboratorInviteCopying?.inviteId === invite.id && collaboratorInviteCopying.action === 'resend')}
+                          onClick={() => { void runCollaboratorInviteCopy('resend', invite.id, invite.invite_token, onResendCollaboratorInvite); }}
+                        >
+                          {collaboratorInviteCopying?.inviteId === invite.id && collaboratorInviteCopying.action === 'resend'
+                            ? 'Copying resend link...'
+                            : collaboratorInviteCopyNotice?.inviteId === invite.id && collaboratorInviteCopyNotice.action === 'resend'
+                              ? collaboratorInviteCopyNotice.mode === 'downloaded'
+                                ? 'Downloaded resend link'
+                                : 'Copied resend link'
+                              : 'Copy again'}
                         </Button>
                       )}
                       {invite.status === 'pending' && (
-                        <Button type="button" variant="outline" size="sm" onClick={() => onRevokeCollaboratorInvite(invite.id)} disabled={revokingCollaboratorInviteId === invite.id}>
+                        <Button type="button" variant="outline" size="sm" onClick={() => onRevokeCollaboratorInvite(invite.id)} disabled={!canManageOwnerSettings || revokingCollaboratorInviteId === invite.id}>
                           {revokingCollaboratorInviteId === invite.id ? 'Revoking…' : 'Revoke'}
                         </Button>
                       )}
@@ -213,12 +275,12 @@ export function SettingsTeamAccessPanel({
 
         <div className="flex flex-wrap justify-end gap-2">
           {plannerInvite && (
-            <Button type="button" variant="outline" size="sm" onClick={onRemovePlannerInvite}>Remove invite</Button>
+            <Button type="button" variant="outline" size="sm" onClick={onRemovePlannerInvite} disabled={!canManageOwnerSettings}>Remove invite</Button>
           )}
-          <Button type="button" variant="outline" size="sm" onClick={onCreateCollaboratorInvite} disabled={creatingCollaboratorInvite}>
+          <Button type="button" variant="outline" size="sm" onClick={onCreateCollaboratorInvite} disabled={creatingCollaboratorInvite || !canManageOwnerSettings}>
             {creatingCollaboratorInvite ? 'Creating invite…' : 'Create invite link'}
           </Button>
-          <Button type="button" variant="primary" size="md" onClick={onSavePlannerInvite}>
+          <Button type="button" variant="primary" size="md" onClick={onSavePlannerInvite} disabled={!canManageOwnerSettings}>
             {plannerInvite ? 'Update planner access' : 'Save planner invite'}
           </Button>
         </div>

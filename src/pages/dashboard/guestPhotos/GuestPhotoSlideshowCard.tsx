@@ -32,7 +32,7 @@ type GuestPhotoSlideshowCardProps = {
   slideshowFrames: SlideshowFrame[];
   slideshowReadyBucketCount: number;
   slideshowPreviewOpen: boolean;
-  copied: string;
+  copyNotice: { key: string; mode: 'copied' | 'downloaded' } | null;
   onBucketFilterChange: (value: string) => void;
   onOrderChange: (value: SlideshowOrderMode) => void;
   onThemeChange: (value: SlideshowTheme) => void;
@@ -50,7 +50,7 @@ export function GuestPhotoSlideshowCard({
   slideshowFrames,
   slideshowReadyBucketCount,
   slideshowPreviewOpen,
-  copied,
+  copyNotice,
   onBucketFilterChange,
   onOrderChange,
   onThemeChange,
@@ -72,7 +72,7 @@ export function GuestPhotoSlideshowCard({
             <select
               value={slideshowBucketFilter}
               onChange={(event) => onBucketFilterChange(event.target.value)}
-              className="rounded-lg border border-neutral-300 px-3 py-2 text-sm"
+              className="rounded-xl border border-neutral-300 px-3 py-2 text-sm"
             >
               <option value="all">All slideshow-ready albums</option>
               {buckets
@@ -84,7 +84,7 @@ export function GuestPhotoSlideshowCard({
             <select
               value={slideshowOrder}
               onChange={(event) => onOrderChange(event.target.value as SlideshowOrderMode)}
-              className="rounded-lg border border-neutral-300 px-3 py-2 text-sm"
+              className="rounded-xl border border-neutral-300 px-3 py-2 text-sm"
             >
               <option value="newest">Newest first</option>
               <option value="oldest">Oldest first</option>
@@ -94,7 +94,7 @@ export function GuestPhotoSlideshowCard({
             <select
               value={slideshowTheme}
               onChange={(event) => onThemeChange(event.target.value as SlideshowTheme)}
-              className="rounded-lg border border-neutral-300 px-3 py-2 text-sm"
+              className="rounded-xl border border-neutral-300 px-3 py-2 text-sm"
             >
               <option value="classic">Classic</option>
               <option value="editorial">Editorial</option>
@@ -104,32 +104,36 @@ export function GuestPhotoSlideshowCard({
               Preview
             </Button>
             <Button variant="outline" onClick={onExportSlideshowPlan} disabled={slideshowFrames.length === 0}>
-              {copied === 'slideshow-plan' ? 'Copied notes' : 'Copy slideshow notes'}
+              {copyNotice?.key === 'slideshow-plan'
+                ? copyNotice.mode === 'downloaded'
+                  ? 'Downloaded slideshow notes'
+                  : 'Copied slideshow notes'
+                : 'Copy slideshow notes'}
             </Button>
           </div>
         </div>
 
         {slideshowFrames.length === 0 ? (
-          <div className="rounded-lg border border-dashed border-neutral-300 bg-surface-subtle/20 px-4 py-6 text-sm text-neutral-600">
+          <div className="rounded-2xl border border-dashed border-neutral-300 bg-surface-subtle/20 px-4 py-6 text-sm text-neutral-600">
             Add at least three visible uploads to an active album to start a slideshow draft.
           </div>
         ) : (
           <div className="space-y-4">
-            <div className="rounded-lg border border-border-subtle bg-surface-subtle/20 px-4 py-3 text-sm text-neutral-700">
+            <div className="rounded-2xl border border-border-subtle bg-surface-subtle/20 px-4 py-3 text-sm text-neutral-700">
               Ready with <span className="font-semibold text-neutral-900">{slideshowFrames.length}</span> slides from <span className="font-semibold text-neutral-900">{slideshowBucketFilter === 'all' ? slideshowReadyBucketCount : 1}</span> album{slideshowBucketFilter === 'all' ? 's' : ''}.
             </div>
-            <div className="rounded-lg border border-border-subtle bg-surface-subtle/20 px-4 py-3 text-sm text-neutral-700">
-              <span className={`inline-flex items-center rounded-lg px-2.5 py-1 text-xs font-medium ${theme.chipClass}`}>
+            <div className="rounded-2xl border border-border-subtle bg-surface-subtle/20 px-4 py-3 text-sm text-neutral-700">
+              <span className={`inline-flex items-center rounded-xl px-2.5 py-1 text-xs font-medium ${theme.chipClass}`}>
                 {theme.label}
               </span>
               <span className="ml-2">{theme.helper}</span>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
               {slideshowFrames.map((frame, index) => (
-                <div key={frame.uploadId} className={`rounded-lg border px-4 py-3 ${theme.cardClass}`}>
+                <div key={frame.uploadId} className={`rounded-2xl border px-4 py-3 ${theme.cardClass}`}>
                   <div className="flex items-center justify-between gap-3">
                     <p className="text-sm font-semibold text-neutral-900">Frame {index + 1}</p>
-                    <span className={`text-xs rounded-lg px-2 py-0.5 ${theme.chipClass}`}>{frame.bucketName}</span>
+                    <span className={`rounded-xl px-2 py-0.5 text-xs ${theme.chipClass}`}>{frame.bucketName}</span>
                   </div>
                   <p className="mt-2 text-sm text-neutral-800 truncate">{frame.title}</p>
                   <p className="mt-1 text-xs text-neutral-500">{frame.caption}</p>
@@ -143,7 +147,7 @@ export function GuestPhotoSlideshowCard({
 
       {slideshowPreviewOpen && slideshowFrames.length > 0 && (
         <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="w-full max-w-4xl bg-white rounded-lg border border-border p-5 space-y-4 max-h-[90vh] overflow-auto">
+          <div className="max-h-[90vh] w-full max-w-4xl space-y-4 overflow-auto rounded-2xl border border-border bg-white p-5">
             <div className="flex items-center justify-between gap-3">
               <div>
                 <h3 className="text-lg font-semibold text-neutral-900">Slideshow preview</h3>
@@ -153,7 +157,7 @@ export function GuestPhotoSlideshowCard({
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               {slideshowFrames.map((frame, index) => (
-                <div key={frame.uploadId} className={`rounded-lg border px-4 py-4 ${theme.cardClass}`}>
+                <div key={frame.uploadId} className={`rounded-2xl border px-4 py-4 ${theme.cardClass}`}>
                   <p className="text-xs text-neutral-500">Slide {index + 1}</p>
                   <p className="mt-2 text-base font-semibold text-neutral-900 truncate">{frame.title}</p>
                   <p className="mt-1 text-sm text-neutral-700">{frame.bucketName}</p>

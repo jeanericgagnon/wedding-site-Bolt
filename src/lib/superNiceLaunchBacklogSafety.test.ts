@@ -9,6 +9,7 @@ describe('super nice launch backlog safety guards', () => {
 
     expect(source).toContain('canonical_route_smoke_green_defer_to_current_proof_board_for_launch_call');
     expect(source).toContain('defer_to_docs_v1_smoke_proof_log_and_proof_board');
+    expect(source).toContain('it still defers the launch call to the proof-board flow instead of regenerating or replacing launch-truth artifacts');
     expect(source).toContain('canonicalSmokeGreenButLaunchRed: false');
     expect(source).not.toContain("publicV1ClaimStatus: 'hold_for_post_deploy_runtime_truth_rerun'");
     expect(source).not.toContain("launchCallRightNow: 'hold_until_post_deploy_wording_and_couple_path_rerun'");
@@ -168,6 +169,7 @@ describe('super nice launch backlog safety guards', () => {
     expect(publicSiteAccess).toContain('safePublicSiteAccessError');
     expect(guestPhotoDashboardData).toContain("setError(safePhotoOwnerError(err, 'Couldn’t load the photo space. Please refresh and try again.'))");
     expect(guestPhotoSharing).not.toContain('return cleaned;');
+    expect(guestPhotoSharingUtils).toContain('function buildBucketLinksStorageKey(storageScope?: string | null): string {');
     expect(vaultContribute).not.toContain('`${err.message} Uploading original video instead.`');
     expect(vaultContribute).toContain("setSubmitError('Couldn’t prepare a smaller version. Uploading the original video instead.');");
     expect(quickStart).not.toContain('setAiDebug(`finish_failed=${err instanceof Error ? err.message : String(err)}`)');
@@ -256,7 +258,7 @@ describe('super nice launch backlog safety guards', () => {
     expect(setupDraft).toContain('MAX_SETUP_DRAFT_STYLE_PREFERENCES');
     expect(quickStartStateTransfer).toContain('QUICK_START_DRAFT_RETENTION_MS');
     expect(quickStartStateTransfer).toContain('savedAtISO');
-    expect(quickStartStateTransfer).toContain('clearQuickStartDraftSnapshot()');
+    expect(quickStartStateTransfer).toContain('clearQuickStartDraftSnapshot(storageScope)');
     expect(quickStart).not.toContain('localStorage.setItem(STORAGE_KEY, JSON.stringify({ initialSetupAnswers');
     expect(quickStart).toContain('persistQuickStartDraftSnapshot({ initialSetupAnswers');
     expect(guidedSetupPersistence).toContain('GUIDED_SETUP_DRAFT_RETENTION_MS');
@@ -288,7 +290,7 @@ describe('super nice launch backlog safety guards', () => {
     expect(guestDashboardStorage).toContain('GUEST_DASHBOARD_STORAGE_RETENTION_MS');
     expect(guestDashboardStorage).toContain('isGuestDashboardStorageEnvelope');
     expect(guestDashboardStorage).toContain('normalizeStoredFollowUpTask');
-    expect(guestDashboardStorage).toContain('writeStoredValue(RSVP_CAMPAIGN_PRESET_KEY, campaignPreset)');
+    expect(guestDashboardStorage).toContain('writeStoredValue(buildGuestDashboardStorageKey(RSVP_CAMPAIGN_PRESET_KEY, storageScope), campaignPreset)');
     expect(guestDashboardStorage).toContain('localStorage.removeItem(key)');
     expect(settingsDemoStorage).toContain('SETTINGS_DEMO_RSVP_RETENTION_MS');
     expect(settingsDemoStorage).toContain('isDemoRsvpStorageEnvelope');
@@ -338,7 +340,7 @@ describe('super nice launch backlog safety guards', () => {
 
     expect(topBar).toContain('builderActions.openMediaLibrary()');
     expect(topBar).toContain('Add photo');
-    expect(topBar).not.toContain('hidden lg:inline-flex items-center gap-1 rounded-md border border-[var(--color-border-subtle)] bg-[var(--color-surface)] px-2 py-1 text-[12px] text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-subtle)]');
+    expect(topBar).not.toContain('hidden lg:inline-flex items-center gap-1');
     expect(exploratory).toContain('builder Add photo has no visible mobile media entry point on the deployed frontend.');
     expect(exploratory).toContain("page.getByRole('button', { name: /^Add photo$/i })");
     expect(exploratory).toContain('openedFromVisibleButton');
@@ -582,9 +584,13 @@ describe('super nice launch backlog safety guards', () => {
 
     expect(source).toContain("id: 'service-role-authorization'");
     expect(source).toContain("id: 'email-messaging-authorization'");
+    expect(source).toContain("id: 'board-freshness'");
+    expect(source).toContain("id: 'board-raw'");
     expect(source).toContain("id: 'board-markdown'");
     expect(source).toContain("id: 'git-diff-check'");
     expect(source).toContain("blocker?.blockerType === 'missing_service_role_key'");
+    expect(source).toContain('this helper/local bundle refreshes board freshness plus the raw and markdown board outputs');
+    expect(source).toContain('it complements the proof board rather than replacing it');
     expect(source).toContain('Rerun npm run proof:v1:launch-closeout.');
     expect(pkg).toContain('"proof:v1:launch-closeout": "node scripts/v1-proof-launch-closeout.mjs"');
     expect(backlog).toContain('npm run proof:v1:launch-closeout');
@@ -606,6 +612,10 @@ describe('super nice launch backlog safety guards', () => {
       'Comms Center',
       'Seating Continuity',
       'docs/v1-smoke-proof-log.md',
+      'npm run proof:v1:board',
+      'npm run proof:v1:board:freshness',
+      'npm run proof:v1:board:md',
+      'local/helper proof paths regenerate the raw and markdown board outputs',
       'launch stays `HOLD` until that secure closeout bundle is green',
       'npm run proof:v1:launch-closeout',
     ]) {
@@ -616,5 +626,189 @@ describe('super nice launch backlog safety guards', () => {
     expect(pkg).toContain('"proof:v1:runtime-note-checklist": "node scripts/v1-proof-runtime-note-checklist.mjs"');
     expect(backlog).toContain('docs/v1-runtime-operator-notes-checklist.md');
     expect(backlog).toContain('npm run proof:v1:runtime-note-checklist');
+  });
+
+  it('keeps the proof runbook aligned with the named board commands', () => {
+    const runbook = read('docs/v1-proof-runbook.md');
+    const notes = read('docs/feature-verification-notes-2026-05-18.md');
+
+    expect(runbook).toContain('npm run proof:v1:board:freshness');
+    expect(runbook).toContain('npm run proof:v1:board');
+    expect(runbook).toContain('npm run proof:v1:board:md');
+    expect(runbook).toContain('Run `npm run proof:v1:board:freshness` before treating either board output as current truth.');
+    expect(runbook).toContain('Workflow gates are intentionally narrower: `ci-hardpass` and `Release Launch Gate` enforce `npm run proof:v1:board:freshness`, but they do not regenerate `npm run proof:v1:board` or `npm run proof:v1:board:md`.');
+    expect(runbook).not.toContain('node scripts/v1-proof-board.mjs --markdown');
+    expect(notes).toContain('proof runbook now uses the named package commands for both board outputs too');
+    expect(notes).toContain('the runtime-note checklist checker and security-automation proof summary now carry that same split too');
+  });
+
+  it('keeps the proof test-lanes summary aligned with the workflow/helper split', () => {
+    const script = read('scripts/v1-proof-test-lanes.mjs');
+    const notes = read('docs/feature-verification-notes-2026-05-18.md');
+
+    expect(script).toContain('workflow gates stay freshness-only while helper/local proof paths regenerate board artifacts through the named proof bundles.');
+    expect(notes).toContain('proof:v1:test-lanes now says the same workflow/helper split in its own result summary');
+  });
+
+  it('keeps the small runbook/checklist proof summaries aligned with the workflow/helper split', () => {
+    const gatedRunbookScript = read('scripts/v1-proof-gated-unblock-runbook.mjs');
+    const runtimeChecklistScript = read('scripts/v1-proof-runtime-note-checklist.mjs');
+    const notes = read('docs/feature-verification-notes-2026-05-18.md');
+
+    expect(gatedRunbookScript).toContain('approval-gated workflow notes remain separate from helper/local closeout paths that regenerate board artifacts');
+    expect(runtimeChecklistScript).toContain('workflow gates stop at freshness while helper/local proof paths regenerate the raw and markdown board artifacts when needed.');
+    expect(notes).toContain('the gated-unblock and runtime-note helper checkers now say the same workflow/helper split in their own result summaries');
+  });
+
+  it('keeps the larger helper-bundle summaries aligned with the proof-board contract', () => {
+    const closeout = read('scripts/v1-proof-launch-closeout.mjs');
+    const fullSuite = read('scripts/v1-proof-full-suite-exit-gate.mjs');
+    const notes = read('docs/feature-verification-notes-2026-05-18.md');
+
+    expect(closeout).toContain('this helper/local bundle refreshes board freshness plus the raw and markdown board outputs');
+    expect(fullSuite).toContain('this helper proof bundle starts with the board trio');
+    expect(notes).toContain('launch-closeout and full-suite exit-gate now carry the same contract in their own summaries');
+  });
+
+  it('keeps feature-lane helper summaries explicit about their lane role', () => {
+    const registry = read('scripts/v1-proof-registry.mjs');
+    const comms = read('scripts/v1-proof-comms-center.mjs');
+    const guestLanguage = read('scripts/v1-proof-guest-language-continuity.mjs');
+    const notes = read('docs/feature-verification-notes-2026-05-18.md');
+
+    expect(registry).toContain('this feature-lane bundle closes owner/public registry runtime truth for the shipped lane while still rolling up into the broader proof-board launch call');
+    expect(comms).toContain('this bundle validates compose/save/review truth without implying reopened live SMS-send clearance');
+    expect(guestLanguage).toContain('this guest-surface bundle validates translated RSVP and guest-hub continuity as supporting non-SMS launch evidence');
+    expect(notes).toContain('registry, comms-center, and guest-language proof helpers now say what kind of lane truth they provide instead of only reporting counts');
+  });
+
+  it('keeps adjacent feature-lane helper summaries explicit about their lane role', () => {
+    const coordinator = read('scripts/v1-proof-coordinator-dayof.mjs');
+    const seating = read('scripts/v1-proof-seating-continuity.mjs');
+    const dayofWebMode = read('scripts/v1-proof-dayof-web-mode.mjs');
+    const notes = read('docs/feature-verification-notes-2026-05-18.md');
+
+    expect(coordinator).toContain('this lane closes coordinator runtime truth for the shipped ops surface while still rolling up into the broader proof-board launch call');
+    expect(seating).toContain('this lane validates seating packet, lookup, and assignment continuity as shipped feature evidence while still deferring the final launch call to the proof-board flow');
+    expect(dayofWebMode).toContain('this read-only guest-hub lane validates invite-scoped day-of visibility without claiming the separate guest-hub write/read mutation lane');
+    expect(notes).toContain('coordinator, seating, and day-of web-mode proof helpers now say the same kind of lane-truth story too');
+  });
+
+  it('keeps additional guest-facing feature-lane helper summaries explicit about their lane role', () => {
+    const travel = read('scripts/v1-proof-travel-guest-portal.mjs');
+    const photoMemory = read('scripts/v1-proof-photo-memory-flow.mjs');
+    const guestPreview = read('scripts/v1-proof-guest-preview-confidence.mjs');
+    const notes = read('docs/feature-verification-notes-2026-05-18.md');
+
+    expect(travel).toContain('this guest-surface lane validates invite-scoped travel/runtime continuity for the shipped portal while still rolling up into the broader proof-board launch call');
+    expect(photoMemory).toContain('this feature bundle validates memory/recap upload-and-readback continuity as shipped lane evidence while still deferring the final launch call to the proof-board flow');
+    expect(guestPreview).toContain('this guest-preview lane validates shipped preview-route visibility and navigation on live runtime without replacing the broader launch-truth flow');
+    expect(notes).toContain('travel guest portal, photo memory flow, and guest preview proof helpers now say the same kind of lane-truth story too');
+  });
+
+  it('keeps adjacent ops-and-analytics helper summaries explicit about their lane role', () => {
+    const qrScanner = read('scripts/v1-proof-qr-scanner.mjs');
+    const analytics = read('scripts/v1-proof-website-invite-analytics.mjs');
+    const collaborator = read('scripts/v1-proof-collaborator-access.mjs');
+    const notes = read('docs/feature-verification-notes-2026-05-18.md');
+
+    expect(qrScanner).toContain('this supporting ops-security lane validates payload safety, parsing, and fallback behavior without acting like a broader launch-truth artifact source');
+    expect(analytics).toContain('this owner-facing lane closes analytics readback and public-route privacy truth for the shipped surface while still rolling up into the broader proof-board launch call');
+    expect(collaborator).toContain('this permission-boundary lane validates invite/role access truth as shipped surface evidence while still deferring full runtime role flows to dedicated live/operator checks');
+    expect(notes).toContain('QR scanner, website/invite analytics, and collaborator access proof helpers now say the same kind of lane-truth story too');
+  });
+
+  it('keeps infra proof helper summaries explicit about readiness, permission, and source-inventory roles', () => {
+    const prereqs = read('scripts/v1-proof-prereqs.mjs');
+    const clientRls = read('scripts/v1-proof-client-rls-matrix.mjs');
+    const clientWriteInventory = read('scripts/v1-proof-client-write-inventory.mjs');
+    const notes = read('docs/feature-verification-notes-2026-05-18.md');
+
+    expect(prereqs).toContain('this readiness lane confirms the local/live foundations for later proof bundles without acting like a shipped-feature or launch-truth artifact source');
+    expect(clientRls).toContain('Client RLS matrix live proof is the strongest collaborator/client permission-boundary lane');
+    expect(clientWriteInventory).toContain('this source-level guard proves shipped runtime files are not using direct client write chains, but it remains supporting inventory evidence rather than a runtime permission proof by itself');
+    expect(notes).toContain('prereqs, client RLS matrix, and client write inventory now say the same kind of infra-lane truth story too');
+  });
+
+  it('keeps security-and-boundary infra helper summaries explicit about their lane role', () => {
+    const performanceBudget = read('scripts/v1-proof-performance-budget.mjs');
+    const astSecurity = read('scripts/v1-proof-ast-security.mjs');
+    const publicAccessCoverage = read('scripts/v1-proof-public-access-coverage.mjs');
+    const notes = read('docs/feature-verification-notes-2026-05-18.md');
+
+    expect(performanceBudget).toContain('this build-artifact lane guards shipped asset weight and review thresholds, but it remains supporting release evidence rather than a feature-runtime truth source by itself');
+    expect(astSecurity).toContain('this source-level security lane guards critical runtime auth/storage/public-boundary patterns, but it supports rather than replaces live permission and guest-surface proof');
+    expect(publicAccessCoverage).toContain('this static boundary lane validates resolver/subresource gate wiring and payload minimization, but it remains supporting public-surface evidence alongside live guest/public proof');
+    expect(notes).toContain('performance budget, AST security, and public-access coverage now say the same kind of infra-lane truth story too');
+  });
+
+  it('keeps long-tail owner and planning helper summaries explicit about their lane role', () => {
+    const notificationDigest = read('scripts/v1-proof-notification-digest.mjs');
+    const weddingIdentity = read('scripts/v1-proof-wedding-identity-exports.mjs');
+    const budgetVendorLedger = read('scripts/v1-proof-budget-vendor-ledger.mjs');
+    const notes = read('docs/feature-verification-notes-2026-05-18.md');
+
+    expect(notificationDigest).toContain('this owner-summary lane validates digest wording and dashboard-count continuity as shipped feature evidence while still leaving live inbox delivery truth to its own downstream pipeline proof');
+    expect(weddingIdentity).toContain('this owner-tooling lane validates safe identity-export generation and download continuity while still deferring broader launch truth to the proof-board flow');
+    expect(budgetVendorLedger).toContain('this planning lane validates financial/vendor continuity and non-exposure as shipped feature evidence while still leaving live shared-site runtime truth to the dedicated reruns');
+    expect(notes).toContain('notification digest, wedding identity exports, and budget/vendor ledger now say the same kind of lane-truth story too');
+  });
+
+  it('keeps AI, fetch-safety, and integrity helper summaries explicit about their lane role', () => {
+    const registryPreviewSsrf = read('scripts/v1-proof-registry-preview-ssrf.mjs');
+    const aiClearance = read('scripts/v1-proof-ai-clearance.mjs');
+    const aiProductReadiness = read('scripts/v1-proof-ai-product-readiness.mjs');
+    const aiMigrationReady = read('scripts/v1-proof-ai-migration-ready.mjs');
+    const dataIntegrity = read('scripts/v1-proof-data-integrity.mjs');
+    const notes = read('docs/feature-verification-notes-2026-05-18.md');
+
+    expect(registryPreviewSsrf).toContain('this runtime security lane validates hostile URL blocking for the shipped preview fetch surface, but it remains supporting fetch-safety evidence rather than a broader launch-truth source by itself');
+    expect(aiClearance).toContain('this lane still needs the live frontend and live readback rerun before AI/privacy launch truth is closed');
+    expect(aiProductReadiness).toContain('this launch-scope lane validates audited AI product posture and labeling, but it still depends on the dedicated secure-model and AI-clearance gates for deeper runtime truth');
+    expect(aiMigrationReady).toContain('this lane confirms the frontend and live readback are ready for the AI/photo column migration, but it is not the post-migration clearance proof by itself');
+    expect(dataIntegrity).toContain('this lane provides partial cross-table evidence only and still defers the full integrity call to the secure service-role proof environment');
+    expect(notes).toContain('AI clearance/readiness/migration, registry-preview SSRF, and data-integrity helpers now say the same kind of lane-truth story too');
+  });
+
+  it('keeps secure AI and runtime guest/collaborator helper summaries explicit about their lane role', () => {
+    const aiSecureModel = read('scripts/v1-proof-ai-secure-model.mjs');
+    const aiExposure = read('scripts/v1-proof-ai-exposure.mjs');
+    const collaboratorRuntime = read('scripts/v1-proof-collaborator-runtime.mjs');
+    const guestLookupScope = read('scripts/v1-proof-guest-lookup-scope.mjs');
+    const notes = read('docs/feature-verification-notes-2026-05-18.md');
+
+    expect(aiSecureModel).toContain('this live secure-env lane closes deeper model/runtime truth for retained AI routes and complements, rather than replaces, AI product-readiness and AI-clearance gates');
+    expect(aiExposure).toContain('this privacy lane closes source/readback evidence that sensitive AI/photo fields are no longer browser-readable on the hardened surface');
+    expect(collaboratorRuntime).toContain('this live permission lane closes invite acceptance and role-scoped runtime behavior beyond the static collaborator access boundary proof');
+    expect(guestLookupScope).toContain('this live guest-contact lane closes scoped lookup/update runtime truth and complements the broader guest/public access proofs');
+    expect(notes).toContain('AI secure model/exposure plus collaborator-runtime and guest-lookup-scope helpers now say the same kind of lane-truth story too');
+  });
+
+  it('keeps proof board and checker-style helper summaries explicit about their contract role', () => {
+    const proofBoard = read('scripts/v1-proof-board.mjs');
+    const gatedRunbook = read('scripts/v1-proof-gated-unblock-runbook.mjs');
+    const runtimeChecklist = read('scripts/v1-proof-runtime-note-checklist.mjs');
+    const securityAutomation = read('scripts/v1-proof-security-automation.mjs');
+    const testLanes = read('scripts/v1-proof-test-lanes.mjs');
+    const notes = read('docs/feature-verification-notes-2026-05-18.md');
+
+    expect(proofBoard).toContain('this canonical launch-truth artifact depends on a fresh BACKLOG.md current-state block');
+    expect(gatedRunbook).toContain('it does not itself establish launch truth, but it keeps the human unblock path aligned with the proof-board and closeout flow');
+    expect(runtimeChecklist).toContain('it keeps the human proof path aligned, but it is not a launch-truth artifact by itself');
+    expect(securityAutomation).toContain('it does not replace the proof-board or feature/runtime proof lanes');
+    expect(testLanes).toContain('it is not itself a feature/runtime proof lane');
+    expect(notes).toContain('proof board plus the remaining checker-style helpers now say their contract role out loud too');
+  });
+
+  it('keeps guest-hub QR, guests/RSVP ops, and name-change runtime helper summaries explicit about their lane role', () => {
+    const guestHubQr = read('scripts/v1-proof-guest-hub-qr.mjs');
+    const guestsRsvpOps = read('scripts/v1-proof-guests-rsvp-ops.mjs');
+    const nameChangeRuntime = read('scripts/v1-proof-name-change-runtime.mjs');
+    const notes = read('docs/feature-verification-notes-2026-05-18.md');
+
+    expect(guestHubQr).toContain('this guest-surface/export lane closes shipped print-pack and safe QR runtime truth while still rolling up into the broader proof-board launch call');
+    expect(guestsRsvpOps).toContain('this owner-plus-guest lane closes shipped RSVP settings, token, and household/runtime truth while still rolling up into the broader proof-board launch call');
+    expect(nameChangeRuntime).toContain('this shipped planner lane closes authenticated saved-surface runtime truth while still rolling up into the broader proof-board launch call');
+    expect(notes).toContain('guest-hub QR, guests/RSVP ops, and name-change runtime now say the same kind of lane-truth story too');
   });
 });

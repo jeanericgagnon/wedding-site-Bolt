@@ -9,51 +9,60 @@ const steps = [
   {
     id: 'name-change-service-tests',
     label: 'Name change service normalization and merge tests',
-    command: 'npm test -- --run src/pages/dashboard/planning/nameChangeService.test.ts',
+    command: 'node_modules/.bin/vitest run src/pages/dashboard/planning/nameChangeService.test.ts --config scripts/name-change-runtime-vitest.config.mjs --environment jsdom --pool=threads --maxWorkers=1 --no-file-parallelism --reporter=verbose',
     required: true,
+    timeoutMs: 180_000,
   },
   {
     id: 'name-change-dependency-tests',
     label: 'Name change TSA, DMV, passport, and dependency matrix tests',
-    command: 'npm test -- --run src/lib/nameChange/requirements.test.ts src/lib/nameChange/tsaFlow.test.ts src/lib/nameChange/dmvFlow.test.ts src/lib/nameChange/passportFlow.test.ts src/lib/nameChange/targetExecution.test.ts',
+    command: 'node_modules/.bin/vitest run src/lib/nameChange/requirements.test.ts src/lib/nameChange/tsaFlow.test.ts src/lib/nameChange/dmvFlow.test.ts src/lib/nameChange/passportFlow.test.ts src/lib/nameChange/targetExecution.test.ts --config scripts/name-change-runtime-vitest.config.mjs --environment jsdom --pool=threads --maxWorkers=1 --no-file-parallelism --reporter=verbose',
     required: true,
+    timeoutMs: 180_000,
   },
   {
     id: 'name-change-reminder-tests',
     label: 'Name change reminder, blocker, and template proof tests',
-    command: 'npm test -- --run src/lib/nameChange/reminders.test.ts',
+    command: 'node_modules/.bin/vitest run src/lib/nameChange/reminders.test.ts --config scripts/name-change-runtime-vitest.config.mjs --environment jsdom --pool=threads --maxWorkers=1 --no-file-parallelism --reporter=verbose',
     required: true,
+    timeoutMs: 180_000,
   },
   {
     id: 'name-change-overview-tests',
     label: 'Name change overview and lifecycle tests',
-    command: 'npm test -- --run src/pages/dashboard/nameChangeLifecycleLabels.test.ts src/pages/dashboard/nameChangeLifecycleStatus.test.ts src/pages/dashboard/nameChangeOverviewCard.test.ts src/pages/dashboard/nameChangeOverviewInsights.test.ts src/pages/dashboard/planning/nameChangePlannerUi.test.ts src/pages/dashboard/planning/nameChangeExecutionTime.test.ts',
+    command: 'node_modules/.bin/vitest run src/pages/dashboard/nameChangeLifecycleLabels.test.ts src/pages/dashboard/nameChangeLifecycleStatus.test.ts src/pages/dashboard/nameChangeOverviewCard.test.ts src/pages/dashboard/nameChangeOverviewInsights.test.ts src/pages/dashboard/planning/nameChangePlannerUi.test.ts src/pages/dashboard/planning/nameChangeExecutionTime.test.ts --config scripts/name-change-runtime-vitest.config.mjs --environment jsdom --pool=threads --maxWorkers=1 --no-file-parallelism --reporter=verbose',
     required: true,
+    timeoutMs: 180_000,
   },
   {
     id: 'name-change-full-suite-tests',
     label: 'Name change full-suite planner depth tests',
-    command: 'npm test -- --run src/lib/nameChange/plannerDeepWork.test.ts src/lib/nameChange/engine.test.ts src/pages/dashboard/planning/NameChangePlannerTab.test.tsx',
+    command: 'node_modules/.bin/vitest run src/lib/nameChange/plannerDeepWork.test.ts src/lib/nameChange/engine.test.ts src/pages/dashboard/planning/NameChangePlannerTab.test.tsx --config scripts/name-change-runtime-vitest.config.mjs --environment jsdom --pool=threads --maxWorkers=1 --no-file-parallelism --reporter=verbose',
     required: true,
+    timeoutMs: 300_000,
   },
   {
     id: 'build',
     label: 'Build integrity check',
     command: 'npm run build',
     required: true,
+    timeoutMs: 900_000,
   },
 ];
 
 function runStep(step) {
   const startedAt = new Date().toISOString();
+  console.error(`[name-change-runtime-proof] starting ${step.id}: ${step.command}`);
   try {
     const stdout = execSync(step.command, {
       stdio: ['ignore', 'pipe', 'pipe'],
       encoding: 'utf8',
       shell: '/bin/zsh',
       env: process.env,
+      timeout: step.timeoutMs ?? 180_000,
       maxBuffer: 20 * 1024 * 1024,
     });
+    console.error(`[name-change-runtime-proof] passed ${step.id}`);
 
     return {
       id: step.id,
@@ -68,6 +77,7 @@ function runStep(step) {
   } catch (error) {
     const stdout = typeof error?.stdout === 'string' ? error.stdout : Buffer.isBuffer(error?.stdout) ? error.stdout.toString('utf8') : '';
     const stderr = typeof error?.stderr === 'string' ? error.stderr : Buffer.isBuffer(error?.stderr) ? error.stderr.toString('utf8') : '';
+    console.error(`[name-change-runtime-proof] failed ${step.id}`);
     return {
       id: step.id,
       label: step.label,
@@ -91,6 +101,7 @@ if (liveEnabled) {
     label: 'Name change live runtime smoke',
     command: 'npx playwright test --workers=1 tests/e2e/name-change-runtime.spec.ts',
     required: true,
+    timeoutMs: 420_000,
   }));
 }
 
@@ -118,6 +129,11 @@ const output = {
     passed: results.filter((result) => result.ok).length,
     failed: failedRequired.length,
   },
+  contractSummary: failedRequired.length === 0
+    ? liveEnabled
+      ? 'Name-change runtime live proof is green: this shipped planner lane closes authenticated saved-surface runtime truth while still rolling up into the broader proof-board launch call.'
+      : 'Name-change runtime local proof is green: this planner lane validates saved planner logic and UI locally and leaves authenticated live route truth to the dedicated rerun.'
+    : 'Name-change runtime proof is not green yet: required planner logic, UI, build, or live runtime evidence is still failing.',
   automatedCoverage: [
     'Case normalization and document merge safety',
     'Passport alias mapping plus TSA, DMV, travel, and execution dependency truth',

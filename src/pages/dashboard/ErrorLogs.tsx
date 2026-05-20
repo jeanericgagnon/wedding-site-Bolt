@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import { Card } from '../../components/ui/Card';
 import { Link } from 'react-router-dom';
@@ -20,6 +20,7 @@ export const DashboardErrorLogs: React.FC = () => {
   const [logsLoading, setLogsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [adminCheckComplete, setAdminCheckComplete] = useState(false);
   const [severityFilter, setSeverityFilter] = useState<'all' | 'error' | 'warning' | 'info'>('all');
   const [routeFilter, setRouteFilter] = useState('all');
   const [datePreset, setDatePreset] = useState<'24h' | '7d' | '30d' | 'all'>('7d');
@@ -27,32 +28,67 @@ export const DashboardErrorLogs: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [page, setPage] = useState(1);
   const [expandedId, setExpandedId] = useState<string | null>(null);
-  const [copied, setCopied] = useState<string | null>(null);
+  const [copyStatus, setCopyStatus] = useState<{ key: string; state: 'copying' | 'copied' | 'downloaded' | 'error' } | null>(null);
+  const copyStatusTimeoutRef = useRef<number | null>(null);
+  const previousUserIdRef = useRef<string | null>(null);
+  const adminCheckRequestIdRef = useRef(0);
+  const errorLogsRequestIdRef = useRef(0);
+  const copyStatusRequestIdRef = useRef(0);
+  const mountedRef = useRef(true);
+
+  const resetErrorLogsState = useCallback(() => {
+    copyStatusRequestIdRef.current += 1;
+    setRows([]);
+    setError(null);
+    setIsAdmin(false);
+    setAdminCheckComplete(false);
+    setSeverityFilter('all');
+    setRouteFilter('all');
+    setDatePreset('7d');
+    setFingerprintFilter('all');
+    setSearchQuery('');
+    setPage(1);
+    setExpandedId(null);
+    setCopyStatus(null);
+  }, []);
+
+  useEffect(() => () => {
+    mountedRef.current = false;
+    copyStatusRequestIdRef.current += 1;
+    if (copyStatusTimeoutRef.current) window.clearTimeout(copyStatusTimeoutRef.current);
+  }, []);
 
   useEffect(() => {
     let mounted = true;
+    const requestId = ++adminCheckRequestIdRef.current;
+    const isCurrentRequest = () => mounted && requestId === adminCheckRequestIdRef.current;
     (async () => {
       if (!user?.id) {
-        if (mounted) {
-          setIsAdmin(false);
+        if (isCurrentRequest()) {
+          resetErrorLogsState();
           setLogsLoading(false);
         }
         return;
       }
       if (isDemoMode) {
-        if (mounted) {
-          setIsAdmin(false);
+        if (isCurrentRequest()) {
+          resetErrorLogsState();
           setLogsLoading(false);
         }
         return;
       }
 
       try {
+        setLogsLoading(true);
+        setAdminCheckComplete(false);
+        setError(null);
         const admin = await isErrorLogAdmin(user.id);
-        if (!mounted) return;
+        if (!isCurrentRequest()) return;
         setIsAdmin(admin);
+        setAdminCheckComplete(true);
       } catch {
-        if (!mounted) return;
+        if (!isCurrentRequest()) return;
+        resetErrorLogsState();
         setError('Couldn’t verify error-log access right now.');
         setLogsLoading(false);
         return;
@@ -62,29 +98,47 @@ export const DashboardErrorLogs: React.FC = () => {
     return () => {
       mounted = false;
     };
-  }, [isDemoMode, user?.id]);
+  }, [isDemoMode, resetErrorLogsState, user?.id]);
 
   useEffect(() => {
+    const userId = user?.id ?? null;
+    if (previousUserIdRef.current && userId && previousUserIdRef.current !== userId) {
+      resetErrorLogsState();
+    }
+    previousUserIdRef.current = userId;
+  }, [resetErrorLogsState, user?.id]);
+
+  useEffect(() => {
+    if (!adminCheckComplete) return;
     if (!isAdmin) {
+      errorLogsRequestIdRef.current += 1;
+      copyStatusRequestIdRef.current += 1;
+      setRows([]);
+      setExpandedId(null);
+      setCopyStatus(null);
       setLogsLoading(false);
       return;
     }
 
     let mounted = true;
+    const requestId = ++errorLogsRequestIdRef.current;
+    const isCurrentRequest = () => mounted && requestId === errorLogsRequestIdRef.current;
     (async () => {
       try {
+        setLogsLoading(true);
+        setError(null);
         const logs = await loadDashboardErrorLogs();
-        if (mounted) setRows(logs);
+        if (isCurrentRequest()) setRows(logs);
       } catch {
-        if (mounted) setError('Couldn’t load error logs right now.');
+        if (isCurrentRequest()) setError('Couldn’t load error logs right now.');
       } finally {
-        if (mounted) setLogsLoading(false);
+        if (isCurrentRequest()) setLogsLoading(false);
       }
     })();
     return () => {
       mounted = false;
     };
-  }, [isAdmin]);
+  }, [adminCheckComplete, isAdmin]);
 
   const filteredRows = useMemo(() => rows.filter((row) => {
     const severityOk = severityFilter === 'all' ? true : row.severity === severityFilter;
@@ -122,12 +176,25 @@ export const DashboardErrorLogs: React.FC = () => {
   }, [rows]);
 
   const copyValue = async (value: string, key: string) => {
+    if (!value || copyStatus?.state === 'copying') return;
+    const requestId = ++copyStatusRequestIdRef.current;
+    const isCurrentCopyRequest = () => mountedRef.current && requestId === copyStatusRequestIdRef.current;
+    setCopyStatus({ key, state: 'copying' });
     try {
-      await copyTextOrDownload(value, `dayof-error-${key}.txt`);
-      setCopied(key);
-      setTimeout(() => setCopied((prev) => (prev === key ? null : prev)), 1200);
+      const result = await copyTextOrDownload(value, `dayof-error-${key}.txt`);
+      if (!isCurrentCopyRequest()) return;
+      setCopyStatus({ key, state: result === 'copied' ? 'copied' : 'downloaded' });
+      if (copyStatusTimeoutRef.current) window.clearTimeout(copyStatusTimeoutRef.current);
+      copyStatusTimeoutRef.current = window.setTimeout(() => {
+        if (isCurrentCopyRequest()) setCopyStatus((prev) => (prev?.key === key ? null : prev));
+      }, 1200);
     } catch {
-      // no-op
+      if (!isCurrentCopyRequest()) return;
+      setCopyStatus({ key, state: 'error' });
+      if (copyStatusTimeoutRef.current) window.clearTimeout(copyStatusTimeoutRef.current);
+      copyStatusTimeoutRef.current = window.setTimeout(() => {
+        if (isCurrentCopyRequest()) setCopyStatus((prev) => (prev?.key === key ? null : prev));
+      }, 1800);
     }
   };
 
@@ -186,7 +253,7 @@ export const DashboardErrorLogs: React.FC = () => {
     return [...map.values()].sort((a, b) => b.count - a.count).slice(0, 8);
   }, [filteredRows]);
 
-  if (loading) {
+  if (loading || (!adminCheckComplete && user?.id && !isDemoMode)) {
     return (
       <div className="min-h-screen bg-background p-6">
         <div className="max-w-6xl mx-auto">
@@ -240,7 +307,7 @@ export const DashboardErrorLogs: React.FC = () => {
                     value={searchQuery}
                     onChange={(e) => { setSearchQuery(e.target.value); setPage(1); }}
                     placeholder="Message, route, source, fingerprint"
-                    className="ml-2 px-2 py-1 border border-border rounded-md text-xs bg-white w-64 max-w-full"
+                    className="ml-2 w-64 max-w-full rounded-xl border border-border bg-white px-2 py-1 text-xs"
                   />
                 </label>
                 <label className="text-xs text-text-secondary">
@@ -248,7 +315,7 @@ export const DashboardErrorLogs: React.FC = () => {
                   <select
                     value={datePreset}
                     onChange={(e) => setDatePreset(e.target.value as '24h' | '7d' | '30d' | 'all')}
-                    className="ml-2 px-2 py-1 border border-border rounded-md text-xs bg-white"
+                    className="ml-2 rounded-xl border border-border bg-white px-2 py-1 text-xs"
                   >
                     <option value="24h">Last 24 hours</option>
                     <option value="7d">Last 7 days</option>
@@ -261,7 +328,7 @@ export const DashboardErrorLogs: React.FC = () => {
                   <select
                     value={severityFilter}
                     onChange={(e) => setSeverityFilter(e.target.value as 'all' | 'error' | 'warning' | 'info')}
-                    className="ml-2 px-2 py-1 border border-border rounded-md text-xs bg-white"
+                    className="ml-2 rounded-xl border border-border bg-white px-2 py-1 text-xs"
                   >
                     <option value="all">All</option>
                     <option value="error">Error</option>
@@ -274,7 +341,7 @@ export const DashboardErrorLogs: React.FC = () => {
                   <select
                     value={routeFilter}
                     onChange={(e) => setRouteFilter(e.target.value)}
-                    className="ml-2 px-2 py-1 border border-border rounded-md text-xs bg-white"
+                    className="ml-2 rounded-xl border border-border bg-white px-2 py-1 text-xs"
                   >
                     {routeOptions.map((r) => (
                       <option key={r} value={r}>{r === 'all' ? 'All routes' : r}</option>
@@ -286,7 +353,7 @@ export const DashboardErrorLogs: React.FC = () => {
                   <select
                     value={fingerprintFilter}
                     onChange={(e) => { setFingerprintFilter(e.target.value); setPage(1); }}
-                    className="ml-2 px-2 py-1 border border-border rounded-md text-xs bg-white"
+                    className="ml-2 rounded-xl border border-border bg-white px-2 py-1 text-xs"
                   >
                     {fingerprintOptions.map((f) => (
                       <option key={f} value={f}>{f === 'all' ? 'All fingerprints' : f}</option>
@@ -295,7 +362,7 @@ export const DashboardErrorLogs: React.FC = () => {
                 </label>
                 <button
                   onClick={exportFilteredCsv}
-                  className="px-3 py-1.5 text-xs border border-border rounded-md bg-white hover:bg-surface-subtle"
+                  className="rounded-xl border border-border bg-white px-3 py-1.5 text-xs hover:bg-surface-subtle"
                 >
                   Export CSV
                 </button>
@@ -311,12 +378,12 @@ export const DashboardErrorLogs: React.FC = () => {
                     </div>
                     <div className="flex items-center gap-2">
                       <button
-                        className="text-xs px-2 py-1 rounded-md border border-border-subtle bg-white"
+                        className="rounded-xl border border-border-subtle bg-white px-2 py-1 text-xs"
                         onClick={() => { setFingerprintFilter(g.fingerprint); setPage(1); }}
                       >
                         Filter
                       </button>
-                      <span className="whitespace-nowrap rounded-md border border-border-subtle bg-surface-subtle px-2 py-1 text-xs">{g.count}x</span>
+                      <span className="whitespace-nowrap rounded-xl border border-border-subtle bg-surface-subtle px-2 py-1 text-xs">{g.count}x</span>
                     </div>
                   </div>
                 ))}
@@ -350,7 +417,7 @@ export const DashboardErrorLogs: React.FC = () => {
                         <td className="px-3 py-2 font-mono text-xs">{r.fingerprint || '—'}</td>
                         <td className="px-3 py-2 text-right">
                           <button
-                            className="px-2 py-1 border border-border rounded-md text-xs"
+                            className="rounded-xl border border-border px-2 py-1 text-xs"
                             onClick={() => setExpandedId((prev) => (prev === r.id ? null : r.id))}
                           >
                             {isOpen ? 'Hide' : 'Details'}
@@ -362,19 +429,41 @@ export const DashboardErrorLogs: React.FC = () => {
                           <td colSpan={8} className="px-3 py-2">
                             <div className="flex flex-wrap gap-2 items-center mb-2">
                               <button
-                                className="px-2 py-1 border border-border rounded-md text-xs"
+                                className="rounded-xl border border-border px-2 py-1 text-xs"
                                 onClick={() => void copyValue(r.fingerprint || '', `fp-${r.id}`)}
-                                disabled={!r.fingerprint}
+                                disabled={!r.fingerprint || copyStatus?.state === 'copying'}
                               >
-                                {copied === `fp-${r.id}` ? 'Copied fingerprint' : 'Copy fingerprint'}
+                                {copyStatus?.key === `fp-${r.id}`
+                                  ? copyStatus.state === 'copying'
+                                    ? 'Copying fingerprint...'
+                                    : copyStatus.state === 'copied'
+                                      ? 'Copied fingerprint'
+                                      : copyStatus.state === 'downloaded'
+                                        ? 'Downloaded fingerprint'
+                                      : 'Retry fingerprint'
+                                  : 'Copy fingerprint'}
                               </button>
                               <button
-                                className="px-2 py-1 border border-border rounded-md text-xs"
+                                className="rounded-xl border border-border px-2 py-1 text-xs"
                                 onClick={() => void copyValue(r.message, `msg-${r.id}`)}
+                                disabled={copyStatus?.state === 'copying'}
                               >
-                                {copied === `msg-${r.id}` ? 'Copied message' : 'Copy message'}
+                                {copyStatus?.key === `msg-${r.id}`
+                                  ? copyStatus.state === 'copying'
+                                    ? 'Copying message...'
+                                    : copyStatus.state === 'copied'
+                                      ? 'Copied message'
+                                      : copyStatus.state === 'downloaded'
+                                        ? 'Downloaded message'
+                                      : 'Retry message'
+                                  : 'Copy message'}
                               </button>
                             </div>
+                            {copyStatus?.state === 'error' && (copyStatus.key === `fp-${r.id}` || copyStatus.key === `msg-${r.id}`) && (
+                              <p role="alert" className="mb-2 text-xs text-error">
+                                Couldn’t copy that value right now.
+                              </p>
+                            )}
                             <p className="text-xs text-text-secondary break-words">{r.message}</p>
                           </td>
                         </tr>
@@ -390,7 +479,7 @@ export const DashboardErrorLogs: React.FC = () => {
               <span>Showing {pagedRows.length} of {filteredRows.length}</span>
               <div className="flex items-center gap-2">
                 <button
-                  className="px-2 py-1 border border-border rounded-md disabled:opacity-50"
+                  className="rounded-xl border border-border px-2 py-1 disabled:opacity-50"
                   disabled={page <= 1}
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
                 >
@@ -398,7 +487,7 @@ export const DashboardErrorLogs: React.FC = () => {
                 </button>
                 <span>Page {page} / {totalPages}</span>
                 <button
-                  className="px-2 py-1 border border-border rounded-md disabled:opacity-50"
+                  className="rounded-xl border border-border px-2 py-1 disabled:opacity-50"
                   disabled={page >= totalPages}
                   onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                 >

@@ -1,9 +1,10 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { Camera, Heart, Share2, Sparkles } from 'lucide-react';
 import { OwnerPreviewBanner } from '../components/site/OwnerPreviewBanner';
 import { copyTextOrDownload } from '../lib/copyText';
+import { resolveCurrentSearchParams } from '../lib/currentSearchParams';
 import { customerSafeErrorMessage } from '../lib/customerSafeError';
 import { demoWeddingSite } from '../lib/demoData';
 import { readStoredGuestLanguage, resolveGuestLanguagePreference, writeStoredGuestLanguage } from '../lib/guestLanguagePreference';
@@ -21,17 +22,16 @@ import {
 } from './guestHubPublicService';
 import { EventRecapLiveContent } from './EventRecapLiveContent';
 
-export const buildEventRecapGuestHubAccessPayload = (slug: string) => {
-  const searchParams = new URLSearchParams(window.location.search);
-  return buildPublicAccessArtifacts(slug, searchParams);
+export const buildEventRecapGuestHubAccessPayload = (slug: string, searchParams?: URLSearchParams) => {
+  return buildPublicAccessArtifacts(slug, resolveCurrentSearchParams(searchParams));
 };
 
 export const resolveEventRecapViewTarget = (access: ReturnType<typeof buildEventRecapGuestHubAccessPayload>) => (
   access.inviteToken ? '/event/recap/invite' : '/event/recap'
 );
 
-export const buildEventRecapAccessHeaders = (slug: string) => {
-  const access = buildEventRecapGuestHubAccessPayload(slug);
+export const buildEventRecapAccessHeaders = (slug: string, searchParams?: URLSearchParams) => {
+  const access = buildEventRecapGuestHubAccessPayload(slug, searchParams);
   return {
     ...(access.inviteToken ? { 'x-dayof-invite-token': access.inviteToken } : {}),
     ...(access.passwordSession ? { 'x-dayof-password-session': access.passwordSession } : {}),
@@ -187,8 +187,9 @@ export const formatEventRecapAlbumLabel = (value: string | null | undefined) => 
 export const EventRecap: React.FC = () => {
   const { t, i18n } = useTranslation();
   const { siteRef } = useParams();
+  const [routerSearchParams] = useSearchParams();
   const slug = normalizeSiteRef(siteRef);
-  const searchParams = useMemo(() => new URLSearchParams(window.location.search), []);
+  const searchParams = useMemo(() => new URLSearchParams(routerSearchParams), [routerSearchParams]);
   const [data, setData] = useState<RecapData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -199,8 +200,38 @@ export const EventRecap: React.FC = () => {
   const [optInStatus, setOptInStatus] = useState<string | null>(null);
   const [savingOptIn, setSavingOptIn] = useState(false);
   const [shareStatus, setShareStatus] = useState<string | null>(null);
+  const [recapShareNotice, setRecapShareNotice] = useState<'copied' | 'downloaded' | null>(null);
+  const [copyingRecapLink, setCopyingRecapLink] = useState(false);
+  const [storyCaptionNotice, setStoryCaptionNotice] = useState<'copied' | 'downloaded' | null>(null);
+  const [copyingStoryCaption, setCopyingStoryCaption] = useState(false);
   const [generatingStory, setGeneratingStory] = useState(false);
+  const shareActionRequestIdRef = useRef(0);
+  const mountedRef = useRef(true);
   const recap = data;
+
+  useEffect(() => () => {
+    mountedRef.current = false;
+    shareActionRequestIdRef.current += 1;
+  }, []);
+
+  useEffect(() => {
+    shareActionRequestIdRef.current += 1;
+    setData(null);
+    setLoading(true);
+    setError(null);
+    setGuestName('');
+    setEmail('');
+    setPhone('');
+    setWantsOwnEventInfo(false);
+    setOptInStatus(null);
+    setSavingOptIn(false);
+    setShareStatus(null);
+    setRecapShareNotice(null);
+    setCopyingRecapLink(false);
+    setStoryCaptionNotice(null);
+    setCopyingStoryCaption(false);
+    setGeneratingStory(false);
+  }, [searchParams, slug]);
 
   useEffect(() => {
     if (slug) {
@@ -209,13 +240,13 @@ export const EventRecap: React.FC = () => {
     }
     const languagePreference = resolveGuestLanguagePreference({
       search: searchParams,
-      storedLanguage: readStoredGuestLanguage(),
+      storedLanguage: readStoredGuestLanguage(slug),
     });
     if (languagePreference.language !== i18n.language?.split('-')[0]?.toLowerCase()) {
       void i18n.changeLanguage(languagePreference.language);
     }
     if (languagePreference.source === 'guest-link') {
-      writeStoredGuestLanguage(languagePreference.language);
+      writeStoredGuestLanguage(languagePreference.language, slug);
     }
   }, [i18n, searchParams, slug]);
 
@@ -231,7 +262,7 @@ export const EventRecap: React.FC = () => {
     if (!slug || !hasGuestHubPublicRuntime()) return;
     let cancelled = false;
     setLoading(true);
-    fetchGuestRecapConfig<RecapData>(slug, buildEventRecapAccessHeaders(slug), 'Couldn’t load the recap.')
+    fetchGuestRecapConfig<RecapData>(slug, buildEventRecapAccessHeaders(slug, searchParams), 'Couldn’t load the recap.')
       .then((payload) => {
         if (!cancelled) setData(payload);
       })
@@ -244,11 +275,11 @@ export const EventRecap: React.FC = () => {
     return () => {
       cancelled = true;
     };
-  }, [slug]);
+  }, [searchParams, slug]);
 
   useEffect(() => {
     if (!slug) return;
-    const access = buildEventRecapGuestHubAccessPayload(slug);
+    const access = buildEventRecapGuestHubAccessPayload(slug, searchParams);
     trackGuestHubEvent(slug, 'view', resolveEventRecapViewTarget(access), access).catch(() => {});
   }, [slug]);
 
@@ -277,7 +308,7 @@ export const EventRecap: React.FC = () => {
           wantsPhotoUpdates: true,
           wantsOwnEventInfo,
           source: 'guest_recap',
-          ...buildEventRecapGuestHubAccessPayload(slug),
+          ...buildEventRecapGuestHubAccessPayload(slug, searchParams),
         },
         'Couldn’t save.',
       );
@@ -292,6 +323,15 @@ export const EventRecap: React.FC = () => {
   };
 
   const shareRecap = async (card?: RecapCard) => {
+    const requestId = ++shareActionRequestIdRef.current;
+    const requestSlug = slug;
+    const requestSearchParams = searchParams.toString();
+    const isCurrentShareAction = () => (
+      mountedRef.current &&
+      requestId === shareActionRequestIdRef.current &&
+      requestSlug === slug &&
+      requestSearchParams === searchParams.toString()
+    );
     const url = typeof window !== 'undefined'
       ? `${window.location.origin}/event/${encodeURIComponent(slug)}/recap`
       : `https://dayof.love/event/${encodeURIComponent(slug)}/recap`;
@@ -300,26 +340,63 @@ export const EventRecap: React.FC = () => {
     try {
       if (navigator.share) {
         await navigator.share({ title, text, url });
+        if (!isCurrentShareAction()) return;
+        setRecapShareNotice(null);
         setShareStatus(t('event_recap.share_status'));
         return;
       }
+      if (!card && copyingRecapLink) return;
+      if (!card) {
+        setRecapShareNotice(null);
+        setCopyingRecapLink(true);
+      }
       const result = await copyTextOrDownload(url, `${slug || 'dayof'}-recap-link.txt`);
+      if (!isCurrentShareAction()) return;
+      if (!card) {
+        setRecapShareNotice(result);
+      }
       setShareStatus(result === 'copied'
         ? t('event_recap.link_copied')
         : t('event_recap.link_downloaded'));
     } catch {
-      setShareStatus('Copy this recap link from your browser bar.');
+      if (!isCurrentShareAction()) return;
+      setShareStatus('Couldn’t copy the recap link right now.');
+    } finally {
+      if (!card && isCurrentShareAction()) {
+        setCopyingRecapLink(false);
+      }
     }
   };
 
   const copyStoryCaption = async () => {
+    if (copyingStoryCaption) return;
+    const requestId = ++shareActionRequestIdRef.current;
+    const requestSlug = slug;
+    const requestSearchParams = searchParams.toString();
+    const isCurrentShareAction = () => (
+      mountedRef.current &&
+      requestId === shareActionRequestIdRef.current &&
+      requestSlug === slug &&
+      requestSearchParams === searchParams.toString()
+    );
+    setStoryCaptionNotice(null);
+    setCopyingStoryCaption(true);
     try {
       const result = await copyTextOrDownload(storyCaption, `${slug || 'dayof'}-story-caption.txt`);
+      if (!isCurrentShareAction()) return;
+      setStoryCaptionNotice(result);
       setShareStatus(result === 'copied' ? t('event_recap.link_copied') : t('event_recap.link_downloaded'));
     } catch {
-      setShareStatus('Copy the recap link from your browser bar.');
+      if (!isCurrentShareAction()) return;
+      setShareStatus('Couldn’t copy the story caption right now.');
+    } finally {
+      if (isCurrentShareAction()) {
+        setCopyingStoryCaption(false);
+      }
     }
   };
+
+  const clearOptInStatus = () => setOptInStatus(null);
 
   const loadCanvasImage = (src: string) => new Promise<HTMLImageElement | null>((resolve) => {
     const img = new Image();
@@ -457,11 +534,11 @@ export const EventRecap: React.FC = () => {
   };
 
   const recapLoadingView = (
-    <div className="mt-6 rounded-lg border border-neutral-200 bg-white p-6 text-neutral-600">{t('event_recap.loading')}</div>
+    <div className="mt-6 rounded-xl border border-neutral-200 bg-white p-6 text-neutral-600">{t('event_recap.loading')}</div>
   );
 
   const recapErrorView = (
-    <div className="mt-6 rounded-lg border border-neutral-200 bg-neutral-50 p-6 text-neutral-700">
+    <div className="mt-6 rounded-xl border border-neutral-200 bg-neutral-50 p-6 text-neutral-700">
       {error || 'Couldn’t load the recap right now. Please refresh and try again.'}
     </div>
   );
@@ -476,7 +553,7 @@ export const EventRecap: React.FC = () => {
         </div>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {recap.highlights.slice(0, 12).map((card) => (
-            <article key={card.id} className="overflow-hidden rounded-lg border border-neutral-200 bg-white">
+            <article key={card.id} className="overflow-hidden rounded-xl border border-neutral-200 bg-white">
               {card.imageUrl && card.mimeType?.startsWith('image/') ? (
                 <img src={card.imageUrl} alt={card.caption || card.filename} className="aspect-[4/3] w-full object-cover" loading="lazy" />
               ) : (
@@ -497,7 +574,7 @@ export const EventRecap: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => void shareRecap(card)}
-                  className="mt-4 inline-flex items-center gap-2 rounded-lg border border-neutral-200 px-3 py-1.5 text-xs font-medium text-neutral-700 hover:bg-neutral-50"
+                  className="mt-4 inline-flex items-center gap-2 rounded-xl border border-neutral-200 px-3 py-1.5 text-xs font-medium text-neutral-700 hover:bg-neutral-50"
                 >
                   <Share2 className="h-3.5 w-3.5" />
                   {t('event_recap.share_moment')}
@@ -511,20 +588,20 @@ export const EventRecap: React.FC = () => {
 
       {recap && (
         <section className="mt-6 grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
-        <div className="rounded-lg border border-neutral-200 bg-white p-5">
+        <div className="rounded-xl border border-neutral-200 bg-white p-5">
           <div className="flex items-center gap-2">
             <Heart className="h-5 w-5 text-neutral-700" />
             <h2 className="text-xl font-semibold">{t('event_recap.memory_chapters')}</h2>
           </div>
           <div className="mt-4 space-y-3">
             {recap.chapters.slice(0, 6).map((chapter) => (
-              <div key={chapter.date} className="rounded-lg border border-neutral-200 bg-neutral-50 p-4">
+              <div key={chapter.date} className="rounded-xl border border-neutral-200 bg-neutral-50 p-4">
                 <p className="text-sm font-semibold text-neutral-900">{formatRecapChapterDate(chapter.date)}</p>
                 <p className="mt-1 text-sm text-neutral-600">{chapter.count} shared moment{chapter.count === 1 ? '' : 's'}</p>
               </div>
             ))}
           </div>
-          <div className="mt-5 rounded-lg border border-neutral-200 bg-neutral-50 p-4">
+          <div className="mt-5 rounded-xl border border-neutral-200 bg-neutral-50 p-4">
             <p className="text-sm font-semibold text-neutral-900">{t('event_recap.post_socials')}</p>
             <p className="mt-1 text-sm leading-6 text-neutral-600">
               {t('event_recap.post_socials_detail')}
@@ -534,7 +611,7 @@ export const EventRecap: React.FC = () => {
                 type="button"
                 onClick={() => void downloadStoryAsset()}
                 disabled={generatingStory}
-                className="inline-flex items-center gap-2 rounded-lg bg-neutral-950 px-4 py-2 text-sm font-semibold text-white hover:bg-neutral-800 disabled:opacity-60"
+                className="inline-flex items-center gap-2 rounded-xl bg-neutral-950 px-4 py-2 text-sm font-semibold text-white hover:bg-neutral-800 disabled:opacity-60"
               >
                 <Sparkles className="h-4 w-4" />
                 {generatingStory ? t('event_recap.creating') : t('event_recap.download_story')}
@@ -542,22 +619,36 @@ export const EventRecap: React.FC = () => {
               <button
                 type="button"
                 onClick={() => void shareRecap()}
-                className="inline-flex items-center gap-2 rounded-lg border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-800 hover:bg-white"
+                disabled={copyingRecapLink}
+                className="inline-flex items-center gap-2 rounded-xl border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-800 hover:bg-white"
               >
                 <Share2 className="h-4 w-4" />
-                {t('event_recap.share_recap')}
+                {copyingRecapLink
+                  ? 'Copying recap...'
+                  : recapShareNotice === 'downloaded'
+                    ? 'Downloaded recap link'
+                    : recapShareNotice === 'copied'
+                      ? 'Copied recap link'
+                      : t('event_recap.share_recap')}
               </button>
               <button
                 type="button"
                 onClick={() => void copyStoryCaption()}
-                className="inline-flex rounded-lg border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-800 hover:bg-white"
+                disabled={copyingStoryCaption}
+                className="inline-flex rounded-xl border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-800 hover:bg-white"
               >
-                {t('event_recap.copy_caption')}
+                {copyingStoryCaption
+                  ? 'Copying caption...'
+                  : storyCaptionNotice === 'downloaded'
+                    ? 'Downloaded caption'
+                    : storyCaptionNotice === 'copied'
+                      ? 'Copied caption'
+                      : t('event_recap.copy_caption')}
               </button>
             </div>
           </div>
         </div>
-        <form onSubmit={submitOptIn} className="rounded-lg border border-neutral-200 bg-white p-5" aria-busy={savingOptIn}>
+        <form onSubmit={submitOptIn} className="rounded-xl border border-neutral-200 bg-white p-5" aria-busy={savingOptIn}>
           <p className="text-xs font-semibold text-neutral-600">{t('event_recap.get_album')}</p>
           <h2 className="mt-3 text-2xl font-semibold">{t('event_recap.send_me')}</h2>
           <p className="mt-2 text-sm leading-6 text-neutral-600">
@@ -566,23 +657,23 @@ export const EventRecap: React.FC = () => {
           <div className="mt-4 space-y-3">
             <div>
               <label htmlFor="event-recap-guest-name" className="mb-1 block text-sm font-medium text-neutral-800">Your name (optional)</label>
-              <input id="event-recap-guest-name" value={guestName} onChange={(e) => setGuestName(e.target.value)} placeholder="Your name" className="w-full rounded-lg border border-neutral-300 px-4 py-3 text-sm" />
+              <input id="event-recap-guest-name" value={guestName} onChange={(e) => { clearOptInStatus(); setGuestName(e.target.value); }} placeholder="Your name" className="w-full rounded-xl border border-neutral-300 px-4 py-3 text-sm" />
             </div>
             <div>
               <label htmlFor="event-recap-email" className="mb-1 block text-sm font-medium text-neutral-800">Email (optional)</label>
-              <input id="event-recap-email" value={email} onChange={(e) => setEmail(e.target.value)} type="email" placeholder="Email" className="w-full rounded-lg border border-neutral-300 px-4 py-3 text-sm" />
+              <input id="event-recap-email" value={email} onChange={(e) => { clearOptInStatus(); setEmail(e.target.value); }} type="email" placeholder="Email" className="w-full rounded-xl border border-neutral-300 px-4 py-3 text-sm" />
             </div>
             <div>
               <label htmlFor="event-recap-phone" className="mb-1 block text-sm font-medium text-neutral-800">{t('event_recap.phone_optional')}</label>
-              <input id="event-recap-phone" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder={t('event_recap.phone_optional')} className="w-full rounded-lg border border-neutral-300 px-4 py-3 text-sm" />
+              <input id="event-recap-phone" value={phone} onChange={(e) => { clearOptInStatus(); setPhone(e.target.value); }} placeholder={t('event_recap.phone_optional')} className="w-full rounded-xl border border-neutral-300 px-4 py-3 text-sm" />
             </div>
-            <label className="flex items-start gap-3 rounded-lg border border-neutral-200 bg-neutral-50 p-3 text-sm text-neutral-700">
-              <input type="checkbox" checked={wantsOwnEventInfo} onChange={(e) => setWantsOwnEventInfo(e.target.checked)} className="mt-1" />
+            <label className="flex items-start gap-3 rounded-xl border border-neutral-200 bg-neutral-50 p-3 text-sm text-neutral-700">
+              <input type="checkbox" checked={wantsOwnEventInfo} onChange={(e) => { clearOptInStatus(); setWantsOwnEventInfo(e.target.checked); }} className="mt-1" />
               <span>{t('event_recap.own_event')}</span>
             </label>
           </div>
           {optInStatus && <p role={optInStatus.startsWith('Saved.') ? 'status' : 'alert'} className="mt-3 text-sm text-neutral-700">{optInStatus}</p>}
-          <button disabled={savingOptIn} className="mt-4 w-full rounded-lg bg-neutral-950 px-4 py-3 text-sm font-semibold text-white disabled:opacity-60">
+          <button disabled={savingOptIn} className="mt-4 w-full rounded-xl bg-neutral-950 px-4 py-3 text-sm font-semibold text-white disabled:opacity-60">
             {savingOptIn ? t('guest_hub.saving') : t('event_recap.get_recap')}
           </button>
           <Link to="/signup" className="mt-3 block text-center text-sm font-medium text-neutral-700 hover:underline">

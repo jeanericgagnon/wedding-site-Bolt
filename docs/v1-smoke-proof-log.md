@@ -37,6 +37,10 @@ _Launch call right now:_ `GO`
 - Client-facing RLS proof now has one canonical live matrix command: `npm run proof:v1:client-rls-matrix`.
 - Active runtime pages now also have one canonical local inventory guard: `npm run proof:v1:client-write-inventory`.
 - `test:launch`, `ci-hardpass`, and `Release Launch Gate` now all require `npm run proof:v1:ast-security`, `npm run proof:v1:client-rls-matrix -- --require-live`, and live `registry-preview-ssrf`.
+- `ci-hardpass` and `Release Launch Gate` are freshness-only board gates: they require `npm run proof:v1:board:freshness`, but they intentionally do not regenerate `npm run proof:v1:board` or `npm run proof:v1:board:md`.
+- Local/helper proof paths such as `npm run proof:v1:launch-closeout`, `dayof:proof`, and the local `full-suite-exit-gate` are the places that regenerate those board artifacts when a fresh machine-readable or markdown snapshot is needed.
+- The proof-board path now has an explicit freshness contract: `npm run proof:v1:board:freshness` must pass before either `npm run proof:v1:board` or `npm run proof:v1:board:md` is treated as current launch truth.
+- Older timestamped entries below may still list only `proof:v1:board:md` because they record the commands that were run at that moment; use the freshness rule above as the current launch-truth contract.
 - Public vault contribution is now live-proven instead of deferred.
 - `.dayof.love` subdomain routing now has a dedicated live proof and is no longer deferred.
 - External custom domains remain unsupported product scope, not a pending proof lane.
@@ -48,6 +52,8 @@ _Launch call right now:_ `GO`
   - `npm run typecheck -- --pretty false` -> `PASS`
   - `npm run lint -- --quiet` -> `PASS`
   - `npm run build` -> `PASS`
+  - `npm run proof:v1:board:freshness` -> `PASS`
+  - `npm run proof:v1:board` -> `PASS`
   - `npm run proof:v1:board:md` -> `PASS`
   - `npm test -- --run src/lib/proofBoardFreshness.test.ts src/lib/launchControlMatrices.test.ts src/lib/guestLookupScopeProofScript.test.ts src/lib/securityAutomationProof.test.ts` -> `PASS`
   - local guest-contact hardening now accepts a guest-specific RSVP invite token as the strongest verifier and still requires the phone-last-4 step-up check before whole-party updates when that stronger token is absent

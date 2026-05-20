@@ -1,4 +1,5 @@
-import React, { useId, useState } from 'react';
+import React, { useEffect, useId, useMemo, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { WeddingDataV1 } from '../../types/weddingData';
 import { SectionInstance } from '../../types/layoutConfig';
 import { Calendar } from 'lucide-react';
@@ -24,10 +25,9 @@ function formatDeadline(iso: string | undefined): string | null {
   });
 }
 
-async function getSiteId(): Promise<string | null> {
-  const slug = window.location.pathname.split('/site/')[1];
+async function getSiteId(slug: string, searchParams: URLSearchParams): Promise<string | null> {
   if (!slug) return null;
-  const { inviteToken, passwordSession } = buildPublicAccessArtifacts(slug, new URLSearchParams(window.location.search));
+  const { inviteToken, passwordSession } = buildPublicAccessArtifacts(slug, searchParams);
   const { data, error } = await supabase.functions.invoke('public-site-access', {
     body: {
       action: 'resolve',
@@ -48,7 +48,7 @@ interface FormState {
   dietaryNotes: string;
 }
 
-function RsvpForm({ onSuccess, dark }: { onSuccess: (attending: boolean) => void; dark?: boolean }) {
+function RsvpForm({ onSuccess, dark, siteSlug, searchParams }: { onSuccess: (attending: boolean) => void; dark?: boolean; siteSlug: string; searchParams: URLSearchParams }) {
   const formId = useId();
   const [form, setForm] = useState<FormState>({
     guestName: '',
@@ -60,26 +60,30 @@ function RsvpForm({ onSuccess, dark }: { onSuccess: (attending: boolean) => void
   const [error, setError] = useState<string | null>(null);
 
   const inputBase = dark
-    ? 'w-full px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-white/40'
-    : 'w-full px-4 py-2 rounded-lg border border-border bg-surface text-text-primary placeholder-text-secondary/50 focus:outline-none focus:ring-2 focus:ring-primary/40';
+    ? 'w-full px-4 py-2 rounded-xl bg-white/10 border border-white/20 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-white/40'
+    : 'w-full px-4 py-2 rounded-xl border border-border bg-surface text-text-primary placeholder-text-secondary/50 focus:outline-none focus:ring-2 focus:ring-primary/40';
   const labelBase = dark ? 'block text-sm font-medium text-white/80 mb-1' : 'block text-sm font-medium text-text-primary mb-1';
+
+  const updateForm = (patch: Partial<FormState>) => {
+    setError(null);
+    setForm((current) => ({ ...current, ...patch }));
+  };
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setSubmitting(true);
     setError(null);
     try {
-      const siteId = await getSiteId();
+      const siteId = await getSiteId(siteSlug, searchParams);
       if (!siteId) {
         setError('Unable to find this wedding website right now. Please try again.');
         setSubmitting(false);
         return;
       }
-      const slug = window.location.pathname.split('/site/')[1] ?? '';
-      const { inviteToken, passwordSession } = buildPublicAccessArtifacts(slug, new URLSearchParams(window.location.search));
+      const { inviteToken, passwordSession } = buildPublicAccessArtifacts(siteSlug, searchParams);
       const { error: submitError } = await supabase.functions.invoke('public-site-rsvp-submit', {
         body: {
-          slug,
+          slug: siteSlug,
           inviteToken,
           passwordSession,
           guestName: form.guestName,
@@ -109,7 +113,7 @@ function RsvpForm({ onSuccess, dark }: { onSuccess: (attending: boolean) => void
           type="text"
           required
           value={form.guestName}
-          onChange={e => setForm(f => ({ ...f, guestName: e.target.value }))}
+          onChange={e => updateForm({ guestName: e.target.value })}
           placeholder="Your name"
           className={inputBase}
         />
@@ -119,7 +123,7 @@ function RsvpForm({ onSuccess, dark }: { onSuccess: (attending: boolean) => void
         <select
           id={`${formId}-attending`}
           value={form.attending}
-          onChange={e => setForm(f => ({ ...f, attending: e.target.value as 'attending' | 'declined' }))}
+          onChange={e => updateForm({ attending: e.target.value as 'attending' | 'declined' })}
           className={inputBase}
         >
           <option value="attending">Yes, I’ll be there</option>
@@ -135,7 +139,7 @@ function RsvpForm({ onSuccess, dark }: { onSuccess: (attending: boolean) => void
             min={1}
             max={10}
             value={form.guestCount}
-            onChange={e => setForm(f => ({ ...f, guestCount: Math.max(1, Math.min(10, parseInt(e.target.value) || 1)) }))}
+            onChange={e => updateForm({ guestCount: Math.max(1, Math.min(10, parseInt(e.target.value) || 1)) })}
             className={inputBase}
           />
         </div>
@@ -145,7 +149,7 @@ function RsvpForm({ onSuccess, dark }: { onSuccess: (attending: boolean) => void
         <textarea
           id={`${formId}-dietary-notes`}
           value={form.dietaryNotes}
-          onChange={e => setForm(f => ({ ...f, dietaryNotes: e.target.value }))}
+          onChange={e => updateForm({ dietaryNotes: e.target.value })}
           placeholder="Any dietary restrictions or allergies we should know about?"
           rows={3}
           className={inputBase}
@@ -173,12 +177,20 @@ function RsvpForm({ onSuccess, dark }: { onSuccess: (attending: boolean) => void
 }
 
 export const RsvpSection: React.FC<Props> = ({ data, instance }) => {
+  const location = useLocation();
   const { rsvp } = data;
   const { settings } = instance;
+  const siteSlug = useMemo(() => location.pathname.split('/site/')[1] ?? '', [location.pathname]);
+  const searchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
   const deadline = formatDeadline(rsvp.deadlineISO);
   const sectionTitle = readBuilderValue(settings.title as string | { value: string } | undefined, 'RSVP').trim() || 'RSVP';
   const [submitted, setSubmitted] = useState(false);
   const [attending, setAttending] = useState(false);
+
+  useEffect(() => {
+    setSubmitted(false);
+    setAttending(false);
+  }, [siteSlug, searchParams.toString(), sectionTitle, deadline]);
 
   function handleSuccess(isAttending: boolean) {
     setAttending(isAttending);
@@ -215,7 +227,7 @@ export const RsvpSection: React.FC<Props> = ({ data, instance }) => {
           </div>
         ) : (
           <div className="rounded-2xl border border-border bg-surface p-6 md:p-8 shadow-sm">
-            <RsvpForm onSuccess={handleSuccess} />
+            <RsvpForm onSuccess={handleSuccess} siteSlug={siteSlug} searchParams={searchParams} />
           </div>
         )}
       </div>
@@ -224,13 +236,21 @@ export const RsvpSection: React.FC<Props> = ({ data, instance }) => {
 };
 
 export const RsvpInline: React.FC<Props> = ({ data, instance }) => {
+  const location = useLocation();
   const { rsvp, couple } = data;
   const { settings } = instance;
+  const siteSlug = useMemo(() => location.pathname.split('/site/')[1] ?? '', [location.pathname]);
+  const searchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
   const deadline = formatDeadline(rsvp.deadlineISO);
   const sectionTitle = readBuilderValue(settings.title as string | { value: string } | undefined, 'RSVP').trim() || 'RSVP';
   const displayName = couple.displayName || buildCoupleDisplayName(couple.partner1Name, couple.partner2Name) || 'the couple';
   const [submitted, setSubmitted] = useState(false);
   const [attending, setAttending] = useState(false);
+
+  useEffect(() => {
+    setSubmitted(false);
+    setAttending(false);
+  }, [siteSlug, searchParams.toString(), sectionTitle, deadline, displayName]);
 
   function handleSuccess(isAttending: boolean) {
     setAttending(isAttending);
@@ -262,7 +282,7 @@ export const RsvpInline: React.FC<Props> = ({ data, instance }) => {
           </div>
         ) : (
           <div className="bg-white/10 rounded-2xl p-6 md:p-8">
-            <RsvpForm onSuccess={handleSuccess} dark />
+            <RsvpForm onSuccess={handleSuccess} dark siteSlug={siteSlug} searchParams={searchParams} />
           </div>
         )}
       </div>

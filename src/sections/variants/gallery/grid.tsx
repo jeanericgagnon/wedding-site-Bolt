@@ -123,6 +123,10 @@ const GalleryGrid: React.FC<SectionComponentProps<GalleryGridData>> = ({ data })
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const images = sanitizePublicGalleryImages(data.images);
 
+  useEffect(() => {
+    setLightboxIndex(null);
+  }, [data.images]);
+
   const colClass = {
     '2': 'grid-cols-2',
     '3': 'grid-cols-2 md:grid-cols-3',
@@ -199,7 +203,7 @@ const GalleryGrid: React.FC<SectionComponentProps<GalleryGridData>> = ({ data })
             <img
               src={images[lightboxIndex]?.url}
               alt={images[lightboxIndex]?.alt ?? 'Gallery photo'}
-              className="max-w-full max-h-[85vh] object-contain rounded-lg"
+              className="max-w-full max-h-[85vh] object-contain rounded-xl"
             />
             {data.showCaptions && images[lightboxIndex]?.caption && (
               <p className="text-white/70 text-sm text-center mt-3">{images[lightboxIndex]?.caption}</p>

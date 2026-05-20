@@ -123,6 +123,9 @@ const output = {
     failed: results.filter((result) => !result.ok).length,
     blocked: blockedRequired.length,
   },
+  contractSummary: failedRequired.length === 0 && blockedRequired.length === 0
+    ? 'Canonical smoke is green as supporting route/build/site-lookup evidence; it still defers the launch call to the proof-board flow instead of regenerating or replacing launch-truth artifacts.'
+    : 'Canonical smoke is not green enough to serve as supporting launch evidence; resolve failed or blocked route/build/site-lookup checks before leaning on the proof-board flow.',
   publicV1ClaimStatus: failedRequired.length === 0 && blockedRequired.length === 0
     ? 'canonical_route_smoke_green_defer_to_current_proof_board_for_launch_call'
     : 'canonical_route_smoke_not_green',
@@ -131,7 +134,7 @@ const output = {
     : 'hold_until_canonical_route_smoke_is_green',
   automationDoesNotClearLaunch: true,
   publicV1ClaimBlockers: [
-    'Canonical smoke is route/build/site-lookup evidence only; launch call belongs to the current proof board and proof log',
+    'Canonical smoke is route/build/site-lookup evidence only; launch call belongs to the current proof board flow and proof log (`npm run proof:v1:board:freshness`, `npm run proof:v1:board`, `npm run proof:v1:board:md`)',
     'Secure service-role storage/cross-table integrity proof remains available only in a secure proof environment',
   ],
   automatedCoverage: [
@@ -152,12 +155,12 @@ const output = {
     guestsRsvpOps: 'separate_required_gate',
     postDeployRuntimeTruthPass: 'covered_by_current_proof_log_keep_fresh_after_deploy',
   },
-  highestRiskTrustGap: 'Canonical smoke is not the launch source of truth; use the current proof board and proof log for launch status',
+  highestRiskTrustGap: 'Canonical smoke is not the launch source of truth; use the current proof board flow and proof log for launch status',
   secondaryTrustGap: 'Production wording and couple-path proof must stay fresh after future approved frontend deploys',
   trustLieClosedInThisGate: 'Canonical smoke output separates automation health from launch-clear status instead of implying launch approval from green checks alone',
   automationCaveat: 'Passing canonical smoke is evidence of route continuity and build health, not launch clearance on its own',
   truthGateSummary: failedRequired.length === 0 && blockedRequired.length === 0
-    ? 'Canonical automation is green. It proves route/build/site-lookup continuity and defers the launch call to the current proof board and proof log.'
+    ? 'Canonical automation is green. It proves route/build/site-lookup continuity and defers the launch call to the current proof board flow and proof log.'
     : 'Canonical automation is not green. Resolve failed or blocked route/build/site-lookup checks before using it as supporting launch evidence.',
   groundedManualProofStatus: 'Manual-proof artifacts are captured when their evidence files exist; rerun them after future approved deploys or when route/copy behavior changes.',
   launchDecisionDependsOnManualTruthPass: false,

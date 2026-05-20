@@ -191,6 +191,9 @@ const output = {
   summary: issues.length === 0
     ? 'AST-backed security guard found no launch-critical runtime auth, storage, or direct-write regressions.'
     : 'AST-backed security guard found launch-critical runtime auth, storage, or direct-write regressions.',
+  contractSummary: issues.length === 0
+    ? 'AST security proof is green: this source-level security lane guards critical runtime auth/storage/public-boundary patterns, but it supports rather than replaces live permission and guest-surface proof.'
+    : 'AST security proof is not green: source-level auth/storage/public-boundary regressions exist and must be fixed before stronger launch-hardening claims remain credible.',
   automatedCoverage: [
     'AST-scans shipped runtime code for direct client Supabase .insert/.update/.upsert/.delete calls instead of relying only on regex matching.',
     'Fails if SUPABASE_SERVICE_ROLE_KEY appears in client runtime code or if critical auth/payment files touch browser storage for authorization.',

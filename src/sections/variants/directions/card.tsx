@@ -85,7 +85,7 @@ const DirectionsCard: React.FC<SectionComponentProps<DirectionsCardData>> = ({ d
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               {data.parkingNote && (
                 <div className="flex items-start gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-stone-100 flex items-center justify-center shrink-0">
+                  <div className="w-8 h-8 rounded-xl bg-stone-100 flex items-center justify-center shrink-0">
                     <Car size={14} className="text-stone-500" />
                   </div>
                   <div>
@@ -97,7 +97,7 @@ const DirectionsCard: React.FC<SectionComponentProps<DirectionsCardData>> = ({ d
 
               {data.rideshareNote && (
                 <div className="flex items-start gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-stone-100 flex items-center justify-center shrink-0">
+                  <div className="w-8 h-8 rounded-xl bg-stone-100 flex items-center justify-center shrink-0">
                     <Navigation size={14} className="text-stone-500" />
                   </div>
                   <div>
@@ -114,7 +114,7 @@ const DirectionsCard: React.FC<SectionComponentProps<DirectionsCardData>> = ({ d
                   href={mapsHref}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 px-6 py-3 bg-stone-900 hover:bg-stone-800 text-white rounded-lg text-sm font-medium transition-colors"
+                  className="inline-flex items-center gap-2 px-6 py-3 bg-stone-900 hover:bg-stone-800 text-white rounded-xl text-sm font-medium transition-colors"
                 >
                   Get Directions
                   <ExternalLink size={14} />

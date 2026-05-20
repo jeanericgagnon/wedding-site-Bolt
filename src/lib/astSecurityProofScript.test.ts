@@ -7,6 +7,8 @@ describe('AST security proof script', () => {
 
     expect(source).toContain("slice: 'ast-security'");
     expect(source).toContain('ts.createSourceFile');
+    expect(source).toContain("import { existsSync, readFileSync } from 'node:fs';");
+    expect(source).toContain('const existingTrackedFiles = trackedFiles.filter((file) => existsSync(file));');
     expect(source).toContain("'direct-client-write'");
     expect(source).toContain("'service-role-reference'");
     expect(source).toContain("'dangerously-set-inner-html'");
@@ -15,5 +17,6 @@ describe('AST security proof script', () => {
     expect(source).toContain('criticalPublicBoundaryFiles');
     expect(source).toContain('internalToolingRoutesEnabled');
     expect(source).not.toContain('const directWritePattern =');
+    expect(source).not.toContain('src/pages/dashboard/messages/MessageDashboardComponents.tsx');
   });
 });

@@ -218,6 +218,11 @@ type StoredBucketLinksEnvelope = {
   value: Record<string, string>;
 };
 
+function buildBucketLinksStorageKey(storageScope?: string | null): string {
+  const scope = typeof storageScope === 'string' ? storageScope.trim() : '';
+  return scope ? `${PHOTO_ALBUM_LINKS_STORAGE_KEY}::${scope}` : PHOTO_ALBUM_LINKS_STORAGE_KEY;
+}
+
 const isFreshBucketLinksTimestamp = (value: unknown, now = Date.now()) => {
   if (typeof value !== 'string') return false;
   const savedAtMs = Date.parse(value);
@@ -247,28 +252,40 @@ const normalizeStoredBucketLinks = (value: unknown): Record<string, string> => {
   );
 };
 
-export const readStoredBucketLinks = (): Record<string, string> => {
+export const readStoredBucketLinks = (storageScope?: string | null): Record<string, string> => {
+  const storageKey = buildBucketLinksStorageKey(storageScope);
   try {
-    const raw = localStorage.getItem(PHOTO_ALBUM_LINKS_STORAGE_KEY);
+    const raw = localStorage.getItem(storageKey) ?? (
+      storageKey !== PHOTO_ALBUM_LINKS_STORAGE_KEY
+        ? localStorage.getItem(PHOTO_ALBUM_LINKS_STORAGE_KEY)
+        : null
+    );
     if (!raw) return {};
     const parsed = JSON.parse(raw);
     if (isStoredBucketLinksEnvelope(parsed)) {
       if (!isFreshBucketLinksTimestamp(parsed.savedAtISO)) {
-        localStorage.removeItem(PHOTO_ALBUM_LINKS_STORAGE_KEY);
+        localStorage.removeItem(storageKey);
         return {};
       }
-      return normalizeStoredBucketLinks(parsed.value);
+      const normalized = normalizeStoredBucketLinks(parsed.value);
+      if (storageKey !== PHOTO_ALBUM_LINKS_STORAGE_KEY && normalized && !localStorage.getItem(storageKey)) {
+        localStorage.setItem(storageKey, JSON.stringify({
+          savedAtISO: new Date().toISOString(),
+          value: normalized,
+        }));
+      }
+      return normalized;
     }
 
     const normalized = normalizeStoredBucketLinks(parsed);
-    localStorage.setItem(PHOTO_ALBUM_LINKS_STORAGE_KEY, JSON.stringify({
+    localStorage.setItem(storageKey, JSON.stringify({
       savedAtISO: new Date().toISOString(),
       value: normalized,
     }));
     return normalized;
   } catch {
     try {
-      localStorage.removeItem(PHOTO_ALBUM_LINKS_STORAGE_KEY);
+      localStorage.removeItem(storageKey);
     } catch {
       // ignore cleanup failures so the dashboard remains usable in private modes.
     }
@@ -276,9 +293,9 @@ export const readStoredBucketLinks = (): Record<string, string> => {
   }
 };
 
-export const writeStoredBucketLinks = (value: Record<string, string>) => {
+export const writeStoredBucketLinks = (value: Record<string, string>, storageScope?: string | null) => {
   try {
-    localStorage.setItem(PHOTO_ALBUM_LINKS_STORAGE_KEY, JSON.stringify({
+    localStorage.setItem(buildBucketLinksStorageKey(storageScope), JSON.stringify({
       savedAtISO: new Date().toISOString(),
       value: normalizeStoredBucketLinks(value),
     }));

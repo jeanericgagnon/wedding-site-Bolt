@@ -40,7 +40,7 @@ async function warmGuestHub(page: Page) {
   await expect(page.getByRole('heading', { name: /Everything guests need in one place\./i })).toBeVisible();
   await expect(page.getByText('Travel plan from this link')).toBeVisible();
   await expect(page.getByText('Access from this link')).toBeVisible();
-  await expect(page.getByText('Private guest link')).toBeVisible();
+  await expect(page.getByText('Guest-specific link')).toBeVisible();
   await expect(page.locator('body')).not.toContainText('token-c-2');
   await waitForGuestHubSnapshot(page);
   await waitForServiceWorkerControl(page);
@@ -70,7 +70,7 @@ test('guest hub keeps the saved in-app day-of snapshot usable offline', async ({
 
   await expect(page.getByText('Showing the saved guest hub')).toBeVisible();
   await expect(page.getByText('Travel plan from this link')).toBeVisible();
-  await expect(page.getByText('Private guest link')).toBeVisible();
+  await expect(page.getByText('Guest-specific link')).toBeVisible();
   await expect(page.getByRole('button', { name: /Try again/i })).toBeVisible();
   await expect(page.locator('body')).not.toContainText('token-c-2');
   await expectNoMeaningfulHorizontalOverflow(page);
@@ -86,8 +86,10 @@ test('service worker serves the cached guest-hub offline shell for event navigat
   await expect(page.getByText(/DayOf offline guest hub/i)).toBeVisible();
   await expect(page.getByText(/You are offline\. The last saved wedding hub is still available for travel, RSVP, and day-of status details\./i)).toBeVisible();
   await expect(page.getByRole('button', { name: /Try live hub again/i })).toBeVisible();
-  await expect(page.getByText('Travel plan from this link')).toBeVisible();
-  await expect(page.getByText('Private guest link')).toBeVisible();
+  await expect(page.getByText('Travel quick plan')).toBeVisible();
+  await expect(page.getByText('Saved travel details')).toBeVisible();
+  await expect(page.getByText('Link access')).toBeVisible();
+  await expect(page.getByText('Guest-specific link')).toBeVisible();
   await expect(page.locator('body')).not.toContainText('token-c-2');
   await expectNoMeaningfulHorizontalOverflow(page);
 

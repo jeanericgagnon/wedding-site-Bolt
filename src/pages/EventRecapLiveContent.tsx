@@ -42,7 +42,7 @@ export function EventRecapLiveContent({
   return (
     <div className="min-h-screen bg-[#fbf7f1] text-neutral-950">
       <main className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 sm:py-10">
-        <section className="rounded-lg border border-neutral-200 bg-white p-6 sm:p-9">
+        <section className="rounded-xl border border-neutral-200 bg-white p-6 sm:p-9">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <p className="text-xs font-semibold text-neutral-500">{t('event_recap.eyebrow')}</p>
             <LanguageSwitcher />
@@ -54,13 +54,13 @@ export function EventRecapLiveContent({
                 {t('event_recap.subtitle')}
               </p>
             </div>
-            <Link to={`/event/${encodeURIComponent(slug)}`} className="inline-flex rounded-lg border border-neutral-300 px-4 py-2 text-sm font-medium hover:bg-neutral-50">
+            <Link to={`/event/${encodeURIComponent(slug)}`} className="inline-flex rounded-xl border border-neutral-300 px-4 py-2 text-sm font-medium hover:bg-neutral-50">
               {t('event_recap.back_hub')}
             </Link>
             <button
               type="button"
               onClick={() => void onShareRecap()}
-              className="inline-flex items-center justify-center gap-2 rounded-lg bg-neutral-950 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-800"
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-neutral-950 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-800"
             >
               <Share2 className="h-4 w-4" />
               {t('event_recap.share_recap')}
@@ -69,19 +69,19 @@ export function EventRecapLiveContent({
           {shareStatus && <p role="status" className="mt-4 text-sm text-neutral-600">{shareStatus}</p>}
           {data && (
             <div className="mt-8 grid gap-3 sm:grid-cols-4">
-              <div className="rounded-lg bg-neutral-950 p-5 text-white">
+              <div className="rounded-xl bg-neutral-950 p-5 text-white">
                 <p className="text-sm text-white/60">{t('event_recap.shared_uploads')}</p>
                 <p className="mt-2 text-3xl font-semibold">{data.summary.uploadCount}</p>
               </div>
-              <div className="rounded-lg border border-neutral-200 bg-neutral-50 p-5">
+              <div className="rounded-xl border border-neutral-200 bg-neutral-50 p-5">
                 <p className="text-sm text-neutral-500">{t('event_recap.top_moments')}</p>
                 <p className="mt-2 text-3xl font-semibold">{data.summary.highlightCount}</p>
               </div>
-              <div className="rounded-lg border border-neutral-200 bg-neutral-50 p-5">
+              <div className="rounded-xl border border-neutral-200 bg-neutral-50 p-5">
                 <p className="text-sm text-neutral-500">{t('event_recap.memory_chapters')}</p>
                 <p className="mt-2 text-3xl font-semibold">{data.summary.chapterCount}</p>
               </div>
-              <div className="rounded-lg border border-neutral-200 bg-neutral-50 p-5">
+              <div className="rounded-xl border border-neutral-200 bg-neutral-50 p-5">
                 <p className="text-sm text-neutral-500">{t('event_recap.curated_picks')}</p>
                 <p className="mt-2 text-3xl font-semibold">{data.summary.curatedCount ?? 0}</p>
               </div>

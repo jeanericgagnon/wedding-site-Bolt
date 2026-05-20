@@ -1,4 +1,6 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
+import type { ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const {
@@ -27,6 +29,10 @@ vi.mock('./vaultService', () => ({
 }));
 
 import { useVaultDashboardData } from './useVaultDashboardData';
+
+const wrapper = ({ children }: { children: ReactNode }) => (
+  <MemoryRouter initialEntries={['/dashboard/vault']}>{children}</MemoryRouter>
+);
 
 describe('useVaultDashboardData', () => {
   beforeEach(() => {
@@ -70,6 +76,7 @@ describe('useVaultDashboardData', () => {
         toast,
         user: { id: 'user-1', email: 'test@example.com' },
       }),
+      { wrapper },
     );
 
     await waitFor(() => expect(result.current.loading).toBe(false));
@@ -110,6 +117,7 @@ describe('useVaultDashboardData', () => {
         toast,
         user: { id: 'user-1', email: 'test@example.com' },
       }),
+      { wrapper },
     );
 
     await waitFor(() => expect(result.current.loading).toBe(false));
@@ -149,6 +157,7 @@ describe('useVaultDashboardData', () => {
         initialProps: {
           toast: vi.fn(),
         },
+        wrapper,
       },
     );
 

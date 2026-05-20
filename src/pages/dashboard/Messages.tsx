@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { canComposeDashboardMessages } from '../../lib/plannerAccess';
@@ -16,9 +16,6 @@ import {
   getPreferredStoredPhotoAlbumLink,
   safeMessagesError,
 } from './messages/messageDashboardUtils';
-import {
-  writeDemoMessages,
-} from './messages/messageDemoStorage';
 import { triggerScheduledMessageDispatch } from './messages/messageService';
 import { useMessageDeliveryActions } from './messages/useMessageDeliveryActions';
 import { useMessageComposeActions } from './messages/useMessageComposeActions';
@@ -92,7 +89,7 @@ export const DashboardMessages: React.FC = () => {
     toasts,
     viewingMessage,
     weddingSite,
-  } = useMessageDashboardUiState();
+  } = useMessageDashboardUiState({ isDemoMode });
   const { handleBuySmsPack } = useMessageBillingActions({
     setBuyingPack,
     toast,
@@ -125,16 +122,14 @@ export const DashboardMessages: React.FC = () => {
     setMessagesPermissions,
   });
 
-  useEffect(() => {
-    if (!isDemoMode) return;
-    writeDemoMessages(messages);
-  }, [isDemoMode, messages]);
-
   const getRecipients = (audience: string): Guest[] => {
     return filterMessageAudienceGuests(guests, audience, eventGuestIds);
   };
 
-  const knownPhotoLinksCount = useMemo(() => countStoredPhotoAlbumLinks(), []);
+  const knownPhotoLinksCount = useMemo(
+    () => countStoredPhotoAlbumLinks(weddingSite?.id ?? null),
+    [weddingSite?.id],
+  );
 
   const applyTemplateVariables = (text: string) => {
     const couple = getMessageTemplateCoupleLabel(weddingSite?.couple_first_name, weddingSite?.couple_second_name);
@@ -142,7 +137,7 @@ export const DashboardMessages: React.FC = () => {
 
     const siteParam = weddingSite?.site_slug ? `?site=${encodeURIComponent(weddingSite.site_slug)}` : '';
     let photoLink = `${window.location.origin}/photos/upload${siteParam}`;
-    photoLink = getPreferredStoredPhotoAlbumLink() ?? photoLink;
+    photoLink = getPreferredStoredPhotoAlbumLink(weddingSite?.id ?? null) ?? photoLink;
 
     return text
       .replace(/\[COUPLE\]/g, couple)
@@ -278,6 +273,7 @@ export const DashboardMessages: React.FC = () => {
   useMessageDashboardContinuitySync({
     hasWeddingSite: !!weddingSite,
     isDemoMode,
+    siteSlug: weddingSite?.site_slug ?? null,
     fetchGuests,
     fetchMessages,
   });

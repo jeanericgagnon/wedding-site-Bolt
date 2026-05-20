@@ -37,7 +37,7 @@ export const GallerySection: React.FC<GallerySectionProps> = ({ content }) => {
 
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           {safePhotos.map((photo) => (
-            <div key={photo.id} className="aspect-square rounded-lg overflow-hidden bg-surface-subtle">
+            <div key={photo.id} className="aspect-square rounded-xl overflow-hidden bg-surface-subtle">
               <img
                 src={photo.url}
                 alt={photo.caption || 'Wedding photo'}

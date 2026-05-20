@@ -16,7 +16,7 @@ export default function VenueClassic({ section }: VenueClassicProps) {
       <div className="max-w-6xl mx-auto px-4">
         <h2 className="text-5xl font-serif text-center mb-16 text-gray-800">Venue</h2>
         <div className="grid md:grid-cols-2 gap-12 items-center">
-          <div className="aspect-[4/3] bg-gray-200 rounded-lg overflow-hidden">
+          <div className="aspect-[4/3] bg-gray-200 rounded-xl overflow-hidden">
             <img
               src="https://images.pexels.com/photos/2306281/pexels-photo-2306281.jpeg"
               alt="Venue"

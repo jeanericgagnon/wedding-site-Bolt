@@ -1,3 +1,4 @@
+import { resolveCurrentSearchParams } from '../lib/currentSearchParams';
 import { buildPublicAccessArtifacts } from '../lib/publicAccessArtifacts';
 import { supabase } from '../lib/supabase';
 import type { Database } from '../types/supabase.generated';
@@ -20,8 +21,8 @@ type InteractiveSectionResponse = {
   error?: string;
 };
 
-function getInteractivePublicAccess(siteSlug: string) {
-  return buildPublicAccessArtifacts(siteSlug, new URLSearchParams(window.location.search));
+function getInteractivePublicAccess(siteSlug: string, searchParams?: URLSearchParams) {
+  return buildPublicAccessArtifacts(siteSlug, resolveCurrentSearchParams(searchParams));
 }
 
 async function invokeInteractiveSectionPublic(body: Record<string, unknown>): Promise<InteractiveSectionResponse> {
@@ -61,6 +62,7 @@ export async function fetchInteractiveSectionSync(params: {
   pollWidgetId: string;
   quizWidgetId: string;
   suggestionPrompt: string;
+  searchParams?: URLSearchParams;
 }): Promise<InteractiveSyncResult> {
   const data = await invokeInteractiveSectionPublic({
     action: 'sync',
@@ -68,7 +70,7 @@ export async function fetchInteractiveSectionSync(params: {
     pollWidgetId: params.pollWidgetId,
     quizWidgetId: params.quizWidgetId,
     suggestionPrompt: params.suggestionPrompt,
-    ...getInteractivePublicAccess(params.siteSlug),
+    ...getInteractivePublicAccess(params.siteSlug, params.searchParams),
   });
 
   return {
@@ -82,13 +84,14 @@ export async function submitInteractiveSuggestion(params: {
   siteSlug: string;
   promptKey: string;
   suggestionText: string;
+  searchParams?: URLSearchParams;
 }): Promise<void> {
   await invokeInteractiveSectionPublic({
     action: 'suggest',
     siteSlug: params.siteSlug,
     promptKey: params.promptKey,
     suggestionText: params.suggestionText,
-    ...getInteractivePublicAccess(params.siteSlug),
+    ...getInteractivePublicAccess(params.siteSlug, params.searchParams),
   });
 }
 
@@ -97,6 +100,7 @@ export async function submitInteractiveVote(params: {
   widgetKind: InteractiveVoteKind;
   widgetId: string;
   optionId: string;
+  searchParams?: URLSearchParams;
 }): Promise<void> {
   await invokeInteractiveSectionPublic({
     action: 'vote',
@@ -104,6 +108,6 @@ export async function submitInteractiveVote(params: {
     widgetKind: params.widgetKind,
     widgetId: params.widgetId,
     optionId: params.optionId,
-    ...getInteractivePublicAccess(params.siteSlug),
+    ...getInteractivePublicAccess(params.siteSlug, params.searchParams),
   });
 }

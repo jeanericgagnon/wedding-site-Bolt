@@ -1,10 +1,11 @@
 import type React from 'react';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { RegistryDashboardRouteContent } from './RegistryDashboardRouteContent';
 import { buildRegistryDashboardDerivedState } from './buildRegistryDashboardDerivedState';
 import type { RegistryItem } from './registryTypes';
+import * as copyTextModule from '../../../lib/copyText';
 
 function makeItem(overrides: Partial<RegistryItem> = {}): RegistryItem {
   return {
@@ -153,6 +154,7 @@ function makeBaseProps(overrides: Partial<RegistryDashboardRouteContentProps> = 
     setShowImageIssuesOnly: vi.fn(),
     showAlertsOnly: false,
     showImageIssuesOnly: false,
+    siteSlug: 'maya-and-rowan',
     topRegistryItems: [item],
     weddingSiteId: 'site-1',
     ...overrides,
@@ -160,6 +162,29 @@ function makeBaseProps(overrides: Partial<RegistryDashboardRouteContentProps> = 
 }
 
 describe('RegistryDashboardRouteContent', () => {
+  it('ignores stale guest registry link copy completion after the site slug changes', async () => {
+    let resolveCopy: (value: 'copied') => void = () => {};
+    vi.spyOn(copyTextModule, 'copyTextOrDownload').mockReturnValueOnce(new Promise((resolve) => {
+      resolveCopy = resolve;
+    }));
+
+    const { rerender } = render(<RegistryDashboardRouteContent {...makeBaseProps({ siteSlug: 'maya-and-rowan' })} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Copy link' }));
+    expect(screen.getByRole('button', { name: 'Copying link...' })).toBeDisabled();
+
+    rerender(<RegistryDashboardRouteContent {...makeBaseProps({ siteSlug: 'new-slug' })} />);
+
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Copy link' })).toBeEnabled());
+
+    await act(async () => {
+      resolveCopy('copied');
+    });
+
+    expect(screen.getByRole('button', { name: 'Copy link' })).toBeEnabled();
+    expect(screen.queryByRole('button', { name: 'Copied registry link' })).not.toBeInTheDocument();
+  });
+
   it('shows the loading block only when the registry is still empty', () => {
     const { rerender } = render(<RegistryDashboardRouteContent {...makeBaseProps({ loading: true, items: [], filtered: [], normalizedItems: [], recentActivity: [], topRegistryItems: [], registryThankYouPlan: { headline: 'Quiet', summary: 'Quiet', purchasedCount: 0, namedPurchaserCount: 0, missingPurchaserCount: 0, completedCount: 0, items: [] }, registryThankYouStats: { purchasedCount: 0, completedCount: 0, pendingCount: 0, readyToSendCount: 0, blockedByMissingPurchaserCount: 0, attributionCoverageRate: 0, completionRate: 0 }, counts: { total: 0, available: 0, partial: 0, purchased: 0, totalValue: 0 }, claimStats: { claimedItems: 0, claimedQuantity: 0, fullyClaimedItems: 0, partiallyClaimedItems: 0, namedPurchaserItems: 0, missingPurchaserItems: 0, multiQuantityInProgress: 0, remainingQuantity: 0 }, guestVisibilityStats: { guestReadyItems: 0, guestVisibleItems: 0, visibleAvailableItems: 0, visibleClaimedItems: 0, hiddenPurchasedItems: 0, blockedGuestItems: 0 } })} />);
 
@@ -1237,6 +1262,55 @@ describe('RegistryDashboardRouteContent', () => {
     expect(screen.getByRole('button', { name: /merge 3 items/i })).toBeInTheDocument();
   });
 
+  it('ignores stale duplicate review copy completion after duplicate groups change', async () => {
+    let resolveCopy: (value: 'copied') => void = () => {};
+    const handleCopyDuplicateReviewList = vi.fn(() => new Promise<'copied'>((resolve) => {
+      resolveCopy = resolve;
+    }));
+    const duplicateGroups = [{
+      id: 'dup-1',
+      primaryItem: makeItem({ id: 'gift-1', item_name: 'Dinner plates', quantity_needed: 4, quantity_purchased: 1 }),
+      secondaryItems: [makeItem({ id: 'gift-2', item_name: 'Dinner plates set', quantity_needed: 2, quantity_purchased: 0 })],
+      items: [
+        makeItem({ id: 'gift-1', item_name: 'Dinner plates', quantity_needed: 4, quantity_purchased: 1 }),
+        makeItem({ id: 'gift-2', item_name: 'Dinner plates set', quantity_needed: 2, quantity_purchased: 0 }),
+      ],
+      mergedQuantityNeeded: 6,
+      mergedQuantityPurchased: 1,
+      signals: [{ kind: 'title' as const, label: 'Same title', value: 'dinner plates' }],
+    }];
+
+    const { rerender } = render(
+      <RegistryDashboardRouteContent
+        {...makeBaseProps({
+          bulkReviewCounts: { repair: 0, duplicates: 1, imageIssues: 0 },
+          duplicateGroups,
+          handleCopyDuplicateReviewList,
+        })}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Copy duplicate list' }));
+    expect(screen.getByRole('button', { name: 'Copying duplicate list...' })).toBeDisabled();
+
+    rerender(
+      <RegistryDashboardRouteContent
+        {...makeBaseProps({
+          bulkReviewCounts: { repair: 0, duplicates: 0, imageIssues: 0 },
+          duplicateGroups: [],
+          handleCopyDuplicateReviewList,
+        })}
+      />,
+    );
+
+    await act(async () => {
+      resolveCopy('copied');
+    });
+
+    expect(screen.queryByRole('button', { name: 'Copied duplicate list' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Copying duplicate list...' })).not.toBeInTheDocument();
+  });
+
   it('keeps broken import titles masked inside thank-you and duplicate review panels', () => {
     render(
       <RegistryDashboardRouteContent
@@ -1840,7 +1914,7 @@ describe('RegistryDashboardRouteContent', () => {
       />,
     );
 
-    expect(screen.getByText('Guest view')).toBeInTheDocument();
+    expect(screen.getAllByText('Guest view').length).toBeGreaterThan(0);
     expect(screen.getByText('1 ready now · 1 already claimed')).toBeInTheDocument();
     expect(screen.getByText('1 older link · 1 price shift · 1 out of stock')).toBeInTheDocument();
     expect(screen.getByText('Snapshot focus: 1 gift still missing a purchaser name · 1 blocked from guests · 1 thank-you still pending · 3 items worth a closer look.')).toBeInTheDocument();
@@ -2022,7 +2096,7 @@ describe('RegistryDashboardRouteContent', () => {
     expect(screen.getByText('Top gifts: 1 fully claimed · 1 partially claimed · 1 still fully open.')).toBeInTheDocument();
     expect(screen.getByText('1 purchased · 1 partially claimed · 1 still available')).toBeInTheDocument();
     expect(screen.getByText('1 still open')).toBeInTheDocument();
-    expect(screen.getByText('Partially claimed')).toBeInTheDocument();
+    expect(screen.getAllByText('Partially claimed').length).toBeGreaterThan(0);
     expect(
       screen.getAllByText(
         (_, element) => element?.tagName.toLowerCase() === 'p'

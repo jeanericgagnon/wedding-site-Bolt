@@ -51,21 +51,69 @@ describe('VendorProfilePage public links', () => {
 
     expect(await screen.findByText('Everlight Studio')).toBeInTheDocument();
 
-    const anchors = Array.from(document.querySelectorAll('a')).map((anchor) => anchor.href);
+    const anchors = screen.getAllByRole('link').map((anchor) => (anchor as HTMLAnchorElement).href);
     expect(anchors).toContain('https://everlight.example.com/');
     expect(anchors).toContain('https://www.tiktok.com/@everlight');
     expect(anchors.some((href) => href.startsWith('javascript:'))).toBe(false);
     expect(anchors.some((href) => href.startsWith('ftp:'))).toBe(false);
     expect(anchors.some((href) => href.includes('bcc='))).toBe(false);
     expect(screen.queryByRole('link', { name: /email everlight studio/i })).not.toBeInTheDocument();
-    expect(screen.getByText('Package your wedding details into one clean vendor email.')).toBeInTheDocument();
-    expect(screen.getByText('Send an inquiry here')).toBeInTheDocument();
+    expect(screen.getByText('Write one clear note.')).toBeInTheDocument();
+    expect(screen.getByText('Write a short note')).toBeInTheDocument();
 
     await waitFor(() => {
-      const images = Array.from(document.querySelectorAll('img')).map((image) => image.getAttribute('src'));
+      const images = screen.getAllByRole('img').map((image) => (image as HTMLImageElement).src);
       expect(images).toContain('https://cdn.example.com/photo.jpg');
-      expect(images).not.toContain('javascript:alert(1)');
+      expect(images.some((src) => src.startsWith('javascript:'))).toBe(false);
     });
+  });
+
+  it('keeps long galleries compact until the guest asks to view every image', async () => {
+    vi.mocked(getVendorProfileBySlug).mockResolvedValue({
+      id: 'vendor-1',
+      slug: 'everlight',
+      vendor_name: 'Everlight Studio',
+      descriptor: 'Photography',
+      about: 'Warm wedding photography.',
+      hero_image_url: null,
+      image_urls: [
+        'https://cdn.example.com/photo-1.jpg',
+        'https://cdn.example.com/photo-2.jpg',
+        'https://cdn.example.com/photo-3.jpg',
+        'https://cdn.example.com/photo-4.jpg',
+        'https://cdn.example.com/photo-5.jpg',
+        'https://cdn.example.com/photo-6.jpg',
+        'https://cdn.example.com/photo-7.jpg',
+        'https://cdn.example.com/photo-8.jpg',
+      ],
+      instagram_url: null,
+      website_url: null,
+      contact_email: null,
+      source_payload: {},
+    });
+
+    render(
+      <MemoryRouter initialEntries={['/vendor/everlight']}>
+        <Routes>
+          <Route path="/vendor/:slug" element={<VendorProfilePage />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    expect(await screen.findByText('Everlight Studio')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'View all images (2 more)' })).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.queryByRole('img', { name: 'Everlight Studio 7' })).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'View all images (2 more)' }));
+
+    expect(screen.getByRole('button', { name: 'Show fewer images' })).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByRole('img', { name: 'Everlight Studio 7' })).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: 'Everlight Studio 8' })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Show fewer images' }));
+
+    expect(screen.getByRole('button', { name: 'View all images (2 more)' })).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.queryByRole('img', { name: 'Everlight Studio 7' })).not.toBeInTheDocument();
   });
 
   it('labels inquiry fields and announces sent status after submit', async () => {
@@ -99,7 +147,7 @@ describe('VendorProfilePage public links', () => {
     const weddingDate = screen.getByLabelText('Wedding date');
     const venueName = screen.getByLabelText('Venue name');
     const venueLocation = screen.getByLabelText('Wedding location');
-    const message = screen.getByLabelText('What do you need from this vendor?');
+    const message = screen.getByLabelText('Your note');
     expect(name).toHaveAttribute('id', 'vendor-inquiry-name');
     expect(email).toHaveAttribute('id', 'vendor-inquiry-email');
     expect(weddingDate).toHaveAttribute('id', 'vendor-inquiry-date');
@@ -113,7 +161,7 @@ describe('VendorProfilePage public links', () => {
     fireEvent.change(venueName, { target: { value: 'Stonehouse Estate' } });
     fireEvent.change(venueLocation, { target: { value: 'Hudson Valley, NY' } });
     fireEvent.change(message, { target: { value: 'We are looking for a photographer.' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Send inquiry' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Write note' }));
 
     await waitFor(() => {
       expect(submitVendorInquiry).toHaveBeenCalledWith({
@@ -126,7 +174,45 @@ describe('VendorProfilePage public links', () => {
         message: 'We are looking for a photographer.',
       });
     });
-    expect(screen.getByRole('status')).toHaveTextContent('Inquiry sent. We saved your message for follow-up.');
+    expect(screen.getByRole('status')).toHaveTextContent('Note sent. We saved a copy here.');
+  });
+
+  it('clears stale inquiry errors once the guest edits the form again', async () => {
+    vi.mocked(getVendorProfileBySlug).mockResolvedValue({
+      id: 'vendor-1',
+      slug: 'everlight',
+      vendor_name: 'Everlight Studio',
+      descriptor: 'Photography',
+      about: 'Warm wedding photography.',
+      hero_image_url: null,
+      image_urls: [],
+      instagram_url: null,
+      website_url: null,
+      contact_email: null,
+      source_payload: {},
+    });
+    vi.mocked(submitVendorInquiry).mockRejectedValueOnce(new Error('temporary failure'));
+
+    render(
+      <MemoryRouter initialEntries={['/vendor/everlight']}>
+        <Routes>
+          <Route path="/vendor/:slug" element={<VendorProfilePage />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    expect(await screen.findByText('Everlight Studio')).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText('Your name'), { target: { value: 'Maya' } });
+    fireEvent.change(screen.getByLabelText('Email'), { target: { value: 'maya@example.com' } });
+    fireEvent.change(screen.getByLabelText('Your note'), { target: { value: 'We are looking for a photographer.' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Write note' }));
+
+    expect(await screen.findByText('Couldn’t send that note right now. Please try again.')).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText('Your note'), { target: { value: 'We are looking for film photography.' } });
+
+    expect(screen.queryByText('Couldn’t send that note right now. Please try again.')).not.toBeInTheDocument();
   });
 
   it('packages logged-in wedding context so couples only write the message', async () => {
@@ -164,13 +250,13 @@ describe('VendorProfilePage public links', () => {
     );
 
     expect(await screen.findByText('Everlight Studio')).toBeInTheDocument();
-    expect(await screen.findByText('Your wedding details are ready')).toBeInTheDocument();
+    expect(await screen.findByText('Wedding notes ready')).toBeInTheDocument();
     expect(screen.queryByLabelText('Your name')).not.toBeInTheDocument();
     expect(screen.getByText('Maya & Lee')).toBeInTheDocument();
     expect(screen.getByText('/maya-lee')).toBeInTheDocument();
 
-    fireEvent.change(screen.getByLabelText('What do you need from this vendor?'), { target: { value: 'Can you share photo packages?' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Send inquiry' }));
+    fireEvent.change(screen.getByLabelText('Your note'), { target: { value: 'Can you share photo details?' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Write note' }));
 
     await waitFor(() => {
       expect(submitVendorInquiry).toHaveBeenCalledWith(expect.objectContaining({
@@ -183,12 +269,12 @@ describe('VendorProfilePage public links', () => {
         couple_names: 'Maya & Lee',
         site_slug: 'maya-lee',
         inquiry_context: expect.stringContaining('Couple: Maya & Lee'),
-        message: 'Can you share photo packages?',
+        message: 'Can you share photo details?',
       }));
     });
   });
 
-  it('renders category-specific proof and CTA for food vendors', async () => {
+  it('renders category-specific details for food vendors', async () => {
     vi.mocked(getVendorProfileBySlug).mockResolvedValue({
       id: 'vendor-food',
       slug: 'sage-table',
@@ -204,20 +290,24 @@ describe('VendorProfilePage public links', () => {
         template_id: 'food',
         vendor_customization: {
           accent_id: 'champagne',
-          cta_label: 'Request a custom tasting',
-          service_area: 'New England estates and tented wedding weekends',
-          pricing_note: 'Menus are scoped by guest count and staffing.',
+          cta_label: 'Write about tasting details',
+          service_area: 'New England venues and tented wedding weekends',
+          pricing_note: 'Add guest count and team notes.',
           proof_points: ['Passed bites', 'Bar staffing', 'Late-night snacks'],
+          category_facts: [
+            { label: 'Service style', value: 'Plated dinner and stations', group: 'service' },
+            { label: 'Tastings', value: 'Available after first details', group: 'service' },
+          ],
           gallery_layout: 'mosaic',
           logo_text: 'STC',
           packages: [
-            { title: 'Cocktail hour', detail: 'Passed bites, stations, and bar timing.', price: 'Custom quote' },
+            { title: 'Cocktail hour', detail: 'Passed bites, stations, and bar timing.', price: 'First note' },
           ],
           testimonials: [
             { quote: 'Dinner felt elegant and relaxed.', attribution: 'Sample couple' },
           ],
           faqs: [
-            { question: 'Can you support rentals?', answer: 'Yes. Rental coordination can be scoped into service.' },
+            { question: 'Can you handle rentals?', answer: 'Yes. Rental timing can be planned into the service.' },
           ],
           inquiry_questions: ['Guest count', 'Service style'],
           external_credibility: {
@@ -231,10 +321,10 @@ describe('VendorProfilePage public links', () => {
           rating: {
             enabled: true,
             overall_score: 9.3,
-            summary: 'Strong fit for polished catering and smooth guest flow.',
+            summary: 'Strong timing for reliable catering and smooth guest flow.',
             categories: [
               { label: 'Guest impact', score: 9.5 },
-              { label: 'Logistics', score: 9.1 },
+              { label: 'Timing', score: 9.1 },
             ],
           },
         },
@@ -251,22 +341,27 @@ describe('VendorProfilePage public links', () => {
     );
 
     expect(await screen.findByText('Sage Table Catering')).toBeInTheDocument();
-    expect(screen.getByText('Food and beverage profile')).toBeInTheDocument();
+    expect(screen.getByText('Food and drinks')).toBeInTheDocument();
     expect(screen.getByText('Passed bites')).toBeInTheDocument();
-    expect(screen.getAllByText('New England estates and tented wedding weekends').length).toBeGreaterThan(0);
-    expect(screen.getByText('Menus are scoped by guest count and staffing.')).toBeInTheDocument();
+    expect(screen.getAllByText('New England venues and tented wedding weekends').length).toBeGreaterThan(0);
+    expect(screen.getByText('Add guest count and team notes.')).toBeInTheDocument();
     expect(screen.getByText('STC')).toBeInTheDocument();
     expect(screen.getByText('Cocktail hour')).toBeInTheDocument();
     expect(screen.getByText(/Dinner felt elegant and relaxed/)).toBeInTheDocument();
-    expect(screen.getByText('Can you support rentals?')).toBeInTheDocument();
-    expect(screen.getByText('Vendor fit rating')).toBeInTheDocument();
-    expect(screen.getByText('External credibility')).toBeInTheDocument();
+    expect(screen.getByText('Can you handle rentals?')).toBeInTheDocument();
+    expect(screen.getByText('Good to know')).toBeInTheDocument();
+    expect(screen.getAllByText('Service style').length).toBeGreaterThan(0);
+    expect(screen.getByText('Plated dinner and stations')).toBeInTheDocument();
+    expect(screen.getByText('Reviews')).toBeInTheDocument();
+    expect(screen.getByText('Review snapshot')).toBeInTheDocument();
+    expect(screen.getByText('Notes')).toBeInTheDocument();
     expect(screen.getByText('4.8')).toBeInTheDocument();
-    expect(screen.getByText(/126 public reviews/)).toBeInTheDocument();
-    expect(screen.getByText('9.3')).toBeInTheDocument();
+    expect(screen.getByText('Google shows 126 reviews.')).toBeInTheDocument();
+    expect(screen.queryByText('9.3/10')).not.toBeInTheDocument();
     expect(screen.getByText('Guest impact')).toBeInTheDocument();
+    expect(screen.queryByText('Guest impact: 9.5/10')).not.toBeInTheDocument();
     expect(screen.getByText('Guest count')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Request a custom tasting' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Write about tasting details' })).toBeInTheDocument();
   });
 
   it('keeps local sample vendor profiles available for preview', () => {

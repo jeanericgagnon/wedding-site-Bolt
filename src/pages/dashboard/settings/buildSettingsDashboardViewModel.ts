@@ -10,7 +10,7 @@ import {
   type WeddingIdentityStyleKit,
 } from '../../../lib/weddingIdentityExports';
 import { buildPublicSiteUrl } from '../../../lib/publicSiteSlug';
-import { PLANNER_ROLE_OPTIONS, type PlannerAccessRole } from '../../../lib/plannerAccess';
+import { PLANNER_ROLE_OPTIONS, type PlannerAccessRole, type PlannerPermissionKey } from '../../../lib/plannerAccess';
 import { getSettingsTabs, type SettingsTab } from './SettingsNavigation';
 import type { SiteLanguageCode } from './settingsDashboardTypes';
 
@@ -20,6 +20,7 @@ type BuildSettingsDashboardViewModelArgs = {
   defaultLanguage: SiteLanguageCode;
   isPublished: boolean;
   settingsRole: PlannerAccessRole;
+  settingsPermissions: PlannerPermissionKey[] | null;
   siteSlug: string;
   venueName: string | null;
   weddingDate: string | null;
@@ -43,6 +44,7 @@ export function buildSettingsDashboardViewModel({
   defaultLanguage,
   isPublished,
   settingsRole,
+  settingsPermissions,
   siteSlug,
   venueName,
   weddingDate,
@@ -55,7 +57,7 @@ export function buildSettingsDashboardViewModel({
     plannerRoleOptions: PLANNER_ROLE_OPTIONS.filter((option) => option.value !== 'owner'),
     isPublished,
     publicSiteUrl: derivedPublicSiteUrl,
-    tabs: getSettingsTabs(settingsRole),
+    tabs: getSettingsTabs(settingsRole, settingsPermissions),
     weddingIdentityExportKit: buildWeddingIdentityExportKit({
       coupleNames,
       publicSiteUrl: derivedPublicSiteUrl,

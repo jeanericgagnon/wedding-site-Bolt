@@ -89,7 +89,7 @@ export function MessageDashboardView({
                   value={messagesRole}
                   onChange={(e) => onSetMessagesRole(e.target.value as PlannerAccessRole)}
                   disabled={activeSiteRole !== 'owner'}
-                  className="px-3 py-2 text-sm bg-surface border border-border rounded-lg text-text-primary"
+                  className="rounded-xl border border-border bg-surface px-3 py-2 text-sm text-text-primary"
                 >
                   <option value="owner">Couple owner</option>
                   <option value="planner">Planner</option>
@@ -104,33 +104,120 @@ export function MessageDashboardView({
           }
         >
           <div className="inline-flex flex-wrap items-center gap-2 text-xs text-text-tertiary">
-            <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">Email drafts</span>
-            <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">Text drafts locked until setup</span>
-            <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">Editable before send</span>
+            <span className="rounded-xl border border-border-subtle bg-white px-3 py-1">Email drafts</span>
+            <span className="rounded-xl border border-border-subtle bg-white px-3 py-1">Text drafts locked until setup</span>
+            <span className="rounded-xl border border-border-subtle bg-white px-3 py-1">Editable before send</span>
           </div>
         </DashboardPageHero>
 
         {messagesRole === 'planner' && (
-          <div className="rounded-lg border border-primary/20 bg-primary/5 px-3 py-2 text-xs text-primary">
-            Planner view is on. This view stays focused on guest communications, reminders, and day-of updates.
+          <div className="rounded-2xl border border-primary/20 bg-primary/5 p-4 text-sm shadow-sm">
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary/75">Planner view</p>
+            <p className="mt-3 font-semibold text-primary">Guest communications stay in focus here.</p>
+            <p className="mt-2 leading-6 text-primary/80">This view stays centered on reminders, logistics updates, and the day-of notes guests actually need.</p>
           </div>
         )}
 
+        <section className="grid gap-4 lg:grid-cols-[minmax(0,1.05fr)_320px]">
+          <article className="rounded-3xl border border-border-subtle bg-white p-5 shadow-sm">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary/75">Message hub</p>
+                <h2 className="mt-3 font-serif text-2xl font-normal text-text-primary">Draft, schedule, and review guest updates.</h2>
+                <p className="mt-2 text-sm leading-6 text-text-secondary">Keep reminders, travel notes, RSVP nudges, and photo links together without turning the wedding into a group chat.</p>
+              </div>
+              <Button variant="primary" size="sm" onClick={() => startingPointsProps.onApplyComposerTemplate('blank')}>
+                New update
+              </Button>
+            </div>
+            <div className="mt-5 grid gap-3 sm:grid-cols-3">
+              <div className="rounded-2xl border border-border-subtle bg-surface-subtle/30 p-4">
+                <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-text-tertiary">Last update</p>
+                <p className="mt-2 text-sm font-semibold text-text-primary">{guestsReached > 0 ? `${guestsReached} reached` : 'Nothing sent yet'}</p>
+              </div>
+              <div className="rounded-2xl border border-border-subtle bg-surface-subtle/30 p-4">
+                <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-text-tertiary">Drafts</p>
+                <p className="mt-2 text-sm font-semibold text-text-primary">{historyProps.messages.filter((message) => message.status === 'draft').length} waiting</p>
+              </div>
+              <div className="rounded-2xl border border-border-subtle bg-surface-subtle/30 p-4">
+                <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-text-tertiary">Scheduled</p>
+                <p className="mt-2 text-sm font-semibold text-text-primary">{scheduledCount > 0 ? `${scheduledCount} planned` : 'Ready when needed'}</p>
+              </div>
+            </div>
+          </article>
+
+          <aside className="rounded-3xl border border-border-subtle bg-white p-5 shadow-sm">
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary/75">Starting points</p>
+            <div className="mt-4 space-y-3">
+              <button
+                type="button"
+                onClick={() => reachSnapshotProps.onApplyComposerTemplate('rsvp-reminder', { campaignName: 'RSVP reminder' })}
+                className="w-full rounded-2xl border border-border-subtle bg-surface-subtle/30 p-4 text-left transition hover:border-primary/30 hover:shadow-sm"
+              >
+                <p className="text-sm font-semibold text-text-primary">RSVP reminder</p>
+                <p className="mt-2 text-sm leading-6 text-text-secondary">Reach guests who have not replied without rebuilding the message from scratch.</p>
+                <p className="mt-4 text-sm font-semibold text-primary">Use template</p>
+              </button>
+              <button
+                type="button"
+                onClick={() => reachSnapshotProps.onApplyComposerTemplate('event-reminder', { campaignName: 'Hotel update' })}
+                className="w-full rounded-2xl border border-border-subtle bg-surface-subtle/30 p-4 text-left transition hover:border-primary/30 hover:shadow-sm"
+              >
+                <p className="text-sm font-semibold text-text-primary">Hotel or travel update</p>
+                <p className="mt-2 text-sm leading-6 text-text-secondary">Share room block deadlines, parking notes, or arrival changes in one calm note.</p>
+                <p className="mt-4 text-sm font-semibold text-primary">Use template</p>
+              </button>
+              <button
+                type="button"
+                onClick={reachSnapshotProps.onNavigatePhotos}
+                className="w-full rounded-2xl border border-border-subtle bg-surface-subtle/30 p-4 text-left transition hover:border-primary/30 hover:shadow-sm"
+              >
+                <p className="text-sm font-semibold text-text-primary">Photo upload link</p>
+                <p className="mt-2 text-sm leading-6 text-text-secondary">Send guests one clear photo or memory link before or after the celebration.</p>
+                <p className="mt-4 text-sm font-semibold text-primary">Open photos</p>
+              </button>
+            </div>
+          </aside>
+        </section>
+
         <MessageGuestFlowCard />
 
-        <div className="flex justify-end">
-          <button
-            type="button"
-            onClick={toggleSendingDetails}
-            className="inline-flex items-center rounded-lg border border-border-subtle bg-white px-4 py-2 text-sm font-medium text-text-secondary transition hover:border-primary/30 hover:text-primary"
-          >
-            {showSendingDetails ? 'Hide sending details' : 'Show sending details'}
-          </button>
-        </div>
+        <section className="rounded-2xl border border-border-subtle bg-white p-4 shadow-sm">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary/75">Delivery details</p>
+              <p className="mt-2 text-sm leading-6 text-text-secondary">Open the deeper send and delivery panels only when you want the operational view.</p>
+            </div>
+            <button
+              type="button"
+              onClick={toggleSendingDetails}
+              className="inline-flex items-center rounded-xl border border-border-subtle bg-white px-4 py-2 text-sm font-medium text-text-secondary transition hover:border-primary/30 hover:text-primary"
+            >
+              {showSendingDetails ? 'Hide sending details' : 'Show sending details'}
+            </button>
+          </div>
+        </section>
 
         {showSendingDetails && <MessageSendingDetailsPanel {...sendingDetailsProps} />}
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <section className="rounded-2xl border border-border-subtle bg-white p-5 shadow-sm">
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary/75">Message workspace</p>
+              <h2 className="mt-3 text-lg font-semibold text-text-primary">Build the note, then check the reach details only when you need them.</h2>
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-text-secondary">
+                The main composer stays on the left, while templates, reach context, and send details stay close without taking over the page.
+              </p>
+            </div>
+            <div className="inline-flex flex-wrap gap-2 text-xs text-text-tertiary">
+              <span className="rounded-xl border border-border-subtle bg-surface-subtle/30 px-3 py-1">Draft first</span>
+              <span className="rounded-xl border border-border-subtle bg-surface-subtle/30 px-3 py-1">Schedule when ready</span>
+              <span className="rounded-xl border border-border-subtle bg-surface-subtle/30 px-3 py-1">Templates stay close</span>
+            </div>
+          </div>
+        </section>
+
+        <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
           <div className="lg:col-span-2">
             <MessageComposerCard {...composerProps} />
             <MessageSavedTemplatesCard {...savedTemplatesProps} />
@@ -142,7 +229,16 @@ export function MessageDashboardView({
           </div>
         </div>
 
-        <MessageHistoryCard {...historyProps} />
+        <section className="space-y-4">
+          <div className="rounded-2xl border border-border-subtle bg-white p-5 shadow-sm">
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary/75">Recent message history</p>
+            <h2 className="mt-3 text-lg font-semibold text-text-primary">Keep a clear record of what guests have already received.</h2>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-text-secondary">
+              This is the audit trail for drafts, scheduled sends, and completed updates, so you can review timing before you send the next note.
+            </p>
+          </div>
+          <MessageHistoryCard {...historyProps} />
+        </section>
       </div>
 
       {detailModalProps && <MessageDetailModal {...detailModalProps} />}

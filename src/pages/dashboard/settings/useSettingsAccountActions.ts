@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useRef } from 'react';
 
 import { splitCoupleNames, safeSettingsError } from './settingsDashboardUtils';
 import {
@@ -43,20 +43,29 @@ export function useSettingsAccountActions({
   setPasswordSuccess,
   weddingSiteId,
 }: UseSettingsAccountActionsArgs) {
+  const accountSaveRequestIdRef = useRef(0);
+  const passwordUpdateRequestIdRef = useRef(0);
+
   const handleSaveAccount = useCallback(async (event: React.FormEvent) => {
     event.preventDefault();
     if (!weddingSiteId) return;
+    const requestId = ++accountSaveRequestIdRef.current;
+    const isCurrentAccountSave = () => requestId === accountSaveRequestIdRef.current;
     setAccountSaving(true);
     setAccountError(null);
     setAccountSuccess(null);
     try {
       const { name1, name2 } = splitCoupleNames(coupleNames);
       await updateSettingsSite(weddingSiteId, { couple_name_1: name1, couple_name_2: name2 });
+      if (!isCurrentAccountSave()) return;
       setAccountSuccess('Account information saved.');
     } catch (err) {
+      if (!isCurrentAccountSave()) return;
       setAccountError(safeSettingsError(err, 'Couldn’t save changes.'));
     } finally {
-      setAccountSaving(false);
+      if (isCurrentAccountSave()) {
+        setAccountSaving(false);
+      }
     }
   }, [coupleNames, setAccountError, setAccountSaving, setAccountSuccess, weddingSiteId]);
 
@@ -81,20 +90,28 @@ export function useSettingsAccountActions({
       return;
     }
 
+    const requestId = ++passwordUpdateRequestIdRef.current;
+    const isCurrentPasswordUpdate = () => requestId === passwordUpdateRequestIdRef.current;
     setPasswordSaving(true);
     try {
       const authUser = await requireSettingsAuthenticatedUser();
+      if (!isCurrentPasswordUpdate()) return;
       await verifySettingsCurrentPassword(authUser.email || '', currentPassword);
+      if (!isCurrentPasswordUpdate()) return;
       await updateSettingsAccountPassword(newPassword);
+      if (!isCurrentPasswordUpdate()) return;
       logSettingsAction('account_password_changed', 'Account password was changed.');
       setPasswordSuccess('Password updated successfully.');
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
     } catch (err) {
+      if (!isCurrentPasswordUpdate()) return;
       setPasswordError(safeSettingsError(err, 'Couldn’t update password.'));
     } finally {
-      setPasswordSaving(false);
+      if (isCurrentPasswordUpdate()) {
+        setPasswordSaving(false);
+      }
     }
   }, [
     confirmPassword,

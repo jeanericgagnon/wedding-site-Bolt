@@ -1,8 +1,8 @@
-import { useState } from 'react';
-import { buildSetupChecklist } from './overviewUtils';
+import { useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import { ACTIVE_SITE_STORAGE_CHANGED_EVENT, getStoredActiveSiteId } from '../../lib/activeSiteStorage';
+import { buildOverviewDismissalStorageKey, buildSetupChecklist, readOverviewDismissalIds } from './overviewUtils';
 import type { OverviewStatsState } from './buildOverviewSnapshotState';
-
-const INTELLIGENCE_DISMISSALS_STORAGE_KEY = 'dayof_intelligence_dismissed_v1';
 
 interface PublishBlockerLike {
   label: string;
@@ -68,21 +68,33 @@ export function buildOverviewDashboardRouteSupport({
 }
 
 export function useOverviewDashboardRouteSupport() {
-  const [dismissedIntelligenceIds, setDismissedIntelligenceIds] = useState<string[]>(() => {
-    try {
-      return JSON.parse(localStorage.getItem(INTELLIGENCE_DISMISSALS_STORAGE_KEY) ?? '[]') as string[];
-    } catch {
-      return [];
-    }
-  });
+  const [searchParams] = useSearchParams();
+  const [activeSiteId, setActiveSiteId] = useState<string | null>(() => getStoredActiveSiteId());
+  const storageKey = useMemo(() => buildOverviewDismissalStorageKey(activeSiteId), [activeSiteId]);
+  const [dismissedIntelligenceIds, setDismissedIntelligenceIds] = useState<string[]>(() => readOverviewDismissalIds(storageKey));
 
-  const showInternalProof =
-    typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('proof') === '1';
+  useEffect(() => {
+    setDismissedIntelligenceIds(readOverviewDismissalIds(storageKey));
+  }, [storageKey]);
+
+  useEffect(() => {
+    const handleActiveSiteChanged = (event: Event) => {
+      const nextSiteId = ((event as CustomEvent<{ siteId?: string | null }>).detail?.siteId ?? null) || null;
+      setActiveSiteId(nextSiteId);
+    };
+
+    window.addEventListener(ACTIVE_SITE_STORAGE_CHANGED_EVENT, handleActiveSiteChanged);
+    return () => {
+      window.removeEventListener(ACTIVE_SITE_STORAGE_CHANGED_EVENT, handleActiveSiteChanged);
+    };
+  }, []);
+
+  const showInternalProof = searchParams.get('proof') === '1';
 
   return {
     dismissedIntelligenceIds,
     setDismissedIntelligenceIds,
     showInternalProof,
-    storageKey: INTELLIGENCE_DISMISSALS_STORAGE_KEY,
+    storageKey,
   };
 }

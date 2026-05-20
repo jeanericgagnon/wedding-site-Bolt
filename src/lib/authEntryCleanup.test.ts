@@ -12,4 +12,10 @@ describe('auth entry cleanup', () => {
     clearAuthEntryReturnPath();
     expect(readSignupReturnPath()).toBeNull();
   });
+
+  it('can clear stale scoped signup return state too', () => {
+    writeSignupReturnPath('/onboarding/quick-start?bypassPayment=1', 'alex@example.com');
+    clearAuthEntryReturnPath('alex@example.com');
+    expect(readSignupReturnPath('alex@example.com')).toBeNull();
+  });
 });

@@ -76,7 +76,7 @@ export const VariantPreviewSwatch: React.FC<{ variantId: string; sectionType?: s
     venue_card: (
       <div className={`w-full h-20 flex items-center gap-1.5 px-2 transition-colors ${h ? 'bg-rose-50' : 'bg-gray-50'}`}>
         {[0, 1].map(i => (
-          <div key={i} className={`flex-1 h-16 rounded-lg overflow-hidden flex flex-col ${h ? 'bg-white shadow-sm ring-1 ring-rose-200' : 'bg-white border border-gray-200'}`}>
+          <div key={i} className={`flex-1 h-16 rounded-xl overflow-hidden flex flex-col ${h ? 'bg-white shadow-sm ring-1 ring-rose-200' : 'bg-white border border-gray-200'}`}>
             <div className={`h-7 w-full ${i === 0 ? (h ? 'bg-rose-200' : 'bg-gray-200') : (h ? 'bg-rose-100' : 'bg-gray-100')}`} />
             <div className="px-1.5 pt-1 flex flex-col gap-0.5">
               <div className={`h-1.5 rounded-sm w-4/5 ${cd}`} />
@@ -168,7 +168,7 @@ export const VariantPreviewSwatch: React.FC<{ variantId: string; sectionType?: s
     schedule_agendaCards: (
       <div className={`w-full h-20 flex items-center gap-1 px-2 transition-colors ${h ? 'bg-rose-50' : 'bg-gray-50'}`}>
         {[0,1,2].map(i => (
-          <div key={i} className={`flex-1 h-14 rounded-lg flex flex-col justify-between p-1.5 ${h ? 'bg-white ring-1 ring-rose-200' : 'bg-white border border-gray-200'}`}>
+          <div key={i} className={`flex-1 h-14 rounded-xl flex flex-col justify-between p-1.5 ${h ? 'bg-white ring-1 ring-rose-200' : 'bg-white border border-gray-200'}`}>
             <div>
               <div className={`text-[7px] font-semibold mb-0.5 ${h ? 'text-rose-400' : 'text-gray-400'}`}>3:00 PM</div>
               <div className={`h-1.5 rounded-sm ${cd}`} />
@@ -195,7 +195,7 @@ export const VariantPreviewSwatch: React.FC<{ variantId: string; sectionType?: s
     travel_hotelBlock: (
       <div className={`w-full h-20 flex items-center gap-1.5 px-2 transition-colors ${h ? 'bg-rose-50' : 'bg-gray-50'}`}>
         {[0,1].map(i => (
-          <div key={i} className={`flex-1 h-16 rounded-lg overflow-hidden flex flex-col ${h ? 'bg-white ring-1 ring-rose-200' : 'bg-white border border-gray-200'}`}>
+          <div key={i} className={`flex-1 h-16 rounded-xl overflow-hidden flex flex-col ${h ? 'bg-white ring-1 ring-rose-200' : 'bg-white border border-gray-200'}`}>
             <div className={`h-6 ${h ? 'bg-rose-100' : 'bg-slate-100'}`} />
             <div className="p-1.5 flex flex-col gap-0.5">
               <div className={`h-1.5 rounded-sm ${cd}`} />
@@ -213,7 +213,7 @@ export const VariantPreviewSwatch: React.FC<{ variantId: string; sectionType?: s
       <div className={`w-full h-20 flex flex-col justify-center px-3 gap-1.5 transition-colors ${h ? 'bg-rose-50' : 'bg-gray-50'}`}>
         <div className={`h-1.5 rounded-sm w-14 ${cd}`} />
         {[0,1].map(i => (
-          <div key={i} className={`h-6 rounded-lg flex items-center px-2 gap-2 ${h ? 'bg-white ring-1 ring-rose-200' : 'bg-white border border-gray-200'}`}>
+          <div key={i} className={`h-6 rounded-xl flex items-center px-2 gap-2 ${h ? 'bg-white ring-1 ring-rose-200' : 'bg-white border border-gray-200'}`}>
             <div className={`w-3 h-3 rounded-sm flex-shrink-0 ${c}`} />
             <div className={`flex-1 h-1 rounded-sm ${c}`} />
             <div className={`w-10 h-3 rounded text-[7px] flex items-center justify-center font-semibold ${h ? 'bg-rose-500 text-white' : 'bg-gray-700 text-white'}`}>Open</div>
@@ -224,7 +224,7 @@ export const VariantPreviewSwatch: React.FC<{ variantId: string; sectionType?: s
     registry_featured: (
       <div className={`w-full h-20 flex items-center gap-1 px-2 transition-colors ${h ? 'bg-rose-50' : 'bg-gray-50'}`}>
         {[0,1,2].map((i) => (
-          <div key={i} className={`flex-1 h-16 rounded-lg overflow-hidden flex flex-col ${h ? 'bg-white ring-1 ring-rose-200' : 'bg-white border border-gray-200'} ${i === 1 ? 'scale-105' : ''}`}>
+          <div key={i} className={`flex-1 h-16 rounded-xl overflow-hidden flex flex-col ${h ? 'bg-white ring-1 ring-rose-200' : 'bg-white border border-gray-200'} ${i === 1 ? 'scale-105' : ''}`}>
             <div className={`h-8 ${h ? 'bg-rose-100' : 'bg-gray-100'} flex items-center justify-center`}>
               <div className={`w-3 h-3 rounded-sm ${c}`} />
             </div>
@@ -254,7 +254,7 @@ export const VariantPreviewSwatch: React.FC<{ variantId: string; sectionType?: s
       <div className={`w-full h-20 flex flex-col justify-center gap-1.5 px-3 transition-colors ${h ? 'bg-rose-50' : 'bg-gray-50'}`}>
         <div className={`h-1.5 rounded-sm w-10 ${cd}`} />
         {[0,1,2].map((i) => (
-          <div key={i} className={`flex items-center justify-between px-2 py-1 rounded-md border transition-colors ${i === 0 ? (h ? 'border-rose-300 bg-rose-100' : 'border-gray-300 bg-white') : (h ? 'border-rose-100 bg-rose-50' : 'border-gray-100 bg-white')}`}>
+          <div key={i} className={`flex items-center justify-between px-2 py-1 rounded-xl border transition-colors ${i === 0 ? (h ? 'border-rose-300 bg-rose-100' : 'border-gray-300 bg-white') : (h ? 'border-rose-100 bg-rose-50' : 'border-gray-100 bg-white')}`}>
             <div className={`h-1.5 w-20 rounded-sm ${i === 0 ? cd : c}`} />
             <div className={`text-[10px] font-bold ${h ? 'text-rose-400' : 'text-gray-400'}`}>{i === 0 ? '−' : '+'}</div>
           </div>
@@ -266,20 +266,20 @@ export const VariantPreviewSwatch: React.FC<{ variantId: string; sectionType?: s
     rsvp_default: (
       <div className={`w-full h-20 flex flex-col justify-center gap-1.5 px-3 transition-colors ${h ? 'bg-rose-50' : 'bg-gray-50'}`}>
         <div className={`h-1.5 rounded-sm w-10 ${cd}`} />
-        <div className={`h-5 rounded-md border ${h ? 'border-rose-200 bg-white' : 'border-gray-200 bg-white'} flex items-center px-2`}>
+        <div className={`h-5 rounded-xl border ${h ? 'border-rose-200 bg-white' : 'border-gray-200 bg-white'} flex items-center px-2`}>
           <div className={`flex-1 h-1 rounded-sm ${cl}`} />
         </div>
         <div className="flex gap-1">
-          <div className={`flex-1 h-5 rounded-md border flex items-center px-1.5 gap-1 ${h ? 'border-rose-200 bg-white' : 'border-gray-200 bg-white'}`}>
+          <div className={`flex-1 h-5 rounded-xl border flex items-center px-1.5 gap-1 ${h ? 'border-rose-200 bg-white' : 'border-gray-200 bg-white'}`}>
             <div className={`w-1.5 h-1.5 rounded-full ${h ? 'bg-rose-300' : 'bg-gray-300'}`} />
             <div className={`text-[7px] ${h ? 'text-rose-500' : 'text-gray-500'} font-medium`}>Yes</div>
           </div>
-          <div className={`flex-1 h-5 rounded-md border flex items-center px-1.5 gap-1 ${h ? 'border-rose-200 bg-white' : 'border-gray-200 bg-white'}`}>
+          <div className={`flex-1 h-5 rounded-xl border flex items-center px-1.5 gap-1 ${h ? 'border-rose-200 bg-white' : 'border-gray-200 bg-white'}`}>
             <div className={`w-1.5 h-1.5 rounded-full ${c}`} />
             <div className={`text-[7px] ${h ? 'text-rose-400' : 'text-gray-400'} font-medium`}>No</div>
           </div>
         </div>
-        <div className={`h-5 rounded-md flex items-center justify-center ${h ? 'bg-rose-500' : 'bg-gray-700'}`}>
+        <div className={`h-5 rounded-xl flex items-center justify-center ${h ? 'bg-rose-500' : 'bg-gray-700'}`}>
           <div className="text-[8px] text-white font-semibold">SEND RSVP</div>
         </div>
       </div>
@@ -289,9 +289,9 @@ export const VariantPreviewSwatch: React.FC<{ variantId: string; sectionType?: s
         <div className={`w-full h-11 rounded-xl border flex items-center px-2.5 gap-2 ${h ? 'border-rose-200 bg-white' : 'border-gray-200 bg-white'}`}>
           <div className="flex-1 flex flex-col gap-0.5">
             <div className={`h-1.5 rounded-sm w-16 ${cd}`} />
-            <div className={`h-4 rounded-md border w-full ${h ? 'border-rose-100' : 'border-gray-100'}`} />
+            <div className={`h-4 rounded-xl border w-full ${h ? 'border-rose-100' : 'border-gray-100'}`} />
           </div>
-          <div className={`w-14 h-7 rounded-lg flex items-center justify-center ${h ? 'bg-rose-500' : 'bg-gray-700'}`}>
+          <div className={`w-14 h-7 rounded-xl flex items-center justify-center ${h ? 'bg-rose-500' : 'bg-gray-700'}`}>
             <div className="text-[7px] text-white font-bold">Reply</div>
           </div>
         </div>
@@ -355,7 +355,7 @@ export const VariantPreviewSwatch: React.FC<{ variantId: string; sectionType?: s
         <div className="flex items-end gap-1.5">
           {[{n:'047',l:'Days'},{n:'12',l:'Hrs'},{n:'38',l:'Min'}].map(({n,l}) => (
             <div key={l} className="flex flex-col items-center">
-              <div className={`w-7 h-7 rounded-lg flex items-center justify-center text-[11px] font-bold ${h ? 'bg-rose-500 text-white' : 'bg-gray-800 text-white'}`}>{n.slice(-2)}</div>
+              <div className={`w-7 h-7 rounded-xl flex items-center justify-center text-[11px] font-bold ${h ? 'bg-rose-500 text-white' : 'bg-gray-800 text-white'}`}>{n.slice(-2)}</div>
               <div className={`text-[6px] mt-0.5 ${h ? 'text-rose-400' : 'text-gray-400'} font-medium`}>{l}</div>
             </div>
           ))}
@@ -452,7 +452,7 @@ export const VariantPreviewSwatch: React.FC<{ variantId: string; sectionType?: s
     accommodations_cards: (
       <div className={`w-full h-20 flex items-center gap-1.5 px-2 transition-colors ${h ? 'bg-rose-50' : 'bg-gray-50'}`}>
         {[0,1].map(i => (
-          <div key={i} className={`flex-1 h-16 rounded-lg overflow-hidden flex flex-col ${h ? 'bg-white ring-1 ring-rose-200' : 'bg-white border border-gray-200'}`}>
+          <div key={i} className={`flex-1 h-16 rounded-xl overflow-hidden flex flex-col ${h ? 'bg-white ring-1 ring-rose-200' : 'bg-white border border-gray-200'}`}>
             <div className={`h-5 ${h ? 'bg-rose-100' : 'bg-slate-100'}`} />
             <div className="p-1.5 flex flex-col gap-0.5">
               <div className={`h-1.5 rounded-sm ${cd}`} />
@@ -470,7 +470,7 @@ export const VariantPreviewSwatch: React.FC<{ variantId: string; sectionType?: s
         <div className={`h-1.5 rounded-sm w-14 ${cd}`} />
         <div className="flex gap-2">
           {[0,1].map(i => (
-            <div key={i} className={`flex-1 h-10 rounded-lg p-1.5 flex flex-col gap-0.5 ${h ? 'bg-rose-50 border border-rose-100' : 'bg-gray-50 border border-gray-100'}`}>
+            <div key={i} className={`flex-1 h-10 rounded-xl p-1.5 flex flex-col gap-0.5 ${h ? 'bg-rose-50 border border-rose-100' : 'bg-gray-50 border border-gray-100'}`}>
               <div className={`w-4 h-4 rounded-full ${c}`} />
               <div className={`h-1 rounded-sm ${cd}`} />
               <div className={`h-1 rounded-sm w-3/4 ${cl}`} />
@@ -521,7 +521,7 @@ export const VariantPreviewSwatch: React.FC<{ variantId: string; sectionType?: s
         </div>
         <div className={`h-1.5 rounded-sm w-20 ${h ? 'bg-amber-300' : 'bg-gray-300'}`} />
         <div className={`h-1 rounded-sm w-full mx-4 ${h ? 'bg-amber-200' : 'bg-gray-200'}`} />
-        <div className={`h-5 rounded-md w-12 ${h ? 'bg-amber-400' : 'bg-gray-400'} mt-0.5`} />
+        <div className={`h-5 rounded-xl w-12 ${h ? 'bg-amber-400' : 'bg-gray-400'} mt-0.5`} />
       </div>
     ),
 
@@ -632,7 +632,7 @@ export const VariantPreviewSwatch: React.FC<{ variantId: string; sectionType?: s
         <div className={`h-1.5 rounded-sm w-16 mx-auto ${cd}`} />
         <div className="flex justify-between gap-1 mt-1">
           {['✈','♥','💍','🎉'].map((icon, i) => (
-            <div key={i} className={`flex-1 flex flex-col items-center gap-0.5 rounded-md p-1 ${h ? 'bg-rose-100' : 'bg-white border border-gray-100'}`}>
+            <div key={i} className={`flex-1 flex flex-col items-center gap-0.5 rounded-xl p-1 ${h ? 'bg-rose-100' : 'bg-white border border-gray-100'}`}>
               <div className={`text-[9px]`}>{icon}</div>
               <div className={`h-1 rounded-sm w-full ${cl}`} />
             </div>
@@ -733,7 +733,7 @@ export const VariantPreviewSwatch: React.FC<{ variantId: string; sectionType?: s
     travel_tiers: (
       <div className={`w-full h-20 flex items-stretch gap-0.5 px-1.5 py-1.5 transition-colors ${h ? 'bg-rose-50' : 'bg-gray-50'}`}>
         {['Closest','Best Value','Budget'].map((tier, i) => (
-          <div key={tier} className={`flex-1 flex flex-col rounded-md overflow-hidden border ${h ? 'border-rose-200 bg-white' : 'border-gray-200 bg-white'}`}>
+          <div key={tier} className={`flex-1 flex flex-col rounded-xl overflow-hidden border ${h ? 'border-rose-200 bg-white' : 'border-gray-200 bg-white'}`}>
             <div className={`h-3 flex items-center justify-center text-[5px] font-bold ${i === 0 ? (h ? 'bg-rose-500 text-white' : 'bg-gray-700 text-white') : (h ? 'bg-rose-100 text-rose-600' : 'bg-gray-100 text-gray-500')}`}>{tier}</div>
             <div className="p-1 flex flex-col gap-0.5">
               <div className={`h-1 rounded-sm ${cd}`} />
@@ -830,7 +830,7 @@ export const VariantPreviewSwatch: React.FC<{ variantId: string; sectionType?: s
         </div>
         <div className="flex-1 p-2 space-y-1">
           {[0,1].map(i => (
-            <div key={i} className={`h-5 rounded-lg flex items-center px-2 gap-2 ${h ? 'bg-white ring-1 ring-rose-100' : 'bg-white border border-gray-100'}`}>
+            <div key={i} className={`h-5 rounded-xl flex items-center px-2 gap-2 ${h ? 'bg-white ring-1 ring-rose-100' : 'bg-white border border-gray-100'}`}>
               <div className={`w-2.5 h-2.5 rounded-sm ${c}`} />
               <div className={`flex-1 h-1 rounded-sm ${c}`} />
             </div>
@@ -937,8 +937,8 @@ export const VariantPreviewSwatch: React.FC<{ variantId: string; sectionType?: s
         <div className="absolute bottom-0 right-0 w-8 h-8 rounded-tl-full opacity-30 bg-green-300" />
         <div className={`relative w-28 h-14 rounded-xl shadow-sm border flex flex-col gap-1 p-2 ${h ? 'border-rose-200 bg-white' : 'border-amber-200 bg-white'}`}>
           <div className={`h-1.5 rounded-sm w-16 mx-auto ${cd}`} />
-          <div className={`h-3 rounded-md border w-full ${h ? 'border-rose-100' : 'border-gray-100'}`} />
-          <div className={`h-3 rounded-md ${h ? 'bg-rose-500' : 'bg-gray-700'} flex items-center justify-center`}>
+          <div className={`h-3 rounded-xl border w-full ${h ? 'border-rose-100' : 'border-gray-100'}`} />
+          <div className={`h-3 rounded-xl ${h ? 'bg-rose-500' : 'bg-gray-700'} flex items-center justify-center`}>
             <div className="text-[6px] text-white font-bold">SEND RSVP</div>
           </div>
         </div>
@@ -1038,7 +1038,7 @@ export const VariantPreviewSwatch: React.FC<{ variantId: string; sectionType?: s
         <div className="flex items-end gap-2">
           {['47','12','38'].map((n,i) => (
             <div key={i} className="flex flex-col items-center">
-              <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-[11px] font-bold ${h ? 'bg-rose-500 text-white' : 'bg-white/10 text-white border border-white/20'}`}>{n}</div>
+              <div className={`w-8 h-8 rounded-xl flex items-center justify-center text-[11px] font-bold ${h ? 'bg-rose-500 text-white' : 'bg-white/10 text-white border border-white/20'}`}>{n}</div>
               <div className={`text-[5px] mt-0.5 ${h ? 'text-rose-400' : 'text-gray-500'}`}>{['Days','Hrs','Min'][i]}</div>
             </div>
           ))}
@@ -1062,7 +1062,7 @@ export const VariantPreviewSwatch: React.FC<{ variantId: string; sectionType?: s
     'wedding-party_scroll': (
       <div className={`w-full h-20 flex items-center gap-1 px-1 transition-colors ${h ? 'bg-rose-50' : 'bg-gray-50'}`}>
         {[0,1,2,3].map(i => (
-          <div key={i} className={`flex-shrink-0 w-10 h-16 rounded-lg flex flex-col overflow-hidden ${h ? 'bg-white ring-1 ring-rose-200' : 'bg-white border border-gray-200'}`}>
+          <div key={i} className={`flex-shrink-0 w-10 h-16 rounded-xl flex flex-col overflow-hidden ${h ? 'bg-white ring-1 ring-rose-200' : 'bg-white border border-gray-200'}`}>
             <div className={`flex-1 ${h ? 'bg-rose-200' : 'bg-gray-200'}`} />
             <div className="p-1">
               <div className={`h-1 rounded-sm ${cd}`} />
@@ -1287,7 +1287,7 @@ export const VariantPreviewSwatch: React.FC<{ variantId: string; sectionType?: s
         <div className={`h-1.5 rounded-sm w-20 ${cd}`} />
         <div className="flex gap-1.5">
           {[0,1].map(i => (
-            <div key={i} className={`flex-1 h-10 rounded-lg p-1 flex flex-col gap-0.5 ${h ? 'bg-rose-50 border border-rose-100' : 'bg-gray-50 border border-gray-100'}`}>
+            <div key={i} className={`flex-1 h-10 rounded-xl p-1 flex flex-col gap-0.5 ${h ? 'bg-rose-50 border border-rose-100' : 'bg-gray-50 border border-gray-100'}`}>
               <div className={`w-3.5 h-3.5 rounded-full ${c}`} />
               <div className={`h-1 rounded-sm ${cd}`} />
               <div className={`text-[5px] ${h ? 'text-rose-400' : 'text-gray-400'}`}>{i === 0 ? 'Couple' : 'Coordinator'}</div>
@@ -1357,7 +1357,7 @@ export const VariantPreviewSwatch: React.FC<{ variantId: string; sectionType?: s
           <div className={`text-[7px] ${h ? 'text-rose-400' : 'text-gray-400'}`}>Send ✨</div>
         </div>
         {[0,1].map(i => (
-          <div key={i} className={`px-2 py-1 rounded-lg text-[6px] leading-tight ${h ? 'bg-white border border-rose-100 text-rose-700' : 'bg-white border border-gray-100 text-gray-600'}`}>
+          <div key={i} className={`px-2 py-1 rounded-xl text-[6px] leading-tight ${h ? 'bg-white border border-rose-100 text-rose-700' : 'bg-white border border-gray-100 text-gray-600'}`}>
             <div className={`h-0.5 rounded-sm mb-0.5 ${cd}`} />
             <div className={`h-0.5 rounded-sm w-3/4 ${c}`} />
           </div>
@@ -1403,7 +1403,7 @@ export const VariantPreviewSwatch: React.FC<{ variantId: string; sectionType?: s
       <div className={`w-full h-20 flex flex-col justify-center gap-1.5 px-3 transition-colors ${h ? 'bg-rose-50' : 'bg-stone-50'}`}>
         <div className="flex gap-2">
           {['🥗','🍗','🎂'].map((icon,i) => (
-            <div key={icon} className={`flex-1 flex flex-col items-center rounded-lg p-1 ${h ? 'bg-white border border-rose-100' : 'bg-white border border-stone-100'}`}>
+            <div key={icon} className={`flex-1 flex flex-col items-center rounded-xl p-1 ${h ? 'bg-white border border-rose-100' : 'bg-white border border-stone-100'}`}>
               <div className="text-[11px]">{icon}</div>
               <div className={`h-0.5 rounded-sm w-full mt-0.5 ${cd}`} />
               <div className={`h-0.5 rounded-sm w-3/4 ${cl}`} />
@@ -1436,11 +1436,11 @@ export const VariantPreviewSwatch: React.FC<{ variantId: string; sectionType?: s
     music_requestForm: (
       <div className={`w-full h-20 flex flex-col justify-center gap-1 px-3 transition-colors ${h ? 'bg-rose-50' : 'bg-gray-50'}`}>
         <div className={`text-[7px] font-bold ${h ? 'text-rose-600' : 'text-gray-700'}`}>What song gets you dancing?</div>
-        <div className={`h-5 rounded-lg border flex items-center px-2 gap-1 ${h ? 'border-rose-200 bg-white' : 'border-gray-200 bg-white'}`}>
+        <div className={`h-5 rounded-xl border flex items-center px-2 gap-1 ${h ? 'border-rose-200 bg-white' : 'border-gray-200 bg-white'}`}>
           <div className={`flex-1 h-1 rounded-sm ${cl}`} />
           <div className={`text-[7px] ${h ? 'text-rose-400' : 'text-gray-400'}`}>🎵</div>
         </div>
-        <div className={`h-4 rounded-lg flex items-center justify-center ${h ? 'bg-rose-500' : 'bg-gray-700'}`}>
+        <div className={`h-4 rounded-xl flex items-center justify-center ${h ? 'bg-rose-500' : 'bg-gray-700'}`}>
           <div className="text-[7px] text-white font-bold">Request a Song</div>
         </div>
       </div>

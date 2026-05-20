@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Heart, CreditCard, Check, Loader2, AlertCircle, RefreshCw } from 'lucide-react';
 import { Button } from '../components/ui';
 import { useAuth } from '../hooks/useAuth';
@@ -27,25 +27,49 @@ function safePaymentError(err: unknown, fallback: string): string {
 
 export const PaymentRequired: React.FC = () => {
   const { user, isDemoMode } = useAuth();
+  const onboardingStorageScope = user?.id ?? null;
   const paymentBypassAllowed = isPaymentBypassAllowed();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [loading, setLoading] = useState(false);
   const [checkingStatus, setCheckingStatus] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [weddingSiteId, setWeddingSiteId] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!user) return;
+    setLoading(false);
+    setCheckingStatus(false);
+    setError(null);
+  }, [searchParams]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    setWeddingSiteId(null);
+    if (!user) {
+      return () => {
+        cancelled = true;
+      };
+    }
+
     if (isDemoMode) {
       setWeddingSiteId('demo-site-id');
-      return;
+      return () => {
+        cancelled = true;
+      };
     }
 
     ensureMinimalPaymentWeddingSite(user.id, user.email)
-      .then(id => setWeddingSiteId(id))
+      .then(id => {
+        if (!cancelled) setWeddingSiteId(id);
+      })
       .catch((err: unknown) => {
-        setError(safePaymentError(err, 'Couldn’t finish setting up your account right now.'));
+        if (!cancelled) setError(safePaymentError(err, 'Couldn’t finish setting up your account right now.'));
       });
+
+    return () => {
+      cancelled = true;
+    };
   }, [isDemoMode, user]);
 
   const handleCheckout = async () => {
@@ -71,12 +95,7 @@ export const PaymentRequired: React.FC = () => {
   };
 
   const handleBypassForNow = () => {
-    if (typeof window !== 'undefined') {
-      clearAllOnboardingContinuationState();
-      window.location.assign('/onboarding/celebration?bypassPayment=1');
-      return;
-    }
-    clearAllOnboardingContinuationState();
+    clearAllOnboardingContinuationState(onboardingStorageScope);
     navigate('/onboarding/celebration?bypassPayment=1', { replace: true });
   };
 
@@ -87,19 +106,22 @@ export const PaymentRequired: React.FC = () => {
     try {
       const status = await fetchPaymentStatus(user.id);
       if (status === 'active') {
-        clearAllOnboardingContinuationState();
+        clearAllOnboardingContinuationState(onboardingStorageScope);
         navigate('/onboarding/celebration?from=payment', { replace: true });
       } else {
         setError('Payment not confirmed yet. If you just paid, please wait a moment and try again.');
       }
     } catch (err) {
+      if (err instanceof SessionExpiredError) {
+        navigate('/login?reason=session_expired', { replace: true });
+        return;
+      }
       setError(safePaymentError(err, 'Couldn’t check payment status right now.'));
     } finally {
       setCheckingStatus(false);
     }
   };
 
-  const searchParams = new URLSearchParams(window.location.search);
   const isCanceled = searchParams.get('canceled') === '1';
   const isExpired = searchParams.get('reason') === 'expired';
   const isBillingUnavailable = searchParams.get('reason') === 'billing_unavailable';
@@ -109,7 +131,7 @@ export const PaymentRequired: React.FC = () => {
     <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,rgba(139,157,126,0.18),transparent_32%),linear-gradient(135deg,#faf7f1,#f6f1e8_42%,#fbfaf7)] flex items-center justify-center p-4">
       <div className="w-full max-w-5xl">
         <div className="mx-auto mb-8 max-w-2xl text-center">
-          <div className="mb-4 inline-flex h-16 w-16 items-center justify-center rounded-lg border border-border-subtle bg-white/82">
+          <div className="mb-4 inline-flex h-16 w-16 items-center justify-center rounded-xl border border-border-subtle bg-white/82">
             <Heart className="w-8 h-8 text-accent" />
           </div>
           <h1 className="text-4xl font-semibold leading-tight text-text-primary">
@@ -124,7 +146,7 @@ export const PaymentRequired: React.FC = () => {
           </p>
         </div>
 
-        <div className="grid overflow-hidden rounded-lg border border-border-subtle bg-white/88 lg:grid-cols-[1fr_0.82fr]">
+        <div className="grid overflow-hidden rounded-xl border border-border-subtle bg-white/88 lg:grid-cols-[1fr_0.82fr]">
           <div className="p-6 sm:p-8">
             <div className="flex flex-wrap items-end justify-between gap-4 border-b border-border-subtle pb-6">
               <div>
@@ -132,7 +154,7 @@ export const PaymentRequired: React.FC = () => {
                 <p className="mt-2 text-4xl font-semibold text-text-primary">$49</p>
                 <p className="mt-1 text-sm text-text-secondary">One payment. Two years included.</p>
               </div>
-              <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1.5 text-sm text-text-secondary">
+              <span className="rounded-xl border border-border-subtle bg-surface-subtle px-3 py-1.5 text-sm text-text-secondary">
                 No surprise renewals
               </span>
             </div>
@@ -140,7 +162,7 @@ export const PaymentRequired: React.FC = () => {
             <p className="mt-6 text-sm font-medium text-text-secondary">Everything included</p>
             <ul className="mt-3 grid gap-3 sm:grid-cols-2">
               {FEATURES.map(f => (
-                <li key={f} className="flex items-start gap-3 rounded-lg border border-border-subtle bg-surface-subtle/60 px-4 py-3 text-sm leading-6 text-text-primary">
+                <li key={f} className="flex items-start gap-3 rounded-xl border border-border-subtle bg-surface-subtle/60 px-4 py-3 text-sm leading-6 text-text-primary">
                   <Check className="mt-1 w-4 h-4 text-accent flex-shrink-0" />
                   {f}
                 </li>
@@ -150,35 +172,35 @@ export const PaymentRequired: React.FC = () => {
 
           <div className="border-t border-border-subtle bg-surface-subtle/40 p-6 sm:p-8 lg:border-l lg:border-t-0">
             {isNewSignup && !error && !isCanceled && !isExpired && (
-              <div className="mb-4 flex items-start gap-2 rounded-lg border border-border-subtle bg-surface-secondary p-3 text-sm text-text-secondary">
+              <div className="mb-4 flex items-start gap-2 rounded-xl border border-border-subtle bg-surface-secondary p-3 text-sm text-text-secondary">
                 <Check className="w-4 h-4 flex-shrink-0 mt-0.5 text-accent" />
                 <span>Your account is saved. Complete payment to open setup and publishing.</span>
               </div>
             )}
 
             {isExpired && !error && !isCanceled && (
-              <div className="mb-4 flex items-start gap-2 rounded-lg border border-border-subtle bg-surface-secondary p-3 text-sm text-text-secondary">
+              <div className="mb-4 flex items-start gap-2 rounded-xl border border-border-subtle bg-surface-secondary p-3 text-sm text-text-secondary">
                 <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5 text-text-tertiary" />
                 <span>Your access period ended. Renew for another two years, then adjust billing preferences in settings.</span>
               </div>
             )}
 
             {isBillingUnavailable && !error && !isCanceled && !isExpired && (
-              <div className="mb-4 flex items-start gap-2 rounded-lg border border-border-subtle bg-surface-secondary p-3 text-sm text-text-secondary">
+              <div className="mb-4 flex items-start gap-2 rounded-xl border border-border-subtle bg-surface-secondary p-3 text-sm text-text-secondary">
                 <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5 text-text-tertiary" />
                 <span>Billing status is temporarily unavailable. Retry status below or reopen checkout before returning to paid dashboard areas.</span>
               </div>
             )}
 
             {isCanceled && !error && (
-              <div className="mb-4 flex items-start gap-2 rounded-lg border border-border-subtle bg-surface-secondary p-3 text-sm text-text-secondary">
+              <div className="mb-4 flex items-start gap-2 rounded-xl border border-border-subtle bg-surface-secondary p-3 text-sm text-text-secondary">
                 <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5 text-text-tertiary" />
                 <span>Payment was canceled. You can try again whenever you're ready.</span>
               </div>
             )}
 
             {error && (
-              <div className="mb-4 flex items-start gap-2 rounded-lg border border-border-subtle bg-surface-secondary p-3 text-sm text-text-secondary">
+              <div className="mb-4 flex items-start gap-2 rounded-xl border border-border-subtle bg-surface-secondary p-3 text-sm text-text-secondary">
                 <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5 text-text-tertiary" />
                 <span>{error}</span>
               </div>

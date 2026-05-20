@@ -1,7 +1,7 @@
 import { resolveActiveSiteForUser } from '../../../lib/activeSite';
 import { demoWeddingSite } from '../../../lib/demoData';
 import { normalizeNotificationPrefs, type DigestCadence } from '../../../lib/notificationPrefs';
-import type { PlannerAccessRole } from '../../../lib/plannerAccess';
+import type { PlannerAccessRole, PlannerPermissionKey } from '../../../lib/plannerAccess';
 import { readDemoRsvpSettings } from './settingsDemoStorage';
 import {
   loadSettingsCollaboratorInvites,
@@ -44,6 +44,7 @@ export type SettingsDashboardSnapshot = {
   rsvpMealOptions: string[];
   rsvpQuestions: RSVPQuestionSetting[];
   settingsRole: PlannerAccessRole;
+  settingsPermissions: PlannerPermissionKey[] | null;
   siteSlug: string;
   translationStatuses: TranslationStatusRow[];
   venueName: string | null;
@@ -83,6 +84,7 @@ const DEFAULT_SNAPSHOT: Omit<SettingsDashboardSnapshot, 'accountEmail'> = {
   rsvpMealOptions: ['Chicken', 'Beef', 'Fish', 'Vegetarian', 'Vegan'],
   rsvpQuestions: [],
   settingsRole: 'owner',
+  settingsPermissions: null,
   siteSlug: '',
   translationStatuses: [],
   venueName: null,
@@ -150,6 +152,7 @@ export async function loadSettingsDashboardSnapshot({
 
   const activeSite = await resolveActiveSiteForUser(userId);
   const settingsRole = activeSite?.role ?? 'owner';
+  const settingsPermissions = activeSite?.permissions ?? null;
   const data = activeSite?.id ? await loadSettingsSite(activeSite.id) : null;
 
   if (!data) {
@@ -157,6 +160,7 @@ export async function loadSettingsDashboardSnapshot({
       ...DEFAULT_SNAPSHOT,
       accountEmail: userEmail ?? '',
       settingsRole,
+      settingsPermissions,
     };
   }
 
@@ -201,6 +205,7 @@ export async function loadSettingsDashboardSnapshot({
     rsvpMealOptions: normalizeMealOptions(mealCfg?.options),
     rsvpQuestions: normalizeRsvpQuestions((data as { rsvp_custom_questions?: unknown }).rsvp_custom_questions),
     settingsRole,
+    settingsPermissions,
     siteSlug: (data.site_slug as string) ?? '',
     translationStatuses: siteId ? await loadSnapshotTranslationStatuses(siteId) : [],
     venueName: (data.venue_name as string | null) ?? null,

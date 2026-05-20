@@ -51,7 +51,8 @@ describe('interactive section data boundary', () => {
     expect(music).not.toContain('supabase.from(');
 
     expect(service).toContain("supabase.functions.invoke('interactive-section-public'");
-    expect(service).toContain('buildPublicAccessArtifacts(siteSlug, new URLSearchParams(window.location.search))');
+    expect(service).toContain("import { resolveCurrentSearchParams } from '../lib/currentSearchParams';");
+    expect(service).toContain('buildPublicAccessArtifacts(siteSlug, resolveCurrentSearchParams(searchParams))');
     expect(service).toContain("action: 'sync'");
     expect(service).toContain("action: 'suggest'");
     expect(service).toContain("action: 'vote'");

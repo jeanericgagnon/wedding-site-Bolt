@@ -150,6 +150,420 @@ describe('publicSiteRenderModel', () => {
     expect((site as unknown as Record<string, unknown>).layout_config).toBeUndefined();
   });
 
+  it('preserves hidden page metadata from published builder projects', () => {
+    const site = buildPublicSiteRenderSite({
+      id: 'site-1',
+      is_published: true,
+      site_slug: 'maya-leo',
+      published_json: {
+        id: 'published-project',
+        weddingId: 'site-1',
+        templateId: 'modern-luxe',
+        themeId: 'romantic',
+        pages: [{
+          id: 'travel-page',
+          title: 'Travel',
+          slug: 'travel',
+          orderIndex: 1,
+          sections: [],
+          meta: { isHome: false, isHidden: true },
+        }],
+      },
+      site_json: null,
+      wedding_data: null,
+      layout_config: null,
+    });
+
+    expect(site.render_model.pages[0]?.meta).toEqual({
+      isHome: false,
+      isHidden: true,
+    });
+  });
+
+  it('normalizes duplicate legacy page slugs in the public render model', () => {
+    const site = buildPublicSiteRenderSite({
+      id: 'site-legacy-pages',
+      is_published: true,
+      site_slug: 'maya-leo',
+      published_json: {
+        pages: [
+          {
+            id: 'home',
+            title: 'Home',
+            slug: 'home',
+            orderIndex: 0,
+            sections: [],
+            meta: { isHome: true, isHidden: false },
+          },
+          {
+            id: 'travel-a',
+            title: 'Travel Info',
+            slug: 'Travel%20Info',
+            orderIndex: 1,
+            sections: [],
+            meta: { isHome: false, isHidden: false },
+          },
+          {
+            id: 'travel-b',
+            title: 'Travel Info',
+            slug: '/travel_info/',
+            orderIndex: 2,
+            sections: [{
+              id: 'travel-b-section',
+              type: 'faq',
+              variant: 'accordion',
+              enabled: true,
+              orderIndex: 0,
+              settings: { anchorId: 'travel-info-2' },
+            }],
+            meta: { isHome: false, isHidden: false },
+          },
+          {
+            id: 'legacy-home',
+            title: 'Home Details',
+            slug: 'home',
+            orderIndex: 3,
+            sections: [],
+            meta: { isHome: true, isHidden: false },
+          },
+        ],
+      },
+      site_json: null,
+      wedding_data: null,
+      layout_config: null,
+    });
+
+    expect(site.render_model.pages.map((page) => ({ slug: page.slug, isHome: page.meta.isHome }))).toEqual([
+      { slug: 'home', isHome: true },
+      { slug: 'travel-info', isHome: false },
+      { slug: 'travel-info-2', isHome: false },
+      { slug: 'home-2', isHome: false },
+    ]);
+    expect(site.render_model.pages[2]?.sections[0]?.settings.anchorId).toBeUndefined();
+  });
+
+  it('unwraps builder provenance page fields before normalizing public page slugs', () => {
+    const site = buildPublicSiteRenderSite({
+      id: 'site-provenance-pages',
+      is_published: true,
+      site_slug: 'maya-leo',
+      published_json: {
+        pages: [
+          {
+            id: 'home',
+            title: 'Home',
+            slug: 'home',
+            orderIndex: '2',
+            sections: [],
+            meta: { isHome: true, isHidden: false },
+          },
+          {
+            id: 'travel-page',
+            title: { value: 'Guest Travel', source: 'user-edited' },
+            slug: { value: 'Guest Travel', source: 'user-edited' },
+            orderIndex: '1',
+            sections: [{
+              id: 'travel-section',
+              type: 'travel',
+              variant: 'list',
+              enabled: true,
+              orderIndex: '3',
+              settings: { anchorId: 'Guest Travel' },
+            }],
+            meta: { isHome: false, isHidden: false },
+          },
+        ],
+      },
+      site_json: null,
+      wedding_data: null,
+      layout_config: null,
+    });
+
+    expect(site.render_model.pages.map((page) => ({
+      title: page.title,
+      slug: page.slug,
+      orderIndex: page.orderIndex,
+    }))).toEqual([
+      { title: 'Home', slug: 'home', orderIndex: 0 },
+      { title: 'Guest Travel', slug: 'guest-travel', orderIndex: 1 },
+    ]);
+    expect(site.render_model.pages[1]?.sections[0]?.orderIndex).toBe(0);
+    expect(site.render_model.pages[1]?.sections[0]?.settings.anchorId).toBeUndefined();
+  });
+
+  it('sorts legacy builder pages by order index before public rendering', () => {
+    const site = buildPublicSiteRenderSite({
+      id: 'site-ordered-pages',
+      is_published: true,
+      site_slug: 'maya-leo',
+      published_json: {
+        pages: [
+          {
+            id: 'later-page',
+            title: 'Later',
+            slug: 'later',
+            orderIndex: 5,
+            sections: [],
+            meta: { isHome: false, isHidden: false },
+          },
+          {
+            id: 'first-page',
+            title: 'First',
+            slug: 'first',
+            orderIndex: '1',
+            sections: [],
+            meta: { isHome: false, isHidden: false },
+          },
+        ],
+      },
+      site_json: null,
+      wedding_data: null,
+      layout_config: null,
+    });
+
+    expect(site.render_model.pages.map((page) => ({ id: page.id, orderIndex: page.orderIndex }))).toEqual([
+      { id: 'first-page', orderIndex: 0 },
+      { id: 'later-page', orderIndex: 1 },
+    ]);
+  });
+
+  it('keeps legacy published home pages first even when their saved order drifted', () => {
+    const site = buildPublicSiteRenderSite({
+      id: 'site-home-order',
+      is_published: true,
+      site_slug: 'maya-leo',
+      published_json: {
+        pages: [
+          {
+            id: 'travel-page',
+            title: 'Travel',
+            slug: 'travel',
+            orderIndex: 0,
+            sections: [],
+            meta: { isHome: false, isHidden: false },
+          },
+          {
+            id: 'home',
+            title: 'Home',
+            slug: 'home',
+            orderIndex: 1,
+            sections: [],
+            meta: { isHome: true, isHidden: false },
+          },
+        ],
+      },
+      site_json: null,
+      wedding_data: null,
+      layout_config: null,
+    });
+
+    expect(site.render_model.pages.map((page) => ({ id: page.id, orderIndex: page.orderIndex, isHome: page.meta.isHome }))).toEqual([
+      { id: 'home', orderIndex: 0, isHome: true },
+      { id: 'travel-page', orderIndex: 1, isHome: false },
+    ]);
+  });
+
+  it('adds default public anchors for older published builder projects without custom anchors', () => {
+    const site = buildPublicSiteRenderSite({
+      id: 'site-anchors',
+      is_published: true,
+      site_slug: 'maya-leo',
+      site_url: 'maya-leo.dayof.love',
+      published_json: {
+        pages: [{
+          id: 'home',
+          title: 'Home',
+          slug: 'home',
+          orderIndex: 0,
+          sections: [
+            {
+              id: 'schedule-1',
+              type: 'schedule',
+              variant: 'timeline',
+              enabled: true,
+              orderIndex: 0,
+              settings: { showTitle: true },
+            },
+            {
+              id: 'rsvp-1',
+              type: 'rsvp',
+              variant: 'default',
+              enabled: true,
+              orderIndex: 1,
+              settings: { showTitle: true, anchorId: 'reply' },
+            },
+          ],
+          meta: { isHome: true, isHidden: false },
+        }],
+      },
+      site_json: null,
+      wedding_data: null,
+      layout_config: null,
+    });
+
+    expect(site.render_model.pages[0]?.sections.map((section) => section.settings?.anchorId)).toEqual(['schedule', 'reply']);
+  });
+
+  it('does not restore default public anchors when a builder section explicitly cleared one', () => {
+    const site = buildPublicSiteRenderSite({
+      id: 'site-cleared-anchor',
+      is_published: true,
+      site_slug: 'maya-leo',
+      site_url: 'maya-leo.dayof.love',
+      published_json: {
+        pages: [{
+          id: 'home',
+          title: 'Home',
+          slug: 'home',
+          orderIndex: 0,
+          sections: [{
+            id: 'rsvp-1',
+            type: 'rsvp',
+            variant: 'default',
+            enabled: true,
+            orderIndex: 0,
+            settings: { showTitle: true, anchorId: '' },
+          }],
+          meta: { isHome: true, isHidden: false },
+        }],
+      },
+      site_json: null,
+      wedding_data: null,
+      layout_config: null,
+    });
+
+    expect(site.render_model.pages[0]?.sections[0]?.settings?.anchorId).toBeUndefined();
+  });
+
+  it('sorts legacy builder page sections by order index before public rendering', () => {
+    const site = buildPublicSiteRenderSite({
+      id: 'site-ordered-sections',
+      is_published: true,
+      site_slug: 'maya-leo',
+      site_url: 'maya-leo.dayof.love',
+      published_json: {
+        pages: [{
+          id: 'home',
+          title: 'Home',
+          slug: 'home',
+          orderIndex: 0,
+          sections: [
+            {
+              id: 'faq-late',
+              type: 'faq',
+              variant: 'accordion',
+              enabled: true,
+              orderIndex: 3,
+              settings: { anchorId: 'faq' },
+            },
+            {
+              id: 'travel-early',
+              type: 'travel',
+              variant: 'list',
+              enabled: true,
+              orderIndex: '1',
+              settings: { anchorId: 'travel' },
+            },
+          ],
+          meta: { isHome: true, isHidden: false },
+        }],
+      },
+      site_json: null,
+      wedding_data: null,
+      layout_config: null,
+    });
+
+    expect(site.render_model.pages[0]?.sections.map((section) => ({ id: section.id, orderIndex: section.orderIndex }))).toEqual([
+      { id: 'travel-early', orderIndex: 0 },
+      { id: 'faq-late', orderIndex: 1 },
+    ]);
+  });
+
+  it('strips redundant first-section anchors from dedicated published pages', () => {
+    const site = buildPublicSiteRenderSite({
+      id: 'site-dedicated-pages',
+      is_published: true,
+      site_slug: 'maya-leo',
+      site_url: 'maya-leo.dayof.love',
+      published_json: {
+        pages: [{
+          id: 'travel-page',
+          title: 'Travel',
+          slug: 'travel',
+          orderIndex: 1,
+          sections: [
+            {
+              id: 'travel-1',
+              type: 'travel',
+              variant: 'list',
+              enabled: true,
+              orderIndex: 0,
+              settings: { showTitle: true, anchorId: 'Travel' },
+            },
+            {
+              id: 'faq-1',
+              type: 'faq',
+              variant: 'accordion',
+              enabled: true,
+              orderIndex: 1,
+              settings: { showTitle: true, anchorId: 'Travel FAQ' },
+            },
+          ],
+          meta: { isHome: false, isHidden: false },
+        }],
+      },
+      site_json: null,
+      wedding_data: null,
+      layout_config: null,
+    });
+
+    expect(site.render_model.pages[0]?.sections.map((section) => section.settings?.anchorId)).toEqual([
+      undefined,
+      'travel-faq',
+    ]);
+  });
+
+  it('adds default anchors to persisted public fallback sections', () => {
+    const pages = buildPersistedPublicFallbackPages([
+      {
+        id: 'travel-1',
+        type: 'travel',
+        variant: 'default',
+        visible: true,
+        order: 1,
+        data: { showTitle: true },
+      },
+    ]);
+
+    expect(pages[0]?.sections[0]?.settings.anchorId).toBe('travel');
+  });
+
+  it('sorts persisted public fallback sections with numeric-string order values', () => {
+    const pages = buildPersistedPublicFallbackPages([
+      {
+        id: 'rsvp-1',
+        type: 'rsvp',
+        variant: 'default',
+        visible: true,
+        order: '2' as unknown as number,
+        data: { showTitle: true },
+      },
+      {
+        id: 'travel-1',
+        type: 'travel',
+        variant: 'default',
+        visible: true,
+        order: '1' as unknown as number,
+        data: { showTitle: true },
+      },
+    ]);
+
+    expect(pages[0]?.sections.map((section) => `${section.id}:${section.orderIndex}`)).toEqual([
+      'travel-1:1',
+      'rsvp-1:2',
+    ]);
+  });
+
   it('normalizes hero settings into the resolved public renderer contract instead of the old builder shape', () => {
     const site = buildPublicSiteRenderSite({
       id: 'site-hero',
@@ -405,6 +819,7 @@ describe('publicSiteRenderModel', () => {
 
     const settings = site.render_model.pages[0]?.sections[0]?.settings as Record<string, unknown>;
     expect(settings).toEqual({
+      anchorId: 'contact',
       showTitle: true,
       eyebrow: 'Need help?',
       emailSubject: 'Wedding Question',
@@ -1043,6 +1458,7 @@ describe('publicSiteRenderModel', () => {
     });
 
     expect(site.render_model.pages[0]?.sections[0]?.settings).toEqual({
+      anchorId: 'travel',
       headline: 'Where to stay',
       subheadline: 'Book soon.',
       generalNote: 'Mention the wedding.',
@@ -1125,6 +1541,7 @@ describe('publicSiteRenderModel', () => {
     });
 
     expect(site.render_model.pages[0]?.sections[0]?.settings).toEqual({
+      anchorId: 'accommodations',
       showTitle: true,
       title: 'Accommodations',
       headline: 'Places to stay',
@@ -1252,6 +1669,7 @@ describe('publicSiteRenderModel', () => {
     });
 
     expect(site.render_model.pages[0]?.sections[0]?.settings).toEqual({
+      anchorId: 'directions',
       eyebrow: 'Travel details',
       headline: 'Directions & Parking',
       drivingTimeFrom: 'downtown',
@@ -1321,6 +1739,7 @@ describe('publicSiteRenderModel', () => {
     });
 
     expect(site.render_model.pages[0]?.sections[0]?.settings).toEqual({
+      anchorId: 'music',
       eyebrow: 'The Soundtrack',
       headline: 'Music for our day',
       showRequestNote: true,
@@ -1601,6 +2020,7 @@ describe('publicSiteRenderModel', () => {
     });
 
     expect(site.render_model.pages[0]?.sections[0]?.settings).toEqual({
+      anchorId: 'rsvp',
       eyebrow: 'Kindly reply by',
       headline: 'Please reply',
       deadlineText: 'August 1, 2026',
@@ -1769,6 +2189,7 @@ describe('publicSiteRenderModel', () => {
     });
 
     expect(site.render_model.pages[0]?.sections[0]?.settings).toEqual({
+      anchorId: 'attire',
       eyebrow: 'Dress your best',
       headline: 'What to wear',
       presetCode: 'cocktail',
@@ -2079,6 +2500,7 @@ describe('publicSiteRenderModel', () => {
 
     const settings = site.render_model.pages[0]?.sections[0]?.settings ?? {};
     expect(settings).toEqual({
+      anchorId: 'menu',
       eyebrow: 'Dining',
       headline: 'Dinner menu',
       subtitle: 'What we are serving',

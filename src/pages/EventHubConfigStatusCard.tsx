@@ -11,7 +11,7 @@ export function EventHubConfigStatusCard({ onRetry, status }: EventHubConfigStat
   if (status === 'ready') return null;
 
   return (
-    <div className="mt-5 rounded-lg border border-[#eadfd2] bg-[#fffdf9] p-4">
+    <div className="mt-5 rounded-xl border border-[#eadfd2] bg-[#fffdf9] p-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex gap-3">
           {status === 'offline' ? (
@@ -34,7 +34,7 @@ export function EventHubConfigStatusCard({ onRetry, status }: EventHubConfigStat
           <button
             type="button"
             onClick={onRetry}
-            className="inline-flex items-center justify-center gap-2 rounded-lg border border-[#d8c8b6] px-3 py-2 text-xs font-semibold text-[#69513f] transition-colors hover:bg-[#f3eadf]"
+            className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#d8c8b6] px-3 py-2 text-xs font-semibold text-[#69513f] transition-colors hover:bg-[#f3eadf]"
           >
             <RefreshCw className="h-4 w-4" />
             Try again

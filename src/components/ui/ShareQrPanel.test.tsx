@@ -1,10 +1,23 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ShareQrPanel } from './ShareQrPanel';
+
+const { copyTextOrDownload } = vi.hoisted(() => ({
+  copyTextOrDownload: vi.fn(),
+}));
+
+vi.mock('../../lib/copyText', async () => {
+  const actual = await vi.importActual<typeof import('../../lib/copyText')>('../../lib/copyText');
+  return {
+    ...actual,
+    copyTextOrDownload: (...args: unknown[]) => copyTextOrDownload(...args),
+  };
+});
 
 describe('ShareQrPanel', () => {
   beforeEach(() => {
     vi.restoreAllMocks();
+    copyTextOrDownload.mockReset();
   });
 
   it('renders a safe public share link and QR image', () => {
@@ -71,5 +84,71 @@ describe('ShareQrPanel', () => {
     expect(html).not.toContain('https://dayof.love/rsvp?token=secret-token');
     expect(click).toHaveBeenCalled();
     expect(revokeObjectUrl).toHaveBeenCalledWith('blob:private-card');
+  });
+
+  it('shows retry copy UI and the fallback field when link copy fails', async () => {
+    copyTextOrDownload.mockRejectedValueOnce(new Error('copy failed'));
+
+    render(<ShareQrPanel title="Guest hub" url="https://dayof.love/event/maya-and-leo" />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Copy link' }));
+
+    await waitFor(() => {
+      expect(screen.getByRole('alert')).toHaveTextContent('Couldn’t copy that link right now.');
+    });
+    expect(screen.getByRole('button', { name: 'Retry copy link' })).toBeInTheDocument();
+    expect(screen.getByLabelText('Guest hub share link')).toHaveValue('https://dayof.love/event/maya-and-leo');
+    expect(copyTextOrDownload).toHaveBeenCalledTimes(1);
+  });
+
+  it('shows a downloaded fallback label when clipboard copy falls back', async () => {
+    copyTextOrDownload.mockResolvedValueOnce('downloaded');
+
+    render(<ShareQrPanel title="Guest hub" url="https://dayof.love/event/maya-and-leo" />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Copy link' }));
+
+    expect(await screen.findByRole('button', { name: 'Downloaded link' })).toBeInTheDocument();
+    expect(screen.getByLabelText('Guest hub share link')).toHaveValue('https://dayof.love/event/maya-and-leo');
+  });
+
+  it('derives specific copied and downloaded labels from the configured copy label', async () => {
+    copyTextOrDownload
+      .mockResolvedValueOnce('copied')
+      .mockResolvedValueOnce('downloaded');
+
+    render(
+      <ShareQrPanel
+        title="Guest album"
+        url="https://dayof.love/photos/upload"
+        copyLabel="Copy upload link"
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Copy upload link' }));
+    expect(await screen.findByRole('button', { name: 'Copied upload link' })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Copied upload link' }));
+    expect(await screen.findByRole('button', { name: 'Downloaded upload link' })).toBeInTheDocument();
+  });
+
+  it('ignores stale copy completions after the share url changes', async () => {
+    let finishCopy: ((value: 'copied') => void) | undefined;
+    copyTextOrDownload.mockReturnValueOnce(new Promise((resolve) => {
+      finishCopy = resolve;
+    }));
+
+    const { rerender } = render(<ShareQrPanel title="Guest hub" url="https://dayof.love/event/maya-and-leo" />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Copy link' }));
+    rerender(<ShareQrPanel title="Guest hub" url="https://dayof.love/event/ava-and-sam" />);
+
+    await act(async () => {
+      finishCopy?.('copied');
+    });
+
+    expect(screen.getByRole('button', { name: 'Copy link' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Copied link' })).not.toBeInTheDocument();
+    expect(screen.getByText('https://dayof.love/event/ava-and-sam')).toBeInTheDocument();
   });
 });

@@ -380,6 +380,9 @@ const output = {
   ok: failedStaticChecks.length === 0 && failedLiveChecks.length === 0 && !strictLiveBlocked,
   generatedAt: new Date().toISOString(),
   mode: liveEnabled ? 'static_and_live' : 'static_only',
+  contractSummary: liveEnabled
+    ? 'AI exposure proof is green in static+live mode: this privacy lane closes source/readback evidence that sensitive AI/photo fields are no longer browser-readable on the hardened surface.'
+    : 'AI exposure proof is green in static-only mode, but it still needs the live readback rerun before AI/privacy launch truth is fully closed.',
   static: {
     ok: failedStaticChecks.length === 0,
     checked: staticChecks.length,

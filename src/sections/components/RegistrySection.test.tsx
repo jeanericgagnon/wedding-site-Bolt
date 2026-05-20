@@ -1,8 +1,9 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
   REGISTRY_PURCHASE_MEMORY_RETENTION_MS,
+  RegistryItemsDisplay,
   RegistryFundHighlight,
   getFeaturedRegistryFundPublicSignals,
   getRegistryFundContributionMethods,
@@ -20,6 +21,7 @@ import type { RegistryItem } from '../../pages/dashboard/registry/registryTypes'
 
 const mockUseSiteView = vi.fn(() => ({ weddingSiteId: null, inviteToken: null, passwordSession: null }));
 const mockPublicFetchRegistryItems = vi.fn(async () => []);
+const mockCopyTextOrDownload = vi.fn();
 
 vi.mock('../../contexts/SiteViewContext', () => ({
   useSiteView: () => mockUseSiteView(),
@@ -32,6 +34,10 @@ vi.mock('../../pages/dashboard/registry/registryService', async () => {
     publicFetchRegistryItems: (...args: Parameters<typeof actual.publicFetchRegistryItems>) => mockPublicFetchRegistryItems(...args),
   };
 });
+
+vi.mock('../../lib/copyText', () => ({
+  copyTextOrDownload: (...args: unknown[]) => mockCopyTextOrDownload(...args),
+}));
 
 function makeInstance(settings: SectionInstance['settings'], bindings?: SectionInstance['bindings']): SectionInstance {
   return {
@@ -52,6 +58,7 @@ describe('RegistrySection', () => {
     mockUseSiteView.mockReturnValue({ weddingSiteId: null, inviteToken: null, passwordSession: null });
     mockPublicFetchRegistryItems.mockReset();
     mockPublicFetchRegistryItems.mockResolvedValue([]);
+    mockCopyTextOrDownload.mockReset();
   });
 
   it('filters broken imported product metadata before guest-facing registry display', () => {
@@ -220,7 +227,7 @@ describe('RegistrySection', () => {
 
     expect(screen.getByText('Safe registry')).toBeInTheDocument();
     expect(screen.queryByText('Unsafe registry')).not.toBeInTheDocument();
-    expect(container.innerHTML).not.toContain('javascript:alert');
+    expect(container.querySelector('a[href^="javascript:"]')).toBeNull();
 
     rerender(
       <RegistryGrid
@@ -231,7 +238,7 @@ describe('RegistrySection', () => {
 
     expect(screen.getByText('Safe registry')).toBeInTheDocument();
     expect(screen.queryByText('Unsafe protocol')).not.toBeInTheDocument();
-    expect(container.innerHTML).not.toContain('ftp://example.com/registry');
+    expect(container.querySelector('a[href^="ftp:"]')).toBeNull();
 
     rerender(
       <RegistryFundHighlight
@@ -242,7 +249,7 @@ describe('RegistrySection', () => {
 
     expect(screen.getByText('Safe registry')).toBeInTheDocument();
     expect(screen.queryByText('Unsafe registry')).not.toBeInTheDocument();
-    expect(container.innerHTML).not.toContain('javascript:alert');
+    expect(container.querySelector('a[href^="javascript:"]')).toBeNull();
   });
 
   it('keeps default titles visible when no registry links exist', () => {
@@ -492,7 +499,7 @@ describe('RegistrySection', () => {
 
     expect(await screen.findByText('Still a real gift & keepsake')).toBeInTheDocument();
     expect(screen.queryByText('Page Not Found')).not.toBeInTheDocument();
-    expect(container.innerHTML).not.toContain('image.thum.io');
+    expect(container.querySelector('img[src*="image.thum.io"]')).toBeNull();
 
     rerender(
       <RegistryGrid
@@ -503,7 +510,7 @@ describe('RegistrySection', () => {
 
     expect(await screen.findByText('Still a real gift & keepsake')).toBeInTheDocument();
     expect(screen.queryByText('Page Not Found')).not.toBeInTheDocument();
-    expect(container.innerHTML).not.toContain('image.thum.io');
+    expect(container.querySelector('img[src*="image.thum.io"]')).toBeNull();
   });
 
   it('shows a filter-specific empty state without pretending the whole registry is finished', async () => {
@@ -703,6 +710,172 @@ describe('RegistrySection', () => {
     });
   });
 
+  it('shows a retry state when public cash-fund Zelle copy fails', async () => {
+    mockPublicFetchRegistryItems.mockResolvedValueOnce([
+      {
+        id: 'fund-1',
+        wedding_site_id: 'site-1',
+        item_type: 'cash_fund',
+        item_name: 'Honeymoon fund',
+        price_label: null,
+        price_amount: null,
+        store_name: null,
+        merchant: null,
+        item_url: null,
+        canonical_url: null,
+        image_url: null,
+        description: null,
+        notes: 'Help us celebrate.',
+        quantity_needed: 1,
+        quantity_purchased: 0,
+        purchaser_name: null,
+        purchase_status: 'available',
+        hide_when_purchased: false,
+        sort_order: 0,
+        priority: 'medium',
+        created_at: new Date(0).toISOString(),
+        updated_at: new Date(0).toISOString(),
+        fund_goal_amount: 1000,
+        fund_received_amount: 100,
+        fund_zelle_handle: 'dayof@example.com',
+      },
+    ] satisfies RegistryItem[]);
+    mockCopyTextOrDownload.mockRejectedValueOnce(new Error('copy failed'));
+
+    render(
+      <RegistrySection
+        data={createEmptyWeddingData()}
+        instance={makeInstance({})}
+      />,
+    );
+
+    fireEvent.click(await screen.findByRole('button', { name: /zelle: dayof@example.com/i }));
+
+    expect(await screen.findByText('Couldn’t copy Zelle right now.')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /retry zelle/i })).toBeInTheDocument();
+    expect(mockCopyTextOrDownload).toHaveBeenCalledTimes(1);
+  });
+
+  it('resets public cash-fund copy state when the visible contribution handle changes', async () => {
+    mockCopyTextOrDownload.mockResolvedValueOnce('copied');
+
+    const fundBase: RegistryItem = {
+      id: 'fund-1',
+      wedding_site_id: 'site-1',
+      item_type: 'cash_fund',
+      item_name: 'Honeymoon fund',
+      price_label: null,
+      price_amount: null,
+      store_name: null,
+      merchant: null,
+      item_url: null,
+      canonical_url: null,
+      image_url: null,
+      description: null,
+      notes: 'Help us celebrate.',
+      quantity_needed: 1,
+      quantity_purchased: 0,
+      purchaser_name: null,
+      purchase_status: 'available',
+      hide_when_purchased: false,
+      sort_order: 0,
+      priority: 'medium',
+      created_at: new Date(0).toISOString(),
+      updated_at: new Date(0).toISOString(),
+      fund_goal_amount: 1000,
+      fund_received_amount: 100,
+      fund_zelle_handle: 'dayof@example.com',
+    };
+    const { rerender } = render(
+      <RegistryItemsDisplay
+        items={[fundBase]}
+        settings={{}}
+        updateItem={vi.fn()}
+        storageScope="site-1"
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /zelle: dayof@example.com/i }));
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /copied/i })).toBeInTheDocument();
+    });
+
+    rerender(
+      <RegistryItemsDisplay
+        items={[{ ...fundBase, fund_zelle_handle: 'new-handle@example.com' }]}
+        settings={{}}
+        updateItem={vi.fn()}
+        storageScope="site-1"
+      />,
+    );
+
+    expect(screen.getByRole('button', { name: /zelle: new-handle@example.com/i })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /copied/i })).not.toBeInTheDocument();
+  });
+
+  it('ignores stale public cash-fund Zelle copy completions after the visible handle changes', async () => {
+    let resolveCopy!: (result: 'copied') => void;
+    mockCopyTextOrDownload.mockReturnValueOnce(new Promise<'copied'>((resolve) => {
+      resolveCopy = resolve;
+    }));
+
+    const fundBase: RegistryItem = {
+      id: 'fund-1',
+      wedding_site_id: 'site-1',
+      item_type: 'cash_fund',
+      item_name: 'Honeymoon fund',
+      price_label: null,
+      price_amount: null,
+      store_name: null,
+      merchant: null,
+      item_url: null,
+      canonical_url: null,
+      image_url: null,
+      description: null,
+      notes: 'Help us celebrate.',
+      quantity_needed: 1,
+      quantity_purchased: 0,
+      purchaser_name: null,
+      purchase_status: 'available',
+      hide_when_purchased: false,
+      sort_order: 0,
+      priority: 'medium',
+      created_at: new Date(0).toISOString(),
+      updated_at: new Date(0).toISOString(),
+      fund_goal_amount: 1000,
+      fund_received_amount: 100,
+      fund_zelle_handle: 'dayof@example.com',
+    };
+    const { rerender } = render(
+      <RegistryItemsDisplay
+        items={[fundBase]}
+        settings={{}}
+        updateItem={vi.fn()}
+        storageScope="site-1"
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /zelle: dayof@example.com/i }));
+    expect(screen.getByRole('button', { name: /copying zelle/i })).toBeInTheDocument();
+
+    rerender(
+      <RegistryItemsDisplay
+        items={[{ ...fundBase, fund_zelle_handle: 'new-handle@example.com' }]}
+        settings={{}}
+        updateItem={vi.fn()}
+        storageScope="site-1"
+      />,
+    );
+
+    await act(async () => {
+      resolveCopy('copied');
+    });
+
+    expect(screen.getByRole('button', { name: /zelle: new-handle@example.com/i })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /copied/i })).not.toBeInTheDocument();
+  });
+
   it('does not pick a featured public fund when no safe contribution method exists', () => {
     const unreadyFund = {
       id: 'fund-unready',
@@ -805,6 +978,22 @@ describe('RegistrySection', () => {
       savedAtISO: '2026-05-06T20:00:00.000Z',
     });
     expect(document.cookie).toContain('dayof_registry_purchases_v1=');
+  });
+
+  it('keeps public registry purchase memory scoped by wedding site', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-05-06T20:00:00.000Z'));
+
+    window.localStorage.setItem('dayof_registry_purchase_memory_v1::site-a', JSON.stringify(['gift-a']));
+    window.localStorage.setItem('dayof_registry_purchase_memory_v1::site-b', JSON.stringify(['gift-b']));
+
+    expect(readRegistryPurchaseMemory('site-a')).toEqual(['gift-a']);
+    expect(readRegistryPurchaseMemory('site-b')).toEqual(['gift-b']);
+
+    const next = rememberRegistryPurchase('gift-c', 'site-a');
+    expect(next).toEqual(['gift-a', 'gift-c']);
+    expect(window.localStorage.getItem('dayof_registry_purchase_memory_v1::site-a')).toContain('gift-c');
+    expect(window.localStorage.getItem('dayof_registry_purchase_memory_v1::site-b')).toContain('gift-b');
   });
 
   it('clears stale or malformed public registry purchase memory', () => {

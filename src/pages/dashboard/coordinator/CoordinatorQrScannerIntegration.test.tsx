@@ -170,6 +170,44 @@ describe('Coordinator QR scanner integration', () => {
     expect(onEscalateDoorReview).toHaveBeenCalledWith(expect.objectContaining({ id: 'guest-1' }));
   });
 
+  it('routes review-needed guests instead of exposing direct confirm check-in', async () => {
+    const reviewGuest: GuestLiteForCoordinator = {
+      ...guests[0],
+      id: 'guest-3',
+      name: 'Riley Review',
+      invite_token: 'guest-token-review',
+      rsvp_status: 'pending',
+      event_arrivals: {
+        'event-1': {
+          seating_event_id: 'seat-1',
+          table_id: null,
+          table_name: 'Unassigned',
+          checked_in_at: null,
+          is_seated: false,
+        },
+      },
+    };
+    const { onEscalateDoorReview } = renderPanel({
+      checkInQueue: [...guests, reviewGuest],
+      checkInStatusContext: {
+        ...checkInStatusContext,
+        guests: [...guests, reviewGuest],
+        eventGuestIds: { 'event-1': new Set(['guest-1', 'guest-2', 'guest-3']) },
+      },
+      nextArrivals: [...guests, reviewGuest],
+    });
+
+    fireEvent.change(screen.getByPlaceholderText('Paste a guest RSVP/check-in URL or invite token'), { target: { value: 'guest-token-review' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Validate code' }));
+
+    await screen.findByText('Riley Review needs review before check-in');
+    expect(screen.queryByRole('button', { name: 'Confirm check-in' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Route to issue desk' })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Route to issue desk' }));
+    expect(onEscalateDoorReview).toHaveBeenCalledWith(expect.objectContaining({ id: 'guest-3' }));
+  });
+
   it('keeps public hub and malformed QR payloads in guidance mode', async () => {
     renderPanel();
 

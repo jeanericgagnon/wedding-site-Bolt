@@ -84,8 +84,7 @@ const results = [
 ];
 
 let previewProcess = null;
-let previewStdout = '';
-let previewStderr = '';
+let previewOutput = { stdout: '', stderr: '' };
 let activeBaseUrl = requestedBaseUrl;
 try {
   if (requestedBaseUrl === PREVIEW_URL) {
@@ -95,8 +94,7 @@ try {
       cwd: process.cwd(),
     });
     previewProcess = previewRuntime.previewProcess;
-    previewStdout = previewRuntime.previewStdout;
-    previewStderr = previewRuntime.previewStderr;
+    previewOutput = previewRuntime.previewOutput;
     activeBaseUrl = previewRuntime.baseUrl;
   }
 
@@ -108,7 +106,7 @@ try {
     command: browserProofCommand(activeBaseUrl, browserSpec, isLiveBaseUrl),
   }));
 
-  if (previewStdout.trim()) {
+  if (previewOutput.stdout.trim()) {
     results.push({
       id: 'preview-server-log',
       label: 'Preview server log',
@@ -117,8 +115,8 @@ try {
       ok: true,
       startedAt: new Date().toISOString(),
       finishedAt: new Date().toISOString(),
-      stdout: previewStdout.trim(),
-      stderr: previewStderr.trim() || undefined,
+      stdout: previewOutput.stdout.trim(),
+      stderr: previewOutput.stderr.trim() || undefined,
     });
   }
 } catch (error) {
@@ -132,7 +130,7 @@ try {
     ok: false,
     startedAt: new Date().toISOString(),
     finishedAt: new Date().toISOString(),
-    stderr: [previewStderr.trim(), error instanceof Error ? error.message : 'Travel guest portal preview server failed to start.'].filter(Boolean).join('\n'),
+    stderr: [previewOutput.stderr.trim(), error instanceof Error ? error.message : 'Travel guest portal preview server failed to start.'].filter(Boolean).join('\n'),
   });
 } finally {
   await stopPreviewRuntime(previewProcess);
@@ -148,6 +146,9 @@ const output = {
     passed: results.filter((result) => result.ok).length,
     failed: results.filter((result) => !result.ok).length,
   },
+  contractSummary: isLiveBaseUrl
+    ? 'Travel guest portal live proof is green: this guest-surface lane validates invite-scoped travel/runtime continuity for the shipped portal while still rolling up into the broader proof-board launch call.'
+    : 'Travel guest portal local proof is green: this guest-surface lane validates invite-scoped travel continuity locally and leaves shipped-runtime portal truth to the dedicated live rerun.',
   automatedCoverage: [
     'Live public-site-access travel data continuity for the proof guest',
     'Travel portal readiness and guest-hub spotlight helper truth',

@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { CheckCircle2, Copy, DollarSign, Download, ExternalLink, ReceiptText } from 'lucide-react';
 import { Card } from '../../../components/ui/Card';
 import { Button } from '../../../components/ui/Button';
@@ -40,8 +40,20 @@ function fmt(n: number) {
 export const PaymentsTab: React.FC<Props> = ({ items, vendorMeta, vendors, onUpdateBudgetItem, onUpdateVendor, canEdit = true }) => {
   const { toast } = useToast();
   const [filter, setFilter] = useState<PaymentFilter>('open');
+  const [pendingPaymentIds, setPendingPaymentIds] = useState<Set<string>>(new Set());
+  const [copyingSummary, setCopyingSummary] = useState(false);
+  const [summaryCopyNotice, setSummaryCopyNotice] = useState<'copied' | 'downloaded' | null>(null);
+  const summaryCopyNoticeTimeoutRef = useRef<number | null>(null);
+  const summaryCopyRequestIdRef = useRef(0);
+  const mountedRef = useRef(true);
   const today = new Date();
   today.setHours(0, 0, 0, 0);
+
+  useEffect(() => () => {
+    mountedRef.current = false;
+    summaryCopyRequestIdRef.current += 1;
+    if (summaryCopyNoticeTimeoutRef.current) window.clearTimeout(summaryCopyNoticeTimeoutRef.current);
+  }, []);
 
   const rows = useMemo<PaymentRow[]>(() => {
     const budgetRows = items.map((item) => {
@@ -90,6 +102,14 @@ export const PaymentsTab: React.FC<Props> = ({ items, vendorMeta, vendors, onUpd
   const overdue = rows.filter((row) => row.remaining > 0 && isVendorDateOnOrBefore(row.dueDate, today)).length;
   const totalCommitted = rows.reduce((sum, row) => sum + row.total, 0);
   const paidPct = totalCommitted > 0 ? Math.round((paidTotal / totalCommitted) * 100) : 0;
+  const paymentSummaryContextKey = useMemo(() => JSON.stringify({
+    rows: rows.map((row) => [row.id, row.source, row.label, row.remaining, row.dueDate]),
+    totalDue,
+    paidTotal,
+    overdue,
+  }), [overdue, paidTotal, rows, totalDue]);
+  const paymentSummaryContextKeyRef = useRef(paymentSummaryContextKey);
+  paymentSummaryContextKeyRef.current = paymentSummaryContextKey;
   const reminderSummary = useMemo(() => buildVendorReminderLedgerSummary({
     vendors,
     vendorMeta,
@@ -102,11 +122,42 @@ export const PaymentsTab: React.FC<Props> = ({ items, vendorMeta, vendors, onUpd
     return row.remaining > 0;
   });
 
+  useEffect(() => {
+    summaryCopyRequestIdRef.current += 1;
+    setCopyingSummary(false);
+    setSummaryCopyNotice(null);
+    if (summaryCopyNoticeTimeoutRef.current) {
+      window.clearTimeout(summaryCopyNoticeTimeoutRef.current);
+      summaryCopyNoticeTimeoutRef.current = null;
+    }
+  }, [paymentSummaryContextKey]);
+
   async function markPaid(row: PaymentRow) {
-    if (row.source === 'budget') {
-      await onUpdateBudgetItem(row.id, { paid_amount: row.total, notes: appendPaymentNote(items.find((item) => item.id === row.id)?.notes, row.total) });
-    } else {
-      await onUpdateVendor(row.id, { amount_paid: row.total, balance_due: 0, notes: appendPaymentNote(vendors.find((vendor) => vendor.id === row.id)?.notes, row.total) });
+    const rowKey = `${row.source}-${row.id}`;
+    if (pendingPaymentIds.has(rowKey)) return;
+
+    setPendingPaymentIds((current) => new Set(current).add(rowKey));
+    try {
+      if (row.source === 'budget') {
+        await onUpdateBudgetItem(row.id, {
+          paid_amount: row.total,
+          notes: appendPaymentNote(items.find((item) => item.id === row.id)?.notes, row.total),
+        });
+      } else {
+        await onUpdateVendor(row.id, {
+          amount_paid: row.total,
+          balance_due: 0,
+          notes: appendPaymentNote(vendors.find((vendor) => vendor.id === row.id)?.notes, row.total),
+        });
+      }
+    } catch {
+      toast('Couldn’t mark that payment as paid right now.', 'error');
+    } finally {
+      setPendingPaymentIds((current) => {
+        const next = new Set(current);
+        next.delete(rowKey);
+        return next;
+      });
     }
   }
 
@@ -116,6 +167,19 @@ export const PaymentsTab: React.FC<Props> = ({ items, vendorMeta, vendors, onUpd
   }
 
   async function copySummary() {
+    if (copyingSummary) return;
+
+    const requestId = summaryCopyRequestIdRef.current + 1;
+    summaryCopyRequestIdRef.current = requestId;
+    const requestContextKey = paymentSummaryContextKeyRef.current;
+    const isCurrentSummaryCopy = () => (
+      mountedRef.current &&
+      requestId === summaryCopyRequestIdRef.current &&
+      requestContextKey === paymentSummaryContextKeyRef.current
+    );
+
+    setCopyingSummary(true);
+    setSummaryCopyNotice(null);
     const summary = [
       `Payment summary`,
       `Open: ${fmt(totalDue)}`,
@@ -124,11 +188,27 @@ export const PaymentsTab: React.FC<Props> = ({ items, vendorMeta, vendors, onUpd
       '',
       ...rows.filter((row) => row.remaining > 0).slice(0, 12).map((row) => `${row.label} — ${fmt(row.remaining)} open${row.dueDate ? `, due ${formatVendorDate(row.dueDate)}` : ''}`),
     ].join('\n');
-    const result = await copyTextOrDownload(summary, 'dayof-payment-summary.txt');
-    if (result === 'copied') {
-      toast('Payment summary copied.', 'success');
-    } else {
-      toast('Clipboard was blocked, so the payment summary downloaded.', 'success');
+    try {
+      const result = await copyTextOrDownload(summary, 'dayof-payment-summary.txt');
+      if (!isCurrentSummaryCopy()) return;
+      setSummaryCopyNotice(result);
+      if (result === 'copied') {
+        toast('Payment summary copied.', 'success');
+      } else {
+        toast('Clipboard was blocked, so the payment summary downloaded.', 'success');
+      }
+      if (summaryCopyNoticeTimeoutRef.current) window.clearTimeout(summaryCopyNoticeTimeoutRef.current);
+      summaryCopyNoticeTimeoutRef.current = window.setTimeout(() => {
+        if (!isCurrentSummaryCopy()) return;
+        setSummaryCopyNotice((current) => (current === result ? null : current));
+      }, 1800);
+    } catch {
+      if (!isCurrentSummaryCopy()) return;
+      toast('Couldn’t copy the payment summary right now.', 'error');
+    } finally {
+      if (isCurrentSummaryCopy()) {
+        setCopyingSummary(false);
+      }
     }
   }
 
@@ -185,7 +265,7 @@ export const PaymentsTab: React.FC<Props> = ({ items, vendorMeta, vendors, onUpd
       <Card padding="sm" className="space-y-3">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
           <div className="flex items-start gap-3">
-            <div className="rounded-lg bg-primary-light p-2">
+            <div className="rounded-xl bg-primary-light p-2">
               <ReceiptText className="w-5 h-5 text-primary" />
             </div>
             <div>
@@ -198,14 +278,20 @@ export const PaymentsTab: React.FC<Props> = ({ items, vendorMeta, vendors, onUpd
               <button
                 key={key}
                 onClick={() => setFilter(key)}
-                className={`rounded-lg border px-3 py-1.5 text-xs capitalize ${filter === key ? 'border-primary bg-primary/10 text-primary' : 'border-border-subtle text-text-secondary hover:text-text-primary'}`}
+                className={`rounded-xl border px-3 py-1.5 text-xs capitalize ${filter === key ? 'border-primary bg-primary/10 text-primary' : 'border-border-subtle text-text-secondary hover:text-text-primary'}`}
               >
                 {key === 'due' ? 'Due now' : key}
               </button>
             ))}
-            <Button size="sm" variant="outline" onClick={copySummary}>
+            <Button size="sm" variant="outline" onClick={() => void copySummary()} disabled={copyingSummary}>
               <Copy className="w-4 h-4 mr-1" />
-              Copy summary
+              {copyingSummary
+                ? 'Copying...'
+                : summaryCopyNotice === 'downloaded'
+                  ? 'Downloaded payment summary'
+                  : summaryCopyNotice === 'copied'
+                    ? 'Copied payment summary'
+                    : 'Copy summary'}
             </Button>
             <Button size="sm" variant="outline" onClick={exportCsv}>
               <Download className="w-4 h-4 mr-1" />
@@ -213,8 +299,8 @@ export const PaymentsTab: React.FC<Props> = ({ items, vendorMeta, vendors, onUpd
             </Button>
           </div>
         </div>
-        <div className="h-2 overflow-hidden rounded-lg bg-surface-subtle">
-          <div className="h-full rounded-lg bg-success" style={{ width: `${Math.min(100, paidPct)}%` }} />
+        <div className="h-2 overflow-hidden rounded-xl bg-surface-subtle">
+          <div className="h-full rounded-xl bg-success" style={{ width: `${Math.min(100, paidPct)}%` }} />
         </div>
         <p className="text-xs text-text-tertiary">
           {reminderSummary.summary}
@@ -244,6 +330,7 @@ export const PaymentsTab: React.FC<Props> = ({ items, vendorMeta, vendors, onUpd
             <tbody>
               {filteredRows.map((row) => {
                 const isDue = row.remaining > 0 && isVendorDateOnOrBefore(row.dueDate, today);
+                const isPending = pendingPaymentIds.has(`${row.source}-${row.id}`);
                 const safeDocumentUrl = getSafePublicWebUrl(row.documentUrl);
                 return (
                   <tr key={`${row.source}-${row.id}`} className="border-t border-border-subtle">
@@ -265,9 +352,9 @@ export const PaymentsTab: React.FC<Props> = ({ items, vendorMeta, vendors, onUpd
                             <ExternalLink className="w-4 h-4" />
                           </a>
                         )}
-                        <Button size="sm" variant="outline" disabled={!canEdit || row.remaining <= 0} onClick={() => markPaid(row)}>
+                        <Button size="sm" variant="outline" disabled={!canEdit || row.remaining <= 0 || isPending} onClick={() => markPaid(row)}>
                           <CheckCircle2 className="w-4 h-4 mr-1" />
-                          Paid
+                          {isPending ? 'Saving...' : 'Paid'}
                         </Button>
                       </div>
                     </td>

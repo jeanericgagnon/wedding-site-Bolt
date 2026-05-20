@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import type { Dispatch, FormEvent, SetStateAction } from 'react';
 
 import type { ToastType } from '../../../components/ui/Toast';
@@ -69,6 +70,27 @@ export function useGuestDashboardCrudActions({
   toast,
   weddingSiteId,
 }: UseGuestDashboardCrudActionsInput) {
+  const confirmDeleteTimeoutRef = useRef<number | null>(null);
+  const guestCrudContextVersionRef = useRef(0);
+  const guestCrudRequestIdRef = useRef(0);
+
+  useEffect(() => {
+    guestCrudContextVersionRef.current += 1;
+    guestCrudRequestIdRef.current += 1;
+    setConfirmDeleteId(null);
+    setDeletingGuestId(null);
+  }, [isDemoMode, setConfirmDeleteId, setDeletingGuestId, weddingSiteId]);
+
+  useEffect(() => () => {
+    guestCrudContextVersionRef.current += 1;
+    guestCrudRequestIdRef.current += 1;
+    if (confirmDeleteTimeoutRef.current) window.clearTimeout(confirmDeleteTimeoutRef.current);
+  }, []);
+
+  function isCurrentGuestCrudContext(contextVersion: number) {
+    return contextVersion === guestCrudContextVersionRef.current;
+  }
+
   const generateLocalInviteToken = () => `demo_${Math.random().toString(36).slice(2, 14)}`;
 
   const resetForm = () => {
@@ -121,63 +143,76 @@ export function useGuestDashboardCrudActions({
     }
     if (!weddingSiteId) return;
 
+    const contextVersion = guestCrudContextVersionRef.current;
+    const requestId = ++guestCrudRequestIdRef.current;
+    const isCurrentGuestCrudRequest = () => (
+      isCurrentGuestCrudContext(contextVersion) && requestId === guestCrudRequestIdRef.current
+    );
+    const targetWeddingSiteId = weddingSiteId;
+    const targetFormData = { ...formData };
+    const targetFormEventInviteIds = new Set(formEventInviteIds);
     let createdGuestId: string | null = null;
 
     try {
       if (isDemoMode) {
         const newGuest: GuestWithRSVP = {
           id: `demo-${Date.now()}`,
-          first_name: formData.first_name,
-          last_name: formData.last_name,
-          name: `${formData.first_name} ${formData.last_name}`.trim(),
-          email: formData.email || null,
-          phone: formData.phone || null,
-          preferred_language: formData.preferred_language || null,
-          plus_one_allowed: formData.plus_one_allowed,
+          first_name: targetFormData.first_name,
+          last_name: targetFormData.last_name,
+          name: `${targetFormData.first_name} ${targetFormData.last_name}`.trim(),
+          email: targetFormData.email || null,
+          phone: targetFormData.phone || null,
+          preferred_language: targetFormData.preferred_language || null,
+          plus_one_allowed: targetFormData.plus_one_allowed,
           plus_one_name: null,
-          invited_to_ceremony: formData.invited_to_ceremony,
-          invited_to_reception: formData.invited_to_reception,
+          invited_to_ceremony: targetFormData.invited_to_ceremony,
+          invited_to_reception: targetFormData.invited_to_reception,
           invite_token: generateLocalInviteToken(),
           rsvp_status: 'pending',
           rsvp_received_at: null,
           household_id: null,
         };
 
+        if (!isCurrentGuestCrudRequest()) return;
         setGuests((prev) => [newGuest, ...prev]);
         setShowAddModal(false);
         resetForm();
-        toast(`${formData.first_name} ${formData.last_name} added`, 'success');
+        toast(`${targetFormData.first_name} ${targetFormData.last_name} added`, 'success');
         return;
       }
 
       const inviteToken = await generateSecureGuestInviteToken();
-      const selectedEventIds = Array.from(formEventInviteIds);
+      if (!isCurrentGuestCrudRequest()) return;
+      const selectedEventIds = Array.from(targetFormEventInviteIds);
       const invitedToCeremony = selectedEventIds.includes('legacy-ceremony');
       const invitedToReception = selectedEventIds.includes('legacy-reception');
       const realEventIds = selectedEventIds.filter((id) => !id.startsWith('legacy-'));
 
       createdGuestId = await createGuest({
-        weddingSiteId,
-        firstName: formData.first_name,
-        lastName: formData.last_name,
-        email: formData.email || null,
-        phone: formData.phone || null,
-        preferredLanguage: formData.preferred_language || null,
-        plusOneAllowed: formData.plus_one_allowed,
+        weddingSiteId: targetWeddingSiteId,
+        firstName: targetFormData.first_name,
+        lastName: targetFormData.last_name,
+        email: targetFormData.email || null,
+        phone: targetFormData.phone || null,
+        preferredLanguage: targetFormData.preferred_language || null,
+        plusOneAllowed: targetFormData.plus_one_allowed,
         invitedToCeremony,
         invitedToReception,
         inviteToken,
       });
       await insertEventInvitations(toEventInvitationRows(createdGuestId, realEventIds));
+      if (!isCurrentGuestCrudRequest()) return;
 
       await fetchGuests();
+      if (!isCurrentGuestCrudRequest()) return;
       setShowAddModal(false);
       resetForm();
-      toast(`${formData.first_name} ${formData.last_name} added`, 'success');
+      toast(`${targetFormData.first_name} ${targetFormData.last_name} added`, 'success');
     } catch (err) {
       if (createdGuestId) {
         await deleteGuestById(createdGuestId);
       }
+      if (!isCurrentGuestCrudRequest()) return;
       toast(safeGuestsDashboardError(err, 'Couldn’t add guest. Please try again.'), 'error');
     }
   };
@@ -190,16 +225,24 @@ export function useGuestDashboardCrudActions({
     }
     if (!editingGuest) return;
 
+    const contextVersion = guestCrudContextVersionRef.current;
+    const requestId = ++guestCrudRequestIdRef.current;
+    const isCurrentGuestCrudRequest = () => (
+      isCurrentGuestCrudContext(contextVersion) && requestId === guestCrudRequestIdRef.current
+    );
+    const targetEditingGuest = editingGuest;
+    const targetFormData = { ...formData };
+    const targetFormEventInviteIds = new Set(formEventInviteIds);
     const previousGuestValues = {
-      first_name: editingGuest.first_name ?? null,
-      last_name: editingGuest.last_name ?? null,
-      name: editingGuest.name ?? null,
-      email: editingGuest.email ?? null,
-      phone: editingGuest.phone ?? null,
-      preferred_language: editingGuest.preferred_language ?? null,
-      plus_one_allowed: editingGuest.plus_one_allowed,
-      invited_to_ceremony: editingGuest.invited_to_ceremony,
-      invited_to_reception: editingGuest.invited_to_reception,
+      first_name: targetEditingGuest.first_name ?? null,
+      last_name: targetEditingGuest.last_name ?? null,
+      name: targetEditingGuest.name ?? null,
+      email: targetEditingGuest.email ?? null,
+      phone: targetEditingGuest.phone ?? null,
+      preferred_language: targetEditingGuest.preferred_language ?? null,
+      plus_one_allowed: targetEditingGuest.plus_one_allowed,
+      invited_to_ceremony: targetEditingGuest.invited_to_ceremony,
+      invited_to_reception: targetEditingGuest.invited_to_reception,
     };
     let eventInvitationRollback: GuestEventInvitationRollback | null = null;
     let guestUpdated = false;
@@ -207,19 +250,20 @@ export function useGuestDashboardCrudActions({
 
     try {
       if (isDemoMode) {
+        if (!isCurrentGuestCrudRequest()) return;
         setGuests((prev) => prev.map((guest) => (
-          guest.id === editingGuest.id
+          guest.id === targetEditingGuest.id
             ? {
                 ...guest,
-                first_name: formData.first_name,
-                last_name: formData.last_name,
-                name: `${formData.first_name} ${formData.last_name}`.trim(),
-                email: formData.email || null,
-                phone: formData.phone || null,
-                preferred_language: formData.preferred_language || null,
-                plus_one_allowed: formData.plus_one_allowed,
-                invited_to_ceremony: formData.invited_to_ceremony,
-                invited_to_reception: formData.invited_to_reception,
+                first_name: targetFormData.first_name,
+                last_name: targetFormData.last_name,
+                name: `${targetFormData.first_name} ${targetFormData.last_name}`.trim(),
+                email: targetFormData.email || null,
+                phone: targetFormData.phone || null,
+                preferred_language: targetFormData.preferred_language || null,
+                plus_one_allowed: targetFormData.plus_one_allowed,
+                invited_to_ceremony: targetFormData.invited_to_ceremony,
+                invited_to_reception: targetFormData.invited_to_reception,
               }
             : guest
         )));
@@ -229,40 +273,42 @@ export function useGuestDashboardCrudActions({
         return;
       }
 
-      const selectedEventIds = Array.from(formEventInviteIds);
+      const selectedEventIds = Array.from(targetFormEventInviteIds);
       const invitedToCeremony = selectedEventIds.includes('legacy-ceremony');
       const invitedToReception = selectedEventIds.includes('legacy-reception');
       const realEventIds = selectedEventIds.filter((id) => !id.startsWith('legacy-'));
 
       await updateGuest({
-        guestId: editingGuest.id,
-        firstName: formData.first_name,
-        lastName: formData.last_name,
-        name: `${formData.first_name} ${formData.last_name}`,
-        email: formData.email || null,
-        phone: formData.phone || null,
-        preferredLanguage: formData.preferred_language || null,
-        plusOneAllowed: formData.plus_one_allowed,
+        guestId: targetEditingGuest.id,
+        firstName: targetFormData.first_name,
+        lastName: targetFormData.last_name,
+        name: `${targetFormData.first_name} ${targetFormData.last_name}`,
+        email: targetFormData.email || null,
+        phone: targetFormData.phone || null,
+        preferredLanguage: targetFormData.preferred_language || null,
+        plusOneAllowed: targetFormData.plus_one_allowed,
         invitedToCeremony,
         invitedToReception,
       });
       guestUpdated = true;
 
-      eventInvitationRollback = await replaceGuestEventInvitations(editingGuest.id, realEventIds);
+      eventInvitationRollback = await replaceGuestEventInvitations(targetEditingGuest.id, realEventIds);
       invitesCleared = true;
+      if (!isCurrentGuestCrudRequest()) return;
 
       await fetchGuests();
+      if (!isCurrentGuestCrudRequest()) return;
       setEditingGuest(null);
       resetForm();
       toast('Guest updated', 'success');
     } catch {
       if (!isDemoMode) {
         if (invitesCleared && eventInvitationRollback) {
-          await restoreGuestEventInvitations(editingGuest.id, eventInvitationRollback);
+          await restoreGuestEventInvitations(targetEditingGuest.id, eventInvitationRollback);
         }
         if (guestUpdated) {
           await updateGuest({
-            guestId: editingGuest.id,
+            guestId: targetEditingGuest.id,
             firstName: previousGuestValues.first_name,
             lastName: previousGuestValues.last_name,
             name: previousGuestValues.name,
@@ -275,6 +321,7 @@ export function useGuestDashboardCrudActions({
           });
         }
       }
+      if (!isCurrentGuestCrudRequest()) return;
       toast('Couldn’t update guest. Please try again.', 'error');
     }
   };
@@ -286,34 +333,48 @@ export function useGuestDashboardCrudActions({
     }
     if (confirmDeleteId !== guestId) {
       setConfirmDeleteId(guestId);
-      setTimeout(() => setConfirmDeleteId(null), 3000);
+      if (confirmDeleteTimeoutRef.current) window.clearTimeout(confirmDeleteTimeoutRef.current);
+      confirmDeleteTimeoutRef.current = window.setTimeout(() => setConfirmDeleteId(null), 3000);
       return;
     }
 
-    setDeletingGuestId(guestId);
+    const contextVersion = guestCrudContextVersionRef.current;
+    const requestId = ++guestCrudRequestIdRef.current;
+    const isCurrentGuestCrudRequest = () => (
+      isCurrentGuestCrudContext(contextVersion) && requestId === guestCrudRequestIdRef.current
+    );
+    const targetGuestId = guestId;
+
+    setDeletingGuestId(targetGuestId);
     setConfirmDeleteId(null);
-    const guest = guests.find((candidate) => candidate.id === guestId);
+    const guest = guests.find((candidate) => candidate.id === targetGuestId);
     try {
       if (isDemoMode) {
-        setGuests((prev) => prev.filter((candidate) => candidate.id !== guestId));
+        if (!isCurrentGuestCrudRequest()) return;
+        setGuests((prev) => prev.filter((candidate) => candidate.id !== targetGuestId));
         toast('Guest removed', 'success');
         return;
       }
 
-      const { invitationCount } = await deleteGuestWithDependencies(guestId);
+      const { invitationCount } = await deleteGuestWithDependencies(targetGuestId);
+      if (!isCurrentGuestCrudRequest()) return;
 
       await fetchGuests();
+      if (!isCurrentGuestCrudRequest()) return;
       logGuestAction('guest_deleted', 'Guest was deleted from the guest list.', {
         hadRsvp: Boolean(guest?.rsvp),
         hadEmail: Boolean(guest?.email),
         hadPhone: Boolean(guest?.phone),
         invitationCount,
-      }, guestId, guest?.name || 'Guest');
+      }, targetGuestId, guest?.name || 'Guest');
       toast('Guest removed', 'success');
     } catch {
+      if (!isCurrentGuestCrudRequest()) return;
       toast('Couldn’t remove guest. Please try again.', 'error');
     } finally {
-      setDeletingGuestId(null);
+      if (isCurrentGuestCrudRequest()) {
+        setDeletingGuestId(null);
+      }
     }
   };
 

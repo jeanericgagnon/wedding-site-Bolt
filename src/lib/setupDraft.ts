@@ -17,6 +17,14 @@ export type SetupDraft = {
 export const SETUP_DRAFT_KEY = 'dayof.builderV2.setupDraft';
 export const SELECTED_TEMPLATE_KEY = 'dayof.builderV2.selectedTemplate';
 export const SELECTED_TEMPLATE_RETENTION_MS = 180 * 24 * 60 * 60 * 1000;
+export const buildSetupDraftStorageKey = (storageScope?: string | null): string => {
+  const scope = typeof storageScope === 'string' ? storageScope.trim() : '';
+  return scope ? `${SETUP_DRAFT_KEY}::${scope}` : SETUP_DRAFT_KEY;
+};
+export const buildSelectedTemplateStorageKey = (storageScope?: string | null): string => {
+  const scope = typeof storageScope === 'string' ? storageScope.trim() : '';
+  return scope ? `${SELECTED_TEMPLATE_KEY}::${scope}` : SELECTED_TEMPLATE_KEY;
+};
 
 export const emptySetupDraft: SetupDraft = {
   migrationSource: '',
@@ -65,38 +73,53 @@ const buildSelectedTemplateEnvelope = (templateId: string): SelectedTemplateEnve
   templateId,
 });
 
-const readSelectedTemplatePreference = (): string => {
+const readSelectedTemplatePreference = (storageScope?: string | null): string => {
   try {
-    const raw = localStorage.getItem(SELECTED_TEMPLATE_KEY);
+    const storageKey = buildSelectedTemplateStorageKey(storageScope);
+    const hasScopedKey = localStorage.getItem(storageKey) !== null;
+    const sourceKey = !hasScopedKey && storageKey !== SELECTED_TEMPLATE_KEY ? SELECTED_TEMPLATE_KEY : storageKey;
+    const raw = localStorage.getItem(sourceKey);
     if (!raw) return emptySetupDraft.selectedTemplateId;
 
     if (!raw.trim().startsWith('{')) {
       const legacyTemplateId = normalizeSelectedTemplateId(raw);
       if (legacyTemplateId !== emptySetupDraft.selectedTemplateId || raw.trim()) {
-        localStorage.setItem(SELECTED_TEMPLATE_KEY, JSON.stringify(buildSelectedTemplateEnvelope(legacyTemplateId)));
+        localStorage.setItem(storageKey, JSON.stringify(buildSelectedTemplateEnvelope(legacyTemplateId)));
+        if (sourceKey !== storageKey) localStorage.removeItem(sourceKey);
       }
       return legacyTemplateId;
     }
 
     const parsed = JSON.parse(raw);
     if (!isRecord(parsed) || !isFreshTimestamp(parsed.savedAtISO, SELECTED_TEMPLATE_RETENTION_MS)) {
-      localStorage.removeItem(SELECTED_TEMPLATE_KEY);
+      localStorage.removeItem(sourceKey);
       return emptySetupDraft.selectedTemplateId;
     }
 
-    return normalizeSelectedTemplateId(typeof parsed.templateId === 'string' ? parsed.templateId : null);
+    const normalized = normalizeSelectedTemplateId(typeof parsed.templateId === 'string' ? parsed.templateId : null);
+    const normalizedRaw = JSON.stringify(buildSelectedTemplateEnvelope(normalized));
+    if (raw !== normalizedRaw || sourceKey !== storageKey) {
+      localStorage.setItem(storageKey, normalizedRaw);
+      if (sourceKey !== storageKey) localStorage.removeItem(sourceKey);
+    }
+    return normalized;
   } catch {
-    localStorage.removeItem(SELECTED_TEMPLATE_KEY);
+    const storageKey = buildSelectedTemplateStorageKey(storageScope);
+    localStorage.removeItem(storageKey);
+    if (storageKey !== SELECTED_TEMPLATE_KEY) localStorage.removeItem(SELECTED_TEMPLATE_KEY);
     return emptySetupDraft.selectedTemplateId;
   }
 };
 
-const writeSelectedTemplatePreference = (templateId: string) => {
+const writeSelectedTemplatePreference = (templateId: string, storageScope?: string | null) => {
+  const storageKey = buildSelectedTemplateStorageKey(storageScope);
   const normalized = templateId.trim().slice(0, MAX_SELECTED_TEMPLATE_ID_LENGTH);
   if (normalized) {
-    localStorage.setItem(SELECTED_TEMPLATE_KEY, JSON.stringify(buildSelectedTemplateEnvelope(normalized)));
+    localStorage.setItem(storageKey, JSON.stringify(buildSelectedTemplateEnvelope(normalized)));
+    if (storageKey !== SELECTED_TEMPLATE_KEY) localStorage.removeItem(SELECTED_TEMPLATE_KEY);
   } else {
-    localStorage.removeItem(SELECTED_TEMPLATE_KEY);
+    localStorage.removeItem(storageKey);
+    if (storageKey !== SELECTED_TEMPLATE_KEY) localStorage.removeItem(SELECTED_TEMPLATE_KEY);
   }
 };
 
@@ -144,52 +167,67 @@ const normalizeSetupDraft = (parsed: Partial<SetupDraft>, selectedTemplate: stri
   };
 };
 
-export const readSetupDraft = (): SetupDraft => {
-  const selectedTemplate = readSelectedTemplatePreference();
+export const readSetupDraft = (storageScope?: string | null): SetupDraft => {
+  const selectedTemplate = readSelectedTemplatePreference(storageScope);
+  const storageKey = buildSetupDraftStorageKey(storageScope);
 
   try {
-    const raw = localStorage.getItem(SETUP_DRAFT_KEY);
+    const hasScopedKey = localStorage.getItem(storageKey) !== null;
+    const sourceKey = !hasScopedKey && storageKey !== SETUP_DRAFT_KEY ? SETUP_DRAFT_KEY : storageKey;
+    const raw = localStorage.getItem(sourceKey);
     if (!raw) return { ...emptySetupDraft, selectedTemplateId: selectedTemplate };
     const parsed = JSON.parse(raw) as Partial<SetupDraft>;
     const normalized = normalizeSetupDraft(parsed, selectedTemplate);
     if (!normalized) {
-      localStorage.removeItem(SETUP_DRAFT_KEY);
+      localStorage.removeItem(sourceKey);
       return { ...emptySetupDraft, selectedTemplateId: selectedTemplate };
     }
     const normalizedRaw = JSON.stringify(normalized);
-    if (raw !== normalizedRaw) localStorage.setItem(SETUP_DRAFT_KEY, normalizedRaw);
+    if (raw !== normalizedRaw || sourceKey !== storageKey) {
+      localStorage.setItem(storageKey, normalizedRaw);
+      if (sourceKey !== storageKey) localStorage.removeItem(sourceKey);
+    }
     return normalized;
   } catch {
-    localStorage.removeItem(SETUP_DRAFT_KEY);
+    localStorage.removeItem(storageKey);
+    if (storageKey !== SETUP_DRAFT_KEY) localStorage.removeItem(SETUP_DRAFT_KEY);
     return { ...emptySetupDraft, selectedTemplateId: selectedTemplate };
   }
 };
 
-export const writeSetupDraft = (draft: SetupDraft) => {
+export const writeSetupDraft = (draft: SetupDraft, storageScope?: string | null) => {
   const selectedTemplateId = draft.selectedTemplateId.trim();
   const normalized = normalizeSetupDraft({
     ...draft,
     selectedTemplateId,
     savedAtISO: new Date().toISOString(),
   }, selectedTemplateId);
-  localStorage.setItem(SETUP_DRAFT_KEY, JSON.stringify(normalized ?? { ...emptySetupDraft, selectedTemplateId }));
-  writeSelectedTemplatePreference(selectedTemplateId);
+  const storageKey = buildSetupDraftStorageKey(storageScope);
+  localStorage.setItem(storageKey, JSON.stringify(normalized ?? { ...emptySetupDraft, selectedTemplateId }));
+  if (storageKey !== SETUP_DRAFT_KEY) localStorage.removeItem(SETUP_DRAFT_KEY);
+  writeSelectedTemplatePreference(selectedTemplateId, storageScope);
 };
 
-export const selectSetupDraftTemplate = (templateId: string) => {
+export const selectSetupDraftTemplate = (templateId: string, storageScope?: string | null) => {
   writeSetupDraft({
-    ...readSetupDraft(),
+    ...readSetupDraft(storageScope),
     selectedTemplateId: templateId,
-  });
+  }, storageScope);
 };
 
-export const clearSetupDraft = () => {
-  localStorage.removeItem(SETUP_DRAFT_KEY);
-  localStorage.removeItem(SELECTED_TEMPLATE_KEY);
+export const clearSetupDraft = (storageScope?: string | null) => {
+  const setupDraftKey = buildSetupDraftStorageKey(storageScope);
+  const selectedTemplateKey = buildSelectedTemplateStorageKey(storageScope);
+  localStorage.removeItem(setupDraftKey);
+  localStorage.removeItem(selectedTemplateKey);
+  if (setupDraftKey !== SETUP_DRAFT_KEY) localStorage.removeItem(SETUP_DRAFT_KEY);
+  if (selectedTemplateKey !== SELECTED_TEMPLATE_KEY) localStorage.removeItem(SELECTED_TEMPLATE_KEY);
 };
 
-export const clearSetupDraftOnly = () => {
-  localStorage.removeItem(SETUP_DRAFT_KEY);
+export const clearSetupDraftOnly = (storageScope?: string | null) => {
+  const setupDraftKey = buildSetupDraftStorageKey(storageScope);
+  localStorage.removeItem(setupDraftKey);
+  if (setupDraftKey !== SETUP_DRAFT_KEY) localStorage.removeItem(SETUP_DRAFT_KEY);
 };
 
 export const setupDraftProgress = (draft: SetupDraft): number => {

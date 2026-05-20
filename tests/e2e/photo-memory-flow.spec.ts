@@ -171,7 +171,7 @@ test('demo photo memory flow proves slideshow, export, and recap readback contin
   expect(downloadContents).toContain('demo-photo-upload-1');
   expect(downloadContents).not.toContain('token-c-2');
 
-  await page.locator('select.h-11.rounded-lg.border.border-border-subtle.bg-white').first().selectOption('published');
+  await page.getByRole('combobox').first().selectOption('published');
   await page.getByRole('button', { name: 'Save status' }).click();
   await expect(page.getByText('Guest hub settings saved.')).toBeVisible();
   await page.reload({ waitUntil: 'domcontentloaded' });

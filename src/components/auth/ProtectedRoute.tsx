@@ -13,6 +13,10 @@ interface ProtectedRouteProps {
 type BillingGateState = BillingInfo | null | 'loading' | 'unavailable';
 type ActiveSiteRoleState = 'loading' | 'owner' | 'planner' | 'coordinator' | 'viewer' | null;
 
+function isResolvedBillingInfo(value: BillingGateState): value is BillingInfo {
+  return Boolean(value) && value !== 'loading' && value !== 'unavailable';
+}
+
 export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, skipPaymentGate = false }) => {
   const { user, loading, isDemoMode } = useAuth();
   const paymentGateEnabled = isPaymentGateEnabled();
@@ -22,28 +26,57 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, skipPa
   const [activeSiteRole, setActiveSiteRole] = useState<ActiveSiteRoleState>('loading');
 
   useEffect(() => {
+    let cancelled = false;
+
     if (!user) {
       setBillingInfo(null);
       setActiveSiteRole(null);
-      return;
+      return () => {
+        cancelled = true;
+      };
     }
 
     if (isDemoMode) {
       setBillingInfo({ payment_status: 'active', billing_type: 'one_time', site_expires_at: null, paid_at: null, stripe_subscription_id: null, wedding_site_id: '' });
       setActiveSiteRole('owner');
-      return;
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    if (skipPaymentGate || !paymentGateEnabled) {
+      setBillingInfo(null);
+      setActiveSiteRole(null);
+      return () => {
+        cancelled = true;
+      };
     }
 
     setActiveSiteRole('loading');
-    resolveActiveSiteRoleForUser(user.id).then(setActiveSiteRole).catch(() => setActiveSiteRole(null));
+    setBillingInfo('loading');
+    resolveActiveSiteRoleForUser(user.id)
+      .then((role) => {
+        if (!cancelled) setActiveSiteRole(role);
+      })
+      .catch(() => {
+        if (!cancelled) setActiveSiteRole(null);
+      });
     fetchBillingInfo(user.id)
-      .then(info => setBillingInfo(info))
-      .catch(() => setBillingInfo('unavailable'));
-  }, [user, isDemoMode]);
+      .then((info) => {
+        if (!cancelled) setBillingInfo(info);
+      })
+      .catch(() => {
+        if (!cancelled) setBillingInfo('unavailable');
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user, isDemoMode, paymentGateEnabled, skipPaymentGate]);
 
   const paymentGateNeedsRoleResolution = paymentGateEnabled && !skipPaymentGate && !isDemoMode;
 
-  if (loading || billingInfo === 'loading' || (paymentGateNeedsRoleResolution && activeSiteRole === 'loading')) {
+  if (loading || (!skipPaymentGate && paymentGateEnabled && billingInfo === 'loading') || (paymentGateNeedsRoleResolution && activeSiteRole === 'loading')) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center">
@@ -68,7 +101,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, skipPa
   if (paymentGateEnabled && !skipPaymentGate && !isDemoMode && activeSiteRole !== 'planner' && activeSiteRole !== 'coordinator' && activeSiteRole !== 'viewer') {
     const isPaymentRoute = location.pathname.startsWith('/payment');
     const bypassPayment = paymentBypassAllowed && new URLSearchParams(location.search).get('bypassPayment') === '1';
-    const resolvedBillingInfo = billingInfo && billingInfo !== 'unavailable' ? billingInfo : null;
+    const resolvedBillingInfo = isResolvedBillingInfo(billingInfo) ? billingInfo : null;
 
     if (billingInfo === 'unavailable' && !isPaymentRoute && !bypassPayment) {
       return <Navigate to="/payment-required?reason=billing_unavailable" replace />;

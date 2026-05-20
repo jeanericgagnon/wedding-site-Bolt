@@ -237,6 +237,20 @@ describe('settings site data boundary', () => {
     expect(routeContentPropsHelper).toContain('export function buildSettingsDashboardRouteContentProps(props: Props): Props {');
     expect(routeContent).toContain('export function SettingsDashboardRouteContent(props: Props)');
     expect(routeContent).toContain('isPublished: props.isPublished,');
+    expect(routeContent).toContain('const canEditSettings = canManageSettings(props.settingsRole, props.settingsPermissions);');
+    expect(routeContent).toContain("const canManageOwnerSettings = props.settingsRole === 'owner';");
+    expect(routeContent).toContain('if (!canEditSettings) return;');
+    expect(routeContent).toContain('if (!canManageOwnerSettings) return;');
+    expect(routeContent).toContain('onSavePrivacy={canEditSettings ? props.handleSavePrivacy : blockSettingsSubmit}');
+    expect(routeContent).toContain('canEditWeddingAccountInfo={canEditSettings}');
+    expect(routeContent).toContain('onSaveAccount={canEditSettings ? props.handleSaveAccount : blockSettingsSubmit}');
+    expect(routeContent).toContain('onCoupleNamesChange={(value) => runSettingsWrite(() => props.setCoupleNames(value))}');
+    expect(routeContent).toContain('onSubmitSiteSlug={canEditSettings ? props.handleUpdateSlug : blockSettingsSubmit}');
+    expect(routeContent).toContain('onSaveQuestions={canEditSettings ? props.handleSaveRsvpQuestions : blockSettingsSubmit}');
+    expect(routeContent).toContain('onSaveNotifications={canEditSettings ? props.handleSaveNotifications : blockSettingsSubmit}');
+    expect(routeContent).toContain('canManageOwnerSettings={canManageOwnerSettings}');
+    expect(routeContent).toContain('onResendCollaboratorInvite={(inviteToken) => canManageOwnerSettings ? props.handleResendCollaboratorInvite(inviteToken) : Promise.resolve(null)}');
+    expect(routeContent).toContain('onSubscribe={() => runOwnerSettingsWrite(() => { void props.handleSubscribe(); })}');
     expect(routeContent).toContain('<SettingsDashboardShell');
     expect(routeContent).toContain('<SettingsTabContent');
     expect(routeContent).toContain('<SettingsSiteTabContent');
@@ -245,7 +259,8 @@ describe('settings site data boundary', () => {
     expect(page).not.toContain('notification_prefs: buildNotificationPrefsPatch({');
     expect(page).not.toContain('rsvp_custom_questions: cleanedQuestions');
 
-    expect(tabContent).toContain('switch (activeTab)');
+    expect(tabContent).toContain('const effectiveTab = tabs.some((tab) => tab.id === activeTab) ? activeTab : tabs[0]?.id;');
+    expect(tabContent).toContain('switch (effectiveTab)');
     expect(tabContent).toContain('<>{accountContent}</>');
     expect(tabContent).toContain('<>{teamContent}</>');
     expect(tabContent).toContain('<>{siteContent}</>');
@@ -257,10 +272,12 @@ describe('settings site data boundary', () => {
     expect(siteTabContent).toContain('<SettingsIdentityExportsPanel');
     expect(siteTabContent).toContain('<SettingsPrivacyPanel');
     expect(siteTabContent).toContain('<SettingsTemplatePanel');
+    expect(siteTabContent).toContain('canEditSettings={canEditSettings}');
     expect(siteTabContent).toContain('onSubmitSiteSlug');
     expect(siteTabContent).toContain('onToggleTemplateSettings');
     expect(rsvpTabContent).toContain('<SettingsRsvpMealPanel');
     expect(rsvpTabContent).toContain('<SettingsRsvpQuestionsPanel');
+    expect(rsvpTabContent).toContain('canEditSettings={canEditSettings}');
     expect(rsvpTabContent).toContain('onSaveMealSettings');
     expect(rsvpTabContent).toContain('onToggleAdvancedVisibility');
 
@@ -270,23 +287,32 @@ describe('settings site data boundary', () => {
     expect(snapshotLoader).toContain('loadSettingsTranslationStatuses(');
     expect(snapshotLoader).toContain('resolveActiveSiteForUser(userId)');
     expect(snapshotLoader).not.toContain("from('wedding_sites')");
-    expect(viewModel).toContain('getSettingsTabs(settingsRole)');
+    expect(viewModel).toContain('getSettingsTabs(settingsRole, settingsPermissions)');
     expect(viewModel).toContain('isPublished,');
     expect(viewModel).toContain('buildWeddingIdentityExportKit({');
     expect(viewModel).toContain('buildWeddingIdentityPrintAssets({');
     expect(viewModel).toContain("PLANNER_ROLE_OPTIONS.filter((option) => option.value !== 'owner')");
 
     expect(accountHook).toContain('export function useSettingsAccountActions({');
+    expect(accountHook).toContain('const accountSaveRequestIdRef = useRef(0);');
+    expect(accountHook).toContain('const passwordUpdateRequestIdRef = useRef(0);');
+    expect(accountHook).toContain('const isCurrentAccountSave = () => requestId === accountSaveRequestIdRef.current;');
+    expect(accountHook).toContain('const isCurrentPasswordUpdate = () => requestId === passwordUpdateRequestIdRef.current;');
     expect(accountHook).toContain('await updateSettingsSite(weddingSiteId, { couple_name_1: name1, couple_name_2: name2 });');
     expect(accountHook).toContain("await verifySettingsCurrentPassword(authUser.email || '', currentPassword);");
     expect(accountHook).toContain('await updateSettingsAccountPassword(newPassword);');
+    expect(accountHook).toContain('if (!isCurrentAccountSave()) return;');
+    expect(accountHook).toContain('if (!isCurrentPasswordUpdate()) return;');
     expect(accountHook).toContain("logSettingsAction('account_password_changed', 'Account password was changed.')");
 
     expect(supportHook).toContain('export function useSettingsDashboardSupport({');
-    expect(supportHook).toContain('setCollaboratorInvites(await loadSettingsCollaboratorInvites(siteId));');
+    expect(supportHook).toContain('const collaboratorInvitesRequestIdRef = useRef(0);');
+    expect(supportHook).toContain('const translationStatusesRequestIdRef = useRef(0);');
+    expect(supportHook).toContain('if (requestId !== collaboratorInvitesRequestIdRef.current) return;');
     expect(supportHook).toContain('const activeSite = await resolveActiveSiteForUser(userId);');
     expect(supportHook).toContain('void logAppAction({');
     expect(supportHook).toContain('const rows = await loadSettingsTranslationStatuses(');
+    expect(supportHook).toContain('if (requestId !== translationStatusesRequestIdRef.current) return;');
     expect(supportHook).toContain('const blob = new Blob([content], { type });');
 
     expect(uiStateHook).toContain('export function useSettingsDashboardUiState({ userId }: Args)');
@@ -301,6 +327,7 @@ describe('settings site data boundary', () => {
     expect(hydrationHook).toContain('export function useSettingsDashboardSnapshotHydration({');
     expect(hydrationHook).toContain('loadSettingsDashboardSnapshot({');
     expect(hydrationHook).toContain('setSettingsRole(snapshot.settingsRole);');
+    expect(hydrationHook).toContain('setSettingsPermissions(snapshot.settingsPermissions);');
     expect(hydrationHook).toContain('setIsPublished(snapshot.isPublished);');
     expect(hydrationHook).toContain('if (visibilityDraftGuard.shouldHydrate())');
     expect(hydrationHook).toContain('if (notifDraftGuard.shouldHydrate())');
@@ -308,7 +335,38 @@ describe('settings site data boundary', () => {
     expect(hydrationHook).toContain("setAccountError(safeSettingsError(err, 'Couldn’t load settings right now.'))");
 
     expect(actionsHook).toContain('createSettingsCollaboratorInvite({');
+    expect(actionsHook).toContain('const collaboratorInviteCopyRequestIdRef = useRef(0);');
+    expect(actionsHook).toContain('const guestAccessCopyRequestIdRef = useRef(0);');
+    expect(actionsHook).toContain('const identityCopyRequestIdRef = useRef(0);');
+    expect(actionsHook).toContain('const identityDownloadRequestIdRef = useRef(0);');
     expect(actionsHook).toContain('revokeSettingsCollaboratorInvite(inviteId)');
+    expect(actionsHook).toContain('const isCurrentCollaboratorInviteCopy = () =>');
+    expect(actionsHook).toContain('const isCurrentGuestAccessCopy = () =>');
+    expect(actionsHook).toContain('const isCurrentIdentityCopy = () =>');
+    expect(actionsHook).toContain('const isCurrentIdentityDownload = () =>');
+    expect(actionsHook).toContain('const slugSaveRequestIdRef = useRef(0);');
+    expect(actionsHook).toContain('const privacySaveRequestIdRef = useRef(0);');
+    expect(actionsHook).toContain('const defaultLanguageSaveRequestIdRef = useRef(0);');
+    expect(actionsHook).toContain('const translationRequestIdRef = useRef(0);');
+    expect(actionsHook).toContain('const musicPlaylistSaveRequestIdRef = useRef(0);');
+    expect(actionsHook).toContain('const guestTokenRegenerationRequestIdRef = useRef(0);');
+    expect(actionsHook).toContain('const isCurrentSlugSave = () =>');
+    expect(actionsHook).toContain('const isCurrentPrivacySave = () =>');
+    expect(actionsHook).toContain('const isCurrentDefaultLanguageSave = () =>');
+    expect(actionsHook).toContain('const isCurrentTranslation = () =>');
+    expect(actionsHook).toContain('const isCurrentMusicPlaylistSave = () =>');
+    expect(actionsHook).toContain('const isCurrentGuestTokenRegeneration = () =>');
+    expect(actionsHook).toContain('if (!isCurrentSlugSave()) return;');
+    expect(actionsHook).toContain('if (!isCurrentPrivacySave()) return;');
+    expect(actionsHook).toContain('if (!isCurrentDefaultLanguageSave()) return;');
+    expect(actionsHook).toContain('if (!isCurrentTranslation()) return;');
+    expect(actionsHook).toContain('if (!isCurrentMusicPlaylistSave()) return;');
+    expect(actionsHook).toContain('if (!isCurrentGuestTokenRegeneration()) return;');
+    expect(actionsHook).toContain('if (!isCurrentCollaboratorInviteCopy()) return null;');
+    expect(actionsHook).toContain('if (!isCurrentGuestAccessCopy()) return;');
+    expect(actionsHook).toContain('if (!isCurrentIdentityCopy()) return;');
+    expect(actionsHook).toContain('if (!isCurrentIdentityDownload()) return;');
+    expect(actionsHook).toContain('guestAccessCopyRequestIdRef.current += 1;');
     expect(actionsHook).toContain('findSettingsSiteBySlug(cleaned)');
     expect(actionsHook).toContain('translateSettingsSiteContent(targetSiteId, language)');
     expect(actionsHook).toContain('generateSettingsSecureToken()');
@@ -320,6 +378,21 @@ describe('settings site data boundary', () => {
     expect(actionsHook).not.toMatch(/supabase\s*\n\s*\.from\('wedding_sites'\)/);
 
     expect(experienceHook).toContain('loadSettingsTemplateChangeSite(weddingSiteId)');
+    expect(experienceHook).toContain('const rsvpSettingsSaveRequestIdRef = useRef(0);');
+    expect(experienceHook).toContain('const notificationSaveRequestIdRef = useRef(0);');
+    expect(experienceHook).toContain('const isCurrentRsvpSettingsSave = () => requestId === rsvpSettingsSaveRequestIdRef.current;');
+    expect(experienceHook).toContain('const isCurrentNotificationSave = () => requestId === notificationSaveRequestIdRef.current;');
+    expect(experienceHook).toContain('if (!isCurrentRsvpSettingsSave()) return;');
+    expect(experienceHook).toContain('if (!isCurrentNotificationSave()) return;');
+    expect(experienceHook).toContain('const templateChangeRequestIdRef = useRef(0);');
+    expect(experienceHook).toContain('const subscribeRequestIdRef = useRef(0);');
+    expect(experienceHook).toContain('const experienceActionContextRef = useRef({ billingSiteId: billingInfo?.wedding_site_id ?? null, weddingSiteId });');
+    expect(experienceHook).toContain('const isLatestSubscribeRequest = () => requestId === subscribeRequestIdRef.current;');
+    expect(experienceHook).toContain('const isCurrentSubscribe = () =>');
+    expect(experienceHook).toContain('const isCurrentTemplateChange = () =>');
+    expect(experienceHook).toContain('if (!isCurrentSubscribe()) {');
+    expect(experienceHook).toContain('if (isLatestSubscribeRequest()) setSubscribeLoading(false);');
+    expect(experienceHook).toContain('if (!isCurrentTemplateChange()) return;');
     expect(experienceHook).toContain('createSubscriptionSession(');
     expect(experienceHook).toContain('notification_prefs: buildNotificationPrefsPatch({');
     expect(experienceHook).toContain('rsvp_custom_questions: cleanedQuestions');

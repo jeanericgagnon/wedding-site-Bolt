@@ -35,7 +35,7 @@ vi.mock('../../../lib/supabase', () => ({
   },
 }));
 
-function makePlanningVendorQuery(result: { data: unknown; error: { message?: string } | null }) {
+function makePlanningVendorQuery(result: { data: unknown; error: { code?: string; message?: string } | null }) {
   const chain = {
     select: vi.fn(() => chain),
     eq: vi.fn(() => chain),
@@ -46,7 +46,7 @@ function makePlanningVendorQuery(result: { data: unknown; error: { message?: str
   return chain;
 }
 
-function makePlanningBudgetQuery(result: { data: unknown; error: { message?: string } | null }) {
+function makePlanningBudgetQuery(result: { data: unknown; error: { code?: string; message?: string } | null }) {
   const chain = {
     select: vi.fn(() => chain),
     eq: vi.fn(() => chain),
@@ -124,8 +124,10 @@ describe('planning song request helpers', () => {
     expect(source).toContain(".order('responded_at', { ascending: false })\n      .limit(MAX_PLANNING_SONG_REQUEST_ROWS),");
     expect(source).toContain(".eq('wedding_site_id', weddingSiteId)\n    .limit(MAX_PLANNING_SEATING_EVENTS);");
     expect(source).toContain(".order('created_at', { ascending: true })\n    .limit(MAX_PLANNING_TASK_ROWS);");
-    expect(source).toContain(".order('name', { ascending: true })\n    .limit(MAX_PLANNING_VENDOR_ROWS);");
-    expect(source).toContain(".order('item_name', { ascending: true })\n    .limit(MAX_PLANNING_BUDGET_ITEM_ROWS);");
+    expect(source).toContain(".order('name', { ascending: true })");
+    expect(source).toContain('.limit(MAX_PLANNING_VENDOR_ROWS);');
+    expect(source).toContain(".order('item_name', { ascending: true })");
+    expect(source).toContain('.limit(MAX_PLANNING_BUDGET_ITEM_ROWS);');
     expect(source).toContain("supabase.rpc('planning_task_write'");
     expect(source).toContain("supabase.rpc('planning_task_delete'");
     expect(source).toContain("supabase.rpc('planning_vendor_write'");
@@ -169,7 +171,7 @@ describe('planning song request helpers', () => {
     });
   });
 
-  it('loads vendors from wildcard rows without depending on optional live columns', async () => {
+  it('loads vendors with an explicit projection while normalizing optional live columns', async () => {
     const query = makePlanningVendorQuery({
       data: [{
         id: 'vendor-1',
@@ -203,10 +205,11 @@ describe('planning song request helpers', () => {
       }),
     ]);
 
-    expect(query.select).toHaveBeenCalledWith('*');
+    expect(query.select).toHaveBeenCalledWith(expect.stringContaining('phone'));
+    expect(query.select).toHaveBeenCalledWith(expect.stringContaining('internal_rating'));
   });
 
-  it('loads budget items from wildcard rows without depending on due_date being present', async () => {
+  it('loads budget items with an explicit projection while normalizing optional due dates', async () => {
     const query = makePlanningBudgetQuery({
       data: [{
         id: 'budget-1',
@@ -234,7 +237,7 @@ describe('planning song request helpers', () => {
       }),
     ]);
 
-    expect(query.select).toHaveBeenCalledWith('*');
+    expect(query.select).toHaveBeenCalledWith(expect.stringContaining('due_date'));
   });
 
   it('loads vendor reminder metadata from planning wedding data safely', async () => {

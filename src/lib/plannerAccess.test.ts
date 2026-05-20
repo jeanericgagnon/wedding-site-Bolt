@@ -11,6 +11,10 @@ import {
   derivePlannerRoleFromPermissions,
   getPlannerPermissionPreset,
   hasPlannerPermission,
+  isPlannerAccessRole,
+  isPlannerCollaboratorRole,
+  normalizePlannerInvite,
+  normalizePlannerPermissions,
   type PlannerAccessRole,
 } from './plannerAccess';
 
@@ -104,5 +108,43 @@ describe('plannerAccess permission presets', () => {
     expect(canEditPlanningBudget('planner')).toBe(true);
     expect(canEditPlanningBudget('coordinator')).toBe(false);
     expect(canComposeDashboardMessages('viewer')).toBe(false);
+  });
+
+  it('normalizes untrusted role and permission values before access checks use them', () => {
+    expect(isPlannerAccessRole('owner')).toBe(true);
+    expect(isPlannerAccessRole('admin')).toBe(false);
+    expect(isPlannerCollaboratorRole('owner')).toBe(false);
+    expect(isPlannerCollaboratorRole('admin')).toBe(false);
+    expect(isPlannerCollaboratorRole('planner')).toBe(true);
+    expect(isPlannerCollaboratorRole('coordinator')).toBe(true);
+    expect(isPlannerCollaboratorRole('viewer')).toBe(true);
+    expect(normalizePlannerPermissions(['guests', 'owner', 'settings', 123])).toEqual(['guests', 'settings']);
+    expect(normalizePlannerPermissions('guests')).toEqual([]);
+  });
+});
+
+describe('planner invite normalization', () => {
+  const baseInvite = {
+    name: 'Casey Planner',
+    email: 'casey@example.com',
+    role: 'planner',
+    status: 'draft',
+    invitedAtISO: new Date().toISOString(),
+  };
+
+  it('rejects owner or unknown roles from persisted invite data', () => {
+    expect(normalizePlannerInvite({ ...baseInvite, role: 'owner' })).toBeNull();
+    expect(normalizePlannerInvite({ ...baseInvite, role: 'admin' })).toBeNull();
+  });
+
+  it('rejects unknown persisted invite statuses', () => {
+    expect(normalizePlannerInvite({ ...baseInvite, status: 'accepted' })).toBeNull();
+  });
+
+  it('keeps only known permission keys from persisted invite data', () => {
+    expect(normalizePlannerInvite({
+      ...baseInvite,
+      permissions: ['guests', 'owner', 'settings'],
+    })?.permissions).toEqual(['guests', 'settings']);
   });
 });

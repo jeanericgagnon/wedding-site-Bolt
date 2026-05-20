@@ -86,7 +86,7 @@ const SkeletonThumbnail: React.FC<{ skeleton: CustomSectionSkeleton; selected: b
     ),
     'image-text': (
       <div className="w-full h-full flex items-center gap-2 p-3" style={{ backgroundColor: bg }}>
-        <div className={`w-12 h-12 rounded-lg ${lineDark} flex-shrink-0`} />
+        <div className={`w-12 h-12 rounded-xl ${lineDark} flex-shrink-0`} />
         <div className="flex-1 flex flex-col gap-1">
           <div className={`h-1.5 rounded ${line}`} />
           <div className={`h-1 rounded ${lineDark}`} />
@@ -415,7 +415,7 @@ const SkeletonThumbnail: React.FC<{ skeleton: CustomSectionSkeleton; selected: b
           <div className={`h-1 rounded ${lineDark} w-4/5`} />
           <div className={`w-10 h-3.5 rounded-full ${line} mt-1`} />
         </div>
-        <div className={`w-14 h-14 rounded-lg ${lineDark} flex-shrink-0`} />
+        <div className={`w-14 h-14 rounded-xl ${lineDark} flex-shrink-0`} />
       </div>
     ),
     'centered-intro': (
@@ -444,7 +444,7 @@ const SkeletonThumbnail: React.FC<{ skeleton: CustomSectionSkeleton; selected: b
     ),
     'photo-caption': (
       <div className="w-full h-full flex flex-col items-center p-3 gap-1.5" style={{ backgroundColor: bg }}>
-        <div className={`w-full flex-1 rounded-lg ${lineDark}`} />
+        <div className={`w-full flex-1 rounded-xl ${lineDark}`} />
         <div className={`w-20 h-2 rounded ${line}`} />
         <div className={`w-24 h-1 rounded ${lineDark}`} />
       </div>
@@ -554,7 +554,7 @@ const SkeletonThumbnail: React.FC<{ skeleton: CustomSectionSkeleton; selected: b
   };
 
   return (
-    <div className={`w-full aspect-[4/3] rounded-lg overflow-hidden transition-all ${
+    <div className={`w-full aspect-[4/3] rounded-xl overflow-hidden transition-all ${
       selected ? 'ring-2 ring-[var(--color-primary)] ring-offset-1' : ''
     }`}>
       {thumbnails[skeleton.thumbnail] ?? (
@@ -586,7 +586,7 @@ export const SkeletonPickerModal: React.FC<SkeletonPickerModalProps> = ({ onSele
           </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors"
+            className="p-2 rounded-xl hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors"
           >
             <X size={16} />
           </button>
@@ -656,7 +656,7 @@ export const SkeletonPickerModal: React.FC<SkeletonPickerModalProps> = ({ onSele
             </button>
             <button
               onClick={() => onSelect(selectedSkeleton)}
-              className="px-5 py-2 bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] text-white text-sm font-medium rounded-lg transition-colors"
+              className="px-5 py-2 bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] text-white text-sm font-medium rounded-xl transition-colors"
             >
               Add Section
             </button>

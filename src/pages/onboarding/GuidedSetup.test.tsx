@@ -1,4 +1,5 @@
 import { render, screen, waitFor } from '@testing-library/react';
+import { readFileSync } from 'node:fs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { GUIDED_SETUP_STORAGE_KEY } from '../../lib/guidedSetupPersistence';
 import { supabase } from '../../lib/supabase';
@@ -143,5 +144,19 @@ describe('safeGuidedSetupCsvError', () => {
     expect(safeGuidedSetupCsvError(new Error('duplicate key value violates unique constraint "guests_email_key"'))).toBe(
       'Couldn’t import that guest file. Please check the CSV and try again.'
     );
+  });
+});
+
+describe('GuidedSetup stale error recovery guards', () => {
+  it('clears stale setup errors when choosing drafts, template, palette, or moving back a step', () => {
+    const page = readFileSync('src/pages/onboarding/GuidedSetup.tsx', 'utf8');
+
+    expect(page).toContain('const updateFormData = (patch: Partial<typeof formData>) => {');
+    expect(page).toContain("setError('');");
+    expect(page).toContain("onClick={() => updateFormData({ ourStory: welcomeNoteDraft })}");
+    expect(page).toContain("onClick={() => updateFormData({ customFaqs: suggestedFaqDrafts.map((item) => `${item.question}::${item.answer}`).join('\\n') })}");
+    expect(page).toContain("onClick={() => updateFormData({ template: tpl.id })}");
+    expect(page).toContain("onClick={() => updateFormData({ colorScheme: scheme.id })}");
+    expect(page).toContain('const handleBack = () => {');
   });
 });

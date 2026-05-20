@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Copy, ExternalLink, QrCode } from 'lucide-react';
 import { Button } from './Button';
 import { copyTextOrDownload, downloadTextFile } from '../../lib/copyText';
@@ -11,6 +11,7 @@ interface ShareQrPanelProps {
   url: string;
   copyLabel?: string;
   copiedLabel?: string;
+  downloadedLabel?: string;
   openLabel?: string;
   downloadLabel?: string;
   privateCardLabel?: string;
@@ -28,12 +29,21 @@ function escapeHtml(value: string): string {
     .replaceAll("'", '&#39;');
 }
 
+function deriveCopyOutcomeLabel(copyLabel: string, verb: 'Copied' | 'Downloaded'): string {
+  const trimmed = copyLabel.trim();
+  if (/^copy\s+/iu.test(trimmed)) {
+    return `${verb} ${trimmed.replace(/^copy\s+/iu, '')}`;
+  }
+  return verb;
+}
+
 export const ShareQrPanel: React.FC<ShareQrPanelProps> = ({
   title,
   description,
   url,
   copyLabel = 'Copy link',
-  copiedLabel = 'Copied',
+  copiedLabel,
+  downloadedLabel,
   openLabel = 'Open QR',
   downloadLabel = 'Download',
   privateCardLabel = 'Save private card',
@@ -41,8 +51,13 @@ export const ShareQrPanel: React.FC<ShareQrPanelProps> = ({
   allowPrivate = false,
   disabled = false,
 }) => {
-  const [copied, setCopied] = useState(false);
+  const [copyStatus, setCopyStatus] = useState<'idle' | 'copied' | 'downloaded' | 'error'>('idle');
+  const [copying, setCopying] = useState(false);
   const [copyFallback, setCopyFallback] = useState(false);
+  const copyStatusTimeoutRef = useRef<number | null>(null);
+  const copyRequestIdRef = useRef(0);
+  const mountedRef = useRef(true);
+  const copyContextRef = useRef({ safeUrl: '', title: '' });
   const normalizedUrl = useMemo(() => url.trim(), [url]);
   const usesPrivateQr = useMemo(
     () => allowPrivate && isPrivateQrPayloadForThirdPartyQr(normalizedUrl),
@@ -68,6 +83,26 @@ export const ShareQrPanel: React.FC<ShareQrPanelProps> = ({
       return 'Private guest link';
     }
   }, [safeUrl, usesPrivateQr]);
+  const copiedNoticeLabel = useMemo(
+    () => copiedLabel ?? deriveCopyOutcomeLabel(copyLabel, 'Copied'),
+    [copiedLabel, copyLabel],
+  );
+  const downloadedNoticeLabel = useMemo(
+    () => downloadedLabel ?? deriveCopyOutcomeLabel(copyLabel, 'Downloaded'),
+    [downloadedLabel, copyLabel],
+  );
+  copyContextRef.current = { safeUrl, title };
+  useEffect(() => () => {
+    mountedRef.current = false;
+    copyRequestIdRef.current += 1;
+    if (copyStatusTimeoutRef.current) window.clearTimeout(copyStatusTimeoutRef.current);
+  }, []);
+  useEffect(() => {
+    copyRequestIdRef.current += 1;
+    setCopying(false);
+    setCopyStatus('idle');
+    if (copyStatusTimeoutRef.current) window.clearTimeout(copyStatusTimeoutRef.current);
+  }, [safeUrl]);
   const privateCardHtml = useMemo(() => {
     if (!usesPrivateQr || !qrUrl) return '';
     const titleText = escapeHtml(title);
@@ -101,13 +136,31 @@ export const ShareQrPanel: React.FC<ShareQrPanelProps> = ({
   }, [description, qrUrl, title, usesPrivateQr, visibleUrl]);
 
   const copyUrl = async () => {
+    if (copying) return;
+    const requestId = ++copyRequestIdRef.current;
+    const requestSafeUrl = safeUrl;
+    const isCurrentCopyRequest = () => (
+      mountedRef.current &&
+      requestId === copyRequestIdRef.current &&
+      requestSafeUrl === copyContextRef.current.safeUrl
+    );
     try {
-      const result = await copyTextOrDownload(safeUrl, `${title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'dayof'}-link.txt`);
-      setCopied(true);
+      setCopying(true);
+      setCopyStatus('idle');
+      const result = await copyTextOrDownload(requestSafeUrl, `${title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'dayof'}-link.txt`);
+      if (!isCurrentCopyRequest()) return;
+      setCopyStatus(result === 'copied' ? 'copied' : 'downloaded');
       setCopyFallback(result === 'downloaded');
-      setTimeout(() => setCopied(false), 1500);
+      if (copyStatusTimeoutRef.current) window.clearTimeout(copyStatusTimeoutRef.current);
+      copyStatusTimeoutRef.current = window.setTimeout(() => setCopyStatus('idle'), 1500);
     } catch {
+      if (!isCurrentCopyRequest()) return;
       setCopyFallback(true);
+      setCopyStatus('error');
+      if (copyStatusTimeoutRef.current) window.clearTimeout(copyStatusTimeoutRef.current);
+      copyStatusTimeoutRef.current = window.setTimeout(() => setCopyStatus('idle'), 1800);
+    } finally {
+      if (isCurrentCopyRequest()) setCopying(false);
     }
   };
 
@@ -120,10 +173,10 @@ export const ShareQrPanel: React.FC<ShareQrPanelProps> = ({
   if (!safeUrl) return null;
 
   return (
-    <div className={`rounded-lg border border-border-subtle bg-white p-4 ${className}`}>
+    <div className={`rounded-xl border border-border-subtle bg-white p-4 ${className}`}>
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
-        <div className="flex h-28 w-28 shrink-0 items-center justify-center rounded-lg border border-border-subtle bg-surface-subtle p-2">
-          <img src={qrUrl} alt={`${title} QR code`} className="h-full w-full rounded-lg" loading="lazy" />
+        <div className="flex h-28 w-28 shrink-0 items-center justify-center rounded-xl border border-border-subtle bg-surface-subtle p-2">
+          <img src={qrUrl} alt={`${title} QR code`} className="h-full w-full rounded-xl" loading="lazy" />
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
@@ -131,22 +184,35 @@ export const ShareQrPanel: React.FC<ShareQrPanelProps> = ({
             <h3 className="text-sm font-semibold text-text-primary">{title}</h3>
           </div>
           {description && <p className="mt-1 text-xs text-text-secondary">{description}</p>}
-          <p className="mt-2 truncate rounded-lg border border-border-subtle bg-surface-subtle px-2 py-1.5 text-xs text-text-secondary">
+          <p className="mt-2 truncate rounded-xl border border-border-subtle bg-surface-subtle px-2 py-1.5 text-xs text-text-secondary">
             {visibleUrl}
           </p>
           {copyFallback && !usesPrivateQr && (
             <input
               aria-label={`${title} share link`}
-              className="mt-2 w-full rounded-lg border border-border bg-white px-2 py-1.5 text-xs text-text-primary"
+              className="mt-2 w-full rounded-xl border border-border bg-white px-2 py-1.5 text-xs text-text-primary"
               readOnly
               value={safeUrl}
               onFocus={(event) => event.currentTarget.select()}
             />
           )}
+          {copyStatus === 'error' && (
+            <p role="alert" className="mt-2 text-xs text-error">
+              Couldn’t copy that link right now.
+            </p>
+          )}
           <div className="mt-3 flex flex-wrap gap-2">
-            <Button type="button" size="sm" variant="outline" onClick={copyUrl} disabled={disabled}>
+            <Button type="button" size="sm" variant="outline" onClick={() => { void copyUrl(); }} disabled={disabled || copying}>
               <Copy className="mr-1 h-3.5 w-3.5" />
-              {copied ? copiedLabel : copyLabel}
+              {copying
+                ? 'Copying...'
+                : copyStatus === 'copied'
+                  ? copiedNoticeLabel
+                  : copyStatus === 'downloaded'
+                    ? downloadedNoticeLabel
+                    : copyStatus === 'error'
+                      ? `Retry ${copyLabel.toLowerCase()}`
+                      : copyLabel}
             </Button>
             <Button type="button" size="sm" variant="outline" onClick={() => window.open(qrUrl, '_blank', 'noopener,noreferrer')} disabled={disabled}>
               <ExternalLink className="mr-1 h-3.5 w-3.5" />
@@ -159,7 +225,7 @@ export const ShareQrPanel: React.FC<ShareQrPanelProps> = ({
               rel="noopener noreferrer"
               aria-disabled={disabled}
               onClick={disabled ? (event) => event.preventDefault() : undefined}
-              className={`inline-flex items-center justify-center rounded-lg border border-border bg-white px-3 py-1.5 text-sm font-medium text-text-primary transition-colors hover:bg-surface-subtle ${disabled ? 'pointer-events-none opacity-60' : ''}`}
+              className={`inline-flex items-center justify-center rounded-xl border border-border bg-white px-3 py-1.5 text-sm font-medium text-text-primary transition-colors hover:bg-surface-subtle ${disabled ? 'pointer-events-none opacity-60' : ''}`}
             >
               {downloadLabel}
             </a>

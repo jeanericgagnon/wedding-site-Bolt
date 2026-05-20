@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { copyTextOrDownload } from '../../../lib/copyText';
 import { ageExceedsMs, isRegistryItemDue } from '../registryItemTime';
@@ -12,6 +12,7 @@ import { buildDemoRegistryRepairPatch } from './registryDemoRepair';
 
 const WEEKLY_REFRESH_MS = 1000 * 60 * 60 * 24 * 7;
 const getBackoffMs = (failCount: number) => Math.min(WEEKLY_REFRESH_MS * 4, Math.max(6 * 60 * 60 * 1000, (2 ** Math.min(5, failCount)) * 60 * 60 * 1000));
+type CopyActionResult = 'copied' | 'downloaded';
 
 interface UseRegistryMaintenanceActionsArgs {
   duplicateGroups: RegistryDuplicateGroup[];
@@ -57,6 +58,26 @@ export function useRegistryMaintenanceActions(args: UseRegistryMaintenanceAction
   const [imageRefreshBusy, setImageRefreshBusy] = useState(false);
   const [mergingDuplicateGroupId, setMergingDuplicateGroupId] = useState<string | null>(null);
   const [repairingBadImports, setRepairingBadImports] = useState(false);
+  const duplicateReviewCopyRequestIdRef = useRef(0);
+  const mountedRef = useRef(true);
+  const duplicateReviewContextKey = useMemo(() => JSON.stringify(duplicateGroups.map((group) => [
+    group.id,
+    group.primaryItem.id,
+    group.primaryItem.item_name,
+    group.items.map((item) => [item.id, item.item_name]),
+    group.signals.map((signal) => [signal.kind, signal.label, signal.value]),
+  ])), [duplicateGroups]);
+  const duplicateReviewContextKeyRef = useRef(duplicateReviewContextKey);
+  duplicateReviewContextKeyRef.current = duplicateReviewContextKey;
+
+  useEffect(() => () => {
+    mountedRef.current = false;
+    duplicateReviewCopyRequestIdRef.current += 1;
+  }, []);
+
+  useEffect(() => {
+    duplicateReviewCopyRequestIdRef.current += 1;
+  }, [duplicateReviewContextKey]);
 
   async function handleRefetchMetadata(item: RegistryItem, silent = false, replaceExisting = false) {
     const url = getRegistryRefreshSourceUrl(item);
@@ -146,7 +167,15 @@ export function useRegistryMaintenanceActions(args: UseRegistryMaintenanceAction
     toast(`Refreshed photos for ${ok}/${candidates.length} gift${candidates.length === 1 ? '' : 's'}.`, ok > 0 ? 'success' : 'error');
   }
 
-  async function handleCopyDuplicateReviewList() {
+  async function handleCopyDuplicateReviewList(): Promise<CopyActionResult | null> {
+    const requestId = duplicateReviewCopyRequestIdRef.current + 1;
+    duplicateReviewCopyRequestIdRef.current = requestId;
+    const requestContextKey = duplicateReviewContextKeyRef.current;
+    const isCurrentDuplicateReviewCopy = () => (
+      mountedRef.current &&
+      requestId === duplicateReviewCopyRequestIdRef.current &&
+      requestContextKey === duplicateReviewContextKeyRef.current
+    );
     const lines = duplicateGroups.flatMap((group, index) => [
       `Group ${index + 1}: ${group.items.map((item) => getOwnerRegistryDisplayTitle(item.item_name)).join(' / ')}`,
       `Why it matches: ${group.signals.map((signal) => signal.label).join(', ')}`,
@@ -154,14 +183,22 @@ export function useRegistryMaintenanceActions(args: UseRegistryMaintenanceAction
     ]);
     if (lines.length === 0) {
       toast('No duplicate groups to review.', 'error');
-      return;
+      return null;
     }
     const payload = lines.join('\n');
-    const result = await copyTextOrDownload(payload, 'dayof-registry-duplicate-review.txt');
-    if (result === 'copied') {
-      toast('Copied duplicate review list');
-    } else {
-      toast('Clipboard was blocked, so the duplicate review list downloaded.');
+    try {
+      const result = await copyTextOrDownload(payload, 'dayof-registry-duplicate-review.txt');
+      if (!isCurrentDuplicateReviewCopy()) return null;
+      if (result === 'copied') {
+        toast('Copied duplicate review list');
+      } else {
+        toast('Clipboard was blocked, so the duplicate review list downloaded.');
+      }
+      return result;
+    } catch {
+      if (!isCurrentDuplicateReviewCopy()) return null;
+      toast('Couldn’t copy the duplicate review list right now.', 'error');
+      return null;
     }
   }
 

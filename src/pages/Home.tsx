@@ -187,13 +187,13 @@ export const Home: React.FC = () => {
                   <button
                     onClick={handleSignUp}
                     aria-label={user ? 'Continue your wedding site' : 'Start your wedding site draft'}
-                    className="inline-flex min-h-[54px] items-center justify-center rounded-md bg-white px-7 py-3.5 text-base font-semibold text-ink transition hover:bg-paper"
+                    className="inline-flex min-h-[54px] items-center justify-center rounded-xl bg-white px-7 py-3.5 text-base font-semibold text-ink transition hover:bg-paper"
                   >
                     {user ? 'Continue your site' : 'Start your draft'}
                   </button>
                   <Link
                     to="/templates"
-                    className="inline-flex min-h-[54px] items-center justify-center gap-2 rounded-md border border-white/35 bg-white/10 px-7 py-3.5 text-base font-semibold text-white transition hover:bg-white/18"
+                    className="inline-flex min-h-[54px] items-center justify-center gap-2 rounded-xl border border-white/35 bg-white/10 px-7 py-3.5 text-base font-semibold text-white transition hover:bg-white/18"
                   >
                     View templates
                     <ArrowRight className="h-4 w-4" />
@@ -201,7 +201,7 @@ export const Home: React.FC = () => {
                   <button
                     onClick={handleDemoLogin}
                     disabled={demoLoading}
-                    className="inline-flex min-h-[54px] items-center justify-center rounded-md border border-white/25 bg-[#2d2d2d]/35 px-7 py-3.5 text-base font-semibold text-white transition hover:bg-[#2d2d2d]/55 disabled:cursor-wait disabled:opacity-70"
+                    className="inline-flex min-h-[54px] items-center justify-center rounded-xl border border-white/25 bg-[#2d2d2d]/35 px-7 py-3.5 text-base font-semibold text-white transition hover:bg-[#2d2d2d]/55 disabled:cursor-wait disabled:opacity-70"
                   >
                     {demoLoading ? 'Opening demo...' : 'View demo'}
                   </button>
@@ -259,7 +259,7 @@ export const Home: React.FC = () => {
             <div className="mt-9 grid gap-5 lg:grid-cols-3">
               {operatingSystemRows.map((item, index) => (
                 <Reveal key={item.title} delay={0.08 * index}>
-                  <article className="overflow-hidden rounded-lg border border-border-subtle bg-white shadow-sm">
+                  <article className="overflow-hidden rounded-xl border border-border-subtle bg-white shadow-sm">
                     <img src={item.image} alt={item.imageAlt} className="aspect-[4/3] w-full object-cover" />
                     <div className="p-5">
                       <h3 className="text-xl font-semibold text-ink">{item.title}</h3>
@@ -300,9 +300,9 @@ export const Home: React.FC = () => {
                   const Icon = feature.icon;
                   return (
                     <Reveal key={feature.title} delay={0.03 * index}>
-                      <article className="rounded-lg border border-border-subtle bg-paper p-5">
+                      <article className="rounded-xl border border-border-subtle bg-paper p-5">
                         <div className="flex items-center gap-3">
-                          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-white text-brand">
+                          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white text-brand">
                             <Icon className="h-4 w-4" />
                           </div>
                           <h3 className="text-base font-semibold text-ink">{feature.title}</h3>
@@ -349,8 +349,8 @@ export const Home: React.FC = () => {
               <div className="mt-7 grid gap-3">
                 {guestSteps.map(([title, body], index) => (
                   <Reveal key={title} delay={0.05 * index}>
-                    <div className="grid gap-3 rounded-lg border border-border-subtle bg-white p-4 sm:grid-cols-[44px_1fr]">
-                      <div className="flex h-11 w-11 items-center justify-center rounded-md bg-[#e8f0e4] text-sm font-semibold text-brand">
+                    <div className="grid gap-3 rounded-xl border border-border-subtle bg-white p-4 sm:grid-cols-[44px_1fr]">
+                      <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#e8f0e4] text-sm font-semibold text-brand">
                         {index + 1}
                       </div>
                       <div>
@@ -366,7 +366,7 @@ export const Home: React.FC = () => {
               <img
                 src={asset('wedding-detail-3.png')}
                 alt="Guest-facing wedding detail preview"
-                className="aspect-[4/5] w-full rounded-lg border border-border-subtle object-cover shadow-sm"
+                className="aspect-[4/5] w-full rounded-xl border border-border-subtle object-cover shadow-sm"
               />
             </Reveal>
           </div>
@@ -384,7 +384,7 @@ export const Home: React.FC = () => {
                 </div>
               </Reveal>
               <Reveal delay={0.08}>
-                <Link to="/templates" className="inline-flex min-h-[48px] items-center justify-center gap-2 rounded-md border border-brand/25 px-5 py-3 text-sm font-semibold text-brand transition hover:bg-brand/5">
+                <Link to="/templates" className="inline-flex min-h-[48px] items-center justify-center gap-2 rounded-xl border border-brand/25 px-5 py-3 text-sm font-semibold text-brand transition hover:bg-brand/5">
                   View templates
                   <ArrowRight className="h-4 w-4" />
                 </Link>
@@ -394,7 +394,7 @@ export const Home: React.FC = () => {
             <div className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
               {templateCards.map((card, index) => (
                 <Reveal key={card.name} delay={0.05 * index}>
-                  <Link to="/templates" className="group block overflow-hidden rounded-lg border border-border-subtle bg-paper">
+                  <Link to="/templates" className="group block overflow-hidden rounded-xl border border-border-subtle bg-paper">
                     <img src={card.image} alt={`${card.name} wedding website preview`} className="aspect-[4/5] w-full object-cover transition duration-300 group-hover:scale-[1.02]" />
                     <div className="flex items-center justify-between p-4">
                       <span className="text-sm font-semibold text-ink">{card.name}</span>
@@ -423,12 +423,12 @@ export const Home: React.FC = () => {
             <Reveal delay={0.1}>
               <div className="grid gap-3 sm:grid-cols-2">
                 {trustPoints.map((point) => (
-                  <div key={point} className="flex gap-3 rounded-lg border border-border-subtle bg-white p-4">
+                  <div key={point} className="flex gap-3 rounded-xl border border-border-subtle bg-white p-4">
                     <Shield className="mt-0.5 h-4 w-4 shrink-0 text-[#4D7FA3]" />
                     <p className="text-sm leading-relaxed text-ink/72">{point}</p>
                   </div>
                 ))}
-                <div className="rounded-lg border border-[#C89F56]/35 bg-[#fff8ea] p-4 sm:col-span-2">
+                <div className="rounded-xl border border-[#C89F56]/35 bg-[#fff8ea] p-4 sm:col-span-2">
                   <p className="text-sm leading-relaxed text-ink/76">
                     {SITE_TRUST_COPY.guestAccessTruth}
                   </p>
@@ -452,7 +452,7 @@ export const Home: React.FC = () => {
               </div>
             </Reveal>
             <Reveal delay={0.1}>
-              <div className="rounded-lg border border-border-subtle bg-paper p-6">
+              <div className="rounded-xl border border-border-subtle bg-paper p-6">
                 <div className="flex items-baseline gap-2">
                   <span className="text-5xl font-semibold text-ink">$49</span>
                   <span className="text-sm text-ink/64">for two years</span>
@@ -469,13 +469,13 @@ export const Home: React.FC = () => {
                   <button
                     onClick={handleSignUp}
                     aria-label={user ? 'Continue your wedding site' : 'Start your wedding site draft'}
-                    className="inline-flex min-h-[52px] items-center justify-center rounded-md bg-brand px-6 py-3 text-sm font-semibold text-white transition hover:bg-brand/90"
+                    className="inline-flex min-h-[52px] items-center justify-center rounded-xl bg-brand px-6 py-3 text-sm font-semibold text-white transition hover:bg-brand/90"
                   >
                     {user ? 'Continue your site' : 'Start your draft'}
                   </button>
                   <Link
                     to="/product"
-                    className="inline-flex min-h-[52px] items-center justify-center rounded-md border border-border bg-white px-6 py-3 text-sm font-semibold text-ink transition hover:bg-paper"
+                    className="inline-flex min-h-[52px] items-center justify-center rounded-xl border border-border bg-white px-6 py-3 text-sm font-semibold text-ink transition hover:bg-paper"
                   >
                     Product tour
                   </Link>
@@ -489,31 +489,31 @@ export const Home: React.FC = () => {
           <section className="border-t border-border-subtle bg-paper py-9 md:py-12">
             <div className="container-custom">
               <Reveal>
-                <div className="rounded-lg border border-brand/15 bg-white p-6">
+                <div className="rounded-xl border border-brand/15 bg-white p-6">
                   <p className="text-sm font-medium text-brand">Already started?</p>
                   <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
                     <Link
                       to="/dashboard/builder"
                       onClick={() => navigate('/dashboard/builder')}
-                      className="inline-flex min-h-[48px] items-center justify-center rounded-md border border-border px-5 py-3 text-sm font-semibold text-ink"
+                      className="inline-flex min-h-[48px] items-center justify-center rounded-xl border border-border px-5 py-3 text-sm font-semibold text-ink"
                     >
                       Edit your site
                     </Link>
                     <Link
                       to="/dashboard/planning"
-                      className="inline-flex min-h-[48px] items-center justify-center rounded-md border border-border px-5 py-3 text-sm font-semibold text-ink"
+                      className="inline-flex min-h-[48px] items-center justify-center rounded-xl border border-border px-5 py-3 text-sm font-semibold text-ink"
                     >
                       Continue planning
                     </Link>
                     <button
                       onClick={() => navigate('/dashboard/guests')}
-                      className="inline-flex min-h-[48px] items-center justify-center rounded-md border border-border px-5 py-3 text-sm font-semibold text-ink"
+                      className="inline-flex min-h-[48px] items-center justify-center rounded-xl border border-border px-5 py-3 text-sm font-semibold text-ink"
                     >
                       Manage guests
                     </button>
                     <button
                       onClick={() => navigate('/dashboard/messages')}
-                      className="inline-flex min-h-[48px] items-center justify-center rounded-md border border-border px-5 py-3 text-sm font-semibold text-ink"
+                      className="inline-flex min-h-[48px] items-center justify-center rounded-xl border border-border px-5 py-3 text-sm font-semibold text-ink"
                     >
                       Guest messages
                     </button>

@@ -6,26 +6,30 @@ const steps = [
   {
     id: 'invite-utils-tests',
     label: 'Invite acceptance utility tests',
-    command: 'npm test -- src/pages/acceptCollaboratorInviteUtils.test.ts',
+    command: 'node_modules/.bin/vitest run src/pages/acceptCollaboratorInviteUtils.test.ts --config scripts/collaborator-access-vitest.config.mjs --environment jsdom --pool=threads --maxWorkers=1 --no-file-parallelism --reporter=verbose',
     required: true,
+    timeoutMs: 180_000,
   },
   {
     id: 'planner-access-matrix-tests',
     label: 'Planner access role-matrix tests',
-    command: 'npm test -- src/lib/plannerAccess.test.ts',
+    command: 'node_modules/.bin/vitest run src/lib/plannerAccess.test.ts --config scripts/collaborator-access-vitest.config.mjs --environment jsdom --pool=threads --maxWorkers=1 --no-file-parallelism --reporter=verbose',
     required: true,
+    timeoutMs: 180_000,
   },
   {
     id: 'planning-financial-readonly-tests',
     label: 'Planning financial read-only surface tests',
-    command: 'npm test -- --run src/pages/dashboard/planning/BudgetTab.test.tsx src/pages/dashboard/planning/VendorsTab.test.tsx',
+    command: 'node_modules/.bin/vitest run src/pages/dashboard/planning/BudgetTab.test.tsx src/pages/dashboard/planning/VendorsTab.test.tsx --config scripts/collaborator-access-vitest.config.mjs --environment jsdom --pool=threads --maxWorkers=1 --no-file-parallelism --reporter=verbose',
     required: true,
+    timeoutMs: 180_000,
   },
   {
     id: 'build',
     label: 'Build integrity check',
     command: 'npm run build',
     required: true,
+    timeoutMs: 900_000,
   },
 ];
 
@@ -44,15 +48,18 @@ function extractJsonBlob(text) {
 
 function runStep(step) {
   const startedAt = new Date().toISOString();
+  console.error(`[collaborator-access-proof] starting ${step.id}: ${step.command}`);
   try {
     const stdout = execSync(step.command, {
       stdio: ['ignore', 'pipe', 'pipe'],
       encoding: 'utf8',
       shell: '/bin/zsh',
       env: process.env,
+      timeout: step.timeoutMs ?? 180_000,
       maxBuffer: 20 * 1024 * 1024,
     });
 
+    console.error(`[collaborator-access-proof] passed ${step.id}`);
     return {
       id: step.id,
       label: step.label,
@@ -67,6 +74,7 @@ function runStep(step) {
   } catch (error) {
     const stdout = typeof error?.stdout === 'string' ? error.stdout : Buffer.isBuffer(error?.stdout) ? error.stdout.toString('utf8') : '';
     const stderr = typeof error?.stderr === 'string' ? error.stderr : Buffer.isBuffer(error?.stderr) ? error.stderr.toString('utf8') : '';
+    console.error(`[collaborator-access-proof] failed ${step.id}`);
     return {
       id: step.id,
       label: step.label,
@@ -95,6 +103,9 @@ const output = {
     passed: results.filter((result) => result.ok).length,
     failed: results.filter((result) => !result.ok).length,
   },
+  contractSummary: failedRequired.length === 0
+    ? 'Collaborator access proof is green: this permission-boundary lane validates invite/role access truth as shipped surface evidence while still deferring full runtime role flows to dedicated live/operator checks.'
+    : 'Collaborator access proof is not green yet: required invite utility, role matrix, read-only surface, or build evidence is still failing.',
   automatedCoverage: [
     'Invite validation + redirect utility behavior',
     'Role-permission matrix boundaries for owner/planner/coordinator/viewer',

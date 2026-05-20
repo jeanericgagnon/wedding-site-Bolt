@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { sendWeddingInvitation } from '../../../lib/emailService';
 import type { ConfirmDialogProps } from '../../../components/ui/ConfirmDialog';
@@ -82,8 +82,19 @@ export function useGuestDashboardCampaignActions({
   weddingSiteId,
   weddingSiteInfo,
 }: UseGuestDashboardCampaignActionsInput) {
+  const guestCampaignContextVersionRef = useRef(0);
   const [bulkSending, setBulkSending] = useState(false);
   const [sendingInviteId, setSendingInviteId] = useState<string | null>(null);
+
+  useEffect(() => {
+    guestCampaignContextVersionRef.current += 1;
+    setBulkSending(false);
+    setSendingInviteId(null);
+  }, [isDemoMode, weddingSiteId]);
+
+  function isCurrentGuestCampaignContext(contextVersion: number) {
+    return contextVersion === guestCampaignContextVersionRef.current;
+  }
 
   const handleSendInvitation = async (guest: GuestWithRSVP) => {
     if (isGuestsReadOnly) {
@@ -103,24 +114,38 @@ export function useGuestDashboardCampaignActions({
       return;
     }
 
+    const contextVersion = guestCampaignContextVersionRef.current;
+    const targetWeddingSiteId = weddingSiteId;
     setSendingInviteId(guest.id);
     try {
-      await sendGuestInvitationEmail({ guest, weddingSiteId, weddingSiteInfo });
-      await markGuestInvitationSentForSite(weddingSiteId, guest.id, new Date().toISOString());
+      await sendGuestInvitationEmail({ guest, weddingSiteId: targetWeddingSiteId, weddingSiteInfo });
+      if (!isCurrentGuestCampaignContext(contextVersion)) return;
+      await markGuestInvitationSentForSite(targetWeddingSiteId, guest.id, new Date().toISOString());
+      if (!isCurrentGuestCampaignContext(contextVersion)) return;
       toast(`Invitation sent to ${getGuestName(guest)}`, 'success');
     } catch {
+      if (!isCurrentGuestCampaignContext(contextVersion)) return;
       toast('Couldn’t send invitation. Please try again.', 'error');
     } finally {
-      setSendingInviteId(null);
+      if (isCurrentGuestCampaignContext(contextVersion)) {
+        setSendingInviteId(null);
+      }
     }
   };
 
   const handleSendSelectedInvitations = async () => {
+    if (isGuestsReadOnly) {
+      toast('Your collaborator role cannot send selected guest reminders.', 'info');
+      return;
+    }
+
     if (!weddingSiteId) {
       toast('Missing wedding site context', 'error');
       return;
     }
 
+    const contextVersion = guestCampaignContextVersionRef.current;
+    const targetWeddingSiteId = weddingSiteId;
     const selectedRecipients = guests.filter((guest) => selectedGuestIds.has(guest.id) && !!guest.email && !!guest.invite_token);
     if (selectedRecipients.length === 0) {
       toast('No selected guests with email and RSVP link.', 'error');
@@ -132,6 +157,7 @@ export function useGuestDashboardCampaignActions({
       description: `This will email RSVP reminders to ${selectedRecipients.length} selected ${selectedRecipients.length === 1 ? 'guest' : 'guests'}. You can review and edit the message before sending.`,
       confirmLabel: 'Send reminders',
     });
+    if (!isCurrentGuestCampaignContext(contextVersion)) return;
     if (!confirmed) return;
 
     if (isDemoMode) {
@@ -146,17 +172,23 @@ export function useGuestDashboardCampaignActions({
       for (const guest of selectedRecipients) {
         if (!guest.email) continue;
         try {
-          await sendGuestInvitationEmail({ guest, weddingSiteId, weddingSiteInfo });
+          if (!isCurrentGuestCampaignContext(contextVersion)) return;
+          await sendGuestInvitationEmail({ guest, weddingSiteId: targetWeddingSiteId, weddingSiteInfo });
+          if (!isCurrentGuestCampaignContext(contextVersion)) return;
           const sentAtIso = new Date().toISOString();
-          await markGuestInvitationAndReminderSentForSite(weddingSiteId, guest.id, sentAtIso);
+          await markGuestInvitationAndReminderSentForSite(targetWeddingSiteId, guest.id, sentAtIso);
+          if (!isCurrentGuestCampaignContext(contextVersion)) return;
           successCount += 1;
         } catch {
+          if (!isCurrentGuestCampaignContext(contextVersion)) return;
           failedCount += 1;
         }
       }
 
       if (successCount > 0) {
+        if (!isCurrentGuestCampaignContext(contextVersion)) return;
         await fetchGuests();
+        if (!isCurrentGuestCampaignContext(contextVersion)) return;
       }
       toast(
         successCount > 0
@@ -169,7 +201,9 @@ export function useGuestDashboardCampaignActions({
         successCount > 0 ? (failedCount > 0 ? 'info' : 'success') : 'error',
       );
     } finally {
-      setBulkSending(false);
+      if (isCurrentGuestCampaignContext(contextVersion)) {
+        setBulkSending(false);
+      }
     }
   };
 
@@ -187,6 +221,8 @@ export function useGuestDashboardCampaignActions({
       return;
     }
 
+    const contextVersion = guestCampaignContextVersionRef.current;
+    const targetWeddingSiteId = weddingSiteId;
     const previewNames = reminderCandidates
       .slice(0, 3)
       .map((guest) => (guest.first_name || guest.last_name) ? `${guest.first_name ?? ''} ${guest.last_name ?? ''}`.trim() : guest.name);
@@ -199,6 +235,7 @@ export function useGuestDashboardCampaignActions({
       description: `Group: ${filterLabel}. Recipients: ${reminderCandidates.length}. Skip recent reminders: ${skipRecentlyInvited ? 'On' : 'Off'}.${noContactWarning ? ` ${noContactWarning.trim()}` : ''}${previewText ? ` ${previewText.trim()}` : ''}`,
       confirmLabel: 'Send campaign',
     });
+    if (!isCurrentGuestCampaignContext(contextVersion)) return;
     if (!confirmed) return;
 
     if (isDemoMode) {
@@ -215,16 +252,21 @@ export function useGuestDashboardCampaignActions({
       for (const guest of reminderCandidates) {
         if (!guest.email) continue;
         try {
-          await sendGuestInvitationEmail({ guest, weddingSiteId, weddingSiteInfo });
+          if (!isCurrentGuestCampaignContext(contextVersion)) return;
+          await sendGuestInvitationEmail({ guest, weddingSiteId: targetWeddingSiteId, weddingSiteInfo });
+          if (!isCurrentGuestCampaignContext(contextVersion)) return;
           const sentAtIso = new Date().toISOString();
-          await markGuestInvitationAndReminderSentForSite(weddingSiteId, guest.id, sentAtIso);
+          await markGuestInvitationAndReminderSentForSite(targetWeddingSiteId, guest.id, sentAtIso);
+          if (!isCurrentGuestCampaignContext(contextVersion)) return;
           successCount += 1;
         } catch {
+          if (!isCurrentGuestCampaignContext(contextVersion)) return;
           failedCount += 1;
         }
       }
 
       if (successCount > 0) {
+        if (!isCurrentGuestCampaignContext(contextVersion)) return;
         const sentAt = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         setCampaignLog((prev) => [{ id: Date.now(), segment: filterLabel, count: successCount, sentAt }, ...prev].slice(0, 6));
         toast(
@@ -234,11 +276,14 @@ export function useGuestDashboardCampaignActions({
           failedCount > 0 ? 'info' : 'success',
         );
         await fetchGuests();
+        if (!isCurrentGuestCampaignContext(contextVersion)) return;
       } else {
         toast(failedCount > 0 ? `${failedCount} reminder${failedCount === 1 ? '' : 's'} need review.` : 'No reminders were sent. Please try again.', 'error');
       }
     } finally {
-      setBulkSending(false);
+      if (isCurrentGuestCampaignContext(contextVersion)) {
+        setBulkSending(false);
+      }
     }
   };
 
@@ -256,11 +301,14 @@ export function useGuestDashboardCampaignActions({
       return;
     }
 
+    const contextVersion = guestCampaignContextVersionRef.current;
+    const targetWeddingSiteId = weddingSiteId;
     const confirmed = await requestConfirmation({
       title: 'Send due reminders now?',
       description: `This will email ${dueReminderCandidatesGlobal.length} ${dueReminderCandidatesGlobal.length === 1 ? 'guest' : 'guests'} who are ready for another reminder after ${reminderCadenceDays} days.`,
       confirmLabel: 'Send due reminders',
     });
+    if (!isCurrentGuestCampaignContext(contextVersion)) return;
     if (!confirmed) return;
 
     if (isDemoMode) {
@@ -277,15 +325,20 @@ export function useGuestDashboardCampaignActions({
       for (const guest of dueReminderCandidatesGlobal) {
         if (!guest.email) continue;
         try {
-          await sendGuestInvitationEmail({ guest, weddingSiteId, weddingSiteInfo });
-          await markGuestReminderSentForSite(weddingSiteId, guest.id, new Date().toISOString());
+          if (!isCurrentGuestCampaignContext(contextVersion)) return;
+          await sendGuestInvitationEmail({ guest, weddingSiteId: targetWeddingSiteId, weddingSiteInfo });
+          if (!isCurrentGuestCampaignContext(contextVersion)) return;
+          await markGuestReminderSentForSite(targetWeddingSiteId, guest.id, new Date().toISOString());
+          if (!isCurrentGuestCampaignContext(contextVersion)) return;
           successCount += 1;
         } catch {
+          if (!isCurrentGuestCampaignContext(contextVersion)) return;
           failedCount += 1;
         }
       }
 
       if (successCount > 0) {
+        if (!isCurrentGuestCampaignContext(contextVersion)) return;
         const sentAt = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         setCampaignLog((prev) => [{ id: Date.now(), segment: 'Due Reminder', count: successCount, sentAt }, ...prev].slice(0, 6));
         toast(
@@ -295,11 +348,14 @@ export function useGuestDashboardCampaignActions({
           failedCount > 0 ? 'info' : 'success',
         );
         await fetchGuests();
+        if (!isCurrentGuestCampaignContext(contextVersion)) return;
       } else {
         toast(failedCount > 0 ? `${failedCount} due reminder${failedCount === 1 ? '' : 's'} need review.` : 'No due reminders were sent. Please try again.', 'error');
       }
     } finally {
-      setBulkSending(false);
+      if (isCurrentGuestCampaignContext(contextVersion)) {
+        setBulkSending(false);
+      }
     }
   };
 

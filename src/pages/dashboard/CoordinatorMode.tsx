@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { useAuth } from '../../hooks/useAuth';
 import { useToast } from '../../components/ui/Toast';
@@ -187,10 +187,29 @@ export const DashboardCoordinatorMode: React.FC = () => {
     toast,
     userId: user?.id,
   });
+  const previousSiteIdRef = useRef<string | null>(null);
   const [handoffBusyEventId, setHandoffBusyEventId] = useState<string | null>(null);
   const [issueBusy, setIssueBusy] = useState(false);
+  const [snapshotCopyNotice, setSnapshotCopyNotice] = useState<'copied' | 'downloaded' | null>(null);
+  const [copyingShiftSnapshot, setCopyingShiftSnapshot] = useState(false);
+  const shiftSnapshotCopyRequestIdRef = useRef(0);
+  const coordinatorModeMountedRef = useRef(true);
   const [selectedIssueId, setSelectedIssueId] = useState<string | null>(null);
   const [issueDraft, setIssueDraft] = useState<CoordinatorIssueDraft>(createEmptyIssueDraft);
+  const resetCoordinatorPageInteractionState = () => {
+    shiftSnapshotCopyRequestIdRef.current += 1;
+    setHandoffBusyEventId(null);
+    setIssueBusy(false);
+    setSnapshotCopyNotice(null);
+    setCopyingShiftSnapshot(false);
+    setSelectedIssueId(null);
+    setIssueDraft(createEmptyIssueDraft());
+  };
+
+  useEffect(() => () => {
+    coordinatorModeMountedRef.current = false;
+    shiftSnapshotCopyRequestIdRef.current += 1;
+  }, []);
   const {
     canCheckIn,
     canEditQna,
@@ -226,7 +245,20 @@ export const DashboardCoordinatorMode: React.FC = () => {
     setSummaryFeedbackShownAt,
     summaryFeedback,
     summaryFeedbackShownAt,
-  } = useCoordinatorDashboardUiState();
+  } = useCoordinatorDashboardUiState({ siteId, isDemoMode });
+
+  useEffect(() => {
+    if (previousSiteIdRef.current && siteId && previousSiteIdRef.current !== siteId) {
+      resetCoordinatorPageInteractionState();
+    }
+    previousSiteIdRef.current = siteId;
+  }, [siteId]);
+
+  useEffect(() => {
+    if (!siteId && !isDemoMode) {
+      resetCoordinatorPageInteractionState();
+    }
+  }, [isDemoMode, siteId]);
 
   const {
     activeCheckInGuest,
@@ -419,6 +451,15 @@ export const DashboardCoordinatorMode: React.FC = () => {
     issueLogs,
     stats,
   }), [eventHandoffs, events, issueLogs, stats]);
+  const shiftSnapshotContextKey = `${shiftSnapshot.filename}\n${shiftSnapshot.text}`;
+  const shiftSnapshotContextKeyRef = useRef(shiftSnapshotContextKey);
+  shiftSnapshotContextKeyRef.current = shiftSnapshotContextKey;
+
+  useEffect(() => {
+    shiftSnapshotCopyRequestIdRef.current += 1;
+    setCopyingShiftSnapshot(false);
+    setSnapshotCopyNotice(null);
+  }, [shiftSnapshotContextKey]);
   const {
     clearCoordinatorTransientState,
     focusCoordinatorAlertLane,
@@ -567,8 +608,30 @@ export const DashboardCoordinatorMode: React.FC = () => {
   };
 
   const copyShiftSnapshot = async () => {
-    const result = await copyTextOrDownload(shiftSnapshot.text, shiftSnapshot.filename);
-    toast(result === 'copied' ? 'Shift snapshot copied.' : 'Shift snapshot downloaded.', 'success');
+    if (copyingShiftSnapshot) return;
+    const requestId = shiftSnapshotCopyRequestIdRef.current + 1;
+    shiftSnapshotCopyRequestIdRef.current = requestId;
+    const requestContextKey = shiftSnapshotContextKeyRef.current;
+    const isCurrentShiftSnapshotCopy = () => (
+      coordinatorModeMountedRef.current &&
+      requestId === shiftSnapshotCopyRequestIdRef.current &&
+      requestContextKey === shiftSnapshotContextKeyRef.current
+    );
+    setSnapshotCopyNotice(null);
+    setCopyingShiftSnapshot(true);
+    try {
+      const result = await copyTextOrDownload(shiftSnapshot.text, shiftSnapshot.filename);
+      if (!isCurrentShiftSnapshotCopy()) return;
+      setSnapshotCopyNotice(result);
+      toast(result === 'copied' ? 'Shift snapshot copied.' : 'Shift snapshot downloaded.', 'success');
+    } catch {
+      if (!isCurrentShiftSnapshotCopy()) return;
+      toast('Couldn’t copy the shift snapshot right now.', 'error');
+    } finally {
+      if (isCurrentShiftSnapshotCopy()) {
+        setCopyingShiftSnapshot(false);
+      }
+    }
   };
 
   const printShiftSnapshot = () => {
@@ -1067,7 +1130,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
           isFocused: panelFocus === 'check-in',
           nextArrivals,
           siteSlug,
-          onCheckInGuest: (guest) => { void toggleCheckIn(guest); },
+          onCheckInGuest: toggleCheckIn,
           onEscalateDoorReview: (guest) => {
             setActiveGuestId(guest.id);
             setPanelFocus('check-in');
@@ -1220,6 +1283,8 @@ export const DashboardCoordinatorMode: React.FC = () => {
     shiftSnapshotPanelProps: {
           onCopySnapshot: () => { void copyShiftSnapshot(); },
           onPrintSnapshot: printShiftSnapshot,
+          snapshotCopyNotice,
+          copyingSnapshot: copyingShiftSnapshot,
           snapshotDetail: `${issueLogs.filter((issue) => issue.status !== 'resolved').length} unresolved incidents and ${eventHandoffs.length} event handoffs are included in the export.`,
         },
     qnaPanelProps: {

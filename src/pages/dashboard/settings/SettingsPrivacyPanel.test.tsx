@@ -15,6 +15,7 @@ function PrivacyPanelHarness() {
       analyticsEnabled={analyticsEnabled}
       analyticsRetentionDays={analyticsRetentionDays}
       analyticsGuestNotice={analyticsGuestNotice}
+      canEditSettings
       defaultLanguage="en"
       guestAccessToken={null}
       hideFromSearch={false}
@@ -32,7 +33,7 @@ function PrivacyPanelHarness() {
       onToggleShowPrivacySettings={() => {}}
       onToggleShowSitePassword={() => {}}
       onVisibilityModeChange={() => {}}
-      privacyCopied={false}
+      privacyCopyNotice={null}
       privacyMode="public"
       showPrivacySettings
       showSitePassword={false}

@@ -31,6 +31,23 @@ function toIsoDateOrUndefined(value: string | undefined): string | undefined {
   return parsed.toISOString();
 }
 
+function normalizeReadinessSlug(value: unknown): string {
+  if (typeof value !== 'string') return '';
+  const decoded = (() => {
+    try {
+      return decodeURIComponent(value);
+    } catch {
+      return value;
+    }
+  })();
+  return decoded
+    .trim()
+    .replace(/^\/+|\/+$/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '');
+}
+
 export function isPublicWeddingDataSparse(data: WeddingDataV1): boolean {
   const hasCoupleNames = hasMeaningfulText(data.couple.partner1Name)
     || hasMeaningfulText(data.couple.partner2Name)
@@ -51,8 +68,15 @@ export function isPublicRenderModelGuestReady(renderModel: PublicSiteRenderModel
 
   if ((renderModel.pages ?? []).length === 0) return true;
 
-  const homePage = renderModel.pages.find((page) => page.meta?.isHome || page.id === 'home' || page.slug === 'home')
-    ?? renderModel.pages[0];
+  const visiblePages = renderModel.pages.filter((page) => page.meta?.isHidden !== true);
+  if (visiblePages.length === 0) return false;
+
+  const homePage = visiblePages.find((page) => (
+    page.meta?.isHome
+    || normalizeReadinessSlug(page.id) === 'home'
+    || normalizeReadinessSlug(page.slug) === 'home'
+  ))
+    ?? visiblePages[0];
 
   return Array.isArray(homePage?.sections)
     && homePage.sections.some((section) => hasGuestReadySection({

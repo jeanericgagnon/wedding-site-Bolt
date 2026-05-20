@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { z } from 'zod';
+import { useSearchParams } from 'react-router-dom';
 import { SectionDefinition, SectionComponentProps } from '../../types';
 import {
   fetchInteractiveSectionSync,
@@ -226,6 +227,10 @@ function usePersistentCounter(siteSlug: string | undefined, key: string) {
   const fullKey = storageKey(siteSlug, key);
   const [counts, setCounts] = useState<Record<string, number>>(() => readInteractiveCounts(fullKey));
 
+  useEffect(() => {
+    setCounts(readInteractiveCounts(fullKey));
+  }, [fullKey]);
+
   const incrementLocal = (optionId: string) => {
     setCounts((prev) => {
       const next = { ...prev, [optionId]: (prev[optionId] || 0) + 1 };
@@ -244,6 +249,7 @@ function usePersistentCounter(siteSlug: string | undefined, key: string) {
 }
 
 const InteractiveHub: React.FC<SectionComponentProps<ContactInteractiveHubData>> = ({ data, siteSlug }) => {
+  const [searchParams] = useSearchParams();
   const pollOptionsFromFields = data.pollOptions
     .split('\n')
     .map((label) => label.trim())
@@ -278,6 +284,18 @@ const InteractiveHub: React.FC<SectionComponentProps<ContactInteractiveHubData>>
   const [selectedQuiz, setSelectedQuiz] = useState<string | null>(null);
   const [suggestions, setSuggestions] = useState<string[]>(() => readInteractiveSuggestions(storageKey(siteSlug, 'suggestions')));
   const [suggestionInput, setSuggestionInput] = useState('');
+  const [suggestionSaving, setSuggestionSaving] = useState(false);
+  const [suggestionError, setSuggestionError] = useState('');
+
+  useEffect(() => {
+    setSelectedPoll(null);
+    setSelectedPollMulti([]);
+    setSelectedQuiz(null);
+    setSuggestions(readInteractiveSuggestions(storageKey(siteSlug, 'suggestions')));
+    setSuggestionInput('');
+    setSuggestionSaving(false);
+    setSuggestionError('');
+  }, [siteSlug, pollQuestion.id, quizQuestion.id, data.suggestionPrompt]);
 
   useEffect(() => {
     let mounted = true;
@@ -291,6 +309,7 @@ const InteractiveHub: React.FC<SectionComponentProps<ContactInteractiveHubData>>
           pollWidgetId: pollQuestion.id,
           quizWidgetId: quizQuestion.id,
           suggestionPrompt: data.suggestionPrompt,
+          searchParams,
         });
 
         if (!mounted) return;
@@ -311,7 +330,7 @@ const InteractiveHub: React.FC<SectionComponentProps<ContactInteractiveHubData>>
 
   const submitSuggestion = async () => {
     const value = suggestionInput.trim();
-    if (!value) return;
+    if (!value || suggestionSaving) return;
 
     const normalized = value.toLowerCase();
     if (suggestions.some((s) => s.trim().toLowerCase() === normalized)) return;
@@ -321,24 +340,34 @@ const InteractiveHub: React.FC<SectionComponentProps<ContactInteractiveHubData>>
     const lastSubmit = readInteractiveCooldown(cooldownKey);
     if (now - lastSubmit < 8000) return;
 
-    const next = normalizeSuggestions([value, ...suggestions]);
-    setSuggestions(next);
-    setSuggestionInput('');
-    writeInteractiveSuggestions(storageKey(siteSlug, 'suggestions'), next);
-    writeInteractiveCooldown(cooldownKey, now);
+    setSuggestionError('');
 
-    if (siteSlug) {
-      try {
-        await submitInteractiveSuggestion({
-          siteSlug,
-          promptKey: data.suggestionPrompt,
-          suggestionText: value,
-        });
-      } catch {
-        const reverted = suggestions;
-        setSuggestions(reverted);
-        writeInteractiveSuggestions(storageKey(siteSlug, 'suggestions'), reverted);
-      }
+    if (!siteSlug) {
+      const next = normalizeSuggestions([value, ...suggestions]);
+      setSuggestions(next);
+      setSuggestionInput('');
+      writeInteractiveSuggestions(storageKey(siteSlug, 'suggestions'), next);
+      writeInteractiveCooldown(cooldownKey, now);
+      return;
+    }
+
+    try {
+      setSuggestionSaving(true);
+      await submitInteractiveSuggestion({
+        siteSlug,
+        promptKey: data.suggestionPrompt,
+        suggestionText: value,
+        searchParams,
+      });
+      const next = normalizeSuggestions([value, ...suggestions]);
+      setSuggestions(next);
+      setSuggestionInput('');
+      writeInteractiveSuggestions(storageKey(siteSlug, 'suggestions'), next);
+      writeInteractiveCooldown(cooldownKey, now);
+    } catch {
+      setSuggestionError('Couldn’t send that idea right now. Please try again.');
+    } finally {
+      setSuggestionSaving(false);
     }
   };
 
@@ -391,11 +420,12 @@ const InteractiveHub: React.FC<SectionComponentProps<ContactInteractiveHubData>>
                             widgetKind: 'poll',
                             widgetId: pollQuestion.id,
                             optionId: opt.id,
+                            searchParams,
                           });
                         }
                       })();
                     }}
-                    className={`w-full rounded-lg border px-3 py-2 text-left text-sm ${isSelected ? 'border-primary bg-primary/10' : 'border-border hover:bg-surface-subtle'}`}
+                    className={`w-full rounded-xl border px-3 py-2 text-left text-sm ${isSelected ? 'border-primary bg-primary/10' : 'border-border hover:bg-surface-subtle'}`}
                   >
                     <div className="flex items-center justify-between gap-2">
                       <span className="inline-flex items-center gap-2">
@@ -426,19 +456,20 @@ const InteractiveHub: React.FC<SectionComponentProps<ContactInteractiveHubData>>
                     for (const optionId of selectedPollMulti) {
                       poll.incrementLocal(optionId);
                       if (siteSlug) {
-                        await submitInteractiveVote({
-                          siteSlug,
-                          widgetKind: 'poll',
-                          widgetId: pollQuestion.id,
-                          optionId,
-                        });
+                          await submitInteractiveVote({
+                            siteSlug,
+                            widgetKind: 'poll',
+                            widgetId: pollQuestion.id,
+                            optionId,
+                            searchParams,
+                          });
                       }
                     }
                     writeInteractiveCooldown(voteCooldownKey, now);
                     setSelectedPollMulti([]);
                   }}
                   disabled={selectedPollMulti.length < pollQuestion.minSelections}
-                  className="rounded-md bg-primary px-2.5 py-1 text-xs font-medium text-white disabled:opacity-50"
+                  className="rounded-xl bg-primary px-2.5 py-1 text-xs font-medium text-white disabled:opacity-50"
                 >
                   Submit choices
                 </button>
@@ -463,15 +494,16 @@ const InteractiveHub: React.FC<SectionComponentProps<ContactInteractiveHubData>>
                     quiz.incrementLocal(opt.id);
                     writeInteractiveCooldown(voteCooldownKey, now);
                     if (siteSlug) {
-                      await submitInteractiveVote({
+                        await submitInteractiveVote({
                           siteSlug,
                           widgetKind: 'quiz',
                           widgetId: quizQuestion.id,
                           optionId: opt.id,
-                      });
+                          searchParams,
+                        });
                     }
                   }}
-                  className={`w-full rounded-lg border px-3 py-2 text-left text-sm ${selectedQuiz === opt.id ? 'border-primary bg-primary/10' : 'border-border hover:bg-surface-subtle'}`}
+                  className={`w-full rounded-xl border px-3 py-2 text-left text-sm ${selectedQuiz === opt.id ? 'border-primary bg-primary/10' : 'border-border hover:bg-surface-subtle'}`}
                 >
                   {opt.label}
                 </button>
@@ -492,15 +524,22 @@ const InteractiveHub: React.FC<SectionComponentProps<ContactInteractiveHubData>>
                 value={suggestionInput}
                 onChange={(e) => setSuggestionInput(e.target.value)}
                 placeholder={data.suggestionPlaceholder}
-                className="flex-1 rounded-lg border border-border px-3 py-2 text-sm"
+                className="flex-1 rounded-xl border border-border px-3 py-2 text-sm"
               />
-              <button onClick={submitSuggestion} className="rounded-lg bg-primary text-white px-3 py-2 text-sm font-medium hover:opacity-90">Send</button>
+              <button
+                onClick={() => { void submitSuggestion(); }}
+                disabled={suggestionSaving}
+                className="rounded-xl bg-primary text-white px-3 py-2 text-sm font-medium hover:opacity-90 disabled:opacity-60"
+              >
+                {suggestionSaving ? 'Sending...' : 'Send'}
+              </button>
             </div>
+            {suggestionError && <p role="alert" className="mb-3 text-xs text-error">{suggestionError}</p>}
             <div className="space-y-1.5 max-h-48 overflow-auto">
               {suggestions.length === 0 ? (
                 <p className="text-xs text-text-tertiary">No suggestions yet.</p>
               ) : suggestions.map((s, idx) => (
-                <div key={`${s}-${idx}`} className="rounded-md bg-surface-subtle px-2.5 py-1.5 text-xs text-text-secondary">{s}</div>
+                <div key={`${s}-${idx}`} className="rounded-xl bg-surface-subtle px-2.5 py-1.5 text-xs text-text-secondary">{s}</div>
               ))}
             </div>
           </div>

@@ -128,7 +128,7 @@ test('owner can create, persist permissions for, and revoke a collaborator invit
       .locator('p')
       .filter({ hasText: inviteEmail })
       .first()
-      .locator('xpath=ancestor::div[contains(@class, "rounded-lg")][1]');
+      .locator('xpath=ancestor::div[.//button[contains(normalize-space(.), "Revoke")]][1]');
     await expect(inviteRow).toBeVisible();
     await inviteRow.getByRole('button', { name: 'Revoke' }).click();
     await expect(page.getByText('Collaborator invite revoked.')).toBeVisible();

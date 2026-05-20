@@ -163,7 +163,7 @@ const secureServiceRoleResult = serviceRoleKey
       ok: false,
       blocked: true,
       blockerType: 'follow_up_required',
-      message: 'Run npm run proof:v1:launch-closeout to complete secure service-role and queue-processing proof plus launch-board refresh.',
+      message: 'Run npm run proof:v1:launch-closeout to complete secure service-role and queue-processing proof plus the launch-board freshness check and raw/markdown board refresh.',
     }
   : {
       id: 'secure-service-role-storage-proof',

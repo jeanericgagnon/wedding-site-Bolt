@@ -4,6 +4,7 @@ import { Heart, Sparkles, Calendar, ArrowRight } from 'lucide-react';
 import { Button, Card } from '../../components/ui';
 import { clearAllOnboardingContinuationState } from '../../lib/onboardingContinuationCleanup';
 import { buildQuickStartEntryPath } from '../../lib/quickStartContinuation';
+import { useAuth } from '../../hooks/useAuth';
 
 interface LocationState {
   weddingDate?: string;
@@ -27,6 +28,8 @@ const normalizeCelebrationWeddingDate = (value: string): string | null => {
 export const Celebration: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { user } = useAuth();
+  const onboardingStorageScope = user?.id ?? null;
   const state = location.state as LocationState;
   const [showConfetti, setShowConfetti] = useState(true);
 
@@ -46,13 +49,13 @@ export const Celebration: React.FC = () => {
   const daysUntilWedding = state?.weddingDate ? calculateDaysUntil(state.weddingDate) : null;
 
   useEffect(() => {
-    clearAllOnboardingContinuationState();
+    clearAllOnboardingContinuationState(onboardingStorageScope);
     const timer = setTimeout(() => {
       setShowConfetti(false);
     }, 2500);
 
     return () => clearTimeout(timer);
-  }, []);
+  }, [onboardingStorageScope]);
 
   const handleQuickStart = () => {
     navigate(buildQuickStartEntryPath());
@@ -72,7 +75,7 @@ export const Celebration: React.FC = () => {
 
       <div className="w-full max-w-5xl relative z-10">
         <div className="text-center mb-8">
-          <div className="inline-flex h-20 w-20 items-center justify-center rounded-lg border border-border-subtle bg-surface-raised mb-6">
+          <div className="inline-flex h-20 w-20 items-center justify-center rounded-xl border border-border-subtle bg-surface-raised mb-6">
             <Heart className="w-10 h-10 text-primary" fill="currentColor" aria-hidden="true" />
           </div>
 
@@ -81,7 +84,7 @@ export const Celebration: React.FC = () => {
           </h1>
 
           {daysUntilWedding !== null && daysUntilWedding > 0 && (
-            <div className="inline-flex items-center gap-3 rounded-lg border border-border-subtle bg-surface px-5 py-3 mb-6 max-w-full">
+            <div className="inline-flex items-center gap-3 rounded-xl border border-border-subtle bg-surface px-5 py-3 mb-6 max-w-full">
               <Calendar className="w-7 h-7 text-primary" aria-hidden="true" />
               <div className="text-left">
                 <div className="text-3xl font-semibold text-text-primary">{daysUntilWedding}</div>
@@ -91,7 +94,7 @@ export const Celebration: React.FC = () => {
           )}
 
           {daysUntilWedding !== null && daysUntilWedding <= 0 && (
-            <div className="inline-flex items-center gap-3 rounded-lg border border-border-subtle bg-surface px-5 py-3 mb-6 max-w-full">
+            <div className="inline-flex items-center gap-3 rounded-xl border border-border-subtle bg-surface px-5 py-3 mb-6 max-w-full">
               <Sparkles className="w-7 h-7 text-primary" aria-hidden="true" />
               <div className="text-2xl font-semibold text-text-primary">
                 Your big day is here!
@@ -119,7 +122,7 @@ export const Celebration: React.FC = () => {
           >
             <div className="flex flex-col h-full">
               <div className="flex-grow">
-                <div className="w-12 h-12 bg-surface-subtle border border-border-subtle rounded-lg flex items-center justify-center mb-4">
+                <div className="w-12 h-12 bg-surface-subtle border border-border-subtle rounded-xl flex items-center justify-center mb-4">
                   <Sparkles className="w-6 h-6 text-primary" aria-hidden="true" />
                 </div>
                 <h2 className="text-xl font-bold text-text-primary mb-2">
@@ -159,7 +162,7 @@ export const Celebration: React.FC = () => {
           >
             <div className="flex flex-col h-full">
               <div className="flex-grow">
-                <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
+                <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center mb-4">
                   <Heart className="w-6 h-6 text-primary" aria-hidden="true" />
                 </div>
                 <h2 className="text-xl font-bold text-text-primary mb-2">
@@ -199,7 +202,7 @@ export const Celebration: React.FC = () => {
           >
             <div className="flex flex-col h-full">
               <div className="flex-grow">
-                <div className="w-12 h-12 bg-surface-subtle rounded-lg flex items-center justify-center mb-4">
+                <div className="w-12 h-12 bg-surface-subtle rounded-xl flex items-center justify-center mb-4">
                   <Calendar className="w-6 h-6 text-text-secondary" aria-hidden="true" />
                 </div>
                 <h2 className="text-xl font-bold text-text-primary mb-2">

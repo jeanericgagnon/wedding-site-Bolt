@@ -27,7 +27,7 @@ export function GuestPhotoRecentUploadsList({
           const safeTags = safePhotoAnalysisList(analysisByUploadId.get(upload.id)?.tags);
 
           return (
-            <li key={upload.id} className={`rounded border px-2 py-1 ${upload.is_hidden ? 'bg-neutral-100 border-neutral-200' : 'bg-white border-neutral-200'}`}>
+            <li key={upload.id} className={`rounded-2xl border px-2 py-1 ${upload.is_hidden ? 'bg-neutral-100 border-neutral-200' : 'bg-white border-neutral-200'}`}>
               <div className="flex items-center justify-between gap-2">
                 <div>
                   <span>
@@ -40,7 +40,7 @@ export function GuestPhotoRecentUploadsList({
                           key={`${upload.id}-${tag}`}
                           type="button"
                           onClick={() => onTagFilterChange(tag.trim().toLowerCase())}
-                          className="rounded-lg bg-neutral-100 px-2 py-0.5 text-[11px] text-neutral-600 hover:bg-neutral-200"
+                          className="rounded-xl bg-neutral-100 px-2 py-0.5 text-[11px] text-neutral-600 hover:bg-neutral-200"
                         >
                           #{tag}
                         </button>
@@ -49,44 +49,44 @@ export function GuestPhotoRecentUploadsList({
                   ) : null}
                   {(upload.recap_featured || upload.recap_story || upload.recap_hidden) && (
                     <div className="mt-1 flex flex-wrap gap-1">
-                      {upload.recap_featured && <span className="rounded-lg bg-surface-subtle px-2 py-0.5 text-[11px] text-text-secondary border border-border-subtle">Featured</span>}
-                      {upload.recap_story && <span className="rounded-lg bg-neutral-100 px-2 py-0.5 text-[11px] text-neutral-700">Story</span>}
-                      {upload.recap_hidden && <span className="rounded-lg bg-neutral-200 px-2 py-0.5 text-[11px] text-neutral-700">Recap hidden</span>}
+                      {upload.recap_featured && <span className="rounded-xl border border-border-subtle bg-surface-subtle px-2 py-0.5 text-[11px] text-text-secondary">Featured</span>}
+                      {upload.recap_story && <span className="rounded-xl bg-neutral-100 px-2 py-0.5 text-[11px] text-neutral-700">Story</span>}
+                      {upload.recap_hidden && <span className="rounded-xl bg-neutral-200 px-2 py-0.5 text-[11px] text-neutral-700">Recap hidden</span>}
                     </div>
                   )}
                 </div>
                 <div className="flex items-center gap-1">
                   <button
                     type="button"
-                    className={`inline-flex items-center rounded px-1.5 py-0.5 border ${upload.recap_featured ? 'bg-surface-subtle text-text-primary border-border-subtle' : 'bg-white text-neutral-600 border-neutral-300'}`}
+                    className={`inline-flex items-center rounded-xl px-1.5 py-0.5 border ${upload.recap_featured ? 'bg-surface-subtle text-text-primary border-border-subtle' : 'bg-white text-neutral-600 border-neutral-300'}`}
                     onClick={() => onModerateUpload(upload.id, { recap_featured: !upload.recap_featured })}
                   >
                     {upload.recap_featured ? 'Unfeature' : 'Feature'}
                   </button>
                   <button
                     type="button"
-                    className={`inline-flex items-center rounded px-1.5 py-0.5 border ${upload.recap_story ? 'bg-neutral-900 text-white border-neutral-900' : 'bg-white text-neutral-600 border-neutral-300'}`}
+                    className={`inline-flex items-center rounded-xl px-1.5 py-0.5 border ${upload.recap_story ? 'bg-neutral-900 text-white border-neutral-900' : 'bg-white text-neutral-600 border-neutral-300'}`}
                     onClick={() => onModerateUpload(upload.id, { recap_story: !upload.recap_story })}
                   >
                     {upload.recap_story ? 'Unstory' : 'Story'}
                   </button>
                   <button
                     type="button"
-                    className={`inline-flex items-center rounded px-1.5 py-0.5 border ${upload.recap_hidden ? 'bg-neutral-200 text-neutral-700 border-neutral-300' : 'bg-white text-neutral-600 border-neutral-300'}`}
+                    className={`inline-flex items-center rounded-xl px-1.5 py-0.5 border ${upload.recap_hidden ? 'bg-neutral-200 text-neutral-700 border-neutral-300' : 'bg-white text-neutral-600 border-neutral-300'}`}
                     onClick={() => onModerateUpload(upload.id, { recap_hidden: !upload.recap_hidden })}
                   >
                     {upload.recap_hidden ? 'Show recap' : 'Hide recap'}
                   </button>
                   <button
                     type="button"
-                    className={`inline-flex items-center rounded px-1.5 py-0.5 border ${upload.is_flagged ? 'bg-surface-subtle text-text-primary border-border-subtle' : 'bg-white text-neutral-600 border-neutral-300'}`}
+                    className={`inline-flex items-center rounded-xl px-1.5 py-0.5 border ${upload.is_flagged ? 'bg-surface-subtle text-text-primary border-border-subtle' : 'bg-white text-neutral-600 border-neutral-300'}`}
                     onClick={() => onModerateUpload(upload.id, { is_flagged: !upload.is_flagged })}
                   >
                     <Flag className="w-3 h-3 mr-1" /> {upload.is_flagged ? 'Unflag' : 'Flag'}
                   </button>
                   <button
                     type="button"
-                    className="inline-flex items-center rounded px-1.5 py-0.5 border bg-white text-neutral-600 border-neutral-300"
+                    className="inline-flex items-center rounded-xl px-1.5 py-0.5 border border-neutral-300 bg-white text-neutral-600"
                     onClick={() => onModerateUpload(upload.id, { is_hidden: !upload.is_hidden })}
                   >
                     {upload.is_hidden ? <Eye className="w-3 h-3 mr-1" /> : <EyeOff className="w-3 h-3 mr-1" />}

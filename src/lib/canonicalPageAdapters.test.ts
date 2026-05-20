@@ -39,6 +39,23 @@ describe('canonical page adapters', () => {
     });
   });
 
+  it('unwraps builder value layout page titles before canonical conversion', () => {
+    const canonical = layoutConfigToCanonicalPageDocument({
+      version: '1',
+      templateId: 'base',
+      pages: [
+        {
+          id: 'travel-page',
+          title: { value: 'Guest Travel', source: 'user-edited' } as unknown as string,
+          sections: [],
+        },
+      ],
+      meta: { createdAtISO: 'a', updatedAtISO: 'b' },
+    });
+
+    expect(canonical.pages[0].title).toBe('Guest Travel');
+  });
+
   it('maps builder-v2 documents into canonical page documents', () => {
     const canonical = builderV2ToCanonicalPageDocument({
       version: 'v2',

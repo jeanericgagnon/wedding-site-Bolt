@@ -2,12 +2,15 @@ import { spawnSync } from 'node:child_process';
 
 const suites = {
   gate: [
+    ['npm', ['run', 'proof:v1:board:freshness']],
     ['npm', ['run', 'typecheck', '--', '--pretty', 'false']],
     ['npm', ['run', 'lint', '--', '--quiet']],
     ['git', ['diff', '--check']],
     ['npm', ['run', 'build']],
   ],
   proof: [
+    ['npm', ['run', 'proof:v1:board:freshness']],
+    ['npm', ['run', 'proof:v1:board']],
     ['npm', ['run', 'proof:v1:board:md']],
     ['npm', ['run', 'proof:v1:guests-rsvp-ops']],
     ['npm', ['run', 'proof:v1:comms-center']],

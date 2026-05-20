@@ -22,6 +22,7 @@ describe('SettingsNotificationsPanel', () => {
 
     render(
       <SettingsNotificationsPanel
+        canEditSettings
         showNotificationSettings
         notifRsvp
         notifPhotos

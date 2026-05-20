@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { QUICK_START_STORAGE_KEY } from '../lib/quickStartStateTransfer';
+import { buildQuickStartDraftStorageKey, QUICK_START_STORAGE_KEY } from '../lib/quickStartStateTransfer';
 
 const navigateMock = vi.fn();
 const useLocationMock = vi.fn();
@@ -114,7 +114,7 @@ describe('Login quick start handoff', () => {
     render(<Login />);
 
     const link = screen.getByRole('link', { name: 'Get started for $49' });
-    const state = JSON.parse(link.getAttribute('data-nav-state') || '{}');
+    const state = JSON.parse((link as HTMLAnchorElement).dataset.navState || '{}');
 
     expect(state.quickStartDraft).toEqual(expect.objectContaining({
       currentIndex: 0,
@@ -131,8 +131,21 @@ describe('Login quick start handoff', () => {
     render(<Login />);
 
     const link = screen.getByRole('link', { name: 'Get started for $49' });
-    const state = JSON.parse(link.getAttribute('data-nav-state') || '{}');
+    const state = JSON.parse((link as HTMLAnchorElement).dataset.navState || '{}');
 
     expect(state).toEqual({ returnTo: '/onboarding' });
+  });
+
+  it('stores carried onboarding drafts in an invite-email scoped key when auth context provides an email', async () => {
+    useSearchParamsMock.mockReturnValue([new URLSearchParams('inviteEmail=alex@example.com&inviteToken=abc')]);
+
+    render(<Login />);
+
+    await waitFor(() => {
+      const stored = JSON.parse(window.localStorage.getItem(buildQuickStartDraftStorageKey('alex@example.com')) || '{}');
+      expect(stored.currentIndex).toBe(0);
+      expect(stored.viewState).toBe('question');
+    });
+    expect(window.localStorage.getItem(QUICK_START_STORAGE_KEY)).toBeNull();
   });
 });

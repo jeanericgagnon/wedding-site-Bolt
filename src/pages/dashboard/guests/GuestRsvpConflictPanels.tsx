@@ -5,6 +5,7 @@ import type { GuestWithRSVP, RsvpConflict, RsvpConflictStats } from './guestDash
 interface GuestRsvpConflictPanelsProps {
   conflictFilter: 'all' | 'error' | 'warning';
   guests: GuestWithRSVP[];
+  isGuestsReadOnly: boolean;
   resolvingConflictId: string | null;
   rsvpConflicts: RsvpConflict[];
   rsvpConflictStats: RsvpConflictStats;
@@ -42,6 +43,7 @@ function buildLocalRsvpConflicts(guests: GuestWithRSVP[]): string[] {
 export function GuestRsvpConflictPanels({
   conflictFilter,
   guests,
+  isGuestsReadOnly,
   resolvingConflictId,
   rsvpConflicts,
   rsvpConflictStats,
@@ -58,15 +60,18 @@ export function GuestRsvpConflictPanels({
   return (
     <>
       {localConflicts.length > 0 && (
-        <div className="p-4 bg-surface-subtle/60 border border-border-subtle rounded-lg space-y-2">
+        <div className="rounded-2xl border border-border-subtle bg-white p-4 shadow-sm space-y-3">
           <div className="flex items-center justify-between gap-2 mb-1">
             <div className="flex items-center gap-2 flex-wrap min-w-0">
               <AlertCircle className="w-4 h-4 text-text-tertiary flex-shrink-0" />
-              <p className="text-sm font-medium text-text-primary">{localConflicts.length} RSVP {localConflicts.length === 1 ? 'item' : 'items'} to review</p>
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary/75">Guest review</p>
+                <p className="mt-1 text-sm font-medium text-text-primary">{localConflicts.length} RSVP {localConflicts.length === 1 ? 'item' : 'items'} to review</p>
+              </div>
             </div>
             <button
               onClick={onReviewPending}
-              className="text-xs px-2 py-1 rounded-md border border-border-subtle text-text-secondary hover:bg-white"
+              className="rounded-xl border border-border-subtle px-2 py-1 text-xs text-text-secondary hover:bg-white"
             >
               Review pending
             </button>
@@ -80,11 +85,14 @@ export function GuestRsvpConflictPanels({
       )}
 
       {rsvpConflicts.length > 0 && (
-        <div className="p-4 bg-surface-subtle/60 border border-border-subtle rounded-lg space-y-3">
+        <div className="rounded-2xl border border-border-subtle bg-white p-4 shadow-sm space-y-3">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
             <div className="flex items-center gap-2">
               <AlertCircle className="w-4 h-4 text-text-tertiary" />
-              <p className="text-sm font-medium text-text-primary">{rsvpConflicts.length} RSVP {rsvpConflicts.length === 1 ? 'item' : 'items'} to review</p>
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary/75">Conflict queue</p>
+                <p className="mt-1 text-sm font-medium text-text-primary">{rsvpConflicts.length} RSVP {rsvpConflicts.length === 1 ? 'item' : 'items'} to review</p>
+              </div>
             </div>
             <div className="flex items-center gap-2">
               <Select
@@ -99,7 +107,7 @@ export function GuestRsvpConflictPanels({
               <Button
                 variant="outline"
                 size="sm"
-                disabled={visibleRsvpConflicts.length === 0 || resolvingConflictId === 'all'}
+                disabled={isGuestsReadOnly || visibleRsvpConflicts.length === 0 || resolvingConflictId === 'all'}
                 onClick={onResolveAllVisibleConflicts}
               >
                 {resolvingConflictId === 'all' ? 'Resolving…' : `Resolve ${visibleRsvpConflicts.length}`}
@@ -127,15 +135,15 @@ export function GuestRsvpConflictPanels({
           {showConflictDetails && (
             <>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                <div className="bg-white/80 border border-border-subtle rounded-md px-2.5 py-2">
+                <div className="rounded-xl border border-border-subtle bg-white/80 px-2.5 py-2">
                   <p className="text-[10px] text-text-tertiary">Open now</p>
                   <p className="text-sm font-semibold text-text-primary">{rsvpConflictStats.openNow}</p>
                 </div>
-                <div className="bg-white/80 border border-border-subtle rounded-md px-2.5 py-2">
+                <div className="rounded-xl border border-border-subtle bg-white/80 px-2.5 py-2">
                   <p className="text-[10px] text-text-tertiary">Opened (24h)</p>
                   <p className="text-sm font-semibold text-text-primary">{rsvpConflictStats.opened24h}</p>
                 </div>
-                <div className="bg-white/80 border border-border-subtle rounded-md px-2.5 py-2">
+                <div className="rounded-xl border border-border-subtle bg-white/80 px-2.5 py-2">
                   <p className="text-[10px] text-text-tertiary">Resolved (24h)</p>
                   <p className="text-sm font-semibold text-text-primary">{rsvpConflictStats.resolved24h}</p>
                 </div>
@@ -161,7 +169,7 @@ export function GuestRsvpConflictPanels({
                   <Button
                     variant="ghost"
                     size="sm"
-                    disabled={resolvingConflictId === conflict.id}
+                    disabled={isGuestsReadOnly || resolvingConflictId === conflict.id}
                     onClick={() => onResolveConflict(conflict.id)}
                   >
                     {resolvingConflictId === conflict.id ? 'Resolving…' : 'Resolve'}

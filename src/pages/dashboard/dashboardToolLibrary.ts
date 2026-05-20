@@ -36,6 +36,7 @@ export type DashboardToolId =
   | 'seating'
   | 'vendors'
   | 'collaborators'
+  | 'guest-details'
   | 'import-export'
   | 'name-change'
   | 'seating-lookup'
@@ -43,12 +44,14 @@ export type DashboardToolId =
   | 'qr-codes'
   | 'address-collection'
   | 'song-requests'
+  | 'travel-stay'
   | 'guest-questions'
   | 'guestbook-prompts'
   | 'vaults'
   | 'photo-recap'
   | 'video-uploads'
   | 'anniversary-capsules'
+  | 'thank-you-notes'
   | 'activity'
   | 'settings'
   | 'privacy-access'
@@ -79,14 +82,19 @@ export type DashboardToolGroup = {
 export const DASHBOARD_NAV_PIN_STORAGE_KEY = 'dayof.dashboard.navPins.v1';
 export const DASHBOARD_HOME_PIN_STORAGE_KEY = 'dayof.dashboard.homePins.v1';
 
+export function buildDashboardToolPinsStorageKey(key: string, storageScope?: string | null): string {
+  const scope = typeof storageScope === 'string' ? storageScope.trim() : '';
+  return scope ? `${key}::${scope}` : key;
+}
+
 export const DEFAULT_DASHBOARD_TOOLS: DashboardTool[] = [
-  { id: 'overview', name: 'Home', description: 'Everything guests need, gathered in one place.', path: '/dashboard/overview', actionLabel: 'Open Home', icon: Globe, primaryHome: 'Home' },
+  { id: 'overview', name: 'Home', description: 'Everything guests need, in one calm place.', path: '/dashboard/overview', actionLabel: 'Open Home', icon: Globe, primaryHome: 'Home' },
   { id: 'builder', name: 'Website', description: 'Manage what guests see.', path: '/dashboard/builder', actionLabel: 'Open Website', icon: Palette, primaryHome: 'Website' },
-  { id: 'guests', name: 'Guests', description: 'People, RSVPs, and details.', path: '/dashboard/guests', actionLabel: 'Open Guests', icon: Users, primaryHome: 'Guests' },
+  { id: 'guests', name: 'Guests', description: 'People, replies, and details.', path: '/dashboard/guests', actionLabel: 'Open Guests', icon: Users, primaryHome: 'Guests' },
   { id: 'registry', name: 'Registry', description: 'Gifts and funds, clearly shared.', path: '/dashboard/registry', actionLabel: 'Open Registry', icon: Gift, primaryHome: 'Registry' },
   { id: 'messages', name: 'Messages', description: 'Updates guests can actually use.', path: '/dashboard/messages', actionLabel: 'Open Messages', icon: Mail, primaryHome: 'Messages' },
-  { id: 'photos', name: 'Memories', description: 'Photos, notes, and moments.', path: '/dashboard/photos', actionLabel: 'Open Memories', icon: Archive, primaryHome: 'Memories' },
-  { id: 'tools', name: 'More Tools', description: 'Choose what stays close by and what stays tucked away.', path: '/dashboard/tools', actionLabel: 'Customize tools', icon: Settings, primaryHome: 'More Tools' },
+  { id: 'photos', name: 'Memories', description: 'Photos, notes, and moments from the celebration.', path: '/dashboard/photos', actionLabel: 'Open Memories', icon: Archive, primaryHome: 'Memories' },
+  { id: 'tools', name: 'More Tools', description: 'Everything else stays close, without taking over.', path: '/dashboard/tools', actionLabel: 'Customize tools', icon: Settings, primaryHome: 'More Tools' },
 ];
 
 export const DASHBOARD_TOOL_GROUPS: DashboardToolGroup[] = [
@@ -117,7 +125,10 @@ export const DASHBOARD_TOOL_GROUPS: DashboardToolGroup[] = [
     description: 'Private links, questions, song ideas, and guestbook prompts for smoother guest moments.',
     tools: [
       { id: 'address-collection', name: 'Address Collection', description: 'Collect mailing addresses and contact details with private guest links.', path: '/dashboard/guests?tool=address-collection', actionLabel: 'Collect addresses', icon: Mail, primaryHome: 'Guests', canPinToHome: true },
+      { id: 'guest-details', name: 'Guest Details', description: 'Open the guest workspace in list mode for names, contact details, notes, and household fixes.', path: '/dashboard/guests?tool=guest-details', actionLabel: 'Review guest details', icon: Users, primaryHome: 'Guests', canPinToHome: true },
+      { id: 'thank-you-notes', name: 'Thank-you Notes', description: 'See who still needs a thank-you and keep post-wedding follow-through in one place.', path: '/dashboard/guests?tool=thank-you-notes', actionLabel: 'Review thank-yous', icon: Bell, primaryHome: 'Guests', canPinToHome: true },
       { id: 'song-requests', name: 'Song Requests', description: 'Collect music ideas from guests and keep the list near planning.', path: '/dashboard/planning?tab=songs', actionLabel: 'Open song requests', icon: Music, primaryHome: 'More Tools', canPinToHome: true },
+      { id: 'travel-stay', name: 'Travel & Stay', description: 'Edit hotel notes, travel details, and guest logistics right where the website pulls them from.', path: '/dashboard/builder?tool=travel', actionLabel: 'Edit travel details', icon: Globe, primaryHome: 'Website', canPinToHome: true },
       { id: 'guest-questions', name: 'Guest Questions', description: 'Reusable RSVP and guest-detail prompts for the information you need.', path: '/dashboard/guests?tab=rsvp-settings', actionLabel: 'Review questions', icon: HelpCircle, primaryHome: 'Guests', canPinToHome: true },
       { id: 'guestbook-prompts', name: 'Guestbook Prompts', description: 'Invite notes, memories, and wishes into the guestbook experience.', path: '/dashboard/photos?tool=guestbook', actionLabel: 'Open guestbook', icon: Bell, primaryHome: 'Memories', canPinToHome: true },
     ],
@@ -153,19 +164,29 @@ export function getAllDashboardTools() {
   return [...DEFAULT_DASHBOARD_TOOLS, ...DASHBOARD_TOOL_GROUPS.flatMap((group) => group.tools)];
 }
 
-export function readStoredToolPins(key: string): DashboardToolId[] {
+export function readStoredToolPins(key: string, storageScope?: string | null): DashboardToolId[] {
   if (typeof window === 'undefined') return [];
   try {
-    const parsed = JSON.parse(window.localStorage.getItem(key) || '[]');
+    const storageKey = buildDashboardToolPinsStorageKey(key, storageScope);
+    const scopedRaw = window.localStorage.getItem(storageKey);
+    const legacyRaw = storageKey !== key ? window.localStorage.getItem(key) : null;
+    const raw = scopedRaw ?? legacyRaw ?? '[]';
+    const parsed = JSON.parse(raw);
     if (!Array.isArray(parsed)) return [];
-    return parsed.filter((id): id is DashboardToolId => typeof id === 'string' && getAllDashboardTools().some((tool) => tool.id === id));
+    const normalized = parsed.filter((id): id is DashboardToolId => typeof id === 'string' && getAllDashboardTools().some((tool) => tool.id === id));
+    if (storageKey !== key && normalized.length > 0 && !scopedRaw) {
+      window.localStorage.setItem(storageKey, JSON.stringify(Array.from(new Set(normalized))));
+      if (legacyRaw) window.localStorage.removeItem(key);
+    }
+    return normalized;
   } catch {
     return [];
   }
 }
 
-export function writeStoredToolPins(key: string, ids: DashboardToolId[]) {
+export function writeStoredToolPins(key: string, ids: DashboardToolId[], storageScope?: string | null) {
   if (typeof window === 'undefined') return;
-  window.localStorage.setItem(key, JSON.stringify(Array.from(new Set(ids))));
+  const storageKey = buildDashboardToolPinsStorageKey(key, storageScope);
+  window.localStorage.setItem(storageKey, JSON.stringify(Array.from(new Set(ids))));
   window.dispatchEvent(new CustomEvent('dayof:dashboard-tool-pins-changed'));
 }

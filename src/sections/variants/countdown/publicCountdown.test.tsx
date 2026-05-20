@@ -1,4 +1,4 @@
-import { render } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 
 import { countdownPhotoDefinition, defaultCountdownSimpleData } from './simple';
@@ -15,12 +15,12 @@ describe('public countdown variants', () => {
       />,
     );
 
-    expect(container.querySelector('img')).not.toBeInTheDocument();
-    expect(container.innerHTML).not.toContain('javascript:alert');
+    expect(screen.queryByRole('img')).not.toBeInTheDocument();
+    expect(container.querySelector('img[src^="javascript:"]')).toBeNull();
   });
 
   it('preserves same-origin public photo countdown image URLs', () => {
-    const { container } = render(
+    render(
       <countdownPhotoDefinition.Component
         data={{
           ...defaultCountdownSimpleData,
@@ -30,6 +30,6 @@ describe('public countdown variants', () => {
       />,
     );
 
-    expect(container.querySelector('img')?.getAttribute('src')).toBe('/preview-photos/header-anchor.jpg');
+    expect(screen.getByRole('img')).toHaveAttribute('src', '/preview-photos/header-anchor.jpg');
   });
 });

@@ -35,10 +35,18 @@ const isStaleEnvelope = (savedAtISO: unknown): boolean => {
   return !Number.isFinite(savedAt) || Date.now() - savedAt > VAULT_RELEASE_NOTICE_RETENTION_MS;
 };
 
+export const buildVaultReleaseNoticeStorageKey = (storageKey: string, storageScope?: string | null): string => {
+  const scope = typeof storageScope === 'string' ? storageScope.trim() : '';
+  return scope ? `${storageKey}::${scope}` : storageKey;
+};
+
 export const readVaultReleaseNoticeKeys = (storageKey: string): string[] => {
   if (typeof window === 'undefined') return [];
   try {
-    const raw = window.localStorage.getItem(storageKey);
+    const legacyKey = storageKey.includes('::') ? storageKey.split('::')[0] ?? storageKey : storageKey;
+    const raw = window.localStorage.getItem(storageKey) ?? (
+      storageKey !== legacyKey ? window.localStorage.getItem(legacyKey) : null
+    );
     if (!raw) return [];
     const parsed: unknown = JSON.parse(raw);
     if (Array.isArray(parsed)) {

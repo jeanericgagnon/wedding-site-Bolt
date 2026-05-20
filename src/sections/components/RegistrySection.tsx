@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { WeddingDataV1 } from '../../types/weddingData';
 import { SectionInstance } from '../../types/layoutConfig';
 import { ExternalLink, Gift, Package, CheckCircle2, Loader2, X, ShoppingBag } from 'lucide-react';
@@ -6,6 +6,7 @@ import { useSiteView } from '../../contexts/SiteViewContext';
 import { publicFetchRegistryItems, publicIncrementPurchase } from '../../pages/dashboard/registry/registryService';
 import type { RegistryItem } from '../../pages/dashboard/registry/registryTypes';
 import { sanitizeRegistryQuantityState } from '../../pages/dashboard/registry/registryTypes';
+import { copyTextOrDownload } from '../../lib/copyText';
 import { readBuilderValue } from '../../lib/weddingProfile';
 import { getSafePublicImageUrl, getSafePublicWebUrl } from '../publicLinks';
 
@@ -82,6 +83,16 @@ type RegistryPurchaseMemoryEnvelope = {
   ids: string[];
 };
 
+function buildRegistryPurchaseMemoryStorageKey(storageScope?: string | null): string {
+  const scope = typeof storageScope === 'string' ? storageScope.trim() : '';
+  return scope ? `${REGISTRY_PURCHASE_MEMORY_KEY}::${scope}` : REGISTRY_PURCHASE_MEMORY_KEY;
+}
+
+function buildRegistryPurchaseCookieKey(storageScope?: string | null): string {
+  const scope = typeof storageScope === 'string' ? storageScope.trim() : '';
+  return scope ? `${REGISTRY_PURCHASE_COOKIE}::${scope}` : REGISTRY_PURCHASE_COOKIE;
+}
+
 function normalizeRegistryPurchaseMemoryIds(value: unknown): string[] {
   if (!Array.isArray(value)) return [];
   const ids = new Set<string>();
@@ -126,25 +137,28 @@ function buildRegistryPurchaseMemoryPayload(ids: string[]): string {
   } satisfies RegistryPurchaseMemoryEnvelope);
 }
 
-function clearRegistryPurchaseCookie() {
+function clearRegistryPurchaseCookie(storageScope?: string | null) {
+  const cookieKey = buildRegistryPurchaseCookieKey(storageScope);
   try {
-    document.cookie = `${REGISTRY_PURCHASE_COOKIE}=; Max-Age=0; Path=/; SameSite=Lax`;
+    document.cookie = `${cookieKey}=; Max-Age=0; Path=/; SameSite=Lax`;
   } catch {
     // Non-critical continuity only.
   }
 }
 
-export function readRegistryPurchaseMemory(): string[] {
+export function readRegistryPurchaseMemory(storageScope?: string | null): string[] {
   if (typeof window === 'undefined') return [];
+  const storageKey = buildRegistryPurchaseMemoryStorageKey(storageScope);
+  const cookieKey = buildRegistryPurchaseCookieKey(storageScope);
   const ids = new Set<string>();
   let shouldPersist = false;
 
   try {
-    const raw = window.localStorage.getItem(REGISTRY_PURCHASE_MEMORY_KEY);
+    const raw = window.localStorage.getItem(storageKey);
     const parsed = parseRegistryPurchaseMemory(raw);
     parsed.ids.forEach((id) => ids.add(id));
     shouldPersist = shouldPersist || parsed.shouldPersist;
-    if (parsed.isStale) window.localStorage.removeItem(REGISTRY_PURCHASE_MEMORY_KEY);
+    if (parsed.isStale) window.localStorage.removeItem(storageKey);
   } catch {
     // Ignore corrupt client memory.
   }
@@ -153,12 +167,12 @@ export function readRegistryPurchaseMemory(): string[] {
     const cookie = document.cookie
       .split(';')
       .map((part) => part.trim())
-      .find((part) => part.startsWith(`${REGISTRY_PURCHASE_COOKIE}=`));
-    const raw = cookie ? decodeURIComponent(cookie.slice(REGISTRY_PURCHASE_COOKIE.length + 1)) : '';
+      .find((part) => part.startsWith(`${cookieKey}=`));
+    const raw = cookie ? decodeURIComponent(cookie.slice(cookieKey.length + 1)) : '';
     const parsed = parseRegistryPurchaseMemory(raw);
     parsed.ids.forEach((id) => ids.add(id));
     shouldPersist = shouldPersist || parsed.shouldPersist;
-    if (parsed.isStale) clearRegistryPurchaseCookie();
+    if (parsed.isStale) clearRegistryPurchaseCookie(storageScope);
   } catch {
     // Ignore corrupt cookie memory.
   }
@@ -167,12 +181,12 @@ export function readRegistryPurchaseMemory(): string[] {
   if (shouldPersist && normalized.length > 0) {
     const payload = buildRegistryPurchaseMemoryPayload(normalized);
     try {
-      window.localStorage.setItem(REGISTRY_PURCHASE_MEMORY_KEY, payload);
+      window.localStorage.setItem(storageKey, payload);
     } catch {
       // Non-critical continuity only.
     }
     try {
-      document.cookie = `${REGISTRY_PURCHASE_COOKIE}=${encodeURIComponent(payload)}; Max-Age=${REGISTRY_PURCHASE_COOKIE_MAX_AGE}; Path=/; SameSite=Lax`;
+      document.cookie = `${cookieKey}=${encodeURIComponent(payload)}; Max-Age=${REGISTRY_PURCHASE_COOKIE_MAX_AGE}; Path=/; SameSite=Lax`;
     } catch {
       // Non-critical continuity only.
     }
@@ -180,17 +194,19 @@ export function readRegistryPurchaseMemory(): string[] {
   return normalized;
 }
 
-export function rememberRegistryPurchase(itemId: string): string[] {
+export function rememberRegistryPurchase(itemId: string, storageScope?: string | null): string[] {
   if (typeof window === 'undefined' || !itemId) return [];
-  const next = normalizeRegistryPurchaseMemoryIds([...readRegistryPurchaseMemory(), itemId]);
+  const storageKey = buildRegistryPurchaseMemoryStorageKey(storageScope);
+  const cookieKey = buildRegistryPurchaseCookieKey(storageScope);
+  const next = normalizeRegistryPurchaseMemoryIds([...readRegistryPurchaseMemory(storageScope), itemId]);
   const payload = buildRegistryPurchaseMemoryPayload(next);
   try {
-    window.localStorage.setItem(REGISTRY_PURCHASE_MEMORY_KEY, payload);
+    window.localStorage.setItem(storageKey, payload);
   } catch {
     // Non-critical continuity only.
   }
   try {
-    document.cookie = `${REGISTRY_PURCHASE_COOKIE}=${encodeURIComponent(payload)}; Max-Age=${REGISTRY_PURCHASE_COOKIE_MAX_AGE}; Path=/; SameSite=Lax`;
+    document.cookie = `${cookieKey}=${encodeURIComponent(payload)}; Max-Age=${REGISTRY_PURCHASE_COOKIE_MAX_AGE}; Path=/; SameSite=Lax`;
   } catch {
     // Non-critical continuity only.
   }
@@ -324,12 +340,26 @@ interface PurchaseModalProps {
   item: RegistryItem;
   onClose: () => void;
   onConfirm: (name: string) => Promise<void>;
+  onNameChange?: () => void;
 }
 
-const PurchaseModal: React.FC<PurchaseModalProps> = ({ item, onClose, onConfirm }) => {
+const PurchaseModal: React.FC<PurchaseModalProps> = ({ item, onClose, onConfirm, onNameChange }) => {
   const [name, setName] = useState('');
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(false);
+  const closeTimerRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (closeTimerRef.current) window.clearTimeout(closeTimerRef.current);
+    closeTimerRef.current = null;
+    setName('');
+    setLoading(false);
+    setDone(false);
+  }, [item.id]);
+
+  useEffect(() => () => {
+    if (closeTimerRef.current) window.clearTimeout(closeTimerRef.current);
+  }, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -337,7 +367,8 @@ const PurchaseModal: React.FC<PurchaseModalProps> = ({ item, onClose, onConfirm 
     try {
       await onConfirm(name.trim());
       setDone(true);
-      setTimeout(onClose, 2000);
+      if (closeTimerRef.current) window.clearTimeout(closeTimerRef.current);
+      closeTimerRef.current = window.setTimeout(onClose, 2000);
     } finally {
       setLoading(false);
     }
@@ -364,7 +395,7 @@ const PurchaseModal: React.FC<PurchaseModalProps> = ({ item, onClose, onConfirm 
           <>
             <div className="flex items-center justify-between px-5 pt-5 pb-3">
               <h3 className="font-semibold text-text-primary">{dialogCopy.title}</h3>
-              <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-surface-subtle text-text-tertiary transition-colors">
+              <button onClick={onClose} className="p-1.5 rounded-xl hover:bg-surface-subtle text-text-tertiary transition-colors">
                 <X className="w-4 h-4" />
               </button>
             </div>
@@ -372,9 +403,9 @@ const PurchaseModal: React.FC<PurchaseModalProps> = ({ item, onClose, onConfirm 
             <div className="px-5 pb-3">
               <div className="flex items-center gap-3 p-3 bg-surface-subtle rounded-xl border border-border">
                 {item.image_url ? (
-                  <img src={item.image_url} alt={item.item_name} className="w-12 h-12 rounded-lg object-cover flex-shrink-0" />
+                  <img src={item.image_url} alt={item.item_name} className="w-12 h-12 rounded-xl object-cover flex-shrink-0" />
                 ) : (
-                  <div className="w-12 h-12 rounded-lg bg-surface flex items-center justify-center flex-shrink-0 border border-border">
+                  <div className="w-12 h-12 rounded-xl bg-surface flex items-center justify-center flex-shrink-0 border border-border">
                     <Package className="w-5 h-5 text-text-tertiary" />
                   </div>
                 )}
@@ -394,9 +425,12 @@ const PurchaseModal: React.FC<PurchaseModalProps> = ({ item, onClose, onConfirm 
                 <input
                   type="text"
                   value={name}
-                  onChange={e => setName(e.target.value)}
+                  onChange={e => {
+                    onNameChange?.();
+                    setName(e.target.value);
+                  }}
                   placeholder="e.g. Aunt Susan"
-                  className="w-full px-3 py-2.5 bg-surface-subtle border border-border rounded-lg text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                  className="w-full px-3 py-2.5 bg-surface-subtle border border-border rounded-xl text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                   autoFocus
                 />
               </div>
@@ -489,8 +523,13 @@ export function safePublicRegistryPurchaseError(): string {
 const RegistryCard: React.FC<RegistryCardProps> = ({ item, onPurchase, rememberedByGuest }) => {
   const isCashFund = item.item_type === 'cash_fund';
   const isPurchased = item.purchase_status === 'purchased';
-  const [copiedZelle, setCopiedZelle] = useState(false);
+  const [zelleStatus, setZelleStatus] = useState<'idle' | 'copying' | 'copied' | 'downloaded' | 'error'>('idle');
   const [imageFailed, setImageFailed] = useState(false);
+  const zelleStatusTimeoutRef = useRef<number | null>(null);
+  const zelleCopyRequestRef = useRef(0);
+  const zelleCopyContextKey = `${item.id}\n${item.fund_zelle_handle ?? ''}`;
+  const zelleCopyContextKeyRef = useRef(zelleCopyContextKey);
+  zelleCopyContextKeyRef.current = zelleCopyContextKey;
   const isPartial = item.purchase_status === 'partial';
   const displayPrice = item.price_label ?? (item.price_amount != null ? `$${item.price_amount.toFixed(2)}` : null);
   const displayUrl = getSafePublicRegistryUrl(item.item_url) ?? getSafePublicRegistryUrl(item.canonical_url);
@@ -505,6 +544,18 @@ const RegistryCard: React.FC<RegistryCardProps> = ({ item, onPurchase, remembere
     setImageFailed(false);
   }, [imageUrl]);
 
+  useEffect(() => {
+    if (zelleStatusTimeoutRef.current) window.clearTimeout(zelleStatusTimeoutRef.current);
+    zelleStatusTimeoutRef.current = null;
+    zelleCopyRequestRef.current += 1;
+    setZelleStatus('idle');
+  }, [item.id, item.fund_zelle_handle]);
+
+  useEffect(() => () => {
+    if (zelleStatusTimeoutRef.current) window.clearTimeout(zelleStatusTimeoutRef.current);
+    zelleCopyRequestRef.current += 1;
+  }, []);
+
   if (isCashFund) {
     const goal = item.fund_goal_amount ?? 0;
     const received = item.fund_received_amount ?? 0;
@@ -517,8 +568,8 @@ const RegistryCard: React.FC<RegistryCardProps> = ({ item, onPurchase, remembere
         </div>
         {item.notes && <p className="text-xs text-text-secondary leading-relaxed">{item.notes}</p>}
         <div className="grid grid-cols-2 gap-2 text-xs">
-          <div className="p-2 rounded-lg border border-border bg-surface-subtle">Goal: {goal > 0 ? `$${goal.toFixed(0)}` : '—'}</div>
-          <div className="p-2 rounded-lg border border-border bg-surface-subtle">Raised: ${received.toFixed(0)}</div>
+          <div className="p-2 rounded-xl border border-border bg-surface-subtle">Goal: {goal > 0 ? `$${goal.toFixed(0)}` : '—'}</div>
+          <div className="p-2 rounded-xl border border-border bg-surface-subtle">Raised: ${received.toFixed(0)}</div>
         </div>
         {pct != null && (
           <div>
@@ -535,19 +586,47 @@ const RegistryCard: React.FC<RegistryCardProps> = ({ item, onPurchase, remembere
           {item.fund_zelle_handle && (
             <button
               onClick={async () => {
+                if (zelleStatus === 'copying') return;
+                const requestId = zelleCopyRequestRef.current + 1;
+                zelleCopyRequestRef.current = requestId;
+                const requestContextKey = zelleCopyContextKeyRef.current;
+                const isCurrentZelleCopy = () => (
+                  requestId === zelleCopyRequestRef.current &&
+                  requestContextKey === zelleCopyContextKeyRef.current
+                );
                 try {
-                  await navigator.clipboard.writeText(item.fund_zelle_handle || '');
-                  setCopiedZelle(true);
-                  setTimeout(() => setCopiedZelle(false), 1600);
-                } catch {}
+                  setZelleStatus('copying');
+                  const result = await copyTextOrDownload(item.fund_zelle_handle || '', 'dayof-registry-zelle.txt');
+                  if (!isCurrentZelleCopy()) return;
+                  setZelleStatus(result === 'copied' ? 'copied' : 'downloaded');
+                  if (zelleStatusTimeoutRef.current) window.clearTimeout(zelleStatusTimeoutRef.current);
+                  zelleStatusTimeoutRef.current = window.setTimeout(() => setZelleStatus('idle'), 1600);
+                } catch {
+                  if (!isCurrentZelleCopy()) return;
+                  setZelleStatus('error');
+                  if (zelleStatusTimeoutRef.current) window.clearTimeout(zelleStatusTimeoutRef.current);
+                  zelleStatusTimeoutRef.current = window.setTimeout(() => setZelleStatus('idle'), 1800);
+                }
               }}
-              className="inline-flex items-center px-3 py-1.5 text-xs font-medium border border-border rounded-xl hover:border-primary hover:text-primary transition-colors"
+              disabled={zelleStatus === 'copying'}
+              className="inline-flex items-center px-3 py-1.5 text-xs font-medium border border-border rounded-xl hover:border-primary hover:text-primary transition-colors disabled:opacity-60"
               title={`Copy Zelle: ${item.fund_zelle_handle}`}
             >
-              {copiedZelle ? 'Copied ✓' : `Zelle: ${item.fund_zelle_handle}`}
+              {zelleStatus === 'copying'
+                ? 'Copying Zelle...'
+                : zelleStatus === 'copied'
+                  ? 'Copied ✓'
+                  : zelleStatus === 'downloaded'
+                    ? 'Downloaded ✓'
+                    : zelleStatus === 'error'
+                      ? 'Retry Zelle'
+                      : `Zelle: ${item.fund_zelle_handle}`}
             </button>
           )}
         </div>
+        {zelleStatus === 'error' && (
+          <p className="text-[11px] text-text-tertiary">Couldn’t copy Zelle right now.</p>
+        )}
       </div>
     );
   }
@@ -646,20 +725,32 @@ const RegistryCard: React.FC<RegistryCardProps> = ({ item, onPurchase, remembere
   );
 };
 
-export function RegistryItemsDisplay({ items, settings, notes, updateItem, excludeItemIds = [] }: {
+export function RegistryItemsDisplay({ items, settings, notes, updateItem, excludeItemIds = [], storageScope = null }: {
   items: RegistryItem[];
   settings: SectionInstance['settings'];
   notes?: string;
   updateItem: (item: RegistryItem) => void;
   excludeItemIds?: string[];
+  storageScope?: string | null;
 }) {
   const normalizedItems = sanitizePublicRegistryItems(items);
   const [purchasingItem, setPurchasingItem] = useState<RegistryItem | null>(null);
   const [purchaseError, setPurchaseError] = useState<string | null>(null);
   const [sortMode, setSortMode] = useState<'recommended' | 'price-low' | 'price-high'>('recommended');
   const [groupMode, setGroupMode] = useState<'all' | 'funds' | 'stores'>('all');
-  const [rememberedPurchaseIds, setRememberedPurchaseIds] = useState<string[]>(() => readRegistryPurchaseMemory());
+  const [rememberedPurchaseIds, setRememberedPurchaseIds] = useState<string[]>(() => readRegistryPurchaseMemory(storageScope));
   const rememberedPurchaseSet = new Set(rememberedPurchaseIds);
+
+  useEffect(() => {
+    setRememberedPurchaseIds(readRegistryPurchaseMemory(storageScope));
+  }, [storageScope]);
+
+  const clearPurchaseError = () => setPurchaseError(null);
+
+  const handleStartPurchase = (item: RegistryItem) => {
+    clearPurchaseError();
+    setPurchasingItem(item);
+  };
 
   const excludedIds = new Set(excludeItemIds);
   const visibleItems = normalizedItems.filter(item => {
@@ -682,11 +773,11 @@ export function RegistryItemsDisplay({ items, settings, notes, updateItem, exclu
 
   async function handleConfirmPurchase(purchaserName: string) {
     if (!purchasingItem) return;
-    setPurchaseError(null);
+    clearPurchaseError();
     try {
       const updated = await publicIncrementPurchase(purchasingItem.id, purchaserName || undefined);
       updateItem(normalizePublicRegistryItemState(updated));
-      setRememberedPurchaseIds(rememberRegistryPurchase(purchasingItem.id));
+      setRememberedPurchaseIds(rememberRegistryPurchase(purchasingItem.id, storageScope));
     } catch {
       setPurchaseError(safePublicRegistryPurchaseError());
       throw new Error(safePublicRegistryPurchaseError());
@@ -721,7 +812,10 @@ export function RegistryItemsDisplay({ items, settings, notes, updateItem, exclu
           ].map((opt) => (
             <button
               key={opt.id}
-              onClick={() => setGroupMode(opt.id as typeof groupMode)}
+              onClick={() => {
+                clearPurchaseError();
+                setGroupMode(opt.id as typeof groupMode);
+              }}
               className={`rounded-full px-2.5 py-1 text-xs font-medium ${groupMode === opt.id ? 'bg-primary/10 text-primary' : 'text-text-secondary hover:bg-surface-subtle'}`}
             >
               {opt.label}
@@ -736,7 +830,10 @@ export function RegistryItemsDisplay({ items, settings, notes, updateItem, exclu
           ].map((opt) => (
             <button
               key={opt.id}
-              onClick={() => setSortMode(opt.id as typeof sortMode)}
+              onClick={() => {
+                clearPurchaseError();
+                setSortMode(opt.id as typeof sortMode);
+              }}
               className={`rounded-full px-2.5 py-1 text-xs font-medium ${sortMode === opt.id ? 'bg-primary/10 text-primary' : 'text-text-secondary hover:bg-surface-subtle'}`}
             >
               {opt.label}
@@ -753,7 +850,7 @@ export function RegistryItemsDisplay({ items, settings, notes, updateItem, exclu
       ) : (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 md:gap-6">
           {sortedItems.map(item => (
-            <RegistryCard key={item.id} item={item} onPurchase={setPurchasingItem} rememberedByGuest={rememberedPurchaseSet.has(item.id)} />
+            <RegistryCard key={item.id} item={item} onPurchase={handleStartPurchase} rememberedByGuest={rememberedPurchaseSet.has(item.id)} />
           ))}
         </div>
       )}
@@ -761,8 +858,9 @@ export function RegistryItemsDisplay({ items, settings, notes, updateItem, exclu
       {purchasingItem && (
         <PurchaseModal
           item={purchasingItem}
-          onClose={() => { setPurchasingItem(null); setPurchaseError(null); }}
+          onClose={() => { setPurchasingItem(null); clearPurchaseError(); }}
           onConfirm={handleConfirmPurchase}
+          onNameChange={clearPurchaseError}
         />
       )}
     </>
@@ -795,7 +893,7 @@ export const RegistrySection: React.FC<Props> = ({ data, instance }) => {
     return (
       <section className="py-16 px-4 bg-surface">
         <div className="max-w-6xl mx-auto">
-          <RegistryItemsDisplay items={items} settings={settings} notes={registry.notes} updateItem={updateItem} />
+          <RegistryItemsDisplay items={items} settings={settings} notes={registry.notes} updateItem={updateItem} storageScope={weddingSiteId} />
         </div>
       </section>
     );
@@ -866,7 +964,7 @@ export const RegistryGrid: React.FC<Props> = ({ data, instance }) => {
     return (
       <section className="py-20 px-4 bg-surface-subtle">
         <div className="max-w-6xl mx-auto">
-          <RegistryItemsDisplay items={items} settings={settings} notes={registry.notes} updateItem={updateItem} />
+          <RegistryItemsDisplay items={items} settings={settings} notes={registry.notes} updateItem={updateItem} storageScope={weddingSiteId} />
         </div>
       </section>
     );

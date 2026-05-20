@@ -44,7 +44,7 @@ export function VaultDashboardLiveContent({
   const archiveMode = getArchiveModeDescriptor({ weddingDate: weddingDate ? weddingDate.toISOString() : null });
 
   return (
-    <div className="max-w-4xl mx-auto space-y-8">
+    <div id="vault-anniversary-capsules" className="max-w-[1100px] mx-auto space-y-8">
       <DashboardPageHero
         eyebrow="Private keepsakes"
         title="Memory Vaults"
@@ -68,9 +68,10 @@ export function VaultDashboardLiveContent({
         ) : null}
       />
 
-      <div className={`rounded-lg border px-4 py-3 text-sm ${archiveMode.isArchiveLike ? 'border-stone-200 bg-stone-50' : 'border-border-subtle bg-white'}`}>
-        <p className="font-medium text-text-primary">{archiveMode.label}</p>
-        <p className="mt-1 text-text-secondary">{archiveMode.detail}</p>
+      <div className={`rounded-3xl border px-5 py-4 text-sm shadow-sm ${archiveMode.isArchiveLike ? 'border-stone-200 bg-stone-50' : 'border-border-subtle bg-white'}`}>
+        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary/75">Mode</p>
+        <p className="mt-3 font-semibold text-text-primary">{archiveMode.label}</p>
+        <p className="mt-2 text-text-secondary">{archiveMode.detail}</p>
         {archiveMode.isArchiveLike && (
           <p className="mt-2 text-xs text-stone-700">The event is behind you, so this should start feeling like the center of gravity for memory, anniversary notes, and what the site becomes next.</p>
         )}
@@ -81,14 +82,14 @@ export function VaultDashboardLiveContent({
           <div>
             <div className="flex items-center gap-2">
               <p className="text-sm font-semibold text-text-primary">Vault media</p>
-              {isDemoMode && <span className="text-[10px] px-2 py-0.5 rounded-lg border border-border-subtle bg-surface-subtle text-text-secondary">Demo mode</span>}
+              {isDemoMode && <span className="text-[10px] px-2 py-0.5 rounded-xl border border-border-subtle bg-surface-subtle text-text-secondary">Demo mode</span>}
             </div>
             <p className="text-xs text-text-secondary mt-1">dayof hosts vault media. Google Drive is an optional backup connection.</p>
             <div className="mt-3 flex items-center gap-2 text-[11px]">
-              <span className="px-2 py-1 rounded-lg border border-border-subtle bg-surface-subtle text-text-secondary">
+              <span className="rounded-xl border border-border-subtle bg-surface-subtle px-2 py-1 text-text-secondary">
                 Drive backup: {driveConnectedHealthy ? 'Connected' : 'Disconnected'}
               </span>
-              <span className="px-2 py-1 rounded-lg border border-border text-text-tertiary">Hosted by dayof</span>
+              <span className="rounded-xl border border-border px-2 py-1 text-text-tertiary">Hosted by dayof</span>
             </div>
             {isDemoMode && (
               <p className="text-xs text-text-secondary mt-2">Drive actions are simulated in demo mode.</p>
@@ -112,12 +113,30 @@ export function VaultDashboardLiveContent({
         </div>
       </Card>
 
+      <section className="rounded-2xl border border-border-subtle bg-white p-5 shadow-sm">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary/75">Vault workspace</p>
+            <h2 className="mt-3 text-lg font-semibold text-text-primary">Set the anniversaries, then decide what stays private until later.</h2>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-text-secondary">
+              This is where you create the sealed vaults themselves, manage contribution links, and choose what should unlock years from now instead of right after the celebration.
+            </p>
+          </div>
+          <div className="inline-flex flex-wrap gap-2 text-xs text-text-tertiary">
+            <span className="rounded-xl border border-border-subtle bg-surface-subtle/30 px-3 py-1">Private by default</span>
+            <span className="rounded-xl border border-border-subtle bg-surface-subtle/30 px-3 py-1">Anniversary unlocks</span>
+            <span className="rounded-xl border border-border-subtle bg-surface-subtle/30 px-3 py-1">Guest contributions stay optional</span>
+          </div>
+        </div>
+      </section>
+
       {!weddingDate && (
-        <div className="flex items-start gap-3 p-4 bg-surface-subtle border border-border-subtle rounded-lg text-sm text-text-secondary">
+        <div className="flex items-start gap-3 rounded-2xl border border-border-subtle bg-surface-subtle/30 p-4 text-sm text-text-secondary shadow-sm">
           <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
           <div>
-            <p className="font-medium">No wedding date set</p>
-            <p className="mt-0.5 text-text-secondary">Set your wedding date in Settings. Vault entries stay locked until an unlock date can be calculated.</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary/75">Needs review</p>
+            <p className="mt-3 font-medium text-text-primary">No wedding date set</p>
+            <p className="mt-2 leading-6 text-text-secondary">Set your wedding date in Settings. Vault entries stay locked until an unlock date can be calculated.</p>
           </div>
         </div>
       )}
@@ -130,15 +149,15 @@ export function VaultDashboardLiveContent({
               <p className="mt-1 text-sm text-text-secondary">Once the wedding is behind you, vaults should feel like a living archive: add a note now, collect a few from guests, and let future anniversaries unlock naturally.</p>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-              <div className="rounded-lg border border-border-subtle bg-surface-subtle/30 px-3 py-3">
+                <div className="rounded-xl border border-border-subtle bg-surface-subtle/30 px-3 py-3">
                 <p className="text-xs font-medium text-text-tertiary">Now</p>
                 <p className="mt-1 text-sm text-text-secondary">Write the first note while the day is still fresh.</p>
               </div>
-              <div className="rounded-lg border border-border-subtle bg-surface-subtle/30 px-3 py-3">
+                <div className="rounded-xl border border-border-subtle bg-surface-subtle/30 px-3 py-3">
                 <p className="text-xs font-medium text-text-tertiary">Next</p>
                 <p className="mt-1 text-sm text-text-secondary">Share a vault link with the people who matter most, not everyone by default.</p>
               </div>
-              <div className="rounded-lg border border-border-subtle bg-surface-subtle/30 px-3 py-3">
+                <div className="rounded-xl border border-border-subtle bg-surface-subtle/30 px-3 py-3">
                 <p className="text-xs font-medium text-text-tertiary">Later</p>
                 <p className="mt-1 text-sm text-text-secondary">Let anniversaries bring these memories back without needing to remember every date yourself.</p>
               </div>
@@ -150,7 +169,7 @@ export function VaultDashboardLiveContent({
       {vaultConfigsLength === 0 && (
         <Card variant="bordered" padding="lg">
           <div className="text-center py-10">
-            <div className="w-16 h-16 bg-surface-subtle rounded-lg flex items-center justify-center mx-auto mb-4">
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-xl bg-surface-subtle">
               <Lock className="w-8 h-8 text-text-tertiary" />
             </div>
             <h3 className="font-semibold text-text-primary mb-2">No anniversary vaults yet</h3>
@@ -172,7 +191,7 @@ export function VaultDashboardLiveContent({
         <button
           onClick={() => void handleAddVault()}
           disabled={addingVault}
-          className="w-full flex items-center justify-center gap-2 py-3 text-sm font-medium text-text-secondary border-2 border-dashed border-border rounded-lg hover:border-primary hover:text-primary hover:bg-primary/5 transition-colors disabled:opacity-50"
+          className="w-full flex items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-border py-3 text-sm font-medium text-text-secondary transition-colors hover:border-primary hover:bg-primary/5 hover:text-primary disabled:opacity-50"
         >
           {addingVault ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
           Add another vault ({vaultConfigsLength}/{MAX_VAULTS} used)
@@ -180,16 +199,17 @@ export function VaultDashboardLiveContent({
       )}
 
       {vaultConfigsLength >= MAX_VAULTS && (
-        <div className="flex items-center gap-2 p-3 bg-surface-subtle rounded-lg border border-border text-sm text-text-secondary">
+        <div className="flex items-center gap-2 rounded-2xl border border-border bg-surface-subtle p-3 text-sm text-text-secondary">
           <GripVertical className="w-4 h-4 text-text-tertiary" />
           Maximum of {MAX_VAULTS} vaults reached. Disable or remove an existing vault to add a new one.
         </div>
       )}
 
-      <div className="p-5 bg-surface-subtle border border-border rounded-lg text-sm text-text-secondary">
-        <p className="font-medium text-text-primary mb-1">How Vaults work</p>
-        <p>Add messages yourself or share a vault link with guests so they can drop in a note. Each vault unlocks automatically on its anniversary date. You can enable or disable individual vaults, and customize how long each one stays sealed. Disabled vaults are hidden from guests but your entries are preserved.</p>
-        {archiveMode.isArchiveLike && <p className="mt-2 text-xs text-text-tertiary">Best rhythm: start with one immediate note, one short guest-facing vault, and one later anniversary vault instead of overbuilding this all at once.</p>}
+      <div className="rounded-2xl border border-border-subtle bg-surface-subtle/30 p-5 text-sm text-text-secondary shadow-sm">
+        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary/75">How it works</p>
+        <p className="mt-3 font-medium text-text-primary">Vaults stay private until their anniversary unlock date.</p>
+        <p className="mt-2 leading-6">Add messages yourself or share a vault link with guests so they can drop in a note. Each vault unlocks automatically on its anniversary date. You can enable or disable individual vaults, and customize how long each one stays sealed. Disabled vaults are hidden from guests but your entries are preserved.</p>
+        {archiveMode.isArchiveLike && <p className="mt-3 text-xs text-text-tertiary">Best rhythm: start with one immediate note, one short guest-facing vault, and one later anniversary vault instead of overbuilding this all at once.</p>}
       </div>
     </div>
   );

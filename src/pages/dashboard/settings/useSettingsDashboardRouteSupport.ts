@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { getSafePublicWebUrl } from '../../../sections/publicLinks';
 import { buildSettingsDashboardViewModel } from './buildSettingsDashboardViewModel';
 import type { SiteLanguageCode } from './settingsDashboardTypes';
-import type { PlannerAccessRole } from '../../../lib/plannerAccess';
+import type { PlannerAccessRole, PlannerPermissionKey } from '../../../lib/plannerAccess';
 
 type Args = {
   coupleNames: string;
@@ -12,6 +12,7 @@ type Args = {
   musicPlaylistUrl: string;
   navigate: (href: string, options?: { replace?: boolean }) => void;
   settingsRole: PlannerAccessRole;
+  settingsPermissions: PlannerPermissionKey[] | null;
   signOut: () => Promise<void>;
   siteSlug: string;
   venueName: string | null;
@@ -26,6 +27,7 @@ export function useSettingsDashboardRouteSupport({
   musicPlaylistUrl,
   navigate,
   settingsRole,
+  settingsPermissions,
   signOut,
   siteSlug,
   venueName,
@@ -49,11 +51,12 @@ export function useSettingsDashboardRouteSupport({
         defaultLanguage,
         isPublished,
         settingsRole,
+        settingsPermissions,
         siteSlug,
         venueName,
         weddingDate,
       }),
-    [coupleNames, currentTemplate, defaultLanguage, isPublished, settingsRole, siteSlug, venueName, weddingDate],
+    [coupleNames, currentTemplate, defaultLanguage, isPublished, settingsPermissions, settingsRole, siteSlug, venueName, weddingDate],
   );
 
   const handleLogout = async () => {

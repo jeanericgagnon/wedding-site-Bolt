@@ -4,6 +4,7 @@ import { SettingsRsvpMealPanel } from './SettingsRsvpMealPanel';
 import { SettingsRsvpQuestionsPanel } from './SettingsRsvpQuestionsPanel';
 
 type SettingsRsvpTabContentProps = {
+  canEditSettings: boolean;
   collapsedQuestionIds: Set<string>;
   mealOptions: string[];
   musicPlaylistUrl: string;
@@ -39,6 +40,7 @@ type SettingsRsvpTabContentProps = {
 };
 
 export function SettingsRsvpTabContent({
+  canEditSettings,
   collapsedQuestionIds,
   mealOptions,
   musicPlaylistUrl,
@@ -75,6 +77,7 @@ export function SettingsRsvpTabContent({
   return (
     <>
       <SettingsRsvpMealPanel
+        canEditSettings={canEditSettings}
         mealOptions={mealOptions}
         onAddMealOption={onAddMealOption}
         onMealChoiceEnabledChange={onMealChoiceEnabledChange}
@@ -91,6 +94,7 @@ export function SettingsRsvpTabContent({
       />
 
       <SettingsRsvpQuestionsPanel
+        canEditSettings={canEditSettings}
         collapsedQuestionIds={collapsedQuestionIds}
         musicPlaylistUrl={musicPlaylistUrl}
         onAddChoice={onAddChoice}

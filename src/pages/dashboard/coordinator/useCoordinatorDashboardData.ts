@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { readPlannerAccessRole, writePlannerAccessRole, type PlannerAccessRole, type PlannerPermissionKey } from '../../../lib/plannerAccess';
 import type { GuestLiteForCoordinator } from '../../../lib/coordinatorTypes';
 import type {
@@ -73,6 +73,7 @@ export function useCoordinatorDashboardData(args: {
   const [checkInFilter, setCheckInFilter] = useState<CoordinatorCheckInFilter>('arrivals');
   const [checkInReviewOnly, setCheckInReviewOnly] = useState(false);
   const [panelFocus, setPanelFocus] = useState<CoordinatorPanelFocus | null>(null);
+  const [restoredStorageSiteId, setRestoredStorageSiteId] = useState<string | null>(null);
   const [alertForm, setAlertForm] = useState({
     subject: 'Day-of update',
     body: 'Quick update from the couple: ',
@@ -83,10 +84,59 @@ export function useCoordinatorDashboardData(args: {
     scheduleTime: '',
   });
 
+  const resetCoordinatorDashboardState = useCallback(() => {
+    setRestoredStorageSiteId(null);
+    setGuests([]);
+    setEvents([]);
+    setSiteId(null);
+    setSiteSlug(null);
+    setEventGuestIds({});
+    setEventSeatingConfiguredIds(new Set<string>());
+    setEventSeatingEventIds({});
+    setEventSeatingTables({});
+    setEventHandoffs([]);
+    setIssueLogs([]);
+    setTimelineState({});
+    setAlertLog([]);
+    setQnaItems([]);
+    setCoordinatorRole('owner');
+    setActiveSiteRole('owner');
+    setCoordinatorPermissions(null);
+    setAlertChannelFilter('all');
+    setAlertTimingFilter('all');
+    setQnaInput('');
+    setQnaFilter('open');
+    setQnaDraftAnswers({});
+    setActiveQnaId(null);
+    setActiveTimelineEventId(null);
+    setActiveGuestId(null);
+    setLastAlertSuggestionKey(null);
+    setCommandSource(null);
+    setCheckInQuery('');
+    setCheckInFilter('arrivals');
+    setCheckInReviewOnly(false);
+    setPanelFocus(null);
+    setAlertForm({
+      subject: 'Day-of update',
+      body: 'Quick update from the couple: ',
+      audience: 'all',
+      channel: 'email',
+      scheduleType: 'now',
+      scheduleDate: '',
+      scheduleTime: '',
+    });
+  }, []);
+
   useEffect(() => {
     let mounted = true;
     const run = async () => {
-      if (!args.userId) return;
+      if (!args.userId) {
+        if (mounted) {
+          resetCoordinatorDashboardState();
+          setLoading(false);
+        }
+        return;
+      }
       setLoading(true);
       try {
         if (args.isDemoMode) {
@@ -96,7 +146,7 @@ export function useCoordinatorDashboardData(args: {
           setSiteSlug('demo-site');
           setActiveSiteRole('owner');
           setCoordinatorRole('owner');
-          setGuests([
+        setGuests([
             {
               id: '1',
               first_name: 'Alex',
@@ -146,11 +196,17 @@ export function useCoordinatorDashboardData(args: {
             },
           ]);
           setIssueLogs([]);
+          setTimelineState({});
+          setAlertLog([]);
+          setQnaItems([]);
           return;
         }
 
         const bootstrap = await loadCoordinatorBootstrapData(args.userId);
-        if (!bootstrap.siteId) return;
+        if (!bootstrap.siteId) {
+          if (mounted) resetCoordinatorDashboardState();
+          return;
+        }
         if (!mounted) return;
         const storedGuestWorkState = readStoredCoordinatorGuestWorkState(bootstrap.siteId);
         setSiteId(bootstrap.siteId);
@@ -169,12 +225,21 @@ export function useCoordinatorDashboardData(args: {
         setEventSeatingTables(bootstrap.eventSeatingTables);
         setEventHandoffs(bootstrap.eventHandoffs);
         setIssueLogs(bootstrap.issueLogs);
+        setTimelineState({});
+        setAlertLog([]);
         setActiveGuestId(storedGuestWorkState.activeGuestId);
         const cachedQna = readStoredCoordinatorQnaItems(bootstrap.siteId);
         if (bootstrap.qnaItems.length > 0) {
           setQnaItems(bootstrap.qnaItems);
         } else if (cachedQna.length > 0) {
           setQnaItems(cachedQna);
+        } else {
+          setQnaItems([]);
+        }
+      } catch {
+        if (mounted) {
+          resetCoordinatorDashboardState();
+          args.toast('Couldn’t load coordinator mode right now.', 'error');
         }
       } finally {
         if (mounted) setLoading(false);
@@ -185,15 +250,16 @@ export function useCoordinatorDashboardData(args: {
     return () => {
       mounted = false;
     };
-  }, [args.isDemoMode, args.userId]);
+  }, [args.isDemoMode, args.toast, args.userId, resetCoordinatorDashboardState]);
 
   useEffect(() => {
     if (!siteId) return;
+    setRestoredStorageSiteId(null);
     try {
       const storedTimelineState = readStoredCoordinatorTimelineState(siteId);
-      if (Object.keys(storedTimelineState).length > 0) setTimelineState(storedTimelineState);
+      setTimelineState(storedTimelineState);
       const storedAlertLog = readStoredCoordinatorAlertLog(siteId);
-      if (storedAlertLog.length > 0) setAlertLog(storedAlertLog);
+      setAlertLog(storedAlertLog);
       const storedQnaItems = readStoredCoordinatorQnaItems(siteId);
       if (storedQnaItems.length > 0) {
         setQnaItems(storedQnaItems);
@@ -233,6 +299,7 @@ export function useCoordinatorDashboardData(args: {
 
       const alertIntentState = readStoredCoordinatorAlertIntentState(siteId);
       setLastAlertSuggestionKey(alertIntentState.lastSuggestionKey);
+      setRestoredStorageSiteId(siteId);
     } catch {
       args.toast('Couldn’t restore coordinator state right now.', 'warning');
     }
@@ -240,31 +307,36 @@ export function useCoordinatorDashboardData(args: {
 
   useEffect(() => {
     if (!siteId) return;
+    if (restoredStorageSiteId !== siteId) return;
     writeStoredCoordinatorTimelineState(siteId, timelineState);
-  }, [siteId, timelineState]);
+  }, [restoredStorageSiteId, siteId, timelineState]);
 
   useEffect(() => {
     if (!siteId) return;
+    if (restoredStorageSiteId !== siteId) return;
     writeStoredCoordinatorAlertLog(siteId, alertLog);
-  }, [siteId, alertLog]);
+  }, [alertLog, restoredStorageSiteId, siteId]);
 
   useEffect(() => {
     if (!siteId) return;
+    if (restoredStorageSiteId !== siteId) return;
     writeStoredCoordinatorQnaItems(siteId, qnaItems);
-  }, [siteId, qnaItems]);
+  }, [qnaItems, restoredStorageSiteId, siteId]);
 
   useEffect(() => {
     if (!siteId) return;
+    if (restoredStorageSiteId !== siteId) return;
     if (activeSiteRole !== 'owner') return;
     try {
       writePlannerAccessRole('coordinator', siteId, coordinatorRole);
     } catch {
       // noop
     }
-  }, [siteId, coordinatorRole, activeSiteRole]);
+  }, [activeSiteRole, coordinatorRole, restoredStorageSiteId, siteId]);
 
   useEffect(() => {
     if (!siteId) return;
+    if (restoredStorageSiteId !== siteId) return;
     writeStoredCoordinatorSessionState(siteId, {
       checkInFilter,
       checkInQuery,
@@ -273,24 +345,27 @@ export function useCoordinatorDashboardData(args: {
       alertChannelFilter,
       alertTimingFilter,
     });
-  }, [siteId, checkInFilter, checkInQuery, checkInReviewOnly, panelFocus, alertChannelFilter, alertTimingFilter]);
+  }, [restoredStorageSiteId, siteId, checkInFilter, checkInQuery, checkInReviewOnly, panelFocus, alertChannelFilter, alertTimingFilter]);
 
   useEffect(() => {
     if (!siteId) return;
+    if (restoredStorageSiteId !== siteId) return;
     writeStoredCoordinatorDraftState(siteId, {
       alertForm,
       qnaDraftAnswers,
       qnaInput,
     });
-  }, [siteId, alertForm, qnaDraftAnswers, qnaInput]);
+  }, [restoredStorageSiteId, siteId, alertForm, qnaDraftAnswers, qnaInput]);
 
   useEffect(() => {
     if (!siteId) return;
+    if (restoredStorageSiteId !== siteId) return;
     writeStoredCoordinatorActiveWorkState(siteId, { activeQnaId });
-  }, [siteId, activeQnaId]);
+  }, [activeQnaId, restoredStorageSiteId, siteId]);
 
   useEffect(() => {
     if (!siteId) return;
+    if (restoredStorageSiteId !== siteId) return;
     writeStoredCoordinatorGuestWorkState(siteId, {
       activeGuestId,
       doorRoutesByGuestId: Object.fromEntries(
@@ -299,12 +374,13 @@ export function useCoordinatorDashboardData(args: {
           .map((guest) => [guest.id, guest.door_route!]),
       ),
     });
-  }, [siteId, activeGuestId, guests]);
+  }, [activeGuestId, guests, restoredStorageSiteId, siteId]);
 
   useEffect(() => {
     if (!siteId) return;
+    if (restoredStorageSiteId !== siteId) return;
     writeStoredCoordinatorTimelineWorkState(siteId, { activeTimelineEventId });
-  }, [siteId, activeTimelineEventId]);
+  }, [activeTimelineEventId, restoredStorageSiteId, siteId]);
 
   useEffect(() => {
     if (!activeTimelineEventId) return;
@@ -314,18 +390,20 @@ export function useCoordinatorDashboardData(args: {
 
   useEffect(() => {
     if (!siteId) return;
+    if (restoredStorageSiteId !== siteId) return;
     writeStoredCoordinatorCommandState(siteId, {
       source: commandSource,
       panelFocus,
       checkInFilter,
       checkInReviewOnly,
     });
-  }, [siteId, commandSource, panelFocus, checkInFilter, checkInReviewOnly]);
+  }, [checkInFilter, checkInReviewOnly, commandSource, panelFocus, restoredStorageSiteId, siteId]);
 
   useEffect(() => {
     if (!siteId) return;
+    if (restoredStorageSiteId !== siteId) return;
     writeStoredCoordinatorAlertIntentState(siteId, { lastSuggestionKey: lastAlertSuggestionKey });
-  }, [siteId, lastAlertSuggestionKey]);
+  }, [lastAlertSuggestionKey, restoredStorageSiteId, siteId]);
 
   return {
     activeGuestId,

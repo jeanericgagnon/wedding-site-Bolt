@@ -1,5 +1,6 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Copy, Download, Mail, MapPin, MessageSquare, Send, Users } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { Card } from '../../../components/ui/Card';
 import { Button } from '../../../components/ui/Button';
 import { useToast } from '../../../components/ui/Toast';
@@ -12,11 +13,24 @@ interface Props {
 }
 
 export const AddressCollectionTab: React.FC<Props> = ({ siteId, isDemoMode = false }) => {
+  const navigate = useNavigate();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [siteSlug, setSiteSlug] = useState('');
   const [guests, setGuests] = useState<PlanningAddressGuest[]>([]);
   const [view, setView] = useState<'missing-address' | 'missing-contact' | 'all'>('missing-address');
+  const [copyingKey, setCopyingKey] = useState<string | null>(null);
+  const [copyNotice, setCopyNotice] = useState<{ key: string; mode: 'copied' | 'downloaded' } | null>(null);
+  const copyNoticeTimeoutRef = useRef<number | null>(null);
+  const copyActionRequestIdRef = useRef(0);
+  const mountedRef = useRef(true);
+  const copyContextRef = useRef('');
+
+  useEffect(() => () => {
+    mountedRef.current = false;
+    copyActionRequestIdRef.current += 1;
+    if (copyNoticeTimeoutRef.current) window.clearTimeout(copyNoticeTimeoutRef.current);
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -49,6 +63,28 @@ export const AddressCollectionTab: React.FC<Props> = ({ siteId, isDemoMode = fal
   const collectionUrl = siteSlug
     ? `${typeof window !== 'undefined' ? window.location.origin : 'https://dayof.love'}/guest-contact/${siteSlug}`
     : '';
+  const copyContextKey = JSON.stringify({
+    siteId,
+    collectionUrl,
+    view,
+    guests: guests.map((guest) => [
+      guest.id,
+      guest.name,
+      guest.email ?? null,
+      guest.phone ?? null,
+      guest.household_id ?? null,
+      guest.mailing_address_line1 ?? null,
+      guest.mailing_city ?? null,
+    ]),
+  });
+  copyContextRef.current = copyContextKey;
+
+  useEffect(() => {
+    copyActionRequestIdRef.current += 1;
+    setCopyingKey(null);
+    setCopyNotice(null);
+    if (copyNoticeTimeoutRef.current) window.clearTimeout(copyNoticeTimeoutRef.current);
+  }, [copyContextKey]);
 
   const stats = useMemo(() => {
     const missingAddress = guests.filter((guest) => !guest.mailing_address_line1);
@@ -59,12 +95,35 @@ export const AddressCollectionTab: React.FC<Props> = ({ siteId, isDemoMode = fal
     return { missingAddress, missingContact, households, reachable, complete };
   }, [guests]);
 
-  async function copyText(text: string, label: string) {
-    const result = await copyTextOrDownload(text, `dayof-${label.toLowerCase().replace(/[^a-z0-9]+/g, '-')}.txt`);
-    if (result === 'copied') {
-      toast(`${label} copied.`, 'success');
-    } else {
-      toast(`Clipboard was blocked, so ${label.toLowerCase()} downloaded.`, 'success');
+  async function runCopyAction(copyKey: string, text: string, label: string, fileName: string) {
+    if (copyingKey) return;
+    const requestId = ++copyActionRequestIdRef.current;
+    const requestContextKey = copyContextRef.current;
+    const isCurrentCopyAction = () => (
+      mountedRef.current &&
+      requestId === copyActionRequestIdRef.current &&
+      copyContextRef.current === requestContextKey
+    );
+
+    setCopyingKey(copyKey);
+    try {
+      const result = await copyTextOrDownload(text, fileName);
+      if (!isCurrentCopyAction()) return;
+      setCopyNotice({ key: copyKey, mode: result });
+      if (result === 'copied') {
+        toast(`${label} copied.`, 'success');
+      } else {
+        toast(`Clipboard was blocked, so ${label.toLowerCase()} downloaded.`, 'success');
+      }
+      if (copyNoticeTimeoutRef.current) window.clearTimeout(copyNoticeTimeoutRef.current);
+      copyNoticeTimeoutRef.current = window.setTimeout(() => setCopyNotice((current) => (current?.key === copyKey ? null : current)), 1800);
+    } catch {
+      if (!isCurrentCopyAction()) return;
+      toast(`Couldn’t copy ${label.toLowerCase()} right now.`, 'error');
+    } finally {
+      if (isCurrentCopyAction()) {
+        setCopyingKey((current) => (current === copyKey ? null : current));
+      }
     }
   }
 
@@ -84,17 +143,15 @@ export const AddressCollectionTab: React.FC<Props> = ({ siteId, isDemoMode = fal
       prefillAudience: 'all',
       prefillChannel: channel,
     });
-    window.location.href = `/dashboard/messages?${params.toString()}`;
+    navigate({
+      pathname: '/dashboard/messages',
+      search: `?${params.toString()}`,
+    });
   }
 
   async function copyFollowUpList() {
     const text = uniqueFollowUpGuests.map((guest) => `${guest.name} — ${guest.email || guest.phone || 'no direct contact'}${guest.household_id ? ' — household' : ''}`).join('\n');
-    const result = await copyTextOrDownload(text || 'No follow-ups needed.', 'dayof-address-follow-ups.txt');
-    if (result === 'copied') {
-      toast('Follow-up list copied.', 'success');
-    } else {
-      toast('Clipboard was blocked, so the follow-up list downloaded.', 'success');
-    }
+    await runCopyAction('follow-ups', text || 'No follow-ups needed.', 'Follow-up list', 'dayof-address-follow-ups.txt');
   }
 
   function exportCsv() {
@@ -146,9 +203,15 @@ export const AddressCollectionTab: React.FC<Props> = ({ siteId, isDemoMode = fal
             <p className="text-sm text-text-secondary mt-0.5">{stats.complete} guest{stats.complete === 1 ? '' : 's'} have address plus at least one contact method.</p>
           </div>
           <div className="flex flex-wrap gap-2">
-            <Button size="sm" variant="outline" onClick={copyFollowUpList}>
+            <Button size="sm" variant="outline" onClick={() => void copyFollowUpList()} disabled={copyingKey === 'follow-ups'}>
               <Copy className="w-4 h-4 mr-1" />
-              Copy follow-ups
+              {copyingKey === 'follow-ups'
+                ? 'Copying...'
+                : copyNotice?.key === 'follow-ups'
+                  ? copyNotice.mode === 'downloaded'
+                    ? 'Downloaded guest follow-ups'
+                    : 'Copied guest follow-ups'
+                  : 'Copy follow-ups'}
             </Button>
             <Button size="sm" variant="outline" onClick={exportCsv}>
               <Download className="w-4 h-4 mr-1" />
@@ -156,14 +219,14 @@ export const AddressCollectionTab: React.FC<Props> = ({ siteId, isDemoMode = fal
             </Button>
           </div>
         </div>
-        <div className="h-2 overflow-hidden rounded-lg bg-surface-subtle">
-          <div className="h-full rounded-lg bg-success" style={{ width: `${guests.length > 0 ? Math.round((stats.complete / guests.length) * 100) : 0}%` }} />
+        <div className="h-2 overflow-hidden rounded-xl bg-surface-subtle">
+          <div className="h-full rounded-xl bg-success" style={{ width: `${guests.length > 0 ? Math.round((stats.complete / guests.length) * 100) : 0}%` }} />
         </div>
       </Card>
 
       <Card padding="md" className="space-y-3">
         <div className="flex items-start gap-3">
-          <div className="rounded-lg bg-primary-light p-2">
+          <div className="rounded-xl bg-primary-light p-2">
             <MapPin className="w-5 h-5 text-primary" />
           </div>
           <div>
@@ -171,21 +234,39 @@ export const AddressCollectionTab: React.FC<Props> = ({ siteId, isDemoMode = fal
             <p className="text-sm text-text-secondary mt-1">Send guests one easy link. They can search their name, update contact info, add a mailing address, and apply it to their household.</p>
           </div>
         </div>
-        <div className="rounded-lg border border-border-subtle bg-surface-subtle/40 px-3 py-2 text-sm text-text-primary break-all">
+        <div className="rounded-2xl border border-border-subtle bg-surface-subtle/40 px-3 py-2 text-sm text-text-primary break-all">
           {collectionUrl || 'Add a site slug before sharing this link.'}
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button size="sm" onClick={() => collectionUrl && copyText(collectionUrl, 'address link')} disabled={!collectionUrl}>
+          <Button size="sm" onClick={() => collectionUrl && void runCopyAction('address-link', collectionUrl, 'Address link', 'dayof-address-link.txt')} disabled={!collectionUrl || copyingKey === 'address-link'}>
             <Copy className="w-4 h-4 mr-1" />
-            Copy link
+            {copyingKey === 'address-link'
+              ? 'Copying...'
+              : copyNotice?.key === 'address-link'
+                ? copyNotice.mode === 'downloaded'
+                  ? 'Downloaded address link'
+                  : 'Copied address link'
+                : 'Copy link'}
           </Button>
-          <Button size="sm" variant="outline" onClick={() => copyText(emailTemplate, 'email copy')} disabled={!collectionUrl}>
+          <Button size="sm" variant="outline" onClick={() => void runCopyAction('email-copy', emailTemplate, 'Email copy', 'dayof-email-copy.txt')} disabled={!collectionUrl || copyingKey === 'email-copy'}>
             <Mail className="w-4 h-4 mr-1" />
-            Copy email copy
+            {copyingKey === 'email-copy'
+              ? 'Copying...'
+              : copyNotice?.key === 'email-copy'
+                ? copyNotice.mode === 'downloaded'
+                  ? 'Downloaded email copy'
+                  : 'Copied email copy'
+                : 'Copy email copy'}
           </Button>
-          <Button size="sm" variant="outline" onClick={() => copyText(emailTemplate.slice(0, 155), 'text copy')} disabled={!collectionUrl}>
+          <Button size="sm" variant="outline" onClick={() => void runCopyAction('text-copy', emailTemplate.slice(0, 155), 'Text copy', 'dayof-text-copy.txt')} disabled={!collectionUrl || copyingKey === 'text-copy'}>
             <MessageSquare className="w-4 h-4 mr-1" />
-            Copy text copy
+            {copyingKey === 'text-copy'
+              ? 'Copying...'
+              : copyNotice?.key === 'text-copy'
+                ? copyNotice.mode === 'downloaded'
+                  ? 'Downloaded text copy'
+                  : 'Copied text copy'
+                : 'Copy text copy'}
           </Button>
           <Button size="sm" variant="outline" onClick={() => openMessageComposer('email')} disabled={!collectionUrl}>
             <Send className="w-4 h-4 mr-1" />
@@ -208,7 +289,7 @@ export const AddressCollectionTab: React.FC<Props> = ({ siteId, isDemoMode = fal
             <select
               value={view}
               onChange={(event) => setView(event.target.value as typeof view)}
-              className="rounded-lg border border-border-subtle bg-surface px-2 py-1 text-xs text-text-secondary"
+              className="rounded-xl border border-border-subtle bg-surface px-2 py-1 text-xs text-text-secondary"
             >
               <option value="missing-address">Addresses</option>
               <option value="missing-contact">Contact info</option>

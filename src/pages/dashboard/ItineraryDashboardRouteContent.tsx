@@ -17,6 +17,7 @@ import {
   Wand2,
   X,
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { DashboardPageHero } from '../../components/dashboard/DashboardPageHero';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
@@ -73,6 +74,7 @@ type Props = {
   setEditingEvent: React.Dispatch<React.SetStateAction<ItineraryEvent | null>>;
   setFormData: React.Dispatch<React.SetStateAction<ItineraryFormData>>;
   setSaveError: React.Dispatch<React.SetStateAction<string | null>>;
+  setSaveNotice: React.Dispatch<React.SetStateAction<string | null>>;
   setSelectedEventId: React.Dispatch<React.SetStateAction<string | null>>;
   setShiftFromEventId: React.Dispatch<React.SetStateAction<string>>;
   setShiftMinutes: React.Dispatch<React.SetStateAction<number>>;
@@ -115,6 +117,7 @@ export function ItineraryDashboardRouteContent({
   setEditingEvent,
   setFormData,
   setSaveError,
+  setSaveNotice,
   setSelectedEventId,
   setShiftFromEventId,
   setShiftMinutes,
@@ -132,16 +135,28 @@ export function ItineraryDashboardRouteContent({
   timelineBusy,
   timelineInsights,
 }: Props) {
+  const navigate = useNavigate();
+  const handleFormDataChange = <K extends keyof ItineraryFormData>(field: K, value: ItineraryFormData[K]) => {
+    setSaveError(null);
+    setSaveNotice(null);
+    setFormData((current) => ({ ...current, [field]: value }));
+  };
+
+  const clearTimelineFeedback = () => {
+    setSaveError(null);
+    setSaveNotice(null);
+  };
+
   return (
     <div className="space-y-6">
       <DashboardPageHero
-        eyebrow="Wedding Day"
-        title="Weekend schedule and timing."
-        description="Add the moments guests need, keep private notes close, and connect the schedule to the wedding-day view."
+        eyebrow="Schedule"
+        title="A weekend guests can follow easily."
+        description="Keep ceremony timing, travel details, and day-of notes clear."
         stats={[
-          { label: 'Events', value: events.length, detail: `${events.filter((event) => event.is_visible !== false).length} visible to guests` },
-          { label: 'Timing notes', value: timelineInsights.length, detail: timelineInsights.length > 0 ? 'worth checking' : 'no timing issues found' },
-          { label: 'Shift preview', value: shiftPreviewCount, detail: 'events can move together' },
+          { label: 'Wedding date', value: events[0]?.event_date ? formatItineraryEventDate(events[0].event_date) : 'Not set', detail: 'core weekend anchor' },
+          { label: 'Weekend events', value: `${events.length} planned`, detail: `${events.filter((event) => event.is_visible !== false).length} visible to guests` },
+          { label: 'Timing notes', value: timelineInsights.length > 0 ? 'Needs review' : 'Live', detail: timelineInsights.length > 0 ? `${timelineInsights.length} worth checking` : 'no timing issues found' },
         ]}
         actions={
           <Button onClick={() => openEventForm()}>
@@ -151,18 +166,80 @@ export function ItineraryDashboardRouteContent({
         }
       />
 
+      <section className="grid gap-4 xl:grid-cols-[minmax(0,1.05fr)_320px]">
+        <article className="rounded-3xl border border-border-subtle bg-white p-5 shadow-sm">
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary/75">Your weekend</p>
+          <h2 className="mt-3 font-serif text-2xl font-normal text-text-primary">A rhythm guests can follow.</h2>
+          <div className="mt-5 space-y-3">
+            {events.slice(0, 3).map((event) => (
+              <div key={event.id} className="flex items-start justify-between gap-4 rounded-2xl border border-border-subtle bg-surface-subtle/30 p-4">
+                <div>
+                  <p className="text-sm font-semibold text-text-primary">{event.event_name}</p>
+                  <p className="mt-1 text-sm text-text-secondary">
+                    {event.event_date ? formatItineraryEventDate(event.event_date) : 'Date to come'}
+                    {event.start_time ? ` · ${formatTime(event.start_time)}` : ''}
+                    {event.location_name ? ` · ${event.location_name}` : ''}
+                  </p>
+                </div>
+                <button type="button" onClick={() => openEventForm(event)} className="text-sm font-semibold text-primary">
+                  Edit event
+                </button>
+              </div>
+            ))}
+            {events.length === 0 && (
+              <div className="rounded-2xl border border-border-subtle bg-surface-subtle/30 p-4">
+                <p className="text-sm font-semibold text-text-primary">No events yet.</p>
+                <p className="mt-2 text-sm leading-6 text-text-secondary">Add the key moments first so guests always know what comes next.</p>
+              </div>
+            )}
+          </div>
+        </article>
+
+        <aside className="rounded-3xl border border-border-subtle bg-white p-5 shadow-sm">
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary/75">Top priority</p>
+          <div className="mt-4 space-y-3">
+            {timelineInsights.length > 0 ? (
+              timelineInsights.slice(0, 2).map((insight, index) => (
+                <div key={`${insight.eventId}-${index}`} className="rounded-2xl border border-border-subtle bg-surface-subtle/30 p-4">
+                  <p className="text-sm font-semibold text-text-primary">{insight.title}</p>
+                  <p className="mt-2 text-sm leading-6 text-text-secondary">{insight.detail}</p>
+                </div>
+              ))
+            ) : (
+              <div className="rounded-2xl border border-border-subtle bg-surface-subtle/30 p-4">
+                <p className="text-sm font-semibold text-text-primary">Nothing urgent is waiting.</p>
+                <p className="mt-2 text-sm leading-6 text-text-secondary">Timing is in a calm place right now. The detailed editor and shift tools stay ready below.</p>
+              </div>
+            )}
+          </div>
+        </aside>
+      </section>
+
       {showEventForm && (
         <Card className="p-6">
-          <h2 className="text-xl font-semibold text-neutral-900 mb-4">
-            {editingEvent ? 'Edit itinerary event' : 'Add itinerary event'}
-          </h2>
+          <div className="mb-5 flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary/75">Event workspace</p>
+              <h2 className="mt-3 text-xl font-semibold text-neutral-900">
+                {editingEvent ? 'Edit the details guests will follow.' : 'Add the next event guests should see.'}
+              </h2>
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-text-secondary">
+                This is where timing, location, notes, and visibility stay aligned before anything shows up on the public schedule.
+              </p>
+            </div>
+            <div className="inline-flex flex-wrap gap-2 text-xs text-text-tertiary">
+              <span className="rounded-xl border border-border-subtle bg-surface-subtle/30 px-3 py-1">Timing first</span>
+              <span className="rounded-xl border border-border-subtle bg-surface-subtle/30 px-3 py-1">Guest-facing notes</span>
+              <span className="rounded-xl border border-border-subtle bg-surface-subtle/30 px-3 py-1">Visibility control</span>
+            </div>
+          </div>
           <form noValidate onSubmit={handleSaveEvent} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-neutral-700 mb-1">Event name *</label>
                 <Input
                   value={formData.event_name}
-                  onChange={(e) => setFormData({ ...formData, event_name: e.target.value })}
+                  onChange={(e) => handleFormDataChange('event_name', e.target.value)}
                   placeholder="e.g., Welcome Dinner, Rehearsal Dinner"
                 />
               </div>
@@ -172,7 +249,7 @@ export function ItineraryDashboardRouteContent({
                 <Input
                   type="date"
                   value={formData.event_date}
-                  onChange={(e) => setFormData({ ...formData, event_date: e.target.value })}
+                  onChange={(e) => handleFormDataChange('event_date', e.target.value)}
                 />
               </div>
 
@@ -181,7 +258,7 @@ export function ItineraryDashboardRouteContent({
                 <Input
                   type="time"
                   value={formData.start_time}
-                  onChange={(e) => setFormData({ ...formData, start_time: e.target.value })}
+                  onChange={(e) => handleFormDataChange('start_time', e.target.value)}
                 />
               </div>
 
@@ -190,7 +267,7 @@ export function ItineraryDashboardRouteContent({
                 <Input
                   type="time"
                   value={formData.end_time}
-                  onChange={(e) => setFormData({ ...formData, end_time: e.target.value })}
+                  onChange={(e) => handleFormDataChange('end_time', e.target.value)}
                 />
               </div>
 
@@ -198,7 +275,7 @@ export function ItineraryDashboardRouteContent({
                 <label className="block text-sm font-medium text-neutral-700 mb-1">Location name</label>
                 <Input
                   value={formData.location_name}
-                  onChange={(e) => setFormData({ ...formData, location_name: e.target.value })}
+                  onChange={(e) => handleFormDataChange('location_name', e.target.value)}
                   placeholder="Venue or place name"
                 />
               </div>
@@ -207,7 +284,7 @@ export function ItineraryDashboardRouteContent({
                 <label className="block text-sm font-medium text-neutral-700 mb-1">Dress Code</label>
                 <Input
                   value={formData.dress_code}
-                  onChange={(e) => setFormData({ ...formData, dress_code: e.target.value })}
+                  onChange={(e) => handleFormDataChange('dress_code', e.target.value)}
                   placeholder="e.g., Cocktail Attire"
                 />
               </div>
@@ -217,7 +294,7 @@ export function ItineraryDashboardRouteContent({
               <label className="block text-sm font-medium text-neutral-700 mb-1">Location Address</label>
               <Input
                 value={formData.location_address}
-                onChange={(e) => setFormData({ ...formData, location_address: e.target.value })}
+                onChange={(e) => handleFormDataChange('location_address', e.target.value)}
                 placeholder="Full address"
               />
             </div>
@@ -226,7 +303,7 @@ export function ItineraryDashboardRouteContent({
               <label className="block text-sm font-medium text-neutral-700 mb-1">Description</label>
               <Textarea
                 value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                onChange={(e) => handleFormDataChange('description', e.target.value)}
                 placeholder="Event details and description"
                 rows={3}
               />
@@ -236,7 +313,7 @@ export function ItineraryDashboardRouteContent({
               <label className="block text-sm font-medium text-neutral-700 mb-1">Notes for guests</label>
               <Textarea
                 value={formData.notes}
-                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                onChange={(e) => handleFormDataChange('notes', e.target.value)}
                 placeholder="Anything guests should know before they arrive"
                 rows={2}
               />
@@ -247,7 +324,7 @@ export function ItineraryDashboardRouteContent({
                 type="checkbox"
                 id="is_visible"
                 checked={formData.is_visible}
-                onChange={(e) => setFormData({ ...formData, is_visible: e.target.checked })}
+                onChange={(e) => handleFormDataChange('is_visible', e.target.checked)}
                 className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-neutral-300 rounded"
               />
               <label htmlFor="is_visible" className="ml-2 block text-sm text-neutral-700">
@@ -261,9 +338,9 @@ export function ItineraryDashboardRouteContent({
                   type="checkbox"
                   id="auto_create_album"
                   checked={autoCreateAlbum}
-                  onChange={(e) => setAutoCreateAlbum(e.target.checked)}
-                  className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-neutral-300 rounded"
-                />
+                onChange={(e) => setAutoCreateAlbum(e.target.checked)}
+                className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-neutral-300 rounded"
+              />
                 <label htmlFor="auto_create_album" className="ml-2 block text-sm text-neutral-700">
                   Create a photo album for this event
                 </label>
@@ -271,13 +348,13 @@ export function ItineraryDashboardRouteContent({
             )}
 
             {saveError && (
-              <div className="rounded-lg border border-error/25 bg-error/5 px-3 py-2 text-sm text-text-primary">
+              <div className="rounded-2xl border border-error/25 bg-error/5 px-3 py-2 text-sm text-text-primary">
                 {saveError}
               </div>
             )}
 
             {saveNotice && (
-              <div className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-2 text-sm text-text-primary">
+              <div className="rounded-2xl border border-border-subtle bg-surface-subtle px-3 py-2 text-sm text-text-primary">
                 {saveNotice}
               </div>
             )}
@@ -293,6 +370,7 @@ export function ItineraryDashboardRouteContent({
                   setShowEventForm(false);
                   setEditingEvent(null);
                   setSaveError(null);
+                  setSaveNotice(null);
                 }}
               >
                 Cancel
@@ -311,27 +389,57 @@ export function ItineraryDashboardRouteContent({
             </div>
             <p className="mt-1 text-sm text-neutral-600">Generate a working day-of timeline, then edit each item into the final producer schedule.</p>
             <div className="mt-4 grid gap-3 sm:grid-cols-3">
-              <Input type="date" value={templateDate} onChange={(e) => setTemplateDate(e.target.value)} />
-              <Input type="time" value={templateStart} onChange={(e) => setTemplateStart(e.target.value)} />
+              <Input
+                type="date"
+                value={templateDate}
+                onChange={(e) => {
+                  clearTimelineFeedback();
+                  setTemplateDate(e.target.value);
+                }}
+              />
+              <Input
+                type="time"
+                value={templateStart}
+                onChange={(e) => {
+                  clearTimelineFeedback();
+                  setTemplateStart(e.target.value);
+                }}
+              />
               <Button type="button" onClick={() => void handleCreateSmartTemplate()} disabled={timelineBusy !== null}>
                 {timelineBusy === 'Building template…' ? 'Building…' : 'Build template'}
               </Button>
             </div>
           </div>
-          <div className="rounded-lg border border-border-subtle bg-surface-subtle/40 p-4">
+          <div className="rounded-2xl border border-border-subtle bg-surface-subtle/40 p-4">
             <div className="flex items-center gap-2">
               <MoveRight className="h-5 w-5 text-neutral-800" />
               <h3 className="text-sm font-semibold text-neutral-900">Bulk time shift</h3>
             </div>
             <p className="mt-1 text-xs leading-5 text-neutral-600">When ceremony or photos move, shift the rest of the day without rebuilding cards.</p>
             <div className="mt-3 grid gap-2 sm:grid-cols-[1fr_110px_auto_auto]">
-              <select className="rounded-lg border border-border-subtle bg-white px-3 py-2 text-sm" value={shiftFromEventId} onChange={(e) => setShiftFromEventId(e.target.value)}>
+              <select
+                className="rounded-xl border border-border-subtle bg-white px-3 py-2 text-sm"
+                value={shiftFromEventId}
+                onChange={(e) => {
+                  clearTimelineFeedback();
+                  setShiftFromEventId(e.target.value);
+                }}
+              >
                 <option value="all">All events</option>
                 {sortedShiftEvents.map((event) => (
                   <option key={event.id} value={event.id}>From {event.event_name}</option>
                 ))}
               </select>
-              <Input type="number" min="1" max="240" value={shiftMinutes} onChange={(e) => setShiftMinutes(Number(e.target.value) || 1)} />
+              <Input
+                type="number"
+                min="1"
+                max="240"
+                value={shiftMinutes}
+                onChange={(e) => {
+                  clearTimelineFeedback();
+                  setShiftMinutes(Number(e.target.value) || 1);
+                }}
+              />
               <Button type="button" variant="outline" onClick={() => void handleShiftTimeline(-Math.abs(shiftMinutes))} disabled={timelineBusy !== null}>Earlier</Button>
               <Button type="button" variant="outline" onClick={() => void handleShiftTimeline(Math.abs(shiftMinutes))} disabled={timelineBusy !== null}>Later</Button>
             </div>
@@ -357,7 +465,7 @@ export function ItineraryDashboardRouteContent({
           </div>
           <div className="mt-3 grid gap-2 md:grid-cols-2">
             {timelineInsights.map((insight, index) => (
-              <div key={`${insight.eventId}-${insight.kind}-${index}`} className="rounded-lg border border-border-subtle bg-surface-subtle/40 px-3 py-3">
+              <div key={`${insight.eventId}-${insight.kind}-${index}`} className="rounded-2xl border border-border-subtle bg-surface-subtle/40 px-3 py-3">
                 <p className="text-sm font-semibold text-neutral-900">{insight.title}</p>
                 <p className="mt-1 text-xs leading-5 text-neutral-600">{insight.detail}</p>
               </div>
@@ -396,7 +504,7 @@ export function ItineraryDashboardRouteContent({
                         </span>
                       )}
                       {conflictIds.has(event.id) && (
-                        <span className="flex items-center gap-1.5 rounded-lg border border-border-subtle bg-surface-subtle px-2 py-1 text-xs font-medium text-text-primary">
+                        <span className="flex items-center gap-1.5 rounded-xl border border-border-subtle bg-surface-subtle px-2 py-1 text-xs font-medium text-text-primary">
                           <AlertTriangle className="w-3 h-3" />
                           Time overlap with another event
                         </span>
@@ -432,7 +540,7 @@ export function ItineraryDashboardRouteContent({
                             href={getMapUrl(event.location_name || '', event.location_address || '')}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="flex items-center gap-1 px-3 py-1 text-sm bg-primary-50 text-primary-700 hover:bg-primary-100 rounded-lg transition-colors"
+                            className="flex items-center gap-1 rounded-xl bg-primary-50 px-3 py-1 text-sm text-primary-700 transition-colors hover:bg-primary-100"
                           >
                             <MapPin className="w-3 h-3" />
                             Map
@@ -447,22 +555,22 @@ export function ItineraryDashboardRouteContent({
                     </div>
 
                     <div className="flex flex-wrap items-stretch gap-2 pt-3 border-t border-border-subtle">
-                      <div className="flex items-center gap-2 rounded-lg border border-border-subtle bg-surface-subtle/40 px-2.5 py-1.5 text-sm">
+                      <div className="flex items-center gap-2 rounded-xl border border-border-subtle bg-surface-subtle/40 px-2.5 py-1.5 text-sm">
                         <Users className="w-4 h-4 text-neutral-500" />
                         <span className="font-semibold text-neutral-900">{event.invitation_count}</span>
                         <span className="text-neutral-500">invited</span>
                       </div>
-                      <div className="flex items-center gap-2 rounded-lg border border-border-subtle bg-surface-subtle/30 px-2.5 py-1.5 text-sm">
+                      <div className="flex items-center gap-2 rounded-xl border border-border-subtle bg-surface-subtle/30 px-2.5 py-1.5 text-sm">
                         <Check className="w-4 h-4 text-text-tertiary" />
                         <span className="font-semibold text-text-primary">{event.attending_count}</span>
                         <span className="text-text-secondary">yes</span>
                       </div>
-                      <div className="flex items-center gap-2 rounded-lg border border-border-subtle bg-surface-subtle/30 px-2.5 py-1.5 text-sm">
+                      <div className="flex items-center gap-2 rounded-xl border border-border-subtle bg-surface-subtle/30 px-2.5 py-1.5 text-sm">
                         <X className="w-4 h-4 text-text-tertiary" />
                         <span className="font-semibold text-text-primary">{event.declined_count}</span>
                         <span className="text-text-secondary">no</span>
                       </div>
-                      <div className="flex items-center gap-2 rounded-lg border border-border-subtle bg-surface-subtle/30 px-2.5 py-1.5 text-sm">
+                      <div className="flex items-center gap-2 rounded-xl border border-border-subtle bg-surface-subtle/30 px-2.5 py-1.5 text-sm">
                         <HelpCircle className="w-4 h-4 text-text-tertiary" />
                         <span className="font-semibold text-text-primary">{pending}</span>
                         <span className="text-text-secondary">pending</span>
@@ -484,7 +592,10 @@ export function ItineraryDashboardRouteContent({
                       size="sm"
                       onClick={() => {
                         const params = new URLSearchParams({ eventId: event.id, eventName: event.event_name });
-                        window.location.href = `/dashboard/photos?${params.toString()}`;
+                        navigate({
+                          pathname: '/dashboard/photos',
+                          search: `?${params.toString()}`,
+                        });
                       }}
                     >
                       <Camera className="w-4 h-4 mr-1" />

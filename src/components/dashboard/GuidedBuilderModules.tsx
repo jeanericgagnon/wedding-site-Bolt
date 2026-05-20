@@ -326,7 +326,7 @@ export const GuidedBuilderModules: React.FC<GuidedBuilderModulesProps> = ({
             <button
               key={module.id}
               onClick={() => setActiveModule(module.id)}
-              className={`w-full text-left p-3 rounded-lg transition-all ${
+              className={`w-full rounded-xl p-3 text-left transition-all ${
                 isActive
                   ? 'bg-primary text-white shadow-lg'
                   : 'bg-surface hover:bg-background border border-border'
@@ -461,7 +461,7 @@ export const GuidedBuilderModules: React.FC<GuidedBuilderModulesProps> = ({
               {activeModule === 'venue' && (
                 <div className="space-y-4">
                   {weddingData.venues.map((venue) => (
-                    <div key={venue.id} className="p-4 bg-background rounded-lg border border-border">
+                    <div key={venue.id} className="rounded-2xl border border-border bg-background p-4">
                       <div className="flex items-start justify-between mb-3">
                         <h4 className="font-medium text-text-primary">Venue</h4>
                         <button
@@ -506,7 +506,7 @@ export const GuidedBuilderModules: React.FC<GuidedBuilderModulesProps> = ({
               {activeModule === 'schedule' && (
                 <div className="space-y-4">
                   {weddingData.schedule.map((item) => (
-                    <div key={item.id} className="p-4 bg-background rounded-lg border border-border">
+                    <div key={item.id} className="rounded-2xl border border-border bg-background p-4">
                       <div className="flex items-start justify-between mb-3">
                         <h4 className="font-medium text-text-primary">Event</h4>
                         <button
@@ -561,7 +561,7 @@ export const GuidedBuilderModules: React.FC<GuidedBuilderModulesProps> = ({
               {activeModule === 'registry' && (
                 <div className="space-y-4">
                   {weddingData.registry.links.map((link) => (
-                    <div key={link.id} className="p-4 bg-background rounded-lg border border-border">
+                    <div key={link.id} className="rounded-2xl border border-border bg-background p-4">
                       <div className="flex items-start justify-between mb-3">
                         <h4 className="font-medium text-text-primary">Registry link</h4>
                         <button
@@ -597,7 +597,7 @@ export const GuidedBuilderModules: React.FC<GuidedBuilderModulesProps> = ({
               {activeModule === 'faq' && (
                 <div className="space-y-4">
                   {weddingData.faq.map((item) => (
-                    <div key={item.id} className="p-4 bg-background rounded-lg border border-border">
+                    <div key={item.id} className="rounded-2xl border border-border bg-background p-4">
                       <div className="flex items-start justify-between mb-3">
                         <h4 className="font-medium text-text-primary">Guest question</h4>
                         <button
@@ -633,13 +633,13 @@ export const GuidedBuilderModules: React.FC<GuidedBuilderModulesProps> = ({
 
               {activeModule === 'travel' && (
                 <div className="space-y-4">
-                  <div className="rounded-lg border border-border bg-background p-4">
+                  <div className="rounded-2xl border border-border bg-background p-4">
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                       <div>
                         <h4 className="font-medium text-text-primary">Guest travel portal readiness</h4>
                         <p className="mt-1 text-sm text-text-secondary">Keep arrival, lodging, transport, venue, and schedule guidance together before guests rely on it from the hub.</p>
                       </div>
-                      <span className="inline-flex w-fit rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1 text-xs font-medium text-text-primary">
+                      <span className="inline-flex w-fit rounded-xl border border-border-subtle bg-surface-subtle px-3 py-1 text-xs font-medium text-text-primary">
                         {travelPortalReadiness.readyCount} of {travelPortalReadiness.steps.length} ready
                       </span>
                     </div>
@@ -651,7 +651,7 @@ export const GuidedBuilderModules: React.FC<GuidedBuilderModulesProps> = ({
                       {travelPortalReadiness.coverageBadges.map((badge) => (
                         <span
                           key={badge}
-                          className="inline-flex rounded-lg border border-border-subtle bg-surface-subtle px-2.5 py-1 text-[11px] font-medium text-text-secondary"
+                          className="inline-flex rounded-xl border border-border-subtle bg-surface-subtle px-2.5 py-1 text-[11px] font-medium text-text-secondary"
                         >
                           {badge}
                         </span>
@@ -659,10 +659,10 @@ export const GuidedBuilderModules: React.FC<GuidedBuilderModulesProps> = ({
                     </div>
                     <div className="mt-4 grid gap-2 sm:grid-cols-2">
                       {travelPortalReadiness.steps.map((step) => (
-                        <div key={step.id} className="rounded-lg border border-border-subtle bg-white p-3">
+                        <div key={step.id} className="rounded-xl border border-border-subtle bg-white p-3">
                           <div className="flex items-start justify-between gap-3">
                             <p className="text-sm font-medium text-text-primary">{step.label}</p>
-                            <span className={`shrink-0 rounded-lg px-2 py-0.5 text-[11px] font-medium ${
+                            <span className={`shrink-0 rounded-xl px-2 py-0.5 text-[11px] font-medium ${
                               step.status === 'ready'
                                 ? 'bg-success/10 text-success'
                                 : step.status === 'needs-info'
@@ -686,7 +686,7 @@ export const GuidedBuilderModules: React.FC<GuidedBuilderModulesProps> = ({
                   {weddingData.venues.length > 0 && (
                     <div className="space-y-2">
                       {weddingData.venues.map((venue) => (
-                        <div key={venue.id} className="p-3 bg-background rounded-lg border border-border flex items-center gap-2">
+                        <div key={venue.id} className="rounded-xl border border-border bg-background p-3 flex items-center gap-2">
                           <span className="font-medium text-text-primary text-sm">{venue.name || 'Unnamed Venue'}</span>
                           {venue.address && <span className="text-xs text-text-secondary truncate">{venue.address}</span>}
                         </div>
@@ -746,7 +746,7 @@ export const GuidedBuilderModules: React.FC<GuidedBuilderModulesProps> = ({
 
               {activeModule === 'rsvp' && (
                 <div className="space-y-4">
-                  <div className="flex items-center justify-between p-4 bg-background rounded-lg border border-border">
+                  <div className="flex items-center justify-between rounded-2xl border border-border bg-background p-4">
                     <div>
                       <h4 className="font-medium text-text-primary">Enable RSVP</h4>
                       <p className="text-sm text-text-secondary">Let guests reply through your website</p>
@@ -797,7 +797,7 @@ export const GuidedBuilderModules: React.FC<GuidedBuilderModulesProps> = ({
                     {weddingData.media.gallery.map((img) => (
                       <div
                         key={img.id}
-                        className="p-4 bg-background rounded-lg border border-border mb-3"
+                        className="mb-3 rounded-2xl border border-border bg-background p-4"
                       >
                         <div className="flex items-start justify-between mb-3">
                           <h5 className="font-medium text-text-primary">Image</h5>

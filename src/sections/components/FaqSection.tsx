@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { WeddingDataV1 } from '../../types/weddingData';
 import { SectionInstance } from '../../types/layoutConfig';
 import { ChevronDown, HelpCircle, Calendar, MapPin, Shirt, Gift } from 'lucide-react';
@@ -77,6 +77,12 @@ export const FaqAccordion: React.FC<Props> = ({ data, instance }) => {
     return matchesSearch && matchesCategory;
   });
 
+  useEffect(() => {
+    setOpenId(null);
+    setSearch('');
+    setCategory('all');
+  }, [faqsToShow]);
+
   if (faqsToShow.length === 0) {
     return (
       <section className="py-16 md:py-20 px-4 bg-surface-subtle">
@@ -106,7 +112,7 @@ export const FaqAccordion: React.FC<Props> = ({ data, instance }) => {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search guest questions"
-            className="w-full sm:max-w-xs rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text-primary"
+            className="w-full sm:max-w-xs rounded-xl border border-border bg-surface px-3 py-2 text-sm text-text-primary"
           />
           <div className="flex items-center gap-1.5 flex-wrap">
             {[

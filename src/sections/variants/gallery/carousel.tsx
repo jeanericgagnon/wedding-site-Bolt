@@ -49,6 +49,10 @@ const GalleryCarousel: React.FC<SectionComponentProps<GalleryCarouselData>> = ({
   const total = slides.length;
 
   React.useEffect(() => {
+    setIndex(0);
+  }, [data.images]);
+
+  React.useEffect(() => {
     if (!data.autoplay || total <= 1) return;
     const speedSeconds = Math.min(Math.max(data.glideSpeed || 6, 2), 20);
     const timer = window.setInterval(() => {

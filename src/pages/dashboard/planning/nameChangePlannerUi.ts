@@ -141,43 +141,70 @@ export const NAME_CHANGE_EXTRACTION_FIELD_PLACEHOLDERS: Partial<Record<NameChang
 export const NAME_CHANGE_SECTION_PREFS_STORAGE_KEY = 'dayoflove:name-change:collapsed-sections';
 export const NAME_CHANGE_ADMIN_PREFS_STORAGE_KEY = 'dayoflove:name-change:show-admin';
 
-export function readNameChangeAdminPreference(): boolean {
+export function buildNameChangePreferenceStorageKey(storageKey: string, storageScope?: string | null): string {
+  const scope = typeof storageScope === 'string' ? storageScope.trim() : '';
+  return scope ? `${storageKey}::${scope}` : storageKey;
+}
+
+export function readNameChangeAdminPreference(storageScope?: string | null): boolean {
   if (typeof window === 'undefined') return false;
 
   try {
-    return window.localStorage.getItem(NAME_CHANGE_ADMIN_PREFS_STORAGE_KEY) === 'true';
+    const storageKey = buildNameChangePreferenceStorageKey(NAME_CHANGE_ADMIN_PREFS_STORAGE_KEY, storageScope);
+    const raw = window.localStorage.getItem(storageKey) ?? (
+      storageKey !== NAME_CHANGE_ADMIN_PREFS_STORAGE_KEY
+        ? window.localStorage.getItem(NAME_CHANGE_ADMIN_PREFS_STORAGE_KEY)
+        : null
+    );
+    if (raw === 'true' && storageKey !== NAME_CHANGE_ADMIN_PREFS_STORAGE_KEY && !window.localStorage.getItem(storageKey)) {
+      window.localStorage.setItem(storageKey, 'true');
+    }
+    return raw === 'true';
   } catch {
     return false;
   }
 }
 
-export function writeNameChangeAdminPreference(showAdmin: boolean): void {
+export function writeNameChangeAdminPreference(showAdmin: boolean, storageScope?: string | null): void {
   if (typeof window === 'undefined') return;
 
   try {
-    window.localStorage.setItem(NAME_CHANGE_ADMIN_PREFS_STORAGE_KEY, String(showAdmin));
+    window.localStorage.setItem(buildNameChangePreferenceStorageKey(NAME_CHANGE_ADMIN_PREFS_STORAGE_KEY, storageScope), String(showAdmin));
   } catch {}
 }
 
-export function readNameChangeCollapsedSections(): Record<string, boolean> {
+export function readNameChangeCollapsedSections(storageScope?: string | null): Record<string, boolean> {
   if (typeof window === 'undefined') return {};
 
   try {
-    const raw = window.localStorage.getItem(NAME_CHANGE_SECTION_PREFS_STORAGE_KEY);
+    const storageKey = buildNameChangePreferenceStorageKey(NAME_CHANGE_SECTION_PREFS_STORAGE_KEY, storageScope);
+    const raw = window.localStorage.getItem(storageKey) ?? (
+      storageKey !== NAME_CHANGE_SECTION_PREFS_STORAGE_KEY
+        ? window.localStorage.getItem(NAME_CHANGE_SECTION_PREFS_STORAGE_KEY)
+        : null
+    );
     const parsed = raw ? JSON.parse(raw) as unknown : {};
-    return parsed && typeof parsed === 'object' && !Array.isArray(parsed)
+    const normalized = parsed && typeof parsed === 'object' && !Array.isArray(parsed)
       ? Object.fromEntries(Object.entries(parsed).filter(([, value]) => typeof value === 'boolean'))
       : {};
+    if (
+      storageKey !== NAME_CHANGE_SECTION_PREFS_STORAGE_KEY
+      && Object.keys(normalized).length > 0
+      && !window.localStorage.getItem(storageKey)
+    ) {
+      window.localStorage.setItem(storageKey, JSON.stringify(normalized));
+    }
+    return normalized;
   } catch {
     return {};
   }
 }
 
-export function writeNameChangeCollapsedSections(collapsedSections: Record<string, boolean>): void {
+export function writeNameChangeCollapsedSections(collapsedSections: Record<string, boolean>, storageScope?: string | null): void {
   if (typeof window === 'undefined') return;
 
   try {
-    window.localStorage.setItem(NAME_CHANGE_SECTION_PREFS_STORAGE_KEY, JSON.stringify(collapsedSections));
+    window.localStorage.setItem(buildNameChangePreferenceStorageKey(NAME_CHANGE_SECTION_PREFS_STORAGE_KEY, storageScope), JSON.stringify(collapsedSections));
   } catch {}
 }
 

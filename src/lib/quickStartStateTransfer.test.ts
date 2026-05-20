@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { clearQuickStartDraftSnapshot, persistQuickStartDraftSnapshot, QUICK_START_DRAFT_RETENTION_MS, QUICK_START_STORAGE_KEY, readQuickStartDraftSnapshot } from './quickStartStateTransfer';
+import { buildQuickStartDraftStorageKey, clearQuickStartDraftSnapshot, migrateQuickStartDraftSnapshotScope, persistQuickStartDraftSnapshot, QUICK_START_DRAFT_RETENTION_MS, QUICK_START_STORAGE_KEY, readQuickStartDraftSnapshot } from './quickStartStateTransfer';
 
 describe('quickStartStateTransfer', () => {
   beforeEach(() => {
@@ -54,6 +54,18 @@ describe('quickStartStateTransfer', () => {
 
     expect(restored?.initialSetupAnswers.names).toBe('Alex & Jordan');
     expect(JSON.parse(window.localStorage.getItem(QUICK_START_STORAGE_KEY) || '{}').savedAtISO).toBe('2026-03-01T15:30:00.000Z');
+  });
+
+  it('migrates scoped quick start drafts between auth scopes without dropping progress', () => {
+    persistQuickStartDraftSnapshot({
+      initialSetupAnswers: { names: 'Alex & Jordan' },
+    }, 'alex@example.com');
+
+    const migrated = migrateQuickStartDraftSnapshotScope('alex@example.com', 'user-1');
+
+    expect(migrated?.initialSetupAnswers.names).toBe('Alex & Jordan');
+    expect(window.localStorage.getItem(buildQuickStartDraftStorageKey('alex@example.com'))).toBeNull();
+    expect(JSON.parse(window.localStorage.getItem(buildQuickStartDraftStorageKey('user-1')) || '{}').initialSetupAnswers.names).toBe('Alex & Jordan');
   });
 
   it('survives malformed existing storage by normalizing on read', () => {

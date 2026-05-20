@@ -228,7 +228,7 @@ export const BuilderSidebarLibrary: React.FC<BuilderSidebarLibraryProps> = ({ ac
                 <p className="text-xs mt-1 text-gray-300 mb-4">Start building your wedding site</p>
                 <button
                   onClick={() => { setActiveTab('sections'); setExpandedType(null); }}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[var(--color-accent)] text-white text-xs font-medium rounded-lg hover:bg-[var(--color-accent-hover)] transition-colors"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[var(--color-accent)] text-white text-xs font-medium rounded-xl hover:bg-[var(--color-accent-hover)] transition-colors"
                 >
                   <Plus size={12} />
                   Add your first section
@@ -267,7 +267,7 @@ export const BuilderSidebarLibrary: React.FC<BuilderSidebarLibraryProps> = ({ ac
 
         {activeTab === 'sections' && !expandedManifest && (
           <div className="p-3">
-            <div className="mb-3 rounded-lg border border-[var(--color-border-subtle)] bg-[var(--color-surface-subtle)]/70 p-2">
+            <div className="mb-3 rounded-xl border border-[var(--color-border-subtle)] bg-[var(--color-surface-subtle)]/70 p-2">
               <p className="px-1 text-[11px] font-semibold text-[var(--color-text-primary)] mb-2">Quick presets</p>
               <button
                 onClick={() => {
@@ -282,7 +282,7 @@ export const BuilderSidebarLibrary: React.FC<BuilderSidebarLibraryProps> = ({ ac
                 Add starter pack
               </button>
 
-              <div className="mb-2 flex items-center gap-1 rounded-md border border-[var(--color-border-subtle)] bg-white p-1">
+              <div className="mb-2 flex items-center gap-1 rounded-xl border border-[var(--color-border-subtle)] bg-white p-1">
                 <button
                   type="button"
                   onClick={() => setQuickPresetGroup('essentials')}
@@ -514,7 +514,7 @@ const VariantPicker: React.FC<VariantPickerProps> = ({
       <div className="flex items-center gap-2 px-3 py-3 border-b border-[var(--color-border-subtle)]">
         <button
           onClick={onBack}
-          className="p-1.5 rounded-md hover:bg-gray-100 text-gray-500 hover:text-gray-700 transition-colors flex-shrink-0"
+          className="p-1.5 rounded-xl hover:bg-gray-100 text-gray-500 hover:text-gray-700 transition-colors flex-shrink-0"
           aria-label="Back to sections"
         >
           <ArrowLeft size={14} />
@@ -533,7 +533,7 @@ const VariantPicker: React.FC<VariantPickerProps> = ({
             <p className="text-[11px] text-gray-400 font-semibold">Choose a layout</p>
             <p className="mt-1 text-[11px] leading-relaxed text-gray-500">Each layout gives this section a different feel. Pick the one that fits best.</p>
           </div>
-          <div className="rounded-md border border-neutral-200 bg-neutral-50 px-2 py-1 text-[10px] font-semibold text-neutral-700">
+          <div className="rounded-xl border border-neutral-200 bg-neutral-50 px-2 py-1 text-[10px] font-semibold text-neutral-700">
             {manifest.variantMeta.length} variants
           </div>
         </div>
@@ -559,11 +559,11 @@ const VariantPicker: React.FC<VariantPickerProps> = ({
       </div>
 
       <div className="flex-1 overflow-y-auto px-3.5 pb-3.5">
-        <div className="mb-2 flex items-center justify-between rounded-lg border border-gray-200 bg-white px-2.5 py-1.5">
+        <div className="mb-2 flex items-center justify-between rounded-xl border border-gray-200 bg-white px-2.5 py-1.5">
           <span className="text-[10px] text-gray-500">Variant browser</span>
           <span className="text-[10px] font-medium text-gray-700">{activeVariantIndex + 1} / {manifest.variantMeta.length}</span>
         </div>
-        <div className="mb-2 rounded-lg border border-gray-200 bg-gray-50 px-2.5 py-1.5 text-[10px] text-gray-600">
+        <div className="mb-2 rounded-xl border border-gray-200 bg-gray-50 px-2.5 py-1.5 text-[10px] text-gray-600">
           Use ↑ ↓ to move • Enter to add this section
         </div>
         <div className="grid grid-cols-1 gap-3">
@@ -678,7 +678,7 @@ const VariantCard: React.FC<VariantCardProps> = ({
           <div className="min-w-0 flex-1">
             <div className="mb-1.5 flex items-center gap-1.5">
               <span className="block truncate text-[13px] font-semibold text-gray-800">{variant.label}</span>
-              <span className={`inline-flex items-center rounded-md border px-1.5 py-0.5 text-[9px] font-semibold ${tone.chip}`}>
+              <span className={`inline-flex items-center rounded-xl border px-1.5 py-0.5 text-[9px] font-semibold ${tone.chip}`}>
                 {tone.label}
               </span>
             </div>
@@ -694,7 +694,7 @@ const VariantCard: React.FC<VariantCardProps> = ({
               </p>
             )}
             {isDefault && (
-              <span className="mt-1.5 inline-flex items-center rounded-md border border-[var(--color-border-subtle)] bg-[var(--color-accent-soft)] px-1.5 py-0.5 text-[9px] font-semibold text-[var(--color-accent)]">Default</span>
+              <span className="mt-1.5 inline-flex items-center rounded-xl border border-[var(--color-border-subtle)] bg-[var(--color-accent-soft)] px-1.5 py-0.5 text-[9px] font-semibold text-[var(--color-accent)]">Default</span>
             )}
           </div>
           <span className={`mt-0.5 flex-shrink-0 transform transition-all duration-200 ${isHovered ? 'translate-x-0 opacity-100' : '-translate-x-1 opacity-0 group-focus-visible:translate-x-0 group-focus-visible:opacity-100'}`}>
@@ -754,7 +754,7 @@ const BuilderVariantCardPreview: React.FC<{
           <SectionTypePreview sectionType={sectionType} compact />
         </div>
         <LiveVariantPreview sectionType={typedSectionType} variantId={variantId} weddingData={weddingData} />
-        <div className="absolute right-1.5 top-1.5 rounded-md bg-black/48 px-1.5 py-0.5 text-[8px] font-semibold text-white/95 shadow-sm">
+        <div className="absolute right-1.5 top-1.5 rounded-xl bg-black/48 px-1.5 py-0.5 text-[8px] font-semibold text-white/95 shadow-sm">
           {variantId}
         </div>
         <div
@@ -891,7 +891,7 @@ const SortableLayerItem: React.FC<SortableLayerItemProps> = ({ section, index, p
         dispatch(builderActions.selectSection(section.id));
         scrollToSection(section.id);
       }}
-      className={`flex items-center gap-2 px-2 py-2 rounded-lg cursor-pointer group transition-colors ${
+      className={`flex items-center gap-2 px-2 py-2 rounded-xl cursor-pointer group transition-colors ${
         isSelected
           ? 'bg-[var(--color-accent-soft)] border border-[var(--color-border-subtle)]'
           : 'hover:bg-gray-50 border border-transparent'
@@ -992,7 +992,7 @@ const LayerItemOverlay: React.FC<{ section: BuilderSectionInstance }> = ({ secti
   const manifest = getSectionManifest(section.type);
   const IconComp = SECTION_ICONS[manifest.icon] ?? Layout;
   return (
-    <div className="flex items-center gap-2 px-2 py-2 rounded-lg bg-white border border-[var(--color-accent)] shadow-sm w-56 opacity-95">
+    <div className="flex items-center gap-2 px-2 py-2 rounded-xl bg-white border border-[var(--color-accent)] shadow-sm w-56 opacity-95">
       <GripVertical size={14} className="text-gray-400 flex-shrink-0" />
       <div className="w-6 h-6 rounded bg-[var(--color-accent-soft)] flex items-center justify-center flex-shrink-0">
         <IconComp size={12} className="text-[var(--color-accent)]" />

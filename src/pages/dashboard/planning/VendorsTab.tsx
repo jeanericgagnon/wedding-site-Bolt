@@ -1,5 +1,6 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Plus, Edit2, Trash2, Phone, Mail, Globe, FileText, ChevronDown, ChevronUp, Copy, Download, Star } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { Card } from '../../../components/ui/Card';
 import { Button } from '../../../components/ui/Button';
 import { Badge } from '../../../components/ui/Badge';
@@ -20,6 +21,16 @@ interface Props {
   onUpdate: (id: string, updates: Partial<PlanningVendor>) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
   canEdit?: boolean;
+}
+
+interface VendorFormProps {
+  initial?: Partial<PlanningVendor>;
+  onSave: (v: Partial<PlanningVendor>) => Promise<void>;
+  onCancel: () => void;
+}
+
+interface VendorRatingProps {
+  rating?: number | null;
 }
 
 const VENDOR_TYPES = [
@@ -75,7 +86,45 @@ function clampVendorRating(value: unknown): number | null {
   return Math.max(1, Math.min(5, Math.round(rating)));
 }
 
-const VendorRating: React.FC<{ rating?: number | null }> = ({ rating }) => {
+function getVendorStage(vendor: PlanningVendor, compareDate: Date): 'due-soon' | 'open-balance' | 'paid' {
+  const dueSoon = Boolean(vendor.balance_due > 0 && isVendorDateOnOrBefore(vendor.next_payment_due, compareDate));
+  if (dueSoon) return 'due-soon';
+  if ((vendor.balance_due || 0) > 0) return 'open-balance';
+  return 'paid';
+}
+
+function buildVendorExportRow(vendor: PlanningVendor, meta: VendorMetaMap[string] | undefined) {
+  return [
+    vendor.name,
+    vendor.vendor_type,
+    vendor.contact_name,
+    vendor.email,
+    vendor.phone,
+    vendor.website,
+    vendor.internal_rating ? String(vendor.internal_rating) : '',
+    vendor.rating_status ?? '',
+    vendor.rating_notes ?? '',
+    String(vendor.contract_total || 0),
+    String(vendor.amount_paid || 0),
+    String(vendor.balance_due || 0),
+    vendor.next_payment_due ?? '',
+    meta?.nextFollowUp ?? '',
+    formatVendorReminderChannel(meta?.reminderChannel),
+    formatVendorReminderLeadDays(meta?.reminderLeadDays),
+    meta?.reminderLastQueuedAt ?? '',
+    vendor.document_label ?? '',
+    vendor.document_url ?? '',
+    (meta?.contractFiles ?? []).map((file) => `${file.kind}: ${file.label || file.url}`).join(' | '),
+    (meta?.paymentMilestones ?? []).map((milestone) => [
+      milestone.label,
+      milestone.dueDate,
+      milestone.amount ? fmt(milestone.amount) : null,
+      milestone.status,
+    ].filter(Boolean).join(' / ')).join(' | '),
+  ];
+}
+
+const VendorRating: React.FC<VendorRatingProps> = ({ rating }) => {
   const safeRating = clampVendorRating(rating) ?? 0;
   return (
     <span className="inline-flex items-center gap-0.5" aria-label={safeRating > 0 ? `${safeRating} out of 5 internal rating` : 'No internal rating yet'}>
@@ -90,11 +139,8 @@ const VendorRating: React.FC<{ rating?: number | null }> = ({ rating }) => {
   );
 };
 
-function VendorForm({ initial, onSave, onCancel }: {
-  initial?: Partial<PlanningVendor>;
-  onSave: (v: Partial<PlanningVendor>) => Promise<void>;
-  onCancel: () => void;
-}) {
+function VendorForm({ initial, onSave, onCancel }: VendorFormProps) {
+  const { toast } = useToast();
   const fieldId = (name: string) => `vendor-form-${name}`;
   const [form, setForm] = useState({
     vendor_type: initial?.vendor_type ?? '',
@@ -118,28 +164,33 @@ function VendorForm({ initial, onSave, onCancel }: {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setSaving(true);
-    await onSave({
-      ...form,
-      contract_total: Number(form.contract_total),
-      amount_paid: Number(form.amount_paid),
-      next_payment_due: form.next_payment_due || null,
-      document_label: form.document_label || null,
-      document_url: form.document_url || null,
-      internal_rating: clampVendorRating(form.internal_rating),
-      rating_status: form.rating_status || null,
-      rating_notes: form.rating_notes || null,
-    });
-    setSaving(false);
+    try {
+      await onSave({
+        ...form,
+        contract_total: Number(form.contract_total),
+        amount_paid: Number(form.amount_paid),
+        next_payment_due: form.next_payment_due || null,
+        document_label: form.document_label || null,
+        document_url: form.document_url || null,
+        internal_rating: clampVendorRating(form.internal_rating),
+        rating_status: form.rating_status || null,
+        rating_notes: form.rating_notes || null,
+      });
+    } catch {
+      toast('Couldn’t save that vendor right now.', 'error');
+    } finally {
+      setSaving(false);
+    }
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 rounded-lg border border-border-subtle bg-surface-subtle p-4">
+    <form onSubmit={handleSubmit} className="space-y-4 rounded-2xl border border-border-subtle bg-surface-subtle p-4">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
           <label htmlFor={fieldId('type')} className="block text-xs font-medium text-text-secondary mb-1">Type *</label>
           <select
             id={fieldId('type')}
-            className="w-full px-3 py-2 text-sm bg-surface border border-border rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+            className="w-full rounded-xl border border-border bg-surface px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
             value={form.vendor_type}
             onChange={e => setForm(f => ({ ...f, vendor_type: e.target.value }))}
             required
@@ -152,7 +203,7 @@ function VendorForm({ initial, onSave, onCancel }: {
           <label htmlFor={fieldId('business-name')} className="block text-xs font-medium text-text-secondary mb-1">Business Name *</label>
           <input
             id={fieldId('business-name')}
-            className="w-full px-3 py-2 text-sm bg-surface border border-border rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+            className="w-full rounded-xl border border-border bg-surface px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
             value={form.name}
             onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
             placeholder="Vendor business name"
@@ -163,7 +214,7 @@ function VendorForm({ initial, onSave, onCancel }: {
           <label htmlFor={fieldId('contact-name')} className="block text-xs font-medium text-text-secondary mb-1">Contact Name</label>
           <input
             id={fieldId('contact-name')}
-            className="w-full px-3 py-2 text-sm bg-surface border border-border rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+            className="w-full rounded-xl border border-border bg-surface px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
             value={form.contact_name}
             onChange={e => setForm(f => ({ ...f, contact_name: e.target.value }))}
             placeholder="Primary contact"
@@ -174,7 +225,7 @@ function VendorForm({ initial, onSave, onCancel }: {
           <input
             id={fieldId('email')}
             type="email"
-            className="w-full px-3 py-2 text-sm bg-surface border border-border rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+            className="w-full rounded-xl border border-border bg-surface px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
             value={form.email}
             onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
             placeholder="vendor@email.com"
@@ -184,7 +235,7 @@ function VendorForm({ initial, onSave, onCancel }: {
           <label htmlFor={fieldId('phone')} className="block text-xs font-medium text-text-secondary mb-1">Phone</label>
           <input
             id={fieldId('phone')}
-            className="w-full px-3 py-2 text-sm bg-surface border border-border rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+            className="w-full rounded-xl border border-border bg-surface px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
             value={form.phone}
             onChange={e => setForm(f => ({ ...f, phone: e.target.value }))}
             placeholder="(555) 000-0000"
@@ -194,7 +245,7 @@ function VendorForm({ initial, onSave, onCancel }: {
           <label htmlFor={fieldId('website')} className="block text-xs font-medium text-text-secondary mb-1">Website</label>
           <input
             id={fieldId('website')}
-            className="w-full px-3 py-2 text-sm bg-surface border border-border rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+            className="w-full rounded-xl border border-border bg-surface px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
             value={form.website}
             onChange={e => setForm(f => ({ ...f, website: e.target.value }))}
             placeholder="https://vendor.com"
@@ -207,7 +258,7 @@ function VendorForm({ initial, onSave, onCancel }: {
             type="number"
             min="0"
             step="0.01"
-            className="w-full px-3 py-2 text-sm bg-surface border border-border rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+            className="w-full rounded-xl border border-border bg-surface px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
             value={form.contract_total}
             onChange={e => setForm(f => ({ ...f, contract_total: Number(e.target.value) }))}
           />
@@ -219,7 +270,7 @@ function VendorForm({ initial, onSave, onCancel }: {
             type="number"
             min="0"
             step="0.01"
-            className="w-full px-3 py-2 text-sm bg-surface border border-border rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+            className="w-full rounded-xl border border-border bg-surface px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
             value={form.amount_paid}
             onChange={e => setForm(f => ({ ...f, amount_paid: Number(e.target.value) }))}
           />
@@ -229,7 +280,7 @@ function VendorForm({ initial, onSave, onCancel }: {
           <input
             id={fieldId('next-payment-due')}
             type="date"
-            className="w-full px-3 py-2 text-sm bg-surface border border-border rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+            className="w-full rounded-xl border border-border bg-surface px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
             value={form.next_payment_due ?? ''}
             onChange={e => setForm(f => ({ ...f, next_payment_due: e.target.value }))}
           />
@@ -238,7 +289,7 @@ function VendorForm({ initial, onSave, onCancel }: {
           <label htmlFor={fieldId('document-label')} className="block text-xs font-medium text-text-secondary mb-1">Document Label</label>
           <input
             id={fieldId('document-label')}
-            className="w-full px-3 py-2 text-sm bg-surface border border-border rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+            className="w-full rounded-xl border border-border bg-surface px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
             value={form.document_label}
             onChange={e => setForm(f => ({ ...f, document_label: e.target.value }))}
             placeholder="Contract, invoice, proposal"
@@ -248,7 +299,7 @@ function VendorForm({ initial, onSave, onCancel }: {
           <label htmlFor={fieldId('document-link')} className="block text-xs font-medium text-text-secondary mb-1">Document Link</label>
           <input
             id={fieldId('document-link')}
-            className="w-full px-3 py-2 text-sm bg-surface border border-border rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+            className="w-full rounded-xl border border-border bg-surface px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
             value={form.document_url}
             onChange={e => setForm(f => ({ ...f, document_url: e.target.value }))}
             placeholder="https://drive.google.com/..."
@@ -258,7 +309,7 @@ function VendorForm({ initial, onSave, onCancel }: {
           <label htmlFor={fieldId('notes')} className="block text-xs font-medium text-text-secondary mb-1">Notes</label>
           <textarea
             id={fieldId('notes')}
-            className="w-full px-3 py-2 text-sm bg-surface border border-border rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-primary resize-none"
+            className="w-full rounded-xl border border-border bg-surface px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary resize-none"
             value={form.notes}
             onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
             rows={2}
@@ -269,7 +320,7 @@ function VendorForm({ initial, onSave, onCancel }: {
           <label htmlFor={fieldId('internal-rating')} className="block text-xs font-medium text-text-secondary mb-1">Internal rating</label>
           <select
             id={fieldId('internal-rating')}
-            className="w-full px-3 py-2 text-sm bg-surface border border-border rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+            className="w-full rounded-xl border border-border bg-surface px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
             value={form.internal_rating}
             onChange={e => setForm(f => ({ ...f, internal_rating: Number(e.target.value) }))}
           >
@@ -281,7 +332,7 @@ function VendorForm({ initial, onSave, onCancel }: {
           <label htmlFor={fieldId('rating-status')} className="block text-xs font-medium text-text-secondary mb-1">Rating status</label>
           <select
             id={fieldId('rating-status')}
-            className="w-full px-3 py-2 text-sm bg-surface border border-border rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+            className="w-full rounded-xl border border-border bg-surface px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
             value={form.rating_status}
             onChange={e => setForm(f => ({ ...f, rating_status: e.target.value }))}
           >
@@ -292,7 +343,7 @@ function VendorForm({ initial, onSave, onCancel }: {
           <label htmlFor={fieldId('rating-notes')} className="block text-xs font-medium text-text-secondary mb-1">Private rating notes</label>
           <textarea
             id={fieldId('rating-notes')}
-            className="w-full px-3 py-2 text-sm bg-surface border border-border rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-primary resize-none"
+            className="w-full rounded-xl border border-border bg-surface px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary resize-none"
             value={form.rating_notes}
             onChange={e => setForm(f => ({ ...f, rating_notes: e.target.value }))}
             rows={2}
@@ -315,7 +366,17 @@ export const VendorsTab: React.FC<Props> = ({ vendorMeta, vendors, onAdd, onSave
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [viewMode, setViewMode] = useState<'list' | 'pipeline'>('list');
+  const [pendingVendorDeleteIds, setPendingVendorDeleteIds] = useState<Set<string>>(new Set());
+  const [copyingVendorBrief, setCopyingVendorBrief] = useState(false);
+  const [vendorBriefCopyNotice, setVendorBriefCopyNotice] = useState<'copied' | 'downloaded' | null>(null);
+  const vendorBriefCopyRequestIdRef = useRef(0);
+  const mountedRef = useRef(true);
   const vendorProfileCreationEnabled = isVendorProfileCreationEnabled();
+
+  useEffect(() => () => {
+    mountedRef.current = false;
+    vendorBriefCopyRequestIdRef.current += 1;
+  }, []);
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -330,9 +391,31 @@ export const VendorsTab: React.FC<Props> = ({ vendorMeta, vendors, onAdd, onSave
     vendorMeta,
     compareDate: in7Days,
   }), [in7Days, vendorMeta, vendors]);
+  const vendorBriefContextKey = useMemo(() => JSON.stringify(vendors.map((vendor) => [
+    vendor.id,
+    vendor.name,
+    vendor.vendor_type,
+    vendor.contact_name,
+    vendor.email,
+    vendor.phone,
+    vendor.balance_due,
+    vendor.next_payment_due,
+    vendor.document_url,
+    vendor.internal_rating,
+    vendor.rating_status,
+    vendor.rating_notes,
+  ])), [vendors]);
+  const vendorBriefContextKeyRef = useRef(vendorBriefContextKey);
+  vendorBriefContextKeyRef.current = vendorBriefContextKey;
+
+  useEffect(() => {
+    vendorBriefCopyRequestIdRef.current += 1;
+    setCopyingVendorBrief(false);
+    setVendorBriefCopyNotice(null);
+  }, [vendorBriefContextKey]);
   const followUpDueCount = reminderSummary.followUpDueCount;
 
-  const saveVendorMetaEntry = (vendorId: string, patch: Partial<VendorMetaMap[string]>) => {
+  const saveVendorMetaEntry = async (vendorId: string, patch: Partial<VendorMetaMap[string]>) => {
     const nextMeta = {
       ...vendorMeta,
       [vendorId]: {
@@ -340,16 +423,97 @@ export const VendorsTab: React.FC<Props> = ({ vendorMeta, vendors, onAdd, onSave
         ...patch,
       },
     };
-    void onSaveVendorMeta(nextMeta);
+    try {
+      await onSaveVendorMeta(nextMeta);
+    } catch {
+      toast('Couldn’t save vendor follow-up details right now.', 'error');
+    }
   };
 
   const saveVendorContractFiles = (vendorId: string, files: VendorContractFileEntry[]) => {
-    saveVendorMetaEntry(vendorId, { contractFiles: nextVendorFileEntries(files) });
+    void saveVendorMetaEntry(vendorId, { contractFiles: nextVendorFileEntries(files) });
   };
 
   const saveVendorPaymentMilestones = (vendorId: string, milestones: VendorPaymentMilestoneEntry[]) => {
-    saveVendorMetaEntry(vendorId, { paymentMilestones: nextVendorMilestoneEntries(milestones) });
+    void saveVendorMetaEntry(vendorId, { paymentMilestones: nextVendorMilestoneEntries(milestones) });
   };
+
+  const updateVendorContractFile = (
+    vendorId: string,
+    files: VendorContractFileEntry[],
+    index: number,
+    patch: Partial<VendorContractFileEntry>,
+  ) => {
+    saveVendorContractFiles(
+      vendorId,
+      files.map((entry, entryIndex) => (entryIndex === index ? { ...entry, ...patch } : entry)),
+    );
+  };
+
+  const removeVendorContractFile = (
+    vendorId: string,
+    files: VendorContractFileEntry[],
+    index: number,
+  ) => {
+    saveVendorContractFiles(vendorId, files.filter((_, entryIndex) => entryIndex !== index));
+  };
+
+  const addVendorContractFile = (
+    vendorId: string,
+    files: VendorContractFileEntry[],
+  ) => {
+    saveVendorContractFiles(vendorId, [
+      ...files,
+      { id: `file-${Date.now()}`, kind: 'contract', label: '', url: '' },
+    ]);
+  };
+
+  const updateVendorPaymentMilestone = (
+    vendorId: string,
+    milestones: VendorPaymentMilestoneEntry[],
+    index: number,
+    patch: Partial<VendorPaymentMilestoneEntry>,
+  ) => {
+    saveVendorPaymentMilestones(
+      vendorId,
+      milestones.map((entry, entryIndex) => (entryIndex === index ? { ...entry, ...patch } : entry)),
+    );
+  };
+
+  const removeVendorPaymentMilestone = (
+    vendorId: string,
+    milestones: VendorPaymentMilestoneEntry[],
+    index: number,
+  ) => {
+    saveVendorPaymentMilestones(vendorId, milestones.filter((_, entryIndex) => entryIndex !== index));
+  };
+
+  const addVendorPaymentMilestone = (
+    vendorId: string,
+    milestones: VendorPaymentMilestoneEntry[],
+  ) => {
+    saveVendorPaymentMilestones(vendorId, [
+      ...milestones,
+      { id: `milestone-${Date.now()}`, label: '', dueDate: '', amount: undefined, status: 'todo' },
+    ]);
+  };
+
+  async function handleVendorDelete(vendorId: string) {
+    if (pendingVendorDeleteIds.has(vendorId)) return;
+
+    setPendingVendorDeleteIds((current) => new Set(current).add(vendorId));
+    try {
+      await onDelete(vendorId);
+    } catch {
+      toast('Couldn’t delete that vendor right now.', 'error');
+    } finally {
+      setPendingVendorDeleteIds((current) => {
+        const next = new Set(current);
+        next.delete(vendorId);
+        return next;
+      });
+    }
+  }
 
   const filteredVendors = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -361,20 +525,26 @@ export const VendorsTab: React.FC<Props> = ({ vendorMeta, vendors, onAdd, onSave
     );
   }, [vendors, search]);
 
-  const vendorStage = (vendor: PlanningVendor): 'due-soon' | 'open-balance' | 'paid' => {
-    const dueSoon = Boolean(vendor.balance_due > 0 && isVendorDateOnOrBefore(vendor.next_payment_due, in7Days));
-    if (dueSoon) return 'due-soon';
-    if ((vendor.balance_due || 0) > 0) return 'open-balance';
-    return 'paid';
-  };
-
   const pipelineGroups = {
-    'due-soon': filteredVendors.filter((v) => vendorStage(v) === 'due-soon'),
-    'open-balance': filteredVendors.filter((v) => vendorStage(v) === 'open-balance'),
-    paid: filteredVendors.filter((v) => vendorStage(v) === 'paid'),
+    'due-soon': filteredVendors.filter((v) => getVendorStage(v, in7Days) === 'due-soon'),
+    'open-balance': filteredVendors.filter((v) => getVendorStage(v, in7Days) === 'open-balance'),
+    paid: filteredVendors.filter((v) => getVendorStage(v, in7Days) === 'paid'),
   };
 
   async function copyVendorBrief() {
+    if (copyingVendorBrief) return;
+
+    const requestId = vendorBriefCopyRequestIdRef.current + 1;
+    vendorBriefCopyRequestIdRef.current = requestId;
+    const requestContextKey = vendorBriefContextKeyRef.current;
+    const isCurrentVendorBriefCopy = () => (
+      mountedRef.current &&
+      requestId === vendorBriefCopyRequestIdRef.current &&
+      requestContextKey === vendorBriefContextKeyRef.current
+    );
+
+    setCopyingVendorBrief(true);
+    setVendorBriefCopyNotice(null);
     const text = vendors.map((vendor) => [
       vendor.name,
       vendor.vendor_type ? `Type: ${vendor.vendor_type}` : null,
@@ -388,8 +558,19 @@ export const VendorsTab: React.FC<Props> = ({ vendorMeta, vendors, onAdd, onSave
       vendor.rating_status ? `Status: ${vendor.rating_status}` : null,
       vendor.rating_notes ? `Private rating notes: ${vendor.rating_notes}` : null,
     ].filter(Boolean).join('\n')).join('\n\n');
-    const result = await copyTextOrDownload(text || 'No vendors yet.', 'dayof-vendor-brief.txt');
-    toast(result === 'copied' ? 'Vendor brief copied.' : 'Clipboard was blocked, so the vendor brief downloaded.', 'success');
+    try {
+      const result = await copyTextOrDownload(text || 'No vendors yet.', 'dayof-vendor-brief.txt');
+      if (!isCurrentVendorBriefCopy()) return;
+      setVendorBriefCopyNotice(result);
+      toast(result === 'copied' ? 'Vendor brief copied.' : 'Clipboard was blocked, so the vendor brief downloaded.', 'success');
+    } catch {
+      if (!isCurrentVendorBriefCopy()) return;
+      toast('Couldn’t copy the vendor brief right now.', 'error');
+    } finally {
+      if (isCurrentVendorBriefCopy()) {
+        setCopyingVendorBrief(false);
+      }
+    }
   }
 
   function exportVendors() {
@@ -397,29 +578,7 @@ export const VendorsTab: React.FC<Props> = ({ vendorMeta, vendors, onAdd, onSave
       ['Name', 'Type', 'Contact', 'Email', 'Phone', 'Website', 'Internal rating', 'Rating status', 'Rating notes', 'Contract total', 'Paid', 'Balance', 'Next due', 'Next follow-up', 'Reminder channel', 'Reminder lead days', 'Last reminder queued', 'Document label', 'Document URL', 'Saved files', 'Payment milestones'],
       ...vendors.map((vendor) => {
         const meta = vendorMeta[vendor.id] ?? {};
-        return [
-        vendor.name,
-        vendor.vendor_type,
-        vendor.contact_name,
-        vendor.email,
-        vendor.phone,
-        vendor.website,
-        vendor.internal_rating ? String(vendor.internal_rating) : '',
-        vendor.rating_status ?? '',
-        vendor.rating_notes ?? '',
-        String(vendor.contract_total || 0),
-        String(vendor.amount_paid || 0),
-        String(vendor.balance_due || 0),
-        vendor.next_payment_due ?? '',
-        meta.nextFollowUp ?? '',
-        formatVendorReminderChannel(meta.reminderChannel),
-        formatVendorReminderLeadDays(meta.reminderLeadDays),
-        meta.reminderLastQueuedAt ?? '',
-        vendor.document_label ?? '',
-        vendor.document_url ?? '',
-        (meta.contractFiles ?? []).map((file) => `${file.kind}: ${file.label || file.url}`).join(' | '),
-        (meta.paymentMilestones ?? []).map((milestone) => [milestone.label, milestone.dueDate, milestone.amount ? fmt(milestone.amount) : null, milestone.status].filter(Boolean).join(' / ')).join(' | '),
-      ];
+        return buildVendorExportRow(vendor, meta);
       }),
     ];
     const csv = csvRows.map((row) => row.map((cell) => `"${String(cell ?? '').replaceAll('"', '""')}"`).join(',')).join('\n');
@@ -444,23 +603,23 @@ export const VendorsTab: React.FC<Props> = ({ vendorMeta, vendors, onAdd, onSave
 
       {(vendors.length > 0 || totalBalance > 0 || followUpDueCount > 0) && (
         <div className="grid grid-cols-1 md:grid-cols-5 gap-2">
-          <div className="flex items-center justify-between rounded-lg border border-border-subtle bg-white p-3 transition-colors hover:border-primary/25">
+          <div className="flex items-center justify-between rounded-2xl border border-border-subtle bg-white p-3 transition-colors hover:border-primary/25">
             <span className="text-sm text-text-secondary">Still to pay vendors</span>
             <span className="font-bold text-text-primary">{fmt(totalBalance)}</span>
           </div>
-          <div className="flex items-center justify-between rounded-lg border border-border-subtle bg-white p-3">
+          <div className="flex items-center justify-between rounded-2xl border border-border-subtle bg-white p-3">
             <span className="text-sm text-text-secondary">Follow-ups due (7d)</span>
             <span className="font-bold text-text-primary">{followUpDueCount}</span>
           </div>
-          <div className="flex items-center justify-between rounded-lg border border-border-subtle bg-white p-3">
+          <div className="flex items-center justify-between rounded-2xl border border-border-subtle bg-white p-3">
             <span className="text-sm text-text-secondary">Docs linked</span>
             <span className="font-bold text-text-primary">{documentedCount}/{vendors.length}</span>
           </div>
-          <div className="flex items-center justify-between rounded-lg border border-border-subtle bg-white p-3">
+          <div className="flex items-center justify-between rounded-2xl border border-border-subtle bg-white p-3">
             <span className="text-sm text-text-secondary">Reachable</span>
             <span className="font-bold text-text-primary">{contactableCount}/{vendors.length}</span>
           </div>
-          <div className="flex items-center justify-between rounded-lg border border-border-subtle bg-white p-3">
+          <div className="flex items-center justify-between rounded-2xl border border-border-subtle bg-white p-3">
             <span className="text-sm text-text-secondary">Reminder-ready</span>
             <span className="font-bold text-text-primary">{reminderSummary.reminderReadyCount}/{vendors.length}</span>
           </div>
@@ -485,23 +644,30 @@ export const VendorsTab: React.FC<Props> = ({ vendorMeta, vendors, onAdd, onSave
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search your vendors"
-            className="px-3 py-1.5 text-sm bg-surface border border-border rounded-lg text-text-primary"
+            className="rounded-xl border border-border bg-surface px-3 py-1.5 text-sm text-text-primary"
           />
-          <div className="inline-flex rounded-lg border border-border overflow-hidden">
+          <div className="inline-flex overflow-hidden rounded-xl border border-border">
             <button onClick={() => setViewMode('list')} className={`px-2.5 py-1 text-xs ${viewMode === 'list' ? 'bg-primary/10 text-primary' : 'text-text-secondary'}`}>List</button>
             <button onClick={() => setViewMode('pipeline')} className={`px-2.5 py-1 text-xs border-l border-border ${viewMode === 'pipeline' ? 'bg-primary/10 text-primary' : 'text-text-secondary'}`}>Stages</button>
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <Button size="sm" variant="outline" onClick={copyVendorBrief}>
-            <Copy className="w-4 h-4 mr-1" /> Copy brief
+          <Button size="sm" variant="outline" onClick={() => void copyVendorBrief()} disabled={copyingVendorBrief}>
+            <Copy className="w-4 h-4 mr-1" />
+            {copyingVendorBrief
+              ? 'Copying brief...'
+              : vendorBriefCopyNotice === 'downloaded'
+                ? 'Downloaded brief'
+                : vendorBriefCopyNotice === 'copied'
+                  ? 'Copied brief'
+                  : 'Copy brief'}
           </Button>
           <Button size="sm" variant="outline" onClick={exportVendors}>
             <Download className="w-4 h-4 mr-1" /> Export
           </Button>
-          <a href="/vendor-templates" className="inline-flex items-center rounded-lg border border-border bg-surface px-3 py-1.5 text-sm font-medium text-text-primary hover:bg-surface-subtle">
+          <Link to="/vendor-templates" className="inline-flex items-center rounded-xl border border-border bg-surface px-3 py-1.5 text-sm font-medium text-text-primary no-underline hover:bg-surface-subtle">
             Template lab
-          </a>
+          </Link>
           {!canEdit && <p className="text-xs text-text-tertiary">Read-only role: editing is turned off here.</p>}
           <Button size="sm" onClick={() => setShowAdd(true)} disabled={!canEdit}>
             <Plus className="w-4 h-4 mr-1" /> Add vendor
@@ -528,14 +694,14 @@ export const VendorsTab: React.FC<Props> = ({ vendorMeta, vendors, onAdd, onSave
             ['open-balance', 'Open balance'],
             ['paid', 'Paid'],
           ] as const).map(([key, label]) => (
-            <div key={key} className="rounded-lg border border-border-subtle bg-white p-3">
+            <div key={key} className="rounded-2xl border border-border-subtle bg-white p-3">
               <div className="flex items-center justify-between mb-2">
                 <p className="text-xs text-text-tertiary">{label}</p>
                 <span className="text-xs text-text-secondary">{pipelineGroups[key].length}</span>
               </div>
               <div className="space-y-2">
                 {pipelineGroups[key].slice(0, 8).map((vendor) => (
-                  <div key={vendor.id} className="rounded-lg border border-border/35 px-2.5 py-2 bg-surface-subtle/40">
+                  <div key={vendor.id} className="rounded-xl border border-border/35 bg-surface-subtle/40 px-2.5 py-2">
                     <p className="text-sm text-text-primary font-medium truncate">{vendor.name}</p>
                     <p className="text-[11px] text-text-tertiary">{vendor.vendor_type} · {fmt(vendor.balance_due || 0)} due</p>
                   </div>
@@ -549,14 +715,16 @@ export const VendorsTab: React.FC<Props> = ({ vendorMeta, vendors, onAdd, onSave
         <div className="space-y-3">
           {filteredVendors.map(vendor => {
             const isExpanded = expandedId === vendor.id;
+            const deletePending = pendingVendorDeleteIds.has(vendor.id);
             const isDueSoon = Boolean(vendor.balance_due > 0 && isVendorDateOnOrBefore(vendor.next_payment_due, in7Days));
             const balancePct = vendor.contract_total > 0 ? (vendor.amount_paid / vendor.contract_total) * 100 : 0;
+            const meta = vendorMeta[vendor.id] ?? {};
             const safeEmailHref = getSafePublicEmailHref(vendor.email);
             const safePhoneHref = getSafePublicTelHref(vendor.phone);
             const safeWebsiteUrl = getSafePublicWebUrl(vendor.website);
             const safeDocumentUrl = getSafePublicWebUrl(vendor.document_url);
-            const contractFiles = vendorMeta[vendor.id]?.contractFiles ?? [];
-            const paymentMilestones = vendorMeta[vendor.id]?.paymentMilestones ?? [];
+            const contractFiles = meta.contractFiles ?? [];
+            const paymentMilestones = meta.paymentMilestones ?? [];
 
             return (
               <div key={vendor.id}>
@@ -592,8 +760,8 @@ export const VendorsTab: React.FC<Props> = ({ vendorMeta, vendors, onAdd, onSave
                                 {vendor.balance_due > 0 ? `${fmt(vendor.balance_due)} left` : 'Paid in full'}
                               </span>
                             </div>
-                            <div className="h-1.5 overflow-hidden rounded-lg bg-surface-subtle">
-                              <div className="h-full rounded-lg bg-primary" style={{ width: `${Math.min(100, balancePct)}%` }} />
+                            <div className="h-1.5 overflow-hidden rounded-xl bg-surface-subtle">
+                              <div className="h-full rounded-xl bg-primary" style={{ width: `${Math.min(100, balancePct)}%` }} />
                             </div>
                           </div>
                         </div>
@@ -605,10 +773,10 @@ export const VendorsTab: React.FC<Props> = ({ vendorMeta, vendors, onAdd, onSave
                         >
                           {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                         </button>
-                        <button aria-label={`Edit vendor ${vendor.name}`} onClick={() => canEdit && setEditingVendor(vendor)} disabled={!canEdit} className="p-1.5 hover:bg-surface-subtle rounded text-text-tertiary hover:text-text-primary transition-colors disabled:opacity-40">
+                        <button aria-label={`Edit vendor ${vendor.name}`} onClick={() => canEdit && !deletePending && setEditingVendor(vendor)} disabled={!canEdit || deletePending} className="p-1.5 hover:bg-surface-subtle rounded text-text-tertiary hover:text-text-primary transition-colors disabled:opacity-40">
                           <Edit2 className="w-3.5 h-3.5" />
                         </button>
-                        <button aria-label={`Delete vendor ${vendor.name}`} onClick={() => canEdit && onDelete(vendor.id)} disabled={!canEdit} className="p-1.5 hover:bg-error/10 rounded text-text-tertiary hover:text-error transition-colors disabled:opacity-40">
+                        <button aria-label={`Delete vendor ${vendor.name}`} onClick={() => canEdit && !deletePending && void handleVendorDelete(vendor.id)} disabled={!canEdit || deletePending} className="p-1.5 hover:bg-error/10 rounded text-text-tertiary hover:text-error transition-colors disabled:opacity-40">
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
                       </div>
@@ -650,22 +818,22 @@ export const VendorsTab: React.FC<Props> = ({ vendorMeta, vendors, onAdd, onSave
                             </span>
                           </p>
                         )}
-                        <div className="rounded-lg border border-border/35 bg-surface-subtle/40 px-2.5 py-2 space-y-1.5">
+                        <div className="rounded-xl border border-border/35 bg-surface-subtle/40 px-2.5 py-2 space-y-1.5">
                           <p className="text-[11px] text-text-tertiary">Follow-up</p>
                           <p className="text-xs text-text-secondary">
-                            Last contacted: {vendorMeta[vendor.id]?.lastContacted ? formatVendorDate(vendorMeta[vendor.id]!.lastContacted as string) : 'Not added yet'}
+                            Last contacted: {meta.lastContacted ? formatVendorDate(meta.lastContacted) : 'Not added yet'}
                           </p>
                           <div className="flex items-center gap-2">
                             <button
                               onClick={() => canEdit && saveVendorMetaEntry(vendor.id, { lastContacted: new Date().toISOString() })}
                               disabled={!canEdit}
-                              className="text-[11px] px-2 py-1 rounded border border-border bg-white text-text-secondary disabled:opacity-40"
+                              className="rounded-xl border border-border bg-white px-2 py-1 text-[11px] text-text-secondary disabled:opacity-40"
                             >
                               Mark as contacted
                             </button>
                             <input
                               type="date"
-                              value={vendorMeta[vendor.id]?.nextFollowUp ? String(vendorMeta[vendor.id]?.nextFollowUp).slice(0, 10) : ''}
+                              value={meta.nextFollowUp ? String(meta.nextFollowUp).slice(0, 10) : ''}
                               onChange={(e) => canEdit && saveVendorMetaEntry(vendor.id, { nextFollowUp: e.target.value || undefined })}
                               disabled={!canEdit}
                               className="text-[11px] rounded border border-border bg-white px-2 py-1 text-text-secondary disabled:opacity-40"
@@ -675,12 +843,12 @@ export const VendorsTab: React.FC<Props> = ({ vendorMeta, vendors, onAdd, onSave
                             <label className="space-y-1 text-[11px] text-text-tertiary">
                               <span className="block">Reminder channel</span>
                               <select
-                                value={vendorMeta[vendor.id]?.reminderChannel ?? 'none'}
+                                value={meta.reminderChannel ?? 'none'}
                                 onChange={(event) => canEdit && saveVendorMetaEntry(vendor.id, {
                                   reminderChannel: event.target.value as 'none' | 'email' | 'phone',
                                 })}
                                 disabled={!canEdit}
-                                className="w-full rounded border border-border bg-white px-2 py-1 text-text-secondary disabled:opacity-40"
+                              className="w-full rounded-xl border border-border bg-white px-2 py-1 text-text-secondary disabled:opacity-40"
                               >
                                 <option value="none">No reminder</option>
                                 <option value="email">Email</option>
@@ -690,12 +858,12 @@ export const VendorsTab: React.FC<Props> = ({ vendorMeta, vendors, onAdd, onSave
                             <label className="space-y-1 text-[11px] text-text-tertiary">
                               <span className="block">Lead time</span>
                               <select
-                                value={String(vendorMeta[vendor.id]?.reminderLeadDays ?? '')}
+                                value={String(meta.reminderLeadDays ?? '')}
                                 onChange={(event) => canEdit && saveVendorMetaEntry(vendor.id, {
                                   reminderLeadDays: event.target.value ? Number(event.target.value) as 1 | 3 | 7 | 14 : undefined,
                                 })}
                                 disabled={!canEdit}
-                                className="w-full rounded border border-border bg-white px-2 py-1 text-text-secondary disabled:opacity-40"
+                                className="w-full rounded-xl border border-border bg-white px-2 py-1 text-text-secondary disabled:opacity-40"
                               >
                                 <option value="">Not set</option>
                                 <option value="1">1 day before</option>
@@ -706,33 +874,30 @@ export const VendorsTab: React.FC<Props> = ({ vendorMeta, vendors, onAdd, onSave
                             </label>
                           </div>
                           <p className="text-[11px] text-text-secondary">
-                            Saved reminder: {formatVendorReminderChannel(vendorMeta[vendor.id]?.reminderChannel)} · {formatVendorReminderLeadDays(vendorMeta[vendor.id]?.reminderLeadDays)}
+                            Saved reminder: {formatVendorReminderChannel(meta.reminderChannel)} · {formatVendorReminderLeadDays(meta.reminderLeadDays)}
                           </p>
                           <div className="flex flex-wrap items-center gap-2">
                             <button
                               onClick={() => canEdit && saveVendorMetaEntry(vendor.id, { reminderLastQueuedAt: new Date().toISOString() })}
                               disabled={!canEdit}
-                              className="text-[11px] px-2 py-1 rounded border border-border bg-white text-text-secondary disabled:opacity-40"
+                              className="rounded-xl border border-border bg-white px-2 py-1 text-[11px] text-text-secondary disabled:opacity-40"
                             >
                               Mark reminder queued
                             </button>
-                            {vendorMeta[vendor.id]?.reminderLastQueuedAt && (
+                            {meta.reminderLastQueuedAt && (
                               <span className="text-[11px] text-text-tertiary">
-                                Last queued: {formatVendorDate(vendorMeta[vendor.id]?.reminderLastQueuedAt ?? '')}
+                                Last queued: {formatVendorDate(meta.reminderLastQueuedAt)}
                               </span>
                             )}
                           </div>
                         </div>
-                        <div className="rounded-lg border border-border/35 bg-surface-subtle/40 px-2.5 py-2 space-y-2">
+                        <div className="rounded-xl border border-border/35 bg-surface-subtle/40 px-2.5 py-2 space-y-2">
                           <div className="flex items-center justify-between gap-2">
                             <p className="text-[11px] text-text-tertiary">Contract and invoice files</p>
                             {canEdit && (
                               <button
-                                onClick={() => saveVendorContractFiles(vendor.id, [
-                                  ...contractFiles,
-                                  { id: `file-${Date.now()}`, kind: 'contract', label: '', url: '' },
-                                ])}
-                                className="text-[11px] px-2 py-1 rounded border border-border bg-white text-text-secondary"
+                                onClick={() => addVendorContractFile(vendor.id, contractFiles)}
+                                className="rounded-xl border border-border bg-white px-2 py-1 text-[11px] text-text-secondary"
                               >
                                 Add file
                               </button>
@@ -744,11 +909,11 @@ export const VendorsTab: React.FC<Props> = ({ vendorMeta, vendors, onAdd, onSave
                                 <div key={file.id} className="grid gap-2 sm:grid-cols-[0.8fr_1fr_1.6fr_auto]">
                                   <select
                                     value={file.kind}
-                                    onChange={(event) => canEdit && saveVendorContractFiles(vendor.id, contractFiles.map((entry, entryIndex) => (
-                                      entryIndex === index ? { ...entry, kind: event.target.value as VendorContractFileEntry['kind'] } : entry
-                                    )))}
+                                    onChange={(event) => canEdit && updateVendorContractFile(vendor.id, contractFiles, index, {
+                                      kind: event.target.value as VendorContractFileEntry['kind'],
+                                    })}
                                     disabled={!canEdit}
-                                    className="rounded border border-border bg-white px-2 py-1 text-[11px] text-text-secondary disabled:opacity-40"
+                                    className="rounded-xl border border-border bg-white px-2 py-1 text-[11px] text-text-secondary disabled:opacity-40"
                                   >
                                     <option value="contract">Contract</option>
                                     <option value="invoice">Invoice</option>
@@ -756,26 +921,26 @@ export const VendorsTab: React.FC<Props> = ({ vendorMeta, vendors, onAdd, onSave
                                   </select>
                                   <input
                                     value={file.label}
-                                    onChange={(event) => canEdit && saveVendorContractFiles(vendor.id, contractFiles.map((entry, entryIndex) => (
-                                      entryIndex === index ? { ...entry, label: event.target.value } : entry
-                                    )))}
+                                    onChange={(event) => canEdit && updateVendorContractFile(vendor.id, contractFiles, index, {
+                                      label: event.target.value,
+                                    })}
                                     disabled={!canEdit}
                                     placeholder="Label"
-                                    className="rounded border border-border bg-white px-2 py-1 text-[11px] text-text-secondary disabled:opacity-40"
+                                    className="rounded-xl border border-border bg-white px-2 py-1 text-[11px] text-text-secondary disabled:opacity-40"
                                   />
                                   <input
                                     value={file.url}
-                                    onChange={(event) => canEdit && saveVendorContractFiles(vendor.id, contractFiles.map((entry, entryIndex) => (
-                                      entryIndex === index ? { ...entry, url: event.target.value } : entry
-                                    )))}
+                                    onChange={(event) => canEdit && updateVendorContractFile(vendor.id, contractFiles, index, {
+                                      url: event.target.value,
+                                    })}
                                     disabled={!canEdit}
                                     placeholder="https://..."
-                                    className="rounded border border-border bg-white px-2 py-1 text-[11px] text-text-secondary disabled:opacity-40"
+                                    className="rounded-xl border border-border bg-white px-2 py-1 text-[11px] text-text-secondary disabled:opacity-40"
                                   />
                                   {canEdit && (
                                     <button
-                                      onClick={() => saveVendorContractFiles(vendor.id, contractFiles.filter((_, entryIndex) => entryIndex !== index))}
-                                      className="text-[11px] px-2 py-1 rounded border border-border bg-white text-text-secondary"
+                                      onClick={() => removeVendorContractFile(vendor.id, contractFiles, index)}
+                                      className="rounded-xl border border-border bg-white px-2 py-1 text-[11px] text-text-secondary"
                                     >
                                       Remove
                                     </button>
@@ -787,16 +952,13 @@ export const VendorsTab: React.FC<Props> = ({ vendorMeta, vendors, onAdd, onSave
                             <p className="text-[11px] text-text-secondary">Save contract, invoice, or proposal links here so the ledger handoff is not stuck on one document field.</p>
                           )}
                         </div>
-                        <div className="rounded-lg border border-border/35 bg-surface-subtle/40 px-2.5 py-2 space-y-2">
+                        <div className="rounded-xl border border-border/35 bg-surface-subtle/40 px-2.5 py-2 space-y-2">
                           <div className="flex items-center justify-between gap-2">
                             <p className="text-[11px] text-text-tertiary">Payment milestones</p>
                             {canEdit && (
                               <button
-                                onClick={() => saveVendorPaymentMilestones(vendor.id, [
-                                  ...paymentMilestones,
-                                  { id: `milestone-${Date.now()}`, label: '', dueDate: '', amount: undefined, status: 'todo' },
-                                ])}
-                                className="text-[11px] px-2 py-1 rounded border border-border bg-white text-text-secondary"
+                                onClick={() => addVendorPaymentMilestone(vendor.id, paymentMilestones)}
+                                className="rounded-xl border border-border bg-white px-2 py-1 text-[11px] text-text-secondary"
                               >
                                 Add milestone
                               </button>
@@ -808,41 +970,41 @@ export const VendorsTab: React.FC<Props> = ({ vendorMeta, vendors, onAdd, onSave
                                 <div key={milestone.id} className="grid gap-2 sm:grid-cols-[1.2fr_0.8fr_0.8fr_0.8fr_auto]">
                                   <input
                                     value={milestone.label}
-                                    onChange={(event) => canEdit && saveVendorPaymentMilestones(vendor.id, paymentMilestones.map((entry, entryIndex) => (
-                                      entryIndex === index ? { ...entry, label: event.target.value } : entry
-                                    )))}
+                                    onChange={(event) => canEdit && updateVendorPaymentMilestone(vendor.id, paymentMilestones, index, {
+                                      label: event.target.value,
+                                    })}
                                     disabled={!canEdit}
                                     placeholder="Balance, installment, final invoice"
-                                    className="rounded border border-border bg-white px-2 py-1 text-[11px] text-text-secondary disabled:opacity-40"
+                                    className="rounded-xl border border-border bg-white px-2 py-1 text-[11px] text-text-secondary disabled:opacity-40"
                                   />
                                   <input
                                     type="date"
                                     value={milestone.dueDate ?? ''}
-                                    onChange={(event) => canEdit && saveVendorPaymentMilestones(vendor.id, paymentMilestones.map((entry, entryIndex) => (
-                                      entryIndex === index ? { ...entry, dueDate: event.target.value } : entry
-                                    )))}
+                                    onChange={(event) => canEdit && updateVendorPaymentMilestone(vendor.id, paymentMilestones, index, {
+                                      dueDate: event.target.value,
+                                    })}
                                     disabled={!canEdit}
-                                    className="rounded border border-border bg-white px-2 py-1 text-[11px] text-text-secondary disabled:opacity-40"
+                                    className="rounded-xl border border-border bg-white px-2 py-1 text-[11px] text-text-secondary disabled:opacity-40"
                                   />
                                   <input
                                     type="number"
                                     min="0"
                                     step="1"
                                     value={milestone.amount ?? ''}
-                                    onChange={(event) => canEdit && saveVendorPaymentMilestones(vendor.id, paymentMilestones.map((entry, entryIndex) => (
-                                      entryIndex === index ? { ...entry, amount: event.target.value ? Number(event.target.value) : undefined } : entry
-                                    )))}
+                                    onChange={(event) => canEdit && updateVendorPaymentMilestone(vendor.id, paymentMilestones, index, {
+                                      amount: event.target.value ? Number(event.target.value) : undefined,
+                                    })}
                                     disabled={!canEdit}
                                     placeholder="Amount"
-                                    className="rounded border border-border bg-white px-2 py-1 text-[11px] text-text-secondary disabled:opacity-40"
+                                    className="rounded-xl border border-border bg-white px-2 py-1 text-[11px] text-text-secondary disabled:opacity-40"
                                   />
                                   <select
                                     value={milestone.status}
-                                    onChange={(event) => canEdit && saveVendorPaymentMilestones(vendor.id, paymentMilestones.map((entry, entryIndex) => (
-                                      entryIndex === index ? { ...entry, status: event.target.value as VendorPaymentMilestoneEntry['status'] } : entry
-                                    )))}
+                                    onChange={(event) => canEdit && updateVendorPaymentMilestone(vendor.id, paymentMilestones, index, {
+                                      status: event.target.value as VendorPaymentMilestoneEntry['status'],
+                                    })}
                                     disabled={!canEdit}
-                                    className="rounded border border-border bg-white px-2 py-1 text-[11px] text-text-secondary disabled:opacity-40"
+                                    className="rounded-xl border border-border bg-white px-2 py-1 text-[11px] text-text-secondary disabled:opacity-40"
                                   >
                                     <option value="todo">To do</option>
                                     <option value="scheduled">Scheduled</option>
@@ -850,8 +1012,8 @@ export const VendorsTab: React.FC<Props> = ({ vendorMeta, vendors, onAdd, onSave
                                   </select>
                                   {canEdit && (
                                     <button
-                                      onClick={() => saveVendorPaymentMilestones(vendor.id, paymentMilestones.filter((_, entryIndex) => entryIndex !== index))}
-                                      className="text-[11px] px-2 py-1 rounded border border-border bg-white text-text-secondary"
+                                      onClick={() => removeVendorPaymentMilestone(vendor.id, paymentMilestones, index)}
+                                      className="rounded-xl border border-border bg-white px-2 py-1 text-[11px] text-text-secondary"
                                     >
                                       Remove
                                     </button>
@@ -867,7 +1029,7 @@ export const VendorsTab: React.FC<Props> = ({ vendorMeta, vendors, onAdd, onSave
                           <p className="text-xs text-text-tertiary">{vendor.notes}</p>
                         )}
                         {(vendor.internal_rating || vendor.rating_notes) && (
-                          <div className="rounded-lg border border-border/35 bg-white px-2.5 py-2">
+                          <div className="rounded-xl border border-border/35 bg-white px-2.5 py-2">
                             <div className="flex items-center justify-between gap-2">
                               <p className="text-[11px] font-medium text-text-tertiary">Internal rating</p>
                               <VendorRating rating={vendor.internal_rating} />

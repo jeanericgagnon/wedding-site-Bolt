@@ -1,4 +1,4 @@
-import { render } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 
 import { defaultDressCodeMoodBoardData, dressCodeMoodBoardDefinition } from './moodBoard';
@@ -17,13 +17,13 @@ describe('public dress-code media', () => {
       />,
     );
 
-    expect(container.querySelector('img')).not.toBeInTheDocument();
-    expect(container.innerHTML).not.toContain('javascript:alert');
-    expect(container.innerHTML).not.toContain('image.thum.io');
+    expect(screen.queryByRole('img')).not.toBeInTheDocument();
+    expect(container.querySelector('img[src^="javascript:"]')).toBeNull();
+    expect(container.querySelector('img[src*="image.thum.io"]')).toBeNull();
   });
 
   it('keeps safe same-origin mood-board images', () => {
-    const { container } = render(
+    render(
       <dressCodeMoodBoardDefinition.Component
         data={{
           ...defaultDressCodeMoodBoardData,
@@ -34,6 +34,6 @@ describe('public dress-code media', () => {
       />,
     );
 
-    expect(container.querySelector('img')?.getAttribute('src')).toBe('/preview-photos/header-anchor.jpg');
+    expect(screen.getByRole('img')).toHaveAttribute('src', '/preview-photos/header-anchor.jpg');
   });
 });

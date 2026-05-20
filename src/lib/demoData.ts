@@ -6,6 +6,7 @@ export const demoWeddingSite = {
   wedding_date: '2026-06-15',
   venue_name: 'Sunset Gardens Estate',
   venue_location: '123 Garden Lane, Napa Valley, CA 94558',
+  site_slug: 'alex-jordan-demo',
   site_url: 'alex-jordan-demo',
   hero_image_url: 'https://images.pexels.com/photos/1444442/pexels-photo-1444442.jpeg',
   theme_settings: {

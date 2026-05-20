@@ -113,7 +113,7 @@ describe('photo upload guest error copy', () => {
   it('forwards gated access artifacts to the guest prospect opt-in follow-up', () => {
     const source = readFileSync('src/pages/PhotoUpload.tsx', 'utf8');
 
-    expect(source).toContain("const access = siteSlug ? buildPhotoUploadAccessPayload(siteSlug) : null;");
+    expect(source).toContain("const access = siteSlug ? buildPhotoUploadAccessPayload(siteSlug, params) : null;");
     expect(source).toContain("...(access ?? {}),");
     expect(source).toContain("uploadToken: token.trim() || null,");
     expect(source).toContain('captureGuestInviteTokenFromSearch(siteSlug, params);');
@@ -132,8 +132,8 @@ describe('photo upload guest error copy', () => {
     const source = readFileSync('src/pages/PhotoUpload.tsx', 'utf8');
 
     expect(source).toContain("trackGuestHubEvent(siteSlug, 'view', '/photos/upload/invite'");
-    expect(source).toContain('...buildPhotoUploadAccessPayload(siteSlug)');
-    expect(source).toContain('...buildPhotoUploadIdentityPayload(siteSlug)');
+    expect(source).toContain('...buildPhotoUploadAccessPayload(siteSlug, params)');
+    expect(source).toContain('...buildPhotoUploadIdentityPayload(siteSlug, params)');
   });
 
   it('routes upload feedback and post-upload CTAs through the shared status panel', () => {
@@ -205,6 +205,22 @@ describe('photo upload guest error copy', () => {
     expect(screen.getByLabelText('Upload link code')).toHaveAttribute('aria-describedby', 'photo-upload-token-hint photo-upload-status-panel');
   });
 
+  it('clears stale upload feedback as soon as the guest edits the upload form again', () => {
+    const source = readFileSync('src/pages/PhotoUpload.tsx', 'utf8');
+
+    expect(source).toContain('const clearUploadFeedback = () => {');
+    expect(source).toContain('setError(null);');
+    expect(source).toContain('setMessage(null);');
+    expect(source).toContain('setUploadedNames([]);');
+    expect(source).toContain('setFailedNames([]);');
+    expect(source).toContain("clearUploadFeedback();\n                  setToken(e.target.value);");
+    expect(source).toContain("clearUploadFeedback();\n                setGuestName(e.target.value);");
+    expect(source).toContain("clearUploadFeedback();\n                setGuestEmail(e.target.value);");
+    expect(source).toContain("clearUploadFeedback();\n                setGuestPhone(e.target.value);");
+    expect(source).toContain("clearUploadFeedback();\n                setNote(e.target.value);");
+    expect(source).toContain("clearUploadFeedback();\n                setFiles(Array.from(e.target.files ?? []));");
+  });
+
   it('uses the local demo upload path for photo memory QA guest video uploads', async () => {
     const appendDemoGuestPhotoUploadsSpy = vi.spyOn(guestPhotoDemoState, 'appendDemoGuestPhotoUploads').mockReturnValue(
       guestPhotoDemoState.buildDefaultDemoGuestPhotoState(),
@@ -212,12 +228,13 @@ describe('photo upload guest error copy', () => {
 
     const originalFetch = global.fetch;
     global.fetch = vi.fn();
-    window.history.pushState({}, '', '/photos/upload?site=alex-jordan-demo&hub=1&invite_token=token-c-2&photoMemoryFlowQa=1');
+    const photoMemoryUploadPath = '/photos/upload?site=alex-jordan-demo&hub=1&invite_token=token-c-2&photoMemoryFlowQa=1';
+    window.history.pushState({}, '', photoMemoryUploadPath);
 
     render(
       React.createElement(
         MemoryRouter,
-        null,
+        { initialEntries: [photoMemoryUploadPath] },
         React.createElement(PhotoUpload),
       ),
     );

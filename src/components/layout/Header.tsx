@@ -94,12 +94,13 @@ export const Header: React.FC<HeaderProps> = ({ variant = 'marketing' }) => {
   useEffect(() => {
     if (location.hash) {
       const sectionId = location.hash.slice(1);
-      setTimeout(() => {
+      const scrollTimeout = window.setTimeout(() => {
         const element = document.getElementById(sectionId);
         if (element) {
           element.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
       }, 100);
+      return () => window.clearTimeout(scrollTimeout);
     }
   }, [location]);
 
@@ -124,7 +125,7 @@ export const Header: React.FC<HeaderProps> = ({ variant = 'marketing' }) => {
         <div className="flex items-center justify-between h-16">
           <Link
             to="/"
-            className="flex items-center gap-2.5 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand rounded-lg p-1 -ml-1"
+            className="flex items-center gap-2.5 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand rounded-xl p-1 -ml-1"
             aria-label="dayof home"
           >
             <Heart className="w-5 h-5 text-accent" aria-hidden="true" />
@@ -138,7 +139,7 @@ export const Header: React.FC<HeaderProps> = ({ variant = 'marketing' }) => {
                   <button
                     key={item.id}
                     onClick={() => scrollToSection(item.id)}
-                    className={`text-[0.875rem] font-medium transition-colors px-3 py-2 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand ${
+                    className={`text-[0.875rem] font-medium transition-colors px-3 py-2 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand ${
                       isHomePage && activeSection === item.id
                         ? 'text-brand bg-brand/10'
                         : 'text-ink/70 hover:text-ink hover:bg-brand/5'
@@ -153,7 +154,7 @@ export const Header: React.FC<HeaderProps> = ({ variant = 'marketing' }) => {
                   <Link
                     key={item.id}
                     to={item.route || '/'}
-                    className={`text-[0.875rem] font-medium transition-colors px-3 py-2 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand ${
+                    className={`text-[0.875rem] font-medium transition-colors px-3 py-2 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand ${
                       location.pathname === item.route
                         ? 'text-brand bg-brand/10'
                         : 'text-ink/70 hover:text-ink hover:bg-brand/5'
@@ -180,7 +181,7 @@ export const Header: React.FC<HeaderProps> = ({ variant = 'marketing' }) => {
           </div>
 
           <button
-            className="md:hidden p-2 text-ink hover:bg-brand/10 rounded-lg transition-colors min-h-[44px] min-w-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+            className="md:hidden p-2 text-ink hover:bg-brand/10 rounded-xl transition-colors min-h-[44px] min-w-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
             aria-expanded={mobileMenuOpen}
@@ -198,7 +199,7 @@ export const Header: React.FC<HeaderProps> = ({ variant = 'marketing' }) => {
                     <button
                       key={item.id}
                       onClick={() => scrollToSection(item.id)}
-                      className={`text-[0.875rem] font-medium transition-colors py-2 px-3 rounded-lg text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand ${
+                      className={`text-[0.875rem] font-medium transition-colors py-2 px-3 rounded-xl text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand ${
                         isHomePage && activeSection === item.id
                           ? 'text-brand bg-brand/10'
                           : 'text-ink/70 hover:text-ink hover:bg-brand/5'
@@ -214,7 +215,7 @@ export const Header: React.FC<HeaderProps> = ({ variant = 'marketing' }) => {
                       key={item.id}
                       to={item.route || '/'}
                       onClick={() => setMobileMenuOpen(false)}
-                      className={`text-[0.875rem] font-medium transition-colors py-2 px-3 rounded-lg text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand ${
+                      className={`text-[0.875rem] font-medium transition-colors py-2 px-3 rounded-xl text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand ${
                         location.pathname === item.route
                           ? 'text-brand bg-brand/10'
                           : 'text-ink/70 hover:text-ink hover:bg-brand/5'

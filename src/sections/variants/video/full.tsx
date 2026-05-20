@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { z } from 'zod';
 import { Play, Film } from 'lucide-react';
 import { SectionDefinition, SectionComponentProps } from '../../types';
@@ -43,6 +43,10 @@ const VideoFull: React.FC<SectionComponentProps<VideoFullData>> = ({ data }) => 
   const thumbnailUrl = getSafePublicImageUrl(data.thumbnailUrl);
   const safeDirectVideoUrl = data.videoType === 'direct' ? getSafePublicVideoEmbedUrl(data.videoUrl, 'direct') : '';
   const colors = bgMap[data.background] ?? bgMap.dark;
+
+  useEffect(() => {
+    setPlaying(false);
+  }, [data.layoutStyle, data.videoType, data.videoUrl, data.thumbnailUrl, data.autoplay]);
 
   if (data.layoutStyle === 'background') {
     return (

@@ -3,6 +3,10 @@ import { hasMeaningfulQuickStartAnswers } from './quickStartHydration';
 
 export const QUICK_START_STORAGE_KEY = 'dayoflove:quickstart-shell';
 export const QUICK_START_DRAFT_RETENTION_MS = 30 * 24 * 60 * 60 * 1000;
+export const buildQuickStartDraftStorageKey = (storageScope?: string | null): string => {
+  const scope = typeof storageScope === 'string' ? storageScope.trim() : '';
+  return scope ? `${QUICK_START_STORAGE_KEY}::${scope}` : QUICK_START_STORAGE_KEY;
+};
 
 const isFreshQuickStartDraftTimestamp = (value: unknown, now = Date.now()) => {
   if (typeof value !== 'string') return false;
@@ -80,11 +84,32 @@ export const hasMeaningfulQuickStartDraftSnapshot = (snapshot: QuickStartDraftSn
 };
 
 
-export const clearQuickStartDraftSnapshot = () => {
+const readScopedQuickStartRaw = (storageScope?: string | null): {
+  storageKey: string;
+  sourceKey: string;
+  raw: string | null;
+  shouldMigrate: boolean;
+} => {
+  const storageKey = buildQuickStartDraftStorageKey(storageScope);
+  const hasScopedKey = window.localStorage.getItem(storageKey) !== null;
+  const sourceKey = !hasScopedKey && storageKey !== QUICK_START_STORAGE_KEY ? QUICK_START_STORAGE_KEY : storageKey;
+  return {
+    storageKey,
+    sourceKey,
+    raw: window.localStorage.getItem(sourceKey),
+    shouldMigrate: sourceKey !== storageKey,
+  };
+};
+
+export const clearQuickStartDraftSnapshot = (storageScope?: string | null) => {
   if (typeof window === 'undefined') return;
 
   try {
-    if (window.localStorage.getItem(QUICK_START_STORAGE_KEY) !== null) {
+    const storageKey = buildQuickStartDraftStorageKey(storageScope);
+    if (window.localStorage.getItem(storageKey) !== null) {
+      window.localStorage.removeItem(storageKey);
+    }
+    if (storageKey !== QUICK_START_STORAGE_KEY && window.localStorage.getItem(QUICK_START_STORAGE_KEY) !== null) {
       window.localStorage.removeItem(QUICK_START_STORAGE_KEY);
     }
   } catch {
@@ -92,22 +117,23 @@ export const clearQuickStartDraftSnapshot = () => {
   }
 };
 
-export const persistQuickStartDraftSnapshot = (value: unknown) => {
+export const persistQuickStartDraftSnapshot = (value: unknown, storageScope?: string | null) => {
   if (typeof window === 'undefined') return null;
   const normalized = createQuickStartDraftSnapshot(value);
   const hasMeaningfulDraft = hasMeaningfulQuickStartDraftSnapshot(normalized);
 
   try {
-    const existingRaw = window.localStorage.getItem(QUICK_START_STORAGE_KEY);
+    const { raw: existingRaw, sourceKey, storageKey } = readScopedQuickStartRaw(storageScope);
     const normalizedWithSavedAt = hasMeaningfulDraft ? withQuickStartSavedAt(normalized, existingRaw) : null;
     const normalizedRaw = normalizedWithSavedAt ? JSON.stringify(normalizedWithSavedAt) : null;
 
     if (normalizedRaw !== null) {
-      if (existingRaw !== normalizedRaw) {
-        window.localStorage.setItem(QUICK_START_STORAGE_KEY, normalizedRaw);
+      if (existingRaw !== normalizedRaw || sourceKey !== storageKey) {
+        window.localStorage.setItem(storageKey, normalizedRaw);
       }
+      if (sourceKey !== storageKey) window.localStorage.removeItem(sourceKey);
     } else if (existingRaw !== null) {
-      clearQuickStartDraftSnapshot();
+      clearQuickStartDraftSnapshot(storageScope);
     }
   } catch {
     // ignore storage write failures and keep the normalized in-memory result usable
@@ -116,16 +142,17 @@ export const persistQuickStartDraftSnapshot = (value: unknown) => {
   return hasMeaningfulDraft ? normalized : null;
 };
 
-export const readQuickStartDraftSnapshot = (): QuickStartDraftSnapshot | null => {
+export const readQuickStartDraftSnapshot = (storageScope?: string | null): QuickStartDraftSnapshot | null => {
   if (typeof window === 'undefined') return null;
 
-  let raw: string | null = null;
+  let scopedRaw: ReturnType<typeof readScopedQuickStartRaw> | null = null;
   try {
-    raw = window.localStorage.getItem(QUICK_START_STORAGE_KEY);
+    scopedRaw = readScopedQuickStartRaw(storageScope);
   } catch {
     return null;
   }
 
+  const raw = scopedRaw.raw;
   if (!raw) return null;
   try {
     const parsed = JSON.parse(raw);
@@ -133,7 +160,7 @@ export const readQuickStartDraftSnapshot = (): QuickStartDraftSnapshot | null =>
     const hasMeaningfulDraft = hasMeaningfulQuickStartDraftSnapshot(normalized);
     const hasSavedAt = typeof normalized.savedAtISO === 'string';
     if (hasSavedAt && !isFreshQuickStartDraftTimestamp(normalized.savedAtISO)) {
-      clearQuickStartDraftSnapshot();
+      clearQuickStartDraftSnapshot(storageScope);
       return null;
     }
     const normalizedWithSavedAt = hasMeaningfulDraft
@@ -145,11 +172,12 @@ export const readQuickStartDraftSnapshot = (): QuickStartDraftSnapshot | null =>
     const normalizedRaw = normalizedWithSavedAt ? JSON.stringify(normalizedWithSavedAt) : null;
     try {
       if (normalizedRaw) {
-        if (raw !== normalizedRaw) {
-          window.localStorage.setItem(QUICK_START_STORAGE_KEY, normalizedRaw);
+        if (raw !== normalizedRaw || scopedRaw.shouldMigrate) {
+          window.localStorage.setItem(scopedRaw.storageKey, normalizedRaw);
+          if (scopedRaw.shouldMigrate) window.localStorage.removeItem(scopedRaw.sourceKey);
         }
       } else {
-        clearQuickStartDraftSnapshot();
+        clearQuickStartDraftSnapshot(storageScope);
       }
     } catch {
       // ignore storage rewrite failures and still return the normalized draft
@@ -157,10 +185,33 @@ export const readQuickStartDraftSnapshot = (): QuickStartDraftSnapshot | null =>
     return hasMeaningfulDraft ? normalized : null;
   } catch {
     try {
-      clearQuickStartDraftSnapshot();
+      clearQuickStartDraftSnapshot(storageScope);
     } catch {
       // ignore cleanup failures after broken payloads and still treat restore as unavailable
     }
     return null;
   }
+};
+
+export const migrateQuickStartDraftSnapshotScope = (
+  sourceStorageScope?: string | null,
+  targetStorageScope?: string | null,
+): QuickStartDraftSnapshot | null => {
+  const sourceKey = buildQuickStartDraftStorageKey(sourceStorageScope);
+  const targetKey = buildQuickStartDraftStorageKey(targetStorageScope);
+
+  if (sourceKey === targetKey) {
+    return readQuickStartDraftSnapshot(targetStorageScope);
+  }
+
+  const sourceDraft = readQuickStartDraftSnapshot(sourceStorageScope);
+  if (!sourceDraft) return readQuickStartDraftSnapshot(targetStorageScope);
+
+  const targetDraft = readQuickStartDraftSnapshot(targetStorageScope);
+  if (!targetDraft) {
+    persistQuickStartDraftSnapshot(sourceDraft, targetStorageScope);
+  }
+
+  clearQuickStartDraftSnapshot(sourceStorageScope);
+  return targetDraft ?? sourceDraft;
 };

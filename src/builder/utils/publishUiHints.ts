@@ -189,3 +189,14 @@ export const shouldOpenPhotoTipsFromSearch = (search: string): boolean => {
   const params = new URLSearchParams(search);
   return params.get('photoTips') === '1';
 };
+
+export const shouldOpenPublishChecklistFromSearch = (search: string): boolean => {
+  const params = new URLSearchParams(search);
+  const tool = params.get('tool');
+  return tool === 'share' || tool === 'qr-codes';
+};
+
+export const shouldOpenDesignPanelFromSearch = (search: string): boolean => {
+  const params = new URLSearchParams(search);
+  return params.get('panel') === 'design';
+};

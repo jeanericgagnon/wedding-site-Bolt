@@ -1,10 +1,11 @@
 import React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { QUICK_START_STORAGE_KEY } from '../../lib/quickStartStateTransfer';
+import { buildQuickStartDraftStorageKey, QUICK_START_STORAGE_KEY } from '../../lib/quickStartStateTransfer';
 
 const navigateMock = vi.fn();
-let authUser: { id: string } | null = null;
+let authUser: { id: string; email?: string | null } | null = null;
 let weddingSiteRow: Record<string, unknown> | null = null;
 
 vi.mock('react-router-dom', async () => {
@@ -23,6 +24,22 @@ vi.mock('framer-motion', () => ({
       Component.displayName = `motion.${key}`;
       return Component;
     },
+  }),
+}));
+
+vi.mock('../../hooks/useAuth', () => ({
+  useAuth: () => ({
+    user: authUser
+      ? {
+          id: authUser.id,
+          email: authUser.email ?? '',
+          name: authUser.email ?? authUser.id,
+        }
+      : null,
+    loading: false,
+    isDemoMode: false,
+    signIn: vi.fn(),
+    signOut: vi.fn(),
   }),
 }));
 
@@ -51,6 +68,14 @@ vi.mock('../../lib/activeSite', () => ({
 }));
 
 import { QuickStart } from './QuickStart';
+
+function renderQuickStart() {
+  return render(
+    <MemoryRouter initialEntries={['/quick-start']}>
+      <QuickStart />
+    </MemoryRouter>,
+  );
+}
 
 describe('QuickStart flow guards', () => {
   beforeEach(() => {
@@ -99,7 +124,7 @@ describe('QuickStart flow guards', () => {
       },
     }));
 
-    render(<QuickStart />);
+    renderQuickStart();
 
     await screen.findByText('A few useful follow-ups before we build');
     fireEvent.click(screen.getByRole('button', { name: 'Back' }));
@@ -136,9 +161,45 @@ describe('QuickStart flow guards', () => {
       clarifyingState: null,
     }));
 
-    render(<QuickStart />);
+    renderQuickStart();
 
     expect(await screen.findByDisplayValue('Local Couple')).toBeInTheDocument();
+  });
+
+  it('migrates email-scoped quick-start drafts into the authenticated user scope', async () => {
+    authUser = { id: 'user-1', email: 'alex@example.com' };
+    window.localStorage.setItem(buildQuickStartDraftStorageKey('alex@example.com'), JSON.stringify({
+      currentIndex: 0,
+      showFollowUps: false,
+      viewState: 'question',
+      initialSetupAnswers: {
+        names: 'Scoped Couple',
+        labelPreference: 'names-only',
+        customLabelPartnerOne: '',
+        customLabelPartnerTwo: '',
+        whenWhere: '',
+        venueNameOrTbd: '',
+        style: '',
+        guestFeel: '',
+        weekendEventsRaw: '',
+        ceremonyArrivalTime: '',
+        guestCountBand: '',
+        plusOnePolicy: '',
+        childrenAllowed: '',
+        rsvpDeadline: '',
+        mealChoice: '',
+        registryIntent: '',
+        optionalStory: '',
+      },
+      followUpAnswers: {},
+      clarifyingState: null,
+    }));
+
+    renderQuickStart();
+
+    expect(await screen.findByDisplayValue('Scoped Couple')).toBeInTheDocument();
+    expect(window.localStorage.getItem(buildQuickStartDraftStorageKey('alex@example.com'))).toBeNull();
+    expect(window.localStorage.getItem(buildQuickStartDraftStorageKey('user-1'))).toContain('Scoped Couple');
   });
 
   it('shows human-readable labels for prior choice answers', async () => {
@@ -169,7 +230,7 @@ describe('QuickStart flow guards', () => {
       clarifyingState: null,
     }));
 
-    render(<QuickStart />);
+    renderQuickStart();
 
     expect(await screen.findByRole('button', { name: /About how many guests are you inviting: 100–150/i })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /About how many guests are you inviting: 100-150/i })).not.toBeInTheDocument();
@@ -204,7 +265,7 @@ describe('QuickStart flow guards', () => {
       clarifyingState: null,
     }));
 
-    render(<QuickStart />);
+    renderQuickStart();
 
     expect(await screen.findByText('Want to add your story? (totally optional)')).toBeInTheDocument();
     expect(JSON.parse(window.localStorage.getItem(QUICK_START_STORAGE_KEY) || '{}').currentIndex).toBe(13);
@@ -222,7 +283,7 @@ describe('QuickStart flow guards', () => {
       },
     };
 
-    render(<QuickStart />);
+    renderQuickStart();
 
     expect(await screen.findByDisplayValue('Alex & Jordan')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
@@ -247,7 +308,7 @@ describe('QuickStart flow guards', () => {
       onboarding_answers: null,
     };
 
-    render(<QuickStart />);
+    renderQuickStart();
 
     expect(await screen.findByDisplayValue('Alex')).toBeInTheDocument();
     expect(screen.queryByDisplayValue(/&/)).not.toBeInTheDocument();

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { formatGuestPhotoDateTime } from './guestPhotoUploadTime';
@@ -24,6 +24,7 @@ import { useGuestPhotoDashboardData } from './guestPhotos/useGuestPhotoDashboard
 import { useGuestPhotoDashboardUiState } from './guestPhotos/useGuestPhotoDashboardUiState';
 import { type GuestPhotoBucketsState, useGuestPhotoBucketWorkspace } from './guestPhotos/useGuestPhotoBucketWorkspace';
 import { useGuestPhotoDashboardRouteSupport } from './guestPhotos/useGuestPhotoDashboardRouteSupport';
+import { resolveGuestPhotoScrollTargets } from './guestPhotos/guestPhotoRouteState';
 
 export const GuestPhotoSharing: React.FC = () => {
   const location = useLocation();
@@ -88,6 +89,7 @@ export const GuestPhotoSharing: React.FC = () => {
     setShowHidden,
     setSiteId,
     setSiteSlug,
+    setStorageScope,
     setSlideshowBucketFilter,
     setSlideshowOrder,
     setSlideshowPreviewOpen,
@@ -101,6 +103,7 @@ export const GuestPhotoSharing: React.FC = () => {
     setUploads,
     setWindowDrafts,
     setWorkingBucketId,
+    resetGuestPhotoDashboardInteractionState,
   } = useGuestPhotoDashboardUiState({ search });
   const {
     archiveMode,
@@ -119,6 +122,7 @@ export const GuestPhotoSharing: React.FC = () => {
     handleBucketRemoveClick,
     handleBucketUploadClick,
     photoBuckets,
+    resetGuestPhotoBucketWorkspace,
     setPhotoBuckets,
   } = useGuestPhotoBucketWorkspace({
     setError,
@@ -126,6 +130,7 @@ export const GuestPhotoSharing: React.FC = () => {
     setSuccess,
     siteId,
   });
+  const previousSiteIdRef = useRef<string | null>(null);
 
   const { load } = useGuestPhotoDashboardData({
     isDemoMode,
@@ -152,8 +157,60 @@ export const GuestPhotoSharing: React.FC = () => {
   });
 
   useEffect(() => {
-    writeStoredBucketLinks(bucketUploadLinks);
-  }, [bucketUploadLinks]);
+    if (!siteId) return;
+    writeStoredBucketLinks(bucketUploadLinks, siteId);
+  }, [bucketUploadLinks, siteId]);
+
+  useEffect(() => {
+    setStorageScope(siteId);
+  }, [setStorageScope, siteId]);
+
+  useEffect(() => {
+    if (previousSiteIdRef.current && siteId && previousSiteIdRef.current !== siteId) {
+      resetGuestPhotoDashboardInteractionState();
+    }
+    previousSiteIdRef.current = siteId;
+  }, [siteId, resetGuestPhotoDashboardInteractionState]);
+
+  useEffect(() => {
+    if (!siteId && !isDemoMode) {
+      resetGuestPhotoDashboardInteractionState();
+      resetGuestPhotoBucketWorkspace();
+    }
+  }, [isDemoMode, siteId, resetGuestPhotoBucketWorkspace, resetGuestPhotoDashboardInteractionState]);
+
+  useEffect(() => {
+    const targetIds = resolveGuestPhotoScrollTargets(location.search);
+    if (targetIds.length === 0) return;
+
+    const consumeToolParam = () => {
+      const nextParams = new URLSearchParams(searchParams);
+      nextParams.delete('tool');
+      navigate(
+        {
+          pathname: location.pathname,
+          search: nextParams.toString() ? `?${nextParams.toString()}` : '',
+          hash: location.hash,
+        },
+        { replace: true },
+      );
+    };
+
+    const scrollToTarget = () => {
+      for (const id of targetIds) {
+        const target = document.getElementById(id);
+        if (!target) continue;
+        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        consumeToolParam();
+        return true;
+      }
+      return false;
+    };
+
+    if (scrollToTarget()) return;
+    const timeout = window.setTimeout(scrollToTarget, 50);
+    return () => window.clearTimeout(timeout);
+  }, [location.hash, location.pathname, location.search, navigate, searchParams]);
 
   const {
     analysisByUploadId,
@@ -346,7 +403,7 @@ export const GuestPhotoSharing: React.FC = () => {
 
   const {
     bulkRegenerating,
-    copied,
+    copyNotice,
     copyAllKnownLinks,
     copyAllShareMessages,
     copyFallbackValue,
@@ -471,7 +528,7 @@ export const GuestPhotoSharing: React.FC = () => {
     bulkRegenerating,
     childBucketsByParent,
     chronologicalUploads,
-    copied,
+    copyNotice,
     copyFallbackValue,
     countsByBucket,
     descendantBucketIdsByParent,

@@ -2,6 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '../../components/ui';
 import { ExternalLink, Eye } from 'lucide-react';
+import { ACTIVE_SITE_STORAGE_CHANGED_EVENT, getStoredActiveSiteId } from '../../lib/activeSiteStorage';
 import { formatOverviewRelativeTime, formatOverviewWeddingDate } from './overviewDate';
 import { buildOverviewDashboardModel } from './buildOverviewDashboardModel';
 import { buildNameChangeOverviewCardModel } from './nameChangeOverviewCard';
@@ -67,12 +68,25 @@ type OverviewLiveContentProps = {
   stats: OverviewStatsState | null;
 };
 
-function openSitePreview(slug: string, isLive: boolean) {
+function openSitePreview(slug: string, isLive: boolean, navigate: (href: string) => void) {
   if (!isLive) {
-    window.location.assign('/dashboard/builder');
+    navigate('/dashboard/builder');
     return;
   }
   window.open(`/site/${slug}`, '_blank', 'noopener,noreferrer');
+}
+
+function formatDaysToGoLabel(weddingDate: string | null | undefined) {
+  if (!weddingDate) return 'Date not set';
+  const target = new Date(`${weddingDate}T12:00:00`);
+  if (Number.isNaN(target.getTime())) return 'Date not set';
+  const today = new Date();
+  const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  const startOfTarget = new Date(target.getFullYear(), target.getMonth(), target.getDate());
+  const diff = Math.round((startOfTarget.getTime() - startOfToday.getTime()) / 86400000);
+  if (diff < 0) return 'Happily married';
+  if (diff === 0) return 'Today';
+  return `${diff} days`;
 }
 
 export function OverviewDashboardLiveContent({
@@ -97,19 +111,22 @@ export function OverviewDashboardLiveContent({
   const [homePins, setHomePins] = React.useState<DashboardToolId[]>([]);
 
   React.useEffect(() => {
-    const syncPins = () => setHomePins(readStoredToolPins(DASHBOARD_HOME_PIN_STORAGE_KEY));
+    const syncPins = () => setHomePins(readStoredToolPins(DASHBOARD_HOME_PIN_STORAGE_KEY, getStoredActiveSiteId()));
     syncPins();
     window.addEventListener('dayof:dashboard-tool-pins-changed', syncPins);
     window.addEventListener('storage', syncPins);
+    window.addEventListener(ACTIVE_SITE_STORAGE_CHANGED_EVENT, syncPins);
     return () => {
       window.removeEventListener('dayof:dashboard-tool-pins-changed', syncPins);
       window.removeEventListener('storage', syncPins);
+      window.removeEventListener(ACTIVE_SITE_STORAGE_CHANGED_EVENT, syncPins);
     };
   }, []);
 
   const weddingDateLabel = stats?.weddingDate ? formatOverviewWeddingDate(stats.weddingDate) : 'Date not set yet';
   const guestTotal = stats?.totalGuests ?? 0;
   const pendingGuests = stats?.pendingGuests ?? 0;
+  const daysToGoLabel = formatDaysToGoLabel(stats?.weddingDate);
   const memoryCount = (stats?.newPhotoUploadCount ?? 0) + (stats?.vaultCount ?? 0);
   const defaultWorkspaceTools = DEFAULT_DASHBOARD_TOOLS.filter((tool) => tool.id !== 'overview' && tool.id !== 'tools');
   const pinnedWorkspaceTools = getAllDashboardTools().filter((tool) => homePins.includes(tool.id));
@@ -121,12 +138,77 @@ export function OverviewDashboardLiveContent({
       : pendingGuests > 0
         ? 'Waiting on replies'
         : 'Replies are gathered';
-  const statusItems = [
-    { label: 'Site', value: siteVisibility.isLive ? 'Guest-ready' : siteVisibility.shortLabel },
-    { label: 'Guests', value: guestTotal > 0 ? `${guestTotal.toLocaleString()} added` : 'Ready to add' },
-    { label: 'RSVPs', value: rsvpOutcome },
-    { label: 'Registry', value: (stats?.registryItemCount ?? 0) > 0 ? 'Ready for guests' : 'Ready to add' },
-    { label: 'Memories', value: memoryCount > 0 ? 'New moments collected' : 'Ready to collect' },
+  const reviewItems = [
+    publishBlockers[0] ? {
+      title: publishBlockers[0].label,
+      detail: 'Finish this setup item before you send more guests into the live site.',
+      href: publishBlockers[0].route,
+      action: publishBlockers[0].actionLabel,
+    } : null,
+    guestTotal > 0 && (contactCoverage ?? 0) < 90 ? {
+      title: 'Collect the missing contact details.',
+      detail: 'A few guests still need addresses or usable contact info before invites and follow-ups feel easy.',
+      href: '/dashboard/guests?tool=address-collection',
+      action: 'Collect addresses',
+    } : null,
+    pendingGuests > 0 ? {
+      title: 'Send a gentle RSVP reminder.',
+      detail: `${pendingGuests} guest${pendingGuests === 1 ? '' : 's'} still have not replied.`,
+      href: '/dashboard/messages?template=rsvp-reminder',
+      action: 'Review RSVPs',
+    } : null,
+    (stats?.registryItemCount ?? 0) === 0 ? {
+      title: 'Review the registry.',
+      detail: 'Guests will have an easier time if at least one gift, fund, or registry link is ready to share.',
+      href: '/dashboard/registry',
+      action: 'Review registry',
+    } : null,
+  ].filter(Boolean).slice(0, 3) as Array<{ title: string; detail: string; href: string; action: string }>;
+
+  const glanceItems = [
+    {
+      label: 'Days to go',
+      value: daysToGoLabel,
+      detail: weddingDateLabel,
+      href: '/dashboard/itinerary',
+      action: 'View weekend',
+    },
+    {
+      label: 'Guests',
+      value: guestTotal > 0 ? `${guestTotal.toLocaleString()} invited` : 'Ready to add',
+      detail: guestTotal > 0 ? `${responseRate ?? 0}% replied • ${pendingGuests} pending` : 'Build your guest list',
+      href: '/dashboard/guests',
+      action: 'Review RSVPs',
+    },
+    {
+      label: 'Guest site',
+      value: siteVisibility.isLive ? 'Live' : siteVisibility.shortLabel,
+      detail: siteVisibility.isLive ? 'Guests can open the full site now.' : siteVisibility.label,
+      href: stats?.siteSlug && siteVisibility.isLive ? `/site/${stats.siteSlug}` : '/dashboard/builder',
+      action: siteVisibility.isLive ? 'Open flow' : 'Finish setup',
+      external: Boolean(stats?.siteSlug && siteVisibility.isLive),
+    },
+    {
+      label: 'Registry',
+      value: (stats?.registryItemCount ?? 0) > 0 ? 'Ready' : 'Needs review',
+      detail: (stats?.registryItemCount ?? 0) > 0 ? `${stats?.registryItemCount ?? 0} gift item${(stats?.registryItemCount ?? 0) === 1 ? '' : 's'} live or queued.` : 'Add a gift, fund, or link.',
+      href: '/dashboard/registry',
+      action: (stats?.registryItemCount ?? 0) > 0 ? 'View registry' : 'Add registry',
+    },
+    {
+      label: 'Missing addresses',
+      value: guestTotal > 0 && contactCoverage !== null ? `${Math.max(0, guestTotal - Math.round((contactCoverage / 100) * guestTotal))}` : '0',
+      detail: guestTotal > 0 && contactCoverage !== null ? `${contactCoverage}% of guests have usable contact details.` : 'Address collection is ready when guests are added.',
+      href: '/dashboard/guests?tool=address-collection',
+      action: 'Collect addresses',
+    },
+    {
+      label: 'Memories',
+      value: memoryCount > 0 ? `${memoryCount} collected` : 'Ready',
+      detail: memoryCount > 0 ? 'Photos or vault moments are waiting in Memories.' : 'Photo sharing can be turned on any time.',
+      href: '/dashboard/photos',
+      action: memoryCount > 0 ? 'Open memories' : 'Share photo link',
+    },
   ];
 
   const recentActivityItems = [
@@ -156,7 +238,7 @@ export function OverviewDashboardLiveContent({
     {
       title: 'Preview what guests will see before you share.',
       detail: 'Open the guest-facing site and check the details in context.',
-      action: stats?.siteSlug ? () => openSitePreview(stats.siteSlug!, siteVisibility.isLive) : () => navigate('/dashboard/builder'),
+      action: stats?.siteSlug ? () => openSitePreview(stats.siteSlug!, siteVisibility.isLive, navigate) : () => navigate('/dashboard/builder'),
       label: siteVisibility.isLive ? 'Preview site' : 'Preview draft',
     },
     guestTotal > 0 && (contactCoverage ?? 0) < 90 ? {
@@ -182,19 +264,19 @@ export function OverviewDashboardLiveContent({
   return (
     <div className="space-y-9">
       <section className="border-b border-border-subtle pb-8">
-        <div className="grid gap-8 lg:grid-cols-[minmax(0,1.05fr)_minmax(360px,0.95fr)] lg:items-center">
+        <div className="grid gap-8 lg:grid-cols-[minmax(0,1.1fr)_minmax(320px,0.9fr)] lg:items-center">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary/75">Your wedding space</p>
             <h1 className="mt-4 max-w-3xl font-serif text-4xl font-normal leading-tight text-text-primary md:text-6xl">
               Everything guests need, in one calm place.
             </h1>
             <p className="mt-5 max-w-2xl text-base leading-8 text-text-secondary">
-              Your site, guests, registry, messages, and memories are gathered here so the experience feels easier for everyone.
+              Guest site is {siteVisibility.isLive ? 'live' : 'still being prepared'}. {pendingGuests > 0 ? `${pendingGuests} RSVP${pendingGuests === 1 ? ' is' : 's are'} still pending.` : 'Replies are coming in cleanly.'}
             </p>
             {heroVenueLine && <p className="mt-4 text-sm font-medium text-text-primary">{heroVenueLine}</p>}
             <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
               {stats?.siteSlug && (
-                <Button variant="primary" size="md" onClick={() => openSitePreview(stats.siteSlug!, siteVisibility.isLive)}>
+                <Button variant="primary" size="md" onClick={() => openSitePreview(stats.siteSlug!, siteVisibility.isLive, navigate)}>
                   <ExternalLink className="mr-2 h-4 w-4" aria-hidden="true" />
                   {siteVisibility.isLive ? 'Preview site' : 'Preview draft'}
                 </Button>
@@ -207,8 +289,9 @@ export function OverviewDashboardLiveContent({
               </Button>
             </div>
           </div>
-          <div className="rounded-[2rem] border border-border-subtle bg-white p-4 shadow-sm">
-            <div className="overflow-hidden rounded-[1.5rem] border border-border-subtle bg-surface-subtle">
+          <div className="rounded-[2rem] border border-border-subtle bg-white p-5 shadow-sm">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary/75">Your guest experience</p>
+            <div className="mt-4 overflow-hidden rounded-[1.5rem] border border-border-subtle bg-surface-subtle">
               <div className="bg-white px-5 py-4">
                 <div className="flex items-center justify-between gap-4">
                   <div>
@@ -218,13 +301,14 @@ export function OverviewDashboardLiveContent({
                   <span className="rounded-full border border-border-subtle px-3 py-1 text-xs text-text-secondary">{siteVisibility.label}</span>
                 </div>
               </div>
-              <div className="min-h-[250px] bg-[linear-gradient(135deg,#f8f5f0_0%,#ffffff_42%,#f1ece4_100%)] p-6">
+              <div className="min-h-[240px] bg-[linear-gradient(135deg,#f8f5f0_0%,#ffffff_42%,#f1ece4_100%)] p-6">
                 <div className="max-w-sm">
                   <p className="text-xs font-medium uppercase tracking-[0.14em] text-primary/75">{weddingDateLabel}</p>
-                  <h2 className="mt-4 font-serif text-4xl leading-tight text-text-primary">Welcome to our wedding weekend.</h2>
-                  <p className="mt-4 text-sm leading-6 text-text-secondary">Weekend details, RSVP, travel, registry, and photos stay easy to find.</p>
+                  <h2 className="mt-4 font-serif text-4xl leading-tight text-text-primary">Complete without a photo.</h2>
+                  <p className="mt-4 text-sm leading-6 text-text-secondary">Your cover is ready now. Add a photo later if you want one, without holding up the guest flow.</p>
                   <div className="mt-6 flex flex-wrap gap-2 text-xs">
                     <span className="rounded-full bg-white px-3 py-1 text-text-primary ring-1 ring-border-subtle">RSVP</span>
+                    <span className="rounded-full bg-white px-3 py-1 text-text-primary ring-1 ring-border-subtle">Schedule</span>
                     <span className="rounded-full bg-white px-3 py-1 text-text-primary ring-1 ring-border-subtle">Registry</span>
                     <span className="rounded-full bg-white px-3 py-1 text-text-primary ring-1 ring-border-subtle">Photos</span>
                   </div>
@@ -235,20 +319,66 @@ export function OverviewDashboardLiveContent({
         </div>
       </section>
 
-      <section className="flex flex-wrap gap-x-8 gap-y-4 border-b border-border-subtle pb-7">
-        {statusItems.map((item, index) => (
-          <div key={item.label} className={index > 0 ? 'border-l border-border-subtle pl-6' : ''}>
-            <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-text-tertiary">{item.label}</p>
-            <p className="mt-1 text-sm font-semibold text-text-primary">{item.value}</p>
+      <section className="grid gap-6 lg:grid-cols-[minmax(0,1.1fr)_360px]">
+        <article className="rounded-[2rem] border border-border-subtle bg-white p-6 shadow-sm">
+          <div className="flex items-start justify-between gap-6">
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary/75">At a glance</p>
+              <h2 className="mt-3 font-serif text-2xl font-normal text-text-primary">The details that matter most right now.</h2>
+            </div>
+            <Button variant="outline" size="sm" onClick={() => navigate('/dashboard/tools')}>
+              Edit grid
+            </Button>
           </div>
-        ))}
+          <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+            {glanceItems.map((item) => {
+              const content = (
+                <div className="rounded-2xl border border-border-subtle bg-surface-subtle/30 p-4 transition hover:border-primary/30 hover:shadow-sm">
+                  <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-text-tertiary">{item.label}</p>
+                  <p className="mt-3 text-2xl font-semibold text-text-primary">{item.value}</p>
+                  <p className="mt-2 text-sm leading-6 text-text-secondary">{item.detail}</p>
+                  <p className="mt-4 text-sm font-semibold text-primary">{item.action}</p>
+                </div>
+              );
+              return item.external ? (
+                <a key={item.label} href={item.href} target="_blank" rel="noreferrer" className="no-underline">
+                  {content}
+                </a>
+              ) : (
+                <Link key={item.label} to={item.href} className="no-underline">
+                  {content}
+                </Link>
+              );
+            })}
+          </div>
+        </article>
+        <aside className="rounded-[2rem] border border-border-subtle bg-white p-6 shadow-sm">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary/75">Needs review</p>
+          <div className="mt-5 space-y-4">
+            {reviewItems.length === 0 ? (
+              <div className="rounded-2xl border border-border-subtle bg-surface-subtle/30 p-4">
+                <p className="text-sm font-semibold text-text-primary">Nothing urgent is waiting.</p>
+                <p className="mt-2 text-sm leading-6 text-text-secondary">You can keep moving, or open the deeper owner detail when you want a fuller sweep.</p>
+              </div>
+            ) : (
+              reviewItems.map((item) => (
+                <Link key={item.title} to={item.href} className="block rounded-2xl border border-border-subtle bg-surface-subtle/30 p-4 no-underline transition hover:border-primary/30 hover:shadow-sm">
+                  <p className="text-sm font-semibold text-text-primary">{item.title}</p>
+                  <p className="mt-2 text-sm leading-6 text-text-secondary">{item.detail}</p>
+                  <p className="mt-4 text-sm font-semibold text-primary">{item.action}</p>
+                </Link>
+              ))
+            )}
+          </div>
+        </aside>
       </section>
 
       <section className="rounded-3xl bg-white/80 p-5 shadow-sm ring-1 ring-border-subtle md:p-6">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <h2 className="font-serif text-2xl font-normal text-text-primary">A few ways to make things smoother.</h2>
-            <p className="mt-1 text-sm text-text-secondary">Keep the helpful next steps close, and open the deeper owner analytics only when you want them.</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary/75">Suggested next steps</p>
+            <h2 className="mt-3 font-serif text-2xl font-normal text-text-primary">A few ways to make things smoother.</h2>
+            <p className="mt-2 text-sm text-text-secondary">Keep the helpful next steps close, and open the deeper owner analytics only when you want them.</p>
           </div>
           <Button
             variant="outline"
@@ -273,7 +403,8 @@ export function OverviewDashboardLiveContent({
         <section className="rounded-3xl border border-border-subtle bg-white p-5 md:p-6">
           <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
             <div>
-              <h2 className="font-serif text-2xl font-normal text-text-primary">Website and invite analytics</h2>
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary/75">Owner detail</p>
+              <h2 className="mt-3 font-serif text-2xl font-normal text-text-primary">Website and invite analytics</h2>
               <p className="mt-2 text-sm leading-6 text-text-secondary">{websiteInviteAnalytics.summary}</p>
               <div className="mt-5 grid gap-3 sm:grid-cols-2">
                 {websiteInviteAnalytics.signals.map((signal) => (
@@ -288,7 +419,8 @@ export function OverviewDashboardLiveContent({
             </div>
             <div className="space-y-4">
               <div className="rounded-2xl border border-border-subtle bg-surface-subtle/40 p-4">
-                <h3 className="font-serif text-xl font-normal text-text-primary">Guest journey funnel</h3>
+                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary/75">Guest path</p>
+                <h3 className="mt-3 font-serif text-xl font-normal text-text-primary">Guest journey funnel</h3>
                 <p className="mt-2 text-sm leading-6 text-text-secondary">{websiteInviteAnalyticsFunnel.summary}</p>
                 <div className="mt-4 space-y-3">
                   {websiteInviteAnalyticsFunnel.steps.map((step) => (
@@ -303,7 +435,8 @@ export function OverviewDashboardLiveContent({
                 </div>
               </div>
               <div className="rounded-2xl border border-border-subtle bg-surface-subtle/40 p-4">
-                <h3 className="font-serif text-xl font-normal text-text-primary">Privacy guardrails</h3>
+                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary/75">Boundaries</p>
+                <h3 className="mt-3 font-serif text-xl font-normal text-text-primary">Privacy guardrails</h3>
                 <ul className="mt-3 space-y-2 text-sm leading-6 text-text-secondary">
                   {websiteInviteAnalyticsFunnel.guardrails.map((rule) => (
                     <li key={rule}>{rule}</li>
@@ -321,7 +454,7 @@ export function OverviewDashboardLiveContent({
             <h2 className="font-serif text-2xl font-normal text-text-primary">Your workspace</h2>
             <p className="mt-1 text-sm text-text-secondary">Bring forward the tools you use most. Keep the rest tucked away.</p>
           </div>
-          <Link to="/dashboard/tools" className="inline-flex min-h-[42px] items-center justify-center rounded-lg border border-border-subtle px-4 py-2 text-sm font-semibold text-text-primary no-underline hover:bg-surface-subtle">
+          <Link to="/dashboard/tools" className="inline-flex min-h-[42px] items-center justify-center rounded-xl border border-border-subtle px-4 py-2 text-sm font-semibold text-text-primary no-underline hover:bg-surface-subtle">
             Customize tools
           </Link>
         </div>
@@ -346,10 +479,13 @@ export function OverviewDashboardLiveContent({
       </section>
 
       <section className="grid gap-6 lg:grid-cols-[1fr_0.8fr]">
-        <div>
-          <h2 className="font-serif text-2xl font-normal text-text-primary">Recent activity</h2>
-          <p className="mt-1 text-sm text-text-secondary">Quiet updates from the parts of the wedding guests touch most.</p>
-          <div className="mt-5">
+        <div className="space-y-4">
+          <div className="rounded-2xl border border-border-subtle bg-white p-5 shadow-sm">
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary/75">Recent activity</p>
+            <h2 className="mt-3 text-lg font-semibold text-text-primary">Quiet updates from the parts of the wedding guests touch most.</h2>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-text-secondary">Use this as the light audit trail for RSVPs, messages, photos, and site changes before you open the deeper workspaces.</p>
+          </div>
+          <div>
             {recentActivityItems.length === 0 ? (
               <div className="rounded-2xl border border-border-subtle bg-white/85 p-5">
                 <p className="text-sm font-semibold text-text-primary">Nothing new here yet.</p>
@@ -371,10 +507,11 @@ export function OverviewDashboardLiveContent({
         </div>
 
         <div className="rounded-3xl border border-border-subtle bg-white p-5 md:p-6">
-          <h2 className="font-serif text-2xl font-normal text-text-primary">Share with guests</h2>
-          <p className="mt-2 text-sm leading-6 text-text-secondary">Preview the experience, share the site, or open the guest-facing memory tools.</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary/75">Guest handoff</p>
+          <h2 className="mt-3 font-serif text-2xl font-normal text-text-primary">Share with guests</h2>
+          <p className="mt-2 text-sm leading-6 text-text-secondary">Preview the experience, share the site, or open the guest-facing memory tools without leaving the calm owner view.</p>
           <div className="mt-5 grid gap-3">
-            <Button variant="primary" size="md" onClick={() => stats?.siteSlug ? openSitePreview(stats.siteSlug, siteVisibility.isLive) : navigate('/dashboard/builder')}>
+            <Button variant="primary" size="md" onClick={() => stats?.siteSlug ? openSitePreview(stats.siteSlug, siteVisibility.isLive, navigate) : navigate('/dashboard/builder')}>
               <Eye className="mr-2 h-4 w-4" aria-hidden="true" />
               {siteVisibility.isLive ? 'Preview what guests will see' : 'Open your draft preview'}
             </Button>

@@ -49,6 +49,7 @@ export const Login: React.FC = () => {
   const inviteRole = searchParams.get('inviteRole');
   const inviteSite = searchParams.get('inviteSite');
   const hasInviteContext = Boolean(inviteToken && inviteEmail);
+  const authStorageScope = (inviteEmail || formData.email || resetEmail || '').trim().toLowerCase() || null;
 
   const inviteReturnSearch = useMemo(() => {
     if (!inviteToken || !inviteEmail) return '';
@@ -71,13 +72,13 @@ export const Login: React.FC = () => {
 
   useEffect(() => {
     if (!explicitReturnPath && !normalizedQuickStartDraft && !hasInviteContext) {
-      clearAuthEntryReturnPath();
+      clearAuthEntryReturnPath(authStorageScope);
     }
-  }, [explicitReturnPath, normalizedQuickStartDraft, hasInviteContext]);
+  }, [authStorageScope, explicitReturnPath, normalizedQuickStartDraft, hasInviteContext]);
 
   useEffect(() => {
-    if (explicitReturnPath) writeSignupReturnPath(explicitReturnPath);
-    if (normalizedQuickStartDraft) persistQuickStartDraftSnapshot(normalizedQuickStartDraft);
+    if (explicitReturnPath) writeSignupReturnPath(explicitReturnPath, authStorageScope);
+    if (normalizedQuickStartDraft) persistQuickStartDraftSnapshot(normalizedQuickStartDraft, authStorageScope);
 
     if (searchParams.get('reason') === 'session_expired') {
       setNotice('Your session expired. Please sign in again.');
@@ -95,7 +96,8 @@ export const Login: React.FC = () => {
       const session = await getLoginSession();
       if (!mounted) return;
       if (session && oauthSource === 'google') {
-        const to = consumeSignupReturnPath() || resolveLoginReturnPath(getPostLoginRoute(session.user.email));
+        const sessionScope = session.user.email?.trim().toLowerCase() || null;
+        const to = consumeSignupReturnPath(sessionScope) || resolveLoginReturnPath(getPostLoginRoute(session.user.email), sessionScope);
         completePostLoginRedirect(to, { replace: true, notice: 'Google sign-in successful. Redirecting…' });
       }
     };
@@ -105,7 +107,8 @@ export const Login: React.FC = () => {
     const { data: authListener } = subscribeLoginAuthState((event, session) => {
       if (!mounted) return;
       if (event === 'SIGNED_IN') {
-        const to = consumeSignupReturnPath() || resolveLoginReturnPath(getPostLoginRoute(session?.user?.email));
+        const sessionScope = session?.user?.email?.trim().toLowerCase() || null;
+        const to = consumeSignupReturnPath(sessionScope) || resolveLoginReturnPath(getPostLoginRoute(session?.user?.email), sessionScope);
         completePostLoginRedirect(to, {
           replace: true,
           notice: oauthSource === 'google' ? 'Google sign-in successful. Redirecting…' : undefined,
@@ -117,17 +120,34 @@ export const Login: React.FC = () => {
       mounted = false;
       authListener.subscription.unsubscribe();
     };
-  }, [searchParams, navigate, inviteEmail, explicitReturnPath, normalizedQuickStartDraft]);
+  }, [authStorageScope, searchParams, navigate, inviteEmail, explicitReturnPath, normalizedQuickStartDraft]);
+
+  const clearAuthFeedback = () => {
+    setError('');
+    setNotice('');
+  };
+
+  useEffect(() => {
+    setView('login');
+    setLoading(false);
+    setDemoLoading(false);
+    setFormData({
+      email: inviteEmail ?? '',
+      password: '',
+    });
+    setResetEmail(inviteEmail ?? '');
+    clearAuthFeedback();
+  }, [inviteEmail, inviteRole, inviteSite, inviteToken]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
-    setError('');
+    clearAuthFeedback();
   };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setError('');
+    clearAuthFeedback();
     try {
       const signInData = await loginWithPassword(formData.email, formData.password);
       if (hasInviteContext) {
@@ -135,7 +155,7 @@ export const Login: React.FC = () => {
         return;
       }
       completePostLoginRedirect(
-        consumeSignupReturnPath() || resolveLoginReturnPath(getPostLoginRoute(signInData.user?.email)),
+        consumeSignupReturnPath(signInData.user?.email) || resolveLoginReturnPath(getPostLoginRoute(signInData.user?.email), signInData.user?.email),
       );
     } catch (err: unknown) {
       setError(safeAuthError(err, 'Couldn’t sign you in right now. Please try again.'));
@@ -146,7 +166,7 @@ export const Login: React.FC = () => {
 
   const handleDemoLogin = async () => {
     setDemoLoading(true);
-    setError('');
+    clearAuthFeedback();
     try {
       await signIn();
       completePostLoginRedirect(getPostLoginRoute('demo@dayof.love'));
@@ -159,18 +179,18 @@ export const Login: React.FC = () => {
 
   const handleGoogleSignIn = async () => {
     setLoading(true);
-    setError('');
+    clearAuthFeedback();
     try {
       const redirectPath = hasInviteContext
         ? `/accept-collaborator-invite${inviteReturnSearch}&oauth=google`
         : '/login?oauth=google';
 
-      const savedReturnPath = resolveLoginReturnPath(getPostLoginRoute(formData.email));
+      const savedReturnPath = resolveLoginReturnPath(getPostLoginRoute(formData.email), authStorageScope);
       if (!hasInviteContext && savedReturnPath) {
-        writeSignupReturnPath(savedReturnPath);
+        writeSignupReturnPath(savedReturnPath, authStorageScope);
       }
       if (normalizedQuickStartDraft) {
-        persistQuickStartDraftSnapshot(normalizedQuickStartDraft);
+        persistQuickStartDraftSnapshot(normalizedQuickStartDraft, authStorageScope);
       }
 
       await startLoginWithGoogle(`${window.location.origin}${redirectPath}`);
@@ -183,7 +203,7 @@ export const Login: React.FC = () => {
   const handleForgotPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setError('');
+    clearAuthFeedback();
     try {
       await sendLoginPasswordReset(resetEmail, `${window.location.origin}/login`);
       setView('forgot-sent');
@@ -205,7 +225,7 @@ export const Login: React.FC = () => {
             </Link>
           </div>
           <Card variant="default" padding="lg" className="text-center">
-            <div className="w-16 h-16 bg-surface-secondary border border-border-subtle rounded-lg flex items-center justify-center mx-auto mb-5">
+            <div className="w-16 h-16 bg-surface-secondary border border-border-subtle rounded-xl flex items-center justify-center mx-auto mb-5">
               <Mail className="w-8 h-8 text-accent" aria-hidden="true" />
             </div>
             <h1 className="text-2xl font-semibold text-text-primary mb-2">Check your email</h1>
@@ -220,12 +240,12 @@ export const Login: React.FC = () => {
               variant="outline"
               size="md"
               fullWidth
-              onClick={() => { setView('forgot-password'); setResetEmail(''); setError(''); }}
+              onClick={() => { setView('forgot-password'); setResetEmail(''); clearAuthFeedback(); }}
             >
               Try a different email
             </Button>
             <button
-              onClick={() => setView('login')}
+              onClick={() => { setView('login'); clearAuthFeedback(); }}
               className="mt-4 text-sm text-primary hover:text-primary-hover font-medium transition-colors w-full text-center"
             >
               Back to sign in
@@ -255,12 +275,12 @@ export const Login: React.FC = () => {
                 type="email"
                 name="resetEmail"
                 value={resetEmail}
-                onChange={(e) => { setResetEmail(e.target.value); setError(''); }}
+                onChange={(e) => { setResetEmail(e.target.value); clearAuthFeedback(); }}
                 placeholder="your@email.com"
                 required
               />
               {error && (
-                <div className="p-3 bg-surface-secondary border border-border-subtle text-text-secondary rounded-lg text-sm" role="alert">
+                <div className="p-3 bg-surface-secondary border border-border-subtle text-text-secondary rounded-xl text-sm" role="alert">
                   {error}
                 </div>
               )}
@@ -269,7 +289,7 @@ export const Login: React.FC = () => {
               </Button>
             </form>
             <button
-              onClick={() => { setView('login'); setError(''); }}
+              onClick={() => { setView('login'); clearAuthFeedback(); }}
               className="mt-5 flex items-center gap-1.5 text-sm text-text-secondary hover:text-text-primary transition-colors mx-auto"
             >
               <ArrowLeft className="w-4 h-4" aria-hidden="true" />
@@ -297,7 +317,7 @@ export const Login: React.FC = () => {
 
         <Card variant="default" padding="lg">
           {hasInviteContext && (
-            <div className="mb-5 rounded-lg border border-border-subtle bg-surface-subtle/30 p-4 text-left">
+            <div className="mb-5 rounded-xl border border-border-subtle bg-surface-subtle/30 p-4 text-left">
               <p className="text-xs font-medium text-text-tertiary">Wedding invite</p>
               <p className="mt-2 text-base font-semibold text-text-primary">{inviteSite || 'Wedding access'}</p>
               <div className="mt-3 flex flex-wrap gap-2 text-xs text-text-secondary">
@@ -309,7 +329,7 @@ export const Login: React.FC = () => {
           )}
 
           {notice && (
-            <div className="flex items-start gap-2 p-3 bg-surface-secondary rounded-lg text-sm text-text-secondary border border-border-subtle mb-5">
+            <div className="flex items-start gap-2 p-3 bg-surface-secondary rounded-xl text-sm text-text-secondary border border-border-subtle mb-5">
               <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5 text-text-tertiary" aria-hidden="true" />
               <span>{notice}</span>
             </div>
@@ -361,7 +381,7 @@ export const Login: React.FC = () => {
               <div className="flex justify-end mt-1.5">
                 <button
                   type="button"
-                  onClick={() => { setView('forgot-password'); setError(''); }}
+                  onClick={() => { setView('forgot-password'); clearAuthFeedback(); }}
                   className="text-xs text-primary hover:text-primary-hover transition-colors font-medium"
                 >
                   Forgot password?
@@ -370,7 +390,7 @@ export const Login: React.FC = () => {
             </div>
 
             {error && (
-              <div className="p-3 bg-surface-secondary border border-border-subtle text-text-secondary rounded-lg text-sm" role="alert">
+              <div className="p-3 bg-surface-secondary border border-border-subtle text-text-secondary rounded-xl text-sm" role="alert">
                 {error}
               </div>
             )}

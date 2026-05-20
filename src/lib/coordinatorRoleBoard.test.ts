@@ -18,7 +18,7 @@ describe('coordinatorRoleBoard', () => {
       modeLabel: 'Coordinator helper',
       enabledLabel: 'Check-in · Timeline · Guest Q&A · Send now',
       blockedLabel: 'Schedule',
-      guidanceLabel: 'Run guest movement, live timing, answers, and urgent sends without drifting into planner-only work.',
+      guidanceLabel: 'guest movement, live timing, guest answers, urgent sends',
     });
   });
 
@@ -37,5 +37,28 @@ describe('coordinatorRoleBoard', () => {
       blockedLabel: 'Check-in · Timeline',
       guidanceLabel: 'Use this view to track handoffs and escalate decisions without changing the board.',
     });
+  });
+
+  it('does not describe blocked coordinator lanes as available guidance', () => {
+    expect(buildCoordinatorRoleBoard({
+      role: 'coordinator',
+      capabilities: [
+        { key: 'check-in', label: 'Check-in', enabled: true, detail: '' },
+        { key: 'timeline', label: 'Timeline', enabled: false, detail: '' },
+        { key: 'qna', label: 'Guest Q&A', enabled: false, detail: '' },
+        { key: 'alerts-now', label: 'Send now', enabled: false, detail: '' },
+        { key: 'alerts-later', label: 'Schedule', enabled: false, detail: '' },
+      ],
+    }).guidanceLabel).toBe('guest movement');
+  });
+
+  it('keeps planner guidance inside enabled lanes when scheduling is blocked', () => {
+    expect(buildCoordinatorRoleBoard({
+      role: 'planner',
+      capabilities: [
+        { key: 'check-in', label: 'Check-in', enabled: true, detail: '' },
+        { key: 'alerts-later', label: 'Schedule', enabled: false, detail: '' },
+      ],
+    }).guidanceLabel).toBe('You can help with the enabled day-of lanes while scheduling stays with the couple.');
   });
 });

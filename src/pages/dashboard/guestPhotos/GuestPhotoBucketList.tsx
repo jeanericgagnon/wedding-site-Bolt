@@ -28,7 +28,7 @@ type GuestPhotoBucketListProps = {
   analysisByUploadId: Map<string, PhotoUploadAiAnalysisRow>;
   latestUploadUrl: string;
   workingBucketId: string;
-  copied: string;
+  copyNotice: { key: string; mode: 'copied' | 'downloaded' } | null;
   uploadCountWithChildren: (bucketId: string) => number;
   bucketTone: (bucketName: string) => string;
   bucketDisplayName: (bucket: PhotoBucketRow | undefined | null) => string;
@@ -67,7 +67,7 @@ export function GuestPhotoBucketList({
   analysisByUploadId,
   latestUploadUrl,
   workingBucketId,
-  copied,
+  copyNotice,
   uploadCountWithChildren,
   bucketTone,
   bucketDisplayName,
@@ -114,7 +114,7 @@ export function GuestPhotoBucketList({
             knownUploadLink={knownUploadLink}
             latestUploadUrl={latestUploadUrl}
             workingBucketId={workingBucketId}
-            copied={copied}
+            copyNotice={copyNotice}
             bucketTone={bucketTone}
             formatDateTime={formatDateTime}
             getBucketQrUrl={getBucketQrUrl}

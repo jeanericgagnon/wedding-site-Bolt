@@ -9,6 +9,7 @@ import { applyWeddingDataBindings } from '../../render/weddingDataBindings';
 import { sanitizePublicSectionDataDeep } from '../../render/publicSectionDataSanitizer';
 import { buildScopedSectionCss, sanitizeCustomClassName } from '../utils/customCss';
 import { getSafePublicImageUrl } from '../../sections/publicLinks';
+import { normalizeSectionAnchorId } from '../utils/sectionAnchors';
 
 interface SectionRendererProps {
   section: BuilderSectionInstance;
@@ -75,6 +76,10 @@ const SIZE_TO_CLASS: Record<string, string> = {
   md: '40%',
   lg: '50%',
 };
+
+function sanitizePublicAnchorId(value: unknown, fallback: string): string {
+  return normalizeSectionAnchorId(value) || normalizeSectionAnchorId(fallback) || 'section';
+}
 
 interface SideImageWrapperProps {
   overrides: BuilderSectionStyleOverrides;
@@ -160,7 +165,7 @@ class SectionErrorBoundary extends React.Component<
         );
       }
       return (
-        <div className="py-8 px-6 bg-surface-subtle border border-border-subtle rounded-lg m-3 flex flex-col items-center gap-3 text-center">
+        <div className="py-8 px-6 bg-surface-subtle border border-border-subtle rounded-xl m-3 flex flex-col items-center gap-3 text-center">
           <AlertTriangle className="w-6 h-6 text-primary" />
           <div>
             <p className="text-sm font-medium text-text-primary">
@@ -172,7 +177,7 @@ class SectionErrorBoundary extends React.Component<
           </div>
           <button
             onClick={this.handleRetry}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-border-subtle hover:bg-surface text-text-primary text-xs font-medium rounded-lg transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-border-subtle hover:bg-surface text-text-primary text-xs font-medium rounded-xl transition-colors"
           >
             <RefreshCw className="w-3.5 h-3.5" />
             Retry
@@ -194,6 +199,7 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({ section, weddi
   const customClassName = sanitizeCustomClassName(styleOverrides.customClassName);
   const customCss = buildScopedSectionCss(section.id, [styleOverrides.styleRecipeCss, styleOverrides.customCss].filter(Boolean).join('\n\n'));
   const sectionClassName = [animationClass, customClassName].filter(Boolean).join(' ');
+  const publicAnchorId = surface === 'public' ? sanitizePublicAnchorId(section.settings?.anchorId, section.id) : undefined;
   const mergedStyle = {
     ...overrideStyle,
     animationDelay: effectivePreset === 'stagger' ? `${Math.min(section.orderIndex * 70, 420)}ms` : undefined,
@@ -233,7 +239,9 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({ section, weddi
           <div
             className={sectionClassName}
             style={mergedStyle}
+            id={publicAnchorId}
             data-builder-section-id={section.id}
+            data-public-section-anchor={publicAnchorId}
             data-section-type={section.type}
             data-section-variant={section.variant}
           >
@@ -247,7 +255,7 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({ section, weddi
   if (strictVariantMatching) {
     if (isPreview) {
       return (
-        <div className="m-3 rounded-lg border border-border-subtle bg-surface-subtle px-4 py-6 text-center">
+        <div className="m-3 rounded-xl border border-border-subtle bg-surface-subtle px-4 py-6 text-center">
           <p className="text-sm text-text-secondary">This design needs a quick refresh before it can preview.</p>
         </div>
       );
@@ -268,7 +276,7 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({ section, weddi
       );
     }
     return (
-      <div className="m-3 rounded-lg border border-dashed border-border-subtle bg-surface-subtle px-4 py-6 text-center">
+      <div className="m-3 rounded-xl border border-dashed border-border-subtle bg-surface-subtle px-4 py-6 text-center">
         <p className="text-sm text-text-secondary">This section needs a quick refresh before it can preview.</p>
         <p className="mt-1 text-xs text-text-tertiary">Remove it or choose a different section from the sidebar.</p>
       </div>
@@ -284,7 +292,9 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({ section, weddi
         <div
           className={sectionClassName}
           style={mergedStyle}
+          id={publicAnchorId}
           data-builder-section-id={section.id}
+          data-public-section-anchor={publicAnchorId}
           data-section-type={section.type}
           data-section-variant={section.variant}
         >

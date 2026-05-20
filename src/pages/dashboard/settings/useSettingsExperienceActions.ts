@@ -1,4 +1,5 @@
 import type React from 'react';
+import { useRef } from 'react';
 import { createSubscriptionSession, type BillingInfo } from '../../../lib/stripeService';
 import { logAppAction } from '../../../lib/actionAudit';
 import { mergeGeneratedDraftIntoBuilderProject } from '../../../lib/aiBuilderProjectPatch';
@@ -105,7 +106,16 @@ export function useSettingsExperienceActions({
   setTemplateSuccess,
   setCurrentTemplate,
 }: UseSettingsExperienceActionsArgs) {
+  const rsvpSettingsSaveRequestIdRef = useRef(0);
+  const notificationSaveRequestIdRef = useRef(0);
+  const subscribeRequestIdRef = useRef(0);
+  const templateChangeRequestIdRef = useRef(0);
+  const experienceActionContextRef = useRef({ billingSiteId: billingInfo?.wedding_site_id ?? null, weddingSiteId });
+  experienceActionContextRef.current = { billingSiteId: billingInfo?.wedding_site_id ?? null, weddingSiteId };
+
   const saveRsvpSettings = async () => {
+    const requestId = ++rsvpSettingsSaveRequestIdRef.current;
+    const isCurrentRsvpSettingsSave = () => requestId === rsvpSettingsSaveRequestIdRef.current;
     setRsvpQuestionsSaving(true);
     setRsvpQuestionsSuccess(null);
     setRsvpQuestionsError(null);
@@ -116,6 +126,7 @@ export function useSettingsExperienceActions({
         mealEnabled: rsvpMealEnabled,
         mealOptions: rsvpMealOptions,
       });
+      if (!isCurrentRsvpSettingsSave()) return;
       if (validationError) {
         setRsvpQuestionsError(validationError);
         return;
@@ -124,6 +135,7 @@ export function useSettingsExperienceActions({
       let targetSiteId = weddingSiteId;
       if (!targetSiteId && userId) {
         const activeSite = await resolveActiveSiteForUser(userId);
+        if (!isCurrentRsvpSettingsSave()) return;
         targetSiteId = activeSite?.id ?? null;
         if (targetSiteId) setWeddingSiteId(targetSiteId);
       }
@@ -144,6 +156,7 @@ export function useSettingsExperienceActions({
         rsvp_custom_questions: cleanedQuestions,
         rsvp_meal_config: { enabled: rsvpMealEnabled, options: cleanedMealOptions },
       });
+      if (!isCurrentRsvpSettingsSave()) return;
       setRsvpQuestions(cleanedQuestions);
       setRsvpMealOptions(cleanedMealOptions);
       rsvpDraftGuard.markSaved();
@@ -154,9 +167,12 @@ export function useSettingsExperienceActions({
       }, targetSiteId, 'RSVP settings', targetSiteId);
       setRsvpQuestionsSuccess('RSVP settings saved.');
     } catch (err) {
+      if (!isCurrentRsvpSettingsSave()) return;
       setRsvpQuestionsError(safeSettingsError(err, 'Couldn’t save RSVP questions.'));
     } finally {
-      setRsvpQuestionsSaving(false);
+      if (isCurrentRsvpSettingsSave()) {
+        setRsvpQuestionsSaving(false);
+      }
     }
   };
 
@@ -167,11 +183,14 @@ export function useSettingsExperienceActions({
 
   const handleSaveNotifications = async (e: React.FormEvent) => {
     e.preventDefault();
+    const requestId = ++notificationSaveRequestIdRef.current;
+    const isCurrentNotificationSave = () => requestId === notificationSaveRequestIdRef.current;
     setNotifSaving(true);
     setNotifError(null);
     setNotifSuccess(null);
     try {
       const targetSiteId = await resolveSettingsSiteId();
+      if (!isCurrentNotificationSave()) return;
       if (!targetSiteId) {
         setNotifError(SETTINGS_SITE_MISSING_COPY);
         return;
@@ -196,6 +215,7 @@ export function useSettingsExperienceActions({
           updates: notifUpdates,
         }),
       });
+      if (!isCurrentNotificationSave()) return;
       setNotifDigestNextDeliveryAt(nextDeliveryAt);
       setNotifDigestLastReviewedAt(reviewedAt);
       notifDraftGuard.markSaved();
@@ -212,14 +232,23 @@ export function useSettingsExperienceActions({
       }, targetSiteId, 'Notification preferences', targetSiteId);
       setNotifSuccess('Preferences saved.');
     } catch (err) {
+      if (!isCurrentNotificationSave()) return;
       setNotifError(safeSettingsError(err, 'Couldn’t save preferences.'));
     } finally {
-      setNotifSaving(false);
+      if (isCurrentNotificationSave()) {
+        setNotifSaving(false);
+      }
     }
   };
 
   const handleSubscribe = async () => {
     if (!billingInfo) return;
+    const requestId = ++subscribeRequestIdRef.current;
+    const actionBillingSiteId = billingInfo.wedding_site_id;
+    const isLatestSubscribeRequest = () => requestId === subscribeRequestIdRef.current;
+    const isCurrentSubscribe = () =>
+      isLatestSubscribeRequest() &&
+      experienceActionContextRef.current.billingSiteId === actionBillingSiteId;
     setSubscribeLoading(true);
     setSubscribeError(null);
     try {
@@ -229,6 +258,10 @@ export function useSettingsExperienceActions({
         `${origin}/payment/success?session_id={CHECKOUT_SESSION_ID}`,
         `${origin}/dashboard/settings?tab=billing&canceled=1`,
       );
+      if (!isCurrentSubscribe()) {
+        if (isLatestSubscribeRequest()) setSubscribeLoading(false);
+        return;
+      }
       void logAppAction({
         weddingSiteId: billingInfo.wedding_site_id,
         area: 'billing',
@@ -243,6 +276,10 @@ export function useSettingsExperienceActions({
       });
       window.location.href = url;
     } catch (err) {
+      if (!isCurrentSubscribe()) {
+        if (isLatestSubscribeRequest()) setSubscribeLoading(false);
+        return;
+      }
       setSubscribeError(safeSettingsError(err, 'Couldn’t start checkout right now.'));
       setSubscribeLoading(false);
     }
@@ -250,11 +287,17 @@ export function useSettingsExperienceActions({
 
   const handleTemplateChange = async (newTemplateId: string) => {
     if (!weddingSiteId) return;
+    const requestId = ++templateChangeRequestIdRef.current;
+    const actionSiteId = weddingSiteId;
+    const isCurrentTemplateChange = () =>
+      requestId === templateChangeRequestIdRef.current &&
+      experienceActionContextRef.current.weddingSiteId === actionSiteId;
     setChangingTemplate(true);
     setTemplateError(null);
     setTemplateSuccess(null);
     try {
       const data = await loadSettingsTemplateChangeSite(weddingSiteId);
+      if (!isCurrentTemplateChange()) return;
       if (!data) throw new Error(SETTINGS_SITE_MISSING_COPY);
 
       const weddingData = data.wedding_data as WeddingDataV1;
@@ -269,6 +312,7 @@ export function useSettingsExperienceActions({
         : rebuiltProject;
 
       await updateSettingsSite(weddingSiteId, { active_template_id: newTemplateId, layout_config: newLayout, site_json: remappedSiteJson });
+      if (!isCurrentTemplateChange()) return;
       setCurrentTemplate(newTemplateId);
       logSettingsAction('template_changed', 'Site template was changed.', {
         templateId: newTemplateId,
@@ -276,9 +320,12 @@ export function useSettingsExperienceActions({
       }, weddingSiteId, newTemplateId, weddingSiteId);
       setTemplateSuccess('Template changed successfully. Your content has been preserved.');
     } catch (err) {
+      if (!isCurrentTemplateChange()) return;
       setTemplateError(safeSettingsError(err, 'Couldn’t change design.'));
     } finally {
-      setChangingTemplate(false);
+      if (isCurrentTemplateChange()) {
+        setChangingTemplate(false);
+      }
     }
   };
 

@@ -1,34 +1,62 @@
 import { useEffect } from 'react';
 import { isFreshRsvpContinuityStorageValue } from '../../rsvpContinuityStorage';
-import { RSVP_CONTINUITY_EVENT, RSVP_CONTINUITY_STORAGE_KEY } from './messageDemoStorage';
+import { RSVP_CONTINUITY_EVENT, buildRsvpContinuityStorageKey } from '../../rsvpTypes';
 
 export type UseMessageDashboardContinuitySyncArgs = {
   hasWeddingSite: boolean;
   isDemoMode: boolean;
+  siteSlug: string | null;
   fetchGuests: () => Promise<void>;
   fetchMessages: () => Promise<void>;
 };
 
+type RsvpContinuityEventDetail = {
+  storageKey?: string | null;
+  siteSlug?: string | null;
+};
+
+const normalizeContinuitySiteSlug = (value: string | null | undefined) => (
+  String(value ?? '').trim().toLowerCase()
+);
+
+export function shouldRefreshForRsvpContinuityEvent(
+  detail: RsvpContinuityEventDetail | null | undefined,
+  continuityStorageKey: string,
+  siteSlug: string | null,
+) {
+  const expectedSiteSlug = normalizeContinuitySiteSlug(siteSlug);
+  const eventStorageKey = detail?.storageKey ?? null;
+  const eventSiteSlug = normalizeContinuitySiteSlug(detail?.siteSlug ?? null);
+
+  if (eventStorageKey) return eventStorageKey === continuityStorageKey;
+  if (expectedSiteSlug) return eventSiteSlug === expectedSiteSlug;
+  return !eventSiteSlug;
+}
+
 export function useMessageDashboardContinuitySync({
   hasWeddingSite,
   isDemoMode,
+  siteSlug,
   fetchGuests,
   fetchMessages,
 }: UseMessageDashboardContinuitySyncArgs) {
   useEffect(() => {
     if (!hasWeddingSite || isDemoMode) return;
+    const continuityStorageKey = buildRsvpContinuityStorageKey(siteSlug);
 
     const refreshGuestMessageContinuity = () => {
       void fetchGuests();
       void fetchMessages();
     };
 
-    const handleRsvpContinuityUpdate = () => {
+    const handleRsvpContinuityUpdate = (event: Event) => {
+      const continuityEvent = event as CustomEvent<RsvpContinuityEventDetail>;
+      if (!shouldRefreshForRsvpContinuityEvent(continuityEvent.detail, continuityStorageKey, siteSlug)) return;
       refreshGuestMessageContinuity();
     };
 
     const handleStorage = (event: StorageEvent) => {
-      if (event.key !== RSVP_CONTINUITY_STORAGE_KEY || !isFreshRsvpContinuityStorageValue(event.newValue)) return;
+      if (event.key !== continuityStorageKey || !isFreshRsvpContinuityStorageValue(event.newValue)) return;
       refreshGuestMessageContinuity();
     };
 
@@ -48,5 +76,5 @@ export function useMessageDashboardContinuitySync({
       window.removeEventListener('storage', handleStorage);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [hasWeddingSite, isDemoMode, fetchGuests, fetchMessages]);
+  }, [hasWeddingSite, isDemoMode, siteSlug, fetchGuests, fetchMessages]);
 }

@@ -1,15 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { getCoordinatorNeutralFocusReason } from '../../../lib/coordinatorNeutralFocusReason';
 import type { CoordinatorPanelFocus } from '../../../lib/coordinatorPanelFocus';
 import type { CoordinatorSummaryFeedback } from '../../../lib/coordinatorSummaryFeedback';
 
 type Args = {
-  commandSource: 'primary-action' | 'escalation' | 'correction' | null;
-  correctionCueCount: number;
-  liveIssueCount: number;
-  panelFocus: CoordinatorPanelFocus | null;
-  primaryActionKey: string;
-  setCommandSource: (value: 'primary-action' | 'escalation' | 'correction' | null) => void;
+  siteId?: string | null;
+  isDemoMode?: boolean;
 };
 
 type SyncArgs = {
@@ -23,6 +19,7 @@ type SyncArgs = {
 };
 
 export function useCoordinatorDashboardUiState(_args?: Args) {
+  const previousSiteIdRef = useRef<string | null>(null);
   const [neutralFocusReason, setNeutralFocusReason] = useState<string | null>(null);
   const [commandJumpLabel, setCommandJumpLabel] = useState<string | null>(null);
   const [commandJumpPanelFocus, setCommandJumpPanelFocus] = useState<CoordinatorPanelFocus | null>(null);
@@ -35,6 +32,33 @@ export function useCoordinatorDashboardUiState(_args?: Args) {
   const [summaryFeedbackShownAt, setSummaryFeedbackShownAt] = useState<number | null>(null);
   const [previousAlertAligned, setPreviousAlertAligned] = useState<boolean | null>(null);
   const [summaryFeedback, setSummaryFeedback] = useState<CoordinatorSummaryFeedback | null>(null);
+
+  const resetCoordinatorDashboardUiState = useCallback(() => {
+    setNeutralFocusReason(null);
+    setCommandJumpLabel(null);
+    setCommandJumpPanelFocus(null);
+    setCommandJumpTargetId(null);
+    setManualOverrideLabel(null);
+    setManualOverrideUpdatedAt(null);
+    setAlertOverrideLabelState(null);
+    setAlertOverrideUpdatedAt(null);
+    setOverrideCueShownAt(null);
+    setSummaryFeedbackShownAt(null);
+    setPreviousAlertAligned(null);
+    setSummaryFeedback(null);
+  }, []);
+
+  useEffect(() => {
+    const siteId = _args?.siteId ?? null;
+    const isDemoMode = _args?.isDemoMode ?? false;
+    if (previousSiteIdRef.current && siteId && previousSiteIdRef.current !== siteId) {
+      resetCoordinatorDashboardUiState();
+    }
+    previousSiteIdRef.current = siteId;
+    if (!siteId && !isDemoMode) {
+      resetCoordinatorDashboardUiState();
+    }
+  }, [_args?.isDemoMode, _args?.siteId, resetCoordinatorDashboardUiState]);
 
   return {
     alertOverrideLabelState,

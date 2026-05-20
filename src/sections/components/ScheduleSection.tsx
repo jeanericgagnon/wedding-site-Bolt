@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { WeddingDataV1 } from '../../types/weddingData';
 import { SectionInstance } from '../../types/layoutConfig';
 import { Clock, MapPin } from 'lucide-react';
@@ -171,6 +171,9 @@ export const ScheduleDayTabs: React.FC<Props> = ({ data, instance }) => {
   }, [itemsToShow]);
 
   const [activeDay, setActiveDay] = useState(dayGroups[0]?.key ?? '');
+  useEffect(() => {
+    setActiveDay(dayGroups[0]?.key ?? '');
+  }, [dayGroups]);
   const activeGroup = dayGroups.find((g) => g.key === activeDay) ?? dayGroups[0];
 
   if (itemsToShow.length === 0) {

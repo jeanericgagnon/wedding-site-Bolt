@@ -1,5 +1,5 @@
 import { writeSignupReturnPath } from './signupContinuation';
 
-export const clearOnboardingEntryReturnPath = () => {
-  writeSignupReturnPath(null);
+export const clearOnboardingEntryReturnPath = (storageScope?: string | null) => {
+  writeSignupReturnPath(null, storageScope);
 };

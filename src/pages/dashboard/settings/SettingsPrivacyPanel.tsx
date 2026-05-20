@@ -17,6 +17,7 @@ type SettingsPrivacyPanelProps = {
   analyticsEnabled: boolean;
   analyticsRetentionDays: AnalyticsRetentionDays;
   analyticsGuestNotice: string;
+  canEditSettings: boolean;
   defaultLanguage: SiteLanguageCode;
   guestAccessToken: string | null;
   hideFromSearch: boolean;
@@ -34,7 +35,7 @@ type SettingsPrivacyPanelProps = {
   onToggleShowPrivacySettings: () => void;
   onToggleShowSitePassword: () => void;
   onVisibilityModeChange: (mode: 'public' | 'password_protected' | 'invite_only') => void;
-  privacyCopied: boolean;
+  privacyCopyNotice: 'copied' | 'downloaded' | null;
   privacyMode: 'public' | 'password_protected' | 'invite_only';
   showPrivacySettings: boolean;
   showSitePassword: boolean;
@@ -52,6 +53,7 @@ export function SettingsPrivacyPanel({
   analyticsEnabled,
   analyticsRetentionDays,
   analyticsGuestNotice,
+  canEditSettings,
   defaultLanguage,
   guestAccessToken,
   hideFromSearch,
@@ -69,7 +71,7 @@ export function SettingsPrivacyPanel({
   onToggleShowPrivacySettings,
   onToggleShowSitePassword,
   onVisibilityModeChange,
-  privacyCopied,
+  privacyCopyNotice,
   privacyMode,
   showPrivacySettings,
   showSitePassword,
@@ -98,16 +100,16 @@ export function SettingsPrivacyPanel({
       </CardHeader>
       <CardContent>
         {!showPrivacySettings ? (
-          <div className="rounded-lg border border-border-subtle bg-surface-subtle/40 p-4 text-sm text-text-secondary">
+          <div className="rounded-2xl border border-border-subtle bg-surface-subtle/40 p-4 text-sm text-text-secondary">
             Hidden by default to keep things simple. Open it when you want to choose who can see your site.
           </div>
         ) : (
           <form onSubmit={onSavePrivacy} className="space-y-5">
             {visibilitySuccess && (
-              <div className="rounded-lg border border-success/20 bg-success-light p-3 text-sm text-success">{visibilitySuccess}</div>
+              <div className="rounded-xl border border-success/20 bg-success-light p-3 text-sm text-success">{visibilitySuccess}</div>
             )}
             {visibilityError && (
-              <div className="rounded-lg border border-border-subtle bg-surface-subtle p-3 text-sm text-text-secondary">{visibilityError}</div>
+              <div className="rounded-xl border border-border-subtle bg-surface-subtle p-3 text-sm text-text-secondary">{visibilityError}</div>
             )}
 
             <div className="space-y-2">
@@ -117,7 +119,7 @@ export function SettingsPrivacyPanel({
                 {SITE_LANGUAGE_OPTIONS.map((option) => (
                   <label
                     key={option.value}
-                    className={`flex cursor-pointer items-center gap-2 rounded-lg border-2 px-4 py-2.5 transition-colors ${
+                    className={`flex cursor-pointer items-center gap-2 rounded-xl border-2 px-4 py-2.5 transition-colors ${
                       defaultLanguage === option.value ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/40'
                     }`}
                   >
@@ -127,30 +129,32 @@ export function SettingsPrivacyPanel({
                       value={option.value}
                       checked={defaultLanguage === option.value}
                       onChange={() => onDefaultLanguageChange(option.value)}
+                      disabled={!canEditSettings}
                       className="text-primary focus:ring-primary"
                     />
                     <span className="text-sm font-medium text-text-primary">{option.label}</span>
                   </label>
                 ))}
               </div>
-              <div className="rounded-lg border border-border-subtle bg-surface-subtle/40 p-4">
+              <div className="rounded-2xl border border-border-subtle bg-surface-subtle/40 p-4">
                 <p className="text-sm font-semibold text-text-primary">Guest-facing language options</p>
                 <p className="mt-1 text-xs text-text-secondary">Choose which languages should show up across translated guest-facing surfaces. Your default language always stays on.</p>
                 <div className="mt-3 flex flex-wrap gap-2">
                   {SITE_LANGUAGE_OPTIONS.map((option) => {
                     const checked = allowedLanguages.includes(option.value);
                     const locked = option.value === defaultLanguage;
+                    const disabled = locked || !canEditSettings;
                     return (
                       <label
                         key={option.value}
-                        className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-sm ${
+                        className={`flex items-center gap-2 rounded-xl border px-3 py-2 text-sm ${
                           checked ? 'border-primary bg-primary/5 text-text-primary' : 'border-border bg-white text-text-secondary'
-                        } ${locked ? 'opacity-100' : 'cursor-pointer'}`}
+                        } ${disabled ? 'opacity-100' : 'cursor-pointer'}`}
                       >
                         <input
                           type="checkbox"
                           checked={checked}
-                          disabled={locked}
+                          disabled={disabled}
                           onChange={(event) => {
                             const next = event.target.checked
                               ? [...allowedLanguages, option.value]
@@ -165,7 +169,7 @@ export function SettingsPrivacyPanel({
                   })}
                 </div>
               </div>
-              <div className="rounded-lg border border-border-subtle bg-surface-subtle/40 p-4">
+              <div className="rounded-2xl border border-border-subtle bg-surface-subtle/40 p-4">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div>
                     <p className="text-sm font-semibold text-text-primary">Auto-translate public site</p>
@@ -179,7 +183,7 @@ export function SettingsPrivacyPanel({
                         variant="outline"
                         size="sm"
                         onClick={() => onAutoTranslateLanguage(language.value)}
-                        disabled={translatingLanguage === language.value}
+                        disabled={translatingLanguage === language.value || !canEditSettings}
                       >
                         {translatingLanguage === language.value ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
                         {translatingLanguage === language.value ? 'Translating…' : language.label}
@@ -194,11 +198,11 @@ export function SettingsPrivacyPanel({
                     const failed = status?.status === 'failed';
 
                     return (
-                      <div key={language.value} className="rounded-lg border border-border bg-white px-3 py-3">
+                      <div key={language.value} className="rounded-xl border border-border bg-white px-3 py-3">
                         <div className="flex items-center justify-between gap-2">
                           <p className="text-xs font-semibold text-text-primary">{language.label}</p>
                           <span
-                            className={`rounded-lg px-2 py-0.5 text-[11px] font-medium ${
+                            className={`rounded-xl px-2 py-0.5 text-[11px] font-medium ${
                               ready ? 'bg-success/10 text-success' : failed ? 'bg-surface-subtle text-text-secondary' : 'bg-surface-subtle text-text-tertiary'
                             }`}
                           >
@@ -215,7 +219,7 @@ export function SettingsPrivacyPanel({
               </div>
             </div>
 
-            <div className="space-y-2 rounded-lg border border-border-subtle bg-surface-subtle/40 p-4">
+            <div className="space-y-2 rounded-2xl border border-border-subtle bg-surface-subtle/40 p-4">
               <p className="text-sm font-medium text-text-primary">Visibility states</p>
               <ul className="space-y-1 text-xs text-text-secondary">
                 <li>• <span className="font-medium text-text-primary">Draft</span> means only you can see the site while editing.</li>
@@ -224,18 +228,19 @@ export function SettingsPrivacyPanel({
               </ul>
             </div>
 
-            <div className="space-y-3 rounded-lg border border-border-subtle bg-surface-subtle/40 p-4">
+            <div className="space-y-3 rounded-2xl border border-border-subtle bg-surface-subtle/40 p-4">
               <div>
                 <p className="text-sm font-medium text-text-primary">Aggregate analytics policy</p>
                 <p className="mt-1 text-xs text-text-secondary">
                   Guest-hub analytics stay aggregate-only. Owner readback should never expose invite tokens, private URLs, IP addresses, or device-level detail.
                 </p>
               </div>
-              <label className="flex items-start gap-3 rounded-lg border border-border bg-white px-3 py-3 text-sm text-text-primary">
+              <label className="flex items-start gap-3 rounded-2xl border border-border bg-white px-3 py-3 text-sm text-text-primary">
                 <input
                   type="checkbox"
                   checked={analyticsEnabled}
                   onChange={(event) => onAnalyticsEnabledChange(event.target.checked)}
+                  disabled={!canEditSettings}
                   className="mt-0.5 text-primary focus:ring-primary"
                 />
                 <span>
@@ -251,8 +256,8 @@ export function SettingsPrivacyPanel({
                   <select
                     value={analyticsRetentionDays}
                     onChange={(event) => onAnalyticsRetentionDaysChange(Number(event.target.value) as AnalyticsRetentionDays)}
-                    disabled={!analyticsEnabled}
-                    className="w-full rounded-lg border border-border bg-white px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/40 disabled:cursor-not-allowed disabled:bg-surface-subtle"
+                    disabled={!analyticsEnabled || !canEditSettings}
+                    className="w-full rounded-xl border border-border bg-white px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/40 disabled:cursor-not-allowed disabled:bg-surface-subtle"
                   >
                     {ANALYTICS_RETENTION_OPTIONS.map((days) => (
                       <option key={days} value={days}>{days} days</option>
@@ -266,9 +271,9 @@ export function SettingsPrivacyPanel({
                     onChange={(event) => onAnalyticsGuestNoticeChange(event.target.value)}
                     rows={3}
                     maxLength={240}
-                    disabled={!analyticsEnabled}
+                    disabled={!analyticsEnabled || !canEditSettings}
                     placeholder="Aggregate visit, invite, and QR counts help us see what guest resources are being used."
-                    className="w-full rounded-lg border border-border bg-white px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/40 disabled:cursor-not-allowed disabled:bg-surface-subtle"
+                    className="w-full rounded-xl border border-border bg-white px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/40 disabled:cursor-not-allowed disabled:bg-surface-subtle"
                   />
                   <span className="block text-xs text-text-secondary">
                     Save a short disclosure for your planning team. Keep it high-level and guest-safe.
@@ -281,7 +286,7 @@ export function SettingsPrivacyPanel({
               {getVisibilityModeOptions().map((option) => (
                 <label
                   key={option.value}
-                  className={`flex cursor-pointer items-start gap-3 rounded-lg border-2 p-3.5 transition-colors ${
+                  className={`flex cursor-pointer items-start gap-3 rounded-2xl border-2 p-3.5 transition-colors ${
                     privacyMode === option.value ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/40'
                   }`}
                 >
@@ -291,6 +296,7 @@ export function SettingsPrivacyPanel({
                     value={option.value}
                     checked={privacyMode === option.value}
                     onChange={() => onVisibilityModeChange(option.value)}
+                    disabled={!canEditSettings}
                     className="mt-0.5 text-primary focus:ring-primary"
                   />
                   <div>
@@ -302,7 +308,7 @@ export function SettingsPrivacyPanel({
             </div>
 
             {privacyMode === 'password_protected' && (
-              <div className="space-y-3 rounded-lg border border-border bg-surface-subtle p-4">
+              <div className="space-y-3 rounded-2xl border border-border bg-surface-subtle p-4">
                 <p className="text-sm font-medium text-text-primary">Site password</p>
                 <p className="text-xs text-text-secondary">Guests will be prompted to enter this before viewing the site.</p>
                 <div className="relative">
@@ -310,8 +316,9 @@ export function SettingsPrivacyPanel({
                     type={showSitePassword ? 'text' : 'password'}
                     value={sitePassword}
                     onChange={(event) => onSitePasswordChange(event.target.value)}
+                    disabled={!canEditSettings}
                     placeholder="Set new password…"
-                    className="w-full rounded-lg border border-border bg-background px-3 py-2 pr-10 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/40"
+                    className="w-full rounded-xl border border-border bg-background px-3 py-2 pr-10 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/40"
                     autoComplete="new-password"
                   />
                   <button
@@ -328,16 +335,34 @@ export function SettingsPrivacyPanel({
             )}
 
             {privacyMode === 'invite_only' && (
-              <div className="space-y-3 rounded-lg border border-border bg-surface-subtle p-4">
+              <div className="space-y-3 rounded-2xl border border-border bg-surface-subtle p-4">
                 <p className="text-sm font-medium text-text-primary">Invite-only guest access link</p>
                 <p className="text-xs text-text-secondary">Share this link with guests you want to allow through your invite-only access setting. This is a guest access control, not a separate unpublished preview product, and it is separate from search visibility.</p>
                 {guestAccessToken && siteSlug ? (
                   <div className="flex items-center gap-2">
-                    <code className="flex-1 truncate rounded-lg border border-border bg-background px-3 py-2 text-xs text-text-secondary">
+                    <code className="flex-1 truncate rounded-xl border border-border bg-background px-3 py-2 text-xs text-text-secondary">
                       {`${window.location.origin}/site/${siteSlug}?token=${guestAccessToken.slice(0, 12)}…`}
                     </code>
                     <Button type="button" variant="outline" size="sm" onClick={onCopyInviteLink}>
-                      {privacyCopied ? <CheckCheck className="h-4 w-4 text-success" /> : <Copy className="h-4 w-4" />}
+                      {privacyCopyNotice === 'copied'
+                        ? <CheckCheck className="h-4 w-4 text-success" />
+                        : privacyCopyNotice === 'downloaded'
+                          ? <CheckCheck className="h-4 w-4 text-text-secondary" />
+                          : <Copy className="h-4 w-4" />}
+                      <span className="sr-only">
+                        {privacyCopyNotice === 'copied'
+                          ? 'Copied guest access link'
+                          : privacyCopyNotice === 'downloaded'
+                            ? 'Downloaded guest access link'
+                            : 'Copy guest access link'}
+                      </span>
+                      <span aria-hidden="true" className="text-xs">
+                        {privacyCopyNotice === 'copied'
+                          ? 'Copied guest access link'
+                          : privacyCopyNotice === 'downloaded'
+                            ? 'Downloaded guest access link'
+                            : 'Copy guest access link'}
+                      </span>
                     </Button>
                   </div>
                 ) : (
@@ -347,7 +372,8 @@ export function SettingsPrivacyPanel({
                   <button
                     type="button"
                     onClick={onRegenerateToken}
-                    className="text-xs text-text-tertiary hover:text-text-secondary hover:underline"
+                    disabled={!canEditSettings}
+                    className="text-xs text-text-tertiary hover:text-text-secondary hover:underline disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:text-text-tertiary disabled:hover:no-underline"
                   >
                     Regenerate access link (old link stops working)
                   </button>
@@ -360,6 +386,7 @@ export function SettingsPrivacyPanel({
                 type="checkbox"
                 checked={hideFromSearch}
                 onChange={(event) => onHideFromSearchChange(event.target.checked)}
+                disabled={!canEditSettings}
                 className="h-4 w-4 rounded border-border text-primary focus:ring-primary"
               />
               <div>
@@ -369,7 +396,7 @@ export function SettingsPrivacyPanel({
             </label>
 
             <div className="flex justify-end pt-2">
-              <Button variant="primary" size="md" type="submit" disabled={visibilitySaving}>
+              <Button variant="primary" size="md" type="submit" disabled={visibilitySaving || !canEditSettings}>
                 {visibilitySaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                 Save Privacy Settings
               </Button>

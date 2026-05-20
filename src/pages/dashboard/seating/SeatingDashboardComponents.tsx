@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useDraggable, useDroppable } from '@dnd-kit/core';
 import {
   AlertTriangle,
@@ -33,7 +33,7 @@ export function GuestChip({
 }) {
   return (
     <div className={`
-      flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium
+      flex items-center gap-1.5 rounded-xl px-2.5 py-1.5 text-xs font-medium
       select-none cursor-grab active:cursor-grabbing
       transition-colors border
       ${isDragging ? 'opacity-90 ring-2 ring-primary/20' : ''}
@@ -74,7 +74,7 @@ export function UnassignedPool({ guests }: { guests: EligibleGuest[] }) {
   return (
     <div
       ref={setNodeRef}
-      className={`min-h-[120px] rounded-lg border-2 border-dashed p-3 transition-colors ${isOver ? 'border-primary bg-primary-light/50' : 'border-border-subtle bg-surface-subtle'}`}
+      className={`min-h-[120px] rounded-2xl border-2 border-dashed p-3 transition-colors ${isOver ? 'border-primary bg-primary-light/50' : 'border-border-subtle bg-surface-subtle'}`}
     >
       {guests.length > 0 && (
         <div className="mb-3 space-y-2">
@@ -135,7 +135,7 @@ function SeatDropSlot({
         e.stopPropagation();
         onSelectSeat?.(tableId, seatIndex);
       }}
-      className={`h-9 sm:h-10 rounded-lg border text-[10px] sm:text-[11px] px-1 flex items-center justify-center text-center ${active ? 'border-primary bg-primary-light/50' : 'border-border-subtle bg-surface-subtle'} ${className ?? ''}`}
+      className={`flex h-9 items-center justify-center rounded-xl border px-1 text-center text-[10px] sm:h-10 sm:text-[11px] ${active ? 'border-primary bg-primary-light/50' : 'border-border-subtle bg-surface-subtle'} ${className ?? ''}`}
       title={`Seat ${seatIndex}`}
     >
       {guest ? (
@@ -258,7 +258,7 @@ export function TableCard({
         onStartMove(e);
       }}
       className={`
-        rounded-lg transition-all cursor-pointer
+        rounded-2xl transition-all cursor-pointer
         ${isCanvas
           ? (isOver && !isFull ? 'bg-transparent ring-2 ring-primary/40' : isSelected ? 'bg-transparent ring-1 ring-border' : 'bg-transparent')
           : (isOver && !isFull
@@ -276,7 +276,7 @@ export function TableCard({
             <span className={`text-[10px] px-1.5 py-0.5 rounded border ${palette.chip}`}>{getShapeLabel((table.table_shape ?? 'round') as TableShape)}</span>
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
-            <span className={`rounded-md px-1.5 py-0.5 text-xs font-medium ${isFull ? 'bg-primary/10 text-primary' : 'bg-surface-subtle text-text-tertiary'}`}>
+            <span className={`rounded-xl px-1.5 py-0.5 text-xs font-medium ${isFull ? 'bg-primary/10 text-primary' : 'bg-surface-subtle text-text-tertiary'}`}>
               {occupied}/{effectiveCapacity}
             </span>
             {isSelected && (
@@ -304,7 +304,7 @@ export function TableCard({
           <div style={{ transform: `rotate(${table.rotation_deg ?? 0}deg)`, transformOrigin: '50% 50%' }}>
             {(['bar', 'dj_booth', 'dance_floor'] as TableShape[]).includes((table.table_shape ?? 'round') as TableShape) ? (
               <div className="relative mb-2">
-                <div className={`mx-auto flex items-center justify-center rounded-lg text-xs text-text-tertiary ${palette.fill} ${isNonSeatingObject ? 'pointer-events-none select-none border-2 border-dashed' : 'border'}`} style={{ width: `${rectSize.width}px`, height: `${rectSize.height}px` }}>
+                <div className={`mx-auto flex items-center justify-center rounded-2xl text-xs text-text-tertiary ${palette.fill} ${isNonSeatingObject ? 'pointer-events-none select-none border-2 border-dashed' : 'border'}`} style={{ width: `${rectSize.width}px`, height: `${rectSize.height}px` }}>
                   {table.table_name || ''}
                 </div>
               </div>
@@ -337,7 +337,7 @@ export function TableCard({
               <div className="relative mb-2">
                 <div className="mx-auto relative" style={{ width: `${rectSize.width + 110}px`, height: `${rectSize.height + 110}px` }}>
                   <div
-                    className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-lg border ${palette.fill}`}
+                    className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-2xl border ${palette.fill}`}
                     style={{ width: `${rectSize.width}px`, height: `${rectSize.height}px` }}
                   >
                     <div className="absolute left-2 top-1 text-[10px] text-text-tertiary">{rectSize.width}x{rectSize.height}</div>
@@ -474,11 +474,33 @@ export function TableForm({ initial, onSave, onCancel }: {
   const [notes, setNotes] = useState(initial?.notes ?? '');
   const autoSaveTimerRef = useRef<number | null>(null);
 
-  function buildPayload() {
+  useEffect(() => {
+    if (autoSaveTimerRef.current) {
+      window.clearTimeout(autoSaveTimerRef.current);
+      autoSaveTimerRef.current = null;
+    }
+
+    setName(initial?.table_name ?? '');
+    setCapacity(initial?.capacity ?? 8);
+    setShape((initial?.table_shape as TableShape) ?? 'round');
+    setLayoutWidth(initial?.layout_width ?? 260);
+    setLayoutHeight(initial?.layout_height ?? 150);
+    setNotes(initial?.notes ?? '');
+  }, [
+    initial?.capacity,
+    initial?.id,
+    initial?.layout_height,
+    initial?.layout_width,
+    initial?.notes,
+    initial?.table_name,
+    initial?.table_shape,
+  ]);
+
+  const buildPayload = useCallback(() => {
     const tableName = name.trim() || (shape === 'round' || shape === 'rectangle' ? 'Table' : '');
     const seatCap = (shape === 'bar' || shape === 'dj_booth' || shape === 'dance_floor') ? 0 : Number(capacity);
     return { table_name: tableName, capacity: seatCap, table_shape: shape, layout_width: Number(layoutWidth), layout_height: Number(layoutHeight), notes };
-  }
+  }, [capacity, layoutHeight, layoutWidth, name, notes, shape]);
 
   useEffect(() => {
     if (!initial?.id) return;
@@ -490,8 +512,7 @@ export function TableForm({ initial, onSave, onCancel }: {
     return () => {
       if (autoSaveTimerRef.current) window.clearTimeout(autoSaveTimerRef.current);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [name, capacity, shape, layoutWidth, layoutHeight, notes]);
+  }, [buildPayload, initial?.id, onSave]);
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -499,11 +520,11 @@ export function TableForm({ initial, onSave, onCancel }: {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-wrap items-end gap-2 rounded-lg border border-border-subtle bg-surface-subtle p-3">
+    <form onSubmit={handleSubmit} className="flex flex-wrap items-end gap-2 rounded-2xl border border-border-subtle bg-surface-subtle p-3">
       <div>
         <label className="block text-xs font-medium text-text-secondary mb-1">Name</label>
         <input
-          className="px-2.5 py-1.5 text-sm bg-surface border border-border rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-primary w-36"
+          className="w-36 rounded-xl border border-border bg-surface px-2.5 py-1.5 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
           value={name}
           onChange={e => setName(e.target.value)}
           placeholder="Optional label"
@@ -516,7 +537,7 @@ export function TableForm({ initial, onSave, onCancel }: {
           type="number"
           min="1"
           max="100"
-          className="px-2.5 py-1.5 text-sm bg-surface border border-border rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-primary w-20"
+          className="w-20 rounded-xl border border-border bg-surface px-2.5 py-1.5 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
           value={capacity}
           onChange={e => setCapacity(Number(e.target.value))}
         />
@@ -524,7 +545,7 @@ export function TableForm({ initial, onSave, onCancel }: {
       <div>
         <label className="block text-xs font-medium text-text-secondary mb-1">Shape</label>
         <select
-          className="px-2.5 py-1.5 text-sm bg-surface border border-border rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+          className="rounded-xl border border-border bg-surface px-2.5 py-1.5 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
           value={shape}
           onChange={e => setShape(e.target.value as TableShape)}
         >
@@ -543,7 +564,7 @@ export function TableForm({ initial, onSave, onCancel }: {
               type="number"
               min="160"
               max="520"
-              className="px-2.5 py-1.5 text-sm bg-surface border border-border rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-primary w-24"
+              className="w-24 rounded-xl border border-border bg-surface px-2.5 py-1.5 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
               value={layoutWidth}
               onChange={e => setLayoutWidth(Number(e.target.value))}
             />
@@ -554,7 +575,7 @@ export function TableForm({ initial, onSave, onCancel }: {
               type="number"
               min="100"
               max="320"
-              className="px-2.5 py-1.5 text-sm bg-surface border border-border rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-primary w-24"
+              className="w-24 rounded-xl border border-border bg-surface px-2.5 py-1.5 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
               value={layoutHeight}
               onChange={e => setLayoutHeight(Number(e.target.value))}
             />

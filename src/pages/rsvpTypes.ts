@@ -9,6 +9,11 @@ export const RSVP_SUBMIT_ERROR_COPY = 'Couldn’t send your RSVP. Please try aga
 export const RSVP_LOOKUP_ERROR_COPY = 'Invitation not recognized. Please use the private RSVP link or code from your invitation.';
 const RSVP_INTERNAL_SENTINEL_ERROR_COPY = /\b(configuration|missing-config|failed\s*to\s*submit)\b/i;
 
+export function buildRsvpContinuityStorageKey(siteSlug?: string | null): string {
+  const normalizedSiteSlug = String(siteSlug ?? '').trim().toLowerCase();
+  return normalizedSiteSlug ? `${RSVP_CONTINUITY_STORAGE_KEY}:${normalizedSiteSlug}` : RSVP_CONTINUITY_STORAGE_KEY;
+}
+
 export function normalizeRsvpGuestError(message?: string | null, fallback = RSVP_LOOKUP_ERROR_COPY) {
   const cleaned = String(message ?? '').replace(/\s+/g, ' ').trim();
   if (!cleaned || RSVP_INTERNAL_SENTINEL_ERROR_COPY.test(cleaned) || isInternalCustomerErrorMessage(cleaned)) return fallback;

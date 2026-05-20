@@ -34,15 +34,15 @@ export const DeleteSectionModal: React.FC<DeleteSectionModalProps> = ({
     >
       <div className="absolute inset-0 bg-black/35 backdrop-blur-sm" aria-hidden="true" />
 
-      <div className="relative mx-4 w-full max-w-sm overflow-hidden rounded-lg border border-[var(--color-border-subtle)] bg-white shadow-md">
+      <div className="relative mx-4 w-full max-w-sm overflow-hidden rounded-xl border border-[var(--color-border-subtle)] bg-white shadow-md">
         <div className="p-6">
           <div className="flex items-start justify-between mb-4">
-            <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg border border-neutral-200 bg-neutral-50">
+            <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl border border-neutral-200 bg-neutral-50">
               <Trash2 size={18} className="text-neutral-700" />
             </div>
             <button
               onClick={onCancel}
-              className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors"
+              className="p-1.5 rounded-xl hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors"
             >
               <X size={16} />
             </button>
@@ -59,14 +59,14 @@ This will remove the section and its content from this page. If you are unsure, 
         <div className="flex gap-2.5 px-6 pb-5">
           <button
             onClick={onCancel}
-            className="flex-1 rounded-lg border border-gray-200 px-4 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+            className="flex-1 rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
           >
             Cancel
           </button>
           <button
             ref={confirmButtonRef}
             onClick={onConfirm}
-            className="flex-1 rounded-lg border border-neutral-900 bg-neutral-900 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-neutral-800 focus:outline-none focus:ring-2 focus:ring-neutral-500 focus:ring-offset-2"
+            className="flex-1 rounded-xl border border-neutral-900 bg-neutral-900 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-neutral-800 focus:outline-none focus:ring-2 focus:ring-neutral-500 focus:ring-offset-2"
           >
 Remove it
           </button>

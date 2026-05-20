@@ -60,8 +60,7 @@ const results = [
 ];
 
 let previewProcess = null;
-let previewStdout = '';
-let previewStderr = '';
+let previewOutput = { stdout: '', stderr: '' };
 try {
   if (baseUrl === PREVIEW_URL) {
     const previewRuntime = await resolvePreviewRuntime({
@@ -71,8 +70,7 @@ try {
     });
     baseUrl = previewRuntime.baseUrl;
     previewProcess = previewRuntime.previewProcess;
-    previewStdout = previewRuntime.previewStdout;
-    previewStderr = previewRuntime.previewStderr;
+    previewOutput = previewRuntime.previewOutput;
   }
 
   results.push(runStep({
@@ -81,7 +79,7 @@ try {
     command: `PLAYWRIGHT_BASE_URL=${baseUrl} npx playwright test --workers=1 tests/e2e/wedding-identity-exports.spec.ts`,
   }));
 
-  if (previewStdout.trim()) {
+  if (previewOutput.stdout.trim()) {
     results.push({
       id: 'preview-server-log',
       label: 'Preview server log',
@@ -90,8 +88,8 @@ try {
       ok: true,
       startedAt: new Date().toISOString(),
       finishedAt: new Date().toISOString(),
-      stdout: previewStdout.trim(),
-      stderr: previewStderr.trim() || undefined,
+      stdout: previewOutput.stdout.trim(),
+      stderr: previewOutput.stderr.trim() || undefined,
     });
   }
 } catch (error) {
@@ -103,7 +101,7 @@ try {
     ok: false,
     startedAt: new Date().toISOString(),
     finishedAt: new Date().toISOString(),
-    stderr: [previewStderr.trim(), error instanceof Error ? error.message : 'Wedding identity preview server failed to start.'].filter(Boolean).join('\n'),
+    stderr: [previewOutput.stderr.trim(), error instanceof Error ? error.message : 'Wedding identity preview server failed to start.'].filter(Boolean).join('\n'),
   });
 } finally {
   await stopPreviewRuntime(previewProcess);
@@ -119,6 +117,7 @@ const output = {
     passed: results.filter((result) => result.ok).length,
     failed: results.filter((result) => !result.ok).length,
   },
+  contractSummary: 'Wedding identity export proof is green: this owner-tooling lane validates safe identity-export generation and download continuity while still deferring broader launch truth to the proof-board flow.',
   automatedCoverage: [
     'Wedding identity readiness truth, planner-safe manifest output, and safe story/style export generation',
     'Settings identity export controls for manifest copy, style-kit copy, print-pack download, and story-graphic download',

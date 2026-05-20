@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { PLANNER_ROLE_OPTIONS, canManageGuests, derivePlannerRoleFromPermissions } from '../../lib/plannerAccess';
 import { formatGuestOpsDate, formatGuestOpsDateTime, formatGuestOpsRelativeTime } from './guestOpsTime';
 import { formatGuestEventDate } from './guestEventDate';
@@ -72,8 +72,10 @@ import { useGuestDashboardRsvpConfigActions } from './guests/useGuestDashboardRs
 import { useGuestDashboardRouteSupport } from './guests/useGuestDashboardRouteSupport';
 import { useGuestDashboardUiState } from './guests/useGuestDashboardUiState';
 import { useGuestDashboardExports } from './guests/useGuestDashboardExports';
+import { resolveGuestRouteState } from './guests/guestRouteState';
 
 export const DashboardGuests: React.FC = () => {
+  const location = useLocation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { fromQuickStart, nextStep } = readQuickStartDashboardContinuation(searchParams);
@@ -81,6 +83,7 @@ export const DashboardGuests: React.FC = () => {
   const { user, isDemoMode } = useAuth();
   const { toast } = useToast();
   const rsvpConfigLoadedRef = useRef(false);
+  const previousWeddingSiteIdRef = useRef<string | null>(null);
   const {
     autoRemindersEnabled,
     campaignLog,
@@ -99,6 +102,7 @@ export const DashboardGuests: React.FC = () => {
     formEventInviteIds,
     guestsTab,
     reminderCadenceDays,
+    resetGuestDashboardUiState,
     savedSegments,
     searchQuery,
     selectedGuestIds,
@@ -144,15 +148,8 @@ export const DashboardGuests: React.FC = () => {
     skipRecentlyInvited,
     sortByPriority,
     viewMode,
+    setStorageScope,
   } = useGuestDashboardUiState();
-
-  useEffect(() => {
-    if (!guestPreviewQa) return;
-    setCheckInMode(false);
-    setShowInsights(false);
-    setViewMode('list');
-  }, [guestPreviewQa, setCheckInMode, setShowInsights, setViewMode]);
-
   const {
     eventInviteGuestMap,
     fetchGuests,
@@ -191,6 +188,53 @@ export const DashboardGuests: React.FC = () => {
     toast,
     userId: user?.id ?? null,
   });
+
+  useEffect(() => {
+    if (previousWeddingSiteIdRef.current && weddingSiteId && previousWeddingSiteIdRef.current !== weddingSiteId) {
+      resetGuestDashboardUiState();
+    }
+    previousWeddingSiteIdRef.current = weddingSiteId;
+  }, [resetGuestDashboardUiState, weddingSiteId]);
+
+  useEffect(() => {
+    setStorageScope(weddingSiteId);
+  }, [setStorageScope, weddingSiteId]);
+
+  useEffect(() => {
+    if (!weddingSiteId && !isDemoMode) {
+      resetGuestDashboardUiState();
+    }
+  }, [isDemoMode, resetGuestDashboardUiState, weddingSiteId]);
+
+  useEffect(() => {
+    if (!guestPreviewQa) return;
+    setCheckInMode(false);
+    setShowInsights(false);
+    setViewMode('list');
+  }, [guestPreviewQa, setCheckInMode, setShowInsights, setViewMode]);
+
+  useEffect(() => {
+    const nextSearchParams = new URLSearchParams(searchParams);
+    const routeState = resolveGuestRouteState(searchParams.toString() ? `?${searchParams.toString()}` : '');
+    if (routeState.guestsTab !== null) setGuestsTab(routeState.guestsTab);
+    if (routeState.viewMode !== null) setViewMode(routeState.viewMode);
+    if (routeState.filterStatus !== null) setFilterStatus(routeState.filterStatus);
+    if (routeState.showInsights !== null) setShowInsights(routeState.showInsights);
+    if (routeState.showOpsMenu !== null) setShowOpsMenu(routeState.showOpsMenu);
+    if (nextSearchParams.has('tool') || nextSearchParams.get('tab') === 'rsvp-settings' || nextSearchParams.get('tab') === 'list') {
+      nextSearchParams.delete('tool');
+      if (nextSearchParams.get('tab') === 'rsvp-settings' || nextSearchParams.get('tab') === 'list') {
+        nextSearchParams.delete('tab');
+      }
+      navigate(
+        {
+          pathname: location.pathname,
+          search: nextSearchParams.toString() ? `?${nextSearchParams.toString()}` : '',
+        },
+        { replace: true },
+      );
+    }
+  }, [location.pathname, navigate, searchParams, setFilterStatus, setGuestsTab, setShowInsights, setShowOpsMenu, setViewMode]);
   const {
     confirmDialog,
     effectiveItineraryEvents,
@@ -223,6 +267,7 @@ export const DashboardGuests: React.FC = () => {
   } = useGuestDashboardRsvpConfigActions({
     guestsTab,
     isDemoMode,
+    isGuestsReadOnly,
     rsvpConfigLoadedRef,
     rsvpAccessSelection,
     rsvpMealEnabled,
@@ -289,6 +334,46 @@ export const DashboardGuests: React.FC = () => {
     toast,
     weddingSiteId,
   });
+
+  useEffect(() => {
+    if (!isGuestsReadOnly) return;
+
+    setShowAddModal(false);
+    setEditingGuest(null);
+    setShowCampaignModal(false);
+    setShowDeleteAllModal(false);
+    setDeleteAllConfirmInput('');
+    setDeletingGuestId(null);
+    setConfirmDeleteId(null);
+    setShowOpsMenu(false);
+    setShowRecipientPreview(false);
+    setCheckInMode(false);
+    setSelectedGuestIds(new Set());
+    setSelectedGuestLanguageDraft('');
+    setAssistedRsvpGuest(null);
+    setAssistedRsvpStatus('confirmed');
+    setAssistedRsvpSource('phone');
+    setAssistedRsvpNotes('');
+  }, [
+    isGuestsReadOnly,
+    setAssistedRsvpGuest,
+    setAssistedRsvpNotes,
+    setAssistedRsvpSource,
+    setAssistedRsvpStatus,
+    setCheckInMode,
+    setConfirmDeleteId,
+    setDeleteAllConfirmInput,
+    setDeletingGuestId,
+    setEditingGuest,
+    setSelectedGuestIds,
+    setSelectedGuestLanguageDraft,
+    setShowAddModal,
+    setShowCampaignModal,
+    setShowDeleteAllModal,
+    setShowOpsMenu,
+    setShowRecipientPreview,
+  ]);
+
   const generateLocalInviteToken = () => `demo_${Math.random().toString(36).slice(2, 14)}`;
   const {
     csvColumnSamples,
@@ -310,9 +395,9 @@ export const DashboardGuests: React.FC = () => {
     buildCsvPreviewFromMapping,
     confirmCsvImport,
     importCSV,
+    resetCsvParserState,
     resetCsvReviewState,
     setCsvFieldMap,
-    setCsvShowMapper,
   } = useGuestDashboardCsvImport({
     buildQuickStartPhotosPath,
     drawerItineraryEvents,
@@ -340,6 +425,7 @@ export const DashboardGuests: React.FC = () => {
   } = useGuestDashboardConflictActions({
     conflictFilter,
     isDemoMode,
+    isGuestsReadOnly,
     rsvpConflictHistory,
     rsvpConflicts,
     setRsvpConflictHistory,
@@ -435,6 +521,7 @@ export const DashboardGuests: React.FC = () => {
     filteredGuests,
     guests,
     isDemoMode,
+    isGuestsReadOnly,
     logGuestAction,
     setCampaignPreset,
     setDeleteAllBusy,
@@ -476,6 +563,20 @@ export const DashboardGuests: React.FC = () => {
     setSavedSegments,
     toast,
   });
+  const handleAddFollowUpTask = (text: string) => {
+    if (isGuestsReadOnly) {
+      toast('Viewer mode is read-only.', 'info');
+      return;
+    }
+    addFollowUpTask(text);
+  };
+  const handleSetSkipRecentlyInvited = (skip: boolean) => {
+    if (isGuestsReadOnly) {
+      toast('Viewer mode is read-only.', 'info');
+      return;
+    }
+    setSkipRecentlyInvited(skip);
+  };
   const {
     handleCopyCampaignDryRun,
     handleCopyChecklist,
@@ -574,6 +675,7 @@ export const DashboardGuests: React.FC = () => {
     handleSendDueRemindersNow,
     handleSendSelectedInvitations,
     handleUndoLastCheckIn,
+    isGuestsReadOnly,
     nextUnresolvedGuest,
     persistReminderSettingsForSite,
     resetForm,
@@ -595,12 +697,15 @@ export const DashboardGuests: React.FC = () => {
   });
   const guestDashboardOverlayActions = buildGuestDashboardOverlayActions({
     csvImporting,
+    deleteAllBusy,
     editingGuest,
     handleAddGuest,
     handleEditGuest,
+    resetCsvParserState,
     resetCsvReviewState,
     resetForm,
     setAssistedRsvpGuest,
+    setDeleteAllConfirmInput,
     setEditingGuest,
     setGuestAuditEntries,
     setItineraryDrawerGuest,
@@ -687,7 +792,7 @@ export const DashboardGuests: React.FC = () => {
     stats,
     viewMode,
     visibleRsvpConflicts,
-    onAddFollowUpTask: addFollowUpTask,
+    onAddFollowUpTask: handleAddFollowUpTask,
     onAddRsvpQuestionTemplate: addRsvpQuestionTemplate,
     onApplyCampaignPreset: applyCampaignPreset,
     onClearFilters: clearFilters,
@@ -713,11 +818,11 @@ export const DashboardGuests: React.FC = () => {
     onOpenItineraryDrawer: openItineraryDrawer,
     onResolveAllVisibleConflicts: resolveAllVisibleConflicts,
     onResolveConflict: resolveConflict,
+    requestConfirmation,
     onSaveRsvpConfig: handleSaveRsvpConfig,
     onSearchQueryChange: setSearchQuery,
     onSelectFiltered: selectFilteredGuests,
     onSendInvitation: handleSendInvitation,
-    onSetConfirmDialog: setConfirmDialog,
     onSetConflictFilter: setConflictFilter,
     onSetGuestsTab: setGuestsTab,
     onSetRsvpAccessSelection: setRsvpAccessSelection,
@@ -730,7 +835,7 @@ export const DashboardGuests: React.FC = () => {
     onSetShowCampaignModal: setShowCampaignModal,
     onSetShowOpsMenu: setShowOpsMenu,
     onSetShowRecipientPreview: setShowRecipientPreview,
-    onSetSkipRecentlyInvited: setSkipRecentlyInvited,
+    onSetSkipRecentlyInvited: handleSetSkipRecentlyInvited,
     onSkipToPhotos: () => navigate(buildQuickStartPhotosPath()),
     onApplySelectedGuestLanguage: () => handleSetGuestsPreferredLanguage(selectedGuestIds, selectedGuestLanguageDraft, () => {
       setSelectedGuestIds(new Set());
@@ -769,6 +874,7 @@ export const DashboardGuests: React.FC = () => {
     guestAuditEntries,
     guestEventIds,
     guests,
+    isGuestsReadOnly,
     itineraryDrawerGuest,
     itineraryEvents: drawerItineraryEvents,
     itineraryFilterEventCount: itineraryFilterEvents.length,
@@ -778,7 +884,7 @@ export const DashboardGuests: React.FC = () => {
     showDeleteAllModal,
     togglingEventId,
     weddingSiteInfo,
-    onAddFollowUpTask: addFollowUpTask,
+    onAddFollowUpTask: handleAddFollowUpTask,
     onBuildCsvPreview: buildCsvPreviewFromMapping,
     onConfirmCsvImport: confirmCsvImport,
     onConfirmDeleteAllGuests: handleDeleteAllGuests,
@@ -791,7 +897,6 @@ export const DashboardGuests: React.FC = () => {
     onSetAssistedRsvpSource: setAssistedRsvpSource,
     onSetAssistedRsvpStatus: setAssistedRsvpStatus,
     onSetCsvFieldMap: setCsvFieldMap,
-    onSetCsvShowMapper: setCsvShowMapper,
     onSetDeleteAllConfirmInput: setDeleteAllConfirmInput,
     onSetFormData: setFormData,
     onSetFormEventInviteIds: setFormEventInviteIds,

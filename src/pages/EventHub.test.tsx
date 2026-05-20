@@ -31,4 +31,13 @@ describe('event hub page boundary', () => {
     expect(liveContent).toContain("Access from this link");
     expect(liveContent).toContain("Readiness from this link");
   });
+
+  it('guards travel-plan copy feedback against stale route and spotlight context', () => {
+    const page = readFileSync(join(process.cwd(), 'src/pages/EventHub.tsx'), 'utf8');
+
+    expect(page).toContain('const travelCopyContextKey = JSON.stringify({');
+    expect(page).toContain('shareText: travelHubSpotlight?.shareText ?? null');
+    expect(page).toContain('const requestContextKey = travelCopyContextKeyRef.current;');
+    expect(page).toContain('requestContextKey === travelCopyContextKeyRef.current');
+  });
 });

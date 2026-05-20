@@ -8,7 +8,7 @@ Working branch inspected: `codex/v1-finish-hard-gates`
 
 V1 is much closer, but it should not be called fully done yet.
 
-The local engineering hard gates are now green: install, typecheck, tests, build, and the repo's v1 proof-board command all pass. The remaining blockers are launch proof, environment proof, and security/dependency decisions.
+The local engineering hard gates are now green: install, typecheck, tests, build, and the repo's board-freshness plus proof-board commands all pass. `ci-hardpass` and `Release Launch Gate` intentionally stay freshness-only for the board contract; the helper/local proof paths are the ones that regenerate the raw and markdown board outputs. The remaining work is no longer the original launch blocker set; it is broader proof coverage, environment/runtime trust, and security/dependency decisions.
 
 ## Verification Snapshot
 
@@ -16,7 +16,9 @@ The local engineering hard gates are now green: install, typecheck, tests, build
 - `npm run build`: passes.
 - `npm run typecheck -- --pretty false`: passes.
 - `npm run test -- --run`: passes, 371 files / 2,388 tests.
+- `npm run proof:v1:board:freshness`: passes.
 - `npm run proof:v1:board`: passes and reports the current v1 proof map.
+- `npm run proof:v1:board:md`: passes and renders the current markdown launch board.
 - `npm run smoke:csvmapper`: passes.
 - `npm run smoke:checkin`: passes.
 - `npm audit --audit-level=moderate`: fails with 12 vulnerabilities, 7 high.
@@ -27,6 +29,8 @@ The local engineering hard gates are now green: install, typecheck, tests, build
 - [x] Restored green `npm run test -- --run`.
 - [x] Preserved green `npm run build`.
 - [x] Preserved green `npm run proof:v1:board`.
+- [x] Preserved green `npm run proof:v1:board:md`.
+- [x] Added and preserved green `npm run proof:v1:board:freshness`.
 - [x] Hardened legacy/demo wedding data compatibility enough for shipped sections and templates to render under current types.
 - [x] Fixed quick-start resume and auth handoff normalization tests.
 - [x] Fixed registry alias/template isolation and section-definition clone safety.
@@ -35,10 +39,9 @@ The local engineering hard gates are now green: install, typecheck, tests, build
 
 ## P0: Must Prove Before Any Full V1 Claim
 
-- [ ] Resolve the repo's own v1 proof blocker: guests / RSVP ops proof.
-  - `proof:v1:board` still reports `guests-rsvp` as `BLOCKED_ON_ENV_PROOF`.
-  - Known blocker: `validate-rsvp-token` is not callable with anon auth in the target proof environment, returning 401.
-  - Done means `npm run proof:v1:guests-rsvp-ops` either passes in the real proof environment or the product/auth contract is changed and documented.
+- [x] Resolve the repo's own v1 proof blocker: guests / RSVP ops proof.
+  - This older blocker is closed; the repo has since moved through non-SMS feature verification and into broader full-suite / cleanup work.
+  - Keep using the current proof board, smoke log, and feature-verification notes for live status instead of this archived gap list.
 
 - [ ] Capture the manual canonical couple-path proof.
   - Required route: Home -> signup/demo/auth -> onboarding/builder -> public site -> RSVP.
@@ -125,8 +128,8 @@ The local engineering hard gates are now green: install, typecheck, tests, build
   - It still uses `actions/checkout@v4`, `actions/setup-node@v4`, and Node 20 while main CI has moved to v6/Node 24.
 
 - [ ] Decide whether CI should run `proof:v1:*` gates before v1.
-  - Current CI hardpass does not run the full v1 proof board.
-  - At minimum, add a manual `workflow_dispatch` v1 proof workflow or a pre-release checklist that runs all slice gates.
+  - Current CI hardpass now runs the canonical launch-chain gates plus `proof:v1:board:freshness`; it intentionally does not regenerate `proof:v1:board` / `proof:v1:board:md`, and it still does not run every broader `proof:v1:*` slice by default.
+  - Keep the explicit release/manual proof bundles for the wider slice matrix instead of pretending hardpass alone covers every v1 lane.
 
 ## P1: Security / Dependency Gaps
 

@@ -14,6 +14,7 @@ import type { RSVPQuestionSetting } from './guestDashboardTypes';
 interface UseGuestDashboardRsvpConfigActionsInput {
   guestsTab: 'ops' | 'rsvp-config';
   isDemoMode: boolean;
+  isGuestsReadOnly: boolean;
   rsvpConfigLoadedRef: MutableRefObject<boolean>;
   rsvpAccessSelection: PersistedRsvpAccessSelection;
   rsvpMealEnabled: boolean;
@@ -27,6 +28,7 @@ interface UseGuestDashboardRsvpConfigActionsInput {
 export function useGuestDashboardRsvpConfigActions({
   guestsTab,
   isDemoMode,
+  isGuestsReadOnly,
   rsvpConfigLoadedRef,
   rsvpAccessSelection,
   rsvpMealEnabled,
@@ -39,8 +41,27 @@ export function useGuestDashboardRsvpConfigActions({
   const [rsvpConfigSaving, setRsvpConfigSaving] = useState(false);
   const [rsvpAutoSaveState, setRsvpAutoSaveState] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [rsvpConfigDirty, setRsvpConfigDirty] = useState(false);
+  const rsvpConfigContextVersionRef = useRef(0);
+
+  useEffect(() => {
+    rsvpConfigContextVersionRef.current += 1;
+    setRsvpConfigSaving(false);
+    setRsvpAutoSaveState('idle');
+    if (isGuestsReadOnly) {
+      setRsvpConfigDirty(false);
+    }
+  }, [isDemoMode, isGuestsReadOnly, weddingSiteId]);
+
+  function isCurrentRsvpConfigContext(contextVersion: number) {
+    return contextVersion === rsvpConfigContextVersionRef.current;
+  }
 
   const addRsvpQuestionTemplate = useCallback((template: RsvpQuestionTemplate) => {
+    if (isGuestsReadOnly) {
+      toast('Viewer mode is read-only.', 'info');
+      return;
+    }
+
     const alreadyExists = rsvpQuestions.some((question) => question.label.trim().toLowerCase() === template.label.toLowerCase());
     if (alreadyExists) {
       toast('That RSVP question is already in your list.', 'info');
@@ -52,9 +73,19 @@ export function useGuestDashboardRsvpConfigActions({
       createRsvpQuestionFromTemplate(template, `q_${Date.now().toString(36)}_${template.key}`),
     ]);
     setRsvpConfigDirty(true);
-  }, [rsvpQuestions, setRsvpQuestions, toast]);
+  }, [isGuestsReadOnly, rsvpQuestions, setRsvpQuestions, toast]);
 
   const handleSaveRsvpConfig = useCallback(async () => {
+    if (isGuestsReadOnly) {
+      setRsvpConfigSaving(false);
+      setRsvpAutoSaveState('idle');
+      setRsvpConfigDirty(false);
+      toast('Viewer mode is read-only.', 'info');
+      return;
+    }
+
+    const contextVersion = rsvpConfigContextVersionRef.current;
+    const targetWeddingSiteId = weddingSiteId;
     setRsvpConfigSaving(true);
     try {
       const normalizedQuestions = rsvpQuestions
@@ -72,17 +103,20 @@ export function useGuestDashboardRsvpConfigActions({
         (question) => (question.type === 'single_choice' || question.type === 'multi_choice') && (question.options?.length ?? 0) < 2,
       );
       if (missingOptions) {
+        if (!isCurrentRsvpConfigContext(contextVersion)) return;
         toast(`Choice question "${missingOptions.label}" needs at least 2 options.`, 'error');
         return;
       }
 
       const mealOptions = rsvpMealOptions.map((option) => toTitleCase(option.trim())).filter(Boolean);
       if (rsvpMealEnabled && mealOptions.length < 2) {
+        if (!isCurrentRsvpConfigContext(contextVersion)) return;
         toast('Meal choices need at least 2 options when enabled.', 'error');
         return;
       }
 
-      if (isDemoMode || !weddingSiteId) {
+      if (isDemoMode || !targetWeddingSiteId) {
+        if (!isCurrentRsvpConfigContext(contextVersion)) return;
         writeStoredDemoRsvpConfig({
           questions: cleanedQuestions,
           mealEnabled: rsvpMealEnabled,
@@ -97,24 +131,29 @@ export function useGuestDashboardRsvpConfigActions({
       }
 
       await persistGuestDashboardRsvpConfig({
-        weddingSiteId,
+        weddingSiteId: targetWeddingSiteId,
         questions: cleanedQuestions,
         mealEnabled: rsvpMealEnabled,
         mealOptions,
         rsvpAccessSelection,
       });
+      if (!isCurrentRsvpConfigContext(contextVersion)) return;
       setRsvpQuestions(cleanedQuestions);
       toast('RSVP settings saved.', 'success');
       setRsvpAutoSaveState('saved');
       setRsvpConfigDirty(false);
     } catch (error) {
+      if (!isCurrentRsvpConfigContext(contextVersion)) return;
       setRsvpAutoSaveState('error');
       toast(safeGuestsDashboardError(error, 'Couldn’t save RSVP settings.'), 'error');
     } finally {
-      setRsvpConfigSaving(false);
+      if (isCurrentRsvpConfigContext(contextVersion)) {
+        setRsvpConfigSaving(false);
+      }
     }
   }, [
     isDemoMode,
+    isGuestsReadOnly,
     rsvpAccessSelection,
     rsvpMealEnabled,
     rsvpMealOptions,
@@ -126,6 +165,11 @@ export function useGuestDashboardRsvpConfigActions({
 
   const autoSaveTimer = useRef<number | null>(null);
   useEffect(() => {
+    if (isGuestsReadOnly) {
+      if (autoSaveTimer.current) window.clearTimeout(autoSaveTimer.current);
+      setRsvpAutoSaveState('idle');
+      return;
+    }
     if (guestsTab !== 'rsvp-config') return;
     if (!rsvpConfigLoadedRef.current) return;
     if (!rsvpConfigDirty) return;
@@ -150,6 +194,7 @@ export function useGuestDashboardRsvpConfigActions({
   }, [
     guestsTab,
     handleSaveRsvpConfig,
+    isGuestsReadOnly,
     rsvpConfigDirty,
     rsvpConfigLoadedRef,
     rsvpQuestions,

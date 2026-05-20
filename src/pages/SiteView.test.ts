@@ -1,6 +1,7 @@
 import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
+import { MemoryRouter } from 'react-router-dom';
 
 const mockRouteParams: { slug?: string } = {};
 let mockSearchParams = new URLSearchParams();
@@ -100,7 +101,16 @@ vi.mock('./guestHubPublicService', () => ({
 
 import { combineDateAndTime, createAlexJordanDemoWeddingData, toIsoDateOrUndefined } from './siteViewHelpers';
 import { getUrlWithoutPublicAccessToken } from '../lib/publicAccessArtifacts';
-import { resolveSiteViewAnalyticsTarget, SiteView } from './SiteView';
+import { getPublicSectionAnchorNavItems, PublicSitePageNav, SiteView } from './SiteView';
+import { resolveSiteViewAnalyticsTarget } from './siteViewAnalyticsTarget';
+
+function removeInjectedNoindexMeta() {
+  document.getElementById('dayof-noindex')?.remove();
+  Array.from(document.head.children)
+    .filter((node): node is HTMLMetaElement => node instanceof HTMLMetaElement)
+    .filter((node) => node.getAttribute('name') === 'robots' && node.getAttribute('data-dayof-noindex') === '1')
+    .forEach((node) => node.remove());
+}
 
 beforeEach(() => {
   mockRouteParams.slug = undefined;
@@ -116,13 +126,13 @@ beforeEach(() => {
   hasLiveRegistryItemsMock.mockResolvedValue(false);
   trackGuestHubEventMock.mockResolvedValue(undefined);
   sessionStorage.clear();
-  document.head.querySelectorAll('meta#dayof-noindex, meta[name="robots"][data-dayof-noindex="1"]').forEach((node) => node.remove());
+  removeInjectedNoindexMeta();
   window.history.replaceState({}, '', '/');
 });
 
 afterEach(() => {
   sessionStorage.clear();
-  document.head.querySelectorAll('meta#dayof-noindex, meta[name="robots"][data-dayof-noindex="1"]').forEach((node) => node.remove());
+  removeInjectedNoindexMeta();
   window.history.replaceState({}, '', '/');
 });
 
@@ -177,6 +187,78 @@ describe('resolveSiteViewAnalyticsTarget', () => {
     expect(resolveSiteViewAnalyticsTarget(new URLSearchParams('invite_token=guest-invite'))).toBe('/site/invite');
     expect(resolveSiteViewAnalyticsTarget(new URLSearchParams('passwordSession=session-1'))).toBe('/site/invite');
     expect(resolveSiteViewAnalyticsTarget(new URLSearchParams('lang=es'))).toBe('/site');
+  });
+});
+
+describe('getPublicSectionAnchorNavItems', () => {
+  it('sorts legacy numeric-string section order values for one-page anchor nav', () => {
+    expect(
+      getPublicSectionAnchorNavItems([
+        {
+          id: 'rsvp',
+          type: 'rsvp',
+          variant: 'default',
+          enabled: true,
+          orderIndex: '2' as unknown as number,
+          settings: { anchorId: 'RSVP' },
+          bindings: {},
+          styleOverrides: {},
+        },
+        {
+          id: 'travel',
+          type: 'travel',
+          variant: 'default',
+          enabled: true,
+          orderIndex: '1' as unknown as number,
+          settings: { anchorId: 'Travel' },
+          bindings: {},
+          styleOverrides: {},
+        },
+      ]),
+    ).toEqual([
+      expect.objectContaining({ id: 'travel', anchorId: 'travel', orderIndex: 1 }),
+      expect.objectContaining({ id: 'rsvp', anchorId: 'rsvp', orderIndex: 2 }),
+    ]);
+  });
+});
+
+describe('PublicSitePageNav', () => {
+  it('renders one-page section anchor navigation when there is only a home page', () => {
+    render(
+      React.createElement(
+        MemoryRouter,
+        null,
+        React.createElement(PublicSitePageNav, {
+          siteSlug: 'maya-leo',
+          pages: [{ slug: 'home', title: 'Home', orderIndex: 0, isHome: true }],
+          sectionAnchors: [{ id: 'travel', anchorId: 'Travel Info', title: 'Travel', orderIndex: 0 }],
+        }),
+      ),
+    );
+
+    expect(screen.getByRole('link', { name: 'Travel' })).toHaveAttribute('href', '/site/maya-leo#travel-info');
+    expect(screen.queryByRole('link', { name: 'Home' })).not.toBeInTheDocument();
+  });
+
+  it('renders multi-page navigation with the current dedicated page marked active', () => {
+    render(
+      React.createElement(
+        MemoryRouter,
+        null,
+        React.createElement(PublicSitePageNav, {
+          siteSlug: 'maya-leo',
+          currentPageSlug: 'Travel Info',
+          pages: [
+            { slug: 'home', title: 'Home', orderIndex: 0, isHome: true },
+            { slug: 'travel-info', title: 'Travel', orderIndex: 1, isHome: false },
+          ],
+        }),
+      ),
+    );
+
+    expect(screen.getByRole('link', { name: 'Home' })).toHaveAttribute('href', '/site/maya-leo');
+    expect(screen.getByRole('link', { name: 'Travel' })).toHaveAttribute('href', '/site/maya-leo/travel-info');
+    expect(screen.getByRole('link', { current: 'page' })).toHaveTextContent('Travel');
   });
 });
 
@@ -253,8 +335,8 @@ describe('SiteView invite handoff continuity', () => {
     await screen.findByText('site view ready');
 
     await waitFor(() => {
-      const robots = document.head.querySelector('meta[name="robots"]');
-      expect(robots?.getAttribute('content')).toContain('noindex');
+      const robots = document.getElementById('dayof-noindex');
+      expect(robots).toHaveAttribute('content', expect.stringContaining('noindex'));
     });
   });
 });

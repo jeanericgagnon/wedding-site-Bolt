@@ -4,6 +4,7 @@ import { Heart } from 'lucide-react';
 import { Button, Card, Input, AddressInput } from '../../components/ui';
 import { parseExpectedGuestCount } from '../../lib/weddingStatusGuestCount';
 import { clearOnboardingEntryReturnPath } from '../../lib/onboardingEntryCleanup';
+import { useAuth } from '../../hooks/useAuth';
 import { requireAuthenticatedOnboardingUser, updateWeddingPlanningStatus } from './onboardingService';
 
 type PlanningStatus = 'not_engaged' | 'just_engaged' | 'venue_booked' | 'invitations_sent';
@@ -32,6 +33,8 @@ interface StatusDetails {
 
 export const WeddingStatus: React.FC = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const onboardingStorageScope = user?.id ?? null;
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [selectedStatus, setSelectedStatus] = useState<PlanningStatus | null>(null);
@@ -40,8 +43,25 @@ export const WeddingStatus: React.FC = () => {
   const [venueCoordinates, setVenueCoordinates] = useState<{ lat: number; lng: number } | null>(null);
 
   useEffect(() => {
-    clearOnboardingEntryReturnPath();
-  }, []);
+    clearOnboardingEntryReturnPath(onboardingStorageScope);
+  }, [onboardingStorageScope]);
+
+  const clearStatusError = () => setError('');
+
+  const updateSelectedStatus = (status: PlanningStatus) => {
+    clearStatusError();
+    setSelectedStatus(status);
+  };
+
+  const updateDestinationWedding = (checked: boolean) => {
+    clearStatusError();
+    setIsDestinationWedding(checked);
+  };
+
+  const updateStatusDetails = (patch: Partial<StatusDetails>) => {
+    clearStatusError();
+    setDetails((prev) => ({ ...prev, ...patch }));
+  };
 
   const statusOptions = [
     { id: 'not_engaged' as const, label: "We're not engaged yet" },
@@ -133,7 +153,7 @@ export const WeddingStatus: React.FC = () => {
 
     if (selectedStatus === 'not_engaged' || selectedStatus === 'just_engaged') {
       return (
-        <div className="mt-6 p-6 bg-surface rounded-lg border border-border">
+        <div className="mt-6 p-6 bg-surface rounded-xl border border-border">
           <p className="text-sm text-text-secondary mb-4">
             {selectedStatus === 'not_engaged'
               ? "No worries! You can start planning and come back to update your details when you're ready."
@@ -145,15 +165,15 @@ export const WeddingStatus: React.FC = () => {
 
     if (selectedStatus === 'venue_booked') {
       return (
-        <div className="mt-6 p-6 bg-surface rounded-lg border border-border space-y-4">
+        <div className="mt-6 p-6 bg-surface rounded-xl border border-border space-y-4">
           <h3 className="text-lg font-semibold text-text-primary mb-4">Venue Details</h3>
 
-          <div className="flex items-center gap-3 p-4 bg-surface-subtle rounded-lg">
+          <div className="flex items-center gap-3 p-4 bg-surface-subtle rounded-xl">
             <input
               type="checkbox"
               id="destination-wedding"
               checked={isDestinationWedding}
-              onChange={(e) => setIsDestinationWedding(e.target.checked)}
+              onChange={(e) => updateDestinationWedding(e.target.checked)}
               className="w-5 h-5 rounded border-border text-primary focus:ring-2 focus:ring-primary"
             />
             <label htmlFor="destination-wedding" className="text-sm font-medium text-text-primary cursor-pointer">
@@ -164,8 +184,7 @@ export const WeddingStatus: React.FC = () => {
           <Input
             label="Venue Name"
             value={details.venue_booked?.venueName || ''}
-            onChange={(e) => setDetails({
-              ...details,
+            onChange={(e) => updateStatusDetails({
               venue_booked: {
                 venueName: e.target.value,
                 venueAddress: details.venue_booked?.venueAddress || '',
@@ -181,8 +200,7 @@ export const WeddingStatus: React.FC = () => {
             label="Venue Address"
             value={details.venue_booked?.venueAddress || ''}
             onChange={(address, coordinates) => {
-              setDetails({
-                ...details,
+              updateStatusDetails({
                 venue_booked: {
                   venueName: details.venue_booked?.venueName || '',
                   venueAddress: address,
@@ -202,8 +220,7 @@ export const WeddingStatus: React.FC = () => {
             label="Wedding Date"
             type="date"
             value={details.venue_booked?.venueDate || ''}
-            onChange={(e) => setDetails({
-              ...details,
+            onChange={(e) => updateStatusDetails({
               venue_booked: {
                 venueName: details.venue_booked?.venueName || '',
                 venueAddress: details.venue_booked?.venueAddress || '',
@@ -218,8 +235,7 @@ export const WeddingStatus: React.FC = () => {
             label="Expected Guest Count"
             type="number"
             value={details.venue_booked?.expectedGuestCount || ''}
-            onChange={(e) => setDetails({
-              ...details,
+            onChange={(e) => updateStatusDetails({
               venue_booked: {
                 venueName: details.venue_booked?.venueName || '',
                 venueAddress: details.venue_booked?.venueAddress || '',
@@ -236,15 +252,15 @@ export const WeddingStatus: React.FC = () => {
 
     if (selectedStatus === 'invitations_sent') {
       return (
-        <div className="mt-6 p-6 bg-surface rounded-lg border border-border space-y-4">
+        <div className="mt-6 p-6 bg-surface rounded-xl border border-border space-y-4">
           <h3 className="text-lg font-semibold text-text-primary mb-4">Wedding Details</h3>
 
-          <div className="flex items-center gap-3 p-4 bg-surface-subtle rounded-lg">
+          <div className="flex items-center gap-3 p-4 bg-surface-subtle rounded-xl">
             <input
               type="checkbox"
               id="destination-wedding-invites"
               checked={isDestinationWedding}
-              onChange={(e) => setIsDestinationWedding(e.target.checked)}
+              onChange={(e) => updateDestinationWedding(e.target.checked)}
               className="w-5 h-5 rounded border-border text-primary focus:ring-2 focus:ring-primary"
             />
             <label htmlFor="destination-wedding-invites" className="text-sm font-medium text-text-primary cursor-pointer">
@@ -255,8 +271,7 @@ export const WeddingStatus: React.FC = () => {
           <Input
             label="Venue Name"
             value={details.invitations_sent?.venueName || ''}
-            onChange={(e) => setDetails({
-              ...details,
+            onChange={(e) => updateStatusDetails({
               invitations_sent: {
                 venueName: e.target.value,
                 venueAddress: details.invitations_sent?.venueAddress || '',
@@ -273,8 +288,7 @@ export const WeddingStatus: React.FC = () => {
             label="Venue Address"
             value={details.invitations_sent?.venueAddress || ''}
             onChange={(address, coordinates) => {
-              setDetails({
-                ...details,
+              updateStatusDetails({
                 invitations_sent: {
                   venueName: details.invitations_sent?.venueName || '',
                   venueAddress: address,
@@ -295,8 +309,7 @@ export const WeddingStatus: React.FC = () => {
             label="Wedding Date"
             type="date"
             value={details.invitations_sent?.venueDate || ''}
-            onChange={(e) => setDetails({
-              ...details,
+            onChange={(e) => updateStatusDetails({
               invitations_sent: {
                 venueName: details.invitations_sent?.venueName || '',
                 venueAddress: details.invitations_sent?.venueAddress || '',
@@ -312,8 +325,7 @@ export const WeddingStatus: React.FC = () => {
             label="Expected Guest Count"
             type="number"
             value={details.invitations_sent?.expectedGuestCount || ''}
-            onChange={(e) => setDetails({
-              ...details,
+            onChange={(e) => updateStatusDetails({
               invitations_sent: {
                 venueName: details.invitations_sent?.venueName || '',
                 venueAddress: details.invitations_sent?.venueAddress || '',
@@ -330,8 +342,7 @@ export const WeddingStatus: React.FC = () => {
             label="When did you send invitations?"
             type="date"
             value={details.invitations_sent?.invitationsSentDate || ''}
-            onChange={(e) => setDetails({
-              ...details,
+            onChange={(e) => updateStatusDetails({
               invitations_sent: {
                 venueName: details.invitations_sent?.venueName || '',
                 venueAddress: details.invitations_sent?.venueAddress || '',
@@ -369,10 +380,9 @@ export const WeddingStatus: React.FC = () => {
                   key={option.id}
                   type="button"
                   onClick={() => {
-                    setSelectedStatus(option.id);
-                    setError('');
+                    updateSelectedStatus(option.id);
                   }}
-                  className={`w-full p-4 text-left rounded-lg border-2 transition-all ${
+                  className={`w-full p-4 text-left rounded-xl border-2 transition-all ${
                     selectedStatus === option.id
                       ? 'border-primary bg-primary/5'
                       : 'border-border hover:border-border-hover bg-surface'
@@ -401,7 +411,7 @@ export const WeddingStatus: React.FC = () => {
             {renderDetailsForm()}
 
             {error && (
-              <div className="p-3 bg-surface-secondary border border-border-subtle text-text-secondary rounded-lg text-sm">
+              <div className="p-3 bg-surface-secondary border border-border-subtle text-text-secondary rounded-xl text-sm">
                 {error}
               </div>
             )}

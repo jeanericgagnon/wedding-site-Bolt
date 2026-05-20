@@ -20,6 +20,10 @@ const requiredPhrases = [
   'Comms Center',
   'Seating Continuity',
   smokeLogPath,
+  'npm run proof:v1:board',
+  'npm run proof:v1:board:freshness',
+  'npm run proof:v1:board:md',
+  'local/helper proof paths regenerate the raw and markdown board outputs',
   'launch stays `HOLD` until that secure closeout bundle is green',
   'npm run proof:v1:launch-closeout',
 ];
@@ -30,6 +34,14 @@ const result = {
   generatedAt: new Date().toISOString(),
   status: missingPhrases.length === 0 ? 'pass' : 'fail',
   checklistPath,
+  summary:
+    missingPhrases.length === 0
+      ? 'Runtime operator notes stay aligned: workflow gates stop at freshness while helper/local proof paths regenerate the raw and markdown board artifacts when needed.'
+      : 'Runtime operator notes drifted from the required workflow-versus-helper board contract.',
+  contractSummary:
+    missingPhrases.length === 0
+      ? 'This checker guards the operator-facing runtime checklist contract; it keeps the human proof path aligned, but it is not a launch-truth artifact by itself.'
+      : 'This checker found drift in the operator-facing runtime checklist contract and the checklist should not be trusted until repaired.',
   checks: {
     requiredPhrases: requiredPhrases.length,
     missingPhrases,

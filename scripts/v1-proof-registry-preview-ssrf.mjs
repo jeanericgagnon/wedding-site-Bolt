@@ -195,6 +195,7 @@ async function main() {
       passed: results.length - failures.length,
       failed: failures.length,
     },
+    contractSummary: 'Registry-preview SSRF proof is green: this runtime security lane validates hostile URL blocking for the shipped preview fetch surface, but it remains supporting fetch-safety evidence rather than a broader launch-truth source by itself.',
     results,
   };
 

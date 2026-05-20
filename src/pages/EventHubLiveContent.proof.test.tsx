@@ -55,6 +55,8 @@ describe('EventHubLiveContent proof slice', () => {
             filename: 'alex-jordan-demo-travel-guide.html',
           }}
           travelShareStatus="Travel plan copied."
+          travelShareNotice="copied"
+          copyingTravelPlan={false}
           onCopyTravelPlan={() => {}}
           onDownloadTravelGuide={() => {}}
           hubUrl="https://dayof.love/event/alex-jordan-demo"

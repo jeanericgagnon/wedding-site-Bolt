@@ -22,6 +22,13 @@ export interface PublishIssueOptions {
 }
 
 const hasNonEmptyString = (value: unknown): value is string => typeof value === 'string' && value.trim().length > 0;
+const getBuilderString = (value: unknown): string => {
+  if (typeof value === 'string') return value;
+  if (value && typeof value === 'object' && 'value' in value && typeof (value as { value?: unknown }).value === 'string') {
+    return (value as { value: string }).value;
+  }
+  return '';
+};
 const getNormalizedId = (value: unknown) => {
   if (typeof value === 'string') return value.trim();
   if (typeof value === 'number' && Number.isFinite(value)) return String(value);
@@ -48,9 +55,11 @@ const getNormalizedPages = (project: BuilderProject) =>
     if (orderDelta !== 0) return orderDelta;
     return getPageTitle(a).localeCompare(getPageTitle(b)) || getNormalizedId(a?.id).localeCompare(getNormalizedId(b?.id));
   });
+const isGuestVisiblePage = (page: BuilderProject['pages'][number] | undefined) => page?.meta?.isHidden !== true;
+const getGuestVisiblePages = (project: BuilderProject) => getNormalizedPages(project).filter(isGuestVisiblePage);
 const getPageId = (page: BuilderProject['pages'][number] | undefined) => getNormalizedId(page?.id);
 const getPageTitle = (page: BuilderProject['pages'][number] | undefined) =>
-  typeof page?.title === 'string' ? page.title.trim() : '';
+  getBuilderString(page?.title).trim();
 const getPageTitleForSentence = (page: BuilderProject['pages'][number] | undefined) => {
   const title = getPageTitle(page).replace(/[.,:;!?]+$/g, '').trim();
   return title || 'the current page';
@@ -58,7 +67,7 @@ const getPageTitleForSentence = (page: BuilderProject['pages'][number] | undefin
 const getSectionId = (section: NonNullable<BuilderProject['pages'][number]>['sections'][number] | undefined) =>
   getNormalizedId(section?.id);
 const getSectionTitle = (section: NonNullable<BuilderProject['pages'][number]>['sections'][number] | undefined) =>
-  typeof section?.displayName === 'string' ? section.displayName.trim() : '';
+  getBuilderString(section?.displayName).trim();
 const isSectionLike = (value: unknown): value is NonNullable<BuilderProject['pages'][number]>['sections'][number] =>
   typeof value === 'object'
   && value !== null
@@ -93,7 +102,7 @@ export const getPublishIssue = (
   weddingData?: WeddingDataV1 | null,
   options?: PublishIssueOptions,
 ): PublishIssue | null => {
-  const normalizedPages = getNormalizedPages(project);
+  const normalizedPages = getGuestVisiblePages(project);
 
   if (!normalizedPages.length) {
     return { kind: 'no-pages', message: 'Add at least one page before sharing with guests.' };
@@ -156,7 +165,7 @@ export const buildPublishReadiness = (
   options?: { isDirty?: boolean; activePageId?: string | null }
 ): PublishReadinessItem[] => {
   const normalizedActivePageId = getNormalizedId(options?.activePageId) || null;
-  const normalizedPages = getNormalizedPages(project);
+  const normalizedPages = getGuestVisiblePages(project);
   const activePage = normalizedPages.find((page) => getPageId(page) === normalizedActivePageId) ?? normalizedPages[0];
   const enabledSectionCount = normalizedPages.reduce(
     (count, page) => count + getNormalizedSections(page).filter((section) => section?.enabled === true).length,

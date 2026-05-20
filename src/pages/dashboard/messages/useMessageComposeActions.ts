@@ -16,6 +16,7 @@ import {
   isPastScheduledTime,
   safeMessagesError,
 } from './messageDashboardUtils';
+import { writeDemoMessages } from './messageDemoStorage';
 import { triggerDashboardBulkSend, insertDashboardMessageMinimal, updateDashboardMessage } from './messageService';
 
 type SetState<T> = React.Dispatch<React.SetStateAction<T>>;
@@ -171,8 +172,11 @@ export function useMessageComposeActions({
           failed_count: 0,
         };
         setMessages((prev) => {
-          if (!isEditingExistingMessage) return [demoMessage, ...prev];
-          return prev.map((item) => (item.id === inserted!.id ? demoMessage : item));
+          const nextMessages = isEditingExistingMessage
+            ? prev.map((item) => (item.id === inserted!.id ? demoMessage : item))
+            : [demoMessage, ...prev];
+          writeDemoMessages(nextMessages);
+          return nextMessages;
         });
       } else {
         if (isEditingExistingMessage) {

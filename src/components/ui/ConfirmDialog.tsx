@@ -68,17 +68,17 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
       }}
     >
       <div className="absolute inset-0 bg-black/35 backdrop-blur-sm" aria-hidden="true" />
-      <div className="relative w-full max-w-sm overflow-hidden rounded-lg border border-border bg-white shadow-md">
+      <div className="relative w-full max-w-sm overflow-hidden rounded-xl border border-border bg-white shadow-md">
         <div className="p-6">
           <div className="mb-4 flex items-start justify-between gap-4">
-            <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border ${isDanger ? 'border-neutral-200 bg-neutral-50 text-neutral-700' : 'border-primary/15 bg-primary-light text-primary'}`}>
+            <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border ${isDanger ? 'border-neutral-200 bg-neutral-50 text-neutral-700' : 'border-primary/15 bg-primary-light text-primary'}`}>
               <AlertTriangle className="h-5 w-5" aria-hidden="true" />
             </div>
             <button
               type="button"
               onClick={onCancel}
               disabled={busy}
-              className="rounded-lg p-1.5 text-text-tertiary transition-colors hover:bg-surface-subtle hover:text-text-primary disabled:opacity-50"
+              className="rounded-xl p-1.5 text-text-tertiary transition-colors hover:bg-surface-subtle hover:text-text-primary disabled:opacity-50"
               aria-label="Close confirmation"
             >
               <X className="h-4 w-4" />
@@ -102,7 +102,7 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
             type="button"
             onClick={() => void handleConfirm()}
             disabled={busy}
-            className={`flex-1 rounded-lg px-4 py-2.5 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60 ${confirmClass}`}
+            className={`flex-1 rounded-xl px-4 py-2.5 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60 ${confirmClass}`}
           >
             {busy ? 'Working...' : confirmLabel}
           </button>

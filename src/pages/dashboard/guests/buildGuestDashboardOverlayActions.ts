@@ -7,7 +7,11 @@ export function buildGuestDashboardOverlayActions(args: any) {
       args.resetForm();
     },
     onCloseAssistedRsvp: () => args.setAssistedRsvpGuest(null),
-    onCloseDeleteAllModal: () => args.setShowDeleteAllModal(false),
+    onCloseDeleteAllModal: () => {
+      if (args.deleteAllBusy) return;
+      args.setShowDeleteAllModal(false);
+      args.setDeleteAllConfirmInput('');
+    },
     onCloseEditModal: () => {
       args.setEditingGuest(null);
       args.resetForm();
@@ -15,6 +19,9 @@ export function buildGuestDashboardOverlayActions(args: any) {
     onCloseItineraryDrawer: () => {
       args.setItineraryDrawerGuest(null);
       args.setGuestAuditEntries([]);
+    },
+    onCloseCsvMapper: () => {
+      if (!args.csvImporting) args.resetCsvParserState();
     },
     onResetCsvReview: () => {
       if (!args.csvImporting) args.resetCsvReviewState();

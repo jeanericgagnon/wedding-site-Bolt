@@ -80,6 +80,30 @@ describe('friendlyGuestbookError', () => {
     expect(screen.getByLabelText('Note')).toHaveAttribute('aria-invalid', 'true');
   });
 
+  it('clears stale guestbook errors once the guest starts editing again', () => {
+    render(
+      React.createElement(
+        MemoryRouter,
+        { initialEntries: ['/guestbook/ericandkaras'] },
+        React.createElement(
+          Routes,
+          null,
+          React.createElement(Route, {
+            path: '/guestbook/:siteRef',
+            element: React.createElement(GuestbookSubmit),
+          }),
+        ),
+      ),
+    );
+
+    fireEvent.submit(screen.getByRole('button', { name: 'Send note' }).closest('form')!);
+    expect(screen.getByRole('alert')).toHaveTextContent('Write a note before sending.');
+
+    fireEvent.change(screen.getByLabelText('Note'), { target: { value: 'Loved being there.' } });
+
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  });
+
   it('routes the guestbook form shell through the shared form panel', () => {
     const pageSource = readFileSync('src/pages/GuestbookSubmit.tsx', 'utf8');
     const panelSource = readFileSync('src/pages/GuestbookSubmitFormPanel.tsx', 'utf8');

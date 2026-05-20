@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { DigestCadence } from '../../../lib/notificationPrefs';
 import { fetchBillingInfo, type BillingInfo } from '../../../lib/stripeService';
 import {
+  canManageSettings,
   getPlannerPermissionPreset,
   readPlannerInvite,
   type PlannerAccessRole,
@@ -41,6 +42,7 @@ type Args = {
 };
 
 export function useSettingsDashboardUiState({ userId }: Args) {
+  const previousUserIdRef = useRef<string | null>(null);
   const [activeTab, setActiveTab] = useState<SettingsTabId>('account');
 
   const [coupleNames, setCoupleNames] = useState('');
@@ -109,7 +111,7 @@ export function useSettingsDashboardUiState({ userId }: Args) {
   }, []);
   const rsvpDraftGuard = useDraftHydrationGuard(clearRsvpSettingsStatus);
 
-  const [privacyCopied, setPrivacyCopied] = useState(false);
+  const [privacyCopyNotice, setPrivacyCopyNotice] = useState<'copied' | 'downloaded' | null>(null);
   const [visibilitySaving, setVisibilitySaving] = useState(false);
   const [visibilitySuccess, setVisibilitySuccess] = useState<string | null>(null);
   const [visibilityError, setVisibilityError] = useState<string | null>(null);
@@ -121,6 +123,7 @@ export function useSettingsDashboardUiState({ userId }: Args) {
 
   const [weddingSiteId, setWeddingSiteId] = useState<string | null>(null);
   const [settingsRole, setSettingsRole] = useState<PlannerAccessRole>('owner');
+  const [settingsPermissions, setSettingsPermissions] = useState<PlannerPermissionKey[] | null>(null);
 
   const [notifRsvp, setNotifRsvp] = useState(true);
   const [notifPhotos, setNotifPhotos] = useState(true);
@@ -152,29 +155,165 @@ export function useSettingsDashboardUiState({ userId }: Args) {
   const [subscribeLoading, setSubscribeLoading] = useState(false);
   const [subscribeError, setSubscribeError] = useState<string | null>(null);
 
+  const resetPlannerInviteState = useCallback(() => {
+    setPlannerInvite(null);
+    setPlannerInviteName('');
+    setPlannerInviteEmail('');
+    setPlannerInviteRole('planner');
+    setPlannerInvitePermissions(getPlannerPermissionPreset('planner'));
+    setPlannerInviteError(null);
+    setPlannerInviteSuccess(null);
+  }, []);
+
+  const resetSettingsDashboardState = useCallback(() => {
+    visibilityDraftGuard.markSaved();
+    rsvpDraftGuard.markSaved();
+    notifDraftGuard.markSaved();
+
+    setActiveTab('account');
+    setCoupleNames('');
+    setWeddingDate(null);
+    setVenueName(null);
+    setAccountEmail('');
+    setAccountSaving(false);
+    setAccountSuccess(null);
+    setAccountError(null);
+    setCurrentPassword('');
+    setNewPassword('');
+    setConfirmPassword('');
+    setShowCurrentPw(false);
+    setShowNewPw(false);
+    setShowConfirmPw(false);
+    setPasswordSaving(false);
+    setPasswordSuccess(null);
+    setPasswordError(null);
+    setSiteSlug('');
+    setMusicPlaylistUrl('');
+    setSlugSaving(false);
+    setSlugSuccess(null);
+    setSlugError(null);
+    setDefaultLanguage('en');
+    setAllowedLanguages(['en', 'es', 'fr', 'it', 'de', 'pt']);
+    setSettingsWeddingData(null);
+    setTranslatingLanguage(null);
+    setTranslationStatuses([]);
+    setPrivacyMode('public');
+    setHideFromSearch(false);
+    setSitePassword('');
+    setShowSitePassword(false);
+    setGuestAccessToken(null);
+    setIsPublished(false);
+    setAnalyticsEnabled(true);
+    setAnalyticsRetentionDays(90);
+    setAnalyticsGuestNotice('');
+    setRsvpQuestions([]);
+    setRsvpQuestionsSaving(false);
+    setRsvpQuestionsSuccess(null);
+    setRsvpQuestionsError(null);
+    setCollapsedQuestionIds(new Set());
+    setShowAdvancedRsvp(false);
+    setShowMealChoiceSettings(false);
+    setShowPrivacySettings(false);
+    setShowTemplateSettings(false);
+    setShowNotificationSettings(false);
+    setRsvpMealEnabled(true);
+    setCollaboratorInvites([]);
+    setCreatingCollaboratorInvite(false);
+    setRevokingCollaboratorInviteId(null);
+    setRsvpMealOptions(['Chicken', 'Beef', 'Fish', 'Vegetarian', 'Vegan']);
+    resetPlannerInviteState();
+    setPrivacyCopyNotice(null);
+    setVisibilitySaving(false);
+    setVisibilitySuccess(null);
+    setVisibilityError(null);
+    setWeddingSiteId(null);
+    setSettingsRole('owner');
+    setSettingsPermissions(null);
+    setNotifRsvp(true);
+    setNotifPhotos(true);
+    setNotifDigest(false);
+    setNotifDigestCadence('paused');
+    setNotifDigestIncludePlanner(false);
+    setNotifDigestQuietUntilLabel('');
+    setNotifDigestNextDeliveryAt(null);
+    setNotifDigestLastReviewedAt(null);
+    setNotifDigestLastDeliveredAt(null);
+    setNotifUpdates(false);
+    setNotifSaving(false);
+    setNotifSuccess(null);
+    setNotifError(null);
+    setCurrentTemplate('base');
+    setChangingTemplate(false);
+    setTemplateError(null);
+    setTemplateSuccess(null);
+    setBillingInfo(null);
+    setBillingLoading(false);
+    setBillingError(null);
+    setSubscribeLoading(false);
+    setSubscribeError(null);
+  }, [notifDraftGuard, rsvpDraftGuard, visibilityDraftGuard, resetPlannerInviteState]);
+
   useEffect(() => {
-    if (activeTab !== 'billing' || settingsRole !== 'owner' || !userId || billingInfo) return;
+    if (previousUserIdRef.current && userId && previousUserIdRef.current !== userId) {
+      resetSettingsDashboardState();
+    }
+    previousUserIdRef.current = userId ?? null;
+  }, [resetSettingsDashboardState, userId]);
+
+  useEffect(() => {
+    if (!userId) {
+      resetSettingsDashboardState();
+      return;
+    }
+    if (settingsRole !== 'owner') {
+      setBillingInfo(null);
+      setBillingLoading(false);
+      setBillingError(null);
+      setSubscribeLoading(false);
+      setSubscribeError(null);
+      return;
+    }
+    if (activeTab !== 'billing' || billingInfo) return;
+    let cancelled = false;
     setBillingLoading(true);
+    setBillingError(null);
     fetchBillingInfo(userId)
-      .then((info) => setBillingInfo(info))
-      .catch((err) => setBillingError(safeSettingsError(err, 'Couldn’t load billing right now.')))
-      .finally(() => setBillingLoading(false));
-  }, [activeTab, billingInfo, settingsRole, userId]);
+      .then((info) => {
+        if (!cancelled) setBillingInfo(info);
+      })
+      .catch((err) => {
+        if (!cancelled) setBillingError(safeSettingsError(err, 'Couldn’t load billing right now.'));
+      })
+      .finally(() => {
+        if (!cancelled) setBillingLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [activeTab, billingInfo, resetSettingsDashboardState, settingsRole, userId]);
 
   useEffect(() => {
     if (settingsRole !== 'owner' && (activeTab === 'team' || activeTab === 'billing')) {
-      setActiveTab('site');
+      setActiveTab(canManageSettings(settingsRole, settingsPermissions) ? 'site' : 'account');
+      return;
     }
-  }, [activeTab, settingsRole]);
+    if (activeTab !== 'account' && !canManageSettings(settingsRole, settingsPermissions)) {
+      setActiveTab('account');
+    }
+  }, [activeTab, settingsPermissions, settingsRole]);
 
   useEffect(() => {
     const invite = readPlannerInvite(siteSlug || userId || null);
-    if (!invite) return;
+    if (!invite) {
+      resetPlannerInviteState();
+      return;
+    }
     setPlannerInvite(invite);
     setPlannerInviteName(invite.name);
     setPlannerInviteEmail(invite.email);
     setPlannerInviteRole(invite.role);
-  }, [siteSlug, userId]);
+    setPlannerInvitePermissions(getPlannerPermissionPreset(invite.role));
+  }, [resetPlannerInviteState, siteSlug, userId]);
 
   return {
     activeTab,
@@ -227,7 +366,7 @@ export function useSettingsDashboardUiState({ userId }: Args) {
     plannerInvitePermissions,
     plannerInviteRole,
     plannerInviteSuccess,
-    privacyCopied,
+    privacyCopyNotice,
     privacyMode,
     rsvpDraftGuard,
     rsvpMealEnabled,
@@ -238,6 +377,7 @@ export function useSettingsDashboardUiState({ userId }: Args) {
     rsvpQuestionsSuccess,
     revokingCollaboratorInviteId,
     settingsRole,
+    settingsPermissions,
     showAdvancedRsvp,
     showConfirmPw,
     showCurrentPw,
@@ -315,7 +455,7 @@ export function useSettingsDashboardUiState({ userId }: Args) {
     setPlannerInvitePermissions,
     setPlannerInviteRole,
     setPlannerInviteSuccess,
-    setPrivacyCopied,
+    setPrivacyCopyNotice,
     setPrivacyMode,
     setRsvpMealEnabled,
     setRsvpMealOptions,
@@ -325,6 +465,7 @@ export function useSettingsDashboardUiState({ userId }: Args) {
     setRsvpQuestionsSuccess,
     setRevokingCollaboratorInviteId,
     setSettingsRole,
+    setSettingsPermissions,
     setShowAdvancedRsvp,
     setShowConfirmPw,
     setShowCurrentPw,

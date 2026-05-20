@@ -109,7 +109,7 @@ export const MediaLibraryPanel: React.FC = () => {
           </div>
           <button
             onClick={() => dispatch(builderActions.closeMediaLibrary())}
-            className="p-2 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors"
+            className="p-2 rounded-xl hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors"
             aria-label="Close media library"
           >
             <X size={20} />
@@ -281,7 +281,7 @@ export const AssetGrid: React.FC<AssetGridProps> = ({ assets, uploadQueue, isPic
         <div className="mb-4 space-y-2">
           <p className="text-xs font-semibold text-gray-500">Uploads in progress</p>
           {uploadQueue.map(item => (
-            <div key={item.assetId} className="flex items-center gap-3 bg-gray-50 rounded-lg px-3 py-2">
+            <div key={item.assetId} className="flex items-center gap-3 bg-gray-50 rounded-xl px-3 py-2">
               {item.status === 'error' ? (
                 <span className="text-[var(--color-accent)] text-xs flex-shrink-0">Needs retry</span>
               ) : (
@@ -352,7 +352,7 @@ const AssetTile: React.FC<AssetTileProps> = ({ asset, onDelete, isPickerMode, on
 
   return (
   <div
-    className={`group relative aspect-square rounded-lg overflow-hidden bg-gray-100 border border-gray-200 ${
+    className={`group relative aspect-square rounded-xl overflow-hidden bg-gray-100 border border-gray-200 ${
       isPickerMode ? 'cursor-pointer hover:ring-2 hover:ring-[var(--color-primary)]' : ''
     }`}
     onClick={isPickerMode ? onSelect : undefined}
@@ -386,7 +386,7 @@ const AssetTile: React.FC<AssetTileProps> = ({ asset, onDelete, isPickerMode, on
 
     {isPickerMode ? (
       <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
-        <div className="rounded-md bg-[var(--color-accent)] p-1.5 text-white">
+        <div className="rounded-xl bg-[var(--color-accent)] p-1.5 text-white">
           <Check size={14} />
         </div>
       </div>
@@ -394,7 +394,7 @@ const AssetTile: React.FC<AssetTileProps> = ({ asset, onDelete, isPickerMode, on
       <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-end justify-end p-2 opacity-0 group-hover:opacity-100">
         <button
           onClick={e => { e.stopPropagation(); onDelete(); }}
-          className="p-1.5 bg-white rounded-lg text-[var(--color-text-secondary)] hover:text-[var(--color-accent)] shadow-sm transition-colors"
+          className="p-1.5 bg-white rounded-xl text-[var(--color-text-secondary)] hover:text-[var(--color-accent)] shadow-sm transition-colors"
           aria-label="Remove image"
         >
           <Trash2 size={12} />
@@ -403,7 +403,7 @@ const AssetTile: React.FC<AssetTileProps> = ({ asset, onDelete, isPickerMode, on
     )}
 
     {asset.attachedSectionIds.length > 0 && !isPickerMode && (
-      <div className="absolute left-1 top-1 flex h-4 w-4 items-center justify-center rounded-md bg-[var(--color-accent)] text-[9px] font-bold text-white">
+      <div className="absolute left-1 top-1 flex h-4 w-4 items-center justify-center rounded-xl bg-[var(--color-accent)] text-[9px] font-bold text-white">
         {asset.attachedSectionIds.length}
       </div>
     )}

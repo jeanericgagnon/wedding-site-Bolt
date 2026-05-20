@@ -77,7 +77,7 @@ export class AppErrorBoundary extends React.Component<Props, State> {
     if (this.state.hasError) {
       return (
         <div className="flex min-h-screen items-start justify-center bg-surface-subtle p-4 pt-20">
-          <div className="w-full max-w-md rounded-lg border border-border-subtle bg-white p-4 shadow-sm">
+          <div className="w-full max-w-md rounded-xl border border-border-subtle bg-white p-4 shadow-sm">
             <div className="flex items-center gap-2 text-sm text-gray-700">
               <AlertTriangle className="h-4 w-4 text-text-tertiary" />
               <span>Please refresh to continue.</span>
@@ -85,14 +85,14 @@ export class AppErrorBoundary extends React.Component<Props, State> {
             <div className="mt-3 flex gap-2">
               <button
                 onClick={() => window.location.reload()}
-                className="flex items-center gap-2 px-3 py-1.5 bg-gray-900 text-white text-xs font-medium rounded-md hover:bg-gray-800 transition-colors"
+                className="flex items-center gap-2 px-3 py-1.5 bg-gray-900 text-white text-xs font-medium rounded-xl hover:bg-gray-800 transition-colors"
               >
                 <RefreshCw size={12} />
                 Refresh
               </button>
               <button
                 onClick={this.handleReset}
-                className="px-3 py-1.5 border border-gray-200 text-gray-600 text-xs font-medium rounded-md hover:bg-gray-50 transition-colors"
+                className="px-3 py-1.5 border border-gray-200 text-gray-600 text-xs font-medium rounded-xl hover:bg-gray-50 transition-colors"
               >
                 Dismiss
               </button>

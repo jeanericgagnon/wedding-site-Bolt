@@ -117,6 +117,9 @@ const output = {
     passed: results.length - failures.length,
     failed: failures.length,
   },
+  contractSummary: liveEnabled
+    ? 'AI clearance live proof is the launch-gating AI/privacy lane: it closes deployed rollout plus live readback truth for the hardened AI/photo surface.'
+    : 'AI clearance local-only proof is green, but it is not launch clearance; this lane still needs the live frontend and live readback rerun before AI/privacy launch truth is closed.',
   results,
   migrationReadiness,
   blockers: [

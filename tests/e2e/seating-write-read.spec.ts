@@ -151,14 +151,14 @@ test('owner seating board persists table assignment, check-in, and auto-seat dat
     await revealCreatedTable(page, tableName);
     const createdTableCard = page
       .getByText(tableName, { exact: true })
-      .locator('xpath=ancestor::div[contains(@class,"rounded-lg")][1]')
+      .locator('xpath=ancestor::div[.//button[contains(normalize-space(.), "Seat 1")]][1]')
       .last();
     await expect(createdTableCard).toBeVisible({ timeout: 10_000 });
     await createdTableCard.getByRole('button', { name: 'Seat 1' }).click({ force: true });
     await expect(page.getByRole('heading', { name: /Map a guest to seat 1/i })).toBeVisible();
     const seatPickerPanel = page
       .getByRole('heading', { name: /Map a guest to seat 1/i })
-      .locator('xpath=ancestor::div[contains(@class,"rounded-lg")][1]');
+      .locator('xpath=ancestor::div[.//button[contains(normalize-space(.), "Guest")]][1]');
     const guestOption = seatPickerPanel.getByRole('button', { name: /Guest$/ }).first();
     await expect(guestOption).toBeVisible({ timeout: 10_000 });
     const guestName = (((await guestOption.textContent()) ?? '').replace(/Guest\s*$/, '')).trim();

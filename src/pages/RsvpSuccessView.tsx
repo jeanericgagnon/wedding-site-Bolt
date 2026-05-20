@@ -48,7 +48,7 @@ export function RsvpSuccessView({
     <Card className="p-5 md:p-7">
       <div className="text-center mb-5">
         <div className="flex justify-center mb-3.5">
-          <div className={`w-16 h-16 rounded-lg flex items-center justify-center ${formData.attending ? 'bg-primary/10' : 'bg-neutral-100'}`}>
+          <div className={`w-16 h-16 rounded-xl flex items-center justify-center ${formData.attending ? 'bg-primary/10' : 'bg-neutral-100'}`}>
             <CheckCircle className={`w-9 h-9 ${formData.attending ? 'text-primary' : 'text-neutral-500'}`} />
           </div>
         </div>
@@ -60,7 +60,7 @@ export function RsvpSuccessView({
         </p>
       </div>
 
-      <details className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-5">
+      <details className="bg-gray-50 border border-gray-200 rounded-xl p-4 mb-5">
         <summary className="cursor-pointer text-sm font-semibold text-gray-800 flex items-center justify-between">
           RSVP summary
           <span className="text-xs text-gray-500">View details</span>
@@ -68,7 +68,7 @@ export function RsvpSuccessView({
         <div className="mt-2.5 space-y-3">
           <div className="flex items-center justify-between text-sm">
             <span className="text-gray-600 font-medium">Attendance</span>
-            <span className={`font-semibold px-2.5 py-1 rounded-lg text-xs ${
+            <span className={`font-semibold px-2.5 py-1 rounded-xl text-xs ${
               formData.attending
                 ? 'bg-primary/10 text-primary'
                 : 'bg-gray-100 text-gray-700'
@@ -128,12 +128,12 @@ export function RsvpSuccessView({
       </details>
 
       {formData.attending && (
-        <p className="text-center text-sm text-text-primary bg-surface-subtle border border-border-subtle rounded-lg py-3 px-4 mb-5">
+        <p className="text-center text-sm text-text-primary bg-surface-subtle border border-border-subtle rounded-xl py-3 px-4 mb-5">
           We can't wait to celebrate with you!
         </p>
       )}
       {!formData.attending && (
-        <p className="text-center text-sm text-gray-600 bg-gray-50 border border-gray-200 rounded-lg py-3 px-4 mb-5">
+        <p className="text-center text-sm text-gray-600 bg-gray-50 border border-gray-200 rounded-xl py-3 px-4 mb-5">
           We'll miss you, but thank you for letting us know.
         </p>
       )}

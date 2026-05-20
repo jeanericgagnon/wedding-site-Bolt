@@ -39,6 +39,11 @@ describe('overview query bounds', () => {
     expect(dataHook).toContain('const siteSlug = resolvePublicSiteSlugFromRow(guestFacingSiteRow);');
     expect(dataHook).toContain('const guestFacingReady = isGuestFacingSiteRowReady(guestFacingSiteRow);');
     expect(dataHook).toContain('const { suggestions, voteSummaries } = await loadOverviewInteractiveData(slug);');
+    expect(dataHook).toContain('const resetOverviewDashboardState = useCallback(() => {');
+    expect(dataHook).toContain('setStats(null);');
+    expect(dataHook).toContain('setInteractiveSuggestions([]);');
+    expect(dataHook).toContain('setNameChangeInsights(DEFAULT_NAME_CHANGE_INSIGHTS);');
+    expect(dataHook).toContain('if (!userId) {\n      resetOverviewDashboardState();\n      setLoading(false);\n      return;\n    }');
     expect(dataHook).toContain("window.addEventListener(ACTIVE_SITE_STORAGE_CHANGED_EVENT, handleActiveSiteChanged);");
     expect(dataHook).toContain("window.removeEventListener(ACTIVE_SITE_STORAGE_CHANGED_EVENT, handleActiveSiteChanged);");
     expect(page).toContain('useOverviewDashboardData({');

@@ -38,7 +38,7 @@ export function GuestPhotoHubControlsCard({
       </div>
       <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {GUEST_HUB_CONTROL_FIELDS.map(([key, label]) => (
-          <label key={key} className="flex items-center justify-between gap-3 rounded-lg border border-border-subtle bg-surface-subtle px-4 py-3 text-sm font-medium text-text-primary">
+          <label key={key} className="flex items-center justify-between gap-3 rounded-2xl border border-border-subtle bg-surface-subtle px-4 py-3 text-sm font-medium text-text-primary">
             {label}
             <input
               type="checkbox"

@@ -200,7 +200,89 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [],
     return { label: 'Product photo: Ready', tone: 'text-primary' };
   })();
 
+  const clearSaveFeedback = useCallback(() => {
+    setSaveError(null);
+  }, []);
+
+  const clearLinkImportFeedback = useCallback(() => {
+    setFetchError(null);
+    setFetchDone(false);
+    setFetchConfidence(null);
+    setDedupeWarning(null);
+  }, []);
+
+  const clearBarcodeLookupFeedback = useCallback((options?: { keepLookup?: boolean }) => {
+    setBarcodeLookupError(null);
+    setDedupeWarning(null);
+    if (!options?.keepLookup) {
+      setBarcodeLookup(null);
+    }
+  }, []);
+
+  useEffect(() => {
+    const nextDraft = initial ? itemToDraft(initial) : {
+      item_type: 'product',
+      source_type: 'link',
+      item_name: '',
+      barcode: '',
+      price_label: '',
+      price_amount: '',
+      merchant: '',
+      item_url: '',
+      image_url: '',
+      selected_retailer: '',
+      selected_product_url: '',
+      estimated_price_cents: '',
+      product_metadata: null,
+      notes: '',
+      desired_quantity: '1',
+      quantity_purchased: '0',
+      purchaser_name: '',
+      hide_when_purchased: false,
+      fund_goal_amount: '',
+      fund_received_amount: '',
+      fund_venmo_url: '',
+      fund_paypal_url: '',
+      fund_zelle_handle: '',
+      fund_custom_url: '',
+      fund_custom_label: '',
+      canonical_url: '',
+      description: '',
+      availability: '',
+      metadata_fetch_status: '',
+      metadata_confidence_score: null,
+      metadata_source_method: null,
+      metadata_retailer: '',
+    } satisfies RegistryItemDraft;
+
+    setDraft(nextDraft);
+    setSourceMode(
+      initial?.item_type === 'cash_fund'
+        ? 'cash_fund'
+        : initial?.source_type ?? (initial?.barcode ? 'barcode' : (initial?.item_url ?? initial?.canonical_url) ? 'link' : 'link'),
+    );
+    setUrlInput(initial?.item_url ?? initial?.canonical_url ?? '');
+    setBarcodeInput(initial?.barcode ?? '');
+    setFetching(false);
+    setFetchError(null);
+    setFetchDone(false);
+    setFetchConfidence(null);
+    setLastPreview(null);
+    setDedupeWarning(null);
+    setSaving(false);
+    setSaveError(null);
+    setBarcodeLookup(null);
+    setBarcodeLookupError(null);
+    setBarcodeLookingUp(false);
+    lastAutoFetchedUrlRef.current = '';
+    if (autoFetchTimerRef.current) {
+      window.clearTimeout(autoFetchTimerRef.current);
+      autoFetchTimerRef.current = null;
+    }
+  }, [initial]);
+
   function set<K extends keyof RegistryItemDraft>(key: K, value: RegistryItemDraft[K]) {
+    clearSaveFeedback();
     setDraft(prev => ({ ...prev, [key]: value }));
   }
 
@@ -477,14 +559,14 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [],
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-text-primary/40 backdrop-blur-sm">
-      <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-lg border border-border-subtle bg-surface">
-        <div className="sticky top-0 bg-surface border-b border-border px-6 py-4 flex items-center justify-between rounded-t-lg z-10">
+      <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-3xl border border-border-subtle bg-surface">
+        <div className="sticky top-0 bg-surface border-b border-border px-6 py-4 flex items-center justify-between rounded-t-3xl z-10">
           <h2 className="text-lg font-semibold text-text-primary">
             {isEdit ? 'Edit Registry Item' : 'Add Registry Item'}
           </h2>
           <button
             onClick={onCancel}
-            className="p-2 rounded-lg hover:bg-surface-subtle text-text-secondary transition-colors"
+            className="p-2 rounded-xl hover:bg-surface-subtle text-text-secondary transition-colors"
             aria-label="Close"
           >
             <X className="w-5 h-5" />
@@ -494,12 +576,20 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [],
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
           <div>
             <label className="block text-sm font-medium text-text-primary mb-2">Item Type</label>
-            <div className="inline-flex rounded-lg border border-border overflow-hidden">
+            <div className="inline-flex rounded-xl border border-border overflow-hidden">
               <button type="button" className={`px-3 py-1.5 text-sm ${draft.item_type !== 'cash_fund' ? 'bg-primary/10 text-primary' : 'text-text-secondary'}`} onClick={() => {
+                clearSaveFeedback();
+                clearLinkImportFeedback();
+                clearBarcodeLookupFeedback();
                 set('item_type', 'product');
                 setDraft((prev) => ({ ...prev, source_type: prev.source_type === 'cash_fund' ? 'manual' : prev.source_type }));
               }}>Product</button>
-              <button type="button" className={`px-3 py-1.5 text-sm border-l border-border ${draft.item_type === 'cash_fund' ? 'bg-primary/10 text-primary' : 'text-text-secondary'}`} onClick={() => set('item_type', 'cash_fund')}>Cash Fund</button>
+              <button type="button" className={`px-3 py-1.5 text-sm border-l border-border ${draft.item_type === 'cash_fund' ? 'bg-primary/10 text-primary' : 'text-text-secondary'}`} onClick={() => {
+                clearSaveFeedback();
+                clearLinkImportFeedback();
+                clearBarcodeLookupFeedback();
+                set('item_type', 'cash_fund');
+              }}>Cash Fund</button>
             </div>
           </div>
 
@@ -507,7 +597,7 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [],
             <div className="space-y-3">
               <div>
                 <label className="block text-sm font-medium text-text-primary mb-2">How do you want to add it?</label>
-                <div className="inline-flex flex-wrap rounded-lg border border-border overflow-hidden">
+                <div className="inline-flex flex-wrap rounded-xl border border-border overflow-hidden">
                   {([
                     ['barcode', 'Scan barcode'],
                     ['link', 'Paste product link'],
@@ -518,6 +608,9 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [],
                       type="button"
                       className={`px-3 py-1.5 text-sm ${sourceMode === mode ? 'bg-primary/10 text-primary' : 'text-text-secondary'} ${mode !== 'barcode' ? 'border-l border-border' : ''}`}
                       onClick={() => {
+                        clearSaveFeedback();
+                        clearLinkImportFeedback();
+                        clearBarcodeLookupFeedback();
                         setSourceMode(mode);
                         setDraft((prev) => ({ ...prev, source_type: mode }));
                       }}
@@ -535,6 +628,8 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [],
                     disabled={saving}
                     isLookingUp={barcodeLookingUp}
                     onChange={(nextValue) => {
+                      clearSaveFeedback();
+                      clearBarcodeLookupFeedback();
                       setBarcodeInput(nextValue);
                       setDraft((prev) => ({ ...prev, source_type: 'barcode', barcode: nextValue }));
                     }}
@@ -544,7 +639,7 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [],
                   />
 
                   {barcodeLookupError && (
-                    <div className="flex items-start gap-2 rounded-lg border border-border-subtle bg-surface-subtle p-3 text-sm text-text-secondary">
+                    <div className="flex items-start gap-2 rounded-xl border border-border-subtle bg-surface-subtle p-3 text-sm text-text-secondary">
                       <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-text-tertiary" />
                       <div className="flex-1">
                         <span>{barcodeLookupError}</span>
@@ -553,14 +648,14 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [],
                     </div>
                   )}
                   {dedupeWarning && (
-                    <div className="flex items-start gap-2 rounded-lg border border-border-subtle bg-surface-subtle p-3 text-sm text-text-secondary">
+                    <div className="flex items-start gap-2 rounded-xl border border-border-subtle bg-surface-subtle p-3 text-sm text-text-secondary">
                       <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-text-tertiary" />
                       <span>{dedupeWarning}</span>
                     </div>
                   )}
 
                   {barcodeLookup?.matched && (
-                    <div className="space-y-3 rounded-lg border border-border-subtle bg-white p-4">
+                    <div className="space-y-3 rounded-2xl border border-border-subtle bg-white p-4">
                       <div className="flex items-start justify-between gap-3">
                         <div>
                           <p className="text-sm font-semibold text-text-primary">{barcodeLookup.title || 'Scanned product'}</p>
@@ -569,7 +664,7 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [],
                           </p>
                         </div>
                         <div className="space-y-1 text-right">
-                          <span className={`rounded-md px-2 py-1 text-xs ${barcodeNeedsReview ? 'bg-warning/10 text-warning' : 'bg-primary/10 text-primary'}`}>
+                          <span className={`rounded-xl px-2 py-1 text-xs ${barcodeNeedsReview ? 'bg-warning/10 text-warning' : 'bg-primary/10 text-primary'}`}>
                             {barcodeNeedsReview ? 'Review required' : 'High confidence'} · {Math.round(barcodeLookup.confidence_score)}
                           </span>
                           {barcodeLookup.provider && (
@@ -583,7 +678,7 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [],
                         {barcodeLookup.retailer_options.length > 0 && (
                           <button
                             type="button"
-                            className="rounded-lg border border-primary/30 bg-primary/5 px-3 py-1.5 text-sm text-primary"
+                            className="rounded-xl border border-primary/30 bg-primary/5 px-3 py-1.5 text-sm text-primary"
                             onClick={() => {
                               const bestRetailer = barcodeLookup.retailer_options.find((option) => option.is_best_match) ?? barcodeLookup.retailer_options[0];
                               if (!bestRetailer) return;
@@ -595,21 +690,26 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [],
                         )}
                         <button
                           type="button"
-                          className="rounded-lg border border-border px-3 py-1.5 text-sm text-text-primary"
+                          className="rounded-xl border border-border px-3 py-1.5 text-sm text-text-primary"
                           onClick={clearBarcodeRetailerSelection}
                         >
                           Add without store
                         </button>
                         <button
                           type="button"
-                          className="rounded-lg border border-border px-3 py-1.5 text-sm text-text-primary"
-                          onClick={() => setSourceMode('link')}
+                          className="rounded-xl border border-border px-3 py-1.5 text-sm text-text-primary"
+                          onClick={() => {
+                            clearSaveFeedback();
+                            clearBarcodeLookupFeedback();
+                            clearLinkImportFeedback();
+                            setSourceMode('link');
+                          }}
                         >
                           Paste another link
                         </button>
                         <button
                           type="button"
-                          className="rounded-lg border border-border px-3 py-1.5 text-sm text-text-primary"
+                          className="rounded-xl border border-border px-3 py-1.5 text-sm text-text-primary"
                           onClick={() => {
                             setBarcodeLookupError(null);
                             setBarcodeLookup((prev) => prev ? { ...prev, review_required: false } : prev);
@@ -619,7 +719,7 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [],
                         </button>
                       </div>
                       {barcodeNeedsReview && (
-                        <div className="rounded-lg border border-warning/30 bg-warning/5 p-3 text-sm text-text-secondary">
+                        <div className="rounded-xl border border-warning/30 bg-warning/5 p-3 text-sm text-text-secondary">
                           We found a possible product match, but it is missing enough detail that you should review the title, price, image, and retailer before saving it.
                         </div>
                       )}
@@ -633,7 +733,7 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [],
                                 <button
                                   key={`${option.label}-${option.url ?? index}`}
                                   type="button"
-                                  className={`rounded-lg border px-3 py-2 text-left text-sm ${isActive ? 'border-primary bg-primary/5 text-primary' : 'border-border text-text-primary'}`}
+                                  className={`rounded-xl border px-3 py-2 text-left text-sm ${isActive ? 'border-primary bg-primary/5 text-primary' : 'border-border text-text-primary'}`}
                                   onClick={() => chooseBarcodeRetailer(option.label, option.url, option.price_cents)}
                                 >
                                   <span className="font-medium">{option.label}</span>
@@ -680,6 +780,8 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [],
                         value={urlInput}
                         onChange={e => {
                           const nextUrl = e.target.value;
+                          clearSaveFeedback();
+                          clearLinkImportFeedback();
                           setUrlInput(nextUrl);
                           setDraft(prev => ({
                             ...prev,
@@ -691,7 +793,7 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [],
                         }}
                         onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleFetch(); } }}
                         placeholder="https://amazon.com/product/… or any store URL"
-                        className="w-full pl-9 pr-3 py-2.5 bg-surface-subtle border border-border rounded-lg text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                        className="w-full pl-9 pr-3 py-2.5 bg-surface-subtle border border-border rounded-xl text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                       />
                     </div>
                     {!isEdit && (
@@ -716,7 +818,7 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [],
                   )}
 
                   {fetchError && (
-                    <div className="flex items-start gap-2 p-3 bg-surface-subtle rounded-lg text-sm text-text-secondary border border-border-subtle">
+                    <div className="flex items-start gap-2 rounded-xl border border-border-subtle bg-surface-subtle p-3 text-sm text-text-secondary">
                       <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5 text-text-tertiary" />
                       <div className="flex-1">
                         <span>{fetchError}</span>
@@ -729,13 +831,13 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [],
                     </div>
                   )}
                   {fetchDone && !fetchError && fetchConfidence === 'full' && (
-                    <div className="flex items-center gap-2 p-3 bg-success-light rounded-lg text-sm text-success border border-success/20">
+                    <div className="flex items-center gap-2 rounded-xl border border-success/20 bg-success-light p-3 text-sm text-success">
                       <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
                       <span>Auto-filled — all details imported. Review and save.</span>
                     </div>
                   )}
                   {fetchDone && !fetchError && fetchConfidence === 'partial' && (
-                    <div className="flex items-start gap-2 p-3 bg-primary-light rounded-lg text-sm text-primary border border-primary/20">
+                    <div className="flex items-start gap-2 rounded-xl border border-primary/20 bg-primary-light p-3 text-sm text-primary">
                       <Info className="w-4 h-4 flex-shrink-0 mt-0.5" />
                       <div>
                         <span>Please review — some details were imported but a few fields may need filling in below.</span>
@@ -746,7 +848,7 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [],
                     </div>
                   )}
                   {dedupeWarning && (
-                    <div className="flex items-start gap-2 p-3 bg-surface-subtle rounded-lg text-sm text-text-secondary border border-border-subtle">
+                    <div className="flex items-start gap-2 rounded-xl border border-border-subtle bg-surface-subtle p-3 text-sm text-text-secondary">
                       <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5 text-text-tertiary" />
                       <span>{dedupeWarning}</span>
                     </div>
@@ -755,7 +857,7 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [],
               )}
 
               {sourceMode === 'manual' && (
-                <div className="rounded-lg border border-border-subtle bg-surface-subtle/40 p-4">
+                <div className="rounded-2xl border border-border-subtle bg-surface-subtle/40 p-4">
                   <p className="text-sm font-medium text-text-primary">Add it manually</p>
                   <p className="mt-1 text-xs text-text-secondary">Use this for one-off items, custom gifts, or anything that is easier to type than import.</p>
                 </div>
@@ -766,7 +868,7 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [],
           <div className="grid grid-cols-1 gap-4">
             {/* Image preview + URL */}
             {draft.item_type !== 'cash_fund' && <div className="flex gap-4">
-              <div className="w-20 h-20 flex-shrink-0 rounded-lg bg-surface-subtle border border-border overflow-hidden flex items-center justify-center">
+              <div className="flex h-20 w-20 flex-shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-border bg-surface-subtle">
                 {getSafePublicImageUrl(draft.image_url) ? (
                   <img
                     src={getSafePublicImageUrl(draft.image_url)}
@@ -785,9 +887,13 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [],
                 <input
                   type="url"
                   value={draft.image_url}
-                  onChange={e => set('image_url', e.target.value)}
+                  onChange={e => {
+                    clearLinkImportFeedback();
+                    clearBarcodeLookupFeedback({ keepLookup: true });
+                    set('image_url', e.target.value);
+                  }}
                   placeholder="https://…/product-image.jpg"
-                  className="w-full px-3 py-2 bg-surface-subtle border border-border rounded-lg text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                  className="w-full px-3 py-2 bg-surface-subtle border border-border rounded-xl text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                 />
                 <p className="mt-1 text-xs text-text-tertiary">{imageSourceHint.label}</p>
                 <div className="mt-1.5 flex flex-wrap gap-2">
@@ -828,10 +934,14 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [],
               <input
                 type="text"
                 value={draft.item_name}
-                onChange={e => set('item_name', e.target.value)}
+                onChange={e => {
+                  clearLinkImportFeedback();
+                  clearBarcodeLookupFeedback({ keepLookup: true });
+                  set('item_name', e.target.value);
+                }}
                 required
                 placeholder="e.g. KitchenAid Stand Mixer"
-                className="w-full px-3 py-2 bg-surface-subtle border border-border rounded-lg text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                className="w-full px-3 py-2 bg-surface-subtle border border-border rounded-xl text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
               />
             </div>
 
@@ -848,9 +958,13 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [],
                   min="0"
                   step="0.01"
                   value={draft.price_amount}
-                  onChange={e => set('price_amount', e.target.value)}
+                  onChange={e => {
+                    clearLinkImportFeedback();
+                    clearBarcodeLookupFeedback({ keepLookup: true });
+                    set('price_amount', e.target.value);
+                  }}
                   placeholder="0.00"
-                  className={`w-full pl-7 pr-3 py-2 bg-surface-subtle border rounded-lg text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent ${missingPrice ? 'border-border-subtle' : 'border-border'}`}
+                  className={`w-full pl-7 pr-3 py-2 bg-surface-subtle border rounded-xl text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent ${missingPrice ? 'border-border-subtle' : 'border-border'}`}
                 />
               </div>
               {missingPrice && (
@@ -866,9 +980,13 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [],
               <input
                 type="text"
                 value={draft.merchant}
-                onChange={e => set('merchant', e.target.value)}
+                onChange={e => {
+                  clearLinkImportFeedback();
+                  clearBarcodeLookupFeedback({ keepLookup: true });
+                  set('merchant', e.target.value);
+                }}
                 placeholder="e.g. Amazon, Target"
-                className={`w-full px-3 py-2 bg-surface-subtle border rounded-lg text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent ${missingMerchant ? 'border-border-subtle' : 'border-border'}`}
+                className={`w-full px-3 py-2 bg-surface-subtle border rounded-xl text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent ${missingMerchant ? 'border-border-subtle' : 'border-border'}`}
               />
               {missingMerchant && (
                 <p className="mt-1 text-xs text-text-tertiary">Store name was not filled in. Add the merchant so guests know where the gift comes from.</p>
@@ -882,9 +1000,12 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [],
                   type="text"
                   inputMode="numeric"
                   value={draft.barcode ?? ''}
-                  onChange={e => set('barcode', e.target.value)}
+                  onChange={e => {
+                    clearBarcodeLookupFeedback();
+                    set('barcode', e.target.value);
+                  }}
                   placeholder="Stored with the registry item"
-                  className="w-full px-3 py-2 bg-surface-subtle border border-border rounded-lg text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                  className="w-full px-3 py-2 bg-surface-subtle border border-border rounded-xl text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                 />
               </div>
             )}
@@ -899,6 +1020,9 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [],
                 value={draft.selected_product_url || draft.item_url}
                 onChange={e => {
                   const nextUrl = e.target.value;
+                  clearSaveFeedback();
+                  clearLinkImportFeedback();
+                  clearBarcodeLookupFeedback({ keepLookup: true });
                   setDraft(prev => ({
                     ...prev,
                     item_url: nextUrl,
@@ -907,7 +1031,7 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [],
                   }));
                 }}
                 placeholder="https://store.com/product"
-                className="w-full px-3 py-2 bg-surface-subtle border border-border rounded-lg text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                className="w-full px-3 py-2 bg-surface-subtle border border-border rounded-xl text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
               />
             </div>
 
@@ -924,7 +1048,7 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [],
                   step="1"
                   value={draft.desired_quantity}
                   onChange={e => set('desired_quantity', e.target.value)}
-                  className="w-full px-3 py-2 bg-surface-subtle border border-border rounded-lg text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                  className="w-full px-3 py-2 bg-surface-subtle border border-border rounded-xl text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                 />
               </div>
               <div>
@@ -938,7 +1062,7 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [],
                   step="1"
                   value={draft.quantity_purchased ?? '0'}
                   onChange={e => set('quantity_purchased', e.target.value)}
-                  className="w-full px-3 py-2 bg-surface-subtle border border-border rounded-lg text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                  className="w-full px-3 py-2 bg-surface-subtle border border-border rounded-xl text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                 />
               </div>
             </div>
@@ -954,7 +1078,7 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [],
                   value={draft.purchaser_name ?? ''}
                   onChange={e => set('purchaser_name', e.target.value)}
                   placeholder="e.g. Alex"
-                  className="w-full px-3 py-2 bg-surface-subtle border border-border rounded-lg text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                  className="w-full px-3 py-2 bg-surface-subtle border border-border rounded-xl text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                 />
               </div>
               <div className="flex items-end pb-0.5">
@@ -974,33 +1098,33 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [],
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="block text-sm font-medium text-text-primary mb-1">Fund goal</label>
-                    <input type="number" min="0" step="0.01" value={draft.fund_goal_amount ?? ''} onChange={e => set('fund_goal_amount', e.target.value)} placeholder="e.g. 2000" className="w-full px-3 py-2 bg-surface-subtle border border-border rounded-lg text-sm" />
+                    <input type="number" min="0" step="0.01" value={draft.fund_goal_amount ?? ''} onChange={e => set('fund_goal_amount', e.target.value)} placeholder="e.g. 2000" className="w-full px-3 py-2 bg-surface-subtle border border-border rounded-xl text-sm" />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-text-primary mb-1">Received so far</label>
-                    <input type="number" min="0" step="0.01" value={draft.fund_received_amount ?? ''} onChange={e => set('fund_received_amount', e.target.value)} placeholder="e.g. 350" className="w-full px-3 py-2 bg-surface-subtle border border-border rounded-lg text-sm" />
+                    <input type="number" min="0" step="0.01" value={draft.fund_received_amount ?? ''} onChange={e => set('fund_received_amount', e.target.value)} placeholder="e.g. 350" className="w-full px-3 py-2 bg-surface-subtle border border-border rounded-xl text-sm" />
                   </div>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
                     <label className="block text-sm font-medium text-text-primary mb-1">Venmo Link</label>
-                    <input type="url" value={draft.fund_venmo_url ?? ''} onChange={e => set('fund_venmo_url', e.target.value)} placeholder="https://venmo.com/yourhandle" className="w-full px-3 py-2 bg-surface-subtle border border-border rounded-lg text-sm" />
+                    <input type="url" value={draft.fund_venmo_url ?? ''} onChange={e => set('fund_venmo_url', e.target.value)} placeholder="https://venmo.com/yourhandle" className="w-full px-3 py-2 bg-surface-subtle border border-border rounded-xl text-sm" />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-text-primary mb-1">PayPal Link</label>
-                    <input type="url" value={draft.fund_paypal_url ?? ''} onChange={e => set('fund_paypal_url', e.target.value)} placeholder="https://paypal.me/yourname" className="w-full px-3 py-2 bg-surface-subtle border border-border rounded-lg text-sm" />
+                    <input type="url" value={draft.fund_paypal_url ?? ''} onChange={e => set('fund_paypal_url', e.target.value)} placeholder="https://paypal.me/yourname" className="w-full px-3 py-2 bg-surface-subtle border border-border rounded-xl text-sm" />
                   </div>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
                     <label className="block text-sm font-medium text-text-primary mb-1">Zelle</label>
-                    <input type="text" value={draft.fund_zelle_handle ?? ''} onChange={e => set('fund_zelle_handle', e.target.value)} placeholder="Email or phone for Zelle" className="w-full px-3 py-2 bg-surface-subtle border border-border rounded-lg text-sm" />
+                    <input type="text" value={draft.fund_zelle_handle ?? ''} onChange={e => set('fund_zelle_handle', e.target.value)} placeholder="Email or phone for Zelle" className="w-full px-3 py-2 bg-surface-subtle border border-border rounded-xl text-sm" />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-text-primary mb-1">Other payment link</label>
                     <div className="grid grid-cols-2 gap-2">
-                      <input type="text" value={draft.fund_custom_label ?? ''} onChange={e => set('fund_custom_label', e.target.value)} placeholder="Label" className="w-full px-3 py-2 bg-surface-subtle border border-border rounded-lg text-sm" />
-                      <input type="url" value={draft.fund_custom_url ?? ''} onChange={e => set('fund_custom_url', e.target.value)} placeholder="https://..." className="w-full px-3 py-2 bg-surface-subtle border border-border rounded-lg text-sm" />
+                      <input type="text" value={draft.fund_custom_label ?? ''} onChange={e => set('fund_custom_label', e.target.value)} placeholder="Label" className="w-full px-3 py-2 bg-surface-subtle border border-border rounded-xl text-sm" />
+                      <input type="url" value={draft.fund_custom_url ?? ''} onChange={e => set('fund_custom_url', e.target.value)} placeholder="https://..." className="w-full px-3 py-2 bg-surface-subtle border border-border rounded-xl text-sm" />
                     </div>
                   </div>
                 </div>
@@ -1015,16 +1139,20 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [],
               </label>
               <textarea
                 value={draft.notes}
-                onChange={e => set('notes', e.target.value)}
+                onChange={e => {
+                  clearLinkImportFeedback();
+                  clearBarcodeLookupFeedback({ keepLookup: true });
+                  set('notes', e.target.value);
+                }}
                 rows={3}
                 placeholder="Any notes for guests, e.g. preferred color or variant…"
-                className="w-full px-3 py-2 bg-surface-subtle border border-border rounded-lg text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent resize-none"
+                className="w-full px-3 py-2 bg-surface-subtle border border-border rounded-xl text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent resize-none"
               />
             </div>
           </div>
 
           {saveError && (
-            <div className="flex items-center gap-2 p-3 bg-surface-subtle rounded-lg text-sm text-text-secondary border border-border-subtle">
+            <div className="flex items-center gap-2 rounded-xl border border-border-subtle bg-surface-subtle p-3 text-sm text-text-secondary">
               <AlertCircle className="w-4 h-4 flex-shrink-0 text-text-tertiary" />
               {saveError}
             </div>

@@ -41,7 +41,7 @@ export const ToastList: React.FC<{ toasts: Toast[] }> = ({ toasts }) => (
     {toasts.map(t => (
       <div
         key={t.id}
-        className={`rounded-lg border bg-white px-4 py-3 text-sm font-medium text-text-primary ${
+        className={`rounded-xl border bg-white px-4 py-3 text-sm font-medium text-text-primary ${
           t.type === 'error'
             ? 'border-error/20'
             : t.type === 'info'
@@ -56,7 +56,7 @@ export const ToastList: React.FC<{ toasts: Toast[] }> = ({ toasts }) => (
 );
 
 export const MessageGuestFlowCard: React.FC = () => (
-  <div className="rounded-lg border border-border-subtle bg-white p-5">
+  <div className="rounded-2xl border border-border-subtle bg-white p-5">
     <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
       <div>
         <p className="text-xs font-medium text-text-tertiary">Guest flow</p>
@@ -66,7 +66,7 @@ export const MessageGuestFlowCard: React.FC = () => (
     </div>
     <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-4">
       {GUEST_COMMUNICATION_FLOW.map((stage, index) => (
-        <div key={stage.id} className="rounded-lg border border-border-subtle bg-surface-subtle/30 px-4 py-4">
+        <div key={stage.id} className="rounded-xl border border-border-subtle bg-surface-subtle/30 px-4 py-4">
           <p className="text-[11px] font-medium text-text-tertiary">0{index + 1}</p>
           <p className="mt-2 text-sm font-semibold text-text-primary">{stage.label}</p>
           <p className="mt-2 text-xs leading-5 text-text-secondary">{stage.detail}</p>
@@ -112,9 +112,9 @@ export const MessageSendingDetailsPanel: React.FC<MessageSendingDetailsPanelProp
             <h3 className="mt-2 text-xl font-semibold text-text-primary">Sending details</h3>
           </div>
           <div className="space-y-4">
-            <div className="rounded-lg border border-border-subtle bg-surface-subtle/30 px-4 py-4">
+            <div className="rounded-xl border border-border-subtle bg-surface-subtle/30 px-4 py-4">
               <div className="flex items-start gap-3">
-                <div className="rounded-lg bg-primary-light p-3">
+                <div className="rounded-xl bg-primary-light p-3">
                   <AtSign className="w-5 h-5 text-primary" />
                 </div>
                 <div>
@@ -124,7 +124,7 @@ export const MessageSendingDetailsPanel: React.FC<MessageSendingDetailsPanelProp
                 </div>
               </div>
             </div>
-            <div className="rounded-lg border border-border-subtle bg-surface-subtle/30 px-4 py-4">
+            <div className="rounded-xl border border-border-subtle bg-surface-subtle/30 px-4 py-4">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <p className="text-xs font-medium text-text-tertiary">Email room</p>
@@ -132,12 +132,12 @@ export const MessageSendingDetailsPanel: React.FC<MessageSendingDetailsPanelProp
                   <p className="mt-1 text-xs text-text-secondary">Email recipients available before today’s sending limit of {hardEmailCap}.</p>
                   <p className="text-xs text-text-tertiary">Used {usedEmailRecipients} total email recipients so far.</p>
                 </div>
-                <div className={`rounded-lg border px-2.5 py-1 text-[11px] font-medium ${emailCapacityEnough ? 'border-success/20 bg-success-light text-success' : 'border-error/20 bg-error-light text-error'}`}>
+                <div className={`rounded-xl border px-2.5 py-1 text-[11px] font-medium ${emailCapacityEnough ? 'border-success/20 bg-success-light text-success' : 'border-error/20 bg-error-light text-error'}`}>
                   {emailCapacityEnough ? 'Ready' : 'Needs a smaller audience'}
                 </div>
               </div>
             </div>
-            <div className="rounded-lg border border-border-subtle bg-surface-subtle/30 px-4 py-4">
+            <div className="rounded-xl border border-border-subtle bg-surface-subtle/30 px-4 py-4">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <p className="text-xs font-semibold text-text-tertiary">Text credits</p>
@@ -177,13 +177,13 @@ export const MessageSendingDetailsPanel: React.FC<MessageSendingDetailsPanelProp
             </p>
           ) : (
             <>
-              <div className="mb-3 rounded-lg border border-border-subtle bg-surface-subtle/30 px-4 py-3">
+              <div className="mb-3 rounded-xl border border-border-subtle bg-surface-subtle/30 px-4 py-3">
                 <p className="text-[11px] text-text-tertiary">Balance snapshot</p>
                 <p className="mt-1 text-sm font-medium text-text-primary">{smsCredits} credits available{smsExpiringSoon > 0 ? ` • ${smsExpiringSoon} expiring soon` : ''}</p>
               </div>
               <div className="space-y-2 max-h-56 overflow-auto pr-1">
                 {smsTransactions.map((tx) => (
-                  <div key={tx.id} className="flex items-center justify-between gap-3 text-xs border border-border rounded-lg px-3 py-2 bg-surface-subtle">
+                  <div key={tx.id} className="flex items-center justify-between gap-3 text-xs border border-border rounded-xl px-3 py-2 bg-surface-subtle">
                     <div>
                       <p className="text-text-primary capitalize">{tx.reason}</p>
                       <p className="text-text-tertiary">{formatMessageHistoryDateTime(tx.created_at)}</p>
@@ -301,7 +301,7 @@ export const MessageReachSnapshotCard: React.FC<MessageReachSnapshotCardProps> =
     </div>
     <div className="space-y-4">
       <div className="flex items-center gap-3">
-        <div className="p-2 bg-primary-light rounded-lg">
+        <div className="p-2 bg-primary-light rounded-xl">
           <Users className="w-5 h-5 text-primary" />
         </div>
         <div>
@@ -310,7 +310,7 @@ export const MessageReachSnapshotCard: React.FC<MessageReachSnapshotCardProps> =
         </div>
       </div>
       <div className="flex items-center gap-3">
-        <div className="p-2 bg-success-light rounded-lg">
+        <div className="p-2 bg-success-light rounded-xl">
           <CheckCircle className="w-5 h-5 text-success" />
         </div>
         <div>
@@ -319,7 +319,7 @@ export const MessageReachSnapshotCard: React.FC<MessageReachSnapshotCardProps> =
         </div>
       </div>
       <div className="flex items-center gap-3">
-        <div className="p-2 bg-primary-light rounded-lg">
+        <div className="p-2 bg-primary-light rounded-xl">
           <Mail className="w-5 h-5 text-primary" />
         </div>
         <div>
@@ -332,7 +332,7 @@ export const MessageReachSnapshotCard: React.FC<MessageReachSnapshotCardProps> =
           </p>
         </div>
       </div>
-      <div className="rounded-lg border border-border-subtle bg-surface-subtle/30 px-4 py-3">
+      <div className="rounded-xl border border-border-subtle bg-surface-subtle/30 px-4 py-3">
         <p className="text-xs font-semibold text-text-tertiary">Engagement signals</p>
         <>
           <p className="mt-2 text-sm text-text-primary">
@@ -346,7 +346,7 @@ export const MessageReachSnapshotCard: React.FC<MessageReachSnapshotCardProps> =
           </p>
         </>
       </div>
-      <div className="rounded-lg border border-border-subtle bg-surface-subtle/30 px-4 py-3">
+      <div className="rounded-xl border border-border-subtle bg-surface-subtle/30 px-4 py-3">
         <p className="text-xs font-semibold text-text-tertiary">Delivery follow-through</p>
         <>
           <p className="mt-2 text-sm text-text-primary">
@@ -396,7 +396,7 @@ export const MessageReachSnapshotCard: React.FC<MessageReachSnapshotCardProps> =
         </>
       </div>
       <div className="flex items-center gap-3">
-        <div className="p-2 bg-primary-light rounded-lg">
+        <div className="rounded-xl bg-primary-light p-2">
           <Link2 className="w-5 h-5 text-primary" />
         </div>
         <div>
@@ -445,7 +445,7 @@ export const MessageReachSnapshotCard: React.FC<MessageReachSnapshotCardProps> =
               type="button"
               onClick={item.action}
               disabled={item.disabled}
-              className="rounded-lg border border-border-subtle bg-surface-subtle/30 px-4 py-4 text-left transition hover:border-primary/30 hover:bg-white disabled:opacity-50"
+              className="rounded-xl border border-border-subtle bg-surface-subtle/30 px-4 py-4 text-left transition hover:border-primary/30 hover:bg-white disabled:opacity-50"
             >
               <p className="text-sm font-semibold text-text-primary">{item.label}</p>
               <p className="mt-1 text-xs leading-5 text-text-secondary">{item.detail}</p>
@@ -482,7 +482,7 @@ export interface ComposerLanguagePreview {
 export const MessageComposerLanguagePreviewPanel: React.FC<{
   languagePreviews: ComposerLanguagePreview[];
 }> = ({ languagePreviews }) => (
-  <div className="rounded-lg border border-border-subtle bg-surface-subtle/30 p-4">
+  <div className="rounded-2xl border border-border-subtle bg-surface-subtle/30 p-4">
     <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
       <div>
         <p className="text-sm font-semibold text-text-primary">Language preview</p>
@@ -490,13 +490,13 @@ export const MessageComposerLanguagePreviewPanel: React.FC<{
           Review how this template reads for guests before language-specific sending is connected.
         </p>
       </div>
-      <span className="rounded-lg border border-border-subtle bg-white px-2 py-1 text-[11px] font-medium text-text-tertiary">
+      <span className="rounded-xl border border-border-subtle bg-white px-2 py-1 text-[11px] font-medium text-text-tertiary">
         Owner review required
       </span>
     </div>
     <div className="mt-3 grid gap-2 md:grid-cols-3">
       {languagePreviews.map((preview) => (
-        <div key={preview.language} className="rounded-lg border border-border-subtle bg-white px-3 py-3">
+        <div key={preview.language} className="rounded-xl border border-border-subtle bg-white px-3 py-3">
           <div className="flex items-center justify-between gap-2">
             <p className="text-xs font-semibold text-text-primary">{preview.label}</p>
             <span className="text-[11px] font-medium text-text-tertiary">
@@ -521,13 +521,13 @@ export const MessageComposerSchedulePanel: React.FC<MessageComposerSchedulePanel
   formData,
   onSetFormData,
 }) => (
-  <div className="rounded-lg border border-border-subtle bg-surface-subtle/30 p-4">
+  <div className="rounded-2xl border border-border-subtle bg-surface-subtle/30 p-4">
     <label className="block text-sm font-medium text-text-primary mb-2">When should it send?</label>
     <div className="flex gap-4 mb-4">
       <button
         type="button"
         onClick={() => onSetFormData((prev) => ({ ...prev, scheduleType: 'now' }))}
-        className={`flex-1 py-3 px-4 rounded-lg font-medium transition-colors ${
+        className={`flex-1 py-3 px-4 rounded-xl font-medium transition-colors ${
           formData.scheduleType === 'now'
             ? 'bg-primary text-text-inverse hover:bg-primary-hover'
             : 'bg-surface-subtle text-text-secondary hover:bg-surface border border-border'
@@ -538,7 +538,7 @@ export const MessageComposerSchedulePanel: React.FC<MessageComposerSchedulePanel
       <button
         type="button"
         onClick={() => onSetFormData((prev) => ({ ...prev, scheduleType: 'later' }))}
-        className={`flex-1 py-3 px-4 rounded-lg font-medium transition-colors ${
+        className={`flex-1 py-3 px-4 rounded-xl font-medium transition-colors ${
           formData.scheduleType === 'later'
             ? 'bg-primary text-text-inverse hover:bg-primary-hover'
             : 'bg-surface-subtle text-text-secondary hover:bg-surface border border-border'
@@ -550,7 +550,7 @@ export const MessageComposerSchedulePanel: React.FC<MessageComposerSchedulePanel
 
     {formData.scheduleType === 'later' && (
       <div className="space-y-3">
-        <div className="grid grid-cols-2 gap-4 p-4 bg-surface-subtle rounded-lg border border-border">
+        <div className="grid grid-cols-2 gap-4 rounded-xl border border-border bg-surface-subtle p-4">
           <div>
             <label className="block text-sm font-medium text-text-primary mb-2">Date</label>
             <Input
@@ -576,7 +576,7 @@ export const MessageComposerSchedulePanel: React.FC<MessageComposerSchedulePanel
           </div>
         </div>
         {formData.scheduleDate && formData.scheduleTime && isPastScheduledTime(`${formData.scheduleDate}T${formData.scheduleTime}:00`) && (
-          <div className="flex items-start gap-2 p-3 bg-warning-light border border-warning/20 rounded-lg text-sm text-warning">
+          <div className="flex items-start gap-2 rounded-xl border border-warning/20 bg-warning-light p-3 text-sm text-warning">
             <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
             <div>
               <span className="font-medium">That time has already passed.</span>
@@ -619,7 +619,7 @@ export const MessageComposerRecipientPreviewPanel: React.FC<MessageComposerRecip
   ));
 
   return (
-    <div className="overflow-hidden rounded-lg border border-border-subtle bg-white">
+    <div className="overflow-hidden rounded-2xl border border-border-subtle bg-white">
       <button
         type="button"
         onClick={onTogglePreview}
@@ -689,7 +689,7 @@ export const MessageComposerPreflightPanel: React.FC<MessageComposerPreflightPan
   smsSegmentCount,
 }) => (
   <>
-    <div className="rounded-lg border border-border-subtle bg-primary-light/35 p-4">
+    <div className="rounded-2xl border border-border-subtle bg-primary-light/35 p-4">
       <div className="flex items-start gap-3">
         <Mail className="w-5 h-5 text-primary mt-0.5" />
         <div className="text-sm">
@@ -707,11 +707,11 @@ export const MessageComposerPreflightPanel: React.FC<MessageComposerPreflightPan
     </div>
 
     <div className="grid gap-3 md:grid-cols-2">
-      <div className="rounded-lg border border-border-subtle bg-surface-subtle/30 px-4 py-3 text-sm">
+      <div className="rounded-xl border border-border-subtle bg-surface-subtle/30 px-4 py-3 text-sm">
         <p className="text-xs font-semibold text-text-tertiary">Email reachability</p>
         <p className="mt-2 text-text-primary">{audienceReachability.total - audienceReachability.missingEmail} reachable · {audienceReachability.missingEmail} missing email</p>
       </div>
-      <div className="rounded-lg border border-border-subtle bg-surface-subtle/30 px-4 py-3 text-sm">
+      <div className="rounded-xl border border-border-subtle bg-surface-subtle/30 px-4 py-3 text-sm">
         <p className="text-xs font-semibold text-text-tertiary">Text reachability</p>
         <p className="mt-2 text-text-primary">{audienceReachability.total - audienceReachability.missingPhone} reachable · {audienceReachability.missingPhone} missing phone/consent</p>
         <p className="mt-1 text-xs text-text-tertiary">{formData.body.trim().length}/{SMS_SEGMENT_SIZE} chars in current segment · {smsSegmentCount || 0} segment{smsSegmentCount === 1 ? '' : 's'} per recipient</p>
@@ -719,7 +719,7 @@ export const MessageComposerPreflightPanel: React.FC<MessageComposerPreflightPan
     </div>
 
     {activeRecipients > 0 && (
-      <div className="text-xs text-text-tertiary bg-surface-subtle border border-border rounded-lg px-3 py-2">
+      <div className="rounded-xl border border-border bg-surface-subtle px-3 py-2 text-xs text-text-tertiary">
         {formData.scheduleType === 'now'
           ? `When you click Send, this ${formData.channel === 'sms' ? 'text' : 'email'} will go out right away to ${activeRecipients} recipient${activeRecipients !== 1 ? 's' : ''}.`
           : `Scheduled messages will send at your chosen time to everyone who still matches this group.`}
@@ -727,7 +727,7 @@ export const MessageComposerPreflightPanel: React.FC<MessageComposerPreflightPan
     )}
 
     {activeRecipients === 0 && !sending && formData.audience !== '' && (
-      <div className="flex items-center gap-2 p-3 bg-warning-light border border-warning/20 rounded-lg text-sm text-warning">
+      <div className="flex items-center gap-2 rounded-xl border border-warning/20 bg-warning-light p-3 text-sm text-warning">
         <AlertCircle className="w-4 h-4 flex-shrink-0" />
         {formData.channel === 'sms'
           ? 'No guests in this group have phone numbers with text consent yet. Add phone numbers and consent before sending a text.'
@@ -736,21 +736,21 @@ export const MessageComposerPreflightPanel: React.FC<MessageComposerPreflightPan
     )}
 
     {formData.channel === 'sms' && activeRecipients > 0 && !smsCreditsSufficient && (
-      <div className="flex items-center justify-between gap-3 p-3 bg-error-light border border-error/20 rounded-lg text-sm text-error">
+      <div className="flex items-center justify-between gap-3 rounded-xl border border-error/20 bg-error-light p-3 text-sm text-error">
         <span>Not enough text credits yet: need {smsCreditsNeeded}, have {smsCredits}.</span>
         <Button size="sm" variant="outline" onClick={() => onBuySmsPack('sms_100')} disabled={buyingPack !== null || !smsProviderEnabled}>Buy credits</Button>
       </div>
     )}
 
     {formData.channel === 'sms' && activeRecipients > 0 && !smsProviderEnabled && (
-      <div className="flex items-start gap-2 p-3 bg-warning-light border border-warning/20 rounded-lg text-sm text-warning">
+      <div className="flex items-start gap-2 rounded-xl border border-warning/20 bg-warning-light p-3 text-sm text-warning">
         <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
         <span>{SMS_PROVIDER_PENDING_COPY} You can still save text drafts and build audiences now.</span>
       </div>
     )}
 
     {formData.channel === 'email' && activeRecipients > 0 && (
-      <div className={`flex items-center justify-between gap-3 p-3 rounded-lg text-sm border ${emailCapacityEnough ? 'bg-success-light border-success/20 text-success' : 'bg-error-light border-error/20 text-error'}`}>
+      <div className={`flex items-center justify-between gap-3 rounded-xl border p-3 text-sm ${emailCapacityEnough ? 'bg-success-light border-success/20 text-success' : 'bg-error-light border-error/20 text-error'}`}>
         <span>
           {emailCapacityEnough
             ? `Email room: ${remainingEmailRecipients} recipient slots left before send, ${emailCapacityAfterSend} left afterward.`
@@ -839,7 +839,7 @@ export const MessageComposerCard: React.FC<MessageComposerCardProps> = ({
     {!canCompose && <p className="mb-3 text-xs text-text-tertiary">Viewer mode is on, so writing and sending are turned off.</p>}
     <form onSubmit={onSubmit} className="space-y-6">
       <fieldset disabled={!canCompose} className="space-y-6">
-        <div className="rounded-lg border border-border-subtle bg-surface-subtle/30 p-4">
+        <div className="rounded-2xl border border-border-subtle bg-surface-subtle/30 p-4">
           <div className="grid gap-4 md:grid-cols-2">
             <div>
               <label className="mb-2 block text-sm font-medium text-text-primary">Campaign name</label>
@@ -856,7 +856,7 @@ export const MessageComposerCard: React.FC<MessageComposerCardProps> = ({
                 aria-label="Template"
                 value={formData.templateKey}
                 onChange={(e) => applyComposerTemplate(e.target.value as MessageTemplateKey)}
-                className="w-full rounded-lg border border-border bg-surface-subtle px-4 py-2.5 text-text-primary focus:border-transparent focus:outline-none focus:ring-2 focus:ring-primary"
+                className="w-full rounded-xl border border-border bg-surface-subtle px-4 py-2.5 text-text-primary focus:border-transparent focus:outline-none focus:ring-2 focus:ring-primary"
               >
                 {COMPOSER_TEMPLATES.map((template) => (
                   <option key={template.key} value={template.key}>{template.label}</option>
@@ -873,9 +873,9 @@ export const MessageComposerCard: React.FC<MessageComposerCardProps> = ({
           </div>
         </div>
 
-        <div className="rounded-lg border border-border-subtle bg-surface-subtle/30 p-4">
+        <div className="rounded-2xl border border-border-subtle bg-surface-subtle/30 p-4">
           <label className="mb-2 block text-sm font-medium text-text-primary">Channel</label>
-          <div className="inline-flex overflow-hidden rounded-lg border border-border bg-white">
+          <div className="inline-flex overflow-hidden rounded-xl border border-border bg-white">
             <button type="button" className={`px-3 py-1.5 text-sm ${formData.channel === 'email' ? 'bg-primary/10 text-primary' : 'text-text-secondary'}`} onClick={() => onSetFormData((prev) => ({ ...prev, channel: 'email' }))}>Email</button>
             <button type="button" className={`border-l border-border px-3 py-1.5 text-sm ${formData.channel === 'sms' ? 'bg-primary/10 text-primary' : 'text-text-secondary'}`} onClick={() => onSetFormData((prev) => ({ ...prev, channel: 'sms' }))}>Text</button>
           </div>
@@ -887,7 +887,7 @@ export const MessageComposerCard: React.FC<MessageComposerCardProps> = ({
           )}
         </div>
 
-        <div className="rounded-lg border border-border-subtle bg-surface-subtle/30 p-4">
+        <div className="rounded-2xl border border-border-subtle bg-surface-subtle/30 p-4">
           <label className="mb-2 block text-sm font-medium text-text-primary">Who should get this?</label>
           {audienceOptions.some((a) => a.value.startsWith('event:')) && (
             <p className="mb-1 text-xs text-text-tertiary">You can also send to itinerary groups from the dropdown.</p>
@@ -896,7 +896,7 @@ export const MessageComposerCard: React.FC<MessageComposerCardProps> = ({
             key={`aud-${audienceOptions.length}`}
             value={formData.audience}
             onChange={(e) => onSetFormData((prev) => ({ ...prev, audience: e.target.value }))}
-            className="w-full rounded-lg border border-border bg-surface-subtle px-4 py-2.5 text-text-primary focus:border-transparent focus:outline-none focus:ring-2 focus:ring-primary"
+            className="w-full rounded-xl border border-border bg-surface-subtle px-4 py-2.5 text-text-primary focus:border-transparent focus:outline-none focus:ring-2 focus:ring-primary"
           >
             {audienceOptions.map((option) => (
               <option key={option.value} value={option.value}>
@@ -916,19 +916,19 @@ export const MessageComposerCard: React.FC<MessageComposerCardProps> = ({
             </p>
           )}
           <div className="mt-2 flex flex-wrap gap-2">
-            <span className="inline-flex items-center rounded-lg border border-border bg-white px-2 py-1 text-xs text-text-secondary">
+            <span className="inline-flex items-center rounded-xl border border-border bg-white px-2 py-1 text-xs text-text-secondary">
               Reaches {activeRecipients} guest{activeRecipients !== 1 ? 's' : ''}
             </span>
-            <span className={`inline-flex items-center rounded-lg border px-2 py-1 text-xs ${unreachableRecipients > 0 ? 'border-warning/30 bg-warning-light text-warning' : 'border-success/30 bg-success-light text-success'}`}>
+            <span className={`inline-flex items-center rounded-xl border px-2 py-1 text-xs ${unreachableRecipients > 0 ? 'border-warning/30 bg-warning-light text-warning' : 'border-success/30 bg-success-light text-success'}`}>
               {unreachableRecipients > 0 ? `${unreachableRecipients} missing ${formData.channel === 'sms' ? 'phone/consent' : 'email addresses'}` : `Everyone in this group is reachable by ${formData.channel === 'sms' ? 'text' : 'email'}`}
             </span>
             {formData.channel === 'sms' && (
-              <span className={`inline-flex items-center rounded-lg border px-2 py-1 text-xs ${smsCreditsSufficient ? 'border-success/30 bg-success-light text-success' : 'border-error/30 bg-error-light text-error'}`}>
+              <span className={`inline-flex items-center rounded-xl border px-2 py-1 text-xs ${smsCreditsSufficient ? 'border-success/30 bg-success-light text-success' : 'border-error/30 bg-error-light text-error'}`}>
                 {smsCreditsSufficient ? `${smsCreditsNeeded} credits ready` : `Need ${smsCreditsNeeded - smsCredits} more credits`}
               </span>
             )}
             {formData.channel === 'sms' && (
-              <span className="inline-flex items-center rounded-lg border border-border bg-white px-2 py-1 text-xs text-text-secondary">
+              <span className="inline-flex items-center rounded-xl border border-border bg-white px-2 py-1 text-xs text-text-secondary">
                 {smsSegmentCount || 0} segment{smsSegmentCount === 1 ? '' : 's'} x {recipientsWithSmsConsent} recipient{recipientsWithSmsConsent === 1 ? '' : 's'}
               </span>
             )}
@@ -1040,7 +1040,7 @@ export const MessageSavedTemplatesCard: React.FC<MessageSavedTemplatesCardProps>
       <p className="mt-1 text-sm text-text-secondary">Keep a lightweight library of messages you actually reuse.</p>
     </div>
     {savedTemplates.length === 0 ? (
-      <div className="rounded-lg border border-border-subtle bg-surface-subtle/30 px-4 py-6 text-sm text-text-secondary">
+      <div className="rounded-2xl border border-border-subtle bg-surface-subtle/30 px-4 py-6 text-sm text-text-secondary">
         No saved reusable templates yet. Save one from the composer when you have a message worth reusing.
       </div>
     ) : (
@@ -1049,7 +1049,7 @@ export const MessageSavedTemplatesCard: React.FC<MessageSavedTemplatesCardProps>
           const savedScheduleIsUsable = isSavedTemplateScheduleUsable(template);
 
           return (
-            <div key={template.id} className="rounded-lg border border-border-subtle bg-surface-subtle/20 px-4 py-4">
+            <div key={template.id} className="rounded-xl border border-border-subtle bg-surface-subtle/20 px-4 py-4">
               <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                 <div className="min-w-0">
                   <p className="text-[11px] font-semibold text-text-tertiary">{template.channel.toUpperCase()} · {audienceOptions.find((option) => option.value === template.audience)?.label ?? 'Saved audience'}</p>
@@ -1112,7 +1112,7 @@ export const MessageStartingPointsCard: React.FC<MessageStartingPointsCardProps>
           type="button"
           onClick={() => onApplyComposerTemplate(template.templateKey, { campaignName: template.campaignName })}
           disabled={!canCompose}
-          className="w-full rounded-lg border border-border-subtle bg-surface-subtle/30 px-4 py-4 text-left transition hover:border-primary/30 hover:bg-white disabled:opacity-50"
+          className="w-full rounded-xl border border-border-subtle bg-surface-subtle/30 px-4 py-4 text-left transition hover:border-primary/30 hover:bg-white disabled:opacity-50"
         >
           <p className="text-sm font-semibold text-text-primary">{template.label}</p>
           <p className="mt-1 text-xs leading-5 text-text-secondary">{template.detail}</p>
@@ -1201,14 +1201,14 @@ export const MessageHistorySummaryPanels: React.FC<MessageHistorySummaryPanelsPr
         ['Needs follow-up', historyStatusCounts.partial],
         ['Needs review', historyStatusCounts.failed],
       ].map(([label, count]) => (
-        <div key={String(label)} className="rounded-lg border border-border-subtle bg-white px-2.5 py-2">
+        <div key={String(label)} className="rounded-xl border border-border-subtle bg-white px-2.5 py-2">
           <p className="text-[11px] text-text-tertiary">{label}</p>
           <p className="text-sm font-semibold text-text-primary">{count}</p>
         </div>
       ))}
     </div>
 
-    <div className="rounded-lg border border-border-subtle bg-surface-subtle/30 px-4 py-3 text-[11px] text-text-secondary mb-4">
+    <div className="mb-4 rounded-2xl border border-border-subtle bg-surface-subtle/30 px-4 py-3 text-[11px] text-text-secondary">
       Delivery health is based on the message activity available here. Use it to see what needs a quick look before the next guest update.
     </div>
 
@@ -1235,7 +1235,7 @@ export const MessageHistorySummaryPanels: React.FC<MessageHistorySummaryPanelsPr
           detail: providerTelemetry.errorTop[0]?.[0] ?? 'No send issues found',
         },
       ].map((item) => (
-        <div key={item.label} className="rounded-lg border border-border-subtle bg-white px-3 py-2.5">
+        <div key={item.label} className="rounded-xl border border-border-subtle bg-white px-3 py-2.5">
           <p className="text-[11px] text-text-tertiary">{item.label}</p>
           <p className="mt-1 text-sm font-semibold text-text-primary">{item.value}</p>
           <p className="mt-1 text-[11px] text-text-tertiary line-clamp-2">{item.detail}</p>
@@ -1246,7 +1246,7 @@ export const MessageHistorySummaryPanels: React.FC<MessageHistorySummaryPanelsPr
     {audienceBreakdown.length > 0 && (
       <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-4">
         {audienceBreakdown.map(([label, count]) => (
-          <div key={label} className="rounded-lg border border-border-subtle bg-surface-subtle/40 px-2.5 py-2">
+          <div key={label} className="rounded-xl border border-border-subtle bg-surface-subtle/40 px-2.5 py-2">
             <p className="text-[11px] text-text-tertiary truncate">{label}</p>
             <p className="text-sm font-semibold text-text-primary">{count} recipients</p>
           </div>
@@ -1256,7 +1256,7 @@ export const MessageHistorySummaryPanels: React.FC<MessageHistorySummaryPanelsPr
 
     <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mb-4">
       {(['email', 'sms'] as const).map((channel) => (
-        <div key={channel} className="rounded-lg border border-border-subtle bg-white px-3 py-2.5">
+        <div key={channel} className="rounded-xl border border-border-subtle bg-white px-3 py-2.5">
           <div className="flex items-center justify-between mb-1.5">
             <p className="text-xs text-text-tertiary">{channel.toUpperCase()}</p>
             <p className="text-xs text-text-secondary">{channelBreakdown[channel].targeted} recipients</p>
@@ -1420,7 +1420,7 @@ export const MessageHistorySummaryPanels: React.FC<MessageHistorySummaryPanelsPr
           detail: 'Scheduled items needing attention',
         },
       ].map((item) => (
-        <div key={item.label} className="rounded-lg border border-border-subtle bg-white px-3 py-3">
+        <div key={item.label} className="rounded-xl border border-border-subtle bg-white px-3 py-3">
           <p className="text-[11px] text-text-tertiary">{item.label}</p>
           <p className={`mt-2 text-lg font-semibold ${item.tone}`}>{item.value}</p>
           <p className="mt-1 text-[11px] text-text-tertiary">{item.detail}</p>
@@ -1429,11 +1429,11 @@ export const MessageHistorySummaryPanels: React.FC<MessageHistorySummaryPanelsPr
     </div>
 
     <div className="mb-4 flex flex-wrap gap-2 text-xs text-text-tertiary">
-      <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">Drafts {campaignStatusSummary.draft}</span>
-      <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">Scheduled {campaignStatusSummary.scheduled}</span>
-      <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">Sent {campaignStatusSummary.sent}</span>
-      <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">Needs follow-up {campaignStatusSummary.partial}</span>
-      <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">Needs review {campaignStatusSummary.failed}</span>
+      <span className="rounded-xl border border-border-subtle bg-surface-subtle px-3 py-1">Drafts {campaignStatusSummary.draft}</span>
+      <span className="rounded-xl border border-border-subtle bg-surface-subtle px-3 py-1">Scheduled {campaignStatusSummary.scheduled}</span>
+      <span className="rounded-xl border border-border-subtle bg-surface-subtle px-3 py-1">Sent {campaignStatusSummary.sent}</span>
+      <span className="rounded-xl border border-border-subtle bg-surface-subtle px-3 py-1">Needs follow-up {campaignStatusSummary.partial}</span>
+      <span className="rounded-xl border border-border-subtle bg-surface-subtle px-3 py-1">Needs review {campaignStatusSummary.failed}</span>
     </div>
   </>
 );
@@ -1469,7 +1469,7 @@ export const MessageCampaignThreadPanels: React.FC<MessageCampaignThreadPanelsPr
 }) => (
   <>
     {campaignThreads.length > 0 && (
-      <div className="mb-4 rounded-lg border border-border-subtle bg-white p-4">
+      <div className="mb-4 rounded-2xl border border-border-subtle bg-white p-4">
         <div className="flex items-center justify-between gap-3 mb-3">
           <div>
             <p className="text-xs font-semibold text-text-tertiary">Campaign rollups</p>
@@ -1493,7 +1493,7 @@ export const MessageCampaignThreadPanels: React.FC<MessageCampaignThreadPanelsPr
               key={thread.key}
               type="button"
               onClick={() => onSelectThread(thread.name)}
-              className="w-full flex items-center justify-between gap-3 rounded-lg border border-border-subtle bg-surface-subtle/20 px-3 py-3 text-sm text-left hover:border-primary/30 hover:bg-white transition-colors"
+              className="w-full flex items-center justify-between gap-3 rounded-xl border border-border-subtle bg-surface-subtle/20 px-3 py-3 text-sm text-left transition-colors hover:border-primary/30 hover:bg-white"
             >
               <div className="min-w-0">
                 <p className="font-medium text-text-primary truncate">{thread.name}</p>
@@ -1568,7 +1568,7 @@ export const MessageCampaignThreadPanels: React.FC<MessageCampaignThreadPanelsPr
     )}
 
     {activeCampaignThread && (
-      <div className="mb-4 rounded-lg border border-border-subtle bg-primary-light/30 p-4">
+      <div className="mb-4 rounded-2xl border border-border-subtle bg-primary-light/30 p-4">
         <div className="flex items-center justify-between gap-3">
           <div>
             <p className="text-xs font-semibold text-text-tertiary">Active campaign thread</p>
@@ -1627,37 +1627,37 @@ export const MessageCampaignThreadPanels: React.FC<MessageCampaignThreadPanelsPr
               : null;
             return (
               <>
-          <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">
+          <span className="rounded-xl border border-border-subtle bg-white px-3 py-1">
             {activeCampaignThread.delivered > 0 ? `${activeCampaignThread.delivered} recipients delivered` : '0 recipients delivered'}
           </span>
-          <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">Delivered {activeCampaignThread.delivered}</span>
+          <span className="rounded-xl border border-border-subtle bg-white px-3 py-1">Delivered {activeCampaignThread.delivered}</span>
           {activeThreadTargetedFallback > 0 && (
-            <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">
+            <span className="rounded-xl border border-border-subtle bg-white px-3 py-1">
               Targeted {activeThreadTargetedFallback}
             </span>
           )}
           {activeThreadTargetedFallback > 0 && (
-            <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">
+            <span className="rounded-xl border border-border-subtle bg-white px-3 py-1">
               {activeCampaignThread.delivered} of {activeThreadTargetedFallback} targeted recipients have been delivered
             </span>
           )}
           {activeThreadDeliveredCoverage != null && (
-            <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">
+            <span className="rounded-xl border border-border-subtle bg-white px-3 py-1">
               {activeThreadDeliveredCoverage}% delivered coverage
             </span>
           )}
           {activeThreadReviewCoverage != null && (
-            <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">
+            <span className="rounded-xl border border-border-subtle bg-white px-3 py-1">
               {activeThreadReviewCoverage}% review coverage
             </span>
           )}
           {activeThreadContactCoverage != null && (
-            <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">
+            <span className="rounded-xl border border-border-subtle bg-white px-3 py-1">
               {activeThreadContactCoverage}% needs contact
             </span>
           )}
           {activeThreadUnreachedCoverage != null && (
-            <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">
+            <span className="rounded-xl border border-border-subtle bg-white px-3 py-1">
               {activeThreadUnreachedCoverage}% unreached
             </span>
           )}
@@ -1668,45 +1668,45 @@ export const MessageCampaignThreadPanels: React.FC<MessageCampaignThreadPanelsPr
               unreached: activeCampaignThread.unreached,
             });
             return focusLabel
-              ? <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">{focusLabel}</span>
+              ? <span className="rounded-xl border border-border-subtle bg-white px-3 py-1">{focusLabel}</span>
               : null;
           })()}
           {activeThreadCleanupRate != null && (
-            <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">
+            <span className="rounded-xl border border-border-subtle bg-white px-3 py-1">
               {activeThreadCleanupRate}% cleanup still pending
             </span>
           )}
           {activeThreadCleanupRate != null && (
-            <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">
+            <span className="rounded-xl border border-border-subtle bg-white px-3 py-1">
               {Math.max(0, 100 - activeThreadCleanupRate)}% follow-through ready
             </span>
           )}
-          <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">
+          <span className="rounded-xl border border-border-subtle bg-white px-3 py-1">
             {activeThreadReadyCount} of {activeThreadTargetedFallback} targeted recipients are already closed out
           </span>
-          <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">
+          <span className="rounded-xl border border-border-subtle bg-white px-3 py-1">
             {activeThreadReadyCount > 0 ? `${activeThreadReadyCount} recipients already closed out` : 'No recipients are already closed out'}
           </span>
-          <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">
+          <span className="rounded-xl border border-border-subtle bg-white px-3 py-1">
             {activeThreadCleanupCount} of {activeThreadTargetedFallback} targeted recipients still need cleanup
           </span>
-          <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">
+          <span className="rounded-xl border border-border-subtle bg-white px-3 py-1">
             {activeThreadCleanupCount > 0 ? `${activeThreadCleanupCount} recipients still need cleanup` : 'No recipients still need cleanup'}
           </span>
-          <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">Needs review {activeCampaignThread.failed}</span>
-          <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">Needs contact {activeCampaignThread.skipped}</span>
-          <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">Not reached {activeCampaignThread.unreached}</span>
-          <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">Opened {activeCampaignThread.opened}</span>
-          <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">Viewed {activeCampaignThread.viewed}</span>
-          <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">Clicked {activeCampaignThread.clicked}</span>
-          <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">Replied {activeCampaignThread.replied}</span>
-          <span className="rounded-lg border border-warning/20 bg-warning-light px-3 py-1 text-warning">Bounced {activeCampaignThread.bounced}</span>
+          <span className="rounded-xl border border-border-subtle bg-white px-3 py-1">Needs review {activeCampaignThread.failed}</span>
+          <span className="rounded-xl border border-border-subtle bg-white px-3 py-1">Needs contact {activeCampaignThread.skipped}</span>
+          <span className="rounded-xl border border-border-subtle bg-white px-3 py-1">Not reached {activeCampaignThread.unreached}</span>
+          <span className="rounded-xl border border-border-subtle bg-white px-3 py-1">Opened {activeCampaignThread.opened}</span>
+          <span className="rounded-xl border border-border-subtle bg-white px-3 py-1">Viewed {activeCampaignThread.viewed}</span>
+          <span className="rounded-xl border border-border-subtle bg-white px-3 py-1">Clicked {activeCampaignThread.clicked}</span>
+          <span className="rounded-xl border border-border-subtle bg-white px-3 py-1">Replied {activeCampaignThread.replied}</span>
+          <span className="rounded-xl border border-warning/20 bg-warning-light px-3 py-1 text-warning">Bounced {activeCampaignThread.bounced}</span>
               </>
             );
           })()}
         </div>
         {activeCampaignLatestMessage && (
-          <div className="mt-4 rounded-lg border border-border-subtle bg-white px-4 py-4">
+          <div className="mt-4 rounded-xl border border-border-subtle bg-white px-4 py-4">
             <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
               <div className="min-w-0">
                 <p className="text-[11px] font-semibold text-text-tertiary">Latest campaign message</p>
@@ -1729,11 +1729,11 @@ export const MessageCampaignThreadPanels: React.FC<MessageCampaignThreadPanelsPr
               <Button size="sm" variant="outline" disabled={!canCompose} onClick={() => onScheduleFollowUp('thank-you')}>Schedule thank you</Button>
             </div>
             <div className="mt-3 flex flex-wrap gap-2 text-xs text-text-tertiary">
-              <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">Recipients {getRecipientCount(activeCampaignLatestMessage)}</span>
-              <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">Delivered {activeCampaignLatestMessage.delivered_count ?? 0}</span>
-              <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">Needs review {activeCampaignLatestMessage.failed_count ?? 0}</span>
-              <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">Needs contact {getSkippedCount(activeCampaignLatestMessage, deliveries)}</span>
-              <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">Not reached {getUnreachedCount(activeCampaignLatestMessage, deliveries)}</span>
+              <span className="rounded-xl border border-border-subtle bg-surface-subtle px-3 py-1">Recipients {getRecipientCount(activeCampaignLatestMessage)}</span>
+              <span className="rounded-xl border border-border-subtle bg-surface-subtle px-3 py-1">Delivered {activeCampaignLatestMessage.delivered_count ?? 0}</span>
+              <span className="rounded-xl border border-border-subtle bg-surface-subtle px-3 py-1">Needs review {activeCampaignLatestMessage.failed_count ?? 0}</span>
+              <span className="rounded-xl border border-border-subtle bg-surface-subtle px-3 py-1">Needs contact {getSkippedCount(activeCampaignLatestMessage, deliveries)}</span>
+              <span className="rounded-xl border border-border-subtle bg-surface-subtle px-3 py-1">Not reached {getUnreachedCount(activeCampaignLatestMessage, deliveries)}</span>
               {(() => {
                 const engagement = getMessageEngagementStats(activeCampaignLatestMessage);
                 const deliveredRecipients = Math.max(0, Number(activeCampaignLatestMessage.delivered_count ?? 0));
@@ -1776,31 +1776,34 @@ export const MessageCampaignThreadPanels: React.FC<MessageCampaignThreadPanelsPr
                 const replyRate = deliveredRecipients > 0 && engagement.replied != null ? Math.round((engagement.replied / deliveredRecipients) * 100) : null;
                 return (
                   <>
-                    <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">
+                    <span className="rounded-xl border border-border-subtle bg-surface-subtle px-3 py-1">
                       {deliveredRecipients > 0 ? `${deliveredRecipients} recipients delivered` : '0 recipients delivered'}
                     </span>
-                    <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">{targetedRecipients} targeted recipients</span>
-                    <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">Targeted {targetedRecipients}</span>
-                    <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">{deliveredRecipients} of {targetedRecipients} targeted recipients have been delivered</span>
-                    {deliveredRate != null && <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">{deliveredRate}% delivered coverage</span>}
-                    {reviewRate != null && <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">{reviewRate}% review coverage</span>}
-                    {skippedRate != null && <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">{skippedRate}% needs contact</span>}
-                    {unreachedRate != null && <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">{unreachedRate}% unreached</span>}
-                    {cleanupRate != null && <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">{cleanupRate}% cleanup still pending</span>}
-                    {cleanupRate != null && <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">{Math.max(0, 100 - cleanupRate)}% follow-through ready</span>}
-                    <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">{followThroughReadyCount} of {targetedRecipients} targeted recipients are already closed out</span>
-                    <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">{followThroughReadyCount > 0 ? `${followThroughReadyCount} recipients already closed out` : 'No recipients are already closed out'}</span>
-                    <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">{cleanupCount} of {targetedRecipients} targeted recipients still need cleanup</span>
-                    <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">{cleanupCount > 0 ? `${cleanupCount} recipients still need cleanup` : 'No recipients still need cleanup'}</span>
-                    <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">{skippedRecipients} of {targetedRecipients} targeted recipients need contact details · {unreachedRecipients} of {targetedRecipients} targeted recipients were not reached yet</span>
-                    {followThroughFocusLabel && <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">{followThroughFocusLabel}</span>}
-                    {engagement.opened != null && <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">Opened {engagement.opened}</span>}
-                    {engagement.viewed != null && <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">Viewed {engagement.viewed}</span>}
-                    {engagement.clicked != null && <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">Clicked {engagement.clicked}</span>}
-                    {engagement.replied != null && <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">Replied {engagement.replied}</span>}
-                    {engagement.bounced != null && <span className="rounded-lg border border-warning/20 bg-warning-light px-3 py-1 text-warning">Bounced {engagement.bounced}</span>}
+                    <span className="rounded-xl border border-border-subtle bg-surface-subtle px-3 py-1">
+                      {deliveredRecipients > 0 ? `${deliveredRecipients} recipients delivered` : '0 recipients delivered'}
+                    </span>
+                    <span className="rounded-xl border border-border-subtle bg-surface-subtle px-3 py-1">{targetedRecipients} targeted recipients</span>
+                    <span className="rounded-xl border border-border-subtle bg-surface-subtle px-3 py-1">Targeted {targetedRecipients}</span>
+                    <span className="rounded-xl border border-border-subtle bg-surface-subtle px-3 py-1">{deliveredRecipients} of {targetedRecipients} targeted recipients have been delivered</span>
+                    {deliveredRate != null && <span className="rounded-xl border border-border-subtle bg-surface-subtle px-3 py-1">{deliveredRate}% delivered coverage</span>}
+                    {reviewRate != null && <span className="rounded-xl border border-border-subtle bg-surface-subtle px-3 py-1">{reviewRate}% review coverage</span>}
+                    {skippedRate != null && <span className="rounded-xl border border-border-subtle bg-surface-subtle px-3 py-1">{skippedRate}% needs contact</span>}
+                    {unreachedRate != null && <span className="rounded-xl border border-border-subtle bg-surface-subtle px-3 py-1">{unreachedRate}% unreached</span>}
+                    {cleanupRate != null && <span className="rounded-xl border border-border-subtle bg-surface-subtle px-3 py-1">{cleanupRate}% cleanup still pending</span>}
+                    {cleanupRate != null && <span className="rounded-xl border border-border-subtle bg-surface-subtle px-3 py-1">{Math.max(0, 100 - cleanupRate)}% follow-through ready</span>}
+                    <span className="rounded-xl border border-border-subtle bg-surface-subtle px-3 py-1">{followThroughReadyCount} of {targetedRecipients} targeted recipients are already closed out</span>
+                    <span className="rounded-xl border border-border-subtle bg-surface-subtle px-3 py-1">{followThroughReadyCount > 0 ? `${followThroughReadyCount} recipients already closed out` : 'No recipients are already closed out'}</span>
+                    <span className="rounded-xl border border-border-subtle bg-surface-subtle px-3 py-1">{cleanupCount} of {targetedRecipients} targeted recipients still need cleanup</span>
+                    <span className="rounded-xl border border-border-subtle bg-surface-subtle px-3 py-1">{cleanupCount > 0 ? `${cleanupCount} recipients still need cleanup` : 'No recipients still need cleanup'}</span>
+                    <span className="rounded-xl border border-border-subtle bg-surface-subtle px-3 py-1">{skippedRecipients} of {targetedRecipients} targeted recipients need contact details · {unreachedRecipients} of {targetedRecipients} targeted recipients were not reached yet</span>
+                    {followThroughFocusLabel && <span className="rounded-xl border border-border-subtle bg-surface-subtle px-3 py-1">{followThroughFocusLabel}</span>}
+                    {engagement.opened != null && <span className="rounded-xl border border-border-subtle bg-surface-subtle px-3 py-1">Opened {engagement.opened}</span>}
+                    {engagement.viewed != null && <span className="rounded-xl border border-border-subtle bg-surface-subtle px-3 py-1">Viewed {engagement.viewed}</span>}
+                    {engagement.clicked != null && <span className="rounded-xl border border-border-subtle bg-surface-subtle px-3 py-1">Clicked {engagement.clicked}</span>}
+                    {engagement.replied != null && <span className="rounded-xl border border-border-subtle bg-surface-subtle px-3 py-1">Replied {engagement.replied}</span>}
+                    {engagement.bounced != null && <span className="rounded-xl border border-warning/20 bg-warning-light px-3 py-1 text-warning">Bounced {engagement.bounced}</span>}
                     {targetedRecipients > 0 && (
-                      <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">
+                      <span className="rounded-xl border border-border-subtle bg-surface-subtle px-3 py-1">
                         {(openRate ?? 0)}% open · {(clickRate ?? 0)}% click · {(replyRate ?? 0)}% reply
                       </span>
                     )}
@@ -1840,7 +1843,7 @@ export const MessageReviewQueuePanels: React.FC<MessageReviewQueuePanelsProps> =
 }) => (
   <>
     {retryCandidates.length > 0 && (
-      <div className="rounded-lg border border-border-subtle bg-surface-subtle/30 p-4 mb-4">
+      <div className="mb-4 rounded-2xl border border-border-subtle bg-surface-subtle/30 p-4">
         <div className="flex items-center justify-between mb-3 gap-3">
           <div>
             <p className="text-xs font-semibold text-text-tertiary">Follow-up review</p>
@@ -1850,7 +1853,7 @@ export const MessageReviewQueuePanels: React.FC<MessageReviewQueuePanelsProps> =
         </div>
         <div className="space-y-2">
           {retryCandidates.map((message) => (
-            <div key={message.id} className="flex items-center justify-between gap-2 rounded-lg border border-border-subtle px-3 py-3 bg-white">
+            <div key={message.id} className="flex items-center justify-between gap-2 rounded-xl border border-border-subtle bg-white px-3 py-3">
               <div className="min-w-0">
                 <p className="text-sm font-medium text-text-primary truncate">{message.subject}</p>
                 <p className="text-[11px] text-text-tertiary">{message.status} · {message.channel} · {getRecipientCount(message)} recipients</p>
@@ -1859,7 +1862,7 @@ export const MessageReviewQueuePanels: React.FC<MessageReviewQueuePanelsProps> =
                 <button
                   onClick={() => onRetry(message)}
                   disabled={retryingMessageId !== null || !canCompose}
-                  className="text-xs px-2 py-1 rounded border border-border bg-white text-text-secondary disabled:opacity-50"
+                  className="rounded-xl border border-border bg-white px-2 py-1 text-xs text-text-secondary disabled:opacity-50"
                 >
                   {retryingMessageId === message.id ? 'Sending…' : 'Send again'}
                 </button>
@@ -1873,7 +1876,7 @@ export const MessageReviewQueuePanels: React.FC<MessageReviewQueuePanelsProps> =
     )}
 
     {reviewCandidates.length > 0 && (
-      <div className="rounded-lg border border-border-subtle bg-surface-subtle/45 p-4 mb-4">
+      <div className="mb-4 rounded-2xl border border-border-subtle bg-surface-subtle/45 p-4">
         <div className="flex items-center justify-between mb-3 gap-3">
           <div>
             <p className="text-xs font-semibold text-text-tertiary">Review queue</p>
@@ -1885,7 +1888,7 @@ export const MessageReviewQueuePanels: React.FC<MessageReviewQueuePanelsProps> =
           {reviewCandidates.map((message) => {
             const rowSummary = getMessageRowFollowThroughSummary(message, deliveries);
             return (
-              <div key={message.id} className="flex items-center justify-between gap-3 rounded-lg border border-border-subtle px-3 py-3 bg-white">
+              <div key={message.id} className="flex items-center justify-between gap-3 rounded-xl border border-border-subtle bg-white px-3 py-3">
                 <div className="min-w-0">
                   <p className="text-sm font-medium text-text-primary truncate">{message.subject}</p>
                   <p className="text-[11px] text-text-tertiary">
@@ -1919,7 +1922,7 @@ export const MessageReviewQueuePanels: React.FC<MessageReviewQueuePanelsProps> =
                 <div className="text-right">
                   <button
                     onClick={() => onViewMessage(message)}
-                    className="text-xs px-2 py-1 rounded border border-border bg-white text-text-secondary"
+                    className="rounded-xl border border-border bg-white px-2 py-1 text-xs text-text-secondary"
                   >
                     Review
                   </button>
@@ -2128,7 +2131,7 @@ export const MessageHistoryCard: React.FC<MessageHistoryCardProps> = ({
               placeholder="Search messages"
               className="w-[180px]"
             />
-            <select value={historyStatusFilter} onChange={(e) => onSetHistoryStatusFilter(e.target.value as MessageHistoryStatusFilter)} className="px-2.5 py-1.5 text-xs bg-surface border border-border rounded-lg text-text-secondary">
+            <select value={historyStatusFilter} onChange={(e) => onSetHistoryStatusFilter(e.target.value as MessageHistoryStatusFilter)} className="rounded-xl border border-border bg-surface px-2.5 py-1.5 text-xs text-text-secondary">
               <option value="all">All status</option>
               <option value="active">Active</option>
               <option value="sent">Sent</option>
@@ -2137,18 +2140,18 @@ export const MessageHistoryCard: React.FC<MessageHistoryCardProps> = ({
               <option value="failed">Needs review</option>
               <option value="draft">Draft</option>
             </select>
-            <select value={historyChannelFilter} onChange={(e) => onSetHistoryChannelFilter(e.target.value as MessageHistoryChannelFilter)} className="px-2.5 py-1.5 text-xs bg-surface border border-border rounded-lg text-text-secondary">
+            <select value={historyChannelFilter} onChange={(e) => onSetHistoryChannelFilter(e.target.value as MessageHistoryChannelFilter)} className="rounded-xl border border-border bg-surface px-2.5 py-1.5 text-xs text-text-secondary">
               <option value="all">All channels</option>
               <option value="email">Email</option>
               <option value="sms">Text</option>
             </select>
-            <select value={historyAudienceFilter} onChange={(e) => onSetHistoryAudienceFilter(e.target.value)} className="px-2.5 py-1.5 text-xs bg-surface border border-border rounded-lg text-text-secondary">
+            <select value={historyAudienceFilter} onChange={(e) => onSetHistoryAudienceFilter(e.target.value)} className="rounded-xl border border-border bg-surface px-2.5 py-1.5 text-xs text-text-secondary">
               <option value="all">All audiences</option>
               {historyAudienceOptions.map((audience) => (
                 <option key={audience} value={audience}>{audience}</option>
               ))}
             </select>
-            <select value={historyDeliveryFilter} onChange={(e) => onSetHistoryDeliveryFilter(e.target.value as MessageHistoryDeliveryFilter)} className="px-2.5 py-1.5 text-xs bg-surface border border-border rounded-lg text-text-secondary">
+            <select value={historyDeliveryFilter} onChange={(e) => onSetHistoryDeliveryFilter(e.target.value as MessageHistoryDeliveryFilter)} className="rounded-xl border border-border bg-surface px-2.5 py-1.5 text-xs text-text-secondary">
               <option value="all">All delivery states</option>
               <option value="delivered">Has delivered</option>
               <option value="failed">Needs review</option>
@@ -2160,18 +2163,18 @@ export const MessageHistoryCard: React.FC<MessageHistoryCardProps> = ({
       </div>
 
       <div className="flex flex-wrap gap-2 mb-4">
-        <button type="button" onClick={() => { onSetHistoryStatusFilter('failed'); onSetHistoryChannelFilter('all'); onSetHistoryDeliveryFilter('failed'); }} className="text-[11px] px-3 py-1.5 rounded-lg border border-border-subtle bg-surface-subtle/30 text-text-secondary hover:border-primary/40 hover:text-primary">Needs review</button>
-        <button type="button" onClick={() => { onSetHistoryDeliveryFilter('skipped'); onSetHistoryStatusFilter('all'); onSetHistoryChannelFilter('all'); }} className="text-[11px] px-3 py-1.5 rounded-lg border border-border-subtle bg-surface-subtle/30 text-text-secondary hover:border-primary/40 hover:text-primary">Needs contact details</button>
-        <button type="button" onClick={() => { onSetHistoryDeliveryFilter('unreached'); onSetHistoryStatusFilter('all'); onSetHistoryChannelFilter('all'); }} className="text-[11px] px-3 py-1.5 rounded-lg border border-border-subtle bg-surface-subtle/30 text-text-secondary hover:border-primary/40 hover:text-primary">Not reached yet</button>
-        <button type="button" onClick={() => { onSetHistoryStatusFilter('scheduled'); onSetHistoryChannelFilter('all'); }} className="text-[11px] px-3 py-1.5 rounded-lg border border-border-subtle bg-surface-subtle/30 text-text-secondary hover:border-primary/40 hover:text-primary">Show scheduled</button>
-        <button type="button" onClick={() => { onSetHistoryStatusFilter('all'); onSetHistoryChannelFilter('sms'); }} className="text-[11px] px-3 py-1.5 rounded-lg border border-border-subtle bg-surface-subtle/30 text-text-secondary hover:border-primary/40 hover:text-primary">Text only</button>
-        <button type="button" onClick={() => { onSetHistoryStatusFilter('all'); onSetHistoryChannelFilter('email'); }} className="text-[11px] px-3 py-1.5 rounded-lg border border-border-subtle bg-surface-subtle/30 text-text-secondary hover:border-primary/40 hover:text-primary">Email only</button>
-        <button type="button" onClick={() => { onSetHistoryStatusFilter('all'); onSetHistoryChannelFilter('all'); onSetHistoryAudienceFilter('all'); onSetHistoryDeliveryFilter('all'); onSetHistoryCampaignFilter(''); onSetHistorySearch(''); }} className="text-[11px] px-3 py-1.5 rounded-lg border border-border-subtle bg-white text-text-secondary hover:border-primary/40 hover:text-primary">Reset filters</button>
+        <button type="button" onClick={() => { onSetHistoryStatusFilter('failed'); onSetHistoryChannelFilter('all'); onSetHistoryDeliveryFilter('failed'); }} className="rounded-xl border border-border-subtle bg-surface-subtle/30 px-3 py-1.5 text-[11px] text-text-secondary hover:border-primary/40 hover:text-primary">Needs review</button>
+        <button type="button" onClick={() => { onSetHistoryDeliveryFilter('skipped'); onSetHistoryStatusFilter('all'); onSetHistoryChannelFilter('all'); }} className="rounded-xl border border-border-subtle bg-surface-subtle/30 px-3 py-1.5 text-[11px] text-text-secondary hover:border-primary/40 hover:text-primary">Needs contact details</button>
+        <button type="button" onClick={() => { onSetHistoryDeliveryFilter('unreached'); onSetHistoryStatusFilter('all'); onSetHistoryChannelFilter('all'); }} className="rounded-xl border border-border-subtle bg-surface-subtle/30 px-3 py-1.5 text-[11px] text-text-secondary hover:border-primary/40 hover:text-primary">Not reached yet</button>
+        <button type="button" onClick={() => { onSetHistoryStatusFilter('scheduled'); onSetHistoryChannelFilter('all'); }} className="rounded-xl border border-border-subtle bg-surface-subtle/30 px-3 py-1.5 text-[11px] text-text-secondary hover:border-primary/40 hover:text-primary">Show scheduled</button>
+        <button type="button" onClick={() => { onSetHistoryStatusFilter('all'); onSetHistoryChannelFilter('sms'); }} className="rounded-xl border border-border-subtle bg-surface-subtle/30 px-3 py-1.5 text-[11px] text-text-secondary hover:border-primary/40 hover:text-primary">Text only</button>
+        <button type="button" onClick={() => { onSetHistoryStatusFilter('all'); onSetHistoryChannelFilter('email'); }} className="rounded-xl border border-border-subtle bg-surface-subtle/30 px-3 py-1.5 text-[11px] text-text-secondary hover:border-primary/40 hover:text-primary">Email only</button>
+        <button type="button" onClick={() => { onSetHistoryStatusFilter('all'); onSetHistoryChannelFilter('all'); onSetHistoryAudienceFilter('all'); onSetHistoryDeliveryFilter('all'); onSetHistoryCampaignFilter(''); onSetHistorySearch(''); }} className="rounded-xl border border-border-subtle bg-white px-3 py-1.5 text-[11px] text-text-secondary hover:border-primary/40 hover:text-primary">Reset filters</button>
       </div>
 
       {historyCampaignFilter && (
         <div className="mb-4 flex items-center gap-2 text-xs text-text-tertiary">
-          <span className="rounded-lg border border-primary/20 bg-primary-light/40 px-3 py-1 text-primary">Campaign thread: {historyCampaignFilter}</span>
+          <span className="rounded-xl border border-primary/20 bg-primary-light/40 px-3 py-1 text-primary">Campaign thread: {historyCampaignFilter}</span>
           <button type="button" onClick={() => onSetHistoryCampaignFilter('')} className="text-primary hover:underline">Clear</button>
         </div>
       )}
@@ -2227,7 +2230,7 @@ export const MessageHistoryCard: React.FC<MessageHistoryCardProps> = ({
       />
 
       {filteredHistory.length === 0 ? (
-        <div className="rounded-lg border border-border-subtle bg-surface-subtle py-14 text-center">
+        <div className="rounded-2xl border border-border-subtle bg-surface-subtle py-14 text-center">
           <Mail className="w-12 h-12 text-text-tertiary mx-auto mb-4" />
           <p className="text-text-secondary">No messages match these filters</p>
           <p className="text-sm text-text-tertiary mt-1">Try a different status, channel, audience, or search term.</p>
@@ -2241,7 +2244,7 @@ export const MessageHistoryCard: React.FC<MessageHistoryCardProps> = ({
             return (
               <div
                 key={message.id}
-                className="w-full rounded-lg border border-border-subtle bg-white p-5 transition-colors hover:border-primary/30 group"
+                className="group w-full rounded-2xl border border-border-subtle bg-white p-5 transition-colors hover:border-primary/30"
               >
                 <button
                   type="button"

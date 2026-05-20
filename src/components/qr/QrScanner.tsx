@@ -143,7 +143,7 @@ export const QrScanner: React.FC<QrScannerProps> = ({
   }, [cameraError, visualState]);
 
   return (
-    <div className="rounded-lg border border-border/60 bg-surface-subtle/20 p-3">
+    <div className="rounded-xl border border-border/60 bg-surface-subtle/20 p-3">
       <div className="flex flex-wrap items-center gap-2">
         <Button type="button" variant="outline" size="sm" onClick={() => void startCamera()} disabled={busy || visualState === 'camera-unavailable'}>
           <Camera className="h-4 w-4" />
@@ -156,14 +156,14 @@ export const QrScanner: React.FC<QrScannerProps> = ({
           </Button>
         )}
         {busy && (
-          <span className="inline-flex items-center gap-1 rounded-md border border-primary/20 bg-primary/5 px-2 py-1 text-[11px] text-primary">
+          <span className="inline-flex items-center gap-1 rounded-xl border border-primary/20 bg-primary/5 px-2 py-1 text-[11px] text-primary">
             <Loader2 className="h-3.5 w-3.5 animate-spin" />
             Validating
           </span>
         )}
       </div>
 
-      <div className="mt-3 overflow-hidden rounded-lg border border-border/50 bg-black/90">
+      <div className="mt-3 overflow-hidden rounded-xl border border-border/50 bg-black/90">
         <div className="relative aspect-[4/3] w-full">
           <video ref={videoRef} className={`h-full w-full object-cover ${cameraActive ? 'block' : 'hidden'}`} muted playsInline />
           {!cameraActive && (

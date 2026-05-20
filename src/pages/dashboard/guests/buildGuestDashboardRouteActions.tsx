@@ -2,7 +2,15 @@ import { Badge } from '../../../components/ui';
 import { getGuestIssueCount } from './guestDashboardUtils';
 
 export function buildGuestDashboardRouteActions(args: any) {
+  const ensureCanEditGuests = () => {
+    if (!args.isGuestsReadOnly) return true;
+    args.toast('Viewer mode is read-only.', 'info');
+    return false;
+  };
+
   const selectUnresolvedGuests = () => {
+    if (!ensureCanEditGuests()) return;
+
     const ids = args.displayedGuests.filter((guest: any) => getGuestIssueCount(guest) > 0).map((guest: any) => guest.id);
     args.setSelectedGuestIds(new Set(ids));
     args.toast(
@@ -30,23 +38,31 @@ export function buildGuestDashboardRouteActions(args: any) {
   return {
     getStatusBadge,
     onAddGuest: () => {
+      if (!ensureCanEditGuests()) return;
       args.resetForm();
       args.setShowAddModal(true);
     },
-    onClearAllCheckIns: () => { void args.handleClearAllCheckIns(); },
-    onCopyAddressCollectionLink: () => { void args.copyContactRequestLink(); },
-    onCopyChecklist: () => { void args.handleCopyChecklist(); },
-    onCopyContactRequestLink: () => { void args.copyContactRequestLink(); },
-    onCopyExceptionChecklist: () => { void args.handleCopyExceptionChecklist(); },
-    onCopyFilteredEmails: () => { void args.handleCopyFilteredEmails(); },
-    onCopyMissingContactList: () => { void args.handleCopyNoContactChecklist(); },
-    onCopyMissingMealChecklist: () => { void args.handleCopyMissingMealChecklist(); },
-    onCopyTextRsvpLinks: () => { void args.copySmsRsvpLinksForFiltered(); },
+    onClearAllCheckIns: () => {
+      if (!ensureCanEditGuests()) return;
+      void args.handleClearAllCheckIns();
+    },
+    onCopyAddressCollectionLink: () => args.copyContactRequestLink(),
+    onCopyChecklist: () => args.handleCopyChecklist(),
+    onCopyContactRequestLink: () => args.copyContactRequestLink(),
+    onCopyExceptionChecklist: () => args.handleCopyExceptionChecklist(),
+    onCopyFilteredEmails: () => args.handleCopyFilteredEmails(),
+    onCopyMissingContactList: () => args.handleCopyNoContactChecklist(),
+    onCopyMissingMealChecklist: () => args.handleCopyMissingMealChecklist(),
+    onCopyTextRsvpLinks: () => args.copySmsRsvpLinksForFiltered(),
     onDeleteAllGuests: () => {
+      if (!ensureCanEditGuests()) return;
       args.setDeleteAllConfirmInput('');
       args.setShowDeleteAllModal(true);
     },
-    onDeleteGuest: (guestId: string) => { void args.handleDeleteGuest(guestId, args.confirmDeleteId); },
+    onDeleteGuest: (guestId: string) => {
+      if (!ensureCanEditGuests()) return;
+      void args.handleDeleteGuest(guestId, args.confirmDeleteId);
+    },
     onDryRun: () => { void args.handleCopyCampaignDryRun(); },
     onFocusCeremonyNo: () => {
       args.setSearchQuery('');
@@ -112,9 +128,19 @@ export function buildGuestDashboardRouteActions(args: any) {
       args.setSearchQuery('');
       args.setFilterStatus('reception-no');
     },
-    onHeaderAddGuest: () => args.setShowAddModal(true),
-    onMarkAllDueThankYous: () => { void args.handleMarkAllDueThankYous(); },
-    onMergeIntoHousehold: () => args.handleMergeIntoHousehold(args.selectedGuestIds, () => args.setSelectedGuestIds(new Set())),
+    onHeaderAddGuest: () => {
+      if (!ensureCanEditGuests()) return;
+      args.resetForm();
+      args.setShowAddModal(true);
+    },
+    onMarkAllDueThankYous: () => {
+      if (!ensureCanEditGuests()) return;
+      void args.handleMarkAllDueThankYous();
+    },
+    onMergeIntoHousehold: () => {
+      if (!ensureCanEditGuests()) return;
+      args.handleMergeIntoHousehold(args.selectedGuestIds, () => args.setSelectedGuestIds(new Set()));
+    },
     onNextUnresolved: () => {
       if (!args.nextUnresolvedGuest) return;
       args.setSearchQuery(
@@ -124,7 +150,10 @@ export function buildGuestDashboardRouteActions(args: any) {
       );
       args.setViewMode('list');
     },
-    onOpenCampaignModal: () => args.setShowCampaignModal(true),
+    onOpenCampaignModal: () => {
+      if (!ensureCanEditGuests()) return;
+      args.setShowCampaignModal(true);
+    },
     onReviewPending: () => {
       args.setFilterStatus('pending');
       args.setViewMode('list');
@@ -135,8 +164,12 @@ export function buildGuestDashboardRouteActions(args: any) {
       args.setExtraFilters([]);
     },
     onSelectUnresolved: selectUnresolvedGuests,
-    onSendDueReminders: () => { void args.handleSendDueRemindersNow(); },
+    onSendDueReminders: () => {
+      if (!ensureCanEditGuests()) return;
+      void args.handleSendDueRemindersNow();
+    },
     onSendDueRemindersToggle: () => {
+      if (!ensureCanEditGuests()) return;
       void (async () => {
         const previous = args.autoRemindersEnabled;
         const next = !previous;
@@ -150,9 +183,16 @@ export function buildGuestDashboardRouteActions(args: any) {
         }
       })();
     },
-    onSendFilteredInvitations: () => { void args.handleSendBulkInvitations(); },
-    onSendSelectedInvitations: () => { void args.handleSendSelectedInvitations(); },
+    onSendFilteredInvitations: () => {
+      if (!ensureCanEditGuests()) return;
+      void args.handleSendBulkInvitations();
+    },
+    onSendSelectedInvitations: () => {
+      if (!ensureCanEditGuests()) return;
+      void args.handleSendSelectedInvitations();
+    },
     onToggleCheckInMode: () => {
+      if (!ensureCanEditGuests()) return;
       args.setCheckInMode((value: boolean) => !value);
       args.setViewMode('list');
     },
@@ -162,6 +202,9 @@ export function buildGuestDashboardRouteActions(args: any) {
       args.setViewMode((value: string) => (value === 'households' ? 'list' : 'households'));
     },
     onToggleInsights: () => args.setShowInsights((value: boolean) => !value),
-    onUndoLastCheckIn: () => { void args.handleUndoLastCheckIn(); },
+    onUndoLastCheckIn: () => {
+      if (!ensureCanEditGuests()) return;
+      void args.handleUndoLastCheckIn();
+    },
   };
 }

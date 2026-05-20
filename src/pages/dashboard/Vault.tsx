@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '../../components/ui';
 import { X } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
@@ -30,7 +31,7 @@ const ToastList: React.FC<{ toasts: Toast[] }> = ({ toasts }) => (
     {toasts.map(t => (
       <div
         key={t.id}
-        className={`px-4 py-3.5 rounded-lg text-sm sm:text-[15px] font-semibold border ${
+        className={`rounded-2xl border px-4 py-3.5 text-sm font-semibold sm:text-[15px] ${
           t.type === 'error'
             ? 'bg-surface text-text-primary border-border-subtle'
             : 'bg-surface text-text-primary border-border-subtle'
@@ -44,15 +45,34 @@ const ToastList: React.FC<{ toasts: Toast[] }> = ({ toasts }) => (
 
 export const DashboardVault: React.FC = () => {
   const { user, isDemoMode } = useAuth();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [activeFormConfigId, setActiveFormConfigId] = useState<string | null>(null);
   const [editingConfig, setEditingConfig] = useState<VaultConfig | null>(null);
   const [toasts, setToasts] = useState<Toast[]>([]);
+  const toastTimeoutsRef = useRef<number[]>([]);
+  const previousWeddingSiteIdRef = useRef<string | null>(null);
+
+  useEffect(() => () => {
+    toastTimeoutsRef.current.forEach((timer) => window.clearTimeout(timer));
+    toastTimeoutsRef.current = [];
+  }, []);
 
   function toast(message: string, type: Toast['type'] = 'success') {
     const id = Date.now();
     setToasts(prev => [...prev, { id, message, type }]);
-    setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 4000);
+    const timer = window.setTimeout(() => {
+      setToasts(prev => prev.filter(t => t.id !== id));
+      toastTimeoutsRef.current = toastTimeoutsRef.current.filter((entry) => entry !== timer);
+    }, 4000);
+    toastTimeoutsRef.current.push(timer);
   }
+
+  const resetVaultDashboardInteractionState = useCallback(() => {
+    setActiveFormConfigId(null);
+    setEditingConfig(null);
+  }, []);
 
   const {
     connectingDrive,
@@ -118,6 +138,53 @@ export const DashboardVault: React.FC = () => {
   const driveConnectedHealthy = googleDriveConnected && !driveNeedsReconnect;
   const showReconnectButton = !googleDriveConnected || driveNeedsReconnect;
 
+  useEffect(() => {
+    if (
+      previousWeddingSiteIdRef.current &&
+      weddingSiteId &&
+      previousWeddingSiteIdRef.current !== weddingSiteId
+    ) {
+      resetVaultDashboardInteractionState();
+    }
+    previousWeddingSiteIdRef.current = weddingSiteId;
+  }, [resetVaultDashboardInteractionState, weddingSiteId]);
+
+  useEffect(() => {
+    if (!weddingSiteId && !isDemoMode) {
+      resetVaultDashboardInteractionState();
+    }
+  }, [isDemoMode, resetVaultDashboardInteractionState, weddingSiteId]);
+
+  useEffect(() => {
+    if (searchParams.get('tool') !== 'anniversary-capsules') return;
+
+    const consumeToolParam = () => {
+      const nextParams = new URLSearchParams(searchParams);
+      nextParams.delete('tool');
+      const nextSearch = nextParams.toString();
+      navigate(
+        {
+          pathname: location.pathname,
+          search: nextSearch ? `?${nextSearch}` : '',
+          hash: location.hash,
+        },
+        { replace: true },
+      );
+    };
+
+    const scrollToTarget = () => {
+      const target = document.getElementById('vault-anniversary-capsules');
+      if (!target) return false;
+      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      consumeToolParam();
+      return true;
+    };
+
+    if (scrollToTarget()) return;
+    const timeout = window.setTimeout(scrollToTarget, 50);
+    return () => window.clearTimeout(timeout);
+  }, [location.hash, location.pathname, navigate, searchParams]);
+
   return (
     <VaultDashboardRouteView error={loadError} loading={loading}>
       <VaultDashboardLiveContent
@@ -171,7 +238,7 @@ export const DashboardVault: React.FC = () => {
                 </div>
                 <button
                   onClick={() => handleDeleteVault(config.id)}
-                  className="absolute -top-2 -right-2 w-6 h-6 rounded-lg bg-surface border border-border-subtle text-text-secondary flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-surface-subtle"
+                  className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-xl border border-border-subtle bg-surface text-text-secondary opacity-0 transition-opacity group-hover:opacity-100 hover:bg-surface-subtle"
                   title="Remove this vault"
                 >
                   <X className="w-3 h-3" />

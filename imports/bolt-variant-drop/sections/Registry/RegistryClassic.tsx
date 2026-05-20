@@ -15,7 +15,7 @@ export default function RegistryClassic({ section }: RegistryClassicProps) {
           Your presence is the greatest gift, but if you wish to honor us with a gift, we've registered at the following stores.
         </p>
         <div className="flex flex-wrap justify-center gap-4">
-          <button className="px-8 py-3 bg-rose-500 text-white rounded-lg hover:bg-rose-600 transition-colors">
+          <button className="px-8 py-3 bg-rose-500 text-white rounded-xl hover:bg-rose-600 transition-colors">
             View Registry
           </button>
         </div>

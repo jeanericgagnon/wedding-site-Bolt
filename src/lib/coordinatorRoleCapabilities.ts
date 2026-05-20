@@ -1,4 +1,4 @@
-import type { PlannerAccessRole } from './plannerAccess';
+import type { PlannerAccessRole, PlannerPermissionKey } from './plannerAccess';
 import {
   canManageCoordinatorCheckIn,
   canManageCoordinatorQna,
@@ -14,12 +14,15 @@ export type CoordinatorRoleCapability = {
   detail: string;
 };
 
-export const buildCoordinatorRoleCapabilities = (role: PlannerAccessRole): CoordinatorRoleCapability[] => {
-  const canCheckIn = canManageCoordinatorCheckIn(role);
-  const canTimeline = canManageCoordinatorTimeline(role);
-  const canQna = canManageCoordinatorQna(role);
-  const canAlertsNow = canSendImmediateCoordinatorAlerts(role);
-  const canAlertsLater = canScheduleCoordinatorAlerts(role);
+export const buildCoordinatorRoleCapabilities = (
+  role: PlannerAccessRole,
+  permissions?: PlannerPermissionKey[] | null,
+): CoordinatorRoleCapability[] => {
+  const canCheckIn = canManageCoordinatorCheckIn(role, permissions);
+  const canTimeline = canManageCoordinatorTimeline(role, permissions);
+  const canQna = canManageCoordinatorQna(role, permissions);
+  const canAlertsNow = canSendImmediateCoordinatorAlerts(role, permissions);
+  const canAlertsLater = canScheduleCoordinatorAlerts(role, permissions);
 
   return [
     {

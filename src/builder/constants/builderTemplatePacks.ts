@@ -1,9 +1,55 @@
-import { BuilderTemplateDefinition, TemplateMoodTag } from '../../types/builder/template';
+import { BuilderTemplateDefinition, TemplateMoodTag, TemplatePageSlot, TemplateSectionSlot } from '../../types/builder/template';
 import { getAllTemplates } from '../../templates/registry';
 import { BuilderSectionType } from '../../types/builder/section';
 import { getTemplateLaunchOrder, getTemplateLaunchTier, isLaunchVisibleTemplateId } from './templateLaunchQuality';
 
 const withBasePath = (path: string) => `${import.meta.env.BASE_URL}${path.replace(/^\/+/, '')}`;
+
+const sectionTypesForPages = (
+  sectionComposition: TemplateSectionSlot[],
+  types: BuilderSectionType[],
+): TemplateSectionSlot[] => sectionComposition.filter((slot) => types.includes(slot.type));
+
+export function inferTemplatePages(sectionComposition: TemplateSectionSlot[]): TemplatePageSlot[] {
+  const homeSections = sectionTypesForPages(sectionComposition, ['hero', 'story', 'venue', 'schedule', 'gallery']);
+  const travelSections = sectionTypesForPages(sectionComposition, ['travel', 'accommodations', 'directions']);
+  const rsvpSections = sectionTypesForPages(sectionComposition, ['rsvp', 'faq', 'contact']);
+  const registrySections = sectionTypesForPages(sectionComposition, ['registry']);
+  const assigned = new Set([
+    ...homeSections,
+    ...travelSections,
+    ...rsvpSections,
+    ...registrySections,
+  ]);
+  const otherSections = sectionComposition.filter((slot) => !assigned.has(slot));
+
+  const pages: TemplatePageSlot[] = [{
+    title: 'Home',
+    slug: 'home',
+    isHome: true,
+    sectionComposition: [...homeSections, ...otherSections],
+  }];
+
+  if (travelSections.length > 0) {
+    pages.push({ title: 'Travel', slug: 'travel', sectionComposition: travelSections });
+  }
+  if (rsvpSections.length > 0) {
+    pages.push({ title: 'RSVP', slug: 'rsvp', sectionComposition: rsvpSections });
+  }
+  if (registrySections.length > 0) {
+    pages.push({ title: 'Registry', slug: 'registry', sectionComposition: registrySections });
+  }
+
+  return pages;
+}
+
+function withInferredTemplatePages(template: BuilderTemplateDefinition): BuilderTemplateDefinition {
+  if (template.pages && template.pages.length > 0) return template;
+  return {
+    ...template,
+    pages: inferTemplatePages(template.sectionComposition),
+  };
+}
 
 const SAYULITA_TRAVEL_LIST_SETTINGS = {
   showTitle: true,
@@ -521,6 +567,7 @@ function toBuilderTemplateFromLegacy(template: ReturnType<typeof getAllTemplates
     previewThumbnailPath: withBasePath(`/template-previews/${template.id}.webp`),
     defaultThemeId: template.defaultThemePreset,
     sectionComposition,
+    pages: inferTemplatePages(sectionComposition),
     sectionVariantMap,
     suggestedFonts: { heading: 'Playfair Display', body: 'Inter' },
     spacingProfile: 'balanced',
@@ -534,8 +581,12 @@ const LEGACY_TEMPLATE_PACKS: Record<string, BuilderTemplateDefinition> = Object.
 );
 
 const MERGED_TEMPLATE_PACKS: Record<string, BuilderTemplateDefinition> = {
-  ...LEGACY_TEMPLATE_PACKS,
-  ...BUILDER_TEMPLATE_PACKS,
+  ...Object.fromEntries(
+    Object.entries(LEGACY_TEMPLATE_PACKS).map(([id, template]) => [id, withInferredTemplatePages(template)])
+  ),
+  ...Object.fromEntries(
+    Object.entries(BUILDER_TEMPLATE_PACKS).map(([id, template]) => [id, withInferredTemplatePages(template)])
+  ),
 };
 
 function withLaunchTier(template: BuilderTemplateDefinition): BuilderTemplateDefinition {

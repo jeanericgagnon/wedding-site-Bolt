@@ -32,6 +32,7 @@ export const DashboardItinerary: React.FC = () => {
         },
       });
     });
+  const { events, hasActiveSite, loadEvents, loading, setEvents } = useItineraryDashboardData({ isDemoMode, toast });
   const {
     autoCreateAlbum,
     editingEvent,
@@ -62,9 +63,7 @@ export const DashboardItinerary: React.FC = () => {
     templateDate,
     templateStart,
     timelineBusy,
-  } = useItineraryDashboardUiState();
-
-  const { events, loadEvents, loading, setEvents } = useItineraryDashboardData({ isDemoMode, toast });
+  } = useItineraryDashboardUiState({ hasActiveSite, isDemoMode });
 
   const {
     handleCreateSmartTemplate,
@@ -134,6 +133,7 @@ export const DashboardItinerary: React.FC = () => {
         setEditingEvent={setEditingEvent}
         setFormData={setFormData}
         setSaveError={setSaveError}
+        setSaveNotice={setSaveNotice}
         setSelectedEventId={setSelectedEventId}
         setShiftFromEventId={setShiftFromEventId}
         setShiftMinutes={setShiftMinutes}

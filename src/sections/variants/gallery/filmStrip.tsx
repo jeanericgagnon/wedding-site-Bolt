@@ -58,6 +58,12 @@ const GalleryFilmStrip: React.FC<SectionComponentProps<GalleryFilmStripData>> = 
   const images = sanitizePublicGalleryImages(data.images);
 
   useEffect(() => {
+    setLightboxIndex(null);
+    setActiveIndex(0);
+    setIsGlidePaused(false);
+  }, [data.images]);
+
+  useEffect(() => {
     const el = sectionRef.current;
     if (!el) return;
     const obs = new IntersectionObserver(([entry]) => {
@@ -180,7 +186,7 @@ const GalleryFilmStrip: React.FC<SectionComponentProps<GalleryFilmStripData>> = 
                       <button
                         key={`${img.id}-${i}`}
                         onClick={() => setActiveIndex(idx)}
-                        className={`flex-shrink-0 w-16 h-16 md:w-20 md:h-20 rounded-lg overflow-hidden transition-all ${
+                        className={`flex-shrink-0 w-16 h-16 md:w-20 md:h-20 rounded-xl overflow-hidden transition-all ${
                           idx === activeIndex
                             ? 'ring-2 ring-white scale-105 opacity-100'
                             : 'opacity-40 hover:opacity-70 scale-100'
@@ -202,7 +208,7 @@ const GalleryFilmStrip: React.FC<SectionComponentProps<GalleryFilmStripData>> = 
                   <button
                     key={img.id}
                     onClick={() => setActiveIndex(idx)}
-                    className={`flex-shrink-0 w-16 h-16 md:w-20 md:h-20 rounded-lg overflow-hidden transition-all snap-start ${
+                    className={`flex-shrink-0 w-16 h-16 md:w-20 md:h-20 rounded-xl overflow-hidden transition-all snap-start ${
                       idx === activeIndex
                         ? 'ring-2 ring-white scale-105 opacity-100'
                         : 'opacity-40 hover:opacity-70 scale-100'
@@ -233,7 +239,7 @@ const GalleryFilmStrip: React.FC<SectionComponentProps<GalleryFilmStripData>> = 
             <ChevronLeft size={20} />
           </button>
           <div className="max-w-5xl max-h-[85vh] px-16" onClick={e => e.stopPropagation()}>
-            <img src={images[lightboxIndex]?.url} alt={images[lightboxIndex]?.alt ?? 'Gallery photo'} className="max-w-full max-h-[85vh] object-contain rounded-lg" />
+            <img src={images[lightboxIndex]?.url} alt={images[lightboxIndex]?.alt ?? 'Gallery photo'} className="max-w-full max-h-[85vh] object-contain rounded-xl" />
           </div>
           <button onClick={e => { e.stopPropagation(); nextLightbox(); }} className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors">
             <ChevronRight size={20} />

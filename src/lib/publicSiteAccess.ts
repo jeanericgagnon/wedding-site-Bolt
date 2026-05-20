@@ -44,8 +44,23 @@ function asRecord(value: unknown): Record<string, unknown> | null {
   return value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : null;
 }
 
+function builderString(value: unknown): string {
+  if (typeof value === 'string') return value;
+  const record = asRecord(value);
+  return typeof record?.value === 'string' ? record.value : '';
+}
+
+function finiteNumber(value: unknown): number | null {
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+  if (typeof value === 'string' && value.trim()) {
+    const parsed = Number(value);
+    if (Number.isFinite(parsed)) return parsed;
+  }
+  return null;
+}
+
 function nullableFiniteNumber(value: unknown): number | null {
-  return typeof value === 'number' && Number.isFinite(value) ? value : null;
+  return finiteNumber(value);
 }
 
 function sanitizePublicRenderSection(value: unknown) {
@@ -57,7 +72,7 @@ function sanitizePublicRenderSection(value: unknown) {
     type: typeof section?.type === 'string' ? section.type : '',
     variant: typeof section?.variant === 'string' ? section.variant : 'default',
     enabled: section?.enabled === true,
-    orderIndex: typeof section?.orderIndex === 'number' ? section.orderIndex : 0,
+    orderIndex: finiteNumber(section?.orderIndex) ?? 0,
     settings: sanitizePublicSectionSettings(section?.type, section?.variant, section?.settings),
     ...(publicBindings ? { bindings: publicBindings } : {}),
     ...(publicStyleOverrides ? { styleOverrides: publicStyleOverrides } : {}),
@@ -66,14 +81,16 @@ function sanitizePublicRenderSection(value: unknown) {
 
 function sanitizePublicRenderPage(value: unknown) {
   const page = asRecord(value);
+  const meta = asRecord(page?.meta);
   return {
     id: typeof page?.id === 'string' ? page.id : '',
-    title: typeof page?.title === 'string' ? page.title : '',
-    slug: typeof page?.slug === 'string' ? page.slug : '',
-    orderIndex: typeof page?.orderIndex === 'number' ? page.orderIndex : 0,
+    title: builderString(page?.title),
+    slug: builderString(page?.slug),
+    orderIndex: finiteNumber(page?.orderIndex) ?? 0,
     sections: Array.isArray(page?.sections) ? page.sections.map(sanitizePublicRenderSection) : [],
     meta: {
-      isHome: asRecord(page?.meta)?.isHome === true,
+      isHome: meta?.isHome === true,
+      isHidden: meta?.isHidden === true,
     },
   };
 }

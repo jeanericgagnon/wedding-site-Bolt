@@ -143,7 +143,7 @@ export function useMessageComposerDraftActions({
     };
 
     const updated = [next, ...savedTemplates.filter((item) => normalizeSavedTemplateName(item.name) !== normalizedName)].slice(0, 12);
-    const persisted = writeSavedComposerTemplates(updated);
+    const persisted = writeSavedComposerTemplates(updated, weddingSite?.id);
     if (!persisted) {
       toast('Couldn’t save that reusable template on this device right now.', 'error');
       return;
@@ -154,7 +154,7 @@ export function useMessageComposerDraftActions({
 
   function deleteSavedTemplate(templateId: string) {
     const updated = savedTemplates.filter((item) => item.id !== templateId);
-    const persisted = writeSavedComposerTemplates(updated);
+    const persisted = writeSavedComposerTemplates(updated, weddingSite?.id);
     if (!persisted) {
       toast('Couldn’t remove that saved template from this device right now.', 'error');
       return;

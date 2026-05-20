@@ -14,12 +14,12 @@ describe('public hero variants', () => {
       />,
     );
 
-    expect(container.querySelector('img')).not.toBeInTheDocument();
-    expect(container.innerHTML).not.toContain('javascript:alert');
+    expect(screen.queryByRole('img')).not.toBeInTheDocument();
+    expect(container.querySelector('img[src^="javascript:"]')).toBeNull();
   });
 
   it('preserves safe hero images and same-page CTA anchors', () => {
-    const { container } = render(
+    render(
       <heroSplitDefinition.Component
         data={{
           ...defaultHeroFullBleedData,
@@ -31,7 +31,7 @@ describe('public hero variants', () => {
       />,
     );
 
-    expect(container.querySelector('img')?.getAttribute('src')).toBe('/preview-photos/header-anchor.jpg');
+    expect(screen.getByRole('img')).toHaveAttribute('src', '/preview-photos/header-anchor.jpg');
     expect(screen.getByRole('link', { name: 'RSVP' })).toHaveAttribute('href', '#rsvp');
   });
 

@@ -27,10 +27,10 @@ export function SettingsDashboardShell({
 }: SettingsDashboardShellProps) {
   return (
     <DashboardLayout currentPage="settings">
-      <div className="max-w-5xl mx-auto space-y-8">
+      <div className="max-w-[1100px] mx-auto space-y-8">
         <DashboardPageHero
           eyebrow="Settings"
-          title="Settings."
+          title="Access, privacy, and account details."
           description="Manage access, privacy, billing, notifications, and account details."
           stats={[
             { label: 'Language', value: getSiteLanguageLabel(defaultLanguage), detail: 'public site default' },
@@ -38,6 +38,23 @@ export function SettingsDashboardShell({
             { label: 'RSVP', value: rsvpQuestionCount, detail: 'custom questions' },
           ]}
         />
+
+        <section className="rounded-2xl border border-border-subtle bg-white p-5 shadow-sm">
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary/75">Settings workspace</p>
+              <h2 className="mt-3 text-lg font-semibold text-text-primary">Choose the area you want to adjust, then keep the rest tucked away.</h2>
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-text-secondary">
+                Team access, privacy, billing, notifications, and site defaults all live here, but each section stays focused so routine account work doesn&apos;t overwhelm the rest of the dashboard.
+              </p>
+            </div>
+            <div className="inline-flex flex-wrap gap-2 text-xs text-text-tertiary">
+              <span className="rounded-xl border border-border-subtle bg-surface-subtle/30 px-3 py-1">Team and roles</span>
+              <span className="rounded-xl border border-border-subtle bg-surface-subtle/30 px-3 py-1">Privacy and defaults</span>
+              <span className="rounded-xl border border-border-subtle bg-surface-subtle/30 px-3 py-1">Billing when needed</span>
+            </div>
+          </div>
+        </section>
 
         <div className="flex flex-col gap-8 md:flex-row">
           <SettingsNavigation activeTab={activeTab} tabs={tabs} onTabChange={onTabChange} />

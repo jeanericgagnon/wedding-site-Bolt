@@ -10,7 +10,7 @@ type GuestPhotoOrganizerCardProps = {
   aiSlideshowFrameCount: number;
   aiPhotoMovesBusy: boolean;
   aiHighConfidenceMoveCount: number;
-  copied: string;
+  copyNotice: { key: string; mode: 'copied' | 'downloaded' } | null;
   onApplyHighConfidencePhotoMoves: () => void;
   onCopyOrganizerNotes: () => void;
 };
@@ -20,7 +20,7 @@ export function GuestPhotoOrganizerCard({
   aiSlideshowFrameCount,
   aiPhotoMovesBusy,
   aiHighConfidenceMoveCount,
-  copied,
+  copyNotice,
   onApplyHighConfidencePhotoMoves,
   onCopyOrganizerNotes,
 }: GuestPhotoOrganizerCardProps) {
@@ -53,20 +53,24 @@ export function GuestPhotoOrganizerCard({
             className="border-border-subtle text-text-primary hover:bg-surface-subtle"
             onClick={onCopyOrganizerNotes}
           >
-            {copied === 'ai-photo-plan' ? 'Copied notes' : 'Copy organizer notes'}
+            {copyNotice?.key === 'ai-photo-plan'
+              ? copyNotice.mode === 'downloaded'
+                ? 'Downloaded organizer notes'
+                : 'Copied organizer notes'
+              : 'Copy organizer notes'}
           </Button>
         </div>
       </div>
 
       <div className="mt-5 grid gap-3 lg:grid-cols-2">
-        <div className="rounded-lg border border-border-subtle bg-surface-subtle/40 px-4 py-4">
+        <div className="rounded-2xl border border-border-subtle bg-surface-subtle/40 px-4 py-4">
           <p className="text-sm font-semibold text-text-primary">Suggested album moves</p>
           <div className="mt-3 space-y-2">
             {aiPhotoOpsPlan.bucketSuggestions.slice(0, 6).map((suggestion) => (
-              <div key={suggestion.uploadId} className="rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2">
+              <div key={suggestion.uploadId} className="rounded-xl border border-neutral-200 bg-neutral-50 px-3 py-2">
                 <div className="flex items-center justify-between gap-3">
                   <p className="text-sm font-medium text-neutral-900">{suggestion.targetBucketName}</p>
-                  <span className="rounded-lg bg-white px-2 py-0.5 text-xs font-medium text-text-secondary ring-1 ring-border-subtle">{Math.round(suggestion.confidence * 100)}%</span>
+                  <span className="rounded-xl bg-white px-2 py-0.5 text-xs font-medium text-text-secondary ring-1 ring-border-subtle">{Math.round(suggestion.confidence * 100)}%</span>
                 </div>
                 <p className="mt-1 text-xs text-neutral-600">
                   {safePhotoAnalysisText(suggestion.reason, 'This looks like the best fit for the album.')}
@@ -74,12 +78,12 @@ export function GuestPhotoOrganizerCard({
                 {(suggestion.detectedMoment || (suggestion.tags?.length ?? 0) > 0) && (
                   <div className="mt-2 flex flex-wrap gap-1.5">
                     {suggestion.detectedMoment && (
-                      <span className="rounded-lg bg-white px-2 py-0.5 text-[11px] font-medium text-text-secondary ring-1 ring-border-subtle">
+                      <span className="rounded-xl bg-white px-2 py-0.5 text-[11px] font-medium text-text-secondary ring-1 ring-border-subtle">
                         {suggestion.detectedMoment}
                       </span>
                     )}
                     {suggestion.tags?.slice(0, 5).map((tag) => (
-                      <span key={`${suggestion.uploadId}-${tag}`} className="rounded-lg bg-white px-2 py-0.5 text-[11px] font-medium text-neutral-600 ring-1 ring-neutral-200">
+                      <span key={`${suggestion.uploadId}-${tag}`} className="rounded-xl bg-white px-2 py-0.5 text-[11px] font-medium text-neutral-600 ring-1 ring-neutral-200">
                         {tagLabel(tag)}
                       </span>
                     ))}
@@ -89,12 +93,12 @@ export function GuestPhotoOrganizerCard({
             ))}
           </div>
         </div>
-        <div className="rounded-lg border border-border-subtle bg-surface-subtle/40 px-4 py-4">
+        <div className="rounded-2xl border border-border-subtle bg-surface-subtle/40 px-4 py-4">
           <p className="text-sm font-semibold text-text-primary">{aiPhotoOpsPlan.slideshow.title}</p>
           <p className="mt-1 text-xs text-text-tertiary">{aiPhotoOpsPlan.slideshow.mood}</p>
           <div className="mt-3 space-y-2">
             {aiPhotoOpsPlan.slideshow.frames.slice(0, 5).map((frame, index) => (
-              <div key={`${frame.uploadId}-${index}`} className="rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2">
+              <div key={`${frame.uploadId}-${index}`} className="rounded-xl border border-neutral-200 bg-neutral-50 px-3 py-2">
                 <p className="text-xs font-semibold text-neutral-500">Frame {index + 1} · {frame.bucketName}</p>
                 <p className="mt-1 text-sm text-neutral-800">
                   {safePhotoAnalysisText(frame.caption, 'A warm wedding moment.')}
@@ -102,7 +106,7 @@ export function GuestPhotoOrganizerCard({
                 {(frame.tags?.length ?? 0) > 0 && (
                   <div className="mt-2 flex flex-wrap gap-1.5">
                     {frame.tags?.slice(0, 4).map((tag) => (
-                      <span key={`${frame.uploadId}-${tag}`} className="rounded-lg bg-white px-2 py-0.5 text-[11px] font-medium text-neutral-600 ring-1 ring-neutral-200">
+                      <span key={`${frame.uploadId}-${tag}`} className="rounded-xl bg-white px-2 py-0.5 text-[11px] font-medium text-neutral-600 ring-1 ring-neutral-200">
                         {tagLabel(tag)}
                       </span>
                     ))}

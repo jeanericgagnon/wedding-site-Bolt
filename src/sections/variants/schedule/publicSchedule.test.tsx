@@ -27,13 +27,13 @@ describe('public schedule media', () => {
       />,
     );
 
-    expect(container.querySelector('img')).not.toBeInTheDocument();
-    expect(container.innerHTML).not.toContain('javascript:alert');
-    expect(container.innerHTML).not.toContain('image.thum.io');
+    expect(screen.queryByRole('img')).not.toBeInTheDocument();
+    expect(container.querySelector('img[src^="javascript:"]')).toBeNull();
+    expect(container.querySelector('img[src*="image.thum.io"]')).toBeNull();
   });
 
   it('keeps safe same-origin schedule event images', () => {
-    const { container } = render(
+    render(
       <scheduleAgendaCardsDefinition.Component
         data={{
           ...defaultScheduleAgendaCardsData,
@@ -47,7 +47,7 @@ describe('public schedule media', () => {
       />,
     );
 
-    expect(container.querySelector('img')?.getAttribute('src')).toBe('/preview-photos/header-anchor.jpg');
+    expect(screen.getByRole('img')).toHaveAttribute('src', '/preview-photos/header-anchor.jpg');
   });
 });
 
@@ -233,7 +233,7 @@ describe('public schedule times', () => {
     );
 
     expect(screen.getByText('Open house')).toBeInTheDocument();
-    expect(container.querySelector('.tabular-nums')).not.toBeInTheDocument();
+    expect(container).not.toHaveTextContent(/\b(?:AM|PM)\b/);
 
     rerender(
       <scheduleDayTabsDefinition.Component
@@ -258,6 +258,6 @@ describe('public schedule times', () => {
     );
 
     expect(screen.getByText('Open house')).toBeInTheDocument();
-    expect(container.querySelector('.tabular-nums')).not.toBeInTheDocument();
+    expect(container).not.toHaveTextContent(/\b(?:AM|PM)\b/);
   });
 });

@@ -32,6 +32,9 @@ vi.mock('./versionHistory', () => ({
 }));
 
 import { builderProjectService } from './builderProjectService';
+import { serializeBuilderProject } from '../serializers/projectSerializer';
+import { fromExistingLayoutToBuilderProject } from '../adapters/layoutAdapter';
+import { createEmptyBuilderProject } from '../../types/builder/project';
 
 describe('builderProjectService.loadWeddingData', () => {
   beforeEach(() => {
@@ -167,6 +170,71 @@ describe('builderProjectService.loadWeddingData', () => {
     expect(result.couple.displayName).toBe('Priya & Sam');
     expect(result.event.weddingDateISO).toBe('2026-09-12T00:00:00.000Z');
     expect(result.venues[0].name).toBe('Garden House');
+  });
+
+  it('normalizes loaded site_json projects without touching timestamps', async () => {
+    const project = {
+      ...createEmptyBuilderProject('old-site', 'modern'),
+      id: 'project-1',
+      meta: {
+        createdAtISO: '2026-01-01T00:00:00.000Z',
+        updatedAtISO: '2026-01-02T00:00:00.000Z',
+      },
+      pages: [{
+        id: 'home',
+        title: 'Home',
+        slug: 'home',
+        orderIndex: 0,
+        sections: [],
+        meta: { isHome: true, isHidden: false },
+      }],
+    };
+    maybeSingle.mockResolvedValue({
+      data: {
+        site_json: project,
+      },
+      error: null,
+    });
+
+    await builderProjectService.loadProject('site-1');
+
+    expect(serializeBuilderProject).toHaveBeenCalledWith(
+      { ...project, weddingId: 'site-1' },
+      { touchTimestamps: false },
+    );
+  });
+
+  it('normalizes converted legacy layout projects without touching timestamps', async () => {
+    const project = {
+      ...createEmptyBuilderProject('site-2', 'classic'),
+      id: 'project-2',
+      meta: {
+        createdAtISO: '2026-01-01T00:00:00.000Z',
+        updatedAtISO: '2026-01-02T00:00:00.000Z',
+      },
+      pages: [{
+        id: 'home',
+        title: 'Home',
+        slug: 'home',
+        orderIndex: 0,
+        sections: [],
+        meta: { isHome: true, isHidden: false },
+      }],
+    };
+    vi.mocked(fromExistingLayoutToBuilderProject).mockReturnValue(project);
+    maybeSingle.mockResolvedValue({
+      data: {
+        layout_config: {
+          version: '1',
+          pages: [{ id: 'home', sections: [] }],
+        },
+      },
+      error: null,
+    });
+
+    await builderProjectService.loadProject('site-2');
+
+    expect(serializeBuilderProject).toHaveBeenCalledWith(project, { touchTimestamps: false });
   });
 
   it('publishes builder projects through the dedicated publish RPC', async () => {

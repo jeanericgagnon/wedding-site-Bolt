@@ -335,7 +335,7 @@ test('guest photo upload stores hosted media and owner reads it back', async ({ 
     await expect(page.locator('video[src*="/storage/v1/object/sign/photo-uploads/"]').first()).toBeVisible();
 
     await page.goto('/dashboard/photos?bypassPayment=1&photoUploadQa=' + runId + '&afterRecap=1', { waitUntil: 'domcontentloaded' });
-    await page.locator('select.h-11.rounded-lg.border.border-border-subtle.bg-white').first().selectOption('published');
+    await page.getByRole('combobox').first().selectOption('published');
     await page.getByRole('button', { name: 'Save status' }).click();
     await expect(page.getByText('Guest hub settings saved.')).toBeVisible();
     await page.reload({ waitUntil: 'domcontentloaded' });

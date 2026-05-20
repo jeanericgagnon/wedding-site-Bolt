@@ -1,8 +1,16 @@
-import { fireEvent, render, screen } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { getOwnerRegistryPurchaserLabel, getOwnerRegistrySourceLabel, normalizeOwnerRegistryItemState, RegistryItemCard } from './RegistryItemCard';
 import type { RegistryItem } from './registryTypes';
+
+const { copyTextOrDownload } = vi.hoisted(() => ({
+  copyTextOrDownload: vi.fn(),
+}));
+
+vi.mock('../../../lib/copyText', () => ({
+  copyTextOrDownload: (...args: unknown[]) => copyTextOrDownload(...args),
+}));
 
 function makeItem(overrides: Partial<RegistryItem> = {}): RegistryItem {
   return {
@@ -32,6 +40,10 @@ function makeItem(overrides: Partial<RegistryItem> = {}): RegistryItem {
 }
 
 describe('RegistryItemCard', () => {
+  beforeEach(() => {
+    copyTextOrDownload.mockReset();
+  });
+
   it('uses canonical_url for the View link when item_url is missing', () => {
     render(
       <RegistryItemCard
@@ -164,9 +176,132 @@ describe('RegistryItemCard', () => {
       />,
     );
 
-    expect(container.querySelector('a[href^="javascript:"]')).not.toBeInTheDocument();
-    expect(container.querySelector('a[href^="data:"]')).not.toBeInTheDocument();
+    expect(container.querySelector('a[href^="javascript:"]')).toBeNull();
+    expect(container.querySelector('a[href^="data:"]')).toBeNull();
     expect(screen.getByRole('link', { name: /paypal/i })).toHaveAttribute('href', 'https://paypal.me/dayof');
+  });
+
+  it('shows a retry hint when owner cash-fund copy fails', async () => {
+    copyTextOrDownload.mockRejectedValueOnce(new Error('copy failed'));
+
+    render(
+      <RegistryItemCard
+        item={makeItem({
+          item_type: 'cash_fund',
+          fund_zelle_handle: 'alex@zelle',
+        })}
+        onEdit={vi.fn()}
+        onDelete={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /copy zelle/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText('Couldn’t copy zelle right now.')).toBeInTheDocument();
+    });
+    expect(copyTextOrDownload).toHaveBeenCalledTimes(1);
+  });
+
+  it('shows downloaded fallback labels on owner cash-fund copy buttons', async () => {
+    copyTextOrDownload.mockResolvedValueOnce('downloaded').mockResolvedValueOnce('downloaded');
+
+    render(
+      <RegistryItemCard
+        item={makeItem({
+          item_type: 'cash_fund',
+          fund_zelle_handle: 'alex@zelle',
+          fund_paypal_url: 'https://paypal.me/dayof',
+        })}
+        onEdit={vi.fn()}
+        onDelete={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /copy zelle/i }));
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Downloaded Zelle' })).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: /copy all/i }));
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Downloaded payout details' })).toBeInTheDocument();
+    });
+  });
+
+  it('ignores stale owner cash-fund copy completion after payout details change', async () => {
+    let resolveCopy: (value: 'copied') => void = () => {};
+    copyTextOrDownload.mockReturnValueOnce(new Promise((resolve) => {
+      resolveCopy = resolve;
+    }));
+
+    const { rerender } = render(
+      <RegistryItemCard
+        item={makeItem({
+          item_type: 'cash_fund',
+          fund_zelle_handle: 'old@zelle',
+        })}
+        onEdit={vi.fn()}
+        onDelete={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /copy zelle/i }));
+    expect(screen.getByRole('button', { name: /copying/i })).toBeDisabled();
+
+    rerender(
+      <RegistryItemCard
+        item={makeItem({
+          item_type: 'cash_fund',
+          fund_zelle_handle: 'new@zelle',
+        })}
+        onEdit={vi.fn()}
+        onDelete={vi.fn()}
+      />,
+    );
+
+    await waitFor(() => expect(screen.getByRole('button', { name: /copy zelle/i })).toBeEnabled());
+
+    await act(async () => {
+      resolveCopy('copied');
+    });
+
+    expect(screen.getByRole('button', { name: /copy zelle/i })).toBeEnabled();
+    expect(screen.queryByRole('button', { name: 'Copied Zelle' })).not.toBeInTheDocument();
+    expect(screen.queryByText('Zelle copied')).not.toBeInTheDocument();
+  });
+
+  it('resets owner purchase confirmation state when a different registry item is loaded into the same card', () => {
+    const onMarkPurchased = vi.fn();
+    const { rerender } = render(
+      <RegistryItemCard
+        item={makeItem({ id: 'item-1', quantity_needed: 3, quantity_purchased: 0 })}
+        onEdit={vi.fn()}
+        onDelete={vi.fn()}
+        onMarkPurchased={onMarkPurchased}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /mark as purchased/i }));
+    fireEvent.change(screen.getByRole('spinbutton'), { target: { value: '2' } });
+    expect(screen.getByRole('spinbutton')).toHaveValue(2);
+
+    rerender(
+      <RegistryItemCard
+        item={makeItem({ id: 'item-2', item_name: 'Serving Bowl', quantity_needed: 4, quantity_purchased: 1 })}
+        onEdit={vi.fn()}
+        onDelete={vi.fn()}
+        onMarkPurchased={onMarkPurchased}
+      />,
+    );
+
+    expect(screen.queryByRole('spinbutton')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /mark as purchased/i }));
+    expect(screen.getByRole('spinbutton')).toHaveValue(1);
+    expect(screen.getByText('of 3 left')).toBeInTheDocument();
   });
 
   it('hides unsafe owner product links from the View action', () => {

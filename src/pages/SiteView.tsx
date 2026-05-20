@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useLayoutEffect, useRef, useCallback } from 'react';
-import { useParams, useSearchParams } from 'react-router-dom';
+import React, { useState, useEffect, useLayoutEffect, useRef, useCallback, useMemo } from 'react';
+import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { AlertCircle, Lock, Eye, EyeOff } from 'lucide-react';
 import { LanguageSwitcher } from '../components/ui/LanguageSwitcher';
@@ -11,6 +11,7 @@ import { SiteViewContext } from '../contexts/SiteViewContext';
 import { OwnerPreviewBanner } from '../components/site/OwnerPreviewBanner';
 import { normalizePublicSiteSlug, resolveWeddingSubdomainSlugFromHostname } from '../lib/publicSiteSlug';
 import { getTemplatePack } from '../builder/constants/builderTemplatePacks';
+import { getSectionManifest } from '../builder/registry/sectionManifests';
 import { getSectionVariants } from '../sections/sectionRegistry';
 import { fetchPublicSiteAccess, requestPublicSitePasswordUnlock } from '../lib/publicSiteAccess';
 import type { PublicWeddingRenderModel } from '../lib/publicSiteRenderModel';
@@ -32,8 +33,94 @@ import { isPublicWeddingDataSparse } from '../lib/publicSiteReadiness';
 import { filterGuestReadySections, hasMeaningfulText } from '../lib/publicGuestSectionReadiness';
 import { resolveSiteViewAnalyticsTarget } from './siteViewAnalyticsTarget';
 import { shouldAppendPublicRsvpSection } from './siteViewSectionGuards';
+import {
+  buildPublicSitePageHref,
+  buildPublicSiteSectionAnchorHref,
+  getPublicSitePageNavItems,
+  normalizePublicSectionAnchorId,
+  normalizeSiteViewPageSlug,
+  selectPublicSitePage,
+  type PublicSiteSectionAnchorNavItem,
+  type PublicSitePageNavItem,
+} from './siteViewPageSelection';
 
 type GuestRenderableSection = Pick<BuilderSectionInstance, 'id' | 'type' | 'variant' | 'enabled' | 'orderIndex' | 'settings' | 'bindings' | 'styleOverrides'> | PublicSectionDTO;
+
+export const PublicSitePageNav: React.FC<{
+  pages: PublicSitePageNavItem[];
+  sectionAnchors?: PublicSiteSectionAnchorNavItem[];
+  siteSlug: string;
+  currentPageSlug?: string | null;
+}> = ({ pages, sectionAnchors = [], siteSlug, currentPageSlug }) => {
+  const showSectionAnchors = pages.length <= 1 && sectionAnchors.length > 0;
+  if (pages.length <= 1 && !showSectionAnchors) return null;
+  const activeSlug = currentPageSlug ? normalizeSiteViewPageSlug(currentPageSlug) : 'home';
+
+  return (
+    <nav className="sticky top-0 z-30 border-b border-black/10 bg-white/90 px-4 py-2 backdrop-blur">
+      <div className="mx-auto flex max-w-5xl items-center gap-2 overflow-x-auto">
+        {showSectionAnchors ? sectionAnchors.map((anchor) => (
+          <a
+            key={anchor.id}
+            href={buildPublicSiteSectionAnchorHref(siteSlug, anchor)}
+            className="whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-medium text-[var(--color-text-secondary)] transition-colors hover:bg-[var(--color-surface-subtle)] hover:text-[var(--color-text-primary)]"
+          >
+            {anchor.title}
+          </a>
+        )) : pages.map((page) => {
+          const isActive = activeSlug === page.slug || (!currentPageSlug && page.isHome);
+          return (
+            <Link
+              key={page.id ?? page.slug}
+              to={buildPublicSitePageHref(siteSlug, page)}
+              aria-current={isActive ? 'page' : undefined}
+              className={`whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
+                isActive
+                  ? 'bg-[var(--color-text-primary)] text-[var(--color-background)]'
+                  : 'text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-subtle)] hover:text-[var(--color-text-primary)]'
+              }`}
+            >
+              {page.title}
+            </Link>
+          );
+        })}
+      </div>
+    </nav>
+  );
+};
+
+function getComparablePublicSectionOrderIndex(value: unknown, fallback: number): number {
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+  if (typeof value === 'string') {
+    const parsed = Number(value);
+    if (Number.isFinite(parsed)) return parsed;
+  }
+  return fallback;
+}
+
+export function getPublicSectionAnchorNavItems(sections: GuestRenderableSection[]): PublicSiteSectionAnchorNavItem[] {
+  return sections
+    .filter((section) => section.enabled !== false)
+    .map((section, index) => {
+      const anchorId = normalizePublicSectionAnchorId(section.settings?.anchorId);
+      if (!anchorId) return null;
+      const title = (() => {
+        try {
+          return getSectionManifest(section.type as BuilderSectionInstance['type']).label;
+        } catch {
+          return anchorId.replace(/-/g, ' ');
+        }
+      })();
+      return {
+        id: section.id,
+        anchorId,
+        title,
+        orderIndex: getComparablePublicSectionOrderIndex(section.orderIndex, index),
+      };
+    })
+    .filter((item): item is PublicSiteSectionAnchorNavItem => Boolean(item))
+    .sort((a, b) => a.orderIndex - b.orderIndex);
+}
 
 function syncPublicNoIndexMeta(shouldNoIndex: boolean) {
   if (typeof document === 'undefined') return null;
@@ -290,8 +377,12 @@ const PasswordGate: React.FC<{
   const [pw, setPw] = useState('');
   const [showPw, setShowPw] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const [dismissedCurrentError, setDismissedCurrentError] = useState(false);
 
   useEffect(() => { inputRef.current?.focus(); }, []);
+  useEffect(() => { setDismissedCurrentError(false); }, [error]);
+
+  const visibleError = error && !dismissedCurrentError ? error : null;
 
   return (
     <div className="min-h-screen flex flex-col bg-[#fbf7f1] px-4">
@@ -301,7 +392,7 @@ const PasswordGate: React.FC<{
       <div className="flex-1 flex items-center justify-center">
       <div className="max-w-sm w-full">
         <div className="text-center mb-6">
-          <div className="w-14 h-14 bg-white rounded-lg border border-stone-200 flex items-center justify-center mx-auto mb-4">
+          <div className="w-14 h-14 bg-white rounded-xl border border-stone-200 flex items-center justify-center mx-auto mb-4">
             <Lock className="w-7 h-7 text-stone-600" />
           </div>
           <h1 className="text-2xl font-light text-stone-800 mb-2">{t('site.password_gate_title')}</h1>
@@ -309,12 +400,12 @@ const PasswordGate: React.FC<{
         </div>
         <form
           onSubmit={e => { e.preventDefault(); onSubmit(pw); }}
-          className="bg-white border border-stone-200 rounded-lg p-5 space-y-4"
+          className="bg-white border border-stone-200 rounded-xl p-5 space-y-4"
         >
-          {error && (
-            <div className="flex items-center gap-2 p-3 bg-stone-50 border border-stone-200 rounded-lg text-stone-700 text-sm">
+          {visibleError && (
+            <div className="flex items-center gap-2 p-3 bg-stone-50 border border-stone-200 rounded-xl text-stone-700 text-sm">
               <AlertCircle className="w-4 h-4 flex-shrink-0" />
-              {error}
+              {visibleError}
             </div>
           )}
           <div className="relative">
@@ -323,8 +414,11 @@ const PasswordGate: React.FC<{
               ref={inputRef}
               type={showPw ? 'text' : 'password'}
               value={pw}
-              onChange={e => setPw(e.target.value)}
-              className="w-full h-11 px-3 pr-10 border border-stone-300 rounded-lg text-stone-800 focus:outline-none focus:ring-2 focus:ring-stone-400"
+              onChange={e => {
+                setPw(e.target.value);
+                if (error) setDismissedCurrentError(true);
+              }}
+              className="w-full h-11 px-3 pr-10 border border-stone-300 rounded-xl text-stone-800 focus:outline-none focus:ring-2 focus:ring-stone-400"
               placeholder={t('site.password_placeholder')}
               autoComplete="current-password"
             />
@@ -340,7 +434,7 @@ const PasswordGate: React.FC<{
           <button
             type="submit"
             disabled={!pw || checking}
-            className="w-full h-11 bg-stone-800 text-white rounded-lg font-semibold hover:bg-stone-900 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="w-full h-11 bg-stone-800 text-white rounded-xl font-semibold hover:bg-stone-900 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             {checking ? t('site.password_checking') : t('site.password_submit')}
           </button>
@@ -361,7 +455,7 @@ const InviteOnlyGate: React.FC = () => {
       </div>
       <div className="flex-1 flex items-center justify-center">
         <div className="max-w-md w-full text-center space-y-3">
-          <div className="w-16 h-16 bg-white rounded-lg border border-stone-200 flex items-center justify-center mx-auto">
+          <div className="w-16 h-16 bg-white rounded-xl border border-stone-200 flex items-center justify-center mx-auto">
             <Lock className="w-8 h-8 text-stone-600" />
           </div>
           <div>
@@ -390,7 +484,7 @@ const ComingSoonScreen: React.FC = () => {
         <LanguageSwitcher />
       </div>
       <div className="max-w-md w-full text-center space-y-3">
-        <div className="w-16 h-16 bg-white rounded-lg border border-border-subtle flex items-center justify-center mx-auto">
+        <div className="w-16 h-16 bg-white rounded-xl border border-border-subtle flex items-center justify-center mx-auto">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-12 h-12 text-primary/60">
             <path d="M12 21.593c-5.63-5.539-11-10.297-11-14.402 0-3.791 3.068-5.191 5.281-5.191 1.312 0 4.151.501 5.719 4.457 1.59-3.968 4.464-4.447 5.726-4.447 2.54 0 5.274 1.621 5.274 5.181 0 4.069-5.136 8.625-11 14.402z"/>
           </svg>
@@ -406,7 +500,7 @@ const ComingSoonScreen: React.FC = () => {
         </div>
         <p className="text-xs text-text-tertiary">
           Are you the couple?{' '}
-          <a href="/login" className="text-primary hover:underline">Sign in</a>
+          <Link to="/login" className="text-primary hover:underline">Sign in</Link>
           {' '}and publish from the site editor.
         </p>
       </div>
@@ -415,7 +509,7 @@ const ComingSoonScreen: React.FC = () => {
 };
 
 export const SiteView: React.FC = () => {
-  const { slug } = useParams<{ slug: string }>();
+  const { slug, pageSlug } = useParams<{ slug: string; pageSlug?: string }>();
 
   const resolvedSlug = React.useMemo(() => {
     if (slug) return normalizePublicSiteSlug(slug);
@@ -425,6 +519,7 @@ export const SiteView: React.FC = () => {
   const { i18n } = useTranslation();
   const [weddingData, setWeddingData] = useState<WeddingDataV1 | null>(null);
   const [builderSections, setBuilderSections] = useState<BuilderSectionInstance[] | null>(null);
+  const [publicPageNavItems, setPublicPageNavItems] = useState<PublicSitePageNavItem[]>([]);
   const [weddingSiteId, setWeddingSiteId] = useState<string | null>(null);
   const [isComingSoon, setIsComingSoon] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -437,6 +532,10 @@ export const SiteView: React.FC = () => {
   const [passwordGateError, setPasswordGateError] = useState<string | null>(null);
   const [passwordGateChecking, setPasswordGateChecking] = useState(false);
   const [privacyUnlockNonce, setPrivacyUnlockNonce] = useState(0);
+  const publicSectionAnchorNavItems = useMemo(
+    () => getPublicSectionAnchorNavItems(builderSections ?? []),
+    [builderSections]
+  );
 
   const handleImageErrorCapture = useCallback((event: React.SyntheticEvent<HTMLElement>) => {
     const target = event.target;
@@ -486,6 +585,7 @@ export const SiteView: React.FC = () => {
         setWeddingSiteId(null);
         setWeddingData(null);
         setBuilderSections(null);
+        setPublicPageNavItems([]);
         setHideFromSearch(false);
         setSitePrivacyMode('public');
         setPublicSubresourceAccess({});
@@ -499,6 +599,7 @@ export const SiteView: React.FC = () => {
         setWeddingSiteId('demo-site-id');
         setHideFromSearch(false);
         setPrivacyGate('open');
+        setPublicPageNavItems([]);
         setBuilderSections(toBuilderSectionState(demoSections));
         setWeddingData(demoData);
         applyThemePreset('elegant');
@@ -569,7 +670,7 @@ export const SiteView: React.FC = () => {
         setWeddingSiteId(data.id as string);
 
         const siteLang = (data.default_language as string) ?? 'en';
-        if (!hasStoredGuestLanguagePreference() && (siteLang === 'en' || siteLang === 'es')) {
+        if (!hasStoredGuestLanguagePreference(resolvedSlug) && (siteLang === 'en' || siteLang === 'es')) {
           i18n.changeLanguage(siteLang);
         }
 
@@ -592,8 +693,14 @@ export const SiteView: React.FC = () => {
         }));
 
         if (renderPages.length > 0) {
-          const homePage = renderPages.find((page) => page.meta?.isHome || page.id === 'home' || page.slug === 'home') ?? renderPages[0];
-          const sections = normalizeSectionVariants(homePage.sections.filter(s => s.enabled));
+          const selectedPage = selectPublicSitePage(renderPages, pageSlug);
+          if (!selectedPage || (selectedPage.meta?.isHidden === true && Boolean(pageSlug))) {
+            setIsComingSoon(true);
+            return;
+          }
+          setPublicPageNavItems(getPublicSitePageNavItems(renderPages));
+
+          const sections = normalizeSectionVariants(selectedPage.sections.filter(s => s.enabled));
           const rawWData = normalizeWeddingData(
             (renderModel.wedding as PublicWeddingRenderModel | WeddingDataV1 | null) ?? createEmptyWeddingData(),
           );
@@ -684,7 +791,7 @@ export const SiteView: React.FC = () => {
       ];
       resetProps.forEach(p => el.style.removeProperty(p));
     };
-  }, [i18n, i18n.language, resolvedSlug, searchParams, privacyUnlockNonce]);
+  }, [i18n, i18n.language, pageSlug, resolvedSlug, searchParams, privacyUnlockNonce]);
 
   const shouldNoIndex = hideFromSearch || sitePrivacyMode !== 'public' || privacyGate === 'invite_only' || privacyGate === 'password_required';
   syncPublicNoIndexMeta(shouldNoIndex);
@@ -709,7 +816,7 @@ export const SiteView: React.FC = () => {
     <div className="min-h-screen bg-background">
       <OwnerPreviewBanner />
       <div className="flex min-h-[calc(100vh-65px)] items-center justify-center px-4">
-        <div className="max-w-md w-full bg-surface border border-border-subtle rounded-lg p-6 text-center">
+        <div className="max-w-md w-full bg-surface border border-border-subtle rounded-xl p-6 text-center">
           <p className="text-text-secondary">This wedding site is not ready to view yet.</p>
         </div>
       </div>
@@ -725,8 +832,16 @@ export const SiteView: React.FC = () => {
       <SiteViewContext.Provider value={{ weddingSiteId, ...publicSubresourceAccess }}>
         <div className="builder-themed-canvas min-h-screen bg-background" onErrorCapture={handleImageErrorCapture}>
           <OwnerPreviewBanner />
+          {resolvedSlug ? (
+            <PublicSitePageNav
+              pages={publicPageNavItems}
+              sectionAnchors={publicSectionAnchorNavItems}
+              siteSlug={resolvedSlug}
+              currentPageSlug={pageSlug}
+            />
+          ) : null}
           {builderSections.map(section => (
-            <SectionRenderer key={section.id} section={section} weddingData={weddingData} surface="public" siteSlug={resolvedSlug} />
+            <SectionRenderer key={section.id} section={section} weddingData={weddingData} surface="public" siteSlug={resolvedSlug ?? undefined} />
           ))}
         </div>
       </SiteViewContext.Provider>

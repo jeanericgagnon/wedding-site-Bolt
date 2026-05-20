@@ -19,6 +19,7 @@ type GuestReminderPreview = {
 export interface GuestCampaignReminderPanelProps {
   campaignPreset: RsvpCampaignPreset;
   campaignReadiness: number;
+  canEditGuests: boolean;
   contactNoContactCount: number;
   daysToWedding: number | null;
   manualFollowUpCount: number;
@@ -46,6 +47,7 @@ export interface GuestCampaignReminderPanelProps {
 export function GuestCampaignReminderPanel({
   campaignPreset,
   campaignReadiness,
+  canEditGuests,
   contactNoContactCount,
   daysToWedding,
   manualFollowUpCount,
@@ -71,25 +73,27 @@ export function GuestCampaignReminderPanel({
 }: GuestCampaignReminderPanelProps) {
   return (
     <>
-      <div className="p-3 rounded-lg border border-border-subtle bg-surface-subtle">
+      <div className="rounded-2xl border border-border-subtle bg-white p-4 shadow-sm">
         <div className="flex items-center justify-between gap-3">
           <div>
-            <p className="text-sm font-semibold text-text-primary">Campaign insights & reminders</p>
-            <p className="text-xs text-text-secondary mt-0.5">
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary/75">Campaigns</p>
+            <p className="mt-3 text-sm font-semibold text-text-primary">Campaign insights and reminder prep</p>
+            <p className="text-xs text-text-secondary mt-1">
               Segment: <span className="font-semibold text-text-primary">{segmentLabel}</span> · Eligible: <span className="font-semibold text-text-primary">{reminderCandidates.length}</span>
             </p>
           </div>
-          <Button variant="outline" size="sm" onClick={onOpenCampaignModal}>Open</Button>
+          <Button variant="outline" size="sm" onClick={onOpenCampaignModal} disabled={!canEditGuests}>Open</Button>
         </div>
       </div>
 
       {showCampaignModal && (
         <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-[1px] flex items-end sm:items-center justify-center p-3">
-          <div className="w-full max-w-2xl max-h-[88vh] overflow-auto rounded-lg border border-border bg-white">
+          <div className="w-full max-w-2xl max-h-[88vh] overflow-auto rounded-2xl border border-border bg-white shadow-xl">
             <div className="sticky top-0 z-10 bg-white/95 backdrop-blur border-b border-border px-4 py-3 flex items-center justify-between">
               <div>
-                <p className="text-sm font-semibold text-text-primary">Campaign insights & reminders</p>
-                <p className="text-xs text-text-tertiary">Focused controls without cluttering the main screen</p>
+                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary/75">Campaign workspace</p>
+                <p className="mt-2 text-sm font-semibold text-text-primary">Campaign insights and reminder controls</p>
+                <p className="text-xs text-text-tertiary mt-1">Focused controls without cluttering the main screen</p>
               </div>
               <Button variant="ghost" size="sm" onClick={onCloseCampaignModal}>Close</Button>
             </div>
@@ -99,7 +103,7 @@ export function GuestCampaignReminderPanel({
                 Worth checking: <span className="font-medium text-text-primary">No response ({rsvpOps.noResponse})</span> · <span className="font-medium text-text-primary">Personal follow-up ({manualFollowUpCount})</span> · <span className="font-medium text-text-primary">Handled personally ({manualHandledCount})</span> · <span className="font-medium text-text-primary">Pending without email ({rsvpOps.pendingNoEmail})</span> · <span className="font-medium text-text-primary">Missing contact info ({contactNoContactCount})</span>
               </div>
               {daysToWedding !== null && (
-                <div className={`text-xs rounded-md px-2 py-1 inline-flex items-center gap-1 ${daysToWedding <= 30 ? 'bg-surface-subtle text-text-secondary border border-border-subtle' : 'bg-primary/5 text-primary border border-primary/20'}`}>
+                <div className={`text-xs rounded-xl px-2 py-1 inline-flex items-center gap-1 ${daysToWedding <= 30 ? 'bg-surface-subtle text-text-secondary border border-border-subtle' : 'bg-primary/5 text-primary border border-primary/20'}`}>
                   Wedding in {daysToWedding} day{daysToWedding === 1 ? '' : 's'}
                 </div>
               )}
@@ -110,7 +114,12 @@ export function GuestCampaignReminderPanel({
                   Reminder detail: <span className="font-semibold text-text-primary">{campaignReadiness}%</span>
                 </p>
                 <label className="inline-flex items-center gap-2 text-xs text-text-secondary">
-                  <input type="checkbox" checked={skipRecentlyInvited} onChange={(event) => onSetSkipRecentlyInvited(event.target.checked)} />
+                  <input
+                    type="checkbox"
+                    checked={skipRecentlyInvited}
+                    disabled={!canEditGuests}
+                    onChange={(event) => onSetSkipRecentlyInvited(event.target.checked)}
+                  />
                   Skip guests invited in last 24h
                 </label>
               </div>
@@ -119,8 +128,9 @@ export function GuestCampaignReminderPanel({
                 <label className="text-xs text-text-secondary w-28">Campaign preset</label>
                 <select
                   value={campaignPreset}
+                  disabled={!canEditGuests}
                   onChange={(event) => onApplyCampaignPreset(event.target.value as RsvpCampaignPreset)}
-                  className="text-xs border border-border rounded-md px-2 py-1.5 bg-white text-text-primary"
+                  className="text-xs border border-border rounded-xl px-2 py-1.5 bg-white text-text-primary disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   <option value="pending">Pending responses ({rsvpOps.noResponse})</option>
                   <option value="missing-meal">Missing meal ({rsvpOps.missingMeal})</option>
@@ -141,7 +151,7 @@ export function GuestCampaignReminderPanel({
                     {showRecipientPreview ? 'Hide' : 'Show'} recipient preview ({reminderCandidates.length})
                   </button>
                   {showRecipientPreview && (
-                    <div className="max-h-28 overflow-auto rounded-lg border border-border bg-white p-2 text-xs text-text-secondary">
+                    <div className="max-h-28 overflow-auto rounded-xl border border-border bg-white p-2 text-xs text-text-secondary">
                       {reminderCandidates.slice(0, 20).map((guest) => (
                         <div key={guest.id} className="py-0.5">
                           {guest.name}
@@ -156,13 +166,13 @@ export function GuestCampaignReminderPanel({
                 </div>
               )}
               <div className="flex flex-wrap gap-2">
-                <button onClick={onFocusPending} className="text-[11px] px-2 py-1 rounded-lg border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary">Focus pending</button>
-                <button onClick={onFocusMissingMeal} className="text-[11px] px-2 py-1 rounded-lg border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary">Focus missing meal</button>
-                <button onClick={onFocusPlusOneNames} className="text-[11px] px-2 py-1 rounded-lg border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary">Focus plus-one names</button>
-                <button onClick={onFocusPendingNoEmail} className="text-[11px] px-2 py-1 rounded-lg border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary">Focus pending without email</button>
-                <button onClick={onFocusHandledPersonally} className="text-[11px] px-2 py-1 rounded-lg border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary">Focus handled personally</button>
-                <button onClick={onFocusHighRiskFirst} className="text-[11px] px-2 py-1 rounded-lg border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary">Focus high-risk first</button>
-                <button onClick={onFocusMissingContact} className="text-[11px] px-2 py-1 rounded-lg border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary">Review missing contact ({contactNoContactCount})</button>
+                <button onClick={onFocusPending} className="text-[11px] px-2 py-1 rounded-xl border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary">Focus pending</button>
+                <button onClick={onFocusMissingMeal} className="text-[11px] px-2 py-1 rounded-xl border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary">Focus missing meal</button>
+                <button onClick={onFocusPlusOneNames} className="text-[11px] px-2 py-1 rounded-xl border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary">Focus plus-one names</button>
+                <button onClick={onFocusPendingNoEmail} className="text-[11px] px-2 py-1 rounded-xl border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary">Focus pending without email</button>
+                <button onClick={onFocusHandledPersonally} className="text-[11px] px-2 py-1 rounded-xl border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary">Focus handled personally</button>
+                <button onClick={onFocusHighRiskFirst} className="text-[11px] px-2 py-1 rounded-xl border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary">Focus high-risk first</button>
+                <button onClick={onFocusMissingContact} className="text-[11px] px-2 py-1 rounded-xl border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary">Review missing contact ({contactNoContactCount})</button>
               </div>
             </div>
           </div>

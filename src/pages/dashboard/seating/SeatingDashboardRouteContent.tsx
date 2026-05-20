@@ -1,6 +1,7 @@
 import type React from 'react';
 import { DndContext, DragOverlay, type DragEndEvent, type DragStartEvent } from '@dnd-kit/core';
 import { AlertTriangle, CheckCircle2, Download, History, Image as ImageIcon, Plus, RefreshCw, TableProperties, Users } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { DashboardPageHero } from '../../../components/dashboard/DashboardPageHero';
 import { Badge } from '../../../components/ui/Badge';
 import { Button } from '../../../components/ui/Button';
@@ -149,8 +150,8 @@ export function SeatingDashboardRouteContent(props: {
         ]}
         actions={
           <>
-            <a href="/dashboard/seating-lookup" className="rounded-lg border border-border-subtle bg-white px-3 py-2 text-sm font-medium text-text-primary no-underline hover:bg-surface-subtle">Open seating lookup</a>
-            <a href="/dashboard/coordinator" className="rounded-lg border border-border-subtle bg-white px-3 py-2 text-sm font-medium text-text-primary no-underline hover:bg-surface-subtle">Wedding Day</a>
+            <Link to="/dashboard/seating-lookup" className="rounded-xl border border-border-subtle bg-white px-3 py-2 text-sm font-medium text-text-primary no-underline hover:bg-surface-subtle">Open seating lookup</Link>
+            <Link to="/dashboard/coordinator" className="rounded-xl border border-border-subtle bg-white px-3 py-2 text-sm font-medium text-text-primary no-underline hover:bg-surface-subtle">Wedding Day</Link>
           </>
         }
       >
@@ -179,31 +180,48 @@ export function SeatingDashboardRouteContent(props: {
           <Button variant="outline" size="sm" onClick={() => void props.handleCheckDrift()}>
             <RefreshCw className="w-4 h-4 mr-1" /> Check assignments
           </Button>
-          <div className="inline-flex rounded-lg border border-border bg-surface-subtle p-0.5">
+          <div className="inline-flex rounded-xl border border-border bg-surface-subtle p-0.5">
             <button
-              className={`rounded-md px-4 py-2 text-sm transition-colors ${props.layoutMode === 'visual' ? 'border border-primary/25 bg-primary/10 text-primary' : 'text-text-tertiary hover:text-text-primary'}`}
+              className={`rounded-xl px-4 py-2 text-sm transition-colors ${props.layoutMode === 'visual' ? 'border border-primary/25 bg-primary/10 text-primary' : 'text-text-tertiary hover:text-text-primary'}`}
               onClick={() => props.setLayoutMode('visual')}
             >
               Canvas Layout
             </button>
             <button
-              className={`rounded-md px-4 py-2 text-sm transition-colors ${props.layoutMode === 'list' ? 'border border-primary/25 bg-primary/10 text-primary' : 'text-text-tertiary hover:text-text-primary'}`}
+              className={`rounded-xl px-4 py-2 text-sm transition-colors ${props.layoutMode === 'list' ? 'border border-primary/25 bg-primary/10 text-primary' : 'text-text-tertiary hover:text-text-primary'}`}
               onClick={() => props.setLayoutMode('list')}
             >
               List Layout
             </button>
           </div>
-          <div className="px-3 py-2 rounded-lg border border-border-subtle bg-surface text-xs text-text-secondary">
+          <div className="rounded-xl border border-border-subtle bg-surface px-3 py-2 text-xs text-text-secondary">
             Current Event: <span className="font-medium text-text-primary">{props.selectedItineraryEvent?.event_name ?? '—'}</span>
           </div>
         </div>
       </DashboardPageHero>
 
+      <section className="rounded-2xl border border-border-subtle bg-white p-5 shadow-sm">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary/75">Seating workspace</p>
+            <h2 className="mt-3 text-lg font-semibold text-text-primary">Choose the event, then shape the room the way guests and helpers will need it.</h2>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-text-secondary">
+              This is where table layout, seat assignments, exports, and check-in all stay together once the guest list is ready for real floor-planning work.
+            </p>
+          </div>
+          <div className="inline-flex flex-wrap gap-2 text-xs text-text-tertiary">
+            <span className="rounded-xl border border-border-subtle bg-surface-subtle/30 px-3 py-1">Event-specific layouts</span>
+            <span className="rounded-xl border border-border-subtle bg-surface-subtle/30 px-3 py-1">Packet-ready exports</span>
+            <span className="rounded-xl border border-border-subtle bg-surface-subtle/30 px-3 py-1">Lookup and check-in nearby</span>
+          </div>
+        </div>
+      </section>
+
       <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
         <div className="flex items-center gap-2 flex-1">
           <label className="text-sm font-medium text-text-secondary whitespace-nowrap">Event:</label>
           <select
-            className="flex-1 rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+            className="flex-1 rounded-xl border border-border bg-surface px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
             value={props.selectedEventId ?? ''}
             onChange={(event) => props.setSelectedEventId(event.target.value)}
           >
@@ -216,7 +234,7 @@ export function SeatingDashboardRouteContent(props: {
         </div>
       </div>
 
-      <div className={`rounded-lg border p-4 ${props.packetReadyTone}`}>
+      <div className={`rounded-2xl border p-4 shadow-sm ${props.packetReadyTone}`}>
         <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
           <div>
             <div className="flex items-center gap-2">
@@ -225,20 +243,23 @@ export function SeatingDashboardRouteContent(props: {
               ) : (
                 <AlertTriangle className="h-4 w-4 text-primary" />
               )}
-              <p className="text-sm font-semibold text-text-primary">Venue and catering packet</p>
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary/75">Packet readiness</p>
+                <p className="mt-1 text-sm font-semibold text-text-primary">Venue and catering packet</p>
+              </div>
             </div>
-            <p className="mt-1 text-sm text-text-secondary">{props.cateringPacket.readiness.summary}</p>
+            <p className="mt-2 text-sm leading-6 text-text-secondary">{props.cateringPacket.readiness.summary}</p>
           </div>
           <div className="grid grid-cols-3 gap-2 text-center sm:min-w-[360px]">
-            <div className="rounded-lg border border-border-subtle bg-surface px-3 py-2">
+            <div className="rounded-xl border border-border-subtle bg-surface px-3 py-2">
               <p className="text-lg font-semibold text-text-primary">{props.cateringPacket.readiness.assignedCount}/{props.cateringPacket.readiness.attendingCount}</p>
               <p className="text-[11px] text-text-tertiary">Seated</p>
             </div>
-            <div className="rounded-lg border border-border-subtle bg-surface px-3 py-2">
+            <div className="rounded-xl border border-border-subtle bg-surface px-3 py-2">
               <p className="text-lg font-semibold text-text-primary">{props.cateringPacket.readiness.mealChoiceCount}</p>
               <p className="text-[11px] text-text-tertiary">Meals</p>
             </div>
-            <div className="rounded-lg border border-border-subtle bg-surface px-3 py-2">
+            <div className="rounded-xl border border-border-subtle bg-surface px-3 py-2">
               <p className="text-lg font-semibold text-text-primary">{props.cateringPacket.readiness.dietaryNoteCount}</p>
               <p className="text-[11px] text-text-tertiary">Notes</p>
             </div>
@@ -248,7 +269,7 @@ export function SeatingDashboardRouteContent(props: {
           {props.cateringPacket.readiness.checklist.map((item) => {
             const iconClass = item.state === 'ready' ? 'text-success' : item.state === 'needs-action' ? 'text-primary' : 'text-text-tertiary';
             return (
-              <div key={item.id} className="flex gap-2 rounded-lg border border-border-subtle bg-surface px-3 py-2">
+              <div key={item.id} className="flex gap-2 rounded-xl border border-border-subtle bg-surface px-3 py-2">
                 {item.state === 'ready' ? (
                   <CheckCircle2 className={`mt-0.5 h-4 w-4 flex-shrink-0 ${iconClass}`} />
                 ) : (
@@ -262,7 +283,7 @@ export function SeatingDashboardRouteContent(props: {
             );
           })}
         </div>
-        <div className="mt-3 rounded-lg border border-border-subtle bg-surface p-3">
+        <div className="mt-3 rounded-2xl border border-border-subtle bg-surface p-3">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
             <div>
               <p className="text-sm font-semibold text-text-primary">Venue handoff review</p>
@@ -281,7 +302,7 @@ export function SeatingDashboardRouteContent(props: {
               { label: 'Unseated', value: props.cateringHandoffReview.sourceCounts.unassignedGuests },
               { label: 'Review', value: props.cateringHandoffReview.sourceCounts.invalidAssignments },
             ].map((stat) => (
-              <div key={stat.label} className="rounded-lg border border-border-subtle bg-surface-subtle px-2 py-2 text-center">
+              <div key={stat.label} className="rounded-xl border border-border-subtle bg-surface-subtle px-2 py-2 text-center">
                 <p className="text-base font-semibold text-text-primary">{stat.value}</p>
                 <p className="text-[11px] text-text-tertiary">{stat.label}</p>
               </div>
@@ -289,7 +310,7 @@ export function SeatingDashboardRouteContent(props: {
           </div>
           <div className="mt-3 grid gap-2 md:grid-cols-2">
             {props.cateringHandoffReview.files.map((file) => (
-              <div key={file.id} className="flex items-start gap-2 rounded-lg border border-border-subtle bg-surface-subtle px-3 py-2">
+              <div key={file.id} className="flex items-start gap-2 rounded-xl border border-border-subtle bg-surface-subtle px-3 py-2">
                 {file.status === 'ready' ? (
                   <CheckCircle2 className="mt-0.5 h-4 w-4 flex-shrink-0 text-success" />
                 ) : (
@@ -303,7 +324,7 @@ export function SeatingDashboardRouteContent(props: {
             ))}
           </div>
           {props.cateringHandoffReview.warnings.length > 0 && (
-            <div className="mt-3 rounded-lg border border-primary/20 bg-primary/5 px-3 py-2">
+            <div className="mt-3 rounded-2xl border border-primary/20 bg-primary/5 px-3 py-2">
               <p className="text-xs font-semibold text-text-primary">Before final handoff</p>
               <ul className="mt-1 space-y-1">
                 {props.cateringHandoffReview.warnings.map((warning) => (
@@ -315,14 +336,14 @@ export function SeatingDashboardRouteContent(props: {
         </div>
       </div>
 
-      <details className="rounded-lg border border-border-subtle bg-surface-subtle/40 p-3">
+      <details className="rounded-2xl border border-border-subtle bg-surface-subtle/40 p-3">
         <summary className="cursor-pointer list-none flex items-center justify-between gap-2">
           <span className="text-sm font-semibold text-text-primary">Seating insights</span>
           <span className="text-xs text-text-tertiary">View details</span>
         </summary>
         <div className="mt-3 space-y-3">
           {props.layoutMode === 'visual' && (
-            <div className="hidden flex-wrap items-center gap-3 rounded-lg border border-border-subtle bg-surface-subtle px-3 py-2 text-xs text-text-tertiary sm:flex">
+            <div className="hidden flex-wrap items-center gap-3 rounded-2xl border border-border-subtle bg-surface-subtle px-3 py-2 text-xs text-text-tertiary sm:flex">
               <span className="inline-flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-surface border border-border-subtle" /> Empty seat</span>
               <span className="inline-flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-primary-light border border-primary/40" /> Active drop zone</span>
               <span className="inline-flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-success/10 border border-success/40" /> Arrived (check-in)</span>
@@ -356,7 +377,7 @@ export function SeatingDashboardRouteContent(props: {
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
                 {props.mealHeadcountByTable.map((row) => (
-                  <div key={row.tableName} className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-2">
+                  <div key={row.tableName} className="rounded-xl border border-border-subtle bg-surface-subtle px-3 py-2">
                     <p className="text-sm font-medium text-text-primary truncate">{row.tableName}</p>
                     <p className="text-xs text-text-secondary mt-0.5">
                       {row.assigned}/{row.capacity} guests · {row.mealCounts.map((meal) => `${meal.meal}: ${meal.count}`).join(', ')}
@@ -371,7 +392,7 @@ export function SeatingDashboardRouteContent(props: {
           )}
 
           {props.invalidCount > 0 && (
-            <div className="flex items-center gap-2 rounded-lg border border-error/20 bg-error/5 p-3 text-sm">
+            <div className="flex items-center gap-2 rounded-2xl border border-error/20 bg-error/5 p-3 text-sm">
               <AlertTriangle className="w-4 h-4 text-error flex-shrink-0" />
               <span className="text-text-primary">
                 <span className="font-medium text-error">{props.invalidCount}</span> assignment(s) are invalid due to RSVP changes.
@@ -399,7 +420,7 @@ export function SeatingDashboardRouteContent(props: {
                 key={version.id}
                 type="button"
                 onClick={() => props.handleRestoreVersion(version)}
-                className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-2 text-left text-xs hover:border-primary/40"
+                className="rounded-xl border border-border-subtle bg-surface-subtle px-3 py-2 text-left text-xs hover:border-primary/40"
               >
                 <span className="block font-medium text-text-primary">{version.label}</span>
                 <span className="text-text-tertiary">{new Date(version.created_at).toLocaleString()}</span>
@@ -409,7 +430,7 @@ export function SeatingDashboardRouteContent(props: {
         )}
       </Card>
 
-      <div className="rounded-lg border border-border-subtle bg-surface-subtle/40 p-3">
+      <div className="rounded-2xl border border-border-subtle bg-surface-subtle/40 p-3">
         <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
           <div>
             <p className="text-xs font-semibold text-text-tertiary">Table actions</p>
@@ -424,7 +445,7 @@ export function SeatingDashboardRouteContent(props: {
             type="button"
             onClick={() => props.setShowAutoTablesModal(true)}
             disabled={props.seatingBusyAction !== null}
-            className="rounded-lg border border-border-subtle bg-white px-4 py-4 text-left hover:border-primary/25 hover:bg-primary-light/10 disabled:opacity-50"
+            className="rounded-2xl border border-border-subtle bg-white px-4 py-4 text-left hover:border-primary/25 hover:bg-primary-light/10 disabled:opacity-50"
           >
             <p className="text-sm font-semibold text-text-primary">Auto-create tables</p>
             <p className="mt-1 text-xs leading-5 text-text-secondary">Build enough tables for the current attending count.</p>
@@ -433,7 +454,7 @@ export function SeatingDashboardRouteContent(props: {
             type="button"
             onClick={() => { void props.handleAutoSeat(); }}
             disabled={props.tables.length === 0 || props.unassignedGuests.length === 0 || props.seatingBusyAction !== null}
-            className="rounded-lg border border-border-subtle bg-white px-4 py-4 text-left hover:border-primary/25 hover:bg-primary-light/10 disabled:opacity-50"
+            className="rounded-2xl border border-border-subtle bg-white px-4 py-4 text-left hover:border-primary/25 hover:bg-primary-light/10 disabled:opacity-50"
           >
             <p className="text-sm font-semibold text-text-primary">{props.seatingBusyAction === 'auto-seat' ? 'Auto-seating guests…' : 'Auto-seat guests'}</p>
             <p className="mt-1 text-xs leading-5 text-text-secondary">Fill open seats for the {props.unassignedGuests.length} guests still waiting.</p>
@@ -442,7 +463,7 @@ export function SeatingDashboardRouteContent(props: {
             type="button"
             onClick={() => props.setShowResetConfirm(true)}
             disabled={props.assignments.length === 0 || props.seatingBusyAction !== null}
-            className="rounded-lg border border-border-subtle bg-white px-4 py-4 text-left hover:border-primary/25 hover:bg-surface-subtle/60 disabled:opacity-50"
+            className="rounded-2xl border border-border-subtle bg-white px-4 py-4 text-left hover:border-primary/25 hover:bg-surface-subtle/60 disabled:opacity-50"
           >
             <p className="text-sm font-semibold text-text-primary">Reset seating</p>
             <p className="mt-1 text-xs leading-5 text-text-secondary">Clear every seat assignment for this event and start fresh.</p>
@@ -451,13 +472,13 @@ export function SeatingDashboardRouteContent(props: {
       </div>
 
       {props.checkInMode && (
-        <div className="space-y-3 rounded-lg border border-border-subtle bg-surface-subtle/40 p-4">
+        <div className="space-y-3 rounded-2xl border border-border-subtle bg-surface-subtle/40 p-4">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <p className="text-xs font-semibold text-text-tertiary">Check-in mode</p>
               <p className="mt-1 text-sm text-text-secondary">Search an attendee, then mark them arrived without leaving the seating board.</p>
             </div>
-            <div className="rounded-lg border border-border-subtle bg-white px-3 py-2 text-right">
+            <div className="rounded-xl border border-border-subtle bg-white px-3 py-2 text-right">
               <p className="text-[11px] text-text-tertiary">Arrivals</p>
               <p className="mt-1 text-sm font-semibold text-text-primary">{props.arrivedCount}/{props.counters?.attending ?? 0}</p>
             </div>
@@ -467,12 +488,12 @@ export function SeatingDashboardRouteContent(props: {
               value={props.checkInQuery}
               onChange={(event) => props.setCheckInQuery(event.target.value)}
               placeholder="Search attendee for quick check-in"
-              className="flex-1 min-w-[220px] px-3 py-2 text-sm bg-surface border border-border rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+              className="min-w-[220px] flex-1 rounded-xl border border-border bg-surface px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
             />
             <select
               value={props.checkInFilter}
               onChange={(event) => props.setCheckInFilter(event.target.value as typeof props.checkInFilter)}
-              className="px-3 py-2 text-sm bg-surface border border-border rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+              className="rounded-xl border border-border bg-surface px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
             >
               <option value="not_arrived">Not arrived</option>
               <option value="arrived">Arrived</option>
@@ -488,7 +509,7 @@ export function SeatingDashboardRouteContent(props: {
               <button
                 type="button"
                 onClick={() => void props.handleBulkCheckIn(props.checkInCandidates.filter((guest) => !props.arrivedGuestIds.has(guest.id)).map((guest) => guest.id), true)}
-                className="rounded-md border border-primary/25 bg-primary/10 px-3 py-1 text-primary hover:bg-primary/15"
+                className="rounded-xl border border-primary/25 bg-primary/10 px-3 py-1 text-primary hover:bg-primary/15"
               >
                 Mark visible arrived
               </button>
@@ -497,7 +518,7 @@ export function SeatingDashboardRouteContent(props: {
               <button
                 type="button"
                 onClick={() => void props.handleBulkCheckIn(props.checkInCandidates.filter((guest) => props.arrivedGuestIds.has(guest.id)).map((guest) => guest.id), false)}
-                className="rounded-md border border-border-subtle bg-white px-3 py-1 text-text-secondary hover:border-primary/30 hover:text-primary"
+                className="rounded-xl border border-border-subtle bg-white px-3 py-1 text-text-secondary hover:border-primary/30 hover:text-primary"
               >
                 Clear visible arrivals
               </button>
@@ -514,7 +535,7 @@ export function SeatingDashboardRouteContent(props: {
                   <button
                     key={guest.id}
                     onClick={() => props.handleToggleCheckIn(guest.id, !checked)}
-                    className={`rounded-md border px-2.5 py-1.5 text-xs transition-colors ${checked ? 'border-primary/30 bg-primary/10 text-primary' : 'border-border-subtle bg-surface text-text-secondary hover:border-primary/40 hover:text-primary'}`}
+                    className={`rounded-xl border px-2.5 py-1.5 text-xs transition-colors ${checked ? 'border-primary/30 bg-primary/10 text-primary' : 'border-border-subtle bg-surface text-text-secondary hover:border-primary/40 hover:text-primary'}`}
                   >
                     {guest.full_name} {isAssigned ? '• Seated' : '• Unseated'} {checked ? '• Arrived' : '• Mark arrived'}
                   </button>
@@ -538,7 +559,7 @@ export function SeatingDashboardRouteContent(props: {
       )}
 
       {props.showAutoTablesModal && (
-        <div className="space-y-3 rounded-lg border border-border-subtle bg-surface-subtle p-4">
+        <div className="space-y-3 rounded-2xl border border-border-subtle bg-surface-subtle p-4">
           <h3 className="text-sm font-semibold text-text-primary">Auto-Create Tables</h3>
           <p className="text-xs text-text-tertiary">
             Creates enough tables for {props.counters?.attending ?? 0} attending guests.
@@ -551,7 +572,7 @@ export function SeatingDashboardRouteContent(props: {
               max="50"
               value={props.autoCapacity}
               onChange={(event) => props.setAutoCapacity(Number(event.target.value))}
-              className="w-20 px-2.5 py-1.5 text-sm bg-surface border border-border rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+              className="w-20 rounded-xl border border-border bg-surface px-2.5 py-1.5 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
             />
             <span className="text-xs text-text-tertiary">
               = {Math.ceil((props.counters?.attending ?? 0) / props.autoCapacity)} tables
@@ -565,7 +586,7 @@ export function SeatingDashboardRouteContent(props: {
       )}
 
       {props.showResetConfirm && (
-        <div className="flex items-start justify-between gap-4 rounded-lg border border-error/20 bg-error/5 p-4">
+        <div className="flex items-start justify-between gap-4 rounded-2xl border border-error/20 bg-error/5 p-4">
           <p className="text-sm text-text-primary">Reset all seating assignments for this event? This cannot be undone.</p>
           <div className="flex gap-2 flex-shrink-0">
             <Button size="sm" variant="outline" onClick={props.handleReset} disabled={props.seatingBusyAction !== null} className="border-error text-error hover:bg-error/5">{props.seatingBusyAction === 'reset' ? 'Resetting…' : 'Reset'}</Button>
@@ -575,7 +596,7 @@ export function SeatingDashboardRouteContent(props: {
       )}
 
       {props.seatPicker && (
-        <div className="space-y-4 rounded-lg border border-border-subtle bg-surface-subtle/40 p-4">
+        <div className="space-y-4 rounded-2xl border border-border-subtle bg-surface-subtle/40 p-4">
           <div className="flex items-center justify-between gap-3">
             <div>
               <h3 className="text-sm font-semibold text-text-primary">Map a guest to seat {props.seatPicker.seatIndex}</h3>
@@ -584,7 +605,7 @@ export function SeatingDashboardRouteContent(props: {
             <Button size="sm" variant="ghost" onClick={props.closeSeatPicker}>Close</Button>
           </div>
           {props.activeSeatGuest && (
-            <div className="rounded-lg border border-primary/20 bg-primary-light/20 px-3 py-3 flex items-center justify-between gap-3">
+            <div className="flex items-center justify-between gap-3 rounded-2xl border border-primary/20 bg-primary-light/20 px-3 py-3">
               <div>
                 <p className="text-xs text-text-tertiary">Current seat assignment</p>
                 <p className="mt-1 text-sm font-medium text-text-primary">{props.activeSeatGuest.full_name}</p>
@@ -606,7 +627,7 @@ export function SeatingDashboardRouteContent(props: {
                 key={guest.id}
                 type="button"
                 onClick={() => void props.assignGuestToSeatDirect(guest.id, props.seatPicker!.tableId, props.seatPicker!.seatIndex)}
-                className="rounded-lg border border-border bg-white px-3 py-2 text-left hover:border-primary/40 hover:bg-primary-light/20"
+                className="rounded-xl border border-border bg-white px-3 py-2 text-left hover:border-primary/40 hover:bg-primary-light/20"
               >
                 <p className="text-sm font-medium text-text-primary">{guest.full_name}</p>
                 <p className="text-xs text-text-tertiary">{guest.rsvp_status === 'attending' ? 'RSVP’d attending' : 'Guest'}</p>
@@ -614,7 +635,7 @@ export function SeatingDashboardRouteContent(props: {
             ))}
           </div>
           {props.seatPickerOptions.length === 0 && (
-            <div className="rounded-lg border border-border bg-white px-3 py-4 text-sm text-text-tertiary">
+            <div className="rounded-xl border border-border bg-white px-3 py-4 text-sm text-text-tertiary">
               No RSVP’d guests match that search.
             </div>
           )}
@@ -629,7 +650,7 @@ export function SeatingDashboardRouteContent(props: {
         <DndContext sensors={props.sensors} onDragStart={props.handleDragStart} onDragEnd={props.handleDragEnd}>
           <div className="flex flex-col lg:flex-row gap-5">
             <div className="lg:w-64 xl:w-72 flex-shrink-0">
-              <div className="sticky top-24 space-y-3 rounded-lg border border-border-subtle bg-surface-subtle/40 p-3">
+              <div className="sticky top-24 space-y-3 rounded-2xl border border-border-subtle bg-surface-subtle/40 p-3">
                 <div className="flex items-center justify-between">
                   <div>
                     <h2 className="text-sm font-semibold text-text-primary">Unassigned</h2>
@@ -637,7 +658,7 @@ export function SeatingDashboardRouteContent(props: {
                   </div>
                   <span className="text-xs text-text-tertiary">{props.unassignedGuests.length} guests</span>
                 </div>
-                <div className="rounded-lg border border-border-subtle bg-white px-3 py-2">
+                <div className="rounded-xl border border-border-subtle bg-white px-3 py-2">
                   <p className="text-[11px] text-text-tertiary">Still needs seats</p>
                   <p className="mt-1 text-sm font-medium text-text-primary">{props.unassignedGuests.length} guest{props.unassignedGuests.length !== 1 ? 's' : ''} still need seats</p>
                 </div>
@@ -647,7 +668,7 @@ export function SeatingDashboardRouteContent(props: {
 
             <div className="flex-1 min-w-0">
               {props.layoutMode === 'visual' && (
-                <div className="mb-3 flex items-center justify-between gap-2 rounded-lg border border-border-subtle bg-surface-subtle p-2 text-xs text-text-tertiary">
+                <div className="mb-3 flex items-center justify-between gap-2 rounded-2xl border border-border-subtle bg-surface-subtle p-2 text-xs text-text-tertiary">
                   <span>Canvas mode: arrange tables and seats visually.</span>
                   <div className="inline-flex items-center gap-1">
                     <button
@@ -683,7 +704,7 @@ export function SeatingDashboardRouteContent(props: {
                 </div>
               )}
               {props.tables.length === 0 ? (
-                <div className="rounded-lg border-2 border-dashed border-border-subtle py-16 text-center">
+                <div className="rounded-2xl border-2 border-dashed border-border-subtle py-16 text-center">
                   <TableProperties className="w-10 h-10 text-text-tertiary mx-auto mb-3" />
                   <p className="text-text-secondary mb-2">No tables yet</p>
                   <p className="text-sm text-text-tertiary mb-4">Add your own tables or let dayof create a starting layout from your guest count.</p>
@@ -697,7 +718,7 @@ export function SeatingDashboardRouteContent(props: {
                     <div className="fixed inset-0 bg-black/35 z-[9998]" onClick={() => props.setCanvasFullscreen(false)} />
                   )}
                   <div
-                    className={`relative min-h-[720px] overflow-auto rounded-lg border border-border-subtle bg-white transition-all duration-300 ${props.canvasFullscreen ? 'bg-white p-3' : ''}`}
+                    className={`relative min-h-[720px] overflow-auto rounded-2xl border border-border-subtle bg-white transition-all duration-300 ${props.canvasFullscreen ? 'bg-white p-3' : ''}`}
                     style={props.canvasFullscreen ? { position: 'fixed', inset: '16px', zIndex: 9999, background: '#fff' } : undefined}
                     onWheel={props.handleCanvasWheelZoom}
                   >
@@ -705,7 +726,7 @@ export function SeatingDashboardRouteContent(props: {
                       <div className="mb-2 flex items-center justify-between animate-in fade-in duration-200">
                         <div className="flex items-center gap-2">
                           <button
-                            className="px-3 py-1.5 rounded-lg border border-border-subtle bg-surface hover:border-border text-sm"
+                            className="rounded-xl border border-border-subtle bg-surface px-3 py-1.5 text-sm hover:border-border"
                             onClick={() => props.setCanvasFullscreen(false)}
                           >
                             ← Back

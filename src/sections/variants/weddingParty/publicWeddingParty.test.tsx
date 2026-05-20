@@ -25,8 +25,8 @@ describe('public wedding party media', () => {
       />,
     );
 
-    expect(container.querySelector('img')).not.toBeInTheDocument();
-    expect(container.innerHTML).not.toContain('javascript:alert');
+    expect(screen.queryByRole('img')).not.toBeInTheDocument();
+    expect(container.querySelector('img[src^="javascript:"]')).toBeNull();
     expect(screen.getByText('S')).toBeInTheDocument();
   });
 
@@ -40,12 +40,12 @@ describe('public wedding party media', () => {
       />,
     );
 
-    expect(container.querySelector('img')).not.toBeInTheDocument();
-    expect(container.innerHTML).not.toContain('javascript:alert');
+    expect(screen.queryByRole('img')).not.toBeInTheDocument();
+    expect(container.querySelector('img[src^="javascript:"]')).toBeNull();
   });
 
   it('keeps safe same-origin scroll member photos', () => {
-    const { container } = render(
+    render(
       <weddingPartyScrollDefinition.Component
         data={{
           ...defaultWeddingPartyScrollData,
@@ -54,6 +54,6 @@ describe('public wedding party media', () => {
       />,
     );
 
-    expect(container.querySelector('img')?.getAttribute('src')).toBe('/preview-photos/header-anchor.jpg');
+    expect(screen.getByRole('img')).toHaveAttribute('src', '/preview-photos/header-anchor.jpg');
   });
 });

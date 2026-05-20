@@ -1,6 +1,7 @@
 import React from 'react';
 import type { DragEndEvent, DragStartEvent } from '@dnd-kit/core';
 import { Users } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { DashboardStateBlock } from '../../components/dashboard/DashboardStateBlock';
 import { Button } from '../../components/ui/Button';
@@ -17,6 +18,7 @@ import { useSeatingDashboardData } from './seating/useSeatingDashboardData';
 import { useSeatingDashboardInteractionState } from './seating/useSeatingDashboardInteractionState';
 
 export const DashboardSeating: React.FC = () => {
+  const navigate = useNavigate();
   const { isDemoMode } = useAuth();
   const { toast } = useToast();
   const {
@@ -86,6 +88,8 @@ export const DashboardSeating: React.FC = () => {
   } = useSeatingDashboardInteractionState({
     allGuests,
     assignments,
+    isDemoMode,
+    siteId,
   });
 
   const {
@@ -242,7 +246,7 @@ export const DashboardSeating: React.FC = () => {
             <Users className="w-12 h-12 text-text-tertiary mx-auto mb-3" />
             <h2 className="text-xl font-semibold text-text-primary mb-2">No Events Yet</h2>
             <p className="text-text-secondary mb-4">Create itinerary events first to start managing seating.</p>
-            <Button onClick={() => { window.location.href = '/dashboard/itinerary'; }}>
+            <Button onClick={() => navigate('/dashboard/itinerary')}>
               Go to Itinerary
             </Button>
           </div>

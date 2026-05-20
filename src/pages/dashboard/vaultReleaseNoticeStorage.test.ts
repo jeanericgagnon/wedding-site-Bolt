@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { readVaultReleaseNoticeKeys, writeVaultReleaseNoticeKeys } from './vaultReleaseNoticeStorage';
+import { buildVaultReleaseNoticeStorageKey, readVaultReleaseNoticeKeys, writeVaultReleaseNoticeKeys } from './vaultReleaseNoticeStorage';
 
 describe('vaultReleaseNoticeStorage', () => {
   beforeEach(() => {
@@ -40,5 +40,22 @@ describe('vaultReleaseNoticeStorage', () => {
     window.localStorage.setItem(key, '{broken');
     expect(readVaultReleaseNoticeKeys(key)).toEqual([]);
     expect(window.localStorage.getItem(key)).toBeNull();
+  });
+
+  it('builds scoped storage keys for per-site vault release notices', () => {
+    expect(buildVaultReleaseNoticeStorageKey('vault-release-notices-test')).toBe('vault-release-notices-test');
+    expect(buildVaultReleaseNoticeStorageKey('vault-release-notices-test', 'site-a')).toBe('vault-release-notices-test::site-a');
+  });
+
+  it('migrates legacy release notices into the active wedding site scope', () => {
+    const baseKey = 'vault-release-notices-test';
+    const scopedKey = buildVaultReleaseNoticeStorageKey(baseKey, 'site-a');
+    window.localStorage.setItem(baseKey, JSON.stringify({
+      savedAtISO: '2026-05-06T12:00:00.000Z',
+      keys: ['legacy-a'],
+    }));
+
+    expect(readVaultReleaseNoticeKeys(scopedKey)).toEqual(['legacy-a']);
+    expect(window.localStorage.getItem(scopedKey)).toContain('legacy-a');
   });
 });

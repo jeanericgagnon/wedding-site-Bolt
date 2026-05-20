@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState, type ChangeEvent, type Dispatch, type SetStateAction } from 'react';
+import { useCallback, useEffect, useRef, useState, type ChangeEvent, type Dispatch, type SetStateAction } from 'react';
 
 import {
   buildDefaultCsvFieldMap,
@@ -10,6 +10,7 @@ import {
 import { isAttendingRsvpStatus, isDeclinedRsvpStatus } from '../../../lib/rsvpStatus';
 import type { ToastType } from '../../../components/ui/Toast';
 import {
+  deleteGuestWithDependencies,
   insertEventInvitations,
   insertImportedGuests,
   replaceImportedGuestRsvps,
@@ -95,8 +96,37 @@ export function useGuestDashboardCsvImport({
   const [csvShowMapper, setCsvShowMapper] = useState(false);
   const [csvImportSummary, setCsvImportSummary] = useState<GuestImportSummary | null>(null);
   const csvFileInputRef = useRef<HTMLInputElement | null>(null);
+  const csvImportContextVersionRef = useRef(0);
+  const csvPreviewRequestIdRef = useRef(0);
+  const csvFileParseRequestIdRef = useRef(0);
+  const csvConfirmRequestIdRef = useRef(0);
 
   const csvNameMappingValid = isCsvNameMappingValid(csvFieldMap);
+
+  useEffect(() => {
+    csvImportContextVersionRef.current += 1;
+    csvPreviewRequestIdRef.current += 1;
+    csvFileParseRequestIdRef.current += 1;
+    csvConfirmRequestIdRef.current += 1;
+    setCsvImporting(false);
+    setCsvPreview(null);
+    setCsvSkipped([]);
+    setCsvUnknownEvents([]);
+    setCsvDuplicateNames([]);
+    setCsvHouseholdWarnings([]);
+    setCsvSelectedFilename(null);
+    setCsvMappingSummary(EMPTY_MAPPING_SUMMARY);
+    setCsvHeaders([]);
+    setCsvDataRows([]);
+    setCsvColumnSamples([]);
+    setCsvFieldMap(null);
+    setCsvShowMapper(false);
+    setCsvImportSummary(null);
+  }, [isDemoMode, isGuestsReadOnly, weddingSiteId]);
+
+  function isCurrentCsvImportContext(contextVersion: number) {
+    return contextVersion === csvImportContextVersionRef.current;
+  }
 
   const resetCsvReviewState = useCallback(() => {
     setCsvPreview(null);
@@ -117,6 +147,10 @@ export function useGuestDashboardCsvImport({
   }, []);
 
   const buildCsvPreviewFromMapping = useCallback(async (headers: string[], dataRows: string[][], fieldMap: CsvFieldMap) => {
+    const contextVersion = csvImportContextVersionRef.current;
+    const requestId = ++csvPreviewRequestIdRef.current;
+    const isCurrentCsvPreview = () =>
+      isCurrentCsvImportContext(contextVersion) && requestId === csvPreviewRequestIdRef.current;
     if (!isCsvNameMappingValid(fieldMap)) {
       toast('Please map First Name + Last Name, or use Full Name instead.', 'error');
       return;
@@ -125,9 +159,11 @@ export function useGuestDashboardCsvImport({
     let resolvedSiteId = weddingSiteId;
     if (!resolvedSiteId && !isDemoMode) {
       resolvedSiteId = userId ? await resolveGuestDashboardSiteId(userId) : null;
+      if (!isCurrentCsvPreview()) return;
       if (resolvedSiteId) setWeddingSiteId(resolvedSiteId);
     }
     if (!resolvedSiteId && !isDemoMode) {
+      if (!isCurrentCsvPreview()) return;
       toast('Couldn’t find your website right now. Refresh and try again.', 'error');
       return;
     }
@@ -142,12 +178,14 @@ export function useGuestDashboardCsvImport({
     const parsed = result.parsed;
 
     if (parsed.length === 0) {
+      if (!isCurrentCsvPreview()) return;
       setCsvUnknownEvents([]);
       setCsvDuplicateNames([]);
       toast('No guests could be read from this file. Check the name columns and try again.', 'error');
       return;
     }
 
+    if (!isCurrentCsvPreview()) return;
     setCsvPreview(parsed);
     setCsvSkipped(result.skipped);
     setCsvUnknownEvents(result.unknownEvents);
@@ -164,6 +202,9 @@ export function useGuestDashboardCsvImport({
 
   const importCSV = useCallback(async (event: ChangeEvent<HTMLInputElement>) => {
     if (isGuestsReadOnly) {
+      resetCsvReviewState();
+      resetCsvParserState();
+      setCsvImportSummary(null);
       toast('Your collaborator role is read-only for guest imports.', 'info');
       event.target.value = '';
       return;
@@ -175,15 +216,23 @@ export function useGuestDashboardCsvImport({
       return;
     }
 
+    const contextVersion = csvImportContextVersionRef.current;
+    const requestId = ++csvFileParseRequestIdRef.current;
+    const isCurrentCsvFileParse = () =>
+      isCurrentCsvImportContext(contextVersion) && requestId === csvFileParseRequestIdRef.current;
+    resetCsvReviewState();
+    resetCsvParserState();
+    setCsvImportSummary(null);
     setCsvSelectedFilename(file.name);
     toast(`Parsing ${file.name}...`, 'success');
 
     try {
       const { headers, dataRows, samples } = await readGuestImportRows(file);
+      if (!isCurrentCsvFileParse()) return;
 
       if (headers.length === 0 || dataRows.length === 0) {
-        setCsvUnknownEvents([]);
-        setCsvDuplicateNames([]);
+        resetCsvReviewState();
+        resetCsvParserState();
         toast('File appears to be empty or missing a header row.', 'error');
         return;
       }
@@ -196,25 +245,40 @@ export function useGuestDashboardCsvImport({
       setCsvFieldMap(defaultMap);
       setCsvShowMapper(true);
     } catch (err) {
-      setCsvUnknownEvents([]);
-      setCsvDuplicateNames([]);
+      if (!isCurrentCsvFileParse()) return;
+      resetCsvReviewState();
+      resetCsvParserState();
       toast(safeGuestImportReadError(err), 'error');
     } finally {
       event.target.value = '';
     }
-  }, [isGuestsReadOnly, toast]);
+  }, [isGuestsReadOnly, resetCsvParserState, resetCsvReviewState, toast]);
 
   const confirmCsvImport = useCallback(async () => {
     if (!csvPreview) return;
 
+    const contextVersion = csvImportContextVersionRef.current;
+    const requestId = ++csvConfirmRequestIdRef.current;
+    const isCurrentCsvConfirm = () =>
+      isCurrentCsvImportContext(contextVersion) && requestId === csvConfirmRequestIdRef.current;
+    const targetCsvPreview = csvPreview;
+    const targetCsvSkippedLength = csvSkipped.length;
+    const targetCsvUnknownEventsLength = csvUnknownEvents.length;
+    const targetCsvDuplicateNamesLength = csvDuplicateNames.length;
+    const targetFromQuickStart = fromQuickStart;
+    const targetNextStep = nextStep;
+    let insertedGuestIds: string[] = [];
+    setCsvImportSummary(null);
     setCsvImporting(true);
     try {
       let resolvedSiteId = weddingSiteId;
       if (!resolvedSiteId && !isDemoMode) {
         resolvedSiteId = userId ? await resolveGuestDashboardSiteId(userId) : null;
+        if (!isCurrentCsvConfirm()) return;
         if (resolvedSiteId) setWeddingSiteId(resolvedSiteId);
       }
       if (!resolvedSiteId && !isDemoMode) {
+        if (!isCurrentCsvConfirm()) return;
         toast('Couldn’t find your wedding site. Refresh and try again.', 'error');
         return;
       }
@@ -222,7 +286,7 @@ export function useGuestDashboardCsvImport({
       const importSiteId = resolvedSiteId;
 
       if (isDemoMode) {
-        const importedGuests = csvPreview.map((guest, index) => ({
+        const importedGuests = targetCsvPreview.map((guest, index) => ({
           id: `demo-import-${Date.now()}-${index}`,
           first_name: String(guest.first_name || ''),
           last_name: String(guest.last_name || ''),
@@ -243,20 +307,21 @@ export function useGuestDashboardCsvImport({
           group_name: (guest.group_name as string | null) || null,
         } as GuestWithRSVP));
 
+        if (!isCurrentCsvConfirm()) return;
         setGuests((prev) => [...importedGuests, ...prev]);
         setCsvImportSummary({
-          duplicateNames: csvDuplicateNames.length,
+          duplicateNames: targetCsvDuplicateNamesLength,
           guardedHouseholds: 0,
           householdKeys: 0,
-          imported: csvPreview.length,
-          skipped: csvSkipped.length,
+          imported: targetCsvPreview.length,
+          skipped: targetCsvSkippedLength,
           unknownEvents: 0,
         });
-        const skippedMsg = csvSkipped.length > 0 ? `, ${csvSkipped.length} row${csvSkipped.length === 1 ? '' : 's'} need review` : '';
-        toast(`${csvPreview.length} guest${csvPreview.length !== 1 ? 's' : ''} imported${skippedMsg}`, 'success');
+        const skippedMsg = targetCsvSkippedLength > 0 ? `, ${targetCsvSkippedLength} row${targetCsvSkippedLength === 1 ? '' : 's'} need review` : '';
+        toast(`${targetCsvPreview.length} guest${targetCsvPreview.length !== 1 ? 's' : ''} imported${skippedMsg}`, 'success');
         resetCsvReviewState();
         resetCsvParserState();
-        if (fromQuickStart && nextStep === 'photos') {
+        if (targetFromQuickStart && targetNextStep === 'photos') {
           navigate(buildQuickStartPhotosPath());
           return;
         }
@@ -264,7 +329,7 @@ export function useGuestDashboardCsvImport({
       }
 
       const guestsWithTokens: Array<Record<string, unknown>> = await Promise.all(
-        csvPreview.map(async (guest) => {
+        targetCsvPreview.map(async (guest) => {
           const existingToken = (guest.invite_token as string | null | undefined) ?? null;
           return {
             ...guest,
@@ -272,6 +337,7 @@ export function useGuestDashboardCsvImport({
           };
         }),
       );
+      if (!isCurrentCsvConfirm()) return;
 
       const guestRows = guestsWithTokens.map((guest) => {
         const row = { ...guest } as Record<string, unknown>;
@@ -286,6 +352,8 @@ export function useGuestDashboardCsvImport({
       });
 
       const inserted = await insertImportedGuests(guestRows);
+      insertedGuestIds = inserted.map((guest) => guest.id).filter(Boolean);
+      if (!isCurrentCsvConfirm()) return;
 
       await Promise.all(inserted.map(async (insertedGuest, index) => {
         const inviteToken = String(guestsWithTokens[index]?.invite_token || '').trim();
@@ -293,6 +361,7 @@ export function useGuestDashboardCsvImport({
         if (!importSiteId) return;
         await updateGuestForSite(importSiteId, insertedGuest.id, { invite_token: inviteToken });
       }));
+      if (!isCurrentCsvConfirm()) return;
 
       const keyToGuestIds = new Map<string, string[]>();
       const householdLastNames = new Map<string, Set<string>>();
@@ -320,6 +389,7 @@ export function useGuestDashboardCsvImport({
           continue;
         }
         await updateHouseholdGuestIds(ids[0], ids);
+        if (!isCurrentCsvConfirm()) return;
       }
 
       const eventInviteRows: Array<{ event_id: string; guest_id: string }> = [];
@@ -360,36 +430,45 @@ export function useGuestDashboardCsvImport({
 
       if (eventInviteRows.length > 0) {
         await insertEventInvitations(eventInviteRows);
+        if (!isCurrentCsvConfirm()) return;
       }
 
       if (rsvpRows.length > 0) {
         await replaceImportedGuestRsvps(rsvpRows);
+        if (!isCurrentCsvConfirm()) return;
       }
 
       await fetchGuests();
+      if (!isCurrentCsvConfirm()) return;
       setCsvImportSummary({
-        duplicateNames: csvDuplicateNames.length,
+        duplicateNames: targetCsvDuplicateNamesLength,
         guardedHouseholds,
         householdKeys: keyToGuestIds.size,
-        imported: csvPreview.length,
-        skipped: csvSkipped.length,
-        unknownEvents: csvUnknownEvents.length,
+        imported: targetCsvPreview.length,
+        skipped: targetCsvSkippedLength,
+        unknownEvents: targetCsvUnknownEventsLength,
       });
-      const skippedMsg = csvSkipped.length > 0 ? `, ${csvSkipped.length} row${csvSkipped.length === 1 ? '' : 's'} need review` : '';
+      const skippedMsg = targetCsvSkippedLength > 0 ? `, ${targetCsvSkippedLength} row${targetCsvSkippedLength === 1 ? '' : 's'} need review` : '';
       const householdsMsg = keyToGuestIds.size > 0 ? `, ${keyToGuestIds.size} household group${keyToGuestIds.size === 1 ? '' : 's'}` : '';
       const guardedMsg = guardedHouseholds > 0 ? `, ${guardedHouseholds} household match${guardedHouseholds === 1 ? '' : 'es'} left separate` : '';
       const eventsMsg = eventInviteRows.length > 0 ? `, ${eventInviteRows.length} event invite${eventInviteRows.length === 1 ? '' : 's'}` : '';
-      const unknownEventsMsg = csvUnknownEvents.length > 0 ? `, ${csvUnknownEvents.length} event name${csvUnknownEvents.length === 1 ? '' : 's'} need review` : '';
-      toast(`${csvPreview.length} guest${csvPreview.length !== 1 ? 's' : ''} imported${skippedMsg}${householdsMsg}${guardedMsg}${eventsMsg}${unknownEventsMsg}`, 'success');
+      const unknownEventsMsg = targetCsvUnknownEventsLength > 0 ? `, ${targetCsvUnknownEventsLength} event name${targetCsvUnknownEventsLength === 1 ? '' : 's'} need review` : '';
+      toast(`${targetCsvPreview.length} guest${targetCsvPreview.length !== 1 ? 's' : ''} imported${skippedMsg}${householdsMsg}${guardedMsg}${eventsMsg}${unknownEventsMsg}`, 'success');
       resetCsvReviewState();
       resetCsvParserState();
-      if (fromQuickStart && nextStep === 'photos') {
+      if (targetFromQuickStart && targetNextStep === 'photos') {
         navigate(buildQuickStartPhotosPath());
       }
     } catch (err) {
+      if (insertedGuestIds.length > 0) {
+        await Promise.allSettled(insertedGuestIds.map((guestId) => deleteGuestWithDependencies(guestId)));
+      }
+      if (!isCurrentCsvConfirm()) return;
       toast(safeGuestsDashboardError(err, 'Couldn’t import guests. Please try again.'), 'error');
     } finally {
-      setCsvImporting(false);
+      if (isCurrentCsvConfirm()) {
+        setCsvImporting(false);
+      }
     }
   }, [
     buildQuickStartPhotosPath,
@@ -433,6 +512,7 @@ export function useGuestDashboardCsvImport({
     buildCsvPreviewFromMapping,
     confirmCsvImport,
     importCSV,
+    resetCsvParserState,
     resetCsvReviewState,
     setCsvFieldMap,
     setCsvShowMapper,

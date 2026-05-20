@@ -22,7 +22,7 @@ export default function RegistryCards({ section }: RegistryCardsProps) {
             </div>
             <h3 className="text-2xl font-serif mb-4 text-gray-800">Home Registry</h3>
             <p className="text-gray-600 mb-6">Help us build our home together</p>
-            <button className="px-6 py-3 bg-rose-500 text-white rounded-lg hover:bg-rose-600 transition-colors">
+            <button className="px-6 py-3 bg-rose-500 text-white rounded-xl hover:bg-rose-600 transition-colors">
               View Registry
             </button>
           </div>
@@ -33,7 +33,7 @@ export default function RegistryCards({ section }: RegistryCardsProps) {
             </div>
             <h3 className="text-2xl font-serif mb-4 text-gray-800">Honeymoon Fund</h3>
             <p className="text-gray-600 mb-6">Contribute to our dream adventure</p>
-            <button className="px-6 py-3 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-colors">
+            <button className="px-6 py-3 bg-amber-500 text-white rounded-xl hover:bg-amber-600 transition-colors">
               Contribute
             </button>
           </div>
@@ -44,7 +44,7 @@ export default function RegistryCards({ section }: RegistryCardsProps) {
             </div>
             <h3 className="text-2xl font-serif mb-4 text-gray-800">Charitable Donations</h3>
             <p className="text-gray-600 mb-6">Give to a cause close to our hearts</p>
-            <button className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors">
+            <button className="px-6 py-3 bg-blue-500 text-white rounded-xl hover:bg-blue-600 transition-colors">
               Learn More
             </button>
           </div>

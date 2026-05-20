@@ -127,6 +127,54 @@ describe('messageDashboardUtils', () => {
     expect(migrated[0].scheduleType).toBe('now');
   });
 
+  it('keeps saved composer templates scoped by wedding site when a site scope is provided', () => {
+    localStorage.clear();
+    const firstTemplate = {
+      id: 'site-a',
+      name: 'Site A reminder',
+      subject: 'Hello A',
+      body: 'Body A',
+      channel: 'email',
+      audience: 'all',
+      campaignName: 'Campaign A',
+      createdAt: '2026-05-18T10:00:00.000Z',
+      updatedAt: '2026-05-18T10:00:00.000Z',
+    } as SavedComposerTemplate;
+    const secondTemplate = {
+      ...firstTemplate,
+      id: 'site-b',
+      name: 'Site B reminder',
+      subject: 'Hello B',
+      body: 'Body B',
+      campaignName: 'Campaign B',
+    } as SavedComposerTemplate;
+
+    expect(writeSavedComposerTemplates([firstTemplate], 'site-a')).toBe(true);
+    expect(writeSavedComposerTemplates([secondTemplate], 'site-b')).toBe(true);
+
+    expect(readSavedComposerTemplates('site-a').map((item) => item.subject)).toEqual(['Hello A']);
+    expect(readSavedComposerTemplates('site-b').map((item) => item.subject)).toEqual(['Hello B']);
+  });
+
+  it('migrates legacy saved composer templates into the active wedding site scope', () => {
+    localStorage.clear();
+    localStorage.setItem(SAVED_COMPOSER_TEMPLATES_STORAGE_KEY, JSON.stringify([
+      {
+        id: 'legacy-a',
+        name: 'Legacy reminder',
+        subject: 'Legacy hello',
+        body: 'Legacy body',
+        channel: 'email',
+        audience: 'all',
+        campaignName: 'Legacy campaign',
+      },
+    ]));
+
+    expect(migrateSavedComposerTemplatesStorage('site-a')).toBe(true);
+    expect(readSavedComposerTemplates('site-a').map((item) => item.subject)).toEqual(['Legacy hello']);
+    expect(localStorage.getItem(SAVED_COMPOSER_TEMPLATES_STORAGE_KEY)).toBeNull();
+  });
+
   it('reads stored photo album links defensively', () => {
     localStorage.clear();
     localStorage.setItem('dayof.photoAlbumLinks', JSON.stringify({
@@ -145,6 +193,55 @@ describe('messageDashboardUtils', () => {
 
     localStorage.setItem('dayof.photoAlbumLinks', JSON.stringify(['https://example.test/array']));
     expect(readStoredPhotoAlbumLinks()).toEqual(['https://example.test/array']);
+  });
+
+  it('keeps stored photo album links scoped by wedding site when a site scope is provided', () => {
+    localStorage.clear();
+    localStorage.setItem('dayof.photoBucketLinks::site-a', JSON.stringify({
+      savedAtISO: '2026-05-06T12:00:00.000Z',
+      value: {
+        ceremony: 'https://example.test/site-a-ceremony',
+      },
+    }));
+    localStorage.setItem('dayof.photoBucketLinks::site-b', JSON.stringify({
+      savedAtISO: '2026-05-06T12:00:00.000Z',
+      value: {
+        toast: 'https://example.test/site-b-toast',
+      },
+    }));
+
+    expect(readStoredPhotoAlbumLinks('site-a')).toEqual(['https://example.test/site-a-ceremony']);
+    expect(readStoredPhotoAlbumLinks('site-b')).toEqual(['https://example.test/site-b-toast']);
+    expect(countStoredPhotoAlbumLinks('site-a')).toBe(1);
+    expect(getPreferredStoredPhotoAlbumLink('site-b')).toBe('https://example.test/site-b-toast');
+  });
+
+  it('migrates legacy stored photo album links into the active wedding site scope', () => {
+    localStorage.clear();
+    localStorage.setItem('dayof.photoAlbumLinks', JSON.stringify({
+      savedAtISO: '2026-05-06T12:00:00.000Z',
+      value: {
+        legacy: 'https://example.test/legacy-photo-link',
+      },
+    }));
+
+    expect(readStoredPhotoAlbumLinks('site-a')).toEqual(['https://example.test/legacy-photo-link']);
+    expect(localStorage.getItem('dayof.photoBucketLinks::site-a')).toContain('legacy-photo-link');
+    expect(localStorage.getItem('dayof.photoAlbumLinks')).toBeNull();
+  });
+
+  it('does not migrate consumed legacy photo album links into another wedding scope', () => {
+    localStorage.clear();
+    localStorage.setItem('dayof.photoAlbumLinks', JSON.stringify({
+      savedAtISO: '2026-05-06T12:00:00.000Z',
+      value: {
+        legacy: 'https://example.test/legacy-photo-link',
+      },
+    }));
+
+    expect(readStoredPhotoAlbumLinks('site-a')).toEqual(['https://example.test/legacy-photo-link']);
+    expect(readStoredPhotoAlbumLinks('site-b')).toEqual([]);
+    expect(localStorage.getItem('dayof.photoBucketLinks::site-b')).toBeNull();
   });
 
   it('checks schedule usability and reachable channels', () => {

@@ -1,7 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useSearchParams } from 'react-router-dom';
 import { HeartHandshake } from 'lucide-react';
 import { OwnerPreviewBanner } from '../components/site/OwnerPreviewBanner';
+import { resolveCurrentSearchParams } from '../lib/currentSearchParams';
 import { customerSafeErrorMessage } from '../lib/customerSafeError';
 import {
   buildPublicAccessArtifacts,
@@ -23,18 +24,17 @@ export const safeGuestbookFunctionError = (value: unknown) => {
   return friendlyGuestbookError(typeof value === 'string' ? value : '');
 };
 
-export const buildGuestbookAccessPayload = (slug: string) => {
-  const searchParams = new URLSearchParams(window.location.search);
-  return buildPublicAccessArtifacts(slug, searchParams);
+export const buildGuestbookAccessPayload = (slug: string, searchParams?: URLSearchParams) => {
+  return buildPublicAccessArtifacts(slug, resolveCurrentSearchParams(searchParams));
 };
 
-export const buildGuestbookIdentityPayload = (slug: string) => {
-  const searchParams = new URLSearchParams(window.location.search);
-  return buildGuestIdentityArtifacts(slug, searchParams);
+export const buildGuestbookIdentityPayload = (slug: string, searchParams?: URLSearchParams) => {
+  return buildGuestIdentityArtifacts(slug, resolveCurrentSearchParams(searchParams));
 };
 
 export const GuestbookSubmit: React.FC = () => {
   const { siteRef } = useParams();
+  const [searchParams] = useSearchParams();
   const siteSlug = useMemo(() => (siteRef ?? '').trim().toLowerCase(), [siteRef]);
   const [guestName, setGuestName] = useState('');
   const [guestEmail, setGuestEmail] = useState('');
@@ -43,24 +43,30 @@ export const GuestbookSubmit: React.FC = () => {
   const [status, setStatus] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const inputClassName = 'w-full rounded-lg border border-stone-200 bg-white px-4 py-3 text-base text-stone-900 outline-none transition focus:border-stone-400 focus:ring-4 focus:ring-stone-200/70';
+  const inputClassName = 'w-full rounded-xl border border-stone-200 bg-white px-4 py-3 text-base text-stone-900 outline-none transition focus:border-stone-400 focus:ring-4 focus:ring-stone-200/70';
   const labelClassName = 'mb-2 block text-sm font-medium text-stone-800';
 
   useEffect(() => {
+    setGuestName('');
+    setGuestEmail('');
+    setMessage('');
+    setWebsite('');
+    setStatus(null);
+    setError(null);
+    setSubmitting(false);
     if (siteSlug) {
-      const searchParams = new URLSearchParams(window.location.search);
       capturePublicInviteTokenFromSearch(siteSlug, searchParams);
       captureGuestInviteTokenFromSearch(siteSlug, searchParams);
     }
-  }, [siteSlug]);
+  }, [searchParams, siteSlug]);
 
   useEffect(() => {
     if (!siteSlug) return;
     trackGuestHubEvent(siteSlug, 'view', '/guestbook/invite', {
-      ...buildGuestbookAccessPayload(siteSlug),
-      ...buildGuestbookIdentityPayload(siteSlug),
+      ...buildGuestbookAccessPayload(siteSlug, searchParams),
+      ...buildGuestbookIdentityPayload(siteSlug, searchParams),
     }).catch(() => {});
-  }, [siteSlug]);
+  }, [searchParams, siteSlug]);
 
   async function onSubmit(event: React.FormEvent) {
     event.preventDefault();
@@ -77,7 +83,7 @@ export const GuestbookSubmit: React.FC = () => {
 
     setSubmitting(true);
     try {
-      await submitGuestbookEntry({ siteSlug, guestName, guestEmail, message, website, ...buildGuestbookAccessPayload(siteSlug) });
+      await submitGuestbookEntry({ siteSlug, guestName, guestEmail, message, website, ...buildGuestbookAccessPayload(siteSlug, searchParams) });
       setStatus('Your note is in. Thank you.');
       setMessage('');
       setGuestEmail('');
@@ -88,11 +94,35 @@ export const GuestbookSubmit: React.FC = () => {
     }
   }
 
+  const handleGuestNameChange = (value: string) => {
+    setError(null);
+    setStatus(null);
+    setGuestName(value);
+  };
+
+  const handleGuestEmailChange = (value: string) => {
+    setError(null);
+    setStatus(null);
+    setGuestEmail(value);
+  };
+
+  const handleMessageChange = (value: string) => {
+    setError(null);
+    setStatus(null);
+    setMessage(value);
+  };
+
+  const handleWebsiteChange = (value: string) => {
+    setError(null);
+    setStatus(null);
+    setWebsite(value);
+  };
+
   return (
     <div className="min-h-screen bg-[#fbf7f1] px-4 py-6 text-stone-950 sm:py-10">
       <OwnerPreviewBanner />
       <main className="mx-auto grid max-w-5xl gap-6 lg:grid-cols-[0.9fr_1.1fr] lg:items-start">
-        <section className="overflow-hidden rounded-lg border border-stone-200 bg-white">
+        <section className="overflow-hidden rounded-xl border border-stone-200 bg-white">
           <div className="relative min-h-[250px] bg-stone-900">
             <img
               src="/preview-photos/024-root-landscape.jpg"
@@ -102,7 +132,7 @@ export const GuestbookSubmit: React.FC = () => {
             />
             <div className="absolute inset-0 bg-gradient-to-t from-stone-950/90 via-stone-950/45 to-stone-950/10" />
             <div className="relative flex min-h-[250px] flex-col justify-end p-6 text-white sm:p-8">
-              <span className="mb-4 inline-flex h-11 w-11 items-center justify-center rounded-lg bg-white/18 backdrop-blur">
+              <span className="mb-4 inline-flex h-11 w-11 items-center justify-center rounded-xl bg-white/18 backdrop-blur">
                 <HeartHandshake className="h-5 w-5" aria-hidden="true" />
               </span>
               <p className="text-xs font-semibold text-white/70">Guestbook</p>
@@ -129,10 +159,10 @@ export const GuestbookSubmit: React.FC = () => {
           inputClassName={inputClassName}
           labelClassName={labelClassName}
           onSubmit={onSubmit}
-          onGuestNameChange={setGuestName}
-          onGuestEmailChange={setGuestEmail}
-          onMessageChange={setMessage}
-          onWebsiteChange={setWebsite}
+          onGuestNameChange={handleGuestNameChange}
+          onGuestEmailChange={handleGuestEmailChange}
+          onMessageChange={handleMessageChange}
+          onWebsiteChange={handleWebsiteChange}
         />
       </main>
     </div>

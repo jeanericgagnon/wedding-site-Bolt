@@ -25,7 +25,7 @@ const TOKEN_LABELS: { key: keyof ThemeTokens; label: string; group: string }[] =
 function ColorSwatch({ color }: { color: string }) {
   return (
     <div
-      className="w-5 h-5 rounded-md border border-black/10 shadow-sm flex-shrink-0"
+      className="w-5 h-5 rounded-xl border border-black/10 shadow-sm flex-shrink-0"
       style={{ backgroundColor: color }}
     />
   );
@@ -50,7 +50,7 @@ function PresetRow({
   return (
     <button
       onClick={onSelect}
-      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-all group ${
+      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-all group ${
         isActive
           ? 'bg-gray-900 text-white'
           : 'hover:bg-gray-50 text-gray-700'
@@ -60,7 +60,7 @@ function PresetRow({
         {swatchColors.map((c, i) => (
           <div
             key={i}
-            className="w-4 h-4 rounded-md border border-black/10"
+            className="w-4 h-4 rounded-xl border border-black/10"
             style={{ backgroundColor: c }}
           />
         ))}
@@ -185,7 +185,7 @@ export const ThemePalettePanel: React.FC<ThemePalettePanelProps> = ({ isOpen, on
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-md hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors"
+            className="p-1.5 rounded-xl hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors"
             aria-label="Close palette panel"
           >
             <X size={14} />
@@ -220,7 +220,7 @@ export const ThemePalettePanel: React.FC<ThemePalettePanelProps> = ({ isOpen, on
           <select
             value={globalAnimationPreset ?? 'none'}
             onChange={(e) => dispatch(builderActions.setGlobalAnimationPreset(e.target.value === 'none' ? null : (e.target.value as NonNullable<typeof globalAnimationPreset>)))}
-            className="mt-1.5 w-full border border-gray-200 rounded-lg px-2.5 py-2 text-xs text-gray-700 bg-white"
+            className="mt-1.5 w-full border border-gray-200 rounded-xl px-2.5 py-2 text-xs text-gray-700 bg-white"
           >
             <option value="none">No shared animation</option>
             <option value="fade-in">Fade in</option>
@@ -242,7 +242,7 @@ export const ThemePalettePanel: React.FC<ThemePalettePanelProps> = ({ isOpen, on
               <div className="flex flex-wrap gap-1.5 pb-2 border-b border-gray-100">
                 <button
                   onClick={() => setSelectedPack('all')}
-                  className={`rounded-lg border px-2 py-1 text-[11px] font-medium ${selectedPack === 'all' ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'}`}
+                  className={`rounded-xl border px-2 py-1 text-[11px] font-medium ${selectedPack === 'all' ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'}`}
                 >
                   All packs
                 </button>
@@ -250,7 +250,7 @@ export const ThemePalettePanel: React.FC<ThemePalettePanelProps> = ({ isOpen, on
                   <button
                     key={pack.id}
                     onClick={() => setSelectedPack(pack.id)}
-                    className={`rounded-lg border px-2 py-1 text-[11px] font-medium ${selectedPack === pack.id ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'}`}
+                    className={`rounded-xl border px-2 py-1 text-[11px] font-medium ${selectedPack === pack.id ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'}`}
                   >
                     {pack.label}
                   </button>
@@ -269,7 +269,7 @@ export const ThemePalettePanel: React.FC<ThemePalettePanelProps> = ({ isOpen, on
               <div className="pt-3 border-t border-gray-100 mt-3">
                 <button
                   onClick={() => setView('custom')}
-                  className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-left hover:bg-gray-50 transition-colors text-gray-600 group"
+                  className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-left hover:bg-gray-50 transition-colors text-gray-600 group"
                 >
                   <div className="flex items-center gap-2">
                     <Pipette size={14} className="text-gray-400" />
@@ -299,7 +299,7 @@ export const ThemePalettePanel: React.FC<ThemePalettePanelProps> = ({ isOpen, on
                           type="color"
                           value={customTokens[key]}
                           onChange={e => handleCustomTokenChange(key, e.target.value)}
-                          className="w-8 h-8 rounded-md cursor-pointer border border-gray-200 p-0.5 flex-shrink-0"
+                          className="w-8 h-8 rounded-xl cursor-pointer border border-gray-200 p-0.5 flex-shrink-0"
                         />
                         <div className="flex-1 min-w-0">
                           <div className="text-xs text-gray-700 font-medium">{label}</div>
@@ -324,13 +324,13 @@ export const ThemePalettePanel: React.FC<ThemePalettePanelProps> = ({ isOpen, on
               <div className="pt-3 border-t border-gray-100 space-y-2">
                 <button
                   onClick={handleApplyCustom}
-                  className="w-full py-2 rounded-lg bg-gray-900 text-white text-sm font-medium hover:bg-gray-800 transition-colors"
+                  className="w-full py-2 rounded-xl bg-gray-900 text-white text-sm font-medium hover:bg-gray-800 transition-colors"
                 >
                   Apply Custom Palette
                 </button>
                 <button
                   onClick={handleResetToPreset}
-                  className="w-full py-2 rounded-lg bg-gray-50 text-gray-600 text-sm font-medium hover:bg-gray-100 transition-colors border border-gray-200"
+                  className="w-full py-2 rounded-xl bg-gray-50 text-gray-600 text-sm font-medium hover:bg-gray-100 transition-colors border border-gray-200"
                 >
                   Reset to Preset
                 </button>
@@ -351,7 +351,7 @@ export const ThemePalettePanel: React.FC<ThemePalettePanelProps> = ({ isOpen, on
               ].map((c, i) => (
                 <div
                   key={i}
-                  className="w-4 h-4 rounded-md border border-black/10 shadow-sm"
+                  className="w-4 h-4 rounded-xl border border-black/10 shadow-sm"
                   style={{ backgroundColor: c }}
                 />
               ))}

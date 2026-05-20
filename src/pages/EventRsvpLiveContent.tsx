@@ -78,7 +78,7 @@ export function EventRsvpLiveContent({
                       </h2>
                       {invitation.rsvp && (
                         <span
-                          className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1 text-sm font-medium ${
+                          className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-1 text-sm font-medium ${
                             invitation.rsvp.attending
                               ? 'bg-surface-secondary text-text-primary border border-border-subtle'
                               : 'bg-neutral-100 text-neutral-600'
@@ -124,7 +124,7 @@ export function EventRsvpLiveContent({
                             href={getMapUrl(invitation.event.location_name || '', invitation.event.location_address || '')}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="flex items-center gap-1 px-3 py-2 text-sm bg-primary-50 text-primary-700 hover:bg-primary-100 rounded-lg transition-colors whitespace-nowrap"
+                            className="flex items-center gap-1 px-3 py-2 text-sm bg-primary-50 text-primary-700 hover:bg-primary-100 rounded-xl transition-colors whitespace-nowrap"
                           >
                             <MapPin className="w-4 h-4" />
                             View Map
@@ -148,7 +148,7 @@ export function EventRsvpLiveContent({
                 )}
 
                 {invitation.event.notes && (
-                  <div className="mb-4 p-3 bg-neutral-50 rounded-lg text-sm text-neutral-600">
+                  <div className="mb-4 p-3 bg-neutral-50 rounded-xl text-sm text-neutral-600">
                     {invitation.event.notes}
                   </div>
                 )}

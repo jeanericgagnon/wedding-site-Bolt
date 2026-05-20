@@ -11,6 +11,7 @@ import { rewriteSignedMediaUrlsToPublicDeep } from './mediaUrl.ts';
 import { getIsPublishedFromSiteRow } from './publicSiteProject.ts';
 import { toPublicPageDTO, toPublicSectionDTO, type PublicPageDTO } from './publicRenderContract.ts';
 import { normalizeTravelPortalData } from './travelStructuredData.ts';
+import { assignDefaultSectionAnchors, normalizePageAnchorSlug, stripRedundantPageSectionAnchor } from '../builder/utils/sectionAnchors.ts';
 
 export interface PublicSiteThemeModel {
   preset: string | null;
@@ -105,18 +106,123 @@ function sanitizeBuilderSection(section: BuilderSectionInstance): BuilderSection
   }) as unknown as BuilderSectionInstance;
 }
 
+function getComparablePublicOrderIndex(value: unknown): number {
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+  if (typeof value === 'string' && value.trim()) {
+    const parsed = Number(value);
+    if (Number.isFinite(parsed)) return parsed;
+  }
+  return Number.MAX_SAFE_INTEGER;
+}
+
+function getPersistedPublicOrderIndex(value: unknown, fallbackIndex: number): number {
+  const orderIndex = getComparablePublicOrderIndex(value);
+  return orderIndex === Number.MAX_SAFE_INTEGER ? fallbackIndex : orderIndex;
+}
+
+function sortBuilderSectionsByOrder(sections: BuilderSectionInstance[]): BuilderSectionInstance[] {
+  return sections
+    .map((section, index) => ({ section, index }))
+    .sort((a, b) => {
+      const orderDelta = getComparablePublicOrderIndex(a.section.orderIndex) - getComparablePublicOrderIndex(b.section.orderIndex);
+      return orderDelta || a.index - b.index;
+    })
+    .map(({ section }, index) => ({ ...section, orderIndex: index }));
+}
+
+function sortBuilderPagesByOrder(pages: BuilderPage[]): BuilderPage[] {
+  return pages
+    .map((page, index) => ({ page, index }))
+    .sort((a, b) => {
+      const orderDelta = getComparablePublicOrderIndex(a.page.orderIndex) - getComparablePublicOrderIndex(b.page.orderIndex);
+      return orderDelta || a.index - b.index;
+    })
+    .map(({ page }, index) => ({ ...page, orderIndex: index }));
+}
+
 function sanitizeBuilderPage(page: BuilderPage): BuilderPage {
+  const pageIdentity = {
+    id: page.id,
+    slug: page.slug,
+    title: page.title,
+    meta: {
+      isHome: page.meta?.isHome === true,
+    },
+  };
   return toPublicPageDTO({
     id: page.id,
     title: page.title,
     slug: page.slug,
     orderIndex: page.orderIndex,
-    sections: Array.isArray(page.sections) ? page.sections.map(sanitizeBuilderSection) : [],
+    sections: Array.isArray(page.sections)
+      ? assignDefaultSectionAnchors(sortBuilderSectionsByOrder(page.sections))
+        .map((section) => stripRedundantPageSectionAnchor(section, pageIdentity))
+        .map(sanitizeBuilderSection)
+      : [],
     meta: {
       isHome: page.meta?.isHome === true,
-      isHidden: false,
+      isHidden: page.meta?.isHidden === true,
     },
   }) as unknown as BuilderPage;
+}
+
+function makeUniquePublicPageSlug(baseSlug: string, usedSlugs: Set<string>, fallbackIndex: number): string {
+  const fallback = normalizePageAnchorSlug(baseSlug) || `page-${fallbackIndex}`;
+  if (!usedSlugs.has(fallback)) {
+    usedSlugs.add(fallback);
+    return fallback;
+  }
+
+  let suffix = 2;
+  while (usedSlugs.has(`${fallback}-${suffix}`)) suffix += 1;
+  const slug = `${fallback}-${suffix}`;
+  usedSlugs.add(slug);
+  return slug;
+}
+
+function normalizePublicPageSlugs(pages: BuilderPage[]): BuilderPage[] {
+  const usedSlugs = new Set<string>();
+  const homeIndex = pages.findIndex((page) => {
+    const normalizedSlug = normalizePageAnchorSlug(page.slug);
+    const normalizedId = normalizePageAnchorSlug(page.id);
+    return page.meta?.isHome === true || normalizedSlug === 'home' || normalizedId === 'home';
+  });
+  const orderedPages = homeIndex > 0
+    ? [pages[homeIndex], ...pages.filter((_, index) => index !== homeIndex)]
+    : pages;
+
+  return orderedPages.map((page, index) => {
+    const normalizedSlug = normalizePageAnchorSlug(page.slug);
+    const normalizedId = normalizePageAnchorSlug(page.id);
+    const wantsHome = page.meta?.isHome === true || normalizedSlug === 'home' || normalizedId === 'home';
+    const isHome = wantsHome && !usedSlugs.has('home');
+    const slug = isHome
+      ? makeUniquePublicPageSlug('home', usedSlugs, index + 1)
+      : makeUniquePublicPageSlug(normalizedSlug || normalizedId || normalizePageAnchorSlug(page.title), usedSlugs, index + 1);
+
+    const normalizedPage = {
+      ...page,
+      slug,
+      meta: {
+        ...page.meta,
+        isHome,
+      },
+    };
+    const pageIdentity = {
+      id: normalizedPage.id,
+      slug: normalizedPage.slug,
+      title: normalizedPage.title,
+      meta: { isHome },
+    };
+
+    return {
+      ...normalizedPage,
+      orderIndex: index,
+      sections: Array.isArray(normalizedPage.sections)
+        ? normalizedPage.sections.map((section) => stripRedundantPageSectionAnchor(section, pageIdentity))
+        : [],
+    };
+  });
 }
 
 function toPersistedPublicBuilderSection(section: PersistedPublicSectionRow, index: number): BuilderSectionInstance {
@@ -125,7 +231,7 @@ function toPersistedPublicBuilderSection(section: PersistedPublicSectionRow, ind
     type: section.type as BuilderSectionInstance['type'],
     variant: section.variant ?? 'default',
     enabled: section.visible !== false,
-    orderIndex: typeof section.order === 'number' ? section.order : index,
+    orderIndex: getPersistedPublicOrderIndex(section.order, index),
     settings: asRecord(section.data) ?? {},
     bindings: section.bindings as Record<string, unknown> | undefined,
     styleOverrides: section.style_overrides as Record<string, unknown> | undefined,
@@ -375,7 +481,7 @@ function getPublishedProjectPages(row: Record<string, unknown>, isPublished: boo
   );
   const pages = Array.isArray(preferredProject?.pages) ? preferredProject.pages : [];
   if (pages.length === 0) return [];
-  return pages.map((page) => sanitizeBuilderPage(page as BuilderPage));
+  return normalizePublicPageSlugs(sortBuilderPagesByOrder(pages as BuilderPage[]).map((page) => sanitizeBuilderPage(page)));
 }
 
 function getPublicWeddingRenderData(row: Record<string, unknown>, isPublished: boolean): PublicWeddingRenderModel | null {
@@ -434,10 +540,12 @@ function getPublicThemeModel(
 export function buildPersistedPublicFallbackPages(
   sections: PersistedPublicSectionRow[],
 ): BuilderPage[] {
-  const publicSections = sections
-    .filter((section) => section.visible !== false)
-    .sort((a, b) => (typeof a.order === 'number' ? a.order : 0) - (typeof b.order === 'number' ? b.order : 0))
-    .map(toPersistedPublicBuilderSection);
+  const publicSections = assignDefaultSectionAnchors(
+    sections
+      .filter((section) => section.visible !== false)
+      .sort((a, b) => getComparablePublicOrderIndex(a.order) - getComparablePublicOrderIndex(b.order))
+      .map(toPersistedPublicBuilderSection)
+  );
 
   if (publicSections.length === 0) return [];
 

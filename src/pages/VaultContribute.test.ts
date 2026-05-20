@@ -145,6 +145,8 @@ describe('vault contribution data boundary', () => {
     expect(page).toContain('uploadVaultContributionToGoogleDrive({');
     expect(page).toContain('uploadVaultContributionAttachment({');
     expect(page).toContain('submitVaultContributionRows(rows, buildVaultAccessPayload(siteSlug ?? \'\'), qaOpen)');
+    expect(page).toContain('} finally {');
+    expect(page).toContain('setSubmitting(false);');
     expect(page).not.toContain("if (step === 'loading')");
     expect(page).not.toContain("if (step === 'invalid')");
     expect(page).not.toContain("if (step === 'hub')");
@@ -166,6 +168,36 @@ describe('vault contribution data boundary', () => {
     expect(fn).toContain('.select("id,site_slug,is_published,privacy_mode,guest_access_token,wedding_date")');
     expect(fn).toContain('const submissionWindow = vaultWindowStatus(site.wedding_date, qaOpen);');
     expect(fn).toContain('.from("vault_configs")');
+  });
+
+  it('keeps vault submitting state alive until the final contribution write settles', () => {
+    const page = readFileSync(join(process.cwd(), 'src/pages/VaultContribute.tsx'), 'utf8');
+    const finalSubmitIndex = page.indexOf("await submitVaultContributionRows(rows, buildVaultAccessPayload(siteSlug ?? ''), qaOpen)");
+    const finalIdleIndex = page.indexOf('setSubmitting(false);', finalSubmitIndex);
+
+    expect(finalSubmitIndex).toBeGreaterThan(-1);
+    expect(finalIdleIndex).toBeGreaterThan(finalSubmitIndex);
+    expect(page.slice(finalSubmitIndex, finalIdleIndex)).not.toContain('setSubmitting(false);');
+  });
+
+  it('clears stale guest contribution submit errors once the guest edits the form again', () => {
+    const page = readFileSync(join(process.cwd(), 'src/pages/VaultContribute.tsx'), 'utf8');
+
+    expect(page).toContain('const clearContributionSubmitError = () => setSubmitError(null);');
+    expect(page).toContain("onChange={e => { clearContributionSubmitError(); setForm({ ...form, author_name: e.target.value }); }}");
+    expect(page).toContain("onChange={e => { clearContributionSubmitError(); setForm({ ...form, title: e.target.value }); }}");
+    expect(page).toContain("onChange={e => { clearContributionSubmitError(); setForm({ ...form, content: e.target.value }); }}");
+    expect(page).toContain("onChange={e => { clearContributionSubmitError(); setForm({ ...form, media_type: e.target.value as 'text' | 'photo' | 'video' | 'voice' }); setSelectedFiles([]);");
+  });
+
+  it('clears stale guest contribution field validation once the matching field changes', () => {
+    const page = readFileSync(join(process.cwd(), 'src/pages/VaultContribute.tsx'), 'utf8');
+
+    expect(page).toContain("const clearContributionFieldError = (field: keyof typeof errors) => {");
+    expect(page).toContain("clearContributionFieldError('author_name');");
+    expect(page).toContain("clearContributionFieldError('content');");
+    expect(page).toContain("clearContributionFieldError('attachment_url');");
+    expect(page).toContain("clearContributionSubmitError();\n                      clearContributionFieldError('attachment_url');");
   });
 });
 

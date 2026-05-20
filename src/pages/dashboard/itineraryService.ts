@@ -274,10 +274,10 @@ export async function deleteItineraryEvent(eventId: string): Promise<void> {
 
 export async function loadItineraryDashboardEvents(
   hasEventRsvpsTable: boolean | null,
-): Promise<{ events: ItineraryDashboardEvent[]; hasEventRsvpsTable: boolean | null }> {
+): Promise<{ events: ItineraryDashboardEvent[]; hasEventRsvpsTable: boolean | null; hasActiveSite: boolean }> {
   const siteId = await resolveItinerarySiteId();
   if (!siteId) {
-    return { events: [], hasEventRsvpsTable };
+    return { events: [], hasEventRsvpsTable, hasActiveSite: false };
   }
 
   const { data: site, error: siteError } = await supabase
@@ -288,7 +288,7 @@ export async function loadItineraryDashboardEvents(
   if (siteError) throw siteError;
 
   if (!site) {
-    return { events: [], hasEventRsvpsTable };
+    return { events: [], hasEventRsvpsTable, hasActiveSite: false };
   }
 
   const { data: eventsData, error } = await supabase
@@ -364,6 +364,7 @@ export async function loadItineraryDashboardEvents(
   return {
     events: eventsWithCounts,
     hasEventRsvpsTable: nextHasEventRsvpsTable,
+    hasActiveSite: true,
   };
 }
 

@@ -20,12 +20,12 @@ export function OverviewDashboardRouteView({
         {loading ? (
           <div className="space-y-6 animate-pulse" aria-hidden="true">
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
-              <div className="h-32 rounded-lg border border-border-subtle bg-surface-subtle" />
-              <div className="h-32 rounded-lg border border-border-subtle bg-surface-subtle" />
-              <div className="h-32 rounded-lg border border-border-subtle bg-surface-subtle" />
-              <div className="h-32 rounded-lg border border-border-subtle bg-surface-subtle" />
+              <div className="h-32 rounded-2xl border border-border-subtle bg-surface-subtle" />
+              <div className="h-32 rounded-2xl border border-border-subtle bg-surface-subtle" />
+              <div className="h-32 rounded-2xl border border-border-subtle bg-surface-subtle" />
+              <div className="h-32 rounded-2xl border border-border-subtle bg-surface-subtle" />
             </div>
-            <div className="h-44 rounded-lg border border-border-subtle bg-surface-subtle" />
+            <div className="h-44 rounded-2xl border border-border-subtle bg-surface-subtle" />
           </div>
         ) : (
           children

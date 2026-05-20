@@ -1,8 +1,9 @@
 #!/usr/bin/env node
 
-import { execSync, spawn } from 'node:child_process';
+import { execSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { resolvePreviewRuntime, stopPreviewRuntime } from './proofPreviewRuntime.mjs';
 
 const PREVIEW_URL = 'http://127.0.0.1:4173';
 const baseUrl = process.env.PLAYWRIGHT_BASE_URL || PREVIEW_URL;
@@ -22,24 +23,6 @@ function envValue(key, fallback = '') {
 const ownerEmail = envValue('V1_OWNER_EMAIL', '');
 const ownerPassword = envValue('V1_OWNER_PASSWORD', '');
 const shouldRunLiveProof = baseUrl !== PREVIEW_URL && /^https?:\/\//i.test(baseUrl) && Boolean(ownerEmail && ownerPassword);
-
-function sleep(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-async function waitForPreview(url, timeoutMs = 20_000) {
-  const startedAt = Date.now();
-  while (Date.now() - startedAt < timeoutMs) {
-    try {
-      const response = await fetch(url, { signal: AbortSignal.timeout(1_500) });
-      if (response.ok) return;
-    } catch {
-      // keep waiting
-    }
-    await sleep(500);
-  }
-  throw new Error(`Preview server did not become ready at ${url} within ${timeoutMs}ms`);
-}
 
 function runStep(step) {
   const startedAt = new Date().toISOString();
@@ -94,24 +77,16 @@ results.push(runStep({
 }));
 
 let previewProcess = null;
-let previewStdout = '';
-let previewStderr = '';
+let previewOutput = { stdout: '', stderr: '' };
 try {
   if (baseUrl === PREVIEW_URL) {
-    previewProcess = spawn('npm', ['run', 'preview', '--', '--host', '127.0.0.1', '--port', '4173'], {
+    const previewRuntime = await resolvePreviewRuntime({
+      preferredPort: 4173,
+      requestedBaseUrl: baseUrl,
       cwd: process.cwd(),
-      env: process.env,
-      stdio: ['ignore', 'pipe', 'pipe'],
     });
-
-    previewProcess.stdout.on('data', (chunk) => {
-      previewStdout += chunk.toString('utf8');
-    });
-    previewProcess.stderr.on('data', (chunk) => {
-      previewStderr += chunk.toString('utf8');
-    });
-
-    await waitForPreview(PREVIEW_URL);
+    previewProcess = previewRuntime.previewProcess;
+    previewOutput = previewRuntime.previewOutput;
   }
 
   results.push(runStep({
@@ -128,7 +103,7 @@ try {
     }));
   }
 
-  if (previewStdout.trim()) {
+  if (previewOutput.stdout.trim()) {
     results.push({
       id: 'preview-server-log',
       label: 'Preview server log',
@@ -137,8 +112,8 @@ try {
       ok: true,
       startedAt: new Date().toISOString(),
       finishedAt: new Date().toISOString(),
-      stdout: previewStdout.trim(),
-      stderr: previewStderr.trim() || undefined,
+      stdout: previewOutput.stdout.trim(),
+      stderr: previewOutput.stderr.trim() || undefined,
     });
   }
 } catch (error) {
@@ -150,14 +125,10 @@ try {
     ok: false,
     startedAt: new Date().toISOString(),
     finishedAt: new Date().toISOString(),
-    stderr: [previewStderr.trim(), error instanceof Error ? error.message : 'Guest language preview server failed to start.'].filter(Boolean).join('\n'),
+    stderr: [previewOutput.stderr.trim(), error instanceof Error ? error.message : 'Guest language preview server failed to start.'].filter(Boolean).join('\n'),
   });
 } finally {
-  if (previewProcess) {
-    previewProcess.kill('SIGTERM');
-    await sleep(300);
-    if (!previewProcess.killed) previewProcess.kill('SIGKILL');
-  }
+  await stopPreviewRuntime(previewProcess);
 }
 
 const failedRequired = results.filter((result) => result.required && !result.ok);
@@ -170,6 +141,9 @@ const output = {
     passed: results.filter((result) => result.ok).length,
     failed: results.filter((result) => !result.ok).length,
   },
+  contractSummary: shouldRunLiveProof
+    ? 'Guest-language continuity live proof is green: this guest-surface bundle validates translated RSVP and guest-hub continuity as supporting non-SMS launch evidence.'
+    : 'Guest-language continuity local proof is green: this guest-surface bundle validates translated route continuity locally and leaves authenticated live guest-language truth to the dedicated production rerun.',
   automatedCoverage: [
     'Stored guest language preference and owner-preview language derivation truth',
     'Translated RSVP question and meal-choice continuity coverage',

@@ -5,6 +5,14 @@ import { defaultDirectionsCardData, directionsCardDefinition } from './card';
 import { defaultDirectionsPinData, directionsPinDefinition } from './pin';
 import { defaultDirectionsSplitData, directionsSplitDefinition } from './split';
 
+function getIframeSrc(container: HTMLElement) {
+  const frame = container.querySelector('iframe');
+  expect(frame).not.toBeNull();
+  const src = frame?.getAttribute('src');
+  expect(src).toBeTruthy();
+  return src as string;
+}
+
 describe('public directions map embeds', () => {
   it('keeps card map iframe sources pinned to Google Maps for hostile map data', () => {
     const { container } = render(
@@ -19,11 +27,11 @@ describe('public directions map embeds', () => {
       />,
     );
 
-    const src = container.querySelector('iframe')?.getAttribute('src');
+    const src = getIframeSrc(container);
     expect(src).toMatch(/^https:\/\/www\.google\.com\/maps\?q=/);
     expect(src).toContain('output=embed');
-    expect(container.innerHTML).not.toContain('evil.example.com');
-    expect(container.innerHTML).not.toContain('<script>');
+    expect(src).not.toContain('evil.example.com');
+    expect(container.querySelector('script')).toBeNull();
   });
 
   it('uses safe Google Maps iframe sources across pin and split variants', () => {
@@ -44,9 +52,9 @@ describe('public directions map embeds', () => {
       />,
     );
 
-    expect(pin.container.querySelector('iframe')?.getAttribute('src')).toMatch(/^https:\/\/www\.google\.com\/maps\?q=/);
-    expect(split.container.querySelector('iframe')?.getAttribute('src')).toMatch(/^https:\/\/www\.google\.com\/maps\?q=/);
-    expect(pin.container.innerHTML).not.toContain('javascript:alert');
-    expect(split.container.innerHTML).not.toContain('ftp://example.com/map');
+    expect(getIframeSrc(pin.container)).toMatch(/^https:\/\/www\.google\.com\/maps\?q=/);
+    expect(getIframeSrc(split.container)).toMatch(/^https:\/\/www\.google\.com\/maps\?q=/);
+    expect(getIframeSrc(pin.container)).not.toContain('javascript:alert');
+    expect(getIframeSrc(split.container)).not.toContain('ftp://example.com/map');
   });
 });

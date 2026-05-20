@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 
 import { toValidDateOrNull } from './vaultDate';
 import { readDemoVaultState, writeDemoVaultState } from '../vaultDemoStorage';
+import { buildVaultReleaseNoticeStorageKey, readVaultReleaseNoticeKeys, writeVaultReleaseNoticeKeys } from './vaultReleaseNoticeStorage';
 import {
   checkVaultGoogleDriveHealth,
   ensureHostedVaultProvider as persistHostedVaultProvider,
@@ -17,6 +19,19 @@ const VAULT_RELEASE_NOTICE_KEY = 'dayof_vault_release_notified_v1';
 const DEMO_WEDDING_DATE = '2026-02-23';
 const VAULT_DASHBOARD_LOAD_TIMEOUT_MS = 12000;
 
+async function runVaultDashboardTimed<T>(task: Promise<T>, timeoutMs: number): Promise<T> {
+  let timeoutId: number | null = null;
+  const timeout = new Promise<never>((_, reject) => {
+    timeoutId = window.setTimeout(() => reject(new Error('Vault dashboard load timed out.')), timeoutMs);
+  });
+
+  try {
+    return await Promise.race([task, timeout]);
+  } finally {
+    if (timeoutId) window.clearTimeout(timeoutId);
+  }
+}
+
 interface VaultDashboardDataArgs {
   isDemoMode: boolean;
   toast: (message: string, type?: 'success' | 'error') => void;
@@ -24,6 +39,9 @@ interface VaultDashboardDataArgs {
 }
 
 export function useVaultDashboardData({ isDemoMode, toast, user }: VaultDashboardDataArgs) {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const toastRef = useRef(toast);
   const userId = user?.id ?? null;
   const userEmail = user?.email ?? null;
@@ -43,6 +61,24 @@ export function useVaultDashboardData({ isDemoMode, toast, user }: VaultDashboar
   const [coupleEmail, setCoupleEmail] = useState<string | null>(null);
   const [coupleName1, setCoupleName1] = useState<string>('Partner');
   const [coupleName2, setCoupleName2] = useState<string>('Partner');
+  const loadRequestIdRef = useRef(0);
+
+  const resetVaultDashboardState = useCallback(() => {
+    setSiteSlug(null);
+    setWeddingSiteId(null);
+    setWeddingDate(null);
+    setVaultConfigs([]);
+    setEntries([]);
+    setVaultStorageProvider('supabase');
+    setGoogleDriveConnected(false);
+    setConnectingDrive(false);
+    setDriveHealthChecking(false);
+    setDriveHealthMessage(null);
+    setDriveNeedsReconnect(false);
+    setCoupleEmail(null);
+    setCoupleName1('Partner');
+    setCoupleName2('Partner');
+  }, []);
 
   useEffect(() => {
     toastRef.current = toast;
@@ -150,6 +186,8 @@ export function useVaultDashboardData({ isDemoMode, toast, user }: VaultDashboar
   }, [isDemoMode, weddingSiteId]);
 
   const loadData = useCallback(async () => {
+    const requestId = ++loadRequestIdRef.current;
+    const isCurrentLoad = () => requestId === loadRequestIdRef.current;
     setLoading(true);
     setLoadError(null);
     try {
@@ -157,13 +195,21 @@ export function useVaultDashboardData({ isDemoMode, toast, user }: VaultDashboar
         setSiteSlug('alex-jordan-demo');
 
         const { site: demoSite, configs, entries: demoEntries } = await loadDemoVaultDashboardData('alex-jordan-demo');
+        if (!isCurrentLoad()) return;
 
         if (demoSite) {
           setWeddingSiteId(demoSite.id);
           setVaultStorageProvider('supabase');
           setGoogleDriveConnected(!!demoSite.vault_google_drive_connected);
+          setConnectingDrive(false);
+          setDriveHealthChecking(false);
+          setDriveHealthMessage(null);
+          setDriveNeedsReconnect(false);
+          setCoupleEmail(null);
+          setCoupleName1(demoSite.couple_name_1 || 'Partner');
+          setCoupleName2(demoSite.couple_name_2 || 'Partner');
           void ensureHostedVaultProvider(demoSite.id).catch(() => {
-            toastRef.current('Couldn’t sync dayof as the active vault home right now.', 'error');
+            if (isCurrentLoad()) toastRef.current('Couldn’t sync dayof as the active vault home right now.', 'error');
           });
           if (demoSite.wedding_date) setWeddingDate(toValidDateOrNull(demoSite.wedding_date));
           else setWeddingDate(toValidDateOrNull(DEMO_WEDDING_DATE));
@@ -175,6 +221,13 @@ export function useVaultDashboardData({ isDemoMode, toast, user }: VaultDashboar
         setWeddingSiteId('demo-site-id');
         setVaultStorageProvider('supabase');
         setGoogleDriveConnected(false);
+        setConnectingDrive(false);
+        setDriveHealthChecking(false);
+        setDriveHealthMessage(null);
+        setDriveNeedsReconnect(false);
+        setCoupleEmail(null);
+        setCoupleName1('Alex');
+        setCoupleName2('Jordan');
         setWeddingDate(toValidDateOrNull(DEMO_WEDDING_DATE));
         const demoState = loadDemoState();
         setVaultConfigs(demoState.vaultConfigs);
@@ -183,47 +236,32 @@ export function useVaultDashboardData({ isDemoMode, toast, user }: VaultDashboar
       }
 
       if (!userId) {
-        setSiteSlug(null);
-        setWeddingSiteId(null);
-        setWeddingDate(null);
-        setVaultConfigs([]);
-        setEntries([]);
-        setGoogleDriveConnected(false);
-        setDriveNeedsReconnect(false);
-        setCoupleEmail(null);
-        setCoupleName1('Partner');
-        setCoupleName2('Partner');
+        resetVaultDashboardState();
         return;
       }
 
-      const { site, configs, entries: loadedEntries } = await Promise.race([
+      const { site, configs, entries: loadedEntries } = await runVaultDashboardTimed(
         loadVaultDashboardData(userId),
-        new Promise<never>((_, reject) => {
-          window.setTimeout(() => reject(new Error('Vault dashboard load timed out.')), VAULT_DASHBOARD_LOAD_TIMEOUT_MS);
-        }),
-      ]);
+        VAULT_DASHBOARD_LOAD_TIMEOUT_MS,
+      );
+      if (!isCurrentLoad()) return;
 
       if (!site) {
-        setSiteSlug(null);
-        setWeddingSiteId(null);
-        setWeddingDate(null);
-        setVaultConfigs([]);
-        setEntries([]);
-        setGoogleDriveConnected(false);
-        setDriveNeedsReconnect(false);
-        setCoupleEmail(null);
-        setCoupleName1('Partner');
-        setCoupleName2('Partner');
+        resetVaultDashboardState();
         return;
       }
 
       setWeddingSiteId(site.id);
       setVaultStorageProvider('supabase');
       setGoogleDriveConnected(!!site.vault_google_drive_connected);
+      setConnectingDrive(false);
+      setDriveHealthChecking(false);
+      setDriveHealthMessage(null);
+      setDriveNeedsReconnect(false);
       void ensureHostedVaultProvider(site.id).catch(() => {
-        toastRef.current('Couldn’t sync dayof as the active vault home right now.', 'error');
+        if (isCurrentLoad()) toastRef.current('Couldn’t sync dayof as the active vault home right now.', 'error');
       });
-      if (site.wedding_date) setWeddingDate(toValidDateOrNull(site.wedding_date));
+      setWeddingDate(toValidDateOrNull(site.wedding_date ?? null));
       setSiteSlug(site.site_slug ?? null);
       setCoupleName1(site.couple_name_1 || 'Partner');
       setCoupleName2(site.couple_name_2 || 'Partner');
@@ -231,22 +269,14 @@ export function useVaultDashboardData({ isDemoMode, toast, user }: VaultDashboar
       setVaultConfigs(configs);
       setEntries(loadedEntries);
     } catch {
-      setSiteSlug(null);
-      setWeddingSiteId(null);
-      setWeddingDate(null);
-      setVaultConfigs([]);
-      setEntries([]);
-      setGoogleDriveConnected(false);
-      setDriveNeedsReconnect(false);
-      setCoupleEmail(null);
-      setCoupleName1('Partner');
-      setCoupleName2('Partner');
+      if (!isCurrentLoad()) return;
+      resetVaultDashboardState();
       setLoadError('Couldn’t load vaults right now. Try again in a moment.');
       toastRef.current('Couldn’t load vault data right now. Please try again.', 'error');
     } finally {
-      setLoading(false);
+      if (isCurrentLoad()) setLoading(false);
     }
-  }, [ensureHostedVaultProvider, isDemoMode, loadDemoState, userEmail, userId]);
+  }, [ensureHostedVaultProvider, isDemoMode, loadDemoState, resetVaultDashboardState, userEmail, userId]);
 
   const handleConnectGoogleDrive = useCallback(async () => {
     if (!weddingSiteId) return;
@@ -276,29 +306,35 @@ export function useVaultDashboardData({ isDemoMode, toast, user }: VaultDashboar
   }, [checkGoogleDriveHealth, googleDriveConnected]);
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const oauthError = params.get('error');
-    const googleCode = params.get('google_drive_code') || params.get('code');
-    const googleState = params.get('state');
+    const oauthError = searchParams.get('error');
+    const googleCode = searchParams.get('google_drive_code') || searchParams.get('code');
+    const googleState = searchParams.get('state');
+    const clearOAuthParams = () => {
+      const url = new URLSearchParams(searchParams);
+      url.delete('google_drive_code');
+      url.delete('code');
+      url.delete('state');
+      url.delete('error');
+      navigate(
+        {
+          pathname: location.pathname,
+          search: url.toString() ? `?${url.toString()}` : '',
+          hash: location.hash,
+        },
+        { replace: true },
+      );
+    };
 
     if (oauthError) {
       toastRef.current('Google Drive connection was cancelled or failed. Please try again.', 'error');
-      const url = new URL(window.location.href);
-      url.searchParams.delete('error');
-      url.searchParams.delete('state');
-      window.history.replaceState({}, '', url.toString());
+      clearOAuthParams();
       return;
     }
 
     if (!googleCode || !googleState) return;
 
     finishVaultGoogleDriveAuth(googleCode, googleState).then((data) => {
-      const url = new URL(window.location.href);
-      url.searchParams.delete('google_drive_code');
-      url.searchParams.delete('code');
-      url.searchParams.delete('state');
-      url.searchParams.delete('error');
-      window.history.replaceState({}, '', url.toString());
+      clearOAuthParams();
 
       const ok = (data as { success?: boolean } | null)?.success;
       if (!ok) {
@@ -321,27 +357,16 @@ export function useVaultDashboardData({ isDemoMode, toast, user }: VaultDashboar
         }
       })();
     }).catch(() => {
-      const url = new URL(window.location.href);
-      url.searchParams.delete('google_drive_code');
-      url.searchParams.delete('code');
-      url.searchParams.delete('state');
-      url.searchParams.delete('error');
-      window.history.replaceState({}, '', url.toString());
+      clearOAuthParams();
       toastRef.current('Google Drive connection failed. Please try again.', 'error');
     });
-  }, [checkGoogleDriveHealth, ensureHostedVaultProvider, loadData, weddingSiteId]);
+  }, [checkGoogleDriveHealth, ensureHostedVaultProvider, loadData, location.hash, location.pathname, navigate, searchParams, weddingSiteId]);
 
   useEffect(() => {
-    if (!weddingDate || vaultConfigs.length === 0) return;
+    if (!weddingDate || !weddingSiteId || vaultConfigs.length === 0) return;
 
-    const notified = (() => {
-      try {
-        const raw = localStorage.getItem(VAULT_RELEASE_NOTICE_KEY);
-        return raw ? JSON.parse(raw) as string[] : [];
-      } catch {
-        return [] as string[];
-      }
-    })();
+    const storageKey = buildVaultReleaseNoticeStorageKey(VAULT_RELEASE_NOTICE_KEY, weddingSiteId);
+    const notified = readVaultReleaseNoticeKeys(storageKey);
 
     const newlyUnlocked = vaultConfigs.filter((config) => {
       const unlockDate = new Date(weddingDate);
@@ -362,8 +387,8 @@ export function useVaultDashboardData({ isDemoMode, toast, user }: VaultDashboar
       return `${config.id}:${unlockDate.toISOString().slice(0, 10)}`;
     })];
 
-    localStorage.setItem(VAULT_RELEASE_NOTICE_KEY, JSON.stringify(Array.from(new Set(next))));
-  }, [vaultConfigs, weddingDate]);
+    writeVaultReleaseNoticeKeys(storageKey, Array.from(new Set(next)));
+  }, [vaultConfigs, weddingDate, weddingSiteId]);
 
   return {
     checkGoogleDriveHealth,

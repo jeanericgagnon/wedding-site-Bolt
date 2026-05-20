@@ -204,10 +204,15 @@ const alternateGateChecks = functionEntrypoints
 
 const alternateGateFailures = alternateGateChecks.filter((check) => !check.ok);
 
+const ok = failures.length === 0 && resolverFailures.length === 0 && alternateGateFailures.length === 0;
+
 console.log(JSON.stringify({
-  ok: failures.length === 0 && resolverFailures.length === 0 && alternateGateFailures.length === 0,
+  ok,
   generatedAt: new Date().toISOString(),
   mode: 'public_subresource_access_gate_static_coverage',
+  contractSummary: ok
+    ? 'Public access coverage proof is green: this static boundary lane validates resolver/subresource gate wiring and payload minimization, but it remains supporting public-surface evidence alongside live guest/public proof.'
+    : 'Public access coverage proof is not green: static resolver/subresource gate or payload-boundary regressions exist and must be fixed before public-surface launch claims stay credible.',
   resolverFunctions: resolverChecks.map((check) => check.name),
   alternateGateFunctions: alternateGateChecks.map((check) => check.name),
   checkedFunctions: checks.map((check) => check.name),
@@ -221,4 +226,4 @@ console.log(JSON.stringify({
   ],
 }, null, 2));
 
-process.exit(failures.length === 0 && resolverFailures.length === 0 && alternateGateFailures.length === 0 ? 0 : 1);
+process.exit(ok ? 0 : 1);

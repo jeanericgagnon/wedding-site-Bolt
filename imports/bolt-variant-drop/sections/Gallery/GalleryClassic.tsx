@@ -20,7 +20,7 @@ export default function GalleryClassic({ section }: GalleryClassicProps) {
         <h2 className="text-5xl font-serif text-center mb-16 text-gray-800">Our Memories</h2>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
           {images.map((image, index) => (
-            <div key={index} className="aspect-square bg-gray-200 rounded-lg overflow-hidden">
+            <div key={index} className="aspect-square bg-gray-200 rounded-xl overflow-hidden">
               <img
                 src={image}
                 alt={`Gallery ${index + 1}`}

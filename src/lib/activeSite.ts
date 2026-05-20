@@ -1,6 +1,6 @@
 import { supabase } from './supabase';
 import { getStoredActiveSiteId } from './activeSiteStorage';
-import type { PlannerPermissionKey } from './plannerAccess';
+import { isPlannerCollaboratorRole, normalizePlannerPermissions, type PlannerPermissionKey } from './plannerAccess';
 import { DEMO_MODE } from '../config/env';
 
 export type ActiveSiteSummary = {
@@ -51,8 +51,8 @@ export async function resolveActiveSiteForUser(userId: string): Promise<ActiveSi
     if (preferredCollaboratorSite?.wedding_site_id) {
       return {
         id: preferredCollaboratorSite.wedding_site_id,
-        role: (preferredCollaboratorSite.role as ActiveSiteSummary['role']) || 'viewer',
-        permissions: Array.isArray(preferredCollaboratorSite.permissions) ? preferredCollaboratorSite.permissions as PlannerPermissionKey[] : [],
+        role: isPlannerCollaboratorRole(preferredCollaboratorSite.role) ? preferredCollaboratorSite.role : 'viewer',
+        permissions: normalizePlannerPermissions(preferredCollaboratorSite.permissions),
       };
     }
   }
@@ -87,8 +87,8 @@ export async function resolveActiveSiteForUser(userId: string): Promise<ActiveSi
 
   return {
     id: collaboratorSite.wedding_site_id,
-    role: (collaboratorSite.role as ActiveSiteSummary['role']) || 'viewer',
-    permissions: Array.isArray(collaboratorSite.permissions) ? collaboratorSite.permissions as PlannerPermissionKey[] : [],
+    role: isPlannerCollaboratorRole(collaboratorSite.role) ? collaboratorSite.role : 'viewer',
+    permissions: normalizePlannerPermissions(collaboratorSite.permissions),
   };
 }
 

@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { templateCatalog } from '../../builder/constants/templateCatalog';
 import { TEMPLATE_USE_CASE_PACKS } from '../../builder/constants/templateUseCasePacks';
@@ -6,6 +6,7 @@ import { clearSetupDraft, clearSetupDraftOnly, readSetupDraft, setupDraftProgres
 import { deriveSetupMode, getRecommendedTemplates, SETUP_STYLE_OPTIONS } from '../../lib/setupDraftRecommendations';
 import { customerSafeErrorMessage } from '../../lib/customerSafeError';
 import { submitSetupBootstrap } from './setupService';
+import { useAuth } from '../../hooks/useAuth';
 
 function safeSetupError(err: unknown): string {
   return customerSafeErrorMessage(err, 'Couldn’t save your setup right now. Please try again.');
@@ -24,11 +25,17 @@ const steps = [
 export const SetupShell: React.FC<{ step?: string }> = ({ step }) => {
   const params = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const setupDraftStorageScope = user?.id ?? null;
   const activeStep = step ?? params.step ?? 'names';
 
-  const [draft, setDraft] = useState<SetupDraft>(() => readSetupDraft());
+  const [draft, setDraft] = useState<SetupDraft>(() => readSetupDraft(setupDraftStorageScope));
   const [error, setError] = useState<string>('');
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    setDraft(readSetupDraft(setupDraftStorageScope));
+  }, [setupDraftStorageScope]);
 
   const completion = useMemo(() => setupDraftProgress(draft), [draft]);
 
@@ -48,7 +55,7 @@ export const SetupShell: React.FC<{ step?: string }> = ({ step }) => {
     setError('');
     setDraft((prev) => {
       const next = { ...prev, ...patch };
-      writeSetupDraft(next);
+      writeSetupDraft(next, setupDraftStorageScope);
       return next;
     });
   };
@@ -67,6 +74,7 @@ export const SetupShell: React.FC<{ step?: string }> = ({ step }) => {
   };
 
   const goPrev = () => {
+    setError('');
     if (prevStep) navigate(`/setup/${prevStep}`);
   };
 
@@ -138,20 +146,20 @@ export const SetupShell: React.FC<{ step?: string }> = ({ step }) => {
   const recommendedTemplates = useMemo(() => getRecommendedTemplates(draft, templateCatalog), [draft]);
 
   const resetSetupDraft = () => {
-    clearSetupDraft();
-    window.location.href = '/setup/names';
+    clearSetupDraft(setupDraftStorageScope);
+    navigate('/setup/names');
   };
 
   const saveAndGoBuilder = async () => {
     try {
       setError('');
       setSaving(true);
-      writeSetupDraft(draft);
+      writeSetupDraft(draft, setupDraftStorageScope);
 
       await submitSetupBootstrap(draft);
 
       // draft has been committed server-side; keep selected template key but clear raw draft
-      clearSetupDraftOnly();
+      clearSetupDraftOnly(setupDraftStorageScope);
       navigate('/builder');
     } catch (err) {
       setError(safeSetupError(err));
@@ -216,22 +224,22 @@ export const SetupShell: React.FC<{ step?: string }> = ({ step }) => {
           })}
         </div>
 
-        <div className="mt-6 rounded-lg border border-neutral-200 bg-white p-5">
+        <div className="mt-6 rounded-xl border border-neutral-200 bg-white p-5">
           <p className="text-sm text-neutral-500">Current step</p>
           <h2 className="text-xl font-semibold text-neutral-900 mt-1">{steps.find((s) => s.key === activeStep)?.label ?? 'Setup'}</h2>
 
           {activeStep === 'migration' && (
           <div className="mt-4 space-y-4">
-            <div className="rounded-lg border border-neutral-200 bg-neutral-50 p-3 text-xs text-neutral-600">
+            <div className="rounded-xl border border-neutral-200 bg-neutral-50 p-3 text-xs text-neutral-600">
               Starting fresh is fine. Moving over from Zola, Joy, The Knot, or somewhere else is fine too. We just want to shape the next steps the right way.
             </div>
             {draft.migrationSource && draft.migrationSource !== 'other' && (
-              <div className="rounded-lg border border-border-subtle bg-surface-secondary p-3 text-xs text-text-secondary">
+              <div className="rounded-xl border border-border-subtle bg-surface-secondary p-3 text-xs text-text-secondary">
                 Migration-first guidance: start by securing your names, date, city, and guest structure here. You can clean up story, FAQs, registry links, and design once the core move is done.
               </div>
             )}
             {draft.migrationSource === 'other' && (
-              <div className="rounded-lg border border-border-subtle bg-surface-secondary p-3 text-xs text-text-secondary">
+              <div className="rounded-xl border border-border-subtle bg-surface-secondary p-3 text-xs text-text-secondary">
                 Migration-first guidance: move the essentials first: names, date, location, guest list, and RSVP setup. Then fill in the rest after the switch is stable.
               </div>
             )}
@@ -247,18 +255,18 @@ export const SetupShell: React.FC<{ step?: string }> = ({ step }) => {
                   key={`${value}-${idx}`}
                   type="button"
                   onClick={() => updateDraft({ migrationSource: value as SetupDraft['migrationSource'] })}
-                  className={`rounded-lg border px-4 py-3 text-sm text-left ${draft.migrationSource === value && !(label === 'Starting fresh' && draft.migrationSource === 'other') ? 'border-primary bg-surface-secondary text-text-primary' : 'border-neutral-200 bg-white text-neutral-700 hover:border-neutral-300'}`}
+                  className={`rounded-xl border px-4 py-3 text-sm text-left ${draft.migrationSource === value && !(label === 'Starting fresh' && draft.migrationSource === 'other') ? 'border-primary bg-surface-secondary text-text-primary' : 'border-neutral-200 bg-white text-neutral-700 hover:border-neutral-300'}`}
                 >
                   {label}
                 </button>
               ))}
             </div>
-            <div className="rounded-lg border border-neutral-200 bg-white p-3 text-xs text-neutral-600">
+            <div className="rounded-xl border border-neutral-200 bg-white p-3 text-xs text-neutral-600">
               Next, we will lock in the essentials that make the move feel stable: your names, your date, and the city guests need to orient around. Design cleanup can wait until after that.
             </div>
             <div className="flex items-center justify-between gap-3">
               <div className="text-xs text-neutral-500">We will use this to shape migration-specific guidance next.</div>
-              <button onClick={continueFromMigration} className="rounded-lg bg-neutral-900 text-white px-4 py-2 text-sm hover:bg-neutral-800">Continue</button>
+              <button onClick={continueFromMigration} className="rounded-xl bg-neutral-900 text-white px-4 py-2 text-sm hover:bg-neutral-800">Continue</button>
             </div>
           </div>
         )}
@@ -298,10 +306,10 @@ export const SetupShell: React.FC<{ step?: string }> = ({ step }) => {
 
           {activeStep === 'location' && (
             <div className="mt-4 space-y-4">
-              <div className="rounded-lg border border-neutral-200 bg-neutral-50 p-3 text-xs text-neutral-600">
+              <div className="rounded-xl border border-neutral-200 bg-neutral-50 p-3 text-xs text-neutral-600">
                 If this is a destination or multi-day weekend, start with the city first. You can fill in hotels, parking, airport notes, and the rest of the weekend flow right after setup.
               </div>
-              {draft.migrationSource && <div className="rounded-lg border border-neutral-200 bg-white p-3 text-xs text-neutral-600">If you're migrating, this is the point where the switch starts feeling real. Get the core location right now; details can follow.</div>}
+              {draft.migrationSource && <div className="rounded-xl border border-neutral-200 bg-white p-3 text-xs text-neutral-600">If you're migrating, this is the point where the switch starts feeling real. Get the core location right now; details can follow.</div>}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <input className="w-full rounded border border-neutral-300 px-3 py-2 text-sm" placeholder="Wedding city" value={draft.weddingCity} onChange={(e) => updateDraft({ weddingCity: e.target.value })} />
                 <input className="w-full rounded border border-neutral-300 px-3 py-2 text-sm" placeholder="State / Region (optional)" value={draft.weddingRegion} onChange={(e) => updateDraft({ weddingRegion: e.target.value })} />
@@ -381,7 +389,7 @@ export const SetupShell: React.FC<{ step?: string }> = ({ step }) => {
                 </div>
               </div>
 
-              <div className="rounded-lg border border-neutral-200 bg-neutral-50 p-3 text-xs text-neutral-600">
+              <div className="rounded-xl border border-neutral-200 bg-neutral-50 p-3 text-xs text-neutral-600">
                 <p className="font-medium text-neutral-800">Setup direction</p>
                 <p className="mt-1">{setupMode.destination ? 'Destination wedding mode is on. dayof will lean harder into travel, hotel, and arrival guidance.' : setupMode.weekend ? 'Weekend-style setup is on. dayof will expect more than one event and more guest coordination.' : 'Classic single-day setup is fine here. You can still add extra events later.'}</p>
               </div>
@@ -389,7 +397,7 @@ export const SetupShell: React.FC<{ step?: string }> = ({ step }) => {
                 {TEMPLATE_USE_CASE_PACKS.map((pack) => {
                   const active = (pack.id === 'destination' && setupMode.destination) || (pack.id === 'bilingual' && setupMode.bilingual) || (pack.id === 'interfaith' && setupMode.interfaith);
                   return (
-                    <div key={pack.id} className={`rounded-lg border p-3 text-xs ${active ? 'border-primary bg-surface-secondary text-text-primary' : 'border-neutral-200 bg-white text-neutral-600'}`}>
+                    <div key={pack.id} className={`rounded-xl border p-3 text-xs ${active ? 'border-primary bg-surface-secondary text-text-primary' : 'border-neutral-200 bg-white text-neutral-600'}`}>
                       <p className="font-medium text-neutral-900">{pack.label}</p>
                       <p className="mt-1">{pack.description}</p>
                     </div>
@@ -418,7 +426,7 @@ export const SetupShell: React.FC<{ step?: string }> = ({ step }) => {
                 <p><strong>Design:</strong> {selectedTemplateName}</p>
               </div>
 
-              <div className="rounded-lg border border-neutral-200 bg-neutral-50 p-3 text-xs text-neutral-600">
+              <div className="rounded-xl border border-neutral-200 bg-neutral-50 p-3 text-xs text-neutral-600">
                 {setupMode.destination ? 'Next after setup: confirm travel details, hotel guidance, and weekend events before publishing.' : setupMode.weekend ? 'Next after setup: add your full weekend schedule so guests can follow the flow clearly.' : 'Next after setup: finish the main event details, RSVP settings, and guest list before sharing it with guests.'} {setupMode.bilingual ? 'Keep bilingual guest copy in mind while you fill out FAQs and key guest guidance.' : ''} {setupMode.interfaith ? 'Add a short ceremony note early so guests understand the traditions being honored.' : ''}
               </div>
 

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { GuestWithRSVP } from './guestDashboardTypes';
 import {
   readStoredCampaignLog,
@@ -33,7 +33,24 @@ type GuestDashboardFilterStatus =
   | 'manual-handled'
   | 'no-contact';
 
+const createEmptyGuestFormData = () => ({
+  first_name: '',
+  last_name: '',
+  email: '',
+  phone: '',
+  preferred_language: '',
+  plus_one_allowed: false,
+  require_plus_one_name: false,
+  invited_to_ceremony: true,
+  invited_to_reception: true,
+});
+
 export function useGuestDashboardUiState() {
+  const [storageScope, setStorageScope] = useState<string | null>(null);
+  const normalizedStorageScope = useMemo(() => {
+    const scope = typeof storageScope === 'string' ? storageScope.trim() : '';
+  return scope || null;
+  }, [storageScope]);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState<GuestDashboardFilterStatus>('all');
   const [extraFilters, setExtraFilters] = useState<string[]>([]);
@@ -57,17 +74,7 @@ export function useGuestDashboardUiState() {
   const [selectedGuestIds, setSelectedGuestIds] = useState<Set<string>>(new Set());
   const [selectedGuestLanguageDraft, setSelectedGuestLanguageDraft] = useState('');
   const [showInsights, setShowInsights] = useState(false);
-  const [formData, setFormData] = useState({
-    first_name: '',
-    last_name: '',
-    email: '',
-    phone: '',
-    preferred_language: '',
-    plus_one_allowed: false,
-    require_plus_one_name: false,
-    invited_to_ceremony: true,
-    invited_to_reception: true,
-  });
+  const [formData, setFormData] = useState(createEmptyGuestFormData);
   const [formEventInviteIds, setFormEventInviteIds] = useState<Set<string>>(new Set());
   const [showExportMenu, setShowExportMenu] = useState(false);
   const [showOpsMenu, setShowOpsMenu] = useState(false);
@@ -78,32 +85,72 @@ export function useGuestDashboardUiState() {
   const [deletingGuestId, setDeletingGuestId] = useState<string | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
-  useEffect(() => {
-    const preset = readStoredCampaignPreset();
-    if (preset) {
-      setCampaignPreset(preset);
-      setFilterStatus(preset);
-    }
-    setFollowUpTasks(readStoredFollowUpTasks());
-    setSavedSegments(readStoredSavedSegments());
-    setCampaignLog(readStoredCampaignLog());
+  const resetGuestDashboardUiState = useCallback(() => {
+    setSearchQuery('');
+    setFilterStatus('all');
+    setExtraFilters([]);
+    setExtraFilterDraft('');
+    setShowAddModal(false);
+    setEditingGuest(null);
+    setShowRecipientPreview(false);
+    setConflictFilter('all');
+    setSkipRecentlyInvited(true);
+    setShowConflictDetails(false);
+    setCheckInMode(false);
+    setSelectedGuestIds(new Set());
+    setSelectedGuestLanguageDraft('');
+    setShowInsights(false);
+    setFormData(createEmptyGuestFormData());
+    setFormEventInviteIds(new Set());
+    setShowExportMenu(false);
+    setShowOpsMenu(false);
+    setShowCampaignModal(false);
+    setShowDeleteAllModal(false);
+    setDeleteAllConfirmInput('');
+    setDeleteAllBusy(false);
+    setDeletingGuestId(null);
+    setConfirmDeleteId(null);
   }, []);
 
   useEffect(() => {
-    writeStoredCampaignPreset(campaignPreset);
-  }, [campaignPreset]);
+    if (!normalizedStorageScope) {
+      setCampaignPreset('pending');
+      setFollowUpTasks([]);
+      setSavedSegments([]);
+      setCampaignLog([]);
+      return;
+    }
+
+    const preset = readStoredCampaignPreset(normalizedStorageScope);
+    setCampaignPreset(preset ?? 'pending');
+    if (preset) {
+      setFilterStatus(preset);
+    }
+    setFollowUpTasks(readStoredFollowUpTasks(normalizedStorageScope));
+    setSavedSegments(readStoredSavedSegments(normalizedStorageScope));
+    setCampaignLog(readStoredCampaignLog(normalizedStorageScope));
+  }, [normalizedStorageScope]);
 
   useEffect(() => {
-    writeStoredFollowUpTasks(followUpTasks);
-  }, [followUpTasks]);
+    if (!normalizedStorageScope) return;
+    writeStoredCampaignPreset(campaignPreset, normalizedStorageScope);
+  }, [campaignPreset, normalizedStorageScope]);
 
   useEffect(() => {
-    writeStoredSavedSegments(savedSegments);
-  }, [savedSegments]);
+    if (!normalizedStorageScope) return;
+    writeStoredFollowUpTasks(followUpTasks, normalizedStorageScope);
+  }, [followUpTasks, normalizedStorageScope]);
 
   useEffect(() => {
-    writeStoredCampaignLog(campaignLog);
-  }, [campaignLog]);
+    if (!normalizedStorageScope) return;
+    writeStoredSavedSegments(savedSegments, normalizedStorageScope);
+  }, [normalizedStorageScope, savedSegments]);
+
+  useEffect(() => {
+    if (!normalizedStorageScope) return;
+    writeStoredCampaignLog(campaignLog, normalizedStorageScope);
+  }, [campaignLog, normalizedStorageScope]);
+
   return {
     autoRemindersEnabled,
     campaignLog,
@@ -127,9 +174,11 @@ export function useGuestDashboardUiState() {
     searchQuery,
     selectedGuestIds,
     selectedGuestLanguageDraft,
+    resetGuestDashboardUiState,
     setAutoRemindersEnabled,
     setCampaignLog,
     setCampaignPreset,
+    setStorageScope,
     setCheckInMode,
     setConfirmDeleteId,
     setConflictFilter,

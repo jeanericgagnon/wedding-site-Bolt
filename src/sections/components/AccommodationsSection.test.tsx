@@ -36,7 +36,7 @@ function makeInstance(settings: SectionInstance['settings']): SectionInstance {
 
 describe('AccommodationsSection', () => {
   it('renders builder-wrapped title copy in the default variant', () => {
-    render(
+    const { container } = render(
       <AccommodationsSection
         data={createEmptyWeddingData()}
         instance={makeInstance({
@@ -74,7 +74,7 @@ describe('AccommodationsSection', () => {
   });
 
   it('does not duplicate the general note when showTitle is unset in the empty state', () => {
-    render(
+    const { container } = render(
       <AccommodationsSection
         data={createEmptyWeddingData()}
         instance={makeInstance({
@@ -89,7 +89,7 @@ describe('AccommodationsSection', () => {
   });
 
   it('shows the general note in the empty state when the title is explicitly hidden', () => {
-    render(
+    const { container } = render(
       <AccommodationsSection
         data={createEmptyWeddingData()}
         instance={makeInstance({
@@ -105,7 +105,7 @@ describe('AccommodationsSection', () => {
   });
 
   it('drops unsafe hotel booking URLs before rendering public links', () => {
-    render(
+    const { container } = render(
       <AccommodationsSection
         data={createEmptyWeddingData()}
         instance={makeInstance({
@@ -119,7 +119,7 @@ describe('AccommodationsSection', () => {
 
     expect(screen.getByText('Unsafe Inn')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /book now/i })).toHaveAttribute('href', 'https://example.com/book');
-    expect(document.querySelector('a[href^="javascript:"]')).not.toBeInTheDocument();
+    expect(container.querySelector('a[href^="javascript:"]')).toBeNull();
   });
 
   it('drops unsafe accommodation variant image URLs before render', () => {

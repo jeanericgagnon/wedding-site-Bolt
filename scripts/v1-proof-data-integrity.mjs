@@ -210,6 +210,9 @@ const output = {
   generatedAt: new Date().toISOString(),
   proofMode,
   summary: Object.fromEntries(Object.entries(results).map(([table, rows]) => [table, rows.length])),
+  contractSummary: proofMode === 'service_role_full'
+    ? 'Data-integrity proof is running in secure full mode: this cross-table lane closes deeper storage/queue/runtime integrity truth that weaker anon-safe proofs cannot establish.'
+    : 'Data-integrity proof is running in anon-limited mode: this lane provides partial cross-table evidence only and still defers the full integrity call to the secure service-role proof environment.',
   skippedTables,
   checks,
   hardCheckNames,

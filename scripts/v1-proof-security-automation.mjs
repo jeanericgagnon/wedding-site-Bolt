@@ -59,10 +59,28 @@ for (const workflow of [ciHardpass, releaseGate]) {
   if (!workflow.includes('npm run proof:v1:security-automation')) {
     failures.push('Launch workflows must run npm run proof:v1:security-automation.');
   }
+  if (!workflow.includes('npm run proof:v1:board:freshness')) {
+    failures.push('Launch workflows must run npm run proof:v1:board:freshness before either proof:v1:board output is treated as current truth.');
+  }
+  if (workflow.includes('npm run proof:v1:board:md')) {
+    failures.push('Launch workflows must not run npm run proof:v1:board:md; they only gate freshness, not board regeneration.');
+  }
+  if (workflow.match(/npm run proof:v1:board(?!:)/)) {
+    failures.push('Launch workflows must not run npm run proof:v1:board directly; they only gate freshness, not board regeneration.');
+  }
 }
 
 if (!String(packageJson.scripts?.['test:launch'] ?? '').includes('npm run proof:v1:security-automation')) {
   failures.push('test:launch must include npm run proof:v1:security-automation.');
+}
+if (!String(packageJson.scripts?.['test:launch'] ?? '').includes('npm run proof:v1:board:freshness')) {
+  failures.push('test:launch must include npm run proof:v1:board:freshness.');
+}
+if (!String(packageJson.scripts?.['test:launch'] ?? '').includes('npm run proof:v1:board')) {
+  failures.push('test:launch must include npm run proof:v1:board.');
+}
+if (!String(packageJson.scripts?.['test:launch'] ?? '').includes('npm run proof:v1:board:md')) {
+  failures.push('test:launch must include npm run proof:v1:board:md.');
 }
 
 const result = {
@@ -71,8 +89,11 @@ const result = {
   slice: 'security-automation',
   generatedAt: new Date().toISOString(),
   summary: failures.length === 0
-    ? 'Dependabot, Semgrep, CodeQL, secret scanning, and launch-proof wiring are present.'
+    ? 'Dependabot, Semgrep, CodeQL, secret scanning, and launch-proof wiring are present; workflows stay freshness-only while helper/local proof paths regenerate board artifacts.'
     : 'Security automation wiring is incomplete.',
+  contractSummary: failures.length === 0
+    ? 'This checker validates security automation and launch-workflow wiring as supporting release infrastructure evidence; it does not replace the proof-board or feature/runtime proof lanes.'
+    : 'Security automation or launch-workflow wiring drifted, so supporting release-infrastructure claims should pause until repaired.',
   failures,
 };
 

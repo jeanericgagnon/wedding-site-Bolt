@@ -1,9 +1,11 @@
 import React from 'react';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { MemoryRouter, Route, Routes, useNavigate } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+const copyTextOrDownloadMock = vi.fn(async (_value?: unknown, _filename?: unknown) => 'copied');
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
@@ -17,6 +19,7 @@ vi.mock('react-i18next', () => ({
         'event_recap.subtitle': 'Guest photos, highlights, and memory chapters from the wedding weekend.',
         'event_recap.back_hub': 'Back to guest hub',
         'event_recap.share_recap': 'Share recap',
+        'event_recap.copy_caption': 'Copy caption',
         'event_recap.shared_uploads': 'Shared uploads',
         'event_recap.top_moments': 'Top moments',
         'event_recap.memory_chapters': 'Memory chapters',
@@ -29,6 +32,8 @@ vi.mock('react-i18next', () => ({
         'event_recap.own_event': 'I want a dayof link for my own event someday.',
         'event_recap.get_recap': 'Get recap',
         'event_recap.create_own': 'Create your own dayof',
+        'event_recap.link_copied': 'Recap link copied.',
+        'event_recap.link_downloaded': 'Recap link downloaded.',
         'guest_hub.saving': 'Saving...',
       };
       if (key === 'event_recap.shared_by') return `Shared by ${params?.name}`;
@@ -42,7 +47,7 @@ vi.mock('../components/ui/LanguageSwitcher', () => ({
 }));
 
 vi.mock('../lib/copyText', () => ({
-  copyTextOrDownload: vi.fn(async () => 'copied'),
+  copyTextOrDownload: (value: unknown, filename?: unknown) => copyTextOrDownloadMock(value, filename),
 }));
 
 import { EventRecap, buildDemoEventRecapData, buildEventRecapAccessHeaders, buildEventRecapGuestHubAccessPayload, formatEventRecapAlbumLabel, friendlyEventRecapError, resolveEventRecapViewTarget, safeEventRecapFunctionError } from './EventRecap';
@@ -72,7 +77,23 @@ const recapPayload = {
   ],
 };
 
+const EventRecapRouteHarness = () => {
+  const navigate = useNavigate();
+  return (
+    <>
+      <button type="button" onClick={() => navigate('/event/nextcouple/recap')}>
+        Switch recap
+      </button>
+      <Routes>
+        <Route path="/event/:siteRef/recap" element={<EventRecap />} />
+      </Routes>
+    </>
+  );
+};
+
 beforeEach(() => {
+  copyTextOrDownloadMock.mockReset();
+  copyTextOrDownloadMock.mockResolvedValue('copied');
   vi.stubGlobal('fetch', vi.fn(async (url: string) => {
     if (url.includes('guest-recap-config')) {
       return new Response(JSON.stringify(recapPayload), { status: 200 });
@@ -245,6 +266,73 @@ describe('EventRecap opt-in form', () => {
       expect(screen.getByRole('status')).toHaveTextContent('Saved. We will send the recap when it is ready.');
     });
   });
+
+  it('clears stale recap opt-in status once the guest edits the form again', async () => {
+    render(
+      <MemoryRouter initialEntries={['/event/ericandkaras/recap']}>
+        <Routes>
+          <Route path="/event/:siteRef/recap" element={<EventRecap />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    expect(await screen.findByRole('heading', { name: /eric & kara/i })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Get recap' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('Add an email or phone so we can send the recap.');
+
+    fireEvent.change(screen.getByLabelText('Email (optional)'), { target: { value: 'guest@example.com' } });
+
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  });
+
+  it('shows a story-caption-specific failure message when caption copy fails', async () => {
+    copyTextOrDownloadMock.mockRejectedValueOnce(new Error('copy failed'));
+
+    render(
+      <MemoryRouter initialEntries={['/event/ericandkaras/recap']}>
+        <Routes>
+          <Route path="/event/:siteRef/recap" element={<EventRecap />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    expect(await screen.findByRole('heading', { name: /eric & kara/i })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Copy caption' }));
+
+    await waitFor(() => {
+      expect(screen.getByText('Couldn’t copy the story caption right now.')).toBeInTheDocument();
+    });
+  });
+
+  it('ignores stale recap copy completions after the recap route changes', async () => {
+    let finishCopy: ((value: 'copied') => void) | undefined;
+    copyTextOrDownloadMock.mockReturnValueOnce(new Promise<'copied'>((resolve) => {
+      finishCopy = resolve;
+    }));
+
+    render(
+      <MemoryRouter initialEntries={['/event/ericandkaras/recap']}>
+        <EventRecapRouteHarness />
+      </MemoryRouter>,
+    );
+
+    expect(await screen.findByRole('heading', { name: /eric & kara/i })).toBeInTheDocument();
+    fireEvent.click(screen.getAllByRole('button', { name: 'Share recap' }).at(-1)!);
+    fireEvent.click(screen.getByRole('button', { name: 'Switch recap' }));
+    await waitFor(() => {
+      expect(screen.getAllByRole('button', { name: 'Share recap' }).at(-1)).toBeEnabled();
+    });
+
+    await act(async () => {
+      finishCopy?.('copied');
+    });
+
+    expect(screen.getAllByRole('button', { name: 'Share recap' }).at(-1)).toBeEnabled();
+    expect(screen.queryByRole('button', { name: 'Copied recap link' })).not.toBeInTheDocument();
+    expect(screen.queryByText('Recap link copied.')).not.toBeInTheDocument();
+  });
 });
 
 describe('event recap page boundary', () => {
@@ -256,8 +344,8 @@ describe('event recap page boundary', () => {
     expect(page).toContain("from './EventRecapLiveContent'");
     expect(page).toContain('<EventRecapLiveContent');
     expect(page).toContain('captureGuestInviteTokenFromSearch(slug, searchParams);');
-    expect(page).not.toContain("{loading && <div className=\"mt-6 rounded-lg border border-neutral-200 bg-white p-6 text-neutral-600\">");
-    expect(page).not.toContain("{error && <div className=\"mt-6 rounded-lg border border-neutral-200 bg-neutral-50 p-6 text-neutral-700\">");
+    expect(page).not.toContain('{loading && <div');
+    expect(page).not.toContain('{error && <div');
     expect(liveContent).toContain("from './EventRecapRouteView'");
     expect(liveContent).toContain('<EventRecapRouteView');
     expect(liveContent).toContain('{t(\'event_recap.back_hub\')}');

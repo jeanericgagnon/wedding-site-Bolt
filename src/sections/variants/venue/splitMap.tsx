@@ -89,7 +89,7 @@ const VenueSplitMap: React.FC<SectionComponentProps<VenueSplitMapData>> = ({ dat
                   <div className="space-y-3 mb-6">
                     {(venue.address || venue.city) && (
                       <div className="flex items-start gap-3">
-                        <div className="w-7 h-7 rounded-lg bg-stone-50 border border-stone-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <div className="w-7 h-7 rounded-xl bg-stone-50 border border-stone-100 flex items-center justify-center flex-shrink-0 mt-0.5">
                           <MapPin size={13} className="text-stone-400" />
                         </div>
                         <div>
@@ -100,7 +100,7 @@ const VenueSplitMap: React.FC<SectionComponentProps<VenueSplitMapData>> = ({ dat
                     )}
                     {venue.time && (
                       <div className="flex items-center gap-3">
-                        <div className="w-7 h-7 rounded-lg bg-stone-50 border border-stone-100 flex items-center justify-center flex-shrink-0">
+                        <div className="w-7 h-7 rounded-xl bg-stone-50 border border-stone-100 flex items-center justify-center flex-shrink-0">
                           <Clock size={13} className="text-stone-400" />
                         </div>
                         <p className="text-sm text-stone-700">{venue.time}</p>
@@ -108,7 +108,7 @@ const VenueSplitMap: React.FC<SectionComponentProps<VenueSplitMapData>> = ({ dat
                     )}
                     {venue.date && (
                       <div className="flex items-center gap-3">
-                        <div className="w-7 h-7 rounded-lg bg-stone-50 border border-stone-100 flex items-center justify-center flex-shrink-0">
+                        <div className="w-7 h-7 rounded-xl bg-stone-50 border border-stone-100 flex items-center justify-center flex-shrink-0">
                           <CalendarDays size={13} className="text-stone-400" />
                         </div>
                         <p className="text-sm text-stone-700">{venue.date}</p>

@@ -4,6 +4,8 @@ _Batch time:_ 2026-05-04 5:43 PM PT
 _Branch:_ `codex/v1-finish-hard-gates`
 _Scope:_ P0 production-hardening execution batch, local only. No deploy, migration, or Supabase function deploy was run.
 
+Historical-note: this review preserves the exact local-only batch story from 2026-05-04. Current launch truth now lives in [BACKLOG.md](/Users/ericgagnon/Documents/DayOfLove/wedding-site-Bolt/BACKLOG.md) and the proof-board flow now requires `npm run proof:v1:board:freshness` before either `npm run proof:v1:board` or `npm run proof:v1:board:md` is treated as canonical. Workflow gates stay narrower on purpose: `ci-hardpass` and `Release Launch Gate` enforce `npm run proof:v1:board:freshness`, but they do not regenerate either board output.
+
 ## Status
 
 This batch improves the highest-risk P0 security/privacy boundaries, but it does not mark DayOf production-ready. The changes are local until deployed, and the remaining P0/P1 audits must still be completed or explicitly deferred with evidence.
@@ -129,6 +131,8 @@ This batch improves the highest-risk P0 security/privacy boundaries, but it does
 - `npm run smoke:rsvp`: PASS after network escalation, `ok: true`, 0 failures.
 - `npm run proof:v1:ai-exposure`: PASS, static-only 53/53; live mode not enabled.
 - `npm run guard:file-size`: PASS.
+- `npm run proof:v1:board:freshness`: PASS.
+- `npm run proof:v1:board`: PASS; machine-readable proof board reflects the current backlog-derived launch map.
 - `npm run proof:v1:board:md`: PASS; proof board now lists strict P0 active blockers.
 - `npm test -- --run src/lib/proofBoardFreshness.test.ts`: PASS, 1/1.
 - `npm test -- --run src/lib/serviceRoleAuthorizationDisposition.test.ts src/lib/launchEdgeFunctions.test.ts`: PASS, 18/18.

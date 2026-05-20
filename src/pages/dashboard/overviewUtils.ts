@@ -23,6 +23,7 @@ export interface ChecklistItemDef {
 const INTELLIGENCE_DISMISSAL_RETENTION_MS = 180 * 24 * 60 * 60 * 1000;
 const MAX_DISMISSAL_IDS = 80;
 const MAX_DISMISSAL_ID_LENGTH = 120;
+const OVERVIEW_DISMISSAL_STORAGE_KEY = 'dayof_intelligence_dismissed_v1';
 
 interface DismissalEnvelope {
   savedAtISO: string;
@@ -57,13 +58,24 @@ const isStaleDismissalEnvelope = (savedAtISO: unknown): boolean => {
   return !Number.isFinite(savedAt) || Date.now() - savedAt > INTELLIGENCE_DISMISSAL_RETENTION_MS;
 };
 
+export const buildOverviewDismissalStorageKey = (storageScope?: string | null): string => {
+  const normalized = typeof storageScope === 'string'
+    ? storageScope.trim().toLowerCase().slice(0, MAX_DISMISSAL_ID_LENGTH)
+    : '';
+  return normalized ? `${OVERVIEW_DISMISSAL_STORAGE_KEY}::${normalized}` : OVERVIEW_DISMISSAL_STORAGE_KEY;
+};
+
 export const getPublishBuilderRoute = (isPublished: boolean): string =>
   isPublished ? '/dashboard/builder' : '/dashboard/builder?publishNow=1';
 
 export const readOverviewDismissalIds = (storageKey: string): string[] => {
   if (typeof window === 'undefined') return [];
   try {
-    const raw = window.localStorage.getItem(storageKey);
+    const raw = window.localStorage.getItem(storageKey) ?? (
+      storageKey !== OVERVIEW_DISMISSAL_STORAGE_KEY
+        ? window.localStorage.getItem(OVERVIEW_DISMISSAL_STORAGE_KEY)
+        : null
+    );
     if (!raw) return [];
     const parsed: unknown = JSON.parse(raw);
     if (Array.isArray(parsed)) {

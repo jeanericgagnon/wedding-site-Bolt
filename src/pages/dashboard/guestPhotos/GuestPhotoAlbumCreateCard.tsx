@@ -14,7 +14,7 @@ type GuestPhotoAlbumCreateCardProps = {
   submitting: boolean;
   loading: boolean;
   latestUploadUrl: string;
-  copied: string;
+  copyNotice: { key: string; mode: 'copied' | 'downloaded' } | null;
   missingItineraryEventCount: number;
   bulkCreating: boolean;
   error: string | null;
@@ -42,7 +42,7 @@ export function GuestPhotoAlbumCreateCard({
   submitting,
   loading,
   latestUploadUrl,
-  copied,
+  copyNotice,
   missingItineraryEventCount,
   bulkCreating,
   error,
@@ -81,7 +81,7 @@ export function GuestPhotoAlbumCreateCard({
               key={template.label}
               type="button"
               onClick={() => onNameChange(template.label)}
-              className="rounded-lg border border-border-subtle bg-surface-subtle px-4 py-4 text-left transition hover:border-neutral-300 hover:bg-white"
+              className="rounded-2xl border border-border-subtle bg-surface-subtle px-4 py-4 text-left transition hover:border-neutral-300 hover:bg-white"
             >
               <p className="text-sm font-medium text-neutral-900">{template.label}</p>
               <p className="mt-1 text-xs text-neutral-500">{template.hint}</p>
@@ -100,7 +100,7 @@ export function GuestPhotoAlbumCreateCard({
             <select
               value={parentAlbumId}
               onChange={(event) => onParentAlbumChange(event.target.value)}
-              className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm"
+              className="w-full rounded-xl border border-neutral-300 px-3 py-2 text-sm"
             >
               <option value="">Top-level album</option>
               {buckets
@@ -119,7 +119,7 @@ export function GuestPhotoAlbumCreateCard({
             <select
               value={itineraryEventId}
               onChange={(event) => onItineraryEventChange(event.target.value)}
-              className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm"
+              className="w-full rounded-xl border border-neutral-300 px-3 py-2 text-sm"
             >
               <option value="">None</option>
               {events.map((event) => (
@@ -140,7 +140,11 @@ export function GuestPhotoAlbumCreateCard({
             {latestUploadUrl && (
               <Button variant="outline" onClick={() => onCopyText(latestUploadUrl, 'sheet-dashboard-link')} className="w-full sm:w-auto">
                 <Copy className="w-4 h-4 mr-1" />
-                {copied === 'sheet-dashboard-link' ? 'Copied newest album link' : 'Copy newest album link'}
+                {copyNotice?.key === 'sheet-dashboard-link'
+                  ? copyNotice.mode === 'downloaded'
+                    ? 'Downloaded newest album link'
+                    : 'Copied newest album link'
+                  : 'Copy newest album link'}
               </Button>
             )}
             {latestUploadUrl && (
@@ -155,7 +159,7 @@ export function GuestPhotoAlbumCreateCard({
             )}
           </div>
 
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 rounded-lg border border-border-subtle bg-surface-subtle/40 px-3 py-2">
+          <div className="flex flex-col gap-2 rounded-xl border border-border-subtle bg-surface-subtle/40 px-3 py-2 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-xs text-text-secondary">
               Missing event albums: <span className="font-semibold text-text-primary">{missingItineraryEventCount}</span>
             </p>
@@ -171,11 +175,11 @@ export function GuestPhotoAlbumCreateCard({
           </div>
         </div>
 
-        {error && <p className="mt-3 rounded-lg border border-border-subtle bg-surface-secondary px-3 py-2 text-sm text-text-secondary">{error}</p>}
-        {success && <p className="mt-3 rounded-lg border border-border-subtle bg-surface-secondary px-3 py-2 text-sm text-text-secondary">{success}</p>}
+        {error && <p className="mt-3 rounded-xl border border-border-subtle bg-surface-secondary px-3 py-2 text-sm text-text-secondary">{error}</p>}
+        {success && <p className="mt-3 rounded-xl border border-border-subtle bg-surface-secondary px-3 py-2 text-sm text-text-secondary">{success}</p>}
         {copyFallbackValue && (
           <textarea
-            className="mt-3 min-h-24 w-full rounded-lg border border-border bg-white px-3 py-2 text-xs text-text-primary"
+            className="mt-3 min-h-24 w-full rounded-xl border border-border bg-white px-3 py-2 text-xs text-text-primary"
             readOnly
             value={copyFallbackValue ?? ''}
             onFocus={(event) => event.currentTarget.select()}
@@ -185,16 +189,21 @@ export function GuestPhotoAlbumCreateCard({
 
         {latestUploadUrl && (
           <div className="grid gap-3 lg:grid-cols-[1.35fr_0.9fr]">
-            <div className="rounded-lg border border-border-subtle bg-surface-subtle p-4">
+            <div className="rounded-2xl border border-border-subtle bg-surface-subtle p-4">
               <p className="text-sm font-medium text-text-primary mb-1">Newest album link</p>
               <div className="flex items-center gap-2">
                 <code className="flex-1 text-xs text-text-secondary break-all">{latestUploadUrl}</code>
                 <Button size="sm" variant="outline" onClick={() => onCopyText(latestUploadUrl, 'latest')}>
-                  <Copy className="w-3 h-3 mr-1" /> {copied === 'latest' ? 'Copied' : 'Copy'}
+                  <Copy className="w-3 h-3 mr-1" />
+                  {copyNotice?.key === 'latest'
+                    ? copyNotice.mode === 'downloaded'
+                      ? 'Downloaded latest link'
+                      : 'Copied latest link'
+                    : 'Copy latest link'}
                 </Button>
               </div>
             </div>
-            <div className="rounded-lg border border-border-subtle bg-surface-subtle p-4">
+            <div className="rounded-2xl border border-border-subtle bg-surface-subtle p-4">
               <p className="text-xs font-semibold text-text-tertiary">Newest album link</p>
               <p className="mt-2 text-sm text-neutral-700">Use a real album upload link here. Guests should land in the right place immediately.</p>
               <div className="mt-3 flex flex-wrap gap-2">

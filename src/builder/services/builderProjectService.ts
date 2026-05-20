@@ -11,10 +11,12 @@ import { buildCoupleDisplayName } from '../../lib/coupleDisplayName';
 
 const BUILDER_PROJECT_SITE_SELECT = 'id, active_template_id, template_id, site_json, layout_config' as const;
 const BUILDER_WEDDING_DATA_SITE_SELECT = 'id, wedding_data, couple_name_1, couple_name_2, couple_first_name, couple_second_name, wedding_date, venue_date, venue_name, wedding_location, venue_location' as const;
-const BUILDER_ENTRY_SITE_SELECT = 'id, couple_name_1, couple_name_2, couple_first_name, couple_second_name' as const;
+const BUILDER_ENTRY_SITE_SELECT = 'id, site_slug, site_url, couple_name_1, couple_name_2, couple_first_name, couple_second_name' as const;
 
 export interface BuilderEntrySiteRow {
   id: string;
+  site_slug?: string | null;
+  site_url?: string | null;
   couple_name_1?: string | null;
   couple_name_2?: string | null;
   couple_first_name?: string | null;
@@ -114,14 +116,14 @@ export const builderProjectService = {
       const parsed = safeJsonParse<BuilderProject>(data.site_json, null as unknown as BuilderProject);
       if (parsed && parsed.pages && Array.isArray(parsed.pages)) {
         const durableParsed = rewriteSignedMediaUrlsToPublicDeep(parsed);
-        return { ...durableParsed, weddingId: weddingSiteId };
+        return serializeBuilderProject({ ...durableParsed, weddingId: weddingSiteId }, { touchTimestamps: false });
       }
     }
 
     if (data.layout_config) {
       const layout = safeJsonParse<LayoutConfigV1>(data.layout_config, null as unknown as LayoutConfigV1);
       if (layout && layout.version === '1' && Array.isArray(layout.pages)) {
-        return fromExistingLayoutToBuilderProject(weddingSiteId, layout);
+        return serializeBuilderProject(fromExistingLayoutToBuilderProject(weddingSiteId, layout), { touchTimestamps: false });
       }
     }
 

@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { readPlannerAccessRole, writePlannerAccessRole, type PlannerAccessRole, type PlannerPermissionKey } from '../../../lib/plannerAccess';
 import {
   migrateSavedComposerTemplatesStorage,
@@ -19,7 +20,14 @@ import type {
   WeddingSite,
 } from './messageDashboardTypes';
 
-export function useMessageDashboardUiState() {
+type Args = {
+  isDemoMode: boolean;
+};
+
+export function useMessageDashboardUiState({ isDemoMode }: Args) {
+  const [searchParams] = useSearchParams();
+  const toastTimeoutsRef = useRef<number[]>([]);
+  const previousWeddingSiteIdRef = useRef<string | null>(null);
   const [weddingSite, setWeddingSite] = useState<WeddingSite | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [deliveries, setDeliveries] = useState<DeliveryRow[]>([]);
@@ -45,7 +53,7 @@ export function useMessageDashboardUiState() {
   const [historyDeliveryFilter, setHistoryDeliveryFilter] = useState<MessageHistoryDeliveryFilter>('all');
   const [historyCampaignFilter, setHistoryCampaignFilter] = useState<string>('');
   const [historySearch, setHistorySearch] = useState('');
-  const [showSendingDetails, setShowSendingDetails] = useState(() => new URLSearchParams(window.location.search).get('details') === '1');
+  const [showSendingDetails, setShowSendingDetails] = useState(() => searchParams.get('details') === '1');
   const [formData, setFormData] = useState({
     campaignName: '',
     templateKey: 'blank' as MessageTemplateKey,
@@ -58,11 +66,75 @@ export function useMessageDashboardUiState() {
     scheduleTime: '',
   });
 
+  const resetMessageDashboardInteractionState = useCallback(() => {
+    setMessages([]);
+    setDeliveries([]);
+    setGuests([]);
+    setLoading(true);
+    setSending(false);
+    setSavedTemplates([]);
+    setEditingMessageId(null);
+    setShowRecipientPreview(false);
+    setToasts([]);
+    setViewingMessage(null);
+    setBuyingPack(null);
+    setSmsExpiringSoon(0);
+    setSmsTransactions([]);
+    setItineraryAudienceOptions([]);
+    setEventGuestIds({});
+    setMessagesRole('owner');
+    setActiveSiteRole('owner');
+    setMessagesPermissions(null);
+    setHistoryStatusFilter('all');
+    setHistoryChannelFilter('all');
+    setHistoryAudienceFilter('all');
+    setHistoryDeliveryFilter('all');
+    setHistoryCampaignFilter('');
+    setHistorySearch('');
+    setShowSendingDetails(searchParams.get('details') === '1');
+    setFormData({
+      campaignName: '',
+      templateKey: 'blank',
+      subject: '',
+      body: '',
+      audience: 'all',
+      channel: 'email',
+      scheduleType: 'now',
+      scheduleDate: '',
+      scheduleTime: '',
+    });
+  }, [searchParams]);
+
   useEffect(() => {
-    const loaded = readSavedComposerTemplates();
+    setShowSendingDetails(searchParams.get('details') === '1');
+  }, [searchParams]);
+
+  useEffect(() => {
+    const weddingSiteId = weddingSite?.id ?? null;
+    const loaded = readSavedComposerTemplates(weddingSiteId);
     setSavedTemplates(loaded);
-    migrateSavedComposerTemplatesStorage();
+    migrateSavedComposerTemplatesStorage(weddingSiteId);
+  }, [weddingSite?.id]);
+
+  useEffect(() => () => {
+    toastTimeoutsRef.current.forEach((timer) => window.clearTimeout(timer));
+    toastTimeoutsRef.current = [];
   }, []);
+
+  useEffect(() => {
+    const weddingSiteId = weddingSite?.id ?? null;
+    if (previousWeddingSiteIdRef.current && weddingSiteId && previousWeddingSiteIdRef.current !== weddingSiteId) {
+      resetMessageDashboardInteractionState();
+    }
+    previousWeddingSiteIdRef.current = weddingSiteId;
+  }, [resetMessageDashboardInteractionState, weddingSite?.id]);
+
+  useEffect(() => {
+    const weddingSiteId = weddingSite?.id ?? null;
+    if (!weddingSiteId && !isDemoMode) {
+      resetMessageDashboardInteractionState();
+    }
+  }, [isDemoMode, resetMessageDashboardInteractionState, weddingSite?.id]);
 
   useEffect(() => {
     if (!weddingSite?.id) return;
@@ -84,7 +156,11 @@ export function useMessageDashboardUiState() {
   const toast = useCallback((message: string, type: Toast['type'] = 'success') => {
     const id = Date.now();
     setToasts((previous) => [...previous, { id, message, type }]);
-    setTimeout(() => setToasts((previous) => previous.filter((toastEntry) => toastEntry.id !== id)), 4000);
+    const timer = window.setTimeout(() => {
+      setToasts((previous) => previous.filter((toastEntry) => toastEntry.id !== id));
+      toastTimeoutsRef.current = toastTimeoutsRef.current.filter((entry) => entry !== timer);
+    }, 4000);
+    toastTimeoutsRef.current.push(timer);
   }, []);
 
   return {

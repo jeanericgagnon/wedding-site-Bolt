@@ -575,7 +575,7 @@ const isFreshSavedComposerTemplatesTimestamp = (value: unknown, now = Date.now()
 };
 
 const isSavedComposerTemplatesEnvelope = (value: unknown): value is SavedComposerTemplatesEnvelope => (
-  Boolean(value)
+  value != null
   && typeof value === 'object'
   && !Array.isArray(value)
   && typeof (value as SavedComposerTemplatesEnvelope).savedAtISO === 'string'
@@ -615,46 +615,67 @@ function buildSavedComposerTemplatesEnvelope(items: SavedComposerTemplate[]): Sa
   };
 }
 
-export function readSavedComposerTemplates(): SavedComposerTemplate[] {
+function buildSavedComposerTemplatesStorageKey(storageScope?: string | null): string {
+  const scope = typeof storageScope === 'string' ? storageScope.trim() : '';
+  return scope ? `${SAVED_COMPOSER_TEMPLATES_STORAGE_KEY}::${scope}` : SAVED_COMPOSER_TEMPLATES_STORAGE_KEY;
+}
+
+function readSavedComposerTemplatesFromStorageKey(storageKey: string): SavedComposerTemplate[] | null {
   try {
-    const raw = localStorage.getItem(SAVED_COMPOSER_TEMPLATES_STORAGE_KEY);
-    if (!raw) return [];
+    const raw = localStorage.getItem(storageKey);
+    if (!raw) return null;
     const parsed = JSON.parse(raw);
     if (isSavedComposerTemplatesEnvelope(parsed)) {
       if (!isFreshSavedComposerTemplatesTimestamp(parsed.savedAtISO)) {
-        localStorage.removeItem(SAVED_COMPOSER_TEMPLATES_STORAGE_KEY);
+        localStorage.removeItem(storageKey);
         return [];
       }
       return normalizeSavedComposerTemplates(parsed.value.filter(isValidSavedComposerTemplate));
     }
     if (!Array.isArray(parsed)) {
-      localStorage.removeItem(SAVED_COMPOSER_TEMPLATES_STORAGE_KEY);
+      localStorage.removeItem(storageKey);
       return [];
     }
 
     const normalized = normalizeSavedComposerTemplates(parsed.filter(isValidSavedComposerTemplate));
-    localStorage.setItem(SAVED_COMPOSER_TEMPLATES_STORAGE_KEY, JSON.stringify(buildSavedComposerTemplatesEnvelope(normalized)));
+    localStorage.setItem(storageKey, JSON.stringify(buildSavedComposerTemplatesEnvelope(normalized)));
     return normalized;
   } catch {
     try {
-      localStorage.removeItem(SAVED_COMPOSER_TEMPLATES_STORAGE_KEY);
+      localStorage.removeItem(storageKey);
     } catch {
       // ignore cleanup failures so the dashboard remains usable in private modes.
     }
-    return [];
+    return null;
   }
 }
 
-export function migrateSavedComposerTemplatesStorage(): boolean {
+export function readSavedComposerTemplates(storageScope?: string | null): SavedComposerTemplate[] {
+  return readSavedComposerTemplatesFromStorageKey(buildSavedComposerTemplatesStorageKey(storageScope)) ?? [];
+}
+
+export function migrateSavedComposerTemplatesStorage(storageScope?: string | null): boolean {
   try {
-    const raw = localStorage.getItem(SAVED_COMPOSER_TEMPLATES_STORAGE_KEY);
+    const storageKey = buildSavedComposerTemplatesStorageKey(storageScope);
+    if (storageKey !== SAVED_COMPOSER_TEMPLATES_STORAGE_KEY && !localStorage.getItem(storageKey)) {
+      const legacyTemplates = readSavedComposerTemplatesFromStorageKey(SAVED_COMPOSER_TEMPLATES_STORAGE_KEY);
+      if (legacyTemplates) {
+        const wroteLegacy = writeSavedComposerTemplates(legacyTemplates, storageScope);
+        if (wroteLegacy) {
+          localStorage.removeItem(SAVED_COMPOSER_TEMPLATES_STORAGE_KEY);
+        }
+        return wroteLegacy;
+      }
+    }
+
+    const raw = localStorage.getItem(storageKey);
     const parsed = raw ? JSON.parse(raw) : null;
     if (!Array.isArray(parsed)) return false;
 
     const normalized = normalizeSavedComposerTemplates(parsed.filter(isValidSavedComposerTemplate));
-    if (JSON.stringify(parsed) === JSON.stringify(normalized)) return writeSavedComposerTemplates(normalized);
+    if (JSON.stringify(parsed) === JSON.stringify(normalized)) return writeSavedComposerTemplates(normalized, storageScope);
 
-    return writeSavedComposerTemplates(normalized);
+    return writeSavedComposerTemplates(normalized, storageScope);
   } catch {
     return false;
   }
@@ -679,14 +700,15 @@ export function isValidSavedComposerTemplate(item: unknown): item is SavedCompos
     && typeof candidate.campaignName === 'string';
 }
 
-export function writeSavedComposerTemplates(items: SavedComposerTemplate[]) {
+export function writeSavedComposerTemplates(items: SavedComposerTemplate[], storageScope?: string | null) {
   try {
+    const storageKey = buildSavedComposerTemplatesStorageKey(storageScope);
     const normalized = normalizeSavedComposerTemplates(items);
     if (normalized.length === 0) {
-      localStorage.removeItem(SAVED_COMPOSER_TEMPLATES_STORAGE_KEY);
+      localStorage.removeItem(storageKey);
       return true;
     }
-    localStorage.setItem(SAVED_COMPOSER_TEMPLATES_STORAGE_KEY, JSON.stringify(buildSavedComposerTemplatesEnvelope(normalized)));
+    localStorage.setItem(storageKey, JSON.stringify(buildSavedComposerTemplatesEnvelope(normalized)));
     return true;
   } catch {
     return false;
@@ -697,14 +719,15 @@ export function normalizeSavedTemplateName(name: string): string {
   return name.trim().toLowerCase();
 }
 
-const PHOTO_ALBUM_LINKS_STORAGE_KEY = 'dayof.photoAlbumLinks';
+const LEGACY_PHOTO_ALBUM_LINKS_STORAGE_KEY = 'dayof.photoAlbumLinks';
+const PHOTO_ALBUM_LINKS_STORAGE_KEY = 'dayof.photoBucketLinks';
 const STORED_PHOTO_ALBUM_LINKS_RETENTION_MS = 1000 * 60 * 60 * 24 * 30;
 const MAX_STORED_PHOTO_ALBUM_LINKS = 12;
 const MAX_STORED_PHOTO_ALBUM_LINK_LENGTH = 400;
 
 type StoredPhotoAlbumLinksEnvelope = {
   savedAtISO: string;
-  value: string[];
+  value: unknown;
 };
 
 const isFreshStoredPhotoAlbumLinksTimestamp = (value: unknown, now = Date.now()) => {
@@ -714,12 +737,17 @@ const isFreshStoredPhotoAlbumLinksTimestamp = (value: unknown, now = Date.now())
 };
 
 const isStoredPhotoAlbumLinksEnvelope = (value: unknown): value is StoredPhotoAlbumLinksEnvelope => (
-  Boolean(value)
+  value != null
   && typeof value === 'object'
   && !Array.isArray(value)
   && typeof (value as StoredPhotoAlbumLinksEnvelope).savedAtISO === 'string'
-  && Array.isArray((value as StoredPhotoAlbumLinksEnvelope).value)
+  && 'value' in value
 );
+
+function buildStoredPhotoAlbumLinksKey(storageScope?: string | null): string {
+  const scope = typeof storageScope === 'string' ? storageScope.trim() : '';
+  return scope ? `${PHOTO_ALBUM_LINKS_STORAGE_KEY}::${scope}` : LEGACY_PHOTO_ALBUM_LINKS_STORAGE_KEY;
+}
 
 function normalizeStoredPhotoAlbumLinks(value: unknown): string[] {
   if (Array.isArray(value)) {
@@ -737,27 +765,43 @@ function normalizeStoredPhotoAlbumLinks(value: unknown): string[] {
     .slice(0, MAX_STORED_PHOTO_ALBUM_LINKS);
 }
 
-export function readStoredPhotoAlbumLinks(): string[] {
+export function readStoredPhotoAlbumLinks(storageScope?: string | null): string[] {
+  const storageKey = buildStoredPhotoAlbumLinksKey(storageScope);
   try {
-    const raw = localStorage.getItem(PHOTO_ALBUM_LINKS_STORAGE_KEY);
+    const scopedRaw = localStorage.getItem(storageKey);
+    const legacyRaw = storageKey !== LEGACY_PHOTO_ALBUM_LINKS_STORAGE_KEY
+      ? localStorage.getItem(LEGACY_PHOTO_ALBUM_LINKS_STORAGE_KEY)
+      : null;
+    const raw = scopedRaw ?? legacyRaw;
     if (!raw) return [];
     const parsed = JSON.parse(raw);
     if (isStoredPhotoAlbumLinksEnvelope(parsed)) {
       if (!isFreshStoredPhotoAlbumLinksTimestamp(parsed.savedAtISO)) {
-        localStorage.removeItem(PHOTO_ALBUM_LINKS_STORAGE_KEY);
+        localStorage.removeItem(storageKey);
         return [];
       }
-      return normalizeStoredPhotoAlbumLinks(parsed.value);
+      const normalized = normalizeStoredPhotoAlbumLinks(parsed.value);
+      if (storageKey !== LEGACY_PHOTO_ALBUM_LINKS_STORAGE_KEY && normalized.length > 0 && !scopedRaw) {
+        localStorage.setItem(storageKey, JSON.stringify({
+          savedAtISO: new Date().toISOString(),
+          value: normalized,
+        }));
+        if (legacyRaw) localStorage.removeItem(LEGACY_PHOTO_ALBUM_LINKS_STORAGE_KEY);
+      }
+      return normalized;
     }
     const normalized = normalizeStoredPhotoAlbumLinks(parsed);
-    localStorage.setItem(PHOTO_ALBUM_LINKS_STORAGE_KEY, JSON.stringify({
+    localStorage.setItem(storageKey, JSON.stringify({
       savedAtISO: new Date().toISOString(),
       value: normalized,
     }));
+    if (storageKey !== LEGACY_PHOTO_ALBUM_LINKS_STORAGE_KEY && legacyRaw) {
+      localStorage.removeItem(LEGACY_PHOTO_ALBUM_LINKS_STORAGE_KEY);
+    }
     return normalized;
   } catch {
     try {
-      localStorage.removeItem(PHOTO_ALBUM_LINKS_STORAGE_KEY);
+      localStorage.removeItem(storageKey);
     } catch {
       // ignore cleanup failures so the dashboard remains usable in private modes.
     }
@@ -765,12 +809,12 @@ export function readStoredPhotoAlbumLinks(): string[] {
   }
 }
 
-export function countStoredPhotoAlbumLinks(): number {
-  return readStoredPhotoAlbumLinks().length;
+export function countStoredPhotoAlbumLinks(storageScope?: string | null): number {
+  return readStoredPhotoAlbumLinks(storageScope).length;
 }
 
-export function getPreferredStoredPhotoAlbumLink(): string | null {
-  return readStoredPhotoAlbumLinks()[0] ?? null;
+export function getPreferredStoredPhotoAlbumLink(storageScope?: string | null): string | null {
+  return readStoredPhotoAlbumLinks(storageScope)[0] ?? null;
 }
 
 export const COMPOSER_TEMPLATES: ComposerTemplate[] = [

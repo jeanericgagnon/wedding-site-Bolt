@@ -1,8 +1,8 @@
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { readFileSync } from 'node:fs';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { buildGuestContactAccessPayload, buildGuestContactIdentityPayload, friendlyGuestContactError, GuestContactUpdate, safeGuestContactFunctionError } from './GuestContactUpdate';
 
 describe('friendlyGuestContactError', () => {
@@ -89,7 +89,55 @@ describe('friendlyGuestContactError', () => {
 
     expect(pageSource).toContain("from './guestHubPublicService'");
     expect(pageSource).toContain("trackGuestHubEvent(siteRef, 'view', '/guest-contact/invite'");
-    expect(pageSource).toContain('...buildGuestContactAccessPayload(siteRef)');
-    expect(pageSource).toContain('...buildGuestContactIdentityPayload(siteRef)');
+    expect(pageSource).toContain('...buildGuestContactAccessPayload(siteRef, searchParams)');
+    expect(pageSource).toContain('...buildGuestContactIdentityPayload(siteRef, searchParams)');
+  });
+
+  it('clears stale guest-contact result copy once the guest edits the form again', async () => {
+    const originalFetch = globalThis.fetch;
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('offline')));
+
+    render(
+      React.createElement(
+        MemoryRouter,
+        { initialEntries: ['/guest-contact/demo'] },
+        React.createElement(
+          Routes,
+          null,
+          React.createElement(Route, {
+            path: '/guest-contact/:token',
+            element: React.createElement(GuestContactUpdate),
+          }),
+        ),
+      ),
+    );
+
+    try {
+      fireEvent.change(screen.getByLabelText('Find your guest record'), { target: { value: 'Not A Guest' } });
+      fireEvent.change(screen.getByLabelText('Confirm your email'), { target: { value: 'not' } });
+      fireEvent.click(screen.getByRole('button', { name: 'Find' }));
+      expect(await screen.findByRole('alert')).toHaveTextContent('No demo guest matched that search. Try a full name from the sample guest list.');
+
+      fireEvent.change(screen.getByLabelText('Find your guest record'), { target: { value: 'Maya Lee' } });
+
+      expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    } finally {
+      vi.stubGlobal('fetch', originalFetch);
+    }
+  });
+
+  it('guards guest contact lookup and submit completions against stale route contexts', () => {
+    const pageSource = readFileSync('src/pages/GuestContactUpdate.tsx', 'utf8');
+
+    expect(pageSource).toContain('const activeLookupRequestRef = useRef(0);');
+    expect(pageSource).toContain('const activeSubmitRequestRef = useRef(0);');
+    expect(pageSource).toContain('activeLookupRequestRef.current += 1;');
+    expect(pageSource).toContain('activeSubmitRequestRef.current += 1;');
+    expect(pageSource).toContain('const requestId = activeLookupRequestRef.current + 1;');
+    expect(pageSource).toContain('if (activeLookupRequestRef.current !== requestId) return;');
+    expect(pageSource).toContain('if (activeLookupRequestRef.current === requestId) setSearching(false);');
+    expect(pageSource).toContain('const requestId = activeSubmitRequestRef.current + 1;');
+    expect(pageSource).toContain('if (activeSubmitRequestRef.current !== requestId) return;');
+    expect(pageSource).toContain('if (activeSubmitRequestRef.current === requestId) setLoading(false);');
   });
 });

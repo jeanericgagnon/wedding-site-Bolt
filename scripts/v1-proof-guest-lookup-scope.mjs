@@ -415,6 +415,9 @@ async function main() {
         passed: checks.length - failures.length,
         failed: failures.length,
       },
+      contractSummary: failures.length === 0
+        ? 'Guest lookup scope proof is green: this live guest-contact lane closes scoped lookup/update runtime truth and complements the broader guest/public access proofs.'
+        : 'Guest lookup scope proof is not green: guest-contact lookup or scoped-update runtime behavior drifted and guest-surface trust claims should pause until this lane is repaired.',
       site: {
         siteSlug: proofSiteSlug,
         privacyMode: site.privacy_mode,

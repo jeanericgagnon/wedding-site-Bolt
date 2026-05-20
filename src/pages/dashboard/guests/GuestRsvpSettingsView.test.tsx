@@ -18,7 +18,7 @@ vi.mock('../../../components/dashboard/DashboardPageHero', () => ({
   ),
 }));
 
-function Wrapper() {
+function Wrapper({ isGuestsReadOnly = false }: { isGuestsReadOnly?: boolean }) {
   const [selection, setSelection] = useState<PersistedRsvpAccessSelection>({
     primaryMode: 'private_link',
     allowNameLookupBackup: true,
@@ -58,9 +58,10 @@ function Wrapper() {
         questions: [],
       }, selection)}
       stats={{ confirmed: 10, declined: 2, pending: 6 }}
+      isGuestsReadOnly={isGuestsReadOnly}
       onAddRsvpQuestionTemplate={vi.fn()}
+      onRequestConfirmation={vi.fn().mockResolvedValue(false)}
       onSaveRsvpConfig={vi.fn()}
-      onSetConfirmDialog={vi.fn()}
       onSetGuestsTab={vi.fn()}
       onSetRsvpAccessSelection={setSelection}
       onSetRsvpConfigDirty={vi.fn()}
@@ -89,6 +90,16 @@ describe('GuestRsvpSettingsView', () => {
 
     expect(screen.getByText(/Guests can find their RSVP by name or email/i)).toBeInTheDocument();
     expect(screen.getByText(/Name lookup is already the active RSVP path/i)).toBeInTheDocument();
+  });
+
+  it('keeps RSVP settings controls inert for read-only collaborators', () => {
+    render(<Wrapper isGuestsReadOnly />);
+
+    expect(screen.getAllByRole('button', { name: /Use as primary access/i })[0]).toBeDisabled();
+    expect(screen.getByRole('checkbox', { name: /Keep name lookup as the backup/i })).toBeDisabled();
+    expect(screen.getByRole('checkbox', { name: /Collect meal choice/i })).toBeDisabled();
+    expect(screen.getByRole('button', { name: /Add question/i })).toBeDisabled();
+    expect(screen.getByRole('button', { name: /Save Now/i })).toBeDisabled();
   });
 
   it('summarizes required, event-specific, and choice-based RSVP questions in the owner readback', () => {
@@ -139,9 +150,10 @@ describe('GuestRsvpSettingsView', () => {
           ],
         }, selection)}
         stats={{ confirmed: 10, declined: 2, pending: 6 }}
+        isGuestsReadOnly={false}
         onAddRsvpQuestionTemplate={vi.fn()}
+        onRequestConfirmation={vi.fn().mockResolvedValue(false)}
         onSaveRsvpConfig={vi.fn()}
-        onSetConfirmDialog={vi.fn()}
         onSetGuestsTab={vi.fn()}
         onSetRsvpAccessSelection={vi.fn()}
         onSetRsvpConfigDirty={vi.fn()}
@@ -201,9 +213,10 @@ describe('GuestRsvpSettingsView', () => {
           questions: [],
         }, selection)}
         stats={{ confirmed: 10, declined: 2, pending: 6 }}
+        isGuestsReadOnly={false}
         onAddRsvpQuestionTemplate={vi.fn()}
+        onRequestConfirmation={vi.fn().mockResolvedValue(false)}
         onSaveRsvpConfig={vi.fn()}
-        onSetConfirmDialog={vi.fn()}
         onSetGuestsTab={vi.fn()}
         onSetRsvpAccessSelection={vi.fn()}
         onSetRsvpConfigDirty={vi.fn()}
@@ -265,9 +278,10 @@ describe('GuestRsvpSettingsView', () => {
           questions: [],
         }, selection)}
         stats={{ confirmed: 10, declined: 2, pending: 6 }}
+        isGuestsReadOnly={false}
         onAddRsvpQuestionTemplate={vi.fn()}
+        onRequestConfirmation={vi.fn().mockResolvedValue(false)}
         onSaveRsvpConfig={vi.fn()}
-        onSetConfirmDialog={vi.fn()}
         onSetGuestsTab={vi.fn()}
         onSetRsvpAccessSelection={vi.fn()}
         onSetRsvpConfigDirty={vi.fn()}

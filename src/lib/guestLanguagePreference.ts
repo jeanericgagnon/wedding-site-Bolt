@@ -30,6 +30,16 @@ interface GuestLanguageEnvelope {
   language: GuestLanguageCode;
 }
 
+function normalizeGuestLanguageStorageScope(scope?: string | null): string | null {
+  const normalizedScope = (scope ?? '').trim().toLowerCase();
+  return normalizedScope ? normalizedScope : null;
+}
+
+function buildGuestLanguageStorageKey(scope?: string | null): string {
+  const normalizedScope = normalizeGuestLanguageStorageScope(scope);
+  return normalizedScope ? `${GUEST_LANGUAGE_STORAGE_KEY}:${normalizedScope}` : GUEST_LANGUAGE_STORAGE_KEY;
+}
+
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   Boolean(value) && typeof value === 'object' && !Array.isArray(value);
 
@@ -78,30 +88,31 @@ export function resolveGuestLanguagePreference(input: GuestLanguageResolutionInp
   return { language: 'en', source: 'fallback' };
 }
 
-export function readStoredGuestLanguage(): string | null {
+export function readStoredGuestLanguage(scope?: string | null): string | null {
+  const storageKey = buildGuestLanguageStorageKey(scope);
   try {
-    const raw = localStorage.getItem(GUEST_LANGUAGE_STORAGE_KEY);
+    const raw = localStorage.getItem(storageKey);
     if (!raw) return null;
     const legacyLanguage = normalizeGuestLanguageCode(raw);
     if (legacyLanguage) {
-      localStorage.setItem(GUEST_LANGUAGE_STORAGE_KEY, JSON.stringify(buildLanguageEnvelope(legacyLanguage)));
+      localStorage.setItem(storageKey, JSON.stringify(buildLanguageEnvelope(legacyLanguage)));
       return legacyLanguage;
     }
     const parsed: unknown = JSON.parse(raw);
     if (!isRecord(parsed) || isStaleLanguageEnvelope(parsed.savedAtISO)) {
-      localStorage.removeItem(GUEST_LANGUAGE_STORAGE_KEY);
+      localStorage.removeItem(storageKey);
       return null;
     }
     const language = normalizeGuestLanguageCode(typeof parsed.language === 'string' ? parsed.language : null);
     if (!language) {
-      localStorage.removeItem(GUEST_LANGUAGE_STORAGE_KEY);
+      localStorage.removeItem(storageKey);
       return null;
     }
-    localStorage.setItem(GUEST_LANGUAGE_STORAGE_KEY, JSON.stringify(buildLanguageEnvelope(language)));
+    localStorage.setItem(storageKey, JSON.stringify(buildLanguageEnvelope(language)));
     return language;
   } catch {
     try {
-      localStorage.removeItem(GUEST_LANGUAGE_STORAGE_KEY);
+      localStorage.removeItem(storageKey);
     } catch {
       // Guest pages still work if storage is unavailable.
     }
@@ -109,13 +120,13 @@ export function readStoredGuestLanguage(): string | null {
   }
 }
 
-export function hasStoredGuestLanguagePreference(): boolean {
-  return readStoredGuestLanguage() !== null;
+export function hasStoredGuestLanguagePreference(scope?: string | null): boolean {
+  return readStoredGuestLanguage(scope) !== null;
 }
 
-export function writeStoredGuestLanguage(language: GuestLanguageCode): void {
+export function writeStoredGuestLanguage(language: GuestLanguageCode, scope?: string | null): void {
   try {
-    localStorage.setItem(GUEST_LANGUAGE_STORAGE_KEY, JSON.stringify(buildLanguageEnvelope(language)));
+    localStorage.setItem(buildGuestLanguageStorageKey(scope), JSON.stringify(buildLanguageEnvelope(language)));
   } catch {
     // Guest pages still work if storage is unavailable.
   }

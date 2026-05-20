@@ -55,19 +55,19 @@ async function expectCanonicalProofSiteIdentity(page: Page) {
 
 test.describe('public site quality', () => {
   test('canonical demo renders guest-ready copy on desktop', async ({ page }) => {
-    await page.goto('/site/alex-jordan-demo?publicQualitySmoke=desktop', { waitUntil: 'networkidle' });
+    await page.goto('/site/alex-jordan-demo?publicQualitySmoke=desktop', { waitUntil: 'domcontentloaded' });
     await expectGuestReadyPublicSite(page);
   });
 
   test('canonical demo renders guest-ready copy on mobile', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
-    await page.goto('/site/alex-jordan-demo?publicQualitySmoke=mobile', { waitUntil: 'networkidle' });
+    await page.goto('/site/alex-jordan-demo?publicQualitySmoke=mobile', { waitUntil: 'domcontentloaded' });
     await expectGuestReadyPublicSite(page);
   });
 
   test('public site owner preview banner is visible and removable', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
-    await page.goto('/site/alex-jordan-demo?publicQualitySmoke=preview&previewGuest=guest-1&previewSurface=public', { waitUntil: 'networkidle' });
+    await page.goto('/site/alex-jordan-demo?publicQualitySmoke=preview&previewGuest=guest-1&previewSurface=public', { waitUntil: 'domcontentloaded' });
     await expect(page.getByText(/owner preview mode/i)).toBeVisible();
     await expect(page.getByText(/private event access still follows/i)).toBeVisible();
     await expect(page.getByRole('link', { name: /leave preview/i })).toHaveAttribute('href', '/site/alex-jordan-demo?publicQualitySmoke=preview');
@@ -75,7 +75,7 @@ test.describe('public site quality', () => {
   });
 
   test('proof site uses canonical row identity instead of stale embedded snapshots', async ({ page }) => {
-    await page.goto(`/site/${proofSiteSlug}?publicQualitySmoke=canonical-row`, { waitUntil: 'networkidle' });
+    await page.goto(`/site/${proofSiteSlug}?publicQualitySmoke=canonical-row`, { waitUntil: 'domcontentloaded' });
     await expectCanonicalProofSiteIdentity(page);
   });
 });
