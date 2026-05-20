@@ -658,7 +658,7 @@ describe('publishReadiness', () => {
     data.venues = [
       { id: 'venue-zeta', orderIndex: 1, name: '   ', address: '   ' },
       { id: 'venue-alpha', orderIndex: 1, name: 'Sunset Cliffs', address: '   ' },
-    ];
+      ] as unknown as typeof data.venues;
 
     expect(getPublishIssue(project, data)).toBeNull();
     expect(buildPublishReadiness(project, data).find((item) => item.id === 'venue')).toEqual({
@@ -680,7 +680,7 @@ describe('publishReadiness', () => {
     data.venues = [
       { id: 'venue-zeta', orderIndex: 1, name: 'Same Venue', address: '   ' },
       { id: 'venue-alpha', orderIndex: 1, name: 'Same Venue', address: '123 Main St' },
-    ];
+      ] as unknown as typeof data.venues;
 
     expect(getPublishIssue(project, data)).toBeNull();
     expect(buildPublishReadiness(project, data).find((item) => item.id === 'venue')).toEqual({

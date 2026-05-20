@@ -526,7 +526,7 @@ describe('name change intake draft helpers', () => {
     expect(isDraftNameChangeDocumentId('draft-current_passport')).toBe(true);
     expect(isDraftNameChangeDocumentId('external-doc-id')).toBe(false);
     expect(isDraftNameChangePlaceholderDocument({ id: 'draft-current_passport', file_name_masked: 'passport-•••.pdf' })).toBe(true);
-    expect(isDraftNameChangePlaceholderDocument({ id: null, file_name_masked: 'current-passport-draft.pdf' })).toBe(true);
+    expect(isDraftNameChangePlaceholderDocument({ id: undefined, file_name_masked: 'current-passport-draft.pdf' })).toBe(true);
     expect(isDraftNameChangePlaceholderDocument({ id: 'doc-passport', file_name_masked: 'passport-•••.pdf' })).toBe(false);
     expect(isDraftNameChangePlaceholderDocument({ id: 'external-doc-id', file_name_masked: null })).toBe(false);
   });

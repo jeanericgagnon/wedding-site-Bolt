@@ -134,7 +134,7 @@ const SUPPLEMENTAL_PROMPT_DEFINITIONS: SupplementalPromptDefinition[] = [
 
 function readStructuredValue(draft: NameChangeCaseInput, key: string | undefined) {
   if (!key) return null;
-  const structured = draft.structured_intake as Record<string, unknown>;
+  const structured = draft.structured_intake as unknown as Record<string, unknown>;
   const value = structured[key];
   if (typeof value === 'string') return value.trim() || null;
   if (typeof value === 'number' || typeof value === 'boolean') return String(value);

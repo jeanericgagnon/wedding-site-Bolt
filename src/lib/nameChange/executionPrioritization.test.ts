@@ -45,7 +45,7 @@ function makeSnapshot(overrides: Partial<NameChangeTargetExecutionSnapshot> = {}
     },
     checklist: [],
     ...overrides,
-  };
+  } as unknown as NameChangeTargetExecutionSnapshot;
 }
 
 describe('name change execution prioritization', () => {
@@ -82,7 +82,7 @@ describe('name change execution prioritization', () => {
         snapshot: makeSnapshot({
           blockers: ['Need review'],
           nextAction: { category: 'review', label: 'Review card', detail: 'Needs review.' },
-          checklist: [{ key: 'a', label: 'A', status: 'attention', reason: 'One attention item.' }],
+          checklist: [{ key: 'a', label: 'A', kind: 'requirement', status: 'attention', reason: 'One attention item.' }],
         }),
       },
       {
@@ -92,8 +92,8 @@ describe('name change execution prioritization', () => {
           blockers: ['Need review'],
           nextAction: { category: 'review', label: 'Review card', detail: 'Needs review.' },
           checklist: [
-            { key: 'a', label: 'A', status: 'attention', reason: 'One attention item.' },
-            { key: 'b', label: 'B', status: 'attention', reason: 'Another attention item.' },
+            { key: 'a', label: 'A', kind: 'requirement', status: 'attention', reason: 'One attention item.' },
+            { key: 'b', label: 'B', kind: 'requirement', status: 'attention', reason: 'Another attention item.' },
           ],
         }),
       },

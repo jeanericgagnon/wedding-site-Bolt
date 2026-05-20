@@ -24,17 +24,17 @@ function createWeddingData(): WeddingDataV1 {
     customSections: [],
     media: { gallery: [] },
     venues: [],
-  };
+  } as unknown as WeddingDataV1;
 }
 
-function makeInstance(settings: SectionInstance['settings']): SectionInstance {
+function makeInstance(settings: Record<string, unknown>): SectionInstance {
   return {
     id: 'travel-1',
     type: 'travel',
     enabled: true,
     variant: 'default',
     settings,
-  };
+  } as unknown as SectionInstance;
 }
 
 describe('TravelSection', () => {

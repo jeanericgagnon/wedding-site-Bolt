@@ -492,14 +492,10 @@ export const Product: React.FC = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             {V1_SLICE_STATUS.map((slice) => {
-              const toneClasses = slice.tone === 'done'
-                ? 'border-emerald-200 bg-white'
-                : slice.tone === 'proof'
+              const toneClasses = slice.tone === 'proof'
                   ? 'border-sky-200 bg-white'
                   : 'border-amber-200 bg-white';
-              const badgeClasses = slice.tone === 'done'
-                ? 'bg-emerald-50 text-emerald-700'
-                : slice.tone === 'proof'
+              const badgeClasses = slice.tone === 'proof'
                   ? 'bg-sky-50 text-sky-700'
                   : 'bg-amber-50 text-amber-700';
 

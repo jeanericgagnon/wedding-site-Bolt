@@ -62,7 +62,7 @@ export const normalizeOnboardingDraftSnapshot = (value: unknown): OnboardingDraf
   const followUpAnswers = sanitizeStringRecord(parsed.followUpAnswers);
   const hasFollowUpReviewData = Boolean(
     Object.keys(followUpAnswers).length > 0
-    || initialSetupFollowUps.venueClarification.trim().length > 0
+    || (initialSetupFollowUps.venueClarification ?? '').trim().length > 0
     || Object.keys(initialSetupFollowUps.eventLocations).length > 0
     || Object.keys(initialSetupFollowUps.eventTimes).length > 0
   );

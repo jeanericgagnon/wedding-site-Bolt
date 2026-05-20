@@ -20,17 +20,17 @@ function createEmptyWeddingData(): WeddingDataV1 {
     theme: {},
     media: { gallery: [] },
     meta: { createdAtISO: '', updatedAtISO: '' },
-  };
+  } as unknown as WeddingDataV1;
 }
 
-function makeInstance(settings: SectionInstance['settings']): SectionInstance {
+function makeInstance(settings: Record<string, unknown>): SectionInstance {
   return {
     id: 'accommodations-1',
     type: 'accommodations',
     enabled: true,
     variant: 'default',
     settings,
-  };
+  } as unknown as SectionInstance;
 }
 
 describe('AccommodationsSection', () => {

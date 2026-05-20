@@ -93,7 +93,8 @@ function scoreCandidate(field: NameChangeFormPopulationFieldMapping, pdfFieldNam
   const label = field.officialFieldLabel;
   const normalizedPdf = normalize(pdfFieldName);
   const normalizedLabel = normalize(label);
-  const fieldKeyTail = normalize(fieldKey.split('.').at(-1) ?? fieldKey);
+  const fieldKeySegments = fieldKey.split('.');
+  const fieldKeyTail = normalize(fieldKeySegments[fieldKeySegments.length - 1] ?? fieldKey);
   const tokens = Array.from(new Set([
     ...splitTokens(fieldKey),
     ...splitTokens(label),

@@ -9,7 +9,12 @@ import {
 import { buildNameChangePlan } from './engine';
 import type { NameChangeCaseInput, NameChangeDocumentInput, NameChangeExtractedFieldInput } from './types';
 
-function makeCase(overrides: Partial<NameChangeCaseInput> = {}): NameChangeCaseInput {
+type CaseOverrides = Partial<Omit<NameChangeCaseInput, 'structured_intake'>> & {
+  structured_intake?: Partial<NameChangeCaseInput['structured_intake']>;
+};
+
+function makeCase(overrides: CaseOverrides = {}): NameChangeCaseInput {
+  const { structured_intake: structuredIntakeOverrides, ...caseOverrides } = overrides;
   return {
     workflow_status: 'draft',
     launch_state: 'california',
@@ -36,9 +41,10 @@ function makeCase(overrides: Partial<NameChangeCaseInput> = {}): NameChangeCaseI
       spouseLastName: 'Jordan',
       travelBookedSoon: false,
       wantsDocumentIntakeHelp: true,
+      ...structuredIntakeOverrides,
     },
     latest_plan_summary: null,
-    ...overrides,
+    ...caseOverrides,
   };
 }
 

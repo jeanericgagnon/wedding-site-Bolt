@@ -17,6 +17,7 @@ describe('name change execution gates', () => {
       {
         key: 'item-1',
         label: 'Checklist item',
+        kind: 'requirement',
         status: 'missing',
         reason: 'Checklist blocker',
       },
@@ -42,6 +43,7 @@ describe('name change execution gates', () => {
       {
         key: 'item-1',
         label: 'Checklist item',
+        kind: 'requirement',
         status: 'attention',
         blocksReady: false,
         reason: 'Checklist attention',
@@ -105,6 +107,7 @@ describe('name change execution gates', () => {
       {
         key: 'canonical-extraction-alignment',
         label: 'Canonical vs extracted values aligned',
+        kind: 'field_presence',
         status: 'attention',
         blocksReady: true,
         reason: 'Structured case truth and extracted document values still disagree.',

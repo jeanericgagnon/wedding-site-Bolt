@@ -19,7 +19,7 @@ function createWeddingData(venues: WeddingDataV1['venues'] = []): WeddingDataV1 
     registry: [],
     theme: {},
     media: { gallery: [] },
-  };
+  } as unknown as WeddingDataV1;
 }
 
 function makeInstance(settings: SectionInstance['settings']): SectionInstance {
@@ -29,7 +29,7 @@ function makeInstance(settings: SectionInstance['settings']): SectionInstance {
     enabled: true,
     variant: 'default',
     settings,
-  };
+  } as unknown as SectionInstance;
 }
 
 describe('VenueSection', () => {

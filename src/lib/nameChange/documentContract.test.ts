@@ -3708,7 +3708,7 @@ describe('name change document intake contract', () => {
       makeCase(),
       [
         {
-          id: null,
+          id: undefined,
           document_kind: 'other',
           display_name: 'Other supporting document',
           storage_mode: 'metadata_only',
@@ -3734,7 +3734,7 @@ describe('name change document intake contract', () => {
       makeCase(),
       [
         {
-          id: null,
+          id: undefined,
           document_kind: 'other',
           display_name: 'Other supporting document',
           storage_mode: 'metadata_only',

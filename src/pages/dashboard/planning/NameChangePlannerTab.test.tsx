@@ -1199,6 +1199,7 @@ describe('NameChangePlannerTab', () => {
         targetStatusOverview: {
           ...basePlan.summary.targetStatusOverview,
           latestUpdatedAt: '2026-04-24T20:15:00.000Z',
+          latestMilestoneAt: null,
           latestReminderAt: '2026-04-24T22:20:00.000Z',
           latestTouchedAt: '2026-04-24T22:20:00.000Z',
           latestTouchedSource: 'reminder' as const,
@@ -1245,6 +1246,7 @@ describe('NameChangePlannerTab', () => {
         targetStatusOverview: {
           ...basePlan.summary.targetStatusOverview,
           latestUpdatedAt: '2026-04-24T22:40:00.000Z',
+          latestMilestoneAt: null,
           latestReminderAt: '2026-04-24T22:20:00.000Z',
           latestTouchedAt: '2026-04-24T22:40:00.000Z',
           latestTouchedSource: 'execution' as const,

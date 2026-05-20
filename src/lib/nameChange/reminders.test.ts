@@ -3,7 +3,12 @@ import { buildNameChangePlan } from './engine';
 import { buildNameChangeReminderSuggestions, bulkUpdateNameChangeReminderStatus, deriveNameChangeReminderAttention, mapReminderSuggestionsToInputs, summarizeNameChangeReminderAttention, summarizeNameChangeReminders, syncNameChangeRemindersWithStepExecution, updateNameChangeReminderStatus } from './reminders';
 import type { NameChangeEngineInput, NameChangeReminderInput } from './types';
 
-function makeInput(overrides: Partial<NameChangeEngineInput['profile']> = {}): NameChangeEngineInput {
+type ProfileOverrides = Partial<Omit<NameChangeEngineInput['profile'], 'structured_intake'>> & {
+  structured_intake?: Partial<NameChangeEngineInput['profile']['structured_intake']>;
+};
+
+function makeInput(overrides: ProfileOverrides = {}): NameChangeEngineInput {
+  const { structured_intake: structuredIntakeOverrides, ...profileOverrides } = overrides;
   return {
     profile: {
       workflow_status: 'draft',
@@ -31,9 +36,10 @@ function makeInput(overrides: Partial<NameChangeEngineInput['profile']> = {}): N
         spouseLastName: 'Jordan',
         travelBookedSoon: false,
         wantsDocumentIntakeHelp: true,
+        ...structuredIntakeOverrides,
       },
       latest_plan_summary: null,
-      ...overrides,
+      ...profileOverrides,
     },
     documents: [
       {
@@ -737,7 +743,7 @@ describe('name change reminder suggestions', () => {
       has_certified_marriage_certificate: false,
       passport_needs_update: true,
       has_us_passport: true,
-    });
+    } as ProfileOverrides);
     const plan = buildNameChangePlan({
       ...blockedInput,
       documents: [],

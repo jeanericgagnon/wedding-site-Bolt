@@ -76,7 +76,7 @@ const isVenueLike = (value: unknown): value is NonNullable<WeddingDataV1['venues
   && !Array.isArray(value)
   && getNormalizedId((value as { id?: unknown }).id).length > 0;
 const getVenueTitle = (venue: NonNullable<WeddingDataV1['venues']>[number]) =>
-  hasNonEmptyString((venue as { name?: unknown }).name) ? venue.name.trim() : '';
+  hasNonEmptyString((venue as { name?: unknown }).name) ? (venue.name ?? '').trim() : '';
 const getSortedNormalizedVenues = (weddingData?: WeddingDataV1 | null) =>
   getNormalizedVenues(weddingData).sort((a, b) => {
     const orderDelta = getComparableOrderIndex((a as { orderIndex?: unknown }).orderIndex)
