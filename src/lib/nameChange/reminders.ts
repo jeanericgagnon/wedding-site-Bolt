@@ -4,8 +4,21 @@ import type { NameChangePlan, NameChangeReminderAttentionItem, NameChangeReminde
 const REMINDER_STALE_AFTER_MS = 1000 * 60 * 60 * 72;
 
 function getReminderTimestamp(value: string | null | undefined): number | null {
-  if (!value) return null;
-  const parsed = new Date(value);
+  const trimmed = value?.trim();
+  if (!trimmed) return null;
+
+  const dateOnlyMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(trimmed);
+  const parsed = dateOnlyMatch
+    ? new Date(Number(dateOnlyMatch[1]), Number(dateOnlyMatch[2]) - 1, Number(dateOnlyMatch[3]))
+    : new Date(trimmed);
+  if (
+    dateOnlyMatch
+    && (parsed.getFullYear() !== Number(dateOnlyMatch[1])
+      || parsed.getMonth() !== Number(dateOnlyMatch[2]) - 1
+      || parsed.getDate() !== Number(dateOnlyMatch[3]))
+  ) {
+    return null;
+  }
   const time = parsed.getTime();
   return Number.isNaN(time) ? null : time;
 }
@@ -164,7 +177,7 @@ const INSTITUTION_REMINDER_FAMILY_CONFIGS: Record<string, NameChangeInstitutionR
   },
   insurance: {
     minimumUrgency: 'medium',
-    reasonSuffix: ' Coverage, cards, and provider rosters are easier to keep aligned when they are checked early.',
+    reasonSuffix: ' Coverage, cards, and care rosters are easier to keep aligned when they are checked early.',
   },
   financial: {
     offsetAdjustmentDays: -1,
@@ -386,7 +399,7 @@ function getCaseLegalNameSetupMissingInputs(plan: NameChangePlan): string[] {
   );
 }
 
-function getReminderPlannerRoute(
+export function getReminderPlannerRoute(
   suggestion: Pick<NameChangeReminderSuggestion, 'id' | 'dependsOnStepId'>,
 ): Pick<NameChangeReminderSuggestion, 'sectionKey' | 'plannerIntent' | 'focusTargetId'> {
   if (suggestion.id === 'reminder-case-legal-name-setup') {
@@ -911,14 +924,14 @@ export function deriveNameChangeReminderAttention(
       attentionItems.push({
         reminderKey: reminder.reminder_key,
         label: reminder.label,
-        dependsOnStepId: reminder.depends_on_step_id,
+        dependsOnStepId: reminder.depends_on_step_id ?? '',
         dependentStepTitle: dependentStep.title,
         dependentStepExecutionStatus: dependentStep.executionStatus ?? 'todo',
         reminderStatus: reminder.status,
-        urgency: reminder.urgency,
+        urgency: reminder.urgency === 'normal' ? 'medium' : reminder.urgency,
         priorityTier,
         actionability,
-        suggestedOffsetDays: reminder.suggested_offset_days,
+        suggestedOffsetDays: reminder.suggested_offset_days ?? 0,
         lastTouchedAt,
         isStale,
         sectionKey: reminder.section_key,

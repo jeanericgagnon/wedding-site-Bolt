@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildNameChangeDmvFormSnapshot } from './dmvForm';
+import { buildNameChangeDmvFormCompanion, buildNameChangeDmvFormSnapshot } from './dmvForm';
 import type { NameChangeCaseInput, NameChangeDocumentInput, NameChangeExtractedFieldInput } from './types';
 
 function makeCase(overrides: Partial<NameChangeCaseInput> = {}): NameChangeCaseInput {
@@ -106,5 +106,26 @@ describe('name change DMV form snapshot', () => {
     expect(snapshot.fields.find((field) => field.fieldKey === 'applicant.county')).toMatchObject({ value: null, confidence: 'low' });
     expect(snapshot.fields.find((field) => field.fieldKey === 'legal.marriageDate')).toMatchObject({ value: null, confidence: 'low' });
     expect(snapshot.fields.find((field) => field.fieldKey === 'legal.marriageIssuingAuthority')).toMatchObject({ value: null, confidence: 'low', required: false });
+  });
+
+  it('builds DMV companion guidance with copy-ready and missing fields', () => {
+    const companion = buildNameChangeDmvFormCompanion(makeCase({ marriage_date: null }), [], []);
+
+    expect(companion.formCode).toBe('CA-DL-44');
+    expect(companion.source).toMatchObject({
+      officialUrl: 'https://www.dmv.ca.gov/portal/driver-licenses-identification-cards/dl-id-online-app-edl-44/',
+      verificationStatus: 'verified_current',
+    });
+    expect(companion.fields.find((field) => field.fieldKey === 'applicant.newLastName')).toMatchObject({
+      officialFieldLabel: 'New last name',
+      status: 'ready',
+      copyValue: 'Jordan',
+    });
+    expect(companion.fields.find((field) => field.fieldKey === 'legal.marriageDate')).toMatchObject({
+      officialFieldLabel: 'Marriage date',
+      status: 'missing',
+      copyValue: '',
+    });
+    expect(companion.summary.missing).toBeGreaterThan(0);
   });
 });

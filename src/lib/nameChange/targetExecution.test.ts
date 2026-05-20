@@ -117,8 +117,8 @@ describe('name change target execution snapshot', () => {
     });
     expect(snapshot.nextAction).toMatchObject({
       category: 'document',
-      label: 'Unblock Legal proof document ready',
-      detail: 'The marriage certificate is reviewed, but metadata is still missing: masked filename, issuing authority, issued date, extraction confidence.',
+      label: 'Unblock Identity document coverage',
+      detail: 'No current passport, driver license, or social security card has been represented in the case intake yet.',
     });
   });
 
@@ -182,7 +182,7 @@ describe('name change target execution snapshot', () => {
       blocksReady: true,
     });
     expect(snapshot.ready).toBe(false);
-    expect(snapshot.blockers).toContain('Identity documents exist in intake, but metadata is still too thin for confident downstream use.');
+    expect(snapshot.blockers).toContain('Identity documents exist in intake, but saved details are still too thin for confident downstream use.');
     expect(snapshot.nextAction).toMatchObject({
       category: 'document',
       label: expect.stringContaining('Unblock'),
@@ -945,7 +945,7 @@ describe('name change target execution snapshot', () => {
     const snapshot = buildNameChangeTargetExecutionSnapshot('medical', makeCase(), documents, [], plan);
     expect(snapshot.checklist.find((item) => item.key === 'medical-support-doc')).toMatchObject({
       status: 'ready',
-      label: 'Medical-provider-supporting document intake',
+      label: 'Medical-office-supporting document intake',
     });
   });
 
@@ -1507,7 +1507,7 @@ describe('name change target execution snapshot', () => {
     expect(snapshot.nextAction).toMatchObject({
       category: 'document',
       label: 'Capture marriage-certificate county + certificate number + issuing authority',
-      detail: 'Marriage certificate is present, but no grounded county, certificate-number extraction, or issuing-authority metadata is represented yet for out-of-state follow-through.',
+      detail: 'Marriage certificate is present, but the county, certificate number, or issuing authority is not ready yet for out-of-state follow-through.',
     });
   });
 
@@ -1557,9 +1557,9 @@ describe('name change target execution snapshot', () => {
 
     const snapshot = buildNameChangeTargetExecutionSnapshot('passport', makeCase({ has_us_passport: false, passport_needs_update: true }), documents, extractedFields, plan);
     expect(snapshot.nextAction).toMatchObject({
-      category: 'review',
-      label: 'Confirm first-passport eligibility path',
-      detail: 'This passport update is really a first-passport branch, so confirm the initial application path and packet before treating it like a standard renewal.',
+      category: 'document',
+      label: 'Add citizenship proof for first-passport branch',
+      detail: 'First-passport follow-through needs citizenship proof in intake before the DS-11 path can be grounded.',
     });
   });
 
@@ -1959,9 +1959,9 @@ describe('name change target execution snapshot', () => {
 
     const snapshot = buildNameChangeTargetExecutionSnapshot('tsa', profile, documents, extractedFields, plan);
     expect(snapshot.nextAction).toMatchObject({
-      category: 'checklist',
-      label: 'Split travel-profile follow-through by partner',
-      detail: 'Both partners are changing names, so TSA, airline traveler profiles, loyalty accounts, and booking-name updates should keep separate completion proof and booked-trip timing for each partner instead of one shared travel rollout.',
+      category: 'review',
+      label: 'Split passport work into two partner chains',
+      detail: 'Both partners are changing names, so passport follow-through should track separate document packets, travel timing, and submission checkpoints for each partner.',
     });
   });
 
@@ -1998,7 +1998,7 @@ describe('name change target execution snapshot', () => {
     expect(snapshot.nextAction).toMatchObject({
       category: 'document',
       label: 'Capture marriage-certificate county + issuing authority',
-      detail: 'Marriage certificate is present, but verified county, certificate-number extraction, and issuing-authority metadata are still incomplete for out-of-state follow-through.',
+      detail: 'Marriage certificate is present, but the verified county, certificate number, and issuing authority are still incomplete for out-of-state follow-through.',
     });
   });
 
@@ -2909,8 +2909,8 @@ describe('name change target execution snapshot', () => {
 
     const snapshot = buildNameChangeTargetExecutionSnapshot('tsa', profile, documents, extractedFields, plan);
     expect(snapshot.nextAction).toMatchObject({
-      category: 'review',
-      label: 'Review traveler-profile timing before TSA updates',
+      category: 'document',
+      label: 'Add passport expiration date before TSA travel updates',
     });
   });
 
@@ -3208,6 +3208,27 @@ describe('name change target execution snapshot', () => {
     expect(snapshot.statusVault.lastTouchedAt).toBe('2026-04-24T22:10:00.000Z');
     expect(snapshot.statusVault.lastTouchedSource).toBe('execution');
     expect(snapshot.statusVault.notes[0]).toBe('SSA packet already filed and waiting on receipt.');
+
+    const impossibleDateSnapshot = buildNameChangeTargetExecutionSnapshot(
+      'ssa',
+      makeCase(),
+      [],
+      [],
+      plan,
+      [{
+        reminder_key: 'ssa-follow-up',
+        label: 'SSA follow-up',
+        reason: 'Receipt still missing',
+        trigger_type: 'manual',
+        status: 'pending',
+        urgency: 'high',
+        focus_target_id: 'ssa',
+        updated_at: '2027-02-30',
+      }],
+    );
+
+    expect(impossibleDateSnapshot.statusVault.lastTouchedAt).toBe('2026-04-24T22:10:00.000Z');
+    expect(impossibleDateSnapshot.statusVault.lastTouchedSource).toBe('execution');
   });
 
   it('keeps execution notes ahead of reminder notes when execution is newer', () => {
@@ -3481,10 +3502,10 @@ describe('name change target execution snapshot', () => {
       nextAction: {
         category: 'document',
         label: 'Capture marriage-certificate county + certificate number + issuing authority',
-        detail: 'Marriage certificate is present, but no grounded county, certificate-number extraction, or issuing-authority metadata is represented yet for out-of-state follow-through.',
+        detail: 'Marriage certificate is present, but the county, certificate number, or issuing authority is not ready yet for out-of-state follow-through.',
       },
     })).toEqual({
-      overview: 'Marriage certificate is present, but no grounded county, certificate-number extraction, or issuing-authority metadata is represented yet for out-of-state follow-through.',
+      overview: 'Marriage certificate is present, but the county, certificate number, or issuing authority is not ready yet for out-of-state follow-through.',
       doNow: 'Pull the reviewed marriage certificate, issuing county name, certificate number, and issuing office into one proof note now.',
       whyItHelps: 'That gives the passport packet the exact out-of-state reference details it needs once filing moves.',
       canWait: 'Actual submission can safely wait until the marriage-certificate grounding is complete.',
@@ -3721,10 +3742,10 @@ describe('name change target execution snapshot', () => {
       nextAction: {
         category: 'document',
         label: 'Capture marriage-certificate county + issuing authority',
-        detail: 'Marriage certificate is present, but verified county, certificate-number extraction, and issuing-authority metadata are still incomplete for out-of-state follow-through.',
+        detail: 'Marriage certificate is present, but the verified county, certificate number, and issuing authority are still incomplete for out-of-state follow-through.',
       },
     })).toEqual({
-      overview: 'Marriage certificate is present, but verified county, certificate-number extraction, and issuing-authority metadata are still incomplete for out-of-state follow-through.',
+      overview: 'Marriage certificate is present, but the verified county, certificate number, and issuing authority are still incomplete for out-of-state follow-through.',
       doNow: 'Pull the reviewed marriage certificate, issuing county name, certificate number, and issuing office into one proof note now.',
       whyItHelps: 'That keeps travel, title, and loyalty follow-through aligned once the out-of-state proof details are grounded.',
       canWait: 'Actual submission can safely wait until the marriage-certificate grounding is complete.',

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildNameChangePassportFormSnapshot } from './passportForm';
+import { buildNameChangePassportFormCompanion, buildNameChangePassportFormSnapshot } from './passportForm';
 import type { NameChangeCaseInput, NameChangeDocumentInput, NameChangeExtractedFieldInput } from './types';
 
 function makeCase(overrides: Partial<NameChangeCaseInput> = {}): NameChangeCaseInput {
@@ -170,6 +170,51 @@ describe('name change passport form snapshot', () => {
       source: 'extracted_field',
       sourceDocumentKind: 'current_passport',
       sourceFieldKey: 'issuance_date',
+    });
+  });
+
+  it('builds passport companion guidance for the selected official form', () => {
+    const documents: NameChangeDocumentInput[] = [
+      {
+        id: 'passport-doc',
+        document_kind: 'current_passport',
+        display_name: 'Passport',
+        storage_mode: 'metadata_only',
+        intake_status: 'uploaded',
+      },
+      {
+        id: 'marriage-doc',
+        document_kind: 'marriage_certificate',
+        display_name: 'Marriage certificate',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+        issuing_authority: 'San Diego County Clerk',
+      },
+    ];
+    const extractedFields: NameChangeExtractedFieldInput[] = [
+      {
+        document_id: 'passport-doc',
+        field_key: 'issuance_date',
+        field_label: 'Passport issue date',
+        field_value_masked: '2024-06-01',
+        source_type: 'document_extract',
+        is_verified: true,
+      },
+    ];
+
+    const companion = buildNameChangePassportFormCompanion(makeCase(), documents, extractedFields);
+    expect(companion.formCode).toBe('DS-82');
+    expect(companion.source).toMatchObject({
+      officialUrl: 'https://eforms.state.gov/Forms/ds82_pdf.PDF',
+      verificationStatus: 'verified_current',
+    });
+    expect(companion.sections.map((section) => section.label)).toContain('Name requested on passport');
+    expect(companion.fields.find((field) => field.fieldKey === 'identity.passportIssueDate')).toMatchObject({
+      officialFieldLabel: 'Most recent passport issue date',
+      status: 'ready',
+      value: '2024-06-01',
+      formattedValue: '06/01/2024',
+      copyValue: '06/01/2024',
     });
   });
 });
