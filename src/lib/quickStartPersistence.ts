@@ -489,9 +489,9 @@ export const normalizeQuickStartDraftSnapshot = (value: unknown): QuickStartDraf
     : 0;
   const normalizedCurrentIndex = hasSafeCurrentIndex
     ? hasMeaningfulRestoreState && (showFollowUps || normalizedViewState !== 'question')
-      ? clampRestorableCurrentIndex(Math.max(parsed.currentIndex, RESTORABLE_SETUP_STEPS.length))
+      ? clampRestorableCurrentIndex(Math.max(parsed.currentIndex ?? 0, RESTORABLE_SETUP_STEPS.length))
       : hasMeaningfulQuickStartAnswers(normalizedInitialSetupAnswers)
-        ? resolveRestorableCurrentIndex(parsed.currentIndex, normalizedInitialSetupAnswers)
+        ? resolveRestorableCurrentIndex(parsed.currentIndex ?? 0, normalizedInitialSetupAnswers)
         : 0
     : hasMeaningfulRestoreState && (showFollowUps || normalizedViewState !== 'question')
       ? RESTORABLE_SETUP_STEPS.length
@@ -501,12 +501,22 @@ export const normalizeQuickStartDraftSnapshot = (value: unknown): QuickStartDraf
         ? recoveredClosedCurrentIndex
         : 0;
 
+  const normalizedClarifyingEnvelope: ClarifyingPersistenceEnvelope | null = normalizedClarifyingState
+    ? {
+        clarifying: {
+          ...normalizedClarifyingState.clarifying,
+          mode: normalizedClarifyingState.clarifying.mode === 'draft' ? 'draft' : 'ask',
+        },
+        draftOutputs: normalizedClarifyingState.draftOutputs,
+      }
+    : null;
+
   return {
     initialSetupAnswers: normalizedInitialSetupAnswers,
     currentIndex: normalizedCurrentIndex,
     followUpAnswers: restoredFollowUpAnswers,
     showFollowUps,
-    clarifyingState: normalizedClarifyingState,
+    clarifyingState: normalizedClarifyingEnvelope,
     viewState: normalizedViewState,
   };
 };

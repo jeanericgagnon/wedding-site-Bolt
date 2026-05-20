@@ -837,9 +837,9 @@ const templateIdAliases = new Map<string, string>(
   [
     ...Object.entries(templateById).flatMap(([templateId, template]) => {
       const keys = new Set([normalizeTemplateIdKey(templateId), normalizeTemplateIdKey(template.name)]);
-      return Array.from(keys).filter(Boolean).map((key) => [key, templateId]);
+      return Array.from(keys).filter(Boolean).map((key): [string, string] => [key, templateId]);
     }),
-    ...Object.entries(TEMPLATE_ALIAS_TARGETS).map(([aliasId, canonicalId]) => [normalizeTemplateIdKey(aliasId), canonicalId]),
+    ...Object.entries(TEMPLATE_ALIAS_TARGETS).map(([aliasId, canonicalId]): [string, string] => [normalizeTemplateIdKey(aliasId), canonicalId]),
   ],
 );
 

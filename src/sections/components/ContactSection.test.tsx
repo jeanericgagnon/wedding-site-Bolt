@@ -23,17 +23,17 @@ function createEmptyWeddingData(): WeddingDataV1 {
     design: { template: 'classic-romance', colorScheme: 'soft-blush', fontPairing: 'elegant-serif' },
     customSections: [],
     media: { gallery: [] },
-  };
+  } as unknown as WeddingDataV1;
 }
 
-function makeInstance(settings: SectionInstance['settings']): SectionInstance {
+function makeInstance(settings: Record<string, unknown>): SectionInstance {
   return {
     id: 'contact-1',
     type: 'contact',
     enabled: true,
     variant: 'default',
     settings,
-  };
+  } as unknown as SectionInstance;
 }
 
 describe('ContactSection', () => {

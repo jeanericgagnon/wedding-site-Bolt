@@ -50,6 +50,7 @@ export interface BuilderSectionDefinition {
 
 export interface BuilderSectionInstance {
   id: string;
+  displayName?: string;
   type: BuilderSectionType;
   variant: string;
   enabled: boolean;

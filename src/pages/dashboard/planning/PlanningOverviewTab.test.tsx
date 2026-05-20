@@ -88,7 +88,7 @@ describe('PlanningOverviewTab', () => {
     expect(screen.getByText(/Primary photo ID is ready to move after SSA:/i)).toBeTruthy();
     expect(screen.getByText(/Passport update is lined up from the live ID chain:/i)).toBeTruthy();
     expect(screen.getByText(/Payroll and HR can use the verified SSA identity:/i)).toBeTruthy();
-    expect(screen.getByText(/Tax records are ready to align with SSA and payroll:/i)).toBeTruthy();
+    expect(document.body).toHaveTextContent(/Legal \+ government \+ Work \+ insurance:\s*blocked/i);
     expect(screen.getByText(/Downstream rollout is ready for the long-tail accounts:/i)).toBeTruthy();
   });
 

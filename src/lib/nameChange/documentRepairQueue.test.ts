@@ -92,7 +92,7 @@ describe('name change document repair queue', () => {
       }),
       expect.objectContaining({
         category: 'document',
-        label: 'Capture county + certificate number for certified marriage certificate',
+        label: 'Capture county + certificate number + issuing authority for certified marriage certificate',
       }),
     ]));
   });

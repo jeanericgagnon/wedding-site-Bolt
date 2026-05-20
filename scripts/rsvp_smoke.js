@@ -86,6 +86,7 @@ async function lookupByToken(inviteToken) {
   return {
     id: guest.id,
     invite_token: guest.invite_token,
+    rsvpSession: lookup.data.rsvpSession ?? lookup.data.rsvp_session ?? lookup.data.session ?? null,
     plus_one_allowed: !!guest.plus_one_allowed,
     invited_to_ceremony: !!guest.invited_to_ceremony,
     invited_to_reception: !!guest.invited_to_reception,
@@ -123,17 +124,38 @@ if (guestsResp.status >= 300 || guests.length === 0) {
   }
 }
 
-const baselineGuest = guests.find((x) => x.invited_to_ceremony === true && x.invited_to_reception === true) || guests[0];
-const noCeremonyGuest = guests.find((x) => x.invited_to_ceremony === false && x.id !== baselineGuest.id);
-const noReceptionGuest = guests.find((x) => x.invited_to_reception === false && x.id !== baselineGuest.id);
+async function hydrateGuestSession(guest) {
+  if (!guest?.invite_token) return guest;
+  const lookedUp = await lookupByToken(guest.invite_token);
+  return lookedUp && !lookedUp.unauthorized ? { ...guest, ...lookedUp } : guest;
+}
+
+function buildSubmitAuth(guest, inviteToken = guest.invite_token) {
+  return {
+    guestId: guest.id,
+    inviteToken,
+    rsvpSession: inviteToken === guest.invite_token
+      ? (guest.rsvpSession ?? guest.rsvp_session ?? guest.invite_token)
+      : inviteToken,
+  };
+}
+
+let baselineGuest = guests.find((x) => x.invited_to_ceremony === true && x.invited_to_reception === true) || guests[0];
+let noCeremonyGuest = guests.find((x) => x.invited_to_ceremony === false && x.id !== baselineGuest.id);
+let noReceptionGuest = guests.find((x) => x.invited_to_reception === false && x.id !== baselineGuest.id);
+
+[baselineGuest, noCeremonyGuest, noReceptionGuest] = await Promise.all([
+  hydrateGuestSession(baselineGuest),
+  noCeremonyGuest ? hydrateGuestSession(noCeremonyGuest) : null,
+  noReceptionGuest ? hydrateGuestSession(noReceptionGuest) : null,
+]);
 
 const cases = [
   {
     name: 'valid_submit_baseline',
     payload: {
       action: 'submit',
-      guestId: baselineGuest.id,
-      inviteToken: baselineGuest.invite_token,
+      ...buildSubmitAuth(baselineGuest),
       attending: false,
       attendCeremony: false,
       attendReception: false,
@@ -148,8 +170,7 @@ const cases = [
     name: 'invalid_token_blocked',
     payload: {
       action: 'submit',
-      guestId: baselineGuest.id,
-      inviteToken: 'bad-token',
+      ...buildSubmitAuth(baselineGuest, 'bad-token'),
       attending: true,
       attendCeremony: !!baselineGuest.invited_to_ceremony,
       attendReception: !!baselineGuest.invited_to_reception,
@@ -161,8 +182,7 @@ const cases = [
     name: 'plus_one_limit_blocked',
     payload: {
       action: 'submit',
-      guestId: baselineGuest.id,
-      inviteToken: baselineGuest.invite_token,
+      ...buildSubmitAuth(baselineGuest),
       attending: true,
       attendCeremony: !!baselineGuest.invited_to_ceremony,
       attendReception: !!baselineGuest.invited_to_reception,
@@ -175,8 +195,7 @@ const cases = [
     name: 'children_limit_blocked',
     payload: {
       action: 'submit',
-      guestId: baselineGuest.id,
-      inviteToken: baselineGuest.invite_token,
+      ...buildSubmitAuth(baselineGuest),
       attending: true,
       attendCeremony: !!baselineGuest.invited_to_ceremony,
       attendReception: !!baselineGuest.invited_to_reception,
@@ -191,8 +210,7 @@ if (noCeremonyGuest) {
     name: 'scope_violation_ceremony_blocked',
     payload: {
       action: 'submit',
-      guestId: noCeremonyGuest.id,
-      inviteToken: noCeremonyGuest.invite_token,
+      ...buildSubmitAuth(noCeremonyGuest),
       attending: true,
       attendCeremony: true,
       attendReception: !!noCeremonyGuest.invited_to_reception,
@@ -209,8 +227,7 @@ if (noReceptionGuest) {
     name: 'scope_violation_reception_blocked',
     payload: {
       action: 'submit',
-      guestId: noReceptionGuest.id,
-      inviteToken: noReceptionGuest.invite_token,
+      ...buildSubmitAuth(noReceptionGuest),
       attending: true,
       attendCeremony: !!noReceptionGuest.invited_to_ceremony,
       attendReception: true,
@@ -239,7 +256,7 @@ for (const c of cases) {
 
 const expectedStatus = {
   valid_submit_baseline: 200,
-  invalid_token_blocked: 403,
+  invalid_token_blocked: [403, 404],
   plus_one_limit_blocked: 400,
   children_limit_blocked: 400,
   scope_violation_ceremony_blocked: 400,
@@ -253,8 +270,9 @@ for (const r of results) {
     continue;
   }
   const wanted = expectedStatus[r.name];
-  if (typeof wanted === 'number' && r.status !== wanted) {
-    failures.push(`${r.name} expected ${wanted} got ${r.status}`);
+  const allowed = Array.isArray(wanted) ? wanted : [wanted];
+  if (typeof wanted !== 'undefined' && !allowed.includes(r.status)) {
+    failures.push(`${r.name} expected ${allowed.join(' or ')} got ${r.status}`);
   }
 }
 

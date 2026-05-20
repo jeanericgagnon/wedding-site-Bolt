@@ -19,10 +19,10 @@ function createWeddingData(faq: WeddingDataV1['faq'] = [{ id: 'faq-1', q: 'Where
     rsvp: { enabled: true },
     theme: {},
     media: { gallery: [] },
-  };
+  } as unknown as WeddingDataV1;
 }
 
-function makeInstance(settings: SectionInstance['settings'], bindings?: SectionInstance['bindings']): SectionInstance {
+function makeInstance(settings: Record<string, unknown>, bindings?: SectionInstance['bindings']): SectionInstance {
   return {
     id: 'faq-1',
     type: 'faq',
@@ -30,7 +30,7 @@ function makeInstance(settings: SectionInstance['settings'], bindings?: SectionI
     variant: 'default',
     settings,
     bindings,
-  };
+  } as unknown as SectionInstance;
 }
 
 describe('FaqSection', () => {

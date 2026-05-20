@@ -1,9 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import { buildNameChangePlan } from './engine';
 import { buildNameChangeReminderSuggestions, bulkUpdateNameChangeReminderStatus, deriveNameChangeReminderAttention, mapReminderSuggestionsToInputs, summarizeNameChangeReminderAttention, summarizeNameChangeReminders, syncNameChangeRemindersWithStepExecution, updateNameChangeReminderStatus } from './reminders';
-import type { NameChangeEngineInput } from './types';
+import type { NameChangeEngineInput, NameChangeReminderInput } from './types';
 
-function makeInput(overrides: Partial<NameChangeEngineInput['profile']> = {}): NameChangeEngineInput {
+type ProfileOverrides = Partial<Omit<NameChangeEngineInput['profile'], 'structured_intake'>> & {
+  structured_intake?: Partial<NameChangeEngineInput['profile']['structured_intake']>;
+};
+
+function makeInput(overrides: ProfileOverrides = {}): NameChangeEngineInput {
+  const { structured_intake: structuredIntakeOverrides, ...profileOverrides } = overrides;
   return {
     profile: {
       workflow_status: 'draft',
@@ -31,9 +36,10 @@ function makeInput(overrides: Partial<NameChangeEngineInput['profile']> = {}): N
         spouseLastName: 'Jordan',
         travelBookedSoon: false,
         wantsDocumentIntakeHelp: true,
+        ...structuredIntakeOverrides,
       },
       latest_plan_summary: null,
-      ...overrides,
+      ...profileOverrides,
     },
     documents: [
       {
@@ -648,7 +654,7 @@ describe('name change reminder suggestions', () => {
   });
 
   it('syncs dependent reminder status when a step moves in progress or complete', () => {
-    const reminders = [
+    const reminders: NameChangeReminderInput[] = [
       {
         reminder_key: 'reminder-banks',
         label: 'Banks',
@@ -737,7 +743,7 @@ describe('name change reminder suggestions', () => {
       has_certified_marriage_certificate: false,
       passport_needs_update: true,
       has_us_passport: true,
-    });
+    } as ProfileOverrides);
     const plan = buildNameChangePlan({
       ...blockedInput,
       documents: [],
@@ -770,7 +776,7 @@ describe('name change reminder suggestions', () => {
 
   it('derives reminder attention items from open reminders tied to incomplete steps', () => {
     const plan = buildNameChangePlan(makeInput());
-    const reminders = [
+    const reminders: NameChangeReminderInput[] = [
       {
         reminder_key: 'reminder-banks',
         label: 'Banks',
@@ -847,7 +853,7 @@ describe('name change reminder suggestions', () => {
 
   it('treats invalid persisted workflow touch timestamps as stale reminder attention', () => {
     const plan = buildNameChangePlan(makeInput());
-    const attention = deriveNameChangeReminderAttention([
+    const reminders: NameChangeReminderInput[] = [
       {
         reminder_key: 'reminder-banks',
         label: 'Banks',
@@ -857,12 +863,15 @@ describe('name change reminder suggestions', () => {
         urgency: 'medium',
         status: 'pending',
       },
-    ], {
+    ];
+    const planWithStep = (executionUpdatedAt: string) => ({
       ...plan,
       steps: plan.steps.map((step) => step.id === 'institution-banks'
-        ? { ...step, executionStatus: 'todo' as const, executionUpdatedAt: 'not-a-date' }
+        ? { ...step, executionStatus: 'todo' as const, executionUpdatedAt }
         : step),
-    }, '2026-04-18T12:00:00.000Z');
+    });
+
+    const attention = deriveNameChangeReminderAttention(reminders, planWithStep('not-a-date'), '2026-04-18T12:00:00.000Z');
 
     expect(attention).toEqual([
       expect.objectContaining({
@@ -871,6 +880,15 @@ describe('name change reminder suggestions', () => {
         isStale: true,
         priorityTier: 'elevated',
         actionability: 'blocked_by_untouched_step',
+      }),
+    ]);
+
+    expect(deriveNameChangeReminderAttention(reminders, planWithStep('2027-02-30'), '2026-04-18T12:00:00.000Z')).toEqual([
+      expect.objectContaining({
+        reminderKey: 'reminder-banks',
+        lastTouchedAt: '2027-02-30',
+        isStale: true,
+        priorityTier: 'elevated',
       }),
     ]);
   });

@@ -276,6 +276,7 @@ interface Props {
   onStepExecutionStatusChange: (stepId: string, executionStatus: 'todo' | 'in_progress' | 'complete') => void;
   onStepExecutionNoteChange: (stepId: string, note: string) => void;
   onSave: () => Promise<void>;
+  initialTargetId?: string;
 }
 
 const documentOptions: Array<{ key: NameChangeDocumentInput['document_kind']; label: string }> = [
@@ -288,7 +289,7 @@ const documentOptions: Array<{ key: NameChangeDocumentInput['document_kind']; la
   { key: 'proof_of_address', label: 'Proof of address' },
 ];
 
-const extractionFieldLabels: Record<NameChangeExtractedFieldInput['field_key'], string> = {
+const extractionFieldLabels: Partial<Record<NameChangeExtractedFieldInput['field_key'], string>> = {
   first_name: 'First name',
   middle_name: 'Middle name',
   last_name: 'Last name',
@@ -2341,7 +2342,7 @@ export const NameChangePlannerTab: React.FC<Props> = ({
                                 extractedFields,
                                 contractDocument?.id,
                                 fieldKey,
-                                extractionFieldLabels[fieldKey],
+                                extractionFieldLabels[fieldKey] ?? fieldKey,
                                 e.target.value,
                               ))}
                               placeholder={extractionFieldPlaceholders[fieldKey] ?? 'Masked structured value'}

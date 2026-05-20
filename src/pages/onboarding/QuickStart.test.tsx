@@ -99,7 +99,7 @@ describe('QuickStart flow guards', () => {
     await screen.findByText('A few smart follow-ups before we build');
     fireEvent.click(screen.getByRole('button', { name: 'Back' }));
 
-    expect(await screen.findByText('When and where are you getting married?')).toBeInTheDocument();
+    expect(await screen.findByText('Want to add your story? (totally optional)')).toBeInTheDocument();
     expect(screen.queryByText('A few smart follow-ups before we build')).not.toBeInTheDocument();
   });
 

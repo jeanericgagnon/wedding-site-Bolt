@@ -240,14 +240,10 @@ export const Trust: React.FC = () => {
 
             <div className="mt-8 grid gap-4 md:grid-cols-2">
               {V1_SLICE_STATUS.map((item) => {
-                const toneClasses = item.tone === 'done'
-                  ? 'border-emerald-200 bg-white'
-                  : item.tone === 'proof'
+                const toneClasses = item.tone === 'proof'
                     ? 'border-sky-200 bg-white'
                     : 'border-amber-200 bg-white';
-                const badgeClasses = item.tone === 'done'
-                  ? 'bg-emerald-50 text-emerald-700'
-                  : item.tone === 'proof'
+                const badgeClasses = item.tone === 'proof'
                     ? 'bg-sky-50 text-sky-700'
                     : 'bg-amber-50 text-amber-700';
 

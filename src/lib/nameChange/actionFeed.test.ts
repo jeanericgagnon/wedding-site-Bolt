@@ -107,7 +107,7 @@ function makeExecutionSnapshot(overrides: Partial<NameChangeTargetExecutionSnaps
     },
     checklist: [],
     ...overrides,
-  };
+  } as unknown as NameChangeTargetExecutionSnapshot;
 }
 
 function makeRepairItem(overrides: Partial<NameChangeDocumentRepairQueueItem> = {}): NameChangeDocumentRepairQueueItem {
@@ -495,22 +495,22 @@ describe('name change action feed', () => {
         },
       }),
     ], [
-      {
+      makeRepairItem({
         kind: 'marriage_certificate',
         label: 'Certified marriage certificate',
         severity: 'blocking',
         score: 320,
         impactedTargets: ['U.S. Passport'],
-        payoffSummary: ['U.S. Passport'],
+        payoffSummary: 'U.S. Passport',
         nextActions: [{
           category: 'document',
           label: 'Capture county + certificate number for certified marriage certificate',
           detail: 'Ground the certificate for passport follow-through.',
           documentKind: 'marriage_certificate',
         }],
-        missingMetadata: [],
+        metadataMissing: [],
         missingExtractionFields: ['county', 'certificate_number'],
-      },
+      }),
     ]);
 
     expect(feed).toHaveLength(1);

@@ -35,7 +35,7 @@ vi.mock('../lib/supabase', () => ({
   supabase: {
     auth: {
       getSession: () => Promise.resolve({ data: { session: null } }),
-      signInWithOAuth: (...args: unknown[]) => signInWithOAuthMock(...args),
+      signInWithOAuth: (...args: Parameters<typeof signInWithOAuthMock>) => signInWithOAuthMock(...args),
       onAuthStateChange: () => ({
         data: { subscription: { unsubscribe: vi.fn() } },
       }),
@@ -67,7 +67,7 @@ describe('Login quick start handoff', () => {
 
     await waitFor(() => {
       const stored = JSON.parse(window.localStorage.getItem(QUICK_START_STORAGE_KEY) || '{}');
-      expect(stored.currentIndex).toBe(0);
+      expect(stored.currentIndex).toBe(2);
       expect(stored.followUpAnswers).toEqual({});
       expect(stored.showFollowUps).toBe(false);
       expect(stored.viewState).toBe('question');
@@ -103,7 +103,7 @@ describe('Login quick start handoff', () => {
     await waitFor(() => {
       expect(signInWithOAuthMock).toHaveBeenCalled();
       const stored = JSON.parse(window.localStorage.getItem(QUICK_START_STORAGE_KEY) || '{}');
-      expect(stored.currentIndex).toBe(0);
+      expect(stored.currentIndex).toBe(2);
       expect(stored.followUpAnswers).toEqual({});
       expect(stored.showFollowUps).toBe(false);
       expect(stored.viewState).toBe('question');
@@ -118,7 +118,7 @@ describe('Login quick start handoff', () => {
     const state = JSON.parse(link.getAttribute('data-nav-state') || '{}');
 
     expect(state.quickStartDraft).toEqual(expect.objectContaining({
-      currentIndex: 0,
+      currentIndex: 2,
       followUpAnswers: {},
       showFollowUps: false,
       viewState: 'question',

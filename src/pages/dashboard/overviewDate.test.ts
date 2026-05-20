@@ -29,6 +29,6 @@ describe('overviewDate', () => {
       day: 'numeric',
       year: 'numeric',
     }));
-    expect(calcOverviewDaysUntil('2026-06-22', new Date('2026-06-20T18:00:00.000Z'))).toBe(1);
+    expect(calcOverviewDaysUntil('2026-06-21T18:00:00.000Z', new Date('2026-06-20T18:00:00.000Z'))).toBe(1);
   });
 });

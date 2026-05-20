@@ -9,6 +9,7 @@ export type NameChangeDocumentKind =
   | 'current_passport'
   | 'social_security_card'
   | 'benefits_account_record'
+  | 'bank_statement'
   | 'insurance_card'
   | 'professional_license_record'
   | 'birth_certificate'
@@ -20,17 +21,24 @@ export type NameChangeExtractionFieldKey =
   | 'middle_name'
   | 'last_name'
   | 'spouse_last_name'
+  | 'spouse_surname'
   | 'issuance_date'
   | 'certificate_number'
+  | 'certificate no.'
   | 'case_number'
+  | 'case #'
+  | 'case no.'
   | 'county'
-  | 'court_order_date';
+  | 'court_order_date'
+  | 'date of signature'
+  | 'signed dt';
 
 export interface NameChangeStructuredIntake {
   spouseLastName: string | null;
   travelBookedSoon: boolean;
   wantsDocumentIntakeHelp: boolean;
   bothPartnersChangeName?: boolean;
+  employerName?: string | null;
 }
 
 export interface NameChangeCaseRecord {
@@ -180,15 +188,15 @@ export interface NameChangePlanSummary {
   legalPathLabel: string;
   recommendedOrder: string[];
   targetStatusOverview?: {
-    todo: number;
-    inProgress: number;
-    complete: number;
-    ready: number;
-    blocked: number;
-    missingProofTargets: number;
-    attentionProofTargets: number;
-    touchedByExecution: number;
-    touchedByReminder: number;
+    todo?: number;
+    inProgress?: number;
+    complete?: number;
+    ready?: number;
+    blocked?: number;
+    missingProofTargets?: number;
+    attentionProofTargets?: number;
+    touchedByExecution?: number;
+    touchedByReminder?: number;
     latestUpdatedAt: string | null;
     latestMilestoneAt: string | null;
     latestReminderAt: string | null;
@@ -456,6 +464,7 @@ export interface NameChangeFormFieldPayload {
 
 export interface NameChangeFormPayloadSnapshot {
   formCode: string;
+  formLabel?: string;
   fields: NameChangeFormFieldPayload[];
   summary: {
     ready: number;
@@ -511,7 +520,7 @@ export interface NameChangeExecutionTargetDefinition {
   checklistSpecs: Array<{
     key: string;
     label: string;
-    kind: 'requirement' | 'field_presence' | 'document_support';
+    kind?: 'requirement' | 'field_presence' | 'document_support';
     nextActionCategory?: 'packet' | 'checklist' | 'document' | 'review';
     blocksReady?: boolean;
     requirementKey?: string;
@@ -673,9 +682,10 @@ export interface NameChangeReminderRecord {
   reminder_key: string;
   label: string;
   reason: string;
-  depends_on_step_id: string;
-  suggested_offset_days: number;
-  urgency: 'high' | 'medium' | 'low';
+  depends_on_step_id?: string;
+  suggested_offset_days?: number;
+  trigger_type?: 'manual' | 'automatic';
+  urgency: 'high' | 'medium' | 'low' | 'normal';
   status: 'pending' | 'scheduled' | 'sent' | 'dismissed';
   section_key?: 'core-government' | 'work-identity' | 'institutional' | 'cleanup';
   planner_intent?: 'open_execution_card';
@@ -688,9 +698,10 @@ export interface NameChangeReminderInput {
   reminder_key: string;
   label: string;
   reason: string;
-  depends_on_step_id: string;
-  suggested_offset_days: number;
-  urgency: 'high' | 'medium' | 'low';
+  depends_on_step_id?: string;
+  suggested_offset_days?: number;
+  trigger_type?: 'manual' | 'automatic';
+  urgency: 'high' | 'medium' | 'low' | 'normal';
   status: 'pending' | 'scheduled' | 'sent' | 'dismissed';
   section_key?: 'core-government' | 'work-identity' | 'institutional' | 'cleanup';
   planner_intent?: 'open_execution_card';

@@ -101,7 +101,7 @@ export function buildNameChangeTargetChecklist(
     return {
       key: spec.key,
       label: spec.label,
-      kind: spec.kind,
+      kind: 'document_support',
       nextActionCategory: spec.nextActionCategory,
       blocksReady: spec.blocksReady,
       status: supported ? 'ready' : 'attention',

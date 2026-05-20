@@ -315,31 +315,31 @@ describe('builderReducer — MEDIA actions', () => {
     const s = makeState();
     const first = builderReducer(s, {
       type: 'UPDATE_UPLOAD_QUEUE',
-      payload: { assetId: 'asset-1', progress: 20, status: 'uploading' },
+      payload: { assetId: 'asset-1', filename: 'asset-1.jpg', progress: 20, status: 'uploading' },
     });
     const next = builderReducer(first, {
       type: 'UPDATE_UPLOAD_QUEUE',
-      payload: { assetId: 'asset-1', progress: 100, status: 'processing' },
+      payload: { assetId: 'asset-1', filename: 'asset-1.jpg', progress: 100, status: 'processing' },
     });
 
     expect(next.uploadQueue).toHaveLength(1);
-    expect(next.uploadQueue[0]).toEqual({ assetId: 'asset-1', progress: 100, status: 'processing' });
+    expect(next.uploadQueue[0]).toEqual({ assetId: 'asset-1', filename: 'asset-1.jpg', progress: 100, status: 'processing' });
   });
 
   it('appends upload queue entries for different asset ids', () => {
     const s = makeState();
     const first = builderReducer(s, {
       type: 'UPDATE_UPLOAD_QUEUE',
-      payload: { assetId: 'asset-1', progress: 20, status: 'uploading' },
+      payload: { assetId: 'asset-1', filename: 'asset-1.jpg', progress: 20, status: 'uploading' },
     });
     const next = builderReducer(first, {
       type: 'UPDATE_UPLOAD_QUEUE',
-      payload: { assetId: 'asset-2', progress: 40, status: 'uploading' },
+      payload: { assetId: 'asset-2', filename: 'asset-2.jpg', progress: 40, status: 'uploading' },
     });
 
     expect(next.uploadQueue).toEqual([
-      { assetId: 'asset-1', progress: 20, status: 'uploading' },
-      { assetId: 'asset-2', progress: 40, status: 'uploading' },
+      { assetId: 'asset-1', filename: 'asset-1.jpg', progress: 20, status: 'uploading' },
+      { assetId: 'asset-2', filename: 'asset-2.jpg', progress: 40, status: 'uploading' },
     ]);
   });
 });

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildNameChangeSs5FormSnapshot } from './ss5Form';
+import { buildNameChangeSs5FormCompanion, buildNameChangeSs5FormSnapshot } from './ss5Form';
 import type { NameChangeCaseInput, NameChangeDocumentInput, NameChangeExtractedFieldInput } from './types';
 
 function makeCase(overrides: Partial<NameChangeCaseInput> = {}): NameChangeCaseInput {
@@ -93,5 +93,24 @@ describe('name change SS-5 form snapshot', () => {
     expect(snapshot.fields.find((field) => field.fieldKey === 'applicant.currentFirstName')).toMatchObject({ value: null, confidence: 'low' });
     expect(snapshot.fields.find((field) => field.fieldKey === 'legal.marriageDate')).toMatchObject({ value: null, confidence: 'low' });
     expect(snapshot.fields.find((field) => field.fieldKey === 'legal.marriageIssuingAuthority')).toMatchObject({ value: null, confidence: 'low', required: false });
+  });
+
+  it('builds the SS-5 field companion with official source and put-this-here rows', () => {
+    const companion = buildNameChangeSs5FormCompanion(makeCase(), [], []);
+    expect(companion.formCode).toBe('SSA-SS5');
+    expect(companion.source).toMatchObject({
+      officialUrl: 'https://www.ssa.gov/forms/ss-5.pdf',
+      officialRevisionLabel: 'Form SS-5 (12-2024) UF',
+      verificationStatus: 'verified_current',
+    });
+    expect(companion.sections.map((section) => section.label)).toContain('Name requested on the updated record');
+    expect(companion.fields.find((field) => field.fieldKey === 'applicant.newLastName')).toMatchObject({
+      officialFieldLabel: 'New last name',
+      value: 'Jordan',
+      copyValue: 'Jordan',
+      status: 'ready',
+      userInstruction: 'Put this in the requested last-name field for the corrected Social Security record.',
+    });
+    expect(companion.reviewWarnings).toContain('This prepares a review draft only. The user must review, sign, and submit through Social Security instructions.');
   });
 });

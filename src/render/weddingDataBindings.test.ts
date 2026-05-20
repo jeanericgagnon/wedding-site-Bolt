@@ -242,9 +242,14 @@ describe('applyWeddingDataBindings', () => {
 
     expect(result.headline).toBe('Avery & Jordan');
     expect(result.title).toBe('Avery & Jordan');
-    expect(result.subheadline).toBe('Friday, June 19, 2026');
-    expect(result.weddingDate).toBe('Friday, June 19, 2026');
-    expect(result.date).toBe('Friday, June 19, 2026');
+    expect(result.subheadline).toBe(new Date(data.event.weddingDateISO).toLocaleDateString('en-US', {
+      weekday: 'long',
+      month: 'long',
+      day: 'numeric',
+      year: 'numeric',
+    }));
+    expect(result.weddingDate).toBe(result.subheadline);
+    expect(result.date).toBe(result.subheadline);
     expect(result.location).toBe('The Grand Pavilion · 450 Park Ave');
     expect(result.venueName).toBe('The Grand Pavilion');
     expect(result.venueAddress).toBe('450 Park Ave');

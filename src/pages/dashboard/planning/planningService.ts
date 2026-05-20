@@ -1,5 +1,6 @@
 import { supabase } from '../../../lib/supabase';
 import { resolveActiveSiteForUser } from '../../../lib/activeSite';
+import type { VendorMetaMap } from './vendorMetaStorage';
 
 async function insertWithDriftFallback<T extends Record<string, unknown>>(
   table: string,
@@ -53,6 +54,7 @@ export interface PlanningTask {
   status: 'todo' | 'in_progress' | 'done';
   priority: 'low' | 'medium' | 'high';
   owner_name: string;
+  category?: string | null;
   linked_event_id: string | null;
   linked_vendor_id: string | null;
   sort_order: number;
@@ -73,6 +75,8 @@ export interface PlanningVendor {
   amount_paid: number;
   balance_due: number;
   next_payment_due: string | null;
+  document_label?: string;
+  document_url?: string;
   notes: string;
   created_at: string;
   updated_at: string;
@@ -179,6 +183,22 @@ export async function updateVendor(id: string, updates: Partial<PlanningVendor>)
 
 export async function deleteVendor(id: string): Promise<void> {
   const { error } = await supabase.from('planning_vendors').delete().eq('id', id);
+  if (error) throw error;
+}
+
+export async function updatePlanningTotalBudget(weddingSiteId: string, totalBudget: number): Promise<void> {
+  const { error } = await supabase
+    .from('wedding_sites')
+    .update({ total_budget: totalBudget, updated_at: new Date().toISOString() })
+    .eq('id', weddingSiteId);
+  if (error) throw error;
+}
+
+export async function updatePlanningVendorMeta(weddingSiteId: string, vendorMeta: VendorMetaMap): Promise<void> {
+  const { error } = await supabase
+    .from('wedding_sites')
+    .update({ vendor_meta: vendorMeta, updated_at: new Date().toISOString() })
+    .eq('id', weddingSiteId);
   if (error) throw error;
 }
 

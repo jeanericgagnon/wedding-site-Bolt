@@ -246,7 +246,7 @@ export function mergeRegistrySourceLabels(
   for (const link of merged) {
     const existingLink = existingByUrl.get(link.url);
     const sourceLabel = link.sourceLabel ?? existingLink?.sourceLabel;
-    const nextLink = sourceLabel ? { ...link, sourceLabel } : { url: link.url };
+    const nextLink: CarryoverRegistryLink = sourceLabel ? { ...link, sourceLabel } : { url: link.url };
     const existingMerged = mergedByUrl.get(link.url);
     if (!existingMerged) {
       if (
@@ -348,69 +348,55 @@ function extractRegistryUrlTokens(line: string): CarryoverRegistryToken[] {
 
 export function carryOverRegistryLinks(raw: string | null | undefined): CarryoverRegistryLink[] {
   if (!raw?.trim()) return [];
-  const carried = new Map<string, CarryoverRegistryLink>();
-  return raw
-    .split('\n')
-    .flatMap((line) => {
-      let pendingSourceLabel: string | undefined;
-      return line
-        .split(/[|,;]/)
-        .map((part) => part.trim())
-        .filter(Boolean)
-        .flatMap((part) => {
-          const extractedUrls = extractRegistryUrlTokens(part);
-          if (extractedUrls.length > 0) {
-            let pendingLabelApplied = false;
-            const normalizedTokens = extractedUrls.map((token) => {
-              const canApplyPendingLabel = Boolean(pendingSourceLabel)
-                && !pendingLabelApplied
-                && (!token.sourceLabel || isWeakExplicitTokenLabel(token.raw, token.sourceLabel));
-              if (canApplyPendingLabel) pendingLabelApplied = true;
-              return {
-                ...token,
-                sourceLabel: canApplyPendingLabel ? pendingSourceLabel : token.sourceLabel,
-                sourceLabelMode: canApplyPendingLabel ? 'explicit' : token.sourceLabelMode,
-              };
-            });
-            if (pendingSourceLabel && normalizedTokens.some((token) => token.sourceLabel === pendingSourceLabel)) {
-              pendingSourceLabel = undefined;
-            }
-            return normalizedTokens;
-          }
+  const carried = new Map<string, CarryoverRegistryLink & { sourceLabelMode?: 'explicit' | 'inferred' }>();
 
-          pendingSourceLabel = extractExplicitSourceLabelFragment(part) ?? pendingSourceLabel;
-          return [];
-        });
-    })
-    .map((token) => {
-      const url = normalizeUrl(token.raw);
-      const inferredSourceLabel = inferSourceLabel(url);
-      return url ? {
-        url,
-        sourceLabel: token.sourceLabel ?? inferredSourceLabel,
-        sourceLabelMode: token.sourceLabelMode ?? (inferredSourceLabel ? 'inferred' : undefined),
-      } : null;
-    })
-    .filter((token): token is CarryoverRegistryLink & { sourceLabelMode?: 'explicit' | 'inferred' } => Boolean(token))
-    .map((token) => {
-      const existing = carried.get(token.url);
-      if (!existing) {
-        carried.set(token.url, token);
-        return null;
+  for (const line of raw.split('\n')) {
+    let pendingSourceLabel: string | undefined;
+    for (const part of line.split(/[|,;]/).map((value) => value.trim()).filter(Boolean)) {
+      const extractedUrls = extractRegistryUrlTokens(part);
+      if (extractedUrls.length === 0) {
+        pendingSourceLabel = extractExplicitSourceLabelFragment(part) ?? pendingSourceLabel;
+        continue;
       }
 
-      const existingMode = (existing as CarryoverRegistryLink & { sourceLabelMode?: 'explicit' | 'inferred' }).sourceLabelMode;
-      const existingInferredLabel = inferSourceLabel(existing.url);
-      if (
-        (!existing.sourceLabel && token.sourceLabel)
-        || (token.sourceLabel && isWeakInferredSourceLabel(existing.url, existing.sourceLabel) && token.sourceLabel !== existing.sourceLabel)
-        || (existingMode !== 'explicit' && token.sourceLabelMode === 'explicit' && token.sourceLabel)
-      ) {
-        carried.set(token.url, { ...existing, sourceLabel: token.sourceLabel });
+      let pendingLabelApplied = false;
+      for (const token of extractedUrls) {
+        const canApplyPendingLabel = Boolean(pendingSourceLabel)
+          && !pendingLabelApplied
+          && (!token.sourceLabel || isWeakExplicitTokenLabel(token.raw, token.sourceLabel));
+        if (canApplyPendingLabel) pendingLabelApplied = true;
+
+        const sourceLabel = canApplyPendingLabel ? pendingSourceLabel : token.sourceLabel;
+        const sourceLabelMode = canApplyPendingLabel ? 'explicit' : token.sourceLabelMode;
+        const url = normalizeUrl(token.raw);
+        if (!url) continue;
+
+        const inferredSourceLabel = inferSourceLabel(url);
+        const next: CarryoverRegistryLink & { sourceLabelMode?: 'explicit' | 'inferred' } = {
+          url,
+          sourceLabel: sourceLabel ?? inferredSourceLabel,
+          sourceLabelMode: sourceLabelMode ?? (inferredSourceLabel ? 'inferred' : undefined),
+        };
+        const existing = carried.get(url);
+        if (!existing) {
+          carried.set(url, next);
+          continue;
+        }
+
+        if (
+          (!existing.sourceLabel && next.sourceLabel)
+          || (next.sourceLabel && isWeakInferredSourceLabel(existing.url, existing.sourceLabel) && next.sourceLabel !== existing.sourceLabel)
+          || (existing.sourceLabelMode !== 'explicit' && next.sourceLabelMode === 'explicit' && next.sourceLabel)
+        ) {
+          carried.set(url, { ...existing, sourceLabel: next.sourceLabel, sourceLabelMode: next.sourceLabelMode });
+        }
       }
 
-      return null;
-    })
-    .filter(() => false)
-    .concat(Array.from(carried.values()).map((token) => finalizeCarryoverRegistryLink(token)));
+      if (pendingSourceLabel && Array.from(carried.values()).some((link) => link.sourceLabel === pendingSourceLabel)) {
+        pendingSourceLabel = undefined;
+      }
+    }
+  }
+
+  return Array.from(carried.values()).map((token) => finalizeCarryoverRegistryLink(token));
 }

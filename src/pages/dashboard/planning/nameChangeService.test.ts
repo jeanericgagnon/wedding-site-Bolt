@@ -42,6 +42,13 @@ function makeCase(overrides: Partial<NameChangeCaseInput> = {}): NameChangeCaseI
   };
 }
 
+const reviewedMarriageCertificate: NameChangeDocumentInput = {
+  document_kind: 'marriage_certificate',
+  display_name: 'Certified marriage certificate',
+  storage_mode: 'metadata_only',
+  intake_status: 'reviewed',
+};
+
 describe('nameChangeService normalization', () => {
   it('normalizes case input into stable, save-safe values', () => {
     const normalized = normalizeNameChangeCaseInput(makeCase());
@@ -553,7 +560,7 @@ describe('nameChangeService normalization', () => {
   });
 
   it('preserves explicit reminder statuses when building a workspace bundle', () => {
-    const bundle = buildNameChangeWorkspaceBundle(makeCase(), [], [], [
+    const bundle = buildNameChangeWorkspaceBundle(makeCase(), [reviewedMarriageCertificate], [], [
       {
         reminder_key: 'reminder-banks',
         label: 'Follow up on Banks and credit cards',
@@ -621,7 +628,7 @@ describe('nameChangeService normalization', () => {
   });
 
   it('keeps reminder statuses stable when planner data changes but reminder keys remain', () => {
-    const initialBundle = buildNameChangeWorkspaceBundle(makeCase(), [], [], [
+    const initialBundle = buildNameChangeWorkspaceBundle(makeCase(), [reviewedMarriageCertificate], [], [
       {
         reminder_key: 'reminder-banks',
         label: 'Follow up on Banks and credit cards',
@@ -635,7 +642,7 @@ describe('nameChangeService normalization', () => {
 
     const updatedBundle = buildNameChangeWorkspaceBundle(
       makeCase({ county_residence: 'Orange County' }),
-      [],
+      [reviewedMarriageCertificate],
       [],
       initialBundle.reminders,
     );
