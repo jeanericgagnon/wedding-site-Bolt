@@ -2,100 +2,275 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
-const registryPage = readFileSync(resolve(process.cwd(), 'src/pages/dashboard/Registry.tsx'), 'utf8');
-const registryTypes = readFileSync(resolve(process.cwd(), 'src/pages/dashboard/registry/registryTypes.ts'), 'utf8');
-const repairState = readFileSync(resolve(process.cwd(), 'src/pages/dashboard/registry/repairState.ts'), 'utf8');
-const duplicateRegistryItems = readFileSync(resolve(process.cwd(), 'src/pages/dashboard/registry/duplicateRegistryItems.ts'), 'utf8');
-const registryItemCard = readFileSync(resolve(process.cwd(), 'src/pages/dashboard/registry/RegistryItemCard.tsx'), 'utf8');
-const registryItemForm = readFileSync(resolve(process.cwd(), 'src/pages/dashboard/registry/RegistryItemForm.tsx'), 'utf8');
-const sectionRegistry = readFileSync(resolve(process.cwd(), 'src/sections/registry.ts'), 'utf8');
-const canonicalSectionRegistry = readFileSync(resolve(process.cwd(), 'src/lib/canonicalSectionRegistry.ts'), 'utf8');
-const registryCardsSection = readFileSync(resolve(process.cwd(), 'src/sections/variants/registry/cards.tsx'), 'utf8');
-const registryFeaturedSection = readFileSync(resolve(process.cwd(), 'src/sections/variants/registry/featured.tsx'), 'utf8');
-const registrySectionComponent = readFileSync(resolve(process.cwd(), 'src/sections/components/RegistrySection.tsx'), 'utf8');
-const sectionManifests = readFileSync(resolve(process.cwd(), 'src/builder/registry/sectionManifests.ts'), 'utf8');
-const templateRegistry = readFileSync(resolve(process.cwd(), 'src/templates/registry.ts'), 'utf8');
-const initialLayout = readFileSync(resolve(process.cwd(), 'src/lib/generateInitialLayout.ts'), 'utf8');
-const siteGenerator = readFileSync(resolve(process.cwd(), 'src/lib/siteGenerator.ts'), 'utf8');
-const aiBuilderProjectPatch = readFileSync(resolve(process.cwd(), 'src/lib/aiBuilderProjectPatch.ts'), 'utf8');
-const weddingDataAdapter = readFileSync(resolve(process.cwd(), 'src/builder/adapters/weddingDataAdapter.ts'), 'utf8');
-const canonicalContentMapper = readFileSync(resolve(process.cwd(), 'src/lib/aiCanonicalContentMapper.ts'), 'utf8');
-const registryLinkCarryover = readFileSync(resolve(process.cwd(), 'src/lib/registryLinkCarryover.ts'), 'utf8');
-const onboardingMapper = readFileSync(resolve(process.cwd(), 'src/lib/onboardingMapper.ts'), 'utf8');
-const generateWeddingData = readFileSync(resolve(process.cwd(), 'src/lib/generateWeddingData.ts'), 'utf8');
-const weddingDataBindings = readFileSync(resolve(process.cwd(), 'src/render/weddingDataBindings.ts'), 'utf8');
-const guidedBuilderModules = readFileSync(resolve(process.cwd(), 'src/components/dashboard/GuidedBuilderModules.tsx'), 'utf8');
-const builderV2Adapter = readFileSync(resolve(process.cwd(), 'src/builder-v2/adapter.ts'), 'utf8');
-const sectionVariantCompatibility = readFileSync(resolve(process.cwd(), 'src/lib/sectionVariantCompatibility.ts'), 'utf8');
-const builderV2Lab = readFileSync(resolve(process.cwd(), 'src/pages/BuilderV2Lab.tsx'), 'utf8');
-const legacySectionRegistry = readFileSync(resolve(process.cwd(), 'src/sections/sectionRegistry.tsx'), 'utf8');
-const builderInspectorPanel = readFileSync(resolve(process.cwd(), 'src/builder/components/BuilderInspectorPanel.tsx'), 'utf8');
-const builderSectionRail = readFileSync(resolve(process.cwd(), 'src/builder/components/BuilderSectionRail.tsx'), 'utf8');
-const builderSidebarLibrary = readFileSync(resolve(process.cwd(), 'src/builder/components/BuilderSidebarLibrary.tsx'), 'utf8');
-const variantPreviewSource = readFileSync(resolve(process.cwd(), 'src/builder/registry/variantPreviewSource.ts'), 'utf8');
-const siteView = readFileSync(resolve(process.cwd(), 'src/pages/SiteView.tsx'), 'utf8');
-const registryProof = readFileSync(resolve(process.cwd(), 'scripts/v1-proof-registry.mjs'), 'utf8');
+const read = (file) => readFileSync(resolve(process.cwd(), file), 'utf8');
+const hasAll = (source, fragments) => fragments.every((fragment) => source.includes(fragment));
+
+const files = {
+  registryPage: read('src/pages/dashboard/Registry.tsx'),
+  registryTypes: read('src/pages/dashboard/registry/registryTypes.ts'),
+  repairState: read('src/pages/dashboard/registry/repairState.ts'),
+  duplicateRegistryItems: read('src/pages/dashboard/registry/duplicateRegistryItems.ts'),
+  registryItemCard: read('src/pages/dashboard/registry/RegistryItemCard.tsx'),
+  registryItemForm: read('src/pages/dashboard/registry/RegistryItemForm.tsx'),
+  sectionRegistry: read('src/sections/registry.ts'),
+  canonicalSectionRegistry: read('src/lib/canonicalSectionRegistry.ts'),
+  registryCardsSection: read('src/sections/variants/registry/cards.tsx'),
+  registryFeaturedSection: read('src/sections/variants/registry/featured.tsx'),
+  registrySectionComponent: read('src/sections/components/RegistrySection.tsx'),
+  sectionManifests: read('src/builder/registry/sectionManifests.ts'),
+  templateRegistry: read('src/templates/registry.ts'),
+  initialLayout: read('src/lib/generateInitialLayout.ts'),
+  siteGenerator: read('src/lib/siteGenerator.ts'),
+  aiBuilderProjectPatch: read('src/lib/aiBuilderProjectPatch.ts'),
+  weddingDataAdapter: read('src/builder/adapters/weddingDataAdapter.ts'),
+  canonicalContentMapper: read('src/lib/aiCanonicalContentMapper.ts'),
+  registryLinkCarryover: read('src/lib/registryLinkCarryover.ts'),
+  onboardingMapper: read('src/lib/onboardingMapper.ts'),
+  generateWeddingData: read('src/lib/generateWeddingData.ts'),
+  weddingDataBindings: read('src/render/weddingDataBindings.ts'),
+  guidedBuilderModules: read('src/components/dashboard/GuidedBuilderModules.tsx'),
+  builderV2Adapter: read('src/builder-v2/adapter.ts'),
+  sectionVariantCompatibility: read('src/lib/sectionVariantCompatibility.ts'),
+  builderInspectorPanel: read('src/builder/components/BuilderInspectorPanel.tsx'),
+  builderSectionRail: read('src/builder/components/BuilderSectionRail.tsx'),
+  builderSidebarLibrary: read('src/builder/components/BuilderSidebarLibrary.tsx'),
+  variantPreviewSource: read('src/builder/registry/variantPreviewSource.ts'),
+  siteView: read('src/pages/SiteView.tsx'),
+  registryProof: read('scripts/v1-proof-registry.mjs'),
+};
 
 const checks = [
-  { name: 'dashboard uses sanitizeRegistryQuantityState', ok: registryPage.includes('sanitizeRegistryQuantityState') },
-  { name: 'dashboard analytics normalize registry purchase truth before owner summaries', ok: registryPage.includes('function normalizeOwnerDashboardRegistryItem(item: RegistryItem): RegistryItem {') && registryPage.includes('const normalizedItems = items.map(normalizeOwnerDashboardRegistryItem);') && registryPage.includes('const duplicateGroups = findDuplicateRegistryGroups(normalizedItems);') && registryPage.includes('setItems(data.map(normalizeOwnerDashboardRegistryItem));') && registryPage.includes('normalizeOwnerDashboardRegistryItem({ ...i, ...fields, updated_at: new Date().toISOString() })') && registryPage.includes('normalizeOwnerDashboardRegistryItem(updated)') && registryPage.includes('normalizeOwnerDashboardRegistryItem(created)') && registryPage.includes('const filtered = normalizedItems.filter(item => {') && registryPage.includes('const hasStale = normalizedItems.some((item) => !item.metadata_last_checked_at || (Date.now() - new Date(item.metadata_last_checked_at).getTime()) > WEEKLY_REFRESH_MS);') && registryPage.includes("purchaser_name: quantityState.purchaseStatus === 'available' ? null : item.purchaser_name,") },
-  { name: 'dashboard bad import counts stay aligned with shared registry import truth', ok: registryPage.includes('badImports: normalizedItems.filter((i) => getRegistryItemMetadataState(i).hasBadImportTitle).length,') && registryPage.includes('const actionableBadImportCount = normalizedItems.filter((item) => getRegistryItemMetadataState(item).hasBadImportTitle && !!(item.item_url || item.canonical_url)).length;') && registryPage.includes('Imported gifts to fix: {actionableBadImportCount}') && registryPage.includes('{actionableBadImportCount > 0 && (') },
-  { name: 'dashboard repair review counts stay aligned with actionable import truth', ok: registryPage.includes('repair: actionableBadImportCount,') },
-  { name: 'dashboard image issue review counts stay aligned with registry alert truth', ok: registryPage.includes("imageIssues: normalizedItems.filter((item) => !item.image_url || item.image_url.includes('thum.io') || item.image_url.includes('weserv.nl')).length,") },
-  { name: 'dashboard repair state summaries stay aligned with normalized registry truth', ok: registryPage.includes('Repair states: {normalizedItems.filter((item) => getRegistryRepairStates(item).length > 0).length}') },
-  { name: 'dashboard loads duplicate registry groups', ok: registryPage.includes('findDuplicateRegistryGroups') },
-  { name: 'dashboard demo creates preserve canonical registry metadata', ok: registryPage.includes('canonical_url: fields.canonical_url ?? null') && registryPage.includes('metadata_fetch_status: fields.metadata_fetch_status ?? \'manual\'') },
-  { name: 'dashboard repair queue includes unavailable registry imports', ok: registryPage.includes('filter((i) => getRegistryItemMetadataState(i).hasBadImportTitle)') && registryTypes.includes('product unavailable') },
-  { name: 'dashboard refresh syncs merchant into store_name', ok: registryPage.includes('fields.store_name = (preview.merchant ?? preview.brand)!;') },
-  { name: 'dashboard auto-refresh syncs merchant into store_name', ok: registryPage.includes('if (preview.merchant ?? preview.brand) {\n          fields.merchant = (preview.merchant ?? preview.brand)!;\n          fields.store_name = (preview.merchant ?? preview.brand)!;\n        }') },
-  { name: 'section registry keeps strict alias fallbacks for template-backed registry variants', ok: sectionRegistry.includes('const def = strictVariant') && sectionRegistry.includes('function cloneSectionDefinitionValue<T>(value: T): T {') && sectionRegistry.includes('function getCanonicalSectionDefinition(type: string, variant: string): SectionDefinition | null {') && sectionRegistry.includes('function getDefinitionsForType(type: string): SectionDefinition[] {') && sectionRegistry.includes('export function getVariantsForType(type: unknown): SectionDefinition[] {') && sectionRegistry.includes('component: definition.component,') && sectionRegistry.includes('schema: definition.schema,') && sectionRegistry.includes('return Array.from(SECTION_REGISTRY.values()).map((definition) => getCanonicalSectionDefinition(definition.type, definition.variant) ?? definition);') && sectionRegistry.includes('const definitionsForType = getDefinitionsForType(type);') && sectionRegistry.includes('const directVariant = getDefinitionsForType(type)') && sectionRegistry.includes('getCanonicalSectionDefinition(normalizedType, normalizedVariant)') && sectionRegistry.includes('const fallbackVariant = getCanonicalSectionFallbackVariant(canonicalSection.type, normalizedType, normalizedVariant);') && sectionRegistry.includes('?? (fallbackVariant ? getCanonicalSectionDefinition(normalizedType, fallbackVariant) : null)') && sectionRegistry.includes('const defaultVariant = getDefaultVariantForType(normalizedType);') && sectionRegistry.includes('const def = getCanonicalSectionDefinition(canonicalSection.type, canonicalSection.variant);') },
-  { name: 'section registry normalizes malformed persisted registry variants before public render fallback', ok: sectionRegistry.includes('function normalizeRegistryVariantKey(variant: unknown): string {') && sectionRegistry.includes('function isRegistrySectionType(type: unknown): boolean {') && sectionRegistry.includes('function normalizeRegistrySectionType(type: unknown): string {') && sectionRegistry.includes('const directSectionType = getAllDefinitions().find((definition) => normalizeRegistryVariantKey(definition.type) === normalizedTypeKey)?.type;') && sectionRegistry.includes("const normalizedInputType = typeof type === 'string' ? type.trim().toLowerCase() : '';") && sectionRegistry.includes('function getVariantFallbacksForType(type: string, inputType?: string): Record<string, string> {') && sectionRegistry.includes('function getCanonicalSectionFallbackVariant(type: string, inputType: string, variant: string): string | null {') && sectionRegistry.includes('function getDefaultVariantForType(type: string): string | undefined {') && sectionRegistry.includes('function resolveCanonicalSectionVariantForType(type: string, inputType: string, variant: unknown): string {') && sectionRegistry.includes("return defaultVariant ?? (typeof variant === 'string' ? variant : '');") && sectionRegistry.includes('.filter((definition) => definition.type === type)') && sectionRegistry.includes('return getCanonicalSectionFallbackVariant(type, inputType, normalizedVariantKey)') && sectionRegistry.includes('variant: resolveCanonicalSectionVariantForType(normalizedType, normalizedInputType, variant),') && sectionRegistry.includes("return normalizedType === 'registry' || normalizedType.startsWith('registrysection');") && sectionRegistry.includes('const canonicalSection = resolveCanonicalRegistrySectionInput(type, variant);') && sectionRegistry.includes('export function getDefinition(type: unknown, variant: unknown): SectionDefinition | null {') && sectionRegistry.includes('if (!canonicalSection.type) return null;') && sectionRegistry.includes('export function getDefinitionOrThrow(type: unknown, variant: unknown): SectionDefinition {') && sectionRegistry.includes('return getCanonicalSectionDefinition(canonicalSection.type, canonicalSection.variant);') && sectionRegistry.includes('throw new Error(`No section definition for ${canonicalSection.type}::${canonicalSection.variant}`);') && sectionRegistry.includes("const normalizedType = resolveCanonicalRegistrySectionInput(type, undefined).type || normalizeRegistrySectionType(type);") && sectionRegistry.includes("return typeof variant === 'string'") && sectionRegistry.includes("const normalizedTypeKey = normalizeRegistrySectionType(canonicalSection.type);") && sectionRegistry.includes("'registry-section': 'registry',") && sectionRegistry.includes("default: 'cards'") && sectionRegistry.includes("grid: 'cards'") && sectionRegistry.includes("const canonicalVariant = resolveCanonicalSectionVariantForType('registry', 'registry', variant);") && sectionRegistry.includes("? canonicalVariant") && sectionRegistry.includes('const normalizedVariant = canonicalSection.variant;') && sectionRegistry.includes('normalizeRegistryVariantKey(alias) === normalizeRegistryVariantKey(variant))?.[1] ?? null;') },
-  { name: 'builder registry manifest exposes template-backed and legacy registry variants', ok: sectionManifests.includes("supportedVariants: ['default', 'cards', 'grid', 'fundHighlight', 'featured', 'minimal', 'honeymoon', 'tabs', 'illustrated', 'classic', 'luxury', 'experiences', 'modern', 'playful']") && sectionManifests.includes("variantMeta: [\n      { id: 'cards'") && sectionManifests.includes("{ id: 'default', label: 'Default'") && sectionManifests.includes("{ id: 'grid', label: 'Grid'") && sectionManifests.includes("'classic'") && sectionManifests.includes("'luxury'") && sectionManifests.includes("'experiences'") && sectionManifests.includes("'modern'") && sectionManifests.includes("'playful'") },
-  { name: 'shipped templates only use builder-supported registry variants', ok: templateRegistry.includes("variant: 'classic'") && templateRegistry.includes("variant: 'luxury'") && templateRegistry.includes("variant: 'experiences'") && sectionManifests.includes("'classic'") && sectionManifests.includes("'luxury'") && sectionManifests.includes("'experiences'") },
-  { name: 'template registry import surfaces deep-clone and normalize definitions before owner edits mutate them', ok: templateRegistry.includes("import { resolveCanonicalRegistrySectionInput } from '../sections/registry';") && templateRegistry.includes('function normalizeTemplateIdKey(templateId: unknown): string {') && templateRegistry.includes('const canonicalRegistrySection = resolveCanonicalRegistrySectionInput(section.type, section.variant);') && templateRegistry.includes("const isRegistryTemplateSection = canonicalRegistrySection.type === 'registry';") && templateRegistry.includes("type: isRegistryTemplateSection ? canonicalRegistrySection.type : section.type,") && templateRegistry.includes('const TEMPLATE_ALIAS_TARGETS: Record<string, string> = {') && templateRegistry.includes('function deepFreezeTemplateValue<T>(value: T): T {') && templateRegistry.includes('export const TEMPLATE_REGISTRY: Record<string, TemplateDefinition> = deepFreezeTemplateValue({') && templateRegistry.includes('function getCanonicalTemplateSource(templateId: string | undefined): TemplateDefinition {') && templateRegistry.includes('export function getCanonicalTemplateSourceId(templateId: unknown): string {') && templateRegistry.includes('function getCanonicalTemplateDefinition(templateId: unknown): TemplateDefinition {') && templateRegistry.includes('const templateIdAliases = new Map<string, string>(') && templateRegistry.includes('Object.entries(templateById).flatMap(([templateId, template]) => {') && templateRegistry.includes('Object.entries(TEMPLATE_ALIAS_TARGETS).map(([aliasId, canonicalId]) => [normalizeTemplateIdKey(aliasId), canonicalId])') && templateRegistry.includes('normalizeTemplateIdKey(template.name)') && templateRegistry.includes('export function resolveCanonicalTemplateId(templateId: unknown): string {') && templateRegistry.includes('export function getTemplate(templateId: unknown): TemplateDefinition {') && templateRegistry.includes("const templateIdValue = typeof templateId === 'string' ? templateId : '';") && templateRegistry.includes("templateIdAliases.get(normalizeTemplateIdKey(templateId)) ?? 'base'") && templateRegistry.includes('return TEMPLATE_ALIAS_TARGETS[resolvedTemplateId] ?? resolvedTemplateId;') && templateRegistry.includes('const canonicalTemplateId = resolveCanonicalTemplateId(templateId);') && templateRegistry.includes('return TEMPLATE_ALIAS_TARGETS[canonicalTemplateId] ?? canonicalTemplateId;') && templateRegistry.includes('function cloneTemplateValue<T>(value: T): T {') && templateRegistry.includes('const clonedTemplate = cloneTemplateValue(template);') && templateRegistry.includes("templateRegistry.map((template) => [template.id, cloneTemplateDefinition(template)])") && templateRegistry.includes("base: cloneTemplateDefinition(getCanonicalTemplateDefinition('base')),") && templateRegistry.includes("variant: isRegistryTemplateSection") && templateRegistry.includes('return resolveCanonicalRegistrySectionInput(\'registry\', variant).variant;') && templateRegistry.includes('bindings: cloneTemplateValue(section.bindings ?? {}),') && templateRegistry.includes('settings: cloneTemplateValue(section.settings ?? {}),') && templateRegistry.includes('overrides: cloneTemplateValue(section.overrides ?? undefined),') && initialLayout.includes('function normalizeSectionTypeKey(type: unknown): string {') && initialLayout.includes('function isRegistrySectionType(type: unknown): boolean {') && initialLayout.includes('if (isRegistrySectionType(type)) return !hasRealRegistryContent;') && initialLayout.includes('currentSectionsByType.set(normalizeSectionTypeKey(section.type), section);') && initialLayout.includes('overrides: sectionDef.overrides ? { ...sectionDef.overrides } : undefined,') && initialLayout.includes('locked: sectionDef.locked,') && initialLayout.includes('id: existing.id,') && initialLayout.includes('variant: existing.variant,') && initialLayout.includes('const existing = currentSectionsByType.get(normalizeSectionTypeKey(newSection.type));') && initialLayout.includes('if (isRegistrySectionType(sectionDef.type) && hasRealRegistryContent) {') && initialLayout.includes('overrides: existing.overrides ?? newSection.overrides,') && initialLayout.includes('locked: existing.locked ?? newSection.locked,') && siteGenerator.includes("import { getTemplate } from '../templates/registry';") && siteGenerator.includes('const template = getTemplate(data.template);') && aiBuilderProjectPatch.includes('const normalizeBuilderSectionTypeKey = (type: unknown) => {') && aiBuilderProjectPatch.includes("if (normalizeBuilderSectionTypeKey(type) === 'registry') {") && sectionRegistry.includes('export function resolveCanonicalRegistrySectionInput(type: unknown, variant: unknown): { type: string; variant: string } {') && sectionRegistry.includes('export function resolveCanonicalRegistrySectionType(type: unknown): string {') && sectionRegistry.includes('export function resolveCanonicalRegistryVariant(variant: unknown): string {') && templateRegistry.includes('function cloneTemplateDefinition(template: TemplateDefinition): TemplateDefinition {') && templateRegistry.includes('return getCanonicalTemplateSource(getCanonicalTemplateSourceId(templateId));') && templateRegistry.includes('return cloneTemplateDefinition(getCanonicalTemplateDefinition(templateId));') && templateRegistry.includes('return templateRegistry.map((template) => cloneTemplateDefinition(getCanonicalTemplateDefinition(template.id)));') },
-  { name: 'shipped templates only use legacy-renderable registry variants', ok: templateRegistry.includes("variant: 'classic'") && templateRegistry.includes("variant: 'luxury'") && templateRegistry.includes("variant: 'experiences'") && legacySectionRegistry.includes("classic: RegistryGrid") && legacySectionRegistry.includes("luxury: RegistryFundHighlight") && legacySectionRegistry.includes("experiences: RegistryFundHighlight") },
-  { name: 'builder registry variant compatibility preserves shipped public variants', ok: sectionVariantCompatibility.includes("registry: ['default', 'cards', 'grid', 'fundHighlight', 'featured', 'minimal', 'honeymoon', 'tabs', 'illustrated', 'classic', 'luxury', 'experiences', 'modern', 'playful']") && sectionVariantCompatibility.includes("luxury: 'fundHighlight'") && sectionVariantCompatibility.includes("experiences: 'fundHighlight'") },
-  { name: 'builder registry variant compatibility tolerates trim casing punctuation and malformed fallback drift', ok: sectionVariantCompatibility.includes('export function resolveBuilderVariant(type: SectionType, variant: unknown): string {') && sectionVariantCompatibility.includes("function normalizeBuilderSectionType(type: SectionType): SectionType {") && sectionVariantCompatibility.includes("function getPreferredBuilderFallbackVariant(type: SectionType, supported: string[]): string {") && sectionVariantCompatibility.includes("const normalizedType = normalizeBuilderSectionType(type);") && sectionVariantCompatibility.includes("if (normalizedType === 'registry') return supported.includes('cards') ? 'cards' : supported[0] ?? 'default';") && sectionVariantCompatibility.includes("const normalizeVariantKey = (value: unknown) => typeof value === 'string'") && sectionVariantCompatibility.includes("const normalizedVariant = typeof variant === 'string' ? variant.trim() : '';") && sectionVariantCompatibility.includes('const supportedByKey = new Map') && sectionVariantCompatibility.includes('const canonicalVariant = supportedByKey.get(normalizedVariantKey) ?? normalizedVariant;') && sectionVariantCompatibility.includes("Object.entries(aliases).find(([aliasVariant]) => normalizeVariantKey(aliasVariant) === normalizedVariantKey)?.[1]") && sectionVariantCompatibility.includes("if (!alias) return fallbackVariant;") },
-  { name: 'builder lab registry picker exposes shipped template variants', ok: builderV2Lab.includes("registry: ['default', 'cards', 'grid', 'fundHighlight', 'featured', 'minimal', 'honeymoon', 'tabs', 'illustrated', 'classic', 'luxury', 'experiences', 'modern', 'playful']") && builderV2Lab.includes("const isRegistryBuilderSectionType = (type: string) => {") && builderV2Lab.includes("return normalizedType === 'registry' || normalizedType.startsWith('registrysection');") && builderV2Lab.includes("{isRegistryBuilderSectionType(selected.type) && (") },
-  { name: 'builder lab registry commands expose shipped template variants', ok: builderV2Lab.includes("['default', 'countdown', 'timeline', 'dayTabs', 'localGuide', 'iconGrid', 'cards', 'grid', 'fundHighlight', 'featured', 'minimal', 'honeymoon', 'tabs', 'illustrated', 'classic', 'luxury', 'experiences', 'modern', 'playful']") },
-  { name: 'legacy section registry preserves public registry aliases', ok: legacySectionRegistry.includes("function normalizeLegacySectionType(type: SectionType): SectionType {") && legacySectionRegistry.includes("function normalizeLegacyRegistryVariant(variant: string): string {") && legacySectionRegistry.includes("const normalizedVariant = normalizedType === 'registry' ? normalizeLegacyRegistryVariant(variant) : variant;") && legacySectionRegistry.includes("component: RegistryGrid") && legacySectionRegistry.includes("variants: {\n      cards: RegistryGrid,") && legacySectionRegistry.includes("default: RegistryGrid") && legacySectionRegistry.includes("classic: RegistryGrid") && legacySectionRegistry.includes("luxury: RegistryFundHighlight") && legacySectionRegistry.includes("cards: RegistryGrid") && legacySectionRegistry.includes("minimal: RegistryGrid") && legacySectionRegistry.includes("featured: RegistryFundHighlight") },
-  { name: 'legacy section registry keeps every builder registry variant renderable', ok: legacySectionRegistry.includes("fundHighlight: RegistryFundHighlight") && legacySectionRegistry.includes("grid: RegistryGrid") && sectionManifests.includes("supportedVariants: ['default', 'cards', 'grid', 'fundHighlight', 'featured', 'minimal', 'honeymoon', 'tabs', 'illustrated', 'classic', 'luxury', 'experiences', 'modern', 'playful']") },
-  { name: 'legacy section registry orders registry variants by builder-first public layouts', ok: legacySectionRegistry.includes("variants: {\n      cards: RegistryGrid,\n      fundHighlight: RegistryFundHighlight,\n      featured: RegistryFundHighlight,\n      minimal: RegistryGrid") && sectionManifests.includes("variantMeta: [\n      { id: 'cards'") },
-  { name: 'site view registry fallback normalization stays aligned with public registry aliases', ok: siteView.includes("registry: {") && siteView.includes("default: 'cards'") && siteView.includes("fundHighlight: 'featured'") && siteView.includes("luxury: 'featured'") && siteView.includes("modern: 'cards'") && siteView.includes("const nextVariant = fallbackMap[section.type]?.[section.variant] ?? supported[0] ?? 'default';") },
-  { name: 'legacy public registry surfaces keep empty live loads from falling back to stale links', ok: registrySectionComponent.includes('export function shouldUseLiveRegistryItems(items: RegistryItem[] | null): items is RegistryItem[] {') && registrySectionComponent.includes('export function normalizePublicRegistryItemState(item: RegistryItem): RegistryItem {') && registrySectionComponent.includes('purchase_status: quantityState.purchaseStatus,') && registrySectionComponent.includes("purchaser_name: quantityState.purchaseStatus === 'available' ? null : item.purchaser_name,") && registrySectionComponent.includes('getRegistryEmptyStateMessage(normalizedItems, groupMode)') && registrySectionComponent.includes('if (shouldUseLiveRegistryItems(items)) {') },
-  { name: 'public registry purchaser labels stay aligned with owner purchase state truth', ok: registrySectionComponent.includes("export function getRegistryPurchaserStatusLabel(item: Pick<RegistryItem, 'purchase_status' | 'purchaser_name'>): string | null {") && registrySectionComponent.includes("if (!item.purchaser_name || item.purchase_status === 'available') return null;") && registrySectionComponent.includes("? `Purchased by ${item.purchaser_name}`") },
-  { name: 'registry proof output encodes remaining runtime truth gaps', ok: registryProof.includes("status: 'manual-proof-pending'") && registryProof.includes("highestRiskTrustGap: 'runtime_registry_truth_after_real_edits'") && registryProof.includes("secondaryTrustGap: 'registry_repair_and_import_persistence_manual_verification_missing'") && registryProof.includes('manualProofRequired: true') && registryProof.includes("truthGateSummary: 'automation_green_manual_truth_red'") && registryProof.includes("evidenceLogPath: 'docs/v1-smoke-proof-log.md'") && registryProof.includes("manualProofStatus: 'pending_runtime_registry_notes'") && registryProof.includes('manualProofBlockingReasons: {') && registryProof.includes("'owner_manage_import_persistence_runtime_pass'") && registryProof.includes("'owner_repair_cleanup_runtime_pass'") && registryProof.includes("'guest_visible_purchase_truth_runtime_pass'") },
-  { name: 'builder registry previews map aliases onto guest-visible layouts', ok: variantPreviewSource.includes('function isRegistryPreviewSectionType(type: string): boolean {') && variantPreviewSource.includes("return normalizedType === 'registry' || normalizedType.startsWith('registrysection');") && variantPreviewSource.includes("case 'classic':") && variantPreviewSource.includes("case 'default':") && variantPreviewSource.includes("return 'cards';") && variantPreviewSource.includes("case 'luxury':") && variantPreviewSource.includes("return 'featured';") && builderInspectorPanel.includes('getVariantPreviewSource(selectedSection.type, v.id)') && builderSectionRail.includes('getVariantPreviewSource(addTypeManifest.type, v.id)') && builderSidebarLibrary.includes('PREVIEW_FIXTURES_BY_VARIANT[`${sectionType}:${previewVariantId}`]') },
-  { name: 'builder registry wedding-data bindings tolerate drifted registry section types', ok: weddingDataAdapter.includes("function normalizeBuilderBindingSectionType(type: BuilderSectionInstance['type']): BuilderSectionInstance['type'] {") && weddingDataAdapter.includes("return (normalizedType === 'registrysection' ? 'registry' : type) as BuilderSectionInstance['type'];") },
-  { name: 'canonical registry content mapping tolerates drifted registry section types', ok: canonicalContentMapper.includes("const normalizedType = type.trim().toLowerCase().replace(/[^a-z0-9-]/g, '');") && canonicalContentMapper.includes("case 'registrysection':") },
-  { name: 'registry link carryover extracts labeled imported urls before dedupe', ok: registryLinkCarryover.includes('interface CarryoverRegistryToken {') && registryLinkCarryover.includes("sourceLabelMode?: 'explicit' | 'inferred';") && registryLinkCarryover.includes('function inferDomainSourceLabel(url: string): string | undefined {') && registryLinkCarryover.includes('function isWeakExplicitTokenLabel(url: string, label: string | undefined): boolean {') && registryLinkCarryover.includes('function isWeakInferredSourceLabel(url: string, label: string | undefined): boolean {') && registryLinkCarryover.includes('return isWeakExplicitTokenLabel(normalizedUrl, label) || isGenericRegistryLabelText(label);') && registryLinkCarryover.includes('function inferSourceLabelFromText(text: string): string | undefined {') && registryLinkCarryover.includes('function isGenericRegistryLabelText(text: string): boolean {') && registryLinkCarryover.includes("if (words.length === 1) return ['our', 'the', 'wedding', 'gift', 'gifts', 'baby', 'bridal', 'honeymoon'].includes(words[0]);") && registryLinkCarryover.includes('const genericWords = new Set([') && registryLinkCarryover.includes("'registry',") && registryLinkCarryover.includes("'link',") && registryLinkCarryover.includes("'ideas',") && registryLinkCarryover.includes('const coreWords = new Set([') && registryLinkCarryover.includes('return words.some((word) => coreWords.has(word)) && words.every((word) => genericWords.has(word));') && registryLinkCarryover.includes('function extractExplicitSourceLabelFragment(text: string): string | undefined {') && registryLinkCarryover.includes('if (isGenericRegistryLabelText(text)) return undefined;') && registryLinkCarryover.includes('function extractExplicitSourceLabelFromTokenText(text: string): string | undefined {') && registryLinkCarryover.includes('function normalizeExplicitSourceLabel(label: string | undefined): string | undefined {') && registryLinkCarryover.includes('function normalizeCarryoverRegistryLink(link: CarryoverRegistryLink): CarryoverRegistryLink | null {') && registryLinkCarryover.includes('claimed|claiming|reserved|reserving|booked|booking)\\s+by\\s+[a-z]') && registryLinkCarryover.includes('purchasing|buying|already|claimed|partially|partial|pending|done|complete|later') && registryLinkCarryover.includes(".replace(/^(?:and|&)\\b\\s*/i, '')") && registryLinkCarryover.includes(".replace(/\\s*\\b(?:and|&)$/i, '')") && registryLinkCarryover.includes('function finalizeCarryoverRegistryLink(') && registryLinkCarryover.includes('function dedupeNormalizedRegistryLinks(links: CarryoverRegistryLink[]): CarryoverRegistryLink[] {') && registryLinkCarryover.includes('export function parsePersistedRegistryLinks(raw: string | null | undefined): CarryoverRegistryLink[] {') && registryLinkCarryover.includes('export function mergeRegistrySourceLabels(') && registryLinkCarryover.includes('const parsedLinks = carryOverRegistryLinks(candidateUrl);') && registryLinkCarryover.includes('const explicitSourceLabel = rest.length > 0 ? normalizeExplicitSourceLabel(label) : undefined;') && registryLinkCarryover.includes('sourceLabel: index === 0 ? (explicitSourceLabel ?? parsedLink.sourceLabel) : parsedLink.sourceLabel,') && registryLinkCarryover.includes('return dedupeNormalizedRegistryLinks(persisted);') && registryLinkCarryover.includes('const existingInferredLabel = inferSourceLabel(existing.url);') && registryLinkCarryover.includes('isWeakInferredSourceLabel(existing.url, existing.sourceLabel)') && registryLinkCarryover.includes('const mergedByUrl = new Map<string, CarryoverRegistryLink>();') && registryLinkCarryover.includes('const merged = carried') && registryLinkCarryover.includes('const existingNormalized = dedupeNormalizedRegistryLinks(existing') && registryLinkCarryover.includes('const existingByUrl = new Map(existingNormalized.map((link) => [link.url, link]));') && registryLinkCarryover.includes('const existingLink = existingByUrl.get(link.url);') && registryLinkCarryover.includes('const nextLink = sourceLabel ? { ...link, sourceLabel } : { url: link.url };') && registryLinkCarryover.includes('isWeakInferredSourceLabel(nextLink.url, nextLink.sourceLabel)') && registryLinkCarryover.includes('mergedByUrl.set(link.url, existingLink);') && registryLinkCarryover.includes('const existingMerged = mergedByUrl.get(link.url);') && registryLinkCarryover.includes('const inferredMergedLabel = inferSourceLabel(existingMerged.url);') && registryLinkCarryover.includes('isWeakInferredSourceLabel(existingMerged.url, existingMerged.sourceLabel)') && registryLinkCarryover.includes('const dedupedMerged = Array.from(mergedByUrl.values());') && registryLinkCarryover.includes('return dedupedMerged.concat(existingNormalized.filter((link) => !carriedUrls.has(link.url)));') && registryLinkCarryover.includes('const existingMode = (existing as CarryoverRegistryLink & { sourceLabelMode?: \'explicit\' | \'inferred\' }).sourceLabelMode;') && registryLinkCarryover.includes('|| (token.sourceLabel && isWeakInferredSourceLabel(existing.url, existing.sourceLabel) && token.sourceLabel !== existing.sourceLabel)') && registryLinkCarryover.includes('let firstUrlIndex: number | null = null;') && registryLinkCarryover.includes('firstUrlIndex = firstUrlIndex === null ? match.index : Math.min(firstUrlIndex, match.index);') && registryLinkCarryover.includes('firstUrlIndex === null ? line : line.slice(0, firstUrlIndex)') && registryLinkCarryover.includes('let lineLabelApplied = false;') && registryLinkCarryover.includes('.sort((left, right) => (left.index ?? Number.MAX_SAFE_INTEGER) - (right.index ?? Number.MAX_SAFE_INTEGER))') && registryLinkCarryover.includes('const canApplyLineLabel = Boolean(lineExplicitLabel)') && registryLinkCarryover.includes("&& (!token.sourceLabel || isWeakExplicitTokenLabel(token.raw, token.sourceLabel));") && registryLinkCarryover.includes('let pendingLabelApplied = false;') && registryLinkCarryover.includes('const canApplyPendingLabel = Boolean(pendingSourceLabel)') && registryLinkCarryover.includes("&& (!token.sourceLabel || isWeakExplicitTokenLabel(token.raw, token.sourceLabel));") && registryLinkCarryover.includes('if (canApplyPendingLabel) pendingLabelApplied = true;') && registryLinkCarryover.includes("if (lower.includes('anthropologie.com')) return 'Anthropologie';") && registryLinkCarryover.includes("if (lower.includes('bloomingdales.com')) return \"Bloomingdale's\";") && registryLinkCarryover.includes("if (lower.includes('macys.com')) return \"Macy's\";") && registryLinkCarryover.includes("if (lower.includes('crateandbarrel.com')) return 'Crate & Barrel';") && registryLinkCarryover.includes("if (lower.includes('cb2.com')) return 'CB2';") && registryLinkCarryover.includes("if (lower.includes('potterybarn.com')) return 'Pottery Barn';") && registryLinkCarryover.includes("if (lower.includes('westelm.com')) return 'West Elm';") && registryLinkCarryover.includes("if (lower.includes('williams-sonoma.com')) return 'Williams Sonoma';") && registryLinkCarryover.includes("if (lower.includes('zola.com')) return 'Zola';") && registryLinkCarryover.includes('function cleanRegistryUrlToken(token: string): string {') && registryLinkCarryover.includes('function extractRegistryUrlTokens(line: string): CarryoverRegistryToken[] {') && registryLinkCarryover.includes('/\\[[^\\]]+\\]\\((https?:\\/\\/[^)]+|www\\.[^)]+)\\)/gi') && registryLinkCarryover.includes('/<(https?:\\/\\/[^>]+|www\\.[^>]+)>/gi') && registryLinkCarryover.includes('/[\"\'](https?:\\/\\/[^\"\']+|www\\.[^\"\']+)[\"\']/gi') && registryLinkCarryover.includes('.matchAll(pattern)') && registryLinkCarryover.includes('const inferredSourceLabel = inferSourceLabel(url);') && registryLinkCarryover.includes('sourceLabel: token.sourceLabel ?? inferredSourceLabel') && registryLinkCarryover.includes("token.sourceLabelMode === 'explicit'") && registryLinkCarryover.includes('(!existing.sourceLabel && token.sourceLabel)') && registryLinkCarryover.includes('let pendingSourceLabel: string | undefined;') && registryLinkCarryover.includes('pendingSourceLabel = extractExplicitSourceLabelFragment(part) ?? pendingSourceLabel;') && registryLinkCarryover.includes('if (pendingSourceLabel && normalizedTokens.some((token) => token.sourceLabel === pendingSourceLabel)) {') && registryLinkCarryover.includes('.map((token) => {') },
-  { name: 'onboarding mapper preserves carried registry source labels', ok: onboardingMapper.includes('mergeRegistrySourceLabels(carriedRegistryLinks, parsePersistedRegistryLinks(input.registryLinks ?? \'\'))') && onboardingMapper.includes('carryOverRegistryLinks(input.registryLinksRaw ?? input.registryLinks)') && onboardingMapper.includes(".map((link) => link.sourceLabel ? `${link.sourceLabel} | ${link.url}` : link.url)") },
-  { name: 'generated wedding data preserves stronger registry source labels after carryover', ok: generateWeddingData.includes('mergeRegistrySourceLabels(') && generateWeddingData.includes('carryOverRegistryLinks(formData.registryLinksRaw || formData.registryLinks || formData.registryLink)') && generateWeddingData.includes('parsePersistedRegistryLinks(formData.registryLinks || formData.registryLink)') },
-  { name: 'rendered registry wedding-data bindings tolerate drifted registry section types', ok: weddingDataBindings.includes('function normalizeBindableSectionType(type: string): string {') && weddingDataBindings.includes("case 'registrysection':") && weddingDataBindings.includes("return 'registry';") },
-  { name: 'guided builder registry toggles tolerate drifted registry section types', ok: guidedBuilderModules.includes("const normalizeModuleSectionType = (type: string) => type.trim().toLowerCase().replace(/[^a-z0-9]/g, '');") && guidedBuilderModules.includes("normalizeModuleSectionType(s.type) === normalizeModuleSectionType(sectionType)") && guidedBuilderModules.includes("switch (normalizeModuleSectionType(moduleId)) {") },
-  { name: 'builder v2 registry adapter tolerates drifted registry section types', ok: builderV2Adapter.includes("const normalizeBuilderV2SectionType = (type: string) => {") && builderV2Adapter.includes("return normalizedType.startsWith('registrysection') ? 'registry' : type;") },
-  { name: 'canonical registry validation accepts template-backed registry aliases', ok: canonicalSectionRegistry.includes("luxury: 'featured'") && canonicalSectionRegistry.includes("experiences: 'featured'") && canonicalSectionRegistry.includes("classic: 'cards'") },
-  { name: 'public registry cards keep canonical-only store links usable', ok: registryCardsSection.includes("return item.item_url ?? item.canonical_url ?? null;") && registryCardsSection.includes('url: existing.url ?? publicUrl') },
-  { name: 'public registry cards separate partial and claimed store counts', ok: registryCardsSection.includes("partial: existing.partial + (item.purchase_status === 'partial' ? 1 : 0)") && registryCardsSection.includes("group.purchased > 0 ? ` · ${group.purchased} claimed` : ''") },
-  { name: 'public registry cards do not fall back to template links after empty live loads', ok: registryCardsSection.includes('return liveItems !== null;') && registryCardsSection.includes('export function normalizeRegistryStoreGroupItems(items: RegistryItem[]): RegistryItem[] {') && registryCardsSection.includes('const shouldUseLiveStoreGroups = shouldUseLiveRegistryStoreGroups(liveItems);') },
-  { name: 'public registry featured links derive live store urls from canonical items', ok: registryFeaturedSection.includes("return item.item_url ?? item.canonical_url ?? '';") && registryFeaturedSection.includes('const displayStoreLinks = shouldUseLiveData ? groupRegistryStoreLinks(liveItems ?? []) : safeStoreLinks;') },
-  { name: 'public registry featured view does not fall back after empty live loads', ok: registryFeaturedSection.includes('return liveItems !== null;') && registryFeaturedSection.includes('export function normalizeRegistryFeaturedItems(items: RegistryItem[]): RegistryItem[] {') && registryFeaturedSection.includes('const shouldUseLiveData = shouldUseLiveRegistryFeaturedData(liveItems);') },
-  { name: 'public registry featured cards expose partial purchase truth', ok: registryFeaturedSection.includes("isPartiallyClaimed: normalizedItem.purchase_status === 'partial'") && registryFeaturedSection.includes("{gift.isPartiallyClaimed ? 'Gift remaining' : 'Gift this'}") },
-  { name: 'public registry hero featured cards expose partial purchase truth', ok: registryFeaturedSection.includes('heroGift.isPartiallyClaimed && !heroGift.isClaimed') && registryFeaturedSection.includes("heroGift.isPartiallyClaimed ? 'View remaining gift' : 'View gift'") },
-  { name: 'public registry detail cards expose partial purchase cta truth', ok: registrySectionComponent.includes("return item.purchase_status === 'partial' ? 'Buy remaining' : 'Mark as purchasing';") },
-  { name: 'public registry detail sorting keeps partial items ahead of purchased ones', ok: registrySectionComponent.includes("item.purchase_status === 'partial'") && registrySectionComponent.includes('const scoreA = getRegistryDisplayPriority(a);') },
-  { name: 'public registry purchase dialog copy matches partial purchase truth', ok: registrySectionComponent.includes("title: 'Buy remaining gift'") && registrySectionComponent.includes("confirmLabel: 'Confirm remaining purchase'") },
-  { name: 'public registry empty state does not overclaim purchased truth under filters', ok: registrySectionComponent.includes("return 'No items match this filter right now.';") },
-  { name: 'registry types expose itemNeedsAttention', ok: registryTypes.includes('export function itemNeedsAttention') },
-  { name: 'registry types expose blocked retailer messaging', ok: registryTypes.includes('Amazon blocks automated product lookups') },
-  { name: 'registry types expose quantity sanitation', ok: registryTypes.includes('export function sanitizeRegistryQuantityState') },
-  { name: 'registry types expose comparison URL normalization', ok: registryTypes.includes('export function normalizeRegistryComparisonUrl') },
-  { name: 'registry types expose title normalization', ok: registryTypes.includes('export function normalizeRegistryTitleForComparison') },
-  { name: 'repair state exposes getRegistryRepairStates', ok: repairState.includes('export function getRegistryRepairStates') },
-  { name: 'duplicate grouping normalizes title-only items', ok: duplicateRegistryItems.includes('normalizeRegistryTitleForComparison') },
-  { name: 'registry cards fall back to canonical page preview URLs', ok: registryItemCard.includes('const pagePreviewSourceUrl = normalizedItem.item_url ?? normalizedItem.canonical_url ?? null;') },
-  { name: 'owner registry purchaser labels stay aligned with purchase state truth', ok: registryItemCard.includes("export function getOwnerRegistryPurchaserLabel(item: Pick<RegistryItem, 'purchase_status' | 'purchaser_name'>): string | null {") && registryItemCard.includes('export function normalizeOwnerRegistryItemState(item: RegistryItem): RegistryItem {') && registryItemCard.includes('await onMarkPurchased(normalizedItem, qty);') && registryItemCard.includes('await onRefetchMetadata(normalizedItem);') && registryItemCard.includes('onClick={() => onEdit(normalizedItem)}') && registryItemCard.includes("? `Purchased by ${item.purchaser_name}`") },
-  { name: 'registry form seeds canonical links into editable product URLs', ok: registryItemForm.includes("const [urlInput, setUrlInput] = useState(initial?.item_url ?? initial?.canonical_url ?? '');") && registryItemForm.includes('canonical_url: nextUrl,') },
+  {
+    name: 'dashboard normalizes registry purchase truth before owner summaries',
+    ok: hasAll(files.registryPage, [
+      'function normalizeOwnerDashboardRegistryItem(item: RegistryItem): RegistryItem {',
+      'sanitizeRegistryQuantityState(item.quantity_purchased ?? 0, item.quantity_needed ?? 1)',
+      'purchase_status: quantityState.purchaseStatus,',
+      "purchaser_name: quantityState.purchaseStatus === 'available' ? null : item.purchaser_name,",
+      'const normalizedItems = items.map(normalizeOwnerDashboardRegistryItem);',
+      'const duplicateGroups = findDuplicateRegistryGroups(normalizedItems);',
+      'setItems(data.map(normalizeOwnerDashboardRegistryItem));',
+      'normalizeOwnerDashboardRegistryItem(updated)',
+      'normalizeOwnerDashboardRegistryItem(created)',
+      'const filtered = normalizedItems.filter(item => {',
+    ]),
+  },
+  {
+    name: 'dashboard repair and import counts use normalized registry truth',
+    ok: hasAll(files.registryPage, [
+      'badImports: normalizedItems.filter((i) => getRegistryItemMetadataState(i).hasBadImportTitle).length,',
+      'const actionableBadImportCount = normalizedItems.filter((item) => getRegistryItemMetadataState(item).hasBadImportTitle && !!(item.item_url || item.canonical_url)).length;',
+      'repair: actionableBadImportCount,',
+      'Repair states: {normalizedItems.filter((item) => getRegistryRepairStates(item).length > 0).length}',
+      'findDuplicateRegistryGroups',
+      'fields.store_name = (preview.merchant ?? preview.brand)!;',
+    ]) && files.registryTypes.includes('product unavailable'),
+  },
+  {
+    name: 'section registry clones definitions and resolves registry aliases safely',
+    ok: hasAll(files.sectionRegistry, [
+      'function cloneSectionDefinitionValue<T>(value: T): T {',
+      'function cloneSectionDefinition(definition: SectionDefinition): SectionDefinition {',
+      'function getCanonicalSectionDefinition(type: string, variant: string): SectionDefinition | null {',
+      'export function getDefinition(type: string, variant: unknown): SectionDefinition | null {',
+      'return definition ? cloneSectionDefinition(definition) : null;',
+      'export function getAllDefinitions(): SectionDefinition[] {',
+      'return Array.from(SECTION_REGISTRY.values()).map(cloneSectionDefinition);',
+      'export function getVariantsForType(type: string): SectionDefinition[] {',
+      'const strictVariant = options?.strictVariant === true;',
+      'const fallbackVariant = getCanonicalSectionFallbackVariant(canonicalSection.type, normalizedType, normalizedVariant);',
+      'const defaultVariant = getDefaultVariantForType(normalizedType);',
+    ]),
+  },
+  {
+    name: 'section registry normalizes malformed registry section type and variant drift',
+    ok: hasAll(files.sectionRegistry, [
+      'function normalizeRegistryVariantKey(variant: unknown): string {',
+      'function isRegistrySectionType(type: unknown): boolean {',
+      "return normalizedType === 'registry' || normalizedType.startsWith('registrysection');",
+      'function normalizeRegistrySectionType(type: unknown): string {',
+      'export function resolveCanonicalRegistrySectionType(type: unknown): string {',
+      'export function resolveCanonicalRegistryVariant(variant: unknown): string {',
+      'function getVariantFallbacksForType(type: string, inputType?: string): Record<string, string> {',
+      'function getCanonicalSectionFallbackVariant(type: string, inputType: string, variant: string): string | null {',
+      'function resolveCanonicalSectionVariantForType(type: string, inputType: string, variant: unknown): string {',
+      'export function resolveCanonicalRegistrySectionInput(type: unknown, variant: unknown): { type: string; variant: string } {',
+      "'registry-section': 'registry',",
+      "default: 'cards'",
+      "grid: 'cards'",
+    ]),
+  },
+  {
+    name: 'builder and shipped templates expose registry aliases consistently',
+    ok: hasAll(files.sectionManifests, [
+      "'classic'",
+      "'luxury'",
+      "'experiences'",
+      "'modern'",
+      "'playful'",
+    ]) && hasAll(files.templateRegistry, [
+      "variant: 'classic'",
+      "variant: 'luxury'",
+      "variant: 'experiences'",
+    ]) && hasAll(files.canonicalSectionRegistry, [
+      "luxury: 'featured'",
+      "experiences: 'featured'",
+      "classic: 'cards'",
+    ]),
+  },
+  {
+    name: 'template registry deep-clones and canonicalizes registry template sections',
+    ok: hasAll(files.templateRegistry, [
+      "import { resolveCanonicalRegistrySectionInput } from '../sections/registry';",
+      'function normalizeTemplateIdKey(templateId: unknown): string {',
+      'function cloneTemplateValue<T>(value: T): T {',
+      'function deepFreezeTemplateValue<T>(value: T): T {',
+      'function cloneTemplateSection(section: TemplateSection): TemplateSection {',
+      'const canonicalRegistrySection = resolveCanonicalRegistrySectionInput(section.type, section.variant);',
+      "const isRegistryTemplateSection = canonicalRegistrySection.type === 'registry';",
+      'function cloneTemplateDefinition(template: TemplateDefinition): TemplateDefinition {',
+      'const clonedTemplate = cloneTemplateValue(template);',
+      'const TEMPLATE_ALIAS_TARGETS: Record<string, string> = {',
+      'export const TEMPLATE_REGISTRY: Record<string, TemplateDefinition> = deepFreezeTemplateValue({',
+      'const templateIdAliases = new Map<string, string>(',
+      'export function resolveCanonicalTemplateId(templateId: unknown): string {',
+      'export function getTemplate(templateId: unknown): TemplateDefinition {',
+      'return cloneTemplateDefinition(getCanonicalTemplateDefinition(templateId));',
+    ]) && hasAll(files.initialLayout, [
+      'function normalizeSectionTypeKey(type: unknown): string {',
+      'function isRegistrySectionType(type: unknown): boolean {',
+      'if (isRegistrySectionType(type)) return !hasRealRegistryContent;',
+      'currentSectionsByType.set(normalizeSectionTypeKey(section.type), section);',
+    ]) && files.siteGenerator.includes("import { getTemplate } from '../templates/registry';") && files.aiBuilderProjectPatch.includes("if (normalizeBuilderSectionTypeKey(type) === 'registry') {"),
+  },
+  {
+    name: 'registry link carryover preserves source labels through parsing, dedupe, and merge',
+    ok: hasAll(files.registryLinkCarryover, [
+      'interface CarryoverRegistryToken {',
+      "sourceLabelMode?: 'explicit' | 'inferred';",
+      'function inferSourceLabel(url: string): string | undefined {',
+      'function isWeakExplicitTokenLabel(url: string, label: string | undefined): boolean {',
+      'function isWeakInferredSourceLabel(url: string, label: string | undefined): boolean {',
+      'function extractExplicitSourceLabelFragment(text: string): string | undefined {',
+      'function extractExplicitSourceLabelFromTokenText(text: string): string | undefined {',
+      'function dedupeNormalizedRegistryLinks(links: CarryoverRegistryLink[]): CarryoverRegistryLink[] {',
+      'const existingInferredLabel = inferSourceLabel(existing.url);',
+      'export function parsePersistedRegistryLinks(raw: string | null | undefined): CarryoverRegistryLink[] {',
+      'export function mergeRegistrySourceLabels(',
+      'const existingNormalized = dedupeNormalizedRegistryLinks(existing',
+      'const inferredMergedLabel = inferSourceLabel(existingMerged.url);',
+      'let pendingSourceLabel: string | undefined;',
+      "if (lower.includes('crateandbarrel.com')) return 'Crate & Barrel';",
+      "if (lower.includes('zola.com')) return 'Zola';",
+    ]),
+  },
+  {
+    name: 'onboarding and generation preserve carried registry source labels',
+    ok: files.onboardingMapper.includes('mergeRegistrySourceLabels(carriedRegistryLinks, parsePersistedRegistryLinks(input.registryLinks ?? \'\'))')
+      && files.generateWeddingData.includes('mergeRegistrySourceLabels(')
+      && files.generateWeddingData.includes('carryOverRegistryLinks(formData.registryLinksRaw || formData.registryLinks || formData.registryLink)')
+      && files.generateWeddingData.includes('parsePersistedRegistryLinks(formData.registryLinks || formData.registryLink)'),
+  },
+  {
+    name: 'builder and render bindings tolerate drifted registry section types',
+    ok: hasAll(files.weddingDataAdapter, [
+      "function normalizeBuilderBindingSectionType(type: BuilderSectionInstance['type']): BuilderSectionInstance['type'] {",
+      "return (normalizedType === 'registrysection' ? 'registry' : type) as BuilderSectionInstance['type'];",
+    ]) && hasAll(files.canonicalContentMapper, [
+      "case 'registrysection':",
+    ]) && hasAll(files.weddingDataBindings, [
+      'function normalizeBindableSectionType(type: string): string {',
+      "case 'registrysection':",
+      "return 'registry';",
+    ]) && hasAll(files.guidedBuilderModules, [
+      'const normalizeModuleSectionType = (type: string) => type.trim().toLowerCase().replace(/[^a-z0-9]/g, \'\');',
+      'normalizeModuleSectionType(s.type) === normalizeModuleSectionType(sectionType)',
+    ]) && hasAll(files.builderV2Adapter, [
+      'const normalizeBuilderV2SectionType = (type: string) => {',
+      "return normalizedType.startsWith('registrysection') ? 'registry' : type;",
+    ]),
+  },
+  {
+    name: 'public registry sections use live canonical links and partial purchase truth',
+    ok: hasAll(files.registryCardsSection, [
+      'return item.item_url ?? item.canonical_url ?? null;',
+      'export function normalizeRegistryStoreGroupItems(items: RegistryItem[]): RegistryItem[] {',
+      'const shouldUseLiveStoreGroups = shouldUseLiveRegistryStoreGroups(liveItems);',
+      "partial: existing.partial + (item.purchase_status === 'partial' ? 1 : 0)",
+    ]) && hasAll(files.registryFeaturedSection, [
+      "return item.item_url ?? item.canonical_url ?? '';",
+      'export function normalizeRegistryFeaturedItems(items: RegistryItem[]): RegistryItem[] {',
+      'const shouldUseLiveData = shouldUseLiveRegistryFeaturedData(liveItems);',
+      "isPartiallyClaimed: normalizedItem.purchase_status === 'partial'",
+      "heroGift.isPartiallyClaimed ? 'View remaining gift' : 'View gift'",
+    ]) && hasAll(files.registrySectionComponent, [
+      'export function shouldUseLiveRegistryItems(items: RegistryItem[] | null): items is RegistryItem[] {',
+      'export function normalizePublicRegistryItemState(item: RegistryItem): RegistryItem {',
+      'purchase_status: quantityState.purchaseStatus,',
+      "return item.purchase_status === 'partial' ? 'Buy remaining' : 'Mark as purchasing';",
+      "title: 'Buy remaining gift'",
+      "return 'No items match this filter right now.';",
+    ]),
+  },
+  {
+    name: 'owner registry item cards and forms preserve canonical links and purchase labels',
+    ok: hasAll(files.registryItemCard, [
+      'const pagePreviewSourceUrl = normalizedItem.item_url ?? normalizedItem.canonical_url ?? null;',
+      "export function getOwnerRegistryPurchaserLabel(item: Pick<RegistryItem, 'purchase_status' | 'purchaser_name'>): string | null {",
+      'export function normalizeOwnerRegistryItemState(item: RegistryItem): RegistryItem {',
+      '? `Purchased by ${item.purchaser_name}`',
+    ]) && hasAll(files.registryItemForm, [
+      "const [urlInput, setUrlInput] = useState(initial?.item_url ?? initial?.canonical_url ?? '');",
+      'canonical_url: nextUrl,',
+    ]),
+  },
+  {
+    name: 'registry repair/types expose launch-critical helpers',
+    ok: hasAll(files.registryTypes, [
+      'export function itemNeedsAttention',
+      'export function sanitizeRegistryQuantityState',
+      'export function normalizeRegistryComparisonUrl',
+      'export function normalizeRegistryTitleForComparison',
+      'Amazon blocks automated product lookups',
+    ]) && files.repairState.includes('export function getRegistryRepairStates') && files.duplicateRegistryItems.includes('normalizeRegistryTitleForComparison'),
+  },
+  {
+    name: 'registry proof still marks runtime truth as manual-proof pending',
+    ok: hasAll(files.registryProof, [
+      "status: 'manual-proof-pending'",
+      "highestRiskTrustGap: 'runtime_registry_truth_after_real_edits'",
+      "secondaryTrustGap: 'registry_repair_and_import_persistence_manual_verification_missing'",
+      'manualProofRequired: true',
+      "truthGateSummary: 'automation_green_manual_truth_red'",
+      "'owner_manage_import_persistence_runtime_pass'",
+      "'owner_repair_cleanup_runtime_pass'",
+      "'guest_visible_purchase_truth_runtime_pass'",
+    ]),
+  },
+  {
+    name: 'builder registry previews map aliases onto guest-visible layouts',
+    ok: hasAll(files.variantPreviewSource, [
+      'function isRegistryPreviewSectionType(type: string): boolean {',
+      "return normalizedType === 'registry' || normalizedType.startsWith('registrysection');",
+      "case 'classic':",
+      "return 'cards';",
+      "case 'luxury':",
+      "return 'featured';",
+    ]) && files.builderInspectorPanel.includes('getVariantPreviewSource(selectedSection.type, v.id)')
+      && files.builderSectionRail.includes('getVariantPreviewSource(addTypeManifest.type, v.id)')
+      && files.builderSidebarLibrary.includes('PREVIEW_FIXTURES_BY_VARIANT[`${sectionType}:${previewVariantId}`]'),
+  },
+  {
+    name: 'site view registry fallback normalization stays aligned with public registry aliases',
+    ok: hasAll(files.siteView, [
+      'registry: {',
+      "default: 'cards'",
+      "fundHighlight: 'featured'",
+      "luxury: 'featured'",
+      "modern: 'cards'",
+      "const nextVariant = fallbackMap[section.type]?.[section.variant] ?? supported[0] ?? 'default';",
+    ]),
+  },
 ];
 
 const failures = checks.filter((check) => !check.ok);
