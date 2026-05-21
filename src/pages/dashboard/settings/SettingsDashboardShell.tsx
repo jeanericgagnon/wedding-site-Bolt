@@ -10,7 +10,9 @@ interface SettingsDashboardShellProps {
   activeTab: SettingsTabId;
   children: ReactNode;
   defaultLanguage: SiteLanguageCode;
+  hideFromSearch: boolean;
   onTabChange: (tab: SettingsTabId) => void;
+  privacyMode: 'public' | 'password_protected' | 'invite_only';
   rsvpQuestionCount: number;
   settingsRole: PlannerAccessRole;
   tabs: SettingsTab[];
@@ -20,11 +22,19 @@ export function SettingsDashboardShell({
   activeTab,
   children,
   defaultLanguage,
+  hideFromSearch,
   onTabChange,
+  privacyMode,
   rsvpQuestionCount,
   settingsRole,
   tabs,
 }: SettingsDashboardShellProps) {
+  const privacySummary = privacyMode === 'invite_only'
+    ? 'Invite only'
+    : privacyMode === 'password_protected'
+      ? 'Password protected'
+      : 'Public';
+
   return (
     <DashboardLayout currentPage="settings">
       <div className="space-y-6">
@@ -35,6 +45,7 @@ export function SettingsDashboardShell({
           stats={[
             { label: 'Language', value: getSiteLanguageLabel(defaultLanguage), detail: 'public site default' },
             { label: 'Access', value: tabs.some((tab) => tab.id === 'team') ? 'Team ready' : 'Owner only', detail: settingsRole === 'owner' ? 'invite links available' : 'limited by role' },
+            { label: 'Privacy', value: privacySummary, detail: hideFromSearch ? 'search hidden' : 'search visible' },
             { label: 'RSVP', value: rsvpQuestionCount, detail: 'custom questions' },
           ]}
         />

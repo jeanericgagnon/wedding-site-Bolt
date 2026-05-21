@@ -22,7 +22,9 @@ describe('settings team access panel copy notices', () => {
     expect(source).toContain("'Copied invite link'");
     expect(source).toContain("'Downloaded resend link'");
     expect(source).toContain("'Copied resend link'");
-    expect(source).toContain("runCollaboratorInviteCopy('copy', invite.id, invite.invite_token, onCopyCollaboratorInviteLink)");
-    expect(source).toContain("runCollaboratorInviteCopy('resend', invite.id, invite.invite_token, onResendCollaboratorInvite)");
+    expect(source).toContain("runCollaboratorInviteCopy('copy', invite.id, onCopyCollaboratorInviteLink)");
+    expect(source).toContain("runCollaboratorInviteCopy('resend', invite.id, onResendCollaboratorInvite)");
+    expect(source).toContain("Invite URL: {revealedInviteLinks[invite.id] ? revealedInviteLinks[invite.id] : '/accept-collaborator-invite?token=••••••••••'}");
+    expect(source).toContain('Clear test invites');
   });
 });

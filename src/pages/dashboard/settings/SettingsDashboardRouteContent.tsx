@@ -46,14 +46,16 @@ type Props = {
   defaultLanguage: SiteLanguageCode;
   guestAccessToken: string | null;
   hasWeddingIdentityStoryGraphic: boolean;
-  handleCopyCollaboratorInviteLink: (inviteToken: string | undefined) => Promise<CopyActionResult | null>;
+  handleCopyCollaboratorInviteLink: (inviteId: string) => Promise<CopyActionResult | null>;
+  handleClearCollaboratorInviteTestFixtures: () => Promise<void>;
   handleCreateCollaboratorInvite: () => Promise<void>;
   handleAllowedLanguagesChange: (languages: SiteLanguageCode[]) => void;
   handleDefaultLanguageChange: (language: SiteLanguageCode) => Promise<void>;
   handleLogout: () => Promise<void>;
   handleRegenerateToken: () => Promise<void>;
   handleRemovePlannerInvite: () => void;
-  handleResendCollaboratorInvite: (inviteToken: string | undefined) => Promise<CopyActionResult | null>;
+  handleResendCollaboratorInvite: (inviteId: string) => Promise<CopyActionResult | null>;
+  handleRevealCollaboratorInviteLink: (inviteId: string) => Promise<string | null>;
   handleRevokeCollaboratorInvite: (inviteId: string) => Promise<void>;
   handleSaveAccount: (e: FormEvent) => Promise<void>;
   handleSaveMusicPlaylist: () => Promise<void>;
@@ -217,7 +219,9 @@ export function SettingsDashboardRouteContent(props: Props) {
     <SettingsDashboardShell
       activeTab={props.activeTab}
       defaultLanguage={props.defaultLanguage}
+      hideFromSearch={props.hideFromSearch}
       onTabChange={props.setActiveTab}
+      privacyMode={props.privacyMode}
       rsvpQuestionCount={props.rsvpQuestions.length}
       settingsRole={props.settingsRole}
       tabs={props.tabs}
@@ -259,11 +263,11 @@ export function SettingsDashboardRouteContent(props: Props) {
             canManageOwnerSettings={canManageOwnerSettings}
             collaboratorInvites={props.collaboratorInvites}
             creatingCollaboratorInvite={props.creatingCollaboratorInvite}
-            onCopyCollaboratorInviteLink={(inviteToken) => {
+            onCopyCollaboratorInviteLink={(inviteId) => {
               if (!canManageOwnerSettings) return Promise.resolve(null);
-              if (!inviteToken) return Promise.resolve(null);
-              return props.handleCopyCollaboratorInviteLink(inviteToken);
+              return props.handleCopyCollaboratorInviteLink(inviteId);
             }}
+            onClearCollaboratorInviteTestFixtures={() => runOwnerSettingsWrite(() => { void props.handleClearCollaboratorInviteTestFixtures(); })}
             onCreateCollaboratorInvite={() => runOwnerSettingsWrite(() => { void props.handleCreateCollaboratorInvite(); })}
             onPlannerInviteEmailChange={(value) => runOwnerSettingsWrite(() => props.setPlannerInviteEmail(value))}
             onPlannerInviteNameChange={(value) => runOwnerSettingsWrite(() => props.setPlannerInviteName(value))}
@@ -274,7 +278,8 @@ export function SettingsDashboardRouteContent(props: Props) {
               });
             }}
             onRemovePlannerInvite={() => runOwnerSettingsWrite(props.handleRemovePlannerInvite)}
-            onResendCollaboratorInvite={(inviteToken) => canManageOwnerSettings ? props.handleResendCollaboratorInvite(inviteToken) : Promise.resolve(null)}
+            onResendCollaboratorInvite={(inviteId) => canManageOwnerSettings ? props.handleResendCollaboratorInvite(inviteId) : Promise.resolve(null)}
+            onRevealCollaboratorInviteLink={(inviteId) => canManageOwnerSettings ? props.handleRevealCollaboratorInviteLink(inviteId) : Promise.resolve(null)}
             onRevokeCollaboratorInvite={(inviteId) => runOwnerSettingsWrite(() => { void props.handleRevokeCollaboratorInvite(inviteId); })}
             onSavePlannerInvite={() => runOwnerSettingsWrite(props.handleSavePlannerInvite)}
             onTogglePlannerPermission={(permission) => runOwnerSettingsWrite(() => props.togglePlannerPermission(permission))}

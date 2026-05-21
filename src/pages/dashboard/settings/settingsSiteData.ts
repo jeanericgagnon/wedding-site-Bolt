@@ -35,7 +35,6 @@ export type SettingsCollaboratorInviteRow = {
   status: string;
   invited_at: string;
   expires_at?: string | null;
-  invite_token?: string;
   permissions?: PlannerPermissionKey[];
 };
 export type SettingsTranslationStatusRow = {
@@ -54,7 +53,7 @@ export type SettingsAuthenticatedUser = {
   email?: string | null;
 };
 
-export const SETTINGS_COLLABORATOR_INVITE_SELECT = 'id, invite_email, invite_name, role, status, invited_at, expires_at, invite_token, permissions';
+export const SETTINGS_COLLABORATOR_INVITE_SELECT = 'id, invite_email, invite_name, role, status, invited_at, expires_at, permissions';
 export const SETTINGS_TRANSLATION_STATUS_SELECT = 'language,status,translated_at';
 export const SETTINGS_TEMPLATE_CHANGE_SELECT = 'wedding_data, layout_config, site_json';
 export const MAX_SETTINGS_COLLABORATOR_INVITES = 200;
@@ -137,6 +136,24 @@ export async function revokeSettingsCollaboratorInvite(inviteId: string, revoked
   });
 
   if (error) throw error;
+}
+
+export async function readSettingsCollaboratorInviteToken(inviteId: string): Promise<string> {
+  const { data, error } = await supabase.rpc('settings_collaborator_invite_token_read', {
+    p_invite_id: inviteId,
+  });
+
+  if (error) throw error;
+  return typeof data === 'string' ? data : '';
+}
+
+export async function clearSettingsCollaboratorInviteTestFixtures(siteId: string): Promise<number> {
+  const { data, error } = await supabase.rpc('settings_collaborator_invite_clear_test_fixtures', {
+    p_wedding_site_id: siteId,
+  });
+
+  if (error) throw error;
+  return typeof data === 'number' ? data : 0;
 }
 
 export async function loadSettingsTranslationStatuses(

@@ -2,10 +2,12 @@ import { useEffect, useRef } from 'react';
 import type React from 'react';
 import { copyTextOrDownload } from '../../../lib/copyText';
 import {
+  clearSettingsCollaboratorInviteTestFixtures,
   generateSettingsSecureToken,
   hashSettingsSitePassword,
   createSettingsCollaboratorInvite,
   findSettingsSiteBySlug,
+  readSettingsCollaboratorInviteToken,
   revokeSettingsCollaboratorInvite,
   translateSettingsSiteContent,
   updateSettingsSite,
@@ -344,7 +346,7 @@ export function useSettingsSiteAccessActions({
     }
   };
 
-  const handleCopyCollaboratorInviteLink = async (inviteToken: string | undefined): Promise<CopyActionResult | null> => {
+  const handleCopyCollaboratorInviteLink = async (inviteId: string): Promise<CopyActionResult | null> => {
     const requestId = ++collaboratorInviteCopyRequestIdRef.current;
     const actionUserId = userId;
     const actionSiteId = weddingSiteId;
@@ -354,13 +356,13 @@ export function useSettingsSiteAccessActions({
       (!actionSiteId || actionContextRef.current.weddingSiteId === actionSiteId);
     setPlannerInviteSuccess(null);
     setPlannerInviteError(null);
-    if (!inviteToken) {
-      setPlannerInviteError('This invite link is not ready yet.');
-      return null;
-    }
-
-    const inviteUrl = `${window.location.origin}/accept-collaborator-invite?token=${inviteToken}`;
     try {
+      const inviteToken = await readSettingsCollaboratorInviteToken(inviteId);
+      if (!inviteToken) {
+        setPlannerInviteError('This invite link is not ready yet.');
+        return null;
+      }
+      const inviteUrl = `${window.location.origin}/accept-collaborator-invite?token=${inviteToken}`;
       const result = await copyTextOrDownload(inviteUrl, 'dayof-collaborator-invite-link.txt');
       if (!isCurrentCollaboratorInviteCopy()) return null;
       if (result === 'copied') {
@@ -376,14 +378,57 @@ export function useSettingsSiteAccessActions({
     }
   };
 
-  const handleResendCollaboratorInvite = async (inviteToken: string | undefined): Promise<CopyActionResult | null> => {
-    const result = await handleCopyCollaboratorInviteLink(inviteToken);
+  const handleResendCollaboratorInvite = async (inviteId: string): Promise<CopyActionResult | null> => {
+    const result = await handleCopyCollaboratorInviteLink(inviteId);
     if (result === 'copied') {
       setPlannerInviteSuccess('Invite link copied for sending.');
     } else if (result === 'downloaded') {
       setPlannerInviteSuccess('Clipboard was blocked, so the invite link downloaded for sending.');
     }
     return result;
+  };
+
+  const handleRevealCollaboratorInviteLink = async (inviteId: string): Promise<string | null> => {
+    try {
+      const inviteToken = await readSettingsCollaboratorInviteToken(inviteId);
+      if (!inviteToken) return null;
+      return `${window.location.origin}/accept-collaborator-invite?token=${inviteToken}`;
+    } catch {
+      return null;
+    }
+  };
+
+  const handleClearCollaboratorInviteTestFixtures = async (): Promise<void> => {
+    const requestId = ++collaboratorInviteActionRequestIdRef.current;
+    const actionSiteId = weddingSiteId;
+    const isCurrentCollaboratorInviteAction = () =>
+      requestId === collaboratorInviteActionRequestIdRef.current &&
+      actionContextRef.current.userId === userId &&
+      actionContextRef.current.weddingSiteId === actionSiteId;
+    setPlannerInviteError(null);
+    setPlannerInviteSuccess(null);
+
+    const targetSiteId = await resolveSettingsSiteId();
+    if (!isCurrentCollaboratorInviteAction()) return;
+    if (!targetSiteId) {
+      setPlannerInviteError(SETTINGS_SITE_MISSING_COPY);
+      return;
+    }
+
+    try {
+      const deletedCount = await clearSettingsCollaboratorInviteTestFixtures(targetSiteId);
+      if (!isCurrentCollaboratorInviteAction()) return;
+      await loadCollaboratorInvites(targetSiteId);
+      if (!isCurrentCollaboratorInviteAction()) return;
+      setPlannerInviteSuccess(
+        deletedCount > 0
+          ? `Cleared ${deletedCount} test invite${deletedCount === 1 ? '' : 's'}.`
+          : 'No test invites found to clear.',
+      );
+    } catch (err) {
+      if (!isCurrentCollaboratorInviteAction()) return;
+      setPlannerInviteError(safeSettingsError(err, 'Couldn’t clear test invites right now.'));
+    }
   };
 
   const handleRemovePlannerInvite = () => {
@@ -868,9 +913,11 @@ export function useSettingsSiteAccessActions({
     handleAllowedLanguagesChange,
     handleAutoTranslateLanguage,
     handleCopyCollaboratorInviteLink,
+    handleClearCollaboratorInviteTestFixtures,
     handleCreateCollaboratorInvite,
     handleDefaultLanguageChange,
     handleRegenerateToken,
+    handleRevealCollaboratorInviteLink,
     handleRemovePlannerInvite,
     handleResendCollaboratorInvite,
     handleRevokeCollaboratorInvite,

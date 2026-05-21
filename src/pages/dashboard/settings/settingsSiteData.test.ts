@@ -249,7 +249,7 @@ describe('settings site data boundary', () => {
     expect(routeContent).toContain('onSaveQuestions={canEditSettings ? props.handleSaveRsvpQuestions : blockSettingsSubmit}');
     expect(routeContent).toContain('onSaveNotifications={canEditSettings ? props.handleSaveNotifications : blockSettingsSubmit}');
     expect(routeContent).toContain('canManageOwnerSettings={canManageOwnerSettings}');
-    expect(routeContent).toContain('onResendCollaboratorInvite={(inviteToken) => canManageOwnerSettings ? props.handleResendCollaboratorInvite(inviteToken) : Promise.resolve(null)}');
+    expect(routeContent).toContain('onResendCollaboratorInvite={(inviteId) => canManageOwnerSettings ? props.handleResendCollaboratorInvite(inviteId) : Promise.resolve(null)}');
     expect(routeContent).toContain('onSubscribe={() => runOwnerSettingsWrite(() => { void props.handleSubscribe(); })}');
     expect(routeContent).toContain('<SettingsDashboardShell');
     expect(routeContent).toContain('<SettingsTabContent');

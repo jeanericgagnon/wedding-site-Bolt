@@ -36,7 +36,9 @@ export function buildTrackedPublicQrPayloadUrl(url: string): string {
 }
 
 export const buildQrImageUrl = (url: string, size = 512) =>
-  isSafePublicQrAssetUrl(url) && !isPrivateQrPayloadForThirdPartyQr(url)
+  import.meta.env.VITE_ENABLE_THIRD_PARTY_QR === 'true' &&
+  isSafePublicQrAssetUrl(url) &&
+  !isPrivateQrPayloadForThirdPartyQr(url)
     ? `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodeURIComponent(buildTrackedPublicQrPayloadUrl(url))}`
     : '';
 
@@ -47,6 +49,7 @@ export const buildRenderableQrImageUrl = (
 ) => {
   const publicUrl = buildQrImageUrl(url, size);
   if (publicUrl) return publicUrl;
+  if (isSafePublicQrAssetUrl(url)) return buildLocalQrSvgDataUrl(buildTrackedPublicQrPayloadUrl(url), size);
   if (!options?.allowPrivate) return '';
   if (isPrivateQrPayloadForThirdPartyQr(url)) {
     return buildLocalQrSvgDataUrl(url, size);

@@ -23,13 +23,15 @@ type SettingsTeamAccessPanelProps = {
   canManageOwnerSettings: boolean;
   collaboratorInvites: SettingsCollaboratorInviteRow[];
   creatingCollaboratorInvite: boolean;
-  onCopyCollaboratorInviteLink: (inviteToken: string | undefined) => Promise<CopyActionResult | null>;
+  onCopyCollaboratorInviteLink: (inviteId: string) => Promise<CopyActionResult | null>;
+  onClearCollaboratorInviteTestFixtures: () => void;
   onCreateCollaboratorInvite: () => void;
   onPlannerInviteEmailChange: (value: string) => void;
   onPlannerInviteNameChange: (value: string) => void;
   onPlannerInviteRoleChange: (role: 'planner' | 'coordinator' | 'viewer') => void;
   onRemovePlannerInvite: () => void;
-  onResendCollaboratorInvite: (inviteToken: string | undefined) => Promise<CopyActionResult | null>;
+  onResendCollaboratorInvite: (inviteId: string) => Promise<CopyActionResult | null>;
+  onRevealCollaboratorInviteLink: (inviteId: string) => Promise<string | null>;
   onRevokeCollaboratorInvite: (inviteId: string) => void;
   onSavePlannerInvite: () => void;
   onTogglePlannerPermission: (key: PlannerPermissionKey) => void;
@@ -49,12 +51,14 @@ export function SettingsTeamAccessPanel({
   collaboratorInvites,
   creatingCollaboratorInvite,
   onCopyCollaboratorInviteLink,
+  onClearCollaboratorInviteTestFixtures,
   onCreateCollaboratorInvite,
   onPlannerInviteEmailChange,
   onPlannerInviteNameChange,
   onPlannerInviteRoleChange,
   onRemovePlannerInvite,
   onResendCollaboratorInvite,
+  onRevealCollaboratorInviteLink,
   onRevokeCollaboratorInvite,
   onSavePlannerInvite,
   onTogglePlannerPermission,
@@ -73,10 +77,11 @@ export function SettingsTeamAccessPanel({
     action: 'copy' | 'resend';
     inviteId: string;
   } | null>(null);
+  const [revealedInviteLinks, setRevealedInviteLinks] = useState<Record<string, string>>({});
   const collaboratorInviteCopyRequestIdRef = useRef(0);
   const collaboratorInviteSignature = useMemo(
     () => collaboratorInvites
-      .map((invite) => `${invite.id}:${invite.invite_token ?? ''}`)
+      .map((invite) => `${invite.id}:${invite.status}:${invite.invited_at}`)
       .join('|'),
     [collaboratorInvites],
   );
@@ -87,13 +92,13 @@ export function SettingsTeamAccessPanel({
     collaboratorInviteCopyRequestIdRef.current += 1;
     setCollaboratorInviteCopyNotice(null);
     setCollaboratorInviteCopying(null);
+    setRevealedInviteLinks({});
   }, [collaboratorInviteSignature]);
 
   const runCollaboratorInviteCopy = async (
     action: 'copy' | 'resend',
     inviteId: string,
-    inviteToken: string | undefined,
-    handler: (inviteToken: string | undefined) => Promise<CopyActionResult | null>,
+    handler: (inviteId: string) => Promise<CopyActionResult | null>,
   ) => {
     const requestId = ++collaboratorInviteCopyRequestIdRef.current;
     const requestSignature = collaboratorInviteSignatureRef.current;
@@ -104,7 +109,7 @@ export function SettingsTeamAccessPanel({
     setCollaboratorInviteCopyNotice(null);
     setCollaboratorInviteCopying({ action, inviteId });
     try {
-      const result = await handler(inviteToken);
+      const result = await handler(inviteId);
       if (result && isCurrentInviteCopy()) {
         setCollaboratorInviteCopyNotice({ action, inviteId, mode: result });
       }
@@ -246,6 +251,9 @@ export function SettingsTeamAccessPanel({
                       <p className="text-sm font-medium text-text-primary">{invite.invite_name || invite.invite_email}</p>
                       <p className="mt-1 text-xs text-text-secondary">{invite.invite_email} · {invite.role} · {formatSettingsDate(invite.invited_at)}{invite.expires_at ? ` · expires ${formatSettingsDate(invite.expires_at)}` : ''}</p>
                       {invite.permissions && invite.permissions.length > 0 && <p className="mt-1 text-[11px] text-text-tertiary">{invite.permissions.map(plannerPermissionLabel).join(' · ')}</p>}
+                      <p className="mt-1 text-[11px] text-text-tertiary">
+                        Invite URL: {revealedInviteLinks[invite.id] ? revealedInviteLinks[invite.id] : '/accept-collaborator-invite?token=••••••••••'}
+                      </p>
                     </div>
                     <div className="flex items-center gap-2">
                       <Badge variant={invite.status === 'accepted' ? 'success' : invite.status === 'pending' ? 'secondary' : 'warning'}>{invite.status}</Badge>
@@ -255,7 +263,7 @@ export function SettingsTeamAccessPanel({
                           variant="outline"
                           size="sm"
                           disabled={!canManageOwnerSettings || (collaboratorInviteCopying?.inviteId === invite.id && collaboratorInviteCopying.action === 'copy')}
-                          onClick={() => { void runCollaboratorInviteCopy('copy', invite.id, invite.invite_token, onCopyCollaboratorInviteLink); }}
+                          onClick={() => { void runCollaboratorInviteCopy('copy', invite.id, onCopyCollaboratorInviteLink); }}
                         >
                           {collaboratorInviteCopying?.inviteId === invite.id && collaboratorInviteCopying.action === 'copy'
                             ? 'Copying link...'
@@ -272,7 +280,7 @@ export function SettingsTeamAccessPanel({
                           variant="outline"
                           size="sm"
                           disabled={!canManageOwnerSettings || (collaboratorInviteCopying?.inviteId === invite.id && collaboratorInviteCopying.action === 'resend')}
-                          onClick={() => { void runCollaboratorInviteCopy('resend', invite.id, invite.invite_token, onResendCollaboratorInvite); }}
+                          onClick={() => { void runCollaboratorInviteCopy('resend', invite.id, onResendCollaboratorInvite); }}
                         >
                           {collaboratorInviteCopying?.inviteId === invite.id && collaboratorInviteCopying.action === 'resend'
                             ? 'Copying resend link...'
@@ -281,6 +289,30 @@ export function SettingsTeamAccessPanel({
                                 ? 'Downloaded resend link'
                                 : 'Copied resend link'
                               : 'Copy again'}
+                        </Button>
+                      )}
+                      {invite.status === 'pending' && (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          disabled={!canManageOwnerSettings}
+                          onClick={() => {
+                            if (revealedInviteLinks[invite.id]) {
+                              setRevealedInviteLinks((current) => {
+                                const next = { ...current };
+                                delete next[invite.id];
+                                return next;
+                              });
+                              return;
+                            }
+                            void onRevealCollaboratorInviteLink(invite.id).then((url) => {
+                              if (!url) return;
+                              setRevealedInviteLinks((current) => ({ ...current, [invite.id]: url }));
+                            });
+                          }}
+                        >
+                          {revealedInviteLinks[invite.id] ? 'Hide link' : 'Reveal link'}
                         </Button>
                       )}
                       {invite.status === 'pending' && (
@@ -297,6 +329,9 @@ export function SettingsTeamAccessPanel({
         </div>
 
         <div className="flex flex-wrap justify-end gap-2">
+          <Button type="button" variant="outline" size="sm" onClick={onClearCollaboratorInviteTestFixtures} disabled={!canManageOwnerSettings}>
+            Clear test invites
+          </Button>
           {plannerInvite && (
             <Button type="button" variant="outline" size="sm" onClick={onRemovePlannerInvite} disabled={!canManageOwnerSettings}>Remove invite</Button>
           )}
