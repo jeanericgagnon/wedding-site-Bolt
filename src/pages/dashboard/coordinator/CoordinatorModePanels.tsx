@@ -202,7 +202,7 @@ export function CoordinatorStatCards({ loading, stats }: CoordinatorStatCardsPro
   return (
     <div className="lg:col-span-2 grid grid-cols-2 md:grid-cols-4 gap-3">
       {cards.map(([label, value]) => (
-        <div key={label} className="rounded-2xl border border-border-subtle bg-white p-4 shadow-sm">
+        <div key={label} className="rounded-[20px] border border-border-subtle bg-white p-4 shadow-none">
           <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-text-tertiary">{label}</p>
           <p className="text-2xl font-semibold text-text-primary mt-1">{loading ? '—' : value}</p>
         </div>
@@ -231,7 +231,7 @@ export function CoordinatorAttentionPanel({
   onEscalationClick,
 }: CoordinatorAttentionPanelProps) {
   return (
-    <div className="rounded-2xl border border-border-subtle bg-white p-4 shadow-sm">
+    <div className="rounded-[20px] border border-border-subtle bg-white p-4 shadow-none">
       <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary/75">Attention now</p>
       <p className="mt-3 text-sm font-medium text-text-primary">Start with the exceptions that could slow down the room.</p>
       <p className="mt-2 text-[13px] leading-6 text-text-secondary">This pulls together the live escalations, correction cues, and arrivals that the coordinator should resolve first.</p>
@@ -329,7 +329,7 @@ export function CoordinatorHandoffPanel({
   const handoffByEventId = new Map(eventHandoffs.map((item) => [item.itinerary_event_id, item]));
 
   return (
-    <div className="rounded-2xl border border-border-subtle bg-white p-4 shadow-sm">
+    <div className="rounded-[20px] border border-border-subtle bg-white p-4 shadow-none">
       <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary/75">Staffing handoff</p>
@@ -489,7 +489,7 @@ export function CoordinatorIssueDeskPanel({
     : null;
 
   return (
-    <div className="rounded-2xl border border-border-subtle bg-white p-4 shadow-sm">
+    <div className="rounded-[20px] border border-border-subtle bg-white p-4 shadow-none">
       <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary/75">Issue desk</p>
@@ -887,7 +887,7 @@ export function CoordinatorRunnerBoardPanel({
   const completedTasks = runnerIssues.filter((issue) => readCoordinatorIssueOperationalMetadata(issue.metadata).runner_task?.status === 'done');
 
   return (
-    <div className="rounded-2xl border border-border-subtle bg-white p-4 shadow-sm">
+    <div className="rounded-[20px] border border-border-subtle bg-white p-4 shadow-none">
       <div className="flex items-center justify-between gap-3">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary/75">Runner board</p>
@@ -995,7 +995,7 @@ export function CoordinatorGuestContinuityPanel({
     : null;
 
   return (
-    <div className="rounded-2xl border border-border-subtle bg-white p-4 shadow-sm">
+    <div className="rounded-[20px] border border-border-subtle bg-white p-4 shadow-none">
       <div className="flex items-center justify-between gap-3">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary/75">Guest continuity</p>
@@ -1100,7 +1100,7 @@ export function CoordinatorShiftSnapshotPanel({
   snapshotDetail,
 }: CoordinatorShiftSnapshotPanelProps) {
   return (
-    <div className="rounded-2xl border border-border-subtle bg-white p-4 shadow-sm">
+    <div className="rounded-[20px] border border-border-subtle bg-white p-4 shadow-none">
       <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary/75">Shift snapshot</p>
@@ -1429,7 +1429,7 @@ export function CoordinatorHelperAccessPanel({
       : 'border-border bg-white text-text-tertiary';
 
   return (
-    <div className="rounded-2xl border border-border-subtle bg-white px-3 py-3 shadow-sm">
+    <div className="rounded-[20px] border border-border-subtle bg-white px-3 py-3 shadow-none">
       <div className="flex items-center justify-between gap-3">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary/75">Day-of helper access</p>
@@ -1588,13 +1588,13 @@ export function CoordinatorDayOfSummaryPanel({
   summaryFeedbackTone,
 }: CoordinatorDayOfSummaryPanelProps) {
   const summaryFeedbackPaddingClassName = summaryFeedbackLayout === 'prominent'
-    ? 'py-1.5 shadow-sm'
+    ? 'py-1.5 shadow-none'
     : summaryFeedbackLayout === 'standard'
       ? 'py-1'
       : 'py-0.5 opacity-90';
 
   return (
-    <div className="rounded-2xl border border-border-subtle bg-white px-3 py-3 shadow-sm">
+    <div className="rounded-[20px] border border-border-subtle bg-white px-3 py-3 shadow-none">
       <div className="mb-3 flex items-center justify-between gap-3">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary/75">Day-of summary</p>

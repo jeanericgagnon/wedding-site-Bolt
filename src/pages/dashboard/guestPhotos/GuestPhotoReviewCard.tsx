@@ -86,7 +86,7 @@ export function GuestPhotoReviewCard({
           <span className="rounded-xl border border-border-subtle bg-surface-subtle px-3 py-1">{recapHiddenCount} recap hidden</span>
         </div>
       </div>
-      <div className="mt-5 rounded-2xl border border-border-subtle bg-surface-subtle/20 p-4">
+      <div className="mt-5 rounded-[20px] border border-border-subtle bg-surface-subtle/20 p-4">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary/75">Review workspace</p>
@@ -126,7 +126,7 @@ export function GuestPhotoReviewCard({
         </Button>
       </div>
       <div className="mt-5 grid gap-3 lg:grid-cols-4">
-        <div className="rounded-2xl border border-border-subtle bg-surface-subtle/30 px-4 py-4 shadow-sm">
+        <div className="rounded-[20px] border border-border-subtle bg-surface-subtle/30 px-4 py-4 shadow-none">
           <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary/75">Highlights</p>
           <p className="mt-2 text-sm text-text-secondary">The photos most likely to carry the memory story forward.</p>
           <div className="mt-3 space-y-2">
@@ -150,7 +150,7 @@ export function GuestPhotoReviewCard({
             {highlightUploads.length === 0 && <p className="text-xs text-neutral-500">Review a few photos to fill this.</p>}
           </div>
         </div>
-        <div className="rounded-2xl border border-border-subtle bg-surface-subtle/30 px-4 py-4 shadow-sm">
+        <div className="rounded-[20px] border border-border-subtle bg-surface-subtle/30 px-4 py-4 shadow-none">
           <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary/75">Timeline</p>
           <p className="mt-2 text-sm text-text-secondary">Saved capture times help the day read in the order it actually unfolded.</p>
           <div className="mt-3 space-y-2">
@@ -163,7 +163,7 @@ export function GuestPhotoReviewCard({
             {chronologicalUploads.length === 0 && <p className="text-xs text-neutral-500">Capture times appear when photos include saved time details.</p>}
           </div>
         </div>
-        <div className="rounded-2xl border border-border-subtle bg-surface-subtle/30 px-4 py-4 shadow-sm">
+        <div className="rounded-[20px] border border-border-subtle bg-surface-subtle/30 px-4 py-4 shadow-none">
           <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary/75">Similar sets</p>
           <p className="mt-2 text-sm text-text-secondary">Useful for tucking away near-duplicates before the recap gets crowded.</p>
           <div className="mt-3 space-y-2">
@@ -177,7 +177,7 @@ export function GuestPhotoReviewCard({
             {duplicateExtraCount > 0 && <p className="text-xs text-primary">{duplicateExtraCount} similar photo{duplicateExtraCount === 1 ? '' : 's'} can be tucked away.</p>}
           </div>
         </div>
-        <div className="rounded-2xl border border-border-subtle bg-surface-subtle/30 px-4 py-4 shadow-sm">
+        <div className="rounded-[20px] border border-border-subtle bg-surface-subtle/30 px-4 py-4 shadow-none">
           <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary/75">Worth checking</p>
           <p className="mt-2 text-sm text-text-secondary">These are the uploads that still need a quick human pass before you trust the recap.</p>
           <div className="mt-3 space-y-2">
@@ -192,7 +192,7 @@ export function GuestPhotoReviewCard({
         </div>
       </div>
       {memoryChapters.length > 0 && (
-        <div className="mt-5 rounded-2xl border border-border-subtle bg-surface-subtle/30 px-4 py-4 shadow-sm">
+        <div className="mt-5 rounded-[20px] border border-border-subtle bg-surface-subtle/30 px-4 py-4 shadow-none">
           <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary/75">Memory chapters</p>
           <p className="mt-2 text-sm text-text-secondary">These give you a rough editorial arc for the day before you turn the best photos into a recap.</p>
           <div className="mt-3 grid gap-2 md:grid-cols-3">

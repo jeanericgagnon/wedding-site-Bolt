@@ -80,7 +80,7 @@ export function CoordinatorDashboardRouteContent({
   onReviewOnlyClick,
 }: Props) {
   return (
-    <div className="max-w-[1100px] mx-auto space-y-5">
+    <div className="space-y-6">
       <DashboardPageHero
         eyebrow="Day-of"
         title="Everything helpers need on the wedding day."
@@ -93,7 +93,7 @@ export function CoordinatorDashboardRouteContent({
         actions={<CoordinatorRoleSelector {...roleSelectorProps} />}
       />
 
-      <section className="rounded-3xl border border-border-subtle bg-white p-4 shadow-sm">
+      <section className="rounded-[20px] border border-border-subtle bg-white p-4 shadow-none">
         <div className="flex flex-wrap items-center gap-3 text-sm text-text-secondary">
           <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary/75">Phase</p>
           <span className="rounded-full border border-border-subtle bg-surface-subtle/30 px-3 py-1">Before</span>
@@ -103,7 +103,7 @@ export function CoordinatorDashboardRouteContent({
       </section>
 
       <section className="grid gap-4 xl:grid-cols-[minmax(0,1.05fr)_320px]">
-        <article className="rounded-3xl border border-border-subtle bg-white p-5 shadow-sm">
+        <article className="rounded-[20px] border border-border-subtle bg-white p-5 shadow-none">
           <div className="flex items-start justify-between gap-4">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary/75">Search-first lookup</p>
@@ -119,15 +119,15 @@ export function CoordinatorDashboardRouteContent({
             </button>
           </div>
           <div className="mt-5 grid gap-3 sm:grid-cols-3">
-            <div className="rounded-2xl border border-border-subtle bg-surface-subtle/30 p-4">
+            <div className="rounded-[20px] border border-border-subtle bg-surface-subtle/30 p-4">
               <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-text-tertiary">Guests</p>
               <p className="mt-2 text-sm font-semibold text-text-primary">{statsCardProps.stats.total} searchable</p>
             </div>
-            <div className="rounded-2xl border border-border-subtle bg-surface-subtle/30 p-4">
+            <div className="rounded-[20px] border border-border-subtle bg-surface-subtle/30 p-4">
               <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-text-tertiary">Checked in</p>
               <p className="mt-2 text-sm font-semibold text-text-primary">{statsCardProps.stats.checkedIn} marked</p>
             </div>
-            <div className="rounded-2xl border border-border-subtle bg-surface-subtle/30 p-4">
+            <div className="rounded-[20px] border border-border-subtle bg-surface-subtle/30 p-4">
               <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-text-tertiary">Open questions</p>
               <p className="mt-2 text-sm font-semibold text-text-primary">{qnaPanelProps.qnaCounts.open} waiting</p>
             </div>
@@ -135,7 +135,7 @@ export function CoordinatorDashboardRouteContent({
         </article>
 
         <aside className="space-y-4">
-          <article className="rounded-3xl border border-border-subtle bg-white p-5 shadow-sm">
+          <article className="rounded-[20px] border border-border-subtle bg-white p-5 shadow-none">
             <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary/75">QR + print packet</p>
             <h3 className="mt-3 font-serif text-xl font-normal text-text-primary">One packet for helpers.</h3>
             <p className="mt-2 text-sm leading-6 text-text-secondary">Guest lookup, photo upload QR, schedule, key contacts, and venue notes stay together.</p>
@@ -148,13 +148,13 @@ export function CoordinatorDashboardRouteContent({
             </button>
           </article>
 
-          <article className="rounded-3xl border border-border-subtle bg-white p-5 shadow-sm">
+          <article className="rounded-[20px] border border-border-subtle bg-white p-5 shadow-none">
             <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary/75">Unified flow</p>
             <h3 className="mt-3 font-serif text-xl font-normal text-text-primary">Preview, share, print.</h3>
             <div className="mt-4 space-y-3 text-sm text-text-secondary">
-              <div className="rounded-2xl border border-border-subtle bg-surface-subtle/30 p-4">1. Preview packet and guest lookup</div>
-              <div className="rounded-2xl border border-border-subtle bg-surface-subtle/30 p-4">2. Share the helper link with family or planners</div>
-              <div className="rounded-2xl border border-border-subtle bg-surface-subtle/30 p-4">3. Print QR codes, notes, and timing</div>
+              <div className="rounded-[20px] border border-border-subtle bg-surface-subtle/30 p-4">1. Preview packet and guest lookup</div>
+              <div className="rounded-[20px] border border-border-subtle bg-surface-subtle/30 p-4">2. Share the helper link with family or planners</div>
+              <div className="rounded-[20px] border border-border-subtle bg-surface-subtle/30 p-4">3. Print QR codes, notes, and timing</div>
             </div>
           </article>
         </aside>
@@ -184,24 +184,24 @@ export function CoordinatorDashboardRouteContent({
       <CoordinatorDayOfSummaryPanel {...dayOfSummaryPanelProps} />
 
       {coordinatorRole === 'planner' && (
-        <div className="rounded-2xl border border-primary/20 bg-primary/5 p-4 text-sm shadow-sm">
+        <div className="rounded-[20px] border border-primary/20 bg-primary/5 p-4 text-sm shadow-none">
           <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary/75">Planner view</p>
           <p className="mt-3 font-medium text-primary">Guest movement, timeline decisions, and day-of updates stay in focus here.</p>
           <p className="mt-2 leading-6 text-primary/80">This mode keeps the coordinator surface centered on the live decisions a planner usually needs most once the weekend starts moving.</p>
         </div>
       )}
       {coordinatorRole === 'viewer' && (
-        <div className="rounded-2xl border border-border-subtle bg-surface-subtle/30 p-4 text-sm text-text-secondary shadow-sm">
+        <div className="rounded-[20px] border border-border-subtle bg-surface-subtle/30 p-4 text-sm text-text-secondary shadow-none">
           <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary/75">Read-only view</p>
           <p className="mt-3 leading-6">Timeline, check-in, alerts, and Q&A stay visible for reference here, while the live edits remain with the people running the room.</p>
         </div>
       )}
 
-      <section className="rounded-2xl border border-border-subtle bg-white p-5 shadow-sm">
+      <section className="rounded-[20px] border border-border-subtle bg-white p-5 shadow-none">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary/75">Live floor workspace</p>
-            <h2 className="mt-3 text-lg font-semibold text-text-primary">Work the queue, keep the timeline close, and answer questions without losing the room.</h2>
+            <h2 className="mt-3 font-serif text-2xl font-normal text-text-primary">Work the queue, keep the timeline close, and answer questions without losing the room.</h2>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-text-secondary">
               This lower workspace is where the live queue, timing shifts, helper messages, and open guest questions stay together once the day is actually in motion.
             </p>
@@ -222,7 +222,7 @@ export function CoordinatorDashboardRouteContent({
           onReviewOnlyClick={onReviewOnlyClick}
         />
 
-        <div className="space-y-4 rounded-xl border border-border-subtle bg-white p-4 shadow-sm">
+        <div className="space-y-4 rounded-[20px] border border-border-subtle bg-white p-4 shadow-none">
           <CoordinatorTimelinePanel {...timelinePanelProps} />
           <CoordinatorDayOfMessagePanel {...dayOfMessagePanelProps} />
           <CoordinatorQnaPanel {...qnaPanelProps} />

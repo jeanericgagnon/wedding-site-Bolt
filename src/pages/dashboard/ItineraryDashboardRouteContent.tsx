@@ -167,12 +167,12 @@ export function ItineraryDashboardRouteContent({
       />
 
       <section className="grid gap-4 xl:grid-cols-[minmax(0,1.05fr)_320px]">
-        <article className="rounded-3xl border border-border-subtle bg-white p-5 shadow-sm">
+        <article className="rounded-[20px] border border-border-subtle bg-white p-5 shadow-none">
           <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary/75">Your weekend</p>
           <h2 className="mt-3 font-serif text-2xl font-normal text-text-primary">A rhythm guests can follow.</h2>
           <div className="mt-5 space-y-3">
             {events.slice(0, 3).map((event) => (
-              <div key={event.id} className="flex items-start justify-between gap-4 rounded-2xl border border-border-subtle bg-surface-subtle/30 p-4">
+              <div key={event.id} className="flex items-start justify-between gap-4 rounded-[20px] border border-border-subtle bg-surface-subtle/30 p-4">
                 <div>
                   <p className="text-sm font-semibold text-text-primary">{event.event_name}</p>
                   <p className="mt-1 text-sm text-text-secondary">
@@ -187,7 +187,7 @@ export function ItineraryDashboardRouteContent({
               </div>
             ))}
             {events.length === 0 && (
-              <div className="rounded-2xl border border-border-subtle bg-surface-subtle/30 p-4">
+              <div className="rounded-[20px] border border-border-subtle bg-surface-subtle/30 p-4">
                 <p className="text-sm font-semibold text-text-primary">No events yet.</p>
                 <p className="mt-2 text-sm leading-6 text-text-secondary">Add the key moments first so guests always know what comes next.</p>
               </div>
@@ -195,18 +195,18 @@ export function ItineraryDashboardRouteContent({
           </div>
         </article>
 
-        <aside className="rounded-3xl border border-border-subtle bg-white p-5 shadow-sm">
+        <aside className="rounded-[20px] border border-border-subtle bg-white p-5 shadow-none">
           <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary/75">Top priority</p>
           <div className="mt-4 space-y-3">
             {timelineInsights.length > 0 ? (
               timelineInsights.slice(0, 2).map((insight, index) => (
-                <div key={`${insight.eventId}-${index}`} className="rounded-2xl border border-border-subtle bg-surface-subtle/30 p-4">
+                <div key={`${insight.eventId}-${index}`} className="rounded-[20px] border border-border-subtle bg-surface-subtle/30 p-4">
                   <p className="text-sm font-semibold text-text-primary">{insight.title}</p>
                   <p className="mt-2 text-sm leading-6 text-text-secondary">{insight.detail}</p>
                 </div>
               ))
             ) : (
-              <div className="rounded-2xl border border-border-subtle bg-surface-subtle/30 p-4">
+              <div className="rounded-[20px] border border-border-subtle bg-surface-subtle/30 p-4">
                 <p className="text-sm font-semibold text-text-primary">Nothing urgent is waiting.</p>
                 <p className="mt-2 text-sm leading-6 text-text-secondary">Timing is in a calm place right now. The detailed editor and shift tools stay ready below.</p>
               </div>
@@ -216,11 +216,11 @@ export function ItineraryDashboardRouteContent({
       </section>
 
       {showEventForm && (
-        <Card className="p-6">
+        <Card className="rounded-[20px] bg-white p-6 shadow-none">
           <div className="mb-5 flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary/75">Event workspace</p>
-              <h2 className="mt-3 text-xl font-semibold text-neutral-900">
+              <h2 className="mt-3 font-serif text-2xl font-normal text-text-primary">
                 {editingEvent ? 'Edit the details guests will follow.' : 'Add the next event guests should see.'}
               </h2>
               <p className="mt-2 max-w-2xl text-sm leading-6 text-text-secondary">
@@ -236,7 +236,7 @@ export function ItineraryDashboardRouteContent({
           <form noValidate onSubmit={handleSaveEvent} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-neutral-700 mb-1">Event name *</label>
+                <label className="mb-1.5 block text-sm font-medium text-text-primary">Event name *</label>
                 <Input
                   value={formData.event_name}
                   onChange={(e) => handleFormDataChange('event_name', e.target.value)}
@@ -245,7 +245,7 @@ export function ItineraryDashboardRouteContent({
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-neutral-700 mb-1">Date</label>
+                <label className="mb-1.5 block text-sm font-medium text-text-primary">Date</label>
                 <Input
                   type="date"
                   value={formData.event_date}
@@ -254,7 +254,7 @@ export function ItineraryDashboardRouteContent({
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-neutral-700 mb-1">Start time</label>
+                <label className="mb-1.5 block text-sm font-medium text-text-primary">Start time</label>
                 <Input
                   type="time"
                   value={formData.start_time}
@@ -263,7 +263,7 @@ export function ItineraryDashboardRouteContent({
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-neutral-700 mb-1">End Time</label>
+                <label className="mb-1.5 block text-sm font-medium text-text-primary">End Time</label>
                 <Input
                   type="time"
                   value={formData.end_time}
@@ -272,7 +272,7 @@ export function ItineraryDashboardRouteContent({
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-neutral-700 mb-1">Location name</label>
+                <label className="mb-1.5 block text-sm font-medium text-text-primary">Location name</label>
                 <Input
                   value={formData.location_name}
                   onChange={(e) => handleFormDataChange('location_name', e.target.value)}
@@ -281,7 +281,7 @@ export function ItineraryDashboardRouteContent({
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-neutral-700 mb-1">Dress Code</label>
+                <label className="mb-1.5 block text-sm font-medium text-text-primary">Dress Code</label>
                 <Input
                   value={formData.dress_code}
                   onChange={(e) => handleFormDataChange('dress_code', e.target.value)}
@@ -291,7 +291,7 @@ export function ItineraryDashboardRouteContent({
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-neutral-700 mb-1">Location Address</label>
+              <label className="mb-1.5 block text-sm font-medium text-text-primary">Location Address</label>
               <Input
                 value={formData.location_address}
                 onChange={(e) => handleFormDataChange('location_address', e.target.value)}
@@ -300,7 +300,7 @@ export function ItineraryDashboardRouteContent({
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-neutral-700 mb-1">Description</label>
+              <label className="mb-1.5 block text-sm font-medium text-text-primary">Description</label>
               <Textarea
                 value={formData.description}
                 onChange={(e) => handleFormDataChange('description', e.target.value)}
@@ -310,7 +310,7 @@ export function ItineraryDashboardRouteContent({
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-neutral-700 mb-1">Notes for guests</label>
+              <label className="mb-1.5 block text-sm font-medium text-text-primary">Notes for guests</label>
               <Textarea
                 value={formData.notes}
                 onChange={(e) => handleFormDataChange('notes', e.target.value)}
@@ -325,9 +325,9 @@ export function ItineraryDashboardRouteContent({
                 id="is_visible"
                 checked={formData.is_visible}
                 onChange={(e) => handleFormDataChange('is_visible', e.target.checked)}
-                className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-neutral-300 rounded"
+                className="h-4 w-4 rounded border-border-subtle text-primary focus:ring-primary/20"
               />
-              <label htmlFor="is_visible" className="ml-2 block text-sm text-neutral-700">
+              <label htmlFor="is_visible" className="ml-2 block text-sm text-text-secondary">
                 Show this on your public site
               </label>
             </div>
@@ -339,22 +339,22 @@ export function ItineraryDashboardRouteContent({
                   id="auto_create_album"
                   checked={autoCreateAlbum}
                 onChange={(e) => setAutoCreateAlbum(e.target.checked)}
-                className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-neutral-300 rounded"
+                className="h-4 w-4 rounded border-border-subtle text-primary focus:ring-primary/20"
               />
-                <label htmlFor="auto_create_album" className="ml-2 block text-sm text-neutral-700">
+                <label htmlFor="auto_create_album" className="ml-2 block text-sm text-text-secondary">
                   Create a photo album for this event
                 </label>
               </div>
             )}
 
             {saveError && (
-              <div className="rounded-2xl border border-error/25 bg-error/5 px-3 py-2 text-sm text-text-primary">
+              <div className="rounded-[20px] border border-error/25 bg-error/5 px-3 py-2 text-sm text-text-primary">
                 {saveError}
               </div>
             )}
 
             {saveNotice && (
-              <div className="rounded-2xl border border-border-subtle bg-surface-subtle px-3 py-2 text-sm text-text-primary">
+              <div className="rounded-[20px] border border-border-subtle bg-surface-subtle px-3 py-2 text-sm text-text-primary">
                 {saveNotice}
               </div>
             )}
@@ -380,14 +380,14 @@ export function ItineraryDashboardRouteContent({
         </Card>
       )}
 
-      <Card className="p-5 border border-border bg-surface">
+      <Card className="rounded-[20px] border border-border-subtle bg-white p-5 shadow-none">
         <div className="grid gap-4 lg:grid-cols-[1.05fr_1fr]">
           <div>
             <div className="flex items-center gap-2">
               <Wand2 className="h-5 w-5 text-primary" />
-              <h2 className="text-lg font-semibold text-neutral-900">Smart wedding-day template</h2>
+              <h2 className="font-serif text-2xl font-normal text-text-primary">Smart wedding-day template</h2>
             </div>
-            <p className="mt-1 text-sm text-neutral-600">Generate a working day-of timeline, then edit each item into the final producer schedule.</p>
+            <p className="mt-2 text-sm leading-6 text-text-secondary">Generate a working day-of timeline, then edit each item into the final producer schedule.</p>
             <div className="mt-4 grid gap-3 sm:grid-cols-3">
               <Input
                 type="date"
@@ -410,15 +410,15 @@ export function ItineraryDashboardRouteContent({
               </Button>
             </div>
           </div>
-          <div className="rounded-2xl border border-border-subtle bg-surface-subtle/40 p-4">
+          <div className="rounded-[20px] border border-border-subtle bg-surface-subtle/40 p-4">
             <div className="flex items-center gap-2">
-              <MoveRight className="h-5 w-5 text-neutral-800" />
-              <h3 className="text-sm font-semibold text-neutral-900">Bulk time shift</h3>
+              <MoveRight className="h-5 w-5 text-primary" />
+              <h3 className="text-sm font-semibold text-text-primary">Bulk time shift</h3>
             </div>
-            <p className="mt-1 text-xs leading-5 text-neutral-600">When ceremony or photos move, shift the rest of the day without rebuilding cards.</p>
+            <p className="mt-1 text-xs leading-5 text-text-secondary">When ceremony or photos move, shift the rest of the day without rebuilding cards.</p>
             <div className="mt-3 grid gap-2 sm:grid-cols-[1fr_110px_auto_auto]">
               <select
-                className="rounded-xl border border-border-subtle bg-white px-3 py-2 text-sm"
+                className="min-h-[44px] rounded-xl border border-border bg-white px-3 py-2 text-sm text-text-primary focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
                 value={shiftFromEventId}
                 onChange={(e) => {
                   clearTimelineFeedback();
@@ -444,7 +444,7 @@ export function ItineraryDashboardRouteContent({
               <Button type="button" variant="outline" onClick={() => void handleShiftTimeline(Math.abs(shiftMinutes))} disabled={timelineBusy !== null}>Later</Button>
             </div>
             <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-              <p className="text-xs leading-5 text-neutral-600">
+              <p className="text-xs leading-5 text-text-secondary">
                 Preview: move {shiftPreviewLabel} by {Math.abs(shiftMinutes || 1)} minute{Math.abs(shiftMinutes || 1) === 1 ? '' : 's'}.
               </p>
               {lastTimelineSnapshot && (
@@ -458,16 +458,16 @@ export function ItineraryDashboardRouteContent({
       </Card>
 
       {timelineInsights.length > 0 && (
-        <Card className="p-5 border border-border bg-white">
+        <Card className="rounded-[20px] border border-border-subtle bg-white p-5 shadow-none">
           <div className="flex items-center gap-2">
             <Clock className="h-5 w-5 text-primary" />
-            <h2 className="text-lg font-semibold text-neutral-900">Timeline quick check</h2>
+            <h2 className="font-serif text-2xl font-normal text-text-primary">Timeline quick check</h2>
           </div>
           <div className="mt-3 grid gap-2 md:grid-cols-2">
             {timelineInsights.map((insight, index) => (
-              <div key={`${insight.eventId}-${insight.kind}-${index}`} className="rounded-2xl border border-border-subtle bg-surface-subtle/40 px-3 py-3">
-                <p className="text-sm font-semibold text-neutral-900">{insight.title}</p>
-                <p className="mt-1 text-xs leading-5 text-neutral-600">{insight.detail}</p>
+              <div key={`${insight.eventId}-${insight.kind}-${index}`} className="rounded-[20px] border border-border-subtle bg-surface-subtle/40 px-3 py-3">
+                <p className="text-sm font-semibold text-text-primary">{insight.title}</p>
+                <p className="mt-1 text-xs leading-5 text-text-secondary">{insight.detail}</p>
               </div>
             ))}
           </div>
@@ -475,10 +475,10 @@ export function ItineraryDashboardRouteContent({
       )}
 
       {events.length === 0 ? (
-        <Card className="p-12 text-center">
-          <Calendar className="w-12 h-12 text-neutral-400 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-neutral-900 mb-2">No itinerary events yet</h3>
-          <p className="text-neutral-600 mb-6">
+        <Card className="rounded-[20px] bg-white p-12 text-center shadow-none">
+          <Calendar className="mx-auto mb-4 h-12 w-12 text-text-tertiary" />
+          <h3 className="mb-2 font-serif text-2xl font-normal text-text-primary">No itinerary events yet</h3>
+          <p className="mb-6 text-text-secondary">
             Add your ceremony, reception, and anything else guests should plan around.
           </p>
           <Button onClick={() => openEventForm()}>
@@ -491,15 +491,15 @@ export function ItineraryDashboardRouteContent({
           {events.map((event) => {
             const pending = event.pending_count;
             return (
-              <Card key={event.id} className={`p-6 border border-border-subtle bg-white transition-colors hover:border-primary/25 ${conflictIds.has(event.id) ? 'ring-1 ring-border-subtle' : ''}`}>
-                <div className="flex items-start justify-between">
+              <Card key={event.id} className={`rounded-[20px] border border-border-subtle bg-white p-6 shadow-none transition-colors hover:border-primary/25 ${conflictIds.has(event.id) ? 'ring-1 ring-border-subtle' : ''}`}>
+                <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-3 flex-wrap">
-                      <h3 className="text-xl font-semibold text-neutral-900">
+                      <h3 className="font-serif text-2xl font-normal text-text-primary">
                         {event.event_name}
                       </h3>
                       {!event.is_visible && (
-                        <span className="px-2 py-1 text-xs font-medium bg-neutral-100 text-neutral-600 rounded">
+                        <span className="rounded-xl border border-border-subtle bg-surface-subtle px-2 py-1 text-xs font-medium text-text-secondary">
                           Hidden
                         </span>
                       )}
@@ -512,13 +512,13 @@ export function ItineraryDashboardRouteContent({
                     </div>
 
                     <div className="space-y-2 mb-4">
-                      <div className="flex items-center text-neutral-600">
+                      <div className="flex items-center text-text-secondary">
                         <Calendar className="w-4 h-4 mr-2" />
                         <span>{formatItineraryEventDate(event.event_date)}</span>
                       </div>
 
                       {event.start_time && (
-                        <div className="flex items-center text-neutral-600">
+                        <div className="flex items-center text-text-secondary">
                           <Clock className="w-4 h-4 mr-2" />
                           <span>
                             {formatTime(event.start_time)}
@@ -528,19 +528,19 @@ export function ItineraryDashboardRouteContent({
                       )}
 
                       {(event.location_name || event.location_address) && (
-                        <div className="flex items-center gap-2 text-neutral-600">
+                        <div className="flex items-center gap-2 text-text-secondary">
                           <MapPin className="w-4 h-4 flex-shrink-0" />
                           <div className="flex-1">
                             {event.location_name && <div>{event.location_name}</div>}
                             {event.location_address && (
-                              <div className="text-sm text-neutral-500">{event.location_address}</div>
+                              <div className="text-sm text-text-tertiary">{event.location_address}</div>
                             )}
                           </div>
                           <a
                             href={getMapUrl(event.location_name || '', event.location_address || '')}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="flex items-center gap-1 rounded-xl bg-primary-50 px-3 py-1 text-sm text-primary-700 transition-colors hover:bg-primary-100"
+                            className="flex items-center gap-1 rounded-xl border border-border-subtle bg-surface-subtle px-3 py-1 text-sm font-semibold text-primary transition-colors hover:border-primary/30 hover:bg-primary/5"
                           >
                             <MapPin className="w-3 h-3" />
                             Map
@@ -550,15 +550,15 @@ export function ItineraryDashboardRouteContent({
                       )}
 
                       {event.description && (
-                        <p className="text-neutral-600 mt-3">{event.description}</p>
+                        <p className="mt-3 text-text-secondary">{event.description}</p>
                       )}
                     </div>
 
                     <div className="flex flex-wrap items-stretch gap-2 pt-3 border-t border-border-subtle">
                       <div className="flex items-center gap-2 rounded-xl border border-border-subtle bg-surface-subtle/40 px-2.5 py-1.5 text-sm">
-                        <Users className="w-4 h-4 text-neutral-500" />
-                        <span className="font-semibold text-neutral-900">{event.invitation_count}</span>
-                        <span className="text-neutral-500">invited</span>
+                        <Users className="w-4 h-4 text-text-tertiary" />
+                        <span className="font-semibold text-text-primary">{event.invitation_count}</span>
+                        <span className="text-text-secondary">invited</span>
                       </div>
                       <div className="flex items-center gap-2 rounded-xl border border-border-subtle bg-surface-subtle/30 px-2.5 py-1.5 text-sm">
                         <Check className="w-4 h-4 text-text-tertiary" />
@@ -578,7 +578,7 @@ export function ItineraryDashboardRouteContent({
                     </div>
                   </div>
 
-                  <div className="flex gap-2 ml-2 sm:ml-4">
+                  <div className="flex flex-wrap gap-2 lg:ml-4 lg:justify-end">
                     <Button
                       variant="outline"
                       size="sm"

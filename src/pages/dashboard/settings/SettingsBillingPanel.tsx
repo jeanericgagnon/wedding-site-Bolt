@@ -31,7 +31,7 @@ export function SettingsBillingPanel({
       )}
 
       {billingError && (
-        <div className="flex items-start gap-2 rounded-2xl border border-border-subtle bg-surface-subtle p-4 text-sm text-text-secondary">
+        <div className="flex items-start gap-2 rounded-[20px] border border-border-subtle bg-surface-subtle p-4 text-sm text-text-secondary">
           <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
           <span>{billingError}</span>
         </div>
@@ -39,7 +39,7 @@ export function SettingsBillingPanel({
 
       {!billingLoading && billingInfo && (
         <>
-          <Card variant="bordered" padding="lg">
+          <Card variant="bordered" padding="lg" className="rounded-[20px] shadow-none">
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div>
@@ -54,7 +54,7 @@ export function SettingsBillingPanel({
             <CardContent className="space-y-5">
               {billingInfo.billing_type === 'one_time' ? (
                 <>
-                  <div className="flex items-start gap-4 rounded-2xl border border-border bg-surface-subtle p-4">
+                  <div className="flex items-start gap-4 rounded-[20px] border border-border bg-surface-subtle p-4">
                     <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-primary/10">
                       <Calendar className="w-5 h-5 text-primary" />
                     </div>
@@ -64,7 +64,7 @@ export function SettingsBillingPanel({
                     </div>
                   </div>
 
-                  <div className="overflow-hidden rounded-2xl border border-border">
+                  <div className="overflow-hidden rounded-[20px] border border-border">
                     <div className="px-5 py-4 bg-surface-subtle/45 border-b border-border">
                       <div className="flex items-center gap-2 mb-1">
                         <Repeat className="w-4 h-4 text-accent" />
@@ -111,7 +111,7 @@ export function SettingsBillingPanel({
                   </div>
                 </>
               ) : (
-                <div className="flex items-start gap-4 rounded-2xl border border-border bg-surface-subtle p-4">
+                <div className="flex items-start gap-4 rounded-[20px] border border-border bg-surface-subtle p-4">
                   <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-success/10">
                     <Repeat className="w-5 h-5 text-success" />
                   </div>
@@ -125,7 +125,7 @@ export function SettingsBillingPanel({
           </Card>
 
           {billingInfo.paid_at && (
-            <Card variant="bordered" padding="lg">
+            <Card variant="bordered" padding="lg" className="rounded-[20px] shadow-none">
               <CardHeader>
                 <CardTitle>Billing History</CardTitle>
                 <CardDescription>Your payment records</CardDescription>

@@ -149,7 +149,7 @@ export const DashboardAuditLogs: React.FC = () => {
 
   return (
     <DashboardLayout currentPage="activity">
-      <div className="max-w-6xl mx-auto space-y-6">
+      <div className="space-y-6">
         <div>
           <h1 className="text-3xl font-bold text-text-primary">Activity history</h1>
           <p className="mt-2 text-sm text-text-secondary">A private record of guest updates and important changes across your wedding tools.</p>
@@ -184,7 +184,7 @@ export const DashboardAuditLogs: React.FC = () => {
           <Card padding="lg">
             <div className="space-y-3">
               {filteredRows.map((row) => (
-                <div key={row.id} className="rounded-2xl border border-border-subtle bg-white px-4 py-3">
+                <div key={row.id} className="rounded-[20px] border border-border-subtle bg-white px-4 py-3">
                   <div className="flex items-center justify-between gap-3">
                     <div>
                       <p className="text-sm font-medium text-text-primary">{row.title}</p>

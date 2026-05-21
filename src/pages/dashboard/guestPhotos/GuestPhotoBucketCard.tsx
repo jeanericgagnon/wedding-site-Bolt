@@ -63,7 +63,7 @@ export function GuestPhotoBucketCard({
   const backupUrl = getSafePublicWebUrl(bucket.drive_folder_url);
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-border-subtle bg-white">
+    <div className="overflow-hidden rounded-[20px] border border-border-subtle bg-white">
       <div className="border-b border-border-subtle bg-surface-subtle px-5 py-4">
         <div className="flex items-start justify-between gap-3">
           <div className={depth > 0 ? 'pl-4 border-l-2 border-border-subtle' : ''}>
@@ -147,7 +147,7 @@ export function GuestPhotoBucketCard({
 
       <div className="px-5 py-4 space-y-4">
         {childBuckets.length > 0 && (
-          <div className="rounded-2xl border border-border-subtle bg-surface-subtle p-3">
+          <div className="rounded-[20px] border border-border-subtle bg-surface-subtle p-3">
             <p className="text-xs font-semibold text-text-primary">Sub-albums</p>
             <div className="mt-2 flex flex-wrap gap-2">
               {childBuckets.map((child) => (
@@ -165,7 +165,7 @@ export function GuestPhotoBucketCard({
         )}
 
         {hasLink && (
-          <div className="rounded-2xl border border-border-subtle bg-surface-subtle p-3">
+          <div className="rounded-[20px] border border-border-subtle bg-surface-subtle p-3">
             <p className="text-xs font-semibold text-text-primary">Upload link ready</p>
             <p className="mt-1 text-sm text-text-primary">Share one clean upload destination for this album.</p>
             <p className="mt-2 truncate text-xs text-text-secondary">{knownUploadLink}</p>

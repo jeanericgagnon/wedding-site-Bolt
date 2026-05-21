@@ -59,7 +59,7 @@ export const SectionSettingsDrawer: React.FC<SectionSettingsDrawerProps> = ({
         className="fixed inset-0 bg-black/50 z-40"
         onClick={onClose}
       />
-      <div className="fixed right-0 top-0 bottom-0 w-96 bg-surface border-l border-border shadow-sm z-50 overflow-y-auto">
+      <div className="fixed right-0 top-0 bottom-0 w-96 bg-surface border-l border-border shadow-none z-50 overflow-y-auto">
         <div className="sticky top-0 bg-surface border-b border-border p-4 flex items-center justify-between">
           <div>
             <h2 className="text-lg font-semibold text-text-primary capitalize">

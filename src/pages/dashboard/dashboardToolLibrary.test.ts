@@ -19,6 +19,7 @@ describe('dashboardToolLibrary', () => {
       'Home',
       'Website',
       'Guests',
+      'Schedule',
       'Registry',
       'Messages',
       'Memories',

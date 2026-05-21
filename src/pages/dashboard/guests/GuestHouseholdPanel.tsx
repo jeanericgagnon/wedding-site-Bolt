@@ -39,7 +39,7 @@ export function GuestHouseholdPanel({
   return (
     <div className="space-y-6">
       {selectedGuestIds.size >= 1 && (
-        <div className="flex items-center justify-between rounded-2xl border border-primary/20 bg-primary/8 px-4 py-3">
+        <div className="flex items-center justify-between rounded-[20px] border border-primary/20 bg-primary/8 px-4 py-3">
           <span className="text-sm font-medium text-primary">{selectedGuestIds.size} guests selected</span>
           <div className="flex items-center gap-2">
             <div className="min-w-[180px]">
@@ -91,7 +91,7 @@ export function GuestHouseholdPanel({
       )}
 
       {households.grouped.map(([householdId, members]) => (
-        <div key={householdId} className="overflow-hidden rounded-2xl border border-border-subtle bg-white transition-colors hover:border-primary/25">
+        <div key={householdId} className="overflow-hidden rounded-[20px] border border-border-subtle bg-white transition-colors hover:border-primary/25">
           <div className="divide-y divide-border-subtle/60 bg-white">
             {members.map((guest) => {
               const name = guest.first_name && guest.last_name ? `${guest.first_name} ${guest.last_name}` : guest.name;
@@ -133,7 +133,7 @@ export function GuestHouseholdPanel({
       ))}
 
       {households.ungrouped.length > 0 && (
-        <div className="overflow-hidden rounded-2xl border border-border">
+        <div className="overflow-hidden rounded-[20px] border border-border">
           <div className="flex items-center justify-between px-5 py-3 bg-surface-subtle border-b border-border">
             <div className="flex items-center gap-2">
               <Users className="w-4 h-4 text-text-tertiary" />

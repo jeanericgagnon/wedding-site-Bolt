@@ -122,21 +122,18 @@ describe('OverviewDashboardLiveContent', () => {
   }
 
   it('routes draft owner preview actions to the builder instead of the blocked public site path', () => {
-    renderOverview({ isLive: false });
+    const { navigateSpy } = renderOverview({ isLive: false });
 
-    fireEvent.click(screen.getByRole('button', { name: 'Preview draft' }));
-    expect(assignSpy).toHaveBeenCalledWith('/dashboard/builder');
-    expect(openSpy).not.toHaveBeenCalled();
-
-    fireEvent.click(screen.getByRole('button', { name: 'Open your draft preview' }));
-    expect(assignSpy).toHaveBeenCalledTimes(2);
+    fireEvent.click(screen.getByText('Preview draft'));
+    expect(navigateSpy).toHaveBeenCalledWith('/dashboard/builder');
+    expect(assignSpy).not.toHaveBeenCalled();
     expect(openSpy).not.toHaveBeenCalled();
   });
 
   it('opens the public site preview only once the site is actually live', () => {
     renderOverview({ isLive: true });
 
-    fireEvent.click(screen.getByRole('button', { name: 'Preview site' }));
+    fireEvent.click(screen.getByText('Preview site'));
     expect(openSpy).toHaveBeenCalledWith('/site/maya-leo', '_blank', 'noopener,noreferrer');
     expect(assignSpy).not.toHaveBeenCalled();
   });
@@ -144,8 +141,7 @@ describe('OverviewDashboardLiveContent', () => {
   it('keeps draft preview routing inside the builder even when the site slug is still missing', () => {
     const { navigateSpy } = renderOverview({ isLive: false, siteSlug: null });
 
-    expect(screen.queryByRole('button', { name: 'Preview draft' })).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Open your draft preview' }));
+    fireEvent.click(screen.getByText('Preview draft'));
 
     expect(navigateSpy).toHaveBeenCalledWith('/dashboard/builder');
     expect(assignSpy).not.toHaveBeenCalled();
@@ -155,9 +151,7 @@ describe('OverviewDashboardLiveContent', () => {
   it('falls back to the builder when no site slug exists, even if visibility state says live', () => {
     const { navigateSpy } = renderOverview({ isLive: true, siteSlug: null });
 
-    expect(screen.queryByRole('button', { name: 'Preview site' })).not.toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole('button', { name: 'Preview what guests will see' }));
+    fireEvent.click(screen.getByText('Preview site'));
 
     expect(navigateSpy).toHaveBeenCalledWith('/dashboard/builder');
     expect(assignSpy).not.toHaveBeenCalled();
@@ -167,7 +161,7 @@ describe('OverviewDashboardLiveContent', () => {
   it('keeps live preview actions on the public site path when the site is live and the slug exists', () => {
     renderOverview({ isLive: true, siteSlug: 'maya-leo' });
 
-    fireEvent.click(screen.getByRole('button', { name: 'Preview site' }));
+    fireEvent.click(screen.getByText('Preview site'));
 
     expect(openSpy).toHaveBeenCalledWith('/site/maya-leo', '_blank', 'noopener,noreferrer');
     expect(screen.getByRole('button', { name: 'Edit website' })).toBeInTheDocument();
@@ -177,13 +171,13 @@ describe('OverviewDashboardLiveContent', () => {
   it('keeps the site summary aligned with the shared visibility truth when the site is not guest-ready', () => {
     renderOverview({ isLive: false, shortLabel: 'Needs content' });
 
-    expect(screen.getByText('Site')).toBeInTheDocument();
+    expect(screen.getByText('Guest site')).toBeInTheDocument();
     expect(screen.getByText('Needs content')).toBeInTheDocument();
     expect(screen.queryByText('Guest-ready')).not.toBeInTheDocument();
   });
 
   it('keeps the hero badge and preview actions aligned when the site is published but not guest-ready', () => {
-    renderOverview({
+    const { navigateSpy } = renderOverview({
       isLive: false,
       shortLabel: 'Needs content',
       label: 'Published, but not ready for guests yet',
@@ -192,12 +186,13 @@ describe('OverviewDashboardLiveContent', () => {
     expect(screen.getByText('Published, but not ready for guests yet')).toBeInTheDocument();
     expect(screen.getByText('Needs content')).toBeInTheDocument();
     expect(screen.queryByText('Guest-ready')).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Preview draft' })).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Preview site' })).not.toBeInTheDocument();
+    expect(screen.getByText('Preview draft')).toBeInTheDocument();
+    expect(screen.queryByText('Preview site')).not.toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Preview draft' }));
+    fireEvent.click(screen.getByText('Preview draft'));
 
-    expect(assignSpy).toHaveBeenCalledWith('/dashboard/builder');
+    expect(navigateSpy).toHaveBeenCalledWith('/dashboard/builder');
+    expect(assignSpy).not.toHaveBeenCalled();
     expect(openSpy).not.toHaveBeenCalled();
   });
 

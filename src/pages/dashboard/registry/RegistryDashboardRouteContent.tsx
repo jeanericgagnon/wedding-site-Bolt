@@ -522,7 +522,7 @@ export function RegistryDashboardRouteContent(props: {
   };
 
   return (
-    <div className="max-w-[1100px] mx-auto space-y-5">
+    <div className="space-y-7">
       <DashboardPageHero
         eyebrow="Registry"
         title="Gifts and funds, clearly shared."
@@ -568,7 +568,7 @@ export function RegistryDashboardRouteContent(props: {
         }
       >
         <div className="inline-flex flex-wrap items-center gap-2 text-[11px] text-text-tertiary">
-          <span className="rounded-xl border border-border-subtle bg-white px-2 py-0.5">
+          <span className="rounded-lg border border-border bg-white px-3 py-1">
             {props.autoRefreshEnabled ? (props.refreshWindowOpen ? 'Weekly refresh on' : 'Refresh window closed') : 'Weekly refresh paused'}
           </span>
           <span>{props.monthlyRefreshCount} of {props.monthlyRefreshCap} refreshes used this month</span>
@@ -576,10 +576,10 @@ export function RegistryDashboardRouteContent(props: {
       </DashboardPageHero>
 
       <section className="grid gap-4 lg:grid-cols-[minmax(0,1.05fr)_340px]">
-        <article className="rounded-3xl border border-border-subtle bg-white p-5 shadow-sm">
+        <article className="rounded-[20px] border border-border bg-white p-5 shadow-none">
           <div className="grid gap-5 lg:grid-cols-[minmax(0,0.95fr)_minmax(280px,0.85fr)] lg:items-center">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary/75">Guest view</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary">Guest view</p>
               <h2 className="mt-3 font-serif text-2xl font-normal text-text-primary">The registry should feel finished before anything else.</h2>
               <p className="mt-2 text-sm leading-6 text-text-secondary">Guests should see one clear place for links, funds, and gifts. The deeper cleanup tools can stay behind the scenes.</p>
               <div className="mt-5 flex flex-wrap gap-3">
@@ -597,8 +597,8 @@ export function RegistryDashboardRouteContent(props: {
                 </Button>
               </div>
             </div>
-            <div className="rounded-[1.5rem] border border-border-subtle bg-surface-subtle/30 p-4">
-              <div className="rounded-[1.25rem] border border-border-subtle bg-white p-4 shadow-sm">
+            <div className="rounded-[20px] border border-border bg-surface-subtle/30 p-4">
+              <div className="rounded-[18px] border border-border bg-white p-4 shadow-none">
                 <div className="flex items-start justify-between gap-4">
                   <div>
                     <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-text-tertiary">Guest preview</p>
@@ -609,13 +609,13 @@ export function RegistryDashboardRouteContent(props: {
                 </div>
                 <div className="mt-4 space-y-2">
                   {props.topRegistryItems.slice(0, 3).map((item) => (
-                    <div key={item.id} className="rounded-xl border border-border-subtle bg-surface-subtle/20 px-3 py-3">
+                    <div key={item.id} className="rounded-xl border border-border bg-surface-subtle/20 px-3 py-3">
                       <p className="text-sm font-semibold text-text-primary">{getOwnerRegistryDisplayTitle(item.item_name)}</p>
                       <p className="mt-1 text-xs text-text-secondary">{formatRegistryPurchaseStatusLabel(item.purchase_status)}</p>
                     </div>
                   ))}
                   {props.topRegistryItems.length === 0 && (
-                    <div className="rounded-xl border border-border-subtle bg-surface-subtle/20 px-3 py-3">
+                    <div className="rounded-xl border border-border bg-surface-subtle/20 px-3 py-3">
                       <p className="text-sm font-semibold text-text-primary">Ready for your first registry item.</p>
                       <p className="mt-1 text-xs text-text-secondary">Links, gifts, and funds can all start here.</p>
                     </div>
@@ -626,8 +626,8 @@ export function RegistryDashboardRouteContent(props: {
           </div>
         </article>
 
-        <aside className="rounded-3xl border border-border-subtle bg-white p-5 shadow-sm">
-          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary/75">Manage when needed</p>
+        <aside className="rounded-[20px] border border-border bg-white p-5 shadow-none">
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary">Manage when needed</p>
           <div className="mt-4 space-y-3">
             {[
               ['Registry links', 'Add or adjust the places guests should look first.', 'Manage'],
@@ -635,7 +635,7 @@ export function RegistryDashboardRouteContent(props: {
               ['Thank-you notes', 'Purchaser names and gift status for later.', 'Track'],
               ['Import, scanner, and cleanup', 'Use deeper tools only when you are adding or polishing items.', 'More'],
             ].map(([title, detail, action]) => (
-              <div key={title} className="rounded-2xl border border-border-subtle bg-surface-subtle/30 p-4">
+              <div key={title} className="rounded-xl border border-border bg-surface-subtle/30 p-4">
                 <p className="text-sm font-semibold text-text-primary">{title}</p>
                 <p className="mt-2 text-sm leading-6 text-text-secondary">{detail}</p>
                 <p className="mt-4 text-sm font-semibold text-primary">{action}</p>
@@ -645,7 +645,7 @@ export function RegistryDashboardRouteContent(props: {
         </aside>
       </section>
 
-      <details className="rounded-2xl border border-border-subtle bg-white/80 p-4">
+      <details className="rounded-[20px] border border-border bg-white/80 p-5">
         <summary className="cursor-pointer list-none text-sm font-semibold text-text-primary">
           Gift snapshot and review details
         </summary>
@@ -1063,7 +1063,7 @@ export function RegistryDashboardRouteContent(props: {
         </div>
       </details>
 
-      <section className="rounded-2xl border border-border-subtle bg-white p-5 shadow-sm">
+      <section className="rounded-[20px] border border-border-subtle bg-white p-5 shadow-none">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary/75">Deeper registry work</p>
@@ -1189,7 +1189,7 @@ export function RegistryDashboardRouteContent(props: {
           </div>
         </div>
 
-        <div className="mb-3 rounded-2xl border border-border-subtle bg-surface-subtle/20 p-4 text-sm text-text-secondary">
+        <div className="mb-3 rounded-[20px] border border-border-subtle bg-surface-subtle/20 p-4 text-sm text-text-secondary">
           <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary/75">Cleanup tools</p>
           <p className="mt-3 leading-6">{cleanupToolsLeadSummary}</p>
           <p className="mt-2 leading-6">These tools help tidy imported links, repeated gifts, and product photos without merging or deleting anything unless you choose it.</p>
@@ -1384,7 +1384,7 @@ export function RegistryDashboardRouteContent(props: {
           </div>
         ) : (
           <section className="space-y-4">
-            <div className="rounded-2xl border border-border-subtle bg-white p-5 shadow-sm">
+            <div className="rounded-[20px] border border-border-subtle bg-white p-5 shadow-none">
               <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary/75">Gift workspace</p>

@@ -62,7 +62,7 @@ export function SettingsNotificationsPanel({
   onSaveNotifications,
 }: SettingsNotificationsPanelProps) {
   return (
-    <Card variant="bordered" padding="lg">
+    <Card variant="bordered" padding="lg" className="rounded-[20px] shadow-none">
       <CardHeader>
         <div className="flex items-start justify-between gap-4">
           <div>
@@ -76,16 +76,16 @@ export function SettingsNotificationsPanel({
       </CardHeader>
       <CardContent>
         {!showNotificationSettings ? (
-          <div className="rounded-2xl border border-border-subtle bg-surface-subtle/40 p-4 text-sm text-text-secondary">
+          <div className="rounded-[20px] border border-border-subtle bg-surface-subtle/40 p-4 text-sm text-text-secondary">
             Hidden by default to keep this page easy to scan. Open it when you want to choose which updates you get.
           </div>
         ) : (
           <form onSubmit={onSaveNotifications} className="space-y-4">
             {notifSuccess && (
-              <div className="rounded-2xl border border-success/20 bg-success-light p-3 text-sm text-success">{notifSuccess}</div>
+              <div className="rounded-[20px] border border-success/20 bg-success-light p-3 text-sm text-success">{notifSuccess}</div>
             )}
             {notifError && (
-              <div className="rounded-2xl border border-border-subtle bg-surface-subtle p-3 text-sm text-text-secondary">{notifError}</div>
+              <div className="rounded-[20px] border border-border-subtle bg-surface-subtle p-3 text-sm text-text-secondary">{notifError}</div>
             )}
             <label className="flex items-start gap-3 cursor-pointer">
               <input
@@ -129,7 +129,7 @@ export function SettingsNotificationsPanel({
               </div>
             </label>
 
-            <div id="digest" className={`space-y-4 rounded-2xl border border-border-subtle bg-surface-subtle/35 p-4 ${notifDigest ? '' : 'opacity-70'}`}>
+            <div id="digest" className={`space-y-4 rounded-[20px] border border-border-subtle bg-surface-subtle/35 p-4 ${notifDigest ? '' : 'opacity-70'}`}>
               <div className="space-y-2">
                 <label htmlFor="digest-cadence" className="text-sm font-medium text-text-primary">
                   Digest cadence
@@ -182,7 +182,7 @@ export function SettingsNotificationsPanel({
                 </p>
               </div>
 
-              <div className="rounded-2xl border border-border-subtle bg-white p-4 space-y-3">
+              <div className="rounded-[20px] border border-border-subtle bg-white p-4 space-y-3">
                 <div>
                   <p className="text-sm font-medium text-text-primary">Digest delivery status</p>
                   <p className="mt-1 text-sm text-text-secondary">{digestPreview.statusLabel}</p>
@@ -198,7 +198,7 @@ export function SettingsNotificationsPanel({
                 {notifDigestLastDeliveredAt && digestPreview.lastDeliveredLabel && (
                   <p className="text-xs leading-5 text-text-secondary">{digestPreview.lastDeliveredLabel}</p>
                 )}
-                <div className="rounded-2xl border border-border-subtle bg-surface-subtle/35 p-3">
+                <div className="rounded-[20px] border border-border-subtle bg-surface-subtle/35 p-3">
                   <p className="text-xs font-medium text-text-tertiary">Sample email preview</p>
                   <p className="mt-2 text-sm font-medium text-text-primary">{digestPreview.subject}</p>
                   <p className="mt-1 text-xs leading-5 text-text-secondary">
@@ -211,7 +211,7 @@ export function SettingsNotificationsPanel({
                   </div>
                   <details className="mt-3">
                     <summary className="cursor-pointer text-xs font-medium text-text-secondary">Plain-text readback</summary>
-                    <pre className="mt-2 whitespace-pre-wrap rounded-2xl border border-border-subtle bg-white p-3 text-[11px] leading-5 text-text-secondary">{digestEmailText}</pre>
+                    <pre className="mt-2 whitespace-pre-wrap rounded-[20px] border border-border-subtle bg-white p-3 text-[11px] leading-5 text-text-secondary">{digestEmailText}</pre>
                   </details>
                 </div>
                 {(notifDigestNextDeliveryAt || notifDigestLastReviewedAt) && (

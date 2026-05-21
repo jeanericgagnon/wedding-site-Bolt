@@ -31,7 +31,7 @@ const ToastList: React.FC<{ toasts: Toast[] }> = ({ toasts }) => (
     {toasts.map(t => (
       <div
         key={t.id}
-        className={`rounded-2xl border px-4 py-3.5 text-sm font-semibold sm:text-[15px] ${
+        className={`rounded-[20px] border px-4 py-3.5 text-sm font-semibold shadow-none sm:text-[15px] ${
           t.type === 'error'
             ? 'bg-surface text-text-primary border-border-subtle'
             : 'bg-surface text-text-primary border-border-subtle'

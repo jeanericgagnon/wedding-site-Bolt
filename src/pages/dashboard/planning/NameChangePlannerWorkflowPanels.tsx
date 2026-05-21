@@ -83,7 +83,7 @@ export function NameChangePlannerRecentActivityPanel({
 
       <div className="mt-4 space-y-3">
         {items.map((item) => (
-          <div key={`${item.stepId}-${item.timestamp}`} className="rounded-2xl border border-border-subtle p-4">
+          <div key={`${item.stepId}-${item.timestamp}`} className="rounded-[20px] border border-border-subtle p-4">
             <div className="flex items-start justify-between gap-3">
               <div>
                 <p className="text-sm font-semibold text-text-primary">{item.title}</p>
@@ -120,7 +120,7 @@ export function NameChangeGeneratedChecklistPanel({
       </div>
 
       {plan.summary.blockers.length > 0 && (
-        <div className="mt-4 rounded-2xl border border-warning/30 bg-warning/5 p-4">
+        <div className="mt-4 rounded-[20px] border border-warning/30 bg-warning/5 p-4">
           <div className="flex items-start gap-2">
             <AlertTriangle className="mt-0.5 h-4 w-4 text-warning" />
             <div>
@@ -135,7 +135,7 @@ export function NameChangeGeneratedChecklistPanel({
 
       <div className="mt-4 space-y-4">
         {plan.steps.map((step) => (
-          <div key={step.id} className="rounded-2xl border border-border-subtle p-4">
+          <div key={step.id} className="rounded-[20px] border border-border-subtle p-4">
             <div className="flex items-start justify-between gap-3">
               <div>
                 <p className="text-xs text-text-tertiary">{step.phase}</p>

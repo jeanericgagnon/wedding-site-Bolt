@@ -115,7 +115,7 @@ export function GuestOpsToolbar({
 
   return (
     <>
-      <div className="rounded-2xl border border-border-subtle bg-surface-subtle/20 p-4 shadow-sm">
+      <div className="rounded-[20px] border border-border-subtle bg-surface-subtle/20 p-4 shadow-none">
         <div className="flex flex-col gap-4">
           <div className="flex flex-col gap-2 lg:flex-row lg:items-end lg:justify-between">
             <div>
@@ -169,7 +169,7 @@ export function GuestOpsToolbar({
                   <ChevronDown className="w-4 h-4 ml-1" />
                 </Button>
                 {showOpsMenu && (
-                  <div className="absolute right-0 z-20 mt-1 max-h-96 w-64 overflow-auto rounded-2xl border border-border bg-white p-1 shadow-sm">
+                  <div className="absolute right-0 z-20 mt-1 max-h-96 w-64 overflow-auto rounded-[20px] border border-border bg-white p-1 shadow-none">
                     <div>
                       <button className="w-full rounded-xl px-3 py-2 text-left text-sm hover:bg-surface-subtle" onClick={() => runAction(onExportAllGuests)}>Export all guests</button>
                       <button className="w-full rounded-xl px-3 py-2 text-left text-sm hover:bg-surface-subtle" onClick={() => runAction(onExportFilteredGuests)}>Export filtered guests</button>

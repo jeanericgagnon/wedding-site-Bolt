@@ -74,7 +74,7 @@ export function UnassignedPool({ guests }: { guests: EligibleGuest[] }) {
   return (
     <div
       ref={setNodeRef}
-      className={`min-h-[120px] rounded-2xl border-2 border-dashed p-3 transition-colors ${isOver ? 'border-primary bg-primary-light/50' : 'border-border-subtle bg-surface-subtle'}`}
+      className={`min-h-[120px] rounded-[20px] border-2 border-dashed p-3 transition-colors ${isOver ? 'border-primary bg-primary-light/50' : 'border-border-subtle bg-surface-subtle'}`}
     >
       {guests.length > 0 && (
         <div className="mb-3 space-y-2">
@@ -258,7 +258,7 @@ export function TableCard({
         onStartMove(e);
       }}
       className={`
-        rounded-2xl transition-all cursor-pointer
+        rounded-[20px] transition-all cursor-pointer
         ${isCanvas
           ? (isOver && !isFull ? 'bg-transparent ring-2 ring-primary/40' : isSelected ? 'bg-transparent ring-1 ring-border' : 'bg-transparent')
           : (isOver && !isFull
@@ -304,7 +304,7 @@ export function TableCard({
           <div style={{ transform: `rotate(${table.rotation_deg ?? 0}deg)`, transformOrigin: '50% 50%' }}>
             {(['bar', 'dj_booth', 'dance_floor'] as TableShape[]).includes((table.table_shape ?? 'round') as TableShape) ? (
               <div className="relative mb-2">
-                <div className={`mx-auto flex items-center justify-center rounded-2xl text-xs text-text-tertiary ${palette.fill} ${isNonSeatingObject ? 'pointer-events-none select-none border-2 border-dashed' : 'border'}`} style={{ width: `${rectSize.width}px`, height: `${rectSize.height}px` }}>
+                <div className={`mx-auto flex items-center justify-center rounded-[20px] text-xs text-text-tertiary ${palette.fill} ${isNonSeatingObject ? 'pointer-events-none select-none border-2 border-dashed' : 'border'}`} style={{ width: `${rectSize.width}px`, height: `${rectSize.height}px` }}>
                   {table.table_name || ''}
                 </div>
               </div>
@@ -337,7 +337,7 @@ export function TableCard({
               <div className="relative mb-2">
                 <div className="mx-auto relative" style={{ width: `${rectSize.width + 110}px`, height: `${rectSize.height + 110}px` }}>
                   <div
-                    className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-2xl border ${palette.fill}`}
+                    className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-[20px] border ${palette.fill}`}
                     style={{ width: `${rectSize.width}px`, height: `${rectSize.height}px` }}
                   >
                     <div className="absolute left-2 top-1 text-[10px] text-text-tertiary">{rectSize.width}x{rectSize.height}</div>
@@ -520,7 +520,7 @@ export function TableForm({ initial, onSave, onCancel }: {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-wrap items-end gap-2 rounded-2xl border border-border-subtle bg-surface-subtle p-3">
+    <form onSubmit={handleSubmit} className="flex flex-wrap items-end gap-2 rounded-[20px] border border-border-subtle bg-surface-subtle p-3">
       <div>
         <label className="block text-xs font-medium text-text-secondary mb-1">Name</label>
         <input

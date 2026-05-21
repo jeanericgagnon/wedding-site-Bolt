@@ -56,7 +56,7 @@ export const ToastList: React.FC<{ toasts: Toast[] }> = ({ toasts }) => (
 );
 
 export const MessageGuestFlowCard: React.FC = () => (
-  <div className="rounded-2xl border border-border-subtle bg-white p-5">
+  <div className="rounded-[20px] border border-border-subtle bg-white p-5">
     <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
       <div>
         <p className="text-xs font-medium text-text-tertiary">Guest flow</p>
@@ -482,7 +482,7 @@ export interface ComposerLanguagePreview {
 export const MessageComposerLanguagePreviewPanel: React.FC<{
   languagePreviews: ComposerLanguagePreview[];
 }> = ({ languagePreviews }) => (
-  <div className="rounded-2xl border border-border-subtle bg-surface-subtle/30 p-4">
+  <div className="rounded-[20px] border border-border-subtle bg-surface-subtle/30 p-4">
     <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
       <div>
         <p className="text-sm font-semibold text-text-primary">Language preview</p>
@@ -523,7 +523,7 @@ export const MessageComposerSchedulePanel: React.FC<MessageComposerSchedulePanel
   onSetFormData,
   selectedScheduleIsPast,
 }) => (
-  <div className="rounded-2xl border border-border-subtle bg-surface-subtle/30 p-4">
+  <div className="rounded-[20px] border border-border-subtle bg-surface-subtle/30 p-4">
     <label className="block text-sm font-medium text-text-primary mb-2">When should it send?</label>
     <div className="flex gap-4 mb-4">
       <button
@@ -621,7 +621,7 @@ export const MessageComposerRecipientPreviewPanel: React.FC<MessageComposerRecip
   ));
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-border-subtle bg-white">
+    <div className="overflow-hidden rounded-[20px] border border-border-subtle bg-white">
       <button
         type="button"
         onClick={onTogglePreview}
@@ -691,7 +691,7 @@ export const MessageComposerPreflightPanel: React.FC<MessageComposerPreflightPan
   smsSegmentCount,
 }) => (
   <>
-    <div className="rounded-2xl border border-border-subtle bg-primary-light/35 p-4">
+    <div className="rounded-[20px] border border-border-subtle bg-primary-light/35 p-4">
       <div className="flex items-start gap-3">
         <Mail className="w-5 h-5 text-primary mt-0.5" />
         <div className="text-sm">
@@ -841,7 +841,7 @@ export const MessageComposerCard: React.FC<MessageComposerCardProps> = ({
     {!canCompose && <p className="mb-3 text-xs text-text-tertiary">Viewer mode is on, so writing and sending are turned off.</p>}
     <form onSubmit={onSubmit} className="space-y-6">
       <fieldset disabled={!canCompose} className="space-y-6">
-        <div className="rounded-2xl border border-border-subtle bg-surface-subtle/30 p-4">
+        <div className="rounded-[20px] border border-border-subtle bg-surface-subtle/30 p-4">
           <div className="grid gap-4 md:grid-cols-2">
             <div>
               <label className="mb-2 block text-sm font-medium text-text-primary">Campaign name</label>
@@ -875,7 +875,7 @@ export const MessageComposerCard: React.FC<MessageComposerCardProps> = ({
           </div>
         </div>
 
-        <div className="rounded-2xl border border-border-subtle bg-surface-subtle/30 p-4">
+        <div className="rounded-[20px] border border-border-subtle bg-surface-subtle/30 p-4">
           <label className="mb-2 block text-sm font-medium text-text-primary">Channel</label>
           <div className="inline-flex overflow-hidden rounded-xl border border-border bg-white">
             <button type="button" className={`px-3 py-1.5 text-sm ${formData.channel === 'email' ? 'bg-primary/10 text-primary' : 'text-text-secondary'}`} onClick={() => onSetFormData((prev) => ({ ...prev, channel: 'email' }))}>Email</button>
@@ -889,7 +889,7 @@ export const MessageComposerCard: React.FC<MessageComposerCardProps> = ({
           )}
         </div>
 
-        <div className="rounded-2xl border border-border-subtle bg-surface-subtle/30 p-4">
+        <div className="rounded-[20px] border border-border-subtle bg-surface-subtle/30 p-4">
           <label className="mb-2 block text-sm font-medium text-text-primary">Who should get this?</label>
           {audienceOptions.some((a) => a.value.startsWith('event:')) && (
             <p className="mb-1 text-xs text-text-tertiary">You can also send to itinerary groups from the dropdown.</p>
@@ -1042,7 +1042,7 @@ export const MessageSavedTemplatesCard: React.FC<MessageSavedTemplatesCardProps>
       <p className="mt-1 text-sm text-text-secondary">Keep a lightweight library of messages you actually reuse.</p>
     </div>
     {savedTemplates.length === 0 ? (
-      <div className="rounded-2xl border border-border-subtle bg-surface-subtle/30 px-4 py-6 text-sm text-text-secondary">
+      <div className="rounded-[20px] border border-border-subtle bg-surface-subtle/30 px-4 py-6 text-sm text-text-secondary">
         No saved reusable templates yet. Save one from the composer when you have a message worth reusing.
       </div>
     ) : (
@@ -1210,7 +1210,7 @@ export const MessageHistorySummaryPanels: React.FC<MessageHistorySummaryPanelsPr
       ))}
     </div>
 
-    <div className="mb-4 rounded-2xl border border-border-subtle bg-surface-subtle/30 px-4 py-3 text-[11px] text-text-secondary">
+    <div className="mb-4 rounded-[20px] border border-border-subtle bg-surface-subtle/30 px-4 py-3 text-[11px] text-text-secondary">
       Delivery health is based on the message activity available here. Use it to see what needs a quick look before the next guest update.
     </div>
 
@@ -1471,7 +1471,7 @@ export const MessageCampaignThreadPanels: React.FC<MessageCampaignThreadPanelsPr
 }) => (
   <>
     {campaignThreads.length > 0 && (
-      <div className="mb-4 rounded-2xl border border-border-subtle bg-white p-4">
+      <div className="mb-4 rounded-[20px] border border-border-subtle bg-white p-4">
         <div className="flex items-center justify-between gap-3 mb-3">
           <div>
             <p className="text-xs font-semibold text-text-tertiary">Campaign rollups</p>
@@ -1570,7 +1570,7 @@ export const MessageCampaignThreadPanels: React.FC<MessageCampaignThreadPanelsPr
     )}
 
     {activeCampaignThread && (
-      <div className="mb-4 rounded-2xl border border-border-subtle bg-primary-light/30 p-4">
+      <div className="mb-4 rounded-[20px] border border-border-subtle bg-primary-light/30 p-4">
         <div className="flex items-center justify-between gap-3">
           <div>
             <p className="text-xs font-semibold text-text-tertiary">Active campaign thread</p>
@@ -1845,7 +1845,7 @@ export const MessageReviewQueuePanels: React.FC<MessageReviewQueuePanelsProps> =
 }) => (
   <>
     {retryCandidates.length > 0 && (
-      <div className="mb-4 rounded-2xl border border-border-subtle bg-surface-subtle/30 p-4">
+      <div className="mb-4 rounded-[20px] border border-border-subtle bg-surface-subtle/30 p-4">
         <div className="flex items-center justify-between mb-3 gap-3">
           <div>
             <p className="text-xs font-semibold text-text-tertiary">Follow-up review</p>
@@ -1878,7 +1878,7 @@ export const MessageReviewQueuePanels: React.FC<MessageReviewQueuePanelsProps> =
     )}
 
     {reviewCandidates.length > 0 && (
-      <div className="mb-4 rounded-2xl border border-border-subtle bg-surface-subtle/45 p-4">
+      <div className="mb-4 rounded-[20px] border border-border-subtle bg-surface-subtle/45 p-4">
         <div className="flex items-center justify-between mb-3 gap-3">
           <div>
             <p className="text-xs font-semibold text-text-tertiary">Review queue</p>
@@ -2232,7 +2232,7 @@ export const MessageHistoryCard: React.FC<MessageHistoryCardProps> = ({
       />
 
       {filteredHistory.length === 0 ? (
-        <div className="rounded-2xl border border-border-subtle bg-surface-subtle py-14 text-center">
+        <div className="rounded-[20px] border border-border-subtle bg-surface-subtle py-14 text-center">
           <Mail className="w-12 h-12 text-text-tertiary mx-auto mb-4" />
           <p className="text-text-secondary">No messages match these filters</p>
           <p className="text-sm text-text-tertiary mt-1">Try a different status, channel, audience, or search term.</p>
@@ -2246,7 +2246,7 @@ export const MessageHistoryCard: React.FC<MessageHistoryCardProps> = ({
             return (
               <div
                 key={message.id}
-                className="group w-full rounded-2xl border border-border-subtle bg-white p-5 transition-colors hover:border-primary/30"
+                className="group w-full rounded-[20px] border border-border-subtle bg-white p-5 transition-colors hover:border-primary/30"
               >
                 <button
                   type="button"

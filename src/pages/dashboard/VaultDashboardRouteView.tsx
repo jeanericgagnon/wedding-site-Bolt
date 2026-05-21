@@ -12,11 +12,11 @@ export function VaultDashboardRouteView({ children, error, loading }: VaultDashb
   return (
     <DashboardLayout currentPage="vault">
       {loading ? (
-        <div className="max-w-[1100px] mx-auto">
+        <div>
           <DashboardStateBlock title="Loading vaults…" description="Preparing your time capsule settings." />
         </div>
       ) : error ? (
-        <div className="max-w-[1100px] mx-auto">
+        <div>
           <DashboardStateBlock title="Couldn’t open vaults right now" description={error} tone="error" />
         </div>
       ) : (

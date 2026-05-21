@@ -62,7 +62,7 @@ export function GuestCsvMapperModal({
     <>
       <div className="fixed inset-0 bg-black/50 z-40" onClick={() => { if (!importing) onClose(); }} />
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-        <div className="flex max-h-[80vh] w-full max-w-2xl flex-col rounded-3xl border border-border-subtle bg-surface">
+        <div className="flex max-h-[80vh] w-full max-w-2xl flex-col rounded-[20px] border border-border-subtle bg-surface">
           <div className="flex items-center justify-between p-6 border-b border-border-subtle">
             <div>
               <h2 className="text-lg font-semibold text-text-primary">Match columns</h2>
@@ -163,7 +163,7 @@ export function GuestCsvReviewModal({
     <>
       <div className="fixed inset-0 bg-black/50 z-40" onClick={() => { if (!importing) onCancel(); }} />
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-        <div className="flex max-h-[80vh] w-full max-w-2xl flex-col rounded-3xl border border-border-subtle bg-surface">
+        <div className="flex max-h-[80vh] w-full max-w-2xl flex-col rounded-[20px] border border-border-subtle bg-surface">
           <div className="flex items-center justify-between p-6 border-b border-border-subtle">
             <div>
               <h2 className="text-lg font-semibold text-text-primary">Review Import</h2>
@@ -257,7 +257,7 @@ function CsvMappingSummaryBlock({ mappingSummary }: { mappingSummary: CsvMapping
   }
 
   return (
-    <div className="mb-4 space-y-2 rounded-2xl border border-border bg-surface-subtle p-3">
+    <div className="mb-4 space-y-2 rounded-[20px] border border-border bg-surface-subtle p-3">
       <p className="text-xs font-medium text-text-primary">Detected mapping</p>
       {mappingSummary.core.length > 0 && <p className="text-xs text-text-secondary"><span className="font-medium text-text-primary">Core:</span> {mappingSummary.core.join(', ')}</p>}
       {mappingSummary.rsvp.length > 0 && <p className="text-xs text-text-secondary"><span className="font-medium text-text-primary">RSVP:</span> {mappingSummary.rsvp.join(', ')}</p>}
@@ -281,7 +281,7 @@ function CsvWarningList({
   if (items.length === 0) return null;
 
   return (
-    <div className="mb-4 rounded-2xl border border-border-subtle bg-surface-subtle p-3">
+    <div className="mb-4 rounded-[20px] border border-border-subtle bg-surface-subtle p-3">
       <p className="text-xs font-medium text-text-primary mb-1">{title}</p>
       {detail && <p className="text-xs text-text-secondary mb-1">{detail}</p>}
       <ul className="space-y-0.5">

@@ -184,7 +184,7 @@ function VendorForm({ initial, onSave, onCancel }: VendorFormProps) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 rounded-2xl border border-border-subtle bg-surface-subtle p-4">
+    <form onSubmit={handleSubmit} className="space-y-4 rounded-[20px] border border-border-subtle bg-surface-subtle p-4 shadow-none">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
           <label htmlFor={fieldId('type')} className="block text-xs font-medium text-text-secondary mb-1">Type *</label>
@@ -602,7 +602,7 @@ export const VendorsTab: React.FC<Props> = ({ vendorMeta, vendors, onAdd, onSave
   return (
     <div className="space-y-4">
       {!canEdit && (
-        <Card padding="sm" className="border-border-subtle bg-surface-subtle">
+        <Card padding="sm" className="rounded-[20px] border-border-subtle bg-surface-subtle shadow-none">
           <p className="text-sm font-semibold text-text-primary">Owner and planner financial details</p>
           <p className="mt-1 text-sm text-text-secondary">
             Vendor balances, reminders, and contract notes stay visible for planning readback here. Editing is turned off in this role, and guest-facing pages do not expose vendor financial details.
@@ -612,23 +612,23 @@ export const VendorsTab: React.FC<Props> = ({ vendorMeta, vendors, onAdd, onSave
 
       {(vendors.length > 0 || totalBalance > 0 || followUpDueCount > 0) && (
         <div className="grid grid-cols-1 md:grid-cols-5 gap-2">
-          <div className="flex items-center justify-between rounded-2xl border border-border-subtle bg-white p-3 transition-colors hover:border-primary/25">
+          <div className="flex items-center justify-between rounded-[20px] border border-border-subtle bg-white p-3 shadow-none transition-colors hover:border-primary/25">
             <span className="text-sm text-text-secondary">Still to pay vendors</span>
             <span className="font-bold text-text-primary">{fmt(totalBalance)}</span>
           </div>
-          <div className="flex items-center justify-between rounded-2xl border border-border-subtle bg-white p-3">
+          <div className="flex items-center justify-between rounded-[20px] border border-border-subtle bg-white p-3 shadow-none">
             <span className="text-sm text-text-secondary">Follow-ups due (7d)</span>
             <span className="font-bold text-text-primary">{followUpDueCount}</span>
           </div>
-          <div className="flex items-center justify-between rounded-2xl border border-border-subtle bg-white p-3">
+          <div className="flex items-center justify-between rounded-[20px] border border-border-subtle bg-white p-3 shadow-none">
             <span className="text-sm text-text-secondary">Docs linked</span>
             <span className="font-bold text-text-primary">{documentedCount}/{vendors.length}</span>
           </div>
-          <div className="flex items-center justify-between rounded-2xl border border-border-subtle bg-white p-3">
+          <div className="flex items-center justify-between rounded-[20px] border border-border-subtle bg-white p-3 shadow-none">
             <span className="text-sm text-text-secondary">Reachable</span>
             <span className="font-bold text-text-primary">{contactableCount}/{vendors.length}</span>
           </div>
-          <div className="flex items-center justify-between rounded-2xl border border-border-subtle bg-white p-3">
+          <div className="flex items-center justify-between rounded-[20px] border border-border-subtle bg-white p-3 shadow-none">
             <span className="text-sm text-text-secondary">Reminder-ready</span>
             <span className="font-bold text-text-primary">{reminderSummary.reminderReadyCount}/{vendors.length}</span>
           </div>
@@ -636,7 +636,7 @@ export const VendorsTab: React.FC<Props> = ({ vendorMeta, vendors, onAdd, onSave
       )}
 
       {vendors.length > 0 && (
-        <Card padding="sm" className="space-y-1.5">
+        <Card padding="sm" className="space-y-1.5 rounded-[20px] shadow-none">
           <p className="text-sm font-semibold text-text-primary">Vendor reminder ledger</p>
           <p className="text-sm text-text-secondary">{reminderSummary.summary}</p>
           <p className="text-xs text-text-tertiary">
@@ -696,7 +696,7 @@ export const VendorsTab: React.FC<Props> = ({ vendorMeta, vendors, onAdd, onSave
       )}
 
       {filteredVendors.length === 0 && !showAdd ? (
-        <Card padding="lg" className="text-center">
+        <Card padding="lg" className="rounded-[20px] text-center shadow-none">
           <p className="text-text-secondary mb-1">No vendors yet.</p>
           <p className="text-sm text-text-tertiary">Try a different search or add your first vendor.</p>
         </Card>
@@ -707,7 +707,7 @@ export const VendorsTab: React.FC<Props> = ({ vendorMeta, vendors, onAdd, onSave
             ['open-balance', 'Open balance'],
             ['paid', 'Paid'],
           ] as const).map(([key, label]) => (
-            <div key={key} className="rounded-2xl border border-border-subtle bg-white p-3">
+            <div key={key} className="rounded-[20px] border border-border-subtle bg-white p-3 shadow-none">
               <div className="flex items-center justify-between mb-2">
                 <p className="text-xs text-text-tertiary">{label}</p>
                 <span className="text-xs text-text-secondary">{pipelineGroups[key].length}</span>
@@ -752,7 +752,7 @@ export const VendorsTab: React.FC<Props> = ({ vendorMeta, vendors, onAdd, onSave
                     onCancel={() => setEditingVendor(null)}
                   />
                 ) : (
-                  <Card padding="sm" className={isDueSoon ? 'border-warning/40' : ''}>
+                  <Card padding="sm" className={`rounded-[20px] shadow-none ${isDueSoon ? 'border-warning/40' : ''}`}>
                     <div className="flex items-start gap-3">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">

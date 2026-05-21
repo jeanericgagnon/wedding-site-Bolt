@@ -82,7 +82,7 @@ export function GuestSnapshotInsightsPanel({
   onFocusReceptionNo,
 }: GuestSnapshotInsightsPanelProps) {
   return (
-    <details className="rounded-2xl border border-border-subtle bg-white p-4 shadow-sm">
+    <details className="rounded-[20px] border border-border-subtle bg-white p-4 shadow-none">
       <summary className="cursor-pointer list-none">
         <div className="flex items-start justify-between gap-4">
           <div>
@@ -164,7 +164,7 @@ export function GuestSnapshotInsightsPanel({
                 {eventReport.length === 0 ? (
                   <p className="text-sm text-text-secondary">No event-level reporting yet.</p>
                 ) : eventReport.map((event) => (
-                  <div key={event.id} className="rounded-2xl border border-border-subtle bg-white px-3 py-2.5">
+                  <div key={event.id} className="rounded-[20px] border border-border-subtle bg-white px-3 py-2.5">
                     <div className="flex items-center justify-between gap-3">
                       <p className="text-sm font-medium text-text-primary">{event.name}</p>
                       <span className="text-xs text-text-tertiary">Invited {event.invited}</span>
@@ -181,7 +181,7 @@ export function GuestSnapshotInsightsPanel({
                 {mealChoiceRollup.length === 0 ? (
                   <p className="text-sm text-text-secondary">No meal data yet.</p>
                 ) : mealChoiceRollup.slice(0, 6).map(([meal, count]) => (
-                  <div key={meal} className="flex items-center justify-between gap-3 rounded-2xl border border-border-subtle bg-white px-3 py-2.5">
+                  <div key={meal} className="flex items-center justify-between gap-3 rounded-[20px] border border-border-subtle bg-white px-3 py-2.5">
                     <span className="text-sm text-text-primary">{meal}</span>
                     <span className="text-sm font-semibold text-text-primary">{count}</span>
                   </div>
@@ -195,7 +195,7 @@ export function GuestSnapshotInsightsPanel({
                 {customAnswerRollup.length === 0 ? (
                   <p className="text-sm text-text-secondary">No custom answers captured yet.</p>
                 ) : customAnswerRollup.map((entry, index) => (
-                  <div key={`${entry.question}-${entry.answer}-${index}`} className="rounded-2xl border border-border-subtle bg-white px-3 py-2.5">
+                  <div key={`${entry.question}-${entry.answer}-${index}`} className="rounded-[20px] border border-border-subtle bg-white px-3 py-2.5">
                     <p className="text-xs text-text-tertiary">{entry.question}</p>
                     <div className="mt-1 flex items-center justify-between gap-3">
                       <span className="text-sm text-text-primary">{entry.answer}</span>
@@ -212,7 +212,7 @@ export function GuestSnapshotInsightsPanel({
                 {songRequestEntries.length === 0 ? (
                   <p className="text-sm text-text-secondary">No song requests captured yet.</p>
                 ) : songRequestEntries.map((entry, index) => (
-                  <div key={`${entry.guestName}-${entry.answer}-${index}`} className="rounded-2xl border border-border-subtle bg-white px-3 py-2.5">
+                  <div key={`${entry.guestName}-${entry.answer}-${index}`} className="rounded-[20px] border border-border-subtle bg-white px-3 py-2.5">
                     <div className="flex items-center justify-between gap-3">
                       <p className="text-sm font-medium text-text-primary">{entry.answer}</p>
                       <span className="text-xs text-text-tertiary">{entry.guestName}</span>
@@ -226,27 +226,27 @@ export function GuestSnapshotInsightsPanel({
         )}
 
         <div className="grid grid-cols-2 lg:grid-cols-3 gap-2.5">
-          <button onClick={onFocusMissingMeal} className="text-left rounded-2xl border border-border-subtle p-2.5 transition-colors hover:border-primary/40 hover:bg-primary/5">
+          <button onClick={onFocusMissingMeal} className="text-left rounded-[20px] border border-border-subtle p-2.5 transition-colors hover:border-primary/40 hover:bg-primary/5">
             <p className="text-xs text-text-tertiary">Missing meal</p>
             <p className="text-base font-semibold text-text-primary">{rsvpOps.missingMeal}</p>
           </button>
-          <button onClick={onFocusPlusOneMissing} className="text-left rounded-2xl border border-border-subtle p-2.5 transition-colors hover:border-primary/40 hover:bg-primary/5">
+          <button onClick={onFocusPlusOneMissing} className="text-left rounded-[20px] border border-border-subtle p-2.5 transition-colors hover:border-primary/40 hover:bg-primary/5">
             <p className="text-xs text-text-tertiary">Plus-one missing</p>
             <p className="text-base font-semibold text-text-primary">{rsvpOps.plusOneMissingName}</p>
           </button>
-          <button onClick={onFocusNoResponse} className="text-left rounded-2xl border border-border-subtle p-2.5 transition-colors hover:border-primary/40 hover:bg-primary/5">
+          <button onClick={onFocusNoResponse} className="text-left rounded-[20px] border border-border-subtle p-2.5 transition-colors hover:border-primary/40 hover:bg-primary/5">
             <p className="text-xs text-text-tertiary">No response</p>
             <p className="text-base font-semibold text-text-primary">{rsvpOps.noResponse}</p>
           </button>
-          <button onClick={onFocusPendingNoEmail} className="text-left rounded-2xl border border-border-subtle p-2.5 transition-colors hover:border-primary/40 hover:bg-primary/5">
+          <button onClick={onFocusPendingNoEmail} className="text-left rounded-[20px] border border-border-subtle p-2.5 transition-colors hover:border-primary/40 hover:bg-primary/5">
             <p className="text-xs text-text-tertiary">Pending, no email</p>
             <p className="text-base font-semibold text-text-primary">{rsvpOps.pendingNoEmail}</p>
           </button>
-          <button onClick={onFocusCeremonyNo} className="text-left rounded-2xl border border-border-subtle p-2.5 transition-colors hover:border-primary/40 hover:bg-primary/5">
+          <button onClick={onFocusCeremonyNo} className="text-left rounded-[20px] border border-border-subtle p-2.5 transition-colors hover:border-primary/40 hover:bg-primary/5">
             <p className="text-xs text-text-tertiary">Ceremony: No</p>
             <p className="text-base font-semibold text-text-primary">{rsvpOps.ceremonyNo}</p>
           </button>
-          <button onClick={onFocusReceptionNo} className="text-left rounded-2xl border border-border-subtle p-2.5 transition-colors hover:border-primary/40 hover:bg-primary/5">
+          <button onClick={onFocusReceptionNo} className="text-left rounded-[20px] border border-border-subtle p-2.5 transition-colors hover:border-primary/40 hover:bg-primary/5">
             <p className="text-xs text-text-tertiary">Reception: No</p>
             <p className="text-base font-semibold text-text-primary">{rsvpOps.receptionNo}</p>
           </button>

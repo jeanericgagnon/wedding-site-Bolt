@@ -112,17 +112,17 @@ export function NameChangeReminderAttentionPanel({
       </div>
 
       <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-        <div className="rounded-2xl border border-warning/20 bg-white/60 p-4">
+        <div className="rounded-[20px] border border-warning/20 bg-white/60 p-4">
           <p className="text-xs text-text-tertiary">Actionable split</p>
           <p className="mt-2 text-sm font-semibold text-text-primary">{reminderAttentionSummary.actionablePriority} priority · {reminderAttentionSummary.actionableNormal} normal</p>
           <p className="mt-2 text-xs text-text-secondary">{reminderAttentionSummary.actionableAndStale} actionable + stale · posture {reminderAttentionSummary.actionableFreshPosture}</p>
         </div>
-        <div className="rounded-2xl border border-warning/20 bg-white/60 p-4">
+        <div className="rounded-[20px] border border-warning/20 bg-white/60 p-4">
           <p className="text-xs text-text-tertiary">Old ready reminders</p>
           <p className="mt-2 text-sm font-semibold text-text-primary">{reminderAttentionSummary.actionableStalePriority} priority · {reminderAttentionSummary.actionableStaleNormal} normal</p>
           <p className="mt-2 text-xs text-text-secondary">Posture {reminderAttentionSummary.staleActionablePosture}</p>
         </div>
-        <div className="rounded-2xl border border-warning/20 bg-white/60 p-4">
+        <div className="rounded-[20px] border border-warning/20 bg-white/60 p-4">
           <p className="text-xs text-text-tertiary">Old waiting reminders</p>
           <p className="mt-2 text-sm font-semibold text-text-primary">{reminderAttentionSummary.blockedStalePriority} priority · {reminderAttentionSummary.blockedStaleNormal} normal</p>
           <p className="mt-2 text-xs text-text-secondary">Posture {reminderAttentionSummary.blockedStalePosture} · stale priority {reminderAttentionSummary.stalePriority}</p>
@@ -131,7 +131,7 @@ export function NameChangeReminderAttentionPanel({
 
       <div className="mt-4 space-y-3">
         {reminderAttention.map((item) => (
-          <div key={item.reminderKey} className="rounded-2xl border border-warning/20 bg-white/60 p-4">
+          <div key={item.reminderKey} className="rounded-[20px] border border-warning/20 bg-white/60 p-4">
             <div className="flex items-start justify-between gap-3">
               <div>
                 <p className="text-sm font-semibold text-text-primary">{item.label}</p>
@@ -189,7 +189,7 @@ export function NameChangeSuggestedRemindersPanel({
 
       <div className="mt-4 grid gap-3 md:grid-cols-2">
         {effectiveReminders.map((reminder) => (
-          <div key={reminder.reminder_key} className="rounded-2xl border border-border-subtle p-4">
+          <div key={reminder.reminder_key} className="rounded-[20px] border border-border-subtle p-4">
             <div className="flex items-start justify-between gap-3">
               <div>
                 <p className="text-sm font-semibold text-text-primary">{reminder.label}</p>
@@ -248,7 +248,7 @@ export function NameChangeNextStepsPanel({
             key={item.key}
             type="button"
             onClick={() => scrollToPlannerTarget(item.focusTargetId)}
-            className="rounded-2xl border border-border-subtle p-4 text-left transition hover:border-primary/30 hover:bg-primary/5"
+            className="rounded-[20px] border border-border-subtle p-4 text-left transition hover:border-primary/30 hover:bg-primary/5"
           >
             <div className="flex items-start justify-between gap-3">
               <div>
@@ -292,7 +292,7 @@ export function NameChangePlannerAdminReviewPanel({
 
       {showAdmin && (
         <div className="mt-4 grid gap-4 xl:grid-cols-2">
-          <div className="rounded-2xl border border-border-subtle p-4">
+          <div className="rounded-[20px] border border-border-subtle p-4">
             <div className="flex items-center gap-2">
               <FileCheck2 className="h-4 w-4 text-primary" />
               <p className="text-sm font-semibold text-text-primary">Seeded forms ({forms.length})</p>
@@ -307,7 +307,7 @@ export function NameChangePlannerAdminReviewPanel({
               ))}
             </div>
           </div>
-          <div className="rounded-2xl border border-border-subtle p-4">
+          <div className="rounded-[20px] border border-border-subtle p-4">
             <div className="flex items-center gap-2">
               <CheckCircle2 className="h-4 w-4 text-primary" />
               <p className="text-sm font-semibold text-text-primary">Institution library ({institutions.length})</p>

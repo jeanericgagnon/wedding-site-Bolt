@@ -249,25 +249,25 @@ export const PaymentsTab: React.FC<Props> = ({ items, vendorMeta, vendors, onUpd
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <Card padding="sm">
+        <Card padding="sm" className="rounded-[20px] shadow-none">
           <p className="text-xs text-text-tertiary mb-0.5">Open payments</p>
           <p className="text-xl font-bold text-text-primary">{fmt(totalDue)}</p>
         </Card>
-        <Card padding="sm">
+        <Card padding="sm" className="rounded-[20px] shadow-none">
           <p className="text-xs text-text-tertiary mb-0.5">Paid so far</p>
           <p className="text-xl font-bold text-success">{fmt(paidTotal)}</p>
         </Card>
-        <Card padding="sm" className={overdue > 0 ? 'border-warning/40' : ''}>
+        <Card padding="sm" className={`rounded-[20px] shadow-none ${overdue > 0 ? 'border-warning/40' : ''}`}>
           <p className="text-xs text-text-tertiary mb-0.5">Due now</p>
           <p className="text-xl font-bold text-text-primary">{overdue}</p>
         </Card>
-        <Card padding="sm">
+        <Card padding="sm" className="rounded-[20px] shadow-none">
           <p className="text-xs text-text-tertiary mb-0.5">Reminder-ready</p>
           <p className="text-xl font-bold text-text-primary">{reminderSummary.reminderReadyCount}</p>
         </Card>
       </div>
 
-      <Card padding="sm" className="space-y-3">
+      <Card padding="sm" className="space-y-3 rounded-[20px] shadow-none">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
           <div className="flex items-start gap-3">
             <div className="rounded-xl bg-primary-light p-2">
@@ -313,13 +313,13 @@ export const PaymentsTab: React.FC<Props> = ({ items, vendorMeta, vendors, onUpd
       </Card>
 
       {rows.length === 0 ? (
-        <Card padding="lg" className="text-center">
+        <Card padding="lg" className="rounded-[20px] text-center shadow-none">
           <DollarSign className="w-8 h-8 mx-auto text-text-tertiary mb-2" />
           <p className="text-text-secondary mb-1">No payment records yet.</p>
           <p className="text-sm text-text-tertiary">Budget items and vendor balances will appear here automatically.</p>
         </Card>
       ) : (
-        <Card variant="bordered" padding="none" className="overflow-auto">
+        <Card variant="bordered" padding="none" className="overflow-auto rounded-[20px] shadow-none">
           <table className="w-full min-w-[760px] text-sm">
             <thead className="bg-surface-subtle text-text-secondary">
               <tr>

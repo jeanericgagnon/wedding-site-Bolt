@@ -185,7 +185,7 @@ function EntryForm({ vaultConfigId, durationYears, onSave, onCancel, safeVaultDa
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 p-5 bg-surface-subtle rounded-2xl border border-border mt-3">
+    <form onSubmit={handleSubmit} className="space-y-4 p-5 bg-surface-subtle rounded-[20px] border border-border mt-3 shadow-none">
       <div className="grid grid-cols-2 gap-3">
         <div>
           <label className="block text-xs font-medium text-text-primary mb-1">Title (optional)</label>
@@ -470,7 +470,7 @@ export function VaultCard({
   }
 
   return (
-    <Card variant="bordered" padding="lg" className={`transition-colors border border-border-subtle ${!config.is_enabled ? 'opacity-60' : ''}`}>
+    <Card variant="bordered" padding="lg" className={`rounded-[20px] shadow-none transition-colors border border-border-subtle ${!config.is_enabled ? 'opacity-60' : ''}`}>
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-1">
         <div className="flex items-start gap-3 flex-1 min-w-0">
           <div className={`p-2.5 rounded-xl flex-shrink-0 ${isUnlocked && config.is_enabled ? 'bg-surface-subtle' : 'bg-surface-subtle'}`}>
@@ -570,7 +570,7 @@ export function VaultCard({
           )}
 
           {displayEntries.length === 0 && !showForm && (
-            <div className="text-center py-6 border border-dashed border-border rounded-2xl">
+            <div className="text-center py-6 border border-dashed border-border rounded-[20px] bg-surface-subtle/30">
               <p className="text-sm text-text-secondary mb-1">No entries yet</p>
               <p className="text-xs text-text-tertiary">Add a note, photo, video, voice note, or link for this anniversary.</p>
             </div>
@@ -582,7 +582,7 @@ export function VaultCard({
             const entryUnlockLabel = entryUnlockDate ? formatVaultUnlockDate(entryUnlockDate) : unlockLabel;
 
             return (
-              <div key={entry.id} className="p-4 bg-surface-subtle rounded-2xl border border-border">
+              <div key={entry.id} className="p-4 bg-surface-subtle rounded-[20px] border border-border shadow-none">
                 <div className="flex items-start justify-between gap-2 mb-2">
                   <div className="flex-1 min-w-0">
                     {entry.title && <p className="font-semibold text-text-primary text-sm mb-0.5">{entry.title}</p>}
@@ -646,7 +646,7 @@ export function VaultCard({
           })}
 
           {displayEntries.length > 0 && displayEntries.every((entry) => !isEntryUnlocked(entry)) && (
-            <div className="p-4 bg-surface-subtle rounded-2xl border border-dashed border-border text-center space-y-1">
+            <div className="p-4 bg-surface-subtle rounded-[20px] border border-dashed border-border text-center space-y-1 shadow-none">
               <Lock className="w-5 h-5 text-text-tertiary mx-auto mb-1" />
               <p className="text-sm font-medium text-text-secondary">{displayEntries.length} {displayEntries.length === 1 ? 'entry' : 'entries'} sealed</p>
               <p className="text-xs text-text-tertiary">{config.is_enabled ? `These messages are locked until ${unlockLabel}.` : 'Enable this vault to add or read entries.'}</p>

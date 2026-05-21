@@ -43,7 +43,7 @@ export function NameChangeExecutionSectionsPanel({
                 key={section.key}
                 type="button"
                 onClick={() => scrollToPlannerTarget(`execution-section-${section.key}`)}
-                className="rounded-2xl border border-border-subtle bg-white/60 p-4 text-left transition hover:border-primary/30 hover:bg-primary/5"
+                className="rounded-[20px] border border-border-subtle bg-white/60 p-4 text-left transition hover:border-primary/30 hover:bg-primary/5"
               >
                 <div className="flex items-center justify-between gap-3">
                   <p className="text-sm font-semibold text-text-primary">{section.title}</p>
@@ -129,29 +129,29 @@ export function NameChangeExecutionSectionsPanel({
           )}
 
           <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-            <div className="rounded-2xl border border-border-subtle bg-white/60 p-4">
+            <div className="rounded-[20px] border border-border-subtle bg-white/60 p-4">
               <p className="text-xs text-text-tertiary">This part</p>
               <p className="mt-2 text-sm font-semibold text-text-primary">{section.readyCount} ready · {section.blockedCount} need details</p>
               <p className="mt-2 text-xs text-text-secondary">Items that can move now versus items that still need details.</p>
             </div>
-            <div className="rounded-2xl border border-border-subtle bg-white/60 p-4">
+            <div className="rounded-[20px] border border-border-subtle bg-white/60 p-4">
               <p className="text-xs text-text-tertiary">Worth checking</p>
               <p className="mt-2 text-sm font-semibold text-text-primary">{section.attentionCount} worth checking</p>
               <p className="mt-2 text-xs text-text-secondary">Items that are not blocked but deserve a quick look.</p>
             </div>
-            <div className="rounded-2xl border border-border-subtle bg-white/60 p-4">
+            <div className="rounded-[20px] border border-border-subtle bg-white/60 p-4">
               <p className="text-xs text-text-tertiary">Most useful next card</p>
               <p className="mt-2 text-sm font-semibold text-text-primary">{section.highestRiskCard}</p>
               <p className="mt-2 text-xs text-text-secondary">The card with the most useful next details to finish.</p>
             </div>
-            <div className="rounded-2xl border border-border-subtle bg-white/60 p-4">
+            <div className="rounded-[20px] border border-border-subtle bg-white/60 p-4">
               <p className="text-xs text-text-tertiary">Old reminders</p>
               <p className="mt-2 text-sm font-semibold text-text-primary">{section.staleReminderOverlap} old reminder{section.staleReminderOverlap === 1 ? '' : 's'}</p>
               <p className="mt-2 text-xs text-text-secondary">Follow-ups that may need to be rescheduled or dismissed.</p>
             </div>
           </div>
 
-          <div className="rounded-2xl border border-primary/20 bg-primary/5 p-4">
+          <div className="rounded-[20px] border border-primary/20 bg-primary/5 p-4">
             <div className="flex items-start justify-between gap-3">
               <div>
                 <p className="text-xs text-primary">Next best step</p>

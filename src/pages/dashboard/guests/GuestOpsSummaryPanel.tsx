@@ -108,7 +108,7 @@ export function GuestOpsSummaryPanel({
   return (
     <div className="space-y-6">
       <section className="grid gap-4 lg:grid-cols-3">
-        <article className="rounded-3xl border border-border-subtle bg-white p-5 shadow-sm">
+        <article className="rounded-[20px] border border-border-subtle bg-white p-5 shadow-none">
           <div>
             <h3 className="text-lg font-semibold text-text-primary">Add guests one by one.</h3>
             <p className="mt-2 text-sm leading-6 text-text-secondary">Start with the people you know are invited, then let the list grow around them.</p>
@@ -124,7 +124,7 @@ export function GuestOpsSummaryPanel({
           </Button>
         </article>
 
-        <article className="rounded-3xl border border-border-subtle bg-white p-5 shadow-sm">
+        <article className="rounded-[20px] border border-border-subtle bg-white p-5 shadow-none">
           <div>
             <h3 className="text-lg font-semibold text-text-primary">Review replies and RSVP setup.</h3>
             <p className="mt-2 text-sm leading-6 text-text-secondary">Keep private links, event invites, meals, and follow-up logic easy to manage from one place.</p>
@@ -134,7 +134,7 @@ export function GuestOpsSummaryPanel({
           </Button>
         </article>
 
-        <article className="rounded-3xl border border-border-subtle bg-white p-5 shadow-sm">
+        <article className="rounded-[20px] border border-border-subtle bg-white p-5 shadow-none">
           <div>
             <h3 className="text-lg font-semibold text-text-primary">Collect missing contact details.</h3>
             <p className="mt-2 text-sm leading-6 text-text-secondary">Send one private link so guests can fill in addresses, phone numbers, and language details themselves.</p>
@@ -159,7 +159,7 @@ export function GuestOpsSummaryPanel({
               <h2 className="mt-3 font-serif text-2xl font-normal text-text-primary">Everything has a place.</h2>
             </div>
             <div className="space-y-3">
-              <div className="rounded-2xl border border-border-subtle bg-surface-subtle/30 p-4">
+              <div className="rounded-[20px] border border-border-subtle bg-surface-subtle/30 p-4">
                 <div className="flex items-start justify-between gap-4">
                   <div>
                     <h3 className="text-sm font-semibold text-text-primary">Guest list</h3>
@@ -168,7 +168,7 @@ export function GuestOpsSummaryPanel({
                   <span className="text-sm font-semibold text-text-primary">{totalCount} invited</span>
                 </div>
               </div>
-              <div className="rounded-2xl border border-border-subtle bg-surface-subtle/30 p-4">
+              <div className="rounded-[20px] border border-border-subtle bg-surface-subtle/30 p-4">
                 <div className="flex items-start justify-between gap-4">
                   <div>
                     <h3 className="text-sm font-semibold text-text-primary">RSVPs</h3>
@@ -177,7 +177,7 @@ export function GuestOpsSummaryPanel({
                   <span className="text-sm font-semibold text-text-primary">{Math.max(0, totalCount - pendingCount)} replied</span>
                 </div>
               </div>
-              <div className="rounded-2xl border border-border-subtle bg-surface-subtle/30 p-4">
+              <div className="rounded-[20px] border border-border-subtle bg-surface-subtle/30 p-4">
                 <div className="flex items-start justify-between gap-4">
                   <div>
                     <h3 className="text-sm font-semibold text-text-primary">Follow-up</h3>
@@ -186,7 +186,7 @@ export function GuestOpsSummaryPanel({
                   <span className="text-sm font-semibold text-text-primary">{pendingCount} pending</span>
                 </div>
               </div>
-              <div className="rounded-2xl border border-border-subtle bg-surface-subtle/30 p-4">
+              <div className="rounded-[20px] border border-border-subtle bg-surface-subtle/30 p-4">
                 <div className="flex items-start justify-between gap-4">
                   <div>
                     <h3 className="text-sm font-semibold text-text-primary">Contact details</h3>
@@ -206,7 +206,7 @@ export function GuestOpsSummaryPanel({
               <button
                 type="button"
                 onClick={() => onFocusRecommendedAction(recommendedAction.filter)}
-                className="w-full rounded-2xl border border-primary/20 bg-primary/5 p-4 text-left transition hover:border-primary/35"
+                className="w-full rounded-[20px] border border-primary/20 bg-primary/5 p-4 text-left transition hover:border-primary/35"
               >
                 <p className="text-sm font-semibold text-text-primary">{recommendedAction.title}</p>
                 <p className="mt-2 text-sm leading-6 text-text-secondary">{recommendedAction.detail}</p>
@@ -218,7 +218,7 @@ export function GuestOpsSummaryPanel({
               <button
                 key={`${item.guestId}-${index}`}
                 onClick={() => onFocusQueueItem(item.filter, item.guestName)}
-                className="w-full rounded-2xl border border-border-subtle bg-white p-4 text-left transition hover:border-primary/30 hover:shadow-sm"
+                className="w-full rounded-[20px] border border-border-subtle bg-white p-4 text-left transition hover:border-primary/30 hover:shadow-none"
               >
                 <p className="text-sm font-semibold text-text-primary">{item.guestName}</p>
                 <p className="mt-2 text-sm leading-6 text-text-secondary">{item.issue}</p>
@@ -227,7 +227,7 @@ export function GuestOpsSummaryPanel({
             ))}
 
             {!recommendedAction && opsQueue.length === 0 && (
-              <div className="rounded-2xl border border-border-subtle bg-surface-subtle/30 p-4">
+              <div className="rounded-[20px] border border-border-subtle bg-surface-subtle/30 p-4">
                 <p className="text-sm font-semibold text-text-primary">Nothing urgent is waiting.</p>
                 <p className="mt-2 text-sm leading-6 text-text-secondary">Guest cleanup is in a calm place right now. The deeper controls stay just below.</p>
               </div>
@@ -239,7 +239,7 @@ export function GuestOpsSummaryPanel({
       <Card variant="bordered" padding="lg">
         <div className="space-y-6">
         {!cleanGuestsView && recommendedAction && (
-          <div className="flex flex-col gap-3 rounded-2xl border border-primary/20 bg-primary/5 p-3.5 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col gap-3 rounded-[20px] border border-primary/20 bg-primary/5 p-3.5 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="text-sm font-semibold text-text-primary">Recommended next action: {recommendedAction.title}</p>
               <p className="text-xs text-text-secondary mt-0.5">{recommendedAction.detail}</p>
@@ -265,7 +265,7 @@ export function GuestOpsSummaryPanel({
         )}
 
         {!cleanGuestsView && opsQueue.length > 0 && (
-          <div className="space-y-2 rounded-2xl border border-border-subtle bg-white p-3.5">
+          <div className="space-y-2 rounded-[20px] border border-border-subtle bg-white p-3.5">
             <div className="flex items-center justify-between">
               <p className="text-sm font-semibold text-text-primary">RSVP follow-up list</p>
               <span className="text-xs text-text-tertiary break-words">{opsQueue.length} to review</span>
@@ -285,7 +285,7 @@ export function GuestOpsSummaryPanel({
           </div>
         )}
 
-        <div className="rounded-2xl border border-primary/20 bg-primary/5 p-4 text-sm shadow-sm">
+        <div className="rounded-[20px] border border-primary/20 bg-primary/5 p-4 text-sm shadow-none">
           <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary/75">Planner handoff</p>
           <p className="mt-3 font-semibold text-primary">{plannerHandoff.title}</p>
           <p className="mt-2 leading-6 text-primary/80">{plannerHandoff.detail}</p>
@@ -293,7 +293,7 @@ export function GuestOpsSummaryPanel({
         </div>
 
         {fromQuickStart && nextStep === 'photos' && (
-          <div className="rounded-2xl border border-primary/20 bg-primary/5 p-4 shadow-sm">
+          <div className="rounded-[20px] border border-primary/20 bg-primary/5 p-4 shadow-none">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary/75">Quick start</p>

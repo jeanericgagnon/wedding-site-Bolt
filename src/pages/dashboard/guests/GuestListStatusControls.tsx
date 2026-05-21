@@ -107,7 +107,7 @@ export function GuestListStatusControls({
   return (
     <>
       {!cleanGuestsView && recommendedAction && (
-        <div className="flex flex-col gap-3 rounded-2xl border border-primary/20 bg-primary/5 p-3.5 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-3 rounded-[20px] border border-primary/20 bg-primary/5 p-3.5 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="text-sm font-semibold text-text-primary">Recommended next action: {recommendedAction.title}</p>
             <p className="text-xs text-text-secondary mt-0.5">{recommendedAction.detail}</p>
@@ -133,7 +133,7 @@ export function GuestListStatusControls({
       )}
 
       {!cleanGuestsView && opsQueue.length > 0 && (
-        <div className="space-y-2 rounded-2xl border border-border-subtle bg-white p-3.5">
+        <div className="space-y-2 rounded-[20px] border border-border-subtle bg-white p-3.5">
           <div className="flex items-center justify-between">
             <p className="text-sm font-semibold text-text-primary">RSVP follow-up list</p>
             <span className="text-xs text-text-tertiary break-words">{opsQueue.length} to review</span>
@@ -143,7 +143,7 @@ export function GuestListStatusControls({
               <button
                 key={`${item.guestId}-${index}`}
                 onClick={() => onFocusOpsItem(item.filter, item.guestName)}
-                className="w-full rounded-2xl border border-border px-2.5 py-2 text-left transition-colors hover:border-primary/40 hover:bg-primary/5"
+                className="w-full rounded-[20px] border border-border px-2.5 py-2 text-left transition-colors hover:border-primary/40 hover:bg-primary/5"
               >
                 <p className="text-xs font-semibold text-text-primary">{item.guestName}</p>
                 <p className="text-[11px] text-text-tertiary">{item.issue}</p>
@@ -153,14 +153,14 @@ export function GuestListStatusControls({
         </div>
       )}
 
-      <div className="rounded-2xl border border-primary/20 bg-primary/5 px-3 py-2 text-xs">
+      <div className="rounded-[20px] border border-primary/20 bg-primary/5 px-3 py-2 text-xs">
         <p className="font-medium text-primary">{plannerHandoff.title}</p>
         <p className="mt-1 text-primary/80">{plannerHandoff.detail}</p>
         <p className="mt-2 text-primary/70">Use this surface to move guest work forward, but couple approval still matters for sensitive calls.</p>
       </div>
 
       {fromQuickStart && nextStep === 'photos' && (
-        <div className="flex flex-col gap-3 rounded-2xl border border-primary/20 bg-primary/5 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-3 rounded-[20px] border border-primary/20 bg-primary/5 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="text-sm font-semibold text-text-primary">Next up: import guests, then add photos</p>
             <p className="text-xs text-text-secondary mt-1">Import your guest list here. If you want to skip this for now, jump straight to photos and come back later.</p>
@@ -171,7 +171,7 @@ export function GuestListStatusControls({
         </div>
       )}
 
-      <div className="flex items-center justify-between gap-3 rounded-2xl border border-border-subtle bg-surface-subtle p-2.5">
+      <div className="flex items-center justify-between gap-3 rounded-[20px] border border-border-subtle bg-surface-subtle p-2.5">
         <p className="text-xs text-text-secondary">
           Active segment: <span className="font-semibold text-text-primary">{segmentLabel}</span>
           {extraFilterCount > 0 ? <> · +<span className="font-semibold text-text-primary">{extraFilterCount}</span> filters</> : null}
@@ -188,7 +188,7 @@ export function GuestListStatusControls({
       </div>
 
       {exceptionReviewVisible && (
-        <div className="space-y-2 rounded-2xl border border-border-subtle bg-surface-subtle/60 p-2.5 text-xs text-text-secondary">
+        <div className="space-y-2 rounded-[20px] border border-border-subtle bg-surface-subtle/60 p-2.5 text-xs text-text-secondary">
           <p>Some guests have RSVP details that are worth reviewing personally.</p>
           <div className="flex flex-wrap gap-2">
             <button onClick={onCopyExceptionChecklist} className="rounded-xl border border-border-subtle bg-white px-2 py-1 text-text-secondary hover:bg-surface-subtle">Copy exception checklist</button>
@@ -197,7 +197,7 @@ export function GuestListStatusControls({
       )}
 
       {filterStatus === 'missing-meal' && (
-        <div className="space-y-2 rounded-2xl border border-border-subtle bg-surface-subtle/60 p-2.5 text-xs text-text-secondary">
+        <div className="space-y-2 rounded-[20px] border border-border-subtle bg-surface-subtle/60 p-2.5 text-xs text-text-secondary">
           <p>These guests are attending but still need a meal choice.</p>
           <div className="flex flex-wrap gap-2">
             <button onClick={onCopyMissingMealChecklist} className="rounded-xl border border-border-subtle bg-white px-2 py-1 text-text-secondary hover:bg-surface-subtle">Copy meal follow-up checklist</button>
@@ -213,7 +213,7 @@ export function GuestListStatusControls({
       )}
 
       {filterStatus === 'no-contact' && (
-        <div className="space-y-2 rounded-2xl border border-border-subtle bg-surface-subtle/60 p-2.5 text-xs text-text-secondary">
+        <div className="space-y-2 rounded-[20px] border border-border-subtle bg-surface-subtle/60 p-2.5 text-xs text-text-secondary">
           <p>These guests have no email or phone. Add contact info before reminder campaigns.</p>
           <div className="flex flex-wrap gap-2">
             <button onClick={onCopyNoContactChecklist} className="rounded-xl border border-border-subtle bg-white px-2 py-1 text-text-secondary hover:bg-surface-subtle">Copy follow-up checklist</button>
@@ -222,7 +222,7 @@ export function GuestListStatusControls({
         </div>
       )}
 
-      <div className="sticky top-2 z-10 flex flex-wrap items-start justify-between gap-2 rounded-2xl border border-border/50 bg-white/95 p-2.5 backdrop-blur">
+      <div className="sticky top-2 z-10 flex flex-wrap items-start justify-between gap-2 rounded-[20px] border border-border/50 bg-white/95 p-2.5 backdrop-blur">
         <div className="flex-1 min-w-0">
           <div className="flex flex-wrap items-center gap-2">
             {([
@@ -272,7 +272,7 @@ export function GuestListStatusControls({
       </div>
 
       {checkInMode && (
-        <div className="mb-3 flex items-center justify-between rounded-2xl border border-success/25 bg-success/10 px-4 py-2.5">
+        <div className="mb-3 flex items-center justify-between rounded-[20px] border border-success/25 bg-success/10 px-4 py-2.5">
           <span className="text-sm font-medium text-success">Check-in mode active · {checkInCount} checked in</span>
           <button
             onClick={onViewCheckedIn}
@@ -284,7 +284,7 @@ export function GuestListStatusControls({
       )}
 
       {checkInMode && lastCheckInGuestName && (
-        <div className="mb-3 flex items-center justify-between rounded-2xl border border-border bg-surface-subtle px-4 py-2">
+        <div className="mb-3 flex items-center justify-between rounded-[20px] border border-border bg-surface-subtle px-4 py-2">
           <span className="text-xs text-text-secondary">Last check-in: <span className="font-medium text-text-primary">{lastCheckInGuestName}</span></span>
           <button
             onClick={onUndoLastCheckIn}
@@ -297,7 +297,7 @@ export function GuestListStatusControls({
       )}
 
       {selectedGuestCount > 0 && viewMode === 'list' && (
-        <div className="mb-3 flex items-center justify-between rounded-2xl border border-primary/20 bg-primary/8 px-4 py-2">
+        <div className="mb-3 flex items-center justify-between rounded-[20px] border border-primary/20 bg-primary/8 px-4 py-2">
           <span className="text-sm font-medium text-primary">{selectedGuestCount} selected · {visibleSelectedCount} visible</span>
           <div className="flex items-center gap-2">
             <button onClick={onKeepVisibleSelection} disabled={!canEditGuests} className="text-xs rounded-xl border border-border bg-white px-2 py-1 text-text-secondary hover:border-primary/40 hover:text-primary disabled:cursor-not-allowed disabled:opacity-60">Keep visible only</button>

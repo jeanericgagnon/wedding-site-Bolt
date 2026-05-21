@@ -54,11 +54,11 @@ export function GuestDashboardHeader({
         ]}
         actions={
           <>
-            <Link to="/dashboard/rsvp-board" className="rounded-xl border border-border-subtle bg-white px-3 py-2 text-sm font-medium text-text-primary no-underline hover:bg-surface-subtle">Review RSVPs</Link>
+            <Link to="/dashboard/guests?tab=rsvps" className="inline-flex min-h-[44px] items-center rounded-lg border border-border-strong bg-surface px-4 text-sm font-medium text-text-primary no-underline hover:bg-surface-subtle">Review RSVPs</Link>
             <button
               onClick={onAddGuest}
               disabled={!canEditGuests}
-              className="rounded-xl bg-primary px-3 py-2 text-sm font-medium text-white hover:bg-primary/90 disabled:opacity-50"
+              className="inline-flex min-h-[44px] items-center rounded-lg border border-primary bg-primary px-4 text-sm font-medium text-white hover:bg-primary-hover disabled:opacity-50"
             >
               Add guest
             </button>
@@ -66,13 +66,13 @@ export function GuestDashboardHeader({
         }
       >
         <div className="flex flex-wrap items-end gap-2">
-          <div className="inline-flex rounded-xl border border-border-subtle bg-white p-1">
-            <button className="rounded-xl border border-border-subtle bg-surface-subtle px-3 py-1.5 text-sm text-text-primary" onClick={() => onSetGuestsTab('ops')}>Guest list</button>
-            <button className="rounded-xl px-3 py-1.5 text-sm text-text-secondary" onClick={() => onSetGuestsTab('rsvp-config')}>RSVPs</button>
+          <div className="inline-flex rounded-lg border border-border bg-surface p-1">
+            <button className="rounded-md border border-border bg-surface-subtle px-3 py-1.5 text-sm text-text-primary" onClick={() => onSetGuestsTab('ops')}>Guest list</button>
+            <button className="rounded-md px-3 py-1.5 text-sm text-text-secondary hover:bg-surface-subtle hover:text-text-primary" onClick={() => onSetGuestsTab('rsvp-config')}>RSVPs</button>
           </div>
           <button
             onClick={onToggleInsights}
-            className="rounded-xl border border-border bg-white px-3 py-1.5 text-xs text-text-secondary hover:border-primary/40 hover:text-primary"
+            className="rounded-lg border border-border bg-surface px-3 py-1.5 text-xs text-text-secondary hover:border-primary/40 hover:text-primary"
           >
             {showInsights ? 'Hide insights' : 'Show insights'}
           </button>
@@ -80,15 +80,15 @@ export function GuestDashboardHeader({
       </DashboardPageHero>
 
       {csvImportSummary && (
-        <div className="space-y-2 rounded-2xl border border-border-subtle bg-surface-subtle/30 px-3 py-3 text-sm">
+        <div className="space-y-2 rounded-[20px] border border-border bg-surface px-5 py-4 text-sm shadow-none">
           <p className="font-medium text-text-primary">Last import summary</p>
           <p className="text-text-secondary">Imported {csvImportSummary.imported} guest{csvImportSummary.imported === 1 ? '' : 's'} · rows needing review {csvImportSummary.skipped} · household groups {csvImportSummary.householdKeys} · household matches left separate {csvImportSummary.guardedHouseholds} · event names to review {csvImportSummary.unknownEvents} · possible repeats {csvImportSummary.duplicateNames}</p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs">
-            <div className="rounded-xl border border-border-subtle bg-surface-subtle px-3 py-2 text-text-secondary">
+            <div className="rounded-lg border border-border bg-surface-subtle/30 px-3 py-2 text-text-secondary">
               <p className="font-medium">What came through</p>
               <p className="mt-1">Guest rows imported, event links mapped where possible, and safer household grouping applied when the keys looked trustworthy.</p>
             </div>
-            <div className="rounded-xl border border-border-subtle bg-white px-3 py-2 text-text-secondary">
+            <div className="rounded-lg border border-border bg-surface-subtle/30 px-3 py-2 text-text-secondary">
               <p className="font-medium">Still review</p>
               <p className="mt-1">Check rows that need names, possible repeats, household matches left separate, event names to review, and any guests still missing direct contact info.</p>
             </div>
@@ -97,7 +97,7 @@ export function GuestDashboardHeader({
       )}
 
       {guestsRole === 'planner' && (
-        <div className="rounded-2xl border border-primary/20 bg-primary/5 px-3 py-2 text-xs text-primary">
+        <div className="rounded-lg border border-primary/20 bg-primary/5 px-4 py-3 text-xs text-primary">
           Planner view is on. This view stays focused on guest follow-up, response cleanup, and who still needs a nudge.
         </div>
       )}

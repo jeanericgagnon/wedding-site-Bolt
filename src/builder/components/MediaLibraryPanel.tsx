@@ -95,7 +95,7 @@ export const MediaLibraryPanel: React.FC = () => {
         className="absolute inset-0 bg-black/50"
         onClick={() => dispatch(builderActions.closeMediaLibrary())}
       />
-      <div className="relative ml-auto w-full max-w-3xl bg-white h-full flex flex-col shadow-sm">
+      <div className="relative ml-auto w-full max-w-3xl bg-white h-full flex flex-col shadow-none">
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
           <div>
             <h2 className="text-lg font-semibold text-gray-900">
@@ -394,7 +394,7 @@ const AssetTile: React.FC<AssetTileProps> = ({ asset, onDelete, isPickerMode, on
       <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-end justify-end p-2 opacity-0 group-hover:opacity-100">
         <button
           onClick={e => { e.stopPropagation(); onDelete(); }}
-          className="p-1.5 bg-white rounded-xl text-[var(--color-text-secondary)] hover:text-[var(--color-accent)] shadow-sm transition-colors"
+          className="p-1.5 bg-white rounded-xl text-[var(--color-text-secondary)] hover:text-[var(--color-accent)] shadow-none transition-colors"
           aria-label="Remove image"
         >
           <Trash2 size={12} />

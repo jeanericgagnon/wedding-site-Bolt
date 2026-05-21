@@ -586,8 +586,8 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [],
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-text-primary/40 backdrop-blur-sm">
-      <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-3xl border border-border-subtle bg-surface">
-        <div className="sticky top-0 bg-surface border-b border-border px-6 py-4 flex items-center justify-between rounded-t-3xl z-10">
+      <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-[20px] border border-border-subtle bg-surface">
+        <div className="sticky top-0 bg-surface border-b border-border px-6 py-4 flex items-center justify-between rounded-t-[20px] z-10">
           <h2 className="text-lg font-semibold text-text-primary">
             {isEdit ? 'Edit Registry Item' : 'Add Registry Item'}
           </h2>
@@ -682,7 +682,7 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [],
                   )}
 
                   {barcodeLookup?.matched && (
-                    <div className="space-y-3 rounded-2xl border border-border-subtle bg-white p-4">
+                    <div className="space-y-3 rounded-[20px] border border-border-subtle bg-white p-4">
                       <div className="flex items-start justify-between gap-3">
                         <div>
                           <p className="text-sm font-semibold text-text-primary">{barcodeLookup.title || 'Scanned product'}</p>
@@ -884,7 +884,7 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [],
               )}
 
               {sourceMode === 'manual' && (
-                <div className="rounded-2xl border border-border-subtle bg-surface-subtle/40 p-4">
+                <div className="rounded-[20px] border border-border-subtle bg-surface-subtle/40 p-4">
                   <p className="text-sm font-medium text-text-primary">Add it manually</p>
                   <p className="mt-1 text-xs text-text-secondary">Use this for one-off items, custom gifts, or anything that is easier to type than import.</p>
                 </div>
@@ -895,7 +895,7 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [],
           <div className="grid grid-cols-1 gap-4">
             {/* Image preview + URL */}
             {draft.item_type !== 'cash_fund' && <div className="flex gap-4">
-              <div className="flex h-20 w-20 flex-shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-border bg-surface-subtle">
+              <div className="flex h-20 w-20 flex-shrink-0 items-center justify-center overflow-hidden rounded-[20px] border border-border bg-surface-subtle">
                 {getSafePublicImageUrl(draft.image_url) ? (
                   <img
                     src={getSafePublicImageUrl(draft.image_url)}

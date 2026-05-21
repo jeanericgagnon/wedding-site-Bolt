@@ -63,7 +63,7 @@ export function GuestPhotoOrganizerCard({
       </div>
 
       <div className="mt-5 grid gap-3 lg:grid-cols-2">
-        <div className="rounded-2xl border border-border-subtle bg-surface-subtle/40 px-4 py-4">
+        <div className="rounded-[20px] border border-border-subtle bg-surface-subtle/40 px-4 py-4">
           <p className="text-sm font-semibold text-text-primary">Suggested album moves</p>
           <div className="mt-3 space-y-2">
             {aiPhotoOpsPlan.bucketSuggestions.slice(0, 6).map((suggestion) => (
@@ -93,7 +93,7 @@ export function GuestPhotoOrganizerCard({
             ))}
           </div>
         </div>
-        <div className="rounded-2xl border border-border-subtle bg-surface-subtle/40 px-4 py-4">
+        <div className="rounded-[20px] border border-border-subtle bg-surface-subtle/40 px-4 py-4">
           <p className="text-sm font-semibold text-text-primary">{aiPhotoOpsPlan.slideshow.title}</p>
           <p className="mt-1 text-xs text-text-tertiary">{aiPhotoOpsPlan.slideshow.mood}</p>
           <div className="mt-3 space-y-2">

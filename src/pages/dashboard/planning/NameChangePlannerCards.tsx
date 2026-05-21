@@ -34,14 +34,14 @@ export const ExecutionSnapshotCard: React.FC<ExecutionCardConfig> = ({
       </div>
 
       <div className="mt-4 grid gap-3 md:grid-cols-5">
-        <div className="rounded-2xl border border-border-subtle p-3"><p className="text-xs text-text-tertiary">Status</p><p className="mt-2 text-sm font-semibold text-text-primary">{snapshot.readinessSummary.status}</p></div>
-        <div className="rounded-2xl border border-border-subtle p-3"><p className="text-xs text-text-tertiary">Needs first</p><p className="mt-2 text-sm font-semibold text-text-primary">{snapshot.readinessSummary.blockingFieldRisks}</p></div>
-        <div className="rounded-2xl border border-border-subtle p-3"><p className="text-xs text-text-tertiary">Worth checking</p><p className="mt-2 text-sm font-semibold text-text-primary">{snapshot.readinessSummary.attentionFieldRisks}</p></div>
-        <div className="rounded-2xl border border-border-subtle p-3"><p className="text-xs text-text-tertiary">Needs review</p><p className="mt-2 text-sm font-semibold text-text-primary">{snapshot.readinessSummary.lowConfidenceFields}</p></div>
-        <div className="rounded-2xl border border-border-subtle p-3"><p className="text-xs text-text-tertiary">Document checks</p><p className="mt-2 text-sm font-semibold text-text-primary">{snapshot.readinessSummary.documentRepairDebt}</p></div>
+        <div className="rounded-[20px] border border-border-subtle p-3"><p className="text-xs text-text-tertiary">Status</p><p className="mt-2 text-sm font-semibold text-text-primary">{snapshot.readinessSummary.status}</p></div>
+        <div className="rounded-[20px] border border-border-subtle p-3"><p className="text-xs text-text-tertiary">Needs first</p><p className="mt-2 text-sm font-semibold text-text-primary">{snapshot.readinessSummary.blockingFieldRisks}</p></div>
+        <div className="rounded-[20px] border border-border-subtle p-3"><p className="text-xs text-text-tertiary">Worth checking</p><p className="mt-2 text-sm font-semibold text-text-primary">{snapshot.readinessSummary.attentionFieldRisks}</p></div>
+        <div className="rounded-[20px] border border-border-subtle p-3"><p className="text-xs text-text-tertiary">Needs review</p><p className="mt-2 text-sm font-semibold text-text-primary">{snapshot.readinessSummary.lowConfidenceFields}</p></div>
+        <div className="rounded-[20px] border border-border-subtle p-3"><p className="text-xs text-text-tertiary">Document checks</p><p className="mt-2 text-sm font-semibold text-text-primary">{snapshot.readinessSummary.documentRepairDebt}</p></div>
       </div>
 
-      <div className="mt-4 rounded-2xl border border-border-subtle p-4">
+      <div className="mt-4 rounded-[20px] border border-border-subtle p-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <p className="text-xs text-text-tertiary">Saved status</p>
@@ -59,7 +59,7 @@ export const ExecutionSnapshotCard: React.FC<ExecutionCardConfig> = ({
 
       <div className="mt-4 grid gap-3 md:grid-cols-2">
         {snapshot.checklist.map((item) => (
-          <div key={item.label} className="rounded-2xl border border-border-subtle p-4">
+          <div key={item.label} className="rounded-[20px] border border-border-subtle p-4">
             <div className="flex items-start justify-between gap-3">
               <p className="text-sm font-semibold text-text-primary">{item.label}</p>
               <span className={`rounded-xl px-2 py-1 text-xs ${item.status === 'ready' ? 'bg-success/10 text-success' : item.status === 'attention' ? 'bg-warning/10 text-warning' : 'bg-danger/10 text-danger'}`}>{getNameChangeStatusChipLabel(item.status)}</span>
@@ -69,11 +69,11 @@ export const ExecutionSnapshotCard: React.FC<ExecutionCardConfig> = ({
         ))}
       </div>
 
-      <div className="mt-4 rounded-2xl border border-border-subtle p-4">
+      <div className="mt-4 rounded-[20px] border border-border-subtle p-4">
         <h4 className="text-sm font-semibold text-text-primary">{sequenceTitle}</h4>
         <div className="mt-3 grid gap-3 md:grid-cols-2">
           {snapshot.sequence.dependencies.map((dependency) => (
-            <div key={dependency.key} className="rounded-2xl border border-border-subtle p-4">
+            <div key={dependency.key} className="rounded-[20px] border border-border-subtle p-4">
               <div className="flex items-start justify-between gap-3">
                 <p className="text-sm font-semibold text-text-primary">{dependency.label}</p>
                 <span className={`rounded-xl px-2 py-1 text-xs ${dependency.status === 'satisfied' ? 'bg-success/10 text-success' : dependency.status === 'attention' ? 'bg-warning/10 text-warning' : 'bg-danger/10 text-danger'}`}>{getNameChangeStatusChipLabel(dependency.status)}</span>
@@ -86,7 +86,7 @@ export const ExecutionSnapshotCard: React.FC<ExecutionCardConfig> = ({
 
       <div className="mt-4 grid gap-3 md:grid-cols-2">
         {snapshot.autofillFields.map((field) => (
-          <div key={field.targetField} className="rounded-2xl border border-border-subtle p-4">
+          <div key={field.targetField} className="rounded-[20px] border border-border-subtle p-4">
             <p className="text-sm font-semibold text-text-primary">{field.label}</p>
             <p className="mt-2 text-sm text-text-secondary">{field.value.value ?? 'Missing'}</p>
             <p className="mt-2 text-xs text-text-secondary">{field.targetField} · {field.value.source} · {field.value.confidence}</p>
@@ -94,9 +94,9 @@ export const ExecutionSnapshotCard: React.FC<ExecutionCardConfig> = ({
         ))}
       </div>
 
-      <div className="mt-4 rounded-2xl border border-border-subtle p-4">
+      <div className="mt-4 rounded-[20px] border border-border-subtle p-4">
         {snapshot.nextAction ? (
-          <div className="mb-4 rounded-2xl border border-border-subtle p-4">
+          <div className="mb-4 rounded-[20px] border border-border-subtle p-4">
             <p className="text-xs text-text-tertiary">Next best step</p>
             <p className="mt-2 text-sm font-semibold text-text-primary">{snapshot.nextAction.label}</p>
             <div className="mt-2 space-y-1 text-sm text-text-secondary">
@@ -120,7 +120,7 @@ export const ExecutionSnapshotCard: React.FC<ExecutionCardConfig> = ({
 
         <div className="mt-4 grid gap-3 md:grid-cols-2">
           {snapshot.formPayload.fields.map((field) => (
-            <div key={field.fieldKey} className="rounded-2xl border border-border-subtle p-4">
+            <div key={field.fieldKey} className="rounded-[20px] border border-border-subtle p-4">
               <p className="text-sm font-semibold text-text-primary">{field.label}</p>
               <p className="mt-2 text-sm text-text-secondary">{field.value ?? 'Missing'}</p>
               <p className="mt-2 text-xs text-text-secondary">{field.fieldKey} · {field.source}{field.sourceDocumentKind ? ` · ${field.sourceDocumentKind}` : ''}{field.sourceFieldKey ? ` · ${field.sourceFieldKey}` : ''}{' · '}{field.confidence}</p>
@@ -129,7 +129,7 @@ export const ExecutionSnapshotCard: React.FC<ExecutionCardConfig> = ({
         </div>
 
         {snapshot.fieldRisks.length > 0 && (
-          <div className="mt-4 rounded-2xl border border-border-subtle p-4">
+          <div className="mt-4 rounded-[20px] border border-border-subtle p-4">
             <div className="flex items-center justify-between gap-3">
               <div>
                 <h4 className="text-sm font-semibold text-text-primary">Details to check</h4>
@@ -141,7 +141,7 @@ export const ExecutionSnapshotCard: React.FC<ExecutionCardConfig> = ({
             </div>
             <div className="mt-4 grid gap-3 md:grid-cols-2">
               {snapshot.fieldRisks.map((risk) => (
-                <div key={`${risk.fieldKey}-${risk.severity}`} className="rounded-2xl border border-border-subtle p-4">
+                <div key={`${risk.fieldKey}-${risk.severity}`} className="rounded-[20px] border border-border-subtle p-4">
                   <div className="flex items-start justify-between gap-3">
                     <p className="text-sm font-semibold text-text-primary">{risk.label}</p>
                     <span className={`rounded-xl px-2 py-1 text-xs ${risk.severity === 'blocking' ? 'bg-danger/10 text-danger' : 'bg-warning/10 text-warning'}`}>{getNameChangeStatusChipLabel(risk.severity)}</span>
@@ -168,7 +168,7 @@ export const ReminderPostureCard: React.FC<ReminderPostureCardConfig> = ({ title
         : 'border-border-subtle bg-white/60';
 
   return (
-    <div className={`rounded-2xl border p-4 ${toneClass}`}>
+    <div className={`rounded-[20px] border p-4 ${toneClass}`}>
       <p className="text-xs text-text-tertiary">{title}</p>
       <p className="mt-2 text-sm font-semibold text-text-primary">{value}</p>
       <p className="mt-2 text-xs text-text-secondary">{detail}</p>

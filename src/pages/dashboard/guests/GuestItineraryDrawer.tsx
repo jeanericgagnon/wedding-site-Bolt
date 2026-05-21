@@ -372,7 +372,7 @@ function GuestDrawerDetails({
 
   return (
     <>
-      <div className="mb-4 rounded-2xl border border-border bg-surface-subtle p-4 space-y-3">
+      <div className="mb-4 rounded-[20px] border border-border bg-surface-subtle p-4 space-y-3">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <p className="text-xs text-text-tertiary">Visibility preview</p>
@@ -592,7 +592,7 @@ function GuestDrawerDetails({
         )}
       </div>
 
-      <div className="mb-4 rounded-2xl border border-border bg-surface-subtle p-4 space-y-2">
+      <div className="mb-4 rounded-[20px] border border-border bg-surface-subtle p-4 space-y-2">
         <p className="text-xs text-text-tertiary">RSVP details</p>
         <div className="text-sm text-text-primary">
           <span className="font-medium">Status:</span>{' '}
@@ -636,7 +636,7 @@ function GuestDrawerDetails({
         )}
       </div>
 
-      <div className="mb-4 rounded-2xl border border-border bg-surface-subtle p-4 space-y-2">
+      <div className="mb-4 rounded-[20px] border border-border bg-surface-subtle p-4 space-y-2">
         <p className="text-xs text-text-tertiary">Per-event RSVP structure</p>
         {(() => {
           const eventState = getPerEventRsvpState({ invitedToCeremony: guest.invited_to_ceremony, invitedToReception: guest.invited_to_reception, invitedEventIds: guest.invited_event_ids as string[] | null | undefined });
@@ -649,7 +649,7 @@ function GuestDrawerDetails({
         })()}
       </div>
 
-      <div className="mb-4 rounded-2xl border border-border bg-surface-subtle p-4 space-y-2">
+      <div className="mb-4 rounded-[20px] border border-border bg-surface-subtle p-4 space-y-2">
         <p className="text-xs text-text-tertiary">Plus-one truth</p>
         {(() => {
           const plusOneState = getPlusOneState({ plusOneAllowed: guest.plus_one_allowed, plusOneName: guest.rsvp?.plus_one_name, attending: guest.rsvp?.attending });
@@ -662,7 +662,7 @@ function GuestDrawerDetails({
         })()}
       </div>
 
-      <div className="mb-4 rounded-2xl border border-border bg-surface-subtle p-4 space-y-2">
+      <div className="mb-4 rounded-[20px] border border-border bg-surface-subtle p-4 space-y-2">
         <p className="text-xs text-text-tertiary">RSVP exceptions</p>
         {(() => {
           const states = getRsvpExceptionStates({
@@ -691,7 +691,7 @@ function GuestDrawerDetails({
         })()}
       </div>
 
-      <div className="mb-4 rounded-2xl border border-border bg-surface-subtle p-4 space-y-2">
+      <div className="mb-4 rounded-[20px] border border-border bg-surface-subtle p-4 space-y-2">
         <p className="text-xs text-text-tertiary">Household context</p>
         {householdMembers.length > 1 ? (
           <>
@@ -713,7 +713,7 @@ function GuestDrawerDetails({
 
 function GuestAuditPanel({ entries }: { entries: GuestAuditEntry[] }) {
   return (
-    <div className="mb-4 rounded-2xl border border-border bg-surface-subtle p-4">
+    <div className="mb-4 rounded-[20px] border border-border bg-surface-subtle p-4">
       <div className="flex items-center justify-between mb-2">
         <p className="text-xs text-text-tertiary">Recent guest updates</p>
         <span className="text-[11px] text-text-tertiary">Last {entries.length} updates</span>
@@ -774,7 +774,7 @@ function GuestEventInviteList({
             key={event.id}
             onClick={() => onToggleEventInvite(event.id, invited)}
             disabled={isToggling || isGuestsReadOnly}
-            className={`w-full flex items-center gap-3 rounded-2xl border p-3.5 text-left transition-all ${
+            className={`w-full flex items-center gap-3 rounded-[20px] border p-3.5 text-left transition-all ${
               invited
                 ? 'border-primary/30 bg-primary/5'
                 : isGuestsReadOnly

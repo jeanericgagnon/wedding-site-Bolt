@@ -81,7 +81,7 @@ export function GuestPhotoAlbumCreateCard({
               key={template.label}
               type="button"
               onClick={() => onNameChange(template.label)}
-              className="rounded-2xl border border-border-subtle bg-surface-subtle px-4 py-4 text-left transition hover:border-neutral-300 hover:bg-white"
+              className="rounded-[20px] border border-border-subtle bg-surface-subtle px-4 py-4 text-left transition hover:border-neutral-300 hover:bg-white"
             >
               <p className="text-sm font-medium text-neutral-900">{template.label}</p>
               <p className="mt-1 text-xs text-neutral-500">{template.hint}</p>
@@ -189,7 +189,7 @@ export function GuestPhotoAlbumCreateCard({
 
         {latestUploadUrl && (
           <div className="grid gap-3 lg:grid-cols-[1.35fr_0.9fr]">
-            <div className="rounded-2xl border border-border-subtle bg-surface-subtle p-4">
+            <div className="rounded-[20px] border border-border-subtle bg-surface-subtle p-4">
               <p className="text-sm font-medium text-text-primary mb-1">Newest album link</p>
               <div className="flex items-center gap-2">
                 <code className="flex-1 text-xs text-text-secondary break-all">{latestUploadUrl}</code>
@@ -203,7 +203,7 @@ export function GuestPhotoAlbumCreateCard({
                 </Button>
               </div>
             </div>
-            <div className="rounded-2xl border border-border-subtle bg-surface-subtle p-4">
+            <div className="rounded-[20px] border border-border-subtle bg-surface-subtle p-4">
               <p className="text-xs font-semibold text-text-tertiary">Newest album link</p>
               <p className="mt-2 text-sm text-neutral-700">Use a real album upload link here. Guests should land in the right place immediately.</p>
               <div className="mt-3 flex flex-wrap gap-2">

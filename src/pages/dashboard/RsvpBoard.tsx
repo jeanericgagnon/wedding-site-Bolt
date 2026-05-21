@@ -138,40 +138,40 @@ export const DashboardRsvpBoard: React.FC = () => {
 
   return (
     <DashboardLayout currentPage="guests">
-      <div className="max-w-5xl mx-auto space-y-6">
-        <div className="rounded-2xl border border-border-subtle bg-white p-5">
+      <div className="space-y-6">
+        <div className="rounded-[20px] border border-border-subtle bg-surface p-5 shadow-none">
           <h1 className="text-2xl font-semibold text-text-primary">Guest replies</h1>
           <p className="text-sm text-text-secondary mt-1">Refreshes every few moments so new replies are easy to spot while plans are changing.</p>
           {lastUpdated && (
             <p className="text-xs text-text-tertiary mt-2">Last refreshed: {lastUpdated.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', second: '2-digit' })}</p>
           )}
           <div className="mt-3 flex flex-wrap gap-2">
-            <Link to="/dashboard/coordinator" className="rounded-xl border border-border px-3 py-1.5 text-xs text-text-secondary hover:border-primary/40 hover:text-primary">Day-of view</Link>
-            <Link to="/dashboard/guests" className="rounded-xl border border-border px-3 py-1.5 text-xs text-text-secondary hover:border-primary/40 hover:text-primary">Open guests</Link>
-            <button onClick={() => setFilter((prev) => prev === 'pending' ? 'all' : 'pending')} className="rounded-xl border border-border px-3 py-1.5 text-xs text-text-secondary hover:border-primary/40 hover:text-primary">{filter === 'pending' ? 'Show everyone' : 'Show guests waiting to reply'}</button>
+            <Link to="/dashboard/coordinator" className="rounded-lg border border-border px-3 py-1.5 text-xs text-text-secondary hover:border-primary/40 hover:text-primary">Day-of view</Link>
+            <Link to="/dashboard/guests" className="rounded-lg border border-border px-3 py-1.5 text-xs text-text-secondary hover:border-primary/40 hover:text-primary">Open guests</Link>
+            <button onClick={() => setFilter((prev) => prev === 'pending' ? 'all' : 'pending')} className="rounded-lg border border-border px-3 py-1.5 text-xs text-text-secondary hover:border-primary/40 hover:text-primary">{filter === 'pending' ? 'Show everyone' : 'Show guests waiting to reply'}</button>
           </div>
           {loadError && (
-            <div className="mt-3 rounded-xl border border-border-subtle bg-surface-subtle px-3 py-2 text-xs text-text-primary">
+            <div className="mt-3 rounded-lg border border-border-subtle bg-surface-subtle px-3 py-2 text-xs text-text-primary">
               {loadError}
             </div>
           )}
-          <div className="mt-3 rounded-xl border border-border-subtle bg-surface-subtle/30 px-3 py-2 text-xs text-text-secondary">
+          <div className="mt-3 rounded-lg border border-border-subtle bg-surface-subtle/30 px-3 py-2 text-xs text-text-secondary">
             Helpful when some guests are invited to welcome events, brunch, or reception-only plans and need different follow-up.
           </div>
         </div>
 
-        <div className="rounded-xl border border-border-subtle bg-surface-subtle/30 px-3 py-2 text-xs text-text-secondary">
+        <div className="rounded-lg border border-border-subtle bg-surface-subtle/30 px-3 py-2 text-xs text-text-secondary">
           Guests who need personal follow-up are kept separate from clean online replies, so your pending list stays easier to trust.
         </div>
 
-        <div className="rounded-2xl border border-border-subtle bg-white p-4">
+        <div className="rounded-[20px] border border-border-subtle bg-surface p-4 shadow-none">
           <p className="text-sm font-semibold text-text-primary">Replies by event</p>
           <div className="mt-3 grid grid-cols-1 md:grid-cols-4 gap-2">
             {['Ceremony + reception', 'Ceremony only', 'Reception only'].map((label) => {
               const count = visibleRows.filter((row) => getPerEventRsvpState({ invitedToCeremony: row.invited_to_ceremony, invitedToReception: row.invited_to_reception, invitedEventIds: row.invited_event_ids }).summary === label).length;
-              return <div key={label} className="rounded-xl border border-border-subtle bg-surface-subtle/30 px-3 py-2"><p className="text-[11px] text-text-tertiary">{label}</p><p className="text-sm font-semibold text-text-primary">{loading ? '—' : count}</p></div>;
+              return <div key={label} className="rounded-lg border border-border-subtle bg-surface-subtle/30 px-3 py-2"><p className="text-[11px] text-text-tertiary">{label}</p><p className="text-sm font-semibold text-text-primary">{loading ? '—' : count}</p></div>;
             })}
-            <div className="rounded-xl border border-border-subtle bg-surface-subtle/30 px-3 py-2"><p className="text-[11px] text-text-tertiary">Special event invites</p><p className="text-sm font-semibold text-text-primary">{loading ? '—' : visibleRows.filter((row) => (row.invited_event_ids?.length ?? 0) > 0).length}</p></div>
+            <div className="rounded-lg border border-border-subtle bg-surface-subtle/30 px-3 py-2"><p className="text-[11px] text-text-tertiary">Special event invites</p><p className="text-sm font-semibold text-text-primary">{loading ? '—' : visibleRows.filter((row) => (row.invited_event_ids?.length ?? 0) > 0).length}</p></div>
           </div>
         </div>
 
@@ -185,14 +185,14 @@ export const DashboardRsvpBoard: React.FC = () => {
             { label: 'Needs contact info', value: stats.unreachable },
             { label: 'Checked in', value: stats.checkedIn },
           ].map((item) => (
-            <div key={item.label} className="rounded-2xl border border-border-subtle bg-white p-4">
+            <div key={item.label} className="rounded-[20px] border border-border-subtle bg-surface p-4 shadow-none">
               <p className="text-xs text-text-tertiary">{item.label}</p>
               <p className="text-2xl font-semibold text-text-primary mt-1">{loading ? '—' : item.value}</p>
             </div>
           ))}
         </div>
 
-        <div className="rounded-2xl border border-border-subtle bg-white p-4">
+        <div className="rounded-[20px] border border-border-subtle bg-surface p-4 shadow-none">
           <p className="text-sm font-semibold text-text-primary">Invitation progress</p>
           <div className="mt-3 grid grid-cols-1 md:grid-cols-4 gap-2">
             {['not-invited', 'invited', 'reminded', 'manual-handled'].map((state) => {
@@ -207,7 +207,7 @@ export const DashboardRsvpBoard: React.FC = () => {
                 : state === 'manual-handled'
                   ? 'handled personally'
                   : state.replace(/-/g, ' ');
-              return <div key={state} className="rounded-xl border border-border-subtle bg-surface-subtle/30 px-3 py-2"><p className="text-[11px] text-text-tertiary">{label}</p><p className="text-sm font-semibold text-text-primary">{loading ? '—' : count}</p></div>;
+              return <div key={state} className="rounded-lg border border-border-subtle bg-surface-subtle/30 px-3 py-2"><p className="text-[11px] text-text-tertiary">{label}</p><p className="text-sm font-semibold text-text-primary">{loading ? '—' : count}</p></div>;
             })}
           </div>
         </div>

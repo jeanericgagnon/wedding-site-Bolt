@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '../../components/ui';
-import { ExternalLink, Eye } from 'lucide-react';
+import { Eye } from 'lucide-react';
 import { ACTIVE_SITE_STORAGE_CHANGED_EVENT, getStoredActiveSiteId } from '../../lib/activeSiteStorage';
 import { formatOverviewRelativeTime, formatOverviewWeddingDate } from './overviewDate';
 import { buildOverviewDashboardModel } from './buildOverviewDashboardModel';
@@ -263,35 +263,32 @@ export function OverviewDashboardLiveContent({
 
   return (
     <div className="space-y-9">
-      <section className="border-b border-border-subtle pb-8">
-        <div className="grid gap-8 lg:grid-cols-[minmax(0,1.1fr)_minmax(320px,0.9fr)] lg:items-center">
+      <section>
+        <div className="grid gap-8">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary/75">Your wedding space</p>
-            <h1 className="mt-4 max-w-3xl font-serif text-4xl font-normal leading-tight text-text-primary md:text-6xl">
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary">Your wedding space</p>
+            <h1 className="mt-4 max-w-[820px] font-serif text-5xl font-normal leading-[1.02] text-text-primary md:text-[64px]">
               Everything guests need, in one calm place.
             </h1>
             <p className="mt-5 max-w-2xl text-base leading-8 text-text-secondary">
-              Guest site is {siteVisibility.isLive ? 'live' : 'still being prepared'}. {pendingGuests > 0 ? `${pendingGuests} RSVP${pendingGuests === 1 ? ' is' : 's are'} still pending.` : 'Replies are coming in cleanly.'}
+              Your site, guests, registry, messages, and memories are gathered here so the experience feels easier for everyone.
             </p>
             {heroVenueLine && <p className="mt-4 text-sm font-medium text-text-primary">{heroVenueLine}</p>}
             <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-              {stats?.siteSlug && (
-                <Button variant="primary" size="md" onClick={() => openSitePreview(stats.siteSlug!, siteVisibility.isLive, navigate)}>
-                  <ExternalLink className="mr-2 h-4 w-4" aria-hidden="true" />
-                  {siteVisibility.isLive ? 'Preview site' : 'Preview draft'}
-                </Button>
-              )}
-              <Button variant={stats?.siteSlug ? 'outline' : 'primary'} size="md" onClick={() => navigate('/dashboard/builder')}>
+              <Button variant="primary" size="lg" onClick={() => navigate('/dashboard/overview')}>
+                Review guest experience
+              </Button>
+              <Button variant="ghost" size="lg" onClick={() => navigate('/dashboard/builder')}>
                 Edit website
               </Button>
-              <Button variant="outline" size="md" onClick={() => navigate('/dashboard/builder?tool=share')}>
-                Share with guests
+              <Button variant="ghost" size="lg" onClick={() => navigate('/dashboard/tools')}>
+                More
               </Button>
             </div>
           </div>
-          <div className="rounded-[2rem] border border-border-subtle bg-white p-5 shadow-sm">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary/75">Your guest experience</p>
-            <div className="mt-4 overflow-hidden rounded-[1.5rem] border border-border-subtle bg-surface-subtle">
+          <div className="rounded-[20px] border border-border bg-white p-5 shadow-none">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-primary">Your guest experience</p>
+            <div className="mt-4 overflow-hidden rounded-[20px] border border-border bg-surface-subtle">
               <div className="bg-white px-5 py-4">
                 <div className="flex items-center justify-between gap-4">
                   <div>
@@ -301,9 +298,9 @@ export function OverviewDashboardLiveContent({
                   <span className="rounded-full border border-border-subtle px-3 py-1 text-xs text-text-secondary">{siteVisibility.label}</span>
                 </div>
               </div>
-              <div className="min-h-[240px] bg-[linear-gradient(135deg,#f8f5f0_0%,#ffffff_42%,#f1ece4_100%)] p-6">
+              <div className="min-h-[240px] bg-[linear-gradient(135deg,#fbf7f1_0%,#ffffff_42%,#f1ece4_100%)] p-6">
                 <div className="max-w-sm">
-                  <p className="text-xs font-medium uppercase tracking-[0.14em] text-primary/75">{weddingDateLabel}</p>
+                  <p className="text-xs font-medium uppercase tracking-[0.14em] text-primary">{weddingDateLabel}</p>
                   <h2 className="mt-4 font-serif text-4xl leading-tight text-text-primary">Complete without a photo.</h2>
                   <p className="mt-4 text-sm leading-6 text-text-secondary">Your cover is ready now. Add a photo later if you want one, without holding up the guest flow.</p>
                   <div className="mt-6 flex flex-wrap gap-2 text-xs">
@@ -320,11 +317,11 @@ export function OverviewDashboardLiveContent({
       </section>
 
       <section className="grid gap-6 lg:grid-cols-[minmax(0,1.1fr)_360px]">
-        <article className="rounded-[2rem] border border-border-subtle bg-white p-6 shadow-sm">
+        <article className="rounded-[20px] border border-border bg-white p-6 shadow-none">
           <div className="flex items-start justify-between gap-6">
             <div>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary/75">At a glance</p>
-              <h2 className="mt-3 font-serif text-2xl font-normal text-text-primary">The details that matter most right now.</h2>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-primary">At a glance</p>
+              <h2 className="mt-3 font-serif text-3xl font-normal text-text-primary">The details that matter most right now.</h2>
             </div>
             <Button variant="outline" size="sm" onClick={() => navigate('/dashboard/tools')}>
               Edit grid
@@ -333,7 +330,7 @@ export function OverviewDashboardLiveContent({
           <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
             {glanceItems.map((item) => {
               const content = (
-                <div className="rounded-2xl border border-border-subtle bg-surface-subtle/30 p-4 transition hover:border-primary/30 hover:shadow-sm">
+                <div className="min-h-[160px] rounded-xl border border-border bg-surface-subtle/30 p-5 transition-colors hover:border-primary/40 hover:bg-white">
                   <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-text-tertiary">{item.label}</p>
                   <p className="mt-3 text-2xl font-semibold text-text-primary">{item.value}</p>
                   <p className="mt-2 text-sm leading-6 text-text-secondary">{item.detail}</p>
@@ -352,17 +349,17 @@ export function OverviewDashboardLiveContent({
             })}
           </div>
         </article>
-        <aside className="rounded-[2rem] border border-border-subtle bg-white p-6 shadow-sm">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary/75">Needs review</p>
+        <aside className="rounded-[20px] border border-border bg-white p-6 shadow-none">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-primary">Review next</p>
           <div className="mt-5 space-y-4">
             {reviewItems.length === 0 ? (
-              <div className="rounded-2xl border border-border-subtle bg-surface-subtle/30 p-4">
+              <div className="rounded-xl border border-border bg-surface-subtle/30 p-4">
                 <p className="text-sm font-semibold text-text-primary">Nothing urgent is waiting.</p>
                 <p className="mt-2 text-sm leading-6 text-text-secondary">You can keep moving, or open the deeper owner detail when you want a fuller sweep.</p>
               </div>
             ) : (
               reviewItems.map((item) => (
-                <Link key={item.title} to={item.href} className="block rounded-2xl border border-border-subtle bg-surface-subtle/30 p-4 no-underline transition hover:border-primary/30 hover:shadow-sm">
+                <Link key={item.title} to={item.href} className="block rounded-xl border border-border bg-surface-subtle/30 p-4 no-underline transition-colors hover:border-primary/40 hover:bg-white">
                   <p className="text-sm font-semibold text-text-primary">{item.title}</p>
                   <p className="mt-2 text-sm leading-6 text-text-secondary">{item.detail}</p>
                   <p className="mt-4 text-sm font-semibold text-primary">{item.action}</p>
@@ -373,7 +370,7 @@ export function OverviewDashboardLiveContent({
         </aside>
       </section>
 
-      <section className="rounded-3xl bg-white/80 p-5 shadow-sm ring-1 ring-border-subtle md:p-6">
+      <section className="rounded-[20px] bg-white/80 p-5 shadow-none ring-1 ring-border-subtle md:p-6">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary/75">Suggested next steps</p>
@@ -390,7 +387,7 @@ export function OverviewDashboardLiveContent({
         </div>
         <div className="mt-5 grid gap-3 lg:grid-cols-3">
           {suggestions.map((suggestion) => (
-            <button key={suggestion.title} type="button" onClick={suggestion.action} className="rounded-2xl border border-border-subtle bg-white p-5 text-left transition hover:border-primary/30 hover:shadow-sm">
+            <button key={suggestion.title} type="button" onClick={suggestion.action} className="rounded-[20px] border border-border-subtle bg-white p-5 text-left transition-colors hover:border-primary/30">
               <h3 className="text-base font-semibold text-text-primary">{suggestion.title}</h3>
               <p className="mt-2 text-sm leading-6 text-text-secondary">{suggestion.detail}</p>
               <p className="mt-4 text-sm font-semibold text-primary">{suggestion.label}</p>
@@ -400,7 +397,7 @@ export function OverviewDashboardLiveContent({
       </section>
 
       {showMoreDetail && (
-        <section className="rounded-3xl border border-border-subtle bg-white p-5 md:p-6">
+        <section className="rounded-[20px] border border-border-subtle bg-white p-5 md:p-6">
           <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary/75">Owner detail</p>
@@ -408,7 +405,7 @@ export function OverviewDashboardLiveContent({
               <p className="mt-2 text-sm leading-6 text-text-secondary">{websiteInviteAnalytics.summary}</p>
               <div className="mt-5 grid gap-3 sm:grid-cols-2">
                 {websiteInviteAnalytics.signals.map((signal) => (
-                  <div key={signal.id} className="rounded-2xl border border-border-subtle bg-surface-subtle/40 p-4">
+                  <div key={signal.id} className="rounded-[20px] border border-border-subtle bg-surface-subtle/40 p-4">
                     <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-text-tertiary">{signal.label}</p>
                     <p className="mt-2 text-xl font-semibold text-text-primary">{signal.value}</p>
                     <p className="mt-2 text-sm leading-6 text-text-secondary">{signal.detail}</p>
@@ -418,7 +415,7 @@ export function OverviewDashboardLiveContent({
               </div>
             </div>
             <div className="space-y-4">
-              <div className="rounded-2xl border border-border-subtle bg-surface-subtle/40 p-4">
+              <div className="rounded-[20px] border border-border-subtle bg-surface-subtle/40 p-4">
                 <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary/75">Guest path</p>
                 <h3 className="mt-3 font-serif text-xl font-normal text-text-primary">Guest journey funnel</h3>
                 <p className="mt-2 text-sm leading-6 text-text-secondary">{websiteInviteAnalyticsFunnel.summary}</p>
@@ -434,7 +431,7 @@ export function OverviewDashboardLiveContent({
                   ))}
                 </div>
               </div>
-              <div className="rounded-2xl border border-border-subtle bg-surface-subtle/40 p-4">
+              <div className="rounded-[20px] border border-border-subtle bg-surface-subtle/40 p-4">
                 <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary/75">Boundaries</p>
                 <h3 className="mt-3 font-serif text-xl font-normal text-text-primary">Privacy guardrails</h3>
                 <ul className="mt-3 space-y-2 text-sm leading-6 text-text-secondary">
@@ -448,7 +445,7 @@ export function OverviewDashboardLiveContent({
         </section>
       )}
 
-      <section className="rounded-3xl border border-border-subtle bg-white p-5 md:p-6">
+      <section className="rounded-[20px] border border-border-subtle bg-white p-5 md:p-6">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <h2 className="font-serif text-2xl font-normal text-text-primary">Your workspace</h2>
@@ -480,21 +477,21 @@ export function OverviewDashboardLiveContent({
 
       <section className="grid gap-6 lg:grid-cols-[1fr_0.8fr]">
         <div className="space-y-4">
-          <div className="rounded-2xl border border-border-subtle bg-white p-5 shadow-sm">
+          <div className="rounded-[20px] border border-border-subtle bg-white p-5 shadow-none">
             <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary/75">Recent activity</p>
             <h2 className="mt-3 text-lg font-semibold text-text-primary">Quiet updates from the parts of the wedding guests touch most.</h2>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-text-secondary">Use this as the light audit trail for RSVPs, messages, photos, and site changes before you open the deeper workspaces.</p>
           </div>
           <div>
             {recentActivityItems.length === 0 ? (
-              <div className="rounded-2xl border border-border-subtle bg-white/85 p-5">
+              <div className="rounded-[20px] border border-border-subtle bg-white/85 p-5">
                 <p className="text-sm font-semibold text-text-primary">Nothing new here yet.</p>
                 <p className="mt-2 text-sm leading-6 text-text-secondary">
                   As guests RSVP, photos arrive, messages send, and the site changes, the latest updates will appear here.
                 </p>
               </div>
             ) : (
-              <div className="divide-y divide-border-subtle rounded-2xl border border-border-subtle bg-white">
+              <div className="divide-y divide-border-subtle rounded-[20px] border border-border-subtle bg-white">
                 {recentActivityItems.slice(0, 5).map((item) => (
                   <Link key={`${item.label}-${item.detail}`} to={item.href} className="block p-4 no-underline hover:bg-surface-subtle/40">
                     <p className="text-sm font-semibold text-text-primary">{item.label}</p>
@@ -506,7 +503,7 @@ export function OverviewDashboardLiveContent({
           </div>
         </div>
 
-        <div className="rounded-3xl border border-border-subtle bg-white p-5 md:p-6">
+        <div className="rounded-[20px] border border-border-subtle bg-white p-5 md:p-6">
           <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary/75">Guest handoff</p>
           <h2 className="mt-3 font-serif text-2xl font-normal text-text-primary">Share with guests</h2>
           <p className="mt-2 text-sm leading-6 text-text-secondary">Preview the experience, share the site, or open the guest-facing memory tools without leaving the calm owner view.</p>

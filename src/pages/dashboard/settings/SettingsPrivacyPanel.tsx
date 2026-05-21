@@ -86,7 +86,7 @@ export function SettingsPrivacyPanel({
   const translationStatusByLanguage = new Map(translationStatuses.map((status) => [status.language, status]));
 
   return (
-    <Card variant="bordered" padding="lg">
+    <Card variant="bordered" padding="lg" className="rounded-[20px] shadow-none">
       <CardHeader>
         <div className="flex items-start justify-between gap-4">
           <div>
@@ -100,7 +100,7 @@ export function SettingsPrivacyPanel({
       </CardHeader>
       <CardContent>
         {!showPrivacySettings ? (
-          <div className="rounded-2xl border border-border-subtle bg-surface-subtle/40 p-4 text-sm text-text-secondary">
+          <div className="rounded-[20px] border border-border-subtle bg-surface-subtle/40 p-4 text-sm text-text-secondary">
             Hidden by default to keep things simple. Open it when you want to choose who can see your site.
           </div>
         ) : (
@@ -136,7 +136,7 @@ export function SettingsPrivacyPanel({
                   </label>
                 ))}
               </div>
-              <div className="rounded-2xl border border-border-subtle bg-surface-subtle/40 p-4">
+              <div className="rounded-[20px] border border-border-subtle bg-surface-subtle/40 p-4">
                 <p className="text-sm font-semibold text-text-primary">Guest-facing language options</p>
                 <p className="mt-1 text-xs text-text-secondary">Choose which languages should show up across translated guest-facing surfaces. Your default language always stays on.</p>
                 <div className="mt-3 flex flex-wrap gap-2">
@@ -169,7 +169,7 @@ export function SettingsPrivacyPanel({
                   })}
                 </div>
               </div>
-              <div className="rounded-2xl border border-border-subtle bg-surface-subtle/40 p-4">
+              <div className="rounded-[20px] border border-border-subtle bg-surface-subtle/40 p-4">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div>
                     <p className="text-sm font-semibold text-text-primary">Auto-translate public site</p>
@@ -219,7 +219,7 @@ export function SettingsPrivacyPanel({
               </div>
             </div>
 
-            <div className="space-y-2 rounded-2xl border border-border-subtle bg-surface-subtle/40 p-4">
+            <div className="space-y-2 rounded-[20px] border border-border-subtle bg-surface-subtle/40 p-4">
               <p className="text-sm font-medium text-text-primary">Visibility states</p>
               <ul className="space-y-1 text-xs text-text-secondary">
                 <li>• <span className="font-medium text-text-primary">Draft</span> means only you can see the site while editing.</li>
@@ -228,14 +228,14 @@ export function SettingsPrivacyPanel({
               </ul>
             </div>
 
-            <div className="space-y-3 rounded-2xl border border-border-subtle bg-surface-subtle/40 p-4">
+            <div className="space-y-3 rounded-[20px] border border-border-subtle bg-surface-subtle/40 p-4">
               <div>
                 <p className="text-sm font-medium text-text-primary">Aggregate analytics policy</p>
                 <p className="mt-1 text-xs text-text-secondary">
                   Guest-hub analytics stay aggregate-only. Owner readback should never expose invite tokens, private URLs, IP addresses, or device-level detail.
                 </p>
               </div>
-              <label className="flex items-start gap-3 rounded-2xl border border-border bg-white px-3 py-3 text-sm text-text-primary">
+              <label className="flex items-start gap-3 rounded-[20px] border border-border bg-white px-3 py-3 text-sm text-text-primary">
                 <input
                   type="checkbox"
                   checked={analyticsEnabled}
@@ -286,7 +286,7 @@ export function SettingsPrivacyPanel({
               {getVisibilityModeOptions().map((option) => (
                 <label
                   key={option.value}
-                  className={`flex cursor-pointer items-start gap-3 rounded-2xl border-2 p-3.5 transition-colors ${
+                  className={`flex cursor-pointer items-start gap-3 rounded-[20px] border-2 p-3.5 transition-colors ${
                     privacyMode === option.value ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/40'
                   }`}
                 >
@@ -308,7 +308,7 @@ export function SettingsPrivacyPanel({
             </div>
 
             {privacyMode === 'password_protected' && (
-              <div className="space-y-3 rounded-2xl border border-border bg-surface-subtle p-4">
+              <div className="space-y-3 rounded-[20px] border border-border bg-surface-subtle p-4">
                 <p className="text-sm font-medium text-text-primary">Site password</p>
                 <p className="text-xs text-text-secondary">Guests will be prompted to enter this before viewing the site.</p>
                 <div className="relative">
@@ -335,7 +335,7 @@ export function SettingsPrivacyPanel({
             )}
 
             {privacyMode === 'invite_only' && (
-              <div className="space-y-3 rounded-2xl border border-border bg-surface-subtle p-4">
+              <div className="space-y-3 rounded-[20px] border border-border bg-surface-subtle p-4">
                 <p className="text-sm font-medium text-text-primary">Invite-only guest access link</p>
                 <p className="text-xs text-text-secondary">Share this link with guests you want to allow through your invite-only access setting. This is a guest access control, not a separate unpublished preview product, and it is separate from search visibility.</p>
                 {guestAccessToken && siteSlug ? (

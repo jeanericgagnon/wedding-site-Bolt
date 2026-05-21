@@ -143,7 +143,7 @@ export const DashboardSeatingLookup: React.FC = () => {
 
   return (
     <DashboardLayout currentPage="seating">
-      <div className="max-w-5xl mx-auto space-y-5">
+      <div className="space-y-5">
         <div className="rounded-xl border border-border-subtle bg-white p-5">
           <h1 className="text-2xl font-semibold text-text-primary">Find a guest seat</h1>
           <p className="text-sm text-text-secondary mt-1">Search a guest’s table and seat when someone asks.</p>

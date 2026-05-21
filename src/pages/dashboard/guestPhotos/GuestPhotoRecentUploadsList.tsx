@@ -27,7 +27,7 @@ export function GuestPhotoRecentUploadsList({
           const safeTags = safePhotoAnalysisList(analysisByUploadId.get(upload.id)?.tags);
 
           return (
-            <li key={upload.id} className={`rounded-2xl border px-2 py-1 ${upload.is_hidden ? 'bg-neutral-100 border-neutral-200' : 'bg-white border-neutral-200'}`}>
+            <li key={upload.id} className={`rounded-[20px] border px-2 py-1 ${upload.is_hidden ? 'bg-neutral-100 border-neutral-200' : 'bg-white border-neutral-200'}`}>
               <div className="flex items-center justify-between gap-2">
                 <div>
                   <span>

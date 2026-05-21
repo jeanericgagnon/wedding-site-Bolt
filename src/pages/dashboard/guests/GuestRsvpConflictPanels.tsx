@@ -60,7 +60,7 @@ export function GuestRsvpConflictPanels({
   return (
     <>
       {localConflicts.length > 0 && (
-        <div className="rounded-2xl border border-border-subtle bg-white p-4 shadow-sm space-y-3">
+        <div className="rounded-[20px] border border-border-subtle bg-white p-4 shadow-none space-y-3">
           <div className="flex items-center justify-between gap-2 mb-1">
             <div className="flex items-center gap-2 flex-wrap min-w-0">
               <AlertCircle className="w-4 h-4 text-text-tertiary flex-shrink-0" />
@@ -85,7 +85,7 @@ export function GuestRsvpConflictPanels({
       )}
 
       {rsvpConflicts.length > 0 && (
-        <div className="rounded-2xl border border-border-subtle bg-white p-4 shadow-sm space-y-3">
+        <div className="rounded-[20px] border border-border-subtle bg-white p-4 shadow-none space-y-3">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
             <div className="flex items-center gap-2">
               <AlertCircle className="w-4 h-4 text-text-tertiary" />

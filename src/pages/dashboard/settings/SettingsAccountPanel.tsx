@@ -59,7 +59,7 @@ export function SettingsAccountPanel({
 }: SettingsAccountPanelProps) {
   return (
     <>
-      <Card variant="bordered" padding="lg">
+      <Card variant="bordered" padding="lg" className="rounded-[20px] shadow-none">
         <CardHeader>
           <CardTitle>Account Information</CardTitle>
           <CardDescription>Update your account details</CardDescription>
@@ -95,7 +95,7 @@ export function SettingsAccountPanel({
         </CardContent>
       </Card>
 
-      <Card variant="bordered" padding="lg">
+      <Card variant="bordered" padding="lg" className="rounded-[20px] shadow-none">
         <CardHeader>
           <CardTitle>Password</CardTitle>
           <CardDescription>Change your password</CardDescription>
@@ -167,7 +167,7 @@ export function SettingsAccountPanel({
         </CardContent>
       </Card>
 
-      <Card variant="bordered" padding="lg">
+      <Card variant="bordered" padding="lg" className="rounded-[20px] shadow-none">
         <CardHeader>
           <CardTitle>Session</CardTitle>
           <CardDescription>Log out of your account on this device</CardDescription>

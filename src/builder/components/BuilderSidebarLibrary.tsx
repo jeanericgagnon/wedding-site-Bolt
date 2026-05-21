@@ -368,7 +368,7 @@ export const BuilderSidebarLibrary: React.FC<BuilderSidebarLibraryProps> = ({ ac
                     onClick={() => setPreviewPhotoSet(opt.id)}
                     className={`rounded border px-1.5 py-0.5 text-[10px] font-medium transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)]/40 focus-visible:ring-offset-1 ${
                       previewPhotoSet === opt.id
-                        ? 'border-[var(--color-accent)] bg-[var(--color-accent-soft)] text-[var(--color-accent)] shadow-sm'
+                        ? 'border-[var(--color-accent)] bg-[var(--color-accent-soft)] text-[var(--color-accent)] ring-1 ring-[var(--color-border-subtle)]'
                         : 'border-gray-200 bg-white text-gray-500 hover:bg-gray-50 hover:border-gray-300'
                     }`}
                   >
@@ -386,8 +386,8 @@ export const BuilderSidebarLibrary: React.FC<BuilderSidebarLibraryProps> = ({ ac
                     onClick={() => handleSectionClick(manifest)}
                     className={`w-full text-left rounded-xl border transition-all duration-300 ease-out overflow-hidden group focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)]/45 focus-visible:ring-offset-2 active:scale-[0.992] ${
                       isCustom
-                        ? 'border-[var(--color-border-subtle)] bg-[var(--color-surface-subtle)] hover:border-[var(--color-border-strong)] hover:bg-[var(--color-accent-soft)] hover:shadow-sm'
-                        : 'border-gray-200 bg-white hover:border-[var(--color-border-strong)] hover:shadow-sm'
+                        ? 'border-[var(--color-border-subtle)] bg-[var(--color-surface-subtle)] hover:border-[var(--color-border-strong)] hover:bg-[var(--color-accent-soft)] hover:ring-1 hover:ring-[var(--color-border-subtle)]'
+                        : 'border-gray-200 bg-white hover:border-[var(--color-border-strong)] hover:ring-1 hover:ring-[var(--color-border-subtle)]'
                     }`}
                   >
                     <div className="pointer-events-none relative">
@@ -401,7 +401,7 @@ export const BuilderSidebarLibrary: React.FC<BuilderSidebarLibraryProps> = ({ ac
                       <div className="absolute top-1.5 right-1.5 rounded bg-black/45 px-1.5 py-0.5 text-[8px] font-semibold text-white/90">
                         {manifest.defaultVariant}
                       </div>
-                      <div className="absolute top-1.5 left-1.5 rounded bg-white/85 px-1.5 py-0.5 text-[8px] font-semibold text-gray-600 shadow-sm">
+                      <div className="absolute top-1.5 left-1.5 rounded bg-white/85 px-1.5 py-0.5 text-[8px] font-semibold text-gray-600 ring-1 ring-[var(--color-border-subtle)]">
                         {SECTION_PICKER_STORY_LABEL[manifest.type] ?? 'Section'}
                       </div>
                     </div>
@@ -547,7 +547,7 @@ const VariantPicker: React.FC<VariantPickerProps> = ({
                 onClick={() => onPreviewPhotoSetChange(opt.id)}
                 className={`rounded border px-1.5 py-0.5 text-[10px] font-medium transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)]/40 focus-visible:ring-offset-1 ${
                   previewPhotoSet === opt.id
-                    ? 'border-[var(--color-accent)] bg-[var(--color-accent-soft)] text-[var(--color-accent)] shadow-sm'
+                    ? 'border-[var(--color-accent)] bg-[var(--color-accent-soft)] text-[var(--color-accent)] ring-1 ring-[var(--color-border-subtle)]'
                     : 'border-gray-200 bg-white text-gray-500 hover:bg-gray-50 hover:border-gray-300'
                 }`}
               >
@@ -658,8 +658,8 @@ const VariantCard: React.FC<VariantCardProps> = ({
       onClick={() => onSelect(variant.id)}
       className={`group relative w-full overflow-hidden rounded-xl border bg-white text-left will-change-transform transition-all duration-200 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)]/45 focus-visible:ring-offset-2 active:scale-[0.995] ${
         isHovered || isKeyboardActive
-          ? 'border-[var(--color-accent)] shadow-sm -translate-y-[1px]'
-          : 'border-neutral-200 hover:border-neutral-300 hover:shadow-sm'
+          ? 'border-[var(--color-accent)] ring-1 ring-[var(--color-border-subtle)] -translate-y-[1px]'
+          : 'border-neutral-200 hover:border-neutral-300 hover:ring-1 hover:ring-[var(--color-border-subtle)]'
       } ${isDefault ? 'ring-1 ring-[var(--color-accent)]/20' : ''}`}
       title={variant.description}
       aria-label={`Add ${variant.label} variant`}
@@ -754,7 +754,7 @@ const BuilderVariantCardPreview: React.FC<{
           <SectionTypePreview sectionType={sectionType} compact />
         </div>
         <LiveVariantPreview sectionType={typedSectionType} variantId={variantId} weddingData={weddingData} />
-        <div className="absolute right-1.5 top-1.5 rounded-xl bg-black/48 px-1.5 py-0.5 text-[8px] font-semibold text-white/95 shadow-sm">
+        <div className="absolute right-1.5 top-1.5 rounded-xl bg-black/48 px-1.5 py-0.5 text-[8px] font-semibold text-white/95 ring-1 ring-[var(--color-border-subtle)]">
           {variantId}
         </div>
         <div
@@ -992,7 +992,7 @@ const LayerItemOverlay: React.FC<{ section: BuilderSectionInstance }> = ({ secti
   const manifest = getSectionManifest(section.type);
   const IconComp = SECTION_ICONS[manifest.icon] ?? Layout;
   return (
-    <div className="flex items-center gap-2 px-2 py-2 rounded-xl bg-white border border-[var(--color-accent)] shadow-sm w-56 opacity-95">
+    <div className="flex items-center gap-2 px-2 py-2 rounded-xl bg-white border border-[var(--color-accent)] ring-1 ring-[var(--color-border-subtle)] w-56 opacity-95">
       <GripVertical size={14} className="text-gray-400 flex-shrink-0" />
       <div className="w-6 h-6 rounded bg-[var(--color-accent-soft)] flex items-center justify-center flex-shrink-0">
         <IconComp size={12} className="text-[var(--color-accent)]" />

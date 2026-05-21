@@ -73,7 +73,7 @@ export function GuestCampaignReminderPanel({
 }: GuestCampaignReminderPanelProps) {
   return (
     <>
-      <div className="rounded-2xl border border-border-subtle bg-white p-4 shadow-sm">
+      <div className="rounded-[20px] border border-border-subtle bg-white p-4 shadow-none">
         <div className="flex items-center justify-between gap-3">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary/75">Campaigns</p>
@@ -88,7 +88,7 @@ export function GuestCampaignReminderPanel({
 
       {showCampaignModal && (
         <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-[1px] flex items-end sm:items-center justify-center p-3">
-          <div className="w-full max-w-2xl max-h-[88vh] overflow-auto rounded-2xl border border-border bg-white shadow-xl">
+          <div className="w-full max-w-2xl max-h-[88vh] overflow-auto rounded-[20px] border border-border bg-white shadow-none">
             <div className="sticky top-0 z-10 bg-white/95 backdrop-blur border-b border-border px-4 py-3 flex items-center justify-between">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary/75">Campaign workspace</p>

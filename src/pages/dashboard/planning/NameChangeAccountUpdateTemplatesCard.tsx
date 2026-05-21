@@ -41,7 +41,7 @@ export function NameChangeAccountUpdateTemplatesCard({
           const bodyText = getAccountUpdateTemplateBodyText(template);
 
           return (
-            <div id={`account-update-template-${template.id}`} key={template.id} className="scroll-mt-24 rounded-2xl border border-border-subtle p-4">
+            <div id={`account-update-template-${template.id}`} key={template.id} className="scroll-mt-24 rounded-[20px] border border-border-subtle p-4">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <p className="text-xs text-text-tertiary">{template.audience}</p>

@@ -31,7 +31,7 @@ export function GuestPhotoGuestbookCard({
       </div>
       <div className="mt-4 grid gap-3 md:grid-cols-2">
         {guestbookEntries.slice(0, 6).map((entry) => (
-          <div key={entry.id} className={`rounded-2xl border p-4 ${entry.is_hidden ? 'border-border-subtle bg-surface-subtle opacity-75' : entry.is_flagged ? 'border-border-subtle bg-surface' : 'border-border-subtle bg-surface-subtle'}`}>
+          <div key={entry.id} className={`rounded-[20px] border p-4 ${entry.is_hidden ? 'border-border-subtle bg-surface-subtle opacity-75' : entry.is_flagged ? 'border-border-subtle bg-surface' : 'border-border-subtle bg-surface-subtle'}`}>
             <p className="text-sm leading-6 text-neutral-800">{entry.message}</p>
             <p className="mt-3 text-xs text-neutral-500">
               {entry.guest_name || 'Guest'}{entry.guest_email ? ` · ${entry.guest_email}` : ''} · {formatDateTime(entry.created_at)}

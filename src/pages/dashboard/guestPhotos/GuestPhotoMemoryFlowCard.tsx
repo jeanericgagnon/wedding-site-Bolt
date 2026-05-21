@@ -49,7 +49,7 @@ export function GuestPhotoMemoryFlowCard({ memoryFlowReadiness }: GuestPhotoMemo
       </div>
       <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
         {memoryFlowReadiness.summaryBadges.map((badge) => (
-          <div key={badge} className="rounded-2xl border border-border-subtle bg-white px-3 py-2">
+          <div key={badge} className="rounded-[20px] border border-border-subtle bg-white px-3 py-2">
             <p className="text-xs font-medium text-text-secondary">{badge}</p>
           </div>
         ))}
@@ -59,7 +59,7 @@ export function GuestPhotoMemoryFlowCard({ memoryFlowReadiness }: GuestPhotoMemo
       )}
       <div className="mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
         {memoryFlowReadiness.lanes.map((lane) => (
-          <div key={lane.id} className="rounded-2xl border border-border-subtle bg-surface-subtle/30 p-4">
+          <div key={lane.id} className="rounded-[20px] border border-border-subtle bg-surface-subtle/30 p-4">
             <div className="flex items-start justify-between gap-3">
               <p className="text-sm font-semibold text-text-primary">{lane.label}</p>
               <span className={`shrink-0 rounded-xl px-2 py-0.5 text-[11px] font-medium ${
@@ -80,7 +80,7 @@ export function GuestPhotoMemoryFlowCard({ memoryFlowReadiness }: GuestPhotoMemo
       </div>
       <div className="mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
         {memoryFlowReadiness.steps.map((step) => (
-          <div key={step.id} className="rounded-2xl border border-border-subtle bg-surface-subtle/50 p-4">
+          <div key={step.id} className="rounded-[20px] border border-border-subtle bg-surface-subtle/50 p-4">
             <div className="flex items-start justify-between gap-3">
               <p className="text-sm font-semibold text-text-primary">{step.label}</p>
               <span className={`shrink-0 rounded-xl px-2 py-0.5 text-[11px] font-medium ${
@@ -99,7 +99,7 @@ export function GuestPhotoMemoryFlowCard({ memoryFlowReadiness }: GuestPhotoMemo
           </div>
         ))}
       </div>
-      <div className={`mt-4 rounded-2xl p-4 ${
+      <div className={`mt-4 rounded-[20px] p-4 ${
         memoryFlowReadiness.blockers.length > 0
           ? 'border border-warning/20 bg-warning/5'
           : 'border border-success/20 bg-success/5'

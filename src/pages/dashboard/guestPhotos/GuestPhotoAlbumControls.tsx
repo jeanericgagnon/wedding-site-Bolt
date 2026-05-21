@@ -66,7 +66,7 @@ export function GuestPhotoAlbumControls({
           <div className="text-xs text-neutral-500">{visibleAlbumCount} visible</div>
         </div>
         <div className="grid gap-3 lg:grid-cols-[1.4fr_1fr]">
-          <div className="rounded-2xl border border-border-subtle bg-surface-subtle p-4">
+          <div className="rounded-[20px] border border-border-subtle bg-surface-subtle p-4">
             <p className="text-xs font-semibold text-text-tertiary">Sharing home</p>
             <p className="mt-2 text-sm text-neutral-700">Copy links, QR codes, and guest-facing prompts without digging through menus.</p>
             <div className="mt-3 flex flex-wrap gap-2">
@@ -92,7 +92,7 @@ export function GuestPhotoAlbumControls({
               </Button>
             </div>
           </div>
-          <div className="rounded-2xl border border-border-subtle bg-white p-4">
+          <div className="rounded-[20px] border border-border-subtle bg-white p-4">
             <p className="text-xs font-medium text-text-tertiary">Owner controls</p>
             <div className="mt-3 flex flex-wrap gap-2">
               <Button size="sm" variant="outline" onClick={onExportBucketLinksCsv}>Save album link sheet</Button>

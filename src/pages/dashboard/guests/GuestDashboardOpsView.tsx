@@ -16,7 +16,7 @@ export function GuestDashboardOpsView({
 }: GuestDashboardOpsViewProps) {
   return (
     <DashboardLayout currentPage="guests">
-      <div className="max-w-[1100px] mx-auto space-y-5">
+      <div className="space-y-7">
         <GuestDashboardHeader {...headerProps} />
         <GuestDashboardContent {...contentProps} />
       </div>

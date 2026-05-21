@@ -376,7 +376,7 @@ export const RegistryBarcodeScanner: React.FC<Props> = ({
   }
 
   return (
-    <div className="space-y-3 rounded-3xl border border-border-subtle bg-surface-subtle/40 p-4">
+    <div className="space-y-3 rounded-[20px] border border-border-subtle bg-surface-subtle/40 p-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <p className="text-sm font-medium text-text-primary">Scan a barcode</p>
@@ -447,7 +447,7 @@ export const RegistryBarcodeScanner: React.FC<Props> = ({
       </div>
 
       {cameraActive && (
-        <div className="overflow-hidden rounded-2xl border border-border-subtle bg-black">
+        <div className="overflow-hidden rounded-[20px] border border-border-subtle bg-black">
           <video
             ref={videoRef}
             className="aspect-[4/3] w-full object-cover"
@@ -458,7 +458,7 @@ export const RegistryBarcodeScanner: React.FC<Props> = ({
       )}
 
       {cameraError && (
-        <div className="rounded-2xl border border-border-subtle bg-white p-3" role="alert">
+        <div className="rounded-[20px] border border-border-subtle bg-white p-3" role="alert">
           <p className="text-sm font-medium text-text-primary">Camera fallback ready</p>
           <p className="mt-1 text-xs text-text-secondary">
             Retry camera access if you want, or keep moving with a barcode photo or the manual code field below.

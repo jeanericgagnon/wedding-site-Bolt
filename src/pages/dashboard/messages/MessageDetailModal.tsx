@@ -141,7 +141,7 @@ export const MessageDetailModal: React.FC<MessageDetailModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-      <div className="bg-surface rounded-2xl w-full max-w-2xl max-h-[90vh] flex flex-col border border-border">
+      <div className="bg-surface rounded-[20px] w-full max-w-2xl max-h-[90vh] flex flex-col border border-border">
         <div className="flex items-center justify-between px-6 py-4 border-b border-border flex-shrink-0">
           <div className="flex items-center gap-3">
             <button
@@ -241,7 +241,7 @@ export const MessageDetailModal: React.FC<MessageDetailModalProps> = ({
 
         <div className="flex-1 overflow-y-auto px-6 py-5 space-y-4">
           <div className="prose prose-sm max-w-none">
-            <div className="bg-surface-subtle rounded-2xl border border-border p-5">
+            <div className="bg-surface-subtle rounded-[20px] border border-border p-5">
               <p className="text-xs font-medium text-text-tertiary mb-3">Message body</p>
               <div className="text-text-primary text-sm leading-relaxed whitespace-pre-wrap font-sans">
                 {message.body}
@@ -250,7 +250,7 @@ export const MessageDetailModal: React.FC<MessageDetailModalProps> = ({
           </div>
 
           {(recipientCount > 0 || recipientReviewPlan || (message.delivered_count ?? 0) > 0 || (message.failed_count ?? 0) > 0 || skippedCount > 0 || unreachedCount > 0) && (
-            <div className="rounded-2xl border border-primary/20 bg-primary-light/30 p-4">
+            <div className="rounded-[20px] border border-primary/20 bg-primary-light/30 p-4">
               <p className="text-sm font-semibold text-text-primary">Next-send review plan</p>
               {recipientReviewPlan && (
                 <p className="mt-1 text-xs text-text-secondary">{recipientReviewPlan}.</p>
@@ -313,7 +313,7 @@ export const MessageDetailModal: React.FC<MessageDetailModalProps> = ({
           )}
 
           {message.status === 'scheduled' && (
-            <div className="rounded-2xl border border-border bg-surface-subtle p-4">
+            <div className="rounded-[20px] border border-border bg-surface-subtle p-4">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <p className="text-sm font-semibold text-text-primary">Scheduled send control</p>
@@ -376,7 +376,7 @@ export const MessageDetailModal: React.FC<MessageDetailModalProps> = ({
           )}
 
           {failedDeliveries.length > 0 && (
-            <div className="rounded-2xl border border-border-subtle bg-surface-subtle p-4">
+            <div className="rounded-[20px] border border-border-subtle bg-surface-subtle p-4">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <p className="text-sm font-semibold text-text-primary">Delivery needs attention</p>
@@ -397,7 +397,7 @@ export const MessageDetailModal: React.FC<MessageDetailModalProps> = ({
                 </div>
               )}
 
-              <div className="mt-3 rounded-2xl border border-border-subtle bg-white">
+              <div className="mt-3 rounded-[20px] border border-border-subtle bg-white">
                 <div className="flex items-center justify-between px-3 py-2 border-b border-border-subtle">
                   <p className="text-xs font-medium text-text-primary">Recipients to review</p>
                   <p className="text-[11px] text-text-tertiary">Most recent first</p>
@@ -439,7 +439,7 @@ export const MessageDetailModal: React.FC<MessageDetailModalProps> = ({
           )}
 
           {skippedDeliveries.length > 0 && (
-            <div className="rounded-2xl border border-border-subtle bg-surface-subtle/70 p-4">
+            <div className="rounded-[20px] border border-border-subtle bg-surface-subtle/70 p-4">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <p className="text-sm font-semibold text-primary">Needs contact details</p>
@@ -460,7 +460,7 @@ export const MessageDetailModal: React.FC<MessageDetailModalProps> = ({
                 </div>
               )}
 
-              <div className="mt-3 rounded-2xl border border-border-subtle bg-white/85">
+              <div className="mt-3 rounded-[20px] border border-border-subtle bg-white/85">
                 <div className="flex items-center justify-between px-3 py-2 border-b border-border-subtle">
                   <p className="text-xs font-medium text-text-primary">Recipients needing contact details</p>
                   <p className="text-[11px] text-text-tertiary">Most recent first</p>

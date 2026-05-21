@@ -92,7 +92,7 @@ export function GuestPhotoMomentsCard({
             const upload = uploads.find((entry) => entry.id === analysis.upload_id);
             const metadata = metadataByUploadId.get(analysis.upload_id);
             return (
-              <div key={analysis.id} className="rounded-2xl border border-border-subtle bg-surface-subtle px-4 py-4">
+              <div key={analysis.id} className="rounded-[20px] border border-border-subtle bg-surface-subtle px-4 py-4">
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <p className="text-sm font-semibold text-text-primary">{safePhotoAnalysisText(analysis.detected_moment, 'Photo')}</p>

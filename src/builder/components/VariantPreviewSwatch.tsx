@@ -76,7 +76,7 @@ export const VariantPreviewSwatch: React.FC<{ variantId: string; sectionType?: s
     venue_card: (
       <div className={`w-full h-20 flex items-center gap-1.5 px-2 transition-colors ${h ? 'bg-rose-50' : 'bg-gray-50'}`}>
         {[0, 1].map(i => (
-          <div key={i} className={`flex-1 h-16 rounded-xl overflow-hidden flex flex-col ${h ? 'bg-white shadow-sm ring-1 ring-rose-200' : 'bg-white border border-gray-200'}`}>
+          <div key={i} className={`flex-1 h-16 rounded-xl overflow-hidden flex flex-col ${h ? 'bg-white ring-1 ring-rose-200' : 'bg-white border border-gray-200'}`}>
             <div className={`h-7 w-full ${i === 0 ? (h ? 'bg-rose-200' : 'bg-gray-200') : (h ? 'bg-rose-100' : 'bg-gray-100')}`} />
             <div className="px-1.5 pt-1 flex flex-col gap-0.5">
               <div className={`h-1.5 rounded-sm w-4/5 ${cd}`} />
@@ -914,7 +914,7 @@ export const VariantPreviewSwatch: React.FC<{ variantId: string; sectionType?: s
     /* ── RSVP new variants ── */
     rsvp_card: (
       <div className={`w-full h-20 flex items-center justify-center transition-colors ${h ? 'bg-rose-50' : 'bg-gray-50'}`}>
-        <div className={`w-32 h-14 rounded-xl shadow-sm border flex flex-col overflow-hidden ${h ? 'border-rose-200 bg-white' : 'border-gray-200 bg-white'}`}>
+        <div className={`w-32 h-14 rounded-xl ring-1 ring-[var(--color-border-subtle)] border flex flex-col overflow-hidden ${h ? 'border-rose-200 bg-white' : 'border-gray-200 bg-white'}`}>
           <div className={`flex gap-1 p-1 border-b ${h ? 'border-rose-100' : 'border-gray-100'}`}>
             {['1','2','3'].map((s,i) => (
               <div key={s} className={`w-4 h-1.5 rounded-full text-[5px] flex items-center justify-center ${i === 0 ? (h ? 'bg-rose-500' : 'bg-gray-700') : (h ? 'bg-rose-100' : 'bg-gray-200')}`} />
@@ -935,7 +935,7 @@ export const VariantPreviewSwatch: React.FC<{ variantId: string; sectionType?: s
         <div className={`absolute inset-0 ${h ? 'bg-rose-50' : 'bg-amber-50'}`} />
         <div className="absolute top-0 left-0 w-6 h-6 rounded-br-full opacity-30 bg-green-200" />
         <div className="absolute bottom-0 right-0 w-8 h-8 rounded-tl-full opacity-30 bg-green-300" />
-        <div className={`relative w-28 h-14 rounded-xl shadow-sm border flex flex-col gap-1 p-2 ${h ? 'border-rose-200 bg-white' : 'border-amber-200 bg-white'}`}>
+        <div className={`relative w-28 h-14 rounded-xl ring-1 ring-[var(--color-border-subtle)] border flex flex-col gap-1 p-2 ${h ? 'border-rose-200 bg-white' : 'border-amber-200 bg-white'}`}>
           <div className={`h-1.5 rounded-sm w-16 mx-auto ${cd}`} />
           <div className={`h-3 rounded-xl border w-full ${h ? 'border-rose-100' : 'border-gray-100'}`} />
           <div className={`h-3 rounded-xl ${h ? 'bg-rose-500' : 'bg-gray-700'} flex items-center justify-center`}>
@@ -1125,7 +1125,7 @@ export const VariantPreviewSwatch: React.FC<{ variantId: string; sectionType?: s
         <div className={`text-[6px] ${h ? 'text-rose-400' : 'text-gray-400'}`}>Encouraged Colors</div>
         <div className="flex gap-1">
           {[h?'bg-rose-300':'bg-slate-300', h?'bg-rose-200':'bg-gray-200', h?'bg-amber-200':'bg-stone-300', h?'bg-green-200':'bg-gray-100'].map((color,i) => (
-            <div key={i} className={`w-5 h-5 rounded-sm ${color} ring-1 ring-white shadow-sm`} />
+            <div key={i} className={`w-5 h-5 rounded-sm ${color} ring-1 ring-white`} />
           ))}
           <div className="flex-1" />
           <div className="w-5 h-5 rounded-sm bg-red-100 ring-1 ring-red-200 relative">
@@ -1540,7 +1540,7 @@ export const VariantPreviewSwatch: React.FC<{ variantId: string; sectionType?: s
     video_lightbox: (
       <div className={`w-full h-20 relative flex items-center justify-center transition-colors ${h ? 'bg-rose-200' : 'bg-gray-300'}`}>
         <div className={`absolute inset-0 ${h ? 'bg-rose-900/20' : 'bg-black/20'}`} />
-        <div className={`relative w-10 h-10 rounded-full border-4 border-white/80 flex items-center justify-center shadow-lg ${h ? 'bg-rose-500/80' : 'bg-black/50'}`}>
+        <div className={`relative w-10 h-10 rounded-full border-4 border-white/80 flex items-center justify-center ring-1 ring-white/70 ${h ? 'bg-rose-500/80' : 'bg-black/50'}`}>
           <div className="w-0 h-0 border-t-[6px] border-t-transparent border-b-[6px] border-b-transparent border-l-[10px] border-l-white/90 ml-1" />
         </div>
         <div className="absolute bottom-2 left-0 right-0 text-center">

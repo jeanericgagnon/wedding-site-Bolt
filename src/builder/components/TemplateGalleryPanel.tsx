@@ -844,7 +844,7 @@ export const TemplateGalleryPanel: React.FC<TemplateGalleryPanelProps> = ({ onSa
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
         <div className="absolute inset-0 bg-black/40" onClick={() => setApplyResult(null)} />
-        <div className="relative bg-white rounded-xl shadow-sm border border-[var(--color-border-subtle)] p-8 max-w-sm w-full mx-4 text-center">
+        <div className="relative bg-white rounded-xl shadow-none border border-[var(--color-border-subtle)] p-8 max-w-sm w-full mx-4 text-center">
           <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-xl bg-[var(--color-accent-soft)]">
             <CheckCircle2 className="h-7 w-7 text-[var(--color-accent)]" />
           </div>
@@ -926,7 +926,7 @@ export const TemplateGalleryPanel: React.FC<TemplateGalleryPanelProps> = ({ onSa
   return (
     <div className="fixed inset-0 z-50 flex">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={handleCloseGallery} />
-      <div className="relative ml-auto w-full max-w-5xl bg-white h-full flex flex-col shadow-sm">
+      <div className="relative ml-auto w-full max-w-5xl bg-white h-full flex flex-col shadow-none">
         <div className="px-7 py-5 border-b border-neutral-200 bg-white">
           <div className="flex items-start justify-between gap-3">
             <div>
@@ -1249,11 +1249,11 @@ const TemplateCard: React.FC<TemplateCardProps> = ({ template, isCurrent, isAppl
     <div
       className={`group rounded-xl overflow-hidden border transition-all cursor-pointer bg-white ${
         isCurrent
-          ? 'border-primary shadow-sm'
+          ? 'border-primary shadow-none'
           : isCompared
-          ? 'border-primary/40 shadow-sm'
+          ? 'border-primary/40 shadow-none'
           : hovered
-          ? 'border-neutral-300 shadow-sm'
+          ? 'border-neutral-300 shadow-none'
           : 'border-neutral-200'
       }`}
       onClick={onDetails}
@@ -1268,19 +1268,19 @@ const TemplateCard: React.FC<TemplateCardProps> = ({ template, isCurrent, isAppl
         />
 
         {isCurrent && (
-          <div className="absolute right-2.5 top-2.5 flex h-6 w-6 items-center justify-center rounded-xl bg-primary text-white shadow-sm">
+          <div className="absolute right-2.5 top-2.5 flex h-6 w-6 items-center justify-center rounded-xl bg-primary text-white shadow-none">
             <Check size={11} />
           </div>
         )}
         {template.isPremium && !template.isNew && (
-          <div className="absolute left-2.5 top-2.5 flex items-center gap-1 rounded-xl px-2 py-0.5 text-[10px] font-semibold shadow-sm"
+          <div className="absolute left-2.5 top-2.5 flex items-center gap-1 rounded-xl px-2 py-0.5 text-[10px] font-semibold shadow-none"
             style={{ background: 'rgba(200,169,110,0.95)', color: '#2D1F00' }}>
             <Crown size={8} />
             Premium
           </div>
         )}
         {template.isNew && (
-          <div className="absolute left-2.5 top-2.5 flex items-center gap-1 rounded-xl bg-primary px-2 py-0.5 text-[10px] font-semibold text-white shadow-sm">
+          <div className="absolute left-2.5 top-2.5 flex items-center gap-1 rounded-xl bg-primary px-2 py-0.5 text-[10px] font-semibold text-white shadow-none">
             <Zap size={8} />
             New
           </div>
@@ -1288,7 +1288,7 @@ const TemplateCard: React.FC<TemplateCardProps> = ({ template, isCurrent, isAppl
 
         {hovered && !isCurrent && (
           <div className="absolute inset-0 flex items-center justify-center">
-            <div className="bg-white/95 text-gray-900 text-xs font-semibold px-4 py-2 rounded-xl shadow-sm">
+            <div className="bg-white/95 text-gray-900 text-xs font-semibold px-4 py-2 rounded-xl shadow-none">
               See design
             </div>
           </div>
@@ -1300,7 +1300,7 @@ const TemplateCard: React.FC<TemplateCardProps> = ({ template, isCurrent, isAppl
           <h3 className="font-semibold text-gray-900 text-sm leading-tight">{template.displayName}</h3>
           <div className="flex items-center gap-1 mt-0.5 flex-shrink-0">
             {dots.map((color, i) => (
-              <div key={i} className="h-2.5 w-2.5 rounded-sm border border-white shadow-sm" style={{ background: color }} />
+              <div key={i} className="h-2.5 w-2.5 rounded-sm border border-white shadow-none" style={{ background: color }} />
             ))}
           </div>
         </div>
@@ -1406,7 +1406,7 @@ const TemplateCompareModal: React.FC<TemplateCompareModalProps> = ({ leftTemplat
 
   return (
     <div className="absolute inset-0 z-10 flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(4px)' }}>
-      <div className="bg-white rounded-xl shadow-sm border border-[var(--color-border-subtle)] p-5 max-w-5xl w-full mx-4">
+      <div className="bg-white rounded-xl shadow-none border border-[var(--color-border-subtle)] p-5 max-w-5xl w-full mx-4">
         <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold text-gray-900">Compare designs</h3>
           <button onClick={onClose} className="p-2 rounded-xl hover:bg-gray-100 text-gray-500"><X size={16} /></button>
@@ -1555,7 +1555,7 @@ const TemplateDetailsModal: React.FC<TemplateDetailsModalProps> = ({ template, o
 
   return (
     <div className="absolute inset-0 z-10 flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(4px)' }}>
-      <div className="bg-white rounded-xl shadow-sm border border-[var(--color-border-subtle)] w-[94vw] h-[90vh] max-w-7xl overflow-hidden flex flex-col">
+      <div className="bg-white rounded-xl shadow-none border border-[var(--color-border-subtle)] w-[94vw] h-[90vh] max-w-[1200px] overflow-hidden flex flex-col">
         <div className="flex items-start justify-between gap-4 px-5 py-4 border-b border-gray-200">
           <div>
             <h3 className="text-lg font-semibold text-gray-900">{template.displayName}</h3>
@@ -1718,7 +1718,7 @@ const TemplateConfirmModal: React.FC<TemplateConfirmModalProps> = ({ template, s
 
   return (
   <div className="absolute inset-0 z-10 flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(4px)' }}>
-    <div className="bg-white rounded-xl shadow-sm border border-[var(--color-border-subtle)] p-6 max-w-sm w-full mx-4">
+    <div className="bg-white rounded-xl shadow-none border border-[var(--color-border-subtle)] p-6 max-w-sm w-full mx-4">
       <div className="flex items-center gap-3 mb-4">
         <div className="w-10 h-10 rounded-xl bg-gray-900 flex items-center justify-center flex-shrink-0">
           <div className="w-5 h-5 rounded relative overflow-hidden">
@@ -1750,7 +1750,7 @@ const TemplateConfirmModal: React.FC<TemplateConfirmModalProps> = ({ template, s
                 onClick={() => onPageModeChange(mode)}
                 className={`w-1/2 rounded-xl px-2.5 py-2 text-xs font-semibold transition-colors ${
                   selectedPageMode === mode
-                    ? 'bg-white text-[var(--color-text-primary)] shadow-sm'
+                    ? 'bg-white text-[var(--color-text-primary)] shadow-none'
                     : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]'
                 }`}
               >

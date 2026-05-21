@@ -746,7 +746,7 @@ export const NameChangePlannerTab: React.FC<Props> = ({
   return (
     <div id="name-change-roadmap" className="space-y-6 scroll-mt-24">
       {plannerActionError ? (
-        <div role="alert" className="rounded-2xl border border-primary/25 bg-primary/5 px-4 py-3 text-sm text-text-primary">
+        <div role="alert" className="rounded-[20px] border border-primary/25 bg-primary/5 px-4 py-3 text-sm text-text-primary">
           {plannerActionError}
         </div>
       ) : null}

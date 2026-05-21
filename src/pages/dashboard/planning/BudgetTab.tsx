@@ -82,7 +82,7 @@ function BudgetForm({ initial, vendors, onSave, onCancel }: BudgetFormProps) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 rounded-2xl border border-border-subtle bg-surface-subtle p-4">
+    <form onSubmit={handleSubmit} className="space-y-4 rounded-[20px] border border-border-subtle bg-surface-subtle p-4 shadow-none">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
           <label htmlFor={fieldId('category')} className="block text-xs font-medium text-text-secondary mb-1">Category *</label>
@@ -326,7 +326,7 @@ export const BudgetTab: React.FC<Props> = ({ items, vendors, vendorMeta = {}, to
   return (
     <div className="space-y-4">
       {!canEdit && (
-        <Card padding="sm" className="border-border-subtle bg-surface-subtle">
+        <Card padding="sm" className="rounded-[20px] border-border-subtle bg-surface-subtle shadow-none">
           <p className="text-sm font-semibold text-text-primary">Owner and planner financial details</p>
           <p className="mt-1 text-sm text-text-secondary">
             Budget readback stays visible here for planning review. Editing is turned off in this role, and guest-facing surfaces do not expose these financial details.
@@ -341,14 +341,14 @@ export const BudgetTab: React.FC<Props> = ({ items, vendors, vendorMeta = {}, to
           { label: 'Actual', value: totalActual, color: 'text-text-primary', format: 'currency' },
           { label: 'Remaining', value: remaining, color: remaining < 0 ? 'text-text-primary' : 'text-success', format: 'currency' },
         ].map(stat => (
-          <Card key={stat.label} padding="sm">
+          <Card key={stat.label} padding="sm" className="rounded-[20px] shadow-none">
             <p className="text-xs text-text-tertiary mb-0.5">{stat.label}</p>
             <p className={`text-lg font-bold ${stat.color}`}>{stat.format === 'currency' ? fmt(stat.value) : stat.value}</p>
           </Card>
         ))}
       </div>
 
-      <Card padding="sm" className="space-y-2">
+      <Card padding="sm" className="space-y-2 rounded-[20px] shadow-none">
         <div className="flex items-center justify-between text-xs text-text-secondary">
           <span>Spent so far</span>
           <span>{usedPct.toFixed(0)}%</span>
@@ -362,7 +362,7 @@ export const BudgetTab: React.FC<Props> = ({ items, vendors, vendorMeta = {}, to
       </Card>
 
       {overBudgetCategories.length > 0 && (
-        <div className="flex items-start gap-2 rounded-xl border border-border-subtle bg-white p-3 text-sm">
+        <div className="flex items-start gap-2 rounded-[20px] border border-border-subtle bg-white p-3 text-sm shadow-none">
           <Sparkles className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />
           <span className="text-text-primary">
             Worth a second look: <span className="font-medium text-text-primary">{overBudgetCategories.join(', ')}</span>
@@ -371,7 +371,7 @@ export const BudgetTab: React.FC<Props> = ({ items, vendors, vendorMeta = {}, to
       )}
 
       {quickChecks.length > 0 && (
-        <Card padding="sm" className="space-y-2 border-primary/20 bg-primary-light/40">
+        <Card padding="sm" className="space-y-2 rounded-[20px] border-primary/20 bg-primary-light/40 shadow-none">
           <p className="text-sm font-semibold text-text-primary">Quick check</p>
           {quickChecks.map((check) => (
             <p key={check.id} className="text-sm leading-5 text-text-secondary">{check.detail}</p>
@@ -379,7 +379,7 @@ export const BudgetTab: React.FC<Props> = ({ items, vendors, vendorMeta = {}, to
         </Card>
       )}
 
-      <div className={`rounded-2xl border p-4 ${ledgerTone}`}>
+      <div className={`rounded-[20px] border p-4 shadow-none ${ledgerTone}`}>
         <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
           <div>
             <div className="flex items-center gap-2">
@@ -431,7 +431,7 @@ export const BudgetTab: React.FC<Props> = ({ items, vendors, vendorMeta = {}, to
         </div>
       </div>
 
-      <Card padding="sm" className="space-y-3">
+      <Card padding="sm" className="space-y-3 rounded-[20px] shadow-none">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <p className="text-sm font-semibold text-text-primary">Payment review</p>
@@ -476,7 +476,7 @@ export const BudgetTab: React.FC<Props> = ({ items, vendors, vendorMeta = {}, to
         <p className="text-[11px] text-text-tertiary">{paymentReview.privacyNote}</p>
       </Card>
 
-      <Card padding="sm" className="space-y-3">
+      <Card padding="sm" className="space-y-3 rounded-[20px] shadow-none">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <p className="text-sm font-semibold text-text-primary">Vendor balance reconciliation</p>
@@ -602,12 +602,12 @@ export const BudgetTab: React.FC<Props> = ({ items, vendors, vendorMeta = {}, to
       )}
 
       {items.length === 0 && !showAdd ? (
-        <Card padding="lg" className="text-center">
+        <Card padding="lg" className="rounded-[20px] text-center shadow-none">
           <p className="text-text-secondary mb-1">No budget items yet.</p>
           <p className="text-sm text-text-tertiary">Keep all your wedding costs in one place.</p>
         </Card>
       ) : viewMode === 'sheet' ? (
-        <Card variant="bordered" padding="none" className="overflow-auto">
+        <Card variant="bordered" padding="none" className="overflow-auto rounded-[20px] shadow-none">
           <table className="w-full text-sm min-w-[760px]">
             <thead className="bg-surface-subtle text-text-secondary">
               <tr>

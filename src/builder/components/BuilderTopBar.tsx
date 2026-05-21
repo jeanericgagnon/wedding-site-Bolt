@@ -408,9 +408,12 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
     }
   }, [showPublishChecklist, checklistDoneCount, checklistItems.length]);
 
+  const toolbarButtonClass = 'inline-flex min-h-[40px] items-center gap-1.5 rounded-xl border border-[var(--color-border-subtle)] bg-white px-3 py-2 text-[12px] font-medium text-[var(--color-text-secondary)] transition-colors hover:border-[var(--color-primary)]/25 hover:bg-[var(--color-surface-subtle)] hover:text-[var(--color-text-primary)]';
+  const iconButtonClass = 'inline-flex h-10 w-10 items-center justify-center rounded-xl border border-transparent text-[var(--color-text-secondary)] transition-colors hover:border-[var(--color-border-subtle)] hover:bg-white hover:text-[var(--color-text-primary)] disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:border-transparent disabled:hover:bg-transparent disabled:hover:text-[var(--color-text-secondary)]';
+
   return (
     <>
-    <header className="min-h-[42px] bg-[var(--color-surface)] border-b border-[var(--color-border-subtle)] flex items-center flex-wrap md:flex-nowrap px-2 md:px-2.5 py-1 gap-1 z-50 sticky top-0">
+    <header className="sticky top-0 z-50 flex min-h-[72px] flex-wrap items-center gap-3 border-b border-[var(--color-border-subtle)] bg-[var(--color-paper)] px-4 py-3 md:flex-nowrap md:px-5">
       <button
         onClick={() => {
           if (isDirty) {
@@ -420,33 +423,39 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
           navigate('/dashboard');
         }}
         title="Back to Dashboard"
-        className="flex items-center gap-1 px-1.5 py-0.5 rounded-xl text-[12px] text-gray-500 hover:text-gray-800 hover:bg-gray-100 transition-colors flex-shrink-0"
+        className="inline-flex min-h-[40px] shrink-0 items-center gap-1.5 rounded-xl border border-[var(--color-border-subtle)] bg-white px-3 py-2 text-[12px] font-medium text-[var(--color-text-secondary)] transition-colors hover:border-[var(--color-primary)]/25 hover:bg-[var(--color-surface-subtle)] hover:text-[var(--color-text-primary)]"
       >
         <ArrowLeft size={15} />
-        <span className="hidden sm:inline">Exit</span>
+        <span className="hidden sm:inline">Dashboard</span>
       </button>
 
+      <div className="min-w-0">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--color-primary)]/75">Website</p>
+        <h1 className="truncate font-serif text-xl font-normal leading-tight text-[var(--color-text-primary)]">
+          {projectName || 'Wedding site editor'}
+        </h1>
+      </div>
 
       <button
         type="button"
         onClick={() => setShowPageManager(true)}
         aria-label={`Manage pages: ${pageStructureSummary.label}`}
-        className="inline-flex items-center gap-1.5 rounded-xl border border-gray-200 bg-gray-50 px-2.5 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-100"
+        className={toolbarButtonClass}
         title={pageStructureSummary.label}
       >
         <Files size={13} />
         Pages · {pageStructureSummary.visiblePageCount}
         {pageStructureSummary.anchorLinkCount > 0 ? (
-          <span className="hidden sm:inline text-gray-500">· {pageStructureSummary.anchorLinkCount} anchors</span>
+          <span className="hidden text-[var(--color-text-tertiary)] sm:inline">· {pageStructureSummary.anchorLinkCount} anchors</span>
         ) : null}
       </button>
 
-      <div className="relative group">
+      <div className="relative flex items-center gap-1 rounded-[20px] border border-[var(--color-border-subtle)] bg-[var(--color-surface-subtle)]/60 p-1">
         <button
           onClick={() => dispatch(builderActions.undo())}
           disabled={!undoRedo.canUndo}
           title={`Undo${undoRedo.undoLabel ? `: ${undoRedo.undoLabel}` : ''} (⌘Z)`}
-          className="p-1.5 rounded hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed text-gray-600 transition-colors"
+          className={iconButtonClass}
           aria-label="Undo"
         >
           <Undo2 size={16} />
@@ -455,7 +464,7 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
           onClick={() => dispatch(builderActions.redo())}
           disabled={!undoRedo.canRedo}
           title={`Redo${undoRedo.redoLabel ? `: ${undoRedo.redoLabel}` : ''} (⌘⇧Z)`}
-          className="p-1.5 rounded hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed text-gray-600 transition-colors"
+          className={iconButtonClass}
           aria-label="Redo"
         >
           <Redo2 size={16} />
@@ -464,12 +473,12 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
 
       <div className="flex-1" />
 
-      <div className="ml-auto flex w-full sm:w-auto items-center justify-end gap-2">
+      <div className="ml-auto flex w-full items-center justify-end gap-2 sm:w-auto">
         {showVariantQaShortcut && (
           <button
             type="button"
             onClick={() => navigate('/dashboard/builder/variants')}
-            className="hidden md:inline-flex items-center gap-1 rounded-xl border border-[var(--color-border-subtle)] bg-[var(--color-surface)] px-2 py-1 text-[12px] text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-subtle)]"
+            className={`${toolbarButtonClass} hidden md:inline-flex`}
             title="Open the layout review gallery"
           >
             <LayoutGrid size={14} />
@@ -479,7 +488,7 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
         <button
           type="button"
           onClick={() => dispatch(builderActions.openMediaLibrary())}
-          className="inline-flex items-center gap-1 rounded-xl border border-[var(--color-border-subtle)] bg-[var(--color-surface)] px-2 py-1 text-[12px] text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-subtle)]"
+          className={toolbarButtonClass}
           title="Add a photo to the media library"
         >
           <ImagePlus size={14} />
@@ -489,7 +498,7 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
           <button
             type="button"
             onClick={onToggleInspector}
-            className="inline-flex items-center gap-1 rounded-xl border border-[var(--color-border-subtle)] bg-[var(--color-surface)] px-2 py-1 text-[12px] text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-subtle)]"
+            className={toolbarButtonClass}
             title={inspectorHidden ? 'Exit full screen' : 'Full screen canvas'}
           >
             {inspectorHidden ? <PanelRightOpen size={14} /> : <PanelRightClose size={14} />}
@@ -506,7 +515,7 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
             onPublish();
           }}
           disabled={isPublishDisabled}
-          className="flex items-center gap-1 px-3 py-1 rounded-xl text-[12px] font-medium bg-[var(--color-accent)] text-[var(--color-text-inverse)] hover:bg-[var(--color-accent-hover)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          className="inline-flex min-h-[40px] items-center gap-1.5 rounded-xl bg-[var(--color-accent)] px-4 py-2 text-[12px] font-semibold text-[var(--color-text-inverse)] transition-colors hover:bg-[var(--color-accent-hover)] disabled:cursor-not-allowed disabled:opacity-50"
         >
           {state.isPublishing || state.isSaving ? (
             <Loader2 size={14} className="animate-spin" />
@@ -686,7 +695,7 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
         </button>
 
         {showPublishChecklist && (
-          <div className="w-full rounded-xl border border-gray-200 bg-white px-2.5 py-2 text-xs text-gray-700 shadow-sm space-y-1 max-h-64 overflow-y-auto">
+          <div className="w-full rounded-xl border border-gray-200 bg-white px-2.5 py-2 text-xs text-gray-700 shadow-none space-y-1 max-h-64 overflow-y-auto">
             <p className="font-semibold text-gray-800 mb-1">What is left before sharing with guests</p>
             <p className="text-[11px] text-gray-500 mb-2">${SITE_VISIBILITY_COPY.draftExplainer} ${SITE_VISIBILITY_COPY.publishedExplainer}</p>
             <ul className="space-y-1">
@@ -807,7 +816,7 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
             disabled={state.isSaving || !isDirty}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-medium transition-all ${
               isDirty && !state.isSaving
-                ? 'bg-gray-900 text-white hover:bg-gray-800 shadow-sm'
+                ? 'bg-gray-900 text-white hover:bg-gray-800 shadow-none'
                 : 'bg-gray-100 text-gray-500 disabled:opacity-50 disabled:cursor-not-allowed'
             }`}
             aria-label="Save draft"
@@ -874,7 +883,7 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
     </header>
     {showPageManager && (
       <div className="fixed inset-0 z-[70] bg-black/40 flex items-center justify-center p-4">
-        <div className="w-full max-w-2xl rounded-xl bg-white shadow-sm border border-[var(--color-border-subtle)] p-4">
+        <div className="w-full max-w-2xl rounded-xl bg-white shadow-none border border-[var(--color-border-subtle)] p-4">
           <div className="flex items-center justify-between mb-3">
             <div>
               <h3 className="text-sm font-semibold text-gray-900">Pages</h3>
@@ -1144,7 +1153,7 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
     )}
     {showLeaveConfirm && (
       <div className="fixed inset-0 z-[70] bg-black/40 flex items-center justify-center p-4">
-        <div className="w-full max-w-sm rounded-xl bg-white shadow-sm border border-[var(--color-border-subtle)] p-4">
+        <div className="w-full max-w-sm rounded-xl bg-white shadow-none border border-[var(--color-border-subtle)] p-4">
           <h3 className="text-sm font-semibold text-gray-900">Leave site editor?</h3>
           <p className="mt-1 text-sm text-gray-600">You have unsaved changes. If you leave now, your latest edits may be lost.</p>
           <div className="mt-4 flex items-center justify-end gap-2">

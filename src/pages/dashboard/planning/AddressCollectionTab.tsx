@@ -181,25 +181,25 @@ export const AddressCollectionTab: React.FC<Props> = ({ siteId, isDemoMode = fal
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
-        <Card padding="sm">
+        <Card padding="sm" className="rounded-[20px] shadow-none">
           <p className="text-xs text-text-tertiary mb-0.5">Guests</p>
           <p className="text-xl font-bold text-text-primary">{guests.length}</p>
         </Card>
-        <Card padding="sm">
+        <Card padding="sm" className="rounded-[20px] shadow-none">
           <p className="text-xs text-text-tertiary mb-0.5">Need address</p>
           <p className="text-xl font-bold text-text-primary">{stats.missingAddress.length}</p>
         </Card>
-        <Card padding="sm">
+        <Card padding="sm" className="rounded-[20px] shadow-none">
           <p className="text-xs text-text-tertiary mb-0.5">Need contact</p>
           <p className="text-xl font-bold text-text-primary">{stats.missingContact.length}</p>
         </Card>
-        <Card padding="sm">
+        <Card padding="sm" className="rounded-[20px] shadow-none">
           <p className="text-xs text-text-tertiary mb-0.5">Households</p>
           <p className="text-xl font-bold text-text-primary">{stats.households}</p>
         </Card>
       </div>
 
-      <Card padding="sm" className="space-y-3">
+      <Card padding="sm" className="space-y-3 rounded-[20px] shadow-none">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
           <div>
             <p className="text-sm font-semibold text-text-primary">Address progress</p>
@@ -227,7 +227,7 @@ export const AddressCollectionTab: React.FC<Props> = ({ siteId, isDemoMode = fal
         </div>
       </Card>
 
-      <Card padding="md" className="space-y-3">
+      <Card padding="md" className="space-y-3 rounded-[20px] shadow-none">
         <div className="flex items-start gap-3">
           <div className="rounded-xl bg-primary-light p-2">
             <MapPin className="w-5 h-5 text-primary" />
@@ -237,7 +237,7 @@ export const AddressCollectionTab: React.FC<Props> = ({ siteId, isDemoMode = fal
             <p className="text-sm text-text-secondary mt-1">Send guests one easy link. They can search their name, update contact info, add a mailing address, and apply it to their household.</p>
           </div>
         </div>
-        <div className="rounded-2xl border border-border-subtle bg-surface-subtle/40 px-3 py-2 text-sm text-text-primary break-all">
+        <div className="rounded-[20px] border border-border-subtle bg-surface-subtle/40 px-3 py-2 text-sm text-text-primary break-all shadow-none">
           {collectionUrl || 'Add a site slug before sharing this link.'}
         </div>
         <div className="flex flex-wrap gap-2">
@@ -282,7 +282,7 @@ export const AddressCollectionTab: React.FC<Props> = ({ siteId, isDemoMode = fal
         </div>
       </Card>
 
-      <Card padding="none" className="overflow-hidden">
+      <Card padding="none" className="overflow-hidden rounded-[20px] shadow-none">
         <div className="border-b border-border-subtle px-4 py-3 flex items-center justify-between">
           <div>
             <p className="text-sm font-semibold text-text-primary">Needs follow-up</p>

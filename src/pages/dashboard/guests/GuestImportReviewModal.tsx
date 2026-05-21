@@ -38,7 +38,7 @@ export function GuestImportReviewModal({
     <>
       <div className="fixed inset-0 z-40 bg-black/50" onClick={() => { if (!csvImporting) onResetWarnings(); }} />
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-        <div className="flex max-h-[80vh] w-full max-w-2xl flex-col rounded-2xl border border-border-subtle bg-surface">
+        <div className="flex max-h-[80vh] w-full max-w-2xl flex-col rounded-[20px] border border-border-subtle bg-surface">
           <div className="flex items-center justify-between border-b border-border-subtle p-6">
             <div>
               <h2 className="text-lg font-semibold text-text-primary">Review Import</h2>
@@ -56,7 +56,7 @@ export function GuestImportReviewModal({
 
           <div className="flex-1 overflow-y-auto p-6">
             {(csvMappingSummary.core.length > 0 || csvMappingSummary.rsvp.length > 0 || csvMappingSummary.household.length > 0 || csvMappingSummary.eventCols.length > 0 || csvMappingSummary.weak.length > 0) && (
-              <div className="mb-4 space-y-2 rounded-2xl border border-border bg-surface-subtle p-3">
+              <div className="mb-4 space-y-2 rounded-[20px] border border-border bg-surface-subtle p-3">
                 <p className="text-xs font-medium text-text-primary">Detected mapping</p>
                 {csvMappingSummary.core.length > 0 && <p className="text-xs text-text-secondary"><span className="font-medium text-text-primary">Core:</span> {csvMappingSummary.core.join(', ')}</p>}
                 {csvMappingSummary.rsvp.length > 0 && <p className="text-xs text-text-secondary"><span className="font-medium text-text-primary">RSVP:</span> {csvMappingSummary.rsvp.join(', ')}</p>}
@@ -68,7 +68,7 @@ export function GuestImportReviewModal({
             )}
 
             {csvSkipped.length > 0 && (
-              <div className="mb-4 rounded-2xl border border-border-subtle bg-surface-subtle p-3">
+              <div className="mb-4 rounded-[20px] border border-border-subtle bg-surface-subtle p-3">
                 <p className="mb-1 text-xs font-medium text-text-primary">{csvSkipped.length} row{csvSkipped.length !== 1 ? 's' : ''} need a guest name</p>
                 <ul className="space-y-0.5">
                   {csvSkipped.map((skipped, index) => <li key={index} className="text-xs text-text-secondary">• {skipped}</li>)}
@@ -77,7 +77,7 @@ export function GuestImportReviewModal({
             )}
 
             {csvUnknownEvents.length > 0 && (
-              <div className="mb-4 rounded-2xl border border-border bg-surface-subtle p-3">
+              <div className="mb-4 rounded-[20px] border border-border bg-surface-subtle p-3">
                 <p className="mb-1 text-xs font-medium text-text-primary">Unmatched itinerary event names ({csvUnknownEvents.length})</p>
                 <p className="mb-1 text-xs text-text-secondary">Match these names to a schedule event when you are ready. Those event invites will stay unassigned for now.</p>
                 <ul className="space-y-0.5">
@@ -87,7 +87,7 @@ export function GuestImportReviewModal({
             )}
 
             {csvHouseholdWarnings.length > 0 && (
-              <div className="mb-4 rounded-2xl border border-border-subtle bg-surface-subtle p-3">
+              <div className="mb-4 rounded-[20px] border border-border-subtle bg-surface-subtle p-3">
                 <p className="mb-1 text-xs font-medium text-text-primary">Household matches to review ({csvHouseholdWarnings.length})</p>
                 <p className="mb-1 text-xs text-text-secondary">These name-only groups mix last names, so they will stay separate until you confirm them.</p>
                 <ul className="space-y-0.5">
@@ -97,7 +97,7 @@ export function GuestImportReviewModal({
             )}
 
             {csvDuplicateNames.length > 0 && (
-              <div className="mb-4 rounded-2xl border border-border-subtle bg-surface-subtle p-3">
+              <div className="mb-4 rounded-[20px] border border-border-subtle bg-surface-subtle p-3">
                 <p className="mb-1 text-xs font-medium text-text-primary">Possible repeated names ({csvDuplicateNames.length})</p>
                 <p className="mb-1 text-xs text-text-secondary">These guests share the same First + Last name. Import will continue, but they are worth checking.</p>
                 <ul className="space-y-0.5">

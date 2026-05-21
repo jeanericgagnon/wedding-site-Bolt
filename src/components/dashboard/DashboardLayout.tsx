@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
-  Settings,
   Menu,
   X,
   ExternalLink,
@@ -11,7 +10,6 @@ import {
   Bell,
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
-import { BillingModal } from '../billing/BillingModal';
 import { getSiteVisibilityState } from '../../lib/siteVisibilityState';
 import { ACTIVE_SITE_STORAGE_CHANGED_EVENT, getStoredActiveSiteId, setStoredActiveSiteId } from '../../lib/activeSiteStorage';
 import { hasPlannerPermission, type PlannerPermissionKey } from '../../lib/plannerAccess';
@@ -85,7 +83,6 @@ function applySiteContext(
 
 export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, currentPage }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [siteContextReady, setSiteContextReady] = useState(false);
   const [siteSlug, setSiteSlug] = useState<string | null>(null);
   const [siteId, setSiteId] = useState<string | null>(null);
@@ -286,6 +283,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
   );
   const previewShareHref = siteVisibility.state === 'draft' ? '/dashboard/builder' : siteSlug ? `/site/${siteSlug}` : '/dashboard/builder';
   const previewShareExternal = siteVisibility.state !== 'draft' && Boolean(siteSlug);
+  const shareHref = '/dashboard/builder?tool=share';
   const currentNavLabel = visibleNavSections.flatMap((section) => section.items).find((item) => item.id === currentPage)?.label
     || getAllDashboardTools().find((tool) => tool.id === currentPage)?.name
     || (currentPage === 'itinerary' ? 'Schedule'
@@ -293,46 +291,31 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
         : currentPage === 'coordinator' ? 'Day-of'
           : currentPage === 'audit-logs' ? 'Activity'
             : 'Dashboard');
-  const pageSubtitles: Record<string, string> = {
-    overview: 'Everything guests need, in one calm place.',
-    builder: 'Manage what guests see.',
-    guests: 'People, replies, and details.',
-    itinerary: 'A weekend guests can follow easily.',
-    messages: 'Updates guests can actually use.',
-    photos: 'Photos, notes, and moments from the celebration.',
-    planning: 'Plans, notes, and finishing touches.',
-    registry: 'Gifts and funds, clearly shared.',
-    seating: 'Tables, assignments, and lookup.',
-    coordinator: 'Everything your helpers need on the wedding day.',
-    vault: 'Private keepsakes, files, and memories.',
-    settings: 'Access, privacy, billing, notifications, and account details.',
-    tools: 'Everything else stays close, without taking over.',
-    activity: 'Recent changes, quietly gathered.',
-    'audit-logs': 'Recent changes, quietly gathered.',
-    'wedding-day': 'Everything your helpers need on the wedding day.',
-    'name-change': 'Name change, organized when you need it.',
-  };
-
   return (
-    <div className="min-h-screen bg-background flex overflow-x-hidden">
+    <div className="min-h-screen bg-background text-text-primary lg:grid lg:grid-cols-[var(--dashboard-sidebar-width)_minmax(0,1fr)]">
       <aside
         className={`
-          fixed inset-y-0 left-0 z-50 w-56 bg-background border-r border-border-subtle
+          fixed inset-y-0 left-0 z-50 w-[var(--dashboard-sidebar-width)] border-r border-border bg-[color-mix(in_srgb,var(--color-background)_84%,white)]
           transform transition-transform duration-200 ease-in-out
           lg:translate-x-0 lg:static
           ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
         `}
       >
         <div className="flex flex-col h-full">
-          <div className="px-6 py-5">
+          <div className="px-5 py-6">
             <div className="flex items-center justify-between">
-              <div className="min-w-0">
-                <p className="text-2xl font-serif font-normal text-text-primary">dayof</p>
-                <p className="mt-1 truncate text-xs text-text-secondary">{workspaceLabel}</p>
+              <div className="flex min-w-0 items-center gap-3">
+                <div className="grid h-[42px] w-[42px] shrink-0 place-items-center rounded-full bg-primary font-serif text-[26px] leading-none text-white">
+                  d
+                </div>
+                <div className="min-w-0">
+                  <p className="text-base font-bold leading-tight text-text-primary">dayof</p>
+                  <p className="mt-1 truncate text-xs text-text-secondary">{workspaceLabel}</p>
+                </div>
               </div>
               <button
                 onClick={() => setSidebarOpen(false)}
-                className="rounded-xl p-2 transition-colors hover:bg-surface-subtle lg:hidden"
+                className="rounded-lg p-2 transition-colors hover:bg-surface-subtle lg:hidden"
                 aria-label="Close menu"
               >
                 <X className="w-5 h-5" />
@@ -340,20 +323,14 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
             </div>
           </div>
 
-          <nav className="flex-1 px-3 pb-4 overflow-y-auto" aria-label="Dashboard navigation">
-            <div className="mb-5 border-b border-border-subtle pb-4">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-text-tertiary">Guest site</p>
-              <p className="mt-1 text-sm font-medium text-text-primary">{siteVisibility.label}</p>
-              {siteSlug && <p className="mt-1 truncate text-xs text-text-secondary">{siteSlug}.dayof.love</p>}
-            </div>
-
+          <nav className="flex-1 overflow-y-auto px-4 pb-5" aria-label="Wedding space navigation">
             {siteMemberships.length > 1 && (
-              <div className="mb-4 rounded-2xl bg-white px-4 py-3 ring-1 ring-border-subtle">
+              <div className="mb-4 rounded-lg bg-surface px-4 py-3 ring-1 ring-border-subtle">
                 <p className="text-[11px] font-medium text-text-tertiary">Switch wedding</p>
                 <select
                   value={siteId || ''}
                   onChange={(e) => handleSiteSwitch(e.target.value)}
-                  className="mt-2 w-full rounded-xl border border-border-subtle bg-white px-3 py-2 text-sm text-text-primary"
+                  className="mt-2 w-full rounded-lg border border-border-subtle bg-surface px-3 py-2 text-sm text-text-primary"
                 >
                   {siteMemberships.map((site) => (
                     <option key={site.id} value={site.id}>
@@ -378,25 +355,23 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
                   )}
 
                   {(section.title !== 'Added tools' || showMoreFeatures) && (
-                    <ul className="space-y-1">
+                    <ul className="space-y-1.5">
                       {section.items.map((item) => {
-                        const Icon = item.icon;
                         const isActive = currentPage === item.id;
                         return (
                           <li key={item.id}>
                             <Link
                               to={item.path}
                               className={`
-                                flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm
-                                transition-colors no-underline min-h-[44px]
+                                flex min-h-[44px] items-center rounded-lg border px-3 text-[15px]
+                                transition-colors no-underline
                                 ${isActive
-                                  ? 'bg-primary/10 text-text-primary'
-                                  : 'text-text-secondary hover:text-text-primary hover:bg-surface-subtle/75'
+                                  ? 'border-[color-mix(in_srgb,var(--color-border)_72%,var(--color-primary))] bg-surface-subtle text-text-primary'
+                                  : 'border-transparent text-text-primary hover:border-border hover:bg-surface-subtle'
                                 }
                               `}
                               onClick={() => setSidebarOpen(false)}
                             >
-                              <Icon className="w-5 h-5 flex-shrink-0" aria-hidden="true" />
                               <span>{item.label}</span>
                             </Link>
                           </li>
@@ -408,29 +383,29 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
               ))}
 
               {moreToolGroups.length > 0 && (
-                <div className="pt-2 border-t border-border-subtle">
+                <div className="pt-2">
                   <button
                     type="button"
                     onClick={() => setMoreToolsOpen((value) => !value)}
                     className={`
-                      flex min-h-[44px] w-full items-center gap-3 rounded-xl px-4 py-2.5 text-sm transition-colors
+                      flex min-h-[44px] w-full items-center gap-3 rounded-lg border px-3 text-[15px] transition-colors
                       ${moreToolsActive || moreToolsOpen
-                        ? 'bg-primary/10 text-text-primary'
-                        : 'text-text-secondary hover:bg-surface-subtle/75 hover:text-text-primary'
+                        ? 'border-border bg-surface text-text-primary'
+                        : 'border-border bg-surface/70 text-text-primary hover:bg-surface'
                       }
                     `}
                     aria-expanded={moreToolsOpen}
                   >
-                    <Settings className="h-5 w-5 shrink-0" aria-hidden="true" />
                     <span className="flex-1 text-left">More</span>
                     <ChevronDown className={`h-4 w-4 transition-transform ${moreToolsOpen ? 'rotate-180' : ''}`} aria-hidden="true" />
                   </button>
+                  <p className="mt-3 px-1 text-xs leading-5 text-text-secondary">Keep the pieces you use most close by.</p>
 
                   {moreToolsOpen && (
-                    <div className="mt-2 space-y-3 rounded-2xl border border-border-subtle bg-white p-2 shadow-sm">
+                    <div className="mt-2 space-y-3 rounded-lg border border-border bg-surface p-2 shadow-none">
                       <Link
                         to="/dashboard/tools"
-                        className="block rounded-xl px-3 py-2 text-xs font-semibold text-primary no-underline hover:bg-primary/5"
+                        className="block rounded-lg px-3 py-2 text-xs font-semibold text-primary no-underline hover:bg-primary/5"
                         onClick={() => setSidebarOpen(false)}
                       >
                         Choose visible tools
@@ -447,7 +422,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
                                 <li key={tool.id} className="flex items-center gap-1">
                                   <Link
                                     to={tool.path}
-                                    className="flex min-h-[38px] min-w-0 flex-1 items-center gap-2 rounded-xl px-3 py-2 text-xs text-text-secondary no-underline hover:bg-surface-subtle hover:text-text-primary"
+                                    className="flex min-h-[38px] min-w-0 flex-1 items-center gap-2 rounded-lg px-3 py-2 text-xs text-text-secondary no-underline hover:bg-surface-subtle hover:text-text-primary"
                                     onClick={() => setSidebarOpen(false)}
                                   >
                                     <Icon className="h-4 w-4 shrink-0" aria-hidden="true" />
@@ -457,10 +432,10 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
                                     <button
                                       type="button"
                                       onClick={() => handleToggleNavPin(tool.id)}
-                                      className={`flex h-8 shrink-0 items-center justify-center gap-1 rounded-xl border px-2 text-[11px] font-medium transition-colors ${
+                                      className={`flex h-8 shrink-0 items-center justify-center gap-1 rounded-lg border px-2 text-[11px] font-medium transition-colors ${
                                         isPinned
                                           ? 'border-primary/25 bg-primary/10 text-primary'
-                                          : 'border-border-subtle bg-white text-text-tertiary hover:text-text-primary'
+                                          : 'border-border-subtle bg-surface text-text-tertiary hover:text-text-primary'
                                       }`}
                                       aria-label={isPinned ? `Keep ${tool.name} tucked away` : `Show ${tool.name} in sidebar`}
                                     >
@@ -481,9 +456,9 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
             </div>
           </nav>
 
-          <div className="p-3">
-            <div className="flex items-center gap-3 rounded-2xl bg-white px-3 py-3 ring-1 ring-border-subtle">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 text-sm font-semibold text-text-primary">
+          <div className="p-4">
+            <div className="flex items-center gap-3 rounded-lg bg-surface px-3 py-3 ring-1 ring-border">
+              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-sm font-semibold text-white">
                 {getUserInitials()}
               </div>
               <div className="min-w-0">
@@ -495,59 +470,69 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
         </div>
       </aside>
 
-      <div className="flex-1 min-w-0 max-w-full overflow-x-hidden">
-        <header className="sticky top-0 z-30 border-b border-border-subtle bg-white">
-          <div className="flex min-h-14 items-center justify-between gap-4 px-4 py-3 sm:px-6 lg:px-8">
+      <div className="min-w-0 max-w-full overflow-x-hidden">
+        <header className="sticky top-0 z-30 border-b border-border bg-[color-mix(in_srgb,var(--color-background)_92%,white)]">
+          <div className="mx-auto flex min-h-[96px] max-w-[var(--container-dashboard)] items-center justify-between gap-6 px-6 py-6 lg:px-[72px]">
             <div className="flex items-center gap-3">
               <button
                 type="button"
                 onClick={() => setSidebarOpen(true)}
-                className="inline-flex items-center gap-2 rounded-xl border border-border-subtle px-3 py-2 text-sm font-medium text-text-secondary hover:bg-surface-subtle hover:text-text-primary lg:hidden"
+                className="inline-flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm font-medium text-text-secondary hover:bg-surface-subtle hover:text-text-primary lg:hidden"
                 aria-label="Open sections"
               >
                 <Menu className="w-4 h-4" />
                 <span>Sections</span>
               </button>
               <div>
-                <h1 className="text-base font-semibold text-text-primary">{currentNavLabel}</h1>
-                <p className="hidden text-sm text-text-secondary sm:block">{pageSubtitles[currentPage] ?? 'Everything for the day in one calm place.'}</p>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">{workspaceLabel}</p>
+                <h1 className="mt-1 max-w-[360px] text-base font-bold leading-snug text-text-primary sm:text-lg">
+                  {currentNavLabel}
+                </h1>
               </div>
             </div>
 
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center justify-end gap-2">
+              <span className="hidden min-h-9 items-center gap-2 rounded-full border border-border bg-surface px-3 text-sm text-text-secondary md:inline-flex">
+                <span className={`h-2.5 w-2.5 rounded-full ${siteVisibility.isLive ? 'bg-success' : 'bg-warning'}`} />
+                {siteVisibility.isLive ? 'Guest-ready' : siteVisibility.shortLabel}
+              </span>
               <a
                 href={previewShareHref}
                 target={previewShareExternal ? '_blank' : undefined}
                 rel={previewShareExternal ? 'noopener' : undefined}
-                className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary-hover"
+                className="inline-flex min-h-[44px] items-center gap-2 rounded-lg border border-border-strong bg-surface px-4 text-sm font-medium text-text-primary no-underline hover:bg-surface-subtle hover:text-text-primary"
               >
                 <ExternalLink className="w-4 h-4" />
-                Preview / Share
+                Preview site
               </a>
+              <Link
+                to={shareHref}
+                className="inline-flex min-h-[44px] items-center rounded-lg border border-primary bg-primary px-4 text-sm font-medium text-white no-underline hover:bg-primary-hover hover:text-white"
+              >
+                Share with guests
+              </Link>
               <button
                 type="button"
-                className="hidden h-10 w-10 items-center justify-center rounded-xl border border-border-subtle bg-white text-text-secondary hover:bg-surface-subtle hover:text-text-primary md:inline-flex"
+                className="hidden h-10 w-10 items-center justify-center rounded-full border border-border bg-surface text-primary hover:bg-surface-subtle md:inline-flex"
                 aria-label="Notifications"
               >
                 <Bell className="h-4 w-4" />
               </button>
               {activeSiteRole === 'owner' && (
-                <button
-                  type="button"
-                  onClick={() => setShowUpgradeModal(true)}
-                  className="hidden items-center gap-2 rounded-xl border border-border-subtle bg-white px-3 py-2 text-sm font-medium text-text-primary hover:bg-surface-subtle sm:inline-flex"
+                <Link
+                  to="/dashboard/settings?tab=team"
+                  className="hidden items-center gap-2 rounded-full border border-primary bg-primary px-3 py-2 text-sm font-semibold text-white hover:bg-primary-hover sm:inline-flex"
+                  aria-label="Open team settings"
                 >
-                  Plan options
-                </button>
+                  {getUserInitials()}
+                </Link>
               )}
             </div>
           </div>
         </header>
 
-        <main className="px-4 py-5 sm:px-6 lg:px-8">{children}</main>
+        <main className="mx-auto max-w-[var(--container-dashboard)] px-6 py-10 lg:px-[72px] lg:pb-24">{children}</main>
       </div>
-
-      {showUpgradeModal && <BillingModal onClose={() => setShowUpgradeModal(false)} />}
     </div>
   );
 };

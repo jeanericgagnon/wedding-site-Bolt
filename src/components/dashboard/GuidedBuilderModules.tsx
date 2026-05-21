@@ -328,7 +328,7 @@ export const GuidedBuilderModules: React.FC<GuidedBuilderModulesProps> = ({
               onClick={() => setActiveModule(module.id)}
               className={`w-full rounded-xl p-3 text-left transition-all ${
                 isActive
-                  ? 'bg-primary text-white shadow-lg'
+                  ? 'bg-primary text-white shadow-none'
                   : 'bg-surface hover:bg-background border border-border'
               }`}
             >
@@ -461,7 +461,7 @@ export const GuidedBuilderModules: React.FC<GuidedBuilderModulesProps> = ({
               {activeModule === 'venue' && (
                 <div className="space-y-4">
                   {weddingData.venues.map((venue) => (
-                    <div key={venue.id} className="rounded-2xl border border-border bg-background p-4">
+                    <div key={venue.id} className="rounded-[20px] border border-border bg-background p-4">
                       <div className="flex items-start justify-between mb-3">
                         <h4 className="font-medium text-text-primary">Venue</h4>
                         <button
@@ -506,7 +506,7 @@ export const GuidedBuilderModules: React.FC<GuidedBuilderModulesProps> = ({
               {activeModule === 'schedule' && (
                 <div className="space-y-4">
                   {weddingData.schedule.map((item) => (
-                    <div key={item.id} className="rounded-2xl border border-border bg-background p-4">
+                    <div key={item.id} className="rounded-[20px] border border-border bg-background p-4">
                       <div className="flex items-start justify-between mb-3">
                         <h4 className="font-medium text-text-primary">Event</h4>
                         <button
@@ -561,7 +561,7 @@ export const GuidedBuilderModules: React.FC<GuidedBuilderModulesProps> = ({
               {activeModule === 'registry' && (
                 <div className="space-y-4">
                   {weddingData.registry.links.map((link) => (
-                    <div key={link.id} className="rounded-2xl border border-border bg-background p-4">
+                    <div key={link.id} className="rounded-[20px] border border-border bg-background p-4">
                       <div className="flex items-start justify-between mb-3">
                         <h4 className="font-medium text-text-primary">Registry link</h4>
                         <button
@@ -597,7 +597,7 @@ export const GuidedBuilderModules: React.FC<GuidedBuilderModulesProps> = ({
               {activeModule === 'faq' && (
                 <div className="space-y-4">
                   {weddingData.faq.map((item) => (
-                    <div key={item.id} className="rounded-2xl border border-border bg-background p-4">
+                    <div key={item.id} className="rounded-[20px] border border-border bg-background p-4">
                       <div className="flex items-start justify-between mb-3">
                         <h4 className="font-medium text-text-primary">Guest question</h4>
                         <button
@@ -633,7 +633,7 @@ export const GuidedBuilderModules: React.FC<GuidedBuilderModulesProps> = ({
 
               {activeModule === 'travel' && (
                 <div className="space-y-4">
-                  <div className="rounded-2xl border border-border bg-background p-4">
+                  <div className="rounded-[20px] border border-border bg-background p-4">
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                       <div>
                         <h4 className="font-medium text-text-primary">Guest travel portal readiness</h4>
@@ -746,7 +746,7 @@ export const GuidedBuilderModules: React.FC<GuidedBuilderModulesProps> = ({
 
               {activeModule === 'rsvp' && (
                 <div className="space-y-4">
-                  <div className="flex items-center justify-between rounded-2xl border border-border bg-background p-4">
+                  <div className="flex items-center justify-between rounded-[20px] border border-border bg-background p-4">
                     <div>
                       <h4 className="font-medium text-text-primary">Enable RSVP</h4>
                       <p className="text-sm text-text-secondary">Let guests reply through your website</p>
@@ -797,7 +797,7 @@ export const GuidedBuilderModules: React.FC<GuidedBuilderModulesProps> = ({
                     {weddingData.media.gallery.map((img) => (
                       <div
                         key={img.id}
-                        className="mb-3 rounded-2xl border border-border bg-background p-4"
+                        className="mb-3 rounded-[20px] border border-border bg-background p-4"
                       >
                         <div className="flex items-start justify-between mb-3">
                           <h5 className="font-medium text-text-primary">Image</h5>

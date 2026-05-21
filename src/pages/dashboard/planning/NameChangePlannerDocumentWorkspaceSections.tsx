@@ -101,7 +101,7 @@ export function NameChangeDocumentDetailsPanel({
       </div>
 
       {documentRepairQueue.length > 0 ? (
-        <div className="mt-4 rounded-2xl border border-border-subtle p-4">
+        <div className="mt-4 rounded-[20px] border border-border-subtle p-4">
           <div className="flex items-center justify-between gap-3">
             <div>
               <h4 className="text-sm font-semibold text-text-primary">Document check list</h4>
@@ -114,7 +114,7 @@ export function NameChangeDocumentDetailsPanel({
 
           <div className="mt-4 grid gap-3 lg:grid-cols-2">
             {documentRepairQueue.slice(0, 6).map((item) => (
-              <div id={`document-${item.kind}`} key={item.kind} className="rounded-2xl border border-border-subtle p-4">
+              <div id={`document-${item.kind}`} key={item.kind} className="rounded-[20px] border border-border-subtle p-4">
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <p className="text-sm font-semibold text-text-primary">{item.label}</p>
@@ -165,7 +165,7 @@ export function NameChangeDocumentDetailsPanel({
         {documents.length === 0 ? (
           <p className="text-sm text-text-tertiary">No document details yet. That is fine. The planner can still work from what you enter here.</p>
         ) : documents.map((document) => (
-          <div key={document.document_kind} className="rounded-2xl border border-border-subtle p-4">
+          <div key={document.document_kind} className="rounded-[20px] border border-border-subtle p-4">
             <div className="flex items-start justify-between gap-3">
               <div>
                 <p className="text-sm font-medium text-text-primary">{document.display_name}</p>
@@ -337,7 +337,7 @@ export function NameChangeDocumentFieldsPanel({
       </div>
 
       {extractionContractSnapshot.summary.conflictCount > 0 && (
-        <div className="mt-4 rounded-2xl border border-warning/30 bg-warning/5 p-4">
+        <div className="mt-4 rounded-[20px] border border-warning/30 bg-warning/5 p-4">
           <div className="flex items-center justify-between gap-3">
             <div>
               <h4 className="text-sm font-semibold text-text-primary">Conflicting details to resolve</h4>
@@ -377,7 +377,7 @@ export function NameChangeDocumentFieldsPanel({
                     : null;
 
             return (
-              <div key={contract.kind} className="rounded-2xl border border-border-subtle p-4">
+              <div key={contract.kind} className="rounded-[20px] border border-border-subtle p-4">
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <p className="text-sm font-semibold text-text-primary">{contract.label}</p>

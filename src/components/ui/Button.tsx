@@ -8,20 +8,20 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
 
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className = '', variant = 'primary', size = 'md', fullWidth = false, children, ...props }, ref) => {
-    const baseStyles = 'inline-flex items-center justify-center font-medium rounded-xl transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:opacity-40 disabled:cursor-not-allowed disabled:pointer-events-none disabled:hover:shadow-none active:translate-y-[1px]';
+    const baseStyles = 'inline-flex items-center justify-center font-medium rounded-lg transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:opacity-40 disabled:cursor-not-allowed disabled:pointer-events-none';
 
     const variantStyles = {
-      primary: 'bg-primary text-text-inverse hover:bg-primary-hover shadow-sm hover:shadow-md focus-visible:ring-primary/50',
-      secondary: 'bg-secondary text-text-inverse hover:bg-secondary-hover shadow-sm hover:shadow-md focus-visible:ring-secondary/50',
-      outline: 'border-2 border-border-strong text-text-primary hover:bg-surface hover:border-primary focus-visible:ring-primary/50',
-      ghost: 'text-text-secondary hover:text-text-primary hover:bg-surface focus-visible:ring-primary/50',
-      accent: 'bg-primary text-text-inverse hover:bg-primary-hover shadow-sm hover:shadow-md focus-visible:ring-primary/50',
+      primary: 'border border-primary bg-primary text-text-inverse hover:bg-primary-hover focus-visible:ring-primary/50',
+      secondary: 'border border-border-strong bg-white text-text-primary hover:bg-surface-subtle hover:border-primary/40 focus-visible:ring-primary/50',
+      outline: 'border border-border-strong bg-white text-text-primary hover:bg-surface-subtle hover:border-primary/50 focus-visible:ring-primary/50',
+      ghost: 'text-text-secondary hover:text-text-primary hover:bg-surface-subtle focus-visible:ring-primary/50',
+      accent: 'border border-accent bg-accent text-text-inverse hover:bg-accent-hover focus-visible:ring-accent/50',
     };
 
     const sizeStyles = {
       sm: 'px-4 py-2 text-sm font-medium min-h-[36px] gap-2',
-      md: 'px-4 py-2.5 text-sm font-medium min-h-[40px] gap-2',
-      lg: 'px-6 py-3 text-base font-semibold min-h-[48px] gap-2',
+      md: 'px-5 py-2.5 text-sm font-medium min-h-[44px] gap-2',
+      lg: 'px-6 py-3 text-base font-semibold min-h-[52px] gap-2',
     };
 
     const widthStyle = fullWidth ? 'w-full' : '';

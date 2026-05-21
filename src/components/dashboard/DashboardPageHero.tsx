@@ -23,33 +23,33 @@ export const DashboardPageHero: React.FC<DashboardPageHeroProps> = ({
   actions,
   children,
 }) => (
-  <section className="border-b border-border-subtle pb-7">
-    <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
+  <section>
+    <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-start">
       <div className="max-w-3xl">
-        {eyebrow && <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary/75">{eyebrow}</p>}
-        <h1 className="mt-3 max-w-2xl font-serif text-3xl font-normal leading-tight text-text-primary sm:text-4xl">{title}</h1>
-        <p className="mt-3 max-w-2xl text-base leading-7 text-text-secondary">{description}</p>
+        {eyebrow && <p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary">{eyebrow}</p>}
+        <h1 className="mt-3 max-w-3xl font-serif text-4xl font-normal leading-[1.08] text-text-primary sm:text-5xl">{title}</h1>
+        <p className="mt-4 max-w-2xl text-base leading-8 text-text-secondary">{description}</p>
       </div>
-      {actions && <div className="flex flex-wrap items-center gap-2 lg:justify-end">{actions}</div>}
+      {actions && <div className="flex flex-wrap items-center gap-3 lg:justify-end">{actions}</div>}
     </div>
 
     {(stats.length > 0 || children) && (
-      <div className="mt-6">
+      <div className="mt-7">
         {stats.length > 0 && (
-          <div className="flex flex-wrap gap-x-8 gap-y-3 border-y border-border-subtle py-4">
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
             {stats.map((stat, index) => (
               <div
                 key={stat.label}
-                className={index > 0 ? 'border-l border-border-subtle pl-6' : ''}
+                className={`min-h-[120px] rounded-[20px] border border-border bg-surface p-5 shadow-none ${index > 2 ? 'xl:hidden' : ''}`}
               >
                 <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-text-tertiary">{stat.label}</p>
-                <p className="mt-1 text-sm font-semibold leading-none text-text-primary">{stat.value}</p>
-                {stat.detail && <p className="mt-1 text-xs leading-5 text-text-secondary">{stat.detail}</p>}
+                <p className="mt-3 text-2xl font-semibold leading-tight text-text-primary">{stat.value}</p>
+                {stat.detail && <p className="mt-2 text-sm leading-6 text-text-secondary">{stat.detail}</p>}
               </div>
             ))}
           </div>
         )}
-        {children && <div className={stats.length > 0 ? 'mt-4' : ''}>{children}</div>}
+        {children && <div className={stats.length > 0 ? 'mt-5' : ''}>{children}</div>}
       </div>
     )}
   </section>

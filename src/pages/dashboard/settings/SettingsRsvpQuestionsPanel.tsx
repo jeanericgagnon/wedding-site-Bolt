@@ -57,7 +57,7 @@ export function SettingsRsvpQuestionsPanel({
   showAdvancedRsvp,
 }: SettingsRsvpQuestionsPanelProps) {
   return (
-    <Card variant="bordered" padding="lg">
+    <Card variant="bordered" padding="lg" className="rounded-[20px] shadow-none">
       <CardHeader>
         <div className="flex items-start justify-between gap-4">
           <div>

@@ -32,7 +32,7 @@ export function GuestImportMapperModal({
     <>
       <div className="fixed inset-0 z-40 bg-black/50" onClick={() => { if (!csvImporting) onClose(); }} />
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-        <div className="flex max-h-[80vh] w-full max-w-2xl flex-col rounded-2xl border border-border-subtle bg-surface">
+        <div className="flex max-h-[80vh] w-full max-w-2xl flex-col rounded-[20px] border border-border-subtle bg-surface">
           <div className="flex items-center justify-between border-b border-border-subtle p-6">
             <div>
               <h2 className="text-lg font-semibold text-text-primary">Match columns</h2>

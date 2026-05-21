@@ -69,7 +69,7 @@ export function EditVaultModal({ config, hasEntries, onSave, onClose }: EditVaul
     <>
       <div className="fixed inset-0 bg-black/50 z-40" onClick={onClose} />
       <div className="fixed inset-0 flex items-center justify-center z-50 p-4">
-        <div className="bg-surface rounded-2xl max-w-md w-full p-6 border border-border">
+        <div className="bg-surface rounded-[20px] max-w-md w-full p-6 border border-border shadow-none">
           <div className="flex items-center justify-between mb-5">
             <h2 className="text-lg font-semibold text-text-primary">Edit Vault Settings</h2>
             <button onClick={onClose} className="p-1.5 rounded-xl hover:bg-surface-subtle text-text-secondary transition-colors">

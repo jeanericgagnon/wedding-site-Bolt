@@ -250,7 +250,7 @@ export function GuestRsvpSettingsView({
 
   return (
     <DashboardLayout currentPage="guests">
-      <div className="max-w-[1100px] mx-auto space-y-5">
+      <div className="space-y-5">
         <DashboardPageHero
           eyebrow="RSVP settings"
           title="Ask only what you truly need from guests."
@@ -282,7 +282,7 @@ export function GuestRsvpSettingsView({
               {safeRsvpAccessModePlan.map((mode) => (
                 <div
                   key={mode.id}
-                  className={`rounded-2xl border p-4 ${
+                  className={`rounded-[20px] border p-4 ${
                     mode.status === 'recommended'
                       ? 'border-primary/40 bg-primary/5'
                       : mode.status === 'future'
@@ -326,7 +326,7 @@ export function GuestRsvpSettingsView({
               ))}
             </div>
 
-            <div className="rounded-2xl border border-border-subtle bg-surface-subtle/30 p-4">
+            <div className="rounded-[20px] border border-border-subtle bg-surface-subtle/30 p-4">
               <label className="flex items-start gap-3 text-sm text-text-primary">
                 <input
                   type="checkbox"
@@ -372,7 +372,7 @@ export function GuestRsvpSettingsView({
             </p>
 
             {verificationInputsChecklistItem ? (
-              <div className="rounded-2xl border border-border-subtle bg-surface-subtle/30 p-4">
+              <div className="rounded-[20px] border border-border-subtle bg-surface-subtle/30 p-4">
                 <div className="mb-2 flex items-center justify-between gap-3">
                   <div>
                     <p className="text-sm font-semibold text-text-primary">Phone or email recovery plan</p>
@@ -423,7 +423,7 @@ export function GuestRsvpSettingsView({
               <p className="text-sm text-text-secondary">Choose what guests answer when they reply on the RSVP page.</p>
             </div>
 
-            <div className="rounded-2xl border border-border-subtle bg-white p-4">
+            <div className="rounded-[20px] border border-border-subtle bg-white p-4">
               <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                 <div>
                   <p className="text-sm font-semibold text-text-primary">Setup proof checklist</p>
@@ -473,7 +473,7 @@ export function GuestRsvpSettingsView({
               )}
             </div>
 
-            <div className="rounded-2xl border border-border-subtle bg-surface-subtle/40 p-4">
+            <div className="rounded-[20px] border border-border-subtle bg-surface-subtle/40 p-4">
               <div className="mb-3">
                 <p className="text-sm font-semibold text-text-primary">Question templates</p>
                 <p className="text-sm text-text-secondary">Add common wedding questions, then edit the wording before guests see them.</p>
@@ -594,7 +594,7 @@ export function GuestRsvpSettingsView({
               </div>
             </div>
 
-            <div className="space-y-3 rounded-2xl border border-border p-4">
+            <div className="space-y-3 rounded-[20px] border border-border p-4">
               <label className="flex items-center gap-2 text-sm text-text-primary">
                 <input
                   type="checkbox"
@@ -645,7 +645,7 @@ export function GuestRsvpSettingsView({
 
             <div className="space-y-3">
               {safeRsvpQuestions.map((question, index) => (
-                <div key={question.id} className="space-y-3 rounded-2xl border border-border p-4">
+                <div key={question.id} className="space-y-3 rounded-[20px] border border-border p-4">
                   <div className="flex items-center justify-between">
                     <p className="text-sm font-semibold">Question {index + 1}</p>
                     <button
@@ -772,7 +772,7 @@ export function GuestRsvpSettingsView({
                 <div className="text-sm text-text-secondary">No recent guest changes yet.</div>
               ) : (
                 rsvpAuditFeed.slice(0, 8).map((entry) => (
-                  <div key={entry.id} className="rounded-2xl border border-border-subtle bg-surface-subtle/40 px-3 py-2.5">
+                  <div key={entry.id} className="rounded-[20px] border border-border-subtle bg-surface-subtle/40 px-3 py-2.5">
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
                         <div className="flex items-center gap-2 mb-1">

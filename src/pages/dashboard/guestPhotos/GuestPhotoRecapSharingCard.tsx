@@ -79,7 +79,7 @@ export function GuestPhotoRecapSharingCard({
           <span className="rounded-xl border border-border-subtle bg-surface-subtle px-4 py-3 text-sm text-text-primary">{recapHiddenCount} recap hidden</span>
         </div>
       </div>
-      <div className="mt-4 rounded-2xl border border-border-subtle bg-surface-subtle p-4">
+      <div className="mt-4 rounded-[20px] border border-border-subtle bg-surface-subtle p-4">
         <p className="text-sm font-semibold text-text-primary">Current mode: {recapStatusLabel(hubSettings.recap_status)}</p>
         <p className="mt-1 text-sm text-text-secondary">
           {!isPublished && 'Publish the site before opening or sharing the guest recap. '}

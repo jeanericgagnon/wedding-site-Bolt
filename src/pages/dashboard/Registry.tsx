@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Gift } from 'lucide-react';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { Button } from '../../components/ui';
@@ -39,7 +39,7 @@ const ToastList: React.FC<{ toasts: Toast[] }> = ({ toasts }) => (
     {toasts.map((toast) => (
       <div
         key={toast.id}
-        className={`rounded-2xl border bg-white px-4 py-3 text-sm font-medium text-text-primary ${
+        className={`rounded-[20px] border bg-white px-4 py-3 text-sm font-medium text-text-primary ${
           toast.type === 'error' ? 'border-border-subtle' : 'border-success/20'
         }`}
       >
@@ -68,6 +68,16 @@ export const DashboardRegistry: React.FC = () => {
   const [registryThankYouBusyItemId, setRegistryThankYouBusyItemId] = useState<string | null>(null);
   const toastTimeoutsRef = useRef<number[]>([]);
   const previousWeddingSiteIdRef = useRef<string | null>(null);
+
+  const toast = useCallback((message: string, type: 'success' | 'error' = 'success') => {
+    const id = Date.now();
+    setToasts((prev) => [...prev, { id, message, type }]);
+    const timer = window.setTimeout(() => {
+      setToasts((prev) => prev.filter((item) => item.id !== id));
+      toastTimeoutsRef.current = toastTimeoutsRef.current.filter((entry) => entry !== timer);
+    }, 4000);
+    toastTimeoutsRef.current.push(timer);
+  }, []);
 
   const {
     autoRefreshEnabled,
@@ -102,7 +112,10 @@ export const DashboardRegistry: React.FC = () => {
     toast,
   });
 
-  const normalizedItems = items.map(normalizeOwnerDashboardRegistryItem);
+  const normalizedItems = useMemo(
+    () => items.map(normalizeOwnerDashboardRegistryItem),
+    [items],
+  );
   const registryActionsRef = useRef<HTMLDivElement>(null);
 
   const resetRegistryDashboardInteractionState = React.useCallback(() => {
@@ -157,17 +170,7 @@ export const DashboardRegistry: React.FC = () => {
     }
   }, [isDemoMode, resetRegistryDashboardInteractionState, weddingSiteId]);
 
-  function toast(message: string, type: 'success' | 'error' = 'success') {
-    const id = Date.now();
-    setToasts((prev) => [...prev, { id, message, type }]);
-    const timer = window.setTimeout(() => {
-      setToasts((prev) => prev.filter((item) => item.id !== id));
-      toastTimeoutsRef.current = toastTimeoutsRef.current.filter((entry) => entry !== timer);
-    }, 4000);
-    toastTimeoutsRef.current.push(timer);
-  }
-
-  function logRegistryAction(type: string, summary: string, metadata?: Record<string, unknown>, targetId?: string | null, targetLabel?: string | null) {
+  const logRegistryAction = useCallback((type: string, summary: string, metadata?: Record<string, unknown>, targetId?: string | null, targetLabel?: string | null) => {
     if (!weddingSiteId) return;
     void logAppAction({
       weddingSiteId,
@@ -178,7 +181,7 @@ export const DashboardRegistry: React.FC = () => {
       targetLabel,
       metadata,
     });
-  }
+  }, [weddingSiteId]);
 
   function handleEdit(item: RegistryItem) {
     setEditItem(item);
@@ -483,7 +486,7 @@ export const DashboardRegistry: React.FC = () => {
 
       {bulkImportOpen && (
         <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="w-full max-w-2xl space-y-4 rounded-2xl border border-border bg-surface p-5">
+          <div className="w-full max-w-2xl space-y-4 rounded-[20px] border border-border bg-surface p-5">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-semibold text-text-primary">Add gift links</h3>
               <button className="text-text-tertiary hover:text-text-primary" onClick={() => setBulkImportOpen(false)}>Close</button>

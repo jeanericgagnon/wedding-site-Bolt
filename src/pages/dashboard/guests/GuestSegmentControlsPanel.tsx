@@ -128,7 +128,7 @@ export function GuestSegmentControlsPanel({
 
   return (
     <>
-      <div className="rounded-2xl border border-border-subtle bg-white p-4 shadow-sm">
+      <div className="rounded-[20px] border border-border-subtle bg-white p-4 shadow-none">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary/75">Filters and views</p>
@@ -150,7 +150,7 @@ export function GuestSegmentControlsPanel({
       </div>
 
       {showExceptionBanner && (
-        <div className="rounded-2xl border border-border-subtle bg-surface-subtle/30 p-4 text-text-secondary text-sm shadow-sm space-y-2">
+        <div className="rounded-[20px] border border-border-subtle bg-surface-subtle/30 p-4 text-text-secondary text-sm shadow-none space-y-2">
           <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary/75">Worth reviewing</p>
           <p className="leading-6">Some guests have RSVP details that are worth reviewing personally.</p>
           <div className="flex flex-wrap gap-2">
@@ -172,7 +172,7 @@ export function GuestSegmentControlsPanel({
       )}
 
       {showMissingMealBanner && (
-        <div className="rounded-2xl border border-border-subtle bg-surface-subtle/30 p-4 text-text-secondary text-sm shadow-sm space-y-2">
+        <div className="rounded-[20px] border border-border-subtle bg-surface-subtle/30 p-4 text-text-secondary text-sm shadow-none space-y-2">
           <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary/75">Meal follow-up</p>
           <p className="leading-6">These guests are attending but still need a meal choice.</p>
           <div className="flex flex-wrap gap-2">
@@ -201,7 +201,7 @@ export function GuestSegmentControlsPanel({
       )}
 
       {showNoContactBanner && (
-        <div className="rounded-2xl border border-border-subtle bg-surface-subtle/30 p-4 text-text-secondary text-sm shadow-sm space-y-2">
+        <div className="rounded-[20px] border border-border-subtle bg-surface-subtle/30 p-4 text-text-secondary text-sm shadow-none space-y-2">
           <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary/75">Missing contact info</p>
           <p className="leading-6">These guests have no email or phone. Add contact info before reminder campaigns.</p>
           <div className="flex flex-wrap gap-2">
@@ -235,7 +235,7 @@ export function GuestSegmentControlsPanel({
         </div>
       )}
 
-      <div className="sticky top-2 z-10 flex gap-2 flex-wrap items-start justify-between bg-white/95 backdrop-blur p-2.5 rounded-2xl border border-border/50 shadow-sm">
+      <div className="sticky top-2 z-10 flex gap-2 flex-wrap items-start justify-between bg-white/95 backdrop-blur p-2.5 rounded-[20px] border border-border/50 shadow-none">
         <div className="flex-1 min-w-0">
           <div className="flex flex-wrap items-center gap-2">
             {segmentOptions.map(({ value, label }) => (
@@ -280,7 +280,7 @@ export function GuestSegmentControlsPanel({
       </div>
 
       {checkInMode && (
-        <div className="mb-3 flex items-center justify-between px-4 py-2.5 bg-success/10 border border-success/25 rounded-2xl shadow-sm">
+        <div className="mb-3 flex items-center justify-between px-4 py-2.5 bg-success/10 border border-success/25 rounded-[20px] shadow-none">
           <span className="text-sm font-medium text-success">Check-in mode active · {checkedInCount} checked in</span>
           <button
             onClick={onSelectCheckedInFilter}
@@ -292,7 +292,7 @@ export function GuestSegmentControlsPanel({
       )}
 
       {checkInMode && lastCheckInGuestName && (
-        <div className="mb-3 flex items-center justify-between px-4 py-2 bg-surface-subtle border border-border rounded-2xl shadow-sm">
+        <div className="mb-3 flex items-center justify-between px-4 py-2 bg-surface-subtle border border-border rounded-[20px] shadow-none">
           <span className="text-xs text-text-secondary">Last check-in: <span className="font-medium text-text-primary">{lastCheckInGuestName}</span></span>
           <button
             onClick={onUndoLastCheckIn}
@@ -305,7 +305,7 @@ export function GuestSegmentControlsPanel({
       )}
 
       {selectedGuestCount > 0 && viewMode === 'list' && (
-        <div className="mb-3 flex items-center justify-between px-4 py-2 bg-primary/8 border border-primary/20 rounded-2xl shadow-sm">
+        <div className="mb-3 flex items-center justify-between px-4 py-2 bg-primary/8 border border-primary/20 rounded-[20px] shadow-none">
           <span className="text-sm font-medium text-primary">{selectedGuestCount} selected · {visibleSelectedCount} visible</span>
           <div className="flex items-center gap-2">
             <button onClick={onKeepOnlyVisibleSelection} disabled={!canEditGuests} className="text-xs px-2 py-1 rounded-xl border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary disabled:cursor-not-allowed disabled:opacity-60">Keep visible only</button>

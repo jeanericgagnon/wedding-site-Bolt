@@ -58,14 +58,15 @@ export const BuilderSectionRail: React.FC<BuilderSectionRailProps> = ({
   };
 
   return (
-    <div className="border-b border-[var(--color-border-subtle)] bg-[var(--color-surface)] h-full flex flex-col">
-      <div className="px-4 py-3 border-b border-[var(--color-border-subtle)]">
-        <h3 className="text-[20px] font-semibold text-[var(--color-text-primary)]">Site sections</h3>
+    <div className="flex h-full flex-col border-r border-[var(--color-border-subtle)] bg-[var(--color-paper)]">
+      <div className="border-b border-[var(--color-border-subtle)] px-4 py-4">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--color-primary)]/75">Website</p>
+        <h3 className="mt-1 font-serif text-2xl font-normal text-[var(--color-text-primary)]">Site sections</h3>
       </div>
 
-      <div className="flex-1 min-h-0 overflow-y-auto px-3 py-2 space-y-1.5">
+      <div className="min-h-0 flex-1 space-y-2 overflow-y-auto px-3 py-3">
         {activeSections.length === 0 && (
-          <div className="rounded-xl border border-dashed border-[var(--color-border)] bg-[var(--color-surface-subtle)] px-3 py-4 text-sm text-[var(--color-text-secondary)] space-y-2">
+          <div className="space-y-2 rounded-[20px] border border-dashed border-[var(--color-border)] bg-white px-3 py-4 text-sm text-[var(--color-text-secondary)]">
             <p className="font-medium text-[var(--color-text-primary)]">This page is empty.</p>
             <p>Add a section to get something real on the page before you start styling.</p>
             <div className="flex flex-wrap gap-2 pt-1">
@@ -94,17 +95,17 @@ export const BuilderSectionRail: React.FC<BuilderSectionRailProps> = ({
           return (
             <div
               key={section.id}
-              className={`w-full rounded-xl border transition-colors text-left ${
+              className={`w-full rounded-[20px] border text-left transition-colors ${
                 isActive
-                  ? 'border-[var(--color-primary)] bg-[var(--color-primary-light)]'
-                  : 'border-[var(--color-border)] bg-[var(--color-surface)] hover:bg-[var(--color-surface-subtle)]'
+                  ? 'border-[var(--color-primary)] bg-white'
+                  : 'border-[var(--color-border-subtle)] bg-white hover:border-[var(--color-primary)]/25 hover:bg-[var(--color-surface-subtle)]'
               }`}
             >
               <div className="flex items-center gap-2.5 text-[var(--color-text-primary)]">
                 <button
                   type="button"
                   onClick={selectSection}
-                  className="flex min-w-0 flex-1 items-center gap-2.5 rounded-xl px-3 py-2.5 text-left"
+                  className="flex min-w-0 flex-1 items-center gap-2.5 rounded-[20px] px-3 py-3 text-left"
                   aria-current={isActive ? 'true' : undefined}
                 >
                   <span className="inline-flex items-center justify-center text-[var(--color-text-tertiary)]" title="Reorder section">
@@ -139,12 +140,12 @@ export const BuilderSectionRail: React.FC<BuilderSectionRailProps> = ({
         })}
       </div>
 
-      <div className="p-2.5 border-t border-[var(--color-border-subtle)] sticky bottom-0 bg-[var(--color-surface)] space-y-2">
+      <div className="sticky bottom-0 space-y-2 border-t border-[var(--color-border-subtle)] bg-[var(--color-paper)] p-3">
         {onSwitchTemplate && (
           <button
             type="button"
             onClick={onSwitchTemplate}
-            className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-3 text-[13px] font-medium text-[var(--color-text-primary)] hover:bg-[var(--color-surface-subtle)]"
+            className="w-full rounded-xl border border-[var(--color-border-subtle)] bg-white px-3 py-3 text-[13px] font-medium text-[var(--color-text-primary)] hover:bg-[var(--color-surface-subtle)]"
           >
             Change design
           </button>
@@ -155,7 +156,7 @@ export const BuilderSectionRail: React.FC<BuilderSectionRailProps> = ({
             setShowAddSectionPicker(true);
             setAddSectionType(null);
           }}
-          className="w-full rounded-xl border border-dashed border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-3 text-[13px] font-medium text-[var(--color-text-primary)] hover:bg-[var(--color-surface-subtle)]"
+          className="w-full rounded-xl border border-dashed border-[var(--color-primary)]/35 bg-white px-3 py-3 text-[13px] font-medium text-[var(--color-text-primary)] hover:bg-[var(--color-surface-subtle)]"
         >
           + Add section
         </button>
@@ -163,7 +164,7 @@ export const BuilderSectionRail: React.FC<BuilderSectionRailProps> = ({
 
       {showAddSectionPicker && (
         <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/45 backdrop-blur-sm p-4">
-          <div className="flex h-[90vh] w-[94vw] max-w-6xl flex-col overflow-hidden rounded-2xl border border-[var(--color-border-subtle)] bg-[var(--color-surface)] shadow-sm">
+          <div className="flex h-[90vh] w-[94vw] max-w-6xl flex-col overflow-hidden rounded-[20px] border border-[var(--color-border-subtle)] bg-[var(--color-surface)] shadow-none">
             <div className="px-5 py-4 border-b border-[var(--color-border-subtle)] flex items-center justify-between">
               <div>
                 <h3 className="text-base font-semibold text-[var(--color-text-primary)]">

@@ -323,15 +323,15 @@ export function NameChangeWorkspaceSummaryPanel({
           </div>
         </div>
         <div className="mt-4 grid gap-3 md:grid-cols-3">
-          <button type="button" className="rounded-2xl border border-border-subtle bg-surface-subtle/30 px-4 py-3 text-left hover:border-primary/25" onClick={() => onResumeHref(resumeCard.primaryHref)}>
+          <button type="button" className="rounded-[20px] border border-border-subtle bg-surface-subtle/30 px-4 py-3 text-left hover:border-primary/25" onClick={() => onResumeHref(resumeCard.primaryHref)}>
             <p className="text-xs text-primary">Core identity chain</p>
             <p className="mt-1 text-sm text-text-primary">{lifecycleInsights.coreChainLabel}</p>
           </button>
-          <button type="button" className="rounded-2xl border border-border-subtle bg-surface-subtle/30 px-4 py-3 text-left hover:border-primary/25" onClick={() => onResumeHref(resumeCard.plannerHref)}>
+          <button type="button" className="rounded-[20px] border border-border-subtle bg-surface-subtle/30 px-4 py-3 text-left hover:border-primary/25" onClick={() => onResumeHref(resumeCard.plannerHref)}>
             <p className="text-xs text-primary">Follow-on work</p>
             <p className="mt-1 text-sm text-text-primary">{lifecycleInsights.followOnLabel}</p>
           </button>
-          <button type="button" className="rounded-2xl border border-border-subtle bg-surface-subtle/30 px-4 py-3 text-left hover:border-primary/25" onClick={() => onLifecycleHref(lifecycleInsights.downstreamHref)}>
+          <button type="button" className="rounded-[20px] border border-border-subtle bg-surface-subtle/30 px-4 py-3 text-left hover:border-primary/25" onClick={() => onLifecycleHref(lifecycleInsights.downstreamHref)}>
             <p className="text-xs text-primary">Downstream updates</p>
             <p className="mt-1 text-sm text-text-primary">{lifecycleInsights.downstreamLabel}</p>
           </button>
@@ -350,7 +350,7 @@ export function NameChangeWorkspaceSummaryPanel({
 
           <div className="mt-4 grid gap-3 md:grid-cols-2">
             {executionTracks.map((track) => (
-              <div key={track.id} className="rounded-2xl border border-border-subtle bg-white/60 p-4">
+              <div key={track.id} className="rounded-[20px] border border-border-subtle bg-white/60 p-4">
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <p className="text-xs text-text-tertiary">{track.sequenceLabel}</p>
@@ -368,7 +368,7 @@ export function NameChangeWorkspaceSummaryPanel({
               </div>
             ))}
             {recommendedOrder.map((stepLabel, index) => (
-              <div key={stepLabel} className="rounded-2xl border border-border-subtle p-4">
+              <div key={stepLabel} className="rounded-[20px] border border-border-subtle p-4">
                 <p className="text-xs text-text-tertiary">Step {index + 1}</p>
                 <p className="mt-2 text-sm font-semibold text-text-primary">{stepLabel}</p>
                 {index === 0 && <p className="mt-2 text-xs text-text-secondary">Get certified proof grounded before anything else moves.</p>}
@@ -391,7 +391,7 @@ export function NameChangeWorkspaceSummaryPanel({
 
           <div className="mt-4 space-y-3">
             {edgeCaseGuidance.map((item) => (
-              <div key={item.id} className={`rounded-2xl border p-4 ${item.severity === 'warning' ? 'border-warning/30 bg-warning/5' : 'border-border-subtle bg-white/50'}`}>
+              <div key={item.id} className={`rounded-[20px] border p-4 ${item.severity === 'warning' ? 'border-warning/30 bg-warning/5' : 'border-border-subtle bg-white/50'}`}>
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <p className="text-sm font-semibold text-text-primary">{item.label}</p>
@@ -404,7 +404,7 @@ export function NameChangeWorkspaceSummaryPanel({
               </div>
             ))}
             {milestoneChecklist.map((milestone) => (
-              <div key={milestone.id} className="rounded-2xl border border-border-subtle p-4">
+              <div key={milestone.id} className="rounded-[20px] border border-border-subtle p-4">
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <p className="text-sm font-semibold text-text-primary">{milestone.label}</p>
@@ -415,7 +415,7 @@ export function NameChangeWorkspaceSummaryPanel({
               </div>
             ))}
             {dualPartnerProofTracks.map((track) => (
-              <div key={track.id} className="rounded-2xl border border-primary/20 bg-primary/5 p-4">
+              <div key={track.id} className="rounded-[20px] border border-primary/20 bg-primary/5 p-4">
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <p className="text-sm font-semibold text-text-primary">{track.label}</p>

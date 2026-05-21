@@ -286,7 +286,7 @@ export const BuilderInspectorPanel: React.FC = () => {
                 }}
                 className={`rounded-xl px-2 py-1.5 text-[11px] font-medium transition-colors ${
                   customizationLevel === level
-                    ? 'bg-white text-[var(--color-text-primary)] shadow-sm'
+                    ? 'bg-white text-[var(--color-text-primary)] ring-1 ring-[var(--color-border-subtle)]'
                     : 'text-[var(--color-text-tertiary)] hover:text-[var(--color-text-primary)]'
                 }`}
               >
@@ -974,7 +974,7 @@ const InspectorField: React.FC<InspectorFieldProps> = ({ field, value, onChange,
             onClick={() => onChange(!(value as boolean))}
             className={`relative w-9 h-5 rounded-full transition-colors flex-shrink-0 ${value ? 'bg-[var(--color-accent)]' : 'bg-gray-200'}`}
           >
-            <span className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow-sm transition-transform ${value ? 'translate-x-4' : ''}`} />
+            <span className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full ring-1 ring-[var(--color-border-subtle)] transition-transform ${value ? 'translate-x-4' : ''}`} />
           </button>
         </div>
       );

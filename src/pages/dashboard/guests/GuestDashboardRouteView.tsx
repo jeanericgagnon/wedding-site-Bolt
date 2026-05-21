@@ -23,7 +23,7 @@ export function GuestDashboardRouteView({
   if (loading) {
     return (
       <DashboardLayout currentPage="guests">
-        <div className="max-w-[1100px] mx-auto">
+        <div>
           <DashboardStateBlock title="Loading guests…" description="Preparing your guest list and RSVP status." />
         </div>
       </DashboardLayout>

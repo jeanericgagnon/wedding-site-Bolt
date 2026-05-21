@@ -46,7 +46,7 @@ export function NameChangeDocumentVaultPanel({
 
       <div className="mt-4 space-y-3">
         {documentVaultRows.length > 0 ? documentVaultRows.map((row) => (
-          <div key={row.key} className="rounded-2xl border border-border-subtle p-4">
+          <div key={row.key} className="rounded-[20px] border border-border-subtle p-4">
             <div className="flex items-start justify-between gap-3">
               <div>
                 <p className="text-sm font-semibold text-text-primary">{row.label}</p>
@@ -58,7 +58,7 @@ export function NameChangeDocumentVaultPanel({
             </div>
           </div>
         )) : (
-          <div className="rounded-2xl border border-dashed border-border-subtle p-4 text-sm text-text-secondary">Add a certificate, ID, or proof document and the vault will track readiness without holding raw files.</div>
+          <div className="rounded-[20px] border border-dashed border-border-subtle p-4 text-sm text-text-secondary">Add a certificate, ID, or proof document and the vault will track readiness without holding raw files.</div>
         )}
       </div>
     </Card>
@@ -80,7 +80,7 @@ export function NameChangePreparationOverviewPanel({
 
       <div className="mt-4 space-y-3">
         {rows.map((row) => (
-          <div key={row.key} className="rounded-2xl border border-border-subtle p-4">
+          <div key={row.key} className="rounded-[20px] border border-border-subtle p-4">
             <div className="flex items-start justify-between gap-3">
               <div>
                 <p className="text-sm font-semibold text-text-primary">{row.label}</p>
@@ -152,7 +152,7 @@ export function NameChangeStatusTrackingPanel({
 
       <div className="mt-4 space-y-3">
         {rows.map((row) => (
-          <div key={row.key} className="rounded-2xl border border-border-subtle p-4">
+          <div key={row.key} className="rounded-[20px] border border-border-subtle p-4">
             <div className="flex items-start justify-between gap-3">
               <div>
                 <p className="text-sm font-semibold text-text-primary">{row.label}</p>
@@ -196,7 +196,7 @@ export function NameChangeAccountUpdateTemplatesPanel({
 
       <div className="mt-4 space-y-3">
         {templates.map((template) => (
-          <div id={`account-update-template-${template.id}`} key={template.id} className="scroll-mt-24 rounded-2xl border border-border-subtle p-4">
+          <div id={`account-update-template-${template.id}`} key={template.id} className="scroll-mt-24 rounded-[20px] border border-border-subtle p-4">
             <div className="flex items-start justify-between gap-3">
               <div>
                 <p className="text-xs text-text-tertiary">{template.audience}</p>

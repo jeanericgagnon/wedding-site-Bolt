@@ -27,7 +27,7 @@ export function SettingsDashboardShell({
 }: SettingsDashboardShellProps) {
   return (
     <DashboardLayout currentPage="settings">
-      <div className="max-w-[1100px] mx-auto space-y-8">
+      <div className="space-y-6">
         <DashboardPageHero
           eyebrow="Settings"
           title="Access, privacy, and account details."
@@ -39,11 +39,11 @@ export function SettingsDashboardShell({
           ]}
         />
 
-        <section className="rounded-2xl border border-border-subtle bg-white p-5 shadow-sm">
+        <section className="rounded-[20px] border border-border-subtle bg-white p-5 shadow-none">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary/75">Settings workspace</p>
-              <h2 className="mt-3 text-lg font-semibold text-text-primary">Choose the area you want to adjust, then keep the rest tucked away.</h2>
+              <h2 className="mt-3 font-serif text-2xl font-normal text-text-primary">Choose the area you want to adjust.</h2>
               <p className="mt-2 max-w-2xl text-sm leading-6 text-text-secondary">
                 Team access, privacy, billing, notifications, and site defaults all live here, but each section stays focused so routine account work doesn&apos;t overwhelm the rest of the dashboard.
               </p>
@@ -56,7 +56,7 @@ export function SettingsDashboardShell({
           </div>
         </section>
 
-        <div className="flex flex-col gap-8 md:flex-row">
+        <div className="grid gap-6 xl:grid-cols-[260px_minmax(0,1fr)]">
           <SettingsNavigation activeTab={activeTab} tabs={tabs} onTabChange={onTabChange} />
           <div className="flex-1 space-y-6">{children}</div>
         </div>

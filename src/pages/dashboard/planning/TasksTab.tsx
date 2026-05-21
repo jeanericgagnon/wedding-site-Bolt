@@ -77,7 +77,7 @@ function TaskForm({ initial, onSave, onCancel }: TaskFormProps) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 rounded-2xl border border-border-subtle bg-surface-subtle p-4">
+    <form onSubmit={handleSubmit} className="space-y-4 rounded-[20px] border border-border-subtle bg-surface-subtle p-4 shadow-none">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div className="sm:col-span-2">
           <label className="block text-xs font-medium text-text-secondary mb-1">Title *</label>
@@ -168,7 +168,7 @@ function TaskCard({ task, onToggleDone, onDelete, onEdit, canEdit = true, pendin
   const isOverdue = task.status !== 'done' && isTaskDueOnOrBefore(task.due_date, today);
 
   return (
-    <div className={`rounded-2xl border bg-white p-3 transition-colors ${isOverdue ? 'border-error/25 bg-error/5' : 'border-border-subtle hover:border-primary/25'}`}>
+    <div className={`rounded-[20px] border bg-white p-3 shadow-none transition-colors ${isOverdue ? 'border-error/25 bg-error/5' : 'border-border-subtle hover:border-primary/25'}`}>
       <div className="flex items-start gap-2">
         <button
           aria-label={task.status === 'done' ? `Mark task ${task.title} incomplete` : `Mark task ${task.title} complete`}
@@ -394,7 +394,7 @@ export const TasksTab: React.FC<Props> = ({ tasks, weddingDate, onAdd, onUpdate,
       </div>
 
       {confirmCreate && (
-        <div className="flex items-start justify-between gap-4 rounded-2xl border border-primary/20 bg-primary-light p-4">
+        <div className="flex items-start justify-between gap-4 rounded-[20px] border border-primary/20 bg-primary-light p-4 shadow-none">
           <div>
             <p className="text-sm font-medium text-text-primary">Build a wedding checklist?</p>
             <p className="text-xs text-text-secondary mt-0.5">This adds a suggested planning checklist based on your wedding date. Anything you already added stays in place.</p>
@@ -424,7 +424,7 @@ export const TasksTab: React.FC<Props> = ({ tasks, weddingDate, onAdd, onUpdate,
       )}
 
       {tasks.length === 0 && !showAddForm ? (
-        <Card padding="lg" className="text-center">
+        <Card padding="lg" className="rounded-[20px] text-center shadow-none">
           <p className="text-text-secondary mb-2">No planning items yet.</p>
           {weddingDate ? (
             <p className="text-sm text-text-tertiary">Add your own items or let dayof build a starting checklist from your wedding date.</p>
@@ -472,7 +472,7 @@ export const TasksTab: React.FC<Props> = ({ tasks, weddingDate, onAdd, onUpdate,
           {kanbanColumns.map(col => {
             const colTasks = tasks.filter(t => t.status === col.status);
             return (
-              <div key={col.status} className="space-y-2 rounded-2xl border border-border-subtle bg-surface-subtle p-3">
+              <div key={col.status} className="space-y-2 rounded-[20px] border border-border-subtle bg-surface-subtle p-3 shadow-none">
                 <div className="flex items-center justify-between mb-2">
                   <h3 className="text-sm font-semibold text-text-primary">{col.label}</h3>
                   <span className="rounded-xl border border-border-subtle bg-surface px-2 py-0.5 text-xs text-text-tertiary">{colTasks.length}</span>

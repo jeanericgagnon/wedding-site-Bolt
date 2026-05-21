@@ -67,26 +67,26 @@ export function NameChangeStatePlaybookPanel({
       <p className="mt-4 text-sm text-text-primary">{statePlaybook.summary}</p>
 
       <div className="mt-4 grid gap-3 md:grid-cols-2">
-        <div className="rounded-2xl border border-border-subtle p-4">
+        <div className="rounded-[20px] border border-border-subtle p-4">
           <p className="text-xs text-text-tertiary">Office path</p>
           <p className="mt-2 text-sm font-semibold text-text-primary">{statePlaybook.officeLabel}</p>
           <p className="mt-2 text-sm text-text-secondary">{statePlaybook.officeDetail}</p>
         </div>
-        <div className="rounded-2xl border border-border-subtle p-4">
+        <div className="rounded-[20px] border border-border-subtle p-4">
           <p className="text-xs text-text-tertiary">County grounding</p>
           <p className="mt-2 text-sm text-text-secondary">{statePlaybook.countyDetail}</p>
         </div>
-        <div className="rounded-2xl border border-border-subtle p-4">
+        <div className="rounded-[20px] border border-border-subtle p-4">
           <p className="text-xs text-text-tertiary">Proof packet</p>
           <p className="mt-2 text-sm text-text-secondary">{statePlaybook.proofPacketDetail}</p>
         </div>
-        <div className="rounded-2xl border border-border-subtle p-4">
+        <div className="rounded-[20px] border border-border-subtle p-4">
           <p className="text-xs text-text-tertiary">Downstream handoff</p>
           <p className="mt-2 text-sm text-text-secondary">{statePlaybook.downstreamDetail}</p>
         </div>
       </div>
 
-      <div className="mt-4 rounded-2xl border border-primary/20 bg-primary/5 p-4">
+      <div className="mt-4 rounded-[20px] border border-primary/20 bg-primary/5 p-4">
         <p className="text-xs text-primary">Partner note</p>
         <p className="mt-2 text-sm text-text-primary">{statePlaybook.partnerDetail}</p>
         <ul className="mt-3 space-y-1 text-xs text-text-secondary">
@@ -120,7 +120,7 @@ export function NameChangeInstitutionCoveragePanel({
 
       <div className="mt-4 space-y-3">
         {categories.map((category) => (
-          <div key={category.id} className="rounded-2xl border border-border-subtle p-4">
+          <div key={category.id} className="rounded-[20px] border border-border-subtle p-4">
             <div className="flex items-start justify-between gap-3">
               <div>
                 <p className="text-sm font-semibold text-text-primary">{category.label}</p>
@@ -169,7 +169,7 @@ export function NameChangeInstitutionPacketsPanel({
 
       <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
         {institutionPackets.map((packet) => (
-          <div key={packet.key} className="rounded-2xl border border-border-subtle p-4">
+          <div key={packet.key} className="rounded-[20px] border border-border-subtle p-4">
             <div className="flex items-start justify-between gap-3">
               <div>
                 <p className="text-sm font-semibold text-text-primary">{packet.label}</p>
@@ -227,7 +227,7 @@ export function NameChangeDualPartnerRolloutPanel({
 
       <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
         {tracks.map((track) => (
-          <div key={track.id} className="rounded-2xl border border-primary/20 bg-primary/5 p-4">
+          <div key={track.id} className="rounded-[20px] border border-primary/20 bg-primary/5 p-4">
             <div className="flex items-start justify-between gap-3">
               <div>
                 <p className="text-sm font-semibold text-text-primary">{track.label}</p>
@@ -268,7 +268,7 @@ export function NameChangePlannerExportsPanel({
 
       <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
         {plannerExports.map((exportItem) => (
-          <div key={exportItem.key} className="rounded-2xl border border-border-subtle p-4">
+          <div key={exportItem.key} className="rounded-[20px] border border-border-subtle p-4">
             <p className="text-sm font-semibold text-text-primary">{exportItem.label}</p>
             <p className="mt-2 text-sm text-text-secondary">{exportItem.summary}</p>
             <Button

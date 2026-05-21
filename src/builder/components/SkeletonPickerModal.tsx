@@ -578,7 +578,7 @@ export const SkeletonPickerModal: React.FC<SkeletonPickerModalProps> = ({ onSele
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-      <div className="bg-white rounded-xl shadow-sm border border-[var(--color-border-subtle)] w-full max-w-2xl flex flex-col overflow-hidden" style={{ maxHeight: '85vh' }}>
+      <div className="bg-white rounded-xl shadow-none border border-[var(--color-border-subtle)] w-full max-w-2xl flex flex-col overflow-hidden" style={{ maxHeight: '85vh' }}>
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
           <div>
             <h2 className="text-base font-semibold text-gray-800">Choose a Section Layout</h2>
@@ -622,7 +622,7 @@ export const SkeletonPickerModal: React.FC<SkeletonPickerModalProps> = ({ onSele
                 onClick={() => setSelected(skeleton.id)}
                 className={`group text-left rounded-xl overflow-hidden border-2 transition-all ${
                   selected === skeleton.id
-                    ? 'border-[var(--color-accent)] shadow-sm'
+                    ? 'border-[var(--color-accent)] shadow-none'
                     : 'border-gray-200 hover:border-gray-300'
                 }`}
               >

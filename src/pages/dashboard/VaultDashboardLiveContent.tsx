@@ -44,7 +44,7 @@ export function VaultDashboardLiveContent({
   const archiveMode = getArchiveModeDescriptor({ weddingDate: weddingDate ? weddingDate.toISOString() : null });
 
   return (
-    <div id="vault-anniversary-capsules" className="max-w-[1100px] mx-auto space-y-8">
+    <div id="vault-anniversary-capsules" className="space-y-6">
       <DashboardPageHero
         eyebrow="Private keepsakes"
         title="Memory Vaults"
@@ -68,7 +68,7 @@ export function VaultDashboardLiveContent({
         ) : null}
       />
 
-      <div className={`rounded-3xl border px-5 py-4 text-sm shadow-sm ${archiveMode.isArchiveLike ? 'border-stone-200 bg-stone-50' : 'border-border-subtle bg-white'}`}>
+      <div className={`rounded-[20px] border px-5 py-4 text-sm shadow-none ${archiveMode.isArchiveLike ? 'border-stone-200 bg-stone-50' : 'border-border-subtle bg-white'}`}>
         <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary/75">Mode</p>
         <p className="mt-3 font-semibold text-text-primary">{archiveMode.label}</p>
         <p className="mt-2 text-text-secondary">{archiveMode.detail}</p>
@@ -77,7 +77,7 @@ export function VaultDashboardLiveContent({
         )}
       </div>
 
-      <Card variant="bordered" padding="md">
+      <Card variant="bordered" padding="md" className="rounded-[20px] shadow-none">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <div className="flex items-center gap-2">
@@ -113,11 +113,11 @@ export function VaultDashboardLiveContent({
         </div>
       </Card>
 
-      <section className="rounded-2xl border border-border-subtle bg-white p-5 shadow-sm">
+      <section className="rounded-[20px] border border-border-subtle bg-white p-5 shadow-none">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary/75">Vault workspace</p>
-            <h2 className="mt-3 text-lg font-semibold text-text-primary">Set the anniversaries, then decide what stays private until later.</h2>
+            <h2 className="mt-3 font-serif text-2xl font-normal text-text-primary">Set the anniversaries, then decide what stays private until later.</h2>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-text-secondary">
               This is where you create the sealed vaults themselves, manage contribution links, and choose what should unlock years from now instead of right after the celebration.
             </p>
@@ -131,7 +131,7 @@ export function VaultDashboardLiveContent({
       </section>
 
       {!weddingDate && (
-        <div className="flex items-start gap-3 rounded-2xl border border-border-subtle bg-surface-subtle/30 p-4 text-sm text-text-secondary shadow-sm">
+        <div className="flex items-start gap-3 rounded-[20px] border border-border-subtle bg-surface-subtle/30 p-4 text-sm text-text-secondary shadow-none">
           <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary/75">Needs review</p>
@@ -142,7 +142,7 @@ export function VaultDashboardLiveContent({
       )}
 
       {archiveModeIsArchiveLike && (
-        <Card variant="bordered" padding="md">
+        <Card variant="bordered" padding="md" className="rounded-[20px] shadow-none">
           <div className="space-y-3">
             <div>
               <p className="text-sm font-semibold text-text-primary">Anniversary note ideas</p>
@@ -167,7 +167,7 @@ export function VaultDashboardLiveContent({
       )}
 
       {vaultConfigsLength === 0 && (
-        <Card variant="bordered" padding="lg">
+        <Card variant="bordered" padding="lg" className="rounded-[20px] shadow-none">
           <div className="text-center py-10">
             <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-xl bg-surface-subtle">
               <Lock className="w-8 h-8 text-text-tertiary" />
@@ -191,7 +191,7 @@ export function VaultDashboardLiveContent({
         <button
           onClick={() => void handleAddVault()}
           disabled={addingVault}
-          className="w-full flex items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-border py-3 text-sm font-medium text-text-secondary transition-colors hover:border-primary hover:bg-primary/5 hover:text-primary disabled:opacity-50"
+          className="w-full flex items-center justify-center gap-2 rounded-[20px] border-2 border-dashed border-border py-3 text-sm font-medium text-text-secondary transition-colors hover:border-primary hover:bg-primary/5 hover:text-primary disabled:opacity-50"
         >
           {addingVault ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
           Add another vault ({vaultConfigsLength}/{MAX_VAULTS} used)
@@ -199,13 +199,13 @@ export function VaultDashboardLiveContent({
       )}
 
       {vaultConfigsLength >= MAX_VAULTS && (
-        <div className="flex items-center gap-2 rounded-2xl border border-border bg-surface-subtle p-3 text-sm text-text-secondary">
+        <div className="flex items-center gap-2 rounded-[20px] border border-border bg-surface-subtle p-3 text-sm text-text-secondary shadow-none">
           <GripVertical className="w-4 h-4 text-text-tertiary" />
           Maximum of {MAX_VAULTS} vaults reached. Disable or remove an existing vault to add a new one.
         </div>
       )}
 
-      <div className="rounded-2xl border border-border-subtle bg-surface-subtle/30 p-5 text-sm text-text-secondary shadow-sm">
+      <div className="rounded-[20px] border border-border-subtle bg-surface-subtle/30 p-5 text-sm text-text-secondary shadow-none">
         <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary/75">How it works</p>
         <p className="mt-3 font-medium text-text-primary">Vaults stay private until their anniversary unlock date.</p>
         <p className="mt-2 leading-6">Add messages yourself or share a vault link with guests so they can drop in a note. Each vault unlocks automatically on its anniversary date. You can enable or disable individual vaults, and customize how long each one stays sealed. Disabled vaults are hidden from guests but your entries are preserved.</p>

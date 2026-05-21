@@ -2,6 +2,7 @@ import {
   Archive,
   Armchair,
   Bell,
+  CalendarDays,
   Camera,
   ClipboardList,
   Download,
@@ -27,6 +28,7 @@ export type DashboardToolId =
   | 'overview'
   | 'builder'
   | 'guests'
+  | 'itinerary'
   | 'registry'
   | 'messages'
   | 'photos'
@@ -91,6 +93,7 @@ export const DEFAULT_DASHBOARD_TOOLS: DashboardTool[] = [
   { id: 'overview', name: 'Home', description: 'Everything guests need, in one calm place.', path: '/dashboard/overview', actionLabel: 'Open Home', icon: Globe, primaryHome: 'Home' },
   { id: 'builder', name: 'Website', description: 'Manage what guests see.', path: '/dashboard/builder', actionLabel: 'Open Website', icon: Palette, primaryHome: 'Website' },
   { id: 'guests', name: 'Guests', description: 'People, replies, and details.', path: '/dashboard/guests', actionLabel: 'Open Guests', icon: Users, primaryHome: 'Guests' },
+  { id: 'itinerary', name: 'Schedule', description: 'A weekend guests can follow easily.', path: '/dashboard/itinerary', actionLabel: 'Open Schedule', icon: CalendarDays, primaryHome: 'Schedule' },
   { id: 'registry', name: 'Registry', description: 'Gifts and funds, clearly shared.', path: '/dashboard/registry', actionLabel: 'Open Registry', icon: Gift, primaryHome: 'Registry' },
   { id: 'messages', name: 'Messages', description: 'Updates guests can actually use.', path: '/dashboard/messages', actionLabel: 'Open Messages', icon: Mail, primaryHome: 'Messages' },
   { id: 'photos', name: 'Memories', description: 'Photos, notes, and moments from the celebration.', path: '/dashboard/photos', actionLabel: 'Open Memories', icon: Archive, primaryHome: 'Memories' },

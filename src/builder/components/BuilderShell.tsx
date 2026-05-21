@@ -579,7 +579,7 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
 
   return (
     <BuilderContext.Provider value={contextValue}>
-      <div className="h-screen flex flex-col bg-[var(--color-surface-subtle)] overflow-hidden">
+      <div className="flex h-screen flex-col overflow-hidden bg-[var(--color-paper)]">
         <BuilderTopBar
           initialPublishChecklistOpen={shouldOpenPublishChecklistFromSearch(location.search)}
           onSave={handleSave}
@@ -597,11 +597,11 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
         />
 
         {state.mode === 'edit' && (
-          <section className="border-b border-[var(--color-border-subtle)] bg-[var(--color-surface)] px-3 py-4 md:px-5">
+          <section className="border-b border-[var(--color-border-subtle)] bg-[var(--color-paper)] px-4 py-5 md:px-5">
             <div className="grid gap-4 xl:grid-cols-[minmax(0,1.05fr)_360px]">
-              <article className="rounded-[1.75rem] border border-[var(--color-border-subtle)] bg-[var(--color-surface-subtle)]/60 p-4 md:p-5">
+              <article className="rounded-[20px] border border-[var(--color-border-subtle)] bg-white p-4 shadow-none md:p-5">
                 <div className="grid gap-5 lg:grid-cols-[260px_minmax(0,1fr)] lg:items-center">
-                  <div className="overflow-hidden rounded-[1.4rem] border border-[var(--color-border-subtle)] bg-white shadow-sm">
+                  <div className="overflow-hidden rounded-[20px] border border-[var(--color-border-subtle)] bg-white shadow-none">
                     <div className="bg-white px-4 py-3">
                       <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--color-text-tertiary)]">Guest site</p>
                       <p className="mt-1 font-serif text-xl text-[var(--color-text-primary)]">{state.weddingData?.couple?.displayName || projectName || 'Your wedding site'}</p>
@@ -621,17 +621,17 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
                   </div>
                   <div>
                     <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--color-accent,#9c6b30)]">Guest view workflow</p>
-                    <h2 className="mt-3 font-serif text-2xl text-[var(--color-text-primary)]">Preview, edit, then publish with confidence.</h2>
+                    <h2 className="mt-3 font-serif text-3xl font-normal leading-tight text-[var(--color-text-primary)]">Preview, edit, then publish with confidence.</h2>
                     <div className="mt-5 space-y-3">
-                      <div className="rounded-2xl border border-[var(--color-border-subtle)] bg-white p-4">
+                      <div className="rounded-[20px] border border-[var(--color-border-subtle)] bg-[var(--color-surface-subtle)]/35 p-4">
                         <p className="text-sm font-semibold text-[var(--color-text-primary)]">1. Preview guest view</p>
                         <p className="mt-1 text-sm leading-6 text-[var(--color-text-secondary)]">See the site exactly as guests will before you share it.</p>
                       </div>
-                      <div className="rounded-2xl border border-[var(--color-border-subtle)] bg-white p-4">
+                      <div className="rounded-[20px] border border-[var(--color-border-subtle)] bg-[var(--color-surface-subtle)]/35 p-4">
                         <p className="text-sm font-semibold text-[var(--color-text-primary)]">2. Edit details</p>
                         <p className="mt-1 text-sm leading-6 text-[var(--color-text-secondary)]">Update welcome, schedule, travel, RSVP, and registry sections from the editor.</p>
                       </div>
-                      <div className="rounded-2xl border border-[var(--color-border-subtle)] bg-white p-4">
+                      <div className="rounded-[20px] border border-[var(--color-border-subtle)] bg-[var(--color-surface-subtle)]/35 p-4">
                         <p className="text-sm font-semibold text-[var(--color-text-primary)]">3. Share</p>
                         <p className="mt-1 text-sm leading-6 text-[var(--color-text-secondary)]">Copy the site link or open QR/share tools when the guest flow feels ready.</p>
                       </div>
@@ -640,11 +640,11 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
                 </div>
               </article>
 
-              <aside className="rounded-[1.75rem] border border-[var(--color-border-subtle)] bg-white p-5 shadow-sm">
+              <aside className="rounded-[20px] border border-[var(--color-border-subtle)] bg-white p-5 shadow-none">
                 <div className="space-y-4">
                   <div>
                     <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--color-accent,#9c6b30)]">Publishing</p>
-                    <h2 className="mt-2 font-serif text-2xl text-[var(--color-text-primary)]">
+                    <h2 className="mt-2 font-serif text-2xl font-normal text-[var(--color-text-primary)]">
                       {siteVisibility.isLive ? 'Guests currently see the live site.' : 'The guest site is still being prepared.'}
                     </h2>
                     <p className="mt-2 text-sm leading-6 text-[var(--color-text-secondary)]">
@@ -654,17 +654,17 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
                   </div>
 
                   <div className="grid gap-3">
-                    <div className="rounded-2xl border border-[var(--color-border-subtle)] bg-[var(--color-surface-subtle)]/40 p-4">
+                    <div className="rounded-[20px] border border-[var(--color-border-subtle)] bg-[var(--color-surface-subtle)]/40 p-4">
                       <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-[var(--color-text-tertiary)]">Guest site</p>
                       <p className="mt-2 text-sm font-semibold text-[var(--color-text-primary)]">{siteVisibility.isLive ? 'Live' : siteVisibility.shortLabel}</p>
                     </div>
-                    <div className="rounded-2xl border border-[var(--color-border-subtle)] bg-[var(--color-surface-subtle)]/40 p-4">
+                    <div className="rounded-[20px] border border-[var(--color-border-subtle)] bg-[var(--color-surface-subtle)]/40 p-4">
                       <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-[var(--color-text-tertiary)]">RSVP</p>
                       <p className="mt-2 text-sm font-semibold text-[var(--color-text-primary)]">
                         {state.weddingData?.rsvp?.enabled === false ? 'Needs review' : 'Live'}
                       </p>
                     </div>
-                    <div className="rounded-2xl border border-[var(--color-border-subtle)] bg-[var(--color-surface-subtle)]/40 p-4">
+                    <div className="rounded-[20px] border border-[var(--color-border-subtle)] bg-[var(--color-surface-subtle)]/40 p-4">
                       <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-[var(--color-text-tertiary)]">Registry</p>
                       <p className="mt-2 text-sm font-semibold text-[var(--color-text-primary)]">
                         {registryCount > 0 ? 'Shown on the site' : 'Needs review'}
@@ -675,7 +675,7 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
                   <div className="space-y-3 pt-1">
                     <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--color-accent,#9c6b30)]">Needs review</p>
                     {reviewItems.length === 0 ? (
-                      <div className="rounded-2xl border border-[var(--color-border-subtle)] bg-[var(--color-surface-subtle)]/40 p-4">
+                      <div className="rounded-[20px] border border-[var(--color-border-subtle)] bg-[var(--color-surface-subtle)]/40 p-4">
                         <p className="text-sm font-semibold text-[var(--color-text-primary)]">Nothing urgent is waiting.</p>
                         <p className="mt-2 text-sm leading-6 text-[var(--color-text-secondary)]">You can keep refining the guest view or open Preview / Share when you are ready.</p>
                       </div>
@@ -685,7 +685,7 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
                           key={item.title}
                           type="button"
                           onClick={item.action}
-                          className="w-full rounded-2xl border border-[var(--color-border-subtle)] bg-[var(--color-surface-subtle)]/40 p-4 text-left transition hover:border-[var(--color-accent,#9c6b30)]/35 hover:shadow-sm"
+                          className="w-full rounded-[20px] border border-[var(--color-border-subtle)] bg-[var(--color-surface-subtle)]/40 p-4 text-left transition-colors hover:border-[var(--color-accent,#9c6b30)]/35"
                         >
                           <p className="text-sm font-semibold text-[var(--color-text-primary)]">{item.title}</p>
                           <p className="mt-2 text-sm leading-6 text-[var(--color-text-secondary)]">{item.detail}</p>
@@ -790,7 +790,7 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
 
         {showCoachmarks && (
           <div className="fixed inset-0 z-[70] bg-black/45 backdrop-blur-[1px] flex items-center justify-center p-4">
-            <div className="w-full max-w-xl rounded-xl bg-white shadow-sm border border-border-subtle p-5">
+            <div className="w-full max-w-xl rounded-[20px] border border-border-subtle bg-white p-5 shadow-none">
               <h3 className="text-lg font-semibold text-gray-900">Quick site editor walkthrough</h3>
               <p className="mt-1 text-sm text-gray-600">Three fast checks so the editor feels straightforward right away.</p>
               <ol className="mt-4 space-y-2 text-sm text-gray-700 list-decimal list-inside">

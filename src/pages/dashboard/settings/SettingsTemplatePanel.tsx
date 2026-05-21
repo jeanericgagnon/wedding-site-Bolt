@@ -24,7 +24,7 @@ export function SettingsTemplatePanel({
   templateSuccess,
 }: SettingsTemplatePanelProps) {
   return (
-    <Card variant="bordered" padding="lg">
+    <Card variant="bordered" padding="lg" className="rounded-[20px] shadow-none">
       <CardHeader>
         <div className="flex items-start justify-between gap-4">
           <div>
@@ -41,18 +41,18 @@ export function SettingsTemplatePanel({
       </CardHeader>
       <CardContent className="space-y-4">
         {!showTemplateSettings ? (
-          <div className="rounded-2xl border border-border-subtle bg-surface-subtle/40 p-4 text-sm text-text-secondary">
+          <div className="rounded-[20px] border border-border-subtle bg-surface-subtle/40 p-4 text-sm text-text-secondary">
             Hidden by default to keep things calm. Open it when you want to change how your site looks.
           </div>
         ) : (
           <>
             {templateSuccess && (
-              <div className="rounded-2xl border border-primary/20 bg-primary/10 p-3 text-sm text-primary">
+              <div className="rounded-[20px] border border-primary/20 bg-primary/10 p-3 text-sm text-primary">
                 {templateSuccess}
               </div>
             )}
             {templateError && (
-              <div className="rounded-2xl border border-border-subtle bg-surface-subtle p-3 text-sm text-text-secondary">
+              <div className="rounded-[20px] border border-border-subtle bg-surface-subtle p-3 text-sm text-text-secondary">
                 {templateError}
               </div>
             )}
@@ -67,7 +67,7 @@ export function SettingsTemplatePanel({
                     type="button"
                     onClick={() => onTemplateChange(template.id)}
                     disabled={changingTemplate || currentTemplate === template.id || !canEditSettings}
-                    className={`rounded-2xl border-2 p-4 text-left transition-all ${
+                    className={`rounded-[20px] border-2 p-4 text-left transition-all ${
                       currentTemplate === template.id
                         ? 'border-primary bg-primary/10'
                         : 'border-border hover:border-primary/50 hover:bg-surface-subtle'

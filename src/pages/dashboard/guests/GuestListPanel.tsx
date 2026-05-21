@@ -52,7 +52,7 @@ export function GuestListPanel({
 }: GuestListPanelProps) {
   return (
     <>
-      <div className="overflow-hidden rounded-2xl border border-border">
+      <div className="overflow-hidden rounded-[20px] border border-border">
         <table className="w-full text-sm">
           <thead className="bg-surface-subtle border-b border-border">
             <tr>

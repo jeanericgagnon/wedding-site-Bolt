@@ -227,7 +227,7 @@ export const SongRequestsTab: React.FC<Props> = ({ siteId, isDemoMode = false, c
 
   return (
     <div className="space-y-4">
-      <Card padding="md" className="space-y-3">
+      <Card padding="md" className="space-y-3 rounded-[20px] shadow-none">
         <div className="flex items-start gap-3">
           <div className="rounded-xl bg-primary-light p-2">
             <Music2 className="w-5 h-5 text-primary" />
@@ -265,7 +265,7 @@ export const SongRequestsTab: React.FC<Props> = ({ siteId, isDemoMode = false, c
         </Button>
       </Card>
 
-      <Card padding="sm" className="space-y-3">
+      <Card padding="sm" className="space-y-3 rounded-[20px] shadow-none">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
           <div className="flex items-start gap-3">
             <div className="rounded-xl border border-primary/20 bg-primary-light p-2">
@@ -295,7 +295,7 @@ export const SongRequestsTab: React.FC<Props> = ({ siteId, isDemoMode = false, c
         </div>
       </Card>
 
-      <Card padding="none" className="overflow-hidden">
+      <Card padding="none" className="overflow-hidden rounded-[20px] shadow-none">
         <div className="border-b border-border-subtle px-4 py-3">
           <p className="text-sm font-semibold text-text-primary">Requests</p>
           <p className="text-xs text-text-tertiary">{loading ? 'Loading…' : `${parsedRequests.length} song request${parsedRequests.length === 1 ? '' : 's'}`}</p>

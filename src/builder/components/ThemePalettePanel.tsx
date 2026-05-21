@@ -25,7 +25,7 @@ const TOKEN_LABELS: { key: keyof ThemeTokens; label: string; group: string }[] =
 function ColorSwatch({ color }: { color: string }) {
   return (
     <div
-      className="w-5 h-5 rounded-xl border border-black/10 shadow-sm flex-shrink-0"
+      className="w-5 h-5 rounded-lg border border-black/10 shadow-none flex-shrink-0"
       style={{ backgroundColor: color }}
     />
   );
@@ -50,26 +50,26 @@ function PresetRow({
   return (
     <button
       onClick={onSelect}
-      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-all group ${
+      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-all group ${
         isActive
-          ? 'bg-gray-900 text-white'
-          : 'hover:bg-gray-50 text-gray-700'
+          ? 'bg-primary text-white'
+          : 'text-text-secondary hover:bg-surface-subtle hover:text-text-primary'
       }`}
     >
       <div className="flex gap-1 flex-shrink-0">
         {swatchColors.map((c, i) => (
           <div
             key={i}
-            className="w-4 h-4 rounded-xl border border-black/10"
+            className="w-4 h-4 rounded-lg border border-black/10"
             style={{ backgroundColor: c }}
           />
         ))}
       </div>
       <div className="flex-1 min-w-0">
-        <div className={`text-sm font-medium ${isActive ? 'text-white' : 'text-gray-800'}`}>
+        <div className={`text-sm font-medium ${isActive ? 'text-white' : 'text-text-primary'}`}>
           {preset.name}
         </div>
-        <div className={`text-xs truncate ${isActive ? 'text-gray-300' : 'text-gray-400'}`}>
+        <div className={`text-xs truncate ${isActive ? 'text-white/70' : 'text-text-tertiary'}`}>
           {preset.description}
         </div>
       </div>
@@ -176,29 +176,29 @@ export const ThemePalettePanel: React.FC<ThemePalettePanelProps> = ({ isOpen, on
     <div className="fixed inset-0 z-50 flex items-start justify-end pointer-events-none">
       <div
         ref={panelRef}
-        className="mt-14 mr-0 w-80 bg-white border-l border-gray-200 shadow-sm h-[calc(100vh-3.5rem)] flex flex-col pointer-events-auto"
+        className="mt-14 mr-0 flex h-[calc(100vh-3.5rem)] w-80 flex-col border-l border-border bg-surface shadow-none pointer-events-auto"
       >
-        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+        <div className="flex items-center justify-between border-b border-border-subtle px-4 py-3">
           <div className="flex items-center gap-2">
-            <Palette size={15} className="text-gray-500" />
-            <span className="text-sm font-semibold text-gray-800">Color palette</span>
+            <Palette size={15} className="text-text-tertiary" />
+            <span className="text-sm font-semibold text-text-primary">Color palette</span>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-xl hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors"
+            className="rounded-lg p-1.5 text-text-tertiary transition-colors hover:bg-surface-subtle hover:text-text-primary"
             aria-label="Close palette panel"
           >
             <X size={14} />
           </button>
         </div>
 
-        <div className="flex border-b border-gray-100">
+        <div className="flex border-b border-border-subtle">
           <button
             onClick={() => setView('presets')}
             className={`flex-1 py-2.5 text-xs font-medium transition-colors border-b-2 ${
               view === 'presets'
-                ? 'border-gray-900 text-gray-900'
-                : 'border-transparent text-gray-400 hover:text-gray-600'
+                ? 'border-primary text-primary'
+                : 'border-transparent text-text-tertiary hover:text-text-primary'
             }`}
           >
             Presets
@@ -207,20 +207,20 @@ export const ThemePalettePanel: React.FC<ThemePalettePanelProps> = ({ isOpen, on
             onClick={() => setView('custom')}
             className={`flex-1 py-2.5 text-xs font-medium transition-colors border-b-2 ${
               view === 'custom'
-                ? 'border-gray-900 text-gray-900'
-                : 'border-transparent text-gray-400 hover:text-gray-600'
+                ? 'border-primary text-primary'
+                : 'border-transparent text-text-tertiary hover:text-text-primary'
             }`}
           >
             Custom
           </button>
         </div>
 
-        <div className="px-3 py-2.5 border-b border-gray-100 bg-gray-50/80">
-          <label className="text-[11px] font-semibold text-gray-500">Section animation (optional)</label>
+        <div className="border-b border-border-subtle bg-surface-subtle/70 px-3 py-2.5">
+          <label className="text-[11px] font-semibold text-text-tertiary">Section animation (optional)</label>
           <select
             value={globalAnimationPreset ?? 'none'}
             onChange={(e) => dispatch(builderActions.setGlobalAnimationPreset(e.target.value === 'none' ? null : (e.target.value as NonNullable<typeof globalAnimationPreset>)))}
-            className="mt-1.5 w-full border border-gray-200 rounded-xl px-2.5 py-2 text-xs text-gray-700 bg-white"
+            className="mt-1.5 w-full rounded-lg border border-border-subtle bg-surface px-2.5 py-2 text-xs text-text-secondary"
           >
             <option value="none">No shared animation</option>
             <option value="fade-in">Fade in</option>
@@ -239,10 +239,10 @@ export const ThemePalettePanel: React.FC<ThemePalettePanelProps> = ({ isOpen, on
         <div className="flex-1 overflow-y-auto">
           {view === 'presets' && (
             <div className="p-3 space-y-2">
-              <div className="flex flex-wrap gap-1.5 pb-2 border-b border-gray-100">
+              <div className="flex flex-wrap gap-1.5 border-b border-border-subtle pb-2">
                 <button
                   onClick={() => setSelectedPack('all')}
-                  className={`rounded-xl border px-2 py-1 text-[11px] font-medium ${selectedPack === 'all' ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'}`}
+                  className={`rounded-lg border px-2 py-1 text-[11px] font-medium ${selectedPack === 'all' ? 'border-primary bg-primary text-white' : 'border-border-subtle bg-surface text-text-secondary hover:bg-surface-subtle'}`}
                 >
                   All packs
                 </button>
@@ -250,7 +250,7 @@ export const ThemePalettePanel: React.FC<ThemePalettePanelProps> = ({ isOpen, on
                   <button
                     key={pack.id}
                     onClick={() => setSelectedPack(pack.id)}
-                    className={`rounded-xl border px-2 py-1 text-[11px] font-medium ${selectedPack === pack.id ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'}`}
+                    className={`rounded-lg border px-2 py-1 text-[11px] font-medium ${selectedPack === pack.id ? 'border-primary bg-primary text-white' : 'border-border-subtle bg-surface text-text-secondary hover:bg-surface-subtle'}`}
                   >
                     {pack.label}
                   </button>
@@ -266,16 +266,16 @@ export const ThemePalettePanel: React.FC<ThemePalettePanelProps> = ({ isOpen, on
                 />
               ))}
 
-              <div className="pt-3 border-t border-gray-100 mt-3">
+              <div className="mt-3 border-t border-border-subtle pt-3">
                 <button
                   onClick={() => setView('custom')}
-                  className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-left hover:bg-gray-50 transition-colors text-gray-600 group"
+                  className="group flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left text-text-secondary transition-colors hover:bg-surface-subtle hover:text-text-primary"
                 >
                   <div className="flex items-center gap-2">
-                    <Pipette size={14} className="text-gray-400" />
+                    <Pipette size={14} className="text-text-tertiary" />
                     <span className="text-sm">Build a custom palette</span>
                   </div>
-                  <ChevronRight size={14} className="text-gray-300 group-hover:text-gray-500 transition-colors" />
+                  <ChevronRight size={14} className="text-text-tertiary transition-colors group-hover:text-text-primary" />
                 </button>
               </div>
             </div>
@@ -283,13 +283,13 @@ export const ThemePalettePanel: React.FC<ThemePalettePanelProps> = ({ isOpen, on
 
           {view === 'custom' && (
             <div className="p-4 space-y-5">
-              <p className="text-xs text-gray-400 leading-relaxed">
+              <p className="text-xs leading-relaxed text-text-tertiary">
                 Customize individual colors. Changes preview instantly on the canvas.
               </p>
 
               {Object.entries(grouped).map(([group, tokens]) => (
                 <div key={group}>
-                  <div className="text-xs font-semibold text-gray-400 mb-2">
+                  <div className="mb-2 text-xs font-semibold text-text-tertiary">
                     {group}
                   </div>
                   <div className="space-y-2">
@@ -299,10 +299,10 @@ export const ThemePalettePanel: React.FC<ThemePalettePanelProps> = ({ isOpen, on
                           type="color"
                           value={customTokens[key]}
                           onChange={e => handleCustomTokenChange(key, e.target.value)}
-                          className="w-8 h-8 rounded-xl cursor-pointer border border-gray-200 p-0.5 flex-shrink-0"
+                          className="h-8 w-8 flex-shrink-0 cursor-pointer rounded-lg border border-border-subtle p-0.5"
                         />
                         <div className="flex-1 min-w-0">
-                          <div className="text-xs text-gray-700 font-medium">{label}</div>
+                          <div className="text-xs font-medium text-text-primary">{label}</div>
                           <input
                             type="text"
                             value={customTokens[key]}
@@ -310,7 +310,7 @@ export const ThemePalettePanel: React.FC<ThemePalettePanelProps> = ({ isOpen, on
                               const v = e.target.value;
                               if (/^#[0-9a-fA-F]{0,6}$/.test(v)) handleCustomTokenChange(key, v);
                             }}
-                            className="w-full text-xs text-gray-500 font-mono bg-transparent border-none outline-none p-0 mt-0.5"
+                            className="mt-0.5 w-full border-none bg-transparent p-0 font-mono text-xs text-text-secondary outline-none"
                             spellCheck={false}
                           />
                         </div>
@@ -321,16 +321,16 @@ export const ThemePalettePanel: React.FC<ThemePalettePanelProps> = ({ isOpen, on
                 </div>
               ))}
 
-              <div className="pt-3 border-t border-gray-100 space-y-2">
+              <div className="space-y-2 border-t border-border-subtle pt-3">
                 <button
                   onClick={handleApplyCustom}
-                  className="w-full py-2 rounded-xl bg-gray-900 text-white text-sm font-medium hover:bg-gray-800 transition-colors"
+                  className="w-full rounded-lg bg-primary py-2 text-sm font-medium text-white transition-colors hover:bg-primary-hover"
                 >
                   Apply Custom Palette
                 </button>
                 <button
                   onClick={handleResetToPreset}
-                  className="w-full py-2 rounded-xl bg-gray-50 text-gray-600 text-sm font-medium hover:bg-gray-100 transition-colors border border-gray-200"
+                  className="w-full rounded-lg border border-border-subtle bg-surface-subtle py-2 text-sm font-medium text-text-secondary transition-colors hover:bg-surface"
                 >
                   Reset to Preset
                 </button>
@@ -339,7 +339,7 @@ export const ThemePalettePanel: React.FC<ThemePalettePanelProps> = ({ isOpen, on
           )}
         </div>
 
-        <div className="px-4 py-3 border-t border-gray-100 bg-gray-50">
+        <div className="border-t border-border-subtle bg-surface-subtle px-4 py-3">
           <div className="flex items-center gap-2">
             <div className="flex gap-1">
               {[
@@ -351,12 +351,12 @@ export const ThemePalettePanel: React.FC<ThemePalettePanelProps> = ({ isOpen, on
               ].map((c, i) => (
                 <div
                   key={i}
-                  className="w-4 h-4 rounded-xl border border-black/10 shadow-sm"
+                  className="w-4 h-4 rounded-lg border border-black/10 shadow-none"
                   style={{ backgroundColor: c }}
                 />
               ))}
             </div>
-            <span className="text-xs text-gray-400 ml-1">
+            <span className="ml-1 text-xs text-text-tertiary">
               {customApplied ? 'Custom palette' : (presets.find(p => p.id === activeThemeId)?.name ?? 'Romantic')}
             </span>
           </div>

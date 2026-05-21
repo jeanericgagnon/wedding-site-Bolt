@@ -15,7 +15,7 @@ export function MessageDashboardRouteView({
   if (loading) {
     return (
       <DashboardLayout currentPage="messages">
-        <div className="max-w-[1100px] mx-auto">
+        <div>
           <DashboardStateBlock title="Loading messages…" description="Preparing your campaigns and activity." />
         </div>
       </DashboardLayout>

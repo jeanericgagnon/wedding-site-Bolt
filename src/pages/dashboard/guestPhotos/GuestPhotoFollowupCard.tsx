@@ -42,7 +42,7 @@ export function GuestPhotoFollowupCard({
       </div>
       <div className="mt-4 grid gap-2 md:grid-cols-2">
         {guestProspects.slice(0, 6).map((entry) => (
-          <div key={entry.id} className="rounded-2xl border border-border-subtle bg-surface-subtle px-4 py-3">
+          <div key={entry.id} className="rounded-[20px] border border-border-subtle bg-surface-subtle px-4 py-3">
             <p className="text-sm font-medium text-neutral-900">{entry.guest_name || 'Guest'}</p>
             <p className="mt-1 text-xs text-neutral-600">{entry.email || entry.phone || 'Contact info not added'} · {entry.source}</p>
             <p className="mt-2 text-xs text-neutral-500">

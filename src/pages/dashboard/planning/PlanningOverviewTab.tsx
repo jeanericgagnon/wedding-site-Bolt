@@ -190,7 +190,7 @@ export const PlanningOverviewTab: React.FC<Props> = ({
   return (
     <div className="space-y-6">
       {lastStarterSuiteRun && undoStarterSuite && starterUndoCount > 0 ? (
-        <Card padding="md" className="border-success/30 bg-success/5">
+        <Card padding="md" className="rounded-[20px] border-success/30 bg-success/5 shadow-none">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="text-sm font-semibold text-text-primary">Starter suite added</p>
@@ -206,11 +206,11 @@ export const PlanningOverviewTab: React.FC<Props> = ({
       ) : null}
 
       {(shouldShowStarterSuite || shouldShowStarterSuiteQa) && starterSuite && applyStarterSuite ? (
-        <Card padding="md" className="border-primary/25 bg-primary/5">
+        <Card padding="md" className="rounded-[20px] border-primary/25 bg-primary/5 shadow-none">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div>
               <p className="text-xs font-semibold text-primary">Planner starter set</p>
-              <h2 className="mt-2 text-lg font-semibold text-text-primary">Add a useful first planner</h2>
+              <h2 className="mt-2 font-serif text-2xl font-normal text-text-primary">Add a useful first planner</h2>
               <p className="mt-1 max-w-2xl text-sm leading-6 text-text-secondary">
                 This adds editable tasks, budget lines, vendor notes, and guest details from the wedding information already on your site.
               </p>
@@ -259,7 +259,7 @@ export const PlanningOverviewTab: React.FC<Props> = ({
           onClick={() => onTabChange('tasks')}
           className="text-left"
         >
-          <Card padding="md" className={`h-full transition-colors hover:border-primary/25 ${overdueTasks.length > 0 ? 'border-error/40 bg-error/5' : ''}`}>
+          <Card padding="md" className={`h-full rounded-[20px] shadow-none transition-colors hover:border-primary/25 ${overdueTasks.length > 0 ? 'border-error/40 bg-error/5' : ''}`}>
             <div className="flex items-start gap-3">
               <div className={`rounded-xl p-2 ${overdueTasks.length > 0 ? 'bg-error/10' : 'bg-surface-subtle'}`}>
                 <AlertTriangle className={`w-5 h-5 ${overdueTasks.length > 0 ? 'text-error' : 'text-text-tertiary'}`} />
@@ -273,7 +273,7 @@ export const PlanningOverviewTab: React.FC<Props> = ({
         </button>
 
         <button onClick={() => onTabChange('tasks')} className="text-left">
-          <Card padding="md" className="h-full transition-colors hover:border-primary/25">
+          <Card padding="md" className="h-full rounded-[20px] shadow-none transition-colors hover:border-primary/25">
             <div className="flex items-start gap-3">
               <div className="rounded-xl bg-warning/10 p-2">
                 <Clock className="w-5 h-5 text-warning" />
@@ -287,7 +287,7 @@ export const PlanningOverviewTab: React.FC<Props> = ({
         </button>
 
         <button onClick={() => onTabChange('budget')} className="text-left">
-          <Card padding="md" className="h-full transition-colors hover:border-primary/25">
+          <Card padding="md" className="h-full rounded-[20px] shadow-none transition-colors hover:border-primary/25">
             <div className="flex items-start gap-3">
               <div className="rounded-xl bg-primary-light p-2">
                 <DollarSign className="w-5 h-5 text-primary" />
@@ -301,7 +301,7 @@ export const PlanningOverviewTab: React.FC<Props> = ({
         </button>
 
         <button onClick={() => onTabChange('vendors')} className="text-left">
-          <Card padding="md" className={`h-full transition-colors hover:border-primary/25 ${unpaidVendorBalance > 0 ? 'border-warning/40' : ''}`}>
+          <Card padding="md" className={`h-full rounded-[20px] shadow-none transition-colors hover:border-primary/25 ${unpaidVendorBalance > 0 ? 'border-warning/40' : ''}`}>
             <div className="flex items-start gap-3">
               <div className={`rounded-xl p-2 ${unpaidVendorBalance > 0 ? 'bg-warning/10' : 'bg-surface-subtle'}`}>
                 <DollarSign className={`w-5 h-5 ${unpaidVendorBalance > 0 ? 'text-warning' : 'text-text-tertiary'}`} />
@@ -328,7 +328,7 @@ export const PlanningOverviewTab: React.FC<Props> = ({
           }}
           className="block w-full text-left"
         >
-          <Card padding="md" className="border-primary/25 bg-primary/5 transition-colors hover:border-primary/40">
+          <Card padding="md" className="rounded-[20px] border-primary/25 bg-primary/5 shadow-none transition-colors hover:border-primary/40">
             <div className="flex items-start justify-between gap-4">
               <div className="flex items-start gap-3">
                 <div className="rounded-xl bg-primary/10 p-2">
@@ -436,7 +436,7 @@ export const PlanningOverviewTab: React.FC<Props> = ({
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card padding="md">
+        <Card padding="md" className="rounded-[20px] shadow-none">
           <div className="flex items-center gap-2 mb-4">
             <Users className="w-5 h-5 text-primary" />
             <h3 className="font-semibold text-text-primary">Seating progress</h3>
@@ -473,7 +473,7 @@ export const PlanningOverviewTab: React.FC<Props> = ({
           </div>
         </Card>
 
-        <Card padding="md">
+        <Card padding="md" className="rounded-[20px] shadow-none">
           <div className="flex items-center gap-2 mb-4">
             <CheckCircle className="w-5 h-5 text-primary" />
             <h3 className="font-semibold text-text-primary">Planning progress</h3>
@@ -515,7 +515,7 @@ export const PlanningOverviewTab: React.FC<Props> = ({
       </div>
 
       {dueSoonVendors.length > 0 && (
-        <Card padding="md" className="border-warning/40 bg-warning/5">
+        <Card padding="md" className="rounded-[20px] border-warning/40 bg-warning/5 shadow-none">
           <div className="flex items-center gap-2 mb-3">
             <AlertTriangle className="w-5 h-5 text-warning" />
             <h3 className="font-semibold text-text-primary">Vendor payments coming up</h3>

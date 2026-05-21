@@ -50,8 +50,8 @@ export const BuilderVariantGallery: React.FC = () => {
   }).filter((group) => group.variants.length > 0), [allVariantRows, manifests, missingPreviews, normalizedQuery, sectionFilter, variantFilter]);
 
   return (
-    <main className="min-h-screen bg-[var(--color-surface)] text-text-primary">
-      <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+    <main className="min-h-screen bg-background text-text-primary">
+      <div className="max-w-none px-4 py-6 sm:px-6 lg:px-8">
         <div className="mb-6 flex flex-col gap-4 border-b border-border-subtle pb-5 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <Link
@@ -88,18 +88,18 @@ export const BuilderVariantGallery: React.FC = () => {
 
         <div className="mb-6 grid gap-3 lg:grid-cols-[1fr_220px_220px]">
           <label className="relative block">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-tertiary" />
             <input
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               placeholder="Search section, layout, style, or note"
-              className="h-11 w-full rounded-xl border border-border-subtle bg-white pl-9 pr-3 text-sm outline-none ring-primary/10 focus:ring-4"
+                  className="h-11 w-full rounded-lg border border-border-subtle bg-surface pl-9 pr-3 text-sm outline-none ring-primary/10 focus:ring-4"
             />
           </label>
           <select
             value={sectionFilter}
             onChange={(event) => setSectionFilter(event.target.value)}
-            className="h-11 rounded-xl border border-border-subtle bg-white px-3 text-sm text-text-secondary outline-none ring-primary/10 focus:ring-4"
+            className="h-11 rounded-lg border border-border-subtle bg-surface px-3 text-sm text-text-secondary outline-none ring-primary/10 focus:ring-4"
           >
             <option value="all">All sections</option>
             {manifests.map((manifest) => (
@@ -109,7 +109,7 @@ export const BuilderVariantGallery: React.FC = () => {
           <select
             value={variantFilter}
             onChange={(event) => setVariantFilter(event.target.value as VariantFilter)}
-            className="h-11 rounded-xl border border-border-subtle bg-white px-3 text-sm text-text-secondary outline-none ring-primary/10 focus:ring-4"
+            className="h-11 rounded-lg border border-border-subtle bg-surface px-3 text-sm text-text-secondary outline-none ring-primary/10 focus:ring-4"
           >
             <option value="all">All layout notes</option>
             <option value="needs-work">Needs polish</option>
@@ -133,11 +133,11 @@ export const BuilderVariantGallery: React.FC = () => {
 
         <div className="space-y-8">
           {filteredManifests.map(({ manifest, variants }) => (
-            <section key={manifest.type} className="rounded-xl border border-border-subtle bg-white p-4 shadow-sm">
+            <section key={manifest.type} className="rounded-[20px] border border-border-subtle bg-surface p-4 shadow-none">
               <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
                 <div>
                   <h2 className="text-lg font-semibold">{manifest.label}</h2>
-                  <p className="text-sm text-slate-500">
+                  <p className="text-sm text-text-secondary">
                     {variants.length} shown of {manifest.variantMeta.length} layout{manifest.variantMeta.length === 1 ? '' : 's'}.
                   </p>
                 </div>
@@ -153,7 +153,7 @@ export const BuilderVariantGallery: React.FC = () => {
                   const previewUrl = `/variant-previews/${manifest.type}__${quality.previewSource}.webp`;
                   const previewMissing = Boolean(missingPreviews[key]);
                   return (
-                    <article key={variant.id} className="overflow-hidden rounded-xl border border-border-subtle bg-white">
+                    <article key={variant.id} className="overflow-hidden rounded-[20px] border border-border-subtle bg-surface">
                       <div className="relative aspect-[16/10] bg-surface-subtle">
                         <img
                           src={previewUrl}
@@ -185,7 +185,7 @@ export const BuilderVariantGallery: React.FC = () => {
                           <p className="text-[10px] font-semibold text-text-tertiary">Best for</p>
                           <p className="mt-1 text-xs leading-relaxed text-text-secondary">{variant.bestFor || 'A flexible choice for a polished wedding page.'}</p>
                           <div className="mt-2 flex flex-wrap gap-1">
-                            {variant.effort ? <span className="rounded-full border border-border-subtle bg-white px-2 py-0.5 text-[10px] font-medium text-text-secondary">{variant.effort} setup</span> : null}
+                            {variant.effort ? <span className="rounded-full border border-border-subtle bg-surface px-2 py-0.5 text-[10px] font-medium text-text-secondary">{variant.effort} setup</span> : null}
                             {variant.recommended ? <span className="rounded-full border border-accent/30 bg-accent-light px-2 py-0.5 text-[10px] font-medium text-primary">Recommended</span> : null}
                           </div>
                         </div>
@@ -225,7 +225,7 @@ export const BuilderVariantGallery: React.FC = () => {
           ))}
           {filteredManifests.length === 0 && (
             <div className="rounded-xl border border-dashed border-border-subtle bg-white px-6 py-12 text-center">
-              <AlertTriangle className="mx-auto h-8 w-8 text-slate-400" />
+              <AlertTriangle className="mx-auto h-8 w-8 text-text-tertiary" />
               <p className="mt-3 text-sm font-semibold text-text-primary">No layouts match those filters</p>
               <p className="mt-1 text-sm text-text-secondary">Clear search or switch back to all layout notes.</p>
             </div>
@@ -265,7 +265,7 @@ const QualityBadge: React.FC<{ status: 'strong' | 'review' | 'needs-work'; score
 };
 
 const FlagPill: React.FC<{ flag: VariantQualityFlag }> = ({ flag }) => (
-  <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[10px] font-medium text-slate-600">
+  <span className="rounded-full border border-border-subtle bg-surface-subtle px-2 py-0.5 text-[10px] font-medium text-text-secondary">
     {getVariantQualityLabel(flag)}
   </span>
 );

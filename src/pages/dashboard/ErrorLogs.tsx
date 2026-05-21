@@ -253,9 +253,11 @@ export const DashboardErrorLogs: React.FC = () => {
 
   if (loading || (!adminCheckComplete && user?.id && !isDemoMode)) {
     return (
-      <div className="min-h-screen bg-background p-6">
-        <div className="max-w-6xl mx-auto">
-          <Card padding="lg"><p className="text-sm text-text-secondary">Checking access…</p></Card>
+      <div className="min-h-screen bg-background px-4 py-6 text-text-primary sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-3xl">
+          <Card padding="lg" className="rounded-[20px] border border-border-subtle bg-surface">
+            <p className="text-sm text-text-secondary">Checking access…</p>
+          </Card>
         </div>
       </div>
     );
@@ -263,12 +265,18 @@ export const DashboardErrorLogs: React.FC = () => {
 
   if (!isAdmin) {
     return (
-      <div className="min-h-screen bg-background p-6">
-        <div className="max-w-3xl mx-auto">
-          <Card padding="lg">
-            <h1 className="text-xl font-semibold text-text-primary mb-2">Restricted</h1>
-            <p className="text-sm text-text-secondary mb-4">This admin page is available only to the designated admin account.</p>
-            <Link to="/dashboard/overview" className="text-sm text-primary hover:text-primary-hover">Back to your wedding</Link>
+      <div className="min-h-screen bg-background px-4 py-6 text-text-primary sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-3xl">
+          <Card padding="lg" className="rounded-[20px] border border-border-subtle bg-surface">
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-text-tertiary">Admin</p>
+            <h1 className="mb-2 mt-3 font-serif text-3xl font-semibold text-text-primary">Restricted</h1>
+            <p className="mb-5 text-sm text-text-secondary">This admin page is available only to the designated admin account.</p>
+            <Link
+              to="/dashboard/overview"
+              className="inline-flex min-h-[40px] items-center justify-center rounded-lg border border-border-subtle bg-surface px-3 py-2 text-sm font-semibold text-text-primary no-underline hover:bg-surface-subtle"
+            >
+              Back to your wedding
+            </Link>
           </Card>
         </div>
       </div>
@@ -276,11 +284,12 @@ export const DashboardErrorLogs: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background p-6">
-      <div className="max-w-6xl mx-auto space-y-4">
-        <div>
-          <h1 className="text-3xl font-bold text-text-primary mb-1">Admin · Error Logs</h1>
-          <p className="text-text-secondary">Recent app issues captured from the live client.</p>
+    <div className="min-h-screen bg-background px-4 py-6 text-text-primary sm:px-6 lg:px-8">
+      <div className="space-y-6">
+        <div className="rounded-[20px] border border-border-subtle bg-surface p-5">
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-text-tertiary">Admin</p>
+          <h1 className="mb-1 mt-2 font-serif text-3xl font-semibold text-text-primary">Admin · Error Logs</h1>
+          <p className="text-sm text-text-secondary">Recent app issues captured from the live client.</p>
         </div>
 
         {logsLoading ? (
@@ -305,7 +314,7 @@ export const DashboardErrorLogs: React.FC = () => {
                     value={searchQuery}
                     onChange={(e) => { setSearchQuery(e.target.value); setPage(1); }}
                     placeholder="Message, route, source, fingerprint"
-                    className="ml-2 w-64 max-w-full rounded-xl border border-border bg-white px-2 py-1 text-xs"
+                    className="ml-2 w-64 max-w-full rounded-lg border border-border bg-surface px-2 py-1 text-xs"
                   />
                 </label>
                 <label className="text-xs text-text-secondary">
@@ -313,7 +322,7 @@ export const DashboardErrorLogs: React.FC = () => {
                   <select
                     value={datePreset}
                     onChange={(e) => setDatePreset(e.target.value as '24h' | '7d' | '30d' | 'all')}
-                    className="ml-2 rounded-xl border border-border bg-white px-2 py-1 text-xs"
+                    className="ml-2 rounded-lg border border-border bg-surface px-2 py-1 text-xs"
                   >
                     <option value="24h">Last 24 hours</option>
                     <option value="7d">Last 7 days</option>
@@ -326,7 +335,7 @@ export const DashboardErrorLogs: React.FC = () => {
                   <select
                     value={severityFilter}
                     onChange={(e) => setSeverityFilter(e.target.value as 'all' | 'error' | 'warning' | 'info')}
-                    className="ml-2 rounded-xl border border-border bg-white px-2 py-1 text-xs"
+                    className="ml-2 rounded-lg border border-border bg-surface px-2 py-1 text-xs"
                   >
                     <option value="all">All</option>
                     <option value="error">Error</option>
@@ -339,7 +348,7 @@ export const DashboardErrorLogs: React.FC = () => {
                   <select
                     value={routeFilter}
                     onChange={(e) => setRouteFilter(e.target.value)}
-                    className="ml-2 rounded-xl border border-border bg-white px-2 py-1 text-xs"
+                    className="ml-2 rounded-lg border border-border bg-surface px-2 py-1 text-xs"
                   >
                     {routeOptions.map((r) => (
                       <option key={r} value={r}>{r === 'all' ? 'All routes' : r}</option>
@@ -351,7 +360,7 @@ export const DashboardErrorLogs: React.FC = () => {
                   <select
                     value={fingerprintFilter}
                     onChange={(e) => { setFingerprintFilter(e.target.value); setPage(1); }}
-                    className="ml-2 rounded-xl border border-border bg-white px-2 py-1 text-xs"
+                    className="ml-2 rounded-lg border border-border bg-surface px-2 py-1 text-xs"
                   >
                     {fingerprintOptions.map((f) => (
                       <option key={f} value={f}>{f === 'all' ? 'All fingerprints' : f}</option>
@@ -360,7 +369,7 @@ export const DashboardErrorLogs: React.FC = () => {
                 </label>
                 <button
                   onClick={exportFilteredCsv}
-                  className="rounded-xl border border-border bg-white px-3 py-1.5 text-xs hover:bg-surface-subtle"
+                  className="rounded-lg border border-border bg-surface px-3 py-1.5 text-xs hover:bg-surface-subtle"
                 >
                   Export CSV
                 </button>
@@ -376,12 +385,12 @@ export const DashboardErrorLogs: React.FC = () => {
                     </div>
                     <div className="flex items-center gap-2">
                       <button
-                        className="rounded-xl border border-border-subtle bg-white px-2 py-1 text-xs"
+                        className="rounded-lg border border-border-subtle bg-surface px-2 py-1 text-xs"
                         onClick={() => { setFingerprintFilter(g.fingerprint); setPage(1); }}
                       >
                         Filter
                       </button>
-                      <span className="whitespace-nowrap rounded-xl border border-border-subtle bg-surface-subtle px-2 py-1 text-xs">{g.count}x</span>
+                      <span className="whitespace-nowrap rounded-lg border border-border-subtle bg-surface-subtle px-2 py-1 text-xs">{g.count}x</span>
                     </div>
                   </div>
                 ))}
@@ -415,7 +424,7 @@ export const DashboardErrorLogs: React.FC = () => {
                         <td className="px-3 py-2 font-mono text-xs">{r.fingerprint || '—'}</td>
                         <td className="px-3 py-2 text-right">
                           <button
-                            className="rounded-xl border border-border px-2 py-1 text-xs"
+                            className="rounded-lg border border-border px-2 py-1 text-xs"
                             onClick={() => setExpandedId((prev) => (prev === r.id ? null : r.id))}
                           >
                             {isOpen ? 'Hide' : 'Details'}
@@ -427,7 +436,7 @@ export const DashboardErrorLogs: React.FC = () => {
                           <td colSpan={8} className="px-3 py-2">
                             <div className="flex flex-wrap gap-2 items-center mb-2">
                               <button
-                                className="rounded-xl border border-border px-2 py-1 text-xs"
+                                className="rounded-lg border border-border px-2 py-1 text-xs"
                                 onClick={() => void copyValue(r.fingerprint || '', `fp-${r.id}`)}
                                 disabled={!r.fingerprint || copyStatus?.state === 'copying'}
                               >
@@ -442,7 +451,7 @@ export const DashboardErrorLogs: React.FC = () => {
                                   : 'Copy fingerprint'}
                               </button>
                               <button
-                                className="rounded-xl border border-border px-2 py-1 text-xs"
+                                className="rounded-lg border border-border px-2 py-1 text-xs"
                                 onClick={() => void copyValue(r.message, `msg-${r.id}`)}
                                 disabled={copyStatus?.state === 'copying'}
                               >
@@ -477,7 +486,7 @@ export const DashboardErrorLogs: React.FC = () => {
               <span>Showing {pagedRows.length} of {filteredRows.length}</span>
               <div className="flex items-center gap-2">
                 <button
-                  className="rounded-xl border border-border px-2 py-1 disabled:opacity-50"
+                  className="rounded-lg border border-border px-2 py-1 disabled:opacity-50"
                   disabled={page <= 1}
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
                 >
@@ -485,7 +494,7 @@ export const DashboardErrorLogs: React.FC = () => {
                 </button>
                 <span>Page {page} / {totalPages}</span>
                 <button
-                  className="rounded-xl border border-border px-2 py-1 disabled:opacity-50"
+                  className="rounded-lg border border-border px-2 py-1 disabled:opacity-50"
                   disabled={page >= totalPages}
                   onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                 >

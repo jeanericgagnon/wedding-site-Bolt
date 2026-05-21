@@ -182,7 +182,7 @@ export function CoordinatorCheckInQueuePanel({
   };
 
   return (
-    <div className={`lg:col-span-2 overflow-hidden rounded-xl border bg-white shadow-sm ${isFocused ? 'border-primary/40 ring-2 ring-primary/10' : 'border-border-subtle'}`}>
+    <div className={`lg:col-span-2 overflow-hidden rounded-[20px] border bg-white shadow-none ${isFocused ? 'border-primary/40 ring-2 ring-primary/10' : 'border-border-subtle'}`}>
       <div className="px-4 py-3 border-b border-border/60 space-y-3">
         <div className="flex items-center justify-between gap-3">
           <div>
@@ -529,7 +529,7 @@ export function CoordinatorTimelinePanel({
 
   return (
     <div>
-      <div className="mb-2 rounded-2xl border border-border/50 bg-surface-subtle/25 px-3 py-3">
+      <div className="mb-2 rounded-[20px] border border-border/50 bg-surface-subtle/25 px-3 py-3">
         <p className="text-sm font-medium text-text-primary">Run-of-show timeline{panelFocus === 'timeline' ? ' · focus' : ''}{activeTimelineEventId ? ` · ${getCoordinatorActiveTargetLabel('timeline')}` : ''}{timelineTargetState.label ? ` · ${timelineTargetState.label}` : ''}</p>
         <p className="mt-1 text-[11px] text-text-secondary">Use this lane to keep the live event flow legible before opening a specific timeline action.</p>
       </div>
@@ -691,7 +691,7 @@ export function CoordinatorDayOfMessagePanel(props: CoordinatorDayOfMessagePanel
 
   return (
     <div className="border-t border-border/60 pt-3">
-      <div className="mb-2 rounded-2xl border border-border/50 bg-surface-subtle/25 px-3 py-3">
+      <div className="mb-2 rounded-[20px] border border-border/50 bg-surface-subtle/25 px-3 py-3">
         <p className="text-sm font-medium text-text-primary">Day-of message</p>
         <p className="mt-1 text-[11px] text-text-secondary">Use this lane to send the right update quickly without losing the live floor context.</p>
       </div>
@@ -703,7 +703,7 @@ export function CoordinatorDayOfMessagePanel(props: CoordinatorDayOfMessagePanel
           ['Text', alertStats.sms],
           ['Email', alertStats.email],
         ].map(([label, value]) => (
-          <div key={String(label)} className="rounded-xl border border-border-subtle bg-white px-2.5 py-2 shadow-sm">
+          <div key={String(label)} className="rounded-xl border border-border-subtle bg-white px-2.5 py-2 shadow-none">
             <p className="text-[10px] text-text-tertiary">{label}</p>
             <p className="text-xs font-semibold text-text-primary">{value}</p>
           </div>
@@ -863,7 +863,7 @@ export function CoordinatorCommandDeckPanel({
 }: CoordinatorCommandDeckPanelProps) {
   return (
     <>
-      <div className="rounded-2xl border border-border/50 bg-surface-subtle/25 px-3 py-3">
+      <div className="rounded-[20px] border border-border/50 bg-surface-subtle/25 px-3 py-3">
         <div className="mb-3">
           <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-text-tertiary">Command board</p>
           <p className="mt-1 text-[11px] text-text-secondary">Use this lane to confirm what is active now before switching into a deeper task surface.</p>
@@ -884,7 +884,7 @@ export function CoordinatorCommandDeckPanel({
           ))}
         </div>
       </div>
-      <div className="mt-3 rounded-2xl border border-border/50 bg-surface-subtle/25 px-3 py-3">
+      <div className="mt-3 rounded-[20px] border border-border/50 bg-surface-subtle/25 px-3 py-3">
         <div className="mb-3">
           <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-text-tertiary">Live task deck</p>
           <p className="mt-1 text-[11px] text-text-secondary">These are the work areas that can take over the floor once the command board has pointed to them.</p>
@@ -903,7 +903,7 @@ export function CoordinatorCommandDeckPanel({
           ))}
         </div>
       </div>
-      <div className="mt-3 rounded-2xl border border-border/50 bg-surface-subtle/25 px-3 py-3">
+      <div className="mt-3 rounded-[20px] border border-border/50 bg-surface-subtle/25 px-3 py-3">
         <div className="mb-3">
           <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-text-tertiary">Ops snapshots</p>
           <p className="mt-1 text-[11px] text-text-secondary">Quick readouts stay here so the floor can reorient without leaving the live route.</p>

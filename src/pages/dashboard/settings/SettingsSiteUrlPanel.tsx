@@ -32,7 +32,7 @@ export function SettingsSiteUrlPanel({
   const visibility = getSiteVisibilityState({ isPublished, privacyMode });
 
   return (
-    <Card variant="bordered" padding="lg">
+    <Card variant="bordered" padding="lg" className="rounded-[20px] shadow-none">
       <CardHeader>
         <CardTitle>Site URL</CardTitle>
         <CardDescription>Your wedding site address</CardDescription>
@@ -40,10 +40,10 @@ export function SettingsSiteUrlPanel({
       <CardContent>
         <form onSubmit={onSubmit} className="space-y-4">
           {slugSuccess && (
-            <div className="rounded-2xl border border-success/20 bg-success-light p-3 text-sm text-success">{slugSuccess}</div>
+            <div className="rounded-[20px] border border-success/20 bg-success-light p-3 text-sm text-success">{slugSuccess}</div>
           )}
           {slugError && (
-            <div className="rounded-2xl border border-border-subtle bg-surface-subtle p-3 text-sm text-text-secondary">{slugError}</div>
+            <div className="rounded-[20px] border border-border-subtle bg-surface-subtle p-3 text-sm text-text-secondary">{slugError}</div>
           )}
           <div>
             <label className="mb-2 block text-sm font-medium text-text-primary">
@@ -84,7 +84,7 @@ export function SettingsSiteUrlPanel({
                     />
                   </>
                 ) : (
-                  <div className="rounded-2xl border border-border-subtle bg-surface-subtle p-3 text-sm text-text-secondary">
+                  <div className="rounded-[20px] border border-border-subtle bg-surface-subtle p-3 text-sm text-text-secondary">
                     <p className="font-medium text-text-primary">This URL is reserved for your site, but guests cannot open it yet.</p>
                     <p className="mt-1">
                       {visibility.explainer} Publish the site before sharing the public link or printing a QR code.

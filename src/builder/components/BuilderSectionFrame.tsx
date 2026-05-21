@@ -239,7 +239,7 @@ export const BuilderSectionFrame: React.FC<BuilderSectionFrameProps> = ({
     >
 
       {isHighlighted && (
-        <div className="absolute top-0 left-0 right-0 z-20 flex items-center justify-between px-3 py-1.5 bg-[#2f261d] text-white text-xs font-medium shadow-sm">
+        <div className="absolute top-0 left-0 right-0 z-20 flex items-center justify-between px-3 py-1.5 bg-[#2f261d] text-white text-xs font-medium shadow-none">
           <div className="flex items-center gap-2">
             {manifest.capabilities.draggable && !section.locked && (
               <button
@@ -358,7 +358,7 @@ const InlineEditPanel: React.FC<{
 
   return (
     <div
-      className="relative z-10 border-t border-border-subtle bg-white shadow-sm"
+      className="relative z-10 border-t border-border-subtle bg-white shadow-none"
       onClick={e => e.stopPropagation()}
     >
       <div className="flex items-center justify-between px-4 py-2.5 bg-surface-subtle/70 border-b border-border-subtle">

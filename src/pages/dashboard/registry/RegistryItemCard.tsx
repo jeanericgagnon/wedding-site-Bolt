@@ -88,7 +88,7 @@ const PurchaseConfirmPanel: React.FC<PurchaseConfirmProps> = ({ item, onConfirm,
   }, [item.id, remaining]);
 
   return (
-    <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 rounded-2xl bg-surface/95 p-4 backdrop-blur-sm">
+    <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 rounded-[20px] bg-surface/95 p-4 backdrop-blur-sm">
       <div className="text-center">
         <p className="font-semibold text-text-primary text-sm leading-snug mb-1">Mark as purchased?</p>
         <p className="text-xs text-text-secondary">This lets guests know it's been bought.</p>
@@ -320,7 +320,7 @@ export const RegistryItemCard: React.FC<Props> = ({ item, onEdit, onDelete, onMa
 
   if (isCashFund) {
     return (
-      <div data-testid="owner-registry-item-card" className="group relative flex flex-col gap-3 overflow-hidden rounded-2xl border border-border bg-surface p-4">
+      <div data-testid="owner-registry-item-card" className="group relative flex flex-col gap-3 overflow-hidden rounded-[20px] border border-border bg-surface p-4">
         <div className="flex items-start justify-between">
           <h3 className="font-semibold text-text-primary leading-snug">{item.item_name}</h3>
           <Badge variant="neutral">Cash Fund</Badge>
@@ -396,7 +396,7 @@ export const RegistryItemCard: React.FC<Props> = ({ item, onEdit, onDelete, onMa
   }
 
   return (
-    <div data-testid="owner-registry-item-card" className="group relative flex flex-col overflow-hidden rounded-2xl border border-border bg-surface">
+    <div data-testid="owner-registry-item-card" className="group relative flex flex-col overflow-hidden rounded-[20px] border border-border bg-surface">
       {showPurchaseConfirm && (
         <PurchaseConfirmPanel
           item={item}

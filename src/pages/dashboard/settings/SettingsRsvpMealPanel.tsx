@@ -35,7 +35,7 @@ export function SettingsRsvpMealPanel({
   showMealChoiceSettings,
 }: SettingsRsvpMealPanelProps) {
   return (
-    <Card variant="bordered" padding="lg">
+    <Card variant="bordered" padding="lg" className="rounded-[20px] shadow-none">
       <CardHeader>
         <div className="flex items-start justify-between gap-4">
           <div>
@@ -49,7 +49,7 @@ export function SettingsRsvpMealPanel({
       </CardHeader>
       <CardContent className="space-y-3">
         {!showMealChoiceSettings ? (
-          <div className="rounded-2xl border border-border-subtle bg-surface-subtle/40 p-4 text-sm text-text-secondary">
+          <div className="rounded-[20px] border border-border-subtle bg-surface-subtle/40 p-4 text-sm text-text-secondary">
             Hidden by default to keep RSVP setup lighter. Open this section only if you want guests to choose a meal.
           </div>
         ) : (
@@ -95,10 +95,10 @@ export function SettingsRsvpMealPanel({
           </>
         )}
         {!showAdvancedRsvp && rsvpQuestionsSuccess && (
-          <div className="rounded-2xl border border-success/20 bg-success-light p-3 text-sm text-success">{rsvpQuestionsSuccess}</div>
+          <div className="rounded-[20px] border border-success/20 bg-success-light p-3 text-sm text-success">{rsvpQuestionsSuccess}</div>
         )}
         {!showAdvancedRsvp && rsvpQuestionsError && (
-          <div className="rounded-2xl border border-border-subtle bg-surface-subtle p-3 text-sm text-text-secondary">{rsvpQuestionsError}</div>
+          <div className="rounded-[20px] border border-border-subtle bg-surface-subtle p-3 text-sm text-text-secondary">{rsvpQuestionsError}</div>
         )}
       </CardContent>
     </Card>
