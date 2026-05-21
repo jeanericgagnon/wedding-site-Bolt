@@ -31,6 +31,7 @@ import { resolvePublicSiteSlugFromRow } from '../../lib/publicSiteSlug';
 import { getSiteVisibilityState } from '../../lib/siteVisibilityState';
 import { resolveActiveSiteForUser, resolveActiveSiteRoleForUser } from '../../lib/activeSite';
 import { getStoredActiveSiteId, setStoredActiveSiteId } from '../../lib/activeSiteStorage';
+import { getDemoDashboardSiteContext } from './dashboardDemoContext';
 import { buildSiteMembershipLabel } from './siteMembershipLabel';
 
 interface DashboardLayoutProps {
@@ -65,7 +66,13 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
     if (!user) return;
 
     if (isDemoMode) {
-      setSiteSlug('alex-jordan-demo');
+      const demoSiteContext = getDemoDashboardSiteContext();
+      setSiteSlug(demoSiteContext.siteSlug);
+      setSiteId(demoSiteContext.siteId);
+      setSiteIsPublished(demoSiteContext.isPublished);
+      setSitePrivacyMode(demoSiteContext.privacyMode);
+      setSiteJsonState(demoSiteContext.siteJson);
+      setActiveSiteRole(demoSiteContext.role);
       return;
     }
 

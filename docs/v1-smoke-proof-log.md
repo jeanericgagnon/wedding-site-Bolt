@@ -502,3 +502,8 @@ A slice does **not** count as passed because:
 - Public promise is much cleaner than before.
 - The repo is now closer to **truthful** than **proven**.
 - The main finish risk is no longer fake copy; it is missing proof on the must-ship flows.
+
+## 2026-05-20 18:17 PDT - Demo Dashboard Visibility Truth Fix
+
+- Concrete finish gap found and fixed: the demo dashboard sidebar still said the Alex/Jordan site was draft-only while the builder and public demo route treated it as live. Demo mode now hydrates the shared dashboard shell with the published public visibility state, search-visible status, real demo site id, and owner role so the overview/sidebar does not contradict the live public demo.
+- Verification: `npm test -- src/components/dashboard/dashboardDemoContext.test.ts` passed, `npm run typecheck -- --pretty false` passed, `npm run build` passed, and `git diff --check` passed. The first heavier component-render test attempt hung during local Vitest startup, so the final regression is a pure helper test that covers the same demo visibility truth without jsdom lifecycle noise. No deploy was run.
