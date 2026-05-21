@@ -36,6 +36,7 @@ import { buildNameChangeOverviewInsights, type NameChangeOverviewInsights } from
 import { NAME_CHANGE_LIFECYCLE_LABELS } from './nameChangeLifecycleLabels';
 import { deriveNameChangeLifecycleStatus } from './nameChangeLifecycleStatus';
 import { hydrateNameChangeWorkspace, loadNameChangeWorkspace } from './planning/nameChangeService';
+import { resolveActiveSiteForUser } from '../../lib/activeSite';
 
 const DEFAULT_NAME_CHANGE_INSIGHTS: NameChangeOverviewInsights = {
   coreChainLabel: 'Certificate, SSA, and DMV stay together so the legal identity chain does not drift.',
@@ -81,6 +82,26 @@ interface RecentRsvp {
   guestName: string;
   status: 'confirmed' | 'declined' | 'accepted' | 'attending' | 'not_attending';
   receivedAt: string;
+}
+
+interface OverviewSiteRow {
+  id: string;
+  site_slug: string | null;
+  site_url: string | null;
+  is_published: boolean | null;
+  privacy_mode: 'public' | 'password_protected' | 'invite_only' | null;
+  hide_from_search: boolean | null;
+  site_json: Record<string, unknown> | null;
+  updated_at: string | null;
+  template_id: string | null;
+  wedding_data: Record<string, unknown> | null;
+  onboarding_answers: unknown;
+  couple_name_1: string | null;
+  couple_name_2: string | null;
+  venue_name: string | null;
+  wedding_date: string | null;
+  venue_date: string | null;
+  wedding_location: string | null;
 }
 
 interface InteractiveSuggestion {
@@ -323,36 +344,16 @@ export const DashboardOverview: React.FC = () => {
         return;
       }
 
-      const { data: ownedSite, error: siteErr } = await supabase
-        .from('wedding_sites')
-.select('id, site_slug, site_url, is_published, site_json, updated_at, template_id, wedding_data, onboarding_answers, couple_name_1, couple_name_2, venue_name, wedding_date, venue_date, wedding_location')
-        .eq('user_id', user.id)
-        .maybeSingle();
-
-      if (siteErr) throw siteErr;
-
-      let site = ownedSite;
-
-      if (!site) {
-        const { data: collaboratorLink, error: collaboratorErr } = await supabase
-          .from('wedding_site_collaborators')
-          .select('wedding_site_id')
-          .eq('user_id', user.id)
-          .limit(1)
+      const activeSite = await resolveActiveSiteForUser(user.id);
+      let site: OverviewSiteRow | null = null;
+      if (activeSite?.id) {
+        const { data: activeSiteRow, error: activeSiteErr } = await supabase
+          .from('wedding_sites')
+          .select('id, site_slug, site_url, is_published, privacy_mode, hide_from_search, site_json, updated_at, template_id, wedding_data, onboarding_answers, couple_name_1, couple_name_2, venue_name, wedding_date, venue_date, wedding_location')
+          .eq('id', activeSite.id)
           .maybeSingle();
-
-        if (collaboratorErr) throw collaboratorErr;
-
-        if (collaboratorLink?.wedding_site_id) {
-          const { data: collaboratorSite, error: collaboratorSiteErr } = await supabase
-            .from('wedding_sites')
-            .select('id, site_slug, site_url, is_published, site_json, updated_at, template_id, wedding_data, onboarding_answers, couple_name_1, couple_name_2, venue_name, wedding_date, venue_date, wedding_location')
-            .eq('id', collaboratorLink.wedding_site_id)
-            .maybeSingle();
-
-          if (collaboratorSiteErr) throw collaboratorSiteErr;
-          site = collaboratorSite;
-        }
+        if (activeSiteErr) throw activeSiteErr;
+        site = (activeSiteRow as OverviewSiteRow | null) ?? null;
       }
 
       let weddingDate: string | null = null;
@@ -450,9 +451,11 @@ export const DashboardOverview: React.FC = () => {
         });
       }
 
-      const siteJson = (site?.site_json as Record<string, unknown> | null) ?? null;
-      const privacyMode = 'public';
-      const hideFromSearch = siteJson?.hide_from_search === true;
+      const siteJson = site?.site_json ?? null;
+      const privacyMode = site?.privacy_mode === 'password_protected' || site?.privacy_mode === 'invite_only'
+        ? (site.privacy_mode as 'password_protected' | 'invite_only')
+        : 'public';
+      const hideFromSearch = site?.hide_from_search === true || siteJson?.hide_from_search === true;
       const isPublished = Boolean(
         site?.is_published === true ||
           siteJson?.publishStatus === 'published' ||

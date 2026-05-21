@@ -131,7 +131,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
 
       const { data } = await supabase
         .from('wedding_sites')
-        .select('id, site_slug, site_url, site_json, is_published')
+        .select('id, site_slug, site_url, site_json, is_published, privacy_mode')
         .eq('id', targetSiteId)
         .maybeSingle();
 
@@ -140,6 +140,11 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
       if (resolved) setSiteSlug(resolved);
       if (row?.id && typeof row.id === 'string') setSiteId(row.id);
       setSiteIsPublished(row?.is_published === true);
+      setSitePrivacyMode(
+        row?.privacy_mode === 'password_protected' || row?.privacy_mode === 'invite_only'
+          ? row.privacy_mode
+          : 'public',
+      );
 
       const siteJson = row?.site_json;
       if (siteJson && typeof siteJson === 'object' && !Array.isArray(siteJson)) {
