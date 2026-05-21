@@ -161,6 +161,18 @@ function logCollaboratorStep(label: string) {
   console.error(`[collaborator-rls ${new Date().toISOString()}] ${label}`);
 }
 
+async function clickSettingsTabByName(page: import('@playwright/test').Page, name: string) {
+  const tab = page.getByRole('button', { name: new RegExp(`^${name}$`, 'i') }).first();
+  if (await tab.isVisible().catch(() => false)) {
+    await tab.click();
+    return;
+  }
+  const navButton = page.locator('button, [role="button"], [role="tab"]').filter({ hasText: new RegExp(`^${name}$`, 'i') }).first();
+  if (await navButton.isVisible().catch(() => false)) {
+    await navButton.click();
+  }
+}
+
 async function createAndClaimInvite(options: {
   ownerPage: import('@playwright/test').Page;
   ownerAccessToken: string;
@@ -184,9 +196,17 @@ async function createAndClaimInvite(options: {
     collaboratorPassword,
   } = options;
 
-  await ownerPage.goto(`/dashboard/settings?bypassPayment=1&permissionRlsQa=${encodeURIComponent(inviteName)}`, { waitUntil: 'domcontentloaded' });
+  await ownerPage.goto(`/dashboard/settings?tab=team&bypassPayment=1&permissionRlsQa=${encodeURIComponent(inviteName)}`, { waitUntil: 'domcontentloaded' });
   await expect(ownerPage.getByRole('heading', { name: 'Settings' }).first()).toBeVisible();
-  await ownerPage.getByRole('button', { name: 'Team Access' }).click();
+  await clickSettingsTabByName(ownerPage, 'Team Access');
+  await ownerPage.waitForTimeout(500);
+  if (!(await ownerPage.getByLabel('Planner name').isVisible().catch(() => false))) {
+    await clickSettingsTabByName(ownerPage, 'Team and roles');
+    await ownerPage.waitForTimeout(400);
+    await clickSettingsTabByName(ownerPage, 'Team Access');
+    await ownerPage.waitForTimeout(500);
+  }
+  await expect(ownerPage.getByLabel('Planner name')).toBeVisible({ timeout: 10_000 });
   await ownerPage.getByRole('button', { name: 'Read only' }).click();
   await ownerPage.getByLabel('Planner name').fill(inviteName);
   await ownerPage.getByLabel('Planner email').fill(inviteEmail);

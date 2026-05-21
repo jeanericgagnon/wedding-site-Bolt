@@ -4,6 +4,7 @@ import { Header, Footer } from '../components/layout';
 import { useAuth } from '../hooks/useAuth';
 import { useToast } from '../components/ui/Toast';
 import { SITE_TRUST_COPY } from '../lib/siteTrustCopy';
+import { DEMO_MODE } from '../config/env';
 import { ArrowRight, Calendar, CheckCircle2, Mail, Shield, Users, Wallet } from 'lucide-react';
 import { SlideReveal } from '../components/marketing/Reveal';
 
@@ -260,6 +261,7 @@ export const Product: React.FC = () => {
     <div className="min-h-screen flex flex-col bg-paper text-ink">
       <Header />
 
+      {DEMO_MODE ? (
       <section className="py-3 border-b border-border-subtle bg-brand text-paper">
         <div className="container-custom max-w-7xl flex flex-col sm:flex-row items-center justify-between gap-2 text-sm">
           <p className="font-medium">{user ? 'Ready to keep shaping your wedding?' : 'Want to see the full flow in action?'}</p>
@@ -281,6 +283,7 @@ export const Product: React.FC = () => {
           )}
         </div>
       </section>
+      ) : null}
 
       <section className="py-10 md:py-14 bg-paper text-ink">
         <div className="container-custom max-w-7xl">
@@ -322,12 +325,12 @@ export const Product: React.FC = () => {
                     Edit your site
                     <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
                   </button>
-                ) : (
+                ) : DEMO_MODE ? (
                   <button onClick={handleDemoLogin} disabled={demoLoading} className="group px-5 py-2.5 border-2 border-brand text-brand rounded-xl font-semibold inline-flex items-center gap-2 disabled:opacity-60">
                     {demoLoading ? 'Opening demo...' : 'Try full demo'}
                     <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
                   </button>
-                )}
+                ) : null}
               </div>
             </div>
 
@@ -573,12 +576,12 @@ export const Product: React.FC = () => {
                   <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
                 </button>
               </>
-            ) : (
+            ) : DEMO_MODE ? (
               <button onClick={handleDemoLogin} disabled={demoLoading} className="group w-full sm:w-auto px-7 py-3.5 border-2 border-brand text-brand font-semibold rounded-xl hover:bg-brand/5 transition-all disabled:opacity-60 inline-flex items-center justify-center gap-2">
                 {demoLoading ? 'Opening demo...' : 'Try product demo'}
                 <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
               </button>
-            )}
+            ) : null}
           </div>
           <p className="text-sm text-ink/65">
             Or{' '}

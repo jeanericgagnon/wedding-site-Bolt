@@ -119,8 +119,8 @@ describe('Product starter draft truth', () => {
 
     expect(screen.getAllByRole('button', { name: 'Continue your site' }).length).toBe(2);
     expect(screen.queryByRole('button', { name: 'Start your draft' })).not.toBeInTheDocument();
-    expect(screen.getAllByRole('button', { name: 'Edit your site' }).length).toBe(3);
-    expect(screen.getByText('Ready to keep shaping your wedding?')).toBeInTheDocument();
+    expect(screen.getAllByRole('button', { name: 'Edit your site' }).length).toBe(2);
+    expect(screen.queryByText('Ready to keep shaping your wedding?')).not.toBeInTheDocument();
     expect(screen.queryByText('Want to see the full flow in action?')).not.toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'edit your site' })).toHaveAttribute('href', '/dashboard/builder');
     expect(screen.queryByRole('button', { name: 'Try full demo' })).not.toBeInTheDocument();
@@ -139,12 +139,12 @@ describe('Product starter draft truth', () => {
     expect(navigateMock).toHaveBeenCalledWith('/dashboard/rsvp-board');
   });
 
-  it('keeps the product demo banner in demo mode for signed-out visitors', () => {
+  it('hides product demo CTAs when demo mode is disabled', () => {
     render(<Product />);
 
-    expect(screen.getByText('Want to see the full flow in action?')).toBeInTheDocument();
-    expect(screen.getAllByRole('button', { name: 'Try product demo' }).length).toBe(2);
-    expect(screen.getByRole('button', { name: 'Try full demo' })).toBeInTheDocument();
+    expect(screen.queryByText('Want to see the full flow in action?')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Try product demo' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Try full demo' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Open your dashboard' })).not.toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'See collaboration trust notes' })).toHaveAttribute('href', '/trust');
     expect(screen.getByRole('link', { name: 'browse templates' })).toHaveAttribute('href', '/templates');

@@ -4,6 +4,7 @@ import { Heart, Menu, X } from 'lucide-react';
 import { Button } from '../ui';
 import { useAuth } from '../../hooks/useAuth';
 import { useToast } from '../ui/Toast';
+import { DEMO_MODE } from '../../config/env';
 
 interface HeaderProps {
   variant?: 'marketing' | 'dashboard';
@@ -172,9 +173,11 @@ export const Header: React.FC<HeaderProps> = ({ variant = 'marketing' }) => {
             <Button variant="ghost" size="sm" onClick={handleLogin}>
               Sign in
             </Button>
-            <Button variant="outline" size="sm" onClick={handleViewDemo} disabled={demoLoading}>
-              {demoLoading ? 'Loading...' : 'View demo'}
-            </Button>
+            {DEMO_MODE ? (
+              <Button variant="outline" size="sm" onClick={handleViewDemo} disabled={demoLoading}>
+                {demoLoading ? 'Loading...' : 'View demo'}
+              </Button>
+            ) : null}
             <Button variant="accent" size="sm" onClick={handleSignUp}>
               Start your wedding
             </Button>
@@ -231,9 +234,11 @@ export const Header: React.FC<HeaderProps> = ({ variant = 'marketing' }) => {
                 <Button variant="ghost" size="md" fullWidth onClick={handleLogin}>
                   Login
                 </Button>
-                <Button variant="outline" size="md" fullWidth onClick={handleViewDemo} disabled={demoLoading}>
-                  {demoLoading ? 'Loading...' : 'View demo'}
-                </Button>
+                {DEMO_MODE ? (
+                  <Button variant="outline" size="md" fullWidth onClick={handleViewDemo} disabled={demoLoading}>
+                    {demoLoading ? 'Loading...' : 'View demo'}
+                  </Button>
+                ) : null}
                 <Button variant="accent" size="md" fullWidth onClick={handleSignUp}>
                   Sign up
                 </Button>

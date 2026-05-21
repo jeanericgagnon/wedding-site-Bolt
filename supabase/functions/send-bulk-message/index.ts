@@ -2,6 +2,7 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { escapeHtml, sanitizeEmailSubject } from "../_shared/emailSafety.ts";
 import { canMutateMessages } from "../_shared/collaboratorPermissions.ts";
+import { resolveLaunchFromAddress } from "../_shared/emailSender.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -348,16 +349,11 @@ async function deliverMessage(opts: {
   const coupleName1: string = message.wedding_sites?.couple_name_1 ?? "Partner";
   const coupleName2: string = message.wedding_sites?.couple_name_2 ?? "Partner";
 
-  const fromDomain = Deno.env.get("FROM_EMAIL_DOMAIN");
-  const fromEmail = Deno.env.get("FROM_EMAIL");
-  const fromName = Deno.env.get("FROM_EMAIL_NAME") || `${coupleName1} & ${coupleName2}`;
-
-  const slugSource = (message.wedding_sites?.site_slug as string | undefined)
-    || `${coupleName1}-${coupleName2}`.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "")
-    || "wedding";
-  const derivedFrom = fromDomain ? `noreply+${slugSource}@${fromDomain}` : "onboarding@resend.dev";
-  const sender = fromEmail || derivedFrom;
-  const fromAddress = `${fromName} <${sender}>`;
+  const { fromAddress } = resolveLaunchFromAddress({
+    coupleName1,
+    coupleName2,
+    siteSlug: message.wedding_sites?.site_slug as string | undefined,
+  });
 
   if (channel === "email") {
     const { data: sentRows, error: sentErr } = await adminClient

@@ -53,6 +53,11 @@ describe('launch edge function guards', () => {
 
     expect(source).toContain('SMS_RSVP_UPDATE_FAILED');
     expect(source).toContain('SMS_RSVP_INBOUND_UNEXPECTED_FAILURE');
+    expect(source).toContain('x-twilio-signature');
+    expect(source).toContain('TWILIO_WEBHOOK_URL');
+    expect(source).toContain('return new Response("Forbidden", { status: 403');
+    expect(source).toContain('process_result: "opt_out"');
+    expect(source).toContain('process_result: "help"');
     expect(source).not.toContain('process_error: updateErr?.message');
     expect(source).not.toContain('const message = err instanceof Error ? err.message');
     expect(source).not.toContain('process_error: message');
@@ -902,6 +907,8 @@ describe('launch edge function guards', () => {
     const contactPage = readFileSync(join(process.cwd(), 'src', 'pages', 'GuestContactUpdate.tsx'), 'utf8');
 
     expect(lookup).toContain('req.method !== "POST"');
+    expect(lookup).toContain('ENABLE_GUEST_NAME_LOOKUP');
+    expect(lookup).toContain('if (!guestNameLookupEnabled)');
     expect(lookup).toContain('import { canReadPublicSubresource } from "../_shared/publicAccessGate.ts"');
     expect(lookup).toContain('.select("id,site_slug,is_published,privacy_mode,guest_access_token")');
     expect(lookup).toContain('const verifier = String(body.verifier ?? "").trim()');

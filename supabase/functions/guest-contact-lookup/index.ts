@@ -89,6 +89,11 @@ Deno.serve(async (req: Request) => {
   if (req.method !== "POST") return json({ error: "Method not allowed" }, 405);
 
   try {
+    const guestNameLookupEnabled = ["1", "true", "yes"].includes(String(Deno.env.get("ENABLE_GUEST_NAME_LOOKUP") ?? "").trim().toLowerCase());
+    if (!guestNameLookupEnabled) {
+      return json({ matches: [] });
+    }
+
     const body = await req.json().catch(() => ({}));
     const siteRef = String(body.site_ref ?? "").trim();
     const query = String(body.query ?? "").trim();

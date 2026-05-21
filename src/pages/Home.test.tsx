@@ -52,6 +52,7 @@ describe('Home draft-first CTAs', () => {
     expect(screen.getAllByRole('button', { name: 'Start your wedding site draft' }).length).toBeGreaterThan(0);
     expect(screen.getByRole('heading', { name: /a calmer wedding operating system/i })).toBeInTheDocument();
     expect(screen.getByText(/most wedding websites stop at publish/i)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'View demo' })).not.toBeInTheDocument();
     const anonymousFeatureHrefs = screen
       .getAllByRole('link', { name: 'Explore this feature' })
       .map((link) => new URL((link as HTMLAnchorElement).href).pathname);
@@ -75,6 +76,7 @@ describe('Home draft-first CTAs', () => {
 
     expect(navigateMock).toHaveBeenCalledWith('/dashboard/builder');
     expect(screen.getAllByRole('button', { name: 'Continue your wedding site' }).length).toBeGreaterThan(0);
+    expect(screen.queryByRole('button', { name: 'View demo' })).not.toBeInTheDocument();
     expect(screen.getAllByRole('link', { name: 'Edit your site' }).length).toBeGreaterThan(0);
     expect(screen.getByRole('link', { name: 'Continue planning' })).toHaveAttribute('href', '/dashboard/planning');
     expect(screen.getByRole('button', { name: 'Manage guests' })).toBeInTheDocument();

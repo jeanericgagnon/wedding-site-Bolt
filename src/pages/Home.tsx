@@ -16,6 +16,7 @@ import { HeroReveal, Reveal } from '../components/marketing/Reveal';
 import { useToast } from '../components/ui/Toast';
 import { useAuth } from '../hooks/useAuth';
 import { SITE_TRUST_COPY } from '../lib/siteTrustCopy';
+import { DEMO_MODE } from '../config/env';
 
 const asset = (name: string) => `${import.meta.env.BASE_URL}landing/${name}`;
 
@@ -198,13 +199,15 @@ export const Home: React.FC = () => {
                     View templates
                     <ArrowRight className="h-4 w-4" />
                   </Link>
-                  <button
-                    onClick={handleDemoLogin}
-                    disabled={demoLoading}
-                    className="inline-flex min-h-[54px] items-center justify-center rounded-xl border border-white/25 bg-[#2d2d2d]/35 px-7 py-3.5 text-base font-semibold text-white transition hover:bg-[#2d2d2d]/55 disabled:cursor-wait disabled:opacity-70"
-                  >
-                    {demoLoading ? 'Opening demo...' : 'View demo'}
-                  </button>
+                  {DEMO_MODE ? (
+                    <button
+                      onClick={handleDemoLogin}
+                      disabled={demoLoading}
+                      className="inline-flex min-h-[54px] items-center justify-center rounded-xl border border-white/25 bg-[#2d2d2d]/35 px-7 py-3.5 text-base font-semibold text-white transition hover:bg-[#2d2d2d]/55 disabled:cursor-wait disabled:opacity-70"
+                    >
+                      {demoLoading ? 'Opening demo...' : 'View demo'}
+                    </button>
+                  ) : null}
                 </div>
               </HeroReveal>
             </div>

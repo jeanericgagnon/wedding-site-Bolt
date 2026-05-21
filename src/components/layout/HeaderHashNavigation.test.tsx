@@ -50,4 +50,14 @@ describe('Header hash navigation', () => {
 
     expect(HTMLElement.prototype.scrollIntoView).not.toHaveBeenCalled();
   });
+
+  it('does not render demo CTA controls when demo mode is disabled', () => {
+    const { queryByRole } = render(
+      <MemoryRouter initialEntries={['/']}>
+        <Header />
+      </MemoryRouter>,
+    );
+
+    expect(queryByRole('button', { name: 'View demo' })).not.toBeInTheDocument();
+  });
 });

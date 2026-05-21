@@ -75,6 +75,15 @@ async function step(name, fn) {
   }
 }
 
+async function firstVisibleLocator(page, candidates) {
+  for (const locator of candidates) {
+    if ((await locator.count()) > 0 && await locator.first().isVisible().catch(() => false)) {
+      return locator.first();
+    }
+  }
+  return null;
+}
+
 try {
   await step('owner login', async () => {
     await ownerPage.goto(`${baseUrl}/login`, { waitUntil: 'domcontentloaded' });
@@ -86,19 +95,36 @@ try {
   });
 
   await step('owner create collaborator invite', async () => {
-    await ownerPage.goto(`${baseUrl}/dashboard/settings`, { waitUntil: 'domcontentloaded' });
+    await ownerPage.goto(`${baseUrl}/dashboard/settings?tab=team`, { waitUntil: 'domcontentloaded' });
     await ownerPage.waitForTimeout(2500);
-    await ownerPage.getByRole('button', { name: /team access/i }).click();
-    await ownerPage.waitForTimeout(1500);
+    await ownerPage.waitForTimeout(1200);
     const body = await ownerPage.locator('body').innerText();
-    const nameInput = ownerPage.getByLabel(/planner name/i);
-    const emailInput = ownerPage.getByLabel(/planner email/i);
-    if (!(await nameInput.count()) || !(await emailInput.count())) {
+    const nameInput = await firstVisibleLocator(ownerPage, [
+      ownerPage.locator('#planner-invite-name'),
+      ownerPage.getByLabel(/planner name/i),
+      ownerPage.getByPlaceholder(/planner or coordinator/i),
+      ownerPage.getByRole('textbox', { name: /planner name/i }),
+    ]);
+    const emailInput = await firstVisibleLocator(ownerPage, [
+      ownerPage.locator('#planner-invite-email'),
+      ownerPage.getByLabel(/planner email/i),
+      ownerPage.getByPlaceholder(/planner@example.com/i),
+      ownerPage.getByRole('textbox', { name: /planner email/i }),
+    ]);
+    if (!nameInput || !emailInput) {
       throw new Error(`Planner invite inputs not found. Body: ${body.slice(0, 2500)}`);
     }
     await nameInput.fill('Test One');
     await emailInput.fill(collaboratorEmail);
-    await ownerPage.getByRole('button', { name: /create (db )?invite( link)?/i }).click();
+    const createInviteButton = await firstVisibleLocator(ownerPage, [
+      ownerPage.getByRole('button', { name: /^create invite link$/i }),
+      ownerPage.getByRole('button', { name: /create (db )?invite( link)?/i }),
+      ownerPage.getByRole('button', { name: /^save planner invite$/i }),
+    ]);
+    if (!createInviteButton) {
+      throw new Error(`Create invite action not found. Body: ${body.slice(0, 2500)}`);
+    }
+    await createInviteButton.click();
     await ownerPage.waitForTimeout(1500);
     await ownerPage.locator(`text=${collaboratorEmail}`).first().waitFor({ state: 'visible', timeout: 15000 });
     const ownerSession = await ownerContext.storageState();

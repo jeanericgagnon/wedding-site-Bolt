@@ -1,6 +1,7 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { escapeHtml, isSafeEmailAddress, safeEmailHref, sanitizeEmailSubject } from "../_shared/emailSafety.ts";
+import { resolveLaunchFromAddress } from "../_shared/emailSender.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -217,6 +218,10 @@ Deno.serve(async (req: Request) => {
         .eq("id", item.id);
 
       try {
+        const coupleName1 = typeof payload.coupleName1 === "string" ? payload.coupleName1 : null;
+        const coupleName2 = typeof payload.coupleName2 === "string" ? payload.coupleName2 : null;
+        const siteSlug = typeof payload.siteSlug === "string" ? payload.siteSlug : null;
+        const { fromAddress } = resolveLaunchFromAddress({ coupleName1, coupleName2, siteSlug });
         const res = await fetch("https://api.resend.com/emails", {
           method: "POST",
           headers: {
@@ -224,7 +229,7 @@ Deno.serve(async (req: Request) => {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            from: "DayOf <onboarding@resend.dev>",
+            from: fromAddress,
             to: [to],
             subject: sanitizeEmailSubject(built.subject),
             html: built.html,
