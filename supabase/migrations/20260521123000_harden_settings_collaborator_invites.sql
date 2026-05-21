@@ -146,10 +146,3 @@ end;
 $$;
 
 grant execute on function public.settings_collaborator_invite_clear_test_fixtures(uuid) to authenticated;
-
-delete from public.wedding_site_collaborator_invites
-where status = 'pending'
-  and (
-    invite_email ~* '(test|qa|demo|fake|seed|staging|temp|example)'
-    or coalesce(invite_name, '') ~* '(test|qa|demo|fake|seed|staging|temp|example)'
-  );
