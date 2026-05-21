@@ -9,6 +9,7 @@ describe('guest photo date time guards', () => {
 
   it('flags malformed local datetime drafts instead of throwing Invalid time value', () => {
     expect(parseDatetimeLocalToIso('not-a-date')).toBeUndefined();
+    expect(parseDatetimeLocalToIso('2027-02-30T18:30')).toBeUndefined();
   });
 
   it('keeps valid upload-window datetimes truthful', () => {

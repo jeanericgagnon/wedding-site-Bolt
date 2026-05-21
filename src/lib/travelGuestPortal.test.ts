@@ -337,6 +337,33 @@ describe('travelGuestPortal', () => {
     expect(spotlight?.htmlDocument).toContain('Directions · Sunset Gardens Estate');
   });
 
+  it('drops impossible saved event window dates instead of rolling them forward', () => {
+    const spotlight = buildTravelHubSpotlight({
+      siteSlug: 'maya-and-leo',
+      enabledActionIds: ['travel'],
+      schedule: [
+        {
+          id: 'evt-bad',
+          label: 'Mystery event',
+          startTimeISO: '2027-02-30',
+          venueId: 'venue-1',
+        },
+      ],
+      venues: [
+        {
+          id: 'venue-1',
+          name: 'Harbor Lounge',
+          address: '1 Dock Road, Sausalito, CA',
+        },
+      ],
+      travel: {},
+    });
+
+    expect(spotlight?.cards.find((card) => card.id === 'event-window-0')?.detail).toBe('Harbor Lounge');
+    expect(spotlight?.shareText).toContain('Mystery event: Harbor Lounge');
+    expect(spotlight?.shareText).not.toContain('Mar 2');
+  });
+
   it('falls back to owner-written hotel, parking, and guest notes when structured records are sparse', () => {
     const spotlight = buildTravelHubSpotlight({
       siteSlug: 'maya-and-leo',

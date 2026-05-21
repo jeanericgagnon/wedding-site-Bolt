@@ -143,6 +143,28 @@ describe('calmOwnerDigest', () => {
     expect(preview.lastDeliveredLabel).toContain('Last delivered');
   });
 
+  it('drops impossible saved digest delivery dates instead of rolling them forward', () => {
+    const digest = buildCalmOwnerDigest({
+      role: 'owner',
+      newRsvpCount: 2,
+      isPublished: true,
+    });
+    const preview = buildCalmDigestDeliveryPreview({
+      digest,
+      cadence: 'daily',
+      includePlanner: false,
+      nextDeliveryAt: '2027-02-30',
+      lastReviewedAt: '2027-02-30',
+      lastDeliveredAt: '2027-02-30',
+      emailDeliveryEnabled: true,
+    });
+
+    expect(preview.nextDeliveryLabel).toBeNull();
+    expect(preview.lastReviewedLabel).toBeNull();
+    expect(preview.lastDeliveredLabel).toBeNull();
+    expect(preview.statusLabel).toBe('Ready for delivery review');
+  });
+
   it('keeps scheduled previews honest when digest delivery is not connected yet', () => {
     const digest = buildCalmOwnerDigest({
       role: 'owner',

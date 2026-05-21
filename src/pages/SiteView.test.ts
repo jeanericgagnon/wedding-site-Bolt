@@ -1,7 +1,6 @@
 import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
-import { MemoryRouter } from 'react-router-dom';
 
 const mockRouteParams: { slug?: string } = {};
 let mockSearchParams = new URLSearchParams();
@@ -101,7 +100,8 @@ vi.mock('./guestHubPublicService', () => ({
 
 import { combineDateAndTime, createAlexJordanDemoWeddingData, toIsoDateOrUndefined } from './siteViewHelpers';
 import { getUrlWithoutPublicAccessToken } from '../lib/publicAccessArtifacts';
-import { getPublicSectionAnchorNavItems, PublicSitePageNav, SiteView } from './SiteView';
+import { createDemoFallbackPages, createDemoWeddingDataForSlug } from './siteViewDemoFallback';
+import { SiteView } from './SiteView';
 import { resolveSiteViewAnalyticsTarget } from './siteViewAnalyticsTarget';
 
 function removeInjectedNoindexMeta() {
@@ -190,78 +190,6 @@ describe('resolveSiteViewAnalyticsTarget', () => {
   });
 });
 
-describe('getPublicSectionAnchorNavItems', () => {
-  it('sorts legacy numeric-string section order values for one-page anchor nav', () => {
-    expect(
-      getPublicSectionAnchorNavItems([
-        {
-          id: 'rsvp',
-          type: 'rsvp',
-          variant: 'default',
-          enabled: true,
-          orderIndex: '2' as unknown as number,
-          settings: { anchorId: 'RSVP' },
-          bindings: {},
-          styleOverrides: {},
-        },
-        {
-          id: 'travel',
-          type: 'travel',
-          variant: 'default',
-          enabled: true,
-          orderIndex: '1' as unknown as number,
-          settings: { anchorId: 'Travel' },
-          bindings: {},
-          styleOverrides: {},
-        },
-      ]),
-    ).toEqual([
-      expect.objectContaining({ id: 'travel', anchorId: 'travel', orderIndex: 1 }),
-      expect.objectContaining({ id: 'rsvp', anchorId: 'rsvp', orderIndex: 2 }),
-    ]);
-  });
-});
-
-describe('PublicSitePageNav', () => {
-  it('renders one-page section anchor navigation when there is only a home page', () => {
-    render(
-      React.createElement(
-        MemoryRouter,
-        null,
-        React.createElement(PublicSitePageNav, {
-          siteSlug: 'maya-leo',
-          pages: [{ slug: 'home', title: 'Home', orderIndex: 0, isHome: true }],
-          sectionAnchors: [{ id: 'travel', anchorId: 'Travel Info', title: 'Travel', orderIndex: 0 }],
-        }),
-      ),
-    );
-
-    expect(screen.getByRole('link', { name: 'Travel' })).toHaveAttribute('href', '/site/maya-leo#travel-info');
-    expect(screen.queryByRole('link', { name: 'Home' })).not.toBeInTheDocument();
-  });
-
-  it('renders multi-page navigation with the current dedicated page marked active', () => {
-    render(
-      React.createElement(
-        MemoryRouter,
-        null,
-        React.createElement(PublicSitePageNav, {
-          siteSlug: 'maya-leo',
-          currentPageSlug: 'Travel Info',
-          pages: [
-            { slug: 'home', title: 'Home', orderIndex: 0, isHome: true },
-            { slug: 'travel-info', title: 'Travel', orderIndex: 1, isHome: false },
-          ],
-        }),
-      ),
-    );
-
-    expect(screen.getByRole('link', { name: 'Home' })).toHaveAttribute('href', '/site/maya-leo');
-    expect(screen.getByRole('link', { name: 'Travel' })).toHaveAttribute('href', '/site/maya-leo/travel-info');
-    expect(screen.getByRole('link', { current: 'page' })).toHaveTextContent('Travel');
-  });
-});
-
 describe('SiteView invite handoff continuity', () => {
   it('loads a guest-hub travel handoff link through invite_token, stores access, and strips it from the visible site URL', async () => {
     mockRouteParams.slug = 'maya-and-leo';
@@ -324,6 +252,7 @@ describe('SiteView invite handoff continuity', () => {
 
   it('adds noindex metadata for blocked invite-only public views', async () => {
     mockRouteParams.slug = 'maya-and-leo';
+    mockSearchParams = new URLSearchParams('invite_token=blocked-guest');
 
     fetchPublicSiteAccessMock.mockResolvedValue({
       status: 'invite_required',
@@ -342,8 +271,30 @@ describe('SiteView invite handoff continuity', () => {
 });
 
 describe('SiteView demo continuity', () => {
-  it('falls back to the alex-jordan demo surface when public access returns coming soon in demo mode', async () => {
-    mockRouteParams.slug = 'alex-jordan-demo';
+  it('builds multi-page local demo previews from the requested public slug', () => {
+    const pages = createDemoFallbackPages('modern-luxe');
+    const data = createDemoWeddingDataForSlug('maya-and-leo');
+
+    expect(pages.length).toBeGreaterThan(1);
+    expect(pages.map((page) => page.slug)).toEqual(expect.arrayContaining(['home', 'schedule', 'travel', 'rsvp', 'registry']));
+    expect(data.couple.partner1Name).toBe('Maya');
+    expect(data.couple.partner2Name).toBe('Leo');
+    expect(data.couple.displayName).toBe('Maya and Leo');
+  });
+
+  it('opens local demo previews without waiting on live public access when no guest token is present', async () => {
+    mockRouteParams.slug = 'maya-and-leo';
+
+    render(React.createElement(SiteView));
+
+    await screen.findByText('site view ready');
+
+    expect(fetchPublicSiteAccessMock).not.toHaveBeenCalled();
+  });
+
+  it('keeps guest-token links on the live public access path even in demo mode', async () => {
+    mockRouteParams.slug = 'maya-and-leo';
+    mockSearchParams = new URLSearchParams('invite_token=guest-token');
 
     fetchPublicSiteAccessMock.mockResolvedValue({
       status: 'coming_soon',
@@ -353,5 +304,10 @@ describe('SiteView demo continuity', () => {
     render(React.createElement(SiteView));
 
     await screen.findByText('site view ready');
+
+    expect(fetchPublicSiteAccessMock).toHaveBeenCalledWith(expect.objectContaining({
+      inviteToken: 'guest-token',
+      slug: 'maya-and-leo',
+    }));
   });
 });

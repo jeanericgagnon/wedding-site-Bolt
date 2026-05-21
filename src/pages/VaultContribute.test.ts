@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('../config/env', () => ({
   DEMO_MODE: true,
@@ -107,8 +107,22 @@ describe('getVaultUnlockAtIso', () => {
 });
 
 describe('getContributionWindow', () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it('ignores impossible persisted wedding dates instead of enforcing a fake upload window', () => {
     expect(getContributionWindow('2027-02-30')).toEqual({ canSubmit: true, message: null });
+  });
+
+  it('labels the upload window with saved local calendar days', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(2026, 1, 19, 12));
+
+    expect(getContributionWindow('2026-02-23')).toEqual({
+      canSubmit: false,
+      message: `Vault uploads open 3 days before the wedding (${new Date(2026, 1, 20).toLocaleDateString()}).`,
+    });
   });
 });
 

@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { canEditPlanningBudget, canEditPlanningTasks, canEditPlanningVendors, type PlannerAccessRole, type PlannerPermissionKey } from '../../../lib/plannerAccess';
 import { logAppAction } from '../../../lib/actionAudit';
 import {
@@ -64,6 +64,13 @@ export function usePlanningStarterSuiteActions({
   const [applyingStarterSuite, setApplyingStarterSuite] = useState(false);
   const [undoingStarterSuite, setUndoingStarterSuite] = useState(false);
   const [lastStarterSuiteRun, setLastStarterSuiteRun] = useState<StarterSuiteRun | null>(null);
+  const suiteActionVersionRef = useRef(0);
+
+  useEffect(() => {
+    suiteActionVersionRef.current += 1;
+    setApplyingStarterSuite(false);
+    setUndoingStarterSuite(false);
+  }, [isDemoMode, planningPermissions, planningRole, siteId]);
 
   const starterSuite = useMemo<StarterPlannerSuite | null>(() => {
     if (!siteId) return null;
@@ -84,6 +91,8 @@ export function usePlanningStarterSuiteActions({
     }
 
     setApplyingStarterSuite(true);
+    const suiteActionVersion = suiteActionVersionRef.current;
+    const isCurrentSuiteAction = () => suiteActionVersion === suiteActionVersionRef.current;
     try {
       const now = Date.now();
       const isStarterSuiteQa = qaRunId.length > 0;
@@ -135,6 +144,7 @@ export function usePlanningStarterSuiteActions({
           shouldAddBudget ? Promise.all(starterSuite.budgetItems.map((item) => createBudgetItem(siteId, { ...item, item_name: `${item.item_name ?? 'Starter budget line'}${qaSuffix}` }))) : Promise.resolve([]),
           shouldAddVendors ? Promise.all(starterSuite.vendors.map((vendor) => createVendor(siteId, { ...vendor, name: `${vendor.name ?? 'Starter vendor'}${qaSuffix}` }))) : Promise.resolve([]),
         ]);
+        if (!isCurrentSuiteAction()) return;
         if (createdTasks.length > 0) setTasks((prev) => [...prev, ...createdTasks]);
         if (createdBudgetItems.length > 0) setBudgetItems((prev) => [...prev, ...createdBudgetItems]);
         if (createdVendors.length > 0) setVendors((prev) => [...prev, ...createdVendors]);
@@ -150,6 +160,7 @@ export function usePlanningStarterSuiteActions({
       ].filter(Boolean);
 
       if (addedGroups.length > 0) {
+        if (!isCurrentSuiteAction()) return;
         setLastStarterSuiteRun({
           taskIds: createdTaskIds,
           budgetItemIds: createdBudgetItemIds,
@@ -159,6 +170,7 @@ export function usePlanningStarterSuiteActions({
       }
 
       if (!isDemoMode && addedGroups.length > 0) {
+        if (!isCurrentSuiteAction()) return;
         void logAppAction({
           weddingSiteId: siteId,
           area: 'planner',
@@ -178,9 +190,10 @@ export function usePlanningStarterSuiteActions({
 
       toast(addedGroups.length > 0 ? `Starter suite added: ${addedGroups.join(', ')}.` : 'Planner already has starter data.', 'success');
     } catch {
+      if (!isCurrentSuiteAction()) return;
       toast('Couldn’t add the starter suite right now. Please try again.', 'error');
     } finally {
-      setApplyingStarterSuite(false);
+      if (isCurrentSuiteAction()) setApplyingStarterSuite(false);
     }
   }, [
     applyingStarterSuite,
@@ -210,6 +223,8 @@ export function usePlanningStarterSuiteActions({
     }
 
     setUndoingStarterSuite(true);
+    const suiteActionVersion = suiteActionVersionRef.current;
+    const isCurrentSuiteAction = () => suiteActionVersion === suiteActionVersionRef.current;
     try {
       const taskIds = new Set(lastStarterSuiteRun.taskIds);
       const budgetItemIds = new Set(lastStarterSuiteRun.budgetItemIds);
@@ -221,6 +236,7 @@ export function usePlanningStarterSuiteActions({
           ...lastStarterSuiteRun.budgetItemIds.map((id) => deleteBudgetItem(id)),
           ...lastStarterSuiteRun.vendorIds.map((id) => deleteVendor(id)),
         ]);
+        if (!isCurrentSuiteAction()) return;
       }
 
       setTasks((prev) => prev.filter((task) => !taskIds.has(task.id)));
@@ -229,6 +245,7 @@ export function usePlanningStarterSuiteActions({
       setLastStarterSuiteRun(null);
 
       if (!isDemoMode) {
+        if (!isCurrentSuiteAction()) return;
         void logAppAction({
           weddingSiteId: siteId,
           area: 'planner',
@@ -246,9 +263,10 @@ export function usePlanningStarterSuiteActions({
 
       toast('Starter suite changes undone.', 'success');
     } catch {
+      if (!isCurrentSuiteAction()) return;
       toast('Couldn’t undo the starter suite right now. Please try again.', 'error');
     } finally {
-      setUndoingStarterSuite(false);
+      if (isCurrentSuiteAction()) setUndoingStarterSuite(false);
     }
   }, [
     isDemoMode,

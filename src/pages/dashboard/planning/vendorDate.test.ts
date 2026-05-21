@@ -18,9 +18,20 @@ describe('vendor date guards', () => {
   it('keeps valid vendor dates truthful', () => {
     const value = '2026-06-20';
     const compareTo = new Date('2026-06-21T00:00:00.000Z');
-    expect(toValidVendorDateOrNull(value)?.getTime()).toBe(new Date(value).getTime());
+    expect(toValidVendorDateOrNull(value)?.getTime()).toBe(new Date(2026, 5, 20).getTime());
     expect(isVendorDateOnOrBefore(value, compareTo)).toBe(true);
     expect(isVendorDateBetween(value, new Date('2026-06-19T00:00:00.000Z'), new Date('2026-06-21T00:00:00.000Z'))).toBe(true);
-    expect(formatVendorDate(value)).toBe(new Date(value).toLocaleDateString());
+    expect(formatVendorDate(value)).toBe(new Date(2026, 5, 20).toLocaleDateString());
+  });
+
+  it('formats date-only vendor due dates as the saved local calendar day', () => {
+    const value = '2026-06-15';
+    const parsed = toValidVendorDateOrNull(value);
+
+    expect(parsed).not.toBeNull();
+    expect(parsed?.getFullYear()).toBe(2026);
+    expect(parsed?.getMonth()).toBe(5);
+    expect(parsed?.getDate()).toBe(15);
+    expect(formatVendorDate(value)).toBe(new Date(2026, 5, 15).toLocaleDateString());
   });
 });

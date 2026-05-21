@@ -1095,21 +1095,23 @@ export function RegistryDashboardRouteContent(props: {
               className="w-full pl-9 pr-4 py-2.5 bg-surface-subtle border border-border rounded-xl text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
             />
           </div>
-          <div className="flex items-center gap-1 bg-surface-subtle rounded-xl p-1 border border-border">
-            {FILTER_TABS.map((tab) => (
-              <button
-                key={tab.key}
-                onClick={() => props.setFilter(tab.key)}
-                className={`px-3 py-1.5 rounded-xl text-sm font-medium transition-all whitespace-nowrap ${
-                  props.filter === tab.key ? 'bg-surface text-text-primary ring-1 ring-border-subtle' : 'text-text-secondary hover:text-text-primary'
-                }`}
-              >
-                {tab.label}
-                {tabCount(tab.key) > 0 && (
-                  <span className="ml-1 text-xs text-text-tertiary">{tabCount(tab.key)}</span>
-                )}
-              </button>
-            ))}
+          <div className="max-w-full overflow-x-auto pb-1 sm:max-w-[min(100%,34rem)]" aria-label="Registry filters">
+            <div className="flex min-w-max items-center gap-1 bg-surface-subtle rounded-xl p-1 border border-border">
+              {FILTER_TABS.map((tab) => (
+                <button
+                  key={tab.key}
+                  onClick={() => props.setFilter(tab.key)}
+                  className={`px-3 py-1.5 rounded-xl text-sm font-medium transition-all whitespace-nowrap ${
+                    props.filter === tab.key ? 'bg-surface text-text-primary ring-1 ring-border-subtle' : 'text-text-secondary hover:text-text-primary'
+                  }`}
+                >
+                  {tab.label}
+                  {tabCount(tab.key) > 0 && (
+                    <span className="ml-1 text-xs text-text-tertiary">{tabCount(tab.key)}</span>
+                  )}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 

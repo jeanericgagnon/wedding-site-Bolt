@@ -24,4 +24,12 @@ describe('registry refresh window guards', () => {
     expect(parseRefreshWindowEndIso('2026-06-21')).toBe('2026-06-21T23:59:59.000Z');
     expect(getWeddingRefreshWindowDate('2026-06-21')?.toISOString().slice(0, 10)).toBe('2026-07-21');
   });
+
+  it('preserves date-only refresh windows as local calendar dates', () => {
+    expect(toValidDateOrNull('2026-09-12')?.getTime()).toBe(new Date(2026, 8, 12).getTime());
+    expect(toDateInputValueOrEmpty('2026-09-12')).toBe('2026-09-12');
+    expect(getWeddingRefreshWindowDate('2026-09-12')?.toLocaleDateString('en-US')).toBe(
+      new Date(2026, 9, 12).toLocaleDateString('en-US'),
+    );
+  });
 });

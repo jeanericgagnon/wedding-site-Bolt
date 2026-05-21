@@ -18,6 +18,17 @@ describe('dayOfGuestHubStatus', () => {
     expect(card?.timingLabel).toContain('Scheduled for');
   });
 
+  it('drops impossible announcement timestamps instead of rolling them forward', () => {
+    const card = buildGuestHubAnnouncementCard({
+      title: 'Day-of update',
+      detail: 'Schedule is almost ready.',
+      status: 'scheduled',
+      scheduledFor: '2027-02-30',
+    });
+
+    expect(card?.timingLabel).toBeNull();
+  });
+
   it('builds guest RSVP and check-in status readback', () => {
     const card = buildGuestHubGuestStateCard({
       guestName: 'Alex Rivera',
@@ -30,6 +41,21 @@ describe('dayOfGuestHubStatus', () => {
       rsvpLabel: 'RSVP confirmed',
     });
     expect(card?.checkInLabel).toContain('Checked in');
+  });
+
+  it('formats date-only check-in timestamps as the saved local calendar day', () => {
+    const card = buildGuestHubGuestStateCard({
+      guestName: 'Alex Rivera',
+      rsvpStatus: 'confirmed',
+      checkedInAt: '2026-09-12',
+    });
+
+    expect(card?.checkInLabel).toContain(new Date(2026, 8, 12).toLocaleString(undefined, {
+      month: 'short',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+    }));
   });
 
   it('builds a guest-safe coordinator handoff card without leaking token params', () => {

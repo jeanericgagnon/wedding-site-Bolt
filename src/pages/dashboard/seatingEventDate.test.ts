@@ -12,7 +12,14 @@ describe('seating event date guards', () => {
 
   it('keeps valid seating event labels truthful', () => {
     expect(formatSeatingEventLabel('Ceremony', '2026-09-12')).toBe(
-      `Ceremony — ${new Date('2026-09-12').toLocaleDateString()}`,
+      `Ceremony — ${new Date(2026, 8, 12).toLocaleDateString()}`,
+    );
+  });
+
+  it('formats date-only seating event labels as the saved local calendar day', () => {
+    expect(formatSeatingEventDate('2026-09-15')).toBe(new Date(2026, 8, 15).toLocaleDateString());
+    expect(formatSeatingEventLabel('Reception', '2026-09-15')).toBe(
+      `Reception — ${new Date(2026, 8, 15).toLocaleDateString()}`,
     );
   });
 });

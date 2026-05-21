@@ -157,6 +157,31 @@ describe('builderReducer — ADD_PAGE', () => {
       meta: { isHome: false, isHidden: false },
     });
   });
+
+  it('can scaffold a suggested guest-facing page with its starter section', () => {
+    const s = makeState();
+
+    const next = builderReducer(s, {
+      type: 'ADD_PAGE',
+      payload: {
+        title: 'Schedule',
+        initialSectionType: 'schedule',
+      },
+    });
+
+    expect(next.project!.pages[1]).toMatchObject({
+      title: 'Schedule',
+      slug: 'schedule',
+      orderIndex: 1,
+      meta: { isHome: false, isHidden: false },
+    });
+    expect(next.project!.pages[1].sections).toHaveLength(1);
+    expect(next.project!.pages[1].sections[0]).toMatchObject({
+      type: 'schedule',
+      orderIndex: 0,
+    });
+    expect(next.project!.pages[1].sections[0].settings.anchorId).toBeUndefined();
+  });
 });
 
 describe('builderReducer — DUPLICATE_PAGE', () => {

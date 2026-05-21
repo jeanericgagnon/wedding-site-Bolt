@@ -113,8 +113,19 @@ function priorityFor(count: number, fallback: CalmDigestPriority = 'quiet'): Cal
 }
 
 function formatDigestTimestamp(value: string | null | undefined, label: string): string | null {
-  if (!value) return null;
-  const parsed = new Date(value);
+  const trimmed = value?.trim();
+  if (!trimmed) return null;
+
+  const dateOnlyMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(trimmed);
+  const parsed = dateOnlyMatch
+    ? new Date(Date.UTC(Number(dateOnlyMatch[1]), Number(dateOnlyMatch[2]) - 1, Number(dateOnlyMatch[3])))
+    : new Date(trimmed);
+  if (
+    dateOnlyMatch
+    && parsed.toISOString().slice(0, 10) !== trimmed
+  ) {
+    return null;
+  }
   if (Number.isNaN(parsed.getTime())) return null;
   return `${label} ${new Intl.DateTimeFormat('en-US', {
     month: 'short',

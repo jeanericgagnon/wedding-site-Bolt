@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { buildAiPhotoOpsPlan, type AiPhotoOpsPlan } from '../../../lib/aiPhotoOps';
 import {
@@ -54,6 +54,36 @@ export function useGuestPhotoAiActions({
   const [aiPhotoMovesBusy, setAiPhotoMovesBusy] = useState(false);
   const [visionAiBusy, setVisionAiBusy] = useState(false);
   const [visionMovesBusy, setVisionMovesBusy] = useState(false);
+  const mountedRef = useRef(true);
+  const aiPhotoOpsRequestIdRef = useRef(0);
+  const aiPhotoMovesRequestIdRef = useRef(0);
+  const visionAiRequestIdRef = useRef(0);
+  const visionMovesRequestIdRef = useRef(0);
+  const siteIdRef = useRef(siteId);
+  siteIdRef.current = siteId;
+
+  useEffect(() => () => {
+    mountedRef.current = false;
+    aiPhotoOpsRequestIdRef.current += 1;
+    aiPhotoMovesRequestIdRef.current += 1;
+    visionAiRequestIdRef.current += 1;
+    visionMovesRequestIdRef.current += 1;
+  }, []);
+
+  useEffect(() => {
+    aiPhotoOpsRequestIdRef.current += 1;
+    aiPhotoMovesRequestIdRef.current += 1;
+    visionAiRequestIdRef.current += 1;
+    visionMovesRequestIdRef.current += 1;
+    setAiPhotoOpsBusy(false);
+    setAiPhotoMovesBusy(false);
+    setVisionAiBusy(false);
+    setVisionMovesBusy(false);
+  }, [siteId]);
+
+  const isCurrentPhotoSiteRequest = (requestSiteId: string | null) => (
+    mountedRef.current && siteIdRef.current === requestSiteId
+  );
 
   const persistAiPhotoOpsPlanState = useCallback(async (plan: AiPhotoOpsPlan) => {
     if (!siteId) return;
@@ -73,6 +103,11 @@ export function useGuestPhotoAiActions({
 
   const generateAiPhotoOpsPlan = useCallback(async () => {
     if (!siteId) return;
+    const requestSiteId = siteId;
+    const requestId = ++aiPhotoOpsRequestIdRef.current;
+    const isCurrentAiPhotoOps = () => (
+      requestId === aiPhotoOpsRequestIdRef.current && isCurrentPhotoSiteRequest(requestSiteId)
+    );
     if (uploads.length === 0) {
       setError('Upload a few guest photos before organizing them.');
       return;
@@ -116,13 +151,16 @@ export function useGuestPhotoAiActions({
             };
           }),
       });
+      if (!isCurrentAiPhotoOps()) return;
       setAiPhotoOpsPlan(plan);
       await persistAiPhotoOpsPlanState(plan);
+      if (!isCurrentAiPhotoOps()) return;
       setSuccess('Organized the photo board and saved a slideshow plan.');
     } catch (err) {
+      if (!isCurrentAiPhotoOps()) return;
       setError(safePhotoOwnerError(err, 'Couldn’t organize the photo uploads yet.'));
     } finally {
-      setAiPhotoOpsBusy(false);
+      if (isCurrentAiPhotoOps()) setAiPhotoOpsBusy(false);
     }
   }, [
     bucketDisplayName,
@@ -138,6 +176,11 @@ export function useGuestPhotoAiActions({
 
   const applyHighConfidencePhotoMoves = useCallback(async (aiPhotoOpsPlan: AiPhotoOpsPlan | null) => {
     if (!siteId || !aiPhotoOpsPlan) return;
+    const requestSiteId = siteId;
+    const requestId = ++aiPhotoMovesRequestIdRef.current;
+    const isCurrentAiPhotoMoves = () => (
+      requestId === aiPhotoMovesRequestIdRef.current && isCurrentPhotoSiteRequest(requestSiteId)
+    );
     const moves = aiPhotoOpsPlan.bucketSuggestions.filter(
       (suggestion) => suggestion.confidence >= 0.74 && suggestion.targetBucketId !== suggestion.currentBucketId,
     );
@@ -153,55 +196,78 @@ export function useGuestPhotoAiActions({
     try {
       for (const move of moves) {
         await moveGuestPhotoUploadToBucket(siteId, move.uploadId, move.targetBucketId);
+        if (!isCurrentAiPhotoMoves()) return;
       }
 
+      if (!isCurrentAiPhotoMoves()) return;
       setUploads((prev) => prev.map((upload) => {
         const move = moves.find((entry) => entry.uploadId === upload.id);
         return move ? { ...upload, photo_album_id: move.targetBucketId } : upload;
       }));
       setSuccess(`Moved ${moves.length} upload${moves.length === 1 ? '' : 's'} into stronger albums.`);
     } catch (err) {
+      if (!isCurrentAiPhotoMoves()) return;
       setError(safePhotoOwnerError(err, 'Couldn’t move those photos yet.'));
     } finally {
-      setAiPhotoMovesBusy(false);
+      if (isCurrentAiPhotoMoves()) setAiPhotoMovesBusy(false);
     }
   }, [setError, setSuccess, setUploads, siteId]);
 
   const applyVisionSuggestion = useCallback(async (analysis: PhotoUploadAiAnalysisRow) => {
     if (!siteId || !analysis.suggested_bucket_id) return;
+    const requestSiteId = siteId;
+    const requestId = ++visionMovesRequestIdRef.current;
+    const isCurrentVisionMove = () => (
+      requestId === visionMovesRequestIdRef.current && isCurrentPhotoSiteRequest(requestSiteId)
+    );
     setVisionMovesBusy(true);
     setError(null);
     setSuccess(null);
     try {
       await moveGuestPhotoUploadToBucket(siteId, analysis.upload_id, analysis.suggested_bucket_id);
+      if (!isCurrentVisionMove()) return;
       await recordVisionCorrection(analysis, 'accepted', analysis.suggested_bucket_id, 'Accepted album suggestion.');
+      if (!isCurrentVisionMove()) return;
       setUploads((prev) => prev.map((upload) => upload.id === analysis.upload_id ? { ...upload, photo_album_id: analysis.suggested_bucket_id as string } : upload));
       setUploadAnalyses((prev) => prev.map((entry) => entry.upload_id === analysis.upload_id ? { ...entry, photo_album_id: analysis.suggested_bucket_id } : entry));
       setSuccess('Moved the photo and saved the preference.');
     } catch {
+      if (!isCurrentVisionMove()) return;
       setError('Couldn’t move that photo right now. Please try again.');
     } finally {
-      setVisionMovesBusy(false);
+      if (isCurrentVisionMove()) setVisionMovesBusy(false);
     }
   }, [recordVisionCorrection, setError, setSuccess, setUploadAnalyses, setUploads, siteId]);
 
   const rejectVisionSuggestion = useCallback(async (analysis: PhotoUploadAiAnalysisRow) => {
     if (!siteId) return;
+    const requestSiteId = siteId;
+    const requestId = ++visionMovesRequestIdRef.current;
+    const isCurrentVisionMove = () => (
+      requestId === visionMovesRequestIdRef.current && isCurrentPhotoSiteRequest(requestSiteId)
+    );
     setVisionMovesBusy(true);
     setError(null);
     setSuccess(null);
     try {
       await recordVisionCorrection(analysis, 'rejected', analysis.photo_album_id, 'Rejected album suggestion.');
+      if (!isCurrentVisionMove()) return;
       setSuccess('Saved. Future sorting will use that correction.');
     } catch (err) {
+      if (!isCurrentVisionMove()) return;
       setError(safePhotoOwnerError(err, 'Couldn’t save that preference yet.'));
     } finally {
-      setVisionMovesBusy(false);
+      if (isCurrentVisionMove()) setVisionMovesBusy(false);
     }
   }, [recordVisionCorrection, setError, setSuccess, siteId]);
 
   const analyzeUploadsWithVision = useCallback(async (force = false) => {
     if (!siteId) return;
+    const requestSiteId = siteId;
+    const requestId = ++visionAiRequestIdRef.current;
+    const isCurrentVisionAi = () => (
+      requestId === visionAiRequestIdRef.current && isCurrentPhotoSiteRequest(requestSiteId)
+    );
     if (uploads.length === 0) {
       setError('Upload photos before sorting them.');
       return;
@@ -219,6 +285,7 @@ export function useGuestPhotoAiActions({
       }
 
       const data = await analyzeGuestPhotoUploads(siteId, uploadIds, force, force ? 'vision' : 'auto');
+      if (!isCurrentVisionAi()) return;
       const nextResults = data.results ?? [];
       setUploadAnalyses((prev) => {
         const byId = new Map(prev.map((analysis) => [analysis.upload_id, analysis]));
@@ -227,15 +294,22 @@ export function useGuestPhotoAiActions({
       });
       setSuccess(`Photo details updated for ${data.analyzed ?? nextResults.length} upload${(data.analyzed ?? nextResults.length) === 1 ? '' : 's'}.`);
       await load();
+      if (!isCurrentVisionAi()) return;
     } catch (err) {
+      if (!isCurrentVisionAi()) return;
       setError(safePhotoOwnerError(err, 'Couldn’t review those photos yet.'));
     } finally {
-      setVisionAiBusy(false);
+      if (isCurrentVisionAi()) setVisionAiBusy(false);
     }
   }, [load, setError, setSuccess, setUploadAnalyses, siteId, unanalyzedUploads, uploads]);
 
   const applyHighConfidenceVisionMoves = useCallback(async () => {
     if (!siteId) return;
+    const requestSiteId = siteId;
+    const requestId = ++visionMovesRequestIdRef.current;
+    const isCurrentVisionMove = () => (
+      requestId === visionMovesRequestIdRef.current && isCurrentPhotoSiteRequest(requestSiteId)
+    );
     const moves = visionHighConfidenceMoves;
     if (moves.length === 0) {
       setSuccess('No high-confidence album moves to apply yet.');
@@ -249,9 +323,12 @@ export function useGuestPhotoAiActions({
       for (const move of moves) {
         if (!move.suggested_bucket_id) continue;
         await moveGuestPhotoUploadToBucket(siteId, move.upload_id, move.suggested_bucket_id);
+        if (!isCurrentVisionMove()) return;
         await recordVisionCorrection(move, 'accepted', move.suggested_bucket_id, 'Accepted high-confidence album suggestion.');
+        if (!isCurrentVisionMove()) return;
       }
 
+      if (!isCurrentVisionMove()) return;
       setUploads((prev) => prev.map((upload) => {
         const move = moves.find((entry) => entry.upload_id === upload.id);
         return move?.suggested_bucket_id ? { ...upload, photo_album_id: move.suggested_bucket_id } : upload;
@@ -262,9 +339,10 @@ export function useGuestPhotoAiActions({
       }));
       setSuccess(`Applied ${moves.length} confirmed album move${moves.length === 1 ? '' : 's'}.`);
     } catch (err) {
+      if (!isCurrentVisionMove()) return;
       setError(safePhotoOwnerError(err, 'Couldn’t apply album moves.'));
     } finally {
-      setVisionMovesBusy(false);
+      if (isCurrentVisionMove()) setVisionMovesBusy(false);
     }
   }, [recordVisionCorrection, setError, setSuccess, setUploadAnalyses, setUploads, siteId, visionHighConfidenceMoves]);
 

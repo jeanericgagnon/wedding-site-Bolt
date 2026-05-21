@@ -3,7 +3,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { Card } from '../../components/ui/Card';
 import { Link } from 'react-router-dom';
 import { formatErrorLogDateTime, getErrorLogTimestamp } from './errorLogTime';
-import { copyTextOrDownload } from '../../lib/copyText';
+import { copyTextOrDownload, downloadTextFile } from '../../lib/copyText';
 import { isErrorLogAdmin, loadDashboardErrorLogs, type ErrorLogRow } from './errorLogService';
 
 interface GroupedError {
@@ -210,13 +210,11 @@ export const DashboardErrorLogs: React.FC = () => {
     ]);
     const esc = (value: string) => `"${String(value).replace(/"/g, '""')}"`;
     const csv = [header, ...rowsCsv].map((line) => line.map((v) => esc(String(v))).join(',')).join('\n');
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `error-logs-${datePreset}-${new Date().toISOString().slice(0, 10)}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
+    downloadTextFile(
+      `error-logs-${datePreset}-${new Date().toISOString().slice(0, 10)}.csv`,
+      csv,
+      'text/csv;charset=utf-8',
+    );
   };
 
   const pageSize = 25;

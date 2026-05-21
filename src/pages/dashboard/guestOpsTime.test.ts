@@ -26,4 +26,15 @@ describe('guest ops time guards', () => {
       new Date('2026-06-21T18:30:00.000Z').toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
     );
   });
+
+  it('formats date-only guest ops timestamps as the saved local calendar day', () => {
+    const value = '2026-09-12';
+    expect(getGuestOpsTimestamp(value)).toBe(new Date(2026, 8, 12).getTime());
+    expect(formatGuestOpsDate(value)).toBe(
+      new Date(2026, 8, 12).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+    );
+    expect(formatGuestOpsDateTime(value)).toBe(
+      new Date(2026, 8, 12).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }),
+    );
+  });
 });

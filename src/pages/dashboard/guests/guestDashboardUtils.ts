@@ -1,5 +1,6 @@
 import { customerSafeErrorMessage } from '../../../lib/customerSafeError';
 import { toSafeCsv } from '../../../lib/csvExport';
+import { downloadTextFile } from '../../../lib/copyText';
 import { extractDietaryNote } from '../../../lib/dietaryNotes';
 import { getRsvpExceptionStates, type RsvpExceptionState } from '../../../lib/rsvpExceptionState';
 import { getRsvpFallbackState, type RsvpFallbackDescriptor } from '../../../lib/rsvpFallbackState';
@@ -82,15 +83,7 @@ export function getGuestExportSegmentSuffix(value: string): string {
 }
 
 export function downloadGuestCsv(csv: string, suffix: string): void {
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
-  const url = URL.createObjectURL(blob);
-  const anchor = document.createElement('a');
-  anchor.href = url;
-  anchor.download = `dayof-${suffix}.csv`;
-  document.body.appendChild(anchor);
-  anchor.click();
-  document.body.removeChild(anchor);
-  URL.revokeObjectURL(url);
+  downloadTextFile(`dayof-${suffix}.csv`, csv, 'text/csv;charset=utf-8');
 }
 
 export function buildGuestExportCsv(input: {

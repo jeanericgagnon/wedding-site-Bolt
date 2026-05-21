@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Heart, CreditCard, Check, Loader2, AlertCircle, RefreshCw } from 'lucide-react';
 import { Button } from '../components/ui';
@@ -35,6 +35,7 @@ export const PaymentRequired: React.FC = () => {
   const [checkingStatus, setCheckingStatus] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [weddingSiteId, setWeddingSiteId] = useState<string | null>(null);
+  const [siteSetupPending, setSiteSetupPending] = useState(false);
 
   useEffect(() => {
     setLoading(false);
@@ -46,6 +47,7 @@ export const PaymentRequired: React.FC = () => {
     let cancelled = false;
 
     setWeddingSiteId(null);
+    setSiteSetupPending(false);
     if (!user) {
       return () => {
         cancelled = true;
@@ -59,17 +61,39 @@ export const PaymentRequired: React.FC = () => {
       };
     }
 
+    setSiteSetupPending(true);
     ensureMinimalPaymentWeddingSite(user.id, user.email)
       .then(id => {
-        if (!cancelled) setWeddingSiteId(id);
+        if (!cancelled) {
+          setWeddingSiteId(id);
+          setSiteSetupPending(false);
+        }
       })
       .catch((err: unknown) => {
-        if (!cancelled) setError(safePaymentError(err, 'Couldn’t finish setting up your account right now.'));
+        if (!cancelled) {
+          setError(safePaymentError(err, 'Couldn’t finish setting up your account right now.'));
+          setSiteSetupPending(false);
+        }
       });
 
     return () => {
       cancelled = true;
     };
+  }, [isDemoMode, user]);
+
+  const handleRetrySiteSetup = useCallback(async () => {
+    if (!user) return;
+    setSiteSetupPending(true);
+    setWeddingSiteId(null);
+    setError(null);
+    try {
+      const id = isDemoMode ? 'demo-site-id' : await ensureMinimalPaymentWeddingSite(user.id, user.email);
+      setWeddingSiteId(id);
+    } catch (err) {
+      setError(safePaymentError(err, 'Couldn’t finish setting up your account right now.'));
+    } finally {
+      setSiteSetupPending(false);
+    }
   }, [isDemoMode, user]);
 
   const handleCheckout = async () => {
@@ -126,6 +150,7 @@ export const PaymentRequired: React.FC = () => {
   const isExpired = searchParams.get('reason') === 'expired';
   const isBillingUnavailable = searchParams.get('reason') === 'billing_unavailable';
   const isNewSignup = searchParams.get('signup') === '1' || searchParams.get('oauth') === 'google';
+  const showMissingSiteRecovery = Boolean(user && !weddingSiteId && !siteSetupPending);
 
   return (
     <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,rgba(139,157,126,0.18),transparent_32%),linear-gradient(135deg,#faf7f1,#f6f1e8_42%,#fbfaf7)] flex items-center justify-center p-4">
@@ -206,12 +231,26 @@ export const PaymentRequired: React.FC = () => {
               </div>
             )}
 
+            {!error && siteSetupPending && (
+              <div className="mb-4 flex items-start gap-2 rounded-xl border border-border-subtle bg-surface-secondary p-3 text-sm text-text-secondary">
+                <Loader2 className="w-4 h-4 flex-shrink-0 mt-0.5 animate-spin text-text-tertiary" />
+                <span>Setting up your wedding record before checkout.</span>
+              </div>
+            )}
+
+            {!error && showMissingSiteRecovery && (
+              <div className="mb-4 flex items-start gap-2 rounded-xl border border-border-subtle bg-surface-secondary p-3 text-sm text-text-secondary">
+                <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5 text-text-tertiary" />
+                <span>We need to finish creating your wedding record before checkout can open.</span>
+              </div>
+            )}
+
             <Button
               variant="accent"
               size="lg"
               fullWidth
               onClick={handleCheckout}
-              disabled={loading || !weddingSiteId}
+              disabled={loading || siteSetupPending || !weddingSiteId}
             >
               {loading ? (
                 <>
@@ -225,6 +264,19 @@ export const PaymentRequired: React.FC = () => {
                 </>
               )}
             </Button>
+
+            {showMissingSiteRecovery && (
+              <Button
+                variant="outline"
+                size="lg"
+                fullWidth
+                onClick={handleRetrySiteSetup}
+                disabled={siteSetupPending}
+                className="mt-3"
+              >
+                Retry site setup
+              </Button>
+            )}
 
             {paymentBypassAllowed && (
               <Button

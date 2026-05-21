@@ -84,7 +84,7 @@ export type BuilderAction =
   | { type: 'LOAD_PROJECT'; payload: BuilderProject }
   | { type: 'SET_WEDDING_DATA'; payload: WeddingDataV1 }
   | { type: 'SET_ACTIVE_PAGE'; payload: string }
-  | { type: 'ADD_PAGE'; payload: { title?: string } }
+  | { type: 'ADD_PAGE'; payload: { title?: string; initialSectionType?: BuilderSectionType } }
   | { type: 'UPDATE_PAGE'; payload: { pageId: string; patch: Partial<BuilderPage> } }
   | { type: 'DUPLICATE_PAGE'; payload: { pageId: string } }
   | { type: 'REMOVE_PAGE'; payload: { pageId: string } }

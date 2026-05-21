@@ -21,8 +21,19 @@ export const getSiteLanguageLabel = (language: string) =>
 
 export const formatTranslationStatusDate = (value: string | null) => {
   if (!value) return 'Not generated yet';
-  const parsed = new Date(value);
+  const dateOnlyMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value.trim());
+  const parsed = dateOnlyMatch
+    ? new Date(Number(dateOnlyMatch[1]), Number(dateOnlyMatch[2]) - 1, Number(dateOnlyMatch[3]))
+    : new Date(value);
   if (Number.isNaN(parsed.getTime())) return 'Generated recently';
+  if (
+    dateOnlyMatch
+    && (parsed.getFullYear() !== Number(dateOnlyMatch[1])
+      || parsed.getMonth() !== Number(dateOnlyMatch[2]) - 1
+      || parsed.getDate() !== Number(dateOnlyMatch[3]))
+  ) {
+    return 'Generated recently';
+  }
   return `Updated ${parsed.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}`;
 };
 

@@ -1,3 +1,5 @@
+import { useEffect, useRef } from 'react';
+
 import { parseDatetimeLocalToIso } from '../guestPhotoDateTime';
 import { getSuggestedGuestPhotoWindowStart } from '../guestPhotoEventDate';
 import { createGuestPhotoAlbum, manageGuestPhotoAlbum } from '../guestPhotoSharingService';
@@ -62,6 +64,33 @@ export function useGuestPhotoAlbumActions({
   siteId,
   windowDrafts,
 }: UseGuestPhotoAlbumActionsInput) {
+  const mountedRef = useRef(true);
+  const albumActionRequestIdRef = useRef(0);
+  const siteIdRef = useRef(siteId);
+  siteIdRef.current = siteId;
+
+  useEffect(() => () => {
+    mountedRef.current = false;
+    albumActionRequestIdRef.current += 1;
+  }, []);
+
+  useEffect(() => {
+    albumActionRequestIdRef.current += 1;
+    setBulkCreating(false);
+    setSubmitting(false);
+    setWorkingBucketId('');
+  }, [setBulkCreating, setSubmitting, setWorkingBucketId, siteId]);
+
+  const beginAlbumAction = () => {
+    const requestId = ++albumActionRequestIdRef.current;
+    const requestSiteId = siteId;
+    return () => (
+      mountedRef.current &&
+      requestId === albumActionRequestIdRef.current &&
+      siteIdRef.current === requestSiteId
+    );
+  };
+
   const createMissingBucketsFromItinerary = async () => {
     if (!siteId) return;
     if (missingItineraryEvents.length === 0) {
@@ -69,6 +98,7 @@ export function useGuestPhotoAlbumActions({
       return;
     }
 
+    const isCurrentAlbumAction = beginAlbumAction();
     try {
       setBulkCreating(true);
       setError(null);
@@ -83,6 +113,7 @@ export function useGuestPhotoAlbumActions({
           name: event.event_name,
           itineraryEventId: event.id,
         });
+        if (!isCurrentAlbumAction()) return;
         const createdAlbum = data?.album ?? data?.bucket;
         if (createdAlbum?.id) {
           created.push(event.event_name);
@@ -93,20 +124,24 @@ export function useGuestPhotoAlbumActions({
       }
 
       if (Object.keys(links).length > 0) {
+        if (!isCurrentAlbumAction()) return;
         setBucketUploadLinks((prev) => ({ ...prev, ...links }));
       }
 
       await load();
+      if (!isCurrentAlbumAction()) return;
       setSuccess(`Created ${created.length} album${created.length === 1 ? '' : 's'} from itinerary events.`);
     } catch (err: unknown) {
+      if (!isCurrentAlbumAction()) return;
       setError(safePhotoOwnerError(err, 'Couldn’t create itinerary albums yet.'));
     } finally {
-      setBulkCreating(false);
+      if (isCurrentAlbumAction()) setBulkCreating(false);
     }
   };
 
   const createMomentBucketFromSuggestion = async (suggestion: MomentSuggestion) => {
     if (!siteId) return;
+    const isCurrentAlbumAction = beginAlbumAction();
     try {
       setSubmitting(true);
       setError(null);
@@ -117,53 +152,64 @@ export function useGuestPhotoAlbumActions({
         itineraryEventId: suggestion.eventId,
         parentAlbumId: suggestion.parentBucket?.id ?? null,
       });
+      if (!isCurrentAlbumAction()) return;
       const createdAlbum = data?.album ?? data?.bucket;
       if (!createdAlbum?.id) throw new Error('Couldn’t create that moment album yet.');
       const uploadUrl = (data.uploadUrl as string) ?? '';
       if (uploadUrl) setBucketUploadLinks((prev) => ({ ...prev, [String(createdAlbum.id)]: uploadUrl }));
       await load();
+      if (!isCurrentAlbumAction()) return;
       setSuccess(suggestion.parentBucket ? `Created ${suggestion.parentBucket.name} / ${suggestion.label}.` : `Created ${suggestion.label} from ${suggestion.eventName}.`);
     } catch (err: unknown) {
+      if (!isCurrentAlbumAction()) return;
       setError(safePhotoOwnerError(err, 'Couldn’t create that moment album yet.'));
     } finally {
-      setSubmitting(false);
+      if (isCurrentAlbumAction()) setSubmitting(false);
     }
   };
 
   const setBucketActive = async (bucketId: string, isActive: boolean) => {
+    const isCurrentAlbumAction = beginAlbumAction();
     try {
       setWorkingBucketId(bucketId);
       setError(null);
       await manageGuestPhotoAlbum({ action: 'set_active', albumId: bucketId, isActive });
       await load();
+      if (!isCurrentAlbumAction()) return;
       logPhotoAction(isActive ? 'bucket_activated' : 'bucket_paused', `${isActive ? 'Opened' : 'Paused'} a photo album.`, { isActive }, bucketId, bucketDisplayName(bucketById.get(bucketId)));
     } catch (err: unknown) {
+      if (!isCurrentAlbumAction()) return;
       setError(safePhotoOwnerError(err, 'Couldn’t update album sharing yet.'));
     } finally {
-      setWorkingBucketId('');
+      if (isCurrentAlbumAction()) setWorkingBucketId('');
     }
   };
 
   const setBucketParent = async (bucketId: string, nextParentAlbumId: string) => {
+    const isCurrentAlbumAction = beginAlbumAction();
     try {
       setWorkingBucketId(bucketId);
       setError(null);
       await manageGuestPhotoAlbum({ action: 'set_parent', albumId: bucketId, parentAlbumId: nextParentAlbumId || null });
       await load();
+      if (!isCurrentAlbumAction()) return;
       setSuccess(nextParentAlbumId ? 'Sub-album relationship saved.' : 'Album moved back to top level.');
     } catch (err: unknown) {
+      if (!isCurrentAlbumAction()) return;
       setError(safePhotoOwnerError(err, 'Couldn’t update the album grouping yet.'));
     } finally {
-      setWorkingBucketId('');
+      if (isCurrentAlbumAction()) setWorkingBucketId('');
     }
   };
 
   const regenerateLink = async (bucketId: string) => {
+    const isCurrentAlbumAction = beginAlbumAction();
     try {
       setWorkingBucketId(bucketId);
       setError(null);
       setSuccess(null);
       const data = await manageGuestPhotoAlbum({ action: 'regenerate_link', albumId: bucketId });
+      if (!isCurrentAlbumAction()) return;
       const uploadUrl = (data?.uploadUrl as string) ?? '';
       setLatestUploadUrl(uploadUrl);
       if (uploadUrl) {
@@ -171,10 +217,12 @@ export function useGuestPhotoAlbumActions({
       }
       setSuccess('Album link refreshed. The previous link no longer accepts uploads.');
       await load();
+      if (!isCurrentAlbumAction()) return;
     } catch (err: unknown) {
+      if (!isCurrentAlbumAction()) return;
       setError(safePhotoOwnerError(err, 'Couldn’t refresh that upload link yet.'));
     } finally {
-      setWorkingBucketId('');
+      if (isCurrentAlbumAction()) setWorkingBucketId('');
     }
   };
 
@@ -199,6 +247,7 @@ export function useGuestPhotoAlbumActions({
   };
 
   const saveWindow = async (bucketId: string) => {
+    const isCurrentAlbumAction = beginAlbumAction();
     try {
       setWorkingBucketId(bucketId);
       setError(null);
@@ -213,12 +262,15 @@ export function useGuestPhotoAlbumActions({
         throw new Error('Close time must be after open time.');
       }
       await manageGuestPhotoAlbum({ action: 'set_window', albumId: bucketId, opensAt, closesAt });
+      if (!isCurrentAlbumAction()) return;
       setSuccess('Upload window saved.');
       await load();
+      if (!isCurrentAlbumAction()) return;
     } catch (err: unknown) {
+      if (!isCurrentAlbumAction()) return;
       setError(safePhotoOwnerError(err, 'Couldn’t save that upload window yet.'));
     } finally {
-      setWorkingBucketId('');
+      if (isCurrentAlbumAction()) setWorkingBucketId('');
     }
   };
 
@@ -229,6 +281,7 @@ export function useGuestPhotoAlbumActions({
       return;
     }
 
+    const isCurrentAlbumAction = beginAlbumAction();
     try {
       setSubmitting(true);
       setError(null);
@@ -240,6 +293,7 @@ export function useGuestPhotoAlbumActions({
         itineraryEventId: itineraryEventId || null,
         parentAlbumId: parentAlbumId || null,
       });
+      if (!isCurrentAlbumAction()) return;
       const createdAlbum = data?.album ?? data?.bucket;
       if (!createdAlbum?.id) throw new Error('Couldn’t create that album yet.');
 
@@ -250,13 +304,15 @@ export function useGuestPhotoAlbumActions({
       }
 
       await load();
+      if (!isCurrentAlbumAction()) return;
       setSuccess(`Album "${createdAlbum.name ?? name.trim()}" created.`);
       setName('');
       setParentAlbumId('');
     } catch (err: unknown) {
+      if (!isCurrentAlbumAction()) return;
       setError(safePhotoOwnerError(err, 'Couldn’t create that album yet.'));
     } finally {
-      setSubmitting(false);
+      if (isCurrentAlbumAction()) setSubmitting(false);
     }
   };
 

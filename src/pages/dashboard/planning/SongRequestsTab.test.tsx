@@ -5,17 +5,20 @@ import { ToastProvider } from '../../../components/ui/Toast';
 import { SongRequestsTab } from './SongRequestsTab';
 import * as planningService from './planningService';
 
-const { copyTextOrDownload } = vi.hoisted(() => ({
+const { copyTextOrDownload, downloadTextFile } = vi.hoisted(() => ({
   copyTextOrDownload: vi.fn(),
+  downloadTextFile: vi.fn(),
 }));
 
 vi.mock('../../../lib/copyText', () => ({
   copyTextOrDownload: (...args: unknown[]) => copyTextOrDownload(...args),
+  downloadTextFile: (...args: unknown[]) => downloadTextFile(...args),
 }));
 
 describe('SongRequestsTab', () => {
   beforeEach(() => {
     copyTextOrDownload.mockReset();
+    downloadTextFile.mockReset();
   });
 
   it('restores the playlist save button after a failed save', async () => {
@@ -42,6 +45,46 @@ describe('SongRequestsTab', () => {
 
     expect(await screen.findByRole('button', { name: /^save$/i })).toBeEnabled();
     expect(screen.getByText(/couldn’t save the playlist link right now\./i)).toBeInTheDocument();
+  });
+
+  it('does not show stale playlist save completion after edit access is removed', async () => {
+    const user = userEvent.setup();
+    let resolveSave: () => void = () => {};
+
+    vi.spyOn(planningService, 'loadSongRequestData').mockResolvedValue({
+      playlistUrl: 'https://open.spotify.com/playlist/existing',
+      hasQuestion: false,
+      requests: [],
+    });
+    const savePlanningPlaylistUrl = vi.spyOn(planningService, 'savePlanningPlaylistUrl')
+      .mockReturnValueOnce(new Promise((resolve) => {
+        resolveSave = resolve;
+      }));
+
+    const { rerender } = render(
+      <ToastProvider>
+        <SongRequestsTab siteId="site-1" />
+      </ToastProvider>,
+    );
+
+    const input = await screen.findByDisplayValue('https://open.spotify.com/playlist/existing');
+    await user.clear(input);
+    await user.type(input, 'https://open.spotify.com/playlist/updated');
+    await user.click(screen.getByRole('button', { name: /^save$/i }));
+
+    rerender(
+      <ToastProvider>
+        <SongRequestsTab siteId="site-1" canEdit={false} />
+      </ToastProvider>,
+    );
+
+    await act(async () => {
+      resolveSave();
+    });
+
+    expect(savePlanningPlaylistUrl).toHaveBeenCalledTimes(1);
+    expect(screen.getByRole('button', { name: /^save$/i })).toBeDisabled();
+    expect(screen.queryByText(/playlist link saved\./i)).not.toBeInTheDocument();
   });
 
   it('restores the DJ copy action after a failed copy', async () => {
@@ -90,6 +133,37 @@ describe('SongRequestsTab', () => {
     await user.click(await screen.findByRole('button', { name: /copy list/i }));
 
     expect(await screen.findByRole('button', { name: /downloaded dj list/i })).toBeInTheDocument();
+  });
+
+  it('exports song requests through the attached download helper', async () => {
+    const user = userEvent.setup();
+
+    vi.spyOn(planningService, 'loadSongRequestData').mockResolvedValue({
+      playlistUrl: 'https://open.spotify.com/playlist/existing',
+      hasQuestion: false,
+      requests: [
+        { guestName: 'Sarah Mitchell', answer: 'Dancing Queen - ABBA', respondedAt: '2026-05-01T12:00:00.000Z' },
+      ],
+    });
+
+    render(
+      <ToastProvider>
+        <SongRequestsTab siteId="site-1" />
+      </ToastProvider>,
+    );
+
+    await user.click(await screen.findByRole('button', { name: /^export$/i }));
+
+    expect(downloadTextFile).toHaveBeenCalledWith(
+      expect.stringMatching(/^dayof-song-requests-\d{4}-\d{2}-\d{2}\.csv$/),
+      expect.stringContaining('Dancing Queen'),
+      'text/csv;charset=utf-8',
+    );
+    expect(downloadTextFile).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.stringContaining('Sarah Mitchell'),
+      expect.any(String),
+    );
   });
 
   it('ignores stale DJ list copy completion after song request data changes', async () => {

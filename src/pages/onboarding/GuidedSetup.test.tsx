@@ -159,4 +159,12 @@ describe('GuidedSetup stale error recovery guards', () => {
     expect(page).toContain("onClick={() => updateFormData({ colorScheme: scheme.id })}");
     expect(page).toContain('const handleBack = () => {');
   });
+
+  it('routes the guest CSV template download through the shared attached-anchor helper', () => {
+    const page = readFileSync('src/pages/onboarding/GuidedSetup.tsx', 'utf8');
+
+    expect(page).toContain("import { downloadTextFile } from '../../lib/copyText';");
+    expect(page).toContain("downloadTextFile('guest-list-template.csv', csv, 'text/csv;charset=utf-8');");
+    expect(page).not.toContain("a.download = 'guest-list-template.csv';");
+  });
 });

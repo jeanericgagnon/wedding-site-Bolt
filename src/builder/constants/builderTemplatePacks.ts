@@ -2,6 +2,7 @@ import { BuilderTemplateDefinition, TemplateMoodTag, TemplatePageSlot, TemplateS
 import { getAllTemplates } from '../../templates/registry';
 import { BuilderSectionType } from '../../types/builder/section';
 import { getTemplateLaunchOrder, getTemplateLaunchTier, isLaunchVisibleTemplateId } from './templateLaunchQuality';
+import { TEMPLATE_PAGE_GROUPS } from './templatePageGroups';
 
 const withBasePath = (path: string) => `${import.meta.env.BASE_URL}${path.replace(/^\/+/, '')}`;
 
@@ -11,34 +12,28 @@ const sectionTypesForPages = (
 ): TemplateSectionSlot[] => sectionComposition.filter((slot) => types.includes(slot.type));
 
 export function inferTemplatePages(sectionComposition: TemplateSectionSlot[]): TemplatePageSlot[] {
-  const homeSections = sectionTypesForPages(sectionComposition, ['hero', 'story', 'venue', 'schedule', 'gallery']);
-  const travelSections = sectionTypesForPages(sectionComposition, ['travel', 'accommodations', 'directions']);
-  const rsvpSections = sectionTypesForPages(sectionComposition, ['rsvp', 'faq', 'contact']);
-  const registrySections = sectionTypesForPages(sectionComposition, ['registry']);
-  const assigned = new Set([
-    ...homeSections,
-    ...travelSections,
-    ...rsvpSections,
-    ...registrySections,
-  ]);
+  const groupedSections = TEMPLATE_PAGE_GROUPS.map((group) => ({
+    group,
+    sections: sectionTypesForPages(sectionComposition, group.sectionTypes),
+  }));
+  const assigned = new Set(groupedSections.flatMap(({ sections }) => sections));
   const otherSections = sectionComposition.filter((slot) => !assigned.has(slot));
+  const homeGroup = groupedSections.find(({ group }) => group.isHome);
+  const homeSections = homeGroup?.sections ?? [];
 
   const pages: TemplatePageSlot[] = [{
-    title: 'Home',
-    slug: 'home',
+    title: homeGroup?.group.title ?? 'Home',
+    slug: homeGroup?.group.slug ?? 'home',
     isHome: true,
     sectionComposition: [...homeSections, ...otherSections],
   }];
 
-  if (travelSections.length > 0) {
-    pages.push({ title: 'Travel', slug: 'travel', sectionComposition: travelSections });
-  }
-  if (rsvpSections.length > 0) {
-    pages.push({ title: 'RSVP', slug: 'rsvp', sectionComposition: rsvpSections });
-  }
-  if (registrySections.length > 0) {
-    pages.push({ title: 'Registry', slug: 'registry', sectionComposition: registrySections });
-  }
+  groupedSections
+    .filter(({ group }) => !group.isHome)
+    .filter(({ sections }) => sections.length > 0)
+    .forEach(({ group, sections }) => {
+      pages.push({ title: group.title, slug: group.slug, sectionComposition: sections });
+    });
 
   return pages;
 }
@@ -515,6 +510,122 @@ export const BUILDER_TEMPLATE_PACKS: Record<string, BuilderTemplateDefinition> =
     spacingProfile: 'balanced',
     structureFocus: 'Classic invitation-style sequencing with dependable guest information built in.',
     bestFor: ['formal weddings', 'traditional weekends', 'classic hotel or ballroom events'],
+    isNew: true,
+  },
+
+  'coastal-weekend': {
+    id: 'coastal-weekend',
+    displayName: 'Coastal Weekend',
+    description: 'A breezy destination-weekend template with travel, lodging, events, and RSVP separated into guest-friendly pages.',
+    moodTags: ['destination', 'modern', 'photo'],
+    previewThumbnailPath: withBasePath('/template-previews/destination-adventure.webp'),
+    defaultThemeId: 'ocean',
+    sectionComposition: [
+      { type: 'hero', variant: 'fullbleed', enabled: true, locked: false, settings: { showTitle: true, textAlign: 'left', overlayOpacity: 38, eyebrow: 'A weekend by the water', ctaLabel: 'Plan the trip' } },
+      { type: 'venue', variant: 'mapFirst', enabled: true, locked: false, settings: { showTitle: true } },
+      { type: 'schedule', variant: 'dayTabs', enabled: true, locked: false, settings: { showTitle: true } },
+      { type: 'travel', variant: 'splitAirHotel', enabled: true, locked: false, settings: SAYULITA_TRAVEL_TIERS_SETTINGS },
+      { type: 'accommodations', variant: 'cards', enabled: true, locked: false, settings: SAYULITA_ACCOMMODATIONS_SETTINGS },
+      { type: 'directions', variant: 'split', enabled: true, locked: false, settings: { showTitle: true } },
+      { type: 'rsvp', variant: 'multiEvent', enabled: true, locked: false, settings: { showTitle: true } },
+      { type: 'faq', variant: 'twoColumn', enabled: true, locked: false, settings: { showTitle: true } },
+      { type: 'gallery', variant: 'carousel', enabled: true, locked: false, settings: { showTitle: false } },
+    ],
+    sectionVariantMap: {
+      hero: 'fullbleed', venue: 'mapFirst', schedule: 'dayTabs', travel: 'splitAirHotel', accommodations: 'cards', directions: 'split', rsvp: 'multiEvent', faq: 'twoColumn', gallery: 'carousel',
+    },
+    suggestedFonts: { heading: 'DM Serif Display', body: 'DM Sans' },
+    spacingProfile: 'spacious',
+    structureFocus: 'Destination-first navigation with travel, stay, directions, schedule, and RSVP split into dedicated guest pages.',
+    bestFor: ['beach weddings', 'destination weekends', 'guests booking travel'],
+    isNew: true,
+  },
+
+  'black-tie-ballroom': {
+    id: 'black-tie-ballroom',
+    displayName: 'Black Tie Ballroom',
+    description: 'Formal evening structure with dress code, menu, venue, and RSVP treated as polished first-class guest information.',
+    moodTags: ['classic', 'luxe', 'editorial'],
+    previewThumbnailPath: withBasePath('/template-previews/timeless-classic.webp'),
+    defaultThemeId: 'classic',
+    sectionComposition: [
+      { type: 'hero', variant: 'invitation', enabled: true, locked: false, settings: { showTitle: true, eyebrow: 'Black tie requested', ctaLabel: 'RSVP' } },
+      { type: 'venue', variant: 'detailsFirst', enabled: true, locked: false, settings: { showTitle: true } },
+      { type: 'schedule', variant: 'program', enabled: true, locked: false, settings: { showTitle: true } },
+      { type: 'travel', variant: 'hotelBlock', enabled: true, locked: false, settings: SAYULITA_HOTEL_BLOCK_SETTINGS },
+      { type: 'dress-code', variant: 'moodBoard', enabled: true, locked: false, settings: { showTitle: true } },
+      { type: 'menu', variant: 'tabs', enabled: true, locked: false, settings: { showTitle: true } },
+      { type: 'rsvp', variant: 'formal', enabled: true, locked: false, settings: { showTitle: true } },
+      { type: 'registry', variant: 'featured', enabled: true, locked: false, settings: { showTitle: true } },
+      { type: 'faq', variant: 'accordion', enabled: true, locked: false, settings: { showTitle: true } },
+      { type: 'gallery', variant: 'grid', enabled: true, locked: false, settings: { showTitle: true } },
+    ],
+    sectionVariantMap: {
+      hero: 'invitation', venue: 'detailsFirst', schedule: 'program', travel: 'hotelBlock', 'dress-code': 'moodBoard', menu: 'tabs', rsvp: 'formal', registry: 'featured', faq: 'accordion', gallery: 'grid',
+    },
+    suggestedFonts: { heading: 'EB Garamond', body: 'Source Sans Pro' },
+    spacingProfile: 'balanced',
+    structureFocus: 'A formal, invitation-inspired flow with dedicated pages for schedule, details, RSVP, and registry.',
+    bestFor: ['black tie weddings', 'ballroom receptions', 'formal guest expectations'],
+    isNew: true,
+  },
+
+  'rustic-vineyard': {
+    id: 'rustic-vineyard',
+    displayName: 'Rustic Vineyard',
+    description: 'Warm outdoor styling with venue, weekend timing, lodging, menu, photos, and RSVP organized for guests.',
+    moodTags: ['garden', 'romantic', 'classic'],
+    previewThumbnailPath: withBasePath('/template-previews/garden-escape.webp'),
+    defaultThemeId: 'sunset',
+    sectionComposition: [
+      { type: 'hero', variant: 'botanical', enabled: true, locked: false, settings: { showTitle: true, eyebrow: 'Dinner under the vines', ctaLabel: 'Join us' } },
+      { type: 'story', variant: 'timeline', enabled: true, locked: false, settings: { showTitle: true } },
+      { type: 'venue', variant: 'card', enabled: true, locked: false, settings: { showTitle: true } },
+      { type: 'schedule', variant: 'agendaCards', enabled: true, locked: false, settings: { showTitle: true } },
+      { type: 'travel', variant: 'compact', enabled: true, locked: false, settings: SAYULITA_TRAVEL_LIST_SETTINGS },
+      { type: 'accommodations', variant: 'cards', enabled: true, locked: false, settings: SAYULITA_ACCOMMODATIONS_SETTINGS },
+      { type: 'menu', variant: 'card', enabled: true, locked: false, settings: { showTitle: true } },
+      { type: 'rsvp', variant: 'illustrated', enabled: true, locked: false, settings: { showTitle: true } },
+      { type: 'gallery', variant: 'mosaic', enabled: true, locked: false, settings: { showTitle: false } },
+      { type: 'faq', variant: 'accordion', enabled: true, locked: false, settings: { showTitle: true } },
+    ],
+    sectionVariantMap: {
+      hero: 'botanical', story: 'timeline', venue: 'card', schedule: 'agendaCards', travel: 'compact', accommodations: 'cards', menu: 'card', rsvp: 'illustrated', gallery: 'mosaic', faq: 'accordion',
+    },
+    suggestedFonts: { heading: 'Gilda Display', body: 'Nunito' },
+    spacingProfile: 'balanced',
+    structureFocus: 'Warm story and venue moments with practical travel, lodging, RSVP, and FAQ pages close at hand.',
+    bestFor: ['vineyard weddings', 'outdoor dinners', 'warm romantic weekends'],
+    isNew: true,
+  },
+
+  'playful-color': {
+    id: 'playful-color',
+    displayName: 'Playful Color',
+    description: 'A brighter modern template with music, guest notes, photos, and RSVP built into a lively but usable guest flow.',
+    moodTags: ['bold', 'modern', 'photo'],
+    previewThumbnailPath: withBasePath('/template-previews/bold-statement.webp'),
+    defaultThemeId: 'sunset',
+    sectionComposition: [
+      { type: 'hero', variant: 'countdown', enabled: true, locked: false, settings: { showTitle: true, layoutStyle: 'countdown', textAlign: 'center', overlayOpacity: 44, eyebrow: 'The party has a date', ctaLabel: 'RSVP' } },
+      { type: 'story', variant: 'milestones', enabled: true, locked: false, settings: { showTitle: true } },
+      { type: 'venue', variant: 'mapFirst', enabled: true, locked: false, settings: { showTitle: true } },
+      { type: 'schedule', variant: 'dayTabs', enabled: true, locked: false, settings: { showTitle: true } },
+      { type: 'travel', variant: 'thingsToDo', enabled: true, locked: false, settings: SAYULITA_TRAVEL_LIST_SETTINGS },
+      { type: 'music', variant: 'requestForm', enabled: true, locked: false, settings: { showTitle: true } },
+      { type: 'quotes', variant: 'guestbook', enabled: true, locked: false, settings: { showTitle: true } },
+      { type: 'rsvp', variant: 'inline', enabled: true, locked: false, settings: { showTitle: true } },
+      { type: 'gallery', variant: 'categorized', enabled: true, locked: false, settings: { showTitle: false } },
+      { type: 'registry', variant: 'cards', enabled: true, locked: false, settings: { showTitle: true } },
+      { type: 'faq', variant: 'twoColumn', enabled: true, locked: false, settings: { showTitle: true } },
+    ],
+    sectionVariantMap: {
+      hero: 'countdown', story: 'milestones', venue: 'mapFirst', schedule: 'dayTabs', travel: 'thingsToDo', music: 'requestForm', quotes: 'guestbook', rsvp: 'inline', gallery: 'categorized', registry: 'cards', faq: 'twoColumn',
+    },
+    suggestedFonts: { heading: 'Syne', body: 'Instrument Sans' },
+    spacingProfile: 'spacious',
+    structureFocus: 'A high-energy template that still separates schedule, travel, details, RSVP, and registry into clear guest destinations.',
+    bestFor: ['colorful weddings', 'music-forward receptions', 'couples who want guest interaction'],
     isNew: true,
   },
 };

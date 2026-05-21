@@ -7,12 +7,14 @@ import { VendorsTab } from './VendorsTab';
 import type { PlanningVendor } from './planningService';
 import type { VendorMetaMap } from './vendorMetaStorage';
 
-const { copyTextOrDownload } = vi.hoisted(() => ({
+const { copyTextOrDownload, downloadTextFile } = vi.hoisted(() => ({
   copyTextOrDownload: vi.fn(),
+  downloadTextFile: vi.fn(),
 }));
 
 vi.mock('../../../lib/copyText', () => ({
   copyTextOrDownload: (...args: unknown[]) => copyTextOrDownload(...args),
+  downloadTextFile: (...args: unknown[]) => downloadTextFile(...args),
 }));
 
 const vendors: PlanningVendor[] = [
@@ -86,6 +88,7 @@ function renderWithProviders(ui: ReactElement) {
 describe('VendorsTab', () => {
   beforeEach(() => {
     copyTextOrDownload.mockReset();
+    downloadTextFile.mockReset();
   });
 
   it('shows readback but disables vendor mutations for read-only roles', () => {
@@ -146,6 +149,43 @@ describe('VendorsTab', () => {
     expect(await screen.findByRole('button', { name: /save vendor/i })).toBeEnabled();
     expect(screen.getByLabelText(/business name/i)).toHaveValue('New Vendor');
     expect(screen.getByText(/couldn’t save that vendor right now\./i)).toBeInTheDocument();
+  });
+
+  it('clears open vendor write forms when edit access is removed', async () => {
+    const onAdd = vi.fn().mockResolvedValue(undefined);
+    const { rerender } = renderWithProviders(
+      <VendorsTab
+        vendorMeta={{}}
+        vendors={[]}
+        onAdd={onAdd}
+        onSaveVendorMeta={vi.fn().mockResolvedValue(undefined)}
+        onUpdate={vi.fn().mockResolvedValue(undefined)}
+        onDelete={vi.fn().mockResolvedValue(undefined)}
+      />,
+    );
+
+    await clickControl(screen.getByRole('button', { name: /add vendor/i }));
+    expect(screen.getByRole('button', { name: /save vendor/i })).toBeEnabled();
+
+    rerender(
+      <MemoryRouter>
+        <ToastProvider>
+          <VendorsTab
+            vendorMeta={{}}
+            vendors={[]}
+            onAdd={onAdd}
+            onSaveVendorMeta={vi.fn().mockResolvedValue(undefined)}
+            onUpdate={vi.fn().mockResolvedValue(undefined)}
+            onDelete={vi.fn().mockResolvedValue(undefined)}
+            canEdit={false}
+          />
+        </ToastProvider>
+      </MemoryRouter>,
+    );
+
+    expect(screen.queryByRole('button', { name: /save vendor/i })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /add vendor/i })).toBeDisabled();
+    expect(onAdd).not.toHaveBeenCalled();
   });
 
   it('shows a toast when vendor meta save fails', async () => {
@@ -249,6 +289,32 @@ describe('VendorsTab', () => {
 
     expect(copyTextOrDownload).toHaveBeenCalledTimes(1);
     expect(await screen.findByRole('button', { name: /downloaded brief/i })).toBeEnabled();
+  });
+
+  it('exports vendors through the attached download helper', async () => {
+    renderWithProviders(
+      <VendorsTab
+        vendorMeta={vendorMeta}
+        vendors={vendors}
+        onAdd={vi.fn().mockResolvedValue(undefined)}
+        onSaveVendorMeta={vi.fn().mockResolvedValue(undefined)}
+        onUpdate={vi.fn().mockResolvedValue(undefined)}
+        onDelete={vi.fn().mockResolvedValue(undefined)}
+      />,
+    );
+
+    await clickControl(screen.getByRole('button', { name: /^export$/i }));
+
+    expect(downloadTextFile).toHaveBeenCalledWith(
+      expect.stringMatching(/^dayof-vendors-\d{4}-\d{2}-\d{2}\.csv$/),
+      expect.stringContaining('Photo Studio'),
+      'text/csv;charset=utf-8',
+    );
+    expect(downloadTextFile).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.stringContaining('Final balance'),
+      expect.any(String),
+    );
   });
 
   it('ignores stale vendor-brief copy completion after vendor data changes', async () => {

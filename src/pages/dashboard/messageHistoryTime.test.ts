@@ -33,4 +33,10 @@ describe('message history time guards', () => {
       formatMessageHistoryDate(value, { month: 'short', day: 'numeric' }),
     ).toBe(new Date(value).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
   });
+
+  it('formats date-only message history timestamps as the saved local calendar day', () => {
+    expect(formatMessageHistoryDate('2026-09-12')).toBe(new Date(2026, 8, 12).toLocaleDateString('en-US'));
+    expect(formatMessageHistoryDateTime('2026-09-12')).toBe(new Date(2026, 8, 12).toLocaleString('en-US'));
+    expect(getMessageHistoryTimestamp('2026-09-12')).toBe(new Date(2026, 8, 12).getTime());
+  });
 });

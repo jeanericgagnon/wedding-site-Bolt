@@ -13,4 +13,8 @@ describe('coordinator event time guards', () => {
     const value = '2026-06-21T18:30:00.000Z';
     expect(formatCoordinatorEventDateTime(value)).toBe(new Date(value).toLocaleString());
   });
+
+  it('formats date-only event start times as the saved local calendar day', () => {
+    expect(formatCoordinatorEventDateTime('2026-09-12')).toBe(new Date(2026, 8, 12).toLocaleString());
+  });
 });

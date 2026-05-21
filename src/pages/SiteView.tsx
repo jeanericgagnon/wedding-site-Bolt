@@ -11,9 +11,9 @@ import { SiteViewContext } from '../contexts/SiteViewContext';
 import { OwnerPreviewBanner } from '../components/site/OwnerPreviewBanner';
 import { normalizePublicSiteSlug, resolveWeddingSubdomainSlugFromHostname } from '../lib/publicSiteSlug';
 import { getTemplatePack } from '../builder/constants/builderTemplatePacks';
-import { getSectionManifest } from '../builder/registry/sectionManifests';
 import { getSectionVariants } from '../sections/sectionRegistry';
 import { fetchPublicSiteAccess, requestPublicSitePasswordUnlock } from '../lib/publicSiteAccess';
+import { DEMO_MODE } from '../config/env';
 import type { PublicWeddingRenderModel } from '../lib/publicSiteRenderModel';
 import {
   buildPublicAccessArtifacts,
@@ -33,94 +33,18 @@ import { isPublicWeddingDataSparse } from '../lib/publicSiteReadiness';
 import { filterGuestReadySections, hasMeaningfulText } from '../lib/publicGuestSectionReadiness';
 import { resolveSiteViewAnalyticsTarget } from './siteViewAnalyticsTarget';
 import { shouldAppendPublicRsvpSection } from './siteViewSectionGuards';
+import { readLocalDemoAuthFlag } from '../contexts/localDemoAuthStorage';
+import { PublicSitePageNav } from './PublicSitePageNav';
+import { createDemoFallbackPages, createDemoWeddingDataForSlug, deriveCoupleNamesFromPublicSlug } from './siteViewDemoFallback';
+import { getPublicSectionAnchorNavItems } from './siteViewSectionAnchors';
 import {
   buildPublicSitePageHref,
-  buildPublicSiteSectionAnchorHref,
   getPublicSitePageNavItems,
-  normalizePublicSectionAnchorId,
-  normalizeSiteViewPageSlug,
   selectPublicSitePage,
-  type PublicSiteSectionAnchorNavItem,
   type PublicSitePageNavItem,
 } from './siteViewPageSelection';
 
 type GuestRenderableSection = Pick<BuilderSectionInstance, 'id' | 'type' | 'variant' | 'enabled' | 'orderIndex' | 'settings' | 'bindings' | 'styleOverrides'> | PublicSectionDTO;
-
-export const PublicSitePageNav: React.FC<{
-  pages: PublicSitePageNavItem[];
-  sectionAnchors?: PublicSiteSectionAnchorNavItem[];
-  siteSlug: string;
-  currentPageSlug?: string | null;
-}> = ({ pages, sectionAnchors = [], siteSlug, currentPageSlug }) => {
-  const showSectionAnchors = pages.length <= 1 && sectionAnchors.length > 0;
-  if (pages.length <= 1 && !showSectionAnchors) return null;
-  const activeSlug = currentPageSlug ? normalizeSiteViewPageSlug(currentPageSlug) : 'home';
-
-  return (
-    <nav className="sticky top-0 z-30 border-b border-black/10 bg-white/90 px-4 py-2 backdrop-blur">
-      <div className="mx-auto flex max-w-5xl items-center gap-2 overflow-x-auto">
-        {showSectionAnchors ? sectionAnchors.map((anchor) => (
-          <a
-            key={anchor.id}
-            href={buildPublicSiteSectionAnchorHref(siteSlug, anchor)}
-            className="whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-medium text-[var(--color-text-secondary)] transition-colors hover:bg-[var(--color-surface-subtle)] hover:text-[var(--color-text-primary)]"
-          >
-            {anchor.title}
-          </a>
-        )) : pages.map((page) => {
-          const isActive = activeSlug === page.slug || (!currentPageSlug && page.isHome);
-          return (
-            <Link
-              key={page.id ?? page.slug}
-              to={buildPublicSitePageHref(siteSlug, page)}
-              aria-current={isActive ? 'page' : undefined}
-              className={`whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
-                isActive
-                  ? 'bg-[var(--color-text-primary)] text-[var(--color-background)]'
-                  : 'text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-subtle)] hover:text-[var(--color-text-primary)]'
-              }`}
-            >
-              {page.title}
-            </Link>
-          );
-        })}
-      </div>
-    </nav>
-  );
-};
-
-function getComparablePublicSectionOrderIndex(value: unknown, fallback: number): number {
-  if (typeof value === 'number' && Number.isFinite(value)) return value;
-  if (typeof value === 'string') {
-    const parsed = Number(value);
-    if (Number.isFinite(parsed)) return parsed;
-  }
-  return fallback;
-}
-
-export function getPublicSectionAnchorNavItems(sections: GuestRenderableSection[]): PublicSiteSectionAnchorNavItem[] {
-  return sections
-    .filter((section) => section.enabled !== false)
-    .map((section, index) => {
-      const anchorId = normalizePublicSectionAnchorId(section.settings?.anchorId);
-      if (!anchorId) return null;
-      const title = (() => {
-        try {
-          return getSectionManifest(section.type as BuilderSectionInstance['type']).label;
-        } catch {
-          return anchorId.replace(/-/g, ' ');
-        }
-      })();
-      return {
-        id: section.id,
-        anchorId,
-        title,
-        orderIndex: getComparablePublicSectionOrderIndex(section.orderIndex, index),
-      };
-    })
-    .filter((item): item is PublicSiteSectionAnchorNavItem => Boolean(item))
-    .sort((a, b) => a.orderIndex - b.orderIndex);
-}
 
 function syncPublicNoIndexMeta(shouldNoIndex: boolean) {
   if (typeof document === 'undefined') return null;
@@ -205,6 +129,32 @@ function createDemoFallbackSections(templateId = 'modern-luxe'): BuilderSectionI
     locked: section.locked,
     settings: { ...section.settings },
   }));
+}
+
+const LOCAL_DEMO_PUBLIC_ACCESS_TIMEOUT_MS = 1200;
+
+async function withLocalDemoPublicAccessTimeout<T>(promise: Promise<T>, shouldTimeout: boolean): Promise<T> {
+  if (!shouldTimeout) return promise;
+
+  let timeoutId: number | null = null;
+  try {
+    return await Promise.race([
+      promise,
+      new Promise<T>((_resolve, reject) => {
+        timeoutId = window.setTimeout(() => reject(new Error('Local demo public access timed out.')), LOCAL_DEMO_PUBLIC_ACCESS_TIMEOUT_MS);
+      }),
+    ]);
+  } finally {
+    if (timeoutId) window.clearTimeout(timeoutId);
+  }
+}
+
+function shouldPreferLocalDemoPublicPreview(): boolean {
+  try {
+    return readLocalDemoAuthFlag();
+  } catch {
+    return false;
+  }
 }
 
 function normalizeSectionVariants(sections: GuestRenderableSection[]): GuestRenderableSection[] {
@@ -308,37 +258,13 @@ function toBuilderSectionState(sections: GuestRenderableSection[]): BuilderSecti
   }));
 }
 
-function titleCaseSlugPart(value: string): string {
-  return value
-    .split(/[\s_-]+/)
-    .filter(Boolean)
-    .map((part) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
-    .join(' ');
-}
-
-function deriveCoupleNamesFromSlug(siteSlug: string): { partner1Name: string; partner2Name: string; displayName: string } | null {
-  const normalized = siteSlug.trim().toLowerCase();
-  const match = normalized.match(/^(.+?)(?:-and-|and)(.+)$/);
-  if (!match) return null;
-
-  const partner1Name = titleCaseSlugPart(match[1] ?? '');
-  const partner2Name = titleCaseSlugPart(match[2] ?? '');
-  if (!hasMeaningfulText(partner1Name) || !hasMeaningfulText(partner2Name)) return null;
-
-  return {
-    partner1Name,
-    partner2Name,
-    displayName: `${partner1Name} and ${partner2Name}`,
-  };
-}
-
 function withSlugDerivedCoupleNames(data: WeddingDataV1, siteSlug: string): WeddingDataV1 {
   const hasNames = hasMeaningfulText(data.couple.partner1Name)
     || hasMeaningfulText(data.couple.partner2Name)
     || hasMeaningfulText(data.couple.displayName);
   if (hasNames) return data;
 
-  const derived = deriveCoupleNamesFromSlug(siteSlug);
+  const derived = deriveCoupleNamesFromPublicSlug(siteSlug);
   if (!derived) return data;
 
   return {
@@ -510,6 +436,7 @@ const ComingSoonScreen: React.FC = () => {
 
 export const SiteView: React.FC = () => {
   const { slug, pageSlug } = useParams<{ slug: string; pageSlug?: string }>();
+  const isWeddingSubdomainRoute = !slug;
 
   const resolvedSlug = React.useMemo(() => {
     if (slug) return normalizePublicSiteSlug(slug);
@@ -536,6 +463,11 @@ export const SiteView: React.FC = () => {
     () => getPublicSectionAnchorNavItems(builderSections ?? []),
     [builderSections]
   );
+  const publicRsvpHref = useMemo(() => {
+    if (!resolvedSlug) return null;
+    const rsvpPage = publicPageNavItems.find((item) => item.slug === 'rsvp' && !item.isHome);
+    return rsvpPage ? buildPublicSitePageHref(resolvedSlug, rsvpPage, isWeddingSubdomainRoute) : null;
+  }, [isWeddingSubdomainRoute, publicPageNavItems, resolvedSlug]);
 
   const handleImageErrorCapture = useCallback((event: React.SyntheticEvent<HTMLElement>) => {
     const target = event.target;
@@ -592,14 +524,17 @@ export const SiteView: React.FC = () => {
       };
       const isDemoSite = resolvedSlug === 'alex-jordan-demo';
       const applyDemoFallback = (templateId?: string | null) => {
-        const demoData = createAlexJordanDemoWeddingData();
-        const demoSections = createDemoFallbackSections(templateId || 'modern-luxe');
+        if (!resolvedSlug) return false;
+        const demoData = createDemoWeddingDataForSlug(resolvedSlug);
+        const demoPages = createDemoFallbackPages(templateId || 'modern-luxe');
+        const selectedDemoPage = selectPublicSitePage(demoPages, pageSlug);
+        const demoSections = selectedDemoPage?.sections ?? createDemoFallbackSections(templateId || 'modern-luxe');
         if (demoSections.length === 0) return false;
 
         setWeddingSiteId('demo-site-id');
         setHideFromSearch(false);
         setPrivacyGate('open');
-        setPublicPageNavItems([]);
+        setPublicPageNavItems(demoPages.length > 0 ? getPublicSitePageNavItems(demoPages) : []);
         setBuilderSections(toBuilderSectionState(demoSections));
         setWeddingData(demoData);
         applyThemePreset('elegant');
@@ -622,15 +557,32 @@ export const SiteView: React.FC = () => {
         const urlToken = getInviteTokenFromSearch(searchParams);
         const { inviteToken, passwordSession } = buildPublicAccessArtifacts(resolvedSlug, searchParams);
         const subresourceAccess = { inviteToken, passwordSession };
-        const access = await fetchPublicSiteAccess({
-          slug: resolvedSlug,
-          inviteToken,
-          passwordSession,
-          language: i18n.language?.split('-')[0] || 'en',
-        });
+        const canUseLocalDemoFallback = DEMO_MODE && !urlToken;
+        const shouldUseLocalDemoPreview = canUseLocalDemoFallback || (!urlToken && shouldPreferLocalDemoPublicPreview());
+        if (shouldUseLocalDemoPreview && applyDemoFallback('modern-luxe')) {
+          return;
+        }
+
+        let access: Awaited<ReturnType<typeof fetchPublicSiteAccess>>;
+        try {
+          access = await withLocalDemoPublicAccessTimeout(
+            fetchPublicSiteAccess({
+              slug: resolvedSlug,
+              inviteToken,
+              passwordSession,
+              language: i18n.language?.split('-')[0] || 'en',
+            }),
+            canUseLocalDemoFallback,
+          );
+        } catch (err) {
+          if (canUseLocalDemoFallback && applyDemoFallback('modern-luxe')) {
+            return;
+          }
+          throw err;
+        }
 
         if (access.status === 'coming_soon') {
-          if (isDemoSite && applyDemoFallback()) {
+          if ((isDemoSite || canUseLocalDemoFallback) && applyDemoFallback()) {
             return;
           }
           setIsComingSoon(true);
@@ -652,6 +604,9 @@ export const SiteView: React.FC = () => {
         }
 
         if (access.status === 'unavailable' || !access.site) {
+          if (canUseLocalDemoFallback && applyDemoFallback()) {
+            return;
+          }
           setError('This wedding site is not available right now.');
           setLoading(false);
           return;
@@ -838,10 +793,18 @@ export const SiteView: React.FC = () => {
               sectionAnchors={publicSectionAnchorNavItems}
               siteSlug={resolvedSlug}
               currentPageSlug={pageSlug}
+              useRootPaths={isWeddingSubdomainRoute}
             />
           ) : null}
           {builderSections.map(section => (
-            <SectionRenderer key={section.id} section={section} weddingData={weddingData} surface="public" siteSlug={resolvedSlug ?? undefined} />
+            <SectionRenderer
+              key={section.id}
+              section={section}
+              weddingData={weddingData}
+              surface="public"
+              siteSlug={resolvedSlug ?? undefined}
+              publicRsvpHref={publicRsvpHref}
+            />
           ))}
         </div>
       </SiteViewContext.Provider>

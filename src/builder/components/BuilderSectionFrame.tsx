@@ -8,6 +8,7 @@ import { useBuilderContext } from '../state/builderStore';
 import { builderActions } from '../state/builderActions';
 import { markFieldAsUserEdited, readBuilderValue } from '../../lib/weddingProfile';
 import { getSectionManifest } from '../registry/sectionManifests';
+import { normalizePageAnchorSlug } from '../utils/sectionAnchors';
 
 interface BuilderSectionFrameProps {
   section: BuilderSectionInstance;
@@ -45,6 +46,23 @@ function getDedicatedPageTitle(section: BuilderSectionInstance, fallbackLabel: s
     '',
   ).trim();
   return customTitle || DEDICATED_PAGE_TITLE_BY_SECTION[section.type] || fallbackLabel;
+}
+
+function makeDedicatedPageSlugPreview(
+  title: string,
+  pages: Array<{ id?: string; slug?: unknown }> = [],
+): string {
+  const baseSlug = normalizePageAnchorSlug(title) || 'page';
+  const usedSlugs = new Set(
+    pages
+      .flatMap((page) => [normalizePageAnchorSlug(page.slug), normalizePageAnchorSlug(page.id)])
+      .filter(Boolean)
+  );
+  if (!usedSlugs.has(baseSlug)) return baseSlug;
+
+  let suffix = 2;
+  while (usedSlugs.has(`${baseSlug}-${suffix}`)) suffix += 1;
+  return `${baseSlug}-${suffix}`;
 }
 
 function getInlineCanvasFields(sectionType: BuilderSectionInstance['type'], fields: BuilderSettingsField[]): BuilderSettingsField[] {
@@ -125,8 +143,11 @@ export const BuilderSectionFrame: React.FC<BuilderSectionFrameProps> = ({
 
   const inlineCanvasFields = getInlineCanvasFields(section.type, manifest.settingsSchema.fields);
   const hasInlineFields = inlineCanvasFields.length > 0;
-  const sourcePageSectionCount = state.project?.pages.find((page) => page.id === pageId)?.sections.length ?? 0;
+  const projectPages = state.project?.pages ?? [];
+  const sourcePageSectionCount = projectPages.find((page) => page.id === pageId)?.sections.length ?? 0;
   const canMakeDedicatedPage = !section.locked && sourcePageSectionCount > 1;
+  const dedicatedPageTitle = getDedicatedPageTitle(section, manifest.label);
+  const dedicatedPageRoute = `/${makeDedicatedPageSlugPreview(dedicatedPageTitle, projectPages)}`;
 
   if (isPreview) {
     return (
@@ -270,12 +291,12 @@ export const BuilderSectionFrame: React.FC<BuilderSectionFrameProps> = ({
             {canMakeDedicatedPage && (
               <button
                 onClick={handleMakeDedicatedPage}
-                title={`Move ${manifest.label} to a dedicated page`}
+                title={`Move ${manifest.label} to a dedicated ${dedicatedPageRoute} page`}
                 aria-label={`Move ${manifest.label} to a dedicated page`}
                 className="flex items-center gap-1 px-2 py-1 rounded text-[11px] font-medium transition-colors hover:bg-white/10"
               >
                 <FilePlus2 size={11} />
-                Page
+                {dedicatedPageRoute}
               </button>
             )}
             <button

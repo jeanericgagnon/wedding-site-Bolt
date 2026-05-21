@@ -4,14 +4,16 @@ import userEvent from '@testing-library/user-event';
 import { ToastProvider } from '../../../components/ui/Toast';
 import { AddressCollectionTab } from './AddressCollectionTab';
 
-const { copyTextOrDownload, loadAddressCollectionData, navigate } = vi.hoisted(() => ({
+const { copyTextOrDownload, downloadTextFile, loadAddressCollectionData, navigate } = vi.hoisted(() => ({
   copyTextOrDownload: vi.fn(),
+  downloadTextFile: vi.fn(),
   loadAddressCollectionData: vi.fn(),
   navigate: vi.fn(),
 }));
 
 vi.mock('../../../lib/copyText', () => ({
   copyTextOrDownload: (...args: unknown[]) => copyTextOrDownload(...args),
+  downloadTextFile: (...args: unknown[]) => downloadTextFile(...args),
 }));
 
 vi.mock('react-router-dom', () => ({
@@ -25,6 +27,7 @@ vi.mock('./planningService', () => ({
 describe('AddressCollectionTab', () => {
   beforeEach(() => {
     copyTextOrDownload.mockReset();
+    downloadTextFile.mockReset();
     loadAddressCollectionData.mockReset();
     navigate.mockReset();
   });
@@ -144,5 +147,123 @@ describe('AddressCollectionTab', () => {
     expect(screen.getByRole('button', { name: /copy follow-ups/i })).toBeEnabled();
     expect(screen.queryByRole('button', { name: /copied guest follow-ups/i })).not.toBeInTheDocument();
     expect(screen.queryByText(/follow-up list copied\./i)).not.toBeInTheDocument();
+  });
+
+  it('copies the same follow-up guests as the active filter view', async () => {
+    const user = userEvent.setup();
+    copyTextOrDownload.mockResolvedValue('copied');
+    loadAddressCollectionData.mockResolvedValue({
+      siteSlug: 'site-one',
+      guests: [
+        {
+          id: 'missing-address',
+          name: 'Needs Address',
+          email: 'address@example.com',
+          phone: null,
+          household_id: null,
+          mailing_address_line1: null,
+          mailing_city: null,
+        },
+        {
+          id: 'missing-contact',
+          name: 'Needs Contact',
+          email: null,
+          phone: null,
+          household_id: 'house-1',
+          mailing_address_line1: '10 Oak St',
+          mailing_city: 'Boston',
+        },
+      ],
+    });
+
+    render(
+      <ToastProvider>
+        <AddressCollectionTab siteId="site-1" />
+      </ToastProvider>,
+    );
+
+    await screen.findByText('Needs Address');
+    await user.selectOptions(screen.getByRole('combobox'), 'missing-contact');
+    await screen.findByText('Needs Contact');
+    await user.click(screen.getByRole('button', { name: /copy follow-ups/i }));
+
+    expect(copyTextOrDownload).toHaveBeenCalledWith(
+      'Needs Contact — no direct contact — household',
+      'dayof-address-follow-ups.txt',
+    );
+    expect(copyTextOrDownload).not.toHaveBeenCalledWith(
+      expect.stringContaining('Needs Address'),
+      expect.any(String),
+    );
+  });
+
+  it('exports the same guests as the active filter view', async () => {
+    const user = userEvent.setup();
+    loadAddressCollectionData.mockResolvedValue({
+      siteSlug: 'site-one',
+      guests: [
+        {
+          id: 'missing-address',
+          name: 'Needs Address',
+          email: 'address@example.com',
+          phone: null,
+          household_id: null,
+          mailing_address_line1: null,
+          mailing_city: null,
+        },
+        {
+          id: 'missing-contact',
+          name: 'Needs Contact',
+          email: null,
+          phone: null,
+          household_id: 'house-1',
+          mailing_address_line1: '10 Oak St',
+          mailing_city: 'Boston',
+        },
+      ],
+    });
+
+    render(
+      <ToastProvider>
+        <AddressCollectionTab siteId="site-1" />
+      </ToastProvider>,
+    );
+
+    await screen.findByText('Needs Address');
+    await user.selectOptions(screen.getByRole('combobox'), 'missing-contact');
+    await screen.findByText('Needs Contact');
+    await user.click(screen.getByRole('button', { name: /^export$/i }));
+
+    expect(downloadTextFile).toHaveBeenCalledWith(
+      expect.stringMatching(/^dayof-address-list-missing-contact-\d{4}-\d{2}-\d{2}\.csv$/),
+      expect.stringContaining('Needs Contact'),
+      'text/csv;charset=utf-8',
+    );
+    expect(downloadTextFile).not.toHaveBeenCalledWith(
+      expect.any(String),
+      expect.stringContaining('Needs Address'),
+      expect.any(String),
+    );
+  });
+
+  it('blocks draft-message actions when address planning is read-only', async () => {
+    const user = userEvent.setup();
+
+    render(
+      <ToastProvider>
+        <AddressCollectionTab siteId="site-1" isDemoMode canEdit={false} />
+      </ToastProvider>,
+    );
+
+    const emailButton = await screen.findByRole('button', { name: /draft email/i });
+    const smsButton = screen.getByRole('button', { name: /draft sms/i });
+
+    expect(emailButton).toBeDisabled();
+    expect(smsButton).toBeDisabled();
+
+    await user.click(emailButton);
+    await user.click(smsButton);
+
+    expect(navigate).not.toHaveBeenCalled();
   });
 });

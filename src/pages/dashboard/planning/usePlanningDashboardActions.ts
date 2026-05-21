@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { canEditPlanningBudget, canEditPlanningTasks, canEditPlanningVendors, type PlannerAccessRole, type PlannerPermissionKey } from '../../../lib/plannerAccess';
 import {
   PlanningTask,
@@ -49,6 +49,12 @@ export function usePlanningDashboardActions({
   weddingDate,
 }: UsePlanningDashboardActionsArgs) {
   const [pendingVendorForBudget, setPendingVendorForBudget] = useState<PlanningVendor | null>(null);
+  const actionContextVersionRef = useRef(0);
+
+  useEffect(() => {
+    actionContextVersionRef.current += 1;
+    setPendingVendorForBudget(null);
+  }, [isDemoMode, planningPermissions, planningRole, siteId]);
 
   const handleAddTask = useCallback(async (task: Partial<PlanningTask>) => {
     if (!canEditPlanningTasks(planningRole, planningPermissions)) {
@@ -56,6 +62,8 @@ export function usePlanningDashboardActions({
       return;
     }
     if (!siteId) return;
+    const actionContextVersion = actionContextVersionRef.current;
+    const isCurrentAction = () => actionContextVersion === actionContextVersionRef.current;
     try {
       if (isDemoMode) {
         const created = {
@@ -79,9 +87,11 @@ export function usePlanningDashboardActions({
         return;
       }
       const created = await createTask(siteId, task);
+      if (!isCurrentAction()) return;
       setTasks((prev) => [...prev, created]);
       toast('Task added', 'success');
     } catch {
+      if (!isCurrentAction()) return;
       toast('Couldn’t add that task. Please try again.', 'error');
     }
   }, [isDemoMode, planningPermissions, planningRole, setTasks, siteId, toast]);
@@ -91,10 +101,14 @@ export function usePlanningDashboardActions({
       toast('Your collaborator role cannot edit planning tasks.', 'info');
       return;
     }
+    const actionContextVersion = actionContextVersionRef.current;
+    const isCurrentAction = () => actionContextVersion === actionContextVersionRef.current;
     try {
       if (!isDemoMode) await updateTask(id, updates);
+      if (!isCurrentAction()) return;
       setTasks((prev) => prev.map((task) => task.id === id ? { ...task, ...updates } : task));
     } catch {
+      if (!isCurrentAction()) return;
       toast('Couldn’t update that task. Please try again.', 'error');
     }
   }, [isDemoMode, planningPermissions, planningRole, setTasks, toast]);
@@ -104,11 +118,15 @@ export function usePlanningDashboardActions({
       toast('Your collaborator role cannot delete planning tasks.', 'info');
       return;
     }
+    const actionContextVersion = actionContextVersionRef.current;
+    const isCurrentAction = () => actionContextVersion === actionContextVersionRef.current;
     try {
       if (!isDemoMode) await deleteTask(id);
+      if (!isCurrentAction()) return;
       setTasks((prev) => prev.filter((task) => task.id !== id));
       toast('Task deleted', 'success');
     } catch {
+      if (!isCurrentAction()) return;
       toast('Couldn’t remove that task. Please try again.', 'error');
     }
   }, [isDemoMode, planningPermissions, planningRole, setTasks, toast]);
@@ -119,6 +137,8 @@ export function usePlanningDashboardActions({
       return;
     }
     if (!siteId || !weddingDate) return;
+    const actionContextVersion = actionContextVersionRef.current;
+    const isCurrentAction = () => actionContextVersion === actionContextVersionRef.current;
     try {
       const milestones = generateMilestoneTasks(siteId, weddingDate);
       if (isDemoMode) {
@@ -133,9 +153,11 @@ export function usePlanningDashboardActions({
         return;
       }
       const created = await Promise.all(milestones.map((milestone) => createTask(siteId, milestone)));
+      if (!isCurrentAction()) return;
       setTasks((prev) => [...prev, ...created]);
       toast(`Added ${created.length} milestone tasks`, 'success');
     } catch {
+      if (!isCurrentAction()) return;
       toast('Couldn’t generate milestones right now. Please try again.', 'error');
     }
   }, [isDemoMode, planningPermissions, planningRole, setTasks, siteId, toast, weddingDate]);
@@ -146,6 +168,8 @@ export function usePlanningDashboardActions({
       return;
     }
     if (!siteId) return;
+    const actionContextVersion = actionContextVersionRef.current;
+    const isCurrentAction = () => actionContextVersion === actionContextVersionRef.current;
     try {
       const created = isDemoMode
         ? ({
@@ -163,9 +187,11 @@ export function usePlanningDashboardActions({
             updated_at: new Date().toISOString(),
           } as PlanningBudgetItem)
         : await createBudgetItem(siteId, item);
+      if (!isCurrentAction()) return;
       setBudgetItems((prev) => [...prev, created]);
       toast('Budget item added', 'success');
     } catch {
+      if (!isCurrentAction()) return;
       toast('Couldn’t add that budget item. Please try again.', 'error');
     }
   }, [isDemoMode, planningPermissions, planningRole, setBudgetItems, siteId, toast]);
@@ -175,10 +201,14 @@ export function usePlanningDashboardActions({
       toast('Your collaborator role cannot edit budget items.', 'info');
       return;
     }
+    const actionContextVersion = actionContextVersionRef.current;
+    const isCurrentAction = () => actionContextVersion === actionContextVersionRef.current;
     try {
       if (!isDemoMode) await updateBudgetItem(id, updates);
+      if (!isCurrentAction()) return;
       setBudgetItems((prev) => prev.map((item) => item.id === id ? { ...item, ...updates } : item));
     } catch {
+      if (!isCurrentAction()) return;
       toast('Couldn’t update that budget item. Please try again.', 'error');
     }
   }, [isDemoMode, planningPermissions, planningRole, setBudgetItems, toast]);
@@ -188,51 +218,67 @@ export function usePlanningDashboardActions({
       toast('Your collaborator role cannot delete budget items.', 'info');
       return;
     }
+    const actionContextVersion = actionContextVersionRef.current;
+    const isCurrentAction = () => actionContextVersion === actionContextVersionRef.current;
     try {
       if (!isDemoMode) await deleteBudgetItem(id);
+      if (!isCurrentAction()) return;
       setBudgetItems((prev) => prev.filter((item) => item.id !== id));
       toast('Budget item deleted', 'success');
     } catch {
+      if (!isCurrentAction()) return;
       toast('Couldn’t remove that budget item. Please try again.', 'error');
     }
   }, [isDemoMode, planningPermissions, planningRole, setBudgetItems, toast]);
 
   const addVendorToBudget = useCallback(async (vendor: PlanningVendor) => {
+    if (!canEditPlanningBudget(planningRole, planningPermissions)) {
+      toast('Your collaborator role cannot add budget items.', 'info');
+      return;
+    }
     if (!siteId) return;
+    const actionContextVersion = actionContextVersionRef.current;
+    const isCurrentAction = () => actionContextVersion === actionContextVersionRef.current;
 
-    const estimated = Number(vendor.contract_total) || 0;
-    const paid = Number(vendor.amount_paid) || 0;
-    const category = vendor.vendor_type || 'Vendor';
+    try {
+      const estimated = Number(vendor.contract_total) || 0;
+      const paid = Number(vendor.amount_paid) || 0;
+      const category = vendor.vendor_type || 'Vendor';
 
-    const createdItem = isDemoMode
-      ? ({
-          id: `demo-budget-${Date.now()}`,
-          wedding_site_id: siteId,
-          category,
-          item_name: vendor.name,
-          estimated_amount: estimated,
-          actual_amount: paid,
-          paid_amount: paid,
-          due_date: vendor.next_payment_due || null,
-          vendor_id: vendor.id,
-          notes: vendor.notes || '',
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        } as PlanningBudgetItem)
-      : await createBudgetItem(siteId, {
-          category,
-          item_name: vendor.name,
-          estimated_amount: estimated,
-          actual_amount: paid,
-          paid_amount: paid,
-          due_date: vendor.next_payment_due || null,
-          vendor_id: vendor.id,
-          notes: vendor.notes || '',
-        });
+      const createdItem = isDemoMode
+        ? ({
+            id: `demo-budget-${Date.now()}`,
+            wedding_site_id: siteId,
+            category,
+            item_name: vendor.name,
+            estimated_amount: estimated,
+            actual_amount: paid,
+            paid_amount: paid,
+            due_date: vendor.next_payment_due || null,
+            vendor_id: vendor.id,
+            notes: vendor.notes || '',
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          } as PlanningBudgetItem)
+        : await createBudgetItem(siteId, {
+            category,
+            item_name: vendor.name,
+            estimated_amount: estimated,
+            actual_amount: paid,
+            paid_amount: paid,
+            due_date: vendor.next_payment_due || null,
+            vendor_id: vendor.id,
+            notes: vendor.notes || '',
+          });
 
-    setBudgetItems((prev) => [...prev, createdItem]);
-    toast('Vendor also added to budget', 'success');
-  }, [isDemoMode, setBudgetItems, siteId, toast]);
+      if (!isCurrentAction()) return;
+      setBudgetItems((prev) => [...prev, createdItem]);
+      toast('Vendor also added to budget', 'success');
+    } catch {
+      if (!isCurrentAction()) return;
+      toast('Couldn’t add this vendor to budget right now. Please try again.', 'error');
+    }
+  }, [isDemoMode, planningPermissions, planningRole, setBudgetItems, siteId, toast]);
 
   const handleAddVendor = useCallback(async (vendor: Partial<PlanningVendor>) => {
     if (!canEditPlanningVendors(planningRole, planningPermissions)) {
@@ -240,6 +286,8 @@ export function usePlanningDashboardActions({
       return;
     }
     if (!siteId) return;
+    const actionContextVersion = actionContextVersionRef.current;
+    const isCurrentAction = () => actionContextVersion === actionContextVersionRef.current;
     try {
       const created = isDemoMode
         ? ({
@@ -262,10 +310,12 @@ export function usePlanningDashboardActions({
             updated_at: new Date().toISOString(),
           } as PlanningVendor)
         : await createVendor(siteId, vendor);
+      if (!isCurrentAction()) return;
       setVendors((prev) => [...prev, created]);
       setPendingVendorForBudget(created);
       toast('Vendor added', 'success');
     } catch {
+      if (!isCurrentAction()) return;
       toast('Couldn’t add that vendor. Please try again.', 'error');
     }
   }, [isDemoMode, planningPermissions, planningRole, setVendors, siteId, toast]);
@@ -276,6 +326,8 @@ export function usePlanningDashboardActions({
       return;
     }
     if (!siteId) return;
+    const actionContextVersion = actionContextVersionRef.current;
+    const isCurrentAction = () => actionContextVersion === actionContextVersionRef.current;
     try {
       if (isDemoMode) {
         setTotalBudget(value);
@@ -284,9 +336,11 @@ export function usePlanningDashboardActions({
       }
 
       await updatePlanningTotalBudget(siteId, value);
+      if (!isCurrentAction()) return;
       setTotalBudget(value);
       toast('Total budget updated', 'success');
     } catch {
+      if (!isCurrentAction()) return;
       toast('Couldn’t update total budget. Please try again.', 'error');
     }
   }, [isDemoMode, planningPermissions, planningRole, setTotalBudget, siteId, toast]);
@@ -296,10 +350,14 @@ export function usePlanningDashboardActions({
       toast('Your collaborator role cannot edit vendors.', 'info');
       return;
     }
+    const actionContextVersion = actionContextVersionRef.current;
+    const isCurrentAction = () => actionContextVersion === actionContextVersionRef.current;
     try {
       if (!isDemoMode) await updateVendor(id, updates);
+      if (!isCurrentAction()) return;
       setVendors((prev) => prev.map((vendor) => vendor.id === id ? { ...vendor, ...updates } : vendor));
     } catch {
+      if (!isCurrentAction()) return;
       toast('Couldn’t update that vendor. Please try again.', 'error');
     }
   }, [isDemoMode, planningPermissions, planningRole, setVendors, toast]);
@@ -310,10 +368,18 @@ export function usePlanningDashboardActions({
       return;
     }
     if (!siteId) return;
-    setVendorMeta(meta);
+    const actionContextVersion = actionContextVersionRef.current;
+    const isCurrentAction = () => actionContextVersion === actionContextVersionRef.current;
+    let previousMeta: VendorMetaMap | null = null;
+    setVendorMeta((prev) => {
+      previousMeta = prev;
+      return meta;
+    });
     try {
       if (!isDemoMode) await updatePlanningVendorMeta(siteId, meta);
     } catch {
+      if (!isCurrentAction()) return;
+      if (previousMeta) setVendorMeta(previousMeta);
       toast('Couldn’t save vendor reminder details. Please try again.', 'error');
     }
   }, [isDemoMode, planningPermissions, planningRole, setVendorMeta, siteId, toast]);
@@ -323,11 +389,15 @@ export function usePlanningDashboardActions({
       toast('Your collaborator role cannot delete vendors.', 'info');
       return;
     }
+    const actionContextVersion = actionContextVersionRef.current;
+    const isCurrentAction = () => actionContextVersion === actionContextVersionRef.current;
     try {
       if (!isDemoMode) await deleteVendor(id);
+      if (!isCurrentAction()) return;
       setVendors((prev) => prev.filter((vendor) => vendor.id !== id));
       toast('Vendor deleted', 'success');
     } catch {
+      if (!isCurrentAction()) return;
       toast('Couldn’t remove that vendor. Please try again.', 'error');
     }
   }, [isDemoMode, planningPermissions, planningRole, setVendors, toast]);

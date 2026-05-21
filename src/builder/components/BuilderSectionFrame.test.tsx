@@ -45,13 +45,23 @@ function makeSection(overrides?: Partial<BuilderSectionInstance>): BuilderSectio
   };
 }
 
-function renderFrame(section: BuilderSectionInstance, sections: BuilderSectionInstance[]) {
+function renderFrame(section: BuilderSectionInstance, sections: BuilderSectionInstance[], existingPageSlugs: string[] = []) {
   const project = createEmptyBuilderProject('wedding-1', 'modern-luxe');
   project.pages[0] = {
     ...project.pages[0],
     id: 'home',
     sections,
   };
+  existingPageSlugs.forEach((slug, index) => {
+    project.pages.push({
+      id: slug,
+      title: slug.charAt(0).toUpperCase() + slug.slice(1),
+      slug,
+      orderIndex: index + 1,
+      sections: [],
+      meta: { isHome: false, isHidden: false },
+    });
+  });
   const dispatch = vi.fn();
 
   render(
@@ -89,6 +99,7 @@ describe('BuilderSectionFrame', () => {
     const sibling = makeSection({ id: 'story-section', type: 'story', orderIndex: 1 });
     const dispatch = renderFrame(section, [section, sibling]);
 
+    expect(screen.getByText('/travel')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Move Travel & Hotels to a dedicated page' }));
 
     expect(dispatch).toHaveBeenCalledWith({
@@ -134,5 +145,13 @@ describe('BuilderSectionFrame', () => {
         title: 'Weekend Travel',
       }),
     }));
+  });
+
+  it('previews a unique route when a matching page already exists', () => {
+    const section = makeSection();
+    const sibling = makeSection({ id: 'story-section', type: 'story', orderIndex: 1 });
+    renderFrame(section, [section, sibling], ['travel']);
+
+    expect(screen.getByText('/travel-2')).toBeInTheDocument();
   });
 });

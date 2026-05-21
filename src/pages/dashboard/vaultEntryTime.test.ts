@@ -21,4 +21,11 @@ describe('vault entry time guards', () => {
     expect(formatVaultEntryDate('2026-06-21T18:30:00.000Z')).toBe('Jun 21, 2026');
     expect(formatVaultEntryDate('2026-06-21T18:30:00.000Z', { month: 'long', year: 'numeric' })).toBe('June 2026');
   });
+
+  it('formats date-only vault entry timestamps as the saved local calendar day', () => {
+    expect(formatVaultEntryDate('2026-09-12')).toBe(
+      new Date(2026, 8, 12).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+    );
+    expect(getVaultEntryTimestamp('2026-09-12')).toBe(new Date(2026, 8, 12).getTime());
+  });
 });

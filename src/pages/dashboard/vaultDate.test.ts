@@ -27,4 +27,13 @@ describe('vaultDate guards', () => {
       new Date(value).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
     );
   });
+
+  it('formats date-only vault dates as the saved local calendar day', () => {
+    expect(formatVaultUnlockDate('2036-02-23')).toBe(
+      new Date(2036, 1, 23).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
+    );
+    expect(getVaultUnlockDate('2026-02-23', 10)?.toLocaleDateString('en-US')).toBe(
+      new Date(2036, 1, 23).toLocaleDateString('en-US'),
+    );
+  });
 });

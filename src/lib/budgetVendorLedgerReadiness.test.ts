@@ -79,6 +79,41 @@ describe('budget vendor ledger readiness', () => {
     expect(readiness.unlinkedBudgetItemCount).toBe(1);
   });
 
+  it('ignores impossible payment due dates instead of rolling them into due-soon risk', () => {
+    const readiness = buildBudgetVendorLedgerReadiness({
+      totalBudget: 12000,
+      today: new Date('2027-03-01T12:00:00Z'),
+      vendors: [
+        {
+          id: 'vendor-1',
+          name: 'Impossible Date Venue',
+          vendor_type: 'Venue',
+          email: 'venue@example.com',
+          contract_total: 12000,
+          amount_paid: 6000,
+          balance_due: 6000,
+          next_payment_due: '2027-02-30',
+          document_url: 'https://docs.example.com/venue',
+        },
+      ],
+      budgetItems: [
+        {
+          id: 'budget-1',
+          category: 'Venue',
+          item_name: 'Venue balance',
+          estimated_amount: 12000,
+          actual_amount: 12000,
+          paid_amount: 6000,
+          due_date: '2027-02-30',
+          vendor_id: 'vendor-1',
+        },
+      ],
+    });
+
+    expect(readiness.dueSoonCount).toBe(0);
+    expect(readiness.checklist.find((item) => item.id === 'payment-reminders')?.state).toBe('ready');
+  });
+
   it('exports a combined budget and vendor ledger csv', () => {
     const csv = budgetVendorLedgerToCsv({
       today: new Date('2026-05-04T12:00:00Z'),
@@ -243,6 +278,44 @@ describe('budget vendor ledger readiness', () => {
       ['Photo balance', 'open'],
     ]);
     expect(review.privacyNote).toContain('guest surfaces must not expose financial details');
+  });
+
+  it('keeps impossible payment due dates open instead of rolling them into overdue rows', () => {
+    const review = buildBudgetPaymentReview({
+      today: new Date('2027-03-01T12:00:00Z'),
+      vendors: [
+        {
+          id: 'vendor-1',
+          name: 'Impossible Date Venue',
+          vendor_type: 'Venue',
+          email: 'venue@example.com',
+          contract_total: 12000,
+          amount_paid: 6000,
+          balance_due: 6000,
+          next_payment_due: '2027-02-30',
+          document_url: 'https://docs.example.com/venue',
+        },
+      ],
+      budgetItems: [
+        {
+          id: 'budget-1',
+          category: 'Photography',
+          item_name: 'Photo balance',
+          estimated_amount: 5000,
+          actual_amount: 5000,
+          paid_amount: 2500,
+          due_date: '2027-02-30',
+          vendor_id: null,
+        },
+      ],
+    });
+
+    expect(review.overdueCount).toBe(0);
+    expect(review.dueSoonCount).toBe(0);
+    expect(review.rows.map((row) => [row.name, row.status])).toEqual([
+      ['Impossible Date Venue', 'open'],
+      ['Photo balance', 'open'],
+    ]);
   });
 
   it('keeps payment review ready when open balances have no near-term risk', () => {

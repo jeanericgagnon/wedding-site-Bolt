@@ -80,16 +80,16 @@ describe('VendorProfileCreatePage', () => {
     expect(vendorName).toHaveAttribute('id', 'vendor-create-name');
     expect(screen.getByLabelText('Instagram link')).toHaveAttribute('id', 'vendor-create-instagram');
     expect(screen.getByLabelText('Website link')).toHaveAttribute('id', 'vendor-create-website');
-    expect(screen.getByLabelText('Reply email')).toHaveAttribute('id', 'vendor-create-contact-email');
+    expect(screen.getByLabelText('Email')).toHaveAttribute('id', 'vendor-create-contact-email');
     expect(screen.getByLabelText('Page style')).toHaveAttribute('id', 'vendor-create-template');
-    expect(screen.getAllByText('Other links').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('More places').length).toBeGreaterThan(0);
     expect(screen.getByRole('option', { name: 'Food and drinks' })).toBeInTheDocument();
     expect(screen.getByRole('option', { name: 'Beauty and getting ready' })).toBeInTheDocument();
     expect(screen.getByRole('option', { name: 'Music and sound' })).toBeInTheDocument();
     expect(screen.getByRole('option', { name: 'Travel and guest movement' })).toBeInTheDocument();
 
     fireEvent.change(vendorName, { target: { value: 'Everlight Studio' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Make draft' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Start' }));
 
     await waitFor(() => {
       expect(generateVendorProfileDraft).toHaveBeenCalledWith(expect.objectContaining({
@@ -98,61 +98,60 @@ describe('VendorProfileCreatePage', () => {
       }));
     });
 
-    expect(await screen.findByRole('heading', { name: 'Check page' })).toBeInTheDocument();
-    expect(screen.getByText('Preview')).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Edit' })).toBeInTheDocument();
+    expect(screen.getAllByText('Notes').length).toBeGreaterThan(0);
     const bodyText = document.body.textContent ?? '';
-    expect(bodyText.indexOf('Preview')).toBeLessThan(bodyText.indexOf('Add helpful notes'));
+    expect(bodyText.indexOf('Notes')).toBeLessThan(bodyText.indexOf('Edit notes'));
     expect(screen.getAllByText('Basics').length).toBeGreaterThan(0);
-    expect(screen.getByText('Basics ready.')).toBeInTheDocument();
-    expect(screen.getByText('Suggested notes: button label, where they work, helpful note, highlights, facts, items, questions, questions to ask')).toBeInTheDocument();
-    expect(screen.getByText('Check the basics')).toBeInTheDocument();
-    expect(screen.getByText('Check suggested notes')).toBeInTheDocument();
+    expect(screen.getByText('Details ready.')).toBeInTheDocument();
+    expect(screen.getByText('Starter notes: send button, where they work, note, notes, details, what to know, common questions, questions for couples')).toBeInTheDocument();
+    expect(screen.getAllByText('Quick check').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Starter notes').length).toBeGreaterThan(0);
     expect(screen.getAllByText('5/5 ready').length).toBeGreaterThanOrEqual(2);
-    expect(screen.getByText('Ready Reply path')).toBeInTheDocument();
-    expect(screen.getByText('Ready Helpful notes')).toBeInTheDocument();
-    expect(screen.getByLabelText('Name on page')).toHaveAttribute('id', 'vendor-draft-name');
-    expect(screen.getByLabelText('Short description')).toHaveAttribute('id', 'vendor-draft-descriptor');
+    expect(screen.getByText('Ready Ways to reply')).toBeInTheDocument();
+    expect(screen.getByText('Ready Notes')).toBeInTheDocument();
+    expect(screen.getByLabelText('Name')).toHaveAttribute('id', 'vendor-draft-name');
+    expect(screen.getByLabelText('Description')).toHaveAttribute('id', 'vendor-draft-descriptor');
     expect(screen.getByLabelText('Link')).toHaveAttribute('id', 'vendor-draft-slug');
     expect(screen.getByRole('textbox', { name: 'About' })).toHaveAttribute('id', 'vendor-draft-about');
-    expect(screen.getByRole('textbox', { name: 'Images' })).toHaveAccessibleDescription('Put the main image first. Add up to 11 more; the page opens with six.');
-    expect(screen.getByLabelText('Color style')).toHaveAttribute('id', 'vendor-draft-accent');
-    expect(screen.getByLabelText('Short mark')).toHaveAttribute('id', 'vendor-draft-logo');
-    expect(screen.getByLabelText('Image style')).toHaveAttribute('id', 'vendor-draft-gallery-layout');
-    expect(screen.getByLabelText('Button label')).toHaveAttribute('id', 'vendor-draft-cta-label');
+    expect(screen.getByRole('textbox', { name: 'Photos' })).toHaveAccessibleDescription('Put the main photo first. Add up to 11 more; the page opens with six.');
+    expect(screen.getByLabelText('Color')).toHaveAttribute('id', 'vendor-draft-accent');
+    expect(screen.getByLabelText('Initials')).toHaveAttribute('id', 'vendor-draft-logo');
+    expect(screen.getByLabelText('Photo style')).toHaveAttribute('id', 'vendor-draft-gallery-layout');
+    expect(screen.getByLabelText('Send button')).toHaveAttribute('id', 'vendor-draft-cta-label');
     expect(screen.getByLabelText('Where they work')).toHaveAttribute('id', 'vendor-draft-service-area');
-    expect(screen.getByLabelText('Helpful note')).toHaveAttribute('id', 'vendor-draft-pricing-note');
+    expect(screen.getByLabelText('Note')).toHaveAttribute('id', 'vendor-draft-pricing-note');
     expect(screen.getByDisplayValue('Documentary photos with a clean finish')).toBeInTheDocument();
     expect(screen.getByDisplayValue('Wedding day and weekend events')).toBeInTheDocument();
-    expect(screen.getAllByText('Good to know').length).toBeGreaterThan(0);
-    expect(screen.getByText('Reviews')).toBeInTheDocument();
+    expect(screen.getAllByText('Details').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Shared notes').length).toBeGreaterThan(0);
     expect(screen.getByText('Notes and questions')).toBeInTheDocument();
     expect(screen.queryByPlaceholderText('Google place ID for future sync')).not.toBeInTheDocument();
     expect(screen.queryByLabelText('Section order')).not.toBeInTheDocument();
-    fireEvent.click(screen.getByText('Good to know', { selector: 'summary' }));
-    expect(screen.getByLabelText('Good to know')).toBeChecked();
-    fireEvent.click(screen.getByLabelText('Good to know'));
-    expect(screen.getByLabelText('Good to know')).not.toBeChecked();
+    fireEvent.click(screen.getByText('Details', { selector: 'summary' }));
+    expect(screen.getByLabelText('Details')).toBeChecked();
+    fireEvent.click(screen.getByLabelText('Details'));
+    expect(screen.getByLabelText('Details')).not.toBeChecked();
 
-    fireEvent.change(screen.getByLabelText('Button label'), { target: { value: 'Check our date' } });
-    fireEvent.change(screen.getByLabelText('Short mark'), { target: { value: 'ES' } });
+    fireEvent.change(screen.getByLabelText('Send button'), { target: { value: 'Send note about our date' } });
+    fireEvent.change(screen.getByLabelText('Initials'), { target: { value: 'ES' } });
     fireEvent.change(screen.getByLabelText('Where they work'), { target: { value: 'Hudson Valley and NYC' } });
-    fireEvent.change(screen.getByLabelText('Helpful note'), { target: { value: 'Weekend details vary.' } });
-    fireEvent.change(screen.getByLabelText('Quick note 1'), { target: { value: 'Preview photos' } });
+    fireEvent.change(screen.getByLabelText('Note'), { target: { value: 'Weekend notes vary.' } });
+    fireEvent.change(screen.getByLabelText('Note 1'), { target: { value: 'Early photos' } });
     fireEvent.change(screen.getByPlaceholderText('Item 1 title'), { target: { value: 'Full weekend' } });
-    fireEvent.change(screen.getAllByPlaceholderText('Short item note')[0], { target: { value: 'Photos from welcome party through sendoff.' } });
-    fireEvent.change(screen.getAllByPlaceholderText('Note or range')[0], { target: { value: 'First note' } });
+    fireEvent.change(screen.getAllByPlaceholderText('Item note')[0], { target: { value: 'Photos from welcome party through sendoff.' } });
+    fireEvent.change(screen.getAllByPlaceholderText('Range or note')[0], { target: { value: 'Start' } });
     fireEvent.click(screen.getByText('Notes and questions'));
-    fireEvent.change(screen.getAllByPlaceholderText('Short note')[0], { target: { value: 'They made everything feel calm.' } });
+    fireEvent.change(screen.getAllByPlaceholderText('Note')[0], { target: { value: 'They made everything feel calm.' } });
     fireEvent.change(screen.getAllByPlaceholderText('Who said it')[0], { target: { value: 'Maya and Lee' } });
     fireEvent.change(screen.getByPlaceholderText('Question 1'), { target: { value: 'Do you travel?' } });
     fireEvent.change(screen.getAllByPlaceholderText('Answer')[0], { target: { value: 'Yes, destination dates can be planned.' } });
     fireEvent.change(screen.getByPlaceholderText('Guest count'), { target: { value: 'Guest count' } });
-    fireEvent.click(screen.getByText('Reviews'));
-    fireEvent.change(screen.getByPlaceholderText('4.8'), { target: { value: '4.9' } });
+    fireEvent.click(screen.getByText('Shared notes', { selector: 'summary' }));
     fireEvent.change(screen.getByPlaceholderText('126'), { target: { value: '212' } });
-    fireEvent.change(screen.getByPlaceholderText('Google or review page link'), { target: { value: 'https://www.google.com/maps' } });
-    fireEvent.change(screen.getByPlaceholderText('Plain note on timing, style, or limits'), { target: { value: 'Clear timing for documentary weekend photos.' } });
-    fireEvent.change(screen.getByLabelText('Note topic 1'), { target: { value: 'Visual style' } });
+    fireEvent.change(screen.getByPlaceholderText('Google or source link'), { target: { value: 'https://www.google.com/maps' } });
+    fireEvent.change(screen.getByPlaceholderText('Note on schedule, style, or limits'), { target: { value: 'Clear schedule for documentary weekend photos.' } });
+    fireEvent.change(screen.getByLabelText('Topic 1'), { target: { value: 'Visual style' } });
 
     fireEvent.click(screen.getByRole('button', { name: 'Save page' }));
 
@@ -163,34 +162,34 @@ describe('VendorProfileCreatePage', () => {
         source_payload: expect.objectContaining({
           template_id: 'photography',
           vendor_customization: expect.objectContaining({
-            cta_label: 'Check our date',
+            cta_label: 'Send note about our date',
             logo_text: 'ES',
             service_area: 'Hudson Valley and NYC',
-            pricing_note: 'Weekend details vary.',
+            pricing_note: 'Weekend notes vary.',
             hidden_sections: ['facts'],
-            proof_points: ['Preview photos', 'Timeline calm', 'Preview gallery'],
+            proof_points: ['Early photos', 'Schedule calm', 'Photo preview'],
             category_facts: expect.arrayContaining([
               { label: 'Style', value: 'Documentary photos with a clean finish', group: 'style' },
               { label: 'Day plan', value: 'Wedding day and weekend events', group: 'service' },
             ]),
             packages: expect.arrayContaining([
-              { title: 'Full weekend', detail: 'Photos from welcome party through sendoff.', price: 'First note' },
-              { title: 'Weekend story', detail: 'Welcome party, rehearsal, wedding day, and next morning photos.', price: 'Event count note' },
+              { title: 'Full weekend', detail: 'Photos from welcome party through sendoff.', price: 'Start' },
+              { title: 'Weekend story', detail: 'Welcome party, rehearsal, wedding day, and next morning photos.', price: 'Event count' },
             ]),
             testimonials: [{ quote: 'They made everything feel calm.', attribution: 'Maya and Lee' }],
             faqs: expect.arrayContaining([
               { question: 'Do you travel?', answer: 'Yes, destination dates can be planned.' },
-              { question: 'Can we add an engagement session?', answer: 'Engagement sessions can be added when the schedule and location make sense.' },
+              { question: 'Can we add an engagement session?', answer: 'Engagement sessions are possible when the schedule and location make sense.' },
             ]),
             inquiry_questions: ['Guest count', 'Venue or location', 'Photo needs'],
             external_credibility: expect.objectContaining({
               source_label: 'Google',
-              rating: 4.9,
+              rating: null,
               review_count: 212,
               profile_url: 'https://www.google.com/maps',
             }),
             rating: expect.objectContaining({
-              summary: 'Clear timing for documentary weekend photos.',
+              summary: 'Clear schedule for documentary weekend photos.',
               categories: [{ label: 'Visual style', score: 0 }],
             }),
           }),
@@ -217,11 +216,11 @@ describe('VendorProfileCreatePage', () => {
     renderRoute();
 
     fireEvent.change(screen.getByLabelText('Name'), { target: { value: 'Bare Vendor' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Make draft' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Start' }));
 
     await waitFor(() => expect(screen.getAllByText('Basics').length).toBeGreaterThan(0));
     expect(screen.getAllByText('2/5 ready').length).toBeGreaterThanOrEqual(2);
-    expect(screen.getByText('Add Images, About, Reply path')).toBeInTheDocument();
+    expect(screen.getByText('Add Photos, About, Ways to reply')).toBeInTheDocument();
   });
 
   it('swaps untouched starter copy when the vendor type changes and keeps edited fields', async () => {
@@ -241,13 +240,13 @@ describe('VendorProfileCreatePage', () => {
     renderRoute();
 
     fireEvent.change(screen.getByLabelText('Name'), { target: { value: 'Everlight Studio' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Make draft' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Start' }));
 
     expect(await screen.findByDisplayValue('Documentary photos with a clean finish')).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: /^Venue/ }));
 
-    expect(screen.getByDisplayValue('Write about a tour')).toBeInTheDocument();
+    expect(screen.getByDisplayValue('Send note about a tour')).toBeInTheDocument();
     expect(screen.getByDisplayValue('Outdoor setting with indoor backup option')).toBeInTheDocument();
     expect(screen.queryByDisplayValue('Documentary photos with a clean finish')).not.toBeInTheDocument();
 
@@ -291,9 +290,9 @@ describe('VendorProfileCreatePage', () => {
     renderRoute();
 
     fireEvent.change(screen.getByLabelText('Name'), { target: { value: 'Everlight Studio' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Make draft' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Start' }));
 
-    expect(await screen.findByRole('heading', { name: 'Check page' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Edit' })).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Save page' }));
 
@@ -301,7 +300,7 @@ describe('VendorProfileCreatePage', () => {
       expect(screen.getByRole('status')).toHaveTextContent('/vendor/everlight-studio');
     });
 
-    fireEvent.click(screen.getByRole('button', { name: 'Copy link' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Copy page link' }));
 
     await waitFor(() => {
       expect(toastMock).toHaveBeenCalledWith('Couldn’t copy the link right now.', 'error');
@@ -340,9 +339,9 @@ describe('VendorProfileCreatePage', () => {
     renderRoute();
 
     fireEvent.change(screen.getByLabelText('Name'), { target: { value: 'Everlight Studio' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Make draft' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Start' }));
 
-    expect(await screen.findByRole('heading', { name: 'Check page' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Edit' })).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Save page' }));
 
@@ -350,7 +349,7 @@ describe('VendorProfileCreatePage', () => {
       expect(screen.getByRole('status')).toHaveTextContent('/vendor/everlight-studio');
     });
 
-    fireEvent.click(screen.getByRole('button', { name: 'Copy link' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Copy page link' }));
 
     expect(await screen.findByRole('button', { name: 'Link saved' })).toBeInTheDocument();
   });
@@ -386,16 +385,16 @@ describe('VendorProfileCreatePage', () => {
     renderRoute();
 
     fireEvent.change(screen.getByLabelText('Name'), { target: { value: 'Everlight Studio' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Make draft' }));
-    expect(await screen.findByRole('heading', { name: 'Check page' })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Start' }));
+    expect(await screen.findByRole('heading', { name: 'Edit' })).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Save page' }));
     expect(await screen.findByRole('status')).toHaveTextContent('/vendor/everlight-studio');
 
-    fireEvent.click(screen.getByRole('button', { name: 'Copy link' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Copy page link' }));
     expect(await screen.findByRole('button', { name: 'Link copied' })).toBeInTheDocument();
 
-    fireEvent.change(screen.getByLabelText('Name on page'), { target: { value: 'Everlight Studio Updated' } });
+    fireEvent.change(screen.getByLabelText('Name'), { target: { value: 'Everlight Studio Updated' } });
 
     await waitFor(() => {
       expect(screen.queryByRole('status')).not.toBeInTheDocument();
@@ -437,14 +436,14 @@ describe('VendorProfileCreatePage', () => {
     renderRoute();
 
     fireEvent.change(screen.getByLabelText('Name'), { target: { value: 'Everlight Studio' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Make draft' }));
-    expect(await screen.findByRole('heading', { name: 'Check page' })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Start' }));
+    expect(await screen.findByRole('heading', { name: 'Edit' })).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Save page' }));
     expect(await screen.findByRole('status')).toHaveTextContent('/vendor/everlight-studio');
 
-    fireEvent.click(screen.getByRole('button', { name: 'Copy link' }));
-    fireEvent.change(screen.getByLabelText('Name on page'), { target: { value: 'Everlight Studio Updated' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Copy page link' }));
+    fireEvent.change(screen.getByLabelText('Name'), { target: { value: 'Everlight Studio Updated' } });
 
     await act(async () => {
       finishCopy?.('copied');

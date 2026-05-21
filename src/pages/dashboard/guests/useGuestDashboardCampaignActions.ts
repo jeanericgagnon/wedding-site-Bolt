@@ -122,6 +122,8 @@ export function useGuestDashboardCampaignActions({
       if (!isCurrentGuestCampaignContext(contextVersion)) return;
       await markGuestInvitationSentForSite(targetWeddingSiteId, guest.id, new Date().toISOString());
       if (!isCurrentGuestCampaignContext(contextVersion)) return;
+      await fetchGuests();
+      if (!isCurrentGuestCampaignContext(contextVersion)) return;
       toast(`Invitation sent to ${getGuestName(guest)}`, 'success');
     } catch {
       if (!isCurrentGuestCampaignContext(contextVersion)) return;

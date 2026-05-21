@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Plus, Edit2, Trash2, CheckSquare, Square, Columns, List, Sparkles, X } from 'lucide-react';
 import { Card } from '../../../components/ui/Card';
 import { Button } from '../../../components/ui/Button';
@@ -223,6 +223,8 @@ export const TasksTab: React.FC<Props> = ({ tasks, weddingDate, onAdd, onUpdate,
   const [generatingMilestones, setGeneratingMilestones] = useState(false);
   const [confirmCreate, setConfirmCreate] = useState(false);
   const [pendingTaskIds, setPendingTaskIds] = useState<Set<string>>(new Set());
+  const canEditRef = useRef(canEdit);
+  canEditRef.current = canEdit;
 
   const filtered = tasks.filter(t => {
     if (filterStatus !== 'all' && t.status !== filterStatus) return false;
@@ -240,42 +242,62 @@ export const TasksTab: React.FC<Props> = ({ tasks, weddingDate, onAdd, onUpdate,
     return 0;
   });
 
+  useEffect(() => {
+    if (canEdit) return;
+    setShowAddForm(false);
+    setEditingTask(null);
+    setSelectedIds(new Set());
+    setConfirmCreate(false);
+    setBulkUpdating(false);
+    setGeneratingMilestones(false);
+    setPendingTaskIds(new Set());
+  }, [canEdit]);
+
   async function handleBulkDone() {
-    if (bulkUpdating || selectedIds.size === 0) return;
+    if (!canEditRef.current || bulkUpdating || selectedIds.size === 0) return;
     setBulkUpdating(true);
     try {
       for (const id of Array.from(selectedIds)) {
+        if (!canEditRef.current) return;
         await onUpdate(id, { status: 'done' });
       }
+      if (!canEditRef.current) return;
       setSelectedIds(new Set());
     } catch {
+      if (!canEditRef.current) return;
       toast('Couldn’t mark those tasks complete right now.', 'error');
     } finally {
-      setBulkUpdating(false);
+      if (canEditRef.current) setBulkUpdating(false);
     }
   }
 
   async function handleCreateMilestones() {
+    if (!canEditRef.current) return;
     setGeneratingMilestones(true);
     try {
       await onCreateMilestones();
+      if (!canEditRef.current) return;
       setConfirmCreate(false);
     } catch {
+      if (!canEditRef.current) return;
       toast('Couldn’t build the wedding checklist right now.', 'error');
     } finally {
-      setGeneratingMilestones(false);
+      if (canEditRef.current) setGeneratingMilestones(false);
     }
   }
 
   async function runTaskMutation(taskId: string, work: () => Promise<void>, errorMessage: string) {
-    if (pendingTaskIds.has(taskId)) return;
+    if (!canEditRef.current || pendingTaskIds.has(taskId)) return;
 
     setPendingTaskIds((current) => new Set(current).add(taskId));
     try {
+      if (!canEditRef.current) return;
       await work();
     } catch {
+      if (!canEditRef.current) return;
       toast(errorMessage, 'error');
     } finally {
+      if (!canEditRef.current) return;
       setPendingTaskIds((current) => {
         const next = new Set(current);
         next.delete(taskId);
@@ -347,7 +369,7 @@ export const TasksTab: React.FC<Props> = ({ tasks, weddingDate, onAdd, onUpdate,
         </div>
         <div className="flex gap-2">
           {selectedIds.size > 0 && (
-            <Button variant="outline" size="sm" onClick={handleBulkDone} disabled={bulkUpdating}>
+            <Button variant="outline" size="sm" onClick={handleBulkDone} disabled={!canEdit || bulkUpdating}>
               <CheckSquare className="w-4 h-4 mr-1" />
               {bulkUpdating ? 'Saving...' : `Mark ${selectedIds.size} complete`}
             </Button>
@@ -378,7 +400,7 @@ export const TasksTab: React.FC<Props> = ({ tasks, weddingDate, onAdd, onUpdate,
             <p className="text-xs text-text-secondary mt-0.5">This adds a suggested planning checklist based on your wedding date. Anything you already added stays in place.</p>
           </div>
           <div className="flex gap-2 flex-shrink-0">
-            <Button size="sm" onClick={handleCreateMilestones} disabled={generatingMilestones}>
+            <Button size="sm" onClick={handleCreateMilestones} disabled={!canEdit || generatingMilestones}>
               {generatingMilestones ? 'Building...' : 'Build checklist'}
             </Button>
             <Button size="sm" variant="ghost" onClick={() => setConfirmCreate(false)}>Cancel</Button>
@@ -417,7 +439,9 @@ export const TasksTab: React.FC<Props> = ({ tasks, weddingDate, onAdd, onUpdate,
               <input
                 type="checkbox"
                 checked={selectedIds.has(task.id)}
+                disabled={!canEdit}
                 onChange={e => {
+                  if (!canEdit) return;
                   const next = new Set(selectedIds);
                   if (e.target.checked) next.add(task.id);
                   else next.delete(task.id);

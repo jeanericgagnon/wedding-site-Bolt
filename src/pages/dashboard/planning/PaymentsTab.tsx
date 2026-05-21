@@ -7,7 +7,7 @@ import type { PlanningBudgetItem, PlanningVendor } from './planningService';
 import { formatVendorDate, isVendorDateOnOrBefore } from './vendorDate';
 import { buildVendorReminderLedgerSummary, formatVendorReminderChannel, formatVendorReminderLeadDays } from './vendorReminderLedger';
 import type { VendorMetaMap } from './vendorMetaStorage';
-import { copyTextOrDownload } from '../../../lib/copyText';
+import { copyTextOrDownload, downloadTextFile } from '../../../lib/copyText';
 import { getSafePublicWebUrl } from '../../../sections/publicLinks';
 
 interface Props {
@@ -46,6 +46,8 @@ export const PaymentsTab: React.FC<Props> = ({ items, vendorMeta, vendors, onUpd
   const summaryCopyNoticeTimeoutRef = useRef<number | null>(null);
   const summaryCopyRequestIdRef = useRef(0);
   const mountedRef = useRef(true);
+  const canEditRef = useRef(canEdit);
+  canEditRef.current = canEdit;
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
@@ -132,9 +134,13 @@ export const PaymentsTab: React.FC<Props> = ({ items, vendorMeta, vendors, onUpd
     }
   }, [paymentSummaryContextKey]);
 
+  useEffect(() => {
+    if (!canEdit) setPendingPaymentIds(new Set());
+  }, [canEdit]);
+
   async function markPaid(row: PaymentRow) {
     const rowKey = `${row.source}-${row.id}`;
-    if (pendingPaymentIds.has(rowKey)) return;
+    if (!canEditRef.current || pendingPaymentIds.has(rowKey)) return;
 
     setPendingPaymentIds((current) => new Set(current).add(rowKey));
     try {
@@ -233,12 +239,11 @@ export const PaymentsTab: React.FC<Props> = ({ items, vendorMeta, vendors, onUpd
       }),
     ];
     const csv = csvRows.map((row) => row.map((cell) => `"${String(cell).replaceAll('"', '""')}"`).join(',')).join('\n');
-    const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `dayof-payments-${new Date().toISOString().slice(0, 10)}.csv`;
-    link.click();
-    URL.revokeObjectURL(url);
+    downloadTextFile(
+      `dayof-payments-${new Date().toISOString().slice(0, 10)}.csv`,
+      csv,
+      'text/csv;charset=utf-8',
+    );
   }
 
   return (

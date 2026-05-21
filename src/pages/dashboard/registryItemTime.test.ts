@@ -30,4 +30,15 @@ describe('registry item time guards', () => {
       formatRegistryItemDate(value, { month: 'short', day: 'numeric', year: 'numeric' }),
     ).toBe(new Date(value).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }));
   });
+
+  it('formats date-only registry item dates as the saved local calendar day', () => {
+    const value = '2026-06-15';
+    const localDate = new Date(2026, 5, 15);
+
+    expect(getRegistryItemTimestamp(value)).toBe(localDate.getTime());
+    expect(formatRegistryItemDate(value)).toBe(localDate.toLocaleDateString('en-US'));
+    expect(formatRegistryItemDate(value, { month: 'short', day: 'numeric', year: 'numeric' })).toBe(
+      localDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+    );
+  });
 });

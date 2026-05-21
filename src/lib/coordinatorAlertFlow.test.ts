@@ -14,6 +14,8 @@ describe('coordinatorAlertFlow', () => {
 
   it('rejects scheduled alerts without a valid future time', () => {
     expect(validateCoordinatorAlertForm({ ...baseForm, scheduleType: 'later', scheduleDate: '', scheduleTime: '' }, 12)).toBe('Pick a valid date and time.');
+    expect(validateCoordinatorAlertForm({ ...baseForm, scheduleType: 'later', scheduleDate: '2027-02-30', scheduleTime: '08:00' }, 12)).toBe('Pick a valid date and time.');
+    expect(validateCoordinatorAlertForm({ ...baseForm, scheduleType: 'later', scheduleDate: '2027-02-28', scheduleTime: '24:00' }, 12)).toBe('Pick a valid date and time.');
     expect(validateCoordinatorAlertForm({ ...baseForm, scheduleType: 'later', scheduleDate: '2026-04-19', scheduleTime: '08:00' }, 12, new Date('2026-04-19T09:00:00'))).toBe('Scheduled alerts need a future time.');
   });
 

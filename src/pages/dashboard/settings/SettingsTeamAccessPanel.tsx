@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Users } from 'lucide-react';
 import { Badge, Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Input } from '../../../components/ui';
 import { PLANNER_PERMISSION_GROUPS, type PlannerInviteRecord, type PlannerPermissionKey } from '../../../lib/plannerAccess';
@@ -73,6 +73,21 @@ export function SettingsTeamAccessPanel({
     action: 'copy' | 'resend';
     inviteId: string;
   } | null>(null);
+  const collaboratorInviteCopyRequestIdRef = useRef(0);
+  const collaboratorInviteSignature = useMemo(
+    () => collaboratorInvites
+      .map((invite) => `${invite.id}:${invite.invite_token ?? ''}`)
+      .join('|'),
+    [collaboratorInvites],
+  );
+  const collaboratorInviteSignatureRef = useRef(collaboratorInviteSignature);
+  collaboratorInviteSignatureRef.current = collaboratorInviteSignature;
+
+  useEffect(() => {
+    collaboratorInviteCopyRequestIdRef.current += 1;
+    setCollaboratorInviteCopyNotice(null);
+    setCollaboratorInviteCopying(null);
+  }, [collaboratorInviteSignature]);
 
   const runCollaboratorInviteCopy = async (
     action: 'copy' | 'resend',
@@ -80,17 +95,25 @@ export function SettingsTeamAccessPanel({
     inviteToken: string | undefined,
     handler: (inviteToken: string | undefined) => Promise<CopyActionResult | null>,
   ) => {
+    const requestId = ++collaboratorInviteCopyRequestIdRef.current;
+    const requestSignature = collaboratorInviteSignatureRef.current;
+    const isCurrentInviteCopy = () => (
+      requestId === collaboratorInviteCopyRequestIdRef.current &&
+      collaboratorInviteSignatureRef.current === requestSignature
+    );
     setCollaboratorInviteCopyNotice(null);
     setCollaboratorInviteCopying({ action, inviteId });
     try {
       const result = await handler(inviteToken);
-      if (result) {
+      if (result && isCurrentInviteCopy()) {
         setCollaboratorInviteCopyNotice({ action, inviteId, mode: result });
       }
     } finally {
-      setCollaboratorInviteCopying((current) => (
-        current?.inviteId === inviteId && current.action === action ? null : current
-      ));
+      if (isCurrentInviteCopy()) {
+        setCollaboratorInviteCopying((current) => (
+          current?.inviteId === inviteId && current.action === action ? null : current
+        ));
+      }
     }
   };
 

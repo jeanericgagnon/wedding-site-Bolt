@@ -19,6 +19,7 @@ vi.mock('react-i18next', () => ({
         'event_recap.subtitle': 'Guest photos, highlights, and memory chapters from the wedding weekend.',
         'event_recap.back_hub': 'Back to guest hub',
         'event_recap.share_recap': 'Share recap',
+        'event_recap.share_moment': 'Share moment',
         'event_recap.copy_caption': 'Copy caption',
         'event_recap.shared_uploads': 'Shared uploads',
         'event_recap.top_moments': 'Top moments',
@@ -50,7 +51,7 @@ vi.mock('../lib/copyText', () => ({
   copyTextOrDownload: (value: unknown, filename?: unknown) => copyTextOrDownloadMock(value, filename),
 }));
 
-import { EventRecap, buildDemoEventRecapData, buildEventRecapAccessHeaders, buildEventRecapGuestHubAccessPayload, formatEventRecapAlbumLabel, friendlyEventRecapError, resolveEventRecapViewTarget, safeEventRecapFunctionError } from './EventRecap';
+import { EventRecap, buildDemoEventRecapData, buildEventRecapAccessHeaders, buildEventRecapGuestHubAccessPayload, buildEventRecapMomentAnchor, formatEventRecapAlbumLabel, formatRecapChapterDate, friendlyEventRecapError, resolveEventRecapViewTarget, safeEventRecapFunctionError } from './EventRecap';
 
 const recapPayload = {
   site: {
@@ -170,6 +171,19 @@ describe('formatEventRecapAlbumLabel', () => {
 
   it('uses a soft fallback for empty values', () => {
     expect(formatEventRecapAlbumLabel('')).toBe('Wedding moment');
+  });
+});
+
+describe('formatRecapChapterDate', () => {
+  it('formats saved chapter dates as local calendar days', () => {
+    expect(formatRecapChapterDate('2026-09-12')).toBe(
+      new Date(2026, 8, 12).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' }),
+    );
+  });
+
+  it('does not roll impossible chapter dates into fake calendar days', () => {
+    expect(formatRecapChapterDate('2026-02-30')).toBe('Undated moments');
+    expect(formatRecapChapterDate('unknown')).toBe('Undated moments');
   });
 });
 
@@ -332,6 +346,55 @@ describe('EventRecap opt-in form', () => {
     expect(screen.getAllByRole('button', { name: 'Share recap' }).at(-1)).toBeEnabled();
     expect(screen.queryByRole('button', { name: 'Copied recap link' })).not.toBeInTheDocument();
     expect(screen.queryByText('Recap link copied.')).not.toBeInTheDocument();
+  });
+
+  it('shares top moments with a stable moment anchor instead of the generic recap URL', async () => {
+    vi.mocked(fetch).mockResolvedValueOnce(new Response(JSON.stringify({
+      ...recapPayload,
+      summary: {
+        ...recapPayload.summary,
+        highlightCount: 1,
+      },
+      highlights: [
+        {
+          id: 'moment one/with spaces',
+          filename: 'dance-floor.jpg',
+          imageUrl: 'https://example.com/dance-floor.jpg',
+          guestName: 'Maya',
+          note: 'Everyone on the dance floor',
+          mimeType: 'image/jpeg',
+          uploadedAt: '2026-06-20T21:00:00Z',
+          takenAt: '2026-06-20T21:00:00Z',
+          bucketName: 'Reception',
+          caption: 'The whole room dancing together.',
+          moment: 'Reception',
+          tags: [],
+          featured: true,
+          story: false,
+        },
+      ],
+    }), { status: 200 }));
+
+    render(
+      <MemoryRouter initialEntries={['/event/ericandkaras/recap']}>
+        <Routes>
+          <Route path="/event/:siteRef/recap" element={<EventRecap />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    expect(await screen.findByText('The whole room dancing together.')).toBeInTheDocument();
+    const anchor = buildEventRecapMomentAnchor('moment one/with spaces');
+    expect(document.getElementById(anchor)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Share moment' }));
+
+    await waitFor(() => {
+      expect(copyTextOrDownloadMock).toHaveBeenCalledWith(
+        `${window.location.origin}/event/ericandkaras/recap#${anchor}`,
+        'ericandkaras-recap-link.txt',
+      );
+    });
   });
 });
 

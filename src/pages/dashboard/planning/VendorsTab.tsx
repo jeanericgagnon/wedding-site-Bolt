@@ -9,7 +9,7 @@ import { PlanningVendor } from './planningService';
 import { formatVendorDate, isVendorDateOnOrBefore } from './vendorDate';
 import { buildVendorReminderLedgerSummary, formatVendorReminderChannel, formatVendorReminderLeadDays } from './vendorReminderLedger';
 import type { VendorContractFileEntry, VendorMetaMap, VendorPaymentMilestoneEntry } from './vendorMetaStorage';
-import { copyTextOrDownload } from '../../../lib/copyText';
+import { copyTextOrDownload, downloadTextFile } from '../../../lib/copyText';
 import { getSafePublicEmailHref, getSafePublicTelHref, getSafePublicWebUrl } from '../../../sections/publicLinks';
 import { isVendorProfileCreationEnabled } from '../../../lib/vendorProfileLaunch';
 
@@ -371,12 +371,21 @@ export const VendorsTab: React.FC<Props> = ({ vendorMeta, vendors, onAdd, onSave
   const [vendorBriefCopyNotice, setVendorBriefCopyNotice] = useState<'copied' | 'downloaded' | null>(null);
   const vendorBriefCopyRequestIdRef = useRef(0);
   const mountedRef = useRef(true);
+  const canEditRef = useRef(canEdit);
   const vendorProfileCreationEnabled = isVendorProfileCreationEnabled();
+
+  canEditRef.current = canEdit;
 
   useEffect(() => () => {
     mountedRef.current = false;
     vendorBriefCopyRequestIdRef.current += 1;
   }, []);
+
+  useEffect(() => {
+    if (canEdit) return;
+    setShowAdd(false);
+    setEditingVendor(null);
+  }, [canEdit]);
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -416,6 +425,7 @@ export const VendorsTab: React.FC<Props> = ({ vendorMeta, vendors, onAdd, onSave
   const followUpDueCount = reminderSummary.followUpDueCount;
 
   const saveVendorMetaEntry = async (vendorId: string, patch: Partial<VendorMetaMap[string]>) => {
+    if (!canEditRef.current) return;
     const nextMeta = {
       ...vendorMeta,
       [vendorId]: {
@@ -499,7 +509,7 @@ export const VendorsTab: React.FC<Props> = ({ vendorMeta, vendors, onAdd, onSave
   };
 
   async function handleVendorDelete(vendorId: string) {
-    if (pendingVendorDeleteIds.has(vendorId)) return;
+    if (!canEditRef.current || pendingVendorDeleteIds.has(vendorId)) return;
 
     setPendingVendorDeleteIds((current) => new Set(current).add(vendorId));
     try {
@@ -582,12 +592,11 @@ export const VendorsTab: React.FC<Props> = ({ vendorMeta, vendors, onAdd, onSave
       }),
     ];
     const csv = csvRows.map((row) => row.map((cell) => `"${String(cell ?? '').replaceAll('"', '""')}"`).join(',')).join('\n');
-    const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `dayof-vendors-${new Date().toISOString().slice(0, 10)}.csv`;
-    link.click();
-    URL.revokeObjectURL(url);
+    downloadTextFile(
+      `dayof-vendors-${new Date().toISOString().slice(0, 10)}.csv`,
+      csv,
+      'text/csv;charset=utf-8',
+    );
   }
 
   return (
@@ -677,7 +686,11 @@ export const VendorsTab: React.FC<Props> = ({ vendorMeta, vendors, onAdd, onSave
 
       {showAdd && (
         <VendorForm
-          onSave={async (v) => { await onAdd(v); setShowAdd(false); }}
+          onSave={async (v) => {
+            if (!canEditRef.current) return;
+            await onAdd(v);
+            if (canEditRef.current) setShowAdd(false);
+          }}
           onCancel={() => setShowAdd(false)}
         />
       )}
@@ -731,7 +744,11 @@ export const VendorsTab: React.FC<Props> = ({ vendorMeta, vendors, onAdd, onSave
                 {editingVendor?.id === vendor.id ? (
                   <VendorForm
                     initial={editingVendor}
-                    onSave={async (u) => { await onUpdate(vendor.id, u); setEditingVendor(null); }}
+                    onSave={async (u) => {
+                      if (!canEditRef.current) return;
+                      await onUpdate(vendor.id, u);
+                      if (canEditRef.current) setEditingVendor(null);
+                    }}
                     onCancel={() => setEditingVendor(null)}
                   />
                 ) : (

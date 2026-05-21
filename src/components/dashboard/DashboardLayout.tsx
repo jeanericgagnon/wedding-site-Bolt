@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   Settings,
@@ -101,9 +101,11 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
   const [activeSitePermissions, setActiveSitePermissions] = useState<PlannerPermissionKey[] | null>(null);
   const { user, isDemoMode } = useAuth();
   const navigate = useNavigate();
+  const siteContextRequestIdRef = useRef(0);
 
   useEffect(() => {
-    if (!user) return;
+    const requestId = ++siteContextRequestIdRef.current;
+    const isCurrentSiteContextRequest = () => requestId === siteContextRequestIdRef.current;
 
     const applyLoadedSiteContext = (siteContext: DashboardLayoutSiteContext) => applySiteContext(siteContext, {
       setActiveSitePermissions,
@@ -116,8 +118,26 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
       setSitePrivacyMode,
       setSiteSlug,
     });
+    const applyEmptySiteContext = () => applyLoadedSiteContext({
+      activeSitePermissions: null,
+      activeSiteRole: null,
+      siteGuestFacingReady: false,
+      siteId: null,
+      siteIsPublished: false,
+      siteJsonState: null,
+      siteMemberships: [],
+      sitePrivacyMode: 'public',
+      siteSlug: null,
+    });
+
+    if (!user) {
+      applyEmptySiteContext();
+      setSiteContextReady(false);
+      return;
+    }
 
     if (isDemoMode) {
+      if (!isCurrentSiteContextRequest()) return;
       applyLoadedSiteContext(createDemoDashboardLayoutSiteContext());
       setSiteContextReady(true);
       return;
@@ -127,20 +147,13 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
       setSiteContextReady(false);
 
       try {
-        applyLoadedSiteContext(await loadDashboardLayoutSiteContext(user.id));
+        const siteContext = await loadDashboardLayoutSiteContext(user.id);
+        if (!isCurrentSiteContextRequest()) return;
+        applyLoadedSiteContext(siteContext);
         setSiteContextReady(true);
       } catch {
-        applyLoadedSiteContext({
-          activeSitePermissions: null,
-          activeSiteRole: null,
-          siteGuestFacingReady: false,
-          siteId: null,
-          siteIsPublished: false,
-          siteJsonState: null,
-          siteMemberships: [],
-          sitePrivacyMode: 'public',
-          siteSlug: null,
-        });
+        if (!isCurrentSiteContextRequest()) return;
+        applyEmptySiteContext();
         setSiteContextReady(true);
       }
     };

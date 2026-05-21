@@ -62,6 +62,7 @@ export const TemplateDetail: React.FC = () => {
               <span key={tag} className="rounded border border-neutral-200 bg-white px-2 py-1 text-xs text-neutral-700">{tag}</span>
             ))}
             <span className="rounded border border-primary/15 bg-primary/5 px-2 py-1 text-xs text-primary">{tpl.colorwayId}</span>
+            <span className="rounded border border-primary/15 bg-primary/5 px-2 py-1 text-xs font-semibold text-primary">{tpl.readinessLabel} · {tpl.readinessScore}</span>
           </div>
 
           <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -92,11 +93,55 @@ export const TemplateDetail: React.FC = () => {
             </div>
             <div className="rounded-xl border border-neutral-200 bg-neutral-50 p-3 md:col-span-1">
               <p className="text-xs font-semibold text-neutral-500 mb-2">Page flow</p>
+              <div className="mb-3 flex flex-wrap gap-1.5">
+                {tpl.pageTitles.map((title, index) => (
+                  <span key={`${title}-${index}`} className="rounded border border-primary/15 bg-primary/5 px-2 py-1 text-xs text-primary">
+                    {title}
+                  </span>
+                ))}
+              </div>
               <div className="flex flex-wrap gap-1.5">
                 {tpl.defaultSectionOrder.map((section) => (
                   <span key={section} className="rounded bg-white border border-neutral-200 px-2 py-1 text-xs text-neutral-700">{section}</span>
                 ))}
               </div>
+            </div>
+            <div className="rounded-xl border border-neutral-200 bg-neutral-50 p-3">
+              <p className="text-xs font-semibold text-neutral-500 mb-2">Guest URLs</p>
+              <div className="flex flex-wrap gap-1.5">
+                {tpl.guestRoutes.map((route) => (
+                  <span key={route} className="rounded border border-neutral-200 bg-white px-2 py-1 font-mono text-xs text-neutral-700">{route}</span>
+                ))}
+              </div>
+              <p className="mt-2 text-[11px] text-neutral-500">
+                {tpl.pageCount > 1 ? 'This starts as a multi-page site.' : 'This starts as one page with section links.'}
+              </p>
+            </div>
+            <div className="rounded-xl border border-neutral-200 bg-neutral-50 p-3 md:col-span-3">
+              <p className="text-xs font-semibold text-neutral-500 mb-2">Page blueprint</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                {tpl.pageBlueprints.map((page) => (
+                  <div key={page.route} className="rounded border border-neutral-200 bg-white p-2">
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-xs font-semibold text-neutral-900">{page.title}</p>
+                      <span className="font-mono text-[11px] text-neutral-500">{page.route}</span>
+                    </div>
+                    <p className="mt-1 text-xs text-neutral-600">{page.sections.join(', ')}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="rounded-xl border border-neutral-200 bg-neutral-50 p-3 md:col-span-3">
+              <div className="flex flex-wrap items-center gap-2">
+                <p className="text-xs font-semibold text-neutral-500">Guest readiness</p>
+                <span className="rounded-xl border border-primary/15 bg-primary/5 px-2 py-0.5 text-[11px] font-semibold text-primary">{tpl.readinessLabel}</span>
+                <span className="rounded-xl border border-neutral-200 bg-white px-2 py-0.5 text-[11px] text-neutral-700">{tpl.readinessScore}/100</span>
+              </div>
+              <p className="mt-2 text-xs text-neutral-600">
+                {tpl.readinessGaps.length > 0
+                  ? `Review next: ${tpl.readinessGaps.join(', ')}.`
+                  : 'The starter structure covers the guest-critical website pieces.'}
+              </p>
             </div>
             <div className="rounded-xl border border-neutral-200 bg-neutral-50 p-3">
               <p className="text-xs font-semibold text-neutral-500 mb-2">Best for</p>
@@ -126,6 +171,8 @@ export const TemplateDetail: React.FC = () => {
                 <div className="flex flex-wrap items-center gap-2">
                   <p className="text-xs font-semibold text-neutral-500">Design preview</p>
                   <span className={`rounded-xl border px-2 py-0.5 text-[11px] font-medium ${supportManifest.previewStatus === 'verified' ? 'border-primary/20 bg-primary/5 text-primary' : 'border-neutral-200 bg-white text-neutral-700'}`}>{supportManifest.previewLabel}</span>
+                  <span className="rounded-xl border border-neutral-200 bg-white px-2 py-0.5 text-[11px] text-neutral-700">{supportManifest.pageFlowLabel}</span>
+                  <span className="rounded-xl border border-primary/15 bg-primary/5 px-2 py-0.5 text-[11px] font-semibold text-primary">{supportManifest.readinessLabel} · {supportManifest.readinessScore}</span>
                   <span className="rounded-xl border border-neutral-200 bg-white px-2 py-0.5 text-[11px] text-neutral-700">{supportManifest.sectionsIncluded} starter sections</span>
                   <span className="rounded-xl border border-neutral-200 bg-white px-2 py-0.5 text-[11px] text-neutral-700">{supportManifest.modulesIncluded} features</span>
                 </div>

@@ -148,6 +148,85 @@ describe('RegistryItemForm', () => {
     }));
   });
 
+  it('blocks impossible purchased quantities before saving', async () => {
+    const onSave = vi.fn(async () => {});
+
+    render(
+      <RegistryItemForm
+        initial={makeItem({
+          item_name: 'Serving Bowl',
+          quantity_needed: 2,
+          quantity_purchased: 1,
+          purchase_status: 'partial',
+        })}
+        existingItems={[]}
+        onSave={onSave}
+        onCancel={vi.fn()}
+      />,
+    );
+
+    fireEvent.change(screen.getByLabelText(/purchased so far/i), { target: { value: '3' } });
+
+    expect(screen.getByRole('alert')).toHaveTextContent('Purchased so far cannot be greater than desired quantity.');
+    expect(screen.getByRole('button', { name: /save changes/i })).toBeDisabled();
+
+    fireEvent.click(screen.getByRole('button', { name: /save changes/i }));
+    expect(onSave).not.toHaveBeenCalled();
+  });
+
+  it('blocks cash funds that do not have a guest contribution path', async () => {
+    const onSave = vi.fn(async () => {});
+
+    render(
+      <RegistryItemForm
+        initial={makeItem({
+          item_type: 'cash_fund',
+          source_type: 'cash_fund',
+          item_name: 'Honeymoon fund',
+          fund_venmo_url: '',
+          fund_paypal_url: '',
+          fund_zelle_handle: '',
+          fund_custom_url: '',
+        })}
+        existingItems={[]}
+        onSave={onSave}
+        onCancel={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByRole('alert')).toHaveTextContent('Add at least one way guests can contribute to this fund before saving.');
+    expect(screen.getByRole('button', { name: /save changes/i })).toBeDisabled();
+
+    fireEvent.click(screen.getByRole('button', { name: /save changes/i }));
+    expect(onSave).not.toHaveBeenCalled();
+  });
+
+  it('allows cash funds with a guest contribution path', async () => {
+    const onSave = vi.fn(async () => {});
+
+    render(
+      <RegistryItemForm
+        initial={makeItem({
+          item_type: 'cash_fund',
+          source_type: 'cash_fund',
+          item_name: 'Honeymoon fund',
+          fund_zelle_handle: 'couple@example.com',
+        })}
+        existingItems={[]}
+        onSave={onSave}
+        onCancel={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /save changes/i }));
+
+    expect(onSave).toHaveBeenCalledWith(expect.objectContaining({
+      item_type: 'cash_fund',
+      source_type: 'cash_fund',
+      fund_zelle_handle: 'couple@example.com',
+    }));
+  });
+
   it('does not render unsafe image URLs in the owner preview', () => {
     const { container } = render(
       <RegistryItemForm

@@ -3,7 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { templateCatalog } from '../../builder/constants/templateCatalog';
 import { TEMPLATE_USE_CASE_PACKS } from '../../builder/constants/templateUseCasePacks';
 import { clearSetupDraft, clearSetupDraftOnly, readSetupDraft, setupDraftProgress, type SetupDraft, writeSetupDraft } from '../../lib/setupDraft';
-import { deriveSetupMode, getRecommendedTemplates, SETUP_STYLE_OPTIONS } from '../../lib/setupDraftRecommendations';
+import { deriveSetupMode, getRecommendedTemplateMatches, SETUP_STYLE_OPTIONS } from '../../lib/setupDraftRecommendations';
 import { customerSafeErrorMessage } from '../../lib/customerSafeError';
 import { submitSetupBootstrap } from './setupService';
 import { useAuth } from '../../hooks/useAuth';
@@ -143,7 +143,7 @@ export const SetupShell: React.FC<{ step?: string }> = ({ step }) => {
 
   const setupMode = useMemo(() => deriveSetupMode(draft), [draft]);
 
-  const recommendedTemplates = useMemo(() => getRecommendedTemplates(draft, templateCatalog), [draft]);
+  const recommendedTemplateMatches = useMemo(() => getRecommendedTemplateMatches(draft, templateCatalog), [draft]);
 
   const resetSetupDraft = () => {
     clearSetupDraft(setupDraftStorageScope);
@@ -372,7 +372,7 @@ export const SetupShell: React.FC<{ step?: string }> = ({ step }) => {
               <div>
                 <p className="text-xs font-medium text-neutral-700 mb-2">Recommended starting points</p>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-                  {recommendedTemplates.map((tpl) => {
+                  {recommendedTemplateMatches.map(({ template: tpl, reasons }) => {
                     const active = draft.selectedTemplateId === tpl.id;
                     return (
                       <button
@@ -382,7 +382,20 @@ export const SetupShell: React.FC<{ step?: string }> = ({ step }) => {
                         className={`rounded border p-2 text-left ${active ? 'border-primary bg-surface-secondary' : 'border-neutral-300 bg-white'}`}
                       >
                         <p className="text-sm font-medium text-neutral-900">{tpl.name}</p>
-                        <p className="text-xs text-neutral-500">{tpl.colorwayId}</p>
+                        <p className="text-xs text-neutral-500">{tpl.colorwayId} · {tpl.pageCount} page{tpl.pageCount === 1 ? '' : 's'} · {tpl.readinessLabel}</p>
+                        <div className="mt-1 flex flex-wrap gap-1">
+                          {tpl.guestRoutes.slice(0, 4).map((route) => (
+                            <span key={route} className="rounded border border-neutral-200 bg-white px-1.5 py-0.5 font-mono text-[10px] text-neutral-600">{route}</span>
+                          ))}
+                        </div>
+                        <p className="mt-1 truncate text-[11px] text-neutral-500">
+                          {tpl.pageBlueprints.slice(0, 2).map((page) => `${page.title}: ${page.sections.slice(0, 2).join(', ')}`).join(' · ')}
+                        </p>
+                        <div className="mt-1 flex flex-wrap gap-1">
+                          {reasons.slice(0, 2).map((reason) => (
+                            <span key={reason} className="rounded border border-primary/15 bg-white px-1.5 py-0.5 text-[10px] text-primary">{reason}</span>
+                          ))}
+                        </div>
                       </button>
                     );
                   })}
@@ -395,7 +408,12 @@ export const SetupShell: React.FC<{ step?: string }> = ({ step }) => {
               </div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
                 {TEMPLATE_USE_CASE_PACKS.map((pack) => {
-                  const active = (pack.id === 'destination' && setupMode.destination) || (pack.id === 'bilingual' && setupMode.bilingual) || (pack.id === 'interfaith' && setupMode.interfaith);
+                  const active = (pack.id === 'destination' && setupMode.destination)
+                    || (pack.id === 'bilingual' && setupMode.bilingual)
+                    || (pack.id === 'interfaith' && setupMode.interfaith)
+                    || (pack.id === 'weekend' && setupMode.weekend)
+                    || (pack.id === 'black-tie' && setupMode.blackTie)
+                    || (pack.id === 'guest-interactive' && setupMode.guestInteractive);
                   return (
                     <div key={pack.id} className={`rounded-xl border p-3 text-xs ${active ? 'border-primary bg-surface-secondary text-text-primary' : 'border-neutral-200 bg-white text-neutral-600'}`}>
                       <p className="font-medium text-neutral-900">{pack.label}</p>
@@ -404,7 +422,7 @@ export const SetupShell: React.FC<{ step?: string }> = ({ step }) => {
                   );
                 })}
               </div>
-              <p className="text-xs text-neutral-500">Optional. This helps dayof pick a better starting direction for your site. Destination is currently the deepest of these packs; bilingual and interfaith are still earlier.</p>
+              <p className="text-xs text-neutral-500">Optional. This helps dayof pick a better starting direction for your site, including page structure and guest-facing routes.</p>
               <div className="flex items-center gap-2">
                 <button type="button" onClick={goPrev} className="rounded border border-neutral-300 px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-100">Back</button>
                 <button type="button" onClick={continueFromStyle} className="rounded bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary-hover">Continue</button>
@@ -422,12 +440,12 @@ export const SetupShell: React.FC<{ step?: string }> = ({ step }) => {
                 <p><strong>Migration source:</strong> {draft.migrationSource ? (draft.migrationSource === 'the-knot' ? 'The Knot' : draft.migrationSource === 'joy' ? 'Joy' : draft.migrationSource === 'zola' ? 'Zola' : 'Other / starting fresh') : 'Not selected'}</p>
                 <p><strong>Styles:</strong> {draft.stylePreferences.join(', ') || 'None selected'}</p>
                 <p><strong>Setup direction:</strong> {setupMode.destination ? 'Destination wedding' : setupMode.weekend ? 'Multi-day / weekend wedding' : 'Single-day wedding'}</p>
-                <p><strong>Use-case packs:</strong> {[setupMode.destination && 'Destination', setupMode.bilingual && 'Bilingual', setupMode.interfaith && 'Interfaith'].filter(Boolean).join(', ') || 'None selected yet'}</p>
+                <p><strong>Use-case packs:</strong> {[setupMode.destination && 'Destination', setupMode.bilingual && 'Bilingual', setupMode.interfaith && 'Interfaith', setupMode.weekend && 'Full weekend', setupMode.blackTie && 'Black tie', setupMode.guestInteractive && 'Guest interactive'].filter(Boolean).join(', ') || 'None selected yet'}</p>
                 <p><strong>Design:</strong> {selectedTemplateName}</p>
               </div>
 
               <div className="rounded-xl border border-neutral-200 bg-neutral-50 p-3 text-xs text-neutral-600">
-                {setupMode.destination ? 'Next after setup: confirm travel details, hotel guidance, and weekend events before publishing.' : setupMode.weekend ? 'Next after setup: add your full weekend schedule so guests can follow the flow clearly.' : 'Next after setup: finish the main event details, RSVP settings, and guest list before sharing it with guests.'} {setupMode.bilingual ? 'Keep bilingual guest copy in mind while you fill out FAQs and key guest guidance.' : ''} {setupMode.interfaith ? 'Add a short ceremony note early so guests understand the traditions being honored.' : ''}
+                {setupMode.destination ? 'Next after setup: confirm travel details, hotel guidance, and weekend events before publishing.' : setupMode.weekend ? 'Next after setup: add your full weekend schedule so guests can follow the flow clearly.' : 'Next after setup: finish the main event details, RSVP settings, and guest list before sharing it with guests.'} {setupMode.bilingual ? 'Keep bilingual guest copy in mind while you fill out FAQs and key guest guidance.' : ''} {setupMode.interfaith ? 'Add a short ceremony note early so guests understand the traditions being honored.' : ''} {setupMode.blackTie ? 'Confirm dress code and menu details before sharing formal invitations.' : ''} {setupMode.guestInteractive ? 'Add the guest interaction moments you want before guests arrive.' : ''}
               </div>
 
               <div className="flex flex-wrap items-center gap-2">

@@ -1,8 +1,16 @@
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { ToastProvider } from '../../../components/ui/Toast';
 import { BudgetTab } from './BudgetTab';
 import type { PlanningBudgetItem, PlanningVendor } from './planningService';
+
+const { downloadTextFile } = vi.hoisted(() => ({
+  downloadTextFile: vi.fn(),
+}));
+
+vi.mock('../../../lib/copyText', () => ({
+  downloadTextFile: (...args: unknown[]) => downloadTextFile(...args),
+}));
 
 const budgetItems: PlanningBudgetItem[] = [
   {
@@ -79,6 +87,10 @@ async function flushPendingUi(): Promise<void> {
 }
 
 describe('BudgetTab', () => {
+  beforeEach(() => {
+    downloadTextFile.mockReset();
+  });
+
   it('keeps ledger readback visible while turning edits off for read-only roles', () => {
     const { container } = render(
       <ToastProvider>
@@ -117,6 +129,44 @@ describe('BudgetTab', () => {
 
     const disabledButtons = screen.getAllByRole('button').filter((button) => (button as HTMLButtonElement).disabled);
     expect(disabledButtons.length).toBeGreaterThan(2);
+  });
+
+  it('exports the budget ledger through the attached download helper', async () => {
+    render(
+      <ToastProvider>
+        <BudgetTab
+          items={budgetItems}
+          vendors={vendors}
+          vendorMeta={{
+            'vendor-1': {
+              reminderChannel: 'email',
+              reminderLeadDays: 14,
+              reminderLastQueuedAt: '2026-05-10T12:00:00.000Z',
+              contractFiles: [{ id: 'file-1', kind: 'contract', label: 'Venue contract', url: 'https://docs.example.com/venue' }],
+              paymentMilestones: [{ id: 'm1', label: 'Final balance', amount: 2500, dueDate: '2026-06-15', status: 'scheduled' }],
+            },
+          }}
+          totalBudget={12000}
+          onTotalBudgetChange={vi.fn().mockResolvedValue(undefined)}
+          onAdd={vi.fn().mockResolvedValue(undefined)}
+          onUpdate={vi.fn().mockResolvedValue(undefined)}
+          onDelete={vi.fn().mockResolvedValue(undefined)}
+        />
+      </ToastProvider>,
+    );
+
+    await clickControl(screen.getByRole('button', { name: /Export ledger/i }));
+
+    expect(downloadTextFile).toHaveBeenCalledWith(
+      expect.stringMatching(/^dayof-budget-vendor-ledger-\d{4}-\d{2}-\d{2}\.csv$/),
+      expect.stringContaining('Rose Hall'),
+      'text/csv;charset=utf-8',
+    );
+    expect(downloadTextFile).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.stringContaining('Final balance'),
+      expect.any(String),
+    );
   });
 
   it('restores the add-expense save button after a failed save', async () => {
@@ -176,6 +226,55 @@ describe('BudgetTab', () => {
 
     expect(onTotalBudgetChange).toHaveBeenCalledWith(13000);
     expect(screen.getByText(/couldn’t save the budget goal right now\./i)).toBeInTheDocument();
+
+    vi.useRealTimers();
+  });
+
+  it('cancels stale budget autosave and open forms when edit access is removed', async () => {
+    vi.useFakeTimers();
+    const onTotalBudgetChange = vi.fn().mockResolvedValue(undefined);
+    const onAdd = vi.fn().mockResolvedValue(undefined);
+    const { rerender } = render(
+      <ToastProvider>
+        <BudgetTab
+          items={[]}
+          vendors={vendors}
+          vendorMeta={{}}
+          totalBudget={12000}
+          onTotalBudgetChange={onTotalBudgetChange}
+          onAdd={onAdd}
+          onUpdate={vi.fn().mockResolvedValue(undefined)}
+          onDelete={vi.fn().mockResolvedValue(undefined)}
+        />
+      </ToastProvider>,
+    );
+
+    await clickControl(screen.getByRole('button', { name: /add expense/i }));
+    expect(screen.getByRole('button', { name: /^save$/i })).toBeEnabled();
+    await setControlValue(screen.getByDisplayValue('12000'), '13000');
+
+    rerender(
+      <ToastProvider>
+        <BudgetTab
+          items={[]}
+          vendors={vendors}
+          vendorMeta={{}}
+          totalBudget={12000}
+          onTotalBudgetChange={onTotalBudgetChange}
+          onAdd={onAdd}
+          onUpdate={vi.fn().mockResolvedValue(undefined)}
+          onDelete={vi.fn().mockResolvedValue(undefined)}
+          canEdit={false}
+        />
+      </ToastProvider>,
+    );
+
+    await advanceAutosave();
+
+    expect(screen.queryByRole('button', { name: /^save$/i })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /add expense/i })).toBeDisabled();
+    expect(onTotalBudgetChange).not.toHaveBeenCalled();
+    expect(onAdd).not.toHaveBeenCalled();
 
     vi.useRealTimers();
   });

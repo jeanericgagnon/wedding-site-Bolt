@@ -9,6 +9,7 @@ import {
   formatSavedAt,
   getPublicSectionAnchorLinks,
   getPublishBlockerUiState,
+  getSuggestedBuilderPages,
   summarizeBuilderPageStructure,
 } from './BuilderTopBar';
 
@@ -49,6 +50,21 @@ describe('builder top bar public link copying', () => {
     expect(source).toContain("dispatch(builderActions.setError('Couldn’t copy that public link right now.'));");
     expect(source).toContain("'Downloaded'");
     expect(source).not.toContain('navigator.clipboard?.writeText');
+  });
+});
+
+describe('builder top bar page manager accessibility', () => {
+  it('labels page and navigation controls for keyboard and screen reader users', () => {
+    const source = readFileSync(join(process.cwd(), 'src/builder/components/BuilderTopBar.tsx'), 'utf8');
+
+    expect(source).toContain('aria-label={`Manage pages: ${pageStructureSummary.label}`}');
+    expect(source).toContain('aria-label="New page name"');
+    expect(source).toContain('aria-label={`Page title for ${pageActionLabel}`}');
+    expect(source).toContain('aria-label={`Public URL slug for ${pageActionLabel}`}');
+    expect(source).toContain('aria-label={page.meta.isHome ?');
+    expect(source).toContain('Quick add');
+    expect(source).toContain('aria-label={`Quick add ${page.title} page');
+    expect(source).toContain('title={`Create /${page.slug}');
   });
 });
 
@@ -258,7 +274,36 @@ describe('summarizeBuilderPageStructure', () => {
       hiddenPageCount: 1,
       anchorLinkCount: 2,
       mode: 'multi-page',
-      label: 'Multi-page · 2 visible pages · 2 anchors',
+      label: 'Multi-page · 2 visible pages · 2 anchors · 1 hidden',
     });
+  });
+});
+
+describe('getSuggestedBuilderPages', () => {
+  it('suggests missing guest-facing page types from the shared template taxonomy', () => {
+    expect(
+      getSuggestedBuilderPages([
+        { id: 'home', slug: 'home', title: 'Home', meta: { isHome: true, isHidden: false } },
+        { id: 'travel-page', slug: 'travel', title: 'Travel', meta: { isHome: false, isHidden: false } },
+        { id: 'rsvp-page', slug: '', title: { value: 'RSVP' }, meta: { isHome: false, isHidden: false } },
+      ]),
+    ).toEqual([
+      { title: 'Schedule', slug: 'schedule', initialSectionType: 'schedule' },
+      { title: 'Details', slug: 'details', initialSectionType: 'wedding-party' },
+      { title: 'Registry', slug: 'registry', initialSectionType: 'registry' },
+    ]);
+  });
+
+  it('does not suggest hidden pages that already exist', () => {
+    expect(
+      getSuggestedBuilderPages([
+        { id: 'home', slug: 'home', title: 'Home', meta: { isHome: true, isHidden: false } },
+        { id: 'schedule', slug: 'schedule', title: 'Schedule', meta: { isHome: false, isHidden: true } },
+        { id: 'travel', slug: 'travel', title: 'Travel', meta: { isHome: false, isHidden: false } },
+        { id: 'details', slug: 'details', title: 'Details', meta: { isHome: false, isHidden: false } },
+        { id: 'rsvp', slug: 'rsvp', title: 'RSVP', meta: { isHome: false, isHidden: false } },
+        { id: 'registry', slug: 'registry', title: 'Registry', meta: { isHome: false, isHidden: false } },
+      ]),
+    ).toEqual([]);
   });
 });

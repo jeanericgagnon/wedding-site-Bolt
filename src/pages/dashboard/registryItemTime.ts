@@ -5,9 +5,10 @@ function normalizeRegistryItemTimeInput(value: string | null | undefined): strin
   if (!trimmed) return null;
 
   if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
-    const date = new Date(`${trimmed}T12:00:00Z`);
+    const [year, month, day] = trimmed.split('-').map(Number);
+    const date = new Date(year, month - 1, day);
     if (Number.isNaN(date.getTime())) return null;
-    return date.toISOString().slice(0, 10) === trimmed ? `${trimmed}T00:00:00.000Z` : null;
+    return date.getFullYear() === year && date.getMonth() === month - 1 && date.getDate() === day ? trimmed : null;
   }
 
   const date = new Date(trimmed);
@@ -18,7 +19,9 @@ function toValidRegistryItemDateOrNull(value: string | null | undefined): Date |
   const normalized = normalizeRegistryItemTimeInput(value);
   if (!normalized) return null;
 
-  const date = new Date(normalized);
+  const date = /^\d{4}-\d{2}-\d{2}$/.test(normalized)
+    ? new Date(Number(normalized.slice(0, 4)), Number(normalized.slice(5, 7)) - 1, Number(normalized.slice(8, 10)))
+    : new Date(normalized);
   return Number.isNaN(date.getTime()) ? null : date;
 }
 

@@ -134,15 +134,25 @@ export function getPublicSitePageNavItems<TPage extends SelectablePublicPage>(
     });
 }
 
-export function buildPublicSitePageHref(siteSlug: string, page: Pick<PublicSitePageNavItem, 'slug' | 'isHome'>): string {
-  const base = `/site/${encodeURIComponent(siteSlug.trim())}`;
+export function buildPublicSitePageHref(
+  siteSlug: string,
+  page: Pick<PublicSitePageNavItem, 'slug' | 'isHome'>,
+  useRootPaths = false,
+): string {
+  const base = useRootPaths ? '' : `/site/${encodeURIComponent(siteSlug.trim())}`;
   const normalizedSlug = normalizeSiteViewPageSlug(page.slug);
-  return page.isHome || normalizedSlug === 'home' ? base : `${base}/${encodeURIComponent(normalizedSlug || 'page')}`;
+  const homePath = base || '/';
+  return page.isHome || normalizedSlug === 'home' ? homePath : `${base}/${encodeURIComponent(normalizedSlug || 'page')}`;
 }
 
-export function buildPublicSiteSectionAnchorHref(siteSlug: string, anchor: Pick<PublicSiteSectionAnchorNavItem, 'anchorId'>): string {
-  const base = `/site/${encodeURIComponent(siteSlug.trim())}`;
+export function buildPublicSiteSectionAnchorHref(
+  siteSlug: string,
+  anchor: Pick<PublicSiteSectionAnchorNavItem, 'anchorId'>,
+  useRootPaths = false,
+): string {
+  const base = useRootPaths ? '' : `/site/${encodeURIComponent(siteSlug.trim())}`;
   const anchorId = normalizePublicSectionAnchorId(anchor.anchorId);
-  if (!anchorId) return base;
-  return `${base}#${encodeURIComponent(anchorId)}`;
+  const homePath = base || '/';
+  if (!anchorId) return homePath;
+  return `${homePath}#${encodeURIComponent(anchorId)}`;
 }

@@ -59,7 +59,11 @@ export function useRegistryMaintenanceActions(args: UseRegistryMaintenanceAction
   const [mergingDuplicateGroupId, setMergingDuplicateGroupId] = useState<string | null>(null);
   const [repairingBadImports, setRepairingBadImports] = useState(false);
   const duplicateReviewCopyRequestIdRef = useRef(0);
+  const duplicateMergeRequestIdRef = useRef(0);
+  const bulkImportRequestIdRef = useRef(0);
   const mountedRef = useRef(true);
+  const weddingSiteIdRef = useRef(weddingSiteId);
+  weddingSiteIdRef.current = weddingSiteId;
   const duplicateReviewContextKey = useMemo(() => JSON.stringify(duplicateGroups.map((group) => [
     group.id,
     group.primaryItem.id,
@@ -73,11 +77,19 @@ export function useRegistryMaintenanceActions(args: UseRegistryMaintenanceAction
   useEffect(() => () => {
     mountedRef.current = false;
     duplicateReviewCopyRequestIdRef.current += 1;
+    duplicateMergeRequestIdRef.current += 1;
+    bulkImportRequestIdRef.current += 1;
   }, []);
 
   useEffect(() => {
     duplicateReviewCopyRequestIdRef.current += 1;
+    duplicateMergeRequestIdRef.current += 1;
   }, [duplicateReviewContextKey]);
+
+  useEffect(() => {
+    bulkImportRequestIdRef.current += 1;
+    setBulkImportBusy(false);
+  }, [weddingSiteId, isDemoMode]);
 
   async function handleRefetchMetadata(item: RegistryItem, silent = false, replaceExisting = false) {
     const url = getRegistryRefreshSourceUrl(item);
@@ -205,12 +217,20 @@ export function useRegistryMaintenanceActions(args: UseRegistryMaintenanceAction
   async function handleMergeDuplicateGroup(group: RegistryDuplicateGroup) {
     if (group.secondaryItems.length === 0 || mergingDuplicateGroupId === group.id) return;
 
+    const requestId = ++duplicateMergeRequestIdRef.current;
+    const requestContextKey = duplicateReviewContextKeyRef.current;
+    const isCurrentDuplicateMerge = () => (
+      mountedRef.current &&
+      requestId === duplicateMergeRequestIdRef.current &&
+      requestContextKey === duplicateReviewContextKeyRef.current
+    );
     const mergedPatch = buildRegistryDuplicateMergePatch(group.primaryItem, group.secondaryItems);
     const secondaryIds = group.secondaryItems.map((item) => item.id);
     setMergingDuplicateGroupId(group.id);
 
     try {
       if (isDemoMode) {
+        if (!isCurrentDuplicateMerge()) return;
         const merged = normalizeOwnerDashboardRegistryItem({
           ...group.primaryItem,
           ...mergedPatch,
@@ -227,6 +247,7 @@ export function useRegistryMaintenanceActions(args: UseRegistryMaintenanceAction
         );
       } else {
         const updated = await mergeDuplicateRegistryItems(group.primaryItem.id, secondaryIds, mergedPatch);
+        if (!isCurrentDuplicateMerge()) return;
         setItems((prev) =>
           prev
             .filter((item) => !secondaryIds.includes(item.id))
@@ -234,6 +255,7 @@ export function useRegistryMaintenanceActions(args: UseRegistryMaintenanceAction
         );
       }
 
+      if (!isCurrentDuplicateMerge()) return;
       logRegistryAction(
         'registry_duplicates_merged',
         'Registry duplicate items were merged into one owner-approved entry.',
@@ -249,9 +271,10 @@ export function useRegistryMaintenanceActions(args: UseRegistryMaintenanceAction
       );
       toast(`Merged ${group.secondaryItems.length + 1} duplicate gifts into "${getOwnerRegistryDisplayTitle(group.primaryItem.item_name)}".`);
     } catch {
+      if (!isCurrentDuplicateMerge()) return;
       toast('Couldn’t merge those duplicate gifts right now. Please try again.', 'error');
     } finally {
-      setMergingDuplicateGroupId(null);
+      if (isCurrentDuplicateMerge()) setMergingDuplicateGroupId(null);
     }
   }
 
@@ -374,74 +397,89 @@ export function useRegistryMaintenanceActions(args: UseRegistryMaintenanceAction
       return;
     }
 
+    const requestId = ++bulkImportRequestIdRef.current;
+    const requestSiteId = weddingSiteId;
+    const isCurrentBulkImport = () => (
+      mountedRef.current &&
+      requestId === bulkImportRequestIdRef.current &&
+      weddingSiteIdRef.current === requestSiteId
+    );
     setBulkImportBusy(true);
     let createdCount = 0;
     let failedCount = 0;
     let invalidUrlCount = 0;
     const reviewExamples: string[] = [];
-    for (const url of urls.slice(0, 30)) {
-      try {
-        let hostname = '';
+    try {
+      for (const url of urls.slice(0, 30)) {
+        if (!isCurrentBulkImport()) return;
         try {
-          hostname = new URL(url).hostname;
+          let hostname = '';
+          try {
+            hostname = new URL(url).hostname;
+          } catch {
+            invalidUrlCount += 1;
+            failedCount += 1;
+            if (reviewExamples.length < 3) reviewExamples.push(`${url} (check the link)`);
+            continue;
+          }
+
+          const preview = await fetchUrlPreview(url, false);
+          if (!isCurrentBulkImport()) return;
+          const itemName = preview.title?.trim() || hostname;
+          const fields: Partial<RegistryItem> = {
+            item_name: itemName,
+            price_label: preview.price_label ?? null,
+            price_amount: preview.price_amount ?? null,
+            merchant: (preview.merchant ?? preview.store_name ?? preview.brand) ?? null,
+            store_name: (preview.merchant ?? preview.store_name ?? preview.brand) ?? null,
+            item_url: preview.canonical_url ?? url,
+            canonical_url: preview.canonical_url ?? null,
+            image_url: preview.image_url ?? null,
+            notes: preview.description ?? null,
+            quantity_needed: 1,
+            quantity_purchased: 0,
+            purchase_status: 'available',
+            hide_when_purchased: false,
+            metadata_last_checked_at: new Date().toISOString(),
+            next_refresh_at: new Date(Date.now() + WEEKLY_REFRESH_MS).toISOString(),
+            metadata_fetch_status: preview.fetch_status ?? 'success',
+            metadata_confidence_score: preview.confidence_score ?? null,
+            availability: preview.availability ?? null,
+          };
+          const created = await createRegistryItem(requestSiteId, fields);
+          if (!isCurrentBulkImport()) return;
+          setItems((prev) => [...prev, normalizeOwnerDashboardRegistryItem(created)]);
+          createdCount += 1;
         } catch {
-          invalidUrlCount += 1;
+          if (!isCurrentBulkImport()) return;
           failedCount += 1;
-          if (reviewExamples.length < 3) reviewExamples.push(`${url} (check the link)`);
-          continue;
+          if (reviewExamples.length < 3) reviewExamples.push(`${url} (add details by hand)`);
         }
-
-        const preview = await fetchUrlPreview(url, false);
-        const itemName = preview.title?.trim() || hostname;
-        const fields: Partial<RegistryItem> = {
-          item_name: itemName,
-          price_label: preview.price_label ?? null,
-          price_amount: preview.price_amount ?? null,
-          merchant: (preview.merchant ?? preview.store_name ?? preview.brand) ?? null,
-          store_name: (preview.merchant ?? preview.store_name ?? preview.brand) ?? null,
-          item_url: preview.canonical_url ?? url,
-          canonical_url: preview.canonical_url ?? null,
-          image_url: preview.image_url ?? null,
-          notes: preview.description ?? null,
-          quantity_needed: 1,
-          quantity_purchased: 0,
-          purchase_status: 'available',
-          hide_when_purchased: false,
-          metadata_last_checked_at: new Date().toISOString(),
-          next_refresh_at: new Date(Date.now() + WEEKLY_REFRESH_MS).toISOString(),
-          metadata_fetch_status: preview.fetch_status ?? 'success',
-          metadata_confidence_score: preview.confidence_score ?? null,
-          availability: preview.availability ?? null,
-        };
-        const created = await createRegistryItem(weddingSiteId, fields);
-        setItems((prev) => [...prev, normalizeOwnerDashboardRegistryItem(created)]);
-        createdCount += 1;
-      } catch {
-        failedCount += 1;
-        if (reviewExamples.length < 3) reviewExamples.push(`${url} (add details by hand)`);
       }
-    }
 
-    setBulkImportBusy(false);
-    setBulkImportOpen(false);
-    setBulkUrls('');
-    if (failedCount > 0) {
-      toast(`Added ${createdCount} gift${createdCount === 1 ? '' : 's'} (${failedCount} need review).`, createdCount > 0 ? 'success' : 'error');
-      const details = [
-        invalidUrlCount > 0 ? `${invalidUrlCount} link${invalidUrlCount === 1 ? '' : 's'} need a quick fix` : null,
-        reviewExamples.length > 0 ? `Examples: ${reviewExamples.join(' • ')}` : null,
-      ].filter(Boolean).join(' — ');
-      if (details) toast(details, 'error');
-    } else {
-      toast(`Added ${createdCount} gift${createdCount === 1 ? '' : 's'} from links.`);
-    }
-    if (createdCount > 0 || failedCount > 0) {
-      logRegistryAction('registry_bulk_import_completed', 'Registry bulk URL import completed.', {
-        urlCount: urls.slice(0, 30).length,
-        createdCount,
-        failedCount,
-        invalidUrlCount,
-      });
+      if (!isCurrentBulkImport()) return;
+      setBulkImportOpen(false);
+      setBulkUrls('');
+      if (failedCount > 0) {
+        toast(`Added ${createdCount} gift${createdCount === 1 ? '' : 's'} (${failedCount} need review).`, createdCount > 0 ? 'success' : 'error');
+        const details = [
+          invalidUrlCount > 0 ? `${invalidUrlCount} link${invalidUrlCount === 1 ? '' : 's'} need a quick fix` : null,
+          reviewExamples.length > 0 ? `Examples: ${reviewExamples.join(' • ')}` : null,
+        ].filter(Boolean).join(' — ');
+        if (details) toast(details, 'error');
+      } else {
+        toast(`Added ${createdCount} gift${createdCount === 1 ? '' : 's'} from links.`);
+      }
+      if (createdCount > 0 || failedCount > 0) {
+        logRegistryAction('registry_bulk_import_completed', 'Registry bulk URL import completed.', {
+          urlCount: urls.slice(0, 30).length,
+          createdCount,
+          failedCount,
+          invalidUrlCount,
+        });
+      }
+    } finally {
+      if (isCurrentBulkImport()) setBulkImportBusy(false);
     }
   }
 

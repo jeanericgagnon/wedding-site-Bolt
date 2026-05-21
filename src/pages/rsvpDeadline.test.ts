@@ -18,4 +18,17 @@ describe('rsvpDeadline', () => {
       new Date(value).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
     );
   });
+
+  it('formats date-only persisted deadlines as the saved local calendar day', () => {
+    const value = '2026-09-12';
+    expect(isRsvpDeadlinePassed(value, new Date(2026, 8, 13))).toBe(true);
+    expect(formatRsvpDeadline(value)).toBe(
+      new Date(2026, 8, 12).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
+    );
+  });
+
+  it('rejects impossible date-only deadlines', () => {
+    expect(isRsvpDeadlinePassed('2026-02-30', new Date(2026, 2, 1))).toBe(true);
+    expect(formatRsvpDeadline('2026-02-30')).toBe('Unknown date');
+  });
 });

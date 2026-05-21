@@ -2,6 +2,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { RsvpInline, RsvpSection } from './RsvpSection';
+import { getPublicSiteSlugFromLocation, getPublicSiteSlugFromPath } from './publicSitePath';
 import type { SectionInstance } from '../../types/layoutConfig';
 import type { WeddingDataV1 } from '../../types/weddingData';
 
@@ -16,6 +17,20 @@ vi.mock('../../lib/supabase', () => ({
     },
   },
 }));
+
+vi.mock('react-router-dom', async () => {
+  const actual = await vi.importActual<typeof import('react-router-dom')>('react-router-dom');
+  return {
+    ...actual,
+    useLocation: () => ({
+      pathname: window.location.pathname,
+      search: window.location.search,
+      hash: window.location.hash,
+      state: null,
+      key: 'test-location',
+    }),
+  };
+});
 
 function createWeddingData(): WeddingDataV1 {
   return {
@@ -172,6 +187,34 @@ describe('RsvpSection', () => {
     expect(await screen.findByText('Your reply has been saved.')).toBeInTheDocument();
   });
 
+  it('uses the root site slug when submitting from a dedicated RSVP page', async () => {
+    invokeMock
+      .mockResolvedValueOnce({ data: { status: 'open', site: { id: 'site-123' } }, error: null })
+      .mockResolvedValueOnce({ data: { ok: true }, error: null });
+    window.history.pushState({}, '', '/site/maya-leo/rsvp?invite_token=guest-token');
+
+    const data = createWeddingData();
+    render(<RsvpInline data={data} instance={makeInstance({})} />);
+
+    fireEvent.change(screen.getByLabelText('Your name'), { target: { value: 'Taylor Guest' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Send RSVP' }));
+
+    await waitFor(() => {
+      expect(invokeMock).toHaveBeenCalledWith('public-site-access', expect.objectContaining({
+        body: expect.objectContaining({
+          slug: 'maya-leo',
+          inviteToken: 'guest-token',
+        }),
+      }));
+      expect(invokeMock).toHaveBeenCalledWith('public-site-rsvp-submit', expect.objectContaining({
+        body: expect.objectContaining({
+          slug: 'maya-leo',
+          inviteToken: 'guest-token',
+        }),
+      }));
+    });
+  });
+
   it('clears stale submit errors once the guest edits the RSVP form again', async () => {
     invokeMock.mockResolvedValueOnce({ data: null, error: new Error('resolve failed') });
 
@@ -188,5 +231,19 @@ describe('RsvpSection', () => {
     await waitFor(() => {
       expect(screen.queryByText('Unable to find this wedding website right now. Please try again.')).not.toBeInTheDocument();
     });
+  });
+});
+
+describe('getPublicSiteSlugFromPath', () => {
+  it('extracts the site slug without swallowing a dedicated page slug', () => {
+    expect(getPublicSiteSlugFromPath('/site/maya-leo')).toBe('maya-leo');
+    expect(getPublicSiteSlugFromPath('/site/maya-leo/rsvp')).toBe('maya-leo');
+    expect(getPublicSiteSlugFromPath('/site/maya%20leo/rsvp')).toBe('maya leo');
+  });
+
+  it('falls back to the wedding subdomain slug for root-mounted public pages', () => {
+    expect(getPublicSiteSlugFromLocation('/rsvp', 'maya-leo.dayof.love')).toBe('maya-leo');
+    expect(getPublicSiteSlugFromLocation('/', 'maya-leo.dayof.love')).toBe('maya-leo');
+    expect(getPublicSiteSlugFromLocation('/rsvp', 'dayof.love')).toBe('');
   });
 });

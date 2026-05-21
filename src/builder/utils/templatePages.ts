@@ -124,10 +124,11 @@ export function buildTemplatePageInstances(
   transformSections: TemplateSectionTransformer = identityTemplateSectionTransformer,
 ): BuilderPage[] {
   if (pageMode === 'single') {
-    const baseEntries = normalizeTemplatePageSlots(template).flatMap((pageSlot) =>
+    const pageEntries = normalizeTemplatePageSlots(template).flatMap((pageSlot) =>
       pageSlot.sectionComposition.map((slot, sectionIndex) => ({
         pageSlot,
         sectionIndex,
+        slot,
         section: applyCollapsedPageAnchor(
           createSectionFromTemplateSlot(slot, 0),
           pageSlot,
@@ -135,6 +136,12 @@ export function buildTemplatePageInstances(
         ),
       }))
     );
+    const pageEntryBySlot = new Map(pageEntries.map((entry) => [entry.slot, entry]));
+    const canPreserveTemplateCompositionOrder = template.sectionComposition.length === pageEntries.length
+      && template.sectionComposition.every((slot) => pageEntryBySlot.has(slot));
+    const baseEntries = canPreserveTemplateCompositionOrder
+      ? template.sectionComposition.map((slot) => pageEntryBySlot.get(slot)!)
+      : pageEntries;
     const baseSections = baseEntries.map(({ section }, sectionIndex) => ({ ...section, orderIndex: sectionIndex }));
     const usedCollapsedAnchorSlugs = new Set<string>();
     const restoredCollapsedAnchors = transformSections(baseSections)

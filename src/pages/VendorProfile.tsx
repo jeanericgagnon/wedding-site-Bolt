@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { ArrowRight, ExternalLink, Instagram, Star } from 'lucide-react';
+import { ArrowRight, ExternalLink, Instagram } from 'lucide-react';
 import {
   getMyVendorInquiryContext,
   getVendorProfileBySlug,
@@ -72,7 +72,7 @@ export const VendorProfilePage: React.FC = () => {
     let cancelled = false;
     async function load() {
       if (!slug) {
-        setError('This note page is not available right now.');
+        setError('This page is not ready right now.');
         setLoading(false);
         return;
       }
@@ -81,11 +81,11 @@ export const VendorProfilePage: React.FC = () => {
         const data = await getVendorProfileBySlug(slug);
         if (cancelled) return;
         setProfile(data);
-        setError(data ? null : 'This note page is not available right now.');
+        setError(data ? null : 'This page is not ready right now.');
       } catch (err) {
         if (cancelled) return;
         setProfile(null);
-        setError(safeVendorProfileError(err, 'Couldn’t load this note page right now. Please refresh and try again.'));
+        setError(safeVendorProfileError(err, 'Couldn’t load this page right now. Please refresh and try again.'));
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -189,36 +189,36 @@ export const VendorProfilePage: React.FC = () => {
           ? 'Wedding help'
           : 'Wedding notes';
   const defaultProfileNotes = isFood
-    ? ['Tasting path', 'Menu notes', 'Timing']
+    ? ['Tasting plan', 'Menu notes', 'Schedule']
     : isBeauty
-      ? ['Trial plan', 'Wedding morning', 'Party timing']
+      ? ['Trial plan', 'Wedding morning', 'Party schedule']
       : isMusic
-        ? ['Ceremony cues', 'Reception energy', 'Set example']
+        ? ['Ceremony cues', 'Reception energy', 'Set notes']
         : isTravel
           ? ['Pickup windows', 'Guest movement', 'Day of contact']
           : templateId === 'venue'
-            ? ['Tour path', 'Guest flow', 'Space details']
+            ? ['Tour plan', 'Guest flow', 'Space notes']
             : templateId === 'floral'
-              ? ['Palette', 'Install scale', 'Seasonal texture']
+              ? ['Palette', 'Install plan', 'Seasonal texture']
               : templateId === 'planner'
-                ? ['Process', 'Timing', 'Timeline calm']
+                ? ['Planning notes', 'Schedule', 'Calm handoffs']
                 : [];
   const profileNotes = customization.proof_points.length > 0 ? customization.proof_points : defaultProfileNotes;
   const rating = customization.rating.enabled ? customization.rating : null;
   const externalCredibility = customization.external_credibility.enabled ? customization.external_credibility : null;
   const defaultNextStepCopy = isFood
-    ? 'Write about tasting'
+    ? 'Send note about tasting'
     : isBeauty
-      ? 'Write about trial'
+      ? 'Send note about trial'
       : isMusic
         ? 'Hear a set'
       : isTravel
-          ? 'Check transportation'
+          ? 'Plan transportation'
           : templateId === 'venue'
-            ? 'Write about a tour'
+            ? 'Send note about a tour'
             : templateId === 'planner'
-              ? 'Write about planning'
-              : 'Write note';
+              ? 'Send note about planning'
+              : 'Send note';
   const nextStepCopy = customization.cta_label ?? defaultNextStepCopy;
   const pageClass = isDark
     ? 'bg-[#11100e] text-[#f8f3ec]'
@@ -295,11 +295,11 @@ export const VendorProfilePage: React.FC = () => {
   };
 
   if (loading) {
-    return <div className="min-h-screen bg-[#f6f1ea] flex items-center justify-center text-[#2f261d]">Loading note page...</div>;
+    return <div className="min-h-screen bg-[#f6f1ea] flex items-center justify-center text-[#2f261d]">Loading page...</div>;
   }
 
   if (!profile) {
-    return <div className="min-h-screen bg-[#f6f1ea] flex items-center justify-center px-6 text-center text-[#2f261d]">{error || 'This note page is not available right now.'}</div>;
+    return <div className="min-h-screen bg-[#f6f1ea] flex items-center justify-center px-6 text-center text-[#2f261d]">{error || 'This page is not ready right now.'}</div>;
   }
 
   return (
@@ -333,10 +333,10 @@ export const VendorProfilePage: React.FC = () => {
             <div className="flex flex-wrap gap-2 pt-2">
               {instagramUrl && <span className={`rounded-xl px-3 py-1 text-xs font-medium ${chipClass}`}>Instagram</span>}
               {websiteUrl && <span className={`rounded-xl px-3 py-1 text-xs font-medium ${chipClass}`}>Website</span>}
-              {hasDirectEmail && <span className={`rounded-xl px-3 py-1 text-xs font-medium ${chipClass}`}>Reply email</span>}
-              {externalCredibility?.rating != null && (
+              {hasDirectEmail && <span className={`rounded-xl px-3 py-1 text-xs font-medium ${chipClass}`}>Email</span>}
+              {externalCredibility && (
                 <span className={`rounded-xl px-3 py-1 text-xs font-medium ${chipClass}`}>
-                  {externalCredibility.source_label} {externalCredibility.rating}/5
+                  {externalCredibility.source_label} notes
                 </span>
               )}
             </div>
@@ -359,7 +359,7 @@ export const VendorProfilePage: React.FC = () => {
           <section style={{ order: sectionOrderIndex('proof') }} className={`grid gap-3 ${isMinimal ? '' : 'sm:grid-cols-3'}`}>
             {profileNotes.map((item) => (
               <div key={item} className={`${isDark ? 'border border-white/10 bg-white/8 text-[#efe4d8]' : `${accent.highlight} border border-black/5`} rounded-xl px-4 py-4 shadow-sm`}>
-                <p className={`text-xs font-semibold ${isDark ? eyebrowText : 'text-current opacity-70'}`}>Quick note</p>
+                <p className={`text-xs font-semibold ${isDark ? eyebrowText : 'text-current opacity-70'}`}>Note</p>
                 <p className="mt-2 text-sm font-semibold">{item}</p>
               </div>
             ))}
@@ -368,22 +368,19 @@ export const VendorProfilePage: React.FC = () => {
 
         {(externalCredibility || rating) && (
           <section style={{ order: sectionOrderIndex('proof') + 0.25 }} className={`${panelClass} space-y-4`}>
-            <h2 className={`text-sm font-semibold ${eyebrowText}`}>Reviews</h2>
+            <h2 className={`text-sm font-semibold ${eyebrowText}`}>Shared notes</h2>
             <div className={`grid gap-3 ${externalCredibility && rating ? 'sm:grid-cols-2' : ''}`}>
               {externalCredibility && (
                 <div className={`rounded-xl border p-4 ${isDark ? 'border-white/10 bg-white/5' : 'border-[#eadfce] bg-[#fffaf3]'}`}>
-                  <p className={`text-xs font-semibold ${eyebrowText}`}>Review snapshot</p>
+                  <p className={`text-xs font-semibold ${eyebrowText}`}>Notes from</p>
                   <div className="mt-3 flex flex-wrap items-center gap-3">
-                    {externalCredibility.rating !== null && (
-                      <span className={`inline-flex items-center gap-1 rounded-xl px-3 py-2 text-sm font-semibold ${isDark ? 'bg-white/10 text-[#f8f3ec]' : accent.highlight}`}>
-                        {externalCredibility.rating}
-                        <Star className="h-4 w-4 fill-current" />
-                      </span>
-                    )}
+                    <span className={`inline-flex items-center rounded-xl px-3 py-2 text-sm font-semibold ${isDark ? 'bg-white/10 text-[#f8f3ec]' : accent.highlight}`}>
+                      {externalCredibility.source_label}
+                    </span>
                     <p className={`text-sm leading-6 ${mutedText}`}>
                       {externalCredibility.review_count !== null
-                        ? `${externalCredibility.source_label} shows ${externalCredibility.review_count.toLocaleString()} review${externalCredibility.review_count === 1 ? '' : 's'}.`
-                        : `${externalCredibility.source_label} has reviews listed.`}
+                        ? `${externalCredibility.review_count.toLocaleString()} note${externalCredibility.review_count === 1 ? '' : 's'} shared there.`
+                        : 'Notes shared there.'}
                     </p>
                   </div>
                   {externalCredibility.profile_url && (
@@ -393,7 +390,7 @@ export const VendorProfilePage: React.FC = () => {
                       rel="noopener noreferrer"
                       className={`mt-3 inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold ${isDark ? 'bg-white/10 text-[#f8f3ec] hover:bg-white/15' : 'bg-white text-[#4b3a2c] hover:bg-[#fbf8f3]'}`}
                     >
-                      View {externalCredibility.source_label}
+                      Open {externalCredibility.source_label}
                       <ExternalLink className="h-4 w-4" />
                     </a>
                   )}
@@ -405,7 +402,7 @@ export const VendorProfilePage: React.FC = () => {
                     <div>
                       <p className={`text-xs font-semibold ${eyebrowText}`}>Notes</p>
                       <p className={`mt-2 text-sm leading-6 ${mutedText}`}>
-                        {rating.summary || 'Notes on timing, style, and guest experience.'}
+                        {rating.summary || 'Schedule, style, and guest notes.'}
                       </p>
                     </div>
                   </div>
@@ -443,7 +440,7 @@ export const VendorProfilePage: React.FC = () => {
 
         {sectionEnabled('facts') && customization.category_facts.length > 0 && (
           <section style={{ order: sectionOrderIndex('facts') }} className={`${panelClass} space-y-4`}>
-            <h2 className={`text-sm font-semibold ${eyebrowText}`}>Good to know</h2>
+            <h2 className={`text-sm font-semibold ${eyebrowText}`}>Details</h2>
             <div className="grid gap-3 sm:grid-cols-2">
               {customization.category_facts.map((fact) => (
                 <div key={`${fact.label}-${fact.value}`} className={`rounded-xl border p-4 ${isDark ? 'border-white/10 bg-white/5' : 'border-[#eadfce] bg-[#fffaf3]'}`}>
@@ -457,11 +454,11 @@ export const VendorProfilePage: React.FC = () => {
 
         {sectionEnabled('gallery') && hasGallery && (
           <section style={{ order: sectionOrderIndex('gallery') }} className="space-y-4 sm:space-y-5">
-            <h2 className={`text-sm font-semibold ${eyebrowText}`}>Images</h2>
+            <h2 className={`text-sm font-semibold ${eyebrowText}`}>Photos</h2>
             <div className={galleryGridClass}>
               {featuredImage && (
                 <div className="overflow-hidden rounded-xl bg-white shadow-sm">
-                  <img src={featuredImage} alt={`${profile.vendor_name} main image`} className={`h-full w-full object-cover ${isDark ? 'aspect-[4/5]' : hasSingleImage ? 'aspect-[4/5] sm:aspect-[16/9]' : 'aspect-[4/5] sm:aspect-[4/4.4]'}`} />
+                  <img src={featuredImage} alt={`${profile.vendor_name} main photo`} className={`h-full w-full object-cover ${isDark ? 'aspect-[4/5]' : hasSingleImage ? 'aspect-[4/5] sm:aspect-[16/9]' : 'aspect-[4/5] sm:aspect-[4/4.4]'}`} />
                 </div>
               )}
               {!hasSingleImage && !isDark && customization.gallery_layout !== 'mosaic' && (
@@ -491,7 +488,7 @@ export const VendorProfilePage: React.FC = () => {
                 onClick={() => setShowFullGallery((current) => !current)}
                 className={`inline-flex rounded-xl px-4 py-2 text-sm font-semibold ${isDark ? 'bg-white/10 text-[#f8f3ec] hover:bg-white/15' : 'bg-white text-[#4b3a2c] shadow-sm hover:bg-[#fbf8f3]'}`}
               >
-                {showFullGallery ? 'Show fewer images' : `View all images${hiddenGalleryCount > 0 ? ` (${hiddenGalleryCount} more)` : ''}`}
+                {showFullGallery ? 'Show fewer photos' : `Show all photos${hiddenGalleryCount > 0 ? ` (${hiddenGalleryCount} more)` : ''}`}
               </button>
             )}
           </section>
@@ -499,18 +496,18 @@ export const VendorProfilePage: React.FC = () => {
 
         {sectionEnabled('gallery') && !hasGallery && (
           <section style={{ order: sectionOrderIndex('gallery') }} className={`rounded-xl border border-dashed ${isDark ? 'border-white/15 bg-white/8 text-[#d8c4ad]' : 'border-[#d8c8b6] bg-white/70 text-[#6f5843]'} p-6 sm:p-8`}>
-            <h2 className={`text-sm font-semibold ${eyebrowText}`}>Images</h2>
-            <p className="mt-3 text-sm sm:text-base">Images can be added later. Use the links below to view more work.</p>
+            <h2 className={`text-sm font-semibold ${eyebrowText}`}>Photos</h2>
+            <p className="mt-3 text-sm sm:text-base">Photos can come later. Check the links for work samples.</p>
           </section>
         )}
 
         {sectionEnabled('packages') && customization.packages.length > 0 && (
           <section style={{ order: sectionOrderIndex('packages') }} className="space-y-4">
-            <h2 className={`text-sm font-semibold ${eyebrowText}`}>What to mention</h2>
+            <h2 className={`text-sm font-semibold ${eyebrowText}`}>What to know</h2>
             <div className={`grid gap-3 ${customization.packages.length > 1 ? 'sm:grid-cols-2' : ''}`}>
               {customization.packages.map((item) => (
                 <div key={`${item.title}-${item.detail}`} className={`${panelClass} space-y-2`}>
-                  <p className={`text-xs font-semibold ${eyebrowText}`}>{item.price ?? 'Detail note'}</p>
+                  <p className={`text-xs font-semibold ${eyebrowText}`}>{item.price ?? 'Note'}</p>
                   <h3 className={`text-xl font-semibold ${titleText}`}>{item.title}</h3>
                   <p className={`text-sm leading-6 ${mutedText}`}>{item.detail}</p>
                 </div>
@@ -550,7 +547,7 @@ export const VendorProfilePage: React.FC = () => {
         {(sectionEnabled('about') || sectionEnabled('links')) && <section style={{ order: Math.min(sectionOrderIndex('about'), sectionOrderIndex('links')) }} className="grid gap-8 lg:grid-cols-[1.12fr_0.88fr] lg:items-start">
           {sectionEnabled('about') && <div className={`${panelClass} space-y-4 sm:space-y-5`}>
             <h2 className={`text-sm font-semibold ${eyebrowText}`}>About</h2>
-            <p className={`text-base sm:text-lg leading-8 ${isDark ? 'text-[#efe4d8]' : 'text-[#4b3a2c]'}`}>{profile.about || `${profile.vendor_name} has basic details, useful links, and a clear way to send a note.`}</p>
+            <p className={`text-base sm:text-lg leading-8 ${isDark ? 'text-[#efe4d8]' : 'text-[#4b3a2c]'}`}>{profile.about || `${profile.vendor_name} has a few notes, links, and a clear way to write.`}</p>
           </div>}
 
           {sectionEnabled('links') && <div className={`${panelClass} space-y-4 lg:sticky lg:top-6`}>
@@ -565,24 +562,24 @@ export const VendorProfilePage: React.FC = () => {
                 ))}
               </div>
             ) : (
-              <p className="text-sm sm:text-base text-[#6f5843]">Links will appear here once they are added.</p>
+              <p className="text-sm sm:text-base text-[#6f5843]">Links can go here.</p>
             )}
             {hasPublicLinks && (
-              <p className="pt-2 text-xs text-[#8b6f53]">Use these links to browse recent work or their website.</p>
+              <p className="pt-2 text-xs text-[#8b6f53]">Check these links for work samples or their website.</p>
             )}
           </div>}
         </section>}
 
         {sectionEnabled('inquiry') && <section style={{ order: sectionOrderIndex('inquiry') + 100 }} id="vendor-inquiry" className={`rounded-xl p-6 shadow-sm sm:p-8 space-y-5 sm:space-y-6 scroll-mt-6 ${accent.inquiry}`}>
           <div>
-            <h2 className="text-sm font-semibold text-[#d8c4ad]">Write a note</h2>
+            <h2 className="text-sm font-semibold text-[#d8c4ad]">Send a note</h2>
             <p className="mt-3 text-2xl font-semibold leading-tight text-white sm:text-3xl">
-              Write one clear note.
+              Send one clear note.
             </p>
             <p className="mt-3 text-base sm:text-lg text-[#efe4d8] max-w-2xl">
               {hasDirectEmail
-                ? `${profile.vendor_name} will get your date, venue, location, reply email, and note together.`
-                : 'Add your date, venue, location, reply email, and note in one place.'}
+                ? `${profile.vendor_name} will get your wedding details, reply email, and note together.`
+                : 'Keep your wedding details, reply email, and note together.'}
             </p>
             {!hasDirectEmail && publicLinks.length === 0 && (
               <p className="mt-3 text-sm text-[#d8c4ad]">There are only a few notes here for now. The form below still gives couples a clear way to write.</p>
@@ -603,28 +600,28 @@ export const VendorProfilePage: React.FC = () => {
           <div className={`grid gap-4 ${hasDirectEmail ? 'lg:grid-cols-[1.18fr_0.82fr]' : ''}`}>
             <div className={`rounded-xl border border-white/25 p-4 shadow-sm sm:p-5 space-y-4 ${accent.highlight}`}>
               {sent ? (
-                <div role="status" className="rounded-xl bg-white px-4 py-4 text-sm text-[#4b3a2c]">Note sent. We saved a copy here.</div>
+                <div role="status" className="rounded-xl bg-white px-4 py-4 text-sm text-[#4b3a2c]">Note sent. Note saved here.</div>
               ) : (
                 <form onSubmit={handleSubmit} className="grid gap-3 sm:grid-cols-2" aria-busy={sending}>
                   <div className="sm:col-span-2 rounded-xl bg-white px-4 py-3">
                     <p className="text-sm font-semibold text-[#2f261d]">
-                      {hasPackagedInquiryContext ? 'Wedding notes ready' : 'Write a short note'}
+                      {hasPackagedInquiryContext ? 'Wedding details included' : 'Add your note'}
                     </p>
                     <p className="mt-1 text-xs leading-5 text-[#6f5843]">
                       {hasPackagedInquiryContext
-                        ? 'Your date, venue, location, DayOf site, and reply email will go with the note.'
-                        : 'Your note includes your reply email.'}
+                        ? 'Your date, venue, location, site, and reply email will go with the note.'
+                        : 'Your reply email is included.'}
                     </p>
                   </div>
                   {hasPackagedInquiryContext ? (
                     <div className="sm:col-span-2 grid gap-2 rounded-xl bg-white/80 p-4 text-sm text-[#4b3a2c]">
-                      {inquiryContext?.couple_names && <p><span className="font-semibold">Couple:</span> {inquiryContext.couple_names}</p>}
+                      {inquiryContext?.couple_names && <p><span className="font-semibold">Names:</span> {inquiryContext.couple_names}</p>}
                       {form.venueLocation && <p><span className="font-semibold">Location:</span> {form.venueLocation}</p>}
                       {form.venueName && <p><span className="font-semibold">Venue:</span> {form.venueName}</p>}
                       {form.weddingDate && <p><span className="font-semibold">Date:</span> {form.weddingDate}</p>}
-                      {inquiryContext?.site_slug && <p><span className="font-semibold">DayOf site:</span> /{inquiryContext.site_slug}</p>}
-                      <p><span className="font-semibold">Reply email:</span> {form.email}</p>
-                      <p className="pt-2 text-xs leading-5 text-[#6f5843]">Add any style, timing, guest count, or budget notes below.</p>
+                      {inquiryContext?.site_slug && <p><span className="font-semibold">Site:</span> /{inquiryContext.site_slug}</p>}
+                      <p><span className="font-semibold">Email:</span> {form.email}</p>
+                      <p className="pt-2 text-xs leading-5 text-[#6f5843]">Add style, schedule, guest count, or budget notes below.</p>
                     </div>
                   ) : (
                     <>
@@ -637,22 +634,22 @@ export const VendorProfilePage: React.FC = () => {
                         <input id="vendor-inquiry-email" type="email" value={form.email} onChange={(e) => updateInquiryField('email', e.target.value)} placeholder="Email" className="w-full rounded-xl border border-[#d8c8b6] bg-white px-4 py-3 text-[#2f261d] placeholder:text-[#9a7a59] outline-none focus:ring-2 focus:ring-[#2f261d]/20" required />
                       </div>
                       <div className="sm:col-span-2 rounded-xl border border-[#d8c8b6] bg-white/80 p-3">
-                        <label htmlFor="vendor-inquiry-location" className="mb-1 block text-sm font-semibold text-[#4b3a2c]">Wedding location</label>
+                        <label htmlFor="vendor-inquiry-location" className="mb-1 block text-sm font-semibold text-[#4b3a2c]">Location</label>
                         <input id="vendor-inquiry-location" value={form.venueLocation} onChange={(e) => updateInquiryField('venueLocation', e.target.value)} placeholder="City, state, venue area, or destination" className="w-full rounded-xl border border-[#d8c8b6] bg-white px-4 py-3 text-[#2f261d] placeholder:text-[#9a7a59] outline-none focus:ring-2 focus:ring-[#2f261d]/20" />
                       </div>
                       <div>
-                        <label htmlFor="vendor-inquiry-venue" className="mb-1 block text-sm font-medium text-[#4b3a2c]">Venue name</label>
-                        <input id="vendor-inquiry-venue" value={form.venueName} onChange={(e) => updateInquiryField('venueName', e.target.value)} placeholder="Venue name" className="w-full rounded-xl border border-[#d8c8b6] bg-white px-4 py-3 text-[#2f261d] placeholder:text-[#9a7a59] outline-none focus:ring-2 focus:ring-[#2f261d]/20" />
+                        <label htmlFor="vendor-inquiry-venue" className="mb-1 block text-sm font-medium text-[#4b3a2c]">Venue</label>
+                        <input id="vendor-inquiry-venue" value={form.venueName} onChange={(e) => updateInquiryField('venueName', e.target.value)} placeholder="Venue" className="w-full rounded-xl border border-[#d8c8b6] bg-white px-4 py-3 text-[#2f261d] placeholder:text-[#9a7a59] outline-none focus:ring-2 focus:ring-[#2f261d]/20" />
                       </div>
                       <div>
-                        <label htmlFor="vendor-inquiry-date" className="mb-1 block text-sm font-medium text-[#4b3a2c]">Wedding date</label>
+                        <label htmlFor="vendor-inquiry-date" className="mb-1 block text-sm font-medium text-[#4b3a2c]">Date</label>
                         <input id="vendor-inquiry-date" type="date" value={form.weddingDate} onChange={(e) => updateInquiryField('weddingDate', e.target.value)} className="w-full rounded-xl border border-[#d8c8b6] bg-white px-4 py-3 text-[#2f261d] outline-none focus:ring-2 focus:ring-[#2f261d]/20" />
                       </div>
                     </>
                   )}
                   <div className="sm:col-span-2">
-                    <label htmlFor="vendor-inquiry-message" className="mb-1 block text-sm font-semibold text-[#4b3a2c]">Your note</label>
-                    <textarea id="vendor-inquiry-message" value={form.message} onChange={(e) => updateInquiryField('message', e.target.value)} placeholder="Share style, timing, guest count, budget notes, or questions." className="min-h-[150px] w-full rounded-xl border border-[#d8c8b6] bg-white px-4 py-3 text-[#2f261d] placeholder:text-[#9a7a59] outline-none focus:ring-2 focus:ring-[#2f261d]/20" required />
+                    <label htmlFor="vendor-inquiry-message" className="mb-1 block text-sm font-semibold text-[#4b3a2c]">Note</label>
+                    <textarea id="vendor-inquiry-message" value={form.message} onChange={(e) => updateInquiryField('message', e.target.value)} placeholder="Share schedule, guest count, style, budget, or questions." className="min-h-[150px] w-full rounded-xl border border-[#d8c8b6] bg-white px-4 py-3 text-[#2f261d] placeholder:text-[#9a7a59] outline-none focus:ring-2 focus:ring-[#2f261d]/20" required />
                   </div>
                   <button disabled={sending} className="sm:col-span-2 rounded-xl bg-[#2f261d] px-5 py-4 text-base font-semibold text-white hover:bg-[#4b3a2c] disabled:opacity-60">
                     {sending ? 'Sending…' : nextStepCopy}
@@ -664,7 +661,7 @@ export const VendorProfilePage: React.FC = () => {
             {hasDirectEmail && (
               <div className="rounded-xl bg-white/8 border border-white/10 p-4 sm:p-5 space-y-3 h-full">
                 <p className="text-xs font-semibold text-[#d8c4ad]">Prefer your inbox?</p>
-                <p className="text-sm text-[#efe4d8] leading-6">Use this if you would rather write from your own inbox.</p>
+                <p className="text-sm text-[#efe4d8] leading-6">Write from your email instead.</p>
                 <div className="grid gap-3">
                   <a
                     href={directEmailSubjectHref}

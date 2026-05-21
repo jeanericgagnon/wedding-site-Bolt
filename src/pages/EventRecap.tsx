@@ -62,6 +62,18 @@ type RecapData = {
   chapters: Array<{ date: string; count: number; highlights: RecapCard[] }>;
 };
 
+export function buildEventRecapMomentAnchor(cardId: string): string {
+  const normalized = cardId.trim().replace(/[^A-Za-z0-9_-]+/g, '-').replace(/^-+|-+$/g, '');
+  return `moment-${normalized || 'shared'}`;
+}
+
+function buildEventRecapShareUrl(slug: string, card?: RecapCard): string {
+  const baseUrl = typeof window !== 'undefined'
+    ? `${window.location.origin}/event/${encodeURIComponent(slug)}/recap`
+    : `https://dayof.love/event/${encodeURIComponent(slug)}/recap`;
+  return card ? `${baseUrl}#${buildEventRecapMomentAnchor(card.id)}` : baseUrl;
+}
+
 export function buildDemoEventRecapData(slug: string, searchParams: URLSearchParams): RecapData | null {
   if (!searchParams.has('photoMemoryFlowQa')) return null;
 
@@ -145,14 +157,27 @@ export function buildDemoEventRecapData(slug: string, searchParams: URLSearchPar
 
 const normalizeSiteRef = (value?: string) => (value ?? '').trim().toLowerCase();
 
-const formatRecapChapterDate = (value: string) => {
+export const formatRecapChapterDate = (value: string) => {
   const normalized = value.trim().toLowerCase();
   if (!normalized || normalized === 'unknown' || normalized === 'undated' || normalized === 'null') {
     return 'Undated moments';
   }
 
-  const parsed = new Date(`${value}T00:00:00`);
-  if (Number.isNaN(parsed.getTime())) {
+  const dateOnlyMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(normalized);
+  if (!dateOnlyMatch) {
+    return 'Undated moments';
+  }
+
+  const year = Number(dateOnlyMatch[1]);
+  const month = Number(dateOnlyMatch[2]);
+  const day = Number(dateOnlyMatch[3]);
+  const parsed = new Date(year, month - 1, day);
+  if (
+    Number.isNaN(parsed.getTime())
+    || parsed.getFullYear() !== year
+    || parsed.getMonth() !== month - 1
+    || parsed.getDate() !== day
+  ) {
     return 'Undated moments';
   }
 
@@ -332,9 +357,7 @@ export const EventRecap: React.FC = () => {
       requestSlug === slug &&
       requestSearchParams === searchParams.toString()
     );
-    const url = typeof window !== 'undefined'
-      ? `${window.location.origin}/event/${encodeURIComponent(slug)}/recap`
-      : `https://dayof.love/event/${encodeURIComponent(slug)}/recap`;
+    const url = buildEventRecapShareUrl(slug, card);
     const title = card ? `${coupleLabel} wedding moment` : `${coupleLabel} wedding recap`;
     const text = card?.caption || card?.note || `Relive ${coupleLabel}'s wedding moments on dayof.`;
     try {
@@ -553,7 +576,7 @@ export const EventRecap: React.FC = () => {
         </div>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {recap.highlights.slice(0, 12).map((card) => (
-            <article key={card.id} className="overflow-hidden rounded-xl border border-neutral-200 bg-white">
+            <article key={card.id} id={buildEventRecapMomentAnchor(card.id)} className="scroll-mt-6 overflow-hidden rounded-xl border border-neutral-200 bg-white">
               {card.imageUrl && card.mimeType?.startsWith('image/') ? (
                 <img src={card.imageUrl} alt={card.caption || card.filename} className="aspect-[4/3] w-full object-cover" loading="lazy" />
               ) : (

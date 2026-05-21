@@ -162,6 +162,17 @@ function makeBaseProps(overrides: Partial<RegistryDashboardRouteContentProps> = 
 }
 
 describe('RegistryDashboardRouteContent', () => {
+  it('keeps registry filter tabs inside a mobile-safe horizontal rail', () => {
+    render(<RegistryDashboardRouteContent {...makeBaseProps()} />);
+
+    const filterRail = screen.getByLabelText('Registry filters');
+
+    expect(filterRail).toHaveClass('max-w-full', 'overflow-x-auto');
+    expect(filterRail.firstElementChild).toHaveClass('min-w-max');
+    expect(screen.getByRole('button', { name: /available/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /purchased/i })).toBeInTheDocument();
+  });
+
   it('ignores stale guest registry link copy completion after the site slug changes', async () => {
     let resolveCopy: (value: 'copied') => void = () => {};
     vi.spyOn(copyTextModule, 'copyTextOrDownload').mockReturnValueOnce(new Promise((resolve) => {

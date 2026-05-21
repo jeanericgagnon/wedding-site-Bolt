@@ -7,6 +7,7 @@ import { supabase } from '../../lib/supabase';
 import { readBuilderValue } from '../../lib/weddingProfile';
 import { buildCoupleDisplayName } from '../../lib/coupleDisplayName';
 import { buildPublicAccessArtifacts } from '../../lib/publicAccessArtifacts';
+import { getPublicSiteSlugFromLocation } from './publicSitePath';
 
 interface Props {
   data: WeddingDataV1;
@@ -180,7 +181,7 @@ export const RsvpSection: React.FC<Props> = ({ data, instance }) => {
   const location = useLocation();
   const { rsvp } = data;
   const { settings } = instance;
-  const siteSlug = useMemo(() => location.pathname.split('/site/')[1] ?? '', [location.pathname]);
+  const siteSlug = useMemo(() => getPublicSiteSlugFromLocation(location.pathname, window.location.hostname), [location.pathname]);
   const searchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
   const deadline = formatDeadline(rsvp.deadlineISO);
   const sectionTitle = readBuilderValue(settings.title as string | { value: string } | undefined, 'RSVP').trim() || 'RSVP';
@@ -239,7 +240,7 @@ export const RsvpInline: React.FC<Props> = ({ data, instance }) => {
   const location = useLocation();
   const { rsvp, couple } = data;
   const { settings } = instance;
-  const siteSlug = useMemo(() => location.pathname.split('/site/')[1] ?? '', [location.pathname]);
+  const siteSlug = useMemo(() => getPublicSiteSlugFromLocation(location.pathname, window.location.hostname), [location.pathname]);
   const searchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
   const deadline = formatDeadline(rsvp.deadlineISO);
   const sectionTitle = readBuilderValue(settings.title as string | { value: string } | undefined, 'RSVP').trim() || 'RSVP';

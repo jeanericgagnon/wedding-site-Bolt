@@ -57,6 +57,7 @@ export const DashboardPlanning: React.FC = () => {
   const [activeSiteRole, setActiveSiteRole] = useState<PlannerAccessRole>('owner');
   const [planningPermissions, setPlanningPermissions] = useState<PlannerPermissionKey[] | null>(null);
   const starterSuiteQaRunId = searchParams.get('starterSuiteQa') ?? '';
+  const loadAllRequestIdRef = useRef(0);
   const previousUserIdRef = useRef<string | null>(null);
   const previousSiteIdRef = useRef<string | null>(null);
   const { toast } = useToast();
@@ -151,6 +152,8 @@ export const DashboardPlanning: React.FC = () => {
   }, [isDemoMode, loading, totalBudget, tasks, budgetItems, vendors, vendorMeta]);
 
   async function loadAll() {
+    const requestId = ++loadAllRequestIdRef.current;
+    const isCurrentLoad = () => requestId === loadAllRequestIdRef.current;
     try {
       setLoading(true);
       if (isDemoMode) {
@@ -198,6 +201,7 @@ export const DashboardPlanning: React.FC = () => {
       }
 
       const id = await getWeddingSiteId();
+      if (!isCurrentLoad()) return;
       if (!id) {
         previousSiteIdRef.current = null;
         resetPlanningDashboardState();
@@ -210,6 +214,7 @@ export const DashboardPlanning: React.FC = () => {
       setSiteId(id);
       if (user) {
         const activeSite = await resolveActiveSiteForUser(user.id);
+        if (!isCurrentLoad()) return;
         if (activeSite?.id === id) {
           setActiveSiteRole(activeSite.role);
           setPlanningRole(activeSite.role);
@@ -219,6 +224,7 @@ export const DashboardPlanning: React.FC = () => {
       const storedRole = readPlannerAccessRole('planning', id);
       if (storedRole) setPlanningRole(storedRole);
       const wDate = await getWeddingDate();
+      if (!isCurrentLoad()) return;
       setWeddingDate(wDate);
 
       const [tasksData, budgetData, vendorsData, siteMeta, guestCountResult] = await Promise.all([
@@ -228,6 +234,7 @@ export const DashboardPlanning: React.FC = () => {
         loadPlanningSiteMeta(id),
         loadPlanningGuestCount(id),
       ]);
+      if (!isCurrentLoad()) return;
       setTasks(tasksData);
       setBudgetItems(budgetData);
       setVendors(vendorsData);
@@ -237,9 +244,11 @@ export const DashboardPlanning: React.FC = () => {
       setTotalBudget(siteMeta.totalBudget);
       setVendorMeta(siteMeta.vendorMeta);
 
-      await loadSeatingReadiness(id);
+      await loadSeatingReadiness(id, isCurrentLoad);
+      if (!isCurrentLoad()) return;
 
       const workspace = await loadNameChangeWorkspace(id);
+      if (!isCurrentLoad()) return;
       if (workspace.caseRecord) {
         const hydrated = hydrateLoadedNameChangeWorkspace(workspace);
         hydrateNameChangeWorkspace(hydrated);
@@ -259,17 +268,20 @@ export const DashboardPlanning: React.FC = () => {
         });
       }
     } catch {
+      if (!isCurrentLoad()) return;
       previousSiteIdRef.current = null;
       resetPlanningDashboardState();
       toast('Couldn’t load planning data right now. Please try again.', 'error');
     } finally {
-      setLoading(false);
+      if (isCurrentLoad()) setLoading(false);
     }
   }
 
-  async function loadSeatingReadiness(id: string) {
+  async function loadSeatingReadiness(id: string, isCurrentLoad: () => boolean = () => true) {
     try {
-      setSeatingReadiness(await loadPlanningSeatingReadiness(id));
+      const nextSeatingReadiness = await loadPlanningSeatingReadiness(id);
+      if (!isCurrentLoad()) return;
+      setSeatingReadiness(nextSeatingReadiness);
     } catch {
     }
   }

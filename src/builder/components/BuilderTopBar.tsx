@@ -40,8 +40,9 @@ import {
 import { selectUndoRedo, selectIsPreviewMode, selectPublishStatus, selectIsDirty } from '../state/builderSelectors';
 import { SITE_VISIBILITY_COPY } from '../../lib/siteVisibilityState';
 import { copyTextOrDownload } from '../../lib/copyText';
-import type { BuilderSectionInstance } from '../../types/builder/section';
+import type { BuilderSectionInstance, BuilderSectionType } from '../../types/builder/section';
 import { isSectionAnchorRedundantWithPage, normalizePageAnchorSlug, normalizeSectionAnchorId } from '../utils/sectionAnchors';
+import { TEMPLATE_PAGE_GROUPS } from '../constants/templatePageGroups';
 
 type PublicLinkBuilderPage = {
   id?: string | null;
@@ -200,6 +201,7 @@ export function summarizeBuilderPageStructure(pages: PublicLinkBuilderPageWithSe
   const mode = visiblePageCount > 1 ? 'multi-page' : 'single-page';
   const pageLabel = `${visiblePageCount} visible page${visiblePageCount === 1 ? '' : 's'}`;
   const anchorLabel = `${anchorLinkCount} anchor${anchorLinkCount === 1 ? '' : 's'}`;
+  const hiddenLabel = hiddenPageCount > 0 ? ` · ${hiddenPageCount} hidden` : '';
 
   return {
     pageCount: pages.length,
@@ -207,8 +209,26 @@ export function summarizeBuilderPageStructure(pages: PublicLinkBuilderPageWithSe
     hiddenPageCount,
     anchorLinkCount,
     mode,
-    label: `${mode === 'multi-page' ? 'Multi-page' : 'Single page'} · ${pageLabel} · ${anchorLabel}`,
+    label: `${mode === 'multi-page' ? 'Multi-page' : 'Single page'} · ${pageLabel} · ${anchorLabel}${hiddenLabel}`,
   };
+}
+
+export function getSuggestedBuilderPages(pages: Array<Pick<PublicLinkBuilderPage, 'id' | 'slug' | 'title' | 'meta'>>): Array<{ title: string; slug: string; initialSectionType?: BuilderSectionType }> {
+  const existingSlugs = new Set(
+    pages
+      .map((page) => normalizeBuilderPageSlug(page.slug) || normalizeBuilderPageSlug(page.id ?? '') || normalizeBuilderPageSlug(page.title))
+      .filter(Boolean)
+  );
+  const existingTitles = new Set(
+    pages
+      .map((page) => normalizeBuilderPageSlug(page.title))
+      .filter(Boolean)
+  );
+
+  return TEMPLATE_PAGE_GROUPS
+    .filter((group) => !group.isHome)
+    .filter((group) => !existingSlugs.has(group.slug) && !existingTitles.has(group.slug))
+    .map((group) => ({ title: group.title, slug: group.slug, initialSectionType: group.sectionTypes[0] }));
 }
 
 function toValidTopBarDate(iso: string): Date | null {
@@ -270,6 +290,7 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
   const activePage = projectPages.find((p) => p.id === state.activePageId) ?? null;
   const visibleProjectPages = React.useMemo(() => projectPages.filter((page) => page.meta.isHidden !== true), [projectPages]);
   const pageStructureSummary = React.useMemo(() => summarizeBuilderPageStructure(projectPages), [projectPages]);
+  const suggestedBuilderPages = React.useMemo(() => getSuggestedBuilderPages(projectPages), [projectPages]);
   const {
     hasHardPublishBlocker,
     effectivePublishValidationError,
@@ -409,6 +430,7 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
       <button
         type="button"
         onClick={() => setShowPageManager(true)}
+        aria-label={`Manage pages: ${pageStructureSummary.label}`}
         className="inline-flex items-center gap-1.5 rounded-xl border border-gray-200 bg-gray-50 px-2.5 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-100"
         title={pageStructureSummary.label}
       >
@@ -856,9 +878,9 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
           <div className="flex items-center justify-between mb-3">
             <div>
               <h3 className="text-sm font-semibold text-gray-900">Pages</h3>
-              <p className="text-[11px] text-gray-500 mt-1">{pageStructureSummary.label}{pageStructureSummary.hiddenPageCount > 0 ? ` · ${pageStructureSummary.hiddenPageCount} hidden` : ''}</p>
+              <p className="text-[11px] text-gray-500 mt-1">{pageStructureSummary.label}</p>
             </div>
-            <button type="button" onClick={() => setShowPageManager(false)} className="rounded border border-gray-200 px-2 py-1 text-xs text-gray-600 hover:bg-gray-50">Close</button>
+            <button type="button" onClick={() => setShowPageManager(false)} aria-label="Close pages manager" className="rounded border border-gray-200 px-2 py-1 text-xs text-gray-600 hover:bg-gray-50">Close</button>
           </div>
 
           <div className="flex items-center gap-2 mb-3">
@@ -866,6 +888,7 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
               value={newPageTitle}
               onChange={(e) => setNewPageTitle(e.target.value)}
               placeholder="Page name"
+              aria-label="New page name"
               className="flex-1 rounded border border-gray-200 px-3 py-2 text-sm"
             />
             <button
@@ -880,6 +903,23 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
               Add page
             </button>
           </div>
+          {suggestedBuilderPages.length > 0 && (
+            <div className="mb-3 flex flex-wrap items-center gap-1.5">
+              <span className="text-[11px] text-gray-500">Quick add</span>
+              {suggestedBuilderPages.map((page) => (
+                <button
+                  key={page.slug}
+                  type="button"
+                  onClick={() => dispatch(builderActions.addPage(page.title, page.initialSectionType))}
+                  aria-label={`Quick add ${page.title} page${page.initialSectionType ? ` with ${getSectionManifest(page.initialSectionType).label}` : ''}`}
+                  title={`Create /${page.slug}${page.initialSectionType ? ` with a ${getSectionManifest(page.initialSectionType).label} section` : ''}`}
+                  className="rounded border border-gray-200 bg-gray-50 px-2 py-1 text-[11px] font-medium text-gray-600 hover:bg-white"
+                >
+                  {page.title}
+                </button>
+              ))}
+            </div>
+          )}
 
           <div className="max-h-[50vh] overflow-y-auto border border-gray-200 rounded-xl divide-y divide-gray-100">
             {projectPages.map((page, idx) => {
@@ -914,12 +954,14 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
                         const title = e.target.value;
                         dispatch(builderActions.updatePage(page.id, { title, slug: slugifyPage(title) || pageSlugValue }));
                       }}
+                      aria-label={`Page title for ${pageActionLabel}`}
                       className="flex-1 min-w-0 bg-transparent text-sm font-medium text-gray-800 outline-none"
                       placeholder="Page title"
                     />
                     <button
                       type="button"
                       onClick={() => dispatch(builderActions.setActivePage(page.id))}
+                      aria-label={state.activePageId === page.id ? `${pageActionLabel} is the current editing page` : `Edit ${pageActionLabel} page`}
                       className={`rounded px-2 py-1 text-[11px] font-medium ${state.activePageId === page.id ? 'bg-[var(--color-accent)] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
                     >
                       {state.activePageId === page.id ? 'Current' : 'Edit'}
@@ -931,6 +973,7 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
                       value={pageSlugValue}
                       onChange={(e) => dispatch(builderActions.updatePage(page.id, { slug: slugifyPage(e.target.value) || pageSlugValue }))}
                       disabled={page.meta.isHome}
+                      aria-label={`Public URL slug for ${pageActionLabel}`}
                       className="bg-transparent outline-none flex-1 min-w-0 disabled:cursor-not-allowed disabled:text-gray-400"
                       placeholder="page-slug"
                     />
@@ -1035,6 +1078,7 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
                   type="button"
                   onClick={() => dispatch(builderActions.updatePage(page.id, { meta: { ...page.meta, isHidden: !page.meta.isHidden } }))}
                   disabled={page.meta.isHome}
+                  aria-label={page.meta.isHome ? 'Home page is visible in guest navigation' : page.meta.isHidden ? `Show ${pageActionLabel} in navigation` : `Hide ${pageActionLabel} from navigation`}
                   title={page.meta.isHome ? 'Home stays visible as the guest-facing root page' : undefined}
                   className="rounded border border-gray-200 px-2 py-1 text-[11px] text-gray-600 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
                 >

@@ -1,11 +1,15 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { TEMPLATE_USAGE_RETENTION_MS, buildTemplateUsageStorageKey, bumpTemplateUsage, readTemplateUsage } from './templateUsageStorage';
 import {
   buildTemplatePageInstances,
   describeTemplateApplyPageMode,
   getRecommendedTemplateApplyPageMode,
   summarizeCollapsedTemplateAnchors,
+  summarizeDedicatedTemplateRoutes,
   summarizeSinglePageTemplateSections,
+  summarizeTemplateGuestDestinations,
   summarizeTemplatePages,
   templateMatchesPageStructure,
 } from './TemplateGalleryPanel';
@@ -73,12 +77,38 @@ describe('TemplateGalleryPanel template usage storage', () => {
 });
 
 describe('summarizeTemplatePages', () => {
+  it('keeps fast discovery chips wired to searchable template metadata', () => {
+    const source = readFileSync(join(process.cwd(), 'src/builder/components/TemplateGalleryPanel.tsx'), 'utf8');
+
+    expect(source).toContain('TEMPLATE_QUICK_SEARCHES');
+    expect(source).toContain('Fast find');
+    expect(source).toContain('searchTokens.every');
+    expect(source).toContain('t.structureFocus');
+    expect(source).toContain('TEMPLATE_READINESS_LABELS');
+    expect(source).toContain('templateCatalogSummary');
+    expect(source).toContain('activeReadinessFilter');
+    expect(source).toContain('TEMPLATE_SORT_OPTIONS');
+    expect(source).toContain('activeSort');
+    expect(source).toContain('readSetupDraft');
+    expect(source).toContain('getRecommendedTemplateMatches');
+    expect(source).toContain('recommendedTemplateReasonById');
+    expect(source).toContain('catalogItem?.readinessLabel');
+    expect(source).toContain('catalogItem?.pageBlueprints');
+    expect(source).toContain('guest-ready');
+    expect(source).toContain('Most pages');
+    expect(source).toContain('Launch readiness');
+    expect(source).toContain('Page blueprint');
+    expect(source).toContain('Still refine');
+    expect(source).toContain('catalogItem.readinessGaps');
+  });
+
   it('summarizes template page structure for compare and confirm surfaces', () => {
     const template = getTemplatePack('modern-luxe');
 
     expect(template).toBeTruthy();
     expect(summarizeTemplatePages(template!)).toEqual([
-      'Home: Hero, Our Story, Venue + 2 more',
+      'Home: Hero, Our Story, Venue + 1 more',
+      'Schedule: Schedule',
       'Travel: Travel & Hotels',
       'RSVP: RSVP, FAQ',
       'Registry: Registry',
@@ -100,9 +130,18 @@ describe('summarizeTemplatePages', () => {
 
     expect(template).toBeTruthy();
     expect(getRecommendedTemplateApplyPageMode(template!)).toBe('multi');
-    expect(describeTemplateApplyPageMode(template!, 'multi')).toBe('4 dedicated pages');
+    expect(describeTemplateApplyPageMode(template!, 'multi')).toBe('5 dedicated pages');
     expect(describeTemplateApplyPageMode(template!, 'single')).toBe('One page with anchor sections');
-    expect(summarizeCollapsedTemplateAnchors(template!)).toEqual(['#travel', '#rsvp', '#registry']);
+    expect(summarizeCollapsedTemplateAnchors(template!)).toEqual(['#schedule', '#travel', '#rsvp', '#registry']);
+    expect(summarizeDedicatedTemplateRoutes(template!)).toEqual(['/', '/schedule', '/travel', '/rsvp', '/registry']);
+    expect(summarizeTemplateGuestDestinations(template!, 'multi')).toEqual({
+      label: 'Guest URLs',
+      destinations: ['/', '/schedule', '/travel', '/rsvp', '/registry'],
+    });
+    expect(summarizeTemplateGuestDestinations(template!, 'single')).toEqual({
+      label: 'Anchor links',
+      destinations: ['#schedule', '#travel', '#rsvp', '#registry'],
+    });
 
     const singlePage = buildTemplatePageInstances(template!, [], 'single');
     const multiPage = buildTemplatePageInstances(template!, [], 'multi');
@@ -110,11 +149,23 @@ describe('summarizeTemplatePages', () => {
     expect(singlePage).toHaveLength(1);
     expect(singlePage[0].slug).toBe('home');
     expect(singlePage[0].sections).toHaveLength(template!.sectionComposition.length);
+    expect(singlePage[0].sections.map((section) => section.type)).toEqual([
+      'hero',
+      'story',
+      'venue',
+      'schedule',
+      'travel',
+      'rsvp',
+      'gallery',
+      'registry',
+      'faq',
+    ]);
+    expect(singlePage[0].sections.find((section) => section.type === 'schedule')?.settings.anchorId).toBe('schedule');
     expect(singlePage[0].sections.find((section) => section.type === 'travel')?.settings.anchorId).toBe('travel');
     expect(singlePage[0].sections.find((section) => section.type === 'rsvp')?.settings.anchorId).toBe('rsvp');
     expect(singlePage[0].sections.find((section) => section.type === 'registry')?.settings.anchorId).toBe('registry');
-    expect(multiPage.map((page) => page.slug)).toEqual(['home', 'travel', 'rsvp', 'registry']);
-    expect(multiPage[0].sections.find((section) => section.type === 'schedule')?.settings.anchorId).toBe('schedule');
+    expect(multiPage.map((page) => page.slug)).toEqual(['home', 'schedule', 'travel', 'rsvp', 'registry']);
+    expect(multiPage.find((page) => page.slug === 'schedule')?.sections[0]?.settings.anchorId).toBeUndefined();
     expect(multiPage.find((page) => page.slug === 'travel')?.sections[0]?.settings.anchorId).toBeUndefined();
     expect(multiPage.find((page) => page.slug === 'rsvp')?.sections[0]?.settings.anchorId).toBeUndefined();
   });
@@ -143,6 +194,7 @@ describe('summarizeTemplatePages', () => {
     };
 
     expect(summarizeCollapsedTemplateAnchors(template)).toEqual(['#travel-info', '#travel-info-2']);
+    expect(summarizeDedicatedTemplateRoutes(template)).toEqual(['/', '/travel-info', '/travel-info-2']);
 
     const singlePage = buildTemplatePageInstances(template, [], 'single');
     const multiPage = buildTemplatePageInstances(template, [], 'multi');
@@ -220,5 +272,18 @@ describe('summarizeTemplatePages', () => {
     ], 'single');
 
     expect(pages[0].sections.find((section) => section.type === 'travel')?.settings.anchorId).toBe('travel');
+  });
+
+  it('summarizes new launch templates as multi-page guest experiences', () => {
+    const template = getTemplatePack('coastal-weekend');
+
+    expect(template).toBeTruthy();
+    expect(summarizeDedicatedTemplateRoutes(template!)).toEqual(['/', '/schedule', '/travel', '/rsvp']);
+    expect(summarizeTemplatePages(template!)).toEqual([
+      'Home: Hero, Venue, Gallery',
+      'Schedule: Schedule',
+      'Travel: Travel & Hotels, Accommodations, Directions',
+      'RSVP: RSVP, FAQ',
+    ]);
   });
 });

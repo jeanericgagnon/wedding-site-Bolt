@@ -6,6 +6,7 @@ import { useToast } from '../../../components/ui/Toast';
 import { PlanningBudgetItem, PlanningVendor } from './planningService';
 import { buildBudgetQuickCheck } from '../../../lib/invisibleIntelligence';
 import { budgetVendorLedgerToCsv, buildBudgetPaymentReview, buildBudgetVendorLedgerReadiness, buildBudgetVendorReconciliation } from '../../../lib/budgetVendorLedgerReadiness';
+import { downloadTextFile } from '../../../lib/copyText';
 import type { VendorMetaMap } from './vendorMetaStorage';
 
 interface Props {
@@ -198,6 +199,8 @@ export const BudgetTab: React.FC<Props> = ({ items, vendors, vendorMeta = {}, to
   const budgetAutoSaveTimer = useRef<number | null>(null);
   const latestBudgetInputRef = useRef<number>(totalBudget || 0);
   const latestBudgetSaveRequestRef = useRef(0);
+  const canEditRef = useRef(canEdit);
+  canEditRef.current = canEdit;
 
   useEffect(() => {
     setBudgetInput(totalBudget || 0);
@@ -205,6 +208,12 @@ export const BudgetTab: React.FC<Props> = ({ items, vendors, vendorMeta = {}, to
   }, [totalBudget]);
 
   useEffect(() => {
+    if (!canEdit) {
+      if (budgetAutoSaveTimer.current) window.clearTimeout(budgetAutoSaveTimer.current);
+      latestBudgetSaveRequestRef.current += 1;
+      setBudgetSaving(false);
+      return;
+    }
     if (budgetInput === (totalBudget || 0)) return;
 
     latestBudgetInputRef.current = budgetInput;
@@ -215,19 +224,20 @@ export const BudgetTab: React.FC<Props> = ({ items, vendors, vendorMeta = {}, to
       const pendingBudgetValue = budgetInput;
       setBudgetSaving(true);
       try {
+        if (!canEditRef.current) return;
         await onTotalBudgetChange(pendingBudgetValue);
-        if (latestBudgetInputRef.current === pendingBudgetValue) {
+        if (canEditRef.current && latestBudgetInputRef.current === pendingBudgetValue) {
           setBudgetSavedAt(Date.now());
         }
       } catch {
-        if (latestBudgetInputRef.current === pendingBudgetValue) {
+        if (canEditRef.current && latestBudgetInputRef.current === pendingBudgetValue) {
           setBudgetSavedAt(null);
         }
-        if (latestBudgetSaveRequestRef.current === saveRequestId) {
+        if (canEditRef.current && latestBudgetSaveRequestRef.current === saveRequestId) {
           toast('Couldn’t save the budget goal right now.', 'error');
         }
       } finally {
-        if (latestBudgetSaveRequestRef.current === saveRequestId) {
+        if (canEditRef.current && latestBudgetSaveRequestRef.current === saveRequestId) {
           setBudgetSaving(false);
         }
       }
@@ -236,7 +246,14 @@ export const BudgetTab: React.FC<Props> = ({ items, vendors, vendorMeta = {}, to
     return () => {
       if (budgetAutoSaveTimer.current) window.clearTimeout(budgetAutoSaveTimer.current);
     };
-  }, [budgetInput, totalBudget, onTotalBudgetChange, toast]);
+  }, [budgetInput, canEdit, totalBudget, onTotalBudgetChange, toast]);
+
+  useEffect(() => {
+    if (canEdit) return;
+    setShowAdd(false);
+    setEditingItem(null);
+    setPendingDeleteIds(new Set());
+  }, [canEdit]);
 
   const totalEstimated = items.reduce((s, i) => s + (i.estimated_amount || 0), 0);
   const totalActual = items.reduce((s, i) => s + (i.actual_amount || 0), 0);
@@ -279,23 +296,25 @@ export const BudgetTab: React.FC<Props> = ({ items, vendors, vendorMeta = {}, to
 
   function exportLedgerCsv() {
     const csv = budgetVendorLedgerToCsv({ budgetItems: items, vendors, vendorMeta });
-    const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `dayof-budget-vendor-ledger-${new Date().toISOString().slice(0, 10)}.csv`;
-    link.click();
-    URL.revokeObjectURL(url);
+    downloadTextFile(
+      `dayof-budget-vendor-ledger-${new Date().toISOString().slice(0, 10)}.csv`,
+      csv,
+      'text/csv;charset=utf-8',
+    );
   }
 
   async function handleDeleteItem(itemId: string) {
-    if (pendingDeleteIds.has(itemId)) return;
+    if (!canEditRef.current || pendingDeleteIds.has(itemId)) return;
 
     setPendingDeleteIds((current) => new Set(current).add(itemId));
     try {
+      if (!canEditRef.current) return;
       await onDelete(itemId);
     } catch {
+      if (!canEditRef.current) return;
       toast('Couldn’t delete that budget item right now.', 'error');
     } finally {
+      if (!canEditRef.current) return;
       setPendingDeleteIds((current) => {
         const next = new Set(current);
         next.delete(itemId);
@@ -573,7 +592,11 @@ export const BudgetTab: React.FC<Props> = ({ items, vendors, vendorMeta = {}, to
       {showAdd && (
         <BudgetForm
           vendors={vendors}
-          onSave={async (item) => { await onAdd(item); setShowAdd(false); }}
+          onSave={async (item) => {
+            if (!canEdit) return;
+            await onAdd(item);
+            setShowAdd(false);
+          }}
           onCancel={() => setShowAdd(false)}
         />
       )}
@@ -642,7 +665,11 @@ export const BudgetTab: React.FC<Props> = ({ items, vendors, vendorMeta = {}, to
                         <BudgetForm
                           initial={editingItem}
                           vendors={vendors}
-                          onSave={async (u) => { await onUpdate(item.id, u); setEditingItem(null); }}
+                          onSave={async (u) => {
+                            if (!canEdit) return;
+                            await onUpdate(item.id, u);
+                            setEditingItem(null);
+                          }}
                           onCancel={() => setEditingItem(null)}
                         />
                       ) : (

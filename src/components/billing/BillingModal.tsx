@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { X, Check, Sparkles, Loader2, AlertCircle } from 'lucide-react';
 import { Button } from '../ui';
 import { useAuth } from '../../hooks/useAuth';
@@ -34,8 +34,16 @@ export const BillingModal: React.FC<BillingModalProps> = ({ onClose, currentPlan
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const mountedRef = useRef(true);
+  const checkoutRequestIdRef = useRef(0);
+
+  useEffect(() => () => {
+    mountedRef.current = false;
+    checkoutRequestIdRef.current += 1;
+  }, []);
 
   useEffect(() => {
+    checkoutRequestIdRef.current += 1;
     setLoading(false);
     setError(null);
   }, [currentPlan, user?.id]);
@@ -46,10 +54,13 @@ export const BillingModal: React.FC<BillingModalProps> = ({ onClose, currentPlan
 
   const handleUpgrade = async () => {
     if (!user) return;
+    const requestId = ++checkoutRequestIdRef.current;
+    const isCurrentCheckout = () => mountedRef.current && requestId === checkoutRequestIdRef.current;
     setLoading(true);
     setError(null);
     try {
       const site = await resolveActiveSiteForUser(user.id);
+      if (!isCurrentCheckout()) return;
 
       if (!site?.id) throw new Error('No wedding site found. Complete setup first.');
 
@@ -59,6 +70,7 @@ export const BillingModal: React.FC<BillingModalProps> = ({ onClose, currentPlan
         `${origin}/payment/success?session_id={CHECKOUT_SESSION_ID}`,
         `${origin}/dashboard/overview`
       );
+      if (!isCurrentCheckout()) return;
       void logAppAction({
         weddingSiteId: site.id,
         area: 'billing',
@@ -72,6 +84,7 @@ export const BillingModal: React.FC<BillingModalProps> = ({ onClose, currentPlan
       });
       window.location.href = url;
     } catch (err) {
+      if (!isCurrentCheckout()) return;
       setError(safeBillingError(err));
       setLoading(false);
     }

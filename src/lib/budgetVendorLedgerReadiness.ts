@@ -138,10 +138,24 @@ function money(value: number | null | undefined): number {
   return Number.isFinite(Number(value)) ? Math.max(0, Number(value)) : 0;
 }
 
+function parseLocalDateOnly(dateValue: string | null | undefined): Date | null {
+  const normalized = dateValue?.trim().slice(0, 10);
+  if (!normalized) return null;
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(normalized);
+  if (!match) return null;
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  const date = new Date(year, month - 1, day);
+  if (Number.isNaN(date.getTime())) return null;
+  return date.getFullYear() === year && date.getMonth() === month - 1 && date.getDate() === day
+    ? date
+    : null;
+}
+
 function isOnOrBefore(dateValue: string | null | undefined, target: Date): boolean {
-  if (!dateValue) return false;
-  const date = new Date(`${dateValue.slice(0, 10)}T00:00:00`);
-  if (Number.isNaN(date.getTime())) return false;
+  const date = parseLocalDateOnly(dateValue);
+  if (!date) return false;
   return date <= target;
 }
 
@@ -174,8 +188,8 @@ function summarizeLinkedBudgetTiming(item: BudgetLedgerItem, today: Date, nextTw
   if (total <= 0) return 'Planned';
   if (open <= 0) return 'Covered';
   if (!item.due_date) return 'No due date';
-  const due = new Date(`${item.due_date.slice(0, 10)}T00:00:00`);
-  if (Number.isNaN(due.getTime())) return 'No due date';
+  const due = parseLocalDateOnly(item.due_date);
+  if (!due) return 'No due date';
   if (due < today) return 'Overdue';
   if (due <= nextTwoWeeks) return 'Due soon';
   return 'Upcoming';
@@ -474,9 +488,8 @@ export function budgetVendorLedgerToCsv(input: {
 
 function paymentStatus(dueDate: string | null | undefined, open: number, today: Date, nextTwoWeeks: Date): BudgetPaymentReviewStatus {
   if (open <= 0) return 'paid';
-  if (!dueDate) return 'open';
-  const due = new Date(`${dueDate.slice(0, 10)}T00:00:00`);
-  if (Number.isNaN(due.getTime())) return 'open';
+  const due = parseLocalDateOnly(dueDate);
+  if (!due) return 'open';
   if (due < today) return 'overdue';
   if (due <= nextTwoWeeks) return 'due-soon';
   return 'open';
@@ -607,7 +620,7 @@ export function buildBudgetVendorReconciliation(input: {
     if (contractTotal > 0 && comparisonTotal > 0 && contractGap >= 1) issues.push(`Contract differs from linked budget by ${money(contractGap).toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 })}`);
     if (vendorPaid > 0 && linkedPaidTotal > 0 && paidGap >= 1) issues.push(`Paid totals differ by ${money(paidGap).toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 })}`);
     if (openBalance > 0 && !hasContact) issues.push('Open balance has no saved email or phone');
-    if (openBalance > 0 && !vendor.next_payment_due) issues.push('Open balance has no saved due date');
+    if (openBalance > 0 && !parseLocalDateOnly(vendor.next_payment_due)) issues.push('Open balance has no saved due date');
     if (fileCount === 0) issues.push('No contract or invoice files saved');
     if (milestoneCount === 0 && openBalance > 0) issues.push('No payment milestones saved');
 
@@ -632,7 +645,7 @@ export function buildBudgetVendorReconciliation(input: {
   const contactReadyCount = input.vendors.filter((vendor) => Boolean(vendor.email || vendor.phone)).length;
   const dueDateReadyCount = input.vendors.filter((vendor) => {
     const openBalance = vendor.balance_due != null ? money(vendor.balance_due) : Math.max(0, money(vendor.contract_total) - money(vendor.amount_paid));
-    return openBalance <= 0 || Boolean(vendor.next_payment_due);
+    return openBalance <= 0 || Boolean(parseLocalDateOnly(vendor.next_payment_due));
   }).length;
   const milestoneReadyCount = rows.filter((row) => row.milestoneCount > 0).length;
   const fileReadyCount = rows.filter((row) => row.fileCount > 0).length;

@@ -13,4 +13,10 @@ describe('settings date guards', () => {
   it('keeps valid billing/invite dates truthful', () => {
     expect(formatSettingsDate('2026-06-21T18:30:00.000Z', { year: 'numeric', month: 'long', day: 'numeric' })).toBe('June 21, 2026');
   });
+
+  it('formats date-only settings dates as the saved local calendar day', () => {
+    const value = '2026-09-12';
+    expect(toValidSettingsDateOrNull(value)?.getTime()).toBe(new Date(2026, 8, 12).getTime());
+    expect(formatSettingsDate(value, { year: 'numeric', month: 'long', day: 'numeric' })).toBe('September 12, 2026');
+  });
 });

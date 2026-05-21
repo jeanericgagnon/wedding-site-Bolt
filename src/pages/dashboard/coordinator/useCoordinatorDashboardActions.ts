@@ -1,4 +1,4 @@
-import { useState, type Dispatch, type SetStateAction } from 'react';
+import { useEffect, useRef, useState, type Dispatch, type SetStateAction } from 'react';
 import type { CoordinatorGuestDoorRoute, GuestLiteForCoordinator } from '../../../lib/coordinatorTypes';
 import type { CoordinatorAlertForm } from '../../../lib/coordinatorAlertFlow';
 import { appendCoordinatorAlertLogItem, resolveCoordinatorScheduledFor } from '../../../lib/coordinatorAlertFlow';
@@ -48,6 +48,31 @@ type Args = {
 export function useCoordinatorDashboardActions(args: Args) {
   const [alertBusy, setAlertBusy] = useState(false);
   const [checkInBusyGuestId, setCheckInBusyGuestId] = useState<string | null>(null);
+  const coordinatorActionContextVersionRef = useRef(0);
+  const checkInRequestIdRef = useRef(0);
+  const alertRequestIdRef = useRef(0);
+  const qnaRequestIdRef = useRef(0);
+
+  useEffect(() => {
+    coordinatorActionContextVersionRef.current += 1;
+    checkInRequestIdRef.current += 1;
+    alertRequestIdRef.current += 1;
+    qnaRequestIdRef.current += 1;
+    setAlertBusy(false);
+    setCheckInBusyGuestId(null);
+  }, [
+    args.canCheckIn,
+    args.canEditQna,
+    args.canScheduleAlerts,
+    args.canSendAlerts,
+    args.currentDoorEventId,
+    args.isDemoMode,
+    args.siteId,
+  ]);
+
+  const isCurrentCoordinatorActionContext = (contextVersion: number) => (
+    contextVersion === coordinatorActionContextVersionRef.current
+  );
 
   const syncGuestCheckInState = (guestId: string, checkedInAt: string | null) => {
     args.setGuests((prev) => prev.map((guest) => {
@@ -109,22 +134,32 @@ export function useCoordinatorDashboardActions(args: Args) {
 
     args.focusCoordinatorQnaLane();
     const question = buildDoorRoutingPrompt(trimmedQuery, route);
+    const contextVersion = coordinatorActionContextVersionRef.current;
+    const requestId = ++qnaRequestIdRef.current;
+    const isCurrentQnaAction = () => (
+      isCurrentCoordinatorActionContext(contextVersion) &&
+      requestId === qnaRequestIdRef.current
+    );
 
     if (!args.isDemoMode && args.siteId) {
       try {
         const data = await createCoordinatorQnaQuestion(args.siteId, question);
+        if (!isCurrentQnaAction()) return;
         args.setQnaItems((prev) => [data, ...prev].slice(0, 30));
         args.setActiveQnaId(data.id);
       } catch {
+        if (!isCurrentQnaAction()) return;
         args.toast('Couldn’t route that door issue right now.', 'error');
         return;
       }
     } else {
+      if (!isCurrentQnaAction()) return;
       const item = { id: `${Date.now()}`, question, status: 'new' as const };
       args.setQnaItems((prev) => [item, ...prev].slice(0, 30));
       args.setActiveQnaId(item.id);
     }
 
+    if (!isCurrentQnaAction()) return;
     args.setQnaInput('');
     args.toast(`Unmatched arrival routed as ${route}.`, 'success');
   };
@@ -144,11 +179,18 @@ export function useCoordinatorDashboardActions(args: Args) {
       activeGuestId: guest.id,
       removeActiveGuest: removesFromCurrentQueue,
     });
+    const contextVersion = coordinatorActionContextVersionRef.current;
+    const requestId = ++checkInRequestIdRef.current;
+    const isCurrentCheckInAction = () => (
+      isCurrentCoordinatorActionContext(contextVersion) &&
+      requestId === checkInRequestIdRef.current
+    );
 
     setCheckInBusyGuestId(guest.id);
 
     try {
       if (args.isDemoMode) {
+        if (!isCurrentCheckInAction()) return;
         syncGuestCheckInState(guest.id, next);
         args.setActiveGuestId(nextFocusGuestId);
         args.toast(next ? 'Guest checked in. Door focus moved to the next guest.' : 'Guest moved back to arrivals.', 'success');
@@ -167,16 +209,19 @@ export function useCoordinatorDashboardActions(args: Args) {
           }),
           refresh: refreshCoordinatorSession,
         });
+        if (!isCurrentCheckInAction()) return;
       } catch {
+        if (!isCurrentCheckInAction()) return;
         args.toast('Couldn’t update check-in right now.', 'error');
         return;
       }
 
+      if (!isCurrentCheckInAction()) return;
       syncGuestCheckInState(guest.id, next);
       args.setActiveGuestId(nextFocusGuestId);
       args.toast(next ? 'Guest checked in. Door focus moved to the next guest.' : 'Guest moved back to arrivals.', 'success');
     } finally {
-      setCheckInBusyGuestId((current) => (current === guest.id ? null : current));
+      if (isCurrentCheckInAction()) setCheckInBusyGuestId((current) => (current === guest.id ? null : current));
     }
   };
 
@@ -196,6 +241,12 @@ export function useCoordinatorDashboardActions(args: Args) {
     }
     const scheduledFor = resolveCoordinatorScheduledFor(args.alertForm);
     const status = scheduledFor ? 'scheduled' : 'queued';
+    const contextVersion = coordinatorActionContextVersionRef.current;
+    const requestId = ++alertRequestIdRef.current;
+    const isCurrentAlertAction = () => (
+      isCurrentCoordinatorActionContext(contextVersion) &&
+      requestId === alertRequestIdRef.current
+    );
 
     setAlertBusy(true);
     try {
@@ -213,8 +264,10 @@ export function useCoordinatorDashboardActions(args: Args) {
           }),
           refresh: refreshCoordinatorSession,
         });
+        if (!isCurrentAlertAction()) return;
       }
 
+      if (!isCurrentAlertAction()) return;
       args.setAlertLog((prev) => appendCoordinatorAlertLogItem(prev, {
         id: `${Date.now()}`,
         subject: args.alertForm.subject.trim(),
@@ -233,9 +286,10 @@ export function useCoordinatorDashboardActions(args: Args) {
       });
       args.toast(scheduledFor ? 'Coordinator alert scheduled.' : 'Coordinator alert queued.', 'success');
     } catch {
+      if (!isCurrentAlertAction()) return;
       args.toast('Couldn’t prepare that update right now.', 'error');
     } finally {
-      setAlertBusy(false);
+      if (isCurrentAlertAction()) setAlertBusy(false);
     }
   };
 
@@ -249,6 +303,12 @@ export function useCoordinatorDashboardActions(args: Args) {
     if (!q) return;
 
     args.focusCoordinatorQnaLane();
+    const contextVersion = coordinatorActionContextVersionRef.current;
+    const requestId = ++qnaRequestIdRef.current;
+    const isCurrentQnaAction = () => (
+      isCurrentCoordinatorActionContext(contextVersion) &&
+      requestId === qnaRequestIdRef.current
+    );
 
     if (!args.isDemoMode && args.siteId) {
       try {
@@ -256,14 +316,18 @@ export function useCoordinatorDashboardActions(args: Args) {
           action: () => createCoordinatorQnaQuestion(args.siteId!, q),
           refresh: refreshCoordinatorSession,
         });
+        if (!isCurrentQnaAction()) return;
         args.setQnaItems((prev) => [data, ...prev].slice(0, 30));
       } catch {
+        if (!isCurrentQnaAction()) return;
         args.toast('Couldn’t save that guest question right now.', 'error');
         return;
       }
     } else {
+      if (!isCurrentQnaAction()) return;
       args.setQnaItems((prev) => [{ id: `${Date.now()}`, question: q, status: 'new' as const }, ...prev].slice(0, 30));
     }
+    if (!isCurrentQnaAction()) return;
     args.setQnaInput('');
   };
 

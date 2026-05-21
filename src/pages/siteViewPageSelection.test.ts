@@ -142,6 +142,12 @@ describe('siteViewPageSelection', () => {
     expect(buildPublicSitePageHref(' maya-leo ', { slug: 'travel', isHome: false })).toBe('/site/maya-leo/travel');
   });
 
+  it('builds root-mounted page hrefs for wedding subdomains', () => {
+    expect(buildPublicSitePageHref('maya-leo', { slug: 'home', isHome: true }, true)).toBe('/');
+    expect(buildPublicSitePageHref('maya-leo', { slug: 'travel', isHome: false }, true)).toBe('/travel');
+    expect(buildPublicSitePageHref('maya-leo', { slug: 'Travel Details!', isHome: false }, true)).toBe('/travel-details');
+  });
+
   it('normalizes and builds one-page section anchor hrefs', () => {
     expect(normalizePublicSectionAnchorId(' Registry Gifts! ')).toBe('registry-gifts');
     expect(normalizePublicSectionAnchorId({ value: 'Travel Info' })).toBe('travel-info');
@@ -149,5 +155,10 @@ describe('siteViewPageSelection', () => {
     expect(buildPublicSiteSectionAnchorHref('maya-leo', { anchorId: 'Travel Info!' })).toBe('/site/maya-leo#travel-info');
     expect(buildPublicSiteSectionAnchorHref(' maya-leo ', { anchorId: 'Travel Info!' })).toBe('/site/maya-leo#travel-info');
     expect(buildPublicSiteSectionAnchorHref('maya-leo', { anchorId: '!!!' })).toBe('/site/maya-leo');
+  });
+
+  it('builds root-mounted section anchor hrefs for wedding subdomains', () => {
+    expect(buildPublicSiteSectionAnchorHref('maya-leo', { anchorId: 'Travel Info!' }, true)).toBe('/#travel-info');
+    expect(buildPublicSiteSectionAnchorHref('maya-leo', { anchorId: '!!!' }, true)).toBe('/');
   });
 });

@@ -29,4 +29,10 @@ describe('guest photo upload timestamp guards', () => {
     expect(toGuestPhotoCsvTimestamp('2026-06-21T18:30:00.000Z')).toBe('2026-06-21T18:30:00.000Z');
     expect(getGuestPhotoSortTime('2026-06-21T18:30:00.000Z')).toBe(new Date('2026-06-21T18:30:00.000Z').getTime());
   });
+
+  it('formats date-only upload timestamps as the saved local calendar day', () => {
+    expect(formatGuestPhotoDate('2026-09-12')).toBe(new Date(2026, 8, 12).toLocaleDateString());
+    expect(formatGuestPhotoDateTime('2026-09-12')).toBe(new Date(2026, 8, 12).toLocaleString());
+    expect(toGuestPhotoCsvTimestamp('2026-09-12')).toBe(new Date(2026, 8, 12).toISOString());
+  });
 });

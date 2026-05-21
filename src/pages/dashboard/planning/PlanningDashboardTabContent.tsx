@@ -210,6 +210,7 @@ export function PlanningDashboardTabContent({
         <AddressCollectionTab
           siteId={siteId}
           isDemoMode={isDemoMode}
+          canEdit={canEditPlanningTasks(planningRole, planningPermissions)}
         />
       )}
       {activeTab === 'nameChange' && (

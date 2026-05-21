@@ -74,6 +74,20 @@ function sanitizeRegistryFormDraft(draft: RegistryItemDraft): RegistryItemDraft 
   };
 }
 
+function parseWholeQuantity(value: string | null | undefined, fallback: number): number {
+  const parsed = Number.parseInt(String(value ?? ''), 10);
+  return Number.isFinite(parsed) ? parsed : fallback;
+}
+
+function hasCashFundSharePath(draft: RegistryItemDraft): boolean {
+  return Boolean(
+    normalizeRegistryFormWebUrl(draft.fund_venmo_url)
+    || normalizeRegistryFormWebUrl(draft.fund_paypal_url)
+    || normalizeRegistryFormWebUrl(draft.fund_custom_url)
+    || String(draft.fund_zelle_handle ?? '').trim(),
+  );
+}
+
 function compactBarcodeProductMetadata(lookup: RegistryBarcodeLookupResult): Record<string, unknown> {
   return {
     barcode: lookup.normalized_barcode,
@@ -191,6 +205,15 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [],
   const missingPrice = missingFieldSet.has('price') || (!draft.price_amount.trim() && !draft.price_label.trim() && !!lastPreview);
   const missingImage = missingFieldSet.has('image') || (!draft.image_url.trim() && !!lastPreview);
   const missingMerchant = missingFieldSet.has('merchant') || (!draft.merchant.trim() && !!lastPreview);
+  const desiredQuantityValue = Math.max(1, parseWholeQuantity(draft.desired_quantity, 1));
+  const purchasedQuantityValue = Math.max(0, parseWholeQuantity(draft.quantity_purchased, 0));
+  const quantityError = draft.item_type !== 'cash_fund' && purchasedQuantityValue > desiredQuantityValue
+    ? 'Purchased so far cannot be greater than desired quantity.'
+    : null;
+  const cashFundSharePathError = draft.item_type === 'cash_fund' && !hasCashFundSharePath(draft)
+    ? 'Add at least one way guests can contribute to this fund before saving.'
+    : null;
+  const formValidationError = quantityError ?? cashFundSharePathError;
 
   const imageSourceHint = (() => {
     const src = (getSafePublicImageUrl(draft.image_url) || '').toLowerCase();
@@ -541,6 +564,10 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [],
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!draft.item_name.trim()) return;
+    if (formValidationError) {
+      setSaveError(formValidationError);
+      return;
+    }
     setSaving(true);
     setSaveError(null);
     try {
@@ -1059,6 +1086,7 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [],
                   id="registry-purchased-quantity"
                   type="number"
                   min="0"
+                  max={desiredQuantityValue}
                   step="1"
                   value={draft.quantity_purchased ?? '0'}
                   onChange={e => set('quantity_purchased', e.target.value)}
@@ -1066,6 +1094,12 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [],
                 />
               </div>
             </div>
+            {quantityError && (
+              <div className="flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900" role="alert">
+                <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0" />
+                <span>{quantityError}</span>
+              </div>
+            )}
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div>
                 <label htmlFor="registry-purchaser-name" className="block text-sm font-medium text-text-primary mb-1">
@@ -1128,6 +1162,12 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [],
                     </div>
                   </div>
                 </div>
+                {cashFundSharePathError && (
+                  <div className="flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900" role="alert">
+                    <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0" />
+                    <span>{cashFundSharePathError}</span>
+                  </div>
+                )}
               </>
             )}
 
@@ -1166,7 +1206,7 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [],
               type="submit"
               variant="primary"
               size="md"
-              disabled={saving || !draft.item_name.trim()}
+              disabled={saving || !draft.item_name.trim() || Boolean(formValidationError)}
             >
               {saving ? (
                 <>

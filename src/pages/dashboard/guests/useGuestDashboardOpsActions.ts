@@ -75,14 +75,15 @@ export function useGuestDashboardOpsActions({
   const persistReminderSettingsForSite = useCallback(async (patch: { reminder_cadence_days?: 1 | 3 | 7; auto_reminders_enabled?: boolean }) => {
     if (isGuestsReadOnly) {
       toast('Viewer mode is read-only.', 'info');
-      return;
+      return false;
     }
 
-    if (!weddingSiteId || isDemoMode) return;
+    if (!weddingSiteId || isDemoMode) return false;
     const contextVersion = guestOpsContextVersionRef.current;
     const targetWeddingSiteId = weddingSiteId;
     await persistGuestReminderSettings(targetWeddingSiteId, patch);
-    if (!isCurrentGuestOpsContext(contextVersion)) return;
+    if (!isCurrentGuestOpsContext(contextVersion)) return false;
+    return true;
   }, [isDemoMode, isGuestsReadOnly, toast, weddingSiteId]);
 
   const handleDeleteAllGuests = useCallback(async () => {

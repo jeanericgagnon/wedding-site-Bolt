@@ -15,4 +15,9 @@ describe('error log time guards', () => {
   it('keeps valid log timestamps truthful', () => {
     expect(getErrorLogTimestamp('2026-06-21T18:30:00.000Z')).toBe(new Date('2026-06-21T18:30:00.000Z').getTime());
   });
+
+  it('formats date-only log timestamps as the saved local calendar day', () => {
+    expect(getErrorLogTimestamp('2026-09-12')).toBe(new Date(2026, 8, 12).getTime());
+    expect(formatErrorLogDateTime('2026-09-12')).toBe(new Date(2026, 8, 12).toLocaleString());
+  });
 });

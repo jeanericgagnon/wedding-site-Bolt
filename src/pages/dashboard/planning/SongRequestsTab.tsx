@@ -3,7 +3,7 @@ import { Copy, Download, ExternalLink, Music2, Plus, Save, Sparkles } from 'luci
 import { Card } from '../../../components/ui/Card';
 import { Button } from '../../../components/ui/Button';
 import { useToast } from '../../../components/ui/Toast';
-import { copyTextOrDownload } from '../../../lib/copyText';
+import { copyTextOrDownload, downloadTextFile } from '../../../lib/copyText';
 import { getSafePublicWebUrl } from '../../../sections/publicLinks';
 import {
   ensurePlanningSongRequestQuestion,
@@ -45,13 +45,22 @@ export const SongRequestsTab: React.FC<Props> = ({ siteId, isDemoMode = false, c
   const djListCopyNoticeTimeoutRef = useRef<number | null>(null);
   const djListCopyRequestIdRef = useRef(0);
   const mountedRef = useRef(true);
+  const canEditRef = useRef(canEdit);
   const safePlaylistUrl = getSafePublicWebUrl(playlistUrl);
+
+  canEditRef.current = canEdit;
 
   useEffect(() => () => {
     mountedRef.current = false;
     djListCopyRequestIdRef.current += 1;
     if (djListCopyNoticeTimeoutRef.current) window.clearTimeout(djListCopyNoticeTimeoutRef.current);
   }, []);
+
+  useEffect(() => {
+    if (canEdit) return;
+    setSavingPlaylist(false);
+    setAddingQuestion(false);
+  }, [canEdit]);
 
   useEffect(() => {
     let cancelled = false;
@@ -117,9 +126,10 @@ export const SongRequestsTab: React.FC<Props> = ({ siteId, isDemoMode = false, c
   const spotifySearchUrl = (request: ParsedSongRequest) => `https://open.spotify.com/search/${encodeURIComponent(`${request.title} ${request.artist}`.trim())}`;
 
   async function savePlaylist() {
-    if (!siteId || savingPlaylist) return;
+    if (!canEditRef.current || !siteId || savingPlaylist) return;
     setSavingPlaylist(true);
     if (isDemoMode) {
+      if (!canEditRef.current) return;
       playlistDirtyRef.current = false;
       toast('Playlist link saved for demo mode.', 'success');
       setSavingPlaylist(false);
@@ -128,19 +138,22 @@ export const SongRequestsTab: React.FC<Props> = ({ siteId, isDemoMode = false, c
     try {
       await savePlanningPlaylistUrl(siteId, playlistUrl);
     } catch {
+      if (!canEditRef.current) return;
       toast('Couldn’t save the playlist link right now.', 'error');
       setSavingPlaylist(false);
       return;
     }
+    if (!canEditRef.current) return;
     playlistDirtyRef.current = false;
     toast('Playlist link saved.', 'success');
     setSavingPlaylist(false);
   }
 
   async function addSongQuestion() {
-    if (!siteId || hasQuestion || addingQuestion) return;
+    if (!canEditRef.current || !siteId || hasQuestion || addingQuestion) return;
     setAddingQuestion(true);
     if (isDemoMode) {
+      if (!canEditRef.current) return;
       setHasQuestion(true);
       toast('Song request question enabled for demo mode.', 'success');
       setAddingQuestion(false);
@@ -149,10 +162,12 @@ export const SongRequestsTab: React.FC<Props> = ({ siteId, isDemoMode = false, c
     try {
       await ensurePlanningSongRequestQuestion(siteId);
     } catch {
+      if (!canEditRef.current) return;
       toast('Couldn’t enable the song request question right now.', 'error');
       setAddingQuestion(false);
       return;
     }
+    if (!canEditRef.current) return;
     setHasQuestion(true);
     toast('Song request question added to RSVP.', 'success');
     setAddingQuestion(false);
@@ -203,12 +218,11 @@ export const SongRequestsTab: React.FC<Props> = ({ siteId, isDemoMode = false, c
       ...parsedRequests.map((request) => [request.title, request.artist, request.guestName, request.answer, request.respondedAt ?? '']),
     ];
     const csv = csvRows.map((row) => row.map((cell) => `"${String(cell).replaceAll('"', '""')}"`).join(',')).join('\n');
-    const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `dayof-song-requests-${new Date().toISOString().slice(0, 10)}.csv`;
-    link.click();
-    URL.revokeObjectURL(url);
+    downloadTextFile(
+      `dayof-song-requests-${new Date().toISOString().slice(0, 10)}.csv`,
+      csv,
+      'text/csv;charset=utf-8',
+    );
   }
 
   return (

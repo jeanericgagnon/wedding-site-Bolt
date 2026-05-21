@@ -1,13 +1,14 @@
-const THIRTY_DAYS_MS = 1000 * 60 * 60 * 24 * 30;
-
 function normalizeRegistryDateInput(value: string | null | undefined): string | null {
   const trimmed = value?.trim();
   if (!trimmed) return null;
 
   if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
-    const date = new Date(`${trimmed}T12:00:00Z`);
+    const [year, month, day] = trimmed.split('-').map(Number);
+    const date = new Date(year, month - 1, day);
     if (Number.isNaN(date.getTime())) return null;
-    return date.toISOString().slice(0, 10) === trimmed ? `${trimmed}T00:00:00Z` : null;
+    return date.getFullYear() === year && date.getMonth() === month - 1 && date.getDate() === day
+      ? `${trimmed}T00:00:00`
+      : null;
   }
 
   const date = new Date(trimmed);
@@ -32,11 +33,18 @@ export function parseRefreshWindowEndIso(value: string): string | null | undefin
   const normalized = normalizeRegistryDateInput(value);
   if (!normalized) return undefined;
 
-  return `${normalized.slice(0, 10)}T23:59:59.000Z`;
+  const date = toValidDateOrNull(normalized);
+  if (!date) return undefined;
+  const yyyy = date.getFullYear();
+  const mm = String(date.getMonth() + 1).padStart(2, '0');
+  const dd = String(date.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}T23:59:59.000Z`;
 }
 
 export function getWeddingRefreshWindowDate(weddingDate: string | null | undefined): Date | null {
   const date = toValidDateOrNull(weddingDate);
   if (!date) return null;
-  return new Date(date.getTime() + THIRTY_DAYS_MS);
+  const refreshDate = new Date(date);
+  refreshDate.setDate(refreshDate.getDate() + 30);
+  return refreshDate;
 }

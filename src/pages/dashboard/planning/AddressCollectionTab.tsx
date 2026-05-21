@@ -4,15 +4,16 @@ import { useNavigate } from 'react-router-dom';
 import { Card } from '../../../components/ui/Card';
 import { Button } from '../../../components/ui/Button';
 import { useToast } from '../../../components/ui/Toast';
-import { copyTextOrDownload } from '../../../lib/copyText';
+import { copyTextOrDownload, downloadTextFile } from '../../../lib/copyText';
 import { loadAddressCollectionData, type PlanningAddressGuest } from './planningService';
 
 interface Props {
   siteId: string | null;
   isDemoMode?: boolean;
+  canEdit?: boolean;
 }
 
-export const AddressCollectionTab: React.FC<Props> = ({ siteId, isDemoMode = false }) => {
+export const AddressCollectionTab: React.FC<Props> = ({ siteId, isDemoMode = false, canEdit = true }) => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
@@ -25,6 +26,8 @@ export const AddressCollectionTab: React.FC<Props> = ({ siteId, isDemoMode = fal
   const copyActionRequestIdRef = useRef(0);
   const mountedRef = useRef(true);
   const copyContextRef = useRef('');
+  const canEditRef = useRef(canEdit);
+  canEditRef.current = canEdit;
 
   useEffect(() => () => {
     mountedRef.current = false;
@@ -133,9 +136,9 @@ export const AddressCollectionTab: React.FC<Props> = ({ siteId, isDemoMode = fal
     : view === 'all'
       ? guests
       : stats.missingAddress;
-  const uniqueFollowUpGuests = [...stats.missingContact, ...stats.missingAddress.filter((guest) => !stats.missingContact.some((missing) => missing.id === guest.id))];
-
   function openMessageComposer(channel: 'email' | 'sms') {
+    if (!canEditRef.current || !collectionUrl) return;
+
     const params = new URLSearchParams({
       prefillCampaignName: 'Address collection',
       prefillSubject: 'Quick wedding address update',
@@ -150,14 +153,15 @@ export const AddressCollectionTab: React.FC<Props> = ({ siteId, isDemoMode = fal
   }
 
   async function copyFollowUpList() {
-    const text = uniqueFollowUpGuests.map((guest) => `${guest.name} — ${guest.email || guest.phone || 'no direct contact'}${guest.household_id ? ' — household' : ''}`).join('\n');
+    const text = followUpGuests.map((guest) => `${guest.name} — ${guest.email || guest.phone || 'no direct contact'}${guest.household_id ? ' — household' : ''}`).join('\n');
     await runCopyAction('follow-ups', text || 'No follow-ups needed.', 'Follow-up list', 'dayof-address-follow-ups.txt');
   }
 
   function exportCsv() {
+    const exportedGuests = followUpGuests;
     const csvRows = [
       ['Name', 'Email', 'Phone', 'Household ID', 'Needs address', 'Needs contact'],
-      ...guests.map((guest) => [
+      ...exportedGuests.map((guest) => [
         guest.name,
         guest.email ?? '',
         guest.phone ?? '',
@@ -167,12 +171,11 @@ export const AddressCollectionTab: React.FC<Props> = ({ siteId, isDemoMode = fal
       ]),
     ];
     const csv = csvRows.map((row) => row.map((cell) => `"${String(cell).replaceAll('"', '""')}"`).join(',')).join('\n');
-    const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `dayof-address-list-${new Date().toISOString().slice(0, 10)}.csv`;
-    link.click();
-    URL.revokeObjectURL(url);
+    downloadTextFile(
+      `dayof-address-list-${view}-${new Date().toISOString().slice(0, 10)}.csv`,
+      csv,
+      'text/csv;charset=utf-8',
+    );
   }
 
   return (
@@ -268,11 +271,11 @@ export const AddressCollectionTab: React.FC<Props> = ({ siteId, isDemoMode = fal
                   : 'Copied text copy'
                 : 'Copy text copy'}
           </Button>
-          <Button size="sm" variant="outline" onClick={() => openMessageComposer('email')} disabled={!collectionUrl}>
+          <Button size="sm" variant="outline" onClick={() => openMessageComposer('email')} disabled={!canEdit || !collectionUrl}>
             <Send className="w-4 h-4 mr-1" />
             Draft email
           </Button>
-          <Button size="sm" variant="outline" onClick={() => openMessageComposer('sms')} disabled={!collectionUrl}>
+          <Button size="sm" variant="outline" onClick={() => openMessageComposer('sms')} disabled={!canEdit || !collectionUrl}>
             <MessageSquare className="w-4 h-4 mr-1" />
             Draft SMS
           </Button>

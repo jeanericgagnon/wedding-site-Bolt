@@ -5,12 +5,14 @@ import { ToastProvider } from '../../../components/ui/Toast';
 import { PaymentsTab } from './PaymentsTab';
 import type { PlanningBudgetItem, PlanningVendor } from './planningService';
 
-const { copyTextOrDownload } = vi.hoisted(() => ({
+const { copyTextOrDownload, downloadTextFile } = vi.hoisted(() => ({
   copyTextOrDownload: vi.fn(),
+  downloadTextFile: vi.fn(),
 }));
 
 vi.mock('../../../lib/copyText', () => ({
   copyTextOrDownload: (...args: unknown[]) => copyTextOrDownload(...args),
+  downloadTextFile: (...args: unknown[]) => downloadTextFile(...args),
 }));
 
 const items: PlanningBudgetItem[] = [
@@ -58,6 +60,7 @@ const vendors: PlanningVendor[] = [
 describe('PaymentsTab', () => {
   beforeEach(() => {
     copyTextOrDownload.mockReset();
+    downloadTextFile.mockReset();
   });
 
   it('restores the paid action after a failed payment update', async () => {
@@ -76,11 +79,12 @@ describe('PaymentsTab', () => {
       </ToastProvider>,
     );
 
-    const paidButton = screen.getByRole('button', { name: /^paid$/i });
+    const paidButton = screen.getAllByRole('button', { name: /^paid$/i }).at(-1);
+    if (!paidButton) throw new Error('Expected a row paid action');
     await user.click(paidButton);
 
     expect(onUpdateBudgetItem).toHaveBeenCalledTimes(1);
-    expect(await screen.findByRole('button', { name: /^paid$/i })).toBeEnabled();
+    await waitFor(() => expect(paidButton).toBeEnabled());
     expect(screen.getByText(/couldn’t mark that payment as paid right now\./i)).toBeInTheDocument();
   });
 
@@ -107,6 +111,52 @@ describe('PaymentsTab', () => {
     expect(screen.getByText(/couldn’t copy the payment summary right now\./i)).toBeInTheDocument();
   });
 
+  it('clears pending paid actions when payment editing is revoked', async () => {
+    const user = userEvent.setup();
+    let finishUpdate: (() => void) | undefined;
+    const onUpdateBudgetItem = vi.fn().mockReturnValueOnce(new Promise<void>((resolve) => {
+      finishUpdate = resolve;
+    }));
+
+    const { rerender } = render(
+      <ToastProvider>
+        <PaymentsTab
+          items={items}
+          vendors={vendors}
+          vendorMeta={{}}
+          onUpdateBudgetItem={onUpdateBudgetItem}
+          onUpdateVendor={vi.fn().mockResolvedValue(undefined)}
+        />
+      </ToastProvider>,
+    );
+
+    const paidButton = screen.getAllByRole('button', { name: /^paid$/i }).at(-1);
+    if (!paidButton) throw new Error('Expected a row paid action');
+    await user.click(paidButton);
+    expect(paidButton).toBeDisabled();
+
+    rerender(
+      <ToastProvider>
+        <PaymentsTab
+          items={items}
+          vendors={vendors}
+          vendorMeta={{}}
+          onUpdateBudgetItem={onUpdateBudgetItem}
+          onUpdateVendor={vi.fn().mockResolvedValue(undefined)}
+          canEdit={false}
+        />
+      </ToastProvider>,
+    );
+
+    await waitFor(() => expect(screen.getAllByRole('button', { name: /^paid$/i }).at(-1)).toBeDisabled());
+
+    await act(async () => {
+      finishUpdate?.();
+    });
+
+    expect(onUpdateBudgetItem).toHaveBeenCalledTimes(1);
+  });
+
   it('shows a downloaded fallback label after the payment summary falls back from clipboard copy', async () => {
     const user = userEvent.setup();
     copyTextOrDownload.mockResolvedValueOnce('downloaded');
@@ -126,6 +176,35 @@ describe('PaymentsTab', () => {
     await user.click(screen.getByRole('button', { name: /copy summary/i }));
 
     expect(await screen.findByRole('button', { name: /downloaded payment summary/i })).toBeInTheDocument();
+  });
+
+  it('exports the payment ledger through the attached download helper', async () => {
+    const user = userEvent.setup();
+
+    render(
+      <ToastProvider>
+        <PaymentsTab
+          items={items}
+          vendors={vendors}
+          vendorMeta={{}}
+          onUpdateBudgetItem={vi.fn().mockResolvedValue(undefined)}
+          onUpdateVendor={vi.fn().mockResolvedValue(undefined)}
+        />
+      </ToastProvider>,
+    );
+
+    await user.click(screen.getByRole('button', { name: /^export$/i }));
+
+    expect(downloadTextFile).toHaveBeenCalledWith(
+      expect.stringMatching(/^dayof-payments-\d{4}-\d{2}-\d{2}\.csv$/),
+      expect.stringContaining('Venue final payment'),
+      'text/csv;charset=utf-8',
+    );
+    expect(downloadTextFile).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.stringContaining('Rose Hall'),
+      expect.any(String),
+    );
   });
 
   it('ignores a stale payment summary copy after payment data changes', async () => {

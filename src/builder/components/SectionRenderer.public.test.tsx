@@ -276,6 +276,71 @@ describe('public builder SectionRenderer fallbacks', () => {
     );
   });
 
+  it('rewrites internal RSVP anchor links to dedicated public RSVP pages when available', () => {
+    registryMocks.resolveAndParse.mockReturnValue({
+      def: { Component: () => <section>Resolved section</section> },
+      parsedData: {},
+    });
+
+    render(
+      <SectionRenderer
+        section={makeSection({
+          type: 'hero',
+          variant: 'fullBleed',
+          settings: {
+            ctaHref: '#rsvp',
+            nested: {
+              rsvpUrl: { value: '#rsvp', source: 'builder' },
+              untouched: '#travel',
+            },
+          },
+        })}
+        weddingData={createEmptyWeddingData()}
+        surface="public"
+        publicRsvpHref="/site/kara-eric/rsvp"
+      />,
+    );
+
+    expect(registryMocks.resolveAndParse).toHaveBeenCalledWith(
+      'hero',
+      'fullBleed',
+      {
+        ctaHref: '/site/kara-eric/rsvp',
+        nested: {
+          rsvpUrl: { value: '/site/kara-eric/rsvp', source: 'builder' },
+          untouched: '#travel',
+        },
+      },
+      { strictVariant: undefined },
+    );
+  });
+
+  it('keeps one-page RSVP anchors when no dedicated public RSVP page is available', () => {
+    registryMocks.resolveAndParse.mockReturnValue({
+      def: { Component: () => <section>Resolved section</section> },
+      parsedData: {},
+    });
+
+    render(
+      <SectionRenderer
+        section={makeSection({
+          type: 'hero',
+          variant: 'fullBleed',
+          settings: { ctaHref: '#rsvp' },
+        })}
+        weddingData={createEmptyWeddingData()}
+        surface="public"
+      />,
+    );
+
+    expect(registryMocks.resolveAndParse).toHaveBeenCalledWith(
+      'hero',
+      'fullBleed',
+      { ctaHref: '#rsvp' },
+      { strictVariant: undefined },
+    );
+  });
+
   it('sanitizes bound settings before legacy public render', () => {
     const LegacySection = ({ instance }: { instance: { settings: Record<string, unknown> } }) => (
       <section>{JSON.stringify(instance.settings)}</section>

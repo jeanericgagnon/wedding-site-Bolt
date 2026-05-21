@@ -1,3 +1,5 @@
+import { useEffect, useRef } from 'react';
+
 import { createSmsCreditsSession } from '../../../lib/stripeService';
 import { isSmsProviderEnabled } from '../../../lib/smsProvider';
 import { logAppAction } from '../../../lib/actionAudit';
@@ -17,6 +19,13 @@ export function useMessageBillingActions({
   toast,
   weddingSite,
 }: UseMessageBillingActionsArgs) {
+  const smsCheckoutRequestIdRef = useRef(0);
+
+  useEffect(() => {
+    smsCheckoutRequestIdRef.current += 1;
+    setBuyingPack(null);
+  }, [setBuyingPack, weddingSite?.id]);
+
   async function handleBuySmsPack(pack: SmsPack) {
     if (!weddingSite) return;
     if (!isSmsProviderEnabled()) {
@@ -24,18 +33,23 @@ export function useMessageBillingActions({
       return;
     }
 
+    const requestId = ++smsCheckoutRequestIdRef.current;
+    const requestSiteId = weddingSite.id;
+    const isCurrentSmsCheckout = () =>
+      requestId === smsCheckoutRequestIdRef.current && weddingSite?.id === requestSiteId;
     setBuyingPack(pack);
     try {
       const base = window.location.origin;
       const success = `${base}/dashboard/messages?smsCredits=success`;
       const cancel = `${base}/dashboard/messages?smsCredits=cancel`;
-      const url = await createSmsCreditsSession(weddingSite.id, success, cancel, pack);
+      const url = await createSmsCreditsSession(requestSiteId, success, cancel, pack);
+      if (!isCurrentSmsCheckout()) return;
       void logAppAction({
-        weddingSiteId: weddingSite.id,
+        weddingSiteId: requestSiteId,
         area: 'billing',
         type: 'sms_credits_checkout_started',
         summary: 'Text credits checkout was started.',
-        targetId: weddingSite.id,
+        targetId: requestSiteId,
         targetLabel: 'Text credits',
         metadata: {
           pack,
@@ -44,9 +58,10 @@ export function useMessageBillingActions({
       });
       window.location.href = url;
     } catch (err) {
+      if (!isCurrentSmsCheckout()) return;
       toast(safeMessagesError(err, 'Couldn’t open checkout right now. Please try again.'), 'error');
     } finally {
-      setBuyingPack(null);
+      if (isCurrentSmsCheckout()) setBuyingPack(null);
     }
   }
 

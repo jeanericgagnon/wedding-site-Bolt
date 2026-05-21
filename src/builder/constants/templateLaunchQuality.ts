@@ -17,6 +17,10 @@ export const LAUNCH_SECONDARY_TEMPLATE_IDS = [
   'floral-garden-rose',
   'modern-luxe-ivory',
   'timeless-classic-navy',
+  'coastal-weekend',
+  'black-tie-ballroom',
+  'rustic-vineyard',
+  'playful-color',
 ] as const;
 
 const FLAGSHIP_IDS = new Set<string>(LAUNCH_FLAGSHIP_TEMPLATE_IDS);

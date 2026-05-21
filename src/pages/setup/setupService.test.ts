@@ -70,4 +70,18 @@ describe('setupService', () => {
     expect(page).toContain("navigate('/setup/names');");
     expect(page).not.toContain("window.location.href = '/setup/names';");
   });
+
+  it('surfaces recommended template page routes and all use-case packs in setup', () => {
+    const page = readFileSync(join(process.cwd(), 'src/pages/setup/SetupShell.tsx'), 'utf8');
+
+    expect(page).toContain('tpl.guestRoutes.slice(0, 4).map');
+    expect(page).toContain('tpl.pageCount');
+    expect(page).toContain('tpl.readinessLabel');
+    expect(page).toContain('tpl.pageBlueprints.slice(0, 2).map');
+    expect(page).toContain('recommendedTemplateMatches.map');
+    expect(page).toContain('reasons.slice(0, 2).map');
+    expect(page).toContain("pack.id === 'weekend' && setupMode.weekend");
+    expect(page).toContain("pack.id === 'black-tie' && setupMode.blackTie");
+    expect(page).toContain("pack.id === 'guest-interactive' && setupMode.guestInteractive");
+  });
 });

@@ -12,11 +12,18 @@ describe('dashboard utility reset wiring', () => {
     expect(source).toContain('const resetRsvpBoardState = useCallback(() => {');
     expect(source).toContain('const currentSiteIdRef = useRef<string | null>(null);');
     expect(source).toContain('const boardRequestIdRef = useRef(0);');
+    expect(source).toContain('const boardInitRequestIdRef = useRef(0);');
+    expect(source).toContain('const initRequestId = ++boardInitRequestIdRef.current;');
+    expect(source).toContain('boardRequestIdRef.current += 1;');
+    expect(source).toContain('currentSiteIdRef.current = null;');
+    expect(source).toContain('const isCurrentInit = () => mounted && initRequestId === boardInitRequestIdRef.current;');
     expect(source).toContain("setFilter('all');");
     expect(source).toContain("setSiteId('demo-site-id');\n          setFilter('all');");
-    expect(source).toContain('if (currentSiteIdRef.current !== weddingSiteId) return;');
+    expect(source).toContain('const isCurrentRequest = () => requestId === boardRequestIdRef.current && currentSiteIdRef.current === weddingSiteId;');
+    expect(source).toContain('if (!isCurrentRequest()) return;');
     expect(source).toContain("setSiteId(id);\n        setFilter('all');\n        await fetchBoard(id);");
-    expect(source).toContain("if (!user) {\n        if (mounted) {\n          resetRsvpBoardState();\n          setLoading(false);\n        }\n        return;\n      }");
+    expect(source).toContain("if (!user) {\n        if (isCurrentInit()) {\n          resetRsvpBoardState();\n          setLoading(false);\n        }\n        return;\n      }");
+    expect(source).toContain('if (currentSiteIdRef.current === siteId) {');
     expect(source).toContain("if (!id) {\n          resetRsvpBoardState();\n          return;\n        }");
   });
 

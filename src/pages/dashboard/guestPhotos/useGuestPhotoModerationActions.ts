@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   manageGuestPhotoAlbum,
   moderateGuestPhotoUploads,
@@ -49,20 +49,76 @@ export function useGuestPhotoModerationActions({
   const [bulkModerating, setBulkModerating] = useState(false);
   const [bulkUpdatingStatus, setBulkUpdatingStatus] = useState(false);
   const [moderatingGuestbookId, setModeratingGuestbookId] = useState('');
+  const mountedRef = useRef(true);
+  const moderationNoticeRequestIdRef = useRef(0);
+  const guestbookModerationRequestIdRef = useRef(0);
+  const bulkModerationRequestIdRef = useRef(0);
+  const albumStatusRequestIdRef = useRef(0);
+  const uploadModerationRequestIdRef = useRef(0);
+
+  useEffect(() => () => {
+    mountedRef.current = false;
+    moderationNoticeRequestIdRef.current += 1;
+    guestbookModerationRequestIdRef.current += 1;
+    bulkModerationRequestIdRef.current += 1;
+    albumStatusRequestIdRef.current += 1;
+    uploadModerationRequestIdRef.current += 1;
+  }, []);
+
+  function beginModerationNotice() {
+    const requestId = ++moderationNoticeRequestIdRef.current;
+    return () => mountedRef.current && requestId === moderationNoticeRequestIdRef.current;
+  }
+
+  function beginGuestbookModeration() {
+    const requestId = ++guestbookModerationRequestIdRef.current;
+    const isCurrentNotice = beginModerationNotice();
+    return {
+      isCurrent: () => mountedRef.current && requestId === guestbookModerationRequestIdRef.current && isCurrentNotice(),
+      isCurrentBusyState: () => mountedRef.current && requestId === guestbookModerationRequestIdRef.current,
+    };
+  }
+
+  function beginBulkModeration() {
+    const requestId = ++bulkModerationRequestIdRef.current;
+    const isCurrentNotice = beginModerationNotice();
+    return {
+      isCurrent: () => mountedRef.current && requestId === bulkModerationRequestIdRef.current && isCurrentNotice(),
+      isCurrentBusyState: () => mountedRef.current && requestId === bulkModerationRequestIdRef.current,
+    };
+  }
+
+  function beginAlbumStatusUpdate() {
+    const requestId = ++albumStatusRequestIdRef.current;
+    const isCurrentNotice = beginModerationNotice();
+    return {
+      isCurrent: () => mountedRef.current && requestId === albumStatusRequestIdRef.current && isCurrentNotice(),
+      isCurrentBusyState: () => mountedRef.current && requestId === albumStatusRequestIdRef.current,
+    };
+  }
+
+  function beginUploadModeration() {
+    const requestId = ++uploadModerationRequestIdRef.current;
+    const isCurrentNotice = beginModerationNotice();
+    return () => mountedRef.current && requestId === uploadModerationRequestIdRef.current && isCurrentNotice();
+  }
 
   const updateGuestbookEntry = async (
     entryId: string,
     patch: Partial<Pick<GuestbookEntryRow, 'is_hidden' | 'is_flagged'>>
   ) => {
+    const request = beginGuestbookModeration();
     try {
       setModeratingGuestbookId(entryId);
       await moderateGuestbookEntryFromService(entryId, patch);
+      if (!request.isCurrent()) return;
       setGuestbookEntries((prev) => prev.map((entry) => (entry.id === entryId ? { ...entry, ...patch } : entry)));
       logPhotoAction('guestbook_entry_moderated', 'Guestbook entry moderation was updated.', patch, entryId, 'Guestbook entry');
     } catch (err: unknown) {
+      if (!request.isCurrent()) return;
       setError(safePhotoOwnerError(err, 'Couldn’t update that guestbook note yet.'));
     } finally {
-      setModeratingGuestbookId('');
+      if (request.isCurrentBusyState()) setModeratingGuestbookId('');
     }
   };
 
@@ -73,12 +129,14 @@ export function useGuestPhotoModerationActions({
       return;
     }
 
+    const request = beginBulkModeration();
     try {
       setBulkModerating(true);
       setError(null);
       const ids = target.map((upload) => upload.id);
       await moderateGuestPhotoUploads(ids, { is_hidden: hide });
       await load();
+      if (!request.isCurrent()) return;
       logPhotoAction(hide ? 'uploads_hidden_bulk' : 'uploads_unhidden_bulk', `${hide ? 'Hidden' : 'Unhidden'} uploads from the filtered photo view.`, {
         uploadCount: ids.length,
         showFlaggedOnly,
@@ -86,9 +144,10 @@ export function useGuestPhotoModerationActions({
       });
       setSuccess(`${hide ? 'Hidden' : 'Unhidden'} ${ids.length} upload(s) from current view.`);
     } catch (err: unknown) {
+      if (!request.isCurrent()) return;
       setError(safePhotoOwnerError(err, 'Couldn’t update those photos yet.'));
     } finally {
-      setBulkModerating(false);
+      if (request.isCurrentBusyState()) setBulkModerating(false);
     }
   };
 
@@ -99,17 +158,20 @@ export function useGuestPhotoModerationActions({
       return;
     }
 
+    const request = beginBulkModeration();
     try {
       setBulkModerating(true);
       setError(null);
       await moderateGuestPhotoUploads(targetIds, { is_hidden: true });
       await load();
+      if (!request.isCurrent()) return;
       logPhotoAction('review_uploads_hidden_bulk', 'Review uploads were hidden in bulk.', { uploadCount: targetIds.length });
       setSuccess(`Hidden ${targetIds.length} review upload${targetIds.length === 1 ? '' : 's'}.`);
     } catch (err: unknown) {
+      if (!request.isCurrent()) return;
       setError(safePhotoOwnerError(err, 'Couldn’t hide those review photos yet.'));
     } finally {
-      setBulkModerating(false);
+      if (request.isCurrentBusyState()) setBulkModerating(false);
     }
   };
 
@@ -120,17 +182,20 @@ export function useGuestPhotoModerationActions({
       return;
     }
 
+    const request = beginBulkModeration();
     try {
       setBulkModerating(true);
       setError(null);
       await moderateGuestPhotoUploads(targetIds, { is_hidden: true });
       await load();
+      if (!request.isCurrent()) return;
       logPhotoAction('duplicate_uploads_hidden_bulk', 'Duplicate extra uploads were hidden in bulk.', { uploadCount: targetIds.length });
       setSuccess(`Kept the best shot in each set and hid ${targetIds.length} extra similar photo${targetIds.length === 1 ? '' : 's'}.`);
     } catch (err: unknown) {
+      if (!request.isCurrent()) return;
       setError(safePhotoOwnerError(err, 'Couldn’t hide the extra similar photos yet.'));
     } finally {
-      setBulkModerating(false);
+      if (request.isCurrentBusyState()) setBulkModerating(false);
     }
   };
 
@@ -141,17 +206,20 @@ export function useGuestPhotoModerationActions({
       return;
     }
 
+    const request = beginBulkModeration();
     try {
       setBulkModerating(true);
       setError(null);
       await moderateGuestPhotoUploads(targetIds, { is_hidden: false });
       await load();
+      if (!request.isCurrent()) return;
       logPhotoAction('hidden_uploads_restored_bulk', 'Hidden uploads were restored in bulk.', { uploadCount: targetIds.length });
       setSuccess(`Restored ${targetIds.length} hidden upload${targetIds.length === 1 ? '' : 's'}.`);
     } catch (err: unknown) {
+      if (!request.isCurrent()) return;
       setError(safePhotoOwnerError(err, 'Couldn’t restore hidden photos yet.'));
     } finally {
-      setBulkModerating(false);
+      if (request.isCurrentBusyState()) setBulkModerating(false);
     }
   };
 
@@ -162,21 +230,24 @@ export function useGuestPhotoModerationActions({
       return;
     }
 
+    const request = beginBulkModeration();
     try {
       setBulkModerating(true);
       setError(null);
       const ids = target.map((upload) => upload.id);
       await moderateGuestPhotoUploads(ids, { is_flagged: flagged });
       await load();
+      if (!request.isCurrent()) return;
       logPhotoAction(flagged ? 'uploads_flagged_bulk' : 'uploads_unflagged_bulk', `${flagged ? 'Flagged' : 'Unflagged'} uploads from the filtered photo view.`, {
         uploadCount: ids.length,
         showHidden,
       });
       setSuccess(`${flagged ? 'Flagged' : 'Unflagged'} ${ids.length} upload(s) from current view.`);
     } catch (err: unknown) {
+      if (!request.isCurrent()) return;
       setError(safePhotoOwnerError(err, 'Couldn’t update those photos yet.'));
     } finally {
-      setBulkModerating(false);
+      if (request.isCurrentBusyState()) setBulkModerating(false);
     }
   };
 
@@ -187,6 +258,7 @@ export function useGuestPhotoModerationActions({
       return;
     }
 
+    const request = beginAlbumStatusUpdate();
     try {
       setBulkUpdatingStatus(true);
       setError(null);
@@ -197,14 +269,16 @@ export function useGuestPhotoModerationActions({
       }
 
       await load();
+      if (!request.isCurrent()) return;
       logPhotoAction(isActive ? 'buckets_activated_bulk' : 'buckets_paused_bulk', `${isActive ? 'Opened' : 'Paused'} photo albums in bulk.`, {
         bucketCount: targetBuckets.length,
       });
       setSuccess(`${isActive ? 'Activated' : 'Paused'} ${targetBuckets.length} album${targetBuckets.length === 1 ? '' : 's'}.`);
     } catch (err: unknown) {
+      if (!request.isCurrent()) return;
       setError(safePhotoOwnerError(err, 'Couldn’t update album sharing yet.'));
     } finally {
-      setBulkUpdatingStatus(false);
+      if (request.isCurrentBusyState()) setBulkUpdatingStatus(false);
     }
   };
 
@@ -212,12 +286,15 @@ export function useGuestPhotoModerationActions({
     uploadId: string,
     patch: Partial<Pick<PhotoUploadRow, 'is_hidden' | 'is_flagged' | 'recap_hidden' | 'recap_featured' | 'recap_story'>>
   ) => {
+    const isCurrentModeration = beginUploadModeration();
     try {
       setError(null);
       await moderateGuestPhotoUploads([uploadId], patch);
       await load();
+      if (!isCurrentModeration()) return;
       logPhotoAction('upload_moderated', 'Photo upload moderation was updated.', patch, uploadId, 'Photo upload');
     } catch (err: unknown) {
+      if (!isCurrentModeration()) return;
       setError(safePhotoOwnerError(err, 'Couldn’t update that photo yet.'));
     }
   };

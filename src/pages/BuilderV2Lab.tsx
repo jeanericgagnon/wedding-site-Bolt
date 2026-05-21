@@ -5,6 +5,7 @@ import { getSectionRenderer } from '../builder/registry';
 import type { SectionType, SectionInstance } from '../types/layoutConfig';
 import type { WeddingDataV1 } from '../types/weddingData';
 import { demoWeddingSite, demoEvents } from '../lib/demoData';
+import { downloadTextFile } from '../lib/copyText';
 import { getInitialBuilderV2LabPreviewFields } from './builderV2LabPreview';
 import { toBuilderV2Document } from '../builder-v2/adapter';
 import type { BuilderV2Document } from '../builder-v2/contracts';
@@ -770,13 +771,11 @@ export const BuilderV2Lab: React.FC = () => {
         })),
       })),
     } as BuilderV2Document;
-    const blob = new Blob([JSON.stringify(withBlocks, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `builder-v2-${Date.now()}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
+    downloadTextFile(
+      `builder-v2-${Date.now()}.json`,
+      JSON.stringify(withBlocks, null, 2),
+      'application/json;charset=utf-8',
+    );
     notify('Exported V2 JSON');
   };
 

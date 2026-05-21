@@ -313,8 +313,19 @@ function escapeHtml(value: string): string {
 }
 
 function formatTravelEventTime(value: string | null | undefined): string {
-  if (!value) return '';
-  const date = new Date(value);
+  const trimmed = value?.trim();
+  if (!trimmed) return '';
+
+  const dateOnlyMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(trimmed);
+  const date = dateOnlyMatch
+    ? new Date(Date.UTC(Number(dateOnlyMatch[1]), Number(dateOnlyMatch[2]) - 1, Number(dateOnlyMatch[3])))
+    : new Date(trimmed);
+  if (
+    dateOnlyMatch
+    && date.toISOString().slice(0, 10) !== trimmed
+  ) {
+    return '';
+  }
   if (Number.isNaN(date.getTime())) return '';
   return date.toLocaleString('en-US', {
     timeZone: 'UTC',

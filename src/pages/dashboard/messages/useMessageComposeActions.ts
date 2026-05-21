@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import type React from 'react';
 import { countSmsSegments, estimateSmsCredits } from '../../../lib/smsSegments';
 import { SMS_PROVIDER_PENDING_COPY, isSmsProviderEnabled } from '../../../lib/smsProvider';
@@ -76,9 +77,17 @@ export function useMessageComposeActions({
   setEditingMessageId,
   setFormData,
 }: UseMessageComposeActionsArgs) {
+  const composeContextVersionRef = useRef(0);
+
+  useEffect(() => {
+    composeContextVersionRef.current += 1;
+  }, [editingMessageId, formData.audience, formData.channel, isDemoMode, weddingSite?.id]);
+
   const handleSendMessage = async (e: React.FormEvent, saveAsDraft = false) => {
     e.preventDefault();
     if (!weddingSite) return;
+    const composeContextVersion = composeContextVersionRef.current;
+    const isCurrentComposeAction = () => composeContextVersion === composeContextVersionRef.current;
     setSending(true);
     try {
       const trimmedSubject = formData.subject.trim();
@@ -195,11 +204,13 @@ export function useMessageComposeActions({
             sending_finished_at: null,
           });
 
-          void updateDashboardMessage(editingMessageId, {
+          if (!isCurrentComposeAction()) return;
+          await updateDashboardMessage(editingMessageId, {
             audience_filter: formData.audience,
             recipient_count: totalAudienceCount,
             recipient_filter: recipientMeta,
           });
+          if (!isCurrentComposeAction()) return;
         } else {
           inserted = await insertDashboardMessageMinimal({
             wedding_site_id: weddingSite.id,
@@ -212,15 +223,18 @@ export function useMessageComposeActions({
           });
 
           if (inserted) {
-            void updateDashboardMessage(inserted.id, {
+            if (!isCurrentComposeAction()) return;
+            await updateDashboardMessage(inserted.id, {
               audience_filter: formData.audience,
               recipient_count: totalAudienceCount,
               recipient_filter: recipientMeta,
             });
+            if (!isCurrentComposeAction()) return;
           }
         }
       }
 
+      if (!isCurrentComposeAction()) return;
       setShowRecipientPreview(false);
       setEditingMessageId(null);
       setFormData({
@@ -239,6 +253,7 @@ export function useMessageComposeActions({
         toast(isEditingExistingMessage ? 'Draft updated' : 'Saved as draft', 'info');
         if (!isDemoMode) {
           await fetchMessages();
+          if (!isCurrentComposeAction()) return;
         }
         return;
       }
@@ -247,6 +262,7 @@ export function useMessageComposeActions({
         toast(`${isEditingExistingMessage ? 'Updated' : 'Scheduled'} for ${formatScheduledMessageDateTime(scheduledFor)} — ${recipientCount} recipient${recipientCount !== 1 ? 's' : ''}`, 'info');
         if (!isDemoMode) {
           await fetchMessages();
+          if (!isCurrentComposeAction()) return;
         }
         return;
       }
@@ -263,8 +279,10 @@ export function useMessageComposeActions({
 
         toast(`Sending to ${recipientCount} guest${recipientCount !== 1 ? 's' : ''}…`, 'info');
         await fetchMessages();
+        if (!isCurrentComposeAction()) return;
         try {
           const result = await triggerDashboardBulkSend(inserted.id);
+          if (!isCurrentComposeAction()) return;
           const skipped = result.skipped ?? 0;
           if (result.failed === 0 && skipped === 0) {
             toast(`Delivered to ${result.delivered} guest${result.delivered !== 1 ? 's' : ''}`, 'success');
@@ -276,14 +294,17 @@ export function useMessageComposeActions({
             toast(`Sent ${result.delivered}${result.failed > 0 ? ` • ${result.failed} need review` : ''}${skipped > 0 ? ` • ${describeRecipientReview(skipped)}` : ''}. Check message history.`, 'info');
           }
         } catch (sendErr) {
+          if (!isCurrentComposeAction()) return;
           toast(safeMessagesError(sendErr, 'Delivery needs review. Check message history.'), 'error');
         }
         await fetchMessages();
+        if (!isCurrentComposeAction()) return;
       }
     } catch (err) {
+      if (!isCurrentComposeAction()) return;
       toast(safeMessagesError(err, 'Couldn’t process message. Please try again.'), 'error');
     } finally {
-      setSending(false);
+      if (isCurrentComposeAction()) setSending(false);
     }
   };
 

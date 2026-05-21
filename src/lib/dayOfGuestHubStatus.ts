@@ -72,8 +72,21 @@ export type GuestHubLinkAccessCard = {
 const coreGuestHubActionIds: GuestHubActionId[] = ['rsvp', 'schedule', 'travel', 'photos'];
 
 function formatDateTime(value?: string | null): string | null {
-  if (!value) return null;
-  const parsed = new Date(value);
+  const trimmed = value?.trim();
+  if (!trimmed) return null;
+
+  const dateOnlyMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(trimmed);
+  const parsed = dateOnlyMatch
+    ? new Date(Number(dateOnlyMatch[1]), Number(dateOnlyMatch[2]) - 1, Number(dateOnlyMatch[3]))
+    : new Date(trimmed);
+  if (
+    dateOnlyMatch
+    && (parsed.getFullYear() !== Number(dateOnlyMatch[1])
+      || parsed.getMonth() !== Number(dateOnlyMatch[2]) - 1
+      || parsed.getDate() !== Number(dateOnlyMatch[3]))
+  ) {
+    return null;
+  }
   if (Number.isNaN(parsed.getTime())) return null;
   return parsed.toLocaleString(undefined, {
     month: 'short',

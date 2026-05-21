@@ -515,11 +515,13 @@ export const MessageComposerLanguagePreviewPanel: React.FC<{
 export interface MessageComposerSchedulePanelProps {
   formData: ComposerFormState;
   onSetFormData: React.Dispatch<React.SetStateAction<ComposerFormState>>;
+  selectedScheduleIsPast: boolean;
 }
 
 export const MessageComposerSchedulePanel: React.FC<MessageComposerSchedulePanelProps> = ({
   formData,
   onSetFormData,
+  selectedScheduleIsPast,
 }) => (
   <div className="rounded-2xl border border-border-subtle bg-surface-subtle/30 p-4">
     <label className="block text-sm font-medium text-text-primary mb-2">When should it send?</label>
@@ -575,16 +577,16 @@ export const MessageComposerSchedulePanel: React.FC<MessageComposerSchedulePanel
             />
           </div>
         </div>
-        {formData.scheduleDate && formData.scheduleTime && isPastScheduledTime(`${formData.scheduleDate}T${formData.scheduleTime}:00`) && (
+        {formData.scheduleDate && formData.scheduleTime && selectedScheduleIsPast && (
           <div className="flex items-start gap-2 rounded-xl border border-warning/20 bg-warning-light p-3 text-sm text-warning">
             <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
             <div>
               <span className="font-medium">That time has already passed.</span>
-              {' '}This message will send right away when you click Schedule message.
+              {' '}This message will send right away when you click Send now.
             </div>
           </div>
         )}
-        {formData.scheduleDate && formData.scheduleTime && !isPastScheduledTime(`${formData.scheduleDate}T${formData.scheduleTime}:00`) && (
+        {formData.scheduleDate && formData.scheduleTime && !selectedScheduleIsPast && (
           <p className="text-xs text-text-tertiary px-1">
             Scheduled for: {formatScheduledDate(`${formData.scheduleDate}T${formData.scheduleTime}:00`)}
           </p>
@@ -967,7 +969,7 @@ export const MessageComposerCard: React.FC<MessageComposerCardProps> = ({
 
         <MessageComposerLanguagePreviewPanel languagePreviews={languagePreviews} />
 
-        <MessageComposerSchedulePanel formData={formData} onSetFormData={onSetFormData} />
+        <MessageComposerSchedulePanel formData={formData} onSetFormData={onSetFormData} selectedScheduleIsPast={selectedScheduleIsPast} />
 
         <MessageComposerRecipientPreviewPanel
           activeRecipients={activeRecipients}
@@ -1010,7 +1012,7 @@ export const MessageComposerCard: React.FC<MessageComposerCardProps> = ({
               )
             )}
           </Button>
-          <Button type="button" variant="outline" onClick={onSubmitDraft} disabled={sending}>
+          <Button type="button" variant="outline" onClick={onSubmitDraft} disabled={sending || !canCompose}>
             <Save className="mr-2 h-4 w-4" />
             Save Draft
           </Button>

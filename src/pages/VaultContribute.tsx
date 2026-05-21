@@ -76,6 +76,11 @@ function normalizeVaultWeddingDate(value: string | null | undefined): string | n
   return date.toISOString().slice(0, 10) === trimmed ? trimmed : null;
 }
 
+function parseLocalVaultWeddingDate(value: string): Date {
+  const [year, month, day] = value.split('-').map(Number);
+  return new Date(year, month - 1, day);
+}
+
 export function getVaultCoupleName(site: Pick<SiteInfo, 'couple_name_1' | 'couple_name_2'> | null): string {
   if (!site) return '';
   return buildCoupleDisplayName(site.couple_name_1, site.couple_name_2, 'the couple');
@@ -110,12 +115,12 @@ export function getContributionWindow(weddingDateRaw: string | null, forceOpen =
   const normalizedWeddingDate = normalizeVaultWeddingDate(weddingDateRaw);
   if (!normalizedWeddingDate) return { canSubmit: true, message: null };
 
-  const weddingDate = new Date(`${normalizedWeddingDate}T00:00:00Z`);
+  const weddingDate = parseLocalVaultWeddingDate(normalizedWeddingDate);
 
   const openAt = new Date(weddingDate);
-  openAt.setUTCDate(openAt.getUTCDate() - 3);
+  openAt.setDate(openAt.getDate() - 3);
   const closeAt = new Date(weddingDate);
-  closeAt.setUTCDate(closeAt.getUTCDate() + 3);
+  closeAt.setDate(closeAt.getDate() + 3);
 
   const now = new Date();
   if (now < openAt) {

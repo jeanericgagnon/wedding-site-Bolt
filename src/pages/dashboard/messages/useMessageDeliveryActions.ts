@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import {
   type Guest,
@@ -46,6 +46,13 @@ export function useMessageDeliveryActions({
 }: UseMessageDeliveryActionsInput) {
   const [processingScheduled, setProcessingScheduled] = useState(false);
   const [retryingMessageId, setRetryingMessageId] = useState<string | null>(null);
+  const deliveryActionVersionRef = useRef(0);
+
+  useEffect(() => {
+    deliveryActionVersionRef.current += 1;
+    setProcessingScheduled(false);
+    setRetryingMessageId(null);
+  }, [canCompose, isDemoMode, isSmsProviderEnabled]);
 
   function getScopedRecipients(message: Message): Guest[] {
     const audience = message.audience_filter ?? (message.recipient_filter?.audience as string) ?? 'all';
@@ -94,6 +101,8 @@ export function useMessageDeliveryActions({
     }
 
     setRetryingMessageId(message.id);
+    const deliveryActionVersion = deliveryActionVersionRef.current;
+    const isCurrentDeliveryAction = () => deliveryActionVersion === deliveryActionVersionRef.current;
     try {
       if (isDemoMode) {
         const recipients = getScopedRecipients(message);
@@ -133,10 +142,13 @@ export function useMessageDeliveryActions({
       }
 
       await updateDashboardMessage(message.id, { status: 'queued', sent_at: null, failed_count: 0, delivered_count: 0 });
+      if (!isCurrentDeliveryAction()) return;
       toast('Sending again…', 'info');
       await fetchMessages();
+      if (!isCurrentDeliveryAction()) return;
       try {
         const result = await triggerDashboardBulkSend(message.id);
+        if (!isCurrentDeliveryAction()) return;
         const skipped = result.skipped ?? 0;
         if (result.failed === 0 && skipped === 0) {
           toast(`Delivered to ${result.delivered} guest${result.delivered !== 1 ? 's' : ''}`, 'success');
@@ -155,13 +167,16 @@ export function useMessageDeliveryActions({
           failed_count: message.failed_count,
           delivered_count: message.delivered_count,
         });
+        if (!isCurrentDeliveryAction()) return;
         toast(safeMessagesError(sendErr, 'Delivery needs review. Try again later.'), 'error');
       }
       await fetchMessages();
+      if (!isCurrentDeliveryAction()) return;
     } catch {
+      if (!isCurrentDeliveryAction()) return;
       toast('Couldn’t retry that message right now. Please try again.', 'error');
     } finally {
-      setRetryingMessageId(null);
+      if (isCurrentDeliveryAction()) setRetryingMessageId(null);
     }
   }
 
@@ -183,6 +198,8 @@ export function useMessageDeliveryActions({
     }
 
     setRetryingMessageId(message.id);
+    const deliveryActionVersion = deliveryActionVersionRef.current;
+    const isCurrentDeliveryAction = () => deliveryActionVersion === deliveryActionVersionRef.current;
     try {
       if (isDemoMode) {
         const nextMessage = {
@@ -228,6 +245,7 @@ export function useMessageDeliveryActions({
       }
 
       await updateMessageRecipientFilter(message, { retry_guest_ids: failedGuestIds });
+      if (!isCurrentDeliveryAction()) return;
       await handleRetry({
         ...message,
         recipient_filter: {
@@ -236,9 +254,10 @@ export function useMessageDeliveryActions({
         },
       });
     } catch {
+      if (!isCurrentDeliveryAction()) return;
       toast('Couldn’t prepare a focused retry right now. Please try again.', 'error');
     } finally {
-      setRetryingMessageId(null);
+      if (isCurrentDeliveryAction()) setRetryingMessageId(null);
     }
   }
 
@@ -259,8 +278,11 @@ export function useMessageDeliveryActions({
       ...skippedGuestIds,
     ]));
 
+    const deliveryActionVersion = deliveryActionVersionRef.current;
+    const isCurrentDeliveryAction = () => deliveryActionVersion === deliveryActionVersionRef.current;
     try {
       if (isDemoMode) {
+        if (!isCurrentDeliveryAction()) return;
         setMessages((prev) => prev.map((item) => (
           item.id === message.id
             ? {
@@ -272,14 +294,18 @@ export function useMessageDeliveryActions({
               }
             : item
         )));
+        if (!isCurrentDeliveryAction()) return;
         toast(`Next send will skip ${skippedGuestIds.length} ${skippedGuestIds.length === 1 ? 'recipient' : 'recipients'} still missing contact details.`, 'info');
         return;
       }
 
       await updateMessageRecipientFilter(message, { excluded_guest_ids: excludedGuestIds });
+      if (!isCurrentDeliveryAction()) return;
       await fetchMessages();
+      if (!isCurrentDeliveryAction()) return;
       toast(`Next send will skip ${skippedGuestIds.length} ${skippedGuestIds.length === 1 ? 'recipient' : 'recipients'} still missing contact details.`, 'info');
     } catch {
+      if (!isCurrentDeliveryAction()) return;
       toast('Couldn’t update that review rule right now. Please try again.', 'error');
     }
   }
@@ -295,13 +321,17 @@ export function useMessageDeliveryActions({
       return;
     }
 
-      if (isDemoMode) {
+    const deliveryActionVersion = deliveryActionVersionRef.current;
+    const isCurrentDeliveryAction = () => deliveryActionVersion === deliveryActionVersionRef.current;
+
+    if (isDemoMode) {
       const recipients = getScopedRecipients(message);
       const deliveredCount = message.channel === 'sms'
         ? recipients.filter((guest) => hasReachableSms(guest)).length
         : recipients.filter((guest) => hasReachableEmail(guest.email)).length;
       const skippedCount = Math.max(recipients.length - deliveredCount, 0);
 
+      if (!isCurrentDeliveryAction()) return;
       setMessages((prev) => prev.map((item) => (
         item.id === message.id
           ? {
@@ -320,6 +350,7 @@ export function useMessageDeliveryActions({
             }
           : item
       )));
+      if (!isCurrentDeliveryAction()) return;
       toast(
         skippedCount > 0
           ? `Scheduled message sent in demo: delivered ${deliveredCount} • ${describeRecipientReview(skippedCount)}.`
@@ -332,9 +363,11 @@ export function useMessageDeliveryActions({
     let deliveryTriggered = false;
     try {
       await updateDashboardMessage(message.id, { scheduled_for: new Date().toISOString() });
+      if (!isCurrentDeliveryAction()) return;
 
       toast('Sending scheduled message now…', 'info');
       const result = await triggerDashboardBulkSend(message.id);
+      if (!isCurrentDeliveryAction()) return;
       const skipped = result.skipped ?? 0;
       if (result.failed === 0 && skipped === 0) {
         toast(`Delivered to ${result.delivered} guest${result.delivered !== 1 ? 's' : ''}`, 'success');
@@ -347,10 +380,13 @@ export function useMessageDeliveryActions({
       }
       deliveryTriggered = true;
       await fetchMessages();
+      if (!isCurrentDeliveryAction()) return;
     } catch (err) {
+      if (!isCurrentDeliveryAction()) return;
       if (!isDemoMode && !deliveryTriggered) {
         await updateDashboardMessage(message.id, { scheduled_for: message.scheduled_for });
       }
+      if (!isCurrentDeliveryAction()) return;
       toast(safeMessagesError(err, 'Couldn’t send that scheduled message right now.'), 'error');
     }
   }
@@ -366,6 +402,9 @@ export function useMessageDeliveryActions({
       return;
     }
 
+    const deliveryActionVersion = deliveryActionVersionRef.current;
+    const isCurrentDeliveryAction = () => deliveryActionVersion === deliveryActionVersionRef.current;
+
     if (isDemoMode) {
       const audience = message.audience_filter ?? (message.recipient_filter?.audience as string) ?? 'all';
       const recipients = getRecipients(audience);
@@ -374,6 +413,7 @@ export function useMessageDeliveryActions({
         : recipients.filter((guest) => hasReachableEmail(guest.email)).length;
       const skippedCount = Math.max(recipients.length - reachableCount, 0);
 
+      if (!isCurrentDeliveryAction()) return;
       setMessages((prev) => prev.map((item) => (
         item.id === message.id
           ? {
@@ -390,6 +430,7 @@ export function useMessageDeliveryActions({
             }
           : item
       )));
+      if (!isCurrentDeliveryAction()) return;
       toast(`Rescheduled for ${formatScheduledMessageDateTime(scheduledFor)}.`, 'success');
       return;
     }
@@ -406,6 +447,7 @@ export function useMessageDeliveryActions({
         scheduled_for: scheduledFor,
         sent_at: null,
       });
+      if (!isCurrentDeliveryAction()) return;
 
       void updateDashboardMessage(message.id, {
         recipient_count: recipients.length,
@@ -419,7 +461,9 @@ export function useMessageDeliveryActions({
 
       toast(`Rescheduled for ${formatScheduledMessageDateTime(scheduledFor)}.`, 'success');
       await fetchMessages();
+      if (!isCurrentDeliveryAction()) return;
     } catch (err) {
+      if (!isCurrentDeliveryAction()) return;
       toast(safeMessagesError(err, 'Couldn’t reschedule that campaign right now.'), 'error');
     }
   }
@@ -430,6 +474,9 @@ export function useMessageDeliveryActions({
       return;
     }
 
+    const deliveryActionVersion = deliveryActionVersionRef.current;
+    const isCurrentDeliveryAction = () => deliveryActionVersion === deliveryActionVersionRef.current;
+
     if (isDemoMode) {
       const audience = message.audience_filter ?? (message.recipient_filter?.audience as string) ?? 'all';
       const recipients = getRecipients(audience);
@@ -438,6 +485,7 @@ export function useMessageDeliveryActions({
         : recipients.filter((guest) => hasReachableEmail(guest.email)).length;
       const skippedCount = Math.max(recipients.length - reachableCount, 0);
 
+      if (!isCurrentDeliveryAction()) return;
       setMessages((prev) => prev.map((item) => (
         item.id === message.id
           ? {
@@ -454,6 +502,7 @@ export function useMessageDeliveryActions({
             }
           : item
       )));
+      if (!isCurrentDeliveryAction()) return;
       toast('Scheduled campaign moved back to draft.', 'info');
       return;
     }
@@ -470,6 +519,7 @@ export function useMessageDeliveryActions({
         status: 'draft',
         scheduled_for: null,
       });
+      if (!isCurrentDeliveryAction()) return;
 
       void updateDashboardMessage(message.id, {
         recipient_count: recipients.length,
@@ -483,7 +533,9 @@ export function useMessageDeliveryActions({
 
       toast('Scheduled campaign moved back to draft.', 'info');
       await fetchMessages();
+      if (!isCurrentDeliveryAction()) return;
     } catch (err) {
+      if (!isCurrentDeliveryAction()) return;
       toast(safeMessagesError(err, 'Couldn’t move that campaign back to draft right now.'), 'error');
     }
   }
@@ -543,8 +595,11 @@ export function useMessageDeliveryActions({
     }
 
     setProcessingScheduled(true);
+    const deliveryActionVersion = deliveryActionVersionRef.current;
+    const isCurrentDeliveryAction = () => deliveryActionVersion === deliveryActionVersionRef.current;
     try {
       const result = await triggerScheduledMessageDispatch(10);
+      if (!isCurrentDeliveryAction()) return;
       if (result.processed === 0) {
         toast('No scheduled messages are due right now.', 'info');
       } else if (result.failed === 0 && result.partial === 0) {
@@ -553,10 +608,12 @@ export function useMessageDeliveryActions({
         toast(`Processed ${result.processed}: sent ${result.sent}, partial ${result.partial}, needs review ${result.failed}${result.skippedRecipients > 0 ? `, ${describeRecipientReview(result.skippedRecipients)}` : ''}${result.skippedMessages > 0 ? `, messages needing review ${result.skippedMessages}` : ''}.`, result.failed > 0 ? 'error' : 'info');
       }
       await fetchMessages();
+      if (!isCurrentDeliveryAction()) return;
     } catch (err) {
+      if (!isCurrentDeliveryAction()) return;
       toast(safeMessagesError(err, 'Couldn’t process scheduled messages right now.'), 'error');
     } finally {
-      setProcessingScheduled(false);
+      if (isCurrentDeliveryAction()) setProcessingScheduled(false);
     }
   }
 

@@ -38,7 +38,7 @@ type SampleVendor = {
   images: string[];
   links: string[];
   email: string;
-  startingPoint: 'Website' | 'Social links' | 'Image notes' | 'Images needed';
+  startingPoint: 'Website' | 'Social links' | 'Photo notes' | 'Add photos';
 };
 
 const templates: VendorTemplate[] = [
@@ -47,49 +47,49 @@ const templates: VendorTemplate[] = [
     name: 'Photography',
     label: 'Photo and video',
     usefulFor: 'photographers, videographers, content teams',
-    summary: 'Photos, recent work, helpful notes, and reply details.',
+    summary: 'Photos, work samples, notes, and a way to reply.',
   },
   {
     id: 'floral',
     name: 'Floral and decor',
     label: 'Flowers and decor',
     usefulFor: 'florists, rentals, tabletop, stationery, decor',
-    summary: 'Texture, palette, installation scale, links, and reply details.',
+    summary: 'Texture, palette, setup scale, links, and a way to reply.',
   },
   {
     id: 'venue',
     name: 'Venue',
     label: 'Venues',
     usefulFor: 'venues, hotels, restaurants, event spaces',
-    summary: 'Location photos, guest flow notes, tour details, and a simple venue review.',
+    summary: 'Location photos, guest flow, tour notes, and a simple venue note.',
   },
   {
     id: 'food',
     name: 'Food and drinks',
     label: 'Catering, cakes, and bar',
     usefulFor: 'caterers, cake artists, bar teams, rehearsal dinners',
-    summary: 'Menu notes, tasting path, dinner style, and a simple food-team note.',
+    summary: 'Menu notes, tasting plan, dinner style, and a simple food-team note.',
   },
   {
     id: 'beauty',
     name: 'Beauty and getting ready',
     label: 'Beauty, getting ready, and jewelry',
     usefulFor: 'beauty teams, salons, bridal fashion, jewelers',
-    summary: 'Work images, trials, prep notes, and a clear way to send a note.',
+    summary: 'Work photos, trials, prep notes, and a clear way to reply.',
   },
   {
     id: 'music',
     name: 'Music and entertainment',
     label: 'Music and entertainment',
     usefulFor: 'DJs, bands, ceremony musicians, performers, photo booths',
-    summary: 'Music examples, reception moments, timing notes, and reply details.',
+    summary: 'Music examples, reception moments, schedule notes, and a way to reply.',
   },
   {
     id: 'planner',
     name: 'Planning help',
     label: 'Planning help',
     usefulFor: 'planners, coordinators, designers, officiants',
-    summary: 'Planning notes, trust details, timing, and next steps.',
+    summary: 'Planning notes, trust notes, schedule, and next steps.',
   },
   {
     id: 'travel',
@@ -115,7 +115,7 @@ const sampleVendors: SampleVendor[] = [
       'https://images.unsplash.com/photo-1523438885200-e635ba2c371e?auto=format&fit=crop&w=900&q=80',
       'https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&w=900&q=80',
     ],
-    links: ['Instagram', 'Website', 'Note form'],
+    links: ['Instagram', 'Website', 'Send note'],
     email: 'hello@everlight.example',
     startingPoint: 'Website',
   },
@@ -126,14 +126,14 @@ const sampleVendors: SampleVendor[] = [
     location: 'Austin, TX',
     descriptor: 'Seasonal florals with texture and clear setup notes',
     about:
-      'Marigold Floral House plans wedding flowers around season, color, setup timing, and the spaces that matter most.',
+      'Marigold Floral House plans wedding flowers around season, color, setup notes, and the spaces that matter most.',
     images: [
       'https://images.unsplash.com/photo-1460978812857-470ed1c77af0?auto=format&fit=crop&w=1400&q=80',
       'https://images.unsplash.com/photo-1526047932273-341f2a7631f9?auto=format&fit=crop&w=900&q=80',
       'https://images.unsplash.com/photo-1509223197845-458d87318791?auto=format&fit=crop&w=900&q=80',
       'https://images.unsplash.com/photo-1504196606672-aef5c9cefc92?auto=format&fit=crop&w=900&q=80',
     ],
-    links: ['Instagram', 'Website', 'Note form'],
+    links: ['Instagram', 'Website', 'Send note'],
     email: 'studio@marigold.example',
     startingPoint: 'Social links',
   },
@@ -144,16 +144,16 @@ const sampleVendors: SampleVendor[] = [
     location: 'Hudson Valley, NY',
     descriptor: 'Historic estate venue with gardens, tented lawns, and guest flow',
     about:
-      'Stonehouse Estate hosts wedding weekends with a ceremony garden, indoor dinner space, and enough property detail to make the day feel organized from arrival to sendoff.',
+      'Stonehouse Estate hosts wedding weekends with a ceremony garden, indoor dinner space, and enough property notes to make the day feel organized from arrival to sendoff.',
     images: [
       'https://images.unsplash.com/photo-1519167758481-83f550bb49b3?auto=format&fit=crop&w=1400&q=80',
       'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=900&q=80',
       'https://images.unsplash.com/photo-1464366400600-7168b8af9bc3?auto=format&fit=crop&w=900&q=80',
       'https://images.unsplash.com/photo-1519225421980-715cb0215aed?auto=format&fit=crop&w=900&q=80',
     ],
-    links: ['Website', 'Note form'],
+    links: ['Website', 'Send note'],
     email: 'events@stonehouse.example',
-    startingPoint: 'Image notes',
+    startingPoint: 'Photo notes',
   },
   {
     id: 'sage-table',
@@ -162,7 +162,7 @@ const sampleVendors: SampleVendor[] = [
     location: 'Charleston, SC',
     descriptor: 'Seasonal wedding menus, passed bites, late night snacks, and bar plans',
     about:
-      'Sage Table builds menus around regional ingredients, guest flow, and timing, from welcome cocktails to family style dinners and cake cutting.',
+      'Sage Table builds menus around regional ingredients, guest flow, and schedule notes, from welcome cocktails to family style dinners and cake cutting.',
     images: [
       'https://images.unsplash.com/photo-1519225421980-715cb0215aed?auto=format&fit=crop&w=1400&q=80',
       'https://images.unsplash.com/photo-1555244162-803834f70033?auto=format&fit=crop&w=900&q=80',
@@ -180,7 +180,7 @@ const sampleVendors: SampleVendor[] = [
     location: 'Miami, FL',
     descriptor: 'Hair, makeup, and styling for wedding mornings',
     about:
-      'Veil & Velvet Beauty handles trials, touch-up timing, bridal party styling, and calm getting-ready room flow.',
+      'Veil & Velvet Beauty handles trials, touch-up plans, bridal party styling, and calm getting-ready room flow.',
     images: [
       'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=1400&q=80',
       'https://images.unsplash.com/photo-1487412947147-5cebf100ffc2?auto=format&fit=crop&w=900&q=80',
@@ -196,16 +196,16 @@ const sampleVendors: SampleVendor[] = [
     name: 'Afterglow Sound',
     category: 'Entertainment',
     location: 'Nashville, TN',
-    descriptor: 'Reception DJ, live ceremony music, and timing help',
+    descriptor: 'Reception DJ, live ceremony music, and schedule help',
     about:
-      'Afterglow Sound helps with ceremony cues, cocktail hour music, reception pacing, and a set example couples can review early.',
+      'Afterglow Sound helps with ceremony cues, cocktail hour music, reception pacing, and a set couples can hear early.',
     images: [
       'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=1400&q=80',
       'https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?auto=format&fit=crop&w=900&q=80',
       'https://images.unsplash.com/photo-1506157786151-b8491531f063?auto=format&fit=crop&w=900&q=80',
       'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?auto=format&fit=crop&w=900&q=80',
     ],
-    links: ['Set sample', 'Website', 'Note form'],
+    links: ['Hear a set', 'Website', 'Send note'],
     email: 'hello@afterglowsound.example',
     startingPoint: 'Website',
   },
@@ -216,14 +216,14 @@ const sampleVendors: SampleVendor[] = [
     location: 'Los Angeles, CA',
     descriptor: 'Planning help for layered weekend weddings',
     about:
-      'Luna Events helps couples with venue walkthroughs, team timing, final schedules, visual direction, and calm wedding day flow.',
+      'Luna Events helps couples with venue walkthroughs, team notes, final schedules, visual direction, and calm wedding day flow.',
     images: [
       'https://images.unsplash.com/photo-1523438885200-e635ba2c371e?auto=format&fit=crop&w=1400&q=80',
       'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?auto=format&fit=crop&w=900&q=80',
       'https://images.unsplash.com/photo-1529634806980-85c3dd6d34ac?auto=format&fit=crop&w=900&q=80',
       'https://images.unsplash.com/photo-1478146896981-b80fe463b330?auto=format&fit=crop&w=900&q=80',
     ],
-    links: ['Instagram', 'Website', 'Note form'],
+    links: ['Instagram', 'Website', 'Send note'],
     email: 'hello@lunaevents.example',
     startingPoint: 'Website',
   },
@@ -232,21 +232,21 @@ const sampleVendors: SampleVendor[] = [
     name: 'Northstar Transit Co.',
     category: 'Transportation',
     location: 'Chicago, IL',
-    descriptor: 'Guest shuttles and late night transportation',
+    descriptor: 'Guest shuttles and late-night rides',
     about:
       'Northstar Transit Co. keeps guests moving between hotel blocks, ceremony locations, reception spaces, and after party stops with clear pickup windows and a day-of contact.',
     images: [],
-    links: ['Website', 'Reply email'],
+    links: ['Website', 'Email'],
     email: 'dispatch@northstar.example',
-    startingPoint: 'Images needed',
+    startingPoint: 'Add photos',
   },
 ];
 
 const sampleProfileLinks = [
-  { label: 'Photo page', href: '/vendor/dayof-sample-photography' },
-  { label: 'Floral page', href: '/vendor/dayof-sample-floral' },
-  { label: 'Venue page', href: '/vendor/dayof-sample-venue' },
-  { label: 'Food page', href: '/vendor/dayof-sample-catering' },
+  { label: 'Photography', href: '/vendor/dayof-sample-photography' },
+  { label: 'Florals', href: '/vendor/dayof-sample-floral' },
+  { label: 'Venue', href: '/vendor/dayof-sample-venue' },
+  { label: 'Food', href: '/vendor/dayof-sample-catering' },
 ];
 
 const getVendorInitials = (name: string) =>
@@ -295,7 +295,7 @@ const ShellPreview: React.FC<{ template: VendorTemplate; vendor: SampleVendor }>
               <div className="rounded-xl bg-white p-5">
                 <p className="text-xs font-semibold text-[#9a7a59]">Palette and scale</p>
                 <p className="mt-3 text-sm leading-6 text-[#4b3a2c]">{vendor.about}</p>
-                <button className="mt-5 w-full rounded-xl bg-[#2f261d] px-4 py-3 text-sm font-semibold text-white">Write note</button>
+                <button className="mt-5 w-full rounded-xl bg-[#2f261d] px-4 py-3 text-sm font-semibold text-white">Send note</button>
               </div>
             </div>
           </div>
@@ -320,14 +320,14 @@ const ShellPreview: React.FC<{ template: VendorTemplate; vendor: SampleVendor }>
               <h3 className="mt-5 text-4xl font-semibold leading-[1] sm:text-6xl">{vendor.name}</h3>
               <p className="mt-5 max-w-lg text-base leading-7 text-[#efe4d8]">{vendor.descriptor}</p>
               <div className="mt-7 grid gap-3 sm:grid-cols-3">
-                {['Tasting path', 'Dinner style', 'Menu notes'].map((item) => (
+                {['Tasting plan', 'Dinner style', 'Menu notes'].map((item) => (
                   <div key={item} className="rounded-xl border border-white/15 px-4 py-3 text-sm text-[#f5e9db]">{item}</div>
                 ))}
               </div>
             </div>
             <div className="mt-8 grid gap-3 sm:grid-cols-[1fr_auto] sm:items-end">
               <p className="text-sm leading-6 text-[#d8c4ad]">{vendor.about}</p>
-              <button className="rounded-xl bg-[#f5e9db] px-5 py-3 text-sm font-semibold text-[#2f261d]">Write about tasting</button>
+              <button className="rounded-xl bg-[#f5e9db] px-5 py-3 text-sm font-semibold text-[#2f261d]">Send note about tasting</button>
             </div>
           </div>
         </div>
@@ -352,8 +352,8 @@ const ShellPreview: React.FC<{ template: VendorTemplate; vendor: SampleVendor }>
             </div>
             <div className="mt-8 grid gap-2 text-sm text-[#4b3a2c]">
               <div className="rounded-xl bg-[#f8f3ec] px-4 py-3">Trial plan</div>
-              <div className="rounded-xl bg-[#f8f3ec] px-4 py-3">Wedding morning timing</div>
-              <div className="rounded-xl bg-[#f8f3ec] px-4 py-3">Party timing</div>
+              <div className="rounded-xl bg-[#f8f3ec] px-4 py-3">Wedding morning schedule</div>
+              <div className="rounded-xl bg-[#f8f3ec] px-4 py-3">Party schedule</div>
             </div>
           </div>
           <div className="grid gap-3 sm:grid-cols-[1.05fr_0.95fr]">
@@ -361,9 +361,9 @@ const ShellPreview: React.FC<{ template: VendorTemplate; vendor: SampleVendor }>
             <div className="grid gap-3">
               <VendorImage src={vendor.images[1]} vendor={vendor} className="min-h-48 w-full rounded-xl object-cover" />
               <div className="rounded-xl bg-[#2f261d] p-5 text-[#f8f3ec]">
-                <p className="text-xs font-semibold text-[#d8c4ad]">Reply path</p>
+                <p className="text-xs font-semibold text-[#d8c4ad]">Ways to reply</p>
                 <p className="mt-3 text-sm leading-6 text-[#efe4d8]">{vendor.about}</p>
-                <button className="mt-5 w-full rounded-xl bg-[#f5e9db] px-4 py-3 text-sm font-semibold text-[#2f261d]">Write about trial</button>
+                <button className="mt-5 w-full rounded-xl bg-[#f5e9db] px-4 py-3 text-sm font-semibold text-[#2f261d]">Send note about trial</button>
               </div>
             </div>
           </div>
@@ -396,7 +396,7 @@ const ShellPreview: React.FC<{ template: VendorTemplate; vendor: SampleVendor }>
             </div>
             <div className="mt-8">
               <p className="text-sm leading-6 text-[#d8c4ad]">{vendor.about}</p>
-              <button className="mt-5 w-full rounded-xl bg-[#f5e9db] px-4 py-3 text-sm font-semibold text-[#2f261d]">Hear a sample</button>
+              <button className="mt-5 w-full rounded-xl bg-[#f5e9db] px-4 py-3 text-sm font-semibold text-[#2f261d]">Hear a set</button>
             </div>
           </div>
         </div>
@@ -427,7 +427,7 @@ const ShellPreview: React.FC<{ template: VendorTemplate; vendor: SampleVendor }>
                 <p className="text-xs font-semibold text-[#9a7a59]">Route clarity</p>
                 <p className="mt-3 text-3xl font-semibold text-[#2f261d]">{vendor.location}</p>
                 <p className="mt-3 text-sm leading-6 text-[#6f5843]">{vendor.about}</p>
-                <button className="mt-6 rounded-xl bg-[#2f261d] px-5 py-3 text-sm font-semibold text-white">Check timing</button>
+                <button className="mt-6 rounded-xl bg-[#2f261d] px-5 py-3 text-sm font-semibold text-white">Plan schedule</button>
               </div>
             </div>
           </div>
@@ -441,7 +441,7 @@ const ShellPreview: React.FC<{ template: VendorTemplate; vendor: SampleVendor }>
       <div className="rounded-xl border border-[#d9c8b3] bg-white p-4 shadow-sm sm:p-6">
         <div className="grid gap-6 lg:grid-cols-[0.74fr_1.26fr]">
           <div className="rounded-xl bg-[#f5e9db] p-5">
-            <p className="text-xs font-semibold text-[#8b6f53]">Helpful notes</p>
+            <p className="text-xs font-semibold text-[#8b6f53]">Notes</p>
             <h3 className="mt-3 text-3xl font-semibold leading-tight text-[#2f261d]">{vendor.name}</h3>
             <p className="mt-3 text-sm leading-6 text-[#6f5843]">{vendor.descriptor}</p>
             <div className="mt-5 space-y-2 text-sm text-[#4b3a2c]">
@@ -454,12 +454,12 @@ const ShellPreview: React.FC<{ template: VendorTemplate; vendor: SampleVendor }>
             <VendorImage src={vendor.images[0]} vendor={vendor} className="min-h-80 w-full rounded-xl object-cover" />
             <div className="flex flex-col justify-between rounded-xl border border-[#eadfce] p-5">
               <div>
-                <p className="text-xs font-semibold text-[#9a7a59]">Reply path</p>
+                <p className="text-xs font-semibold text-[#9a7a59]">Ways to reply</p>
                 <p className="mt-3 text-sm leading-6 text-[#6f5843]">{vendor.about}</p>
               </div>
               <div className="mt-5 grid gap-2">
-                <button className="rounded-xl bg-[#2f261d] px-4 py-3 text-sm font-semibold text-white">Write note</button>
-                <button className="rounded-xl border border-[#eadfce] px-4 py-3 text-sm font-semibold text-[#4b3a2c]">Use email</button>
+                <button className="rounded-xl bg-[#2f261d] px-4 py-3 text-sm font-semibold text-white">Send note</button>
+                <button className="rounded-xl border border-[#eadfce] px-4 py-3 text-sm font-semibold text-[#4b3a2c]">Email them</button>
                 <div className="flex flex-wrap gap-2 pt-2">
                   {vendor.links.map((link) => (
                     <span key={link} className="rounded-xl bg-[#fbf7f0] px-3 py-1 text-xs text-[#6f5843]">{link}</span>
@@ -484,7 +484,7 @@ const ShellPreview: React.FC<{ template: VendorTemplate; vendor: SampleVendor }>
               <VendorImage key={image ?? `fallback-${index}`} src={image} vendor={vendor} className="h-full min-h-32 w-full rounded object-cover" />
             ))}
             <div className="flex min-h-32 items-center justify-center rounded bg-[#2f261d] px-4 text-center text-xs font-semibold text-[#f5e9db]">
-              Recent work
+              Work samples
             </div>
           </div>
         </div>
@@ -525,14 +525,14 @@ const ShellPreview: React.FC<{ template: VendorTemplate; vendor: SampleVendor }>
             <p className="mt-2 text-xs font-medium text-[#9a7a59]">{vendor.category} · {vendor.location}</p>
           </div>
           <div className="grid gap-2 sm:w-52">
-            <button className="rounded-xl bg-[#2f261d] px-4 py-3 text-sm font-semibold text-white">Write about planning</button>
+            <button className="rounded-xl bg-[#2f261d] px-4 py-3 text-sm font-semibold text-white">Send note about planning</button>
             <button className="rounded-xl border border-[#eadfce] px-4 py-3 text-sm font-semibold text-[#4b3a2c]">Planning notes</button>
           </div>
         </div>
         <div className="mt-6 grid gap-3 sm:grid-cols-3">
           <div className="rounded-xl bg-[#fbf7f0] p-4">
             <Instagram className="h-4 w-4 text-[#8b6f53]" />
-          <p className="mt-2 text-sm text-[#4b3a2c]">Suggested notes added</p>
+          <p className="mt-2 text-sm text-[#4b3a2c]">Notes added</p>
           </div>
           <div className="rounded-xl bg-[#fbf7f0] p-4">
             <Mail className="h-4 w-4 text-[#8b6f53]" />
@@ -563,7 +563,7 @@ const ShellPreview: React.FC<{ template: VendorTemplate; vendor: SampleVendor }>
         <p className="text-base leading-8 text-[#4b3a2c]">{vendor.about}</p>
         <div className="rounded-xl bg-[#f8f3ec] p-4">
           <p className="text-xs font-semibold text-[#9a7a59]">Tour notes</p>
-          <button className="mt-3 w-full rounded-xl bg-[#2f261d] px-4 py-3 text-sm font-semibold text-white">Write about a tour</button>
+          <button className="mt-3 w-full rounded-xl bg-[#2f261d] px-4 py-3 text-sm font-semibold text-white">Send note about a tour</button>
           <div className="mt-3 flex flex-wrap gap-2">
             {vendor.links.map((link) => (
               <span key={link} className="rounded-xl bg-white px-3 py-1 text-xs text-[#6f5843]">{link}</span>
@@ -610,7 +610,7 @@ export const VendorTemplates: React.FC = () => {
       setInquiryError('');
       setInquiries(await listMyVendorProfileInquiries());
     } catch {
-      setInquiryError('Couldn’t load recent notes right now.');
+      setInquiryError('Couldn’t load notes right now.');
     } finally {
       setLoadingInquiries(false);
     }
@@ -625,10 +625,10 @@ export const VendorTemplates: React.FC = () => {
       <div className="mx-auto max-w-7xl space-y-8">
         <header className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
           <div className="max-w-3xl">
-            <p className="text-xs font-semibold text-[#8b6f53]">Examples</p>
-            <h1 className="mt-3 text-4xl font-semibold leading-tight sm:text-6xl">Choose a page shape.</h1>
+            <p className="text-xs font-semibold text-[#8b6f53]">Page styles</p>
+            <h1 className="mt-3 text-4xl font-semibold leading-tight sm:text-6xl">Pick a page style.</h1>
             <p className="mt-4 text-base leading-7 text-[#6f5843]">
-              Compare photos, notes, and reply paths before saving.
+              Check photos, notes, and ways to reply before you save.
             </p>
           </div>
           <div className="flex flex-wrap gap-3">
@@ -639,17 +639,17 @@ export const VendorTemplates: React.FC = () => {
             ))}
             {creationEnabled ? (
               <Link to="/vendor-profile-v1" className="inline-flex items-center rounded-xl bg-[#2f261d] px-5 py-3 text-sm font-semibold text-white">
-                Make draft
+                Start
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
             ) : (
               <span className="inline-flex items-center rounded-xl bg-[#2f261d]/70 px-5 py-3 text-sm font-semibold text-white">
-                Editing paused
+                Editing off
                 <ShieldCheck className="ml-2 h-4 w-4" />
               </span>
             )}
             <a href="#review" className="inline-flex items-center rounded-xl border border-[#d8c8b6] bg-white px-5 py-3 text-sm font-semibold text-[#4b3a2c]">
-              Check list
+              Quick check
             </a>
           </div>
         </header>
@@ -671,7 +671,7 @@ export const VendorTemplates: React.FC = () => {
                   </div>
                 </div>
                 <p className="mt-3 text-sm leading-6 text-[#6f5843]">{template.summary}</p>
-                <p className="mt-4 text-xs font-medium text-[#9a7a59]">Works for {template.usefulFor}</p>
+                <p className="mt-4 text-xs font-medium text-[#9a7a59]">For {template.usefulFor}</p>
               </button>
             );
           })}
@@ -685,31 +685,31 @@ export const VendorTemplates: React.FC = () => {
                 <CheckCircle2 className="h-5 w-5 text-[#8b6f53]" />
               </div>
               <div>
-                <p className="text-xs font-semibold text-[#8b6f53]">Selected style</p>
+                <p className="text-xs font-semibold text-[#8b6f53]">Page style</p>
                 <h2 className="text-xl font-semibold">{activeTemplate.name}</h2>
               </div>
             </div>
             <div className="mt-6 space-y-4 text-sm leading-6 text-[#6f5843]">
               <p>{activeTemplate.summary}</p>
               <div className="rounded-xl bg-[#fbf7f0] p-4">
-                <p className="text-xs font-semibold text-[#8b6f53]">Start with</p>
+                <p className="text-xs font-semibold text-[#8b6f53]">Use</p>
                 <ul className="mt-3 space-y-2">
                   <li>Website</li>
-                  <li>Social links only</li>
-                  <li>Saved notes</li>
-                  <li>Images needed</li>
-                  <li>Reply email only</li>
+                  <li>Social links</li>
+                  <li>Starter notes</li>
+                  <li>Add photos</li>
+                  <li>Email</li>
                 </ul>
               </div>
               <div className="rounded-xl bg-[#2f261d] p-4 text-[#f5e9db]">
                 <CheckCircle2 className="h-4 w-4" />
-                <p className="mt-2 text-sm">Check the preview and note form before saving.</p>
+                <p className="mt-2 text-sm">Check the page and note form before you save.</p>
               </div>
             </div>
           </div>
 
           <div className="rounded-xl border border-[#e7dac8] bg-white p-6 shadow-sm">
-            <p className="text-xs font-semibold text-[#8b6f53]">Examples</p>
+            <p className="text-xs font-semibold text-[#8b6f53]">Page styles</p>
             <div className="mt-4 grid gap-3">
               <input
                 value={search}
@@ -751,7 +751,7 @@ export const VendorTemplates: React.FC = () => {
               })}
               {filteredVendors.length === 0 && (
                 <div className="rounded-xl border border-dashed border-[#d8c8b6] px-4 py-5 text-sm text-[#6f5843]">
-                  No examples match those filters yet.
+                  No examples match yet.
                 </div>
               )}
             </div>
@@ -764,17 +764,17 @@ export const VendorTemplates: React.FC = () => {
         </section>
 
         <section id="review" className="rounded-xl border border-[#e7dac8] bg-white p-6 shadow-sm sm:p-8">
-          <p className="text-xs font-semibold text-[#8b6f53]">Check list</p>
+          <p className="text-xs font-semibold text-[#8b6f53]">Quick check</p>
           <div className="mt-5 grid gap-3 md:grid-cols-2">
             {[
-              'Use website notes when they help.',
-              'Use social links when the website is thin.',
-              'Check name, about, links, email, and images.',
-              'Open the draft page.',
+              'Use website details only when they help.',
+              'Use social links when the website is light.',
+              'Check name, about, links, email, and photos.',
+              'Open the page.',
               'Send yourself a note and make sure it appears here.',
-              'Make one small edit before saving.',
-              'Try the note form.',
-              'Check the planning link.',
+              'Make one small edit.',
+              'Send a test note.',
+              'Open the planning page.',
             ].map((item) => (
               <div key={item} className="flex items-start gap-3 rounded-xl bg-[#fbf7f0] px-4 py-3 text-sm text-[#4b3a2c]">
                 <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#8b6f53]" />
@@ -788,9 +788,9 @@ export const VendorTemplates: React.FC = () => {
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div>
               <p className="text-xs font-semibold text-[#8b6f53]">Notes</p>
-              <h2 className="mt-2 text-2xl font-semibold text-[#2f261d]">Notes received</h2>
+              <h2 className="mt-2 text-2xl font-semibold text-[#2f261d]">Notes</h2>
               <p className="mt-2 max-w-2xl text-sm leading-6 text-[#6f5843]">
-                Notes from note pages appear here.
+                Notes sent from pages appear here.
               </p>
             </div>
             <button
@@ -799,7 +799,7 @@ export const VendorTemplates: React.FC = () => {
               disabled={loadingInquiries}
               className="inline-flex items-center justify-center rounded-xl border border-[#d8c8b6] px-4 py-3 text-sm font-semibold text-[#4b3a2c] disabled:opacity-60"
             >
-              {loadingInquiries ? 'Checking...' : 'Check again'}
+              {loadingInquiries ? 'Loading...' : 'Check again'}
             </button>
           </div>
 
@@ -825,14 +825,14 @@ export const VendorTemplates: React.FC = () => {
                 <p className="mt-3 text-sm leading-6 text-[#4b3a2c]">{inquiry.message}</p>
                 {inquiry.vendor_slug && (
                   <Link to={`/vendor/${inquiry.vendor_slug}`} className="mt-3 inline-flex text-sm font-semibold text-[#2f261d] underline decoration-[#d8c8b6] underline-offset-4">
-                    View page
+                    Open page
                   </Link>
                 )}
               </article>
             ))}
             {!loadingInquiries && inquiries.length === 0 && !inquiryError && (
               <div className="rounded-xl border border-dashed border-[#d8c8b6] px-4 py-5 text-sm text-[#6f5843]">
-                No notes yet. Send one from a note page to make sure it shows up.
+                No notes yet. Send one from a page to make sure it shows up.
               </div>
             )}
           </div>

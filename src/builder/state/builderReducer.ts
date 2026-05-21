@@ -209,12 +209,19 @@ export function builderReducer(state: BuilderState, action: BuilderAction): Buil
       const titleBase = getBuilderString(action.payload.title).trim() || `Page ${nextIndex + 1}`;
       const slug = makeUniquePageSlug(slugifyPageTitle(titleBase), state.project.pages);
       const now = new Date().toISOString();
+      const initialSections = action.payload.initialSectionType
+        ? [stripRedundantPageSectionAnchor(getDefaultSectionInstance(action.payload.initialSectionType, undefined, 0), {
+            slug,
+            title: titleBase,
+            meta: { isHome: false },
+          })]
+        : [];
       const newPage: BuilderPage = {
         id: generateBuilderId(),
         title: titleBase,
         slug,
         orderIndex: nextIndex,
-        sections: [],
+        sections: initialSections,
         meta: { isHome: false, isHidden: false },
       };
       return {

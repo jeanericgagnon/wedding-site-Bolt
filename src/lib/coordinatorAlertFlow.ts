@@ -13,9 +13,29 @@ export type CoordinatorAlertForm = {
 export const resolveCoordinatorScheduledFor = (form: CoordinatorAlertForm) => {
   if (form.scheduleType !== 'later') return null;
   if (!form.scheduleDate || !form.scheduleTime) return null;
+  const dateMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(form.scheduleDate);
+  const timeMatch = /^(\d{2}):(\d{2})$/.exec(form.scheduleTime);
+  if (!dateMatch || !timeMatch) return null;
+
+  const year = Number(dateMatch[1]);
+  const month = Number(dateMatch[2]);
+  const day = Number(dateMatch[3]);
+  const hour = Number(timeMatch[1]);
+  const minute = Number(timeMatch[2]);
+  if (hour > 23 || minute > 59) return null;
+
   const scheduledFor = `${form.scheduleDate}T${form.scheduleTime}:00`;
-  const scheduled = new Date(scheduledFor);
+  const scheduled = new Date(year, month - 1, day, hour, minute);
   if (Number.isNaN(scheduled.getTime())) return null;
+  if (
+    scheduled.getFullYear() !== year
+    || scheduled.getMonth() !== month - 1
+    || scheduled.getDate() !== day
+    || scheduled.getHours() !== hour
+    || scheduled.getMinutes() !== minute
+  ) {
+    return null;
+  }
   return scheduledFor;
 };
 

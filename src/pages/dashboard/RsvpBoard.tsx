@@ -19,6 +19,7 @@ export const DashboardRsvpBoard: React.FC = () => {
   const [loadError, setLoadError] = useState<string | null>(null);
   const currentSiteIdRef = useRef<string | null>(null);
   const boardRequestIdRef = useRef(0);
+  const boardInitRequestIdRef = useRef(0);
 
   const resetRsvpBoardState = useCallback(() => {
     currentSiteIdRef.current = null;
@@ -32,9 +33,15 @@ export const DashboardRsvpBoard: React.FC = () => {
 
   const fetchBoard = useCallback(async (weddingSiteId: string) => {
     const requestId = ++boardRequestIdRef.current;
-    const rows = await loadRsvpBoardRows(weddingSiteId);
-    if (requestId !== boardRequestIdRef.current) return;
-    if (currentSiteIdRef.current !== weddingSiteId) return;
+    const isCurrentRequest = () => requestId === boardRequestIdRef.current && currentSiteIdRef.current === weddingSiteId;
+    let rows: RsvpBoardGuestRow[];
+    try {
+      rows = await loadRsvpBoardRows(weddingSiteId);
+    } catch (error) {
+      if (!isCurrentRequest()) return;
+      throw error;
+    }
+    if (!isCurrentRequest()) return;
     setRows(rows);
     setLastUpdated(new Date());
     setLoadError(null);
@@ -42,9 +49,13 @@ export const DashboardRsvpBoard: React.FC = () => {
 
   useEffect(() => {
     let mounted = true;
+    const initRequestId = ++boardInitRequestIdRef.current;
+    boardRequestIdRef.current += 1;
+    currentSiteIdRef.current = null;
+    const isCurrentInit = () => mounted && initRequestId === boardInitRequestIdRef.current;
     const init = async () => {
       if (!user) {
-        if (mounted) {
+        if (isCurrentInit()) {
           resetRsvpBoardState();
           setLoading(false);
         }
@@ -54,7 +65,7 @@ export const DashboardRsvpBoard: React.FC = () => {
         setLoading(true);
         setLoadError(null);
         if (isDemoMode) {
-          if (!mounted) return;
+          if (!isCurrentInit()) return;
           currentSiteIdRef.current = 'demo-site-id';
           setSiteId('demo-site-id');
           setFilter('all');
@@ -69,7 +80,7 @@ export const DashboardRsvpBoard: React.FC = () => {
         }
 
         const id = await resolveRsvpBoardSiteId(user.id);
-        if (!mounted) return;
+        if (!isCurrentInit()) return;
         if (!id) {
           resetRsvpBoardState();
           return;
@@ -79,12 +90,12 @@ export const DashboardRsvpBoard: React.FC = () => {
         setFilter('all');
         await fetchBoard(id);
       } catch {
-        if (mounted) {
+        if (isCurrentInit()) {
           resetRsvpBoardState();
           setLoadError('We could not load RSVP activity right now. Refresh or try again in a minute.');
         }
       } finally {
-        if (mounted) setLoading(false);
+        if (isCurrentInit()) setLoading(false);
       }
     };
 
@@ -97,7 +108,9 @@ export const DashboardRsvpBoard: React.FC = () => {
     const timer = window.setInterval(() => {
       if (!siteId) return;
       void fetchBoard(siteId).catch(() => {
-        setLoadError('We could not refresh RSVP activity right now. The board will try again automatically.');
+        if (currentSiteIdRef.current === siteId) {
+          setLoadError('We could not refresh RSVP activity right now. The board will try again automatically.');
+        }
       });
     }, 15000);
     return () => window.clearInterval(timer);

@@ -1019,6 +1019,86 @@ describe('MessageReviewQueuePanels', () => {
 });
 
 describe('MessageComposerCard', () => {
+  const baseComposerForm: ComposerFormState = {
+    audience: 'all',
+    body: 'Initial body',
+    campaignName: '',
+    channel: 'email',
+    scheduleDate: '',
+    scheduleTime: '',
+    scheduleType: 'now',
+    subject: 'Initial subject',
+    templateKey: 'event-reminder',
+  };
+
+  function renderComposerCard(overrides: Partial<React.ComponentProps<typeof MessageComposerCard>> = {}) {
+    const onSubmitDraft = vi.fn();
+    const props: React.ComponentProps<typeof MessageComposerCard> = {
+      activeRecipients: 12,
+      applyComposerTemplate: vi.fn(),
+      audienceOptions: [{ value: 'all', label: 'All guests', count: 12 }],
+      audienceReachability: { missingEmail: 0, missingPhone: 0, total: 12 },
+      buyingPack: null,
+      canCompose: true,
+      emailCapacityAfterSend: 100,
+      emailCapacityEnough: true,
+      formData: baseComposerForm,
+      languagePreviews: [],
+      onBuySmsPack: vi.fn(),
+      onSaveCurrentComposerAsTemplate: vi.fn(),
+      onSetFormData: vi.fn(),
+      onSubmit: vi.fn(),
+      onSubmitDraft,
+      onToggleRecipientPreview: vi.fn(),
+      previewRecipients: [],
+      recipientsWithEmail: 12,
+      recipientsWithSmsConsent: 0,
+      remainingEmailRecipients: 112,
+      selectedAudienceCount: 12,
+      selectedAudienceDetail: 'All guests',
+      selectedScheduleIsPast: false,
+      selectedTemplateDetail: 'Useful reminder for a specific event or group.',
+      sending: false,
+      showRecipientPreview: false,
+      smsCredits: 0,
+      smsCreditsNeeded: 0,
+      smsCreditsSufficient: true,
+      smsProviderEnabled: false,
+      smsSegmentCount: 0,
+      unreachableRecipients: 0,
+      ...overrides,
+    };
+
+    render(<MessageComposerCard {...props} />);
+    return { onSubmitDraft };
+  }
+
+  it('disables draft saving for read-only collaborators', () => {
+    const { onSubmitDraft } = renderComposerCard({ canCompose: false });
+
+    const draftButton = screen.getByRole('button', { name: /save draft/i });
+    expect(draftButton).toBeDisabled();
+
+    fireEvent.click(draftButton);
+    expect(onSubmitDraft).not.toHaveBeenCalled();
+  });
+
+  it('keeps a past schedule warning aligned with the Send now action', () => {
+    renderComposerCard({
+      formData: {
+        ...baseComposerForm,
+        scheduleDate: '2000-01-01',
+        scheduleTime: '09:00',
+        scheduleType: 'later',
+      },
+      selectedScheduleIsPast: true,
+    });
+
+    expect(screen.getByText(/this message will send right away when you click send now\./i)).toBeInTheDocument();
+    expect(screen.getAllByRole('button', { name: /send now/i }).some((button) => button.getAttribute('type') === 'submit')).toBe(true);
+    expect(screen.queryByRole('button', { name: /schedule message/i })).not.toBeInTheDocument();
+  });
+
   it('preserves a freshly typed subject when the body is updated immediately after it', () => {
     function Harness() {
       const [formData, setFormData] = React.useState<ComposerFormState>({

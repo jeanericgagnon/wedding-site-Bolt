@@ -9,6 +9,7 @@ import {
   buildFilteredEmailList,
   buildFollowUpTask,
   buildGeneratedFollowUpTasks,
+  downloadGuestCsv,
   buildGuestHouseholdGroups,
   buildGuestHouseholdStateMap,
   buildGuestOpsQueue,
@@ -49,6 +50,24 @@ describe('guestDashboardUtils', () => {
   it('allows known actionable import validation copy', () => {
     expect(safeGuestImportReadError(new Error('Guest import files must be CSV or .xlsx.'))).toBe('Guest import files must be CSV or .xlsx.');
     expect(safeGuestImportReadError(new Error('database relation failed'))).toBe('Couldn’t read that guest file. Please check the format and try again.');
+  });
+
+  it('downloads guest CSV exports through the shared attached-anchor helper path', () => {
+    const createObjectURL = vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:guest-export');
+    const revokeObjectURL = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {});
+    const click = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {});
+
+    try {
+      downloadGuestCsv('"First Name"\n"Maya"', 'filtered-guests');
+
+      expect(createObjectURL).toHaveBeenCalledWith(expect.any(Blob));
+      expect(click).toHaveBeenCalledTimes(1);
+      expect(revokeObjectURL).toHaveBeenCalledWith('blob:guest-export');
+    } finally {
+      createObjectURL.mockRestore();
+      revokeObjectURL.mockRestore();
+      click.mockRestore();
+    }
   });
 
   it('creates blank RSVP question drafts', () => {

@@ -14,6 +14,7 @@ const authState = {
 const isErrorLogAdmin = vi.fn();
 const loadDashboardErrorLogs = vi.fn();
 const copyTextOrDownload = vi.fn();
+const downloadTextFile = vi.fn();
 
 vi.mock('../../hooks/useAuth', () => ({
   useAuth: () => authState,
@@ -25,6 +26,7 @@ vi.mock('../../components/ui/Card', () => ({
 
 vi.mock('../../lib/copyText', () => ({
   copyTextOrDownload: (...args: unknown[]) => copyTextOrDownload(...args),
+  downloadTextFile: (...args: unknown[]) => downloadTextFile(...args),
 }));
 
 vi.mock('./errorLogService', () => ({
@@ -47,6 +49,24 @@ describe('DashboardErrorLogs', () => {
         fingerprint: 'planner-save-failed',
       },
     ]);
+  });
+
+  it('exports filtered error logs through the attached download helper', async () => {
+    render(<DashboardErrorLogs />);
+
+    expect(await screen.findByText('Admin · Error Logs')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /export csv/i }));
+
+    expect(downloadTextFile).toHaveBeenCalledWith(
+      expect.stringMatching(/^error-logs-7d-\d{4}-\d{2}-\d{2}\.csv$/),
+      expect.stringContaining('Planner save failed'),
+      'text/csv;charset=utf-8',
+    );
+    expect(downloadTextFile).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.stringContaining('planner-save-failed'),
+      expect.any(String),
+    );
   });
 
   it('shows a retry message when copying an error-log value fails', async () => {

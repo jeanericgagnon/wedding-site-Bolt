@@ -13,6 +13,7 @@ import { writeSignupReturnPath } from '../../lib/signupContinuation';
 import { clearOnboardingEntryReturnPath } from '../../lib/onboardingEntryCleanup';
 import { buildGuidedSetupHydrationErrorMessage, buildGuidedSetupSaveErrorMessage } from '../../lib/guidedSetupErrorCopy';
 import { customerSafeErrorMessage } from '../../lib/customerSafeError';
+import { downloadTextFile } from '../../lib/copyText';
 import { useAuth } from '../../hooks/useAuth';
 import {
   createEmptyGuidedSetupFormData,
@@ -312,13 +313,7 @@ export const GuidedSetup: React.FC = () => {
     const example2 = 'John,Smith,john@example.com,555-0101,Smith Family,false,true,true';
     const example3 = 'Alice,Johnson,alice@example.com,,College Friends,true,false,true';
     const csv = [headers, example1, example2, example3].join('\n');
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'guest-list-template.csv';
-    a.click();
-    URL.revokeObjectURL(url);
+    downloadTextFile('guest-list-template.csv', csv, 'text/csv;charset=utf-8');
   };
 
   const handleCsvUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {

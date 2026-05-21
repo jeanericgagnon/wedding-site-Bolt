@@ -92,6 +92,7 @@ describe('dashboard workspace reset wiring', () => {
 
     expect(planningPage).toContain('const previousUserIdRef = useRef<string | null>(null);');
     expect(planningPage).toContain('const previousSiteIdRef = useRef<string | null>(null);');
+    expect(planningPage).toContain('const loadAllRequestIdRef = useRef(0);');
     expect(planningPage).toContain('const resetPlanningDashboardState = useCallback(() => {');
     expect(planningPage).toContain('setSiteId(null);');
     expect(planningPage).toContain('setPlanningPermissions(null);');
@@ -105,6 +106,11 @@ describe('dashboard workspace reset wiring', () => {
     expect(planningPage).toContain(
       "if (previousSiteIdRef.current && previousSiteIdRef.current !== id) {\n        resetPlanningDashboardState();\n      }",
     );
+    expect(planningPage).toContain('const requestId = ++loadAllRequestIdRef.current;');
+    expect(planningPage).toContain('const isCurrentLoad = () => requestId === loadAllRequestIdRef.current;');
+    expect(planningPage).toContain('if (!isCurrentLoad()) return;');
+    expect(planningPage).toContain('if (isCurrentLoad()) setLoading(false);');
+    expect(planningPage).toContain('await loadSeatingReadiness(id, isCurrentLoad);');
     expect(planningPage).toContain("toast('Couldn’t load planning data right now. Please try again.', 'error');");
   });
 });

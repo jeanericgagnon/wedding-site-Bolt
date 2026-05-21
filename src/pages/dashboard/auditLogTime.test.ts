@@ -13,4 +13,8 @@ describe('audit log time guards', () => {
   it('keeps valid audit timestamps truthful', () => {
     expect(formatAuditLogDateTime('2026-06-21T18:30:00.000Z')).toBe(new Date('2026-06-21T18:30:00.000Z').toLocaleString());
   });
+
+  it('formats date-only audit timestamps as the saved local calendar day', () => {
+    expect(formatAuditLogDateTime('2026-09-12')).toBe(new Date(2026, 8, 12).toLocaleString());
+  });
 });

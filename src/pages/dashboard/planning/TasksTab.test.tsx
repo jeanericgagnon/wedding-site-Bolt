@@ -105,6 +105,49 @@ describe('TasksTab', () => {
     expect(screen.getByText(/couldn’t mark those tasks complete right now\./i)).toBeInTheDocument();
   });
 
+  it('clears selected write actions when task editing access is removed', async () => {
+    const user = userEvent.setup();
+    const onUpdate = vi.fn().mockResolvedValue(undefined);
+    const onCreateMilestones = vi.fn().mockResolvedValue(undefined);
+    const { rerender } = render(
+      <ToastProvider>
+        <TasksTab
+          tasks={baseTasks}
+          weddingDate="2026-10-10"
+          onAdd={vi.fn().mockResolvedValue(undefined)}
+          onUpdate={onUpdate}
+          onDelete={vi.fn().mockResolvedValue(undefined)}
+          onCreateMilestones={onCreateMilestones}
+        />
+      </ToastProvider>,
+    );
+
+    await user.click(screen.getByRole('checkbox'));
+    expect(screen.getByRole('button', { name: /mark 1 complete/i })).toBeEnabled();
+    await user.click(screen.getByRole('button', { name: /wedding checklist/i }));
+    expect(screen.getByText(/build a wedding checklist\?/i)).toBeInTheDocument();
+
+    rerender(
+      <ToastProvider>
+        <TasksTab
+          tasks={baseTasks}
+          weddingDate="2026-10-10"
+          onAdd={vi.fn().mockResolvedValue(undefined)}
+          onUpdate={onUpdate}
+          onDelete={vi.fn().mockResolvedValue(undefined)}
+          onCreateMilestones={onCreateMilestones}
+          canEdit={false}
+        />
+      </ToastProvider>,
+    );
+
+    expect(screen.getByRole('checkbox')).toBeDisabled();
+    expect(screen.queryByRole('button', { name: /mark 1 complete/i })).not.toBeInTheDocument();
+    expect(screen.queryByText(/build a wedding checklist\?/i)).not.toBeInTheDocument();
+    expect(onUpdate).not.toHaveBeenCalled();
+    expect(onCreateMilestones).not.toHaveBeenCalled();
+  });
+
   it('shows a toast when the quick complete toggle fails', async () => {
     const user = userEvent.setup();
     const onUpdate = vi.fn().mockRejectedValueOnce(new Error('toggle failed'));

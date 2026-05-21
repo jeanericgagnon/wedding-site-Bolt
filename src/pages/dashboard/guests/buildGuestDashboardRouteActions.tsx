@@ -175,7 +175,8 @@ export function buildGuestDashboardRouteActions(args: any) {
         const next = !previous;
         try {
           args.setAutoRemindersEnabled(next);
-          await args.persistReminderSettingsForSite({ auto_reminders_enabled: next });
+          const saved = await args.persistReminderSettingsForSite({ auto_reminders_enabled: next });
+          if (!saved) return;
           args.toast(next ? 'Auto reminders enabled' : 'Auto reminders paused', 'success');
         } catch {
           args.setAutoRemindersEnabled(previous);

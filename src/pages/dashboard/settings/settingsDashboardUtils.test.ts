@@ -40,6 +40,10 @@ describe('settingsDashboardUtils', () => {
     expect(getSiteLanguageLabel('zz')).toBe('ZZ');
     expect(formatTranslationStatusDate(null)).toBe('Not generated yet');
     expect(formatTranslationStatusDate('not-a-date')).toBe('Generated recently');
+    expect(formatTranslationStatusDate('2026-02-30')).toBe('Generated recently');
+    expect(formatTranslationStatusDate('2026-09-12')).toBe(
+      `Updated ${new Date(2026, 8, 12).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}`,
+    );
   });
 
   it('keeps settings errors customer-safe', () => {
