@@ -9,31 +9,31 @@ const steps = [
   {
     id: 'name-change-service-tests',
     label: 'Name change service normalization and merge tests',
-    command: 'npm test -- --pool=threads --run src/pages/dashboard/planning/nameChangeService.test.ts',
+    command: 'DAYOF_FOCUSED_VITEST_TIMEOUT_MS=180000 npm run test:focused -- src/pages/dashboard/planning/nameChangeService.test.ts',
     required: true,
   },
   {
     id: 'name-change-dependency-tests',
     label: 'Name change TSA, DMV, passport, and dependency matrix tests',
-    command: 'npm test -- --pool=threads --run src/lib/nameChange/requirements.test.ts src/lib/nameChange/tsaFlow.test.ts src/lib/nameChange/dmvFlow.test.ts src/lib/nameChange/passportFlow.test.ts src/lib/nameChange/targetExecution.test.ts',
+    command: 'DAYOF_FOCUSED_VITEST_TIMEOUT_MS=180000 npm run test:focused -- src/lib/nameChange/requirements.test.ts src/lib/nameChange/tsaFlow.test.ts src/lib/nameChange/dmvFlow.test.ts src/lib/nameChange/passportFlow.test.ts src/lib/nameChange/targetExecution.test.ts',
     required: true,
   },
   {
     id: 'name-change-reminder-tests',
     label: 'Name change reminder, blocker, and template proof tests',
-    command: 'npm test -- --pool=threads --run src/lib/nameChange/reminders.test.ts',
+    command: 'DAYOF_FOCUSED_VITEST_TIMEOUT_MS=180000 npm run test:focused -- src/lib/nameChange/reminders.test.ts',
     required: true,
   },
   {
     id: 'name-change-overview-tests',
     label: 'Name change overview and lifecycle tests',
-    command: 'npm test -- --pool=threads --run src/pages/dashboard/nameChangeLifecycleLabels.test.ts src/pages/dashboard/nameChangeLifecycleStatus.test.ts src/pages/dashboard/nameChangeOverviewCard.test.ts src/pages/dashboard/nameChangeOverviewInsights.test.ts src/pages/dashboard/planning/nameChangePlannerUi.test.ts src/pages/dashboard/planning/nameChangeExecutionTime.test.ts',
+    command: 'DAYOF_FOCUSED_VITEST_TIMEOUT_MS=180000 npm run test:focused -- src/pages/dashboard/nameChangeLifecycleLabels.test.ts src/pages/dashboard/nameChangeLifecycleStatus.test.ts src/pages/dashboard/nameChangeOverviewCard.test.ts src/pages/dashboard/nameChangeOverviewInsights.test.ts src/pages/dashboard/planning/nameChangePlannerUi.test.ts src/pages/dashboard/planning/nameChangeExecutionTime.test.ts',
     required: true,
   },
   {
     id: 'name-change-full-suite-tests',
     label: 'Name change full-suite planner depth tests',
-    command: 'npm test -- --pool=threads --run src/lib/nameChange/plannerDeepWork.test.ts src/lib/nameChange/engine.test.ts src/pages/dashboard/planning/NameChangePlannerTab.test.tsx',
+    command: 'DAYOF_FOCUSED_VITEST_TIMEOUT_MS=180000 npm run test:focused -- src/lib/nameChange/plannerDeepWork.test.ts src/lib/nameChange/engine.test.ts src/pages/dashboard/planning/NameChangePlannerTab.test.tsx',
     required: true,
   },
   {
@@ -121,9 +121,17 @@ const output = {
     passed: results.filter((result) => result.ok).length,
     failed: failedRequired.length,
   },
-  contractSummary: liveEnabled
-    ? 'Name-change runtime live proof is green: this shipped planner lane closes authenticated saved-surface runtime truth while still rolling up into the broader proof-board launch call.'
-    : 'Name-change runtime local proof is green: this planner lane validates saved planner logic and UI locally and leaves authenticated live route truth to the dedicated rerun.',
+  contractSummary: failedRequired.length === 0
+    ? (
+      liveEnabled
+        ? 'Name-change runtime live proof is green: this shipped planner lane closes authenticated saved-surface runtime truth while still rolling up into the broader proof-board launch call.'
+        : 'Name-change runtime local proof is green: this planner lane validates saved planner logic and UI locally and leaves authenticated live route truth to the dedicated rerun.'
+    )
+    : (
+      liveEnabled
+        ? 'Name-change runtime live proof is red: fix failing required lanes before using this as deploy evidence.'
+        : 'Name-change runtime local proof is red: fix failing required lanes before using this as deploy evidence.'
+    ),
   automatedCoverage: [
     'Case normalization and document merge safety',
     'Passport alias mapping plus TSA, DMV, travel, and execution dependency truth',
