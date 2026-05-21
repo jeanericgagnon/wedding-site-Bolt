@@ -7,6 +7,8 @@ describe('SettingsSiteUrlPanel', () => {
     render(
       <SettingsSiteUrlPanel
         canEditSettings
+        hideFromSearch={false}
+        isGuestFacingReady={false}
         isPublished={false}
         onSiteSlugChange={vi.fn()}
         onSubmit={vi.fn((event) => event.preventDefault())}
@@ -28,6 +30,8 @@ describe('SettingsSiteUrlPanel', () => {
     render(
       <SettingsSiteUrlPanel
         canEditSettings
+        hideFromSearch={false}
+        isGuestFacingReady
         isPublished
         onSiteSlugChange={vi.fn()}
         onSubmit={vi.fn((event) => event.preventDefault())}
@@ -48,6 +52,8 @@ describe('SettingsSiteUrlPanel', () => {
     render(
       <SettingsSiteUrlPanel
         canEditSettings
+        hideFromSearch={false}
+        isGuestFacingReady={false}
         isPublished={false}
         onSiteSlugChange={vi.fn()}
         onSubmit={vi.fn((event) => event.preventDefault())}
@@ -70,6 +76,8 @@ describe('SettingsSiteUrlPanel', () => {
     render(
       <SettingsSiteUrlPanel
         canEditSettings
+        hideFromSearch={false}
+        isGuestFacingReady
         isPublished
         onSiteSlugChange={vi.fn()}
         onSubmit={vi.fn((event) => event.preventDefault())}

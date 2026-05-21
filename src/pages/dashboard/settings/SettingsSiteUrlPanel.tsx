@@ -1,4 +1,4 @@
-import { ExternalLink, Loader2 } from 'lucide-react';
+import { Copy, ExternalLink, Loader2, Printer } from 'lucide-react';
 import type { FormEvent } from 'react';
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Input } from '../../../components/ui';
 import { ShareQrPanel } from '../../../components/ui/ShareQrPanel';
@@ -6,9 +6,12 @@ import { getSiteVisibilityState, type SitePrivacyMode } from '../../../lib/siteV
 
 type SettingsSiteUrlPanelProps = {
   canEditSettings: boolean;
+  hideFromSearch: boolean;
+  isGuestFacingReady: boolean;
   isPublished: boolean;
   onSiteSlugChange: (value: string) => void;
   onSubmit: (event: FormEvent) => void;
+  onDownloadIdentityPrintPack: () => void;
   privacyMode: SitePrivacyMode;
   publicSiteUrl: string;
   siteSlug: string;
@@ -19,9 +22,12 @@ type SettingsSiteUrlPanelProps = {
 
 export function SettingsSiteUrlPanel({
   canEditSettings,
+  hideFromSearch,
+  isGuestFacingReady,
   isPublished,
   onSiteSlugChange,
   onSubmit,
+  onDownloadIdentityPrintPack,
   privacyMode,
   publicSiteUrl,
   siteSlug,
@@ -29,7 +35,7 @@ export function SettingsSiteUrlPanel({
   slugSaving,
   slugSuccess,
 }: SettingsSiteUrlPanelProps) {
-  const visibility = getSiteVisibilityState({ isPublished, privacyMode });
+  const visibility = getSiteVisibilityState({ isPublished, privacyMode, hideFromSearch, isGuestFacingReady });
 
   return (
     <Card variant="bordered" padding="lg" className="rounded-[20px] shadow-none">
@@ -47,8 +53,15 @@ export function SettingsSiteUrlPanel({
           )}
           <div>
             <label className="mb-2 block text-sm font-medium text-text-primary">
-              Current URL
+              Site URL
             </label>
+            <Input
+              value={publicSiteUrl}
+              readOnly
+              className="mb-3 bg-surface-subtle text-text-secondary"
+              aria-label="Public site URL"
+              onFocus={(event) => event.currentTarget.select()}
+            />
             <div className="flex items-center gap-3">
               <Input
                 value={siteSlug}
@@ -59,29 +72,56 @@ export function SettingsSiteUrlPanel({
               />
               <span className="shrink-0 text-text-secondary">.dayof.love</span>
             </div>
+            <p className="mt-2 text-xs text-text-secondary">Updating the URL changes your public site address and existing share links.</p>
             {siteSlug && (
               <div className="mt-2 space-y-2">
                 {visibility.isLive ? (
                   <>
-                    <p className="text-sm text-text-secondary">
-                      Your site is accessible at{' '}
-                      <a
-                        href={publicSiteUrl}
-                        className="text-primary hover:text-primary-hover"
-                        target="_blank"
-                        rel="noopener noreferrer"
+                    <p className="text-sm text-text-secondary">Guests can reach your live site at this address.</p>
+                    <div className="flex flex-wrap gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={async () => {
+                          try {
+                            await navigator.clipboard.writeText(publicSiteUrl);
+                          } catch {
+                            window.open(publicSiteUrl, '_blank', 'noopener,noreferrer');
+                          }
+                        }}
                       >
-                        {siteSlug}.dayof.love
-                        <ExternalLink className="ml-1 inline h-3 w-3" aria-hidden="true" />
-                      </a>
-                    </p>
+                        <Copy className="mr-1 h-3.5 w-3.5" />
+                        Copy link
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={onDownloadIdentityPrintPack}
+                        disabled={!isPublished}
+                      >
+                        <Printer className="mr-1 h-3.5 w-3.5" />
+                        Print / export kit
+                      </Button>
+                    </div>
                     <ShareQrPanel
                       title="Public site QR"
-                      description="Print this or add it to signage so guests can open the wedding site quickly."
+                      description="Download QR files for signage or printed inserts."
                       url={publicSiteUrl}
-                      copyLabel="Copy site link"
+                      copyLabel="Copy link"
+                      downloadLabel="Download QR"
                       className="mt-3"
                     />
+                    <a
+                      href={publicSiteUrl}
+                      className="inline-flex items-center text-xs text-primary hover:text-primary-hover"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      Open site
+                      <ExternalLink className="ml-1 inline h-3 w-3" aria-hidden="true" />
+                    </a>
                   </>
                 ) : (
                   <div className="rounded-[20px] border border-border-subtle bg-surface-subtle p-3 text-sm text-text-secondary">

@@ -1,7 +1,7 @@
 import { CheckCheck, Copy, Eye, EyeOff, Loader2, Save, Sparkles } from 'lucide-react';
 import type { FormEvent } from 'react';
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../../components/ui';
-import { getVisibilityModeOptions } from '../../../lib/siteVisibilityState';
+import { getSiteVisibilityState, getVisibilityModeOptions } from '../../../lib/siteVisibilityState';
 import { ANALYTICS_RETENTION_OPTIONS, formatTranslationStatusDate } from './settingsDashboardUtils';
 import {
   type AnalyticsRetentionDays,
@@ -21,6 +21,8 @@ type SettingsPrivacyPanelProps = {
   defaultLanguage: SiteLanguageCode;
   guestAccessToken: string | null;
   hideFromSearch: boolean;
+  isGuestFacingReady?: boolean;
+  isPublished: boolean;
   onAutoTranslateLanguage: (language: TranslationLanguageCode) => void;
   onCopyInviteLink: () => void;
   onAllowedLanguagesChange: (languages: SiteLanguageCode[]) => void;
@@ -57,6 +59,8 @@ export function SettingsPrivacyPanel({
   defaultLanguage,
   guestAccessToken,
   hideFromSearch,
+  isGuestFacingReady,
+  isPublished,
   onAutoTranslateLanguage,
   onCopyInviteLink,
   onAllowedLanguagesChange,
@@ -83,6 +87,12 @@ export function SettingsPrivacyPanel({
   visibilitySaving,
   visibilitySuccess,
 }: SettingsPrivacyPanelProps) {
+  const visibilitySummary = getSiteVisibilityState({
+    isPublished,
+    privacyMode,
+    hideFromSearch,
+    isGuestFacingReady,
+  });
   const translationStatusByLanguage = new Map(translationStatuses.map((status) => [status.language, status]));
 
   return (
@@ -101,7 +111,8 @@ export function SettingsPrivacyPanel({
       <CardContent>
         {!showPrivacySettings ? (
           <div className="rounded-[20px] border border-border-subtle bg-surface-subtle/40 p-4 text-sm text-text-secondary">
-            Hidden by default to keep things simple. Open it when you want to choose who can see your site.
+            <p className="font-medium text-text-primary">{visibilitySummary.label}</p>
+            <p className="mt-1">{visibilitySummary.searchLabel}. Open this panel when you want to change who can see your site.</p>
           </div>
         ) : (
           <form onSubmit={onSavePrivacy} className="space-y-5">

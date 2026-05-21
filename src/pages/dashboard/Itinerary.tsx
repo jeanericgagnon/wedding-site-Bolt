@@ -32,7 +32,7 @@ export const DashboardItinerary: React.FC = () => {
         },
       });
     });
-  const { events, hasActiveSite, loadEvents, loading, setEvents } = useItineraryDashboardData({ isDemoMode, toast });
+  const { events, weddingDate, hasActiveSite, loadEvents, loading, setEvents } = useItineraryDashboardData({ isDemoMode, toast });
   const {
     autoCreateAlbum,
     editingEvent,
@@ -150,6 +150,7 @@ export const DashboardItinerary: React.FC = () => {
         templateStart={templateStart}
         timelineBusy={timelineBusy}
         timelineInsights={timelineInsights}
+        weddingDate={weddingDate}
       />
       {confirmDialog && (
         <ConfirmDialog

@@ -14,6 +14,7 @@ import { loadDemoItineraryEventsFromStorage, readDemoSeatingState } from './seat
 import { isAttendingRsvpStatus, isDeclinedRsvpStatus, isPendingRsvpStatus } from '../../lib/rsvpStatus';
 import type { PlannerAccessRole, PlannerPermissionKey } from '../../lib/plannerAccess';
 import type { NotificationPrefs } from '../../lib/notificationPrefs';
+import { resolveCanonicalWeddingDate } from '../../lib/canonicalWeddingDate';
 import type { AnalyticsEventSummary } from './analyticsEventSummary';
 import { normalizeAnalyticsSettings } from './settings/settingsDashboardUtils';
 
@@ -126,10 +127,7 @@ export function resolveWeddingDateFromData(
   weddingData: Record<string, unknown> | null,
   site: { wedding_date?: string | null; venue_date?: string | null } | null
 ): string | null {
-  const event = (weddingData?.event as Record<string, unknown> | undefined) ?? undefined;
-  const eventWeddingDateISO = typeof event?.weddingDateISO === 'string' ? event.weddingDateISO : null;
-  const legacyWeddingDate = typeof weddingData?.weddingDate === 'string' ? (weddingData.weddingDate as string) : null;
-  return eventWeddingDateISO ?? legacyWeddingDate ?? site?.wedding_date ?? site?.venue_date ?? null;
+  return resolveCanonicalWeddingDate(weddingData, site);
 }
 
 export function buildDemoOverviewSnapshotState(): {

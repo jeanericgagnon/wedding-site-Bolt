@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { demoEvents } from '../../lib/demoData';
+import { demoEvents, demoWeddingSite } from '../../lib/demoData';
 import { readDemoItineraryEvents, writeDemoItineraryEvents } from './itineraryDemoStorage';
 import {
   loadItineraryDashboardEvents,
@@ -40,6 +40,7 @@ function buildDemoItineraryEvents(): EventWithInvites[] {
 
 export function useItineraryDashboardData({ isDemoMode, toast }: Args) {
   const [events, setEvents] = useState<EventWithInvites[]>([]);
+  const [weddingDate, setWeddingDate] = useState<string | null>(null);
   const [hasActiveSite, setHasActiveSite] = useState(isDemoMode);
   const [loading, setLoading] = useState(true);
   const loadEventsRequestIdRef = useRef(0);
@@ -52,6 +53,7 @@ export function useItineraryDashboardData({ isDemoMode, toast }: Args) {
       if (isDemoMode) {
         if (!isCurrentRequest()) return;
         setHasActiveSite(true);
+        setWeddingDate(demoWeddingSite.wedding_date ?? null);
         const seeded = buildDemoItineraryEvents();
         const storedEvents = readDemoItineraryEvents(seeded);
         if (storedEvents.length > 0) {
@@ -72,10 +74,12 @@ export function useItineraryDashboardData({ isDemoMode, toast }: Args) {
       if (!isCurrentRequest()) return;
       hasEventRsvpsTable = snapshot.hasEventRsvpsTable;
       setHasActiveSite(snapshot.hasActiveSite);
+      setWeddingDate(snapshot.weddingDate);
       setEvents(snapshot.events);
     } catch {
       if (!isCurrentRequest()) return;
       setHasActiveSite(false);
+      setWeddingDate(null);
       setEvents([]);
       toast('Couldn’t load itinerary events. Please try again.', 'error');
     } finally {
@@ -98,6 +102,7 @@ export function useItineraryDashboardData({ isDemoMode, toast }: Args) {
 
   return {
     events,
+    weddingDate,
     hasActiveSite,
     loadEvents,
     loading,

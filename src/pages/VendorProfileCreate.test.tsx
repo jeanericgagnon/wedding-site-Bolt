@@ -221,6 +221,12 @@ describe('VendorProfileCreatePage', () => {
     await waitFor(() => expect(screen.getAllByText('Basics').length).toBeGreaterThan(0));
     expect(screen.getAllByText('2/5 ready').length).toBeGreaterThanOrEqual(2);
     expect(screen.getByText('Add Photos, About, Ways to reply')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Save page' })).toBeDisabled();
+    expect(screen.getByText('Add Photos, About, Ways to reply before saving.')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Save page' }));
+    expect(createVendorProfile).not.toHaveBeenCalled();
+    expect(toastMock).not.toHaveBeenCalledWith('Add Photos, About, Ways to reply before saving.', 'error');
   });
 
   it('swaps untouched starter copy when the vendor type changes and keeps edited fields', async () => {

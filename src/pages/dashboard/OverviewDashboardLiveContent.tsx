@@ -275,7 +275,11 @@ export function OverviewDashboardLiveContent({
             </p>
             {heroVenueLine && <p className="mt-4 text-sm font-medium text-text-primary">{heroVenueLine}</p>}
             <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-              <Button variant="primary" size="lg" onClick={() => navigate('/dashboard/overview')}>
+              <Button
+                variant="primary"
+                size="lg"
+                onClick={() => (stats?.siteSlug ? openSitePreview(stats.siteSlug, siteVisibility.isLive, navigate) : navigate('/dashboard/builder'))}
+              >
                 Review guest experience
               </Button>
               <Button variant="ghost" size="lg" onClick={() => navigate('/dashboard/builder')}>

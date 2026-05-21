@@ -515,6 +515,12 @@ export const VendorProfilePage: React.FC = () => {
             </div>
           </section>
         )}
+        {sectionEnabled('packages') && customization.packages.length === 0 && (
+          <section style={{ order: sectionOrderIndex('packages') }} className={`rounded-xl border border-dashed ${isDark ? 'border-white/15 bg-white/8 text-[#d8c4ad]' : 'border-[#d8c8b6] bg-white/70 text-[#6f5843]'} p-6 sm:p-8`}>
+            <h2 className={`text-sm font-semibold ${eyebrowText}`}>What to know</h2>
+            <p className="mt-3 text-sm sm:text-base">Key details can be added before booking.</p>
+          </section>
+        )}
 
         {sectionEnabled('testimonials') && customization.testimonials.length > 0 && (
           <section style={{ order: sectionOrderIndex('testimonials') }} className="space-y-4">
@@ -529,6 +535,12 @@ export const VendorProfilePage: React.FC = () => {
             </div>
           </section>
         )}
+        {sectionEnabled('testimonials') && customization.testimonials.length === 0 && (
+          <section style={{ order: sectionOrderIndex('testimonials') }} className={`rounded-xl border border-dashed ${isDark ? 'border-white/15 bg-white/8 text-[#d8c4ad]' : 'border-[#d8c8b6] bg-white/70 text-[#6f5843]'} p-6 sm:p-8`}>
+            <h2 className={`text-sm font-semibold ${eyebrowText}`}>Couple notes</h2>
+            <p className="mt-3 text-sm sm:text-base">More shared notes can be added after first messages.</p>
+          </section>
+        )}
 
         {sectionEnabled('faq') && customization.faqs.length > 0 && (
           <section style={{ order: sectionOrderIndex('faq') }} className={`${panelClass} space-y-4`}>
@@ -541,6 +553,12 @@ export const VendorProfilePage: React.FC = () => {
                 </div>
               ))}
             </div>
+          </section>
+        )}
+        {sectionEnabled('faq') && customization.faqs.length === 0 && (
+          <section style={{ order: sectionOrderIndex('faq') }} className={`rounded-xl border border-dashed ${isDark ? 'border-white/15 bg-white/8 text-[#d8c4ad]' : 'border-[#d8c8b6] bg-white/70 text-[#6f5843]'} p-6 sm:p-8`}>
+            <h2 className={`text-sm font-semibold ${eyebrowText}`}>Common questions</h2>
+            <p className="mt-3 text-sm sm:text-base">Questions and answers can be added as plans are finalized.</p>
           </section>
         )}
 

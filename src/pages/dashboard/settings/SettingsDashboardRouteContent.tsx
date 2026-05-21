@@ -66,6 +66,7 @@ type Props = {
   handleUpdatePassword: (e: FormEvent) => Promise<void>;
   handleUpdateSlug: (e: FormEvent) => Promise<void>;
   hideFromSearch: boolean;
+  isGuestFacingReady: boolean;
   musicPlaylistUrl: string;
   newPassword: string;
   notifDigest: boolean;
@@ -302,6 +303,7 @@ export function SettingsDashboardRouteContent(props: Props) {
             hasWeddingIdentityStoryGraphic={props.hasWeddingIdentityStoryGraphic}
             guestAccessToken={props.guestAccessToken}
             hideFromSearch={props.hideFromSearch}
+            isGuestFacingReady={props.isGuestFacingReady}
             isPublished={props.isPublished}
             onAutoTranslateLanguage={(language) => runSettingsWrite(() => { void props.onAutoTranslateLanguage(language); })}
             onAllowedLanguagesChange={(languages) => {

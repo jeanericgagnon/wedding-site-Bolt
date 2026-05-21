@@ -59,6 +59,10 @@ export function MessageDashboardView({
   toasts,
   toggleSendingDetails,
 }: MessageDashboardViewProps) {
+  const hasDeliveryBaseline = historyProps.messages.some((message) => message.status !== 'draft');
+  const deliverySummary = hasDeliveryBaseline ? `${deliveryRate}% healthy` : 'No sends yet';
+  const deliveryDetail = hasDeliveryBaseline ? 'latest send status' : 'health appears after first send';
+
   return (
     <DashboardLayout currentPage="messages">
       <div className="space-y-7">
@@ -69,7 +73,7 @@ export function MessageDashboardView({
           stats={[
             { label: 'Scheduled', value: scheduledCount > 0 ? `${scheduledCount} waiting` : 'Nothing waiting', detail: 'ready when needed' },
             { label: 'Reach', value: guestsReached > 0 ? `${guestsReached} guests reached` : 'Ready to send', detail: 'across sent updates' },
-            { label: 'Delivery', value: `${deliveryRate}% healthy`, detail: 'latest send status' },
+            { label: 'Delivery', value: deliverySummary, detail: deliveryDetail },
           ]}
           actions={
             <div className="flex flex-col gap-3 md:items-end">

@@ -9,7 +9,7 @@ import { getBuilderRevision, listBuilderRevisions, recordBuilderRevision } from 
 import { rewriteSignedMediaUrlsToPublicDeep } from '../../lib/mediaUrl';
 import { buildCoupleDisplayName } from '../../lib/coupleDisplayName';
 
-const BUILDER_PROJECT_SITE_SELECT = 'id, active_template_id, template_id, site_json, layout_config' as const;
+const BUILDER_PROJECT_SITE_SELECT = 'id, active_template_id, template_id, site_json, layout_config, is_published' as const;
 const BUILDER_WEDDING_DATA_SITE_SELECT = 'id, wedding_data, couple_name_1, couple_name_2, couple_first_name, couple_second_name, wedding_date, venue_date, venue_name, wedding_location, venue_location' as const;
 const BUILDER_ENTRY_SITE_SELECT = 'id, site_slug, site_url, couple_name_1, couple_name_2, couple_first_name, couple_second_name' as const;
 
@@ -21,6 +21,18 @@ export interface BuilderEntrySiteRow {
   couple_name_2?: string | null;
   couple_first_name?: string | null;
   couple_second_name?: string | null;
+}
+
+function alignProjectWithPublishTruth(project: BuilderProject, isPublished: boolean): BuilderProject {
+  if (!isPublished) return project;
+
+  return {
+    ...project,
+    publishStatus: 'published',
+    publishedVersion: typeof project.publishedVersion === 'number' && project.publishedVersion > 0
+      ? project.publishedVersion
+      : 1,
+  };
 }
 
 const toIsoDateOrUndefined = (value: unknown): string | undefined => {
@@ -111,23 +123,26 @@ export const builderProjectService = {
     if (!data) return null;
 
     const templateId = (data.active_template_id ?? data.template_id ?? 'modern-luxe') as string;
+    const isPublished = (data.is_published as boolean | null | undefined) === true;
 
     if (data.site_json) {
       const parsed = safeJsonParse<BuilderProject>(data.site_json, null as unknown as BuilderProject);
       if (parsed && parsed.pages && Array.isArray(parsed.pages)) {
         const durableParsed = rewriteSignedMediaUrlsToPublicDeep(parsed);
-        return serializeBuilderProject({ ...durableParsed, weddingId: weddingSiteId }, { touchTimestamps: false });
+        const serialized = serializeBuilderProject({ ...durableParsed, weddingId: weddingSiteId }, { touchTimestamps: false });
+        return alignProjectWithPublishTruth(serialized, isPublished);
       }
     }
 
     if (data.layout_config) {
       const layout = safeJsonParse<LayoutConfigV1>(data.layout_config, null as unknown as LayoutConfigV1);
       if (layout && layout.version === '1' && Array.isArray(layout.pages)) {
-        return serializeBuilderProject(fromExistingLayoutToBuilderProject(weddingSiteId, layout), { touchTimestamps: false });
+        const serialized = serializeBuilderProject(fromExistingLayoutToBuilderProject(weddingSiteId, layout), { touchTimestamps: false });
+        return alignProjectWithPublishTruth(serialized, isPublished);
       }
     }
 
-    return createEmptyBuilderProject(weddingSiteId, templateId);
+    return alignProjectWithPublishTruth(createEmptyBuilderProject(weddingSiteId, templateId), isPublished);
   },
 
   async loadWeddingData(weddingSiteId: string): Promise<WeddingDataV1> {

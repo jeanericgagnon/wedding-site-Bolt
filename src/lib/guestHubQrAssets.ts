@@ -36,8 +36,8 @@ export function buildTrackedPublicQrPayloadUrl(url: string): string {
 }
 
 export const buildQrImageUrl = (url: string, size = 512) =>
-  isSafePublicQrAssetUrl(url) && !isPrivateQrPayloadForThirdPartyQr(url)
-    ? `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodeURIComponent(buildTrackedPublicQrPayloadUrl(url))}`
+  isSafePublicQrAssetUrl(url)
+    ? buildLocalQrSvgDataUrl(buildTrackedPublicQrPayloadUrl(url), size)
     : '';
 
 export const buildRenderableQrImageUrl = (
@@ -45,13 +45,10 @@ export const buildRenderableQrImageUrl = (
   size = 512,
   options?: { allowPrivate?: boolean },
 ) => {
-  const publicUrl = buildQrImageUrl(url, size);
-  if (publicUrl) return publicUrl;
+  const safePublicUrl = buildQrImageUrl(url, size);
+  if (safePublicUrl) return safePublicUrl;
   if (!options?.allowPrivate) return '';
-  if (isPrivateQrPayloadForThirdPartyQr(url)) {
-    return buildLocalQrSvgDataUrl(url, size);
-  }
-  return '';
+  return isPrivateQrPayloadForThirdPartyQr(url) ? buildLocalQrSvgDataUrl(url, size) : '';
 };
 
 function cleanText(value: string, fallback: string): string {

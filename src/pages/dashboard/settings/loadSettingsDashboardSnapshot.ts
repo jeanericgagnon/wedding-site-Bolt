@@ -1,4 +1,5 @@
 import { resolveActiveSiteForUser } from '../../../lib/activeSite';
+import { resolveCanonicalWeddingDate } from '../../../lib/canonicalWeddingDate';
 import { demoWeddingSite } from '../../../lib/demoData';
 import { normalizeNotificationPrefs, type DigestCadence } from '../../../lib/notificationPrefs';
 import type { PlannerAccessRole, PlannerPermissionKey } from '../../../lib/plannerAccess';
@@ -177,6 +178,13 @@ export async function loadSettingsDashboardSnapshot({
   );
   const prefs = normalizeNotificationPrefs(data.notification_prefs as Record<string, unknown> | null);
   const mealCfg = (data as { rsvp_meal_config?: unknown }).rsvp_meal_config as { enabled?: boolean; options?: unknown[] } | undefined;
+  const weddingDate = resolveCanonicalWeddingDate(
+    weddingData,
+    {
+      wedding_date: (data.wedding_date as string | null | undefined) ?? null,
+      venue_date: (data.venue_date as string | null | undefined) ?? null,
+    },
+  );
 
   return {
     ...DEFAULT_SNAPSHOT,
@@ -209,7 +217,7 @@ export async function loadSettingsDashboardSnapshot({
     siteSlug: (data.site_slug as string) ?? '',
     translationStatuses: siteId ? await loadSnapshotTranslationStatuses(siteId) : [],
     venueName: (data.venue_name as string | null) ?? null,
-    weddingDate: (data.wedding_date as string | null) ?? null,
+    weddingDate,
     weddingData,
     weddingSiteId: siteId,
   };

@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   Menu,
   X,
   ExternalLink,
   ChevronDown,
+  Search,
   Pin,
   PinOff,
   Bell,
@@ -24,7 +25,6 @@ import {
   DASHBOARD_NAV_PIN_STORAGE_KEY,
   DASHBOARD_TOOL_GROUPS,
   DEFAULT_DASHBOARD_TOOLS,
-  PINNABLE_NAV_TOOL_IDS,
   getAllDashboardTools,
   readStoredToolPins,
   writeStoredToolPins,
@@ -90,13 +90,15 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
   const [siteIsPublished, setSiteIsPublished] = useState(false);
   const [siteGuestFacingReady, setSiteGuestFacingReady] = useState(false);
   const [sitePrivacyMode, setSitePrivacyMode] = useState<'public' | 'password_protected' | 'invite_only' | 'hidden'>('public');
-  const [showMoreFeatures, setShowMoreFeatures] = useState(true);
   const [moreToolsOpen, setMoreToolsOpen] = useState(false);
+  const [moreToolsQuery, setMoreToolsQuery] = useState('');
+  const [openMoreGroup, setOpenMoreGroup] = useState<string | null>(null);
   const [navPins, setNavPins] = useState<DashboardToolId[]>([]);
   const [siteMemberships, setSiteMemberships] = useState<SiteMembershipOption[]>([]);
   const [activeSiteRole, setActiveSiteRole] = useState<DashboardRole | null>(null);
   const [activeSitePermissions, setActiveSitePermissions] = useState<PlannerPermissionKey[] | null>(null);
   const { user, isDemoMode } = useAuth();
+  const location = useLocation();
   const navigate = useNavigate();
   const siteContextRequestIdRef = useRef(0);
 
@@ -182,7 +184,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
     .filter((tool) => tool.id !== 'tools')
     .map((tool) => ({ ...tool, label: tool.name }));
   const optionalNavTools = getAllDashboardTools()
-    .filter((tool) => PINNABLE_NAV_TOOL_IDS.includes(tool.id) && navPins.includes(tool.id))
+    .filter((tool) => navPins.includes(tool.id) && !defaultNavTools.some((navTool) => navTool.id === tool.id))
     .map((tool) => ({ ...tool, label: tool.name }));
 
   const navSections: Array<{
@@ -190,9 +192,8 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
     items: Array<DashboardTool & { label: string }>;
   }> = [
     {
-      items: defaultNavTools,
+      items: [...defaultNavTools, ...optionalNavTools],
     },
-    ...(optionalNavTools.length > 0 ? [{ title: 'Added tools', items: optionalNavTools }] : []),
   ];
 
   const role = activeSiteRole ?? 'owner';
@@ -245,10 +246,53 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
     ...group,
     tools: group.tools.filter((tool) => !tool.adminOnly && canSeeNavItem(tool.id)),
   })).filter((group) => group.tools.length > 0);
+  const filteredMoreToolGroups = useMemo(() => {
+    const query = moreToolsQuery.trim().toLowerCase();
+    if (!query) return moreToolGroups;
+    return moreToolGroups
+      .map((group) => ({
+        ...group,
+        tools: group.tools.filter((tool) => {
+          const haystack = `${tool.name} ${tool.description} ${group.title}`.toLowerCase();
+          return haystack.includes(query);
+        }),
+      }))
+      .filter((group) => group.tools.length > 0);
+  }, [moreToolGroups, moreToolsQuery]);
   const moreToolsActive = currentPage === 'tools' || DASHBOARD_TOOL_GROUPS.some((group) => group.tools.some((tool) => tool.id === currentPage));
   const navPinSet = useMemo(() => new Set(navPins), [navPins]);
   const handleToggleNavPin = (toolId: DashboardToolId) => {
     writeStoredToolPins(DASHBOARD_NAV_PIN_STORAGE_KEY, togglePin(navPins, toolId), siteId ?? getStoredActiveSiteId());
+  };
+  const currentSearchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
+  const navItems = useMemo(
+    () => visibleNavSections.flatMap((section) => section.items),
+    [visibleNavSections]
+  );
+  const defaultNavToolIds = useMemo(
+    () => new Set(defaultNavTools.map((tool) => tool.id)),
+    [defaultNavTools]
+  );
+  const isNavItemActive = (itemPath: string) => {
+    try {
+      const parsedPath = new URL(itemPath, 'https://dayof.local');
+      if (parsedPath.pathname !== location.pathname) return false;
+      const pathParams = Array.from(parsedPath.searchParams.entries());
+      const queryMatches = pathParams.every(([key, value]) => currentSearchParams.get(key) === value);
+      if (!queryMatches) return false;
+      if (pathParams.length > 0) return true;
+      const hasMoreSpecificMatch = navItems.some((candidate) => {
+        if (candidate.path === itemPath) return false;
+        const parsedCandidate = new URL(candidate.path, 'https://dayof.local');
+        if (parsedCandidate.pathname !== location.pathname) return false;
+        const candidateParams = Array.from(parsedCandidate.searchParams.entries());
+        if (candidateParams.length === 0) return false;
+        return candidateParams.every(([key, value]) => currentSearchParams.get(key) === value);
+      });
+      return !hasMoreSpecificMatch;
+    } catch {
+      return false;
+    }
   };
 
   useEffect(() => {
@@ -265,6 +309,14 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
   useEffect(() => {
     setSidebarOpen(false);
   }, [currentPage]);
+  useEffect(() => {
+    if (moreToolsOpen) {
+      setOpenMoreGroup('Planning');
+      return;
+    }
+    setMoreToolsQuery('');
+    setOpenMoreGroup(null);
+  }, [moreToolsOpen]);
 
   const handleSiteSwitch = (nextSiteId: string) => {
     setStoredActiveSiteId(nextSiteId);
@@ -283,7 +335,9 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
   );
   const previewShareHref = siteVisibility.state === 'draft' ? '/dashboard/builder' : siteSlug ? `/site/${siteSlug}` : '/dashboard/builder';
   const previewShareExternal = siteVisibility.state !== 'draft' && Boolean(siteSlug);
-  const shareHref = '/dashboard/builder?tool=share';
+  const shareHref = siteVisibility.isLive ? '/dashboard/builder?tool=share' : '/dashboard/builder?publishNow=1';
+  const previewCtaLabel = siteVisibility.isLive ? 'Preview site' : 'Preview draft';
+  const shareCtaLabel = siteVisibility.isLive ? 'Share with guests' : 'Finish setup';
   const currentNavLabel = visibleNavSections.flatMap((section) => section.items).find((item) => item.id === currentPage)?.label
     || getAllDashboardTools().find((tool) => tool.id === currentPage)?.name
     || (currentPage === 'itinerary' ? 'Schedule'
@@ -305,11 +359,12 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
           <div className="px-5 py-6">
             <div className="flex items-center justify-between">
               <div className="flex min-w-0 items-center gap-3">
-                <div className="grid h-[42px] w-[42px] shrink-0 place-items-center rounded-full bg-primary font-serif text-[26px] leading-none text-white">
-                  d
-                </div>
+                <img
+                  src="/brand/dayof-topbar-side.png"
+                  alt="dayof"
+                  className="h-auto w-full max-w-[230px] shrink-0 object-contain"
+                />
                 <div className="min-w-0">
-                  <p className="text-base font-bold leading-tight text-text-primary">dayof</p>
                   <p className="mt-1 truncate text-xs text-text-secondary">{workspaceLabel}</p>
                 </div>
               </div>
@@ -344,41 +399,40 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
             <div className="space-y-5">
               {visibleNavSections.map((section, sectionIndex) => (
                 <div key={section.title || `section-${sectionIndex}`}>
-                  {section.title && (
-                    <button
-                      type="button"
-                      onClick={() => section.title === 'Added tools' && setShowMoreFeatures((prev) => !prev)}
-                      className={`mb-1 flex w-full items-center justify-between px-4 py-2 text-xs font-medium ${section.title === 'Added tools' ? 'text-text-secondary hover:text-text-primary' : 'text-text-tertiary'}`}
-                    >
-                      <span>{section.title}</span>
-                    </button>
-                  )}
-
-                  {(section.title !== 'Added tools' || showMoreFeatures) && (
-                    <ul className="space-y-1.5">
-                      {section.items.map((item) => {
-                        const isActive = currentPage === item.id;
-                        return (
-                          <li key={item.id}>
-                            <Link
-                              to={item.path}
-                              className={`
-                                flex min-h-[44px] items-center rounded-lg border px-3 text-[15px]
+                  <ul className="space-y-1.5">
+                    {section.items.map((item) => {
+                      const isActive = isNavItemActive(item.path);
+                      const canUnpinFromNav = !defaultNavToolIds.has(item.id) && navPinSet.has(item.id);
+                      return (
+                        <li key={item.id} className="flex items-center gap-1">
+                          <Link
+                            to={item.path}
+                            className={`
+                                flex min-h-[44px] min-w-0 flex-1 items-center rounded-lg border px-3 text-[15px]
                                 transition-colors no-underline
                                 ${isActive
                                   ? 'border-[color-mix(in_srgb,var(--color-border)_72%,var(--color-primary))] bg-surface-subtle text-text-primary'
                                   : 'border-transparent text-text-primary hover:border-border hover:bg-surface-subtle'
                                 }
                               `}
-                              onClick={() => setSidebarOpen(false)}
+                            onClick={() => setSidebarOpen(false)}
+                          >
+                            <span className="truncate">{item.label}</span>
+                          </Link>
+                          {canUnpinFromNav && (
+                            <button
+                              type="button"
+                              onClick={() => handleToggleNavPin(item.id)}
+                              className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-primary/25 bg-primary/10 text-primary transition-colors hover:bg-primary/20"
+                              aria-label={`Unpin ${item.label} from sidebar`}
                             >
-                              <span>{item.label}</span>
-                            </Link>
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  )}
+                              <PinOff className="h-3.5 w-3.5" />
+                            </button>
+                          )}
+                        </li>
+                      );
+                    })}
+                  </ul>
                 </div>
               ))}
 
@@ -399,10 +453,20 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
                     <span className="flex-1 text-left">More</span>
                     <ChevronDown className={`h-4 w-4 transition-transform ${moreToolsOpen ? 'rotate-180' : ''}`} aria-hidden="true" />
                   </button>
-                  <p className="mt-3 px-1 text-xs leading-5 text-text-secondary">Keep the pieces you use most close by.</p>
+                  <p className="mt-3 px-1 text-xs leading-5 text-text-secondary">Pin favorites to keep the sidebar calm.</p>
 
                   {moreToolsOpen && (
                     <div className="mt-2 space-y-3 rounded-lg border border-border bg-surface p-2 shadow-none">
+                      <label className="flex items-center gap-2 rounded-lg border border-border-subtle bg-white px-3 py-2 text-xs text-text-secondary">
+                        <Search className="h-3.5 w-3.5" aria-hidden="true" />
+                        <input
+                          value={moreToolsQuery}
+                          onChange={(event) => setMoreToolsQuery(event.target.value)}
+                          placeholder="Find a tool"
+                          className="w-full bg-transparent text-xs text-text-primary outline-none placeholder:text-text-tertiary"
+                          aria-label="Find a tool"
+                        />
+                      </label>
                       <Link
                         to="/dashboard/tools"
                         className="block rounded-lg px-3 py-2 text-xs font-semibold text-primary no-underline hover:bg-primary/5"
@@ -410,13 +474,22 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
                       >
                         Choose visible tools
                       </Link>
-                      {moreToolGroups.map((group) => (
+                      {filteredMoreToolGroups.map((group, groupIndex) => (
                         <div key={group.title}>
-                          <p className="px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-text-tertiary">{group.title}</p>
-                          <ul className="space-y-1">
-                            {group.tools.map((tool) => {
+                          <button
+                            type="button"
+                            onClick={() => setOpenMoreGroup((current) => (current === group.title ? null : group.title))}
+                            className="flex w-full items-center justify-between px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-text-tertiary"
+                            aria-expanded={openMoreGroup === group.title || (!!moreToolsQuery.trim() && groupIndex === 0)}
+                          >
+                            <span>{group.title}</span>
+                            <ChevronDown className={`h-3.5 w-3.5 transition-transform ${openMoreGroup === group.title ? 'rotate-180' : ''}`} />
+                          </button>
+                          {(openMoreGroup === group.title || (!!moreToolsQuery.trim() && groupIndex === 0)) && (
+                            <ul className="space-y-1">
+                              {group.tools.map((tool) => {
                               const Icon = tool.icon;
-                              const canPin = tool.canPinToNav && PINNABLE_NAV_TOOL_IDS.includes(tool.id);
+                              const canPin = tool.id !== 'tools' && !tool.adminOnly;
                               const isPinned = navPinSet.has(tool.id);
                               return (
                                 <li key={tool.id} className="flex items-center gap-1">
@@ -432,21 +505,21 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
                                     <button
                                       type="button"
                                       onClick={() => handleToggleNavPin(tool.id)}
-                                      className={`flex h-8 shrink-0 items-center justify-center gap-1 rounded-lg border px-2 text-[11px] font-medium transition-colors ${
+                                      className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-md border transition-colors ${
                                         isPinned
                                           ? 'border-primary/25 bg-primary/10 text-primary'
                                           : 'border-border-subtle bg-surface text-text-tertiary hover:text-text-primary'
                                       }`}
-                                      aria-label={isPinned ? `Keep ${tool.name} tucked away` : `Show ${tool.name} in sidebar`}
+                                      aria-label={isPinned ? `Unpin ${tool.name} from sidebar` : `Pin ${tool.name} to sidebar`}
                                     >
-                                      {isPinned ? <PinOff className="h-3.5 w-3.5" /> : <Pin className="h-3.5 w-3.5" />}
-                                      <span>{isPinned ? 'Tuck away' : 'Show'}</span>
+                                      <Pin className="h-3.5 w-3.5" />
                                     </button>
                                   )}
                                 </li>
                               );
-                            })}
-                          </ul>
+                              })}
+                            </ul>
+                          )}
                         </div>
                       ))}
                     </div>
@@ -492,6 +565,13 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
             </div>
 
             <div className="flex flex-wrap items-center justify-end gap-2">
+              <span className="hidden h-10 w-10 items-center justify-center rounded-full border border-border bg-surface md:inline-flex">
+                <img
+                  src="/brand/dayof-calendar-mark.png"
+                  alt="dayof calendar"
+                  className="h-5 w-5 object-contain"
+                />
+              </span>
               <span className="hidden min-h-9 items-center gap-2 rounded-full border border-border bg-surface px-3 text-sm text-text-secondary md:inline-flex">
                 <span className={`h-2.5 w-2.5 rounded-full ${siteVisibility.isLive ? 'bg-success' : 'bg-warning'}`} />
                 {siteVisibility.isLive ? 'Guest-ready' : siteVisibility.shortLabel}
@@ -503,13 +583,13 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
                 className="inline-flex min-h-[44px] items-center gap-2 rounded-lg border border-border-strong bg-surface px-4 text-sm font-medium text-text-primary no-underline hover:bg-surface-subtle hover:text-text-primary"
               >
                 <ExternalLink className="w-4 h-4" />
-                Preview site
+                {previewCtaLabel}
               </a>
               <Link
                 to={shareHref}
                 className="inline-flex min-h-[44px] items-center rounded-lg border border-primary bg-primary px-4 text-sm font-medium text-white no-underline hover:bg-primary-hover hover:text-white"
               >
-                Share with guests
+                {shareCtaLabel}
               </Link>
               <button
                 type="button"

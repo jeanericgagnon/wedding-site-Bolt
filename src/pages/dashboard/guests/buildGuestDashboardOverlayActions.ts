@@ -18,7 +18,13 @@ export function buildGuestDashboardOverlayActions(args: any) {
     },
     onCloseItineraryDrawer: () => {
       args.setItineraryDrawerGuest(null);
+      args.setDrawerItineraryEvents([]);
+      args.setGuestEventIds(new Set());
       args.setGuestAuditEntries([]);
+      args.setLoadingDrawer(false);
+      args.setTogglingEventId(null);
+      args.setRotatingInviteToken(false);
+      args.setLastCheckIn(null);
     },
     onCloseCsvMapper: () => {
       if (!args.csvImporting) args.resetCsvParserState();

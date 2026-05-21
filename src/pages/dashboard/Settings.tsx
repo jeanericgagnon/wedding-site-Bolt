@@ -21,6 +21,8 @@ import { useSettingsDashboardSnapshotHydration } from './settings/useSettingsDas
 import { useSettingsDashboardUiState } from './settings/useSettingsDashboardUiState';
 import { useSettingsDashboardRouteSupport } from './settings/useSettingsDashboardRouteSupport';
 import { resolveSettingsRouteState } from './settings/settingsRouteState';
+import { normalizeWeddingData } from '../../types/weddingData';
+import { isPublicWeddingDataSparse } from '../../lib/publicSiteReadiness';
 
 export const DashboardSettings: React.FC = () => {
   const { toast } = useToast();
@@ -209,6 +211,14 @@ export const DashboardSettings: React.FC = () => {
     setWeddingSiteId,
   } = useSettingsDashboardUiState({ userId: user?.id });
   const isPublishedForIdentityExports = isPublished || identityExportsQaMode;
+  const isGuestFacingReady = React.useMemo(() => {
+    if (!settingsWeddingData) return false;
+    try {
+      return !isPublicWeddingDataSparse(normalizeWeddingData(settingsWeddingData));
+    } catch {
+      return false;
+    }
+  }, [settingsWeddingData]);
 
   React.useEffect(() => {
     const routeState = resolveSettingsRouteState({
@@ -503,6 +513,7 @@ export const DashboardSettings: React.FC = () => {
     analyticsGuestNotice,
     defaultLanguage,
     guestAccessToken,
+    isGuestFacingReady,
     isPublished: isPublishedForIdentityExports,
     onAutoTranslateLanguage: handleAutoTranslateLanguage,
     handleAllowedLanguagesChange,

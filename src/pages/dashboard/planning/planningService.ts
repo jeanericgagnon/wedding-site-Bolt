@@ -1,5 +1,6 @@
 import { supabase } from '../../../lib/supabase';
 import { resolveActiveSiteForUser } from '../../../lib/activeSite';
+import { resolveCanonicalWeddingDate } from '../../../lib/canonicalWeddingDate';
 import { normalizeVendorMeta, type VendorMetaMap } from './vendorMetaStorage';
 
 function requireRpcRecord<T>(data: unknown, functionName: string): T {
@@ -181,12 +182,20 @@ export async function getWeddingSiteId(): Promise<string | null> {
 export async function getWeddingDate(): Promise<string | null> {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null;
+  const activeSite = await resolveActiveSiteForUser(user.id);
+  if (!activeSite?.id) return null;
   const { data } = await supabase
     .from('wedding_sites')
-    .select('wedding_date')
-    .eq('id', (await resolveActiveSiteForUser(user.id))?.id ?? '')
+    .select('wedding_data, wedding_date, venue_date')
+    .eq('id', activeSite.id)
     .maybeSingle();
-  return data?.wedding_date ?? null;
+  return resolveCanonicalWeddingDate(
+    (data?.wedding_data as Record<string, unknown> | null | undefined) ?? null,
+    {
+      wedding_date: (data?.wedding_date as string | null | undefined) ?? null,
+      venue_date: (data?.venue_date as string | null | undefined) ?? null,
+    },
+  );
 }
 
 export async function loadPlanningSiteMeta(weddingSiteId: string): Promise<PlanningSiteMeta> {

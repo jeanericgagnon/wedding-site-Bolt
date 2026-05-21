@@ -18,7 +18,6 @@ type Match = {
   contact_session: string;
   name: string;
   household_size?: number;
-  household_updates_allowed?: boolean;
   verification_strength?: 'email_verifier' | 'invite_token';
 };
 
@@ -26,7 +25,6 @@ export const friendlyGuestContactError = (err: unknown, fallback: string) => {
   return customerSafeErrorMessage(err, fallback, {
     allow: [
       /^Add an email or phone first\.$/i,
-      /^Add the last 4 digits of the phone number on file before updating your whole party\.$/i,
     ],
   });
 };
@@ -52,10 +50,6 @@ function hasGuestContactVerifier(value: string) {
   return value.trim().toLowerCase().length >= 3;
 }
 
-function normalizeHouseholdVerifier(value: string) {
-  return value.replace(/\D+/g, '').slice(-4);
-}
-
 function hasGuestInviteToken(value: string | null | undefined) {
   return typeof value === 'string' && value.trim().length >= 8;
 }
@@ -68,12 +62,8 @@ export const GuestContactUpdate: React.FC = () => {
 
   const [query, setQuery] = useState('');
   const [verifier, setVerifier] = useState('');
-  const [householdVerifier, setHouseholdVerifier] = useState('');
   const [matches, setMatches] = useState<Match[]>([]);
   const [selectedContactSession, setSelectedContactSession] = useState<string>('');
-  const [selectedHouseholdSize, setSelectedHouseholdSize] = useState<number>(1);
-  const [selectedHouseholdAllowed, setSelectedHouseholdAllowed] = useState(false);
-  const [applyHousehold, setApplyHousehold] = useState(false);
 
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
@@ -91,27 +81,27 @@ export const GuestContactUpdate: React.FC = () => {
   const activeLookupRequestRef = useRef(0);
   const activeSubmitRequestRef = useRef(0);
 
-  const canSubmit = useMemo(() => !!selectedContactSession && (
+  const canSubmitContact = useMemo(() => !!selectedContactSession && (
     !!email.trim() ||
     !!phone.trim() ||
-    !!rsvpStatus ||
     !!mailingAddressLine1.trim() ||
     !!mailingCity.trim() ||
     !!mailingPostalCode.trim() ||
     !!mailingCountry.trim()
-  ), [selectedContactSession, email, phone, rsvpStatus, mailingAddressLine1, mailingCity, mailingPostalCode, mailingCountry]);
+  ), [selectedContactSession, email, phone, mailingAddressLine1, mailingCity, mailingPostalCode, mailingCountry]);
+
+  const canSubmitRsvp = useMemo(
+    () => !!selectedContactSession && !!rsvpStatus,
+    [selectedContactSession, rsvpStatus]
+  );
 
   useEffect(() => {
     activeLookupRequestRef.current += 1;
     activeSubmitRequestRef.current += 1;
     setQuery('');
     setVerifier('');
-    setHouseholdVerifier('');
     setMatches([]);
     setSelectedContactSession('');
-    setSelectedHouseholdSize(1);
-    setSelectedHouseholdAllowed(false);
-    setApplyHousehold(false);
     setEmail('');
     setPhone('');
     setRsvpStatus('');
@@ -154,15 +144,11 @@ export const GuestContactUpdate: React.FC = () => {
     setResult(null);
     setMatches([]);
     setSelectedContactSession('');
-    setSelectedHouseholdSize(1);
-    setSelectedHouseholdAllowed(false);
-    setApplyHousehold(false);
     try {
       const data = await callGuestContactFunction<{ matches?: Match[] }>('guest-contact-lookup', {
         site_ref: siteRef,
         query: query.trim(),
         verifier: verifier.trim(),
-        household_verifier: normalizeHouseholdVerifier(householdVerifier),
         ...buildGuestContactAccessPayload(siteRef, searchParams),
         ...guestIdentity,
       });
@@ -171,8 +157,6 @@ export const GuestContactUpdate: React.FC = () => {
       setMatches(rows);
       if (rows.length > 0) {
         setSelectedContactSession(rows[0].contact_session);
-        setSelectedHouseholdSize(rows[0].household_size ?? 1);
-        setSelectedHouseholdAllowed(rows[0].household_updates_allowed === true);
       } else {
         setResult({ ok: false, message: 'No guest record matched that search. Try your full name as it appears on the invitation.' });
       }
@@ -187,13 +171,10 @@ export const GuestContactUpdate: React.FC = () => {
             contact_session: g.id,
             name: g.name,
             household_size: ((g as any).household_size as number | undefined) ?? 1,
-            household_updates_allowed: normalizeHouseholdVerifier(householdVerifier).length === 4,
           }));
         setMatches(rows);
         if (rows.length > 0) {
           setSelectedContactSession(rows[0].contact_session);
-          setSelectedHouseholdSize(rows[0].household_size ?? 1);
-          setSelectedHouseholdAllowed(rows[0].household_updates_allowed === true);
         } else {
           setResult({ ok: false, message: 'No demo guest matched that search. Try a full name from the sample guest list.' });
         }
@@ -205,15 +186,11 @@ export const GuestContactUpdate: React.FC = () => {
     }
   }
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  async function handleSubmit(mode: 'contact' | 'rsvp') {
+    const canSubmit = mode === 'contact' ? canSubmitContact : canSubmitRsvp;
     if (!canSubmit) return;
     const requestId = activeSubmitRequestRef.current + 1;
     activeSubmitRequestRef.current = requestId;
-    if (applyHousehold && !selectedHouseholdAllowed) {
-      setResult({ ok: false, message: 'Add the last 4 digits of the phone number on file before updating your whole party.' });
-      return;
-    }
     setLoading(true);
     setResult(null);
     try {
@@ -221,21 +198,21 @@ export const GuestContactUpdate: React.FC = () => {
         await callGuestContactFunction('guest-contact-submit', {
           site_ref: siteRef,
           contact_session: selectedContactSession,
-          apply_household: applyHousehold,
-          email: email.trim() || null,
-          phone: phone.trim() || null,
-          rsvp_status: rsvpStatus || null,
-          sms_consent: smsConsent,
-          mailing_address_line1: mailingAddressLine1.trim() || null,
-          mailing_address_line2: mailingAddressLine2.trim() || null,
-          mailing_city: mailingCity.trim() || null,
-          mailing_state: mailingState.trim() || null,
-          mailing_postal_code: mailingPostalCode.trim() || null,
-          mailing_country: mailingCountry.trim() || null,
+          apply_household: false,
+          email: mode === 'contact' ? (email.trim() || null) : null,
+          phone: mode === 'contact' ? (phone.trim() || null) : null,
+          rsvp_status: mode === 'rsvp' ? (rsvpStatus || null) : null,
+          sms_consent: mode === 'contact' ? smsConsent : false,
+          mailing_address_line1: mode === 'contact' ? (mailingAddressLine1.trim() || null) : null,
+          mailing_address_line2: mode === 'contact' ? (mailingAddressLine2.trim() || null) : null,
+          mailing_city: mode === 'contact' ? (mailingCity.trim() || null) : null,
+          mailing_state: mode === 'contact' ? (mailingState.trim() || null) : null,
+          mailing_postal_code: mode === 'contact' ? (mailingPostalCode.trim() || null) : null,
+          mailing_country: mode === 'contact' ? (mailingCountry.trim() || null) : null,
         });
       }
       if (activeSubmitRequestRef.current !== requestId) return;
-      setResult({ ok: true, message: 'Thanks! Your information has been updated.' });
+      setResult({ ok: true, message: mode === 'rsvp' ? 'Thanks! Your RSVP update is saved.' : 'Thanks! Your contact information has been updated.' });
     } catch (err) {
       if (activeSubmitRequestRef.current !== requestId) return;
       setResult({ ok: false, message: friendlyGuestContactError(err, 'Couldn’t send your update right now.') });
@@ -248,9 +225,6 @@ export const GuestContactUpdate: React.FC = () => {
   const resetLookupSelection = () => {
     setMatches([]);
     setSelectedContactSession('');
-    setSelectedHouseholdSize(1);
-    setSelectedHouseholdAllowed(false);
-    setApplyHousehold(false);
   };
   const resetContactDraft = () => {
     setEmail('');
@@ -270,40 +244,34 @@ export const GuestContactUpdate: React.FC = () => {
       <OwnerPreviewBanner />
       <div className="flex items-center justify-center p-4">
         <div className="w-full max-w-xl bg-surface border border-border rounded-xl p-6 space-y-4">
-        <h1 className="text-xl font-semibold text-text-primary">Update contact & RSVP</h1>
-        <p className="text-sm text-text-secondary">Search your name, choose your record, then update details for yourself or your party.</p>
+        <h1 className="text-xl font-semibold text-text-primary">Update contact info or RSVP</h1>
+        <p className="text-sm text-text-secondary">Search your name, choose your record, then update contact details or RSVP separately.</p>
 
         <GuestContactLookupPanel
           query={query}
           verifier={verifier}
-          householdVerifier={householdVerifier}
           searching={searching}
           matches={matches}
           selectedContactSession={selectedContactSession}
-          selectedHouseholdSize={selectedHouseholdSize}
-          selectedHouseholdAllowed={selectedHouseholdAllowed}
-          applyHousehold={applyHousehold}
           onQueryChange={(value) => { clearResult(); resetLookupSelection(); resetContactDraft(); setQuery(value); }}
           onVerifierChange={(value) => { clearResult(); resetLookupSelection(); resetContactDraft(); setVerifier(value); }}
-          onHouseholdVerifierChange={(value) => { clearResult(); resetLookupSelection(); resetContactDraft(); setHouseholdVerifier(value); }}
           onSearch={handleSearch}
           onSelectContactSession={(contactSession) => {
             clearResult();
             resetContactDraft();
             setSelectedContactSession(contactSession);
-            const hit = matches.find((match) => match.contact_session === contactSession);
-            setSelectedHouseholdSize(hit?.household_size ?? 1);
-            setSelectedHouseholdAllowed(hit?.household_updates_allowed === true);
-            if (hit?.household_updates_allowed !== true) setApplyHousehold(false);
-          }}
-          onToggleApplyHousehold={(value) => {
-            clearResult();
-            setApplyHousehold(value);
           }}
           canSearch={hasFullNameQuery(query) && (hasGuestContactVerifier(verifier) || hasGuestInviteToken(buildGuestContactIdentityPayload(siteRef, searchParams).guestInviteToken))}
         />
 
-        <form onSubmit={handleSubmit} className="space-y-4" aria-busy={loading}>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            void handleSubmit('contact');
+          }}
+          className="space-y-4"
+          aria-busy={loading}
+        >
           <div>
             <label htmlFor="guest-contact-email" className="block text-sm font-medium text-text-primary mb-1">Email (optional)</label>
             <input id="guest-contact-email" value={email} onChange={(e) => { clearResult(); setEmail(e.target.value); }} type="email" className="w-full px-3 py-2 border border-border rounded-xl bg-surface-subtle" placeholder="you@example.com" />
@@ -342,23 +310,35 @@ export const GuestContactUpdate: React.FC = () => {
             </div>
           </fieldset>
 
-          <div>
-            <label htmlFor="guest-contact-rsvp" className="block text-sm font-medium text-text-primary mb-1">RSVP (optional)</label>
-            <select id="guest-contact-rsvp" value={rsvpStatus} onChange={(e) => { clearResult(); setRsvpStatus(e.target.value as any); }} className="w-full px-3 py-2 border border-border rounded-xl bg-surface-subtle">
-              <option value="">No change</option>
-              <option value="confirmed">Attending</option>
-              <option value="declined">Can’t attend</option>
-              <option value="pending">Not sure yet</option>
-            </select>
-          </div>
-
           <label className="flex items-center gap-2 text-sm text-text-secondary">
             <input type="checkbox" checked={smsConsent} onChange={(e) => { clearResult(); setSmsConsent(e.target.checked); }} />
             I agree to receive wedding updates by SMS (if phone provided).
           </label>
 
-          <button type="submit" disabled={!canSubmit || loading} className="w-full px-4 py-2 rounded-xl bg-primary text-white disabled:opacity-50">
-            {loading ? 'Saving…' : 'Save update'}
+          <button type="submit" disabled={!canSubmitContact || loading} className="w-full px-4 py-2 rounded-xl bg-primary text-white disabled:opacity-50">
+            {loading ? 'Saving…' : 'Save contact info'}
+          </button>
+        </form>
+
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            void handleSubmit('rsvp');
+          }}
+          className="space-y-4 rounded-xl border border-border-subtle bg-surface-subtle/30 p-4"
+          aria-busy={loading}
+        >
+          <div>
+            <label htmlFor="guest-contact-rsvp" className="block text-sm font-medium text-text-primary mb-1">RSVP update</label>
+            <select id="guest-contact-rsvp" value={rsvpStatus} onChange={(e) => { clearResult(); setRsvpStatus(e.target.value as any); }} className="w-full px-3 py-2 border border-border rounded-xl bg-surface">
+              <option value="">Select a response</option>
+              <option value="confirmed">Attending</option>
+              <option value="declined">Can’t attend</option>
+              <option value="pending">Not sure yet</option>
+            </select>
+          </div>
+          <button type="submit" disabled={!canSubmitRsvp || loading} className="w-full px-4 py-2 rounded-xl border border-primary bg-white text-primary disabled:opacity-50">
+            {loading ? 'Saving…' : 'Save RSVP'}
           </button>
         </form>
 

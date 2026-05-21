@@ -91,6 +91,7 @@ type Props = {
   templateStart: string;
   timelineBusy: string | null;
   timelineInsights: TimelineInsight[];
+  weddingDate: string | null;
 };
 
 export function ItineraryDashboardRouteContent({
@@ -134,6 +135,7 @@ export function ItineraryDashboardRouteContent({
   templateStart,
   timelineBusy,
   timelineInsights,
+  weddingDate,
 }: Props) {
   const navigate = useNavigate();
   const handleFormDataChange = <K extends keyof ItineraryFormData>(field: K, value: ItineraryFormData[K]) => {
@@ -154,7 +156,7 @@ export function ItineraryDashboardRouteContent({
         title="A weekend guests can follow easily."
         description="Keep ceremony timing, travel details, and day-of notes clear."
         stats={[
-          { label: 'Wedding date', value: events[0]?.event_date ? formatItineraryEventDate(events[0].event_date) : 'Not set', detail: 'core weekend anchor' },
+          { label: 'Wedding date', value: weddingDate ? formatItineraryEventDate(weddingDate) : 'Not set', detail: 'core weekend anchor' },
           { label: 'Weekend events', value: `${events.length} planned`, detail: `${events.filter((event) => event.is_visible !== false).length} visible to guests` },
           { label: 'Timing notes', value: timelineInsights.length > 0 ? 'Needs review' : 'Live', detail: timelineInsights.length > 0 ? `${timelineInsights.length} worth checking` : 'no timing issues found' },
         ]}

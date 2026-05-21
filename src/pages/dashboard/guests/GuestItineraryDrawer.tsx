@@ -231,7 +231,9 @@ export function GuestItineraryDrawer({
         {!loadingDrawer && itineraryEvents.length > 0 && (
           <div className="px-5 py-4 border-t border-border bg-surface-subtle">
             <p className="text-xs text-text-tertiary text-center">
-              {guestEventIds.size} of {itineraryEvents.length} events · Changes save instantly
+              {isGuestsReadOnly
+                ? `${guestEventIds.size} of ${itineraryEvents.length} events visible to this guest · Read-only mode`
+                : `${guestEventIds.size} of ${itineraryEvents.length} events · Invite visibility changes save instantly`}
             </p>
           </div>
         )}
@@ -339,36 +341,18 @@ function GuestDrawerDetails({
     || link.kind === 'registry'
     || link.kind === 'site'
   )).length;
-  const guestSpecificCoverageRate = visibilityPreview.links.length > 0
-    ? Math.round((guestSpecificPreviewRouteCount / visibilityPreview.links.length) * 100)
-    : null;
-  const publicShellCoverageRate = visibilityPreview.links.length > 0
-    ? Math.round((publicPreviewRouteCount / visibilityPreview.links.length) * 100)
-    : null;
   const visibleEventCount = visibilityPreview.visibleEvents.length;
   const hiddenEventCount = visibilityPreview.hiddenEvents.length;
   const totalEventVisibilityCount = visibleEventCount + hiddenEventCount;
-  const visibleEventCoverageRate = totalEventVisibilityCount > 0
-    ? Math.round((visibleEventCount / totalEventVisibilityCount) * 100)
-    : null;
-  const hiddenEventCoverageRate = totalEventVisibilityCount > 0
-    ? Math.round((hiddenEventCount / totalEventVisibilityCount) * 100)
-    : null;
+  // NOTE: Intentionally keep only guest-facing visibility summaries; detailed route
+  // coverage percentages are intentionally omitted here to reduce internal
+  // diagnostics in the standard owner UI.
   const guestContactUrl = visibilityPreview.links.find((link) => link.kind === 'contact')
     ? `${window.location.origin}${visibilityPreview.links.find((link) => link.kind === 'contact')?.href ?? ''}`
     : '';
   const guestPublicSiteUrl = visibilityPreview.links.find((link) => link.kind === 'site')
     ? `${buildPublicSiteUrl(resolvedPublicSiteSlug)}?previewGuest=${encodeURIComponent(guest.id)}&previewSurface=public`
     : '';
-  const totalPotentialPreviewRouteCount = (
-    (guest.invite_token ? 1 : 0)
-    + (guest.invite_token && resolvedPublicSiteSlug ? 5 : 0)
-    + (resolvedPublicSiteSlug ? 3 : 0)
-  );
-  const missingPreviewRouteCount = Math.max(totalPotentialPreviewRouteCount - visibilityPreview.links.length, 0);
-  const previewRouteCoverageRate = totalPotentialPreviewRouteCount > 0
-    ? Math.round((visibilityPreview.links.length / totalPotentialPreviewRouteCount) * 100)
-    : null;
 
   return (
     <>
@@ -395,35 +379,11 @@ function GuestDrawerDetails({
               {visibleEventCount > 0 ? ` · ${visibleEventCount} visible event${visibleEventCount === 1 ? '' : 's'}` : ''}
               {` · ${hiddenEventCount} hidden event${hiddenEventCount === 1 ? '' : 's'}`}
             </p>
-            {(guestSpecificCoverageRate != null || publicShellCoverageRate != null) && (
-              <p className="text-xs text-text-tertiary">
-                {guestSpecificCoverageRate != null ? `${guestSpecificCoverageRate}% guest-specific coverage` : ''}
-                {guestSpecificCoverageRate != null && publicShellCoverageRate != null ? ' · ' : ''}
-                {publicShellCoverageRate != null ? `${publicShellCoverageRate}% public-shell coverage` : ''}
-              </p>
-            )}
-            {visibleEventCoverageRate != null && (
-              <p className="text-xs text-text-tertiary">
-                {visibleEventCoverageRate}% event visibility coverage
-                {hiddenEventCoverageRate != null ? ` · ${hiddenEventCoverageRate}% still hidden` : ''}
-              </p>
-            )}
             {visibilityPreview.visibleEventSummary && (
               <p className="text-xs text-text-tertiary">{visibilityPreview.visibleEventSummary}</p>
             )}
             {visibilityPreview.hiddenEventSummary && (
               <p className="text-xs text-text-tertiary">{visibilityPreview.hiddenEventSummary}</p>
-            )}
-            {totalPotentialPreviewRouteCount > 0 && (
-              <p className="text-xs text-text-tertiary">
-                {previewRouteCoverageRate != null ? `${previewRouteCoverageRate}% preview-route coverage` : ''}
-                {previewRouteCoverageRate != null ? ' · ' : ''}
-                {visibilityPreview.links.length} route{visibilityPreview.links.length === 1 ? '' : 's'} ready
-                {' · '}
-                {missingPreviewRouteCount === 0
-                  ? 'No preview routes missing'
-                  : `${missingPreviewRouteCount} preview route${missingPreviewRouteCount === 1 ? '' : 's'} still missing`}
-              </p>
             )}
             <p className="text-xs font-medium text-text-secondary">{visibilityPreview.routeReadinessLabel}</p>
             <p className="text-xs text-text-tertiary">{visibilityPreview.pathCoverageSummary}</p>
@@ -764,7 +724,9 @@ function GuestEventInviteList({
   return (
     <div className="space-y-2">
       <p className="text-xs text-text-tertiary mb-3">
-        Toggle each event to invite or uninvite this guest.
+        {isGuestsReadOnly
+          ? 'This guest’s visibility is read-only for your account. Contact an owner to change itinerary access.'
+          : 'Toggle each event to invite or uninvite this guest.'}
       </p>
       {itineraryEvents.map((event) => {
         const invited = guestEventIds.has(event.id);

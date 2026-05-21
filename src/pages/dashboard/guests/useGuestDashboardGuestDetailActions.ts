@@ -226,6 +226,11 @@ export function useGuestDashboardGuestDetailActions({
     const targetGuest = guest;
     setItineraryDrawerGuest(guest);
     setLoadingDrawer(true);
+    setDrawerItineraryEvents([]);
+    setGuestEventIds(new Set());
+    setGuestAuditEntries([]);
+    setTogglingEventId(null);
+    setRotatingInviteToken(false);
     try {
       if (isDemoMode) {
         const now = Date.now();
@@ -546,8 +551,12 @@ export function useGuestDashboardGuestDetailActions({
     setAssistedRsvpStatus,
     setGuestAuditEntries,
     setGuestEventIds,
+    setDrawerItineraryEvents,
     setItineraryDrawerGuest,
     setLastCheckIn,
+    setLoadingDrawer,
     togglingEventId,
+    setTogglingEventId,
+    setRotatingInviteToken,
   };
 }

@@ -535,6 +535,7 @@ export const VendorProfileCreatePage: React.FC = () => {
   const draftReviewItems = draft && draftCustomization ? buildDraftReviewItems(draft, draftCustomization, draftSafeImages) : [];
   const draftReviewReadyCount = draftReviewItems.filter((item) => item.ready).length;
   const draftMissingReviewItems = draftReviewItems.filter((item) => !item.ready);
+  const canSavePage = draftMissingReviewItems.length === 0;
   const draftStarterDetailLabels = draft && draftCustomization ? getStarterDetailLabels(draftCustomization, getDraftTemplateId(draft)) : [];
   const liveUrlNoticeTimeoutRef = useRef<number | null>(null);
   const liveUrlCopyRequestIdRef = useRef(0);
@@ -584,6 +585,10 @@ export const VendorProfileCreatePage: React.FC = () => {
 
   const handlePublish = async () => {
     if (!draft) return;
+    if (draftMissingReviewItems.length > 0) {
+      toast(`Add ${draftMissingReviewItems.map((item) => item.label).join(', ')} before saving.`, 'error');
+      return;
+    }
     try {
       setSaving(true);
       const created = await createVendorProfile(sanitizeDraftForPublish(draft));
@@ -721,7 +726,7 @@ export const VendorProfileCreatePage: React.FC = () => {
           <div className="space-y-6">
           <div className="rounded-xl bg-white p-6 sm:p-8 shadow-sm space-y-4">
             <div>
-              <p className="text-xs font-semibold text-[#8b6f53]">Working page</p>
+              <p className="text-xs font-semibold text-[#8b6f53]">Page</p>
               <h2 className="mt-2 text-2xl font-semibold">Edit</h2>
               <p className="mt-2 text-sm text-[#6f5843]">Edit the words, links, photos, and ways to reply before you save.</p>
               {typeof draft.source_payload?.sourceLabel === 'string' && (
@@ -1303,11 +1308,16 @@ export const VendorProfileCreatePage: React.FC = () => {
             </div>
             <p className="text-xs text-[#8b6f53]">Social links can help when the website is light.</p>
             <div className="flex flex-wrap gap-3">
-              <button type="button" onClick={handlePublish} disabled={saving} className="rounded-xl bg-[#2f261d] px-5 py-3 text-sm font-semibold text-white disabled:opacity-60">
+              <button type="button" onClick={handlePublish} disabled={saving || !canSavePage} className="rounded-xl bg-[#2f261d] px-5 py-3 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60">
                 {saving ? 'Saving...' : 'Save page'}
               </button>
               <div className="text-sm text-[#8b6f53] self-center">/vendor/{draft.slug}</div>
             </div>
+            {!canSavePage && (
+              <p className="text-xs text-[#8b6f53]">
+                Add {draftMissingReviewItems.map((item) => item.label).join(', ')} before saving.
+              </p>
+            )}
             <p className="text-xs text-[#8b6f53]">If that link is taken, DayOf will pick the next clean one.</p>
           </div>
 

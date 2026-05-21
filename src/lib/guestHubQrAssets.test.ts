@@ -58,6 +58,12 @@ describe('guestHubQrAssets', () => {
     expect(html).not.toContain('photo-prompt');
   });
 
+  it('uses local qr rendering for safe public links (no third-party qr vendor)', () => {
+    const qrImageUrl = buildQrImageUrl('https://dayof.love/event/maya-and-leo', 420);
+    expect(qrImageUrl.startsWith('data:image/svg+xml')).toBe(true);
+    expect(qrImageUrl).not.toContain('api.qrserver.com');
+  });
+
   it('renders private dayof qr payloads locally instead of through the public qr vendor', () => {
     const privateUrl = 'https://dayof.love/rsvp?token=private-token';
 

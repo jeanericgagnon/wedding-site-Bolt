@@ -1,12 +1,16 @@
 import { Eye } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
+import { useAuth } from '../../hooks/useAuth';
 import { getOwnerPreviewMode } from '../../lib/ownerPreviewMode';
 
 export function OwnerPreviewBanner() {
   const location = useLocation();
+  const { user, isDemoMode } = useAuth();
   const previewMode = getOwnerPreviewMode(location.pathname, new URLSearchParams(location.search));
 
   if (!previewMode) return null;
+  // Never show owner preview chrome to unauthenticated public visitors.
+  if (!user && !isDemoMode) return null;
 
   return (
     <div className="relative z-50 border-b border-amber-200 bg-amber-50 px-4 py-3 text-amber-950 shadow-sm">

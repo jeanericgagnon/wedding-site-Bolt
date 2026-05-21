@@ -97,7 +97,8 @@ export const DEFAULT_DASHBOARD_TOOLS: DashboardTool[] = [
   { id: 'registry', name: 'Registry', description: 'Gifts and funds, clearly shared.', path: '/dashboard/registry', actionLabel: 'Open Registry', icon: Gift, primaryHome: 'Registry' },
   { id: 'messages', name: 'Messages', description: 'Updates guests can actually use.', path: '/dashboard/messages', actionLabel: 'Open Messages', icon: Mail, primaryHome: 'Messages' },
   { id: 'photos', name: 'Memories', description: 'Photos, notes, and moments from the celebration.', path: '/dashboard/photos', actionLabel: 'Open Memories', icon: Archive, primaryHome: 'Memories' },
-  { id: 'tools', name: 'More Tools', description: 'Everything else stays close, without taking over.', path: '/dashboard/tools', actionLabel: 'Customize tools', icon: Settings, primaryHome: 'More Tools' },
+  { id: 'planning', name: 'Planning', description: 'Tasks, budget, vendors, songs, and wedding planning essentials.', path: '/dashboard/planning', actionLabel: 'Open planning', icon: ClipboardList, primaryHome: 'Planning' },
+  { id: 'settings', name: 'Settings', description: 'Team access, privacy, billing, and account controls.', path: '/dashboard/settings', actionLabel: 'Open settings', icon: Settings, primaryHome: 'Settings' },
 ];
 
 export const DASHBOARD_TOOL_GROUPS: DashboardToolGroup[] = [
@@ -154,7 +155,7 @@ export const DASHBOARD_TOOL_GROUPS: DashboardToolGroup[] = [
       { id: 'settings', name: 'Settings', description: 'Access, privacy, billing, notifications, and account details.', path: '/dashboard/settings', actionLabel: 'Open settings', icon: Settings, primaryHome: 'More Tools', canPinToNav: true, canPinToHome: true },
       { id: 'privacy-access', name: 'Privacy & Access', description: 'Control who can see the site, search visibility, and collaborator access.', path: '/dashboard/settings?tab=privacy', actionLabel: 'Manage privacy', icon: Lock, primaryHome: 'Settings', canPinToHome: true },
       { id: 'advanced-design', name: 'Advanced Design', description: 'Fine tune sections, layouts, and visual details after the basics are ready.', path: '/dashboard/builder?panel=design', actionLabel: 'Open design controls', icon: Palette, primaryHome: 'Website', canPinToHome: true },
-      { id: 'data-settings', name: 'Data Settings', description: 'Export data, archive the site, or manage stored wedding information.', path: '/dashboard/settings?tab=site', actionLabel: 'Open data settings', icon: Shield, primaryHome: 'Settings', canPinToHome: true },
+      { id: 'data-settings', name: 'Data Settings', description: 'Export data, archive the site, or manage stored wedding information.', path: '/dashboard/settings?tab=data', actionLabel: 'Open data settings', icon: Shield, primaryHome: 'Settings', canPinToHome: true },
       { id: 'audit-logs', name: 'Audit Logs', description: 'Admin record of important changes across the wedding workspace.', path: '/dashboard/audit-logs', actionLabel: 'Open audit logs', icon: ScrollText, primaryHome: 'Activity', adminOnly: true },
       { id: 'error-logs', name: 'Error Logs', description: 'Admin-only reliability logs for support and investigation.', path: '/admin/errors', actionLabel: 'Open error logs', icon: Shield, primaryHome: 'Advanced', adminOnly: true },
     ],

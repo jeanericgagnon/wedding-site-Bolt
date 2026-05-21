@@ -8,6 +8,7 @@ import {
   restoreEventRsvpSnapshots,
 } from '../../lib/eventRsvpCleanup';
 import type { WeddingDataV1 } from '../../types/weddingData';
+import { resolveCanonicalWeddingDate } from '../../lib/canonicalWeddingDate';
 import { combineDateAndTimeISO } from './itineraryDateTime';
 import { deriveItineraryEventRsvpCounts, shouldLoadEventRsvps } from './itineraryEventRsvpCounts';
 
@@ -47,7 +48,7 @@ export interface ItineraryScheduleMirrorEvent {
 
 const ITINERARY_EVENT_MANAGER_SITE_SELECT = 'id';
 const ITINERARY_EVENT_MUTATION_SITE_SELECT = 'id';
-const ITINERARY_EVENT_LIST_SITE_SELECT = 'id';
+const ITINERARY_EVENT_LIST_SITE_SELECT = 'id, wedding_date, venue_date, wedding_data';
 export const ITINERARY_EVENT_SELECT = 'id, event_name, title, description, event_date, start_time, end_time, location_name, location_address, dress_code, notes, display_order, sort_order, is_visible' as const;
 export const ITINERARY_EVENT_GUEST_PICKER_SELECT = 'id, name, first_name, last_name, email' as const;
 export const MAX_ITINERARY_EVENTS = 200;
@@ -274,10 +275,10 @@ export async function deleteItineraryEvent(eventId: string): Promise<void> {
 
 export async function loadItineraryDashboardEvents(
   hasEventRsvpsTable: boolean | null,
-): Promise<{ events: ItineraryDashboardEvent[]; hasEventRsvpsTable: boolean | null; hasActiveSite: boolean }> {
+): Promise<{ events: ItineraryDashboardEvent[]; hasEventRsvpsTable: boolean | null; hasActiveSite: boolean; weddingDate: string | null }> {
   const siteId = await resolveItinerarySiteId();
   if (!siteId) {
-    return { events: [], hasEventRsvpsTable, hasActiveSite: false };
+    return { events: [], hasEventRsvpsTable, hasActiveSite: false, weddingDate: null };
   }
 
   const { data: site, error: siteError } = await supabase
@@ -288,8 +289,16 @@ export async function loadItineraryDashboardEvents(
   if (siteError) throw siteError;
 
   if (!site) {
-    return { events: [], hasEventRsvpsTable, hasActiveSite: false };
+    return { events: [], hasEventRsvpsTable, hasActiveSite: false, weddingDate: null };
   }
+
+  const weddingDate = resolveCanonicalWeddingDate(
+    (site.wedding_data as Record<string, unknown> | null) ?? null,
+    {
+      wedding_date: (site.wedding_date as string | null | undefined) ?? null,
+      venue_date: (site.venue_date as string | null | undefined) ?? null,
+    },
+  );
 
   const { data: eventsData, error } = await supabase
     .from('itinerary_events')
@@ -365,6 +374,7 @@ export async function loadItineraryDashboardEvents(
     events: eventsWithCounts,
     hasEventRsvpsTable: nextHasEventRsvpsTable,
     hasActiveSite: true,
+    weddingDate,
   };
 }
 

@@ -19,6 +19,8 @@ function PrivacyPanelHarness() {
       defaultLanguage="en"
       guestAccessToken={null}
       hideFromSearch={false}
+      isGuestFacingReady
+      isPublished
       onAutoTranslateLanguage={() => {}}
       onCopyInviteLink={() => {}}
       onAllowedLanguagesChange={() => {}}

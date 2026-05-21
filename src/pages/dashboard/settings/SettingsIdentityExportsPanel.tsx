@@ -1,4 +1,5 @@
 import { Copy, Image, Layout, Palette } from 'lucide-react';
+import { useState } from 'react';
 import { Badge, Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../../components/ui';
 import type { WeddingIdentityExportKit, WeddingIdentityPrintAsset } from '../../../lib/weddingIdentityExports';
 
@@ -23,6 +24,8 @@ export function SettingsIdentityExportsPanel({
   weddingIdentityPrintAssets,
   hasStoryGraphic,
 }: SettingsIdentityExportsPanelProps) {
+  const [showDetails, setShowDetails] = useState(false);
+
   return (
     <Card variant="bordered" padding="lg" className="rounded-[20px] shadow-none">
       <CardHeader>
@@ -38,30 +41,37 @@ export function SettingsIdentityExportsPanel({
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {weddingIdentityExportKit.items.map((item) => (
-              <div key={item.id} className="rounded-[20px] border border-border-subtle bg-white p-3">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <p className="text-sm font-semibold text-text-primary">{item.label}</p>
-                    <p className="mt-1 text-xs text-text-secondary">{item.description}</p>
-                  </div>
-                  <span className={`shrink-0 rounded-xl px-2 py-0.5 text-[11px] font-medium ${
-                    item.status === 'ready'
-                      ? 'bg-success/10 text-success'
-                      : item.status === 'needs-info'
-                        ? 'bg-warning/10 text-warning'
-                        : 'bg-surface-subtle text-text-tertiary'
-                  }`}>
-                    {item.status === 'ready' ? 'Ready' : item.status === 'needs-info' ? 'Needs info' : 'Planned'}
-                  </span>
-                </div>
-                <p className="mt-2 text-[11px] text-text-tertiary">{item.format}</p>
-                {item.blockers.length > 0 && (
-                  <p className="mt-2 text-[11px] leading-4 text-text-secondary">{item.blockers.join(' ')}</p>
-                )}
+          <div className="rounded-[20px] border border-border-subtle bg-white p-4">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <p className="text-sm font-semibold text-text-primary">Wedding identity kit ({weddingIdentityExportKit.items.length} items)</p>
+                <p className="mt-1 text-xs text-text-secondary">Use this as the single source for print, signage, and planner handoff.</p>
               </div>
-            ))}
+              <Button type="button" variant="outline" size="sm" onClick={() => setShowDetails((value) => !value)}>
+                {showDetails ? 'Hide details' : 'Show details'}
+              </Button>
+            </div>
+            {showDetails && (
+              <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {weddingIdentityExportKit.items.map((item) => (
+                  <div key={item.id} className="rounded-[16px] border border-border-subtle bg-surface-subtle/30 p-3">
+                    <div className="flex items-start justify-between gap-3">
+                      <p className="text-sm font-semibold text-text-primary">{item.label}</p>
+                      <span className={`shrink-0 rounded-xl px-2 py-0.5 text-[11px] font-medium ${
+                        item.status === 'ready'
+                          ? 'bg-success/10 text-success'
+                          : item.status === 'needs-info'
+                            ? 'bg-warning/10 text-warning'
+                            : 'bg-surface-subtle text-text-tertiary'
+                      }`}>
+                        {item.status === 'ready' ? 'Ready' : item.status === 'needs-info' ? 'Needs info' : 'Planned'}
+                      </span>
+                    </div>
+                    <p className="mt-2 text-[11px] text-text-tertiary">{item.format}</p>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="rounded-[20px] border border-border-subtle bg-surface-subtle/40 p-4">
