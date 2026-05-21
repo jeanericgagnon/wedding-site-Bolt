@@ -117,6 +117,7 @@ import { buildCoordinatorPrimaryActionBoard } from '../../lib/coordinatorPrimary
 import { buildCoordinatorExecutionBoard } from '../../lib/coordinatorExecutionBoard';
 import { buildCoordinatorAlertLogView } from '../../lib/coordinatorAlertLogView';
 import { buildCoordinatorNavigationBoard } from '../../lib/coordinatorNavigationBoard';
+import { getCoordinatorDemoSiteId } from './coordinatorDemoContext';
 
 
 type AudienceOption = { value: string; label: string; count: number };
@@ -206,7 +207,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
         if (isDemoMode) {
           if (!mounted) return;
           const now = new Date().toISOString();
-          setSiteId('demo-site');
+          setSiteId(getCoordinatorDemoSiteId());
           setActiveSiteRole('owner');
           setCoordinatorRole('owner');
           setGuests([
