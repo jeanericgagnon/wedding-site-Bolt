@@ -2,6 +2,7 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { escapeHtml, safeEmailUrl, sanitizeEmailSubject } from "../_shared/emailSafety.ts";
 import { canMutateGuestsOrMessages, canMutateMessages } from "../_shared/collaboratorPermissions.ts";
+import { resolveLaunchFromAddress } from "../_shared/emailSender.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -521,10 +522,11 @@ Deno.serve(async (req: Request) => {
         });
     }
 
-    const fromDomain = Deno.env.get("FROM_EMAIL_DOMAIN");
-    const fromEmail = Deno.env.get("FROM_EMAIL");
-    const fromName = Deno.env.get("FROM_EMAIL_NAME") || "DayOf";
-    const sender = fromEmail || (fromDomain ? `noreply@${fromDomain}` : "onboarding@resend.dev");
+    const { fromAddress } = resolveLaunchFromAddress({
+      coupleName1,
+      coupleName2,
+      siteSlug: typeof data.siteSlug === "string" ? data.siteSlug : null,
+    });
 
     const resendResponse = await fetch("https://api.resend.com/emails", {
       method: "POST",
@@ -533,7 +535,7 @@ Deno.serve(async (req: Request) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: `${fromName} <${sender}>`,
+        from: fromAddress,
         to: [to],
         subject: sanitizeEmailSubject(subject),
         html,

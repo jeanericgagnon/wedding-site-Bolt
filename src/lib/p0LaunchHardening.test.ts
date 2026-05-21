@@ -26,10 +26,16 @@ describe('P0 launch hardening guards', () => {
     const sender = read('supabase/functions/_shared/emailSender.ts');
     const bulk = read('supabase/functions/send-bulk-message/index.ts');
     const queue = read('supabase/functions/process-email-queue/index.ts');
+    const wedding = read('supabase/functions/send-wedding-email/index.ts');
+    const vendorInquiry = read('supabase/functions/vendor-profile-inquiry-submit/index.ts');
 
     expect(sender).toContain('set FROM_EMAIL or FROM_EMAIL_DOMAIN');
     expect(bulk).toContain('resolveLaunchFromAddress');
     expect(queue).toContain('resolveLaunchFromAddress');
+    expect(wedding).toContain('resolveLaunchFromAddress');
+    expect(vendorInquiry).toContain('resolveLaunchFromAddress');
     expect(queue).not.toContain('onboarding@resend.dev');
+    expect(wedding).not.toContain('onboarding@resend.dev');
+    expect(vendorInquiry).not.toContain('onboarding@resend.dev');
   });
 });

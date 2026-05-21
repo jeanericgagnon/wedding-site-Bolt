@@ -15,6 +15,11 @@ interface LookupPayload {
   searchValue: string;
   language?: string | null;
 }
+interface NameLookupPayload {
+  action: "lookup_name";
+  fullName: string;
+  siteRef: string;
+}
 
 interface EventLookupPayload {
   action: "event_lookup";
@@ -57,7 +62,7 @@ interface EventSubmitPayload {
   notes?: string | null;
 }
 
-type Payload = LookupPayload | GuestLookupPayload | EventLookupPayload | SubmitPayload | EventSubmitPayload;
+type Payload = LookupPayload | NameLookupPayload | GuestLookupPayload | EventLookupPayload | SubmitPayload | EventSubmitPayload;
 
 interface RsvpSessionPayload {
   scope: "rsvp";
@@ -192,6 +197,31 @@ function sanitizeHouseholdGuest(guest: {
     invited_to_ceremony: guest.invited_to_ceremony === true,
     invited_to_reception: guest.invited_to_reception === true,
   };
+}
+
+function normalizeFullName(value: string) {
+  return value.trim().toLowerCase().replace(/\s+/g, " ");
+}
+
+function maskEmailHint(value: string | null | undefined): string | null {
+  const email = String(value ?? "").trim().toLowerCase();
+  const atIndex = email.indexOf("@");
+  if (atIndex <= 0) return null;
+  const local = email.slice(0, atIndex);
+  const domain = email.slice(atIndex + 1);
+  if (!domain) return null;
+  const localHint = local.length <= 2 ? `${local[0] ?? "*"}*` : `${local.slice(0, 2)}***`;
+  const domainParts = domain.split(".");
+  const domainHead = domainParts[0] ?? "";
+  const domainTail = domainParts.length > 1 ? `.${domainParts.slice(1).join(".")}` : "";
+  const domainHint = domainHead.length <= 2 ? `${domainHead[0] ?? "*"}*` : `${domainHead.slice(0, 2)}***`;
+  return `${localHint}@${domainHint}${domainTail}`;
+}
+
+function maskPhoneHint(value: string | null | undefined): string | null {
+  const digits = String(value ?? "").replace(/\D+/g, "");
+  if (digits.length < 4) return null;
+  return `***-***-${digits.slice(-4)}`;
 }
 
 Deno.serve(async (req: Request) => {
@@ -424,6 +454,65 @@ Deno.serve(async (req: Request) => {
       }
 
       return json({ error: "We couldn't verify that invitation. Please use the private RSVP link or code from your invitation." }, 404);
+    }
+
+    if (payload.action === "lookup_name") {
+      const nameLookupEnabled = ["1", "true", "yes"].includes(String(Deno.env.get("ENABLE_PUBLIC_RSVP_NAME_LOOKUP") ?? "").trim().toLowerCase());
+      if (!nameLookupEnabled) {
+        return json({ error: "Please use the private RSVP link or code from your invitation." }, 403);
+      }
+
+      const normalizedName = normalizeFullName(payload.fullName ?? "");
+      const queryParts = normalizedName.split(" ").filter(Boolean);
+      const siteRef = String(payload.siteRef ?? "").trim();
+      if (!siteRef || normalizedName.length < 5 || queryParts.length < 2) {
+        return json({ error: "Add your full name and wedding site before searching." }, 400);
+      }
+      if (!(await enforceRateLimit("rsvp_lookup_name", `${siteRef}:${normalizedName}`, LOOKUP_RATE_LIMIT_MAX_ATTEMPTS))) {
+        return json({ error: "Too many lookup attempts. Please wait a few minutes and try again." }, 429);
+      }
+
+      const siteFilterColumn = /^[0-9a-f-]{36}$/i.test(siteRef) ? "id" : "site_slug";
+      const { data: site } = await adminClient
+        .from("wedding_sites")
+        .select("id")
+        .eq(siteFilterColumn, siteRef)
+        .maybeSingle();
+      if (!site?.id) return json({ matches: [], ambiguous: false }, 200);
+
+      const lastName = queryParts.at(-1) ?? "";
+      const firstName = queryParts.slice(0, -1).join(" ");
+      const { data: exactNameCandidates } = await adminClient
+        .from("guests")
+        .select("id, name, first_name, last_name, email, phone")
+        .eq("wedding_site_id", site.id)
+        .ilike("name", normalizedName)
+        .limit(8);
+      const { data: splitNameCandidates } = await adminClient
+        .from("guests")
+        .select("id, name, first_name, last_name, email, phone")
+        .eq("wedding_site_id", site.id)
+        .ilike("first_name", firstName)
+        .ilike("last_name", lastName)
+        .limit(8);
+
+      const byId = new Map<string, { id: string; name?: string | null; first_name?: string | null; last_name?: string | null; email?: string | null; phone?: string | null }>();
+      for (const row of [...(exactNameCandidates ?? []), ...(splitNameCandidates ?? [])]) {
+        if (row?.id) byId.set(row.id, row);
+      }
+      const matches = Array.from(byId.values())
+        .filter((row) => normalizeFullName(row.name || [row.first_name, row.last_name].filter(Boolean).join(" ")) === normalizedName)
+        .slice(0, 5)
+        .map((row) => ({
+          name: row.name || [row.first_name, row.last_name].filter(Boolean).join(" "),
+          email_hint: maskEmailHint(row.email),
+          phone_hint: maskPhoneHint(row.phone),
+        }));
+
+      return json({
+        ambiguous: matches.length !== 1,
+        matches,
+      });
     }
 
     if (payload.action === "lookup_guest") {

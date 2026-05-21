@@ -20,4 +20,17 @@ describe('P0 RSVP submit authorization', () => {
     expect(source).toContain('enforceRateLimit("rsvp_lookup", trimmed, LOOKUP_RATE_LIMIT_MAX_ATTEMPTS)');
     expect(source).toContain('RSVP_SEARCH_REQUIRED_COPY = "Enter the invitation code from your invitation."');
   });
+
+  it('keeps optional name lookup site-scoped and safe-field only', () => {
+    const source = readFileSync(join(process.cwd(), 'supabase', 'functions', 'validate-rsvp-token', 'index.ts'), 'utf8');
+
+    expect(source).toContain('payload.action === "lookup_name"');
+    expect(source).toContain('ENABLE_PUBLIC_RSVP_NAME_LOOKUP');
+    expect(source).toContain('if (!siteRef || normalizedName.length < 5 || queryParts.length < 2)');
+    expect(source).toContain('enforceRateLimit("rsvp_lookup_name"');
+    expect(source).toContain('.eq("wedding_site_id", site.id)');
+    expect(source).toContain('email_hint: maskEmailHint(row.email)');
+    expect(source).toContain('phone_hint: maskPhoneHint(row.phone)');
+    expect(source).not.toContain('matches: [{ invite_token');
+  });
 });

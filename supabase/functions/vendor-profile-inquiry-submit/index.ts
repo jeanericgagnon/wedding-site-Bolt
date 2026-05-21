@@ -1,6 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { escapeHtml, sanitizeEmailSubject } from "../_shared/emailSafety.ts";
 import { enforcePublicSubmissionRateLimit } from "../_shared/rateLimit.ts";
+import { resolveLaunchFromAddress } from "../_shared/emailSender.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -91,10 +92,11 @@ async function sendVendorInquiryEmail(input: {
   const apiKey = Deno.env.get("RESEND_API_KEY");
   if (!apiKey || !isSafeEmail(input.to)) return;
 
-  const fromDomain = Deno.env.get("FROM_EMAIL_DOMAIN");
-  const fromEmail = Deno.env.get("FROM_EMAIL");
-  const fromName = Deno.env.get("FROM_EMAIL_NAME") || "DayOf";
-  const sender = fromEmail || (fromDomain ? `noreply@${fromDomain}` : "onboarding@resend.dev");
+  const { fromAddress } = resolveLaunchFromAddress({
+    coupleName1: input.coupleNames || "DayOf",
+    coupleName2: "Vendor",
+    siteSlug: input.siteSlug || null,
+  });
 
   const response = await fetch("https://api.resend.com/emails", {
     method: "POST",
@@ -103,7 +105,7 @@ async function sendVendorInquiryEmail(input: {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      from: `${fromName} <${sender}>`,
+      from: fromAddress,
       to: [input.to],
       reply_to: input.email,
       subject: sanitizeEmailSubject(`New wedding inquiry from ${input.name}`),
