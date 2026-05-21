@@ -255,6 +255,12 @@ export const PaymentRequired: React.FC = () => {
             </p>
           </div>
         </div>
+        <div className="mt-4 flex flex-wrap items-center justify-center gap-4 text-xs text-text-tertiary">
+          <a href="/support" className="hover:text-text-primary transition-colors">Support</a>
+          <a href="/privacy" className="hover:text-text-primary transition-colors">Privacy</a>
+          <a href="/terms" className="hover:text-text-primary transition-colors">Terms</a>
+          <a href="/refund" className="hover:text-text-primary transition-colors">Refund</a>
+        </div>
       </div>
     </div>
   );

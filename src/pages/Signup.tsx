@@ -314,6 +314,12 @@ export const Signup: React.FC = () => {
             </p>
           </div>
         </Card>
+        <div className="mt-4 flex flex-wrap items-center justify-center gap-4 text-xs text-text-tertiary">
+          <Link to="/support" className="hover:text-text-primary transition-colors">Support</Link>
+          <Link to="/privacy" className="hover:text-text-primary transition-colors">Privacy</Link>
+          <Link to="/terms" className="hover:text-text-primary transition-colors">Terms</Link>
+          <Link to="/refund" className="hover:text-text-primary transition-colors">Refund</Link>
+        </div>
       </div>
     </div>
   );

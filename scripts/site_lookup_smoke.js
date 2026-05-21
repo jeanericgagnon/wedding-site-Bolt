@@ -9,18 +9,23 @@ const normalizeEnvValue = (value) => {
   return trimmed;
 };
 
-const fileEnv = fs.existsSync('.env.local')
+const loadEnvFile = (path) => (fs.existsSync(path)
   ? Object.fromEntries(
-      fs.readFileSync('.env.local', 'utf8')
+      fs.readFileSync(path, 'utf8')
         .split('\n')
         .map((l) => l.trim())
         .filter((line) => line && !line.startsWith('#') && line.includes('='))
         .map((line) => {
           const i = line.indexOf('=');
           return [line.slice(0, i), normalizeEnvValue(line.slice(i + 1))];
-        })
+        }),
     )
-  : {};
+  : {});
+
+const fileEnv = {
+  ...loadEnvFile('.env'),
+  ...loadEnvFile('.env.local'),
+};
 
 const base = normalizeEnvValue(process.env.VITE_SUPABASE_URL || fileEnv.VITE_SUPABASE_URL);
 const key = normalizeEnvValue(process.env.VITE_SUPABASE_ANON_KEY || fileEnv.VITE_SUPABASE_ANON_KEY);
