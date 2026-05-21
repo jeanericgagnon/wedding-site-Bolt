@@ -92,7 +92,8 @@ export const DashboardSettings: React.FC = () => {
   const [plannerInviteRole, setPlannerInviteRole] = useState<'planner' | 'coordinator' | 'viewer'>('planner');
   const [plannerInviteError, setPlannerInviteError] = useState<string | null>(null);
   const [plannerInviteSuccess, setPlannerInviteSuccess] = useState<string | null>(null);
-  const [collaboratorInvites, setCollaboratorInvites] = useState<Array<{ id: string; invite_email: string; invite_name: string | null; role: string; status: string; invited_at: string; expires_at?: string | null; invite_token?: string; permissions?: PlannerPermissionKey[] }>>([]);
+  const [collaboratorInvites, setCollaboratorInvites] = useState<Array<{ id: string; invite_email: string; invite_name: string | null; role: string; status: string; invited_at: string; expires_at?: string | null; permissions?: PlannerPermissionKey[] }>>([]);
+  const [revealedInviteLinks, setRevealedInviteLinks] = useState<Record<string, string>>({});
   const [creatingCollaboratorInvite, setCreatingCollaboratorInvite] = useState(false);
   const [plannerInvitePermissions, setPlannerInvitePermissions] = useState<PlannerPermissionKey[]>(getPlannerPermissionPreset('planner'));
   const [revokingCollaboratorInviteId, setRevokingCollaboratorInviteId] = useState<string | null>(null);
@@ -122,6 +123,12 @@ export const DashboardSettings: React.FC = () => {
   const [subscribeLoading, setSubscribeLoading] = useState(false);
   const [subscribeError, setSubscribeError] = useState<string | null>(null);
 
+  const privacySummary = privacyMode === 'invite_only'
+    ? 'Invite only'
+    : privacyMode === 'password_protected'
+      ? 'Password protected'
+      : 'Public';
+
   useEffect(() => {
     loadSiteData();
   }, [user, isDemoMode]);
@@ -144,11 +151,12 @@ export const DashboardSettings: React.FC = () => {
   const loadCollaboratorInvites = async (siteId: string) => {
     const { data: inviteRows, error: inviteLoadError } = await supabase
       .from('wedding_site_collaborator_invites')
-      .select('id, invite_email, invite_name, role, status, invited_at, expires_at, invite_token, permissions')
+      .select('id, invite_email, invite_name, role, status, invited_at, expires_at, permissions')
       .eq('wedding_site_id', siteId)
       .order('invited_at', { ascending: false });
     if (inviteLoadError) throw inviteLoadError;
-    setCollaboratorInvites((inviteRows as Array<{ id: string; invite_email: string; invite_name: string | null; role: string; status: string; invited_at: string; expires_at?: string | null; invite_token?: string; permissions?: PlannerPermissionKey[] }> | null) ?? []);
+    setCollaboratorInvites((inviteRows as Array<{ id: string; invite_email: string; invite_name: string | null; role: string; status: string; invited_at: string; expires_at?: string | null; permissions?: PlannerPermissionKey[] }> | null) ?? []);
+    setRevealedInviteLinks({});
   };
 
   const loadSiteData = async () => {
@@ -384,20 +392,18 @@ export const DashboardSettings: React.FC = () => {
     setCreatingCollaboratorInvite(true);
     try {
       const inviteToken = crypto.randomUUID();
-      const { data, error } = await supabase
-        .from('wedding_site_collaborator_invites')
-        .insert({
-          wedding_site_id: weddingSiteId,
+      const { data, error } = await supabase.rpc('settings_collaborator_invite_write', {
+        p_wedding_site_id: weddingSiteId,
+        p_payload: {
           invite_email: email,
           invite_name: name,
           role: plannerInviteRole,
           status: 'pending',
           invite_token: inviteToken,
           invited_by: user.id,
-        })
-        .select('id, invite_email, invite_name, role, status, invited_at, expires_at, invite_token, permissions')
-        .single();
-
+          permissions: plannerInvitePermissions,
+        },
+      });
       if (error) throw error;
 
       await loadCollaboratorInvites(weddingSiteId);
@@ -414,10 +420,10 @@ export const DashboardSettings: React.FC = () => {
     setPlannerInviteSuccess(null);
     setRevokingCollaboratorInviteId(inviteId);
     try {
-      const { error } = await supabase
-        .from('wedding_site_collaborator_invites')
-        .update({ status: 'revoked', revoked_at: new Date().toISOString() })
-        .eq('id', inviteId);
+      const { error } = await supabase.rpc('settings_collaborator_invite_revoke', {
+        p_invite_id: inviteId,
+        p_revoked_at: new Date().toISOString(),
+      });
 
       if (error) throw error;
 
@@ -432,27 +438,60 @@ export const DashboardSettings: React.FC = () => {
     }
   };
 
-  const handleCopyCollaboratorInviteLink = async (inviteToken: string | undefined) => {
-    if (!inviteToken) {
-      setPlannerInviteError('Missing invite token.');
-      return;
-    }
-
-    const inviteUrl = `${window.location.origin}/accept-collaborator-invite?token=${inviteToken}`;
+  const handleCopyCollaboratorInviteLink = async (inviteId: string) => {
     try {
+      const { data: inviteToken, error } = await supabase.rpc('settings_collaborator_invite_token_read', {
+        p_invite_id: inviteId,
+      });
+      if (error) throw error;
+      if (!inviteToken) throw new Error('This invite link is not ready yet.');
+      const inviteUrl = `${window.location.origin}/accept-collaborator-invite?token=${String(inviteToken)}`;
       await navigator.clipboard.writeText(inviteUrl);
       setPlannerInviteSuccess('Invite link copied.');
       setPlannerInviteError(null);
-    } catch {
-      window.prompt('Copy collaborator invite link:', inviteUrl);
-      setPlannerInviteSuccess('Invite link ready to copy.');
-      setPlannerInviteError(null);
+    } catch (err) {
+      setPlannerInviteError(err instanceof Error ? err.message : 'Failed to copy collaborator invite.');
     }
   };
 
-  const handleResendCollaboratorInvite = async (inviteToken: string | undefined) => {
-    await handleCopyCollaboratorInviteLink(inviteToken);
+  const handleResendCollaboratorInvite = async (inviteId: string) => {
+    await handleCopyCollaboratorInviteLink(inviteId);
     setPlannerInviteSuccess('Invite link copied again for resend.');
+  };
+
+  const handleRevealCollaboratorInviteLink = async (inviteId: string) => {
+    try {
+      const { data: inviteToken, error } = await supabase.rpc('settings_collaborator_invite_token_read', {
+        p_invite_id: inviteId,
+      });
+      if (error) throw error;
+      if (!inviteToken) throw new Error('This invite link is not ready yet.');
+      const inviteUrl = `${window.location.origin}/accept-collaborator-invite?token=${String(inviteToken)}`;
+      setRevealedInviteLinks((current) => ({ ...current, [inviteId]: inviteUrl }));
+    } catch (err) {
+      setPlannerInviteError(err instanceof Error ? err.message : 'Failed to reveal collaborator invite.');
+    }
+  };
+
+  const handleClearCollaboratorInviteTestFixtures = async () => {
+    if (!weddingSiteId) return;
+    setPlannerInviteError(null);
+    setPlannerInviteSuccess(null);
+    try {
+      const { data, error } = await supabase.rpc('settings_collaborator_invite_clear_test_fixtures', {
+        p_wedding_site_id: weddingSiteId,
+      });
+      if (error) throw error;
+      await loadCollaboratorInvites(weddingSiteId);
+      const deletedCount = Number(data ?? 0);
+      setPlannerInviteSuccess(
+        deletedCount > 0
+          ? `Cleared ${deletedCount} test invite${deletedCount === 1 ? '' : 's'}.`
+          : 'No test invites found to clear.',
+      );
+    } catch (err) {
+      setPlannerInviteError(err instanceof Error ? err.message : 'Failed to clear test invites.');
+    }
   };
 
   const handleRemovePlannerInvite = () => {
@@ -602,7 +641,7 @@ export const DashboardSettings: React.FC = () => {
   const togglePlannerPermission = (key: PlannerPermissionKey) => {
     setPlannerInvitePermissions((prev) => prev.includes(key) ? prev.filter((item) => item !== key) : [...prev, key]);
   };
-  const publicSiteQrUrl = publicSiteUrl
+  const publicSiteQrUrl = publicSiteUrl && import.meta.env.VITE_ENABLE_THIRD_PARTY_QR === 'true'
     ? `https://api.qrserver.com/v1/create-qr-code/?size=512x512&data=${encodeURIComponent(publicSiteUrl)}`
     : '';
 
@@ -793,6 +832,14 @@ export const DashboardSettings: React.FC = () => {
         <div>
           <h1 className="text-3xl font-bold text-text-primary mb-2">Settings</h1>
           <p className="text-text-secondary">Manage your account and wedding site preferences</p>
+          <div className="mt-3 flex flex-wrap gap-2 text-xs text-text-tertiary">
+            <span className="rounded-xl border border-border-subtle bg-surface-subtle/30 px-3 py-1">
+              Privacy: {privacySummary}
+            </span>
+            <span className="rounded-xl border border-border-subtle bg-surface-subtle/30 px-3 py-1">
+              Search: {hideFromSearch ? 'Hidden' : 'Visible'}
+            </span>
+          </div>
         </div>
 
         <div className="flex flex-col md:flex-row gap-8">
@@ -1078,17 +1125,40 @@ export const DashboardSettings: React.FC = () => {
                                   <p className="text-sm font-medium text-text-primary">{invite.invite_name || invite.invite_email}</p>
                                   <p className="mt-1 text-xs text-text-secondary">{invite.invite_email} · {invite.role} · {formatSettingsDate(invite.invited_at)}{invite.expires_at ? ` · expires ${formatSettingsDate(invite.expires_at)}` : ''}</p>
                                   {invite.permissions && invite.permissions.length > 0 && <p className="mt-1 text-[11px] text-text-tertiary">{invite.permissions.join(' · ')}</p>}
+                                  <p className="mt-1 text-[11px] text-text-tertiary">
+                                    Invite URL: {revealedInviteLinks[invite.id] ? revealedInviteLinks[invite.id] : '/accept-collaborator-invite?token=••••••••••'}
+                                  </p>
                                 </div>
                                 <div className="flex items-center gap-2">
                                   <Badge variant={invite.status === 'accepted' ? 'success' : invite.status === 'pending' ? 'secondary' : 'warning'}>{invite.status}</Badge>
                                   {invite.status === 'pending' && (
-                                    <Button type="button" variant="outline" size="sm" onClick={() => handleCopyCollaboratorInviteLink(invite.invite_token)}>
+                                    <Button type="button" variant="outline" size="sm" onClick={() => { void handleCopyCollaboratorInviteLink(invite.id); }}>
                                       Copy link
                                     </Button>
                                   )}
                                   {invite.status === 'pending' && (
-                                    <Button type="button" variant="outline" size="sm" onClick={() => { void handleResendCollaboratorInvite(invite.invite_token); }}>
+                                    <Button type="button" variant="outline" size="sm" onClick={() => { void handleResendCollaboratorInvite(invite.id); }}>
                                       Resend
+                                    </Button>
+                                  )}
+                                  {invite.status === 'pending' && (
+                                    <Button
+                                      type="button"
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => {
+                                        if (revealedInviteLinks[invite.id]) {
+                                          setRevealedInviteLinks((current) => {
+                                            const next = { ...current };
+                                            delete next[invite.id];
+                                            return next;
+                                          });
+                                          return;
+                                        }
+                                        void handleRevealCollaboratorInviteLink(invite.id);
+                                      }}
+                                    >
+                                      {revealedInviteLinks[invite.id] ? 'Hide link' : 'Reveal link'}
                                     </Button>
                                   )}
                                   {invite.status === 'pending' && (
@@ -1105,6 +1175,9 @@ export const DashboardSettings: React.FC = () => {
                     </div>
 
                     <div className="flex flex-wrap justify-end gap-2">
+                      <Button type="button" variant="outline" size="sm" onClick={() => { void handleClearCollaboratorInviteTestFixtures(); }}>
+                        Clear test invites
+                      </Button>
                       {plannerInvite && (
                         <Button type="button" variant="outline" size="sm" onClick={handleRemovePlannerInvite}>Remove invite</Button>
                       )}
@@ -1168,7 +1241,8 @@ export const DashboardSettings: React.FC = () => {
                                 type="button"
                                 size="sm"
                                 variant="outline"
-                                onClick={() => window.open(publicSiteQrUrl, '_blank')}
+                                onClick={() => publicSiteQrUrl ? window.open(publicSiteQrUrl, '_blank') : undefined}
+                                disabled={!publicSiteQrUrl}
                               >
                                 Open QR
                               </Button>
@@ -1191,6 +1265,9 @@ export const DashboardSettings: React.FC = () => {
                               >
                                 Copy QR link
                               </Button>
+                              {!publicSiteQrUrl && (
+                                <p className="text-xs text-text-tertiary">Third-party QR is disabled by default.</p>
+                              )}
                             </div>
                           </div>
                         )}
