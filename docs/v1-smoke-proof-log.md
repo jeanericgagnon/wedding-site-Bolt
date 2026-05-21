@@ -133,7 +133,7 @@ If the product cannot be shown, shared, and trusted publicly, the v1 claim is de
   - 2026-05-20 17:50 PDT manual live truth pass found a launch blocker on the public site route: `https://dayof.love/site/alex-jordan-demo` and `https://alex-jordan-demo.dayof.love/` rendered `Something went wrong` / `Failed to load wedding site`, even though the Supabase slug lookup smoke resolved `alex-jordan-demo`.
   - Root cause isolated locally: public site runtime selected secret privacy fields (`site_password_hash`, `guest_access_token`) and the wedding-data parser assumed an empty `wedding_data` object had a `couple` shape before `normalizeWeddingData` could repair it.
   - Local fix verified on production preview at `http://127.0.0.1:4177/site/alex-jordan-demo`: the route rendered public site content with RSVP available, no `Something went wrong` state, and no failed Supabase responses.
-  - Fix is not live until its PR is merged and deployed; live production still needs a post-deploy recheck of `/site/alex-jordan-demo`.
+  - Post-merge live recheck passed at `https://dayof.love/site/alex-jordan-demo`: the route rendered public site content with RSVP available, no `Something went wrong` state, and no failed Supabase responses.
   - 2026-04-21 automated canonical smoke passed via `npm run proof:v1:canonical-smoke`.
   - `npm run test:e2e:live` passed across Home, Product, Trust, Login, RSVP entry, and collaborator invite route load.
   - Canonical route smoke now also covers signup load, payment gate auth fallback, quick-start preview reachability, and login fallback behavior across protected onboarding, setup, and dashboard surfaces when auth is missing.
