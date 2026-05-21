@@ -74,7 +74,7 @@ export function GuestDashboardHeader({
             onClick={onToggleInsights}
             className="rounded-lg border border-border bg-surface px-3 py-1.5 text-xs text-text-secondary hover:border-primary/40 hover:text-primary"
           >
-            {showInsights ? 'Hide insights' : 'Show insights'}
+            {showInsights ? 'Hide summary' : 'Show summary'}
           </button>
         </div>
       </DashboardPageHero>
@@ -83,16 +83,7 @@ export function GuestDashboardHeader({
         <div className="space-y-2 rounded-[20px] border border-border bg-surface px-5 py-4 text-sm shadow-none">
           <p className="font-medium text-text-primary">Last import summary</p>
           <p className="text-text-secondary">Imported {csvImportSummary.imported} guest{csvImportSummary.imported === 1 ? '' : 's'} · rows needing review {csvImportSummary.skipped} · household groups {csvImportSummary.householdKeys} · household matches left separate {csvImportSummary.guardedHouseholds} · event names to review {csvImportSummary.unknownEvents} · possible repeats {csvImportSummary.duplicateNames}</p>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs">
-            <div className="rounded-lg border border-border bg-surface-subtle/30 px-3 py-2 text-text-secondary">
-              <p className="font-medium">What came through</p>
-              <p className="mt-1">Guest rows imported, event links mapped where possible, and safer household grouping applied when the keys looked trustworthy.</p>
-            </div>
-            <div className="rounded-lg border border-border bg-surface-subtle/30 px-3 py-2 text-text-secondary">
-              <p className="font-medium">Still review</p>
-              <p className="mt-1">Check rows that need names, possible repeats, household matches left separate, event names to review, and any guests still missing direct contact info.</p>
-            </div>
-          </div>
+          <p className="text-xs text-text-tertiary">Tip: review skipped rows, possible repeats, and missing contact details before sending reminders.</p>
         </div>
       )}
 

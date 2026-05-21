@@ -69,7 +69,7 @@ export function MessageDashboardView({
         <DashboardPageHero
           eyebrow="Messages"
           title="Updates guests can actually use."
-          description="Send reminders, schedule changes, photo links, and thank-you notes without turning your wedding into a group chat."
+          description="Send reminders, schedule changes, and photo links from one place."
           stats={[
             { label: 'Scheduled', value: scheduledCount > 0 ? `${scheduledCount} waiting` : 'Nothing waiting', detail: 'ready when needed' },
             { label: 'Reach', value: guestsReached > 0 ? `${guestsReached} guests reached` : 'Ready to send', detail: 'across sent updates' },
@@ -88,7 +88,7 @@ export function MessageDashboardView({
                   : <><Clock className="w-4 h-4 mr-2" />{overdueScheduled > 0 ? `Send ${overdueScheduled} scheduled update${overdueScheduled !== 1 ? 's' : ''}` : 'Review scheduled updates'}</>}
               </Button>
               <div>
-                <label className="block text-xs text-text-tertiary mb-1">View as</label>
+                <label className="block text-xs text-text-tertiary mb-1">Role view</label>
                 <select
                   value={messagesRole}
                   onChange={(e) => onSetMessagesRole(e.target.value as PlannerAccessRole)}
@@ -100,9 +100,7 @@ export function MessageDashboardView({
                   <option value="coordinator">Coordinator</option>
                   <option value="viewer">Read only</option>
                 </select>
-                {activeSiteRole !== 'owner' && (
-                  <p className="mt-1 text-[11px] text-text-tertiary">Access view follows your actual collaborator role on this site.</p>
-                )}
+                {activeSiteRole !== 'owner' && <p className="mt-1 text-[11px] text-text-tertiary">Locked to your collaborator role.</p>}
               </div>
             </div>
           }
@@ -128,7 +126,7 @@ export function MessageDashboardView({
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary">Message hub</p>
                 <h2 className="mt-3 font-serif text-2xl font-normal text-text-primary">Draft, schedule, and review guest updates.</h2>
-                <p className="mt-2 text-sm leading-6 text-text-secondary">Keep reminders, travel notes, RSVP nudges, and photo links together without turning the wedding into a group chat.</p>
+                <p className="mt-2 text-sm leading-6 text-text-secondary">Start with a draft, then schedule when ready.</p>
               </div>
               <Button variant="primary" size="sm" onClick={() => startingPointsProps.onApplyComposerTemplate('blank')}>
                 New update
@@ -159,7 +157,7 @@ export function MessageDashboardView({
                 className="w-full rounded-xl border border-border bg-surface-subtle/30 p-4 text-left transition-colors hover:border-primary/40 hover:bg-white"
               >
                 <p className="text-sm font-semibold text-text-primary">RSVP reminder</p>
-                <p className="mt-2 text-sm leading-6 text-text-secondary">Reach guests who have not replied without rebuilding the message from scratch.</p>
+                <p className="mt-2 text-sm leading-6 text-text-secondary">Nudge guests who have not replied yet.</p>
                 <p className="mt-4 text-sm font-semibold text-primary">Use template</p>
               </button>
               <button
@@ -168,7 +166,7 @@ export function MessageDashboardView({
                 className="w-full rounded-xl border border-border bg-surface-subtle/30 p-4 text-left transition-colors hover:border-primary/40 hover:bg-white"
               >
                 <p className="text-sm font-semibold text-text-primary">Hotel or travel update</p>
-                <p className="mt-2 text-sm leading-6 text-text-secondary">Share room block deadlines, parking notes, or arrival changes in one calm note.</p>
+                <p className="mt-2 text-sm leading-6 text-text-secondary">Share lodging, parking, or arrival updates.</p>
                 <p className="mt-4 text-sm font-semibold text-primary">Use template</p>
               </button>
               <button
@@ -177,7 +175,7 @@ export function MessageDashboardView({
                 className="w-full rounded-xl border border-border bg-surface-subtle/30 p-4 text-left transition-colors hover:border-primary/40 hover:bg-white"
               >
                 <p className="text-sm font-semibold text-text-primary">Photo upload link</p>
-                <p className="mt-2 text-sm leading-6 text-text-secondary">Send guests one clear photo or memory link before or after the celebration.</p>
+                <p className="mt-2 text-sm leading-6 text-text-secondary">Send one simple memory upload link.</p>
                 <p className="mt-4 text-sm font-semibold text-primary">Open photos</p>
               </button>
             </div>
@@ -190,7 +188,7 @@ export function MessageDashboardView({
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary">Delivery details</p>
-              <p className="mt-2 text-sm leading-6 text-text-secondary">Open the deeper send and delivery panels only when you want the operational view.</p>
+              <p className="mt-2 text-sm leading-6 text-text-secondary">Open deeper send details only when needed.</p>
             </div>
             <button
               type="button"
@@ -209,9 +207,7 @@ export function MessageDashboardView({
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary">Message workspace</p>
               <h2 className="mt-3 text-lg font-semibold text-text-primary">Build the note, then check the reach details only when you need them.</h2>
-              <p className="mt-2 max-w-2xl text-sm leading-6 text-text-secondary">
-                The main composer stays on the left, while templates, reach context, and send details stay close without taking over the page.
-              </p>
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-text-secondary">Composer on the left, support tools on the right.</p>
             </div>
             <div className="inline-flex flex-wrap gap-2 text-xs text-text-tertiary">
               <span className="rounded-lg border border-border bg-surface-subtle/30 px-3 py-1">Draft first</span>
@@ -237,9 +233,7 @@ export function MessageDashboardView({
           <div className="rounded-[20px] border border-border bg-white p-5 shadow-none">
             <p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary">Recent message history</p>
             <h2 className="mt-3 text-lg font-semibold text-text-primary">Keep a clear record of what guests have already received.</h2>
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-text-secondary">
-              This is the audit trail for drafts, scheduled sends, and completed updates, so you can review timing before you send the next note.
-            </p>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-text-secondary">Review drafts, scheduled sends, and completed sends in one timeline.</p>
           </div>
           <MessageHistoryCard {...historyProps} />
         </section>

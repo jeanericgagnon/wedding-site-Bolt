@@ -77,10 +77,8 @@ export function PlanningDashboardShell({
           <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary/75">Planning workspace</p>
-              <h2 className="mt-3 font-serif text-2xl font-normal text-text-primary">Switch between the planning areas without losing the bigger picture.</h2>
-              <p className="mt-2 max-w-2xl text-sm leading-6 text-text-secondary">
-                This is where tasks, budget, vendors, song requests, address collection, and name-change details stay within reach while the guest-facing parts of the site stay calm elsewhere.
-              </p>
+              <h2 className="mt-3 font-serif text-2xl font-normal text-text-primary">Pick an area and keep moving.</h2>
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-text-secondary">Tasks, budget, vendors, songs, addresses, and name change stay in one workspace.</p>
             </div>
             <div className="inline-flex flex-wrap gap-2 text-xs text-text-tertiary">
               <span className="rounded-lg border border-border-subtle bg-surface-subtle/30 px-3 py-1">Tasks and vendors</span>
@@ -90,34 +88,39 @@ export function PlanningDashboardShell({
           </div>
         </section>
 
-        <div className="grid grid-cols-1 gap-3 rounded-[20px] border border-border-subtle bg-surface p-4 shadow-none md:grid-cols-2">
-          <div>
-            <label className="text-sm font-semibold text-text-primary">Section</label>
-            <select
-              value={activeTab}
-              onChange={(e) => onTabChange(e.target.value as Tab)}
-              className="mt-1 w-full rounded-lg border border-border bg-surface px-3 py-2.5 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
-            >
-              {TABS.map((tab) => (
-                <option key={tab.id} value={tab.id}>{tab.label}</option>
-              ))}
-            </select>
+        <div className="rounded-[20px] border border-border-subtle bg-surface p-4 shadow-none">
+          <div className="flex flex-wrap gap-2">
+            {TABS.map((tab) => {
+              const active = tab.id === activeTab;
+              return (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => onTabChange(tab.id)}
+                  className={`rounded-lg px-3 py-2 text-sm font-medium transition ${
+                    active
+                      ? 'border border-primary/30 bg-primary/10 text-primary'
+                      : 'border border-border-subtle bg-surface text-text-secondary hover:border-primary/30 hover:text-primary'
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              );
+            })}
           </div>
-          <div>
-            <label className="text-sm font-semibold text-text-primary">How this page is shown</label>
+          <div className="mt-3">
+            <label className="text-xs font-semibold uppercase tracking-[0.12em] text-text-tertiary">View mode</label>
             <select
               value={planningRole}
               onChange={(e) => onPlanningRoleChange(e.target.value as PlannerAccessRole)}
               disabled={activeSiteRole !== 'owner'}
-              className="mt-1 w-full rounded-lg border border-border bg-surface px-3 py-2.5 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+              className="mt-1 w-full rounded-lg border border-border bg-surface px-3 py-2.5 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary md:max-w-xs"
             >
               {PLANNER_ROLE_OPTIONS.map((option) => (
                 <option key={option.value} value={option.value}>{option.label}</option>
               ))}
             </select>
-            {activeSiteRole !== 'owner' && (
-              <p className="mt-1 text-xs text-text-tertiary">This follows your current collaborator role.</p>
-            )}
+            {activeSiteRole !== 'owner' && <p className="mt-1 text-xs text-text-tertiary">Follows your collaborator role.</p>}
           </div>
         </div>
 
