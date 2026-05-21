@@ -17,6 +17,7 @@ import { PLANNER_ROLE_OPTIONS, PLANNER_PERMISSION_GROUPS, getPlannerPermissionPr
 import { resolveActiveSiteForUser } from '../../lib/activeSite';
 import { useToast } from '../../components/ui/Toast';
 import { formatSettingsDate } from './settingsDate';
+import { SETTINGS_SITE_SELECT } from './settingsSiteSelect';
 
 
 interface RSVPQuestionSetting {
@@ -194,7 +195,7 @@ export const DashboardSettings: React.FC = () => {
     try {
       const { data: queryData, error: siteLoadError } = await supabase
         .from('wedding_sites')
-        .select('id, couple_name_1, couple_name_2, active_template_id, site_slug, rsvp_custom_questions, rsvp_meal_config, music_playlist_url')
+        .select(SETTINGS_SITE_SELECT)
         .eq('id', (await resolveActiveSiteForUser(user.id))?.id ?? '')
         .maybeSingle();
       if (siteLoadError) throw siteLoadError;
