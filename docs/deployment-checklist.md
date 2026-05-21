@@ -2,6 +2,31 @@
 
 Run this before every production deployment.
 
+## P0 Launch Proof Sequence
+
+Run these in order:
+
+1. `npm run typecheck -- --pretty false`
+2. `npm run build`
+3. `npm test`
+4. `npm run smoke:rsvp:strict`
+5. `npm run smoke:csvmapper`
+6. `npm run smoke:checkin`
+7. `npm run smoke:web`
+8. `npm run proof:v1:collaborator-runtime`
+9. `npm run proof:v1:service-role-authorization`
+10. `npm run proof:v1:email-messaging-authorization`
+
+Required env for this gate:
+
+- `SUPABASE_URL`
+- `SUPABASE_SERVICE_ROLE_KEY`
+- `RESEND_API_KEY` (email send lanes)
+- `FROM_EMAIL` or `FROM_EMAIL_DOMAIN` (prod-like mode)
+- `TWILIO_AUTH_TOKEN` (inbound SMS signature verification)
+- optional `TWILIO_WEBHOOK_URL` (if validating against a fixed webhook URL)
+- `ENABLE_GUEST_NAME_LOOKUP` should stay unset/false for token-only RSVP lookup mode
+
 ## Pre-Deploy Quality Gate
 
 - [ ] `npm run typecheck` — 0 errors

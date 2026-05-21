@@ -3,7 +3,7 @@ import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { fetchBillingInfo, isSiteExpired, type BillingInfo } from '../../lib/stripeService';
 import { resolveActiveSiteRoleForUser } from '../../lib/activeSite';
-import { isPaymentGateEnabled } from '../../lib/paymentGate';
+import { isPaymentBypassAllowed, isPaymentGateEnabled } from '../../lib/paymentGate';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -13,28 +13,63 @@ interface ProtectedRouteProps {
 export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, skipPaymentGate = false }) => {
   const { user, loading, isDemoMode } = useAuth();
   const paymentGateEnabled = isPaymentGateEnabled();
+  const paymentBypassAllowed = isPaymentBypassAllowed();
   const location = useLocation();
-  const [billingInfo, setBillingInfo] = useState<BillingInfo | null | 'loading'>('loading');
-  const [activeSiteRole, setActiveSiteRole] = useState<string | null>(null);
+  const [billingInfo, setBillingInfo] = useState<BillingInfo | null | 'loading' | 'unavailable'>('loading');
+  const [activeSiteRole, setActiveSiteRole] = useState<'loading' | 'owner' | 'planner' | 'coordinator' | 'viewer' | null>('loading');
 
   useEffect(() => {
+    let cancelled = false;
+
     if (!user) {
       setBillingInfo(null);
-      return;
+      setActiveSiteRole(null);
+      return () => {
+        cancelled = true;
+      };
     }
 
     if (isDemoMode) {
       setBillingInfo({ payment_status: 'active', billing_type: 'one_time', site_expires_at: null, paid_at: null, stripe_subscription_id: null, wedding_site_id: '' });
-      return;
+      setActiveSiteRole('owner');
+      return () => {
+        cancelled = true;
+      };
     }
 
-    resolveActiveSiteRoleForUser(user.id).then(setActiveSiteRole).catch(() => setActiveSiteRole(null));
-    fetchBillingInfo(user.id)
-      .then(info => setBillingInfo(info))
-      .catch(() => setBillingInfo({ payment_status: 'active', billing_type: 'one_time', site_expires_at: null, paid_at: null, stripe_subscription_id: null, wedding_site_id: '' }));
-  }, [user, isDemoMode]);
+    if (skipPaymentGate || !paymentGateEnabled) {
+      setBillingInfo(null);
+      setActiveSiteRole(null);
+      return () => {
+        cancelled = true;
+      };
+    }
 
-  if (loading || billingInfo === 'loading') {
+    setActiveSiteRole('loading');
+    setBillingInfo('loading');
+    resolveActiveSiteRoleForUser(user.id)
+      .then((role) => {
+        if (!cancelled) setActiveSiteRole(role);
+      })
+      .catch(() => {
+        if (!cancelled) setActiveSiteRole(null);
+      });
+    fetchBillingInfo(user.id)
+      .then((info) => {
+        if (!cancelled) setBillingInfo(info);
+      })
+      .catch(() => {
+        if (!cancelled) setBillingInfo('unavailable');
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user, isDemoMode, paymentGateEnabled, skipPaymentGate]);
+
+  const paymentGateNeedsRoleResolution = paymentGateEnabled && !skipPaymentGate && !isDemoMode;
+
+  if (loading || (!skipPaymentGate && paymentGateEnabled && billingInfo === 'loading') || (paymentGateNeedsRoleResolution && activeSiteRole === 'loading')) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center">
@@ -46,7 +81,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, skipPa
   }
 
   if (!user) {
-    const bypassPayment = new URLSearchParams(location.search).get('bypassPayment') === '1';
+    const bypassPayment = paymentBypassAllowed && new URLSearchParams(location.search).get('bypassPayment') === '1';
     const allowQuickStartPreview = bypassPayment && location.pathname === '/onboarding/quick-start';
 
     if (allowQuickStartPreview) {
@@ -58,16 +93,21 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, skipPa
 
   if (paymentGateEnabled && !skipPaymentGate && !isDemoMode && activeSiteRole !== 'planner' && activeSiteRole !== 'coordinator' && activeSiteRole !== 'viewer') {
     const isPaymentRoute = location.pathname.startsWith('/payment');
-    const bypassPayment = new URLSearchParams(location.search).get('bypassPayment') === '1';
+    const bypassPayment = paymentBypassAllowed && new URLSearchParams(location.search).get('bypassPayment') === '1';
+    const resolvedBillingInfo = (billingInfo && typeof billingInfo === 'object') ? billingInfo : null;
 
-    if (billingInfo?.payment_status === 'payment_required' && !isPaymentRoute && !bypassPayment) {
+    if (billingInfo === 'unavailable' && !isPaymentRoute && !bypassPayment) {
+      return <Navigate to="/payment-required?reason=billing_unavailable" replace />;
+    }
+
+    if (resolvedBillingInfo?.payment_status === 'payment_required' && !isPaymentRoute && !bypassPayment) {
       return <Navigate to="/payment-required" replace />;
     }
 
     if (
-      billingInfo?.payment_status === 'active' &&
-      billingInfo.billing_type === 'one_time' &&
-      isSiteExpired(billingInfo.site_expires_at) &&
+      resolvedBillingInfo?.payment_status === 'active' &&
+      resolvedBillingInfo.billing_type === 'one_time' &&
+      isSiteExpired(resolvedBillingInfo.site_expires_at) &&
       !isPaymentRoute
     ) {
       return <Navigate to="/payment-required?reason=expired" replace />;

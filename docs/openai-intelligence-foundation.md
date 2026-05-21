@@ -16,10 +16,10 @@ Provide a narrow provider layer for model-backed intelligence while keeping loca
 
 ## Configuration
 Set:
-- `VITE_OPENAI_API_KEY`
+- `OPENAI_API_KEY`
 
 Optional later:
-- `VITE_OPENAI_MODEL`
+- `OPENAI_MODEL`
 
 ## Intended usage pattern
 Use OpenAI only for:

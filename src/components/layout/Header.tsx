@@ -4,6 +4,7 @@ import { Heart, Menu, X } from 'lucide-react';
 import { Button } from '../ui';
 import { useAuth } from '../../hooks/useAuth';
 import { useToast } from '../ui/Toast';
+import { DEMO_MODE } from '../../config/env';
 
 interface HeaderProps {
   variant?: 'marketing' | 'dashboard';
@@ -35,9 +36,8 @@ export const Header: React.FC<HeaderProps> = ({ variant = 'marketing' }) => {
     try {
       await signIn();
       navigate('/dashboard');
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Demo login failed. Please try again.';
-      toast(message, 'error');
+    } catch {
+      toast('Couldn’t open the demo right now. Please try again.', 'error');
       setDemoLoading(false);
     }
   };
@@ -95,12 +95,13 @@ export const Header: React.FC<HeaderProps> = ({ variant = 'marketing' }) => {
   useEffect(() => {
     if (location.hash) {
       const sectionId = location.hash.slice(1);
-      setTimeout(() => {
+      const scrollTimeout = window.setTimeout(() => {
         const element = document.getElementById(sectionId);
         if (element) {
           element.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
       }, 100);
+      return () => window.clearTimeout(scrollTimeout);
     }
   }, [location]);
 
@@ -118,18 +119,18 @@ export const Header: React.FC<HeaderProps> = ({ variant = 'marketing' }) => {
   return (
     <header className={`sticky top-0 z-50 transition-all duration-200 ${
       isScrolled
-        ? 'bg-paper shadow-md border-b border-brand/20'
+        ? 'bg-paper shadow-sm border-b border-brand/20'
         : 'bg-paper/95 backdrop-blur-md border-b border-brand/10'
     }`}>
       <nav className="container-custom" aria-label="Main navigation">
         <div className="flex items-center justify-between h-16">
           <Link
             to="/"
-            className="flex items-center gap-2.5 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand rounded-lg p-1 -ml-1"
-            aria-label="WeddingSite home"
+            className="flex items-center gap-2.5 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand rounded-xl p-1 -ml-1"
+            aria-label="dayof home"
           >
             <Heart className="w-5 h-5 text-accent" aria-hidden="true" />
-            <span className="text-[1.125rem] font-semibold text-ink tracking-tight leading-snug">WeddingSite</span>
+            <span className="text-[1.125rem] font-semibold text-ink leading-snug">dayof</span>
           </Link>
 
           <div className="hidden md:flex items-center gap-1">
@@ -139,7 +140,7 @@ export const Header: React.FC<HeaderProps> = ({ variant = 'marketing' }) => {
                   <button
                     key={item.id}
                     onClick={() => scrollToSection(item.id)}
-                    className={`text-[0.875rem] font-medium transition-colors px-3 py-2 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand ${
+                    className={`text-[0.875rem] font-medium transition-colors px-3 py-2 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand ${
                       isHomePage && activeSection === item.id
                         ? 'text-brand bg-brand/10'
                         : 'text-ink/70 hover:text-ink hover:bg-brand/5'
@@ -154,7 +155,7 @@ export const Header: React.FC<HeaderProps> = ({ variant = 'marketing' }) => {
                   <Link
                     key={item.id}
                     to={item.route || '/'}
-                    className={`text-[0.875rem] font-medium transition-colors px-3 py-2 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand ${
+                    className={`text-[0.875rem] font-medium transition-colors px-3 py-2 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand ${
                       location.pathname === item.route
                         ? 'text-brand bg-brand/10'
                         : 'text-ink/70 hover:text-ink hover:bg-brand/5'
@@ -170,18 +171,20 @@ export const Header: React.FC<HeaderProps> = ({ variant = 'marketing' }) => {
 
           <div className="hidden md:flex items-center gap-3">
             <Button variant="ghost" size="sm" onClick={handleLogin}>
-              Login
+              Sign in
             </Button>
-            <Button variant="outline" size="sm" onClick={handleViewDemo} disabled={demoLoading}>
-              {demoLoading ? 'Loading...' : 'View demo'}
-            </Button>
+            {DEMO_MODE ? (
+              <Button variant="outline" size="sm" onClick={handleViewDemo} disabled={demoLoading}>
+                {demoLoading ? 'Loading...' : 'View demo'}
+              </Button>
+            ) : null}
             <Button variant="accent" size="sm" onClick={handleSignUp}>
-              Sign up
+              Start your wedding
             </Button>
           </div>
 
           <button
-            className="md:hidden p-2 text-ink hover:bg-brand/10 rounded-lg transition-colors min-h-[44px] min-w-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+            className="md:hidden p-2 text-ink hover:bg-brand/10 rounded-xl transition-colors min-h-[44px] min-w-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
             aria-expanded={mobileMenuOpen}
@@ -199,7 +202,7 @@ export const Header: React.FC<HeaderProps> = ({ variant = 'marketing' }) => {
                     <button
                       key={item.id}
                       onClick={() => scrollToSection(item.id)}
-                      className={`text-[0.875rem] font-medium transition-colors py-2 px-3 rounded-lg text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand ${
+                      className={`text-[0.875rem] font-medium transition-colors py-2 px-3 rounded-xl text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand ${
                         isHomePage && activeSection === item.id
                           ? 'text-brand bg-brand/10'
                           : 'text-ink/70 hover:text-ink hover:bg-brand/5'
@@ -215,7 +218,7 @@ export const Header: React.FC<HeaderProps> = ({ variant = 'marketing' }) => {
                       key={item.id}
                       to={item.route || '/'}
                       onClick={() => setMobileMenuOpen(false)}
-                      className={`text-[0.875rem] font-medium transition-colors py-2 px-3 rounded-lg text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand ${
+                      className={`text-[0.875rem] font-medium transition-colors py-2 px-3 rounded-xl text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand ${
                         location.pathname === item.route
                           ? 'text-brand bg-brand/10'
                           : 'text-ink/70 hover:text-ink hover:bg-brand/5'
@@ -231,9 +234,11 @@ export const Header: React.FC<HeaderProps> = ({ variant = 'marketing' }) => {
                 <Button variant="ghost" size="md" fullWidth onClick={handleLogin}>
                   Login
                 </Button>
-                <Button variant="outline" size="md" fullWidth onClick={handleViewDemo} disabled={demoLoading}>
-                  {demoLoading ? 'Loading...' : 'View demo'}
-                </Button>
+                {DEMO_MODE ? (
+                  <Button variant="outline" size="md" fullWidth onClick={handleViewDemo} disabled={demoLoading}>
+                    {demoLoading ? 'Loading...' : 'View demo'}
+                  </Button>
+                ) : null}
                 <Button variant="accent" size="md" fullWidth onClick={handleSignUp}>
                   Sign up
                 </Button>

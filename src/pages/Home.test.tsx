@@ -1,4 +1,3 @@
-import React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -51,43 +50,56 @@ describe('Home draft-first CTAs', () => {
 
     expect(navigateMock).toHaveBeenCalledWith('/signup');
     expect(screen.getAllByRole('button', { name: 'Start your wedding site draft' }).length).toBeGreaterThan(0);
-    const anonymousFeatureLinks = screen.getAllByRole('link', { name: 'Explore this feature' });
-    expect(anonymousFeatureLinks.find((link) => link.getAttribute('href') === '/product')).toBeTruthy();
-    expect(anonymousFeatureLinks.find((link) => link.getAttribute('href') === '/features/guests')).toBeTruthy();
-    expect(anonymousFeatureLinks.find((link) => link.getAttribute('href') === '/features/rsvp')).toBeTruthy();
-    expect(anonymousFeatureLinks.find((link) => link.getAttribute('href') === '/features/messaging')).toBeTruthy();
-    expect(anonymousFeatureLinks.find((link) => link.getAttribute('href') === '/features/travel')).toBeTruthy();
-    expect(anonymousFeatureLinks.find((link) => link.getAttribute('href') === '/features/registry')).toBeTruthy();
-    expect(anonymousFeatureLinks.find((link) => link.getAttribute('href') === '/features/seating')).toBeTruthy();
+    expect(screen.getByRole('heading', { name: /a calmer wedding operating system/i })).toBeInTheDocument();
+    expect(screen.getByText(/most wedding websites stop at publish/i)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'View demo' })).not.toBeInTheDocument();
+    const anonymousFeatureHrefs = screen
+      .getAllByRole('link', { name: 'Explore this feature' })
+      .map((link) => new URL((link as HTMLAnchorElement).href).pathname);
+    expect(anonymousFeatureHrefs).toEqual(expect.arrayContaining([
+      '/product',
+      '/templates',
+      '/features/guests',
+      '/features/rsvp',
+      '/features/messaging',
+      '/features/travel',
+      '/features/registry',
+      '/features/seating',
+    ]));
   });
 
   it('sends signed-in users straight to the builder when they start their draft', () => {
     authState.user = { id: 'user-1' };
     render(<Home />);
 
-    fireEvent.click(screen.getAllByRole('button', { name: 'Review your wedding site draft' })[0]);
+    fireEvent.click(screen.getAllByRole('button', { name: 'Continue your wedding site' })[0]);
 
     expect(navigateMock).toHaveBeenCalledWith('/dashboard/builder');
-    expect(screen.getAllByRole('button', { name: 'Review your wedding site draft' }).length).toBeGreaterThan(0);
-    expect(screen.getAllByRole('link', { name: 'Open your builder' }).length).toBeGreaterThan(0);
-    expect(screen.getByRole('link', { name: 'Open planner workspace' })).toHaveAttribute('href', '/dashboard/planning');
-    expect(screen.getByRole('button', { name: 'Open your guest list' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Open message drafts' })).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Open your guest list' }));
+    expect(screen.getAllByRole('button', { name: 'Continue your wedding site' }).length).toBeGreaterThan(0);
+    expect(screen.queryByRole('button', { name: 'View demo' })).not.toBeInTheDocument();
+    expect(screen.getAllByRole('link', { name: 'Edit your site' }).length).toBeGreaterThan(0);
+    expect(screen.getByRole('link', { name: 'Continue planning' })).toHaveAttribute('href', '/dashboard/planning');
+    expect(screen.getByRole('button', { name: 'Manage guests' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Guest messages' })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Manage guests' }));
     expect(navigateMock).toHaveBeenCalledWith('/dashboard/guests');
-    fireEvent.click(screen.getByRole('button', { name: 'Open message drafts' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Guest messages' }));
     expect(navigateMock).toHaveBeenCalledWith('/dashboard/messages');
-    fireEvent.click(screen.getAllByRole('link', { name: 'Open your builder' })[0]);
+    fireEvent.click(screen.getAllByRole('link', { name: 'Edit your site' })[0]);
     expect(navigateMock).toHaveBeenCalledWith('/dashboard/builder');
-    expect(screen.getAllByRole('link', { name: 'Open your builder' })[0]).toHaveAttribute('href', '/dashboard/builder');
-    const signedInFeatureLinks = screen.getAllByRole('link', { name: 'Explore this feature' });
-    expect(signedInFeatureLinks.find((link) => link.getAttribute('href') === '/dashboard/guests')).toBeTruthy();
-    expect(signedInFeatureLinks.find((link) => link.getAttribute('href') === '/dashboard/rsvp-board')).toBeTruthy();
-    expect(signedInFeatureLinks.find((link) => link.getAttribute('href') === '/dashboard/messages')).toBeTruthy();
-    expect(signedInFeatureLinks.find((link) => link.getAttribute('href') === '/dashboard/planning')).toBeTruthy();
-    expect(signedInFeatureLinks.find((link) => link.getAttribute('href') === '/dashboard/coordinator')).toBeTruthy();
-    expect(signedInFeatureLinks.find((link) => link.getAttribute('href') === '/dashboard/itinerary')).toBeTruthy();
-    expect(signedInFeatureLinks.find((link) => link.getAttribute('href') === '/dashboard/registry')).toBeTruthy();
-    expect(signedInFeatureLinks.find((link) => link.getAttribute('href') === '/dashboard/seating')).toBeTruthy();
+    expect(screen.getAllByRole('link', { name: 'Edit your site' })[0]).toHaveAttribute('href', '/dashboard/builder');
+    const signedInFeatureHrefs = screen
+      .getAllByRole('link', { name: 'Explore this feature' })
+      .map((link) => new URL((link as HTMLAnchorElement).href).pathname);
+    expect(signedInFeatureHrefs).toEqual(expect.arrayContaining([
+      '/dashboard/guests',
+      '/dashboard/rsvp-board',
+      '/dashboard/messages',
+      '/dashboard/coordinator',
+      '/dashboard/itinerary',
+      '/dashboard/registry',
+      '/dashboard/seating',
+      '/dashboard/photos',
+    ]));
   });
 });

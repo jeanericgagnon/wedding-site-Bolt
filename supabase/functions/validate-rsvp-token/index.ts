@@ -1,6 +1,8 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
-import { buildEventRsvpSyncRows } from "../../../src/lib/eventRsvpSync.ts";
+import { getPublicSessionSecretSource } from "../_shared/publicSessionSecrets.ts";
+import { sha256Hex, signSessionToken, verifySessionToken } from "../_shared/signedSession.ts";
+import { resolveLocalizedRsvpConfig } from "../../../src/lib/rsvpTranslationAssets.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -11,6 +13,12 @@ const corsHeaders = {
 interface LookupPayload {
   action: "lookup";
   searchValue: string;
+  language?: string | null;
+}
+interface NameLookupPayload {
+  action: "lookup_name";
+  fullName: string;
+  siteRef: string;
 }
 
 interface EventLookupPayload {
@@ -18,10 +26,17 @@ interface EventLookupPayload {
   inviteToken: string;
 }
 
+interface GuestLookupPayload {
+  action: "lookup_guest";
+  guestId: string;
+  rsvpSession?: string | null;
+  language?: string | null;
+}
+
 interface SubmitPayload {
   action: "submit";
   guestId: string;
-  inviteToken: string;
+  rsvpSession: string;
   attending: boolean;
   attendCeremony?: boolean;
   attendReception?: boolean;
@@ -40,15 +55,97 @@ interface SubmitPayload {
 interface EventSubmitPayload {
   action: "event_submit";
   guestId: string;
-  inviteToken: string;
+  rsvpSession: string;
   eventInvitationId: string;
   attending: boolean;
+  dietaryRestrictions?: string | null;
+  notes?: string | null;
 }
 
-type Payload = LookupPayload | EventLookupPayload | SubmitPayload | EventSubmitPayload;
+type Payload = LookupPayload | NameLookupPayload | GuestLookupPayload | EventLookupPayload | SubmitPayload | EventSubmitPayload;
+
+interface RsvpSessionPayload {
+  scope: "rsvp";
+  guestId: string;
+  inviteTokenHash: string;
+  exp: number;
+}
 
 const RATE_LIMIT_WINDOW_MINUTES = 15;
 const RATE_LIMIT_MAX_ATTEMPTS = 10;
+const LOOKUP_RATE_LIMIT_MAX_ATTEMPTS = 8;
+const RSVP_REQUEST_INVALID_COPY = "Could not read this RSVP request. Please try again.";
+const RSVP_SEARCH_REQUIRED_COPY = "Enter the invitation code from your invitation.";
+
+function isMissingEventRsvpTableError(error: unknown) {
+  const typed = error as { code?: string; message?: string } | null;
+  const message = (typed?.message || "").toLowerCase();
+  return typed?.code === "PGRST205"
+    || message.includes("event_rsvps")
+    || message.includes("schema cache")
+    || message.includes("does not exist")
+    || message.includes("relation");
+}
+
+function normalizeEventName(value: string | null | undefined): string {
+  return (value || "")
+    .toLowerCase()
+    .replace(/&/g, " and ")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
+
+function isCeremonyEvent(eventName: string | null | undefined): boolean {
+  const normalized = normalizeEventName(eventName);
+  return normalized.includes("ceremony") || normalized.includes("wedding ceremony");
+}
+
+function isReceptionEvent(eventName: string | null | undefined): boolean {
+  const normalized = normalizeEventName(eventName);
+  return normalized.includes("reception") || normalized.includes("cocktail hour") || normalized.includes("dinner and dancing");
+}
+
+function buildEventRsvpSyncRows(params: {
+  invitations: Array<{ event_invitation_id: string; event_name: string | null }>;
+  attending: boolean;
+  attendCeremony: boolean;
+  attendReception: boolean;
+  respondedAt: string;
+}) {
+  const { invitations, attending, attendCeremony, attendReception, respondedAt } = params;
+
+  if (!attending) {
+    return invitations.map((invitation) => ({
+      event_invitation_id: invitation.event_invitation_id,
+      attending: false,
+      responded_at: respondedAt,
+    }));
+  }
+
+  return invitations.map((invitation) => {
+    if (isCeremonyEvent(invitation.event_name)) {
+      return {
+        event_invitation_id: invitation.event_invitation_id,
+        attending: attendCeremony,
+        responded_at: respondedAt,
+      };
+    }
+
+    if (isReceptionEvent(invitation.event_name)) {
+      return {
+        event_invitation_id: invitation.event_invitation_id,
+        attending: attendReception,
+        responded_at: respondedAt,
+      };
+    }
+
+    return {
+      event_invitation_id: invitation.event_invitation_id,
+      attending: true,
+      responded_at: respondedAt,
+    };
+  });
+}
 
 async function hashIp(ip: string): Promise<string> {
   const encoder = new TextEncoder();
@@ -56,6 +153,75 @@ async function hashIp(ip: string): Promise<string> {
   const hashBuffer = await crypto.subtle.digest("SHA-256", data);
   const hashArray = Array.from(new Uint8Array(hashBuffer));
   return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("").slice(0, 32);
+}
+
+function sanitizeGuest(guest: {
+  id: string;
+  first_name: string | null;
+  last_name: string | null;
+  name: string;
+  plus_one_allowed: boolean | null;
+  invited_to_ceremony: boolean | null;
+  invited_to_reception: boolean | null;
+  children_allowed?: boolean | null;
+  max_children?: number | null;
+  max_additional_guests?: number | null;
+}) {
+  return {
+    id: guest.id,
+    first_name: guest.first_name ?? null,
+    last_name: guest.last_name ?? null,
+    name: guest.name,
+    plus_one_allowed: guest.plus_one_allowed === true,
+    invited_to_ceremony: guest.invited_to_ceremony === true,
+    invited_to_reception: guest.invited_to_reception === true,
+    children_allowed: guest.children_allowed ?? false,
+    max_children: guest.max_children ?? 0,
+    max_additional_guests: guest.max_additional_guests ?? 0,
+  };
+}
+
+function sanitizeHouseholdGuest(guest: {
+  id: string;
+  first_name: string | null;
+  last_name: string | null;
+  name: string;
+  invited_to_ceremony: boolean | null;
+  invited_to_reception: boolean | null;
+}) {
+  return {
+    id: guest.id,
+    first_name: guest.first_name ?? null,
+    last_name: guest.last_name ?? null,
+    name: guest.name,
+    invited_to_ceremony: guest.invited_to_ceremony === true,
+    invited_to_reception: guest.invited_to_reception === true,
+  };
+}
+
+function normalizeFullName(value: string) {
+  return value.trim().toLowerCase().replace(/\s+/g, " ");
+}
+
+function maskEmailHint(value: string | null | undefined): string | null {
+  const email = String(value ?? "").trim().toLowerCase();
+  const atIndex = email.indexOf("@");
+  if (atIndex <= 0) return null;
+  const local = email.slice(0, atIndex);
+  const domain = email.slice(atIndex + 1);
+  if (!domain) return null;
+  const localHint = local.length <= 2 ? `${local[0] ?? "*"}*` : `${local.slice(0, 2)}***`;
+  const domainParts = domain.split(".");
+  const domainHead = domainParts[0] ?? "";
+  const domainTail = domainParts.length > 1 ? `.${domainParts.slice(1).join(".")}` : "";
+  const domainHint = domainHead.length <= 2 ? `${domainHead[0] ?? "*"}*` : `${domainHead.slice(0, 2)}***`;
+  return `${localHint}@${domainHint}${domainTail}`;
+}
+
+function maskPhoneHint(value: string | null | undefined): string | null {
+  const digits = String(value ?? "").replace(/\D+/g, "");
+  if (digits.length < 4) return null;
+  return `***-***-${digits.slice(-4)}`;
 }
 
 Deno.serve(async (req: Request) => {
@@ -69,10 +235,44 @@ Deno.serve(async (req: Request) => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
 
+  if (req.method !== "POST") {
+    return json({ error: "Method not allowed" }, 405);
+  }
+
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const adminClient = createClient(supabaseUrl, serviceKey);
+    const sessionSecret = getPublicSessionSecretSource();
+
+    const issueRsvpSession = async (guestId: string, inviteToken: string) => {
+      const inviteTokenHash = await sha256Hex(`${inviteToken}:${supabaseUrl}`);
+      return signSessionToken<RsvpSessionPayload>({
+        scope: "rsvp",
+        guestId,
+        inviteTokenHash,
+        exp: Date.now() + 1000 * 60 * 60 * 12,
+      }, sessionSecret);
+    };
+
+    const validateRsvpSession = async (guestId: string, rsvpSession: string) => {
+      const payload = await verifySessionToken<RsvpSessionPayload>(rsvpSession, sessionSecret);
+      if (!payload || payload.scope !== "rsvp" || payload.guestId !== guestId || payload.exp <= Date.now()) {
+        return null;
+      }
+
+      const { data: guest, error } = await adminClient
+        .from("guests")
+        .select("id, invite_token, wedding_site_id, email, first_name, last_name, name, household_id, plus_one_allowed, invited_to_ceremony, invited_to_reception, children_allowed, max_children, max_additional_guests")
+        .eq("id", guestId)
+        .maybeSingle();
+
+      if (error || !guest?.invite_token) return null;
+
+      const inviteTokenHash = await sha256Hex(`${guest.invite_token}:${supabaseUrl}`);
+      if (inviteTokenHash !== payload.inviteTokenHash) return null;
+      return guest;
+    };
 
     const logConflict = async (
       weddingSiteId: string,
@@ -96,81 +296,326 @@ Deno.serve(async (req: Request) => {
       }
     };
 
+    const clientIp = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? req.headers.get("x-real-ip") ?? "unknown";
+
+    const enforceRateLimit = async (
+      scope: string,
+      subject: string | null,
+      maxAttempts = RATE_LIMIT_MAX_ATTEMPTS,
+    ) => {
+      const ipHash = await hashIp(`${scope}:${clientIp}`);
+      const windowStart = new Date(Date.now() - RATE_LIMIT_WINDOW_MINUTES * 60 * 1000).toISOString();
+      const { data: existingLimit } = await adminClient
+        .from("rsvp_rate_limit")
+        .select("id, attempts, last_attempt_at")
+        .eq("ip_hash", ipHash)
+        .gte("last_attempt_at", windowStart)
+        .maybeSingle();
+
+      if (existingLimit) {
+        if (existingLimit.attempts >= maxAttempts) {
+          return false;
+        }
+        await adminClient
+          .from("rsvp_rate_limit")
+          .update({ attempts: existingLimit.attempts + 1, last_attempt_at: new Date().toISOString() })
+          .eq("id", existingLimit.id);
+        return true;
+      }
+
+      const safeSubjectMarker = subject
+        ? `h:${(await sha256Hex(`${scope}:${subject}:${supabaseUrl}`)).slice(0, 32)}`
+        : scope;
+
+      await adminClient
+        .from("rsvp_rate_limit")
+        .insert({ ip_hash: ipHash, guest_token: safeSubjectMarker, attempts: 1 });
+      return true;
+    };
+
     let payload: Payload;
     try {
       payload = await req.json();
     } catch {
-      return json({ error: "Invalid JSON body" }, 400);
+      return json({ error: RSVP_REQUEST_INVALID_COPY }, 400);
     }
 
     if (payload.action === "lookup") {
-      const { searchValue } = payload;
-      if (!searchValue?.trim()) return json({ error: "searchValue is required" }, 400);
+      const { searchValue, language: requestedLanguage } = payload;
+      if (!searchValue?.trim()) return json({ error: RSVP_SEARCH_REQUIRED_COPY }, 400);
 
       const trimmed = searchValue.trim();
-      const guestSelect = "id, first_name, last_name, name, email, plus_one_allowed, invited_to_ceremony, invited_to_reception, invite_token, wedding_site_id, household_id";
+      if (!(await enforceRateLimit("rsvp_lookup", trimmed, LOOKUP_RATE_LIMIT_MAX_ATTEMPTS))) {
+        return json({ error: "Too many lookup attempts. Please wait a few minutes and try again." }, 429);
+      }
 
-      const { data: byToken } = await adminClient.from("guests").select(guestSelect).eq("invite_token", trimmed).maybeSingle();
+      const guestSelect = "id, first_name, last_name, name, plus_one_allowed, invited_to_ceremony, invited_to_reception, wedding_site_id, household_id, children_allowed, max_children, max_additional_guests";
+      const guestLookupSelect = `${guestSelect}, invite_token`;
+
+      const buildLookupSuccess = async (
+        guest: {
+          id: string;
+          first_name: string | null;
+          last_name: string | null;
+          name: string;
+          plus_one_allowed: boolean | null;
+          invited_to_ceremony: boolean | null;
+          invited_to_reception: boolean | null;
+          wedding_site_id: string;
+          household_id?: string | null;
+          children_allowed?: boolean | null;
+          max_children?: number | null;
+          max_additional_guests?: number | null;
+          invite_token?: string | null;
+        },
+      ) => {
+        const [existingRsvpResult, config, householdGuests, rsvpSession] = await Promise.all([
+          adminClient.from("rsvps").select("id, attending, attending_ceremony, attending_reception, meal_choice, plus_one_name, plus_one_count, children_count, notes, custom_answers").eq("guest_id", guest.id).maybeSingle(),
+          fetchRsvpConfig(guest.wedding_site_id),
+          fetchHouseholdGuests(guest.wedding_site_id, guest.household_id, guest.id),
+          issueRsvpSession(guest.id, guest.invite_token ?? ""),
+        ]);
+
+        return json({
+          guest: sanitizeGuest(guest),
+          existingRsvp: existingRsvpResult.data,
+          guests: null,
+          rsvpDeadline: config.rsvpDeadline,
+          rsvpQuestions: config.rsvpQuestions,
+          rsvpMealConfig: config.rsvpMealConfig,
+          musicPlaylistUrl: config.musicPlaylistUrl,
+          householdGuests: householdGuests.map(sanitizeHouseholdGuest),
+          rsvpSession,
+        });
+      };
+
+      const { data: byToken } = await adminClient.from("guests").select(guestLookupSelect).eq("invite_token", trimmed).maybeSingle();
 
       const fetchRsvpConfig = async (siteId: string): Promise<{ rsvpDeadline: string | null; rsvpQuestions: unknown[]; rsvpMealConfig: { enabled: boolean; options: string[] }; musicPlaylistUrl: string | null }> => {
-        const { data } = await adminClient.from("wedding_sites").select("rsvp_deadline, rsvp_custom_questions, rsvp_meal_config, music_playlist_url").eq("id", siteId).maybeSingle();
-        const typed = data as { rsvp_deadline?: string | null; rsvp_custom_questions?: unknown; rsvp_meal_config?: unknown; music_playlist_url?: string | null } | null;
-        const parsedQuestions = Array.isArray(typed?.rsvp_custom_questions) ? typed.rsvp_custom_questions : [];
-        const mealRaw = typed?.rsvp_meal_config as { enabled?: unknown; options?: unknown } | undefined;
+        const { data, error } = await adminClient
+          .from("wedding_sites")
+          .select("rsvp_custom_questions, rsvp_meal_config, music_playlist_url, default_language, wedding_data")
+          .eq("id", siteId)
+          .maybeSingle();
+
+        if (error) throw error;
+
+        const typed = data as {
+          rsvp_custom_questions?: unknown;
+          rsvp_meal_config?: unknown;
+          music_playlist_url?: string | null;
+          default_language?: string | null;
+          wedding_data?: unknown;
+        } | null;
+        let translatedWeddingData: unknown = null;
+
+        if (typeof requestedLanguage === "string" && requestedLanguage.trim().length > 0 && requestedLanguage !== typed?.default_language) {
+          const { data: translationRow } = await adminClient
+            .from("site_translations")
+            .select("translated_wedding_data")
+            .eq("wedding_site_id", siteId)
+            .eq("language", requestedLanguage)
+            .eq("status", "ready")
+            .maybeSingle();
+          translatedWeddingData = (translationRow as { translated_wedding_data?: unknown } | null)?.translated_wedding_data ?? null;
+        }
+
+        const localized = resolveLocalizedRsvpConfig({
+          baseQuestions: typed?.rsvp_custom_questions,
+          baseMealConfig: typed?.rsvp_meal_config,
+          requestedLanguage,
+          siteDefaultLanguage: typed?.default_language,
+          weddingData: typed?.wedding_data,
+          translatedWeddingData,
+        });
+
         return {
-          rsvpDeadline: typed?.rsvp_deadline ?? null,
-          rsvpQuestions: parsedQuestions,
-          rsvpMealConfig: {
-            enabled: typeof mealRaw?.enabled === "boolean" ? mealRaw.enabled : true,
-            options: Array.isArray(mealRaw?.options)
-              ? mealRaw.options.filter((x): x is string => typeof x === "string" && x.trim().length > 0)
-              : ["Chicken", "Beef", "Fish", "Vegetarian", "Vegan"],
-          },
+          rsvpDeadline: null,
+          rsvpQuestions: localized.questions,
+          rsvpMealConfig: localized.mealConfig,
           musicPlaylistUrl: typed?.music_playlist_url ?? null,
         };
       };
 
       const fetchHouseholdGuests = async (siteId: string, householdId: string | null | undefined, guestId: string) => {
-        if (!householdId) return [] as Array<{ id: string; first_name: string | null; last_name: string | null; name: string; invite_token: string | null; invited_to_ceremony: boolean; invited_to_reception: boolean }>;
+        if (!householdId) return [] as Array<{ id: string; first_name: string | null; last_name: string | null; name: string; invited_to_ceremony: boolean; invited_to_reception: boolean }>;
         const { data } = await adminClient
           .from("guests")
-          .select("id, first_name, last_name, name, invite_token, invited_to_ceremony, invited_to_reception")
+          .select("id, first_name, last_name, name, invited_to_ceremony, invited_to_reception")
           .eq("wedding_site_id", siteId)
           .eq("household_id", householdId)
           .neq("id", guestId)
           .limit(8);
-        return (data || []) as Array<{ id: string; first_name: string | null; last_name: string | null; name: string; invite_token: string | null; invited_to_ceremony: boolean; invited_to_reception: boolean }>;
+        return (data || []) as Array<{ id: string; first_name: string | null; last_name: string | null; name: string; invited_to_ceremony: boolean; invited_to_reception: boolean }>;
       };
 
       if (byToken) {
-        const [existingRsvpResult, config, householdGuests] = await Promise.all([
-          adminClient.from("rsvps").select("id, attending, attending_ceremony, attending_reception, meal_choice, plus_one_name, plus_one_count, children_count, notes, custom_answers").eq("guest_id", byToken.id).maybeSingle(),
-          fetchRsvpConfig(byToken.wedding_site_id),
-          fetchHouseholdGuests(byToken.wedding_site_id, (byToken as { household_id?: string | null }).household_id, byToken.id),
-        ]);
-        return json({ guest: byToken, existingRsvp: existingRsvpResult.data, guests: null, rsvpDeadline: config.rsvpDeadline, rsvpQuestions: config.rsvpQuestions, rsvpMealConfig: config.rsvpMealConfig, musicPlaylistUrl: config.musicPlaylistUrl, householdGuests });
+        return buildLookupSuccess(byToken);
       }
 
-      const lower = trimmed.toLowerCase();
-      const { data: byName } = await adminClient.from("guests").select(guestSelect).or(`name.ilike.%${lower}%,first_name.ilike.%${lower}%,last_name.ilike.%${lower}%`).limit(10);
-      if (!byName || byName.length === 0) return json({ error: "We couldn't find an invitation matching that name or code. Please double-check the spelling or use the invitation code from your email." }, 404);
+      return json({ error: "We couldn't verify that invitation. Please use the private RSVP link or code from your invitation." }, 404);
+    }
 
-      if (byName.length === 1) {
-        const guest = byName[0];
-        const [existingRsvpResult, config, householdGuests] = await Promise.all([
-          adminClient.from("rsvps").select("id, attending, attending_ceremony, attending_reception, meal_choice, plus_one_name, plus_one_count, children_count, notes, custom_answers").eq("guest_id", guest.id).maybeSingle(),
-          fetchRsvpConfig(guest.wedding_site_id),
-          fetchHouseholdGuests(guest.wedding_site_id, (guest as { household_id?: string | null }).household_id, guest.id),
-        ]);
-        return json({ guest, existingRsvp: existingRsvpResult.data, guests: null, rsvpDeadline: config.rsvpDeadline, rsvpQuestions: config.rsvpQuestions, rsvpMealConfig: config.rsvpMealConfig, musicPlaylistUrl: config.musicPlaylistUrl, householdGuests });
+    if (payload.action === "lookup_name") {
+      const nameLookupEnabled = ["1", "true", "yes"].includes(String(Deno.env.get("ENABLE_PUBLIC_RSVP_NAME_LOOKUP") ?? "").trim().toLowerCase());
+      if (!nameLookupEnabled) {
+        return json({ error: "Please use the private RSVP link or code from your invitation." }, 403);
       }
 
-      return json({ guest: null, existingRsvp: null, guests: byName, rsvpDeadline: null, rsvpQuestions: [], rsvpMealConfig: { enabled: true, options: ["Chicken", "Beef", "Fish", "Vegetarian", "Vegan"] }, householdGuests: [] });
+      const normalizedName = normalizeFullName(payload.fullName ?? "");
+      const queryParts = normalizedName.split(" ").filter(Boolean);
+      const siteRef = String(payload.siteRef ?? "").trim();
+      if (!siteRef || normalizedName.length < 5 || queryParts.length < 2) {
+        return json({ error: "Add your full name and wedding site before searching." }, 400);
+      }
+      if (!(await enforceRateLimit("rsvp_lookup_name", `${siteRef}:${normalizedName}`, LOOKUP_RATE_LIMIT_MAX_ATTEMPTS))) {
+        return json({ error: "Too many lookup attempts. Please wait a few minutes and try again." }, 429);
+      }
+
+      const siteFilterColumn = /^[0-9a-f-]{36}$/i.test(siteRef) ? "id" : "site_slug";
+      const { data: site } = await adminClient
+        .from("wedding_sites")
+        .select("id")
+        .eq(siteFilterColumn, siteRef)
+        .maybeSingle();
+      if (!site?.id) return json({ matches: [], ambiguous: false }, 200);
+
+      const lastName = queryParts.at(-1) ?? "";
+      const firstName = queryParts.slice(0, -1).join(" ");
+      const { data: exactNameCandidates } = await adminClient
+        .from("guests")
+        .select("id, name, first_name, last_name, email, phone")
+        .eq("wedding_site_id", site.id)
+        .ilike("name", normalizedName)
+        .limit(8);
+      const { data: splitNameCandidates } = await adminClient
+        .from("guests")
+        .select("id, name, first_name, last_name, email, phone")
+        .eq("wedding_site_id", site.id)
+        .ilike("first_name", firstName)
+        .ilike("last_name", lastName)
+        .limit(8);
+
+      const byId = new Map<string, { id: string; name?: string | null; first_name?: string | null; last_name?: string | null; email?: string | null; phone?: string | null }>();
+      for (const row of [...(exactNameCandidates ?? []), ...(splitNameCandidates ?? [])]) {
+        if (row?.id) byId.set(row.id, row);
+      }
+      const matches = Array.from(byId.values())
+        .filter((row) => normalizeFullName(row.name || [row.first_name, row.last_name].filter(Boolean).join(" ")) === normalizedName)
+        .slice(0, 5)
+        .map((row) => ({
+          name: row.name || [row.first_name, row.last_name].filter(Boolean).join(" "),
+          email_hint: maskEmailHint(row.email),
+          phone_hint: maskPhoneHint(row.phone),
+        }));
+
+      return json({
+        ambiguous: matches.length !== 1,
+        matches,
+      });
+    }
+
+    if (payload.action === "lookup_guest") {
+      const { guestId, rsvpSession, language: requestedLanguage } = payload;
+      if (!guestId?.trim() || !rsvpSession?.trim()) {
+        return json({ error: "Please use the private RSVP link or code from your invitation." }, 403);
+      }
+      if (!(await enforceRateLimit("rsvp_lookup_guest", guestId, LOOKUP_RATE_LIMIT_MAX_ATTEMPTS))) {
+        return json({ error: "Too many lookup attempts. Please wait a few minutes and try again." }, 429);
+      }
+
+      const guest = await validateRsvpSession(guestId.trim(), rsvpSession);
+
+      if (!guest) {
+        return json({ error: "Please use the private RSVP link or code from your invitation." }, 403);
+      }
+
+      const fetchRsvpConfig = async (siteId: string): Promise<{ rsvpDeadline: string | null; rsvpQuestions: unknown[]; rsvpMealConfig: { enabled: boolean; options: string[] }; musicPlaylistUrl: string | null }> => {
+        const { data, error } = await adminClient
+          .from("wedding_sites")
+          .select("rsvp_custom_questions, rsvp_meal_config, music_playlist_url, default_language, wedding_data")
+          .eq("id", siteId)
+          .maybeSingle();
+
+        if (error) throw error;
+
+        const typed = data as {
+          rsvp_custom_questions?: unknown;
+          rsvp_meal_config?: unknown;
+          music_playlist_url?: string | null;
+          default_language?: string | null;
+          wedding_data?: unknown;
+        } | null;
+        let translatedWeddingData: unknown = null;
+
+        if (typeof requestedLanguage === "string" && requestedLanguage.trim().length > 0 && requestedLanguage !== typed?.default_language) {
+          const { data: translationRow } = await adminClient
+            .from("site_translations")
+            .select("translated_wedding_data")
+            .eq("wedding_site_id", siteId)
+            .eq("language", requestedLanguage)
+            .eq("status", "ready")
+            .maybeSingle();
+          translatedWeddingData = (translationRow as { translated_wedding_data?: unknown } | null)?.translated_wedding_data ?? null;
+        }
+
+        const localized = resolveLocalizedRsvpConfig({
+          baseQuestions: typed?.rsvp_custom_questions,
+          baseMealConfig: typed?.rsvp_meal_config,
+          requestedLanguage,
+          siteDefaultLanguage: typed?.default_language,
+          weddingData: typed?.wedding_data,
+          translatedWeddingData,
+        });
+
+        return {
+          rsvpDeadline: null,
+          rsvpQuestions: localized.questions,
+          rsvpMealConfig: localized.mealConfig,
+          musicPlaylistUrl: typed?.music_playlist_url ?? null,
+        };
+      };
+
+      const fetchHouseholdGuests = async (siteId: string, householdId: string | null | undefined, currentGuestId: string) => {
+        if (!householdId) return [] as Array<{ id: string; first_name: string | null; last_name: string | null; name: string; invited_to_ceremony: boolean; invited_to_reception: boolean }>;
+        const { data } = await adminClient
+          .from("guests")
+          .select("id, first_name, last_name, name, invited_to_ceremony, invited_to_reception")
+          .eq("wedding_site_id", siteId)
+          .eq("household_id", householdId)
+          .neq("id", currentGuestId)
+          .limit(8);
+        return (data || []) as Array<{ id: string; first_name: string | null; last_name: string | null; name: string; invited_to_ceremony: boolean; invited_to_reception: boolean }>;
+      };
+
+      const [existingRsvpResult, config, householdGuests, nextRsvpSession, siteRow] = await Promise.all([
+        adminClient.from("rsvps").select("id, attending, attending_ceremony, attending_reception, meal_choice, plus_one_name, plus_one_count, children_count, notes, custom_answers").eq("guest_id", guest.id).maybeSingle(),
+        fetchRsvpConfig(guest.wedding_site_id),
+        fetchHouseholdGuests(guest.wedding_site_id, guest.household_id, guest.id),
+        issueRsvpSession(guest.id, guest.invite_token),
+        adminClient.from("wedding_sites").select("site_slug").eq("id", guest.wedding_site_id).maybeSingle(),
+      ]);
+
+      return json({
+        guest: sanitizeGuest(guest),
+        existingRsvp: existingRsvpResult.data,
+        guests: null,
+        siteSlug: siteRow.data?.site_slug ?? null,
+        rsvpDeadline: config.rsvpDeadline,
+        rsvpQuestions: config.rsvpQuestions,
+        rsvpMealConfig: config.rsvpMealConfig,
+        musicPlaylistUrl: config.musicPlaylistUrl,
+        householdGuests: householdGuests.map(sanitizeHouseholdGuest),
+        rsvpSession: nextRsvpSession,
+      });
     }
 
     if (payload.action === "event_lookup") {
       const { inviteToken } = payload;
-      if (!inviteToken?.trim()) return json({ error: "inviteToken is required" }, 400);
+      if (!inviteToken?.trim()) return json({ error: RSVP_SEARCH_REQUIRED_COPY }, 400);
+      if (!(await enforceRateLimit("rsvp_event_lookup", inviteToken.trim(), LOOKUP_RATE_LIMIT_MAX_ATTEMPTS))) {
+        return json({ error: "Too many lookup attempts. Please wait a few minutes and try again." }, 429);
+      }
 
       const { data: guest, error: guestErr } = await adminClient
         .from("guests")
@@ -181,6 +626,8 @@ Deno.serve(async (req: Request) => {
       if (guestErr || !guest) {
         return json({ error: "No invitation link found. Please use your invite email link or ask the couple for help." }, 404);
       }
+
+      const rsvpSession = await issueRsvpSession(guest.id, inviteToken.trim());
 
       const { data: invitations, error: invitationsError } = await adminClient
         .from("event_invitations")
@@ -193,13 +640,10 @@ Deno.serve(async (req: Request) => {
             event_name,
             event_date,
             start_time,
-            location,
+            end_time,
+            location_name,
+            location_address,
             description
-          ),
-          event_rsvps (
-            id,
-            attending,
-            responded_at
           )
         `)
         .eq("guest_id", guest.id)
@@ -210,25 +654,60 @@ Deno.serve(async (req: Request) => {
 
       if (invitationsError) throw invitationsError;
 
-      return json({ guest, invitations: invitations || [] });
+      const invitationRows = invitations || [];
+      const invitationIds = invitationRows.map((invitation: { id: string }) => invitation.id);
+      const { data: eventRsvps, error: eventRsvpsError } = invitationIds.length > 0
+        ? await adminClient
+          .from("event_rsvps")
+          .select("id, event_invitation_id, attending, dietary_restrictions, notes, responded_at")
+          .in("event_invitation_id", invitationIds)
+        : { data: [], error: null };
+
+      const hasEventRsvpSupport = !eventRsvpsError;
+      if (eventRsvpsError && !isMissingEventRsvpTableError(eventRsvpsError)) throw eventRsvpsError;
+
+      const rsvpsByInvitationId = new Map<string, Array<{ id: string; attending: boolean | null; dietary_restrictions: string | null; notes: string | null; responded_at: string | null }>>();
+      ((eventRsvps || []) as Array<{ id: string; event_invitation_id: string; attending: boolean | null; dietary_restrictions: string | null; notes: string | null; responded_at: string | null }>).forEach((rsvp) => {
+        const existing = rsvpsByInvitationId.get(rsvp.event_invitation_id) ?? [];
+        existing.push({
+          id: rsvp.id,
+          attending: rsvp.attending,
+          dietary_restrictions: rsvp.dietary_restrictions,
+          notes: rsvp.notes,
+          responded_at: rsvp.responded_at,
+        });
+        rsvpsByInvitationId.set(rsvp.event_invitation_id, existing);
+      });
+
+      const { data: siteRow } = await adminClient
+        .from("wedding_sites")
+        .select("site_slug")
+        .eq("id", guest.wedding_site_id)
+        .maybeSingle();
+
+      return json({
+        guest: { id: guest.id, name: guest.name },
+        eventRsvpSupport: hasEventRsvpSupport,
+        siteSlug: siteRow?.site_slug ?? null,
+        rsvpSession,
+        invitations: invitationRows.map((invitation: { id: string }) => ({
+          ...invitation,
+          event_rsvps: rsvpsByInvitationId.get(invitation.id) ?? [],
+        })),
+      });
     }
 
     if (payload.action === "event_submit") {
-      const { guestId, inviteToken, eventInvitationId, attending } = payload;
-      if (!guestId || !inviteToken || !eventInvitationId) {
-        return json({ error: "guestId, inviteToken, and eventInvitationId are required" }, 400);
+      const { guestId, rsvpSession, eventInvitationId, attending, dietaryRestrictions, notes } = payload;
+      if (!guestId || !rsvpSession || !eventInvitationId) {
+        return json({ error: "guestId, rsvpSession, and eventInvitationId are required" }, 400);
       }
       if (typeof attending !== "boolean") {
         return json({ error: "Please indicate whether you will be attending." }, 400);
       }
 
-      const { data: guest, error: guestErr } = await adminClient
-        .from("guests")
-        .select("id, invite_token")
-        .eq("id", guestId)
-        .maybeSingle();
-
-      if (guestErr || !guest || guest.invite_token !== inviteToken) {
+      const guest = await validateRsvpSession(guestId, rsvpSession);
+      if (!guest) {
         return json({ error: "This RSVP link isn't valid. Please use the original link from your invitation email, or ask the couple for a new one." }, 403);
       }
 
@@ -246,6 +725,8 @@ Deno.serve(async (req: Request) => {
       const eventRsvpPayload = {
         event_invitation_id: eventInvitationId,
         attending,
+        dietary_restrictions: typeof dietaryRestrictions === "string" && dietaryRestrictions.trim().length > 0 ? dietaryRestrictions.trim() : null,
+        notes: typeof notes === "string" && notes.trim().length > 0 ? notes.trim() : null,
         responded_at: respondedAt,
       };
 
@@ -253,12 +734,39 @@ Deno.serve(async (req: Request) => {
         .from("event_rsvps")
         .upsert(eventRsvpPayload, { onConflict: "event_invitation_id" });
 
+      if (eventRsvpError && isMissingEventRsvpTableError(eventRsvpError)) {
+        return json({ error: "Event-specific RSVP is temporarily unavailable for this site." }, 503);
+      }
       if (eventRsvpError) throw eventRsvpError;
+
+      const { data: guestInvitationRows, error: guestInvitationRowsError } = await adminClient
+        .from("event_invitations")
+        .select("id")
+        .eq("guest_id", guestId);
+
+      if (guestInvitationRowsError) throw guestInvitationRowsError;
+
+      const guestInvitationIds = ((guestInvitationRows || []) as Array<{ id: string }>).map((row) => row.id);
+      const { data: guestEventRsvps, error: guestEventRsvpsError } = guestInvitationIds.length > 0
+        ? await adminClient
+          .from("event_rsvps")
+          .select("event_invitation_id, attending")
+          .in("event_invitation_id", guestInvitationIds)
+        : { data: [], error: null };
+
+      if (guestEventRsvpsError && !isMissingEventRsvpTableError(guestEventRsvpsError)) throw guestEventRsvpsError;
+
+      const eventResponses = (guestEventRsvps || []) as Array<{ event_invitation_id: string; attending: boolean | null }>;
+      const hasAcceptedEvent = eventResponses.some((row) => row.attending === true);
+      const allInvitedEventsDeclined = guestInvitationIds.length > 0
+        && eventResponses.length >= guestInvitationIds.length
+        && eventResponses.every((row) => row.attending === false);
+      const nextGuestRsvpStatus = hasAcceptedEvent ? "confirmed" : allInvitedEventsDeclined ? "declined" : "pending";
 
       await adminClient
         .from("guests")
         .update({
-          rsvp_status: attending ? "confirmed" : "declined",
+          rsvp_status: nextGuestRsvpStatus,
           rsvp_received_at: respondedAt,
         })
         .eq("id", guestId);
@@ -270,36 +778,24 @@ Deno.serve(async (req: Request) => {
       const submitPayload = payload as SubmitPayload;
       if (submitPayload.website || submitPayload.hp_field) return json({ success: true });
 
-      const { guestId, inviteToken, attending, mealChoice, plusOneName, notes, customAnswers, applyToHousehold, targetGuestIds } = submitPayload;
+      const { guestId, rsvpSession, attending, mealChoice, plusOneName, notes, customAnswers, applyToHousehold, targetGuestIds } = submitPayload;
       const attendCeremony = !!submitPayload.attendCeremony;
       const attendReception = !!submitPayload.attendReception;
       const plusOneCount = Number.isFinite(submitPayload.plusOneCount) ? Math.max(0, Math.floor(submitPayload.plusOneCount as number)) : (plusOneName?.trim() ? 1 : 0);
       const childrenCount = Number.isFinite(submitPayload.childrenCount) ? Math.max(0, Math.floor(submitPayload.childrenCount as number)) : 0;
 
-      if (!guestId || !inviteToken) return json({ error: "guestId and inviteToken are required" }, 400);
+      if (!guestId || !rsvpSession) return json({ error: "guestId and rsvpSession are required" }, 400);
       if (typeof attending !== "boolean") return json({ error: "Please indicate whether you will be attending." }, 400);
 
-      const clientIp = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? req.headers.get("x-real-ip") ?? "unknown";
-      const ipHash = await hashIp(clientIp);
-      const windowStart = new Date(Date.now() - RATE_LIMIT_WINDOW_MINUTES * 60 * 1000).toISOString();
-
-      const { data: existingLimit } = await adminClient.from("rsvp_rate_limit").select("id, attempts, last_attempt_at").eq("ip_hash", ipHash).gte("last_attempt_at", windowStart).maybeSingle();
-      if (existingLimit) {
-        if (existingLimit.attempts >= RATE_LIMIT_MAX_ATTEMPTS) return json({ error: "Too many requests. Please try again later." }, 429);
-        await adminClient.from("rsvp_rate_limit").update({ attempts: existingLimit.attempts + 1, last_attempt_at: new Date().toISOString() }).eq("id", existingLimit.id);
-      } else {
-        await adminClient.from("rsvp_rate_limit").insert({ ip_hash: ipHash, guest_token: inviteToken.slice(0, 16), attempts: 1 });
+      if (!(await enforceRateLimit("rsvp_submit", guestId))) {
+        return json({ error: "Too many requests. Please try again later." }, 429);
       }
 
-      const { data: guest, error: guestErr } = await adminClient
-        .from("guests")
-        .select("id, invite_token, wedding_site_id, email, first_name, last_name, name, household_id, plus_one_allowed, invited_to_ceremony, invited_to_reception, children_allowed, max_children, max_additional_guests")
-        .eq("id", guestId)
-        .maybeSingle();
+      const guest = await validateRsvpSession(guestId, rsvpSession);
 
-      if (guestErr || !guest) return json({ error: "We couldn't find your invitation. Please use the RSVP link from your invitation email, or search by your full name." }, 404);
-      if (!guest.invite_token || guest.invite_token !== inviteToken) {
-        await logConflict(guest.wedding_site_id, guestId, "invite_token_mismatch", "Invite token did not match guest record.", submitPayload);
+      if (!guest) return json({ error: "We couldn't find your invitation. Please use the RSVP link from your invitation email, or search by your full name." }, 404);
+      if (!guest.invite_token) {
+        await logConflict(guest.wedding_site_id, guestId, "invite_token_mismatch", "RSVP session did not resolve to a valid guest token.", submitPayload);
         return json({ error: "This RSVP link isn't valid. Please use the original link from your invitation email, or ask the couple for a new one." }, 403);
       }
       const tokenExpiresAt = (guest as { token_expires_at?: string | null }).token_expires_at;
@@ -490,7 +986,7 @@ Deno.serve(async (req: Request) => {
 
     return json({ error: "Unknown action" }, 400);
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Internal server error";
-    return json({ error: message }, 500);
+    console.error("VALIDATE_RSVP_TOKEN_UNEXPECTED_FAILED", { reason: "UNEXPECTED_RSVP_TOKEN_VALIDATION_FAILURE" });
+    return json({ error: "Could not update this RSVP. Please try again." }, 500);
   }
 });

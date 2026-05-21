@@ -12,6 +12,9 @@ const TWILIO_XML_HEADERS = {
   "Content-Type": "application/xml; charset=utf-8",
 };
 
+const STOP_KEYWORDS = new Set(["stop", "stopall", "unsubscribe", "cancel", "end", "quit"]);
+const HELP_KEYWORDS = new Set(["help", "info", "support"]);
+
 function normalizePhone(input: string): string {
   const cleaned = (input || "").replace(/[^\d+]/g, "").trim();
   if (!cleaned) return "";
@@ -27,6 +30,53 @@ function normalizeBody(input: string): string {
     .replace(/[^a-z0-9\s]/g, " ")
     .replace(/\s+/g, " ")
     .trim();
+}
+
+function secureEqual(a: string, b: string): boolean {
+  const aBytes = new TextEncoder().encode(a);
+  const bBytes = new TextEncoder().encode(b);
+  if (aBytes.length !== bBytes.length) return false;
+  let diff = 0;
+  for (let i = 0; i < aBytes.length; i += 1) diff |= aBytes[i] ^ bBytes[i];
+  return diff === 0;
+}
+
+async function isValidTwilioSignature(params: {
+  request: Request;
+  rawBody: string;
+  contentType: string;
+}): Promise<boolean> {
+  const authToken = (Deno.env.get("TWILIO_AUTH_TOKEN") || "").trim();
+  if (!authToken) return false;
+  const signature = (params.request.headers.get("x-twilio-signature") || "").trim();
+  if (!signature) return false;
+  const baseUrl = (Deno.env.get("TWILIO_WEBHOOK_URL") || params.request.url).trim();
+  if (!baseUrl) return false;
+
+  let payload = baseUrl;
+  if (params.contentType.includes("application/x-www-form-urlencoded")) {
+    const parsed = new URLSearchParams(params.rawBody);
+    const keys = Array.from(new Set(Array.from(parsed.keys()))).sort();
+    for (const key of keys) {
+      const values = parsed.getAll(key);
+      for (const value of values) {
+        payload += `${key}${value}`;
+      }
+    }
+  } else {
+    payload += params.rawBody;
+  }
+
+  const key = await crypto.subtle.importKey(
+    "raw",
+    new TextEncoder().encode(authToken),
+    { name: "HMAC", hash: "SHA-1" },
+    false,
+    ["sign"],
+  );
+  const digest = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(payload));
+  const expected = btoa(String.fromCharCode(...new Uint8Array(digest)));
+  return secureEqual(signature, expected);
 }
 
 function interpretRsvp(text: string): "confirmed" | "declined" | "pending" | null {
@@ -57,19 +107,25 @@ Deno.serve(async (req: Request) => {
 
   try {
     const contentType = req.headers.get("content-type") || "";
+    const rawBody = await req.text();
+    const signatureValid = await isValidTwilioSignature({ request: req, rawBody, contentType });
+    if (!signatureValid) {
+      return new Response("Forbidden", { status: 403, headers: corsHeaders });
+    }
+
     let from = "";
     let to = "";
     let body = "";
     let sid: string | null = null;
 
     if (contentType.includes("application/x-www-form-urlencoded")) {
-      const form = await req.formData();
+      const form = new URLSearchParams(rawBody);
       from = String(form.get("From") || "");
       to = String(form.get("To") || "");
       body = String(form.get("Body") || "");
       sid = String(form.get("MessageSid") || "") || null;
     } else {
-      const json = await req.json().catch(() => ({}));
+      const json = JSON.parse(rawBody || "{}");
       from = String(json?.from || json?.From || "");
       to = String(json?.to || json?.To || "");
       body = String(json?.body || json?.Body || "");
@@ -79,6 +135,30 @@ Deno.serve(async (req: Request) => {
     const fromNorm = normalizePhone(from);
     const toNorm = normalizePhone(to);
     const bodyNorm = normalizeBody(body);
+    if (STOP_KEYWORDS.has(bodyNorm)) {
+      await admin.from("sms_inbound_rsvp_events").insert({
+        from_number: fromNorm || from || "unknown",
+        to_number: toNorm || to || null,
+        message_sid: sid,
+        raw_body: body || "",
+        normalized_body: bodyNorm || "",
+        interpreted_status: null,
+        process_result: "opt_out",
+      });
+      return twiml("You are unsubscribed from DayOf SMS updates. Reply START to re-subscribe.");
+    }
+    if (HELP_KEYWORDS.has(bodyNorm)) {
+      await admin.from("sms_inbound_rsvp_events").insert({
+        from_number: fromNorm || from || "unknown",
+        to_number: toNorm || to || null,
+        message_sid: sid,
+        raw_body: body || "",
+        normalized_body: bodyNorm || "",
+        interpreted_status: null,
+        process_result: "help",
+      });
+      return twiml("DayOf RSVP help: reply YES to attend, NO to decline. For support contact the couple directly.");
+    }
     const interpreted = interpretRsvp(bodyNorm);
 
     if (!fromNorm || !bodyNorm) {
@@ -184,7 +264,7 @@ Deno.serve(async (req: Request) => {
       guest_id: guest.id,
       wedding_site_id: weddingSiteId,
       process_result: updateErr ? "failed" : "updated",
-      process_error: updateErr?.message,
+      process_error: updateErr ? "SMS_RSVP_UPDATE_FAILED" : null,
     });
 
     if (updateErr) {
@@ -199,14 +279,13 @@ Deno.serve(async (req: Request) => {
       : `Thanks ${firstName}. We saved your RSVP as pending.`;
 
     return twiml(confirmationText);
-  } catch (err) {
-    const message = err instanceof Error ? err.message : "Internal server error";
+  } catch {
     await admin.from("sms_inbound_rsvp_events").insert({
       from_number: "unknown",
       raw_body: "",
       normalized_body: "",
       process_result: "failed",
-      process_error: message,
+      process_error: "SMS_RSVP_INBOUND_UNEXPECTED_FAILURE",
     }).catch(() => {});
     return twiml("Sorry, something went wrong processing your RSVP reply.");
   }
