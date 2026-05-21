@@ -1,4 +1,4 @@
-import readXlsxFile from 'read-excel-file';
+import readXlsxFile from 'read-excel-file/browser';
 import { findCsvHeaderIndex, normalizeCsvHeader } from './csvHeaderMatcher';
 import { hasRespondedRsvpStatus } from './rsvpStatus';
 
