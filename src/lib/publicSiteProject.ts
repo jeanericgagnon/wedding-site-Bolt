@@ -15,6 +15,8 @@ const asRecord = (value: unknown): Record<string, unknown> | null => {
 };
 
 const withTruthfulCoupleDisplayName = (data: WeddingDataV1): WeddingDataV1 => {
+  if (!data.couple) return data;
+
   const displayName = data.couple.displayName
     || buildCoupleDisplayName(data.couple.partner1Name, data.couple.partner2Name);
 

@@ -493,15 +493,13 @@ export const SiteView: React.FC = () => {
           return;
         }
 
-        const pwHash = (data.site_password_hash as string | null) ?? null;
         const hideSearch = !!(data.hide_from_search);
-        const guestToken = (data.guest_access_token as string | null) ?? null;
 
         setHideFromSearch(hideSearch);
 
         if (privacyMode === 'password_protected') {
           const alreadyUnlocked = sessionStorage.getItem(`dayof_pw_unlocked_${resolvedSlug}`) === '1';
-          if (!pwHash || !alreadyUnlocked) {
+          if (!alreadyUnlocked) {
             setPrivacyGate('password_required');
             setLoading(false);
             return;
@@ -510,7 +508,10 @@ export const SiteView: React.FC = () => {
           const urlToken = searchParams.get('token');
           const storedToken = sessionStorage.getItem(`dayof_invite_token_${resolvedSlug}`);
           const tokenToCheck = urlToken ?? storedToken;
-          if (!guestToken || !tokenToCheck || tokenToCheck !== guestToken) {
+          const hasInviteAccess = tokenToCheck
+            ? await siteRepository.verifyPublicInviteAccess(resolvedSlug, tokenToCheck)
+            : false;
+          if (!hasInviteAccess) {
             setPrivacyGate('invite_only');
             setLoading(false);
             return;

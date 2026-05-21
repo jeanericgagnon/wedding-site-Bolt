@@ -46,8 +46,6 @@ export const siteRepository = {
       'default_language',
       'privacy_mode',
       'hide_from_search',
-      'site_password_hash',
-      'guest_access_token',
     ].join(',');
 
     const bySlug = await supabase
@@ -88,6 +86,22 @@ export const siteRepository = {
     if (match) return match as unknown as Record<string, unknown>;
 
     return null;
+  },
+
+  async verifyPublicInviteAccess(slugInput: string, tokenInput: string): Promise<boolean> {
+    const slug = normalizePublicSiteSlug(slugInput);
+    const token = typeof tokenInput === 'string' ? tokenInput.trim() : '';
+    if (!slug || !token) return false;
+
+    const { data, error } = await supabase
+      .from('wedding_sites')
+      .select('id')
+      .eq('site_slug', slug)
+      .eq('guest_access_token', token)
+      .maybeSingle();
+
+    if (error) return false;
+    return Boolean(data);
   },
 
   async fetchSections(siteId: string): Promise<PersistedSection[]> {

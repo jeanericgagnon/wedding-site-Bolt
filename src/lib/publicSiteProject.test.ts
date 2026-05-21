@@ -507,4 +507,21 @@ describe('publicSiteProject', () => {
 
     expect(getPublicWeddingData(row)?.couple.displayName).toBe('Draft Names');
   });
+
+  it('does not throw when live wedding_data is an empty object', () => {
+    const row = {
+      is_published: true,
+      site_json: {
+        ...draftProject,
+        weddingDataSnapshot: '',
+      },
+      published_json: {
+        ...publishedProject,
+        weddingDataSnapshot: 'not-json',
+      },
+      wedding_data: {},
+    };
+
+    expect(getPublicWeddingData(row)).toEqual({});
+  });
 });
