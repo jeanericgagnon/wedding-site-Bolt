@@ -13,7 +13,7 @@ test.describe('public v1 trust smoke', () => {
     await expect(page.getByText(/Core v1 today/i)).toBeVisible();
     await expect(page.getByText(/Should ship/i)).toBeVisible();
     await expect(page.getByText(/Cut from promise/i)).toBeVisible();
-    await expect(page.getByRole('button', { name: /sign up for your wedding site|start your site/i }).first()).toBeVisible();
+    await expect(page.getByRole('button', { name: /start your wedding site draft|sign up for your wedding site|start your site/i }).first()).toBeVisible();
   });
 
   test('product page exposes the real v1 line instead of the wishlist', async ({ page }) => {
