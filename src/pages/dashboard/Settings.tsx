@@ -103,6 +103,7 @@ export const DashboardSettings: React.FC = () => {
   const [visibilitySuccess, setVisibilitySuccess] = useState<string | null>(null);
   const [visibilityError, setVisibilityError] = useState<string | null>(null);
   const [weddingSiteId, setWeddingSiteId] = useState<string | null>(null);
+  const [isPublished, setIsPublished] = useState(false);
 
   const [notifRsvp, setNotifRsvp] = useState(true);
   const [notifPhotos, setNotifPhotos] = useState(true);
@@ -128,6 +129,7 @@ export const DashboardSettings: React.FC = () => {
     : privacyMode === 'password_protected'
       ? 'Password protected'
       : 'Public';
+  const visibilityState = getSiteVisibilityState({ isPublished, privacyMode });
 
   useEffect(() => {
     loadSiteData();
@@ -166,6 +168,7 @@ export const DashboardSettings: React.FC = () => {
       setAccountEmail('');
       setSiteSlug('');
       setGuestAccessToken(null);
+      setIsPublished(false);
       setCollaboratorInvites([]);
       return;
     }
@@ -222,6 +225,7 @@ export const DashboardSettings: React.FC = () => {
         setPrivacyMode((data.privacy_mode as 'public' | 'password_protected' | 'invite_only') ?? 'public');
         setHideFromSearch(!!(data.hide_from_search as boolean | null | undefined));
         setGuestAccessToken((data.guest_access_token as string | null) ?? null);
+        setIsPublished((data.is_published as boolean | null | undefined) === true);
         setDefaultLanguage(((data.default_language as string) === 'es' ? 'es' : 'en'));
         const prefs = data.notification_prefs as Record<string, boolean> | null;
         if (prefs) {
@@ -261,6 +265,7 @@ export const DashboardSettings: React.FC = () => {
         setAccountEmail(user.email ?? '');
         setSiteSlug('');
         setGuestAccessToken(null);
+        setIsPublished(false);
         setCollaboratorInvites([]);
       }
     } catch (err) {
@@ -834,7 +839,10 @@ export const DashboardSettings: React.FC = () => {
           <p className="text-text-secondary">Manage your account and wedding site preferences</p>
           <div className="mt-3 flex flex-wrap gap-2 text-xs text-text-tertiary">
             <span className="rounded-xl border border-border-subtle bg-surface-subtle/30 px-3 py-1">
-              Privacy: {privacySummary}
+              Status: {visibilityState.label}
+            </span>
+            <span className="rounded-xl border border-border-subtle bg-surface-subtle/30 px-3 py-1">
+              Privacy preset: {privacySummary}{isPublished ? '' : ' (applies when live)'}
             </span>
             <span className="rounded-xl border border-border-subtle bg-surface-subtle/30 px-3 py-1">
               Search: {hideFromSearch ? 'Hidden' : 'Visible'}
