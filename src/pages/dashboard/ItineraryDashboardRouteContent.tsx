@@ -158,7 +158,7 @@ export function ItineraryDashboardRouteContent({
         stats={[
           { label: 'Wedding date', value: weddingDate ? formatItineraryEventDate(weddingDate) : 'Not set', detail: 'core weekend anchor' },
           { label: 'Weekend events', value: `${events.length} planned`, detail: `${events.filter((event) => event.is_visible !== false).length} visible to guests` },
-          { label: 'Timing notes', value: timelineInsights.length > 0 ? 'Needs review' : 'Live', detail: timelineInsights.length > 0 ? `${timelineInsights.length} worth checking` : 'no timing issues found' },
+          { label: 'Timing notes', value: timelineInsights.length > 0 ? 'Needs review' : 'Ready', detail: timelineInsights.length > 0 ? `${timelineInsights.length} worth checking` : 'no timing issues found' },
         ]}
         actions={
           <Button onClick={() => openEventForm()}>

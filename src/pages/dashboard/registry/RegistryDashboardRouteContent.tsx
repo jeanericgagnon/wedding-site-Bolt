@@ -428,7 +428,7 @@ export function RegistryDashboardRouteContent(props: {
   ].filter(Boolean);
   const registryNotesSummary = registryNoteWatchouts.length === 0
     ? 'No active registry follow-through gaps right now.'
-    : `Main watchouts: ${registryNoteWatchouts.join(' · ')}.`;
+    : `Main review items: ${registryNoteWatchouts.join(' · ')}.`;
   const topRegistryProgressCounts = props.topRegistryItems.reduce((acc, item) => {
     const state = getRegistryProgressState(item);
     acc[state] += 1;
@@ -530,7 +530,7 @@ export function RegistryDashboardRouteContent(props: {
         stats={[
           { label: 'Registry', value: props.counts.total > 0 ? 'Ready to share' : 'Nothing added yet', detail: `${props.counts.total} gifts or links` },
           { label: 'Purchased', value: props.counts.purchased > 0 ? `${props.counts.purchased} already purchased` : 'Nothing purchased yet', detail: `${props.fulfillmentRate}% complete` },
-          { label: 'Watchouts', value: props.alertCounts.stale + props.alertCounts.priceChanged + props.alertCounts.outOfStock > 0 ? 'Needs a quick pass' : 'Quiet right now', detail: 'links, prices, and photos' },
+          { label: 'Review', value: props.alertCounts.stale + props.alertCounts.priceChanged + props.alertCounts.outOfStock > 0 ? 'Needs a quick pass' : 'Quiet right now', detail: 'links, prices, and photos' },
         ]}
         actions={
           <>
