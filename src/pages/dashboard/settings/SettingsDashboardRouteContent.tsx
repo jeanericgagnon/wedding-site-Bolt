@@ -196,6 +196,32 @@ export function SettingsDashboardRouteContent(props: Props) {
     if (!canManageOwnerSettings) return;
     callback();
   };
+  const closeAllAdvancedPanels = () => {
+    props.setShowPrivacySettings(false);
+    props.setShowTemplateSettings(false);
+    props.setShowAdvancedRsvp(false);
+    props.setShowMealChoiceSettings(false);
+    props.setShowNotificationSettings(false);
+  };
+  const toggleExclusiveAdvancedPanel = (
+    key: 'privacy' | 'template' | 'rsvp-advanced' | 'rsvp-meal' | 'notifications'
+  ) => {
+    const isOpen =
+      (key === 'privacy' && props.showPrivacySettings) ||
+      (key === 'template' && props.showTemplateSettings) ||
+      (key === 'rsvp-advanced' && props.showAdvancedRsvp) ||
+      (key === 'rsvp-meal' && props.showMealChoiceSettings) ||
+      (key === 'notifications' && props.showNotificationSettings);
+
+    closeAllAdvancedPanels();
+    if (!isOpen) {
+      if (key === 'privacy') props.setShowPrivacySettings(true);
+      if (key === 'template') props.setShowTemplateSettings(true);
+      if (key === 'rsvp-advanced') props.setShowAdvancedRsvp(true);
+      if (key === 'rsvp-meal') props.setShowMealChoiceSettings(true);
+      if (key === 'notifications') props.setShowNotificationSettings(true);
+    }
+  };
   const digestPreview = buildCalmDigestDeliveryPreview({
     digest: buildCalmOwnerDigest({
       role: 'owner',
@@ -359,9 +385,9 @@ export function SettingsDashboardRouteContent(props: Props) {
             onSiteSlugChange={(value) => runSettingsWrite(() => props.setSiteSlug(value.toLowerCase().replace(/[^a-z0-9-]/g, '')))}
             onSubmitSiteSlug={canEditSettings ? props.handleUpdateSlug : blockSettingsSubmit}
             onTemplateChange={(templateId) => runSettingsWrite(() => { void props.handleTemplateChange(templateId); })}
-            onTogglePrivacySettings={() => props.setShowPrivacySettings((value) => !value)}
+            onTogglePrivacySettings={() => toggleExclusiveAdvancedPanel('privacy')}
             onToggleShowSitePassword={() => props.setShowSitePassword((value) => !value)}
-            onToggleTemplateSettings={() => props.setShowTemplateSettings((value) => !value)}
+            onToggleTemplateSettings={() => toggleExclusiveAdvancedPanel('template')}
             privacyCopyNotice={props.privacyCopyNotice}
             privacyMode={props.privacyMode}
             publicSiteUrl={props.publicSiteUrl}
@@ -485,7 +511,7 @@ export function SettingsDashboardRouteContent(props: Props) {
             onSaveMealSettings={() => runSettingsWrite(() => { void props.saveRsvpSettings(); })}
             onSaveMusicPlaylist={() => runSettingsWrite(() => { void props.handleSaveMusicPlaylist(); })}
             onSaveQuestions={canEditSettings ? props.handleSaveRsvpQuestions : blockSettingsSubmit}
-            onToggleAdvancedVisibility={() => props.setShowAdvancedRsvp((value) => !value)}
+            onToggleAdvancedVisibility={() => toggleExclusiveAdvancedPanel('rsvp-advanced')}
             onToggleCollapse={(questionId) => {
               props.setCollapsedQuestionIds((prev) => {
                 const next = new Set(prev);
@@ -494,7 +520,7 @@ export function SettingsDashboardRouteContent(props: Props) {
                 return next;
               });
             }}
-            onToggleMealVisibility={() => props.setShowMealChoiceSettings((value) => !value)}
+            onToggleMealVisibility={() => toggleExclusiveAdvancedPanel('rsvp-meal')}
             onTypeChange={(questionId, value) => {
               runSettingsWrite(() => {
                 props.rsvpDraftMarkDirty();
@@ -548,7 +574,7 @@ export function SettingsDashboardRouteContent(props: Props) {
             notifError={props.notifError}
             digestPreview={digestPreview}
             digestEmailText={digestEmail.text}
-            onToggleVisibility={() => props.setShowNotificationSettings((value) => !value)}
+            onToggleVisibility={() => toggleExclusiveAdvancedPanel('notifications')}
             onRsvpChange={(value) => runSettingsWrite(() => { props.notifDraftMarkDirty(); props.setNotifRsvp(value); })}
             onPhotosChange={(value) => runSettingsWrite(() => { props.notifDraftMarkDirty(); props.setNotifPhotos(value); })}
             onDigestChange={(value) => {
