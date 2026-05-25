@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 test.skip(process.env.LIVE_GUEST_IMPORT_WRITE !== '1', 'Set LIVE_GUEST_IMPORT_WRITE=1 to import and delete production QA guests.');
@@ -18,6 +19,8 @@ function envValue(key: string, fallback = '') {
 }
 
 test('guest import writes household RSVP data and deletes only its QA guests', async ({ page }) => {
+  test.setTimeout(120_000);
+  const importRpcLogs: Array<{ url: string; status: number; body: string }> = [];
   const email = process.env.V1_OWNER_EMAIL || 'test@gmail.com';
   const password = process.env.V1_OWNER_PASSWORD || '12345678';
   const supabaseUrl = envValue('VITE_SUPABASE_URL', 'https://atuzuobpprjstfmdnwso.supabase.co');
@@ -35,8 +38,7 @@ test('guest import writes household RSVP data and deletes only its QA guests', a
   };
   const searchNeedle = `dayof.writeqa.${runId}`;
   let ownerAccessToken = '';
-  const artifactDir = join(process.cwd(), 'test-results', 'guest-import-write');
-  mkdirSync(artifactDir, { recursive: true });
+  const artifactDir = mkdtempSync(join(tmpdir(), 'guest-import-write-'));
   const csvPath = join(artifactDir, `guest-import-write-${runId}.csv`);
   writeFileSync(
     csvPath,
@@ -46,6 +48,32 @@ test('guest import writes household RSVP data and deletes only its QA guests', a
       `${guestTwo.name};${guestTwo.email};HH-WRITE-${runId};WriteQA Household ${runId};;;Pending;`,
     ].join('\n'),
   );
+
+  page.on('response', async (response) => {
+    const url = response.url();
+    if (!url.includes('/rest/v1/rpc/')) return;
+    if (
+      !url.includes('guest_dashboard_import_guests')
+      && !url.includes('guest_dashboard_guest_write')
+      && !url.includes('guest_dashboard_guest_bulk_patch')
+      && !url.includes('guest_dashboard_event_invitation_insert_many')
+      && !url.includes('guest_dashboard_rsvp_replace_many')
+    ) {
+      return;
+    }
+    let body = '';
+    try {
+      body = await response.text();
+    } catch {
+      body = '<unreadable>';
+    }
+    importRpcLogs.push({
+      url,
+      status: response.status(),
+      body: body.slice(0, 500),
+    });
+    console.error(`[guest-import-rpc] ${response.status()} ${url} ${body.slice(0, 200)}`);
+  });
 
   const deleteVisibleGuestByEmail = async (guestEmail: string) => {
     const row = page.locator('tr', { hasText: guestEmail });
@@ -77,6 +105,15 @@ test('guest import writes household RSVP data and deletes only its QA guests', a
       await restFetch(restUrl('guests', { email: `eq.${guestEmail}` }), { method: 'DELETE' });
     }
   };
+  const countQaGuestsByEmail = async () => {
+    const response = await restFetch(restUrl('guests', {
+      select: 'id,email',
+      email: `in.(${guestOne.email},${guestTwo.email})`,
+    }));
+    if (!response.ok) return -1;
+    const rows = await response.json() as Array<{ id: string; email: string | null }>;
+    return rows.length;
+  };
   const forceListTableView = async () => {
     await page.getByRole('button', { name: 'Check-in mode' }).click();
     await page.getByRole('button', { name: 'Check-in mode' }).click();
@@ -105,7 +142,7 @@ test('guest import writes household RSVP data and deletes only its QA guests', a
   await cleanupQaGuestsByEmail();
 
   await page.goto(`/dashboard/guests?bypassPayment=1&guestImportWriteE2e=${runId}`, { waitUntil: 'domcontentloaded' });
-  await expect(page.getByRole('heading', { name: 'Guests & RSVP' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: /People, replies, and details\./i })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Import Guests' })).toBeVisible();
 
   if (cleanupOnlyRunId) {
@@ -137,8 +174,22 @@ test('guest import writes household RSVP data and deletes only its QA guests', a
     await expect(page.getByText('Children: 2')).toBeVisible();
     await expect(page.getByText(`Household: WriteQA Household ${runId}`)).toHaveCount(2);
 
-    await page.getByRole('button', { name: 'Import 2 Guests' }).click();
-    await expect(page.getByText(/Imported 2 guests/i)).toBeVisible();
+    const importGuestsButton = page.getByRole('button', { name: 'Import 2 Guests' });
+    await importGuestsButton.scrollIntoViewIfNeeded();
+    await expect(importGuestsButton).toBeEnabled();
+    await importGuestsButton.click();
+    await expect.poll(async () => {
+      const response = await restFetch(restUrl('guests', {
+        select: 'id,email',
+        email: `in.(${guestOne.email},${guestTwo.email})`,
+      }));
+      if (!response.ok) return -1;
+      const rows = await response.json() as Array<{ id: string; email: string | null }>;
+      return rows.length;
+    }, { timeout: 30_000 }).toBe(2);
+    await expect(page.getByRole('heading', { name: 'Review Import' })).toHaveCount(0, { timeout: 30_000 });
+    await expect(page.getByText('Loading...')).toHaveCount(0, { timeout: 30_000 });
+    await expect(page.getByRole('button', { name: /^All/i })).toBeVisible();
 
     await page.getByRole('button', { name: /^All/i }).click();
     await forceListTableView();
@@ -153,28 +204,18 @@ test('guest import writes household RSVP data and deletes only its QA guests', a
 
     const [previewPage] = await Promise.all([
       page.context().waitForEvent('page'),
-      page.locator('tr', { hasText: guestTwo.email }).getByRole('button', { name: 'Preview' }).click(),
+      page.locator('tr', { hasText: guestTwo.email }).getByRole('button', { name: /Guest view|Preview/i }).first().click(),
     ]);
     await previewPage.waitForLoadState('domcontentloaded');
-    await expect(previewPage).toHaveURL(/\/rsvp\?token=.*previewGuest=/);
-    await expect(previewPage.getByRole('heading', { name: new RegExp(`Welcome, ${guestTwo.name}!`, 'i') })).toBeVisible();
+    await expect(previewPage).toHaveURL(/\/site\/.*\?previewGuest=.*previewSurface=public/);
+    await expect(previewPage.getByText('Owner preview mode')).toBeVisible();
+    await expect(previewPage.getByRole('button', { name: 'RSVP' })).toBeVisible();
     await previewPage.close();
   } finally {
-    await page.goto(`/dashboard/guests?bypassPayment=1&guestImportCleanupE2e=${runId}`, { waitUntil: 'domcontentloaded' });
-    await expect(page.getByRole('heading', { name: 'Guests & RSVP' })).toBeVisible();
-    await page.getByRole('button', { name: /^All/i }).click();
-    await forceListTableView();
-    await page.getByPlaceholder('Search guests...').fill(searchNeedle);
-
-    if (await page.getByText(guestOne.email).isVisible().catch(() => false)) {
-      await deleteVisibleGuestByEmail(guestOne.email);
-    }
-    if (await page.getByText(guestTwo.email).isVisible().catch(() => false)) {
-      await deleteVisibleGuestByEmail(guestTwo.email);
+    if (importRpcLogs.length > 0) {
+      console.error(`[guest-import-rpc-summary] ${JSON.stringify(importRpcLogs, null, 2)}`);
     }
     await cleanupQaGuestsByEmail();
-    await page.reload({ waitUntil: 'domcontentloaded' });
-    await expect(page.getByText(guestOne.email)).toHaveCount(0);
-    await expect(page.getByText(guestTwo.email)).toHaveCount(0);
+    await expect.poll(countQaGuestsByEmail, { timeout: 30_000 }).toBe(0);
   }
 });

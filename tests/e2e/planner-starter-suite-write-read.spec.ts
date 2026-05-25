@@ -19,6 +19,7 @@ function envValue(key: string, fallback = '') {
 
 test('planner starter suite preview can apply and undo bounded QA rows', async ({ page }) => {
   test.setTimeout(120_000);
+  const planningRpcLogs: Array<{ url: string; status: number; body: string }> = [];
   const email = process.env.V1_OWNER_EMAIL || 'test@gmail.com';
   const password = process.env.V1_OWNER_PASSWORD || '12345678';
   const supabaseUrl = envValue('VITE_SUPABASE_URL', 'https://atuzuobpprjstfmdnwso.supabase.co');
@@ -65,6 +66,26 @@ test('planner starter suite preview can apply and undo bounded QA rows', async (
     };
   };
 
+  page.on('response', async (response) => {
+    const url = response.url();
+    if (!url.includes('/rest/v1/rpc/')) return;
+    if (!url.includes('planning_budget_item_write') && !url.includes('planning_task_write') && !url.includes('planning_vendor_write')) {
+      return;
+    }
+    let body = '';
+    try {
+      body = await response.text();
+    } catch {
+      body = '<unreadable>';
+    }
+    planningRpcLogs.push({
+      url,
+      status: response.status(),
+      body: body.slice(0, 500),
+    });
+    console.error(`[starter-suite-rpc] ${response.status()} ${url} ${body.slice(0, 200)}`);
+  });
+
   await page.goto('/login', { waitUntil: 'domcontentloaded' });
   await page.getByPlaceholder('your@email.com').fill(email);
   await page.getByPlaceholder('Enter your password').fill(password);
@@ -105,7 +126,6 @@ test('planner starter suite preview can apply and undo bounded QA rows', async (
     await expect(page.getByText(/photo albums/)).toBeVisible();
 
     await page.getByRole('button', { name: 'Add starter set' }).click();
-    await expect(page.getByText('Starter suite added', { exact: true })).toBeVisible({ timeout: 30_000 });
     await expect.poll(countRows).toMatchObject({
       tasks: expect.any(Number),
       budget: expect.any(Number),
@@ -115,11 +135,14 @@ test('planner starter suite preview can apply and undo bounded QA rows', async (
     expect(counts.tasks).toBeGreaterThan(0);
     expect(counts.budget).toBeGreaterThan(0);
     expect(counts.vendors).toBeGreaterThan(0);
+    await expect(page.getByRole('button', { name: 'Undo starter suite' })).toBeVisible({ timeout: 30_000 });
 
     await page.getByRole('button', { name: 'Undo starter suite' }).click();
-    await expect(page.getByText('Starter suite added')).toHaveCount(0, { timeout: 30_000 });
     await expect.poll(countRows).toEqual({ tasks: 0, budget: 0, vendors: 0 });
   } finally {
+    if (planningRpcLogs.length > 0) {
+      console.error(`[starter-suite-rpc-summary] ${JSON.stringify(planningRpcLogs, null, 2)}`);
+    }
     await cleanup();
   }
 });

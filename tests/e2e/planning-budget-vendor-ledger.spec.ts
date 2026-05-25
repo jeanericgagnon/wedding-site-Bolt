@@ -23,16 +23,37 @@ async function enableLocalDemo(page: Page) {
 
 async function enterPlanningRoute(page: Page, tab: 'budget' | 'vendors', runId: string) {
   const targetPath = `/dashboard/planning?bypassPayment=1&tab=${tab}&budgetVendorLedgerQa=${runId}`;
-  await page.goto(targetPath, { waitUntil: 'domcontentloaded' });
+  const targetTabName = tab === 'budget' ? 'Budget' : 'Vendors';
 
-  const tryDemo = page.getByRole('button', { name: /try demo/i });
-  if (await tryDemo.isVisible().catch(() => false)) {
-    await Promise.all([
-      page.waitForURL(/\/dashboard/),
-      tryDemo.click(),
-    ]);
+  for (let attempt = 0; attempt < 3; attempt += 1) {
     await page.goto(targetPath, { waitUntil: 'domcontentloaded' });
+
+    const tryDemo = page.getByRole('button', { name: /try demo/i });
+    if (await tryDemo.isVisible().catch(() => false)) {
+      await tryDemo.click();
+      await page.waitForURL(/\/(dashboard|onboarding|setup)/, { timeout: 20_000 }).catch(() => {});
+      await page.waitForLoadState('networkidle').catch(() => {});
+      continue;
+    }
+
+    if (await page.getByRole('heading', { name: 'Planning' }).isVisible().catch(() => false)) {
+      break;
+    }
   }
+
+  await expect(page.getByRole('heading', { name: 'Planning' })).toBeVisible();
+  await page.getByRole('button', { name: targetTabName, exact: true }).click();
+
+  if (tab === 'budget') {
+    await expect(page.getByRole('button', { name: /add expense/i })).toBeVisible();
+    return;
+  }
+
+  await expect(page.getByText(/vendor reminder ledger/i)).toBeVisible();
+}
+
+async function selectPlanningViewMode(page: Page, label: 'Owner view' | 'Planner view' | 'Coordinator view' | 'Read-only view') {
+  await page.getByRole('combobox').selectOption({ label });
 }
 
 test('demo planning ledger keeps owner vendor and budget CRUD changes across reloads', async ({ page }) => {
@@ -107,7 +128,7 @@ test('demo planning ledger keeps read-only collaborator visibility while guest r
   await enableLocalDemo(page);
 
   await enterPlanningRoute(page, 'budget', `viewer-${Date.now()}`);
-  await page.locator('select').nth(1).selectOption({ label: 'Read-only view' });
+  await selectPlanningViewMode(page, 'Read-only view');
   await expect(page.getByText('Owner and planner financial details')).toBeVisible();
   await expect(page.getByText(/guest-facing surfaces do not expose these financial details/i)).toBeVisible();
   await expect(page.getByRole('button', { name: /Export ledger/i })).toBeEnabled();
@@ -115,7 +136,7 @@ test('demo planning ledger keeps read-only collaborator visibility while guest r
   await expect(page.getByText('Read only in this role')).toBeVisible();
 
   await enterPlanningRoute(page, 'vendors', `viewer-${Date.now()}`);
-  await page.locator('select').nth(1).selectOption({ label: 'Read-only view' });
+  await selectPlanningViewMode(page, 'Read-only view');
   await expect(page.getByText('Owner and planner financial details')).toBeVisible();
   await expect(page.getByText(/guest-facing pages do not expose vendor financial details/i)).toBeVisible();
   await expect(page.getByRole('button', { name: /Copy brief/i })).toBeEnabled();

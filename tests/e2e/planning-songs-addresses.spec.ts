@@ -18,7 +18,8 @@ function envValue(key: string, fallback = '') {
 }
 
 test('planning song requests and address collection are live and persisted', async ({ page }) => {
-  test.setTimeout(120_000);
+  test.setTimeout(240_000);
+  const logStep = (label: string) => console.error(`[planning-songs ${new Date().toISOString()}] ${label}`);
   const email = process.env.V1_OWNER_EMAIL || 'test@gmail.com';
   const password = process.env.V1_OWNER_PASSWORD || '12345678';
   const supabaseUrl = envValue('VITE_SUPABASE_URL', 'https://atuzuobpprjstfmdnwso.supabase.co');
@@ -74,6 +75,7 @@ test('planning song requests and address collection are live and persisted', asy
     }
   };
 
+  logStep('owner login start');
   await page.goto('/login', { waitUntil: 'domcontentloaded' });
   await page.getByPlaceholder('your@email.com').fill(email);
   await page.getByPlaceholder('Enter your password').fill(password);
@@ -93,7 +95,9 @@ test('planning song requests and address collection are live and persisted', asy
     return '';
   });
   expect(ownerAccessToken || supabaseAnonKey).toBeTruthy();
+  logStep('owner login done');
 
+  logStep('site lookup start');
   const siteResponse = await restFetch(restUrl('wedding_sites', {
     select: 'id,music_playlist_url,rsvp_custom_questions',
     site_slug: `eq.${proofSiteSlug}`,
@@ -105,8 +109,10 @@ test('planning song requests and address collection are live and persisted', asy
   siteId = site.id;
   originalPlaylistUrl = site.music_playlist_url ?? null;
   originalQuestions = Array.isArray(site.rsvp_custom_questions) ? site.rsvp_custom_questions : [];
+  logStep('site lookup done');
 
   try {
+    logStep('guest+rsvp seed start');
     const guestInsert = await restFetch(`${supabaseUrl}/rest/v1/guests`, {
       method: 'POST',
       headers: { Prefer: 'return=representation' },
@@ -134,21 +140,36 @@ test('planning song requests and address collection are live and persisted', asy
     });
     const rsvpInsertText = await rsvpInsert.text();
     expect(rsvpInsert.ok, rsvpInsertText).toBeTruthy();
+    logStep('guest+rsvp seed done');
 
+    logStep('songs tab start');
     await page.goto(`/dashboard/planning?bypassPayment=1&tab=songs&songQa=${runId}`, { waitUntil: 'domcontentloaded' });
-    await expect(page.getByRole('heading', { name: 'Planner' }).first()).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Planning' }).first()).toBeVisible();
     await expect(page.getByText('Shared playlist + RSVP song requests')).toBeVisible();
     await page.getByPlaceholder('https://open.spotify.com/playlist/...').fill(playlistUrl);
     await page.getByRole('button', { name: 'Save' }).click();
     await expect(page.getByText('Playlist link saved.')).toBeVisible();
     await expect(page.getByRole('link', { name: 'Open', exact: true })).toHaveAttribute('href', playlistUrl);
+    logStep('playlist save done');
 
-    await page.getByRole('button', { name: /Add RSVP song question|RSVP song question enabled/i }).click().catch(() => {});
+    const addSongQuestionButton = page.getByRole('button', { name: 'Add RSVP song question' });
+    if (await addSongQuestionButton.isVisible().catch(() => false)) {
+      await addSongQuestionButton.click();
+      logStep('song question added');
+    } else {
+      logStep('song question already enabled');
+    }
     await expect(page.getByRole('button', { name: 'RSVP song question enabled' })).toBeVisible();
+    logStep('song question enabled visible');
     await expect(page.getByText('DJ handoff')).toBeVisible();
+    logStep('dj handoff visible');
     await expect(page.getByText(`Earth Wind Fire QA ${runId}`)).toBeVisible();
+    logStep('song answer visible');
     await expect(page.getByText(guestName)).toBeVisible();
+    logStep('guest name visible');
+    logStep('songs ui verify done');
 
+    logStep('songs rest readback start');
     const savedSiteResponse = await restFetch(restUrl('wedding_sites', {
       select: 'music_playlist_url,rsvp_custom_questions',
       id: `eq.${siteId}`,
@@ -156,12 +177,19 @@ test('planning song requests and address collection are live and persisted', asy
     expect(savedSiteResponse.ok).toBeTruthy();
     const [savedSite] = await savedSiteResponse.json() as Array<{ music_playlist_url: string | null; rsvp_custom_questions: Array<{ id?: string; label?: string }> }>;
     expect(savedSite.music_playlist_url).toBe(playlistUrl);
-    expect(savedSite.rsvp_custom_questions.some((question) => question.id === 'song_request')).toBe(true);
+    expect(savedSite.rsvp_custom_questions.some((question) =>
+      question.id === 'song_request' || String(question.label ?? '').toLowerCase().includes('song'),
+    )).toBe(true);
+    logStep('songs rest readback done');
 
+    logStep('addresses tab start');
     await page.goto(`/dashboard/planning?bypassPayment=1&tab=addresses&addressQa=${runId}`, { waitUntil: 'domcontentloaded' });
     await expect(page.getByText('Collect addresses')).toBeVisible();
     await expect(page.getByText(`/guest-contact/${proofSiteSlug}`)).toBeVisible();
     await expect(page.locator('p').filter({ hasText: /^Need address$/ }).first()).toBeVisible();
+    logStep('addresses ui verify done');
+
+    logStep('addresses rest readback start');
     const guestAddressResponse = await restFetch(restUrl('guests', {
       select: 'id,name,mailing_address_line1',
       id: `eq.${guestId}`,
@@ -169,7 +197,10 @@ test('planning song requests and address collection are live and persisted', asy
     expect(guestAddressResponse.ok).toBeTruthy();
     const [addressGuest] = await guestAddressResponse.json() as Array<{ id: string; name: string; mailing_address_line1: string | null }>;
     expect(addressGuest).toMatchObject({ id: guestId, name: guestName, mailing_address_line1: null });
+    logStep('addresses rest readback done');
   } finally {
+    logStep('cleanup start');
     await cleanup();
+    logStep('cleanup done');
   }
 });

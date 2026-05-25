@@ -1,5 +1,6 @@
 import { supabase } from '../../../lib/supabase';
 import { resolveActiveSiteForUser } from '../../../lib/activeSite';
+import { safeJsonParse } from '../../../lib/jsonUtils';
 import { resolvePublicSiteSlugFromRow } from '../../../lib/publicSiteSlug';
 import {
   deriveDefaultRsvpAccessSelection,
@@ -88,6 +89,21 @@ const EVENT_INVITATION_ROLLBACK_SELECT = 'id, event_id';
 const GUEST_ID_SELECT = 'id';
 const IMPORTED_GUEST_SELECT = 'id, first_name, last_name, name, email';
 const DEFAULT_RSVP_MEAL_OPTIONS = ['Chicken', 'Beef', 'Fish', 'Vegetarian', 'Vegan'];
+
+function asWeddingDataRecord(value: unknown): Record<string, unknown> | null {
+  if (value && typeof value === 'object' && !Array.isArray(value)) {
+    return value as Record<string, unknown>;
+  }
+
+  if (typeof value === 'string') {
+    const parsed = safeJsonParse<Record<string, unknown> | null>(value, null);
+    return parsed && typeof parsed === 'object' && !Array.isArray(parsed)
+      ? parsed
+      : null;
+  }
+
+  return null;
+}
 
 async function ensureGuestDashboardSessionReady(): Promise<void> {
   const { data: { session } } = await supabase.auth.getSession();
@@ -249,7 +265,7 @@ export async function loadGuestDashboardSiteSettings(userId: string): Promise<Gu
     ? (mealCfg.options as unknown[]).filter((x): x is string => typeof x === 'string' && x.trim().length > 0)
     : [...DEFAULT_RSVP_MEAL_OPTIONS];
   const cadence = Number((data as { reminder_cadence_days?: unknown }).reminder_cadence_days);
-  const weddingData = ((data as { wedding_data?: unknown }).wedding_data as Record<string, unknown> | null) ?? null;
+  const weddingData = asWeddingDataRecord((data as { wedding_data?: unknown }).wedding_data);
   const rsvpAccessSelection = normalizePersistedRsvpAccessSelection(
     (weddingData?.rsvp_access as Record<string, unknown> | undefined) ?? null,
     deriveDefaultRsvpAccessSelection({
@@ -301,7 +317,7 @@ export async function persistGuestDashboardRsvpConfig(input: PersistGuestDashboa
       .maybeSingle();
 
     if (loadError) throw loadError;
-    currentWeddingData = ((data as { wedding_data?: unknown } | null)?.wedding_data as Record<string, unknown> | null) ?? null;
+    currentWeddingData = asWeddingDataRecord((data as { wedding_data?: unknown } | null)?.wedding_data);
   }
 
   const nextWeddingData = {
@@ -818,6 +834,14 @@ export async function updateGuestForSite(
   patch: Record<string, unknown>,
 ): Promise<void> {
   await runGuestBulkPatch(weddingSiteId, [guestId], patch);
+}
+
+export async function updateGuestInviteTokenForSite(
+  weddingSiteId: string,
+  guestId: string,
+  inviteToken: string,
+): Promise<void> {
+  await updateGuestForSite(weddingSiteId, guestId, { invite_token: inviteToken });
 }
 
 export async function updateGuestCheckInForSite(

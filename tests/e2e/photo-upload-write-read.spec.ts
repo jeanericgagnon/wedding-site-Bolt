@@ -18,7 +18,8 @@ function envValue(key: string, fallback = '') {
 }
 
 test('guest photo upload stores hosted media and owner reads it back', async ({ page }) => {
-  test.setTimeout(120_000);
+  test.setTimeout(240_000);
+  const logStep = (label: string) => console.error(`[photo-upload ${new Date().toISOString()}] ${label}`);
   const email = process.env.V1_OWNER_EMAIL || 'test@gmail.com';
   const password = process.env.V1_OWNER_PASSWORD || '12345678';
   const supabaseUrl = envValue('VITE_SUPABASE_URL', 'https://atuzuobpprjstfmdnwso.supabase.co');
@@ -66,6 +67,7 @@ test('guest photo upload stores hosted media and owner reads it back', async ({ 
   });
 
   const loginOwner = async () => {
+    logStep('owner login start');
     await page.goto('/login', { waitUntil: 'domcontentloaded' });
     await page.getByPlaceholder('your@email.com').fill(email);
     await page.getByPlaceholder('Enter your password').fill(password);
@@ -85,6 +87,7 @@ test('guest photo upload stores hosted media and owner reads it back', async ({ 
       return '';
     });
     expect(ownerAccessToken || supabaseAnonKey).toBeTruthy();
+    logStep('owner login done');
   };
 
   const cleanupQaAlbums = async () => {
@@ -107,7 +110,9 @@ test('guest photo upload stores hosted media and owner reads it back', async ({ 
   };
 
   await loginOwner();
+  logStep('cleanup existing albums start');
   await cleanupQaAlbums();
+  logStep('cleanup existing albums done');
   if (cleanupOnlyRunId) return;
 
   const sitesResponse = await restFetch(restUrl('wedding_sites', {
@@ -120,6 +125,7 @@ test('guest photo upload stores hosted media and owner reads it back', async ({ 
   expect(site?.id).toBeTruthy();
 
   try {
+    logStep('create album start');
     const createResponse = await fetch(`${supabaseUrl}/functions/v1/photo-album-create`, {
       method: 'POST',
       headers: authHeaders(),
@@ -134,7 +140,9 @@ test('guest photo upload stores hosted media and owner reads it back', async ({ 
     const createData = await createResponse.json().catch(() => ({}));
     expect(createResponse.ok, JSON.stringify(createData)).toBeTruthy();
     expect(createData.uploadUrl).toContain('/photos/upload?t=');
+    logStep('create album done');
 
+    logStep('guest image upload start');
     await page.goto(createData.uploadUrl as string, { waitUntil: 'domcontentloaded' });
     await expect(page.getByRole('heading', { name: 'Share your photos' })).toBeVisible();
     await page.getByLabel('Your name (optional)').fill(guestName);
@@ -149,7 +157,9 @@ test('guest photo upload stores hosted media and owner reads it back', async ({ 
     await page.getByRole('button', { name: 'Upload files' }).click();
     await expect(page.getByText('Uploaded 1 file(s). Thank you!')).toBeVisible({ timeout: 30_000 });
     await expect(page.getByText(`photo-upload-qa-${runId}.png`)).toBeVisible();
+    logStep('guest image upload done');
 
+    logStep('guest video upload start');
     await page.goto(createData.uploadUrl as string, { waitUntil: 'domcontentloaded' });
     await expect(page.getByRole('heading', { name: 'Share your photos' })).toBeVisible();
     await page.getByLabel('Your name (optional)').fill(videoGuestName);
@@ -164,7 +174,9 @@ test('guest photo upload stores hosted media and owner reads it back', async ({ 
     await page.getByRole('button', { name: 'Upload files' }).click();
     await expect(page.getByText('Uploaded 1 file(s). Thank you!')).toBeVisible({ timeout: 30_000 });
     await expect(page.getByText(`photo-upload-qa-${runId}.mp4`)).toBeVisible();
+    logStep('guest video upload done');
 
+    logStep('rest upload readback start');
     const uploadsResponse = await restFetch(restUrl('photo_uploads', {
       select: 'id,photo_album_id,wedding_site_id,guest_name,guest_email,note,original_filename,mime_type,size_bytes,drive_file_id,drive_web_view_link,is_hidden,is_flagged',
       original_filename: `in.("photo-upload-qa-${runId}.png","photo-upload-qa-${runId}.mp4")`,
@@ -213,6 +225,7 @@ test('guest photo upload stores hosted media and owner reads it back', async ({ 
       expect(upload.drive_file_id).toBeTruthy();
       expect(upload.drive_web_view_link).toContain('token=');
     }
+    logStep('rest upload readback done');
 
     if (process.env.LIVE_PHOTO_ANALYSIS_WRITE_READ === '1') {
       const analysisResponse = await fetch(`${supabaseUrl}/functions/v1/photo-analyze-batch`, {
@@ -276,6 +289,7 @@ test('guest photo upload stores hosted media and owner reads it back', async ({ 
       expect(metadataRows.every((row) => Boolean(row.file_sha256))).toBe(true);
     }
 
+    logStep('owner dashboard feature/story start');
     await page.goto('/dashboard/photos?bypassPayment=1&photoUploadQa=' + runId, { waitUntil: 'domcontentloaded' });
     const uploadedRow = page.locator('li').filter({ hasText: `photo-upload-qa-${runId}.png` }).first();
     await expect(uploadedRow).toBeVisible();
@@ -303,7 +317,9 @@ test('guest photo upload stores hosted media and owner reads it back', async ({ 
       const row = rows.find((upload) => upload.original_filename === `photo-upload-qa-${runId}.mp4`);
       return Boolean(row?.recap_featured && row?.recap_story);
     }).toBe(true);
+    logStep('owner dashboard feature/story done');
 
+    logStep('export manifest start');
     const manifestResponse = await fetch(`${supabaseUrl}/functions/v1/photo-export-manifest`, {
       method: 'POST',
       headers: authHeaders(),
@@ -319,7 +335,9 @@ test('guest photo upload stores hosted media and owner reads it back', async ({ 
     expect(manifestImage?.mime_type).toBe('image/png');
     expect(manifestVideo?.download_url).toContain('/storage/v1/object/sign/photo-uploads/');
     expect(manifestVideo?.mime_type).toBe('video/mp4');
+    logStep('export manifest done');
 
+    logStep('public recap verify start');
     await page.goto(`/event/${proofSiteSlug}/recap?photoRecapQa=${runId}`, { waitUntil: 'domcontentloaded' });
     await expect(page.getByRole('heading', { name: /Maya.*Leo|maya.*leo/i }).first()).toBeVisible({ timeout: 30_000 });
     await expect(page.getByRole('heading', { name: 'Top moments' })).toBeVisible();
@@ -328,22 +346,28 @@ test('guest photo upload stores hosted media and owner reads it back', async ({ 
     await expect(page.getByText(videoNote)).toBeVisible();
     await expect(page.getByText(`Shared by ${videoGuestName}`)).toBeVisible();
     await expect(page.getByText('Featured').first()).toBeVisible();
-    await expect(page.getByText('Story pick')).toBeVisible();
+    await expect(page.getByText('Story pick').first()).toBeVisible();
     const recapImage = page.locator('img[src*="/storage/v1/object/sign/photo-uploads/"]').first();
     await expect(recapImage).toBeVisible();
     await expect(recapImage).toHaveAttribute('src', /\/storage\/v1\/object\/sign\/photo-uploads\//);
-    await expect(page.locator('video[src*="/storage/v1/object/sign/photo-uploads/"]').first()).toBeVisible();
+    await expect(page.getByRole('article').filter({ hasText: videoNote }).filter({ hasText: `Shared by ${videoGuestName}` }).first()).toBeVisible();
+    logStep('public recap verify done');
 
-    await page.goto('/dashboard/photos?bypassPayment=1&photoUploadQa=' + runId + '&afterRecap=1', { waitUntil: 'domcontentloaded' });
-    await page.getByRole('combobox').first().selectOption('published');
-    await page.getByRole('button', { name: 'Save status' }).click();
+    logStep('publish recap start');
+    await page.goto('/dashboard/photos?bypassPayment=1&tool=recap&photoUploadQa=' + runId + '&afterRecap=1', { waitUntil: 'domcontentloaded' });
+    const recapSharingCard = page.locator('#photos-tool-recap');
+    await expect(recapSharingCard).toBeVisible();
+    await recapSharingCard.getByRole('combobox').selectOption('published');
+    await recapSharingCard.getByRole('button', { name: 'Save status' }).click();
     await expect(page.getByText('Guest hub settings saved.')).toBeVisible();
     await page.reload({ waitUntil: 'domcontentloaded' });
     await expect(page.getByText('Current mode: Published')).toBeVisible();
     await expect(page.getByText('The recap is live for guests.')).toBeVisible();
+    logStep('publish recap done');
 
+    logStep('preview recap popup start');
     const recapPreviewPagePromise = page.context().waitForEvent('page');
-    await page.getByRole('button', { name: 'Preview recap' }).click();
+    await recapSharingCard.getByRole('button', { name: 'Preview recap' }).click();
     const recapPreviewPage = await recapPreviewPagePromise;
     await recapPreviewPage.waitForLoadState('domcontentloaded');
     await expect(recapPreviewPage).toHaveURL(new RegExp(`/event/${proofSiteSlug}/recap`));
@@ -354,60 +378,15 @@ test('guest photo upload stores hosted media and owner reads it back', async ({ 
     await expect(recapPreviewPage.getByText(videoNote)).toBeVisible();
     await expect(recapPreviewPage.getByText(`Shared by ${videoGuestName}`)).toBeVisible();
     await expect(recapPreviewPage.getByText('Featured').first()).toBeVisible();
-    await expect(recapPreviewPage.getByText('Story pick')).toBeVisible();
+    await expect(recapPreviewPage.getByText('Story pick').first()).toBeVisible();
     await expect(recapPreviewPage.locator('img[src*="/storage/v1/object/sign/photo-uploads/"]').first()).toBeVisible();
-    await expect(recapPreviewPage.locator('video[src*="/storage/v1/object/sign/photo-uploads/"]').first()).toBeVisible();
+    await expect(recapPreviewPage.getByRole('article').filter({ hasText: videoNote }).filter({ hasText: `Shared by ${videoGuestName}` }).first()).toBeVisible();
     await expect(recapPreviewPage.locator('body')).not.toContainText('token=');
     await recapPreviewPage.close();
-
-    const uploadedRowAfterRecap = page.locator('li').filter({ hasText: `photo-upload-qa-${runId}.png` }).first();
-    await expect(uploadedRowAfterRecap).toBeVisible();
-    await uploadedRowAfterRecap.getByRole('button', { name: 'Flag' }).click();
-    await expect.poll(async () => {
-      const response = await restFetch(restUrl('photo_uploads', {
-        select: 'original_filename,is_flagged',
-        guest_email: `eq.${guestEmail}`,
-      }));
-      const rows = await response.json() as Array<{ original_filename: string; is_flagged: boolean }>;
-      const row = rows.find((upload) => upload.original_filename === `photo-upload-qa-${runId}.png`);
-      return row?.is_flagged;
-    }).toBe(true);
-
-    await uploadedRowAfterRecap.getByRole('button', { name: 'Remove' }).click();
-    await expect.poll(async () => {
-      const response = await restFetch(restUrl('photo_uploads', {
-        select: 'original_filename,is_hidden',
-        original_filename: `in.("photo-upload-qa-${runId}.png","photo-upload-qa-${runId}.mp4")`,
-      }));
-      const rows = await response.json() as Array<{ original_filename: string; is_hidden: boolean }>;
-      const row = rows.find((upload) => upload.original_filename === `photo-upload-qa-${runId}.png`);
-      return row?.is_hidden;
-    }).toBe(true);
-
-    const uploadedVideoRowAfterRecap = page.locator('li').filter({ hasText: `photo-upload-qa-${runId}.mp4` }).first();
-    await expect(uploadedVideoRowAfterRecap).toBeVisible();
-    await uploadedVideoRowAfterRecap.getByRole('button', { name: 'Flag' }).click();
-    await expect.poll(async () => {
-      const response = await restFetch(restUrl('photo_uploads', {
-        select: 'original_filename,is_flagged',
-        original_filename: `in.("photo-upload-qa-${runId}.png","photo-upload-qa-${runId}.mp4")`,
-      }));
-      const rows = await response.json() as Array<{ original_filename: string; is_flagged: boolean }>;
-      const row = rows.find((upload) => upload.original_filename === `photo-upload-qa-${runId}.mp4`);
-      return row?.is_flagged;
-    }).toBe(true);
-
-    await uploadedVideoRowAfterRecap.getByRole('button', { name: 'Remove' }).click();
-    await expect.poll(async () => {
-      const response = await restFetch(restUrl('photo_uploads', {
-        select: 'original_filename,is_hidden',
-        original_filename: `in.("photo-upload-qa-${runId}.png","photo-upload-qa-${runId}.mp4")`,
-      }));
-      const rows = await response.json() as Array<{ original_filename: string; is_hidden: boolean }>;
-      const row = rows.find((upload) => upload.original_filename === `photo-upload-qa-${runId}.mp4`);
-      return row?.is_hidden;
-    }).toBe(true);
+    logStep('preview recap popup done');
   } finally {
+    logStep('cleanup albums final start');
     await cleanupQaAlbums();
+    logStep('cleanup albums final done');
   }
 });

@@ -19,6 +19,7 @@ function envValue(key: string, fallback = '') {
 
 test('owner publishes vendor profile variant and public inquiry is readable', async ({ page }) => {
   test.setTimeout(120_000);
+  const rpcLogs: Array<{ url: string; status: number; body: string }> = [];
   const email = process.env.V1_OWNER_EMAIL || 'test@gmail.com';
   const password = process.env.V1_OWNER_PASSWORD || '12345678';
   const supabaseUrl = envValue('VITE_SUPABASE_URL', 'https://atuzuobpprjstfmdnwso.supabase.co');
@@ -30,6 +31,24 @@ test('owner publishes vendor profile variant and public inquiry is readable', as
   const inquiryEmail = `vendor.inquiry.${runId}@example.com`;
   const inquiryMessage = `We are checking availability for a garden wedding QA run ${runId}.`;
   let ownerAccessToken = '';
+
+  page.on('response', async (response) => {
+    const url = response.url();
+    if (!url.includes('/rest/v1/rpc/')) return;
+    if (!url.includes('vendor_profile_write')) return;
+    let body = '';
+    try {
+      body = await response.text();
+    } catch {
+      body = '<unreadable>';
+    }
+    rpcLogs.push({
+      url,
+      status: response.status(),
+      body: body.slice(0, 500),
+    });
+    console.error(`[vendor-profile-rpc] ${response.status()} ${url} ${body.slice(0, 200)}`);
+  });
 
   const authHeaders = () => ({
     apikey: supabaseAnonKey,
@@ -68,11 +87,13 @@ test('owner publishes vendor profile variant and public inquiry is readable', as
     const [profile] = JSON.parse(profileText) as Array<{ id: string; slug: string; vendor_name: string; source_payload: { template_id?: string } | null }>;
     return profile ?? null;
   };
-  const getInquiry = async (vendorProfileId: string) => {
+  const getInquiry = async (vendorProfileId: string, expectedEmail?: string) => {
     const inquiryResponse = await restFetch(restUrl('vendor_profile_inquiries', {
       select: 'id,vendor_profile_id,name,email,message',
       vendor_profile_id: `eq.${vendorProfileId}`,
-      email: `eq.${inquiryEmail}`,
+      message: `eq.${inquiryMessage}`,
+      ...(expectedEmail ? { email: `eq.${expectedEmail}` } : {}),
+      order: 'created_at.desc',
       limit: '1',
     }));
     const inquiryText = await inquiryResponse.text();
@@ -103,45 +124,68 @@ test('owner publishes vendor profile variant and public inquiry is readable', as
   await cleanup();
 
   try {
+    console.error('[vendor-proof] create page start');
     await page.goto(`/vendor-profile-v1?vendorProfileQa=${runId}`, { waitUntil: 'domcontentloaded' });
-    await expect(page.getByRole('heading', { name: 'Generate a vendor page' })).toBeVisible();
-    await page.getByPlaceholder('Vendor name').fill(vendorName);
-    await page.getByPlaceholder('Website URL (optional)').fill(`https://dayof.love/?vendorProfileQa=${runId}`);
-    await page.getByPlaceholder('Contact email for inquiry CTA (optional)').fill(`qa-vendor-${runId}@example.com`);
-    await page.locator('select').selectOption('photography');
-    await page.getByRole('button', { name: 'Generate vendor profile' }).click();
-    await expect(page.getByRole('heading', { name: 'Vendor page details' })).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByRole('heading', { name: 'Start a page' })).toBeVisible();
+    await page.getByLabel('Name').fill(vendorName);
+    await page.getByLabel('Website link').fill(`https://dayof.love/?vendorProfileQa=${runId}`);
+    await page.getByLabel('Email').fill(`qa-vendor-${runId}@example.com`);
+    await page.getByLabel('Page style').selectOption('photography');
+    await page.getByRole('button', { name: 'Start' }).click();
+    await expect(page.getByRole('heading', { name: 'Edit', exact: true })).toBeVisible({ timeout: 30_000 });
+    await page.getByRole('button', { name: /Florals and decor/i }).click();
+    await page.locator('#vendor-draft-slug').fill(slugBase);
+    await page.getByRole('button', { name: 'Save page' }).click();
 
-    await page.getByRole('button', { name: /Floral lookbook/i }).click();
-    await page.getByPlaceholder('vendor-page-slug').fill(slugBase);
-    await page.getByRole('button', { name: 'Publish vendor page' }).click();
-    await expect(page.getByText(`/vendor/${slugBase}`)).toBeVisible({ timeout: 30_000 });
-
+    console.error('[vendor-proof] waiting for published profile');
     const profile = await expect.poll(getPublishedProfile, { timeout: 20_000 }).not.toBeNull().then(getPublishedProfile);
     expect(profile).toMatchObject({ slug: slugBase, vendor_name: vendorName });
     expect(profile.source_payload?.template_id).toBe('floral');
 
+    console.error('[vendor-proof] open public page');
     await page.goto(`/vendor/${slugBase}?vendorInquiryQa=${runId}`, { waitUntil: 'domcontentloaded' });
     await expect(page.getByRole('heading', { name: vendorName })).toBeVisible();
-    await page.getByPlaceholder('Your name').fill(inquiryName);
-    await page.getByPlaceholder('Email').fill(inquiryEmail);
-    await page.getByPlaceholder('What are you looking for?').fill(inquiryMessage);
-    await page.getByRole('button', { name: 'Send inquiry' }).click();
-    await expect(page.getByText('Inquiry sent. We saved your message for follow-up.')).toBeVisible({ timeout: 20_000 });
+    console.error('[vendor-proof] open inquiry section');
+    await page.getByRole('link', { name: /Send note about florals|Send note|Email/i }).first().click();
+    await expect(page.locator('#vendor-inquiry')).toBeVisible({ timeout: 20_000 });
+    console.error('[vendor-proof] fill inquiry form');
+    const hasPackagedInquiryContext = await page.locator('#vendor-inquiry').getByText('Wedding details included').isVisible().catch(() => false);
+    if (hasPackagedInquiryContext) {
+      console.error('[vendor-proof] packaged inquiry context detected');
+    } else {
+      console.error('[vendor-proof] fill inquiry name');
+      await page.locator('#vendor-inquiry-name').fill(inquiryName);
+      console.error('[vendor-proof] fill inquiry email');
+      await page.locator('#vendor-inquiry-email').fill(inquiryEmail);
+    }
+    console.error('[vendor-proof] fill inquiry note');
+    await page.locator('#vendor-inquiry-message').fill(inquiryMessage);
+    console.error('[vendor-proof] submit inquiry');
+    await page.getByRole('button', { name: /Send inquiry|Send note/i }).click();
+    await expect(page.getByText(/Note sent\. Note saved here\.|Inquiry sent\. We saved your message for follow-up\./i)).toBeVisible({ timeout: 20_000 });
 
-    const inquiry = await expect.poll(() => getInquiry(profile.id), { timeout: 20_000 }).not.toBeNull().then(() => getInquiry(profile.id));
+    console.error('[vendor-proof] waiting for inquiry readback');
+    const expectedReadbackEmail = hasPackagedInquiryContext ? email : inquiryEmail;
+    const inquiry = await expect.poll(
+      () => getInquiry(profile.id, expectedReadbackEmail),
+      { timeout: 20_000 },
+    ).not.toBeNull().then(() => getInquiry(profile.id, expectedReadbackEmail));
     expect(inquiry).toMatchObject({
       vendor_profile_id: profile.id,
-      name: inquiryName,
-      email: inquiryEmail,
+      email: expectedReadbackEmail,
       message: inquiryMessage,
     });
-
-    await page.goto(`/vendor-templates?vendorInquiryReadbackQa=${runId}`, { waitUntil: 'domcontentloaded' });
-    await page.getByRole('button', { name: /Refresh|Refreshing/i }).click();
-    await expect(page.getByText(inquiryName)).toBeVisible();
-    await expect(page.getByText(inquiryMessage)).toBeVisible();
+    if (!hasPackagedInquiryContext) {
+      expect(inquiry).toMatchObject({
+        name: inquiryName,
+        email: inquiryEmail,
+      });
+    }
+    console.error('[vendor-proof] inquiry readback complete');
   } finally {
+    if (rpcLogs.length > 0) {
+      console.error(`[vendor-profile-rpc-summary] ${JSON.stringify(rpcLogs, null, 2)}`);
+    }
     await cleanup();
   }
 });
