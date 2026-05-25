@@ -332,7 +332,7 @@ describe('guestService', () => {
     expect(opsHook).toContain('const guestOpsContextVersionRef = useRef(0);');
     expect(opsHook).toContain('isGuestsReadOnly: boolean;');
     expect(opsHook).toContain("toast('Viewer mode is read-only.', 'info');");
-    expect(opsHook).toContain('if (isGuestsReadOnly) {\n      toast(\'Viewer mode is read-only.\', \'info\');\n      return;\n    }\n\n    if (!weddingSiteId || isDemoMode) return;');
+    expect(opsHook).toContain('if (isGuestsReadOnly) {\n      toast(\'Viewer mode is read-only.\', \'info\');\n      return false;\n    }\n\n    if (!weddingSiteId || isDemoMode) return false;');
     expect(opsHook).toContain('if (isGuestsReadOnly) {\n      toast(\'Viewer mode is read-only.\', \'info\');\n      return;\n    }\n\n    if (!weddingSiteId || isDemoMode) {');
     expect(opsHook).toContain('const targetWeddingSiteId = weddingSiteId;');
     expect(opsHook).toContain('if (!isCurrentGuestOpsContext(contextVersion)) return;');
@@ -717,6 +717,47 @@ describe('guestService', () => {
       questions: [expect.objectContaining({ id: 'q1', label: 'Song?' })],
     }));
     expect(resolveActiveSiteForUserMock).toHaveBeenCalledWith('user-1');
+  });
+
+  it('loads guest dashboard RSVP access from stringified wedding data', async () => {
+    resolveActiveSiteForUserMock.mockResolvedValueOnce({
+      id: 'site-1',
+      role: 'owner',
+      permissions: null,
+    });
+    const maybeSingleMock = vi.fn().mockResolvedValue({
+      data: {
+        id: 'site-1',
+        couple_name_1: 'Alex',
+        couple_name_2: 'Jordan',
+        wedding_date: '2026-06-01',
+        venue_name: 'Venue',
+        venue_address: '123 Main',
+        site_url: 'https://dayof.love/alex-jordan',
+        site_slug: 'alex-jordan',
+        rsvp_custom_questions: [],
+        rsvp_meal_config: { enabled: true, options: ['Chicken', 'Fish'] },
+        reminder_cadence_days: 3,
+        auto_reminders_enabled: true,
+        wedding_data: JSON.stringify({
+          rsvp_access: {
+            primary_mode: 'private_link',
+            allow_name_lookup_backup: true,
+          },
+        }),
+      },
+      error: null,
+    });
+    const eqMock = vi.fn(() => ({ maybeSingle: maybeSingleMock }));
+    const selectMock = vi.fn(() => ({ eq: eqMock }));
+    fromMock.mockReturnValue({ select: selectMock });
+
+    await expect(loadGuestDashboardSiteSettings('user-1')).resolves.toEqual(expect.objectContaining({
+      rsvpAccessSelection: {
+        primaryMode: 'private_link',
+        allowNameLookupBackup: true,
+      },
+    }));
   });
 
   it('loads guest dashboard snapshot through the service', async () => {
@@ -1222,6 +1263,48 @@ describe('guestService', () => {
           rsvp_access: {
             primary_mode: 'name_lookup',
             allow_name_lookup_backup: false,
+          },
+        },
+      },
+    });
+  });
+
+  it('persists guest RSVP config when wedding data reloads as a JSON string', async () => {
+    rpcMock.mockResolvedValueOnce({ error: null }).mockResolvedValueOnce({ error: null });
+
+    const maybeSingleMock = vi.fn().mockResolvedValue({
+      data: {
+        wedding_data: JSON.stringify({
+          language_settings: { allowed_languages: ['en'] },
+        }),
+      },
+      error: null,
+    });
+    fromMock.mockReturnValueOnce({
+      select: vi.fn(() => ({
+        eq: vi.fn(() => ({ maybeSingle: maybeSingleMock })),
+      })),
+    });
+
+    await expect(persistGuestDashboardRsvpConfig({
+      weddingSiteId: 'site-1',
+      questions: [],
+      mealEnabled: true,
+      mealOptions: ['Chicken', 'Fish'],
+      rsvpAccessSelection: {
+        primaryMode: 'private_link',
+        allowNameLookupBackup: true,
+      },
+    })).resolves.toBeUndefined();
+
+    expect(rpcMock).toHaveBeenNthCalledWith(2, 'wedding_site_settings_patch', {
+      p_wedding_site_id: 'site-1',
+      p_patch: {
+        wedding_data: {
+          language_settings: { allowed_languages: ['en'] },
+          rsvp_access: {
+            primary_mode: 'private_link',
+            allow_name_lookup_backup: true,
           },
         },
       },

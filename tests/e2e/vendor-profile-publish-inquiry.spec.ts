@@ -19,6 +19,7 @@ function envValue(key: string, fallback = '') {
 
 test('owner publishes vendor profile variant and public inquiry is readable', async ({ page }) => {
   test.setTimeout(120_000);
+  const rpcLogs: Array<{ url: string; status: number; body: string }> = [];
   const email = process.env.V1_OWNER_EMAIL || 'test@gmail.com';
   const password = process.env.V1_OWNER_PASSWORD || '12345678';
   const supabaseUrl = envValue('VITE_SUPABASE_URL', 'https://atuzuobpprjstfmdnwso.supabase.co');
@@ -30,6 +31,24 @@ test('owner publishes vendor profile variant and public inquiry is readable', as
   const inquiryEmail = `vendor.inquiry.${runId}@example.com`;
   const inquiryMessage = `We are checking availability for a garden wedding QA run ${runId}.`;
   let ownerAccessToken = '';
+
+  page.on('response', async (response) => {
+    const url = response.url();
+    if (!url.includes('/rest/v1/rpc/')) return;
+    if (!url.includes('vendor_profile_write')) return;
+    let body = '';
+    try {
+      body = await response.text();
+    } catch {
+      body = '<unreadable>';
+    }
+    rpcLogs.push({
+      url,
+      status: response.status(),
+      body: body.slice(0, 500),
+    });
+    console.error(`[vendor-profile-rpc] ${response.status()} ${url} ${body.slice(0, 200)}`);
+  });
 
   const authHeaders = () => ({
     apikey: supabaseAnonKey,
@@ -104,18 +123,16 @@ test('owner publishes vendor profile variant and public inquiry is readable', as
 
   try {
     await page.goto(`/vendor-profile-v1?vendorProfileQa=${runId}`, { waitUntil: 'domcontentloaded' });
-    await expect(page.getByRole('heading', { name: 'Generate a vendor page' })).toBeVisible();
-    await page.getByPlaceholder('Vendor name').fill(vendorName);
-    await page.getByPlaceholder('Website URL (optional)').fill(`https://dayof.love/?vendorProfileQa=${runId}`);
-    await page.getByPlaceholder('Contact email for inquiry CTA (optional)').fill(`qa-vendor-${runId}@example.com`);
-    await page.locator('select').selectOption('photography');
-    await page.getByRole('button', { name: 'Generate vendor profile' }).click();
-    await expect(page.getByRole('heading', { name: 'Vendor page details' })).toBeVisible({ timeout: 30_000 });
-
-    await page.getByRole('button', { name: /Floral lookbook/i }).click();
-    await page.getByPlaceholder('vendor-page-slug').fill(slugBase);
-    await page.getByRole('button', { name: 'Publish vendor page' }).click();
-    await expect(page.getByText(`/vendor/${slugBase}`)).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByRole('heading', { name: 'Start a page' })).toBeVisible();
+    await page.getByLabel('Name').fill(vendorName);
+    await page.getByLabel('Website link').fill(`https://dayof.love/?vendorProfileQa=${runId}`);
+    await page.getByLabel('Email').fill(`qa-vendor-${runId}@example.com`);
+    await page.getByLabel('Page style').selectOption('photography');
+    await page.getByRole('button', { name: 'Start' }).click();
+    await expect(page.getByRole('heading', { name: 'Edit', exact: true })).toBeVisible({ timeout: 30_000 });
+    await page.getByRole('button', { name: /Florals and decor/i }).click();
+    await page.locator('#vendor-draft-slug').fill(slugBase);
+    await page.getByRole('button', { name: 'Save page' }).click();
 
     const profile = await expect.poll(getPublishedProfile, { timeout: 20_000 }).not.toBeNull().then(getPublishedProfile);
     expect(profile).toMatchObject({ slug: slugBase, vendor_name: vendorName });
@@ -142,6 +159,9 @@ test('owner publishes vendor profile variant and public inquiry is readable', as
     await expect(page.getByText(inquiryName)).toBeVisible();
     await expect(page.getByText(inquiryMessage)).toBeVisible();
   } finally {
+    if (rpcLogs.length > 0) {
+      console.error(`[vendor-profile-rpc-summary] ${JSON.stringify(rpcLogs, null, 2)}`);
+    }
     await cleanup();
   }
 });

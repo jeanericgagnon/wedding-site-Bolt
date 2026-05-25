@@ -15,6 +15,7 @@ import {
   insertImportedGuests,
   replaceImportedGuestRsvps,
   resolveGuestDashboardSiteId,
+  updateGuestInviteTokenForSite,
   updateGuestForSite,
   updateHouseholdGuestIds,
 } from './guestService';
@@ -359,7 +360,7 @@ export function useGuestDashboardCsvImport({
         const inviteToken = String(guestsWithTokens[index]?.invite_token || '').trim();
         if (!insertedGuest?.id || !inviteToken) return;
         if (!importSiteId) return;
-        await updateGuestForSite(importSiteId, insertedGuest.id, { invite_token: inviteToken });
+        await updateGuestInviteTokenForSite(importSiteId, insertedGuest.id, inviteToken);
       }));
       if (!isCurrentCsvConfirm()) return;
 

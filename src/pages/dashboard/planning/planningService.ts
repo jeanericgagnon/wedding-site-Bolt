@@ -120,6 +120,18 @@ function isMissingColumnError(error: unknown, column: string): boolean {
   return code === '42703' && text.includes(column);
 }
 
+function stripVendorCompatibilityFields<T extends Partial<PlanningVendor>>(vendor: T): T {
+  const next = { ...vendor };
+  delete next.phone;
+  return next;
+}
+
+function stripBudgetCompatibilityFields<T extends Partial<PlanningBudgetItem>>(item: T): T {
+  const next = { ...item };
+  delete next.due_date;
+  return next;
+}
+
 export interface PlanningSiteMeta {
   venueName: string | null;
   destinationWedding: boolean;
@@ -513,8 +525,22 @@ export async function createVendor(weddingSiteId: string, vendor: Partial<Planni
     p_vendor_id: null,
     p_payload: vendor,
   });
+  if (error && isMissingColumnError(error, 'phone')) {
+    const fallback = await supabase.rpc('planning_vendor_write', {
+      p_wedding_site_id: weddingSiteId,
+      p_vendor_id: null,
+      p_payload: stripVendorCompatibilityFields(vendor),
+    });
+    if (fallback.error) throw fallback.error;
+    return normalizeVendorCompatibilityRecord(
+      requireRpcRecord<Record<string, unknown>>(fallback.data, 'planning_vendor_write'),
+      { missingPhone: true },
+    );
+  }
   if (error) throw error;
-  return requireRpcRecord<PlanningVendor>(data, 'planning_vendor_write');
+  return normalizeVendorCompatibilityRecord(
+    requireRpcRecord<Record<string, unknown>>(data, 'planning_vendor_write'),
+  );
 }
 
 export async function updateVendor(id: string, updates: Partial<PlanningVendor>): Promise<void> {
@@ -523,6 +549,15 @@ export async function updateVendor(id: string, updates: Partial<PlanningVendor>)
     p_vendor_id: id,
     p_payload: updates,
   });
+  if (error && isMissingColumnError(error, 'phone')) {
+    const fallback = await supabase.rpc('planning_vendor_write', {
+      p_wedding_site_id: null,
+      p_vendor_id: id,
+      p_payload: stripVendorCompatibilityFields(updates),
+    });
+    if (fallback.error) throw fallback.error;
+    return;
+  }
   if (error) throw error;
 }
 
@@ -563,8 +598,22 @@ export async function createBudgetItem(weddingSiteId: string, item: Partial<Plan
     p_item_id: null,
     p_payload: item,
   });
+  if (error && isMissingColumnError(error, 'due_date')) {
+    const fallback = await supabase.rpc('planning_budget_item_write', {
+      p_wedding_site_id: weddingSiteId,
+      p_item_id: null,
+      p_payload: stripBudgetCompatibilityFields(item),
+    });
+    if (fallback.error) throw fallback.error;
+    return normalizeBudgetItemCompatibilityRecord(
+      requireRpcRecord<Record<string, unknown>>(fallback.data, 'planning_budget_item_write'),
+      { missingDueDate: true },
+    );
+  }
   if (error) throw error;
-  return requireRpcRecord<PlanningBudgetItem>(data, 'planning_budget_item_write');
+  return normalizeBudgetItemCompatibilityRecord(
+    requireRpcRecord<Record<string, unknown>>(data, 'planning_budget_item_write'),
+  );
 }
 
 export async function updateBudgetItem(id: string, updates: Partial<PlanningBudgetItem>): Promise<void> {
@@ -573,6 +622,15 @@ export async function updateBudgetItem(id: string, updates: Partial<PlanningBudg
     p_item_id: id,
     p_payload: updates,
   });
+  if (error && isMissingColumnError(error, 'due_date')) {
+    const fallback = await supabase.rpc('planning_budget_item_write', {
+      p_wedding_site_id: null,
+      p_item_id: id,
+      p_payload: stripBudgetCompatibilityFields(updates),
+    });
+    if (fallback.error) throw fallback.error;
+    return;
+  }
   if (error) throw error;
 }
 

@@ -2,7 +2,9 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
+  createBudgetItem,
   createTask,
+  createVendor,
   deleteTask,
   generateMilestoneTasks,
   hasPlanningSongQuestion,
@@ -16,8 +18,10 @@ import {
   MAX_PLANNING_TASK_ROWS,
   MAX_PLANNING_VENDOR_ROWS,
   readPlanningSongAnswer,
+  updateBudgetItem,
   updatePlanningVendorMeta,
   updateTask,
+  updateVendor,
 } from './planningService';
 
 const { rpcMock } = vi.hoisted(() => ({
@@ -168,6 +172,147 @@ describe('planning song request helpers', () => {
     await expect(deleteTask('task-1')).resolves.toBeUndefined();
     expect(rpcMock).toHaveBeenNthCalledWith(3, 'planning_task_delete', {
       p_task_id: 'task-1',
+    });
+  });
+
+  it('retries budget writes without due_date when the live schema is missing that column', async () => {
+    rpcMock
+      .mockResolvedValueOnce({ data: null, error: { code: '42703', message: 'column "due_date" of relation "planning_budget_items" does not exist' } })
+      .mockResolvedValueOnce({
+        data: {
+          id: 'budget-1',
+          wedding_site_id: 'site-1',
+          category: 'Venue',
+          item_name: 'Venue rental',
+          estimated_amount: 8500,
+          actual_amount: 0,
+          paid_amount: 0,
+          vendor_id: null,
+          notes: 'Starter estimate',
+          created_at: '2026-05-25T00:00:00.000Z',
+          updated_at: '2026-05-25T00:00:00.000Z',
+        },
+        error: null,
+      })
+      .mockResolvedValueOnce({ error: { code: '42703', message: 'column "due_date" of relation "planning_budget_items" does not exist' } })
+      .mockResolvedValueOnce({ error: null });
+
+    await expect(createBudgetItem('site-1', {
+      item_name: 'Venue rental',
+      due_date: '2027-06-06',
+      estimated_amount: 8500,
+    })).resolves.toEqual(expect.objectContaining({
+      id: 'budget-1',
+      due_date: null,
+    }));
+    expect(rpcMock).toHaveBeenNthCalledWith(1, 'planning_budget_item_write', {
+      p_wedding_site_id: 'site-1',
+      p_item_id: null,
+      p_payload: {
+        item_name: 'Venue rental',
+        due_date: '2027-06-06',
+        estimated_amount: 8500,
+      },
+    });
+    expect(rpcMock).toHaveBeenNthCalledWith(2, 'planning_budget_item_write', {
+      p_wedding_site_id: 'site-1',
+      p_item_id: null,
+      p_payload: {
+        item_name: 'Venue rental',
+        estimated_amount: 8500,
+      },
+    });
+
+    await expect(updateBudgetItem('budget-1', {
+      due_date: '2027-06-07',
+      paid_amount: 1200,
+    })).resolves.toBeUndefined();
+    expect(rpcMock).toHaveBeenNthCalledWith(3, 'planning_budget_item_write', {
+      p_wedding_site_id: null,
+      p_item_id: 'budget-1',
+      p_payload: {
+        due_date: '2027-06-07',
+        paid_amount: 1200,
+      },
+    });
+    expect(rpcMock).toHaveBeenNthCalledWith(4, 'planning_budget_item_write', {
+      p_wedding_site_id: null,
+      p_item_id: 'budget-1',
+      p_payload: {
+        paid_amount: 1200,
+      },
+    });
+  });
+
+  it('retries vendor writes without phone when the live schema is missing that column', async () => {
+    rpcMock
+      .mockResolvedValueOnce({ data: null, error: { code: '42703', message: 'column "phone" of relation "planning_vendors" does not exist' } })
+      .mockResolvedValueOnce({
+        data: {
+          id: 'vendor-1',
+          wedding_site_id: 'site-1',
+          vendor_type: 'Venue',
+          name: 'Venue team',
+          contact_name: '',
+          email: '',
+          website: '',
+          contract_total: 0,
+          amount_paid: 0,
+          balance_due: 0,
+          next_payment_due: null,
+          notes: 'QA vendor',
+          created_at: '2026-05-25T00:00:00.000Z',
+          updated_at: '2026-05-25T00:00:00.000Z',
+        },
+        error: null,
+      })
+      .mockResolvedValueOnce({ error: { code: '42703', message: 'column "phone" of relation "planning_vendors" does not exist' } })
+      .mockResolvedValueOnce({ error: null });
+
+    await expect(createVendor('site-1', {
+      name: 'Venue team',
+      phone: '555-111-2222',
+      vendor_type: 'Venue',
+    })).resolves.toEqual(expect.objectContaining({
+      id: 'vendor-1',
+      phone: '',
+    }));
+    expect(rpcMock).toHaveBeenNthCalledWith(1, 'planning_vendor_write', {
+      p_wedding_site_id: 'site-1',
+      p_vendor_id: null,
+      p_payload: {
+        name: 'Venue team',
+        phone: '555-111-2222',
+        vendor_type: 'Venue',
+      },
+    });
+    expect(rpcMock).toHaveBeenNthCalledWith(2, 'planning_vendor_write', {
+      p_wedding_site_id: 'site-1',
+      p_vendor_id: null,
+      p_payload: {
+        name: 'Venue team',
+        vendor_type: 'Venue',
+      },
+    });
+
+    await expect(updateVendor('vendor-1', {
+      phone: '555-999-0000',
+      amount_paid: 100,
+    })).resolves.toBeUndefined();
+    expect(rpcMock).toHaveBeenNthCalledWith(3, 'planning_vendor_write', {
+      p_wedding_site_id: null,
+      p_vendor_id: 'vendor-1',
+      p_payload: {
+        phone: '555-999-0000',
+        amount_paid: 100,
+      },
+    });
+    expect(rpcMock).toHaveBeenNthCalledWith(4, 'planning_vendor_write', {
+      p_wedding_site_id: null,
+      p_vendor_id: 'vendor-1',
+      p_payload: {
+        amount_paid: 100,
+      },
     });
   });
 

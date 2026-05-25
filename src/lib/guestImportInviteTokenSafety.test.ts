@@ -10,6 +10,6 @@ describe('guest import invite token safety', () => {
     );
 
     expect(source).toContain('await Promise.all(inserted.map(async (insertedGuest, index) => {');
-    expect(source).toContain('await updateGuestForSite(importSiteId, insertedGuest.id, { invite_token: inviteToken });');
+    expect(source).toContain('await updateGuestInviteTokenForSite(importSiteId, insertedGuest.id, inviteToken);');
   });
 });

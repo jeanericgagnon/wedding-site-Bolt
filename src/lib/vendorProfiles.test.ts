@@ -1,4 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 
 const invoke = vi.fn();
 const getUser = vi.fn();
@@ -106,6 +108,17 @@ describe('vendor profile draft fallback safety', () => {
         contact_email: null,
       }),
     });
+  });
+
+  it('keeps vendor profile write migrations storing image_urls as jsonb payloads', () => {
+    const migration = readFileSync(
+      join(process.cwd(), 'supabase/migrations/20260524181721_fix_vendor_profile_write_image_urls_jsonb.sql'),
+      'utf8',
+    );
+
+    expect(migration).toContain("coalesce(p_payload->'image_urls', '[]'::jsonb)");
+    expect(migration).not.toContain("jsonb_array_elements_text(coalesce(p_payload->'image_urls', '[]'::jsonb))");
+    expect(migration).not.toContain("array[]::text[]");
   });
 
   it('keeps the expected modern-events sample slug reachable before any database read', async () => {

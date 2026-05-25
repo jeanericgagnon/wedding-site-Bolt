@@ -18,6 +18,7 @@ function envValue(key: string, fallback = '') {
 }
 
 test('guest import writes household RSVP data and deletes only its QA guests', async ({ page }) => {
+  const importRpcLogs: Array<{ url: string; status: number; body: string }> = [];
   const email = process.env.V1_OWNER_EMAIL || 'test@gmail.com';
   const password = process.env.V1_OWNER_PASSWORD || '12345678';
   const supabaseUrl = envValue('VITE_SUPABASE_URL', 'https://atuzuobpprjstfmdnwso.supabase.co');
@@ -46,6 +47,26 @@ test('guest import writes household RSVP data and deletes only its QA guests', a
       `${guestTwo.name};${guestTwo.email};HH-WRITE-${runId};WriteQA Household ${runId};;;Pending;`,
     ].join('\n'),
   );
+
+  page.on('response', async (response) => {
+    const url = response.url();
+    if (!url.includes('/rest/v1/rpc/')) return;
+    if (!url.includes('guest_dashboard_import_guests') && !url.includes('guest_dashboard_guest_write') && !url.includes('guest_dashboard_rsvp_replace_many')) {
+      return;
+    }
+    let body = '';
+    try {
+      body = await response.text();
+    } catch {
+      body = '<unreadable>';
+    }
+    importRpcLogs.push({
+      url,
+      status: response.status(),
+      body: body.slice(0, 500),
+    });
+    console.error(`[guest-import-rpc] ${response.status()} ${url} ${body.slice(0, 200)}`);
+  });
 
   const deleteVisibleGuestByEmail = async (guestEmail: string) => {
     const row = page.locator('tr', { hasText: guestEmail });
@@ -105,7 +126,7 @@ test('guest import writes household RSVP data and deletes only its QA guests', a
   await cleanupQaGuestsByEmail();
 
   await page.goto(`/dashboard/guests?bypassPayment=1&guestImportWriteE2e=${runId}`, { waitUntil: 'domcontentloaded' });
-  await expect(page.getByRole('heading', { name: 'Guests & RSVP' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: /People, replies, and details\./i })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Import Guests' })).toBeVisible();
 
   if (cleanupOnlyRunId) {
@@ -137,8 +158,22 @@ test('guest import writes household RSVP data and deletes only its QA guests', a
     await expect(page.getByText('Children: 2')).toBeVisible();
     await expect(page.getByText(`Household: WriteQA Household ${runId}`)).toHaveCount(2);
 
-    await page.getByRole('button', { name: 'Import 2 Guests' }).click();
-    await expect(page.getByText(/Imported 2 guests/i)).toBeVisible();
+    const importGuestsButton = page.getByRole('button', { name: 'Import 2 Guests' });
+    await importGuestsButton.scrollIntoViewIfNeeded();
+    await expect(importGuestsButton).toBeEnabled();
+    await importGuestsButton.click();
+    await expect.poll(async () => {
+      const response = await restFetch(restUrl('guests', {
+        select: 'id,email',
+        email: `in.(${guestOne.email},${guestTwo.email})`,
+      }));
+      if (!response.ok) return -1;
+      const rows = await response.json() as Array<{ id: string; email: string | null }>;
+      return rows.length;
+    }, { timeout: 30_000 }).toBe(2);
+    await expect(page.getByRole('heading', { name: 'Review Import' })).toHaveCount(0, { timeout: 30_000 });
+    await expect(page.getByText('Loading...')).toHaveCount(0, { timeout: 30_000 });
+    await expect(page.getByRole('button', { name: /^All/i })).toBeVisible();
 
     await page.getByRole('button', { name: /^All/i }).click();
     await forceListTableView();
@@ -160,8 +195,11 @@ test('guest import writes household RSVP data and deletes only its QA guests', a
     await expect(previewPage.getByRole('heading', { name: new RegExp(`Welcome, ${guestTwo.name}!`, 'i') })).toBeVisible();
     await previewPage.close();
   } finally {
+    if (importRpcLogs.length > 0) {
+      console.error(`[guest-import-rpc-summary] ${JSON.stringify(importRpcLogs, null, 2)}`);
+    }
     await page.goto(`/dashboard/guests?bypassPayment=1&guestImportCleanupE2e=${runId}`, { waitUntil: 'domcontentloaded' });
-    await expect(page.getByRole('heading', { name: 'Guests & RSVP' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /People, replies, and details\./i })).toBeVisible();
     await page.getByRole('button', { name: /^All/i }).click();
     await forceListTableView();
     await page.getByPlaceholder('Search guests...').fill(searchNeedle);

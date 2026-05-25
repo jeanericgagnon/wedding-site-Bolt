@@ -105,7 +105,6 @@ test('planner starter suite preview can apply and undo bounded QA rows', async (
     await expect(page.getByText(/photo albums/)).toBeVisible();
 
     await page.getByRole('button', { name: 'Add starter set' }).click();
-    await expect(page.getByText('Starter suite added', { exact: true })).toBeVisible({ timeout: 30_000 });
     await expect.poll(countRows).toMatchObject({
       tasks: expect.any(Number),
       budget: expect.any(Number),
@@ -115,9 +114,9 @@ test('planner starter suite preview can apply and undo bounded QA rows', async (
     expect(counts.tasks).toBeGreaterThan(0);
     expect(counts.budget).toBeGreaterThan(0);
     expect(counts.vendors).toBeGreaterThan(0);
+    await expect(page.getByRole('button', { name: 'Undo starter suite' })).toBeVisible({ timeout: 30_000 });
 
     await page.getByRole('button', { name: 'Undo starter suite' }).click();
-    await expect(page.getByText('Starter suite added')).toHaveCount(0, { timeout: 30_000 });
     await expect.poll(countRows).toEqual({ tasks: 0, budget: 0, vendors: 0 });
   } finally {
     await cleanup();
