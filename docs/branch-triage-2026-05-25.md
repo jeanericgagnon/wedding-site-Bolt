@@ -24,6 +24,7 @@ Why not treat as PR-ready:
 
 Recommended next move:
 - salvage the desired parts onto a fresh branch from `main`
+- see `docs/launch-main-p0-salvage-plan-2026-05-25.md` for the current salvage split
 
 ### Preserve as working history
 
@@ -41,6 +42,7 @@ Why not treat as cleanup residue:
 Recommended next move:
 - preserve as alternate history
 - salvage intentionally if name-change work resumes
+- see `docs/name-change-form-population-salvage-plan-2026-05-25.md` for the current salvage split
 
 #### `origin/codex/non-registry-live-fixes`
 
@@ -50,6 +52,7 @@ Why keep:
 
 Recommended next move:
 - leave preserved unless there is explicit product appetite to resurrect pieces
+- see `docs/non-registry-live-fixes-salvage-plan-2026-05-25.md` for the current preservation guidance
 
 #### `origin/brand-phase-5-imagery-system`
 
@@ -59,6 +62,7 @@ Why keep:
 
 Recommended next move:
 - preserve until there is clear product/design appetite to revisit
+- see `docs/brand-phase-5-imagery-system-salvage-plan-2026-05-25.md` for the current preservation guidance
 
 #### `origin/codex/v1-finish-hard-gates`
 
@@ -67,6 +71,7 @@ Why keep:
 
 Recommended next move:
 - preserve as older hardening history
+- see `docs/v1-finish-hard-gates-salvage-plan-2026-05-25.md` for the current preservation guidance
 
 #### `origin/codex/v1-finish-hard-gates-3`
 
@@ -76,6 +81,7 @@ Why keep:
 
 Recommended next move:
 - preserve as later hardening history
+- see `docs/v1-finish-hard-gates-3-salvage-plan-2026-05-25.md` for the current preservation guidance
 
 #### `origin/feat/builder-v2-setup-route-skeleton`
 
@@ -85,6 +91,7 @@ Why keep:
 
 Recommended next move:
 - decide separately whether to revive as a real feature branch
+- see `docs/builder-v2-setup-route-skeleton-salvage-plan-2026-05-25.md` for the current revival split
 
 ## Summary
 
