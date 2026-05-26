@@ -37,6 +37,10 @@ describe('setupDraftHydration', () => {
     expect(result.theme.tokens?.style_preferences).toContain('modern');
     expect(result.couple.story).toContain('Eric & Alex');
     expect(result.travel.notes).toContain('hotel and travel recommendations');
+    expect(result.meta.useCasePacks).toEqual([]);
+    expect(result.rsvp.deadlineISO).toBe(new Date('2026-09-10').toISOString());
+    expect(result.schedule[0]?.label).toBe('Ceremony');
+    expect(result.faq.some((item) => item.q.includes('RSVP'))).toBe(true);
   });
 
   it('does not override existing authored fields', () => {
@@ -73,6 +77,29 @@ describe('setupDraftHydration', () => {
     const result = applySetupDraftToWeddingData(source, draft());
 
     expect(result.couple.displayName).toBe('Alex');
-    expect(result.couple.story).toContain('Alex are so excited');
+    expect(result.couple.story).toContain('Alex');
+  });
+
+  it('hydrates destination-aware travel, schedule, and faq scaffolding', () => {
+    const source = createEmptyWeddingData();
+
+    const result = applySetupDraftToWeddingData(
+      source,
+      draft({
+        partnerOneFirstName: 'Alex',
+        partnerTwoFirstName: 'Jordan',
+        weddingDate: '2026-11-15',
+        dateKnown: true,
+        weddingCity: 'Sayulita',
+        guestEstimateBand: '200plus',
+        stylePreferences: ['Destination'],
+      })
+    );
+
+    expect(result.meta.useCasePacks).toEqual(['destination']);
+    expect(result.travel.hotelInfo).toContain('room-block');
+    expect(result.travel.flightInfo).toContain('Sayulita');
+    expect(result.schedule[0]?.label).toBe('Welcome gathering');
+    expect(result.faq.some((item) => item.q.includes('When should guests arrive'))).toBe(true);
   });
 });

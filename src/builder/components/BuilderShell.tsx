@@ -14,9 +14,11 @@ import { WeddingDataV1 } from '../../types/weddingData';
 import { BUILDER_AUTOSAVE_INTERVAL_MS } from '../constants/builderCapabilities';
 import { mediaService } from '../services/mediaService';
 import { applyThemePreset, applyThemeTokens } from '../../lib/themePresets';
+import { buildBuilderConciergeModel } from '../../lib/setupConcierge';
 import { getPublishIssue, getPublishValidationError } from '../utils/publishReadiness';
 import { shouldAutoPublishFromSearch } from '../utils/publishUiHints';
 import { getPublishNowAction } from '../utils/publishNowFlow';
+import { templateCatalog } from '../constants/templateCatalog';
 
 interface BuilderShellProps {
   initialProject: BuilderProject;
@@ -177,6 +179,12 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
       setShowCoachmarks(true);
     }
   }, []);
+
+  const conciergePlan = useMemo(() => {
+    if (!state.weddingData) return null;
+    const templateName = templateCatalog.find((template) => template.id === state.project?.templateId)?.name ?? null;
+    return buildBuilderConciergeModel(state.weddingData, { templateName });
+  }, [state.project?.templateId, state.weddingData]);
 
   const handleSave = useCallback(async (): Promise<boolean> => {
     const currentState = stateRef.current;
@@ -417,13 +425,34 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
         {showCoachmarks && (
           <div className="fixed inset-0 z-[70] bg-black/45 backdrop-blur-[1px] flex items-center justify-center p-4">
             <div className="w-full max-w-xl rounded-2xl bg-white shadow-2xl border border-gray-200 p-5">
-              <h3 className="text-lg font-semibold text-gray-900">Quick builder walkthrough</h3>
-              <p className="mt-1 text-sm text-gray-600">Three fast checks so the builder feels straightforward right away.</p>
-              <ol className="mt-4 space-y-2 text-sm text-gray-700 list-decimal list-inside">
-                <li><span className="font-medium">Canvas first:</span> click any section to start editing without hunting for controls.</li>
-                <li><span className="font-medium">Right panel:</span> use the right panel for the next useful action first, then open more controls only if needed.</li>
-                <li><span className="font-medium">Top bar:</span> check desktop, tablet, and mobile before you go live.</li>
-              </ol>
+              <h3 className="text-lg font-semibold text-gray-900">{conciergePlan?.heading ?? 'Quick builder walkthrough'}</h3>
+              <p className="mt-1 text-sm text-gray-600">
+                {conciergePlan?.summary ?? 'Three fast checks so the builder feels straightforward right away.'}
+              </p>
+              <div className="mt-4 space-y-3">
+                {(conciergePlan?.checklist ?? [
+                  {
+                    id: 'canvas',
+                    title: 'Canvas first',
+                    detail: 'Click any section to start editing without hunting for controls.',
+                  },
+                  {
+                    id: 'inspector',
+                    title: 'Right panel next',
+                    detail: 'Use the right panel for the next useful action first, then open more controls only if needed.',
+                  },
+                  {
+                    id: 'preview',
+                    title: 'Preview before publish',
+                    detail: 'Check desktop, tablet, and mobile before you go live.',
+                  },
+                ]).map((item, index) => (
+                  <div key={item.id} className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3">
+                    <p className="text-sm font-medium text-gray-900">{index + 1}. {item.title}</p>
+                    <p className="mt-1 text-sm text-gray-600">{item.detail}</p>
+                  </div>
+                ))}
+              </div>
               <div className="mt-5 flex items-center justify-end gap-2">
                 <button
                   type="button"
