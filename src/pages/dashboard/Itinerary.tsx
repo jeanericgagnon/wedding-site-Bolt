@@ -116,7 +116,9 @@ export const DashboardItinerary: React.FC = () => {
     if (!isDemoMode) return;
     try {
       localStorage.setItem(DEMO_ITINERARY_STORAGE_KEY, JSON.stringify(events));
-    } catch {}
+    } catch {
+      // Demo itinerary persistence is best-effort.
+    }
   }, [isDemoMode, events]);
 
   async function syncWeddingDataSchedule(siteId: string, eventList: ItineraryEvent[]) {
@@ -207,7 +209,9 @@ export const DashboardItinerary: React.FC = () => {
               return;
             }
           }
-        } catch {}
+        } catch {
+          // Fall back to seeded demo itinerary data if cached data is unavailable.
+        }
 
         setEvents(seeded as EventWithInvites[]);
         return;
@@ -786,7 +790,7 @@ Add to itinerary
               const pending = Math.max(0, event.invitation_count - event.attending_count - event.declined_count);
               return (
               <Card key={event.id} className={`p-6 hover:shadow-lg transition-shadow ${conflictIds.has(event.id) ? 'ring-2 ring-amber-300' : ''}`}>
-                <div className="flex items-start justify-between">
+                <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-3 flex-wrap">
                       <h3 className="text-xl font-semibold text-neutral-900">
@@ -872,10 +876,11 @@ Add to itinerary
                     </div>
                   </div>
 
-                  <div className="flex gap-2 ml-2 sm:ml-4">
+                  <div className="flex w-full flex-wrap gap-2 lg:ml-4 lg:w-auto lg:justify-end">
                     <Button
                       variant="outline"
                       size="sm"
+                      className="flex-1 sm:flex-none"
                       onClick={() => setSelectedEventId(event.id)}
                     >
                       <UserPlus className="w-4 h-4 mr-1" />
@@ -884,6 +889,7 @@ Add to itinerary
                     <Button
                       variant="outline"
                       size="sm"
+                      className="flex-1 sm:flex-none"
                       onClick={() => {
                         const params = new URLSearchParams({ eventId: event.id, eventName: event.event_name });
                         window.location.href = `/dashboard/photos?${params.toString()}`;
@@ -895,6 +901,7 @@ Add to itinerary
                     <Button
                       variant="outline"
                       size="sm"
+                      className="sm:flex-none"
                       onClick={() => openEventForm(event)}
                     >
                       <Edit2 className="w-4 h-4" />
@@ -902,6 +909,7 @@ Add to itinerary
                     <Button
                       variant="outline"
                       size="sm"
+                      className="sm:flex-none"
                       onClick={() => handleDeleteEvent(event.id)}
                     >
                       <Trash2 className="w-4 h-4" />

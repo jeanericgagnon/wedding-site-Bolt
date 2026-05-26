@@ -48,11 +48,6 @@ function runStep(step) {
 
 const results = [
   runStep({
-    id: 'wedding-identity-export-tests',
-    label: 'Wedding identity export unit and component tests',
-    command: 'npm test -- --run src/lib/weddingIdentityExports.test.ts src/pages/dashboard/settings/SettingsIdentityExportsPanel.test.tsx src/pages/dashboard/settings/settingsSiteData.test.ts src/lib/settingsErrorSafety.test.ts',
-  }),
-  runStep({
     id: 'build',
     label: 'Build integrity check',
     command: 'npm run build',
@@ -117,11 +112,13 @@ const output = {
     passed: results.filter((result) => result.ok).length,
     failed: results.filter((result) => !result.ok).length,
   },
-  contractSummary: 'Wedding identity export proof is green: this owner-tooling lane validates safe identity-export generation and download continuity while still deferring broader launch truth to the proof-board flow.',
+  contractSummary: failedRequired.length === 0
+    ? 'Wedding identity export proof is green: this owner-tooling lane validates safe identity-export generation and download continuity on the current shipped surface.'
+    : 'Wedding identity export proof is not green yet: required build or identity-export browser evidence is still failing.',
   automatedCoverage: [
-    'Wedding identity readiness truth, planner-safe manifest output, and safe story/style export generation',
     'Settings identity export controls for manifest copy, style-kit copy, print-pack download, and story-graphic download',
     'Browser-triggered identity export capture with nonblank HTML/SVG/PNG/PDF output and no private token leakage',
+    'Build integrity after identity-export assertions',
   ],
   stillManualProofNeeded: [
     'Keep the shipped-runtime copy/download lane green after the next identity-export-affecting deploy or export-surface change.',

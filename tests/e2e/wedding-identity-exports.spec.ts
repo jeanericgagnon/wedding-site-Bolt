@@ -65,9 +65,11 @@ test('settings identity exports copy and download safe wedding assets', async ({
   test.setTimeout(120_000);
   await enableIdentityExportCaptureHarness(page);
   await signInAsOwner(page);
-  await page.goto('/dashboard/settings?bypassPayment=1&identityExportsQa=1&tab=data', { waitUntil: 'domcontentloaded' });
+  await page.goto('/dashboard/settings?bypassPayment=1&identityExportsQa=1&tab=site', { waitUntil: 'domcontentloaded' });
 
-  await expect(page.getByRole('heading', { name: 'Site Settings' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Settings' }).first()).toBeVisible();
+  await page.getByRole('button', { name: /site settings/i }).first().click();
+  await expect(page.getByText('Site URL')).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Wedding identity exports' })).toBeVisible();
   const publicSiteUrlField = page.getByRole('textbox', { name: 'Public site URL' });
   await expect(publicSiteUrlField).toHaveValue(/https:\/\/.+\.dayof\.love/);
@@ -185,9 +187,11 @@ test('settings identity exports stay readable across theme variants with long na
   test.setTimeout(120_000);
   await enableIdentityExportCaptureHarness(page);
   await signInAsOwner(page);
-  await page.goto('/dashboard/settings?bypassPayment=1&identityExportsQa=1&identityThemeQa=1&tab=data', { waitUntil: 'domcontentloaded' });
+  await page.goto('/dashboard/settings?bypassPayment=1&identityExportsQa=1&identityThemeQa=1&tab=site', { waitUntil: 'domcontentloaded' });
 
-  await expect(page.getByRole('heading', { name: 'Site Settings' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Settings' }).first()).toBeVisible();
+  await page.getByRole('button', { name: /site settings/i }).first().click();
+  await expect(page.getByText('Site URL')).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Wedding identity exports' })).toBeVisible();
 
   await expect(page.getByRole('button', { name: /save print pack/i })).toBeVisible();

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, Button, Input, Select, Badge } from '../../components/ui';
@@ -16,8 +16,20 @@ import { useAuth } from '../../hooks/useAuth';
 import { PLANNER_ROLE_OPTIONS, PLANNER_PERMISSION_GROUPS, getPlannerPermissionPreset, readPlannerInvite, writePlannerInvite, type PlannerInviteRecord, type PlannerPermissionKey } from '../../lib/plannerAccess';
 import { resolveActiveSiteForUser } from '../../lib/activeSite';
 import { useToast } from '../../components/ui/Toast';
+import { copyTextOrDownload, downloadTextFile } from '../../lib/copyText';
+import { downloadBlob, rasterizeSvgToPdfBlob, rasterizeSvgToPngBlob } from '../../lib/svgRaster';
+import {
+  buildWeddingIdentityExportKit,
+  buildWeddingIdentityManifestText,
+  buildWeddingIdentityPrintAssets,
+  buildWeddingIdentityStoryGraphic,
+  buildWeddingIdentityStyleKit,
+  renderWeddingIdentityPrintHtml,
+  renderWeddingIdentityPrintSvg,
+} from '../../lib/weddingIdentityExports';
 import { formatSettingsDate } from './settingsDate';
 import { SETTINGS_SITE_SELECT } from './settingsSiteSelect';
+import { SettingsIdentityExportsPanel } from './SettingsIdentityExportsPanel';
 
 
 interface RSVPQuestionSetting {
@@ -48,6 +60,8 @@ export const DashboardSettings: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'account' | 'team' | 'site' | 'rsvp' | 'notifications' | 'billing'>('account');
 
   const [coupleNames, setCoupleNames] = useState('');
+  const [weddingDate, setWeddingDate] = useState<string | null>(null);
+  const [venueName, setVenueName] = useState<string | null>(null);
   const [accountEmail, setAccountEmail] = useState('');
   const [accountSaving, setAccountSaving] = useState(false);
   const [accountSuccess, setAccountSuccess] = useState<string | null>(null);
@@ -165,6 +179,8 @@ export const DashboardSettings: React.FC = () => {
     if (!user) {
       setWeddingSiteId(null);
       setCoupleNames('');
+      setWeddingDate(null);
+      setVenueName(null);
       setAccountEmail('');
       setSiteSlug('');
       setGuestAccessToken(null);
@@ -221,6 +237,8 @@ export const DashboardSettings: React.FC = () => {
         setAccountEmail(user.email ?? '');
         setCurrentTemplate((data.active_template_id as string) || 'base');
         setSiteSlug((data.site_slug as string) ?? '');
+        setWeddingDate((data.wedding_date as string | null) ?? null);
+        setVenueName((data.venue_name as string | null) ?? null);
         setMusicPlaylistUrl((data.music_playlist_url as string) ?? '');
         setPrivacyMode((data.privacy_mode as 'public' | 'password_protected' | 'invite_only') ?? 'public');
         setHideFromSearch(!!(data.hide_from_search as boolean | null | undefined));
@@ -264,6 +282,8 @@ export const DashboardSettings: React.FC = () => {
         setWeddingSiteId(null);
         setAccountEmail(user.email ?? '');
         setSiteSlug('');
+        setWeddingDate(null);
+        setVenueName(null);
         setGuestAccessToken(null);
         setIsPublished(false);
         setCollaboratorInvites([]);
@@ -397,7 +417,7 @@ export const DashboardSettings: React.FC = () => {
     setCreatingCollaboratorInvite(true);
     try {
       const inviteToken = crypto.randomUUID();
-      const { data, error } = await supabase.rpc('settings_collaborator_invite_write', {
+      const { error } = await supabase.rpc('settings_collaborator_invite_write', {
         p_wedding_site_id: weddingSiteId,
         p_payload: {
           invite_email: email,
@@ -641,6 +661,56 @@ export const DashboardSettings: React.FC = () => {
   };
 
   const publicSiteUrl = siteSlug ? `https://${siteSlug}.dayof.love` : '';
+  const settingsSearchParams = typeof window === 'undefined' ? new URLSearchParams() : new URLSearchParams(window.location.search);
+  const identityExportsQa = settingsSearchParams.get('identityExportsQa') === '1';
+  const identityThemeQa = settingsSearchParams.get('identityThemeQa') === '1';
+  const currentTemplateName = useMemo(
+    () => getAllTemplates().find((template) => template.id === currentTemplate)?.name ?? 'Current site theme',
+    [currentTemplate],
+  );
+  const exportPublicSiteUrl = publicSiteUrl || (identityExportsQa ? 'https://alex-jordan-demo.dayof.love' : '');
+  const exportCoupleNames = identityThemeQa
+    ? 'Alexandria Montgomery-Smythe & Christopher Benedict Holloway'
+    : (coupleNames.trim() || (identityExportsQa ? 'Alex & Jordan' : ''));
+  const exportWeddingDate = weddingDate || (identityExportsQa ? '2026-09-12' : null);
+  const exportVenueName = venueName || (identityExportsQa ? 'Rosewood Estate & Vineyard' : null);
+  const exportTemplateName = identityThemeQa ? 'Editorial Impact' : currentTemplateName;
+  const weddingIdentityExportKit = useMemo(() => buildWeddingIdentityExportKit({
+    coupleNames: exportCoupleNames,
+    publicSiteUrl: exportPublicSiteUrl,
+    weddingDate: exportWeddingDate,
+    venueName: exportVenueName,
+    templateId: currentTemplate,
+    templateName: exportTemplateName,
+    defaultLanguage,
+  }), [exportCoupleNames, exportPublicSiteUrl, exportWeddingDate, exportVenueName, currentTemplate, exportTemplateName, defaultLanguage]);
+  const weddingIdentityPrintAssets = useMemo(() => buildWeddingIdentityPrintAssets({
+    coupleNames: exportCoupleNames,
+    publicSiteUrl: exportPublicSiteUrl,
+    weddingDate: exportWeddingDate,
+    venueName: exportVenueName,
+    templateId: currentTemplate,
+    templateName: exportTemplateName,
+    defaultLanguage,
+  }), [exportCoupleNames, exportPublicSiteUrl, exportWeddingDate, exportVenueName, currentTemplate, exportTemplateName, defaultLanguage]);
+  const weddingIdentityStoryGraphic = useMemo(() => buildWeddingIdentityStoryGraphic({
+    coupleNames: exportCoupleNames,
+    publicSiteUrl: exportPublicSiteUrl,
+    weddingDate: exportWeddingDate,
+    venueName: exportVenueName,
+    templateId: currentTemplate,
+    templateName: exportTemplateName,
+    defaultLanguage,
+  }), [exportCoupleNames, exportPublicSiteUrl, exportWeddingDate, exportVenueName, currentTemplate, exportTemplateName, defaultLanguage]);
+  const weddingIdentityStyleKit = useMemo(() => buildWeddingIdentityStyleKit({
+    coupleNames: exportCoupleNames,
+    publicSiteUrl: exportPublicSiteUrl,
+    weddingDate: exportWeddingDate,
+    venueName: exportVenueName,
+    templateId: currentTemplate,
+    templateName: exportTemplateName,
+    defaultLanguage,
+  }), [exportCoupleNames, exportPublicSiteUrl, exportWeddingDate, exportVenueName, currentTemplate, exportTemplateName, defaultLanguage]);
   const plannerRoleOptions = PLANNER_ROLE_OPTIONS.filter((option) => option.value !== 'owner');
 
   const togglePlannerPermission = (key: PlannerPermissionKey) => {
@@ -649,6 +719,76 @@ export const DashboardSettings: React.FC = () => {
   const publicSiteQrUrl = publicSiteUrl && import.meta.env.VITE_ENABLE_THIRD_PARTY_QR === 'true'
     ? `https://api.qrserver.com/v1/create-qr-code/?size=512x512&data=${encodeURIComponent(publicSiteUrl)}`
     : '';
+
+  const copyIdentityManifest = async () => {
+    const manifest = buildWeddingIdentityManifestText(weddingIdentityExportKit);
+    const result = await copyTextOrDownload(manifest, 'dayof-wedding-identity-export-manifest.txt');
+    toast(result === 'copied' ? 'Wedding identity manifest copied.' : 'Wedding identity manifest downloaded.', 'success');
+  };
+
+  const copyIdentityStyleKit = async () => {
+    const result = await copyTextOrDownload(weddingIdentityStyleKit.text, weddingIdentityStyleKit.filename);
+    toast(result === 'copied' ? 'Wedding identity style kit copied.' : 'Wedding identity style kit downloaded.', 'success');
+  };
+
+  const downloadIdentityPrintPack = async () => {
+    if (weddingIdentityPrintAssets.length === 0) {
+      toast('Set a public site URL before saving the identity print pack.', 'error');
+      return;
+    }
+
+    const printSheet = renderWeddingIdentityPrintSvg(weddingIdentityPrintAssets);
+    if (!printSheet) {
+      toast('Set a public site URL before saving the identity print pack.', 'error');
+      return;
+    }
+
+    try {
+      downloadTextFile(
+        'dayof-wedding-identity-print-pack.html',
+        renderWeddingIdentityPrintHtml(weddingIdentityPrintAssets),
+        'text/html;charset=utf-8',
+      );
+      downloadTextFile(
+        printSheet.filename,
+        printSheet.svg,
+        'image/svg+xml;charset=utf-8',
+      );
+      downloadBlob(
+        'dayof-wedding-identity-print-pack.png',
+        await rasterizeSvgToPngBlob(printSheet.svg),
+      );
+      downloadBlob(
+        'dayof-wedding-identity-print-pack.pdf',
+        await rasterizeSvgToPdfBlob(printSheet.svg),
+      );
+      toast('Wedding identity print pack saved as HTML, SVG, PNG, and PDF.', 'success');
+    } catch (err) {
+      toast(err instanceof Error ? err.message : "Couldn't save the identity print pack.", 'error');
+    }
+  };
+
+  const downloadIdentityStoryGraphic = async () => {
+    if (!weddingIdentityStoryGraphic) {
+      toast('Set a public site URL before saving the story graphic.', 'error');
+      return;
+    }
+
+    try {
+      downloadTextFile(
+        weddingIdentityStoryGraphic.filename,
+        weddingIdentityStoryGraphic.svg,
+        'image/svg+xml;charset=utf-8',
+      );
+      downloadBlob(
+        'dayof-wedding-story-graphic.png',
+        await rasterizeSvgToPngBlob(weddingIdentityStoryGraphic.svg),
+      );
+      toast('Wedding story graphic saved as SVG and PNG.', 'success');
+    } catch (err) {
+      toast(err instanceof Error ? err.message : "Couldn't save the story graphic.", 'error');
+    }
+  };
 
   const handleDefaultLanguageChange = async (next: 'en' | 'es') => {
     const previous = defaultLanguage;
@@ -1206,7 +1346,7 @@ export const DashboardSettings: React.FC = () => {
               <>
                 <Card variant="bordered" padding="lg">
                   <CardHeader>
-                    <CardTitle>Site URL</CardTitle>
+                    <CardTitle>Website address</CardTitle>
                     <CardDescription>Your wedding site address</CardDescription>
                   </CardHeader>
                   <CardContent>
@@ -1289,6 +1429,17 @@ export const DashboardSettings: React.FC = () => {
                     </form>
                   </CardContent>
                 </Card>
+
+                <SettingsIdentityExportsPanel
+                  publicSiteUrl={exportPublicSiteUrl}
+                  onCopyIdentityManifest={copyIdentityManifest}
+                  onCopyIdentityStyleKit={copyIdentityStyleKit}
+                  onDownloadIdentityPrintPack={downloadIdentityPrintPack}
+                  onDownloadIdentityStoryGraphic={downloadIdentityStoryGraphic}
+                  weddingIdentityExportKit={weddingIdentityExportKit}
+                  weddingIdentityPrintAssets={weddingIdentityPrintAssets}
+                  hasStoryGraphic={Boolean(weddingIdentityStoryGraphic)}
+                />
 
                 <Card variant="bordered" padding="lg">
                   <CardHeader>

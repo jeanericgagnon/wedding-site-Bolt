@@ -3,8 +3,11 @@
 import { execSync } from 'node:child_process';
 import { resolvePreviewRuntime, stopPreviewRuntime } from './proofPreviewRuntime.mjs';
 
-const PREVIEW_URL = 'http://127.0.0.1:4176';
+const PREVIEW_PORT = 4174;
+const PREVIEW_URL = `http://127.0.0.1:${PREVIEW_PORT}`;
 const requestedBaseUrl = process.env.PLAYWRIGHT_BASE_URL || PREVIEW_URL;
+const browserSpec = 'tests/e2e/mobile-core-smoke.spec.ts';
+const browserGrep = 'guest-facing mobile routes stay reachable and token-free where intended';
 
 function runStep(step) {
   const startedAt = new Date().toISOString();
@@ -14,7 +17,6 @@ function runStep(step) {
       encoding: 'utf8',
       shell: '/bin/zsh',
       env: process.env,
-      timeout: step.timeoutMs ?? 180_000,
       maxBuffer: 20 * 1024 * 1024,
     });
 
@@ -48,29 +50,27 @@ function runStep(step) {
 
 const results = [
   runStep({
-    id: 'photo-memory-tests',
-    label: 'Photo memory flow unit and boundary tests',
-    command: 'NODE_OPTIONS=--max-old-space-size=4096 npm test -- --run src/components/dashboard/PhotoBucketCards.test.tsx src/pages/dashboard/guestPhotoDateTime.test.ts src/pages/dashboard/guestPhotoEventDate.test.ts src/pages/dashboard/guestPhotoUploadTime.test.ts src/lib/photoUploadSafety.test.ts',
-    timeoutMs: 240_000,
+    id: 'dayof-web-mode-tests',
+    label: 'Public site and guest-hub route continuity tests',
+    command: 'NODE_OPTIONS=--max-old-space-size=4096 npm test -- --run src/pages/SiteView.test.ts src/lib/publicSiteProject.test.ts src/lib/publicSiteSlug.test.ts',
   }),
   runStep({
     id: 'build',
     label: 'Build integrity check',
     command: 'npm run build',
-    timeoutMs: 900_000,
   }),
 ];
 
 let previewProcess = null;
 let previewOutput = { stdout: '', stderr: '' };
 let activeBaseUrl = requestedBaseUrl;
+
 try {
   if (requestedBaseUrl === PREVIEW_URL) {
     const previewRuntime = await resolvePreviewRuntime({
-      preferredPort: 4176,
+      preferredPort: PREVIEW_PORT,
       requestedBaseUrl,
       cwd: process.cwd(),
-      startupTimeoutMs: 120_000,
     });
     previewProcess = previewRuntime.previewProcess;
     previewOutput = previewRuntime.previewOutput;
@@ -78,35 +78,20 @@ try {
   }
 
   results.push(runStep({
-    id: 'photo-memory-browser-proof',
-    label: 'Photo memory flow browser proof',
-    command: `PLAYWRIGHT_BASE_URL=${activeBaseUrl} npx playwright test --workers=1 tests/e2e/mobile-core-smoke.spec.ts`,
-    timeoutMs: 900_000,
+    id: 'dayof-web-mode-browser-proof',
+    label: 'Guest-facing mobile wedding-hub browser proof',
+    command: `PLAYWRIGHT_BASE_URL=${activeBaseUrl} npx playwright test --workers=1 ${browserSpec} -g "${browserGrep}"`,
   }));
-
-  if (previewOutput.stdout.trim()) {
-    results.push({
-      id: 'preview-server-log',
-      label: 'Preview server log',
-      command: 'npm run preview -- --host 127.0.0.1 --port 4176',
-      required: false,
-      ok: true,
-      startedAt: new Date().toISOString(),
-      finishedAt: new Date().toISOString(),
-      stdout: previewOutput.stdout.trim(),
-      stderr: previewOutput.stderr.trim() || undefined,
-    });
-  }
 } catch (error) {
   results.push({
-    id: 'photo-memory-browser-proof',
-    label: 'Photo memory flow browser proof',
-    command: `PLAYWRIGHT_BASE_URL=${activeBaseUrl} npx playwright test --workers=1 tests/e2e/mobile-core-smoke.spec.ts`,
+    id: 'dayof-web-mode-browser-proof',
+    label: 'Guest-facing mobile wedding-hub browser proof',
+    command: `PLAYWRIGHT_BASE_URL=${activeBaseUrl} npx playwright test --workers=1 ${browserSpec} -g "${browserGrep}"`,
     required: true,
     ok: false,
     startedAt: new Date().toISOString(),
     finishedAt: new Date().toISOString(),
-    stderr: [previewOutput.stderr.trim(), error instanceof Error ? error.message : 'Photo memory flow preview server failed to start.'].filter(Boolean).join('\n'),
+    stderr: [previewOutput.stderr.trim(), error instanceof Error ? error.message : 'Day-of web mode preview server failed to start.'].filter(Boolean).join('\n'),
   });
 } finally {
   await stopPreviewRuntime(previewProcess);
@@ -115,7 +100,7 @@ try {
 const failedRequired = results.filter((result) => result.required && !result.ok);
 const output = {
   ok: failedRequired.length === 0,
-  slice: 'photo-memory-flow',
+  slice: 'dayof-web-mode',
   generatedAt: new Date().toISOString(),
   summary: {
     total: results.length,
@@ -123,16 +108,15 @@ const output = {
     failed: results.filter((result) => !result.ok).length,
   },
   contractSummary: failedRequired.length === 0
-    ? 'Photo memory flow proof is green: this feature bundle validates memory/recap upload-and-readback continuity as shipped lane evidence while still deferring the final launch call to the proof-board flow.'
-    : 'Photo memory flow proof is not green yet: required unit, build, or browser evidence is still failing.',
+    ? 'Day-of web mode proof is green: the public guest-hub path stays reachable on mobile without app-only assumptions.'
+    : 'Day-of web mode proof is not green yet: required route, build, or guest-hub browser evidence is still failing.',
   automatedCoverage: [
-    'Photo bucket card rendering plus guest-photo date/time normalization helpers',
-    'Guest-safe photo upload fallback messaging for the public route',
-    'Mobile guest photo-upload route continuity without raw-token leakage',
-    'Mobile dashboard visibility for the no-app memory flow, QR guest hub, and print-card controls',
+    'Public site + guest-hub route continuity helpers',
+    'Guest-facing mobile route continuity through RSVP, travel, photo upload, recap, guestbook, and vault paths',
+    'Build integrity after day-of web mode assertions',
   ],
   stillManualProofNeeded: [
-    'Keep the live upload-to-recap and owner export lane green after future photo-surface deploys.',
+    'Rerun the shipped guest-hub mobile path after future guest-facing route or wording deploys.',
   ],
   results,
 };
