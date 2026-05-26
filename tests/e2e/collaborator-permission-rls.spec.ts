@@ -184,12 +184,12 @@ async function createAndClaimInvite(options: {
     collaboratorPassword,
   } = options;
 
-  await ownerPage.goto(`/dashboard/settings?bypassPayment=1&permissionRlsQa=${encodeURIComponent(inviteName)}`, { waitUntil: 'domcontentloaded' });
+  await ownerPage.goto(`/dashboard/settings?tab=team&bypassPayment=1&permissionRlsQa=${encodeURIComponent(inviteName)}`, { waitUntil: 'domcontentloaded' });
   await expect(ownerPage.getByRole('heading', { name: 'Settings' }).first()).toBeVisible();
-  await ownerPage.getByRole('button', { name: 'Team Access' }).click();
+  await ownerPage.locator('#planner-invite-name').waitFor({ state: 'visible', timeout: 15_000 });
   await ownerPage.getByRole('button', { name: 'Read only' }).click();
-  await ownerPage.getByLabel('Planner name').fill(inviteName);
-  await ownerPage.getByLabel('Planner email').fill(inviteEmail);
+  await ownerPage.locator('#planner-invite-name').fill(inviteName);
+  await ownerPage.locator('#planner-invite-email').fill(inviteEmail);
   await ownerPage.getByRole('button', { name: 'Create invite link' }).click();
   await expect(ownerPage.getByText('Collaborator invite link created.')).toBeVisible();
 

@@ -123,16 +123,17 @@ test('owner can save and enforce invite-only privacy settings', async ({ page, b
   originalSitePasswordHash = site.site_password_hash ?? null;
 
   try {
-    await page.goto('/dashboard/settings?bypassPayment=1&settingsPrivacyQa=' + Date.now(), { waitUntil: 'domcontentloaded' });
+    await page.goto('/dashboard/settings?bypassPayment=1&tab=site&settingsPrivacyQa=' + Date.now(), { waitUntil: 'domcontentloaded' });
     await expect(page.getByRole('heading', { name: 'Settings' }).first()).toBeVisible();
-    await page.getByRole('button', { name: 'Site Settings' }).click();
-    await expect(page.getByText('Privacy Settings')).toBeVisible();
-    await page.getByRole('button', { name: 'Show' }).first().click();
+    const privacySection = page.locator('#settings-privacy');
+    await expect(privacySection.getByText('Privacy Settings')).toBeVisible();
+    await privacySection.scrollIntoViewIfNeeded();
+    await privacySection.getByRole('button', { name: 'Show' }).click();
 
-    await page.getByLabel('Invite-only live site').check();
-    await page.getByLabel('Hide from search engines').check();
-    await page.getByRole('button', { name: 'Save Privacy Settings' }).click();
-    await expect(page.getByText('Privacy settings saved.')).toBeVisible();
+    await privacySection.getByLabel('Invite-only live site').check();
+    await privacySection.getByLabel('Hide from search engines').check();
+    await privacySection.getByRole('button', { name: 'Save Privacy Settings' }).click();
+    await expect(privacySection.getByText('Privacy settings saved.')).toBeVisible();
 
     const savedResponse = await restFetch(restUrl('wedding_sites', {
       select: 'privacy_mode,hide_from_search,guest_access_token',
