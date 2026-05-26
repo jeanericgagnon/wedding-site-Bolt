@@ -42,6 +42,7 @@ Why not treat as cleanup residue:
 Recommended next move:
 - preserve as alternate history
 - salvage intentionally if name-change work resumes
+- see `docs/name-change-form-population-salvage-plan-2026-05-25.md` for the current salvage split
 
 #### `origin/codex/non-registry-live-fixes`
 
