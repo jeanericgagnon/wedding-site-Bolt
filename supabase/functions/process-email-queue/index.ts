@@ -175,8 +175,10 @@ Deno.serve(async (req: Request) => {
     }
 
     return json({ processed: items.length, delivered, failed });
-  } catch (err) {
-    const message = err instanceof Error ? err.message : "Internal server error";
-    return json({ error: message }, 500);
+  } catch {
+    console.error("PROCESS_EMAIL_QUEUE_UNEXPECTED_FAILED", {
+      reason: "UNEXPECTED_EMAIL_QUEUE_FAILURE",
+    });
+    return json({ error: "Could not process email queue. Please try again." }, 500);
   }
 });
