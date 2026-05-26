@@ -29,6 +29,7 @@ import { getArchiveModeDescriptor } from '../../lib/archiveMode';
 import { hasRespondedRsvpStatus, isAttendingRsvpStatus, isDeclinedRsvpStatus, isPendingRsvpStatus } from '../../lib/rsvpStatus';
 import { writeOnboardingResumeTarget } from '../../lib/onboardingResumeStorage';
 import { useToast } from '../../components/ui/Toast';
+import { buildGuestOpsCoach } from '../../lib/guestOpsCoach';
 import { calcOverviewDaysUntil, formatOverviewRelativeTime, formatOverviewWeddingDate, getOverviewTimestamp } from './overviewDate';
 import { getOverviewFallbackCoupleValue } from './overviewDraftBrief';
 import { buildNameChangeOverviewCardModel } from './nameChangeOverviewCard';
@@ -473,6 +474,16 @@ export const DashboardOverview: React.FC = () => {
     interactiveSuggestionCount: interactiveSuggestions.length,
   });
 
+  const guestOpsCoach = buildGuestOpsCoach({
+    totalGuests: stats?.totalGuests ?? 0,
+    attendingGuests: stats?.confirmedGuests ?? 0,
+    pendingResponses: stats?.pendingGuests ?? 0,
+    pendingWithoutEmail: 0,
+    noContact: stats ? Math.max((stats.totalGuests ?? 0) - (stats.contactableGuestCount ?? 0), 0) : 0,
+    missingMealChoices: 0,
+    missingPlusOneNames: 0,
+  });
+
   const hideSuggestion = async (id: string) => {
     const { error } = await supabase.from('interactive_suggestions').update({ is_hidden: true }).eq('id', id);
     if (error) {
@@ -783,11 +794,30 @@ export const DashboardOverview: React.FC = () => {
                     </div>
                   </div>
                   <div className="rounded-xl border border-border-subtle bg-white px-4 py-4">
-                    <p className="text-sm font-semibold text-text-primary">Where to push next</p>
-                    <div className="mt-3 space-y-2 text-sm text-text-secondary">
-                      <p>{(stats?.pendingGuests ?? 0) > 0 ? `${stats?.pendingGuests ?? 0} guests still need an RSVP reply.` : 'RSVP backlog is clear right now.'}</p>
-                      <p>{(stats?.contactableGuestCount ?? 0) < (stats?.totalGuests ?? 0) ? `${(stats?.totalGuests ?? 0) - (stats?.contactableGuestCount ?? 0)} guests still need contact coverage.` : 'Guest contact coverage looks complete.'}</p>
-                      <p>{(stats?.registryItemCount ?? 0) === 0 ? 'Registry still needs live items.' : 'Registry has enough live items to be guest-facing.'}</p>
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="text-sm font-semibold text-text-primary">Guest ops coach</p>
+                        <p className="mt-1 text-xs text-text-secondary">{guestOpsCoach.summary}</p>
+                      </div>
+                      <Badge variant={guestOpsCoach.tone === 'urgent' ? 'error' : guestOpsCoach.tone === 'steady' ? 'warning' : 'success'}>
+                        {guestOpsCoach.statusLabel}
+                      </Badge>
+                    </div>
+                    <div className="mt-3 space-y-2">
+                      {guestOpsCoach.actions.slice(0, 3).map((action) => (
+                        <button
+                          key={action.id}
+                          type="button"
+                          onClick={() => navigate(action.area === 'messages' ? '/dashboard/messages' : '/dashboard/guests')}
+                          className="w-full rounded-lg border border-border-subtle bg-surface-secondary/20 px-3 py-2 text-left hover:border-primary/30 hover:bg-white"
+                        >
+                          <div className="flex items-center justify-between gap-3">
+                            <span className="text-sm font-medium text-text-primary">{action.title}</span>
+                            <span className="text-[11px] text-primary">{action.ctaLabel}</span>
+                          </div>
+                          <p className="mt-1 text-xs text-text-secondary">{action.detail}</p>
+                        </button>
+                      ))}
                     </div>
                   </div>
                 </div>

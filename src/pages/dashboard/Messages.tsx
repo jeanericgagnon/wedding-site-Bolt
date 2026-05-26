@@ -14,6 +14,7 @@ import { GUEST_COMMUNICATION_FLOW } from '../../lib/guestCommunicationFlow';
 import { buildRsvpReminderDraft } from '../../lib/reminderDraftHelper';
 import { buildDayOfUpdateDraft } from '../../lib/dayOfUpdateHelper';
 import { buildEventReminderDraft } from '../../lib/eventReminderHelper';
+import { buildGuestOpsCoach, buildMessageOpsCoach } from '../../lib/guestOpsCoach';
 import { formatMessageEventOptionLabel } from './messageEventDate';
 import { formatMessageHistoryDate, formatMessageHistoryDateTime, getMessageHistoryTimestamp } from './messageHistoryTime';
 import { formatScheduledMessageDateTime, parseScheduleInputToIso, toScheduleInputValue } from './messageScheduleTime';
@@ -2230,6 +2231,72 @@ export const DashboardMessages: React.FC = () => {
     }));
   }
 
+  function runMessageOpsCoachPlay(play: ReturnType<typeof buildMessageOpsCoach>['plays'][number]) {
+    if (play.action === 'open-partial') {
+      if (reviewCandidates[0]) {
+        setViewingMessage(reviewCandidates[0]);
+      } else {
+        setHistoryStatusFilter('partial');
+        setHistoryChannelFilter('all');
+      }
+      return;
+    }
+
+    if (play.action === 'open-failed') {
+      if (retryCandidates[0]) {
+        setViewingMessage(retryCandidates[0]);
+      } else {
+        setHistoryStatusFilter('failed');
+        setHistoryChannelFilter('all');
+      }
+      return;
+    }
+
+    if (play.action === 'run-due-scheduled') {
+      void handleRunDueScheduledMessages();
+      return;
+    }
+
+    if (play.action === 'open-guests') {
+      navigate('/dashboard/guests');
+      return;
+    }
+
+    if (!canCompose) {
+      toast('Composer actions stay with the couple or planner in this access view.', 'info');
+      return;
+    }
+
+    if (play.action === 'compose-rsvp-reminder') {
+      applyComposerTemplate('rsvp-reminder', {
+        audience: 'not_responded',
+        channel: 'email',
+        scheduleType: 'now',
+        scheduleDate: '',
+        scheduleTime: '',
+        campaignName: 'RSVP follow-up',
+      });
+      setShowRecipientPreview(true);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      toast('Loaded an RSVP reminder into the composer.', 'info');
+      return;
+    }
+
+    if (play.action === 'compose-day-of-update') {
+      applyComposerTemplate('day-of-update', {
+        audience: 'attending',
+        channel: 'sms',
+        scheduleType: 'now',
+        scheduleDate: '',
+        scheduleTime: '',
+        campaignName: 'Day-of update',
+      });
+      setShowRecipientPreview(true);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      toast('Loaded a day-of update into the composer.', 'info');
+    }
+  }
+
   function applySavedTemplate(template: SavedComposerTemplate) {
     setEditingMessageId(null);
     const savedScheduleIsUsable = isSavedTemplateScheduleUsable(template);
@@ -2572,6 +2639,32 @@ export const DashboardMessages: React.FC = () => {
     return { successRate, failRate, skipped, skippedRate, overdueScheduled, retryBacklog, reviewBacklog };
   }, [messages, deliveries]);
 
+  const guestOpsCoach = useMemo(() => buildGuestOpsCoach({
+    totalGuests: guests.length,
+    attendingGuests: guests.filter((guest) => isAttendingStatus(guest.rsvp_status)).length,
+    pendingResponses: guests.filter((guest) => isPendingStatus(guest.rsvp_status)).length,
+    pendingWithoutEmail: guests.filter((guest) => isPendingStatus(guest.rsvp_status) && !hasReachableEmail(guest.email)).length,
+    noContact: guests.filter((guest) => !hasReachableEmail(guest.email) && !hasReachablePhone(guest.phone)).length,
+    missingMealChoices: 0,
+    missingPlusOneNames: 0,
+  }), [guests]);
+
+  const messageOpsCoach = useMemo(() => buildMessageOpsCoach({
+    totalGuests: guests.length,
+    attendingGuests: guests.filter((guest) => isAttendingStatus(guest.rsvp_status)).length,
+    pendingResponses: guests.filter((guest) => isPendingStatus(guest.rsvp_status)).length,
+    pendingWithoutEmail: guests.filter((guest) => isPendingStatus(guest.rsvp_status) && !hasReachableEmail(guest.email)).length,
+    noContact: guests.filter((guest) => !hasReachableEmail(guest.email) && !hasReachablePhone(guest.phone)).length,
+    missingMealChoices: 0,
+    missingPlusOneNames: 0,
+  }, {
+    scheduledCount: historyStatusCounts.scheduled,
+    overdueScheduledCount: deliveryHealth.overdueScheduled,
+    partialCount: historyStatusCounts.partial,
+    failedCount: historyStatusCounts.failed,
+    unreachedRecipientCount: messages.reduce((sum, message) => sum + getUnreachedCount(message, deliveries), 0),
+  }), [deliveryHealth.overdueScheduled, deliveries, guests, historyStatusCounts.failed, historyStatusCounts.partial, historyStatusCounts.scheduled, messages]);
+
   const campaignThreads = useMemo(() => {
     const map = new Map<string, {
       key: string;
@@ -2763,6 +2856,53 @@ export const DashboardMessages: React.FC = () => {
                 <p className="text-[11px] uppercase tracking-[0.22em] text-text-tertiary">0{index + 1}</p>
                 <p className="mt-2 text-sm font-semibold text-text-primary">{stage.label}</p>
                 <p className="mt-2 text-xs leading-5 text-text-secondary">{stage.detail}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="rounded-[28px] border border-border-subtle bg-white p-5 shadow-sm">
+          <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+            <div className="max-w-3xl">
+              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-text-tertiary">Suggested next moves</p>
+              <h2 className="mt-2 text-2xl font-semibold text-text-primary">{messageOpsCoach.pulse}</h2>
+              <p className="mt-2 text-sm text-text-secondary">{messageOpsCoach.summary}</p>
+            </div>
+            <div className="rounded-2xl border border-border-subtle bg-surface-subtle/30 px-4 py-3 md:min-w-[220px]">
+              <p className="text-[11px] uppercase tracking-[0.22em] text-text-tertiary">Guest ops readiness</p>
+              <p className="mt-1 text-2xl font-semibold text-text-primary">{guestOpsCoach.readinessScore}%</p>
+              <p className="mt-1 text-xs text-text-secondary">Shared guest and messaging confidence, so the next send is based on the real state of the list.</p>
+            </div>
+          </div>
+          <div className="mt-4 grid gap-3 md:grid-cols-3">
+            {messageOpsCoach.plays.map((play) => (
+              <div key={play.id} className="rounded-2xl border border-border-subtle bg-surface-subtle/20 px-4 py-4">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-sm font-semibold text-text-primary">{play.title}</p>
+                  <span className={`rounded-full px-2.5 py-1 text-[11px] font-medium ${
+                    play.status === 'review'
+                      ? 'border border-warning/20 bg-warning-light text-warning'
+                      : play.status === 'blocked'
+                        ? 'border border-error/20 bg-error-light text-error'
+                        : play.status === 'ready'
+                          ? 'border border-primary/20 bg-primary-light text-primary'
+                          : 'border border-success/20 bg-success-light text-success'
+                  }`}>
+                    {play.status === 'review' ? 'Review' : play.status === 'blocked' ? 'Blocked' : play.status === 'ready' ? 'Ready' : 'Calm'}
+                  </span>
+                </div>
+                <p className="mt-2 text-xs leading-5 text-text-secondary">{play.detail}</p>
+                {play.action !== 'none' && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="mt-3"
+                    disabled={!canCompose && (play.action === 'compose-rsvp-reminder' || play.action === 'compose-day-of-update' || play.action === 'run-due-scheduled')}
+                    onClick={() => runMessageOpsCoachPlay(play)}
+                  >
+                    {play.actionLabel}
+                  </Button>
+                )}
               </div>
             ))}
           </div>
