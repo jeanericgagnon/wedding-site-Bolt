@@ -69,8 +69,10 @@ Deno.serve(async (req: Request) => {
     }
 
     return json({ tokens });
-  } catch (err) {
-    const message = err instanceof Error ? err.message : "Internal server error";
-    return json({ error: message }, 500);
+  } catch {
+    console.error("GENERATE_TOKEN_UNEXPECTED_FAILED", {
+      reason: "UNEXPECTED_GENERATE_TOKEN_FAILURE",
+    });
+    return json({ error: "Could not generate a token. Please try again." }, 500);
   }
 });
