@@ -39,7 +39,7 @@
 - QR scanner, website/invite analytics, and collaborator access proof helpers now say the same kind of lane-truth story too, so the ops/privacy/permissions bundle family is clearer about what is shipped evidence versus what still rolls up into broader launch truth
 - prereqs, client RLS matrix, and client write inventory now say the same kind of infra-lane truth story too, so readiness, permission-boundary, and source-inventory proofs are clearer about what they establish versus what they only support
 - performance budget, AST security, and public-access coverage now say the same kind of infra-lane truth story too, so build-guard, source-security, and static boundary proofs are clearer about what they establish versus what they only support
-- notification digest, wedding identity exports, and budget/vendor ledger now say the same kind of lane-truth story too, so the long-tail owner/planning proof helpers are clearer about what shipped behavior they validate versus what still needs separate live/runtime confirmation
+- notification digest, wedding identity exports, and budget/vendor ledger now say the same kind of lane-truth story too, so the long-tail owner/planning proof helpers are clearer about what shipped behavior they validate versus what is already carried by the canonical live matrix versus future upkeep reruns
 - AI clearance/readiness/migration, registry-preview SSRF, and data-integrity helpers now say the same kind of lane-truth story too, so AI/privacy, fetch-safety, and deep integrity proofs are clearer about what they close versus what they only prepare or support
 - AI secure model/exposure plus collaborator-runtime and guest-lookup-scope helpers now say the same kind of lane-truth story too, so the deeper live runtime/privacy lanes are clearer about what they close versus what they complement
 - guest-hub QR, guests/RSVP ops, and name-change runtime now say the same kind of lane-truth story too, so these major shipped product-lane proofs are clearer about when they close live/runtime truth versus when they still wait on a dedicated rerun
@@ -131,6 +131,7 @@ This note is meant to be the brief "how it works" map plus the current proof sig
   - owner-facing landing contract now exists at `/dashboard/builder?tool=travel`
 - Current proof:
   - travel section tests and guest hub travel coverage exist
+  - structured venue map-link fallback is covered in `src/lib/travelGuestPortal.test.ts`
   - dedicated proof lane exists: `npm run proof:v1:travel-guest-portal`
   - runtime guest-hub / travel proof cleared via:
     - `tests/e2e/travel-guest-hub-mobile.spec.ts`
@@ -157,6 +158,7 @@ This note is meant to be the brief "how it works" map plus the current proof sig
     - `tests/e2e/photo-memory-flow.spec.ts`
     - `tests/e2e/vault-contribute-write-read.spec.ts`
     - `tests/e2e/guest-hub-qr-print-pack-live.spec.ts`
+  - remaining guest-hub QR gap is the mobile QR-to-hub landing rerun, not print-pack export safety
 
 ### 7. Guest management
 
@@ -197,6 +199,7 @@ This note is meant to be the brief "how it works" map plus the current proof sig
   - runtime dashboard proof cleared via:
     - `tests/e2e/messages-comms-center.spec.ts`
     - `tests/e2e/messages-comms-center-live.spec.ts`
+  - remaining delivery-history proof is a deferred provider/send-lane follow-up, not a missing non-SMS dashboard proof
 
 ### 9. Registry
 
@@ -284,6 +287,7 @@ This note is meant to be the brief "how it works" map plus the current proof sig
     - `tests/e2e/settings-privacy-config.spec.ts`
     - `tests/e2e/settings-rsvp-config.spec.ts`
     - `tests/e2e/wedding-identity-exports.spec.ts`
+  - remaining identity-export work is future shipped-runtime upkeep after the next export-affecting deploy, not baseline asset-generation proof
 
 ### 14. Collaborator access
 
@@ -331,6 +335,8 @@ This note is meant to be the brief "how it works" map plus the current proof sig
   - dedicated proof lane exists for vendor/budget ledger: `npm run proof:v1:budget-vendor-ledger`
   - runtime proof cleared via:
     - `tests/e2e/planning-budget-vendor-ledger.spec.ts`
+    - `tests/e2e/planning-songs-addresses.spec.ts`
+    - the broad authenticated production write/read suite, which already covered planning song requests and address collection on `https://dayof.love`
 
 ### 17. Name change assistant
 
