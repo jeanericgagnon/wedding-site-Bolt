@@ -1,6 +1,7 @@
 import React from 'react';
 import { ImagePlus } from 'lucide-react';
 import { CanonicalPhotoBuckets, PhotoBucketKind } from '../../lib/aiPhotoBuckets';
+import { buildPhotoBucketStatusMap } from '../../lib/memoryCurator';
 
 const BUCKETS: Array<{ key: PhotoBucketKind; title: string; description: string; placementHint: string }> = [
   { key: 'main-couple', title: 'Main photo of you two', description: 'One favorite photo. We use this for the hero by default.', placementHint: 'Usually lands in the hero first.' },
@@ -17,16 +18,28 @@ type Props = {
 };
 
 export const PhotoBucketCards: React.FC<Props> = ({ buckets, onUploadClick, onRemoveClick }) => {
+  const bucketStatusMap = buildPhotoBucketStatusMap(buckets);
+
   return (
     <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
       {BUCKETS.map((bucket) => {
         const items = buckets[bucket.key] ?? [];
+        const status = bucketStatusMap[bucket.key];
+        const chipClass = status.tone === 'ready'
+          ? 'bg-emerald-50 text-emerald-700'
+          : status.tone === 'growing'
+            ? 'bg-amber-50 text-amber-700'
+            : 'bg-neutral-100 text-neutral-600';
         return (
           <div key={bucket.key} className="rounded-3xl border border-border bg-surface p-4 shadow-sm">
             <div className="flex items-start justify-between gap-3">
               <div>
                 <h3 className="text-base font-semibold text-text-primary">{bucket.title}</h3>
                 <p className="mt-1 text-sm text-text-secondary">{bucket.description}</p>
+                <div className="mt-2 flex flex-wrap items-center gap-2">
+                  <span className={`rounded-full px-2.5 py-1 text-[11px] font-medium ${chipClass}`}>{status.label}</span>
+                  <p className="text-xs text-text-tertiary">{status.detail}</p>
+                </div>
                 <p className="mt-2 text-xs text-text-tertiary">{bucket.placementHint}</p>
               </div>
               <span className="rounded-full bg-primary-light px-2.5 py-1 text-xs font-medium text-primary">{items.length}</span>
