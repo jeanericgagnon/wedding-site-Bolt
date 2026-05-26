@@ -3,6 +3,17 @@
 Audited: 2026-05-03 8:14 AM PT
 Updated: 2026-05-04 2:41 PM PT
 
+## Current status note
+
+This audit captures the AI launch-scope hardening review and detailed lane-by-lane reasoning.
+
+For current canonical launch truth, pair this audit with:
+- [BACKLOG.md](/Users/ericgagnon/Documents/DayOfLove/wedding-site-Bolt/BACKLOG.md)
+- [docs/PRODUCTION_HARDENING_REPORT.md](/Users/ericgagnon/Documents/DayOfLove/wedding-site-Bolt/docs/PRODUCTION_HARDENING_REPORT.md)
+- [docs/v1-smoke-proof-log.md](/Users/ericgagnon/Documents/DayOfLove/wedding-site-Bolt/docs/v1-smoke-proof-log.md)
+
+The durable product claim remains narrow on purpose: model-backed server routes for Quick Start orchestration, photo vision, and owner site translation; deterministic helpers elsewhere unless a separately proven server route is added.
+
 Scope: quick-start/onboarding AI, generated wedding-site copy, clarifying questions, planner/invisible-intelligence suggestions, photo organization and vision analysis, owner site translation, vendor profile generation, registry product preview, customer-visible AI output, provider/key/spend secrecy, public-source fetching, fallbacks, and proof coverage.
 
 Status: **AI/photo column-privilege blocker cleared; secure model-backed AI proof cleared; AI launch scope is explicit**. The browser-visible provider-key path has been closed locally, the dormant frontend provider client has been removed, raw provider response-body handling has been tightened in audited AI paths, avoidable provider/model metadata has been removed from key browser responses/queries, AI/photo sensitive columns have a live-applied database privilege migration plus regression guard, rollout guard, and executable exposure proof, and secure live model proof now passes for retained model-capable routes. Latest production deploy `dpl_BUWMeVETBxxuuuATpuv6XQJpby9p` is aliased to `https://dayof.love`; postdeploy passed 8/8. The current marketable AI launch scope is: model-backed server routes for Quick Start orchestration, photo vision, and owner site translation; deterministic browser launch lanes for generated wedding-site copy, legacy onboarding extraction, photo organizer planning, and planner suggestions. Current launch-truth flow follows the shared proof-board contract too: `npm run proof:v1:board:freshness` must pass before either board output is treated as canonical, while `ci-hardpass` and `Release Launch Gate` stay freshness-only and do not regenerate the board outputs. `npm run proof:v1:ai-product-readiness` codifies this scope and passed 23/23; `V1_AI_SECURE_MODEL_LIVE=1 npm run proof:v1:ai-secure-model` passed 17/17 at 2:41 PM PT without printing secret values.

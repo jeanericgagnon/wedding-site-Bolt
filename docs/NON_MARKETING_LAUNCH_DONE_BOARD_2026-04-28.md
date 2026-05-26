@@ -4,6 +4,19 @@ Date: 2026-04-28
 Source: `DayOf_Feature_Audit_Full_Accounting.docx`
 Scope: Product/runtime launch work only. Marketing acceleration is intentionally skipped.
 
+## Historical status note
+
+This board is an archived 2026-04-28 launch snapshot.
+
+It still contains rows that say things like collaborator runtime is blocked, production deploy confirmation is pending, or core proof is still waiting on environment setup. Those statements were accurate for that date, but they are not the current canonical launch call.
+
+For current launch truth, use:
+- [BACKLOG.md](/Users/ericgagnon/Documents/DayOfLove/wedding-site-Bolt/BACKLOG.md)
+- [docs/PRODUCTION_HARDENING_REPORT.md](/Users/ericgagnon/Documents/DayOfLove/wedding-site-Bolt/docs/PRODUCTION_HARDENING_REPORT.md)
+- [docs/v1-smoke-proof-log.md](/Users/ericgagnon/Documents/DayOfLove/wedding-site-Bolt/docs/v1-smoke-proof-log.md)
+
+Treat this file as historical decision context, not the current readiness board.
+
 ## Operating Rule
 
 Every feature gets one outcome:

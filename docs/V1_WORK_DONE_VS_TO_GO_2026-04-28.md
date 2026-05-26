@@ -4,13 +4,26 @@ Date: 2026-04-28
 Branch: `codex/v1-finish-hard-gates`
 Repo: `jeanericgagnon/wedding-site-Bolt`
 
+## Historical status note
+
+This file is an archived status snapshot from 2026-04-28.
+
+Do not use the blocker list or "not done" sections below as the current launch verdict. They preserve the state of the repo at that time, including proof-account and provider gaps that were later closed or reclassified.
+
+Current launch truth now lives in:
+- [BACKLOG.md](/Users/ericgagnon/Documents/DayOfLove/wedding-site-Bolt/BACKLOG.md)
+- [docs/PRODUCTION_HARDENING_REPORT.md](/Users/ericgagnon/Documents/DayOfLove/wedding-site-Bolt/docs/PRODUCTION_HARDENING_REPORT.md)
+- [docs/v1-smoke-proof-log.md](/Users/ericgagnon/Documents/DayOfLove/wedding-site-Bolt/docs/v1-smoke-proof-log.md)
+
+If this file disagrees with those docs, treat this file as historical context only.
+
 ## Read This First
 
 This is the backlog for getting DayOf from "the repo builds and tests pass" to "a full wedding product that can be proudly shown, sold, and trusted."
 
 Green unit tests do not mean the product is done. They mean the codebase is stable enough to finish deliberately.
 
-Historical-note: this document preserves an older status snapshot from 2026-04-28. Current launch truth now lives in [BACKLOG.md](/Users/ericgagnon/Documents/DayOfLove/wedding-site-Bolt/BACKLOG.md), and the current proof-board contract requires `npm run proof:v1:board:freshness` before `npm run proof:v1:board` or `npm run proof:v1:board:md` is treated as canonical launch status. Workflow gates stay narrower on purpose: `ci-hardpass` and `Release Launch Gate` enforce freshness, but they do not regenerate the raw or markdown board outputs.
+Historical-note: this document preserves an older status snapshot from 2026-04-28. Current launch truth now lives in [BACKLOG.md](/Users/ericgagnon/Documents/DayOfLove/wedding-site-Bolt/BACKLOG.md), the hardening report, and the smoke-proof log. The current proof-board contract requires `npm run proof:v1:board:freshness` before `npm run proof:v1:board` or `npm run proof:v1:board:md` is treated as canonical launch status. Workflow gates stay narrower on purpose: `ci-hardpass` and `Release Launch Gate` enforce freshness, but they do not regenerate the raw or markdown board outputs.
 
 ## Current Truth
 
