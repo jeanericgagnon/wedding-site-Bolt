@@ -1,4 +1,4 @@
-import type { RegistryItem, RegistryPreview } from './registryTypes';
+import { isBadRegistryProductTitle, type RegistryItem, type RegistryPreview } from './registryTypes';
 
 const WEEKLY_REFRESH_MS = 1000 * 60 * 60 * 24 * 7;
 
@@ -32,6 +32,34 @@ function deriveRegistryRefreshRetailer(item: RegistryItem, preview: RegistryPrev
     ?? null;
 }
 
+export function scoreRegistryItemQuality(item: RegistryItem): number {
+  let score = 0;
+  if (!isBadRegistryProductTitle(item.item_name)) score += 40;
+  if (item.image_url) score += 20;
+  if (item.price_amount != null || item.price_label) score += 15;
+  if (item.merchant || item.store_name || item.selected_retailer) score += 10;
+  if (item.description || item.notes) score += 5;
+  if (item.metadata_fetch_status === 'success') score += 5;
+  score += Math.min(5, Math.max(0, item.metadata_confidence_score ?? 0) * 5);
+  return score;
+}
+
+export function scoreRegistryPreviewQuality(preview: RegistryPreview): number {
+  if (preview.display_mode === 'link_card' || preview.fetch_status === 'blocked' || isBadRegistryProductTitle(preview.title)) {
+    return 20;
+  }
+
+  let score = 0;
+  if (!isBadRegistryProductTitle(preview.title)) score += 40;
+  if (preview.image_url) score += 20;
+  if (preview.price_amount != null || preview.price_label) score += 15;
+  if (preview.merchant || preview.store_name || preview.retailer || preview.brand) score += 10;
+  if (preview.description) score += 5;
+  if (preview.fetch_status === 'success') score += 5;
+  score += Math.min(5, Math.max(0, preview.confidence_score ?? 0) * 5);
+  return score;
+}
+
 export function getRegistryRefreshSourceUrl(item: Pick<RegistryItem, 'selected_product_url' | 'item_url' | 'canonical_url'>) {
   return item.selected_product_url ?? item.item_url ?? item.canonical_url ?? null;
 }
@@ -51,6 +79,24 @@ export function buildRegistryRefreshFields(
   const estimatedPriceCents = preview.price_amount != null
     ? Math.round(preview.price_amount * 100)
     : item.estimated_price_cents ?? null;
+  const oldQuality = scoreRegistryItemQuality(item);
+  const newQuality = scoreRegistryPreviewQuality(preview);
+
+  if (!replaceExisting && oldQuality > 55 && newQuality < oldQuality) {
+    const existingMetadata = item.product_metadata && !Array.isArray(item.product_metadata) ? item.product_metadata : {};
+    return {
+      metadata_last_checked_at: nowIso,
+      next_refresh_at: nextRefreshAt,
+      last_auto_refreshed_at: autoRefresh ? nowIso : item.last_auto_refreshed_at ?? null,
+      product_metadata: {
+        ...existingMetadata,
+        registryLastRefreshSkippedReason: 'new_result_worse',
+        registryLastRefreshPreviewStatus: preview.fetch_status ?? null,
+        registryLastRefreshPreviewMode: preview.display_mode ?? null,
+        registryLastRefreshCheckedAt: nowIso,
+      },
+    };
+  }
 
   const fields: Partial<RegistryItem> = {
     metadata_last_checked_at: nowIso,

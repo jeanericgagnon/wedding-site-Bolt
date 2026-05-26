@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import type { RegistryItem, RegistryPreview } from './registryTypes';
-import { buildRegistryRefreshFields, getRegistryRefreshSourceUrl } from './registryRefreshFields';
+import { buildRegistryRefreshFields, getRegistryRefreshSourceUrl, scoreRegistryItemQuality, scoreRegistryPreviewQuality } from './registryRefreshFields';
 
 function makeItem(overrides: Partial<RegistryItem> = {}): RegistryItem {
   return {
@@ -122,5 +122,43 @@ describe('buildRegistryRefreshFields', () => {
     expect(fields.image_url).toBeUndefined();
     expect(fields.description).toBe('A better bowl');
     expect(fields.selected_retailer).toBe('Store B');
+  });
+
+  it('does not overwrite a good item with a blocked or link-only refresh result', () => {
+    const item = makeItem({
+      item_name: 'Vitamix Ascent A3500 Blender',
+      image_url: 'https://cdn.example.com/vitamix.jpg',
+      price_amount: 649,
+      price_label: '$649.00',
+      store_name: 'Williams Sonoma',
+      merchant: 'Williams Sonoma',
+      metadata_confidence_score: 0.92,
+    });
+    const preview = makePreview({
+      title: 'Access Denied',
+      image_url: null,
+      price_amount: null,
+      price_label: null,
+      merchant: 'Williams Sonoma',
+      store_name: 'Williams Sonoma',
+      fetch_status: 'blocked',
+      source_method: 'link_only',
+      display_mode: 'link_card',
+      confidence_score: 0.4,
+    });
+
+    const fields = buildRegistryRefreshFields(item, preview, { autoRefresh: true, now: new Date('2026-05-13T20:00:00.000Z') });
+
+    expect(scoreRegistryItemQuality(item)).toBeGreaterThan(scoreRegistryPreviewQuality(preview));
+    expect(fields.item_name).toBeUndefined();
+    expect(fields.image_url).toBeUndefined();
+    expect(fields.price_amount).toBeUndefined();
+    expect(fields.metadata_fetch_status).toBeUndefined();
+    expect(fields.product_metadata).toEqual(expect.objectContaining({
+      registryLastRefreshSkippedReason: 'new_result_worse',
+      registryLastRefreshPreviewStatus: 'blocked',
+      registryLastRefreshPreviewMode: 'link_card',
+    }));
+    expect(fields.last_auto_refreshed_at).toBe('2026-05-13T20:00:00.000Z');
   });
 });
