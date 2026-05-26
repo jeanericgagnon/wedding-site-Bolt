@@ -2,6 +2,35 @@
 
 Run this before every production deployment.
 
+## Release Readiness Refresh — 2026-05-26
+
+### Current Branch Truth
+
+- `main` is clean and synced with `origin/main`
+- latest merge on `main`: `151354afb` (`Merge pull request #94 from jeanericgagnon/codex-deploy-readiness-main-audit`)
+- latest `main` hardpass GitHub run: `success`
+
+### Current Audit Results
+
+| Check | Result |
+|---|---|
+| `npm run build` | PASS |
+| `npm run test:security` | PASS |
+| `npm run proof:v1:strict-pocket` | PASS |
+| `npm run smoke:registry` | PASS |
+| `npm run test:smoke` | PASS |
+| Fresh worktree `npm ci` | PASS |
+| Fresh worktree `npm run typecheck -- --pretty false` | PASS |
+
+### Deploy Readiness Call
+
+**GO, with one environment note**
+
+- The launch-blocking registry smoke drift and missing barcode lookup lane were repaired in PR #94.
+- Current `main` passed the launch-critical local and live-smoke audit after those repairs.
+- A fresh-install typecheck pass confirmed the earlier local checkout typecheck failure was environment contamination, not repo source truth.
+- Local `npm ci` on Node 22 surfaced an engine warning from `@zxing/library`, while GitHub hardpass already uses Node 24. Prefer deploying and CI-verifying on the Node 24 lane.
+
 ## Pre-Deploy Quality Gate
 
 - [ ] `npm run typecheck` — 0 errors

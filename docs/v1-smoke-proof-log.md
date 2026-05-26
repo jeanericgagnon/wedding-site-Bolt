@@ -8,6 +8,22 @@ _Launch call right now:_ `GO`
 
 ## Current Truth
 
+- 2026-05-26 10:25 AM PDT:
+  - merged deploy-readiness audit PR #94 onto `main` (`151354afb`)
+  - repaired current launch blockers in the audit lane:
+    - stale `proof:v1:strict-pocket` launch-critical file list
+    - stale `smoke:registry` assertions
+    - missing `registry-barcode-lookup` source/test lane used by current registry flows
+  - `npm run build` -> `PASS`
+  - `npm run test:security` -> `PASS`
+  - `npm run proof:v1:strict-pocket` -> `PASS`
+  - `npm run test:smoke` -> `PASS`
+  - fresh temporary worktree:
+    - `npm ci` -> `PASS`
+    - `npm run typecheck -- --pretty false` -> `PASS`
+  - `hardpass-rsvp` on `main` for SHA `151354afb` -> `SUCCESS`
+  - no deploy was run; latest verified live deploy remains `dpl_DQG5bU5yVbqT79Y6r4ZCx13nPtSU`
+  - current launch call from repo + CI truth: `GO`, with the operational note that GitHub hardpass uses Node 24 and local Node 22 still surfaces an `@zxing/library` engine warning during clean install
 - 2026-05-21 08:46 PM PDT:
   - added a headless registry maintenance proof lane in `scripts/v1-proof-registry-maintenance-report.mjs`
   - the proof now reads the same shared registry maintenance snapshot as the dashboard cleanup surface
