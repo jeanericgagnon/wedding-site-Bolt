@@ -294,9 +294,9 @@ async function deliverMessage(opts: {
       return { ok: false, status: 500, body: { error: sentErr.message } };
     }
 
-    const used = (sentRows ?? [])
-      .filter((r: any) => ["sent", "partial", "queued"].includes(String(r.status ?? "")))
-      .reduce((sum: number, r: any) => sum + Number(r.recipient_count ?? 0), 0);
+    const used = ((sentRows ?? []) as Array<{ recipient_count?: number | null; status?: string | null }>)
+      .filter((row) => ["sent", "partial", "queued"].includes(String(row.status ?? "")))
+      .reduce((sum: number, row) => sum + Number(row.recipient_count ?? 0), 0);
 
     const HARD_EMAIL_CAP = 1000;
     if (used + eligibleGuests.length > HARD_EMAIL_CAP) {
@@ -337,10 +337,10 @@ async function deliverMessage(opts: {
       return { ok: false, status: 500, body: { error: lotsError.message } };
     }
 
-    const lots = (purchaseLots ?? []).map((l: any) => ({
-      id: l.id as string,
-      remaining: Number(l.remaining_credits ?? 0),
-      expiresAt: l.expires_at as string | null,
+    const lots = ((purchaseLots ?? []) as Array<{ id: string; remaining_credits?: number | null; expires_at?: string | null }>).map((lot) => ({
+      id: lot.id,
+      remaining: Number(lot.remaining_credits ?? 0),
+      expiresAt: lot.expires_at ?? null,
     }));
 
     let expiredCredits = 0;
@@ -645,7 +645,7 @@ Deno.serve(async (req: Request) => {
         return jsonResponse(500, { error: dueMessagesError.message });
       }
 
-      const messageIds = (dueMessages ?? []).map((row: any) => row.id as string).filter(Boolean);
+      const messageIds = ((dueMessages ?? []) as Array<{ id: string | null }>).map((row) => row.id).filter(Boolean) as string[];
       if (messageIds.length === 0) {
         return jsonResponse(200, {
           success: true,
@@ -718,8 +718,10 @@ Deno.serve(async (req: Request) => {
     });
 
     return jsonResponse(result.status, result.body);
-  } catch (err) {
-    const message = err instanceof Error ? err.message : "Internal server error";
-    return jsonResponse(500, { error: message });
+  } catch {
+    console.error("SEND_BULK_MESSAGE_UNEXPECTED_FAILED", {
+      reason: "UNEXPECTED_SEND_BULK_FAILURE",
+    });
+    return jsonResponse(500, { error: "Could not process this message. Please try again." });
   }
 });
