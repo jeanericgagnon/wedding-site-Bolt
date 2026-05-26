@@ -21,7 +21,7 @@ type ProofBoardOutput = {
 };
 
 const read = (path: string) => readFileSync(path, 'utf8');
-const FRESH_GENERATED_AT = '2026-05-24 04:16 PM PT';
+const FRESH_GENERATED_AT = '2026-05-26 11:22 PM PT';
 
 const parseCurrentStateTable = (text: string) => {
   const lines = text.split(/\r?\n/);
@@ -86,12 +86,12 @@ describe('proof board freshness', () => {
     expect(board.currentState).toMatchObject(expectedState);
     expect(board.activeUngatedLaunchBlockers ?? []).toEqual(expectedBlockers);
     expect(board.currentStateFreshness?.status).toBe('FRESH');
-    expect(board.summary?.currentProofState).toContain('proof:v1:full-suite-exit-gate');
-    expect(board.summary?.currentProofState).toContain('proof:v1:board:freshness');
+    expect(board.summary?.currentProofState).toContain('proof:v1:canonical-smoke');
+    expect(board.summary?.currentProofState).toContain('proof:v1:guests-rsvp-ops');
     expect(board.summary?.currentNextActions ?? '').toContain('proof:v1:board:freshness');
     expect(board.activeUngatedLaunchBlockers ?? []).toEqual([]);
-    expect(board.sections?.['Current Canonical Status']).toContain('| Current launch verdict | `FULL-SUITE READY FOR THE ACTIVE THREE-LANE SCOPE` |');
-    expect(board.sections?.['Current Canonical Status']).toContain('| Production-ready | `YES FOR DAY-OF / COORDINATOR, NAME CHANGE, AND REGISTRY BARCODE` |');
+    expect(board.sections?.['Current Canonical Status']).toContain('| Current launch verdict | `GO` |');
+    expect(board.sections?.['Current Canonical Status']).toContain('| Production-ready | `YES FOR THE CURRENT PUBLIC / GUEST / RSVP LAUNCH SCOPE` |');
     expect(board.sections?.['Deployment Matrix']).toContain('guest-contact-lookup');
   });
 
@@ -117,7 +117,7 @@ describe('proof board freshness', () => {
 
     const staleBacklogPath = join(tempDir, 'BACKLOG.md');
     const staleBacklog = read('BACKLOG.md').replace(
-      '| Current date/time | `2026-05-24 04:16 PM PDT` |',
+      '| Current date/time | `2026-05-26 11:22 PM PDT` |',
       '| Current date/time | `2026-05-15 02:26 PM PDT` |',
     );
     writeFileSync(staleBacklogPath, staleBacklog);
