@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { ExternalLink, Instagram } from 'lucide-react';
 import { getVendorProfileBySlug, submitVendorInquiry, type VendorProfile } from '../lib/vendorProfiles';
+import { buildVendorProfileGuide } from './dashboard/planning/vendorDecisionSupport';
 
 function readSourceLink(profile: VendorProfile, key: 'pinterest_url' | 'tiktok_url' | 'facebook_url' | 'youtube_url'): string | null {
   const value = profile.source_payload?.[key];
@@ -72,6 +73,7 @@ export const VendorProfilePage: React.FC = () => {
   const hasDescriptor = Boolean(profile?.descriptor);
   const hasDirectEmail = Boolean(profile?.contact_email);
   const hasPublicLinks = publicLinks.length > 0;
+  const profileGuide = useMemo(() => (profile ? buildVendorProfileGuide(profile) : null), [profile]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -170,6 +172,21 @@ export const VendorProfilePage: React.FC = () => {
 
           <div className="rounded-[28px] bg-white p-6 sm:p-8 shadow-[0_18px_40px_rgba(53,37,22,0.08)] space-y-4 lg:sticky lg:top-6">
             <h2 className="text-sm uppercase tracking-[0.28em] text-[#8b6f53]">Links</h2>
+            {profileGuide && (
+              <div className="rounded-[22px] bg-[#f8f3ec] px-4 py-4 space-y-2">
+                <p className="text-xs uppercase tracking-[0.22em] text-[#8b6f53]">{profileGuide.label}</p>
+                <p className="text-sm font-medium text-[#2f261d]">{profileGuide.title}</p>
+                <p className="text-sm text-[#6f5843]">{profileGuide.detail}</p>
+                <ul className="space-y-1.5 text-sm text-[#6f5843]">
+                  {profileGuide.checks.map((check) => (
+                    <li key={check} className="flex gap-2">
+                      <span className="mt-2 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-[#8b6f53]" />
+                      <span>{check}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
             {hasPublicLinks ? (
               <div className="space-y-3">
                 {publicLinks.map((link) => (
