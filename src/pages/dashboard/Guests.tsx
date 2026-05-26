@@ -27,6 +27,7 @@ import { demoWeddingSite, demoGuests, demoRSVPs } from '../../lib/demoData';
 import { buildQuickStartPhotosPath, readQuickStartDashboardContinuation } from '../../lib/quickStartContinuation';
 import { sendWeddingInvitation } from '../../lib/emailService';
 import { resolvePublicSiteSlugFromRow } from '../../lib/publicSiteSlug';
+import { buildGuestOpsCoach } from '../../lib/guestOpsCoach';
 import * as XLSX from 'xlsx';
 
 interface Guest {
@@ -3075,38 +3076,39 @@ Proceed with send?`)) return;
     pendingNoEmail: guests.filter(g => isPendingRsvpStatus(g.rsvp_status) && !g.email).length,
   };
 
+  const manualFollowUpCount = guests.filter((guest) => getRsvpFallbackState({
+    rsvpStatus: guest.rsvp_status,
+    hasEmail: Boolean(guest.email),
+    hasPhone: Boolean(guest.phone),
+    manualHandled: typeof guest.notes === 'string' && guest.notes.toLowerCase().includes('[manual rsvp]'),
+  }).state === 'manual-follow-up').length;
 
-  const recommendedAction = (() => {
-    if (rsvpOps.pendingNoEmail > 0) {
-      return {
-        filter: 'pending-no-email' as const,
-        title: 'Collect missing email addresses',
-        detail: `${rsvpOps.pendingNoEmail} pending guests can’t receive reminders yet.`,
-      };
-    }
-    if (rsvpOps.noResponse > 0) {
-      return {
-        filter: 'pending' as const,
-        title: 'Send reminder to pending guests',
-        detail: `${rsvpOps.noResponse} guests still haven’t responded.`,
-      };
-    }
-    if (rsvpOps.missingMeal > 0) {
-      return {
-        filter: 'missing-meal' as const,
-        title: 'Collect missing meal choices',
-        detail: `${rsvpOps.missingMeal} attending guests are missing meal picks.`,
-      };
-    }
-    if (rsvpOps.plusOneMissingName > 0) {
-      return {
-        filter: 'plusone-missing' as const,
-        title: 'Collect plus-one names',
-        detail: `${rsvpOps.plusOneMissingName} RSVPs allow plus-ones but names are missing.`,
-      };
-    }
-    return null;
-  })();
+  const manualHandledCount = guests.filter((guest) => getRsvpFallbackState({
+    rsvpStatus: guest.rsvp_status,
+    hasEmail: Boolean(guest.email),
+    hasPhone: Boolean(guest.phone),
+    manualHandled: typeof guest.notes === 'string' && guest.notes.toLowerCase().includes('[manual rsvp]'),
+  }).state === 'manual-handled').length;
+
+  const guestOpsCoach = buildGuestOpsCoach({
+    totalGuests: guests.length,
+    attendingGuests: guests.filter((guest) => isAttendingRsvpStatus(guest.rsvp_status)).length,
+    pendingResponses: rsvpOps.noResponse,
+    pendingWithoutEmail: rsvpOps.pendingNoEmail,
+    noContact: contactStats.withNoContact,
+    missingMealChoices: rsvpOps.missingMeal,
+    missingPlusOneNames: rsvpOps.plusOneMissingName,
+    manualFollowUp: manualFollowUpCount,
+    manualHandled: manualHandledCount,
+  });
+
+  const recommendedAction = guestOpsCoach.primaryAction
+    ? {
+        filter: guestOpsCoach.primaryAction.filter as typeof filterStatus,
+        title: guestOpsCoach.primaryAction.title,
+        detail: guestOpsCoach.primaryAction.detail,
+      }
+    : null;
 
   const rsvpCompleteness = Math.max(0, 100 - Math.min(100, (
     (rsvpOps.noResponse * 0.55) +
@@ -3848,6 +3850,59 @@ Proceed with send?`)) return;
             </ul>
           </div>
         )}
+
+        <Card variant="bordered" padding="lg" className="border-border-subtle shadow-sm">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+            <div className="max-w-3xl">
+              <div className="flex items-center gap-2">
+                <p className="text-sm font-semibold text-text-primary">Guest ops coach</p>
+                <Badge variant={guestOpsCoach.tone === 'urgent' ? 'error' : guestOpsCoach.tone === 'steady' ? 'warning' : 'success'}>
+                  {guestOpsCoach.statusLabel}
+                </Badge>
+              </div>
+              <p className="mt-2 text-sm text-text-secondary">{guestOpsCoach.summary}</p>
+            </div>
+            <div className="rounded-2xl border border-border-subtle bg-surface-subtle/30 px-4 py-3 lg:min-w-[180px]">
+              <p className="text-[11px] uppercase tracking-[0.22em] text-text-tertiary">Readiness</p>
+              <p className="mt-1 text-2xl font-semibold text-text-primary">{guestOpsCoach.readinessScore}%</p>
+              <p className="mt-1 text-xs text-text-secondary">How ready the RSVP and follow-up lane feels right now.</p>
+            </div>
+          </div>
+          <div className="mt-4 grid gap-3 md:grid-cols-3">
+            {guestOpsCoach.actions.slice(0, 3).map((action) => (
+              <div key={action.id} className="rounded-2xl border border-border-subtle bg-white px-4 py-4 shadow-[0_4px_14px_rgba(15,23,42,0.04)]">
+                <p className="text-sm font-semibold text-text-primary">{action.title}</p>
+                <p className="mt-2 text-xs leading-5 text-text-secondary">{action.detail}</p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      if (action.area === 'messages') {
+                        navigate('/dashboard/messages');
+                        return;
+                      }
+                      setFilterStatus(action.filter as typeof filterStatus);
+                      setViewMode('list');
+                      setSearchQuery('');
+                    }}
+                  >
+                    {action.ctaLabel}
+                  </Button>
+                  {action.id !== 'healthy' && action.id !== 'import-guests' && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => addFollowUpTask(action.taskLabel)}
+                    >
+                      Save task
+                    </Button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
 
         <Card variant="bordered" padding="lg">
           <div className="space-y-6">
