@@ -7,6 +7,7 @@ import {
   buildPublicSectionAnchorPath,
   formatPublishedAt,
   formatSavedAt,
+  getBuilderStructureButtonLabel,
   getPublicSectionAnchorLinks,
   getPublishBlockerUiState,
   getSuggestedBuilderPages,
@@ -57,7 +58,7 @@ describe('builder top bar page manager accessibility', () => {
   it('labels page and navigation controls for keyboard and screen reader users', () => {
     const source = readFileSync(join(process.cwd(), 'src/builder/components/BuilderTopBar.tsx'), 'utf8');
 
-    expect(source).toContain('aria-label={`Manage pages: ${pageStructureSummary.label}`}');
+    expect(source).toContain('aria-label={`${getBuilderStructureButtonLabel(pageStructureSummary)}: ${pageStructureSummary.label}`}');
     expect(source).toContain('aria-label="New page name"');
     expect(source).toContain('aria-label={`Page title for ${pageActionLabel}`}');
     expect(source).toContain('aria-label={`Public URL slug for ${pageActionLabel}`}');
@@ -65,6 +66,34 @@ describe('builder top bar page manager accessibility', () => {
     expect(source).toContain('Quick add');
     expect(source).toContain('aria-label={`Quick add ${page.title} page');
     expect(source).toContain('title={`Create /${page.slug}');
+  });
+});
+
+describe('getBuilderStructureButtonLabel', () => {
+  it('keeps the default action calm for single-page setups', () => {
+    expect(
+      getBuilderStructureButtonLabel({
+        pageCount: 1,
+        visiblePageCount: 1,
+        hiddenPageCount: 0,
+        anchorLinkCount: 0,
+        mode: 'single-page',
+        label: 'Single page · 1 visible page · 0 anchors',
+      }),
+    ).toBe('Manage sections');
+  });
+
+  it('adds page count context when the site is split across multiple pages', () => {
+    expect(
+      getBuilderStructureButtonLabel({
+        pageCount: 3,
+        visiblePageCount: 3,
+        hiddenPageCount: 0,
+        anchorLinkCount: 2,
+        mode: 'multi-page',
+        label: 'Multi-page · 3 visible pages · 2 anchors',
+      }),
+    ).toBe('Manage sections · 3 pages');
   });
 });
 

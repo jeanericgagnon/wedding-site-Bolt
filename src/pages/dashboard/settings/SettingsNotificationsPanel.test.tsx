@@ -60,4 +60,55 @@ describe('SettingsNotificationsPanel', () => {
     expect(screen.getAllByText(/Owners and planners/i).length).toBeGreaterThan(0);
     expect(screen.queryByText(/^Sent$/i)).not.toBeInTheDocument();
   });
+
+  it('keeps the collapsed notification card concise by default', () => {
+    const preview = buildCalmDigestDeliveryPreview({
+      digest: buildCalmOwnerDigest({
+        role: 'owner',
+        newRsvpCount: 0,
+        upcomingTaskCount: 0,
+        newPhotoUploadCount: 0,
+        isPublished: false,
+      }),
+      cadence: 'paused',
+      includePlanner: false,
+      nextDeliveryAt: null,
+      lastReviewedAt: null,
+      emailDeliveryEnabled: false,
+    });
+
+    render(
+      <SettingsNotificationsPanel
+        canEditSettings
+        showNotificationSettings={false}
+        notifRsvp={false}
+        notifPhotos={false}
+        notifDigest={false}
+        notifDigestCadence="paused"
+        notifDigestIncludePlanner={false}
+        notifDigestQuietUntilLabel=""
+        notifDigestNextDeliveryAt={null}
+        notifDigestLastReviewedAt={null}
+        notifDigestLastDeliveredAt={null}
+        notifUpdates={false}
+        notifSaving={false}
+        notifSuccess={null}
+        notifError={null}
+        digestPreview={preview}
+        digestEmailText=""
+        onToggleVisibility={vi.fn()}
+        onRsvpChange={vi.fn()}
+        onPhotosChange={vi.fn()}
+        onDigestChange={vi.fn()}
+        onDigestCadenceChange={vi.fn()}
+        onDigestIncludePlannerChange={vi.fn()}
+        onDigestQuietUntilLabelChange={vi.fn()}
+        onUpdatesChange={vi.fn()}
+        onSaveNotifications={(event) => event.preventDefault()}
+      />,
+    );
+
+    expect(screen.getByText('Hidden by default. Open it when you want to tune owner email updates.')).toBeInTheDocument();
+    expect(screen.queryByText(/Hidden by default to keep this page easy to scan/i)).not.toBeInTheDocument();
+  });
 });

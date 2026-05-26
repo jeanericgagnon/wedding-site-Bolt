@@ -19,6 +19,15 @@ describe('builder inspector anchor copy', () => {
     expect(source).toContain("'Downloaded'");
     expect(source).not.toContain('navigator.clipboard?.writeText');
   });
+
+  it('keeps advanced anchor controls behind an explicit disclosure in the default content flow', () => {
+    const source = readFileSync(join(process.cwd(), 'src/builder/components/BuilderInspectorPanel.tsx'), 'utf8');
+
+    expect(source).toContain('const [showSectionLinkTools, setShowSectionLinkTools] = React.useState(false);');
+    expect(source).toContain('Most sections can use the page link as-is. Open advanced link settings only if you need a custom anchor.');
+    expect(source).toContain("showSectionLinkTools ? 'Hide advanced link settings' : 'Show advanced link settings'");
+    expect(source).toContain('{showSectionLinkTools ? (');
+  });
 });
 
 describe('normalizeGalleryImages', () => {

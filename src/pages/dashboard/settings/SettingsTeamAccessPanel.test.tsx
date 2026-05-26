@@ -25,4 +25,14 @@ describe('settings team access panel copy notices', () => {
     expect(source).toContain("runCollaboratorInviteCopy('copy', invite.id, invite.invite_token, onCopyCollaboratorInviteLink)");
     expect(source).toContain("runCollaboratorInviteCopy('resend', invite.id, invite.invite_token, onResendCollaboratorInvite)");
   });
+
+  it('keeps team access framing concise instead of the older dense explainer copy', () => {
+    const source = readFileSync(join(process.cwd(), 'src/pages/dashboard/settings/SettingsTeamAccessPanel.tsx'), 'utf8');
+
+    expect(source).toContain('Invite planners and helpers without sharing ownership or billing.');
+    expect(source).toContain('Keep ownership with the couple.');
+    expect(source).toContain('Helpers join through a secure invite link and only see the areas you allow.');
+    expect(source).not.toContain('Invite your planner, not a generic staff account');
+    expect(source).not.toContain('Keep ownership with the couple while sharing the parts of dayof that help someone run the event well.');
+  });
 });
