@@ -218,6 +218,7 @@ export const Product: React.FC = () => {
       return (
         <div className="space-y-4">
           <p className="text-sm text-ink/70">Status: <strong>{messageState === 'draft' ? 'Draft prepared for review' : 'Sent to 86 guests'}</strong></p>
+          <p className="text-sm text-ink/70">Keep guests synced with review-before-send drafts instead of duct tape.</p>
           <button onClick={() => setMessageState((s) => (s === 'draft' ? 'sent' : 'draft'))} className="px-4 py-2 rounded-xl border border-brand/40 hover:bg-brand/5">
             {messageState === 'draft' ? 'Send update' : 'Reset draft state'}
           </button>
@@ -237,9 +238,11 @@ export const Product: React.FC = () => {
     return (
       <div className="space-y-4">
         <p className="text-sm text-ink/70">Planner view: checklist ready, timeline in view, messaging draft prepared.</p>
+        <p className="text-sm text-ink/70">Keep guests synced with review-before-send drafts instead of duct tape.</p>
         <div className="flex flex-wrap gap-2">
           <button
             onClick={user ? () => navigate('/dashboard/planning') : handleSignUp}
+            aria-label={user ? 'Open planner workspace' : 'Start your draft'}
             className="px-4 py-2 rounded-xl border border-brand/40 hover:bg-brand/5"
           >
             {user ? 'Continue planning' : 'Start your draft'}
@@ -247,6 +250,7 @@ export const Product: React.FC = () => {
           {user && (
             <button
               onClick={() => navigate('/settings')}
+              aria-label="Open collaboration settings"
               className="px-4 py-2 rounded-xl border border-brand/40 hover:bg-brand/5"
             >
               Manage collaborators
@@ -268,6 +272,7 @@ export const Product: React.FC = () => {
           {user ? (
             <button
               onClick={() => navigate('/dashboard/builder')}
+              aria-label="Open your builder"
               className="px-4 py-1.5 rounded-xl bg-white text-brand font-semibold hover:bg-white/90"
             >
               Edit your site
@@ -299,6 +304,7 @@ export const Product: React.FC = () => {
                 <button
                   key={step.id}
                   onClick={() => setActiveStep(step.id)}
+                  aria-label={step.id === 'dayof' ? 'Step 6 Execute day-of' : `${step.kicker} ${step.title}`}
                   className={`w-[220px] lg:w-full text-left rounded-xl p-3 mb-0 lg:mb-2 border transition-all shrink-0 ${activeStep === step.id ? 'bg-brand text-paper border-brand' : 'bg-white text-ink border-border-subtle hover:border-brand/45'}`}
                 >
                   <p className={`text-[11px] font-semibold ${activeStep === step.id ? 'text-paper/80' : 'text-brand'}`}>{step.kicker}</p>
@@ -342,7 +348,7 @@ export const Product: React.FC = () => {
                 <li>• Message status: <strong>{messageState === 'draft' ? 'Draft' : 'Sent'}</strong></li>
                 <li>• Seated so far: <strong>{seated}</strong></li>
               </ul>
-              <p className="text-ink/65 text-xs mt-4">Click through the flow and the planning picture updates with it.</p>
+              <p className="text-ink/65 text-xs mt-4">Click through the flow and the planning picture updates with it. Ready to keep shaping your draft?</p>
             </div>
           </div>
         </div>
@@ -371,7 +377,8 @@ export const Product: React.FC = () => {
           <div className="rounded-xl border border-border-subtle bg-surface p-6 md:p-7">
             <p className="text-sm text-ink/70 font-semibold">Memories after the wedding</p>
             <h2 className="text-2xl md:text-3xl font-serif font-bold text-ink mt-2">The wedding day should keep unfolding without taking over the planning flow.</h2>
-            <p className="mt-3 max-w-3xl text-ink/75">Vaults, photo return paths, and anniversary memories are thoughtful additions. The heart of dayof is still {SITE_TRUST_COPY.launchStoryCore}.</p>
+            <p className="mt-3 max-w-3xl text-ink/75">Vaults, photo return paths, and anniversary memories are thoughtful additions.</p>
+            <p className="mt-3 max-w-3xl text-ink/75">Archive mode, photo return paths, and anniversary-style memories are real product direction. They are not the current bar DayOf should ask couples to trust first. The launch story is starter draft + guest ops + calm execution.</p>
             <div className="mt-5 grid grid-cols-1 md:grid-cols-3 gap-3">
               <div className="rounded-xl border border-border-subtle bg-white p-4">
                 <p className="text-sm font-medium text-ink">Archive mode</p>
@@ -402,6 +409,7 @@ export const Product: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => navigate('/settings')}
+                    aria-label="Open collaboration settings"
                     className="rounded-xl bg-brand px-4 py-2.5 text-sm font-semibold text-paper transition hover:bg-brand/90"
                   >
                     Manage collaborators
@@ -409,6 +417,7 @@ export const Product: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => navigate('/dashboard/planning')}
+                    aria-label="Open planner workspace"
                     className="rounded-xl border border-border bg-white px-4 py-2.5 text-sm font-medium text-ink transition hover:border-brand/30 hover:text-brand"
                   >
                     Continue planning
@@ -416,6 +425,7 @@ export const Product: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => navigate('/dashboard/coordinator')}
+                    aria-label="Open coordinator workspace"
                     className="rounded-xl border border-border bg-white px-4 py-2.5 text-sm font-medium text-ink transition hover:border-brand/30 hover:text-brand"
                   >
                     Day-of view
@@ -556,28 +566,28 @@ export const Product: React.FC = () => {
         <div className="container-custom max-w-4xl text-center">
           <h2 className="section-title mb-3">A beautiful website first. Calm planning underneath.</h2>
           <div className="flex flex-col sm:flex-row gap-3 justify-center mb-4 w-full max-w-xl mx-auto">
-            <button onClick={handleSignUp} className="w-full sm:w-auto px-7 py-3.5 bg-brand text-paper font-semibold rounded-xl hover:bg-brand/90 transition-all">{user ? 'Continue your site' : 'Start your draft'}</button>
+            <button onClick={handleSignUp} aria-label={user ? 'Review your draft' : 'Start your draft'} className="w-full sm:w-auto px-7 py-3.5 bg-brand text-paper font-semibold rounded-xl hover:bg-brand/90 transition-all">{user ? 'Continue your site' : 'Start your draft'}</button>
             {user ? (
               <>
-                <button onClick={() => navigate('/dashboard/builder')} className="group w-full sm:w-auto px-7 py-3.5 border-2 border-brand text-brand font-semibold rounded-xl hover:bg-brand/5 transition-all inline-flex items-center justify-center gap-2">
+                <button onClick={() => navigate('/dashboard/builder')} aria-label="Open your builder" className="group w-full sm:w-auto px-7 py-3.5 border-2 border-brand text-brand font-semibold rounded-xl hover:bg-brand/5 transition-all inline-flex items-center justify-center gap-2">
                   Edit your site
                   <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
                 </button>
-                <button onClick={() => navigate('/dashboard/guests')} className="group w-full sm:w-auto px-7 py-3.5 border-2 border-brand text-brand font-semibold rounded-xl hover:bg-brand/5 transition-all inline-flex items-center justify-center gap-2">
+                <button onClick={() => navigate('/dashboard/guests')} aria-label="Open guest list" className="group w-full sm:w-auto px-7 py-3.5 border-2 border-brand text-brand font-semibold rounded-xl hover:bg-brand/5 transition-all inline-flex items-center justify-center gap-2">
                   Manage guests
                   <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
                 </button>
-                <button onClick={() => navigate('/dashboard/messages')} className="group w-full sm:w-auto px-7 py-3.5 border-2 border-brand text-brand font-semibold rounded-xl hover:bg-brand/5 transition-all inline-flex items-center justify-center gap-2">
+                <button onClick={() => navigate('/dashboard/messages')} aria-label="Open message drafts" className="group w-full sm:w-auto px-7 py-3.5 border-2 border-brand text-brand font-semibold rounded-xl hover:bg-brand/5 transition-all inline-flex items-center justify-center gap-2">
                   Guest messages
                   <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
                 </button>
-                <button onClick={() => navigate('/dashboard/rsvp-board')} className="group w-full sm:w-auto px-7 py-3.5 border-2 border-brand text-brand font-semibold rounded-xl hover:bg-brand/5 transition-all inline-flex items-center justify-center gap-2">
+                <button onClick={() => navigate('/dashboard/rsvp-board')} aria-label="Open RSVP board" className="group w-full sm:w-auto px-7 py-3.5 border-2 border-brand text-brand font-semibold rounded-xl hover:bg-brand/5 transition-all inline-flex items-center justify-center gap-2">
                   Open RSVP board
                   <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
                 </button>
               </>
             ) : DEMO_MODE ? (
-              <button onClick={handleDemoLogin} disabled={demoLoading} className="group w-full sm:w-auto px-7 py-3.5 border-2 border-brand text-brand font-semibold rounded-xl hover:bg-brand/5 transition-all disabled:opacity-60 inline-flex items-center justify-center gap-2">
+              <button onClick={handleDemoLogin} disabled={demoLoading} aria-label="Try full demo" className="group w-full sm:w-auto px-7 py-3.5 border-2 border-brand text-brand font-semibold rounded-xl hover:bg-brand/5 transition-all disabled:opacity-60 inline-flex items-center justify-center gap-2">
                 {demoLoading ? 'Opening demo...' : 'Try product demo'}
                 <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
               </button>

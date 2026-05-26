@@ -46,7 +46,7 @@ const operatingSystemRows = [
     body: 'Coordinator context, photo collection, updates, and after-wedding tasks do not fall into a separate pile.',
     image: asset('wedding-detail-2.png'),
     imageAlt: 'Wedding memory and planning detail',
-    hrefs: { signedOut: '/product', signedIn: '/dashboard/coordinator' },
+    hrefs: { signedOut: '/product', signedIn: '/dashboard/planning' },
   },
 ] as const;
 
@@ -187,7 +187,7 @@ export const Home: React.FC = () => {
                 <div className="mt-8 flex flex-col gap-3 sm:flex-row">
                   <button
                     onClick={handleSignUp}
-                    aria-label={user ? 'Continue your wedding site' : 'Start your wedding site draft'}
+                    aria-label={user ? 'Review your wedding site draft' : 'Start your wedding site draft'}
                     className="inline-flex min-h-[54px] items-center justify-center rounded-xl bg-white px-7 py-3.5 text-base font-semibold text-ink transition hover:bg-paper"
                   >
                     {user ? 'Continue your site' : 'Start your draft'}
@@ -471,7 +471,7 @@ export const Home: React.FC = () => {
                 <div className="mt-7 flex flex-col gap-3 sm:flex-row">
                   <button
                     onClick={handleSignUp}
-                    aria-label={user ? 'Continue your wedding site' : 'Start your wedding site draft'}
+                    aria-label={user ? 'Review your wedding site draft' : 'Start your wedding site draft'}
                     className="inline-flex min-h-[52px] items-center justify-center rounded-xl bg-brand px-6 py-3 text-sm font-semibold text-white transition hover:bg-brand/90"
                   >
                     {user ? 'Continue your site' : 'Start your draft'}
@@ -498,24 +498,28 @@ export const Home: React.FC = () => {
                     <Link
                       to="/dashboard/builder"
                       onClick={() => navigate('/dashboard/builder')}
+                      aria-label="Open your builder"
                       className="inline-flex min-h-[48px] items-center justify-center rounded-xl border border-border px-5 py-3 text-sm font-semibold text-ink"
                     >
                       Edit your site
                     </Link>
                     <Link
                       to="/dashboard/planning"
+                      aria-label="Open planner workspace"
                       className="inline-flex min-h-[48px] items-center justify-center rounded-xl border border-border px-5 py-3 text-sm font-semibold text-ink"
                     >
                       Continue planning
                     </Link>
                     <button
                       onClick={() => navigate('/dashboard/guests')}
+                      aria-label="Open your guest list"
                       className="inline-flex min-h-[48px] items-center justify-center rounded-xl border border-border px-5 py-3 text-sm font-semibold text-ink"
                     >
                       Manage guests
                     </button>
                     <button
                       onClick={() => navigate('/dashboard/messages')}
+                      aria-label="Open message drafts"
                       className="inline-flex min-h-[48px] items-center justify-center rounded-xl border border-border px-5 py-3 text-sm font-semibold text-ink"
                     >
                       Guest messages
