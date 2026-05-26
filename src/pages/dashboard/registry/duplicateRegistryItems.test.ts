@@ -42,16 +42,26 @@ describe('findDuplicateRegistryGroups', () => {
     expect(groups[0].map((item) => item.id)).toEqual(['item-1', 'item-2']);
   });
 
-  it('groups title-only items despite punctuation and spacing drift', () => {
+  it('groups high-confidence same-store title matches despite punctuation and spacing drift', () => {
     const groups = findDuplicateRegistryGroups([
-      makeItem({ id: 'item-1', item_name: 'KitchenAid Mixer - Matte Black' }),
-      makeItem({ id: 'item-2', item_name: 'KitchenAid   Mixer Matte Black' }),
-      makeItem({ id: 'item-3', item_name: "KitchenAid Mixer, Matte Black!" }),
+      makeItem({ id: 'item-1', item_name: 'KitchenAid Mixer - Matte Black', store_name: 'Target', metadata_confidence_score: 0.9 }),
+      makeItem({ id: 'item-2', item_name: 'KitchenAid   Mixer Matte Black', store_name: 'Target', metadata_confidence_score: 0.92 }),
+      makeItem({ id: 'item-3', item_name: "KitchenAid Mixer, Matte Black!", store_name: 'Target', metadata_confidence_score: 0.91 }),
       makeItem({ id: 'item-4', item_name: 'Dyson Airwrap' }),
     ]);
 
     expect(groups).toHaveLength(1);
-    expect(groups[0].map((item) => item.id)).toEqual(['item-1', 'item-2', 'item-3']);
+    expect(groups[0].map((item) => item.id).sort()).toEqual(['item-1', 'item-2', 'item-3']);
+  });
+
+  it('does not group blocked imports by bad titles', () => {
+    const groups = findDuplicateRegistryGroups([
+      makeItem({ id: 'item-1', item_name: 'Access Denied', store_name: 'REI', item_url: 'https://www.rei.com/product/one', metadata_confidence_score: 0.95 }),
+      makeItem({ id: 'item-2', item_name: 'Access Denied', store_name: "Macy's", item_url: 'https://www.macys.com/shop/product/two', metadata_confidence_score: 0.95 }),
+      makeItem({ id: 'item-3', item_name: 'Robot or human?', store_name: 'Walmart', item_url: 'https://www.walmart.com/ip/three', metadata_confidence_score: 0.95 }),
+    ]);
+
+    expect(groups).toHaveLength(0);
   });
 
   it('builds merge-ready duplicate groups with a preferred keep item', () => {

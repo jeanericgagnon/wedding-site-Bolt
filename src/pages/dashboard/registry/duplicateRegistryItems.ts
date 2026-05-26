@@ -1,5 +1,5 @@
 import type { RegistryItem } from './registryTypes';
-import { normalizeRegistryComparisonUrl, normalizeRegistryTitleForComparison } from './registryTypes';
+import { isBadRegistryProductTitle, normalizeRegistryComparisonUrl, normalizeRegistryTitleForComparison } from './registryTypes';
 
 export type RegistryDuplicateSignalKind =
   | 'barcode'
@@ -27,6 +27,10 @@ export interface RegistryDuplicateGroup {
 
 function normalizeRegistryMerchantForComparison(item: Pick<RegistryItem, 'merchant' | 'store_name' | 'selected_retailer'>): string | null {
   return normalizeRegistryTitleForComparison(item.selected_retailer || item.merchant || item.store_name || null);
+}
+
+function canUseTitleForDuplicateMatch(item: RegistryItem): boolean {
+  return (item.metadata_confidence_score ?? 0) >= 0.85 && !isBadRegistryProductTitle(item.item_name);
 }
 
 function getComparableRegistryUrls(item: Pick<RegistryItem, 'canonical_url' | 'item_url' | 'selected_product_url'>) {
@@ -72,6 +76,8 @@ function getDuplicateSignals(a: RegistryItem, b: RegistryItem): RegistryDuplicat
     }
   }
 
+  if (!canUseTitleForDuplicateMatch(a) || !canUseTitleForDuplicateMatch(b)) return signals;
+
   const titleA = normalizeRegistryTitleForComparison(a.item_name);
   const titleB = normalizeRegistryTitleForComparison(b.item_name);
   if (!titleA || !titleB || titleA !== titleB) return signals;
@@ -83,19 +89,6 @@ function getDuplicateSignals(a: RegistryItem, b: RegistryItem): RegistryDuplicat
     return signals;
   }
 
-  const priceA = a.price_amount;
-  const priceB = b.price_amount;
-  const samePrice =
-    priceA != null &&
-    priceB != null &&
-    Math.abs(priceA - priceB) <= Math.max(1, Math.min(priceA, priceB) * 0.05);
-
-  if (samePrice) {
-    push({ kind: 'title-price', label: 'Same title and price', value: titleA });
-    return signals;
-  }
-
-  push({ kind: 'title', label: 'Same title', value: titleA });
   return signals;
 }
 

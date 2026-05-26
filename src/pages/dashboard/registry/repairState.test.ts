@@ -41,6 +41,9 @@ describe('getRegistryRepairStates', () => {
     const states = getRegistryRepairStates(
       makeItem({
         item_name: 'Page not found',
+        item_url: null,
+        canonical_url: null,
+        selected_product_url: null,
         image_url: null,
         price_label: null,
         price_amount: null,
@@ -60,6 +63,9 @@ describe('getRegistryRepairStates', () => {
     const states = getRegistryRepairStates(
       makeItem({
         item_name: 'Product unavailable',
+        item_url: null,
+        canonical_url: null,
+        selected_product_url: null,
         metadata_fetch_status: 'success',
         metadata_confidence_score: 0.92,
       }),
@@ -109,6 +115,9 @@ describe('buildRegistryRepairQueue', () => {
       makeItem({
         id: 'item-broken',
         item_name: 'Page not found',
+        item_url: null,
+        canonical_url: null,
+        selected_product_url: null,
         metadata_fetch_status: 'blocked',
         metadata_confidence_score: 0.3,
       }),

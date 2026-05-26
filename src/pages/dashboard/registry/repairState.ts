@@ -1,5 +1,6 @@
-import type { RegistryItem } from './registryTypes';
-import { isRegistryItemDue } from '../registryItemTime';
+import type { RegistryItem } from './registryTypes.ts';
+import { deriveRegistryItemDisplayState, isBadRegistryProductTitle } from './registryTypes.ts';
+import { isRegistryItemDue } from '../registryItemTime.ts';
 
 export type RegistryRepairState =
   | 'broken-import'
@@ -64,7 +65,15 @@ function hasRetailerDrift(item: RegistryItem) {
 export function getRegistryRepairStates(item: RegistryItem): RegistryRepairState[] {
   const states: RegistryRepairState[] = [];
   const confidence = item.metadata_confidence_score ?? null;
-  const badTitle = /^(page not found|product unavailable|gift from\s.+)$/i.test((item.item_name || '').trim());
+  const displayState = deriveRegistryItemDisplayState(item);
+  const linkOnlySafe = displayState.displayMode === 'link_card' && displayState.guestSafe;
+  const badTitle = isBadRegistryProductTitle(item.item_name);
+
+  if (linkOnlySafe) {
+    if (item.next_refresh_at && isRegistryItemDue(item.next_refresh_at)) states.push('stale-details');
+    if (hasRetailerDrift(item)) states.push('retailer-drift');
+    return Array.from(new Set(states));
+  }
 
   if (badTitle || item.metadata_fetch_status === 'error' || item.metadata_fetch_status === 'blocked') states.push('broken-import');
   if ((item.metadata_fetch_status === 'success' && confidence !== null && confidence < 0.7) || (!item.image_url || (!item.price_label && item.price_amount == null))) states.push('partial-import');
