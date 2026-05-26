@@ -725,7 +725,11 @@ export async function replaceNameChangeDocuments(caseId: string, documents: Name
 
   const { data, error } = await supabase
     .from('name_change_documents')
-    .insert(normalizedDocuments.map(({ id: _id, ...document }) => ({ ...document, name_change_case_id: caseId })))
+    .insert(normalizedDocuments.map((document) => {
+      const { id, ...persistedDocument } = document;
+      void id;
+      return { ...persistedDocument, name_change_case_id: caseId };
+    }))
     .select();
 
   if (error) throw error;

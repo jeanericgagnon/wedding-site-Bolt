@@ -1,7 +1,23 @@
 import { supabase } from './supabase';
 import { resolveActiveSiteForUser } from './activeSite';
 
-async function getFunctionErrorMessage(error: any, fallback: string): Promise<string> {
+type FunctionErrorContextLike = {
+  clone?: () => { text?: () => Promise<string> } | Response;
+  text?: () => Promise<string>;
+};
+
+type FunctionErrorLike = {
+  message?: string;
+  context?: FunctionErrorContextLike;
+};
+
+function getErrorMessage(error: unknown): string {
+  if (!error || typeof error !== 'object') return '';
+  const candidate = (error as { message?: unknown }).message;
+  return typeof candidate === 'string' ? candidate : '';
+}
+
+async function getFunctionErrorMessage(error: FunctionErrorLike | null | undefined, fallback: string): Promise<string> {
   const base = error?.message || '';
   const ctx = error?.context;
 
@@ -120,7 +136,7 @@ export async function createSubscriptionSession(
     },
   });
 
-  if (error && /401|unauthorized|jwt|token|expired/i.test((error as any)?.message || '')) {
+  if (error && /401|unauthorized|jwt|token|expired/i.test(getErrorMessage(error))) {
     const { error: refreshError } = await supabase.auth.refreshSession();
     if (!refreshError) {
       const { data: { session: refreshedSession } } = await supabase.auth.getSession();
@@ -276,7 +292,7 @@ export async function createSmsCreditsSession(
     },
   });
 
-  if (error && /401|unauthorized|jwt|token|expired/i.test((error as any)?.message || '')) {
+  if (error && /401|unauthorized|jwt|token|expired/i.test(getErrorMessage(error))) {
     const { error: refreshError } = await supabase.auth.refreshSession();
     if (!refreshError) {
       const { data: { session: refreshedSession } } = await supabase.auth.getSession();

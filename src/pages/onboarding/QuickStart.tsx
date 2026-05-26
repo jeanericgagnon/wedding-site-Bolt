@@ -1,22 +1,15 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { supabase } from '../../lib/supabase';
-import {
-  applyInitialSetupAnswersToWeddingProfile,
-  createEmptyWeddingProfile,
-  evaluateWeddingProfileReadiness,
-} from '../../lib/weddingProfile';
 import {
   createEmptyInitialSetupAnswers,
   initialSetupAnswersToOnboardingFormShape,
   type InitialSetupAnswers,
 } from '../../lib/initialSetupAnswers';
 import { createEmptyInitialSetupFollowUps } from '../../lib/initialSetupFollowUps';
-import { buildInitialSetupSnapshot } from '../../lib/initialSetupSnapshot';
 import { buildInitialSetupDerivedOutputs } from '../../lib/initialSetupDerivedOutputs';
 import { mergeOnboardingFollowUpAnswers } from '../../lib/onboardingFollowUpMerge';
-import { createOnboardingSessionStateFromInitialSetup } from '../../lib/aiOnboarding';
 import { createClarifyingDecisionFromInitialSetup, createClarifyingPersistenceFromDecision } from '../../lib/aiOnboardingClarifyingAdapter';
 import { buildClarifyingAnswerPatchSet } from '../../lib/aiClarifyingFlow';
 import { mapClarifyingPersistenceToTemplateSeed } from '../../lib/aiClarifyingMapper';
@@ -152,7 +145,6 @@ export const QuickStart: React.FC = () => {
   const [error, setError] = useState('');
   const [aiDebug, setAiDebug] = useState('');
   const [showFollowUps, setShowFollowUps] = useState(false);
-  const [isThinking, setIsThinking] = useState(false);
   const [viewState, setViewState] = useState<'question' | 'thinking' | 'followups'>('question');
   const [processingStep, setProcessingStep] = useState(0);
   const [followUpAnswers, setFollowUpAnswers] = useState<Record<string, string>>({});
@@ -162,7 +154,6 @@ export const QuickStart: React.FC = () => {
   const [initialSetupAnswers, setInitialSetupAnswers] = useState<InitialSetupAnswers>(createEmptyInitialSetupAnswers());
   const initialSetupAnswersRef = useRef<InitialSetupAnswers>(createEmptyInitialSetupAnswers());
   const [initialSetupFollowUps] = useState(createEmptyInitialSetupFollowUps());
-  const [weddingProfile, setWeddingProfile] = useState(createEmptyWeddingProfile());
   const [hasLocalDraftHydration, setHasLocalDraftHydration] = useState(false);
   const hasLocalDraftHydrationRef = useRef(false);
   const [hasHydratedDraft, setHasHydratedDraft] = useState(false);
@@ -171,8 +162,6 @@ export const QuickStart: React.FC = () => {
   const safeCurrentIndex = clampQuickStartQuestionIndex(currentIndex, questions.length);
   const currentQuestion = questions[safeCurrentIndex];
   const formData = initialSetupAnswersToOnboardingFormShape(initialSetupAnswers);
-  const readiness = evaluateWeddingProfileReadiness(weddingProfile);
-  const onboardingSession = createOnboardingSessionStateFromInitialSetup(initialSetupAnswers, currentQuestion ? [currentQuestion.key] : []);
   const activeClarifyingQuestions = clarifyingState?.clarifying.questions ?? [];
 
   useEffect(() => {
@@ -218,7 +207,6 @@ export const QuickStart: React.FC = () => {
       const restoredIndex = clampQuickStartQuestionIndex(parsed.currentIndex, questions.length);
       const canResumeFollowUps = canResumeQuickStartFollowUps(parsed.showFollowUps, normalizedClarifyingState);
       setInitialSetupAnswers(parsed.initialSetupAnswers);
-      setWeddingProfile(applyInitialSetupAnswersToWeddingProfile(parsed.initialSetupAnswers));
       setCurrentIndex(restoredIndex);
       followUpAnswersRef.current = restoredFollowUps;
       setFollowUpAnswers(restoredFollowUps);
@@ -229,7 +217,9 @@ export const QuickStart: React.FC = () => {
       const nextHasLocalDraftHydration = hasMeaningfulQuickStartAnswers(parsed.initialSetupAnswers) || Object.keys(restoredFollowUps).length > 0 || Boolean(normalizedClarifyingState);
       hasLocalDraftHydrationRef.current = nextHasLocalDraftHydration;
       setHasLocalDraftHydration(nextHasLocalDraftHydration);
-    } catch {}
+    } catch {
+      // Ignore malformed local draft snapshots and fall back to a fresh flow.
+    }
     finally {
       setHasHydratedDraft(true);
       setIsResettingDraft(false);
@@ -269,7 +259,6 @@ export const QuickStart: React.FC = () => {
         const restored = normalizeQuickStartDraftSnapshot({ initialSetupAnswers: data.onboarding_answers }).initialSetupAnswers;
         setInitialSetupAnswers((prev) => {
           const next = hasLocalDraftHydrationRef.current ? mergeQuickStartSeedIntoDraft(prev, restored) : { ...prev, ...restored };
-          setWeddingProfile(applyInitialSetupAnswersToWeddingProfile(next));
           return next;
         });
         return;
@@ -292,10 +281,6 @@ export const QuickStart: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    setWeddingProfile(applyInitialSetupAnswersToWeddingProfile(initialSetupAnswers));
-  }, [initialSetupAnswers]);
-
-  useEffect(() => {
     if (!currentQuestion) return;
     setInputValue(getValueForQuestion(currentQuestion.key, formData));
     // Only reset when the visible question changes, not on every keystroke.
@@ -308,7 +293,7 @@ export const QuickStart: React.FC = () => {
     return choice?.label || value;
   };
 
-  const getValueForQuestion = (key: ConciergeQuestion, data: typeof formData): string => {
+  const getValueForQuestion = useCallback((key: ConciergeQuestion, data: typeof formData): string => {
     switch (key) {
       case 'partnerNames': return data.partnerNames || '';
       case 'partnerLabels': {
@@ -336,7 +321,7 @@ export const QuickStart: React.FC = () => {
       case 'story': return data.story || '';
       default: return '';
     }
-  };
+  }, []);
 
   useEffect(() => {
     if (!hasHydratedDraft || !currentQuestion) return;
@@ -351,7 +336,7 @@ export const QuickStart: React.FC = () => {
 
   const previousAnswers = useMemo(
     () => questions.slice(0, safeCurrentIndex).map((q) => ({ ...q, value: getValueForQuestion(q.key, formData) })).filter((entry) => entry.value.trim()),
-    [safeCurrentIndex, formData],
+    [safeCurrentIndex, formData, getValueForQuestion],
   );
 
   const applyAnswer = (questionKey: ConciergeQuestion, rawValue: string) => {
@@ -381,7 +366,6 @@ export const QuickStart: React.FC = () => {
         persistQuickStartDraftSnapshot(carriedQuickStartDraft);
         writeSignupReturnPath(buildQuickStartEntryPath());
         setLoading(false);
-        setIsThinking(false);
         navigate('/signup?bypassPayment=1', {
           replace: true,
           state: {
@@ -464,18 +448,15 @@ export const QuickStart: React.FC = () => {
       setError(err instanceof Error ? err.message : 'Failed to save. Please try again.');
       setAiDebug(`finish_failed=${err instanceof Error ? err.message : String(err)}`);
       setLoading(false);
-      setIsThinking(false);
     }
   };
 
   const runProcessingInterstitial = async () => {
-    setIsThinking(true);
     setViewState('thinking');
     for (let i = 0; i < PROCESSING_STEPS.length; i += 1) {
       setProcessingStep(i);
       await new Promise((resolve) => setTimeout(resolve, i === PROCESSING_STEPS.length - 1 ? PROCESSING_FINAL_STEP_MS : PROCESSING_STEP_MS));
     }
-    setIsThinking(false);
     setViewState(showFollowUps ? 'followups' : 'question');
   };
 
@@ -524,7 +505,6 @@ export const QuickStart: React.FC = () => {
       setError(err instanceof Error ? err.message : 'AI step failed.');
       setAiDebug(`step=${answeredQuestion.key}; value=${value.trim().slice(0, 80)}`);
       setLoading(false);
-      setIsThinking(false);
     }
   };
 
@@ -538,12 +518,12 @@ export const QuickStart: React.FC = () => {
 
         {previousAnswers.length > 0 && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mb-8 space-y-2">
-            {previousAnswers.map((item, index) => (
+            {previousAnswers.map((item) => (
               <button
                 key={item.key}
                 type="button"
                 onClick={() => {
-                  setCurrentIndex(index);
+                  setCurrentIndex(questions.findIndex((question) => question.key === item.key));
                   setShowFollowUps(false);
                   setViewState('question');
                   setError('');
@@ -587,7 +567,7 @@ export const QuickStart: React.FC = () => {
 
               {currentQuestion?.type === 'choice' ? (
                 <div className="space-y-3">
-                  {currentQuestion.choices?.map((choice, index) => (
+                  {currentQuestion.choices?.map((choice) => (
                     <motion.button
                       key={choice.value}
                       onClick={() => void goNext(choice.value)}
