@@ -22,22 +22,49 @@ async function waitForPreview(url, timeoutMs = 60_000, getStartupFailureMessage 
   throw new Error(`Preview server did not become ready at ${url} within ${timeoutMs}ms`);
 }
 
-function isLocalPortAvailable(port) {
+function checkLocalPortAvailability(port) {
   return new Promise((resolve) => {
     const server = createServer();
     server.unref();
-    server.on('error', () => resolve(false));
+    server.on('error', (error) => resolve({
+      available: false,
+      error,
+    }));
     server.listen({ host: '127.0.0.1', port }, () => {
-      server.close(() => resolve(true));
+      server.close(() => resolve({
+        available: true,
+        error: null,
+      }));
     });
   });
 }
 
-async function findOpenLocalPort(preferredPort, maxAttempts = 100) {
+export async function findOpenLocalPort(
+  preferredPort,
+  maxAttempts = 100,
+  portAvailabilityCheck = checkLocalPortAvailability,
+) {
+  const bindingFailures = [];
   for (let offset = 0; offset < maxAttempts; offset += 1) {
     const port = preferredPort + offset;
-    if (await isLocalPortAvailable(port)) return port;
+    const result = await portAvailabilityCheck(port);
+    if (result.available) return port;
+    if (result.error && result.error.code !== 'EADDRINUSE') {
+      bindingFailures.push({
+        port,
+        code: result.error.code,
+        message: result.error.message,
+      });
+    }
   }
+
+  if (bindingFailures.length > 0) {
+    const { port, code, message } = bindingFailures[0];
+    throw new Error(
+      `Could not bind a local preview port starting at ${preferredPort}. First failure: ${code ?? 'UNKNOWN'} on ${port}${message ? ` (${message})` : ''}`,
+    );
+  }
+
   throw new Error(`No available local preview port found from ${preferredPort} through ${preferredPort + maxAttempts - 1}`);
 }
 
