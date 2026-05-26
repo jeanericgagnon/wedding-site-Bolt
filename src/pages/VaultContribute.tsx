@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Lock, Heart, Send, CheckCircle, AlertCircle, Loader2, Mic, Square } from 'lucide-react';
+import { GuestJourneyCompanion } from '../components/guest/GuestJourneyCompanion';
 import { supabase } from '../lib/supabase';
 import { DEMO_MODE } from '../config/env';
 import { buildCoupleDisplayName } from '../lib/coupleDisplayName';
@@ -103,6 +104,7 @@ function ordinalLabel(years: number): string {
 export const VaultContribute: React.FC = () => {
   const { siteSlug, year } = useParams<{ siteSlug: string; year: string }>();
   const navigate = useNavigate();
+  const params = useMemo(() => new URLSearchParams(window.location.search), []);
   const [site, setSite] = useState<SiteInfo | null>(null);
   const [vaultConfig, setVaultConfig] = useState<VaultConfigInfo | null>(null);
   const [vaultOptions, setVaultOptions] = useState<VaultConfigInfo[]>([]);
@@ -131,6 +133,8 @@ export const VaultContribute: React.FC = () => {
 
   const hasYearParam = typeof year === 'string' && year.length > 0;
   const vaultYear = hasYearParam ? parseInt(year ?? '0', 10) : null;
+  const previewGuest = params.get('previewGuest')?.trim() ?? '';
+  const inviteToken = params.get('invite_token')?.trim() ?? '';
 
 
   const submittedKey = `${VAULT_SUBMITTED_KEY_PREFIX}${siteSlug ?? 'unknown'}`;
@@ -688,6 +692,14 @@ export const VaultContribute: React.FC = () => {
                 );
               })}
             </div>
+
+            <GuestJourneyCompanion
+              currentSurface="vault"
+              siteSlug={siteSlug || undefined}
+              inviteToken={inviteToken || undefined}
+              previewGuest={previewGuest || undefined}
+              className="mt-6 bg-white/90"
+            />
           </div>
         </div>
       </div>
@@ -769,6 +781,13 @@ export const VaultContribute: React.FC = () => {
 
           <div className="bg-white/95 backdrop-blur rounded-3xl shadow-xl border border-border-subtle p-5 sm:p-6 md:p-8 relative overflow-hidden transition-shadow duration-300 hover:shadow-2xl">
             <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-primary/20 via-primary/60 to-primary/20" />
+            <GuestJourneyCompanion
+              currentSurface="vault"
+              siteSlug={siteSlug || undefined}
+              inviteToken={inviteToken || undefined}
+              previewGuest={previewGuest || undefined}
+              className="mb-5 bg-primary/[0.03]"
+            />
             <form onSubmit={handleSubmit} className="space-y-5 md:space-y-5.5">
               <div className="text-xs rounded-xl px-3 py-2 border bg-stone-50 border-stone-200 text-stone-600">
                 Storage destination: <strong className="text-stone-800">{usingGoogleDrive ? 'Google Drive' : 'Secure vault storage'}</strong>

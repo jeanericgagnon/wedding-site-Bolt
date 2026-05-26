@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
+import { GuestJourneyCompanion } from '../components/guest/GuestJourneyCompanion';
 import { demoGuests, demoWeddingSite } from '../lib/demoData';
 
 type Match = {
@@ -37,8 +38,11 @@ async function callPublicFn(name: string, body: unknown) {
 
 export const GuestContactUpdate: React.FC = () => {
   const { token = '' } = useParams<{ token: string }>();
+  const params = useMemo(() => new URLSearchParams(window.location.search), []);
   const siteRef = token; // now interpreted as site id/slug
   const isDemoSiteRef = siteRef === demoWeddingSite.id || siteRef.toLowerCase() === 'demo';
+  const previewGuest = params.get('previewGuest')?.trim() ?? '';
+  const inviteToken = params.get('invite_token')?.trim() ?? '';
 
   const [query, setQuery] = useState('');
   const [matches, setMatches] = useState<Match[]>([]);
@@ -153,6 +157,14 @@ export const GuestContactUpdate: React.FC = () => {
       <div className="w-full max-w-xl bg-surface border border-border rounded-2xl p-6 space-y-4">
         <h1 className="text-xl font-semibold text-text-primary">Update contact & RSVP</h1>
         <p className="text-sm text-text-secondary">Search your name, choose your record, then update details for yourself or your party.</p>
+
+        <GuestJourneyCompanion
+          currentSurface="contact"
+          siteSlug={siteRef || undefined}
+          inviteToken={inviteToken || undefined}
+          previewGuest={previewGuest || undefined}
+          className="mt-4"
+        />
 
         <div className="flex gap-2">
           <input

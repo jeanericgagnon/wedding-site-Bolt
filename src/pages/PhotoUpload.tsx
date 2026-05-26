@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { GuestJourneyCompanion } from '../components/guest/GuestJourneyCompanion';
 
 const supabaseUrl = (import.meta.env.VITE_SUPABASE_URL as string | undefined)?.trim();
 const supabaseAnonKey = (import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined)?.trim();
@@ -28,6 +29,9 @@ export const PhotoUpload: React.FC = () => {
   const params = useMemo(() => new URLSearchParams(window.location.search), []);
   const initialToken = params.get('t')?.trim() ?? '';
   const siteSlug = params.get('site')?.trim().toLowerCase() ?? '';
+  const previewGuest = params.get('previewGuest')?.trim() ?? '';
+  const inviteToken = params.get('invite_token')?.trim() || initialToken;
+  const isHubEntry = params.get('hub') === '1';
 
   const [token, setToken] = useState(initialToken);
   const [guestName, setGuestName] = useState('');
@@ -117,6 +121,15 @@ export const PhotoUpload: React.FC = () => {
             Uploading to {siteSlug}.dayof.love
           </p>
         )}
+
+        <GuestJourneyCompanion
+          currentSurface="photos"
+          siteSlug={siteSlug || undefined}
+          inviteToken={inviteToken || undefined}
+          previewGuest={previewGuest || undefined}
+          isHubEntry={isHubEntry}
+          className="mt-5 border-rose-100 bg-rose-50/45"
+        />
 
         <form onSubmit={onSubmit} className="mt-6 space-y-4">
           {!siteSlug && (
