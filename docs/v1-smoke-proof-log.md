@@ -2,12 +2,25 @@
 
 _Date:_ `2026-05-12`
 _Production:_ [dayof.love](https://dayof.love)
-_Latest verified deploy:_ `dpl_DQG5bU5yVbqT79Y6r4ZCx13nPtSU`
-_Exact frontend SHA:_ `f2cc4811`
+_Latest verified deploy:_ `dpl_Epn8mhHinAWkDwUjhetC7otmdBPq`
+_Exact frontend SHA:_ `84d8df1c4`
 _Launch call right now:_ `GO`
 
 ## Current Truth
 
+- 2026-05-26 11:22 PM PDT:
+  - recovered the intended public UI/trust surface on `main` through PR #96 and the follow-up homepage proof-alignment commit `84d8df1c4`
+  - production deploys during the recovery loop:
+    - `dpl_4yLjYEQUum4i8ovQiyde8KU7J1BE` brought the recovered public UI onto the live lane
+    - `dpl_Epn8mhHinAWkDwUjhetC7otmdBPq` is the latest verified production deploy now aliased to `dayof.love`
+  - live proof on the recovered alias/runtime:
+    - `npm run smoke:rsvp` -> `PASS`
+    - `npm run smoke:site` -> `PASS`
+    - `PLAYWRIGHT_BASE_URL=https://dayof.love npm run proof:v1:canonical-smoke` -> `LIVE PASS`
+    - `npm run proof:v1:guests-rsvp-ops` -> `PASS` when rerun with network access after the initial sandbox DNS failure
+  - canonical smoke is now green on the real alias with all 35 public Playwright smoke checks passing
+  - the public UI regression is closed: Home/Product/Trust, signup/support/refund, quick-start bypass gating, RSVP helper copy, guest-contact lookup placeholder, and site-photo-upload guest flow all match the current launch-proof expectations again
+  - remaining manual proof note is unchanged and explicit: the canonical couple path route-notes artifact still needs a logged human pass, but the automated launch-critical public/guest gates are green again
 - 2026-05-26 10:25 AM PDT:
   - merged deploy-readiness audit PR #94 onto `main` (`151354afb`)
   - repaired current launch blockers in the audit lane:

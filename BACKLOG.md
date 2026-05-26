@@ -238,21 +238,21 @@ Yes. The launch-critical hardening lane is closed, the blocker-fix runtime is li
 
 | Field | Current State |
 | --- | --- |
-| Current date/time | `2026-05-24 04:16 PM PDT` |
-| Branch | `codex/v1-finish-hard-gates-3` |
-| Latest verified Git SHA | `branch head` |
-| Latest verified commit message | `branch head` |
-| Vercel deployment ID | `dpl_EgkU34BQxP2sibkgpcwaqiZTUJNW` |
+| Current date/time | `2026-05-26 11:22 PM PDT` |
+| Branch | `main` |
+| Latest verified Git SHA | `84d8df1c4` |
+| Latest verified commit message | `Align homepage pricing heading with launch proof` |
+| Vercel deployment ID | `dpl_Epn8mhHinAWkDwUjhetC7otmdBPq` |
 | Supabase project ID | `atuzuobpprjstfmdnwso` |
 | Supabase functions deployed | Live blocker-fix lane includes `submit-rsvp --no-verify-jwt` plus applied migration `20260511170500_serialize_submit_rsvp_capacity.sql`. Same-day confirmed/live-proven: `public-site-access --no-verify-jwt`; `photo-upload --no-verify-jwt`; `process-email-queue`; `validate-rsvp-token --no-verify-jwt`; `interactive-section-public --no-verify-jwt`; `vault-contribution-public --no-verify-jwt`; `vault-entry-submit --no-verify-jwt`; `translate-site-content`. Latest deploy waves also pushed `guest-contact-lookup --no-verify-jwt`, `guest-contact-submit --no-verify-jwt`, and the final `registry-barcode-lookup --no-verify-jwt` fuller-suite provider/repair/fallback batch live. |
-| Current readiness score | `10 / 10 for the active three-lane full-suite bar` |
-| Current launch verdict | `FULL-SUITE READY FOR THE ACTIVE THREE-LANE SCOPE` |
-| Production-ready | `YES FOR DAY-OF / COORDINATOR, NAME CHANGE, AND REGISTRY BARCODE` |
-| Reason production-ready is claimed | The reopened coordinator scanner/event-awareness lane, the name-change dependency matrix lane, and the aggregate full-suite gate have all rerun green locally and live on production, including a fresh authenticated name-change runtime rerun that closes the last named proof risk with the board and research doc aligned again. |
-| Current blockers | None for the active three-lane full-suite scope. Broader repo-completion work remains open in the backlog below. |
-| Current proof state | Fresh green proof now covers the reopened hardening bar honestly: focused shared-foundation/scanner/name-change/coordinator Vitest lanes, `npm run proof:v1:qr-scanner`, `npm run proof:v1:coordinator-dayof`, `npm run proof:v1:full-suite-features`, `npm run proof:v1:full-suite-exit-gate`, a fresh `V1_NAME_CHANGE_RUNTIME_LIVE=1 npm run proof:v1:name-change-runtime -- --require-live` rerun, `V1_COORDINATOR_DAYOF_LIVE=1 npm run proof:v1:coordinator-dayof -- --require-live`, `V1_FULL_SUITE_EXIT_GATE_LIVE=1 npm run proof:v1:full-suite-exit-gate -- --require-live`, `npm run proof:v1:board:freshness`, `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `git diff --check`, and `npm run build`. |
-| Current deployment state | The latest deployed frontend runtime is [dayof.love](https://dayof.love) via verified Vercel production deploy `dpl_EgkU34BQxP2sibkgpcwaqiZTUJNW`. The coordinator migrations `20260513170000_coordinator_event_checkin_write.sql` and `20260513213000_coordinator_handoff_issue_depth.sql`, the name-change reminder compatibility migration `20260513193000_fix_name_change_reminders_replace_runtime.sql`, and the registry duplicate-merge migration `20260513195500_add_registry_duplicate_merge.sql` remain applied remotely. This runtime now has current-production green proof for coordinator QR/manual validation, event-aware day-of routing, name-change dependency/runtime truth, registry live write/read, the responsive three-lane surface check, and collaborator permission boundaries. `submit-rsvp` remains live with the serialized capacity path, and the public-session-secret, admin route gate, guest-contact, route-module decomposition, vault contribution, and `.dayof.love` host-routing lanes remain live-proven. External custom domains remain unsupported product scope, not an active proof lane. |
-| Current next actions | Keep the three-lane truth synced as future deploys change it, and rerun `npm run proof:v1:board:freshness` whenever the canonical launch-state block changes. Use the broader product-completion backlog below for unfinished feature work outside the current hard-claimed scope. |
+| Current readiness score | `10 / 10 for the current public + guest/RSVP launch bar` |
+| Current launch verdict | `GO` |
+| Production-ready | `YES FOR THE CURRENT PUBLIC / GUEST / RSVP LAUNCH SCOPE` |
+| Reason production-ready is claimed | Production now serves the recovered intended public UI on `dayof.love`, canonical public smoke is green on the real alias, `npm run smoke:rsvp` and `npm run smoke:site` are green, and `npm run proof:v1:guests-rsvp-ops` is green when run with network access in the target environment. |
+| Current blockers | No active automated blockers remain on the current public / guest / RSVP launch bar. The remaining note is manual proof hygiene: keep the canonical couple-path route notes and wording/runtime evidence fresh after approved frontend deploys. |
+| Current proof state | Fresh green proof now covers the current public launch bar honestly: `PLAYWRIGHT_BASE_URL=https://dayof.love npm run proof:v1:canonical-smoke`, `npm run proof:v1:guests-rsvp-ops`, `npm run smoke:rsvp`, `npm run smoke:site`, `npm run build`, and the earlier deploy-readiness / CI gates that were already green before the UI recovery. |
+| Current deployment state | The latest verified deployed frontend runtime is [dayof.love](https://dayof.love) via Vercel production deploy `dpl_Epn8mhHinAWkDwUjhetC7otmdBPq`. The intended Home/Product/Trust surface, signup/support/refund routes, quick-start bypass gating, RSVP helper copy, guest-contact lookup placeholder, and tokenless site-photo-upload guest path now match the current launch-proof expectations on the live alias. |
+| Current next actions | Keep the canonical couple-path route notes and wording/runtime proof fresh after future approved frontend deploys, rerun `npm run proof:v1:board:freshness` whenever this launch-state block changes, and treat the remaining backlog below as broader product work rather than active launch blockers. |
 
 Blunt status:
 - `P1-04 Public section DTO minimization` is still closed.
