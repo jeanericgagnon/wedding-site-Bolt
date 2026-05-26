@@ -14,6 +14,8 @@ import { isTaskDueBetween, isTaskDueOnOrBefore } from './taskDueDate';
 import { buildNameChangeOverviewCardModel } from '../nameChangeOverviewCard';
 import { buildNameChangeOverviewInsights } from '../nameChangeOverviewInsights';
 import { deriveNameChangeLifecycleStatus } from '../nameChangeLifecycleStatus';
+import { PlanningDecisionCard } from './PlanningDecisionCard';
+import { buildPlanningOverviewDecisionCard } from './planningDecisionAssistant';
 
 interface SeatingReadiness {
   attending: number;
@@ -123,9 +125,28 @@ export const PlanningOverviewTab: React.FC<Props> = ({ tasks, budgetItems, vendo
       nameChangePlan,
     ),
   );
+  const planningDecision = buildPlanningOverviewDecisionCard({
+    tasks,
+    budgetItems,
+    vendors,
+    seatingReadiness,
+  });
 
   return (
     <div className="space-y-6">
+      <PlanningDecisionCard
+        model={planningDecision}
+        onAction={(target) => {
+          if (target === 'seating') {
+            if (typeof window !== 'undefined') {
+              window.location.assign('/dashboard/seating');
+            }
+            return;
+          }
+          onTabChange(target);
+        }}
+      />
+
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <button
           onClick={() => onTabChange('tasks')}
