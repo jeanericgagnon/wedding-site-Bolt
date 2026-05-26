@@ -284,7 +284,10 @@ Deno.serve(async (req: Request) => {
       failed,
       partial: failed.length > 0,
     });
-  } catch (err) {
-    return fail("INTERNAL_ERROR", err instanceof Error ? err.message : "Internal server error", 500);
+  } catch {
+    console.error("PHOTO_UPLOAD_UNEXPECTED_FAILED", {
+      reason: "UNEXPECTED_PHOTO_UPLOAD_FAILURE",
+    });
+    return fail("INTERNAL_ERROR", "Could not upload files. Please try again.", 500);
   }
 });
