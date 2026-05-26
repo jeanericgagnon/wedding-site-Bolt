@@ -4,6 +4,8 @@ export const SETTINGS_SITE_SELECT_FIELDS = [
   'couple_name_2',
   'active_template_id',
   'site_slug',
+  'wedding_date',
+  'venue_name',
   'privacy_mode',
   'hide_from_search',
   'guest_access_token',

@@ -14,6 +14,8 @@ describe('settings site select', () => {
         'rsvp_custom_questions',
         'rsvp_meal_config',
         'music_playlist_url',
+        'wedding_date',
+        'venue_name',
       ]),
     );
   });

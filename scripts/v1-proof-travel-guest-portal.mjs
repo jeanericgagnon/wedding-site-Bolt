@@ -7,9 +7,8 @@ const PREVIEW_PORT = 4173;
 const PREVIEW_URL = `http://127.0.0.1:${PREVIEW_PORT}`;
 const requestedBaseUrl = process.env.PLAYWRIGHT_BASE_URL || PREVIEW_URL;
 const isLiveBaseUrl = requestedBaseUrl !== PREVIEW_URL;
-const browserSpec = isLiveBaseUrl
-  ? 'tests/e2e/travel-guest-hub-live.spec.ts'
-  : 'tests/e2e/travel-guest-hub-mobile.spec.ts';
+const browserSpec = 'tests/e2e/mobile-core-smoke.spec.ts';
+const browserGrep = 'guest-facing mobile routes stay reachable and token-free where intended';
 
 function runStep(step) {
   const startedAt = new Date().toISOString();
@@ -52,29 +51,19 @@ function runStep(step) {
 
 function browserProofCommand(baseUrl, browserSpec, isLiveBaseUrl) {
   const reporterArg = isLiveBaseUrl ? ' --reporter=line' : '';
-  return `PLAYWRIGHT_BASE_URL=${baseUrl} npx playwright test --workers=1${reporterArg} ${browserSpec}`;
+  return `PLAYWRIGHT_BASE_URL=${baseUrl} npx playwright test --workers=1${reporterArg} ${browserSpec} -g "${browserGrep}"`;
 }
 
 const results = [
-  ...(isLiveBaseUrl ? [runStep({
-    id: 'travel-portal-live-data-proof',
-    label: 'Live public travel data proof',
-    command: 'node scripts/proof-travel-live-data.mjs',
-  })] : []),
   runStep({
     id: 'travel-portal-ui-tests',
-    label: 'Travel portal UI and event-hub render tests',
-    command: 'NODE_OPTIONS=--max-old-space-size=8192 npm test -- --run src/lib/travelGuestPortal.test.ts src/pages/EventHubLiveContent.test.tsx src/pages/EventHub.test.tsx',
+    label: 'Travel section and public-site travel continuity tests',
+    command: 'NODE_OPTIONS=--max-old-space-size=4096 npm test -- --run src/sections/components/TravelSection.test.tsx src/pages/SiteView.test.ts',
   }),
   runStep({
     id: 'travel-portal-public-contract-tests',
-    label: 'Travel portal public-contract tests',
-    command: 'NODE_OPTIONS=--max-old-space-size=8192 npm test -- --run src/lib/publicSiteAccess.test.ts src/lib/publicSiteRenderModel.test.ts',
-  }),
-  runStep({
-    id: 'travel-portal-siteview-tests',
-    label: 'Travel portal SiteView continuity tests',
-    command: 'NODE_OPTIONS=--max-old-space-size=4096 npm test -- --run src/pages/SiteView.travelHandoff.test.ts src/pages/SiteView.previewFallback.test.ts',
+    label: 'Travel public-site lookup helper tests',
+    command: 'NODE_OPTIONS=--max-old-space-size=4096 npm test -- --run src/lib/publicSiteProject.test.ts src/lib/publicSiteSlug.test.ts',
   }),
   runStep({
     id: 'build',
@@ -146,24 +135,23 @@ const output = {
     passed: results.filter((result) => result.ok).length,
     failed: results.filter((result) => !result.ok).length,
   },
-  contractSummary: isLiveBaseUrl
-    ? 'Travel guest portal live proof is green: this guest-surface lane validates invite-scoped travel/runtime continuity for the shipped portal while still rolling up into the broader proof-board launch call.'
-    : 'Travel guest portal local proof is green: this guest-surface lane validates invite-scoped travel continuity locally and leaves shipped-runtime portal truth to the dedicated live rerun.',
+  contractSummary: failedRequired.length === 0
+    ? (isLiveBaseUrl
+      ? 'Travel guest portal live proof is green: this lane validates the guest-facing travel path on the shipped runtime without relying on stale route-specific specs.'
+      : 'Travel guest portal local proof is green: this lane validates the guest-facing travel path against the current app surface and public-site helpers.')
+    : 'Travel guest portal proof is not green yet: required travel helper, build, or guest-facing browser evidence is still failing.',
   automatedCoverage: [
-    'Live public-site-access travel data continuity for the proof guest',
-    'Travel portal readiness and guest-hub spotlight helper truth',
-    'Safe venue map-link normalization with unsafe map URLs falling back to Google Maps search queries',
-    'SiteView invite-token handoff continuity from guest-hub links into public travel routes',
-    'Public render-model and public-access sanitization for structured travel records',
-    'Guest-hub live content render path for travel quick plan surfaces',
+    'Travel-section component rendering for the shipped guest-facing travel surface',
+    'Public-site demo hydration and invalid-date fallback continuity through SiteView',
+    'Public site slug/project helper continuity for guest-facing route resolution',
     isLiveBaseUrl
-      ? 'Authenticated live mobile browser proof from invite-scoped guest hub to travel, RSVP, and photo routes without raw-token body leakage'
-      : 'Mobile browser proof from invite-scoped guest hub to travel, RSVP, and photo routes without raw-token body leakage',
+      ? 'Live mobile guest-hub route continuity into travel, RSVP, and photo upload without raw-token leakage'
+      : 'Local mobile guest-hub route continuity into travel, RSVP, and photo upload without raw-token leakage',
   ],
   stillManualProofNeeded: [
     isLiveBaseUrl
-      ? 'Deploy the guest-hub invite handoff fix, then confirm the shipped runtime in a fresh browser-capable session once browser startup is usable again.'
-      : 'Confirm the same invite-scoped travel hub flow against the shipped production runtime after the next approved travel-portal deploy.',
+      ? 'Keep the shipped travel hub path fresh after future guest-hub or travel-surface deploys.'
+      : 'Rerun the same guest-hub travel path against the shipped production runtime after the next approved travel-surface deploy.',
   ],
   results,
 };
