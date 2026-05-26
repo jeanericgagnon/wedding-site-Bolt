@@ -3,10 +3,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import {
   Heart,
   LayoutDashboard,
-  Palette,
   Users,
   Image,
-  Camera,
   Gift,
   Settings,
   Menu,
@@ -33,6 +31,7 @@ import { resolveActiveSiteForUser, resolveActiveSiteRoleForUser } from '../../li
 import { getStoredActiveSiteId, setStoredActiveSiteId } from '../../lib/activeSiteStorage';
 import { getDemoDashboardSiteContext } from './dashboardDemoContext';
 import { buildSiteMembershipLabel } from './siteMembershipLabel';
+import { resolveDashboardLayoutSiteContext } from './dashboardSiteContext';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -131,24 +130,26 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
 
       const { data } = await supabase
         .from('wedding_sites')
-        .select('id, site_slug, site_url, site_json, is_published')
+        .select('id, site_slug, site_url, site_json, is_published, privacy_mode')
         .eq('id', targetSiteId)
         .maybeSingle();
 
       const row = (data as Record<string, unknown> | null) ?? null;
+      const siteContext = resolveDashboardLayoutSiteContext(row);
       const resolved = resolvePublicSiteSlugFromRow(row);
       if (resolved) setSiteSlug(resolved);
-      if (row?.id && typeof row.id === 'string') setSiteId(row.id);
-      setSiteIsPublished(row?.is_published === true);
+      if (siteContext.rowId) setSiteId(siteContext.rowId);
+      setSiteIsPublished(siteContext.isPublished);
+      setSitePrivacyMode(siteContext.privacyMode);
 
-      const siteJson = row?.site_json;
-      if (siteJson && typeof siteJson === 'object' && !Array.isArray(siteJson)) {
-        const parsedSiteJson = siteJson as Record<string, unknown>;
-        setSiteJsonState(parsedSiteJson);
-        const dashboard = parsedSiteJson.dashboard;
+      if (siteContext.siteJson) {
+        setSiteJsonState(siteContext.siteJson);
+        const dashboard = siteContext.siteJson.dashboard;
         if (dashboard && typeof dashboard === 'object' && !Array.isArray(dashboard)) {
           // legacy sidebar feature state ignored after nav rollup
         }
+      } else {
+        setSiteJsonState(null);
       }
     };
 
