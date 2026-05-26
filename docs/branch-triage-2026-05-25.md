@@ -87,6 +87,7 @@ Why keep:
 
 Recommended next move:
 - decide separately whether to revive as a real feature branch
+- see `docs/builder-v2-setup-route-skeleton-salvage-plan-2026-05-25.md` for the current revival split
 
 ## Summary
 
