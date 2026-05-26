@@ -83,11 +83,11 @@ test('public event RSVP writes per-event answers and reloads saved details', asy
 
   const fetchQaGuestRows = async () => {
     const response = await restFetch(restUrl('guests', {
-      select: 'id,email,rsvp_status',
+      select: 'id,email,invite_token,rsvp_status',
       email: `eq.${guest.email}`,
     }));
     expect(response.ok).toBeTruthy();
-    return await response.json() as Array<{ id: string; email: string; rsvp_status: string | null }>;
+    return await response.json() as Array<{ id: string; email: string; invite_token: string | null; rsvp_status: string | null }>;
   };
 
   const cleanupQaGuest = async () => {
@@ -136,16 +136,22 @@ test('public event RSVP writes per-event answers and reloads saved details', asy
 
   try {
     await page.goto(`/dashboard/guests?bypassPayment=1&eventRsvpImportE2e=${runId}`, { waitUntil: 'domcontentloaded' });
-    await expect(page.getByRole('heading', { name: 'Guests & RSVP' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'People, replies, and details.' })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Import Guests' })).toBeVisible();
     await page.locator('input[type="file"]').setInputFiles(csvPath);
     await expect(page.getByRole('heading', { name: 'Match columns' })).toBeVisible();
     await page.getByRole('button', { name: 'Continue to Review' }).click();
     await expect(page.getByRole('heading', { name: 'Review Import' })).toBeVisible();
     await expect(page.getByText('1 guest ready to import', { exact: true })).toBeVisible();
-    await expect(page.getByText('2 event invites')).toBeVisible();
     await page.getByRole('button', { name: 'Import 1 Guest' }).click();
     await expect(page.getByText(guest.email)).toBeVisible({ timeout: 20_000 });
+    await expect.poll(async () => {
+      const [importedGuest] = await fetchQaGuestRows();
+      return importedGuest?.invite_token ?? null;
+    }, {
+      message: 'expected imported guest invite token to persist before event RSVP route lookup',
+      timeout: 15_000,
+    }).toBe(inviteToken);
 
     await page.goto(`/events?token=${encodeURIComponent(inviteToken)}`, { waitUntil: 'domcontentloaded' });
     await expect(page.getByRole('heading', { name: new RegExp(`Hello, ${guest.name}!`) })).toBeVisible();

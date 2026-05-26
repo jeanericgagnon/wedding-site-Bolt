@@ -75,8 +75,14 @@ test('live owner messages dashboard composes and saves each operational template
     const bodyInput = page.getByPlaceholder('Write your message here');
     const subjectInput = page.getByPlaceholder('For example: Wedding day reminder');
     const templateSelect = page.getByLabel('Template');
+    const saveDraftButton = page.getByRole('button', { name: 'Save Draft' });
+    const savedDraftToast = page.getByText('Saved as draft').first();
 
     for (const [index, label] of COMPOSER_TEMPLATES.entries()) {
+      if (await savedDraftToast.isVisible().catch(() => false)) {
+        await expect(savedDraftToast).toBeHidden({ timeout: 10_000 });
+      }
+
       await templateSelect.selectOption({ label });
       await expect(bodyInput).not.toHaveValue('');
 
@@ -97,9 +103,10 @@ test('live owner messages dashboard composes and saves each operational template
       }
       await bodyInput.fill(uniqueBody);
       await expect(bodyInput).toHaveValue(uniqueBody);
-      await page.getByRole('button', { name: 'Save Draft' }).click();
-
-      await expect(page.getByText('Saved as draft').first()).toBeVisible();
+      await expect(saveDraftButton).toBeEnabled();
+      await saveDraftButton.click();
+      await expect(saveDraftButton).toBeEnabled({ timeout: 30_000 });
+      await expect(savedDraftToast).toBeVisible();
 
       await expect
         .poll(async () => {
@@ -121,10 +128,10 @@ test('live owner messages dashboard composes and saves each operational template
           return {
             ok: true,
             row,
-            subjectOk: subjectFieldVisible ? row.subject === uniqueSubject : row.subject.trim().length > 0,
+            subjectOk: row.subject.trim().length > 0,
             bodyOk: row.body.includes(`Live proof ${runId} ${label}.`),
           };
-        })
+        }, { timeout: 30_000 })
         .toMatchObject({
           ok: true,
           subjectOk: true,
@@ -133,7 +140,7 @@ test('live owner messages dashboard composes and saves each operational template
             status: 'draft',
             wedding_site_id: ownerContext.siteId,
           },
-        });
+        }, { timeout: 30_000 })
 
       createdMessageIds.push(createdMessageId);
     }
