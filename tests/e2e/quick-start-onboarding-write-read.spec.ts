@@ -134,7 +134,7 @@ test('quick-start AI onboarding creates an editable starter site and guest impor
     expect(originalSite?.id).toBeTruthy();
 
     await page.goto('/onboarding/quick-start?bypassPayment=1&resetQuickStart=1', { waitUntil: 'domcontentloaded' });
-    await expect(page.getByRole('heading', { name: /Who’s getting married\?/i })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /Who['’]s getting married\?/i })).toBeVisible();
 
     await fillVisibleTextField(page, coupleNames);
     await continueIfVisible(page);
@@ -160,7 +160,7 @@ test('quick-start AI onboarding creates an editable starter site and guest impor
     await fillVisibleTextField(page, '4:30 PM');
     await continueIfVisible(page);
 
-    await page.getByRole('button', { name: '50–100' }).click();
+    await page.getByRole('button', { name: /50.?100/i }).click();
     await page.getByRole('button', { name: 'Some plus-ones' }).click();
     await page.getByRole('button', { name: 'No' }).click();
 

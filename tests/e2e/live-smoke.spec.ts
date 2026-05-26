@@ -238,7 +238,7 @@ test.describe('public route smoke basics', () => {
 
   test('guest contact update page stays publicly reachable', async ({ page }) => {
     await gotoDom(page, '/guest-contact/ericandkaras');
-    await expect(page.getByRole('heading', { name: /update contact & rsvp/i })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /update contact (info|&)\s*(or\s*)?rsvp/i })).toBeVisible();
     await expect(page.getByPlaceholder(/search your full name/i)).toBeVisible();
     await expect(page.getByRole('button', { name: /^find$/i })).toBeDisabled();
   });
