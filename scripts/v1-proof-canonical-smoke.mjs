@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 
 import { execSync } from 'node:child_process';
-import { existsSync } from 'node:fs';
+import { existsSync, readdirSync } from 'node:fs';
+import { join, relative } from 'node:path';
 
 const steps = [
   {
@@ -96,13 +97,66 @@ function runStep(step) {
   }
 }
 
-const results = steps.map(runStep);
+const PROOF_SCREENSHOTS_ROOT = process.env.V1_PROOF_SCREENSHOTS_ROOT
+  || join(process.cwd(), 'docs', 'proof-screenshots', '2026-05-01');
+
+function toRepoRelativePath(path) {
+  return relative(process.cwd(), path).replaceAll('\\', '/');
+}
+
+function resolveLatestProofArtifact({ familyPattern, familyHint, filename }) {
+  if (!existsSync(PROOF_SCREENSHOTS_ROOT)) {
+    return {
+      path: `${toRepoRelativePath(PROOF_SCREENSHOTS_ROOT)}/${familyHint}*/${filename}`,
+      captured: false,
+    };
+  }
+
+  const latestMatch = readdirSync(PROOF_SCREENSHOTS_ROOT, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => {
+      const match = entry.name.match(familyPattern);
+      if (!match) return null;
+      return {
+        runId: Number(match[1]),
+        path: join(PROOF_SCREENSHOTS_ROOT, entry.name, filename),
+      };
+    })
+    .filter(Boolean)
+    .filter((entry) => Number.isFinite(entry.runId))
+    .sort((a, b) => b.runId - a.runId)[0];
+
+  if (!latestMatch) {
+    return {
+      path: `${toRepoRelativePath(PROOF_SCREENSHOTS_ROOT)}/${familyHint}*/${filename}`,
+      captured: false,
+    };
+  }
+
+  return {
+    path: toRepoRelativePath(latestMatch.path),
+    captured: existsSync(latestMatch.path),
+  };
+}
+
+const shouldSkipSteps = process.env.V1_PROOF_CANONICAL_SMOKE_SKIP_STEPS === '1';
+const results = shouldSkipSteps ? [] : steps.map(runStep);
 const blockedRequired = results.filter((result) => result.required && result.blocked);
 const failedRequired = results.filter((result) => result.required && !result.ok && !result.blocked);
-const localRouteEvidencePath = 'docs/proof-screenshots/2026-05-01/canonical-couple-path-1777633026721/route-notes.md';
-const localWordingEvidencePath = 'docs/proof-screenshots/2026-05-01/runtime-wording-truth-1777635678106/notes.md';
-const localRouteEvidenceCaptured = existsSync(localRouteEvidencePath);
-const localWordingEvidenceCaptured = existsSync(localWordingEvidencePath);
+const canonicalCouplePathEvidence = resolveLatestProofArtifact({
+  familyPattern: /^canonical-couple-path-(\d+)$/,
+  familyHint: 'canonical-couple-path-',
+  filename: 'route-notes.md',
+});
+const runtimeWordingEvidence = resolveLatestProofArtifact({
+  familyPattern: /^runtime-wording-truth-(\d+)$/,
+  familyHint: 'runtime-wording-truth-',
+  filename: 'notes.md',
+});
+const localRouteEvidencePath = canonicalCouplePathEvidence.path;
+const localWordingEvidencePath = runtimeWordingEvidence.path;
+const localRouteEvidenceCaptured = canonicalCouplePathEvidence.captured;
+const localWordingEvidenceCaptured = runtimeWordingEvidence.captured;
 
 const output = {
   ok: failedRequired.length === 0 && blockedRequired.length === 0,

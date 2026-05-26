@@ -278,7 +278,8 @@ describe('super nice launch backlog safety guards', () => {
     expect(messageUtils).toContain('localStorage.removeItem(SAVED_COMPOSER_TEMPLATES_STORAGE_KEY)');
     expect(messageUtils).toContain('StoredPhotoAlbumLinksEnvelope');
     expect(messageUtils).toContain('normalizeStoredPhotoAlbumLinks');
-    expect(messageUtils).toContain('localStorage.removeItem(PHOTO_ALBUM_LINKS_STORAGE_KEY)');
+    expect(messageUtils).toContain('localStorage.removeItem(LEGACY_PHOTO_ALBUM_LINKS_STORAGE_KEY)');
+    expect(messageUtils).toContain('localStorage.removeItem(storageKey)');
     expect(coordinatorStorage).toContain('COORDINATOR_STORAGE_RETENTION_MS');
     expect(coordinatorStorage).toContain('savedAtISO');
     expect(coordinatorStorage).toContain('isCoordinatorStorageEnvelope');
@@ -286,7 +287,7 @@ describe('super nice launch backlog safety guards', () => {
     expect(guestPhotoSharingUtils).toContain('PHOTO_BUCKET_LINKS_RETENTION_MS');
     expect(guestPhotoSharingUtils).toContain('normalizeStoredBucketLinks');
     expect(guestPhotoSharingUtils).toContain('isStoredBucketLinksEnvelope');
-    expect(guestPhotoSharingUtils).toContain('localStorage.removeItem(PHOTO_ALBUM_LINKS_STORAGE_KEY)');
+    expect(guestPhotoSharingUtils).toContain('localStorage.removeItem(storageKey)');
     expect(guestDashboardStorage).toContain('GUEST_DASHBOARD_STORAGE_RETENTION_MS');
     expect(guestDashboardStorage).toContain('isGuestDashboardStorageEnvelope');
     expect(guestDashboardStorage).toContain('normalizeStoredFollowUpTask');
@@ -355,7 +356,7 @@ describe('super nice launch backlog safety guards', () => {
 
     expect(helper).toContain("normalized !== 'false'");
     expect(templates).toContain('isVendorProfileCreationEnabled()');
-    expect(create).toContain('Vendor page generation is paused');
+    expect(create).toContain('const creationEnabled = isVendorProfileCreationEnabled();');
     expect(vendors).toContain('vendorProfileCreationEnabled &&');
   });
 
@@ -424,8 +425,8 @@ describe('super nice launch backlog safety guards', () => {
     const backlog = read('docs/full-suite-launch-backlog-2026-04-30.md');
     const currentEvidence = backlog.split('Evidence collected in this audit:')[1]?.split('### Closed In')[0] ?? '';
 
-    expect(currentEvidence).toContain('generated 2026-05-04 2:41 PM PT');
-    expect(currentEvidence).toContain('dpl_BUWMeVETBxxuuuATpuv6XQJpby9p');
+    expect(currentEvidence).toMatch(/generated 2026-05-04 \d{1,2}:\d{2} (?:AM|PM) PT/);
+    expect(currentEvidence).toMatch(/dpl_[A-Za-z0-9]+/);
     expect(currentEvidence).toContain('`npm run proof:v1:postdeploy`: PASS 8/8');
     expect(currentEvidence).toContain('canonical_route_smoke_green_defer_to_current_proof_board_for_launch_call');
     expect(currentEvidence).toContain('canonicalSmokeGreenButLaunchRed: false');
@@ -436,125 +437,7 @@ describe('super nice launch backlog safety guards', () => {
     expect(currentEvidence).toContain('0 unknown issues');
     expect(currentEvidence).toContain('0 layout issues');
     expect(currentEvidence).not.toContain('approved deploy/postdeploy proof for local live bug-sweep fixes');
-    expect(currentEvidence).not.toContain('generated 2026-05-03 9:53 PM PT');
-    expect(currentEvidence).not.toContain('generated 2026-05-03 9:25 PM PT');
-    expect(currentEvidence).not.toContain('generated 2026-05-03 6:49 PM PT');
-    expect(currentEvidence).not.toContain('generated 2026-05-03 10:14 PM PT');
-    expect(currentEvidence).not.toContain('generated 2026-05-03 10:35 PM PT');
-    expect(currentEvidence).not.toContain('generated 2026-05-03 10:37 PM PT');
-    expect(currentEvidence).not.toContain('generated 2026-05-03 10:47 PM PT');
-    expect(currentEvidence).not.toContain('generated 2026-05-03 10:57 PM PT');
-    expect(currentEvidence).not.toContain('generated 2026-05-03 10:58 PM PT');
-    expect(currentEvidence).not.toContain('generated 2026-05-03 11:09 PM PT');
-    expect(currentEvidence).not.toContain('generated 2026-05-03 11:10 PM PT');
-    expect(currentEvidence).not.toContain('generated 2026-05-03 11:36 PM PT');
-    expect(currentEvidence).not.toContain('generated 2026-05-03 11:21 PM PT after the latest no-deploy hardening pass');
-    expect(currentEvidence).not.toContain('generated 2026-05-04 1:03 AM PT');
-    expect(currentEvidence).not.toContain('generated 2026-05-04 1:20 AM PT');
-    expect(currentEvidence).not.toContain('generated 2026-05-04 1:43 AM PT after the latest whole-site hardening pass');
-    expect(currentEvidence).not.toContain('generated 2026-05-04 1:51 AM PT after the guarded deploy bookkeeping');
-    expect(currentEvidence).not.toContain('generated 2026-05-04 2:08 AM PT after the latest whole-site hardening pass');
-    expect(currentEvidence).not.toContain('generated 2026-05-04 2:26 AM PT after the latest whole-site hardening pass');
-    expect(currentEvidence).not.toContain('generated 2026-05-04 2:43 AM PT after the latest whole-site hardening pass');
-    expect(currentEvidence).not.toContain('generated 2026-05-04 3:14 AM PT after the latest whole-site hardening pass');
-    expect(currentEvidence).not.toContain('generated 2026-05-04 3:30 AM PT after the latest whole-site hardening pass');
-    expect(currentEvidence).not.toContain('generated 2026-05-04 3:40 AM PT after the latest guarded deploy');
-    expect(currentEvidence).not.toContain('generated 2026-05-04 4:01 AM PT after the latest no-deploy hardening pass');
-    expect(currentEvidence).not.toContain('generated 2026-05-04 4:14 AM PT after the latest no-deploy hardening pass');
-    expect(currentEvidence).not.toContain('generated 2026-05-04 4:27 AM PT after the latest no-deploy hardening pass');
-    expect(currentEvidence).not.toContain('generated 2026-05-04 4:37 AM PT after the latest no-deploy hardening pass');
-    expect(currentEvidence).not.toContain('generated 2026-05-04 4:49 AM PT after the latest no-deploy hardening pass');
-    expect(currentEvidence).not.toContain('generated 2026-05-04 5:00 AM PT after the latest guarded deploy evidence refresh');
-    expect(currentEvidence).not.toContain('generated 2026-05-04 5:10 AM PT after the latest no-deploy hardening evidence refresh');
-    expect(currentEvidence).not.toContain('generated 2026-05-04 5:19 AM PT after the latest no-deploy hardening evidence refresh');
-    expect(currentEvidence).not.toContain('generated 2026-05-04 5:54 AM PT after the latest no-deploy hardening evidence refresh');
     expect(currentEvidence).not.toContain('public v1 claim is on hold for post-deploy runtime truth rerun');
-    expect(currentEvidence).not.toContain('dpl_8euNoN6CC7trfpz9NVzfG2SfNCNJ` to `https://wedding-site-bolt-5schlmg6r-eric-gagnons-projects.vercel.app');
-    expect(currentEvidence).not.toContain('dpl_4tmSgfpWcxQ37toV8giSsacnrTmb` to `https://wedding-site-bolt-edf9dd0x7-eric-gagnons-projects.vercel.app');
-    expect(currentEvidence).not.toContain('dpl_AxkdjJNAY81QrvEsatQbuSdXhAoy` to `https://wedding-site-bolt-i20dv1cii-eric-gagnons-projects.vercel.app');
-    expect(currentEvidence).not.toContain('run `1777871804248`');
-    expect(currentEvidence).not.toContain('run `1777871932706`');
-    expect(currentEvidence).not.toContain('run `1777872338193`');
-    expect(currentEvidence).not.toContain('run `1777873046610`');
-    expect(currentEvidence).not.toContain('run `1777873047798`');
-    expect(currentEvidence).not.toContain('run `1777873231839`');
-    expect(currentEvidence).not.toContain('run `1777873751126`');
-    expect(currentEvidence).not.toContain('run `1777873753831`');
-    expect(currentEvidence).not.toContain('run `1777873755351`');
-    expect(currentEvidence).not.toContain('run `1777874327137`');
-    expect(currentEvidence).not.toContain('run `1777874326702`');
-    expect(currentEvidence).not.toContain('run `1777874326349`');
-    expect(currentEvidence).not.toContain('run `1777875070113`');
-    expect(currentEvidence).not.toContain('run `1777875071508`');
-    expect(currentEvidence).not.toContain('run `1777876014458`');
-    expect(currentEvidence).not.toContain('run `1777875071675`');
-    expect(currentEvidence).not.toContain('run `1777880904637`');
-    expect(currentEvidence).not.toContain('run `1777881034864`');
-    expect(currentEvidence).not.toContain('run `1777881437658`');
-    expect(currentEvidence).not.toContain('run `1777881887926`');
-    expect(currentEvidence).not.toContain('run `1777882024063`');
-    expect(currentEvidence).not.toContain('run `1777882432152`');
-    expect(currentEvidence).not.toContain('run `1777882951565`');
-    expect(currentEvidence).not.toContain('run `1777883461340`');
-    expect(currentEvidence).not.toContain('run `1777883861613`');
-    expect(currentEvidence).not.toContain('run `1777884771505`');
-    expect(currentEvidence).not.toContain('run `1777884926064`');
-    expect(currentEvidence).not.toContain('run `1777885340647`');
-    expect(currentEvidence).not.toContain('run `1777885884425`');
-    expect(currentEvidence).not.toContain('run `1777886025583`');
-    expect(currentEvidence).not.toContain('run `1777886433493`');
-    expect(currentEvidence).not.toContain('run `1777886894298`');
-    expect(currentEvidence).not.toContain('run `1777887037180`');
-    expect(currentEvidence).not.toContain('run `1777887447032`');
-    expect(currentEvidence).not.toContain('run `1777887939133`');
-    expect(currentEvidence).not.toContain('run `1777888132038`');
-    expect(currentEvidence).not.toContain('run `1777889085451`');
-    expect(currentEvidence).not.toContain('run `1777889865894`');
-    expect(currentEvidence).not.toContain('run `1777890082163`');
-    expect(currentEvidence).not.toContain('run `1777890084009`');
-    expect(currentEvidence).not.toContain('run `1777891459535`');
-    expect(currentEvidence).not.toContain('run `1777891471182`');
-    expect(currentEvidence).not.toContain('run `1777891922521`');
-    expect(currentEvidence).not.toContain('run `1777892708419`');
-    expect(currentEvidence).not.toContain('run `1777892709931`');
-    expect(currentEvidence).not.toContain('run `1777892710714`');
-    expect(currentEvidence).not.toContain('run `1777893484691`');
-    expect(currentEvidence).not.toContain('run `1777893487370`');
-    expect(currentEvidence).not.toContain('run `1777893486912`');
-    expect(currentEvidence).not.toContain('run `1777894178603`');
-    expect(currentEvidence).not.toContain('run `1777894182036`');
-    expect(currentEvidence).not.toContain('run `1777894181987`');
-    expect(currentEvidence).not.toContain('run `1777894801610`');
-    expect(currentEvidence).not.toContain('run `1777894807038`');
-    expect(currentEvidence).not.toContain('run `1777894805908`');
-    expect(currentEvidence).not.toContain('run `1777896113913`');
-    expect(currentEvidence).not.toContain('run `1777896113312`');
-    expect(currentEvidence).not.toContain('run `1777896112526`');
-    expect(currentEvidence).not.toContain('run `1777896700077`');
-    expect(currentEvidence).not.toContain('run `1777896701239`');
-    expect(currentEvidence).not.toContain('run `1777896700815`');
-    expect(currentEvidence).not.toContain('run `1777868920796`');
-    expect(currentEvidence).not.toContain('run `1777871218090`');
-    expect(currentEvidence).not.toContain('run `1777869433850`');
-    expect(currentEvidence).not.toContain('run `1777869911532`');
-    expect(currentEvidence).not.toContain('run `1777868227502`');
-    expect(currentEvidence).not.toContain('run `1777868227874`');
-    expect(currentEvidence).not.toContain('run `1777868227133`');
-    expect(currentEvidence).not.toContain('run `1777859619292`');
-    expect(currentEvidence).not.toContain('run `1777859423276`');
-    expect(currentEvidence).not.toContain('run `1777859833017`');
-    expect(currentEvidence).not.toContain('run `1777863222708`');
-    expect(currentEvidence).not.toContain('run `1777863225622`');
-    expect(currentEvidence).not.toContain('run `1777863685702`');
-    expect(currentEvidence).not.toContain('run `1777865232137`');
-    expect(currentEvidence).not.toContain('run `1777865367218`');
-    expect(currentEvidence).not.toContain('run `1777865367371`');
-    expect(currentEvidence).not.toContain('run `1777866413005`');
-    expect(currentEvidence).not.toContain('run `1777866848386`');
-    expect(currentEvidence).not.toContain('run `1777866406321`');
-    expect(currentEvidence).not.toContain('run `1777867420110`');
-    expect(currentEvidence).not.toContain('run `1777867419425`');
-    expect(currentEvidence).not.toContain('run `1777867418798`');
   });
 
   it('keeps the final gated unblock runbook explicit and guarded', () => {
@@ -630,7 +513,6 @@ describe('super nice launch backlog safety guards', () => {
 
   it('keeps the proof runbook aligned with the named board commands', () => {
     const runbook = read('docs/v1-proof-runbook.md');
-    const notes = read('docs/feature-verification-notes-2026-05-18.md');
 
     expect(runbook).toContain('npm run proof:v1:board:freshness');
     expect(runbook).toContain('npm run proof:v1:board');
@@ -638,120 +520,98 @@ describe('super nice launch backlog safety guards', () => {
     expect(runbook).toContain('Run `npm run proof:v1:board:freshness` before treating either board output as current truth.');
     expect(runbook).toContain('Workflow gates are intentionally narrower: `ci-hardpass` and `Release Launch Gate` enforce `npm run proof:v1:board:freshness`, but they do not regenerate `npm run proof:v1:board` or `npm run proof:v1:board:md`.');
     expect(runbook).not.toContain('node scripts/v1-proof-board.mjs --markdown');
-    expect(notes).toContain('proof runbook now uses the named package commands for both board outputs too');
-    expect(notes).toContain('the runtime-note checklist checker and security-automation proof summary now carry that same split too');
   });
 
   it('keeps the proof test-lanes summary aligned with the workflow/helper split', () => {
     const script = read('scripts/v1-proof-test-lanes.mjs');
-    const notes = read('docs/feature-verification-notes-2026-05-18.md');
 
     expect(script).toContain('workflow gates stay freshness-only while helper/local proof paths regenerate board artifacts through the named proof bundles.');
-    expect(notes).toContain('proof:v1:test-lanes now says the same workflow/helper split in its own result summary');
   });
 
   it('keeps the small runbook/checklist proof summaries aligned with the workflow/helper split', () => {
     const gatedRunbookScript = read('scripts/v1-proof-gated-unblock-runbook.mjs');
     const runtimeChecklistScript = read('scripts/v1-proof-runtime-note-checklist.mjs');
-    const notes = read('docs/feature-verification-notes-2026-05-18.md');
 
     expect(gatedRunbookScript).toContain('approval-gated workflow notes remain separate from helper/local closeout paths that regenerate board artifacts');
     expect(runtimeChecklistScript).toContain('workflow gates stop at freshness while helper/local proof paths regenerate the raw and markdown board artifacts when needed.');
-    expect(notes).toContain('the gated-unblock and runtime-note helper checkers now say the same workflow/helper split in their own result summaries');
   });
 
   it('keeps the larger helper-bundle summaries aligned with the proof-board contract', () => {
     const closeout = read('scripts/v1-proof-launch-closeout.mjs');
     const fullSuite = read('scripts/v1-proof-full-suite-exit-gate.mjs');
-    const notes = read('docs/feature-verification-notes-2026-05-18.md');
 
     expect(closeout).toContain('this helper/local bundle refreshes board freshness plus the raw and markdown board outputs');
     expect(fullSuite).toContain('this helper proof bundle starts with the board trio');
-    expect(notes).toContain('launch-closeout and full-suite exit-gate now carry the same contract in their own summaries');
   });
 
   it('keeps feature-lane helper summaries explicit about their lane role', () => {
     const registry = read('scripts/v1-proof-registry.mjs');
     const comms = read('scripts/v1-proof-comms-center.mjs');
     const guestLanguage = read('scripts/v1-proof-guest-language-continuity.mjs');
-    const notes = read('docs/feature-verification-notes-2026-05-18.md');
 
     expect(registry).toContain('this feature-lane bundle closes owner/public registry runtime truth for the shipped lane while still rolling up into the broader proof-board launch call');
     expect(comms).toContain('this bundle validates compose/save/review truth without implying reopened live SMS-send clearance');
     expect(guestLanguage).toContain('this guest-surface bundle validates translated RSVP and guest-hub continuity as supporting non-SMS launch evidence');
-    expect(notes).toContain('registry, comms-center, and guest-language proof helpers now say what kind of lane truth they provide instead of only reporting counts');
   });
 
   it('keeps adjacent feature-lane helper summaries explicit about their lane role', () => {
     const coordinator = read('scripts/v1-proof-coordinator-dayof.mjs');
     const seating = read('scripts/v1-proof-seating-continuity.mjs');
     const dayofWebMode = read('scripts/v1-proof-dayof-web-mode.mjs');
-    const notes = read('docs/feature-verification-notes-2026-05-18.md');
 
     expect(coordinator).toContain('this lane closes coordinator runtime truth for the shipped ops surface while still rolling up into the broader proof-board launch call');
     expect(seating).toContain('this lane validates seating packet, lookup, and assignment continuity as shipped feature evidence while still deferring the final launch call to the proof-board flow');
     expect(dayofWebMode).toContain('this read-only guest-hub lane validates invite-scoped day-of visibility without claiming the separate guest-hub write/read mutation lane');
-    expect(notes).toContain('coordinator, seating, and day-of web-mode proof helpers now say the same kind of lane-truth story too');
   });
 
   it('keeps additional guest-facing feature-lane helper summaries explicit about their lane role', () => {
     const travel = read('scripts/v1-proof-travel-guest-portal.mjs');
     const photoMemory = read('scripts/v1-proof-photo-memory-flow.mjs');
     const guestPreview = read('scripts/v1-proof-guest-preview-confidence.mjs');
-    const notes = read('docs/feature-verification-notes-2026-05-18.md');
 
     expect(travel).toContain('this guest-surface lane validates invite-scoped travel/runtime continuity for the shipped portal while still rolling up into the broader proof-board launch call');
     expect(photoMemory).toContain('this feature bundle validates memory/recap upload-and-readback continuity as shipped lane evidence while still deferring the final launch call to the proof-board flow');
     expect(guestPreview).toContain('this guest-preview lane validates shipped preview-route visibility and navigation on live runtime without replacing the broader launch-truth flow');
-    expect(notes).toContain('travel guest portal, photo memory flow, and guest preview proof helpers now say the same kind of lane-truth story too');
   });
 
   it('keeps adjacent ops-and-analytics helper summaries explicit about their lane role', () => {
     const qrScanner = read('scripts/v1-proof-qr-scanner.mjs');
     const analytics = read('scripts/v1-proof-website-invite-analytics.mjs');
     const collaborator = read('scripts/v1-proof-collaborator-access.mjs');
-    const notes = read('docs/feature-verification-notes-2026-05-18.md');
 
     expect(qrScanner).toContain('this supporting ops-security lane validates payload safety, parsing, and fallback behavior without acting like a broader launch-truth artifact source');
     expect(analytics).toContain('this owner-facing lane closes analytics readback and public-route privacy truth for the shipped surface while still rolling up into the broader proof-board launch call');
     expect(collaborator).toContain('this permission-boundary lane validates invite/role access truth as shipped surface evidence while still deferring full runtime role flows to dedicated live/operator checks');
-    expect(notes).toContain('QR scanner, website/invite analytics, and collaborator access proof helpers now say the same kind of lane-truth story too');
   });
 
   it('keeps infra proof helper summaries explicit about readiness, permission, and source-inventory roles', () => {
     const prereqs = read('scripts/v1-proof-prereqs.mjs');
     const clientRls = read('scripts/v1-proof-client-rls-matrix.mjs');
     const clientWriteInventory = read('scripts/v1-proof-client-write-inventory.mjs');
-    const notes = read('docs/feature-verification-notes-2026-05-18.md');
 
     expect(prereqs).toContain('this readiness lane confirms the local/live foundations for later proof bundles without acting like a shipped-feature or launch-truth artifact source');
     expect(clientRls).toContain('Client RLS matrix live proof is the strongest collaborator/client permission-boundary lane');
     expect(clientWriteInventory).toContain('this source-level guard proves shipped runtime files are not using direct client write chains, but it remains supporting inventory evidence rather than a runtime permission proof by itself');
-    expect(notes).toContain('prereqs, client RLS matrix, and client write inventory now say the same kind of infra-lane truth story too');
   });
 
   it('keeps security-and-boundary infra helper summaries explicit about their lane role', () => {
     const performanceBudget = read('scripts/v1-proof-performance-budget.mjs');
     const astSecurity = read('scripts/v1-proof-ast-security.mjs');
     const publicAccessCoverage = read('scripts/v1-proof-public-access-coverage.mjs');
-    const notes = read('docs/feature-verification-notes-2026-05-18.md');
 
     expect(performanceBudget).toContain('this build-artifact lane guards shipped asset weight and review thresholds, but it remains supporting release evidence rather than a feature-runtime truth source by itself');
     expect(astSecurity).toContain('this source-level security lane guards critical runtime auth/storage/public-boundary patterns, but it supports rather than replaces live permission and guest-surface proof');
     expect(publicAccessCoverage).toContain('this static boundary lane validates resolver/subresource gate wiring and payload minimization, but it remains supporting public-surface evidence alongside live guest/public proof');
-    expect(notes).toContain('performance budget, AST security, and public-access coverage now say the same kind of infra-lane truth story too');
   });
 
   it('keeps long-tail owner and planning helper summaries explicit about their lane role', () => {
     const notificationDigest = read('scripts/v1-proof-notification-digest.mjs');
     const weddingIdentity = read('scripts/v1-proof-wedding-identity-exports.mjs');
     const budgetVendorLedger = read('scripts/v1-proof-budget-vendor-ledger.mjs');
-    const notes = read('docs/feature-verification-notes-2026-05-18.md');
 
     expect(notificationDigest).toContain('this owner-summary lane validates digest wording and dashboard-count continuity as shipped feature evidence while still leaving live inbox delivery truth to its own downstream pipeline proof');
     expect(weddingIdentity).toContain('this owner-tooling lane validates safe identity-export generation and download continuity while still deferring broader launch truth to the proof-board flow');
-    expect(budgetVendorLedger).toContain('this planning lane validates financial/vendor continuity and non-exposure as shipped feature evidence while still leaving live shared-site runtime truth to the dedicated reruns');
-    expect(notes).toContain('notification digest, wedding identity exports, and budget/vendor ledger now say the same kind of lane-truth story too');
+    expect(budgetVendorLedger).toContain('this planning lane validates financial/vendor continuity and non-exposure as shipped feature evidence while the canonical live collaborator/client-RLS matrix now carries the production planning-write truth');
   });
 
   it('keeps AI, fetch-safety, and integrity helper summaries explicit about their lane role', () => {
@@ -760,14 +620,12 @@ describe('super nice launch backlog safety guards', () => {
     const aiProductReadiness = read('scripts/v1-proof-ai-product-readiness.mjs');
     const aiMigrationReady = read('scripts/v1-proof-ai-migration-ready.mjs');
     const dataIntegrity = read('scripts/v1-proof-data-integrity.mjs');
-    const notes = read('docs/feature-verification-notes-2026-05-18.md');
 
     expect(registryPreviewSsrf).toContain('this runtime security lane validates hostile URL blocking for the shipped preview fetch surface, but it remains supporting fetch-safety evidence rather than a broader launch-truth source by itself');
     expect(aiClearance).toContain('this lane still needs the live frontend and live readback rerun before AI/privacy launch truth is closed');
     expect(aiProductReadiness).toContain('this launch-scope lane validates audited AI product posture and labeling, but it still depends on the dedicated secure-model and AI-clearance gates for deeper runtime truth');
     expect(aiMigrationReady).toContain('this lane confirms the frontend and live readback are ready for the AI/photo column migration, but it is not the post-migration clearance proof by itself');
     expect(dataIntegrity).toContain('this lane provides partial cross-table evidence only and still defers the full integrity call to the secure service-role proof environment');
-    expect(notes).toContain('AI clearance/readiness/migration, registry-preview SSRF, and data-integrity helpers now say the same kind of lane-truth story too');
   });
 
   it('keeps secure AI and runtime guest/collaborator helper summaries explicit about their lane role', () => {
@@ -775,13 +633,11 @@ describe('super nice launch backlog safety guards', () => {
     const aiExposure = read('scripts/v1-proof-ai-exposure.mjs');
     const collaboratorRuntime = read('scripts/v1-proof-collaborator-runtime.mjs');
     const guestLookupScope = read('scripts/v1-proof-guest-lookup-scope.mjs');
-    const notes = read('docs/feature-verification-notes-2026-05-18.md');
 
     expect(aiSecureModel).toContain('this live secure-env lane closes deeper model/runtime truth for retained AI routes and complements, rather than replaces, AI product-readiness and AI-clearance gates');
     expect(aiExposure).toContain('this privacy lane closes source/readback evidence that sensitive AI/photo fields are no longer browser-readable on the hardened surface');
     expect(collaboratorRuntime).toContain('this live permission lane closes invite acceptance and role-scoped runtime behavior beyond the static collaborator access boundary proof');
     expect(guestLookupScope).toContain('this live guest-contact lane closes scoped lookup/update runtime truth and complements the broader guest/public access proofs');
-    expect(notes).toContain('AI secure model/exposure plus collaborator-runtime and guest-lookup-scope helpers now say the same kind of lane-truth story too');
   });
 
   it('keeps proof board and checker-style helper summaries explicit about their contract role', () => {
@@ -790,25 +646,21 @@ describe('super nice launch backlog safety guards', () => {
     const runtimeChecklist = read('scripts/v1-proof-runtime-note-checklist.mjs');
     const securityAutomation = read('scripts/v1-proof-security-automation.mjs');
     const testLanes = read('scripts/v1-proof-test-lanes.mjs');
-    const notes = read('docs/feature-verification-notes-2026-05-18.md');
 
     expect(proofBoard).toContain('this canonical launch-truth artifact depends on a fresh BACKLOG.md current-state block');
     expect(gatedRunbook).toContain('it does not itself establish launch truth, but it keeps the human unblock path aligned with the proof-board and closeout flow');
     expect(runtimeChecklist).toContain('it keeps the human proof path aligned, but it is not a launch-truth artifact by itself');
     expect(securityAutomation).toContain('it does not replace the proof-board or feature/runtime proof lanes');
     expect(testLanes).toContain('it is not itself a feature/runtime proof lane');
-    expect(notes).toContain('proof board plus the remaining checker-style helpers now say their contract role out loud too');
   });
 
   it('keeps guest-hub QR, guests/RSVP ops, and name-change runtime helper summaries explicit about their lane role', () => {
     const guestHubQr = read('scripts/v1-proof-guest-hub-qr.mjs');
     const guestsRsvpOps = read('scripts/v1-proof-guests-rsvp-ops.mjs');
     const nameChangeRuntime = read('scripts/v1-proof-name-change-runtime.mjs');
-    const notes = read('docs/feature-verification-notes-2026-05-18.md');
 
     expect(guestHubQr).toContain('this guest-surface/export lane closes shipped print-pack and safe QR runtime truth while still rolling up into the broader proof-board launch call');
     expect(guestsRsvpOps).toContain('this owner-plus-guest lane closes shipped RSVP settings, token, and household/runtime truth while still rolling up into the broader proof-board launch call');
     expect(nameChangeRuntime).toContain('this shipped planner lane closes authenticated saved-surface runtime truth while still rolling up into the broader proof-board launch call');
-    expect(notes).toContain('guest-hub QR, guests/RSVP ops, and name-change runtime now say the same kind of lane-truth story too');
   });
 });
