@@ -10,6 +10,8 @@ const Templates = lazy(() => import('./pages/Templates').then(m => ({ default: m
 const TemplateDetail = lazy(() => import('./pages/TemplateDetail').then(m => ({ default: m.TemplateDetail })));
 const Login = lazy(() => import('./pages/Login').then(m => ({ default: m.Login })));
 const Signup = lazy(() => import('./pages/Signup').then(m => ({ default: m.Signup })));
+const Support = lazy(() => import('./pages/Support').then(m => ({ default: m.Support })));
+const Refund = lazy(() => import('./pages/Refund').then(m => ({ default: m.Refund })));
 const Onboarding = lazy(() => import('./pages/Onboarding').then(m => ({ default: m.Onboarding })));
 const WeddingStatus = lazy(() => import('./pages/onboarding/WeddingStatus').then(m => ({ default: m.WeddingStatus })));
 const Celebration = lazy(() => import('./pages/onboarding/Celebration').then(m => ({ default: m.Celebration })));
@@ -101,6 +103,8 @@ const AppContent = () => {
         <Route path="/features/seating" element={<SeatingFeature />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
+        <Route path="/support" element={<Support />} />
+        <Route path="/refund" element={<Refund />} />
         <Route path="/privacy" element={<Privacy />} />
         <Route path="/terms" element={<Terms />} />
         <Route path="/trust" element={<Trust />} />

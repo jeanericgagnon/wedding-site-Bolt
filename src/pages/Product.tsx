@@ -5,7 +5,7 @@ import { useAuth } from '../hooks/useAuth';
 import { useToast } from '../components/ui/Toast';
 import { SITE_TRUST_COPY } from '../lib/siteTrustCopy';
 import { ArrowRight, Calendar, CheckCircle2, Mail, Shield, Users, Wallet } from 'lucide-react';
-import { HeroReveal, SlideReveal } from '../components/marketing/Reveal';
+import { SlideReveal } from '../components/marketing/Reveal';
 
 type StepId = 'launch' | 'guests' | 'rsvp' | 'message' | 'seating' | 'dayof';
 
@@ -286,8 +286,8 @@ export const Product: React.FC = () => {
       <section className="py-10 md:py-14 bg-paper text-ink">
         <div className="container-custom max-w-7xl">
           <SlideReveal from="left" className="mb-8">
-            <h2 className="text-[2rem] md:text-[2.6rem] font-serif font-bold mb-2">See the actual v1 spine, not the wishlist.</h2>
-            <p className="text-ink/70">Start with a beautiful site, then move into guests, RSVPs, messaging, seating, and day-of execution without switching tools constantly.</p>
+            <h2 className="text-[2rem] md:text-[2.6rem] font-serif font-bold mb-2">Start with the website. Keep the rest close.</h2>
+            <p className="text-ink/70">Build a beautiful site, then handle guests, RSVPs, messaging, seating, and the wedding-day plan without switching tools constantly.</p>
           </SlideReveal>
 
           <div className="grid grid-cols-1 lg:grid-cols-[260px,1fr,260px] gap-4 lg:gap-5">
@@ -368,7 +368,7 @@ export const Product: React.FC = () => {
         <div className="container-custom max-w-6xl">
           <div className="rounded-2xl border border-amber-200 bg-amber-50/50 p-6 md:p-7">
             <p className="text-xs uppercase tracking-wide text-amber-700 font-semibold">Beyond the core v1 line</p>
-            <h2 className="text-2xl md:text-3xl font-serif font-bold text-ink mt-2">Post-wedding memory layers matter — they just should not pretend to be the launch claim.</h2>
+            <h2 className="text-2xl md:text-3xl font-serif font-bold text-ink mt-2">The wedding day should keep unfolding without taking over the planning flow.</h2>
             <p className="mt-3 max-w-3xl text-ink/75">Archive mode, photo return paths, and anniversary-style memories are real product direction. They are not the current bar DayOf should ask couples to trust first. The launch story is {SITE_TRUST_COPY.launchStoryCore}.</p>
             <div className="mt-5 grid grid-cols-1 md:grid-cols-3 gap-3">
               <div className="rounded-xl border border-amber-200 bg-white p-4">
@@ -486,7 +486,7 @@ export const Product: React.FC = () => {
         <div className="container-custom max-w-6xl">
           <SlideReveal from="left" className="mb-6">
             <p className="text-xs uppercase tracking-wide text-brand font-semibold">Ruthless v1 line</p>
-            <h2 className="text-2xl md:text-3xl font-serif font-bold text-ink mt-2">What counts as the real launch claim right now</h2>
+            <h2 className="text-2xl md:text-3xl font-serif font-bold text-ink mt-2">What couples can rely on right now</h2>
             <p className="mt-3 max-w-3xl text-ink/75">DayOf should be judged on whether the core wedding flow is grounded where proof exists, with the remaining gaps called out plainly instead of blurred into the v1 line. Some surrounding slices are real product direction, but they should not get to pad the current v1 line.</p>
           </SlideReveal>
 

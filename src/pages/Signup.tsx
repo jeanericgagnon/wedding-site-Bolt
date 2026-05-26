@@ -199,9 +199,9 @@ export const Signup: React.FC = () => {
             <Heart className="w-8 h-8 text-accent" aria-hidden="true" />
             <span className="text-2xl font-semibold text-text-primary">WeddingSite</span>
           </Link>
-          <h1 className="text-3xl font-bold text-text-primary mb-2">Create your account</h1>
+          <h1 className="text-3xl font-bold text-text-primary mb-2">Start your wedding</h1>
           <p className="text-text-secondary">
-            {hasInviteContext ? 'Create a collaborator account, then jump straight back into this invite.' : (paymentGateEnabled ? 'Step 1: account setup. Step 2: site details after payment.' : 'Create your account, then go straight into setup.')}
+            {hasInviteContext ? 'Create a collaborator account, then jump straight back into this invite.' : (paymentGateEnabled ? 'Create your account, then move straight into setup after payment.' : 'Create your account, then go straight into setup.')}
           </p>
         </div>
 

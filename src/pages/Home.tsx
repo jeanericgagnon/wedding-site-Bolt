@@ -15,7 +15,7 @@ import {
   ArrowRight,
   Radio,
 } from 'lucide-react';
-import { GridItem, HeroReveal, Reveal, SlideReveal, StaggerGrid } from '../components/marketing/Reveal';
+import { HeroReveal, Reveal, SlideReveal } from '../components/marketing/Reveal';
 
 const V1_HOME_GROUPS = [
   {
@@ -200,12 +200,12 @@ export const Home: React.FC = () => {
           <div className="max-w-4xl mx-auto text-center">
             <HeroReveal>
               <h1 className="text-[2.4rem] md:text-[4rem] font-serif font-bold text-ink mb-5 leading-[1.04] updates-tight">
-                A beautiful wedding website with RSVP and guest tools built in
+                A calmer wedding operating system.
               </h1>
             </HeroReveal>
             <HeroReveal delay={0.1}>
               <p className="text-[1.0625rem] md:text-[1.1875rem] text-ink/75 mb-8 leading-relaxed max-w-3xl mx-auto">
-                Start with a polished wedding website, then manage RSVPs, guests, messaging, seating, registry, and day-of details without stitching together extra tools.
+                Build the wedding site, manage the guest list, run RSVP and messages, collect photos, and hand the day-of details to the right people from one place.
               </p>
             </HeroReveal>
             <HeroReveal delay={0.2}>
@@ -262,7 +262,7 @@ export const Home: React.FC = () => {
         <div className="container-custom max-w-6xl">
           <div className="rounded-2xl border border-border-subtle bg-surface p-6 md:p-7">
             <p className="text-xs uppercase tracking-wide text-brand font-semibold">Migration proof</p>
-            <h2 className="text-2xl md:text-3xl font-serif font-bold text-ink mt-2">Switching is no longer just a promise.</h2>
+            <h2 className="text-2xl md:text-3xl font-serif font-bold text-ink mt-2">One place for the details, people, and memories that matter.</h2>
             <p className="mt-3 max-w-3xl text-ink/75">DayOf now has a guided migration path with source intake, setup guidance, guest import review, story/event/FAQ recovery helpers, registry-link carryover, and starter-draft review cues before anything gets shared with guests.</p>
             <div className="mt-5 grid grid-cols-1 md:grid-cols-3 gap-3">
               <div className="rounded-xl border border-border-subtle bg-white p-4">
@@ -287,7 +287,7 @@ export const Home: React.FC = () => {
           <div className="rounded-2xl border border-border-subtle bg-surface p-6 md:p-7">
             <div className="max-w-3xl">
               <p className="text-xs uppercase tracking-wide text-brand font-semibold">Switching is part of the plan</p>
-              <h2 className="text-2xl md:text-3xl font-serif font-bold text-ink mt-2">Already started on Zola, Joy, or The Knot?</h2>
+              <h2 className="text-2xl md:text-3xl font-serif font-bold text-ink mt-2">Built for launch truth, not wedding-tech theater.</h2>
               <p className="mt-3 text-ink/75 leading-relaxed">You should not have to restart from scratch just because another wedding site got messy, expensive, or too limited. DayOf is being shaped to make switching feel calm: keep your guest list, bring over the essentials, and move into a cleaner operating flow.</p>
             </div>
             <div className="mt-5 grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -313,7 +313,7 @@ export const Home: React.FC = () => {
         <div className="container-custom">
           <Reveal className="max-w-3xl mx-auto">
             <h2 className="section-title mb-10 text-center">
-              Why I built this
+              Most wedding websites stop at publish. dayof stays useful through the rest.
             </h2>
 
             <div className="mb-10">
@@ -363,7 +363,7 @@ export const Home: React.FC = () => {
         <div className="container-custom">
           <SlideReveal from="left" className="section-intro">
             <h2 className="section-title mb-4">
-              Core wedding flow first. Broader product ambition second.
+              Site, guests, and day-of work in the same rhythm.
             </h2>
             <p className="text-ink/70 max-w-3xl">
               DayOf should be judged on the core wedding path couples actually need right now. Some surrounding slices are real direction, but they should not blur the current v1 line.

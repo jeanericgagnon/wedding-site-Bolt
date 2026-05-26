@@ -32,7 +32,7 @@ const SAFETY_NOTES = [
 
 const V1_TRUST_LINE = [
   {
-    title: 'Core v1 claim',
+    title: 'Core promise',
     badge: 'Must ship',
     tone: 'must',
     body: `DayOf should be judged on whether couples can build a polished wedding site draft before sharing it with guests, collect RSVPs, manage guests, send core updates, run seating, and coordinate the event week from one grounded product story. The hard launch line is ${SITE_TRUST_COPY.launchStoryCore}, with any remaining proof gaps called out plainly instead of marketed away.`,
@@ -44,7 +44,7 @@ const V1_TRUST_LINE = [
     body: 'Photo return paths, archive mode, anniversary memory layers, and name-change support can be meaningful, but they should not be used to fake a broader launch claim than the core wedding workflow has earned.',
   },
   {
-    title: 'Not part of the current promise',
+    title: 'Future or limited today',
     badge: 'Cut from promise',
     tone: 'cut',
     body: 'We should not imply external custom domains, advanced analytics, enterprise workflow governance, or magical one-click automation unless those things are actually proven live.',
@@ -185,8 +185,8 @@ export const Trust: React.FC = () => {
         <section className="px-6 py-14 md:py-16">
           <div className="mx-auto max-w-5xl">
             <div className="max-w-3xl">
-              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-text-tertiary">Current v1 line</p>
-              <h2 className="mt-3 text-3xl font-semibold tracking-tight text-text-primary">Trust gets a lot easier when the launch claim is narrow and real.</h2>
+              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-text-tertiary">Current promise</p>
+              <h2 className="mt-3 text-3xl font-semibold tracking-tight text-text-primary">Trust gets a lot easier when the promise is narrow and real.</h2>
               <p className="mt-3 text-sm leading-6 text-text-secondary">
                 The point is not to sound smaller. The point is to say the true thing clearly enough that couples can trust what they are buying and the team can actually finish what it promises.
               </p>
@@ -231,7 +231,7 @@ export const Trust: React.FC = () => {
             </div>
 
             <div className="mt-10 max-w-3xl">
-              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-text-tertiary">Per-slice v1 read</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-text-tertiary">Feature-by-feature read</p>
               <h3 className="mt-3 text-2xl font-semibold tracking-tight text-text-primary">What is actually done enough versus what still needs proof</h3>
               <p className="mt-3 text-sm leading-6 text-text-secondary">
                 This is the harsher read behind the launch line. The product can be directionally strong and still need proof before a slice earns broader public confidence, so unfinished proof should narrow the claim instead of hiding behind polished copy.
