@@ -1,13 +1,29 @@
 # V1 Smoke Proof Log
 
-_Date:_ `2026-05-12`
+_Date:_ `2026-05-26`
 _Production:_ [dayof.love](https://dayof.love)
-_Latest verified deploy:_ `dpl_Epn8mhHinAWkDwUjhetC7otmdBPq`
-_Exact frontend SHA:_ `84d8df1c4`
+_Latest verified deploy:_ `dpl_DYBXMvyB4fgNGCNcYQLh7bS5Ytn1`
+_Exact frontend SHA:_ `6b6f2069a`
 _Launch call right now:_ `GO`
 
 ## Current Truth
 
+- 2026-05-26 12:43 PM PDT:
+  - deployed merged newer public UI recovery PR #97 from `main`
+  - production deploy:
+    - `vercel deploy --prod --yes` -> `PASS`
+    - Vercel production deploy `dpl_DYBXMvyB4fgNGCNcYQLh7bS5Ytn1` is now aliased to `dayof.love`
+  - live proof on the current production alias/runtime:
+    - `npm run smoke:rsvp` -> `PASS`
+    - `npm run smoke:site` -> `PASS`
+    - `PLAYWRIGHT_BASE_URL=https://dayof.love npm run proof:v1:canonical-smoke` -> `LIVE PASS`
+    - `npm run proof:v1:guests-rsvp-ops` -> `PASS`
+  - current live truth is strong:
+    - the richer newer Home/Product/Trust UI is live on `dayof.love`
+    - public-route canonical smoke is green on the real alias
+    - guests/RSVP ops proof is green on the current runtime
+  - remaining manual proof note is still the same one explicit gap:
+    - keep the canonical couple-path route notes fresh as human proof after approved frontend deploys
 - 2026-05-26 11:22 PM PDT:
   - recovered the intended public UI/trust surface on `main` through PR #96 and the follow-up homepage proof-alignment commit `84d8df1c4`
   - production deploys during the recovery loop:
