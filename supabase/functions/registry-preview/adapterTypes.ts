@@ -12,9 +12,23 @@ export interface ProductData {
   store_name: string;
   canonical_url: string;
   confidence_score: number; // 0-1, how confident we are in the data
-  source_method: 'retailer_adapter' | 'jsonld' | 'opengraph' | 'fallback';
+  source_method: 'retailer_adapter' | 'jsonld' | 'opengraph' | 'fallback' | 'link_only';
   partial?: boolean; // true if some data is missing
   missing_fields?: string[]; // list of fields we couldn't extract
+  display_mode?: 'product_card' | 'link_card' | 'review_only' | 'hidden';
+  guest_safe?: boolean;
+  source_status?: 'clean' | 'partial' | 'blocked' | 'timeout' | 'invalid_url' | 'parse_failed' | 'manual' | 'not_imported';
+  review_status?: 'clean' | 'needs_review' | 'missing_price' | 'missing_image' | 'weak_title' | 'blocked_source' | 'duplicate_candidate' | 'manual_override';
+  import_reason?: string;
+  owner_message?: string;
+  confidence?: {
+    overall: number;
+    title: number;
+    price: number;
+    image: number;
+    availability: number;
+    canonical_url: number;
+  };
 }
 
 export interface AdapterContext {

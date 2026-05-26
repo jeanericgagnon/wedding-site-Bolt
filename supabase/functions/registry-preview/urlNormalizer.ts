@@ -21,6 +21,7 @@ const RETAILER_PATTERNS: Record<string, RegExp> = {
   target: /target\.com$/i,
   amazon: /amazon\.(com|ca|co\.uk|de|fr|it|es|co\.jp|in|com\.au|com\.br|com\.mx|nl|se|pl|sg|ae|sa)$/i,
   walmart: /walmart\.com$/i,
+  bestbuy: /bestbuy\.com$/i,
   etsy: /etsy\.com$/i,
   wayfair: /wayfair\.(com|ca|co\.uk|de)$/i,
   ikea: /ikea\.com$/i,
@@ -33,6 +34,7 @@ const RETAILER_PATTERNS: Record<string, RegExp> = {
   macys: /macys\.com$/i,
   nordstrom: /nordstrom\.com$/i,
   williams_sonoma: /williams-sonoma\.com$/i,
+  rei: /(^|\.)rei\.com$/i,
   sur_la_table: /surlatable\.com$/i,
 };
 
@@ -96,6 +98,24 @@ function extractTargetTCIN(pathname: string): string | null {
 function extractAmazonASIN(pathname: string): string | null {
   const match = pathname.match(/\/(dp|gp\/product)\/([A-Z0-9]{10})/i);
   return match ? match[2] : null;
+}
+
+/**
+ * Extract Best Buy product id from URL
+ * Format: /site/product-name/6484343.p
+ */
+function extractBestBuySku(pathname: string): string | null {
+  const match = pathname.match(/\/(\d+)\.p(?:\/|$)/i);
+  return match ? match[1] : null;
+}
+
+/**
+ * Extract IKEA article number from URL
+ * Format: .../product-name-20500016/
+ */
+function extractIkeaArticleNumber(pathname: string): string | null {
+  const match = pathname.match(/-([0-9]{8})(?:\/|$)/);
+  return match ? match[1] : null;
 }
 
 /**
@@ -183,6 +203,18 @@ export function normalizeUrl(url: string): NormalizedUrl {
         // Canonical Amazon URL format
         canonicalPath = `/dp/${asin}`;
       }
+    } else if (retailer === 'bestbuy') {
+      const sku = extractBestBuySku(parsed.pathname);
+      if (sku) {
+        metadata.sku = sku;
+        canonicalPath = `/site/${sku}.p`;
+      }
+    } else if (retailer === 'ikea') {
+      const article = extractIkeaArticleNumber(parsed.pathname);
+      if (article) {
+        metadata.article_number = article;
+        canonicalPath = `/us/en/p/${article}/`;
+      }
     }
 
     // Rebuild canonical URL
@@ -221,6 +253,12 @@ export function isSameProduct(url1: string, url2: string): boolean {
     }
     if (norm1.metadata.asin && norm2.metadata.asin) {
       return norm1.metadata.asin === norm2.metadata.asin;
+    }
+    if (norm1.metadata.sku && norm2.metadata.sku) {
+      return norm1.metadata.sku === norm2.metadata.sku;
+    }
+    if (norm1.metadata.article_number && norm2.metadata.article_number) {
+      return norm1.metadata.article_number === norm2.metadata.article_number;
     }
   }
 
