@@ -124,7 +124,7 @@ const output = {
     'Browser-triggered identity export capture with nonblank HTML/SVG/PNG/PDF output and no private token leakage',
   ],
   stillManualProofNeeded: [
-    'Rerun the same copy/download flow against the shipped production runtime after the next approved identity-export deploy.',
+    'Keep the shipped-runtime copy/download lane green after the next identity-export-affecting deploy or export-surface change.',
   ],
   results,
 };

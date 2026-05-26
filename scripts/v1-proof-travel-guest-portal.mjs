@@ -152,6 +152,7 @@ const output = {
   automatedCoverage: [
     'Live public-site-access travel data continuity for the proof guest',
     'Travel portal readiness and guest-hub spotlight helper truth',
+    'Safe venue map-link normalization with unsafe map URLs falling back to Google Maps search queries',
     'SiteView invite-token handoff continuity from guest-hub links into public travel routes',
     'Public render-model and public-access sanitization for structured travel records',
     'Guest-hub live content render path for travel quick plan surfaces',
