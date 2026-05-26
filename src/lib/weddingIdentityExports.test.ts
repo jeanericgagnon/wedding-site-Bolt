@@ -102,8 +102,9 @@ describe('weddingIdentityExports', () => {
 
     const html = renderWeddingIdentityPrintHtml(assets);
     expect(html).toContain('DayOf wedding identity print pack');
-    expect(html).toContain('api.qrserver.com');
-    expect(html).toContain(encodeURIComponent('https://maya-leo.dayof.love/rsvp'));
+    expect(html).toContain('data:image/svg+xml;charset=utf-8,');
+    expect(html).toContain(encodeURIComponent('aria-label="QR code"'));
+    expect(html).toContain('https://maya-leo.dayof.love/rsvp');
     expect(html).not.toMatch(/guest_access|service-role|secret/i);
   });
 
