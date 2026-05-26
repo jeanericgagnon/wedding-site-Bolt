@@ -1,11 +1,11 @@
 # Collaborator persistence flow
 
-Date: 2026-04-13
+Date: 2026-05-22
 
-## Goal
-Replace local-only planner invite/setup behavior with a real DB-backed collaborator invite and activation flow.
+## Current state
+The collaborator invite and claim flow is already DB-backed and shipped. This document now describes the live flow and the remaining maturity gaps instead of a future replacement plan for local-only behavior.
 
-## Desired flow
+## Live flow
 
 ### 1. Owner creates invite
 Owner enters:
@@ -13,64 +13,59 @@ Owner enters:
 - email
 - role
 
-System creates a collaborator invite record tied to:
-- wedding site id
+The system creates a persisted collaborator invite tied to:
+- wedding site
 - invite email
 - target role
 - invited by
-- status = pending
-- token / claim path
+- invite status
+- claim path/token
 
 ### 2. Invite recipient accepts
-Recipient opens invite link, authenticates or creates account, then claims invite.
+Recipient opens the invite route, authenticates or creates an account, and claims the invite.
+
+Current truth:
+- token is validated against stored invite state
+- invited email is enforced in both UI flow and backend acceptance
 
 ### 3. Activation
 On successful claim:
-- collaborator row becomes active
-- collaborator links to real user id
-- role is enforced by backend RBAC
+- collaborator membership is created or updated
+- membership links to the claiming user
+- invite status is marked accepted
+- the collaborator lands in the dashboard with role-aware runtime behavior
 
 ### 4. Ongoing management
-Owner can:
+Owner can currently:
 - view collaborators
-- change role
-- revoke access
-- resend invite
+- create invites
+- copy invite links
+- revoke pending invites
 
-## Minimum data model additions
-Need one of:
-- collaborator_invites table
-or
-- extend existing collaborator model with pending invite fields
+## What is already proven
+- DB-backed invite creation
+- real invite claim route
+- backend-enforced invite/email validation
+- collaborator row persistence after accept
+- invite status transition to accepted
+- viewer deny plus planner/coordinator runtime allow/deny coverage in the live collaborator proof lane
 
-Recommended cleaner choice:
-- separate `wedding_site_collaborator_invites`
+Primary evidence:
+- `docs/collaborator-flow-qa.md`
+- `scripts/v1-proof-collaborator-runtime.mjs`
+- `docs/PRODUCTION_HARDENING_REPORT.md`
 
-## Suggested invite table fields
-- id
-- wedding_site_id
-- invite_email
-- invite_name
-- role
-- status (pending / accepted / revoked / expired)
-- invite_token
-- invited_by
-- invited_at
-- accepted_at
-- accepted_user_id
-- expires_at
+## What is not fully mature yet
+- no dedicated resend action
+- no polished expiry management UX
+- no broader collaborator management center outside Settings
+- future write surfaces still need to be added to the role-matrix proof as product scope expands
 
-## Why separate invite table is better
-- cleaner than overloading active collaborator rows
-- easier resend/revoke/expiry tracking
-- clearer auditability
+## What to avoid claiming
+Do not describe collaborator persistence as local-only, fake, or merely planned.
 
-## Safe rollout order
-1. add invite table
-2. build owner create/list UI
-3. build invite accept flow
-4. create active collaborator row on accept
-5. retire local-only invite reliance
+That language is stale now. The honest limitation is narrower: the flow is real and shipped, but still not the final polished admin experience.
 
-## Next step
-- 10.3.4 define invite table + accept flow contract
+## Recommended next step
+- keep the collaborator permission matrix and runtime proof current as new shared-site write surfaces are added
+- improve invite resend/expiry management without re-framing the core system as unshipped

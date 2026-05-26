@@ -101,7 +101,19 @@ export class TargetAdapter implements RetailerAdapter {
 
       const title = product.title || product.name || product.item?.product_description?.title;
       const rawPrice = product.price?.current_retail || product.price?.current || product.price;
-      const price = this.sanitizePrice(typeof rawPrice === 'number' ? rawPrice : Number.parseFloat(String(rawPrice?.value || rawPrice?.amount || rawPrice || '')));
+      const priceRecord = typeof rawPrice === 'object' && rawPrice !== null
+        ? rawPrice as {
+          value?: string | number | null;
+          amount?: string | number | null;
+          currency_code?: string | null;
+          formatted?: string | null;
+        }
+        : null;
+      const price = this.sanitizePrice(
+        typeof rawPrice === 'number'
+          ? rawPrice
+          : Number.parseFloat(String(priceRecord?.value || priceRecord?.amount || rawPrice || '')),
+      );
       const image =
         product.images?.[0]?.base_url ||
         product.image ||
@@ -121,10 +133,10 @@ export class TargetAdapter implements RetailerAdapter {
         if (typeof price === 'number') {
           priceAmount = this.sanitizePrice(price);
           if (priceAmount) priceLabel = `$${priceAmount.toFixed(2)}`;
-        } else if (typeof price === 'object') {
-          priceAmount = this.sanitizePrice(parseFloat(price.value || price.amount));
-          currency = price.currency_code || 'USD';
-          if (priceAmount) priceLabel = price.formatted || `$${priceAmount.toFixed(2)}`;
+        } else if (priceRecord) {
+          priceAmount = this.sanitizePrice(parseFloat(String(priceRecord.value || priceRecord.amount || '')));
+          currency = priceRecord.currency_code || 'USD';
+          if (priceAmount) priceLabel = priceRecord.formatted || `$${priceAmount.toFixed(2)}`;
         }
       }
 
@@ -154,6 +166,7 @@ export class TargetAdapter implements RetailerAdapter {
     try {
       const title = jsonLd.name;
       if (!title) return null;
+      if (this.looksLikeSkuTitle(title)) return null;
 
       const missing: string[] = [];
       let image = jsonLd.image;
@@ -165,7 +178,7 @@ export class TargetAdapter implements RetailerAdapter {
       let priceAmount: number | undefined;
       let currency = 'USD';
 
-      const offers = jsonLd.offers || (Array.isArray(jsonLd.offers) ? jsonLd.offers[0] : null);
+      const offers = Array.isArray(jsonLd.offers) ? jsonLd.offers[0] : jsonLd.offers;
       if (offers?.price) {
         priceAmount = this.sanitizePrice(parseFloat(offers.price));
         currency = offers.priceCurrency || 'USD';
@@ -213,9 +226,15 @@ export class TargetAdapter implements RetailerAdapter {
       meta['twitter:title'] ||
       extractTitle(html);
 
-    if (!title || title.toLowerCase().includes('target')) {
+    if (!title) {
       return null;
     }
+
+    const cleanedTitle = title
+      .replace(/\s*\|\s*Target.*$/i, '')
+      .replace(/^Target\s*:\s*/i, '')
+      .trim();
+    if (!cleanedTitle || this.looksLikeSkuTitle(cleanedTitle)) return null;
 
     const missing: string[] = [];
 
@@ -245,7 +264,7 @@ export class TargetAdapter implements RetailerAdapter {
     }
 
     return {
-      title: title.replace(/\s*\|\s*Target.*$/i, '').trim(),
+      title: cleanedTitle,
       image_url: image || undefined,
       price_label: priceLabel || undefined,
       price_amount: priceAmount,
@@ -264,6 +283,17 @@ export class TargetAdapter implements RetailerAdapter {
    */
   private createFallback(url: string, canonical: string): ProductData {
     const title = generateFallbackTitle(url);
+    if (this.looksLikeSkuTitle(title)) {
+      return {
+        title: 'Target Product',
+        store_name: 'Target',
+        canonical_url: canonical,
+        confidence_score: 0.15,
+        source_method: 'fallback',
+        partial: true,
+        missing_fields: ['title', 'image', 'price'],
+      };
+    }
 
     return {
       title,
@@ -280,5 +310,10 @@ export class TargetAdapter implements RetailerAdapter {
     if (!amount || !Number.isFinite(amount)) return undefined;
     if (amount < 1 || amount > 10000) return undefined;
     return amount;
+  }
+
+  private looksLikeSkuTitle(title: string): boolean {
+    const value = title.trim();
+    return /^[a-z]?\s?\d{5,}$/i.test(value) || /^A-\d+$/i.test(value);
   }
 }

@@ -1,265 +1,238 @@
 #!/usr/bin/env node
 
-const proofBoard = {
-  generatedAt: new Date().toISOString(),
-  purpose: 'Executable map of the current DayOf v1 proof gate.',
-  realV1Line: [
-    'A couple can get from setup to a polished live wedding site without obvious trust breaks.',
-    'Guests can find the site, access it correctly, and RSVP without weird state drift.',
-    'The couple can run the core wedding ops layer from one product: guests, RSVP, messages, seating, registry, itinerary, settings.',
-    'A planner or coordinator can be invited into a role-aware version of the product without fake permissions.',
-    'The public story matches the real runtime closely enough that launch does not feel dishonest.',
-  ],
-  summary: {
-    mustShip: [
-      'public-site-trust',
-      'guests-rsvp',
-      'planner-access',
-      'coordinator-dayof',
-      'comms-center',
-      'seating',
-      'registry',
-      'onboarding',
-    ],
-    shouldShipIfStable: ['memories-photo-return', 'name-change'],
-    cutFromPromiseUnlessProven: [
-      'external-custom-domains',
-      'advanced-analytics-claims',
-      'fully-automated-migration-reminders-merchant-sync',
-      'enterprise-governance-claims',
-    ],
-    secondaryTrustGap: 'Canonical couple-path truth notes and runtime wording verification are still missing',
-    secondaryTrustGapKey: 'canonical_couple_path_runtime_wording_and_starter_draft_verification_missing',
-    starterDraftWordingVerificationMissing: true,
-  },
-  ruthlessNextThree: [
-    {
-      id: 'canonical-v1-smoke',
-      rank: 1,
-      title: 'Finish canonical smoke with route-note proof',
-      whyNow: 'The automated gate is green. The remaining work is the manual couple-path route notes that turn this from strong automated coverage into a fully logged proof artifact.',
-      focusSlices: ['public-site-trust', 'onboarding'],
-      commands: [
-        'npm run proof:v1:canonical-smoke',
-      ],
-      manualProof: [
-        'Home -> signup/demo/auth -> onboarding/builder -> public site -> RSVP route notes',
-        'Verify privacy/access/publish plus marketing/settings/billing wording against live runtime behavior',
-        'Verify onboarding and first-run starter-draft wording against live runtime behavior',
-        'Capture exact pass/fail points in docs/v1-smoke-proof-log.md',
-      ],
-      exitBar: 'Automated canonical smoke stays green and one logged canonical route-note + runtime wording pass is captured in docs/v1-smoke-proof-log.md.',
-      status: 'AUTOMATED_PASS_MANUAL_NOTES_PENDING',
-      runtimeWordingVerificationMissing: true,
-      starterDraftWordingVerificationMissing: true,
-      secondaryTrustGapKey: 'canonical_couple_path_runtime_wording_and_starter_draft_verification_missing',
-    },
-    {
-      id: 'guest-rsvp-continuity-proof',
-      rank: 2,
-      title: 'Prove guest -> RSVP -> downstream ops continuity',
-      whyNow: 'Guest truth feeds seating, messaging, and event counts. If this seam is weak, the wedding ops story is weak.',
-      focusSlices: ['guests-rsvp', 'seating', 'comms-center'],
-      commands: [
-        'npm run proof:v1:guests-rsvp-ops',
-      ],
-      manualProof: [
-        'Create/edit/review guest + household state',
-        'Submit/update RSVP and verify dashboard/event readback',
-      ],
-      exitBar: 'One guest can move through dashboard and public RSVP without trust drift.',
-      status: 'BLOCKED_ON_ENV',
-      blocker: 'RSVP strict smoke is currently environment-blocked by validate-rsvp-token anon auth (401) in this environment.',
-    },
-    {
-      id: 'collaborator-forbidden-action-proof',
-      rank: 3,
-      title: 'Capture role-aware collaborator runtime proof with forbidden actions',
-      whyNow: 'Planner/coordinator support is a core differentiator and the easiest slice to overclaim if runtime boundaries are not captured.',
-      focusSlices: ['planner-access', 'coordinator-dayof'],
-      commands: [
-        'npm run proof:v1:collaborator-access',
-        'npm run proof:v1:collaborator-runtime',
-      ],
-      manualProof: [
-        'Owner invite -> accept -> planner/coordinator dashboard framing',
-        'Attempt at least one forbidden action per non-owner role tested',
-      ],
-      exitBar: 'One planner and one coordinator runtime path logged with at least one blocked forbidden action each.',
-      status: 'READY_IF_CREDENTIALS_EXIST',
-      blocker: 'Runtime proof still depends on disposable owner/collaborator proof credentials.',
-    },
-  ],
-  slices: [
-    {
-      id: 'public-site-trust',
-      title: 'Public site / launch path / trust surface',
-      status: 'AUTOMATED_PASS_MANUAL_NOTES_PENDING',
-      tier: 1,
-      exitBar: 'Home -> auth/demo -> onboarding/builder -> site -> RSVP feels coherent, and privacy/access/publish behavior matches the copy.',
-      automatedProof: [
-        'npm run proof:v1:canonical-smoke',
-      ],
-      manualProof: [
-        'Home -> signup/demo/auth -> onboarding/builder -> public site route notes',
-        'Verify privacy/access/publish wording against live behavior',
-        'Verify marketing/settings/billing wording against live behavior',
-        'Verify onboarding and first-run starter-draft wording against live behavior',
-      ],
-      runtimeWordingVerificationMissing: true,
-      starterDraftWordingVerificationMissing: true,
-      secondaryTrustGapKey: 'canonical_couple_path_runtime_wording_and_starter_draft_verification_missing',
-      evidenceTarget: 'docs/v1-smoke-proof-log.md',
-    },
-    {
-      id: 'guests-rsvp',
-      title: 'Guests / RSVP ops',
-      status: 'BLOCKED_ON_ENV_PROOF',
-      tier: 1,
-      exitBar: 'Guest list, householding, public RSVP, assisted RSVP, and downstream dashboard truth stay aligned enough for real planning.',
-      automatedProof: [
-        'npm run proof:v1:guests-rsvp-ops',
-      ],
-      manualProof: [
-        'Create/edit/review guest + household state',
-        'Submit/update RSVP and verify dashboard/event readback',
-      ],
-      blocker: 'RSVP strict smoke is currently environment-blocked by validate-rsvp-token anon auth (401) in this environment.',
-      evidenceTarget: 'docs/v1-smoke-proof-log.md',
-    },
-    {
-      id: 'planner-access',
-      title: 'Planner / collaborator access',
-      status: 'MOSTLY_DONE_PROOF_NEEDED',
-      tier: 1,
-      exitBar: 'Invite flow feels safe, collaborator lands in a role-aware surface, and at least one forbidden action is actually blocked per non-owner role tested.',
-      automatedProof: [
-        'npm run proof:v1:collaborator-access',
-        'npm run proof:v1:collaborator-runtime',
-      ],
-      manualProof: [
-        'Owner invite -> accept -> planner/coordinator dashboard framing',
-        'Attempt at least one forbidden action per non-owner role',
-      ],
-      evidenceTarget: 'docs/v1-smoke-proof-log.md',
-    },
-    {
-      id: 'coordinator-dayof',
-      title: 'Coordinator / day-of',
-      status: 'MOSTLY_DONE_PROOF_NEEDED',
-      tier: 1,
-      exitBar: 'Queue/check-in/timeline/Q&A feel calmer under realistic use and do not collapse into role or state confusion.',
-      automatedProof: [
-        'npm run proof:v1:coordinator-dayof',
-      ],
-      manualProof: [
-        'Coordinator mode queue/check-in/timeline/Q&A smoke',
-        'Verify a coordinator can answer who is here / what is next / what needs action',
-      ],
-      evidenceTarget: 'docs/v1-smoke-proof-log.md',
-    },
-    {
-      id: 'comms-center',
-      title: 'Comms center',
-      status: 'MUST_PROVE',
-      tier: 2,
-      exitBar: 'Draft -> schedule/send -> history state reads trustworthy enough that core wedding messaging can stay inside DayOf.',
-      automatedProof: [
-        'npm run proof:v1:comms-center',
-      ],
-      manualProof: [
-        'Create or inspect a draft',
-        'Schedule or send a message',
-        'Verify history state shows believable draft/scheduled/sent/partial/failed state',
-      ],
-      evidenceTarget: 'docs/v1-smoke-proof-log.md',
-    },
-    {
-      id: 'seating',
-      title: 'Seating',
-      status: 'PROOF_NEEDED',
-      tier: 2,
-      exitBar: 'RSVP-backed seating assignment, lookup, and counts stay coherent without embarrassing event-level drift.',
-      automatedProof: [
-        'npm run proof:v1:seating-continuity',
-      ],
-      manualProof: [
-        'Assign guests using RSVP-backed data',
-        'Use seating lookup/export and verify counts/eligibility match event truth',
-      ],
-      evidenceTarget: 'docs/v1-smoke-proof-log.md',
-    },
-    {
-      id: 'registry',
-      title: 'Registry',
-      status: 'MUST_PROVE',
-      tier: 2,
-      exitBar: 'Add/import/edit/repair plus purchased-state handling survives one realistic smoke without trust drift.',
-      automatedProof: [
-        'npm run proof:v1:registry',
-      ],
-      manualProof: [
-        'Add/import/edit a registry item',
-        'Run a repair/cleanup path if needed',
-        'Verify internal/public purchased-state behavior',
-      ],
-      evidenceTarget: 'docs/v1-smoke-proof-log.md',
-    },
-    {
-      id: 'onboarding',
-      title: 'Onboarding truth / first-run continuity',
-      status: 'AUTOMATED_BASELINE_PASS_MANUAL_NOTES_PENDING',
-      tier: 1,
-      exitBar: 'Entry -> onboarding -> usable draft site/dashboard state is fast, honest, and does not oversell launch-readiness.',
-      automatedProof: [
-        'npm run build',
-      ],
-      manualProof: [
-        'Entry -> onboarding -> dashboard/site first-run smoke',
-        'Verify starter-draft wording matches actual first-run output',
-      ],
-      runtimeWordingVerificationMissing: true,
-      starterDraftWordingVerificationMissing: true,
-      secondaryTrustGapKey: 'canonical_couple_path_runtime_wording_and_starter_draft_verification_missing',
-      evidenceTarget: 'docs/v1-smoke-proof-log.md',
-    },
-  ],
+import fs from 'node:fs';
+
+const BACKLOG_PATH = process.env.V1_PROOF_BOARD_BACKLOG_PATH || 'BACKLOG.md';
+
+const formatPacificTimestamp = (date = new Date()) => {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'America/Los_Angeles',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+    timeZoneName: 'short',
+  }).formatToParts(date);
+  const byType = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+  const zone = (byType.timeZoneName || 'PT').replace(/^PST$|^PDT$/, 'PT');
+  return `${byType.year}-${byType.month}-${byType.day} ${byType.hour}:${byType.minute} ${byType.dayPeriod} ${zone}`;
 };
 
-const asMarkdown = process.argv.includes('--markdown');
-
-if (asMarkdown) {
-  console.log('# V1 Proof Board\n');
-  console.log(`_Generated:_ ${proofBoard.generatedAt}\n`);
-  console.log('## Real v1 line');
-  for (const line of proofBoard.realV1Line) console.log(`- ${line}`);
-  console.log('');
-  console.log('## Ruthless next 3');
-  for (const item of proofBoard.ruthlessNextThree) {
-    console.log(`### ${item.rank}) ${item.title}`);
-    console.log(`- status: ${item.status}`);
-    console.log(`- why now: ${item.whyNow}`);
-    console.log(`- focus slices: ${item.focusSlices.join(', ')}`);
-    console.log(`- commands:`);
-    for (const cmd of item.commands) console.log(`  - \`${cmd}\``);
-    console.log(`- manual proof:`);
-    for (const step of item.manualProof) console.log(`  - ${step}`);
-    console.log(`- exit bar: ${item.exitBar}`);
-    if (item.blocker) console.log(`- blocker: ${item.blocker}`);
-    console.log('');
+const readBacklog = () => {
+  try {
+    return fs.readFileSync(BACKLOG_PATH, 'utf8');
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Unknown backlog read failure.';
+    console.error(`[proof:v1:board] Failed to read backlog source \`${BACKLOG_PATH}\`: ${message}`);
+    process.exit(1);
   }
-  for (const slice of proofBoard.slices) {
-    console.log(`## ${slice.title}`);
-    console.log(`- status: ${slice.status}`);
-    console.log(`- tier: ${slice.tier}`);
-    console.log(`- exit bar: ${slice.exitBar}`);
-    console.log(`- automated proof:`);
-    for (const cmd of slice.automatedProof) console.log(`  - \`${cmd}\``);
-    console.log(`- manual proof:`);
-    for (const step of slice.manualProof) console.log(`  - ${step}`);
-    if (slice.blocker) console.log(`- blocker: ${slice.blocker}`);
-    console.log(`- evidence target: ${slice.evidenceTarget}\n`);
+};
+
+const parseBacklogTimestamp = (value) => {
+  if (!value) return null;
+  const cleaned = value.replace(/`/g, '').trim();
+  const match = cleaned.match(
+    /^(\d{4})-(\d{2})-(\d{2}) (\d{1,2}):(\d{2}) (AM|PM) (PT|PDT|PST)$/,
+  );
+  if (!match) return null;
+
+  const [, year, month, day, rawHour, minute, dayPeriod] = match;
+  let hour = Number(rawHour);
+  if (dayPeriod === 'AM' && hour === 12) hour = 0;
+  if (dayPeriod === 'PM' && hour !== 12) hour += 12;
+
+  const isoLike = `${year}-${month}-${day}T${String(hour).padStart(2, '0')}:${minute}:00`;
+  const parsed = new Date(isoLike);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+};
+
+const describeStateFreshness = (currentState, generatedAt) => {
+  const reportedAt = parseBacklogTimestamp(currentState['Current date/time']);
+  const generatedAtDate = parseBacklogTimestamp(generatedAt);
+
+  if (!reportedAt || !generatedAtDate) {
+    return {
+      status: 'UNKNOWN',
+      warning: 'Current state freshness could not be evaluated from the backlog timestamp.',
+    };
+  }
+
+  const ageHours = Math.round(((generatedAtDate.getTime() - reportedAt.getTime()) / 36e5) * 10) / 10;
+  if (ageHours <= 24) {
+    return {
+      status: 'FRESH',
+      warning: '',
+      ageHours,
+    };
+  }
+
+  return {
+    status: 'STALE',
+    warning: `Current state snapshot in \`${BACKLOG_PATH}\` is ${ageHours} hours older than this generated board.`,
+    ageHours,
+  };
+};
+
+const parseCurrentStateTable = (text) => {
+  const lines = text.split(/\r?\n/);
+  const state = {};
+  let inTable = false;
+
+  for (const line of lines) {
+    if (!inTable) {
+      if (line.trim() === '| Field | Current State |') {
+        inTable = true;
+      }
+      continue;
+    }
+
+    if (!line.startsWith('|')) break;
+    if (line.includes('---')) continue;
+
+    const cells = line
+      .split('|')
+      .slice(1, -1)
+      .map((cell) => cell.trim());
+
+    if (cells.length === 2) {
+      state[cells[0]] = cells[1];
+    }
+  }
+
+  return state;
+};
+
+const extractSections = (text) => {
+  const lines = text.split(/\r?\n/);
+  const sections = {};
+  let current = null;
+  let buffer = [];
+
+  const flush = () => {
+    if (!current) return;
+    sections[current] = buffer.join('\n').trim();
+  };
+
+  for (const line of lines) {
+    const match = line.match(/^## (.+)$/);
+    if (match) {
+      flush();
+      current = match[1].trim();
+      buffer = [];
+      continue;
+    }
+
+    if (current) {
+      buffer.push(line);
+    }
+  }
+
+  flush();
+  return sections;
+};
+
+const extractSubheadings = (sectionText) => {
+  if (!sectionText) return [];
+  return [...sectionText.matchAll(/^### (.+)$/gm)].map((match) => match[1].trim());
+};
+
+const extractNumberedList = (sectionText) => {
+  if (!sectionText) return [];
+  return [...sectionText.matchAll(/^\d+\.\s+(.+)$/gm)].map((match) => match[1].trim());
+};
+
+const slugify = (value) => value
+  .toLowerCase()
+  .replace(/`/g, '')
+  .replace(/[^a-z0-9]+/g, '-')
+  .replace(/^-+|-+$/g, '');
+
+const backlogText = readBacklog();
+const currentState = parseCurrentStateTable(backlogText);
+const sections = extractSections(backlogText);
+const generatedAt = process.env.V1_PROOF_BOARD_GENERATED_AT || formatPacificTimestamp();
+const currentStateFreshness = describeStateFreshness(currentState, generatedAt);
+const activeUngatedLaunchBlockers = extractSubheadings(sections['Current Launch Blockers'])
+  .map((title) => title.replace(/^Critical \d+:\s*/, ''));
+const nextThree = extractNumberedList(sections['Next 10 Tasks']).slice(0, 3);
+
+const proofBoard = {
+  generatedAt,
+  source: BACKLOG_PATH,
+  currentState,
+  currentStateFreshness,
+  readinessScore: currentState['Current readiness score'] ?? 'unknown',
+  launchVerdict: currentState['Current launch verdict'] ?? 'unknown',
+  productionReady: currentState['Production-ready'] ?? 'unknown',
+  contractSummary: currentStateFreshness.status === 'FRESH'
+    ? 'Proof board is current: this canonical launch-truth artifact depends on a fresh BACKLOG.md current-state block, while workflows only gate freshness and helper/local bundles regenerate the raw and markdown board outputs.'
+    : 'Proof board is generated from stale current-state metadata: update BACKLOG.md before treating either proof:v1:board output as canonical launch truth.',
+  activeUngatedLaunchBlockers,
+  blockedOrApprovalGatedLaunchItems: currentState['Current blockers']
+    ? [currentState['Current blockers']]
+    : [],
+  summary: {
+    currentProofState: currentState['Current proof state'] ?? '',
+    currentNextActions: currentState['Current next actions'] ?? '',
+  },
+  ruthlessNextThree: nextThree.map((title, index) => ({
+    id: slugify(title),
+    rank: index + 1,
+    title,
+    status: index === 0 ? 'READY_WHEN_SECURE_ENV_EXISTS' : 'PENDING_ON_PRIOR_STEP',
+  })),
+  sections,
+};
+
+const orderedMarkdownSections = [
+  'Launch Question',
+  'Current Canonical Status',
+  'Current Launch Blockers',
+  'Critical Resolved This Wave',
+  'Non-Critical Before Launch',
+  'Non-Critical After Launch / Deferred',
+  'Validation Matrix',
+  'Deployment Matrix',
+  'Next 10 Tasks',
+  'Resolved Work Summary',
+  'What Changed In This Final Closeout',
+];
+
+const markdownMode = process.argv.includes('--markdown');
+const requireFreshCurrentState = process.argv.includes('--require-fresh-current-state');
+const freshnessOnlyMode = process.argv.includes('--freshness-only');
+
+if (freshnessOnlyMode) {
+  const freshnessLine = currentStateFreshness.warning || 'Current state metadata is fresh.';
+  console.log(`[proof:v1:board] ${currentStateFreshness.status}: ${freshnessLine}`);
+} else if (markdownMode) {
+  console.log('# V1 Proof Board\n');
+  console.log(`_Generated:_ ${proofBoard.generatedAt}`);
+  console.log(`_Source:_ \`${BACKLOG_PATH}\`\n`);
+  if (currentStateFreshness.warning) {
+    console.log(`> Warning: ${currentStateFreshness.warning}\n`);
+  }
+  console.log('## Current State');
+  for (const [key, value] of Object.entries(currentState)) {
+    console.log(`- ${key}: ${value}`);
+  }
+  console.log('');
+
+  for (const name of orderedMarkdownSections) {
+    if (!sections[name]) continue;
+    console.log(`## ${name}`);
+    console.log(sections[name]);
+    console.log('');
   }
 } else {
   console.log(JSON.stringify(proofBoard, null, 2));
+}
+
+if (requireFreshCurrentState && currentStateFreshness.status !== 'FRESH') {
+  console.error(
+    `[proof:v1:board] Current state metadata is ${currentStateFreshness.status.toLowerCase()}; update BACKLOG.md before treating either proof:v1:board output as fresh launch truth.`,
+  );
+  process.exitCode = 1;
 }

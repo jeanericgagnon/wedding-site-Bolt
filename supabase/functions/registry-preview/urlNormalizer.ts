@@ -21,6 +21,7 @@ const RETAILER_PATTERNS: Record<string, RegExp> = {
   target: /target\.com$/i,
   amazon: /amazon\.(com|ca|co\.uk|de|fr|it|es|co\.jp|in|com\.au|com\.br|com\.mx|nl|se|pl|sg|ae|sa)$/i,
   walmart: /walmart\.com$/i,
+  bestbuy: /bestbuy\.com$/i,
   etsy: /etsy\.com$/i,
   wayfair: /wayfair\.(com|ca|co\.uk|de)$/i,
   ikea: /ikea\.com$/i,
@@ -33,8 +34,53 @@ const RETAILER_PATTERNS: Record<string, RegExp> = {
   macys: /macys\.com$/i,
   nordstrom: /nordstrom\.com$/i,
   williams_sonoma: /williams-sonoma\.com$/i,
+  rei: /(^|\.)rei\.com$/i,
   sur_la_table: /surlatable\.com$/i,
 };
+
+function isPrivateIpv4(hostname: string): boolean {
+  const parts = hostname.split('.').map((part) => Number(part));
+  if (parts.length !== 4 || parts.some((part) => !Number.isInteger(part) || part < 0 || part > 255)) {
+    return false;
+  }
+
+  const [a, b] = parts;
+  return (
+    a === 10 ||
+    a === 127 ||
+    (a === 100 && b >= 64 && b <= 127) ||
+    (a === 169 && b === 254) ||
+    (a === 172 && b >= 16 && b <= 31) ||
+    (a === 192 && b === 0) ||
+    (a === 192 && b === 2) ||
+    (a === 192 && b === 168) ||
+    (a === 198 && (b === 18 || b === 19)) ||
+    (a === 198 && b === 51) ||
+    (a === 203 && b === 0) ||
+    a >= 224 ||
+    a === 0
+  );
+}
+
+function isBlockedHostname(hostname: string): boolean {
+  const normalized = hostname.toLowerCase().replace(/\.$/, '');
+  if (!normalized) return true;
+  if (
+    normalized === 'localhost' ||
+    normalized.endsWith('.localhost') ||
+    normalized.endsWith('.local') ||
+    normalized.endsWith('.internal') ||
+    normalized.endsWith('.invalid') ||
+    normalized.endsWith('.example') ||
+    normalized.endsWith('.test') ||
+    normalized === 'metadata' ||
+    normalized === 'metadata.google.internal'
+  ) {
+    return true;
+  }
+  if (normalized.includes(':')) return true;
+  return isPrivateIpv4(normalized);
+}
 
 /**
  * Extract Target TCIN (Target.com Item Number) from URL
@@ -55,6 +101,24 @@ function extractAmazonASIN(pathname: string): string | null {
 }
 
 /**
+ * Extract Best Buy product id from URL
+ * Format: /site/product-name/6484343.p
+ */
+function extractBestBuySku(pathname: string): string | null {
+  const match = pathname.match(/\/(\d+)\.p(?:\/|$)/i);
+  return match ? match[1] : null;
+}
+
+/**
+ * Extract IKEA article number from URL
+ * Format: .../product-name-20500016/
+ */
+function extractIkeaArticleNumber(pathname: string): string | null {
+  const match = pathname.match(/-([0-9]{8})(?:\/|$)/);
+  return match ? match[1] : null;
+}
+
+/**
  * Detect retailer from hostname
  */
 function detectRetailer(hostname: string): string | null {
@@ -66,12 +130,47 @@ function detectRetailer(hostname: string): string | null {
   return null;
 }
 
+export function isPublicPreviewResourceUrl(url: string, depth = 0): boolean {
+  try {
+    const parsed = new URL(url);
+    const publicTarget = (parsed.protocol === 'http:' || parsed.protocol === 'https:')
+      && !parsed.username
+      && !parsed.password
+      && !isBlockedHostname(parsed.hostname);
+    if (!publicTarget) return false;
+
+    if (parsed.hostname.toLowerCase() === 'images.weserv.nl') {
+      const proxiedTarget = parsed.searchParams.get('url');
+      if (!proxiedTarget) return true;
+      if (depth >= 2) return false;
+      const normalizedTarget = /^https?:\/\//i.test(proxiedTarget)
+        ? proxiedTarget
+        : `https://${proxiedTarget.replace(/^\/+/, '')}`;
+      return isPublicPreviewResourceUrl(normalizedTarget, depth + 1);
+    }
+
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 /**
  * Normalize and canonicalize a product URL
  */
 export function normalizeUrl(url: string): NormalizedUrl {
   try {
     const parsed = new URL(url);
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+      throw new Error('URL must use http or https');
+    }
+    if (parsed.username || parsed.password) {
+      throw new Error('URL cannot include credentials');
+    }
+    if (isBlockedHostname(parsed.hostname)) {
+      throw new Error('URL must be a public product page');
+    }
+
     const hostname = parsed.hostname.toLowerCase().replace(/^www\./, '');
     const retailer = detectRetailer(hostname);
     const metadata: Record<string, string> = {};
@@ -104,6 +203,18 @@ export function normalizeUrl(url: string): NormalizedUrl {
         // Canonical Amazon URL format
         canonicalPath = `/dp/${asin}`;
       }
+    } else if (retailer === 'bestbuy') {
+      const sku = extractBestBuySku(parsed.pathname);
+      if (sku) {
+        metadata.sku = sku;
+        canonicalPath = `/site/${sku}.p`;
+      }
+    } else if (retailer === 'ikea') {
+      const article = extractIkeaArticleNumber(parsed.pathname);
+      if (article) {
+        metadata.article_number = article;
+        canonicalPath = `/us/en/p/${article}/`;
+      }
     }
 
     // Rebuild canonical URL
@@ -118,15 +229,8 @@ export function normalizeUrl(url: string): NormalizedUrl {
       retailer,
       metadata,
     };
-  } catch (error) {
-    // If URL parsing fails, return original
-    return {
-      canonical: url,
-      hostname: '',
-      pathname: '',
-      retailer: null,
-      metadata: {},
-    };
+  } catch {
+    throw new Error('Enter a public product URL.');
   }
 }
 
@@ -149,6 +253,12 @@ export function isSameProduct(url1: string, url2: string): boolean {
     }
     if (norm1.metadata.asin && norm2.metadata.asin) {
       return norm1.metadata.asin === norm2.metadata.asin;
+    }
+    if (norm1.metadata.sku && norm2.metadata.sku) {
+      return norm1.metadata.sku === norm2.metadata.sku;
+    }
+    if (norm1.metadata.article_number && norm2.metadata.article_number) {
+      return norm1.metadata.article_number === norm2.metadata.article_number;
     }
   }
 

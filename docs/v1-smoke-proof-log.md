@@ -1,514 +1,674 @@
 # V1 Smoke Proof Log
 
-_Date:_ 2026-04-21
-_Status:_ Canonical smoke automation covers public, setup, onboarding, and dashboard route continuity; manual runtime notes still needed
-_Owner:_ Product finish lane
-_Public v1 claim status:_ Not clear to claim yet
-_Launch call right now:_ NO-GO for public v1 claim
-_Why no-go:_ critical trust proof is still missing on the canonical couple path and runtime wording truth
-_Highest-risk trust gap:_ guests / RSVP ops proof is still blocked by anon-auth 401 on `validate-rsvp-token`
-_Secondary trust gap:_ canonical couple-path truth notes, runtime wording verification, and starter-draft wording verification are still missing
-_Automation caveat:_ passing canonical smoke is not launch clearance by itself
-_Truth gate summary:_ automation is green, launch truth is still red
-_Grounded status line:_ `manualProofSummary` is still `requiredCount: 3`, `missingCount: 3`, `blockingCount: 3`
-_Grounded next-step line:_ `manualProofSummary.blockingNextSteps` still points to the canonical couple-path truth pass, runtime wording verification, and starter-draft wording verification in that order
-_What must change before GO:_ close the anon-auth RSVP blocker, log the canonical couple-path truth pass, verify privacy/access/publish plus marketing/settings/billing runtime wording, and verify starter-draft wording against live runtime behavior
-_False-positive avoided:_ a green canonical smoke run no longer reads like public launch approval
-_Externally blocked proof seam:_ `npm run proof:v1:guests-rsvp-ops` is `external_fixture_required` until anon-callable auth exists for `validate-rsvp-token`
-_Launch-critical blocker command:_ `npm run proof:v1:guests-rsvp-ops`
-_Launch decision depends on:_ a logged manual truth pass, not automation alone
-_Machine-readable guardrail:_ canonical smoke JSON now encodes the no-go launch call and the blocked RSVP proof command
-_Highest-risk trust gap key:_ `guests_rsvp_ops_and_manual_truth_pass`
-_Secondary trust gap key:_ `canonical_couple_path_runtime_wording_and_starter_draft_verification_missing`
-_Machine-readable flag:_ `runtimeWordingVerificationMissing: true`
-_Machine-readable flag:_ `starterDraftWordingVerificationMissing: true`
-_Machine-readable requirement:_ `manualProofRequirements.canonicalCouplePath`
-_Machine-readable requirement:_ `manualProofRequirements.runtimeWordingVerification`
-_Machine-readable requirement:_ `manualProofRequirements.onboardingStarterDraftWording`
-_Machine-readable status:_ `manualProofSummary.requiredCount: 3`
-_Machine-readable status:_ `manualProofSummary.missingCount: 3` (`canonicalCouplePath`, `runtimeWordingVerification`, `onboardingStarterDraftWording`)
-_Machine-readable status:_ all three missing manual-proof requirements are currently blocking, so `manualProofSummary.missingCount` still matches `manualProofSummary.blockingCount`
-_Machine-readable status:_ `manualProofSummary.blockingCount: 3`
-_Machine-readable status:_ `manualProofSummary.blockingKeys: canonicalCouplePath, runtimeWordingVerification, onboardingStarterDraftWording`
-_Grounded status line:_ every current `manualProofSummary.blockingKey` is still represented in `publicV1ClaimBlockers`, so the no-go call remains fully backed by named proof gaps
-_Machine-readable status:_ `manualProofSummary.blockingNextSteps` mirrors the remaining runtime-proof actions in order
-_Machine-readable next-step order:_ `manualProofSummary.blockingNextSteps[0]` = canonical couple-path truth pass
-_Machine-readable next-step order:_ `manualProofSummary.blockingNextSteps[1]` = privacy/access/publish plus marketing/settings/billing runtime wording verification
-_Machine-readable next-step order:_ `manualProofSummary.blockingNextSteps[2]` = onboarding + first-run starter-draft runtime wording verification
-_Machine-readable evidence log:_ `manualProofSummary.evidenceLogPath: docs/v1-smoke-proof-log.md`
-_Machine-readable blocker:_ `manualProofBlockingReasons[canonicalCouplePath]` = no logged human route-note pass yet
-_Machine-readable next step:_ `manualProofBlockingReasons[canonicalCouplePath].nextStep` = run and log the Home -> signup/demo/auth -> onboarding/builder -> public site -> RSVP truth pass here
-_Machine-readable blocker:_ `manualProofBlockingReasons[runtimeWordingVerification]` = privacy/access/publish and marketing/settings/billing runtime wording not yet verified
-_Machine-readable next step:_ `manualProofBlockingReasons[runtimeWordingVerification].nextStep` = verify those surfaces in runtime and log pass/fail notes here
-_Machine-readable blocker:_ `manualProofBlockingReasons[onboardingStarterDraftWording]` = onboarding and first-run starter-draft wording not yet verified
-_Machine-readable next step:_ `manualProofBlockingReasons[onboardingStarterDraftWording].nextStep` = verify onboarding + first-run draft wording in runtime and log pass/fail notes here
-
-## Purpose
-This is the hard proof artifact for whether DayOf can credibly claim **v1 / done-enough**.
-
-Current v1 line for this proof pass:
-- couples can create and launch a polished wedding site
-- guests can use the public site and RSVP flows reliably
-- couples can run the core ops layer: guests, RSVP, messages, seating, registry, itinerary, settings
-- planner/collaborator support exists in a real usable form
-- marketing, settings, and billing surfaces describe the product honestly
-- partial features are framed honestly instead of padded into fake completeness
-
-Source of truth: `docs/finish-board-2026-04-19.md`
-Last aligned from source: 2026-04-21
-Alignment scope: current v1 line bullets only
-Verification gate for this log: `npm run proof:v1:canonical-smoke`
-Environment-specific blocker gate: `npm run proof:v1:guests-rsvp-ops`
-Current automated proof status: canonical smoke passing, guests/RSVP ops environment-blocked
-Known blocker message: `validate-rsvp-token function is not callable with current anon credentials (401).`
-Blocked proof owner action: provide anon-callable function auth in this environment or run with credentials that can invoke the function.
-Blocked proof classification: `external_fixture_required`
-Remaining manual proof: one human canonical couple-path route-note pass plus runtime wording verification, including starter-draft wording truth.
-Protected route smoke inventory is automated; remaining proof work is now manual truth validation, not route reachability.
-Last canonical smoke confirmation: 2026-04-21 via `npm run proof:v1:canonical-smoke`
-Latest published-site lookup confirmation: `alex-jordan-demo`
-Latest live smoke breadth: 31 Playwright checks passing
-Latest canonical smoke result: `ok: true`, `blocked: false`
-Latest site lookup statuses: list 200, bySlug 200, byUrl 200
-Canonical manual-proof scope: route-note pass plus privacy/access/publish, marketing/settings/billing, and starter-draft wording verification
-Starter-draft manual-proof scope: onboarding and first-run dashboard/site draft wording verification
-Starter-draft wording proof scope: onboarding plus first-run dashboard/site draft wording still needs explicit runtime-truth verification
-
-This is **not** a generic QA checklist.
-This is the must-ship truth gate.
-
-A slice only counts if it:
-- works in the live flow that matters
-- is actually useful under real wedding pressure
-- feels trustworthy
-- is not obviously brittle or embarrassing
-- is strong enough to claim publicly
-
-## Go / No-Go Standard
-
-### GO only if all Tier 1 slices pass
-- public site / launch path / trust surface
-- guests / RSVP ops
-- planner / collaborator access
-- coordinator / day-of
-
-### Soft GO only if Tier 2 has minor contained issues
-- comms center
-- seating
-- registry
-
-### NOT required for v1 claim if honestly demoted
-- memories / guest photo sharing
-- name-change planner
-
----
-
-## Tier 1 — Must-pass to claim v1
-
-### 1) Public site / launch path / trust surface
-**Why it matters**
-If the product cannot be shown, shared, and trusted publicly, the v1 claim is dead before the wedding ops layer matters.
-
-**Flow to prove**
-1. Land on Home
-2. Move to signup/demo/auth
-3. Reach onboarding or builder without confusing dead ends
-4. Reach a usable site draft / live site state
-5. Open public site
-6. Open guest-facing RSVP entry
-
-**Done-enough bar**
-- flow feels coherent end to end
-- trust/legal/privacy wording matches actual behavior
-- nothing obviously fake, placeholder-ish, or misleading remains in the path
-
-**Evidence to capture**
-- route list touched
-- screenshots or route notes if available
-- exact failure point if broken
-
-**Pass / Fail**
-- Status: AUTOMATED_PASS / MANUAL_NOTES_PENDING
-- Notes:
-  - 2026-05-20 17:50 PDT manual live truth pass found a launch blocker on the public site route: `https://dayof.love/site/alex-jordan-demo` and `https://alex-jordan-demo.dayof.love/` rendered `Something went wrong` / `Failed to load wedding site`, even though the Supabase slug lookup smoke resolved `alex-jordan-demo`.
-  - Root cause isolated locally: public site runtime selected secret privacy fields (`site_password_hash`, `guest_access_token`) and the wedding-data parser assumed an empty `wedding_data` object had a `couple` shape before `normalizeWeddingData` could repair it.
-  - Local fix verified on production preview at `http://127.0.0.1:4177/site/alex-jordan-demo`: the route rendered public site content with RSVP available, no `Something went wrong` state, and no failed Supabase responses.
-  - Post-merge live recheck passed at `https://dayof.love/site/alex-jordan-demo`: the route rendered public site content with RSVP available, no `Something went wrong` state, and no failed Supabase responses.
-  - 2026-04-21 automated canonical smoke passed via `npm run proof:v1:canonical-smoke`.
-  - `npm run test:e2e:live` passed across Home, Product, Trust, Login, RSVP entry, and collaborator invite route load.
-  - Canonical route smoke now also covers signup load, payment gate auth fallback, quick-start preview reachability, and login fallback behavior across protected onboarding, setup, and dashboard surfaces when auth is missing.
-  - Protected fallback coverage now explicitly includes `/payment-required`, `/onboarding`, `/onboarding/status`, `/onboarding/guided`, `/onboarding/celebration`, `/setup`, `/setup/celebration`, `/dashboard`, `/dashboard/builder`, `/dashboard/overview`, `/dashboard/guests`, `/dashboard/rsvp-board`, `/dashboard/planning`, `/dashboard/settings`, `/dashboard/messages`, `/dashboard/itinerary`, `/dashboard/registry`, `/dashboard/seating`, `/dashboard/seating-lookup`, `/dashboard/vault`, `/dashboard/photos`, `/dashboard/coordinator`, and `/dashboard/audit-logs`.
-  - `npm run smoke:site` passed and resolved a real published slug + site_url (`alex-jordan-demo`) from Supabase.
-  - `npm run build` passed in the same proof batch.
-- Blockers:
-  - Still need one logged human route-note pass for Home -> signup/demo/auth -> onboarding/builder -> public site -> RSVP, focused on UX quality rather than route availability.
-  - Still need explicit manual verification that privacy/access/publish wording matches live runtime behavior in the canonical couple path.
-  - Still need explicit manual verification that marketing, settings, and billing wording stays honest against the live runtime behavior.
-  - Still need explicit manual verification that onboarding and the first-run dashboard/site draft wording stay honest against the live starter-draft runtime behavior.
-
----
-
-### 2) Guests / RSVP ops
-**Why it matters**
-This is the operational spine. If guest state is weak, messages, seating, and final counts are all suspect.
-
-**Flow to prove**
-1. Open guests dashboard
-2. Add/edit or review guest + household structure
-3. Confirm plus-one / event visibility behavior is credible
-4. Submit or update RSVP through guest-facing flow
-5. Verify RSVP status flows back into operational state
-6. Verify meal/dietary / exception visibility is usable
-
-**Done-enough bar**
-- guest data feels safer than spreadsheet chaos
-- RSVP state is trustworthy enough to plan against
-- fallback/manual intervention does not make the product feel broken
-
-**Evidence to capture**
-- guest/household test state used
-- RSVP result observed
-- any mismatch between public and dashboard state
-
-**Pass / Fail**
-- Status: BLOCKED_ON_ENV
-- Notes:
-  - Current automated target remains `npm run proof:v1:guests-rsvp-ops`.
-  - The known blocker in this pass is environment auth on the RSVP validation seam, not a newly observed product-flow regression.
-  - Block reproduced under `scripts/v1-proof-guests-rsvp-ops.mjs` with anon credentials in the current environment.
-- Blockers:
-  - `npm run proof:v1:guests-rsvp-ops` is currently blocked because `validate-rsvp-token` is not callable with anon auth in this environment (401), so guest -> RSVP -> downstream ops proof cannot complete.
-
----
-
-### 3) Planner / collaborator access
-**Why it matters**
-This is a major differentiator. If it feels fake or sloppy, the product looks half-built.
-
-**Flow to prove**
-1. Open Settings planner access flow
-2. Create or review named invite
-3. Check role preset and permissions preview
-4. Open collaborator invite acceptance path
-5. Confirm collaborator lands in a believable role-aware dashboard surface
-
-**Done-enough bar**
-- invite flow feels safe and intentional
-- collaborator role does not feel like a generic owner clone
-- planner/coordinator access is useful without making ownership sloppy
-
-**Evidence to capture**
-- role tested
-- route after accept
-- visible permission differences / framing observed
-
-**Pass / Fail**
-- Status: PENDING
-- Notes:
-  - `npm run test:e2e:live` now covers collaborator invite route load with token param as part of canonical smoke.
-  - Accept-path proof is still route-load only; role-aware landing behavior still needs a dedicated finish pass.
-- Blockers:
-
----
-
-### 4) Coordinator / day-of
-**Why it matters**
-This is where the product either reduces event-day chaos or gets exposed as pretty software with no nerve.
-
-**Flow to prove**
-1. Open coordinator mode
-2. Review queue / live event focus
-3. Search or locate guest situation
-4. Use check-in / arrival handling path
-5. Review timeline / Q&A / alert action surfaces
-
-**Done-enough bar**
-- a real coordinator could use it under pressure
-- interface reduces confusion instead of adding it
-- role framing and available actions feel coherent
-
-**Evidence to capture**
-- role tested
-- queue/check-in/timeline action observed
-- any browser-local persistence or trust caveat seen
-
-**Pass / Fail**
-- Status: PENDING
-- Notes:
-  - Protected route smoke now covers `/dashboard/coordinator` auth fallback as part of canonical live smoke.
-  - Protected route smoke now also covers `/dashboard/audit-logs` auth fallback as part of canonical live smoke.
-- Blockers:
-
----
-
-## Tier 2 — Must be believable before launch, but can survive narrow caveats
-
-### 5) Comms center
-**Why it matters**
-If this is weak, couples bounce back to external tools and the ops story collapses.
-
-**Flow to prove**
-1. Open messages
-2. Create or inspect a draft
-3. Verify recipient logic / segmentation is credible
-4. Send or schedule if possible
-5. Verify message history state feels real
-
-**Done-enough bar**
-- message lifecycle reads as trustworthy
-- core wedding messaging can happen without tool-jumping
-- no fake success language
-
-**Pass / Fail**
-- Status: PENDING
-- Notes:
-  - Protected route smoke now covers `/dashboard/messages` auth fallback as part of canonical live smoke.
-- Blockers:
-
----
-
-### 6) Seating
-**Why it matters**
-Seating is where guest state must become actionable, fast.
-
-**Flow to prove**
-1. Open seating
-2. Create or inspect event seating state
-3. Assign guests / move table state
-4. Use lookup or export path
-5. Confirm drift / exception handling is intelligible
-
-**Done-enough bar**
-- helps a real couple or staff member answer seating questions quickly
-- does not create more confusion than it resolves
-
-**Pass / Fail**
-- Status: PENDING
-- Notes:
-  - Protected route smoke now covers `/dashboard/seating` and `/dashboard/seating-lookup` auth fallback as part of canonical live smoke.
-- Blockers:
-
----
-
-### 7) Registry
-**Why it matters**
-Not the spine of the product, but still part of a credible all-in-one wedding platform claim.
-
-**Flow to prove**
-1. Open registry dashboard
-2. Add/import/edit a link or item
-3. Inspect cleanup/repair behavior
-4. Verify purchased-state management on internal side
-
-**Done-enough bar**
-- import / cleanup / repair workflow feels practical
-- public promise stays narrower than unproven merchant parity
-
-**Pass / Fail**
-- Status: PENDING
-- Notes:
-  - Protected route smoke now covers `/dashboard/registry` auth fallback as part of canonical live smoke.
-  - `npm run proof:v1:registry` is intentionally still automation-green / manual-red until this log contains runtime notes for owner import/edit persistence, repair cleanup, and guest-visible purchase truth.
-- Blockers:
-  - Still need one logged runtime pass for owner add/import/edit persistence on a real registry item.
-  - Still need one logged runtime pass for repair or cleanup on a weak imported item.
-  - Still need one logged runtime pass confirming guest-visible purchase state stays aligned after owner-side edits.
-
----
-
-## Tier 3 — Valuable but not v1-defining
-
-### 8) Memories / guest photo sharing
-**Done-enough bar**
-Helpful and credible if used, but should not be carrying the v1 claim.
-
-**Pass / Fail**
-- Status: OPTIONAL
-- Notes:
-  - Canonical smoke already covers `/dashboard/photos` auth fallback, so this slice is explicitly outside the current v1 claim rather than unguarded.
-- Blockers:
-
-### 9) Name-change planner
-**Done-enough bar**
-Useful if stable, but should not distort the wedding-core launch decision.
-
-**Pass / Fail**
-- Status: OPTIONAL
-- Notes:
-  - The planner alias fix is covered by `src/lib/nameChange/documentKinds.test.ts`, but this slice remains explicitly outside the current wedding-core v1 claim.
-- Blockers:
-
----
-
-## Severity rules
-- **P0** — kills v1 claim outright
-- **P1** — must be fixed before launch unless promise is reduced immediately
-- **P2** — survivable if clearly outside the v1 line
-
-## Active blocker list
-- P0: none logged yet
-- P1: canonical smoke automated gate now passes, but the manual canonical couple-path route-note proof is still missing
-- P1: role-aware collaborator/coordinator proof still missing
-- P1: guests / RSVP ops proof remains environment-blocked by `validate-rsvp-token` anon auth 401
-- P2: optional memories and name-change slices are now explicitly scoped outside the current wedding-core v1 claim
-- P2: marketing/settings/billing honesty is narrowed in copy, but still awaiting one logged runtime wording pass
-- P1: guest-state continuity across RSVP -> messages -> seating still unproven in one run
-
-## Proof notes from current inspection
-- Collaborator invite claim already enforces invited-email match in both the Accept Collaborator Invite UI flow and the `claim_collaborator_invite` RPC. That older gap should no longer be treated as an active v1 blocker.
-- The collaborator proof gap is now narrower and more concrete: role behavior and permission boundaries still need executed QA, not speculative trust-copy cleanup.
-
-## Canonical run order
-1. **Public site / launch path / trust surface**
-   - this is the first truth gate because it controls whether the product can even be shown honestly
-2. **Guests / RSVP ops**
-   - this is the operational spine and the highest-likelihood downstream drift source
-3. **Planner / collaborator access**
-   - this proves DayOf is not faking multi-role support
-4. **Coordinator / day-of**
-   - this proves the event-week story is useful instead of decorative
-5. **Comms center**
-6. **Seating**
-7. **Registry**
-
-## Evidence standard per slice
-For each slice, capture:
-- routes touched
-- role/account context used
-- test data or guest state used
-- exact pass/fail call
-- exact blocker if failed
-- whether the issue is P0, P1, or P2
-
-A slice does **not** count as passed because:
-- code looks right
-- build passes
-- demo mode looks polished
-- a doc says it should work
-- Concrete finish gap found and fixed: major collaborator-facing ops surfaces were still defaulting to `owner` until a local role override existed. Planning, Guests, Messages, and Coordinator Mode now bootstrap from the active site role first, then allow a saved per-surface override.
-- Concrete finish gap found and fixed: the dashboard shell knew the active-site role but still showed a too-broad owner-shaped navigation map. The shell now filters nav affordances by real role so viewers/coordinators do not get the wrong product shape presented up front.
-- Concrete finish gap found and fixed: collaborator-facing role selectors on Planning, Messages, and Coordinator Mode could still let non-owners locally impersonate a stronger role. Those selectors are now owner-only, and collaborators see their real role as read-through state instead.
-- Concrete finish gap found and fixed: nav hiding alone still allowed deep-link access to pages outside a collaborator's visible role map. The dashboard shell now redirects hidden current pages back to overview, so shell-level role gating is enforced on navigation as well as display.
-- Concrete finish gap found and fixed: Guests still allowed read-only collaborator roles to start the import flow. Guest import is now gated behind the same edit permission as other guest-management actions, with a handler-level guard as backup.
-- Concrete finish gap found and fixed: Messaging still exposed scheduled-send execution controls to non-compose roles. Running due sends, sending scheduled campaigns now, and moving scheduled campaigns back to draft are now gated by compose permission in both the UI and handler paths.
-- Concrete finish gap found and fixed: Coordinator Mode still relied too heavily on UI disable states for day-of alerts and Q&A creation. Handler-level guards now block unauthorized alert sending/scheduling and guest-question creation for weaker collaborator roles.
-- Concrete finish gap found and fixed: Planning write paths still trusted tab-level disable states too much. Task, budget, and vendor create/update/delete handlers now hard-stop based on the collaborator’s actual planning permissions, including total-budget updates and milestone generation.
-- Concrete finish gap found and fixed: Guests bulk follow-up handlers still trusted menu/button disable states too much. Read-only collaborator roles can no longer trigger thank-you updates, clear all check-ins, or send bulk/due reminders through handler paths.
-- Concrete finish gap found and fixed: Guests individual high-impact actions still trusted button disable states too much. Read-only collaborator roles can no longer trigger invitation sends, check-in changes, or thank-you state changes through direct handler paths.
-- Concrete finish gap found and fixed: a few remaining Coordinator/Guests edge paths still skipped the new permission wall. Undo-last-check-in, coordinator check-in, door escalation, and Q&A answer saves now hard-stop on the collaborator’s actual permission level instead of relying on surrounding UI state.
-- Concrete finish gap found and fixed: assisted RSVP was still one of the remaining manual-ops paths outside the new guest permission wall. Read-only collaborator roles can no longer record assisted RSVPs through the handler path.
-- Concrete finish gap found and fixed: assisted RSVP could leave stale attending-only RSVP detail behind when a guest was manually marked declined. The manual RSVP path now clears meal and plus-one detail on decline so guest-ops views do not keep showing stale attending-state data.
-- Concrete finish gap found and fixed: the demo/manual proof path for assisted RSVP still preserved stale attending-only detail on declines even after the persisted path was corrected. Demo guest state now clears meal and plus-one detail on manual declines too, so proof behavior matches the real path.
-- Concrete finish gap found and fixed: assisted/manual RSVP was still drifting from the public RSVP contract on ceremony/reception attendance flags. Manual RSVP now updates `attending_ceremony` and `attending_reception` alongside top-level attendance so per-event state does not go stale after manual changes.
-- Concrete finish gap found and fixed: first-time event-specific RSVP submissions were not stamping `responded_at`, while updates were. Event RSVP now records a response timestamp on insert as well, so fresh event responses and edited event responses behave consistently in downstream itinerary/seating reads.
-- Concrete finish gap found and fixed: guest edit rollback restored deleted event invitations but not the deleted `event_rsvps` rows behind them. Failed guest invitation edits now restore both invitations and their prior event-specific RSVP snapshots instead of silently losing per-event response history.
-- Concrete finish gap found and fixed: event seating counters were mixing in guest-level declined/pending counts without first restricting to guests actually invited to the event. Event counters now derive invited/attending/declined/pending/seated from the event-invited subset, so event dashboards stop bleeding in unrelated site-wide RSVP state.
-- Concrete finish gap found and fixed: seating/event eligibility was still inheriting global RSVP acceptance when an event invitation existed but no explicit `event_rsvp` response had been recorded yet. Event-specific attendance now requires an explicit positive event RSVP instead of silently treating global wedding acceptance as event attendance.
-- Concrete finish gap found and fixed: Seating Lookup was still loading stale invalid assignments, which could give staff wrong live table/seat answers even after assignment drift was already marked invalid elsewhere. Lookup now restricts itself to `is_valid = true` assignments.
-- Concrete finish gap found and fixed: the Seating demo/proof path was still computing counters from looser guest-level assumptions than the hardened runtime path. Demo counters now mirror invited/attending/seated math more closely so proof behavior stops teaching the wrong event-scoped model.
-- Concrete finish gap found and fixed: itinerary pending counts were derived from raw `rsvp_count`, which could undercount pending guests whenever an `event_rsvp` row existed but `attending` was still null. Pending is now derived from invitation count minus explicit yes/no counts, so itinerary progress stops overstating resolved event responses.
-- Concrete finish gap found and fixed: Coordinator Mode's “Next arrivals” list was still showing any unchecked-in guest, including people already flagged for review. That diluted the live fast-path with edge cases. The list now shows only unchecked-in guests whose door status is actually `ready`.
-- Concrete finish gap found and fixed: after narrowing “Next arrivals” to ready guests, the empty-state message could still falsely claim everyone was checked in even when review-needed guests were waiting. The empty state now distinguishes between “no ready arrivals” and “everyone checked in.”
-- Concrete finish gap found and fixed: Messaging retry still trusted button disable state instead of the handler path. Non-compose roles can no longer retry failed or partial campaign sends by reaching the retry action directly.
-- Concrete finish gap found and fixed: Messaging reschedule still trusted UI state instead of the handler path. Non-compose roles can no longer move scheduled campaigns by reaching the reschedule action directly.
-- Concrete finish gap found and fixed: public site lookup was not selecting privacy/access fields that the public SiteView actually depends on. Password/invite-only/search-visibility/default-language gating now receives the real row fields instead of silently degrading toward public defaults.
-- Concrete finish gap found and fixed: the public site path could still fall back to section-based rendering even for unpublished/private-preview access when preview JSON was missing, which risked showing an ambiguous stale render path instead of the actual preview state. Section fallback is now gated to published sites only.
-- Concrete finish gap found and fixed: ambiguous RSVP guest selection still depended on a second token lookup and could drop already-known RSVP config if that follow-up lookup failed. Picked guests now retain the already-loaded deadline/questions/meal/household context instead of degrading to a weaker form state.
-- Concrete finish gap found and fixed: selecting a guest with no RSVP after viewing one who already had an RSVP could leave stale `existingRsvp` state in memory. The guest-facing RSVP form now explicitly clears prior RSVP state when a newly selected guest has not responded yet.
-- Concrete finish gap found and fixed: the RSVP deadline was mostly enforced through UI state, but the submit handler itself did not hard-stop a brand-new RSVP after deadline. The guest-facing submit path now blocks new post-deadline responses unless the guest already has an RSVP on file.
-- Concrete finish gap found and fixed: EventRSVP used a module-global `hasEventRsvpsTable` flag, so one site/session falling into the unsupported path could disable event-specific RSVP for unrelated guests until reload. Event RSVP support is now scoped to component state instead of leaking across guests/pages.
-- Concrete finish gap found and fixed: invite-only public site access could still accept any non-empty token when the site row was missing `guest_access_token`, because the gate only compared tokens when a saved token existed. Invite-only now requires a real stored access token and an exact match instead of silently degrading to “any token works.”
-- Concrete finish gap found and fixed: password-protected public access could still degrade to open if the site row was missing `site_password_hash`, because the gate only blocked when a hash existed. Password mode now blocks whenever the site is marked password-protected unless a real hash exists and the site has already been unlocked for the current session.
-- Concrete finish gap found and fixed: RSVP search/lookup could leave the prior guest context hanging around while a new lookup was in flight or after it failed, because the handler did not clear guest/RSVP/household state before searching again. Fresh lookups now reset the prior guest context before the next lookup runs.
-- Concrete finish gap found and fixed: RSVP token auto-load had the same stale-state problem as manual search. A bad or changed token could leave the last guest/RSVP/household context hanging behind the error state. Token-driven lookups now clear prior guest context before loading.
-- Concrete finish gap found and fixed: SiteView could start a new slug load while still carrying the prior site’s privacy gate, error, or coming-soon state until the next fetch resolved. Public site loads now reset those gate/error fields up front so one site’s state does not bleed into another site view attempt.
-- Concrete finish gap found and fixed: the public Home/Product story was still giving post-wedding memory layers near-equal billing with the hard wedding-core v1 slices. Home now centers the feature carousel on must-ship wedding execution work, swaps the archive/memory panel out for day-of coordination, and explicitly demotes archive/photo/name-change language into an adjacent-not-core lane instead of letting the launch claim blur.
-- Concrete finish gap found and fixed: onboarding and setup completion copy still blurred “starter draft created” with “site is ready,” and one RSVP tip still implied stronger live-response proof than the current v1 bar earns. Onboarding now frames the output as a starter draft, points couples back to dashboard refinement before launch, removes the stale “real-time responses” promise, and replaces “preview privately” wording with access-mode language that matches the actual product truth better.
-- Concrete finish gap found and fixed: the Trust page still framed the high-level v1 line, but did not expose the per-slice reality of what is done enough vs still missing vs proof-needed. Trust now carries the current slice-by-slice v1 read so the public truth surface cannot quietly flatten partially-proven slices into one equally-earned launch claim.
-- Concrete finish gap found and fixed: feature marketing pages for Messaging, Registry, and RSVP still had a few “everything,” “complete,” and “real-time” phrases that oversold slices the finish board still marks as proof-needed or must-prove. Those pages now frame the offer as strong practical cores, not fully-earned comprehensive systems, and RSVP analytics now points to the latest saved responses instead of implying harder live-state guarantees than the current proof bar supports.
-- Concrete finish gap found and fixed: the remaining Guests, Seating, Travel, and RSVP summary blocks still reused the same blanket “Everything you need, already together” framing that made partially-proven slices sound equally comprehensive. Those pages now describe practical cores instead of total completeness, and RSVP summary language now says “current” visibility instead of implying harder live-state guarantees than the finish board has earned.
-- Concrete finish gap found and fixed: two small but still real launch-claim leaks remained outside the main feature-page pass — RSVP still labeled its visibility block as “Real-Time Analytics,” and the billing modal still promised “Everything you need for a beautiful wedding website.” Those surfaces now use narrower wording that matches the current proven core instead of implying harder live-state guarantees or blanket completeness.
-- Concrete finish gap found and fixed: the existing Playwright "live smoke" was too weak to support the current v1 proof gate. It only checked that the homepage, login page, and invite page loaded. The public smoke now asserts the narrowed v1 story on Home, Product, and Trust, including must-ship / should-ship / cut framing and per-slice reality markers, so the executable smoke better matches the actual launch-truth bar.
-- Concrete finish gap found and fixed: the canonical public/onboarding smoke still existed as three loose commands instead of one slice-level gate. There is now a dedicated `proof:v1:canonical-smoke` bundle that runs build integrity, the public v1 Playwright smoke, and the site lookup smoke together, and returns one structured pass/fail/blocked result for the top cross-product truth gate.
-- Concrete finish gap found and fixed: the Guests / RSVP / ops slice still depended on three separate smoke commands with no single slice-level proof entry point. That made the board harder to execute and easier to hand-wave. There is now a dedicated `proof:v1:guests-rsvp-ops` command that runs and summarizes the RSVP strict smoke, CSV mapper guard, and check-in guard as one proof bundle, while still calling out the manual dashboard/public continuity proof that remains required.
-- Concrete finish gap found and fixed: the new Guests / RSVP / ops proof bundle initially treated an environment auth blocker the same as a product failure. That was muddy and would have hidden the real issue. The bundle now classifies blocker-vs-failure explicitly, surfaces blocker details/recommendation in its JSON output, and only exits non-zero for actual required-step failures.
-- Concrete finish gap found and fixed: collaborator access still lacked automated proof for the actual role-permission matrix. Invite utilities were lightly tested, but the owner/planner/coordinator/viewer boundaries themselves were not locked. There is now a dedicated collaborator-access proof bundle plus plannerAccess role-matrix tests that assert the current v1 boundaries for editing, budget/vendors, dashboard message composition, coordinator updates, and preset-to-role derivation.
-- Concrete finish gap found and fixed: seating continuity still relied on event-scoped attendance and counter math buried inside the service layer without direct proof. That left the highest-risk seating truth seam under-locked. Seating now exposes pure helpers for event attendance interpretation and invited-only counter derivation, has direct tests for explicit event RSVP vs top-level RSVP fallback behavior, and ships with a dedicated seating-continuity proof bundle.
-- Concrete finish gap found and fixed: the human finish board and machine-readable proof board had drifted behind the actual finish lane. They still pointed at outdated next steps and older raw commands even after proof bundles existed. The board now reflects the current executable gates, the real env blocker on RSVP strict smoke, and the fact that the next highest-leverage work is runtime proof capture, not more claim cleanup.
-- Concrete finish gap found and fixed: collaborator runtime proof was still sitting in the runbook as a manual intention, even though the repo already had an invite/create/claim Playwright script. There is now a dedicated `proof:v1:collaborator-runtime` gate that executes that runtime path when disposable proof credentials are available, and reports a structured blocker when those credentials are missing instead of leaving the lane stuck in vague “manual later” language.
-- Concrete finish gap found and fixed: comms center still relied too much on surface plausibility. The core message-state truth and non-compose permission boundaries were not captured in an executable slice-level proof gate. There is now a dedicated comms-center proof bundle, direct tests for delivery-state labeling, and a messaging guard smoke that asserts compose/send/retry/reschedule/run-due actions stay permission-gated in the dashboard surface.
-- Concrete finish gap found and fixed: registry was still lagging the other major slices in proof structure. It had service coverage, but no slice-level proof gate for metadata/repair attention truth or dashboard guardrails. There is now a dedicated registry proof bundle, direct tests for blocked retailer messaging + repair-state attention logic, and a registry guard smoke that asserts the dashboard still routes through quantity sanitation, duplicate review, and attention-state helpers.
-- Concrete finish gap found and fixed: coordinator/day-of proof was stronger than the board implied, but its checks were scattered. The slice now has a dedicated coordinator-dayof proof bundle that groups role-access boundaries, check-in queue behavior, single-live-event timeline state, the check-in guard smoke, and build integrity into one executable gate.
-
-## Verification notes
-- `npm run proof:v1:board` now gives a machine-readable view of the current v1 proof gate.
-- `npm run proof:v1:board:md` now gives a human-readable proof-board export for quick review.
-- `npm run build` passes after the guest-import permission fix.
-- `npm run build` passes after the Messaging scheduled-send permission fix.
-- `npm run build` passes after the Coordinator Mode permission fix.
-- `npm run build` passes after the Planning handler permission fix.
-- `npm run build` passes after the Guests bulk-action permission fix.
-- `npm run build` passes after the Guests individual-action permission fix.
-- `npm run build` passes after the Coordinator/Guests edge-path permission fix.
-- `npm run build` passes after the assisted-RSVP permission fix.
-- `npm run build` passes after the assisted-RSVP continuity fix.
-- `npm run build` passes after the demo/manual assisted-RSVP continuity fix.
-- `npm run build` passes after the assisted/manual event-selection continuity fix.
-- `npm run build` passes after the event-RSVP response-timestamp continuity fix.
-- `npm run build` passes after the guest-invitation rollback continuity fix.
-- `npm run build` passes after the event counter invitation-scope fix.
-- `npm run build` passes after the event-specific attendance interpretation fix.
-- `npm run build` passes after the Seating Lookup validity fix.
-- `npm run build` passes after the Seating demo/proof-path alignment fix.
-- `npm run build` passes after the itinerary pending-count truth fix.
-- `npm run build` passes after the coordinator next-arrivals focus fix.
-- `npm run build` passes after the coordinator next-arrivals empty-state truth fix.
-- `npm run build` passes after the Messaging retry permission fix.
-- `npm run build` passes after the Messaging reschedule permission fix.
-- `npm run build` passes after the public site lookup field fix.
-- `npm run build` passes after the public preview fallback gating fix.
-- `npm run build` passes after the RSVP picked-guest fallback fix.
-- `npm run build` passes after the RSVP stale-existing-state fix.
-- `npm run build` passes after the RSVP handler-level deadline enforcement fix.
-- `npm run build` passes after the EventRSVP support-scoping fix.
-- `npm run build` passes after the invite-only token enforcement fix.
-- `npm run build` passes after the password-mode gating fix.
-- `npm run build` passes after the RSVP fresh-lookup state reset fix.
-- `npm run build` passes after the RSVP token-auto-load state reset fix.
-- `npm run build` passes after the SiteView stale-gate reset fix.
-- `npm run typecheck && npm run build` passes after the Home/Product v1-story tightening pass.
-- `npm run build` passes after the onboarding first-run truth-copy tightening pass.
-- `npm run build` passes after the Trust-page per-slice v1 truth pass.
-- `npm run build` passes after the feature-page v1 truth pass for Messaging, Registry, and RSVP.
-- `npm run build` passes after the remaining feature-page completeness-language cleanup for Guests, Seating, Travel, and RSVP.
-- `npm run build` passes after the final RSVP/billing truth-copy cleanup.
-- `npm run proof:v1:board && npm run build` passes after the v1 proof-board/runbook pass.
-- `PLAYWRIGHT_BASE_URL=http://127.0.0.1:4173 npm run test:e2e:live` passes against local preview after the public v1 trust smoke hardening pass.
-- `npm run proof:v1:canonical-smoke` passes, returning one structured result for build integrity, public v1 Playwright smoke, and site lookup truth.
-- `npm run proof:v1:guests-rsvp-ops` passes after the Guests / RSVP / ops proof-bundle pass.
-- `npm run proof:v1:guests-rsvp-ops` now returns a structured blocked-state summary when RSVP strict smoke is environment-blocked, instead of collapsing blocker vs failure.
-- `npm run proof:v1:collaborator-access` passes after the collaborator-access proof-bundle + role-matrix test pass.
-- `npm run proof:v1:seating-continuity` passes after the seating continuity proof-bundle pass.
-- `npm run proof:v1:board && npm run proof:v1:board:md` pass after syncing the finish/proof boards to the current executable lane reality.
-- `npm run proof:v1:collaborator-runtime` now returns a structured blocked-state summary when runtime proof credentials are missing, instead of leaving collaborator runtime proof as vague manual work.
-- `npm run proof:v1:comms-center` passes after the comms-center proof-bundle pass.
-- `npm run proof:v1:registry` passes after the registry proof-bundle pass.
-- `npm run proof:v1:coordinator-dayof` passes after the coordinator/day-of proof-bundle pass.
-
-## Highest-value next proof seam
-- Guest-level RSVP and event-specific RSVP are both materially stronger now, but the next likely continuity seam is how newly created or removed event invitations affect downstream event attendance interpretation in itinerary/seating without a fresh explicit event response. That should be the next runtime proof target rather than more copy or permission cleanup.
-
-## Finish-lane read right now
-- Public promise is much cleaner than before.
-- The repo is now closer to **truthful** than **proven**.
-- The main finish risk is no longer fake copy; it is missing proof on the must-ship flows.
-
-## 2026-05-20 18:17 PDT - Demo Dashboard Visibility Truth Fix
-
-- Concrete finish gap found and fixed: the demo dashboard sidebar still said the Alex/Jordan site was draft-only while the builder and public demo route treated it as live. Demo mode now hydrates the shared dashboard shell with the published public visibility state, search-visible status, real demo site id, and owner role so the overview/sidebar does not contradict the live public demo.
-- Verification: `npm test -- src/components/dashboard/dashboardDemoContext.test.ts` passed, `npm run typecheck -- --pretty false` passed, `npm run build` passed, and `git diff --check` passed. The first heavier component-render test attempt hung during local Vitest startup, so the final regression is a pure helper test that covers the same demo visibility truth without jsdom lifecycle noise. No deploy was run.
-
-## 2026-05-20 18:38 PDT - Coordinator Demo Site Id Consistency Fix
-
-- Concrete finish gap found and fixed: Coordinator Mode demo state was still persisted under `demo-site`, while the shared demo site and other dashboard surfaces use `demo-site-id`. Coordinator demo mode now reads the shared demo site id so local coordinator timeline, Q&A, alert, role, and command state keys do not fork away from the rest of the Alex/Jordan demo.
-- Verification: `npm test -- src/pages/dashboard/coordinatorDemoContext.test.ts` passed, `npm run typecheck -- --pretty false` passed, `npm run build` passed, and `git diff --check` passed. No deploy was run.
+_Date:_ `2026-05-12`
+_Production:_ [dayof.love](https://dayof.love)
+_Latest verified deploy:_ `dpl_DQG5bU5yVbqT79Y6r4ZCx13nPtSU`
+_Exact frontend SHA:_ `f2cc4811`
+_Launch call right now:_ `GO`
+
+## Current Truth
+
+- 2026-05-21 08:46 PM PDT:
+  - added a headless registry maintenance proof lane in `scripts/v1-proof-registry-maintenance-report.mjs`
+  - the proof now reads the same shared registry maintenance snapshot as the dashboard cleanup surface
+  - `node scripts/v1-proof-registry-maintenance-report.mjs --input scripts/fixtures/registry-maintenance-proof.fixture.json --format json` -> `PASS`
+  - `npm run smoke:registry` -> `PASS`
+  - `npm run build` -> `PASS`
+  - `git diff --check` -> `PASS`
+  - the dedicated Vitest runner still stalls on this machine before returning results, so the maintenance lane is currently proven through the fixture command plus smoke/build
+  - no deploy was run
+- The main verified live runtime is exact frontend SHA `f2cc4811`.
+- Current branch head is `f29574dd`; the extra head commit is a board-sync cleanup and does not change deployed runtime behavior.
+- Public DTO minimization is closed and live-proven.
+- Secure service-role, queue, storage/media, and email queue-processing proof lanes are green with the provided secure key.
+- Guest contact, RSVP, public site, guest hub, photo, registry preview, collaborator runtime, and AI/provider launch lanes are green on the blocker-fix runtime.
+- Guest contact now also proves the stronger household verifier path live: no exact-name match without verifier, phone last 4 unlocks household-wide updates, and guest invite tokens act as the strongest verifier.
+- Dedicated live coordinator/day-of and name-change runtime smokes are now green on production.
+- The hard-fail strict pocket now also covers RSVP, SiteView/siteViewHelpers, QuickStart, route modules, and `nameChangeService.ts`.
+- 2026-05-12 10:14 PM PDT:
+  - `npm run typecheck -- --pretty false` -> `PASS`
+  - `npm run lint -- --quiet` -> `PASS`
+  - `npm run build` -> `PASS`
+  - `npm run proof:v1:strict-pocket` -> `PASS`
+  - `npm test -- --run src/lib/strictPocketTypecheck.test.ts src/pages/Onboarding.test.tsx src/pages/PhotoUpload.test.ts src/pages/RSVP.test.tsx src/pages/SiteView.test.ts src/lib/proofBoardFreshness.test.ts src/lib/launchControlMatrices.test.ts` -> `PASS`
+  - broader same-night cleanup reduced strict-only repo debt again (`238 -> 205` file-scoped findings) without reopening the launch gate
+  - the remaining full repo-wide strictness flip is now tracked as future maintainability work, not active launch-board debt
+- 2026-05-12 09:31 PM PDT:
+  - `supabase functions deploy guest-contact-lookup --project-ref atuzuobpprjstfmdnwso --no-verify-jwt` -> `PASS`
+  - `supabase functions deploy guest-contact-submit --project-ref atuzuobpprjstfmdnwso --no-verify-jwt` -> `PASS`
+  - `vercel deploy --prod --yes` -> `PASS` (`dpl_DQG5bU5yVbqT79Y6r4ZCx13nPtSU`, aliased to `dayof.love`)
+  - `PLAYWRIGHT_BASE_URL=https://dayof.love npm run proof:v1:canonical-smoke` -> `LIVE PASS`
+  - `npm run proof:v1:guest-lookup-scope` -> `LIVE PASS`
+  - `LIVE_GUEST_DASHBOARD_SETTINGS_RPCS=1 npm run proof:v1:client-rls-matrix -- --require-live` -> `LIVE PASS`
+  - `npm run proof:v1:registry-preview-ssrf -- --require-live` -> `LIVE PASS`
+  - `V1_COORDINATOR_DAYOF_LIVE=1 npm run proof:v1:coordinator-dayof -- --require-live` -> `LIVE PASS`
+  - `V1_NAME_CHANGE_RUNTIME_LIVE=1 npm run proof:v1:name-change-runtime -- --require-live` -> `LIVE PASS`
+- Client-facing RLS proof now has one canonical live matrix command: `npm run proof:v1:client-rls-matrix`.
+- Active runtime pages now also have one canonical local inventory guard: `npm run proof:v1:client-write-inventory`.
+- `test:launch`, `ci-hardpass`, and `Release Launch Gate` now all require `npm run proof:v1:ast-security`, `npm run proof:v1:client-rls-matrix -- --require-live`, and live `registry-preview-ssrf`.
+- `ci-hardpass` and `Release Launch Gate` are freshness-only board gates: they require `npm run proof:v1:board:freshness`, but they intentionally do not regenerate `npm run proof:v1:board` or `npm run proof:v1:board:md`.
+- Local/helper proof paths such as `npm run proof:v1:launch-closeout`, `dayof:proof`, and the local `full-suite-exit-gate` are the places that regenerate those board artifacts when a fresh machine-readable or markdown snapshot is needed.
+- The proof-board path now has an explicit freshness contract: `npm run proof:v1:board:freshness` must pass before either `npm run proof:v1:board` or `npm run proof:v1:board:md` is treated as current launch truth.
+- Older timestamped entries below may still list only `proof:v1:board:md` because they record the commands that were run at that moment; use the freshness rule above as the current launch-truth contract.
+- Public vault contribution is now live-proven instead of deferred.
+- `.dayof.love` subdomain routing now has a dedicated live proof and is no longer deferred.
+- External custom domains remain unsupported product scope, not a pending proof lane.
+- 2026-05-12 05:50 PM PDT:
+  - `npm test -- --run src/lib/publicAccessArtifacts.test.ts src/pages/GuestContactUpdate.test.ts src/lib/guestLookupScopeProofScript.test.ts src/lib/launchEdgeFunctions.test.ts src/lib/routeCompositionBoundary.test.ts src/lib/securityAutomationProof.test.ts` -> `PASS`
+  - `npm run proof:v1:security-automation` -> `PASS`
+  - `npm run proof:v1:ast-security` -> `PASS`
+  - `npm run proof:v1:test-lanes` -> `PASS`
+  - `npm run typecheck -- --pretty false` -> `PASS`
+  - `npm run lint -- --quiet` -> `PASS`
+  - `npm run build` -> `PASS`
+  - `npm run proof:v1:board:freshness` -> `PASS`
+  - `npm run proof:v1:board` -> `PASS`
+  - `npm run proof:v1:board:md` -> `PASS`
+  - `npm test -- --run src/lib/proofBoardFreshness.test.ts src/lib/launchControlMatrices.test.ts src/lib/guestLookupScopeProofScript.test.ts src/lib/securityAutomationProof.test.ts` -> `PASS`
+  - local guest-contact hardening now accepts a guest-specific RSVP invite token as the strongest verifier and still requires the phone-last-4 step-up check before whole-party updates when that stronger token is absent
+  - local guest-contact submit now also writes a redacted app-action audit event for public guest updates
+  - no deploy was run, so production still reflects the earlier guest-contact verifier behavior
+- 2026-05-12 04:34 PM PDT:
+  - `supabase functions list --project-ref atuzuobpprjstfmdnwso` -> `PASS`
+    - live inventory now includes `vault-contribution-public` and `vault-entry-submit`
+  - `supabase secrets set ALLOW_VAULT_QA_OPEN=true --project-ref atuzuobpprjstfmdnwso --yes` -> `PASS`
+  - `LIVE_VAULT_CONTRIBUTE_WRITE_READ=1 PLAYWRIGHT_BASE_URL=https://dayof.love npx playwright test --workers=1 tests/e2e/vault-contribute-write-read.spec.ts` -> `LIVE PASS`
+  - `supabase secrets set ALLOW_VAULT_QA_OPEN=false --project-ref atuzuobpprjstfmdnwso --yes` -> `PASS`
+  - `V1_SUBDOMAIN_ROUTE_LIVE=1 npm run proof:v1:subdomain-route -- --require-live` -> `LIVE PASS`
+  - public vault contribution now has live save/readback/delete proof
+  - `.dayof.love` host routing now has dedicated live fail-closed/no-leak proof
+- 2026-05-12 03:46 PM PDT:
+  - `supabase secrets set PUBLIC_SITE_SESSION_SECRET_V1=... --project-ref atuzuobpprjstfmdnwso --yes` -> `PASS`
+  - `supabase functions deploy guest-contact-submit --project-ref atuzuobpprjstfmdnwso --no-verify-jwt` -> `PASS`
+  - `npm run proof:v1:guest-lookup-scope` -> `LIVE PASS`
+  - `LIVE_GUEST_DASHBOARD_SETTINGS_RPCS=1 npm run proof:v1:client-rls-matrix -- --require-live` -> `LIVE PASS`
+  - `PLAYWRIGHT_BASE_URL=https://dayof.love npm run proof:v1:canonical-smoke` -> `LIVE PASS`
+  - guest contact update now requires a full name plus the first few characters of the guest email address before a signed household-scoped contact session is issued
+- 2026-05-12 11:37 AM PDT:
+  - `supabase db push --linked --include-all` -> `PASS`
+  - `vercel deploy --prod --yes` -> `PASS` (`dpl_L9m7XKgo3GhpLkH5NR4M1ZzLSDjh`, aliased to `dayof.love`)
+  - `PLAYWRIGHT_BASE_URL=https://dayof.love npm run proof:v1:canonical-smoke` -> `LIVE PASS`
+  - `npm run proof:v1:guest-lookup-scope` -> `LIVE PASS`
+  - `npm run proof:v1:guests-rsvp-ops` -> `LIVE PASS`
+  - `npm run proof:v1:collaborator-runtime` -> `LIVE PASS`
+  - `npm run proof:v1:client-rls-matrix` -> `LIVE PASS`
+  - `admin_access_check()` is now applied remotely and the frontend/admin route gate is live on the RPC-backed path
+- 2026-05-12 11:18 AM PDT:
+  - `npm test -- --run src/lib/publicSessionSecretBoundary.test.ts src/lib/adminAccessRpcBoundary.test.ts src/lib/signedSessionShared.test.ts src/lib/publicAccessCoverageProofScript.test.ts src/lib/collaboratorPermissionRlsProof.test.ts src/lib/clientRlsMatrixProofScript.test.ts src/lib/launchEdgeFunctions.test.ts` -> `PASS`
+  - `npm run proof:v1:public-access-coverage` -> `PASS`
+  - `supabase functions deploy public-site-access --project-ref atuzuobpprjstfmdnwso --no-verify-jwt` -> `PASS`
+  - `supabase functions deploy guest-contact-lookup --project-ref atuzuobpprjstfmdnwso --no-verify-jwt` -> `PASS`
+  - `supabase functions deploy guest-contact-submit --project-ref atuzuobpprjstfmdnwso --no-verify-jwt` -> `PASS`
+  - `supabase functions deploy validate-rsvp-token --project-ref atuzuobpprjstfmdnwso --no-verify-jwt` -> `PASS`
+  - `supabase functions deploy photo-upload --project-ref atuzuobpprjstfmdnwso --no-verify-jwt` -> `PASS`
+  - `supabase functions deploy interactive-section-public --project-ref atuzuobpprjstfmdnwso --no-verify-jwt` -> `PASS`
+  - `PLAYWRIGHT_BASE_URL=https://dayof.love npm run proof:v1:canonical-smoke` -> `LIVE PASS`
+  - `npm run proof:v1:guest-lookup-scope` -> `LIVE PASS`
+  - `npm run proof:v1:guests-rsvp-ops` -> `LIVE PASS`
+  - `npm run proof:v1:collaborator-runtime` -> `LIVE PASS`
+  - `npm run proof:v1:client-rls-matrix` -> `LIVE PASS`
+  - public/session functions now use `PUBLIC_SITE_SESSION_SECRET_V1` / `PUBLIC_SITE_SESSION_SECRET` instead of `SUPABASE_SERVICE_ROLE_KEY`
+  - direct regular-user `admin_users` reads now fail or return no rows in the live matrix
+  - the remaining admin-route hardening step was the remote apply of `20260512050000_harden_admin_access_check.sql`; that is now complete
+- 2026-05-12 08:45 AM PDT:
+  - `npm run proof:v1:strict-pocket` -> `PASS`
+  - `npm test -- --run src/lib/serviceRoleAuthorizationDisposition.test.ts src/lib/strictPocketTypecheck.test.ts src/lib/stripeService.test.ts src/lib/siteConfigValidate.test.ts src/lib/vendorProfiles.test.ts src/lib/vendorProfiles.boundary.test.ts` -> `PASS`
+  - `docs/service-role-authorization-disposition-2026-05-05.md` is now aligned with the live-green guest-dashboard settings and broader client-RLS matrix lanes
+  - the serialized RSVP capacity function is explicitly called out in the repo proof story
+- 2026-05-12 09:10 AM PDT:
+  - `./node_modules/.bin/eslint src/lib/publicSiteSlug.ts src/lib/publicSiteAccess.ts src/lib/publicRenderContract.ts src/components/auth/ProtectedRoute.tsx src/lib/siteConfigValidate.ts src/lib/stripeService.ts src/lib/vendorProfiles.ts` -> `PASS`
+  - `npm run proof:v1:strict-pocket` -> `PASS`
+  - `npm run proof:v1:test-lanes` -> `PASS`
+  - the launch-critical strict pocket now also covers the public access / public DTO contract boundary
+- 2026-05-12 09:18 AM PDT:
+  - `npm run proof:v1:strict-pocket` -> `PASS`
+  - `npm run proof:v1:test-lanes` -> `PASS`
+  - `npm test -- --run src/lib/strictPocketTypecheck.test.ts src/lib/proofBoardFreshness.test.ts src/lib/launchControlMatrices.test.ts src/lib/publicSiteRenderModel.test.ts` -> `PASS`
+  - `npm run typecheck -- --pretty false` -> `PASS`
+  - the launch-critical strict pocket now also covers the broader auth/public runtime boundary: `activeSite.ts`, `customerSafeError.ts`, `mediaUrl.ts`, `paymentGate.ts`, `publicSiteRenderModel.ts`, and `publicSectionDataSanitizer.ts`
+- 2026-05-12 09:35 AM PDT:
+  - `npm test -- --run src/lib/internalToolingRoutes.test.ts src/lib/internalToolingRouteBoundary.test.ts src/lib/clientWriteInventoryProofScript.test.ts src/lib/signedSessionShared.test.ts src/lib/releaseLaunchGate.test.ts src/lib/strictPocketTypecheck.test.ts` -> `PASS`
+  - `npm run proof:v1:strict-pocket` -> `PASS`
+  - `npm run proof:v1:test-lanes` -> `PASS`
+  - `npm run typecheck -- --pretty false` -> `PASS`
+  - `npm run proof:v1:registry-preview-ssrf -- --require-live` -> `LIVE PASS`
+  - internal tooling routes now require admin auth in addition to the env flag
+  - `test:launch` and `Release Launch Gate` now require the live registry-preview SSRF proof lane
+  - signed session verification now fails closed on malformed parsing and supports versioned token envelopes
+- 2026-05-12 07:49 AM PDT:
+  - `npm run proof:v1:test-lanes` -> `PASS`
+  - `npm test -- --run src/lib/ciHardpassWorkflow.test.ts src/lib/releaseLaunchGate.test.ts src/lib/aiExposureProofScript.test.ts src/lib/proofBoardFreshness.test.ts src/lib/launchControlMatrices.test.ts` -> `PASS`
+  - generic `ci-hardpass` no longer soft-skips strict Supabase RSVP smoke when secrets are missing
+  - `deploy_prod_guarded.mjs` no longer allows `SKIP_POSTDEPLOY_PROOF`; postdeploy proof is mandatory
+- 2026-05-11 08:48 PM PDT:
+  - broadened `proof:v1:client-write-inventory` from active pages to all tracked `src` runtime files
+  - after the builder/section/itinerary/seating RPC sweep, result is now `PASS`
+  - no direct client `.insert/.update/.upsert/.delete` calls remain in tracked shipped `src` runtime files
+  - final local batches added:
+    - `20260512030000_builder_section_itinerary_write_rpcs.sql`
+    - `20260512031500_seating_assignment_version_rpcs.sql`
+  - same sweep moved section writes, builder project publish, itinerary event/schedule mirror writes, and seating assignment/layout-version writes behind local RPCs
+  - focused proof green:
+    - `npm test -- --run src/data/siteRepository.test.ts src/builder/services/builderProjectService.test.ts src/pages/dashboard/itineraryService.test.ts src/pages/dashboard/seating/seatingService.test.ts src/lib/dashboardDataBoundary.test.ts src/lib/clientWriteInventoryProofScript.test.ts`
+    - `npm run proof:v1:client-write-inventory`
+    - `npm run typecheck -- --pretty false`
+    - `git diff --check`
+- 2026-05-11 09:02 PM PDT:
+  - applied the full pending RPC sweep remotely with `supabase db push`
+  - the remote apply surfaced one real SQL issue in `20260511220000_guest_core_write_rpcs.sql`, which was fixed by giving `p_guest_ids` a default value and rerunning the push cleanly
+  - reran live proof with `LIVE_GUEST_DASHBOARD_SETTINGS_RPCS=1`:
+    - `npm run proof:v1:collaborator-runtime` -> `LIVE PASS`
+    - `npm run proof:v1:client-rls-matrix` -> `LIVE PASS`
+  - refreshed proof scripts so they no longer claim the guest-dashboard settings RPC lane still needs deployment after it is live
+- That matrix now explicitly proves guest, planning, settings, registry, seating, coordinator, message, photo, and vault-config permission lanes stay scoped while direct timeline/settings and other ungranted writes remain denied.
+- 2026-05-11 10:06 PM PDT:
+  - expanded the live collaborator/client-RLS proof again so it now covers planner `itinerary_event_write` allow + registry deny and settings `section_write` allow + registry deny
+  - the first live reruns exposed real production drift, not flaky proof:
+    - missing `itinerary_events.dress_code`
+    - missing `itinerary_events.notes`
+    - `itinerary_event_write` create path inserted `NULL` ids
+    - `itinerary_event_write` still had text/time coercion drift
+    - `section_write` treated explicit-id creates as missing-row updates
+  - remote repairs landed via:
+    - `20260512040000_reconcile_itinerary_dress_code_column.sql`
+    - `20260512040500_reconcile_itinerary_runtime_columns.sql`
+    - `20260512041000_fix_itinerary_event_write_time_types.sql`
+    - `20260512041500_fix_itinerary_event_write_ids.sql`
+    - `20260512042000_fix_section_write_create_with_explicit_id.sql`
+  - focused proof green:
+    - `npm test -- --run src/lib/sectionRpcSafety.test.ts src/lib/itineraryRpcSafety.test.ts src/lib/collaboratorPermissionRlsProof.test.ts src/lib/clientRlsMatrixProofScript.test.ts`
+    - `npm run typecheck -- --pretty false`
+    - `git diff --check`
+  - live proof green again after the repairs:
+    - `LIVE_GUEST_DASHBOARD_SETTINGS_RPCS=1 npm run proof:v1:collaborator-runtime` -> `LIVE PASS`
+    - `LIVE_GUEST_DASHBOARD_SETTINGS_RPCS=1 npm run proof:v1:client-rls-matrix` -> `LIVE PASS`
+- The matrix now explicitly proves guest, planning, itinerary, settings, sections, registry item/policy, seating, coordinator, message, photo, vault-config, and vault-provider permission lanes stay scoped while direct timeline/settings and other ungranted writes remain denied.
+- 2026-05-12 07:14 AM PDT:
+  - expanded the live collaborator/client-RLS proof again so registry-scoped collaborators can write `registry_refresh_policy_write` while settings-scoped collaborators stay denied on that lane
+  - tightened `proof:v1:client-write-inventory` so the tracked-runtime scan now also guards double-quoted and backtick table names and skips `.d.ts` noise
+  - the first live rerun exposed one real production DB defect:
+    - `registry_refresh_policy_write` mixed uuid/text in `registry_refresh_policy_updated_by`
+  - remote repair landed via:
+    - `20260512043000_fix_registry_refresh_policy_write_updated_by_type.sql`
+  - focused proof green:
+    - `npm test -- --run src/lib/clientWriteInventoryProofScript.test.ts src/lib/collaboratorPermissionRlsProof.test.ts src/lib/clientRlsMatrixProofScript.test.ts`
+    - `npm run proof:v1:client-write-inventory`
+    - `npm run typecheck -- --pretty false`
+    - `git diff --check`
+  - live proof green after the repair:
+    - `LIVE_GUEST_DASHBOARD_SETTINGS_RPCS=1 npm run proof:v1:collaborator-runtime` -> `LIVE PASS`
+    - `LIVE_GUEST_DASHBOARD_SETTINGS_RPCS=1 npm run proof:v1:client-rls-matrix` -> `LIVE PASS`
+- Payment gate now fails closed on billing lookup failure.
+- RSVP capacity enforcement now serializes through the deployed database function path.
+- Release launch CI now hard-fails without strict Supabase RSVP proof secrets and passes with the configured repo secrets.
+- Internal tooling routes are now disabled in production by default unless `VITE_ENABLE_INTERNAL_TOOLING_ROUTES=true`.
+## Latest Runtime Proof Results
+
+- `npm test` -> `PASS` (`537/537` files, `3321/3321` tests)
+- `npm run typecheck -- --pretty false` -> `PASS`
+- `npm run lint -- --quiet` -> `PASS`
+- `npm run build` -> `PASS`
+- `npm run test:security` -> `PASS`
+- `npm run test:smoke` -> `PASS`
+- `npm run proof:v1:public-access-coverage` -> `PASS`
+- `npm run proof:v1:client-write-inventory` -> `PASS`
+- `npm run proof:v1:service-role-authorization` -> `PASS`
+- `npm run proof:v1:email-messaging-authorization` -> `PASS`
+- `npm run proof:v1:launch-closeout` -> `PASS`
+- `npm run proof:v1:collaborator-runtime` -> `LIVE PASS`
+- `npm run proof:v1:client-rls-matrix` -> `LIVE PASS`
+- `LIVE_VAULT_CONTRIBUTE_WRITE_READ=1 PLAYWRIGHT_BASE_URL=https://dayof.love npx playwright test --workers=1 tests/e2e/vault-contribute-write-read.spec.ts` -> `LIVE PASS`
+- `V1_SUBDOMAIN_ROUTE_LIVE=1 npm run proof:v1:subdomain-route -- --require-live` -> `LIVE PASS`
+
+## 2026-05-11 07:57 PM PDT - Vault And Planning Vendor/Budget RPC Batch (Local Only)
+
+- Added local migration `20260512013000_vault_planning_write_rpcs.sql`
+- Moved owner-side vault writes behind local RPCs:
+  - `wedding_site_vault_provider_patch`
+  - `vault_config_write`
+  - `vault_seed_starter_configs`
+  - `vault_entry_write`
+  - `vault_entry_delete`
+  - `vault_config_delete`
+- Moved planning vendor and budget writes behind local RPCs:
+  - `planning_vendor_write`
+  - `planning_vendor_delete`
+  - `planning_budget_item_write`
+  - `planning_budget_item_delete`
+- Focused proof green:
+  - `npm test -- --run src/pages/dashboard/vaultService.test.ts src/pages/dashboard/planning/planningService.test.ts src/pages/dashboard/planning/planningServiceStarterSuite.test.ts`
+  - `git diff --check`
+- Not live yet: migration apply/deploy is still pending, so runtime proof remains gated until the local RPC batches are deployed.
+
+## 2026-05-11 08:04 PM PDT - Onboarding And Signup Write RPC Batch (Local Only)
+
+- Added local migration `20260512014500_onboarding_signup_write_rpcs.sql`
+- Moved onboarding/signup writes behind local RPCs:
+  - `wedding_site_bootstrap_write`
+  - `onboarding_event_seed_insert_many`
+  - existing `wedding_site_settings_patch`
+  - existing `guest_dashboard_guest_write`
+- Focused proof green:
+  - `npm test -- --run src/pages/onboarding/onboardingService.test.ts src/pages/signupService.test.ts`
+  - `npm run typecheck -- --pretty false`
+  - `git diff --check`
+- Not live yet: migration apply/deploy is still pending, so runtime proof remains gated until the local RPC batches are deployed.
+
+## 2026-05-11 08:10 PM PDT - Name Change Write RPC Batch (Local Only)
+
+- Added local migration `20260512020000_name_change_write_rpcs.sql`
+- Moved name-change planner writes behind local RPCs:
+  - `name_change_case_write`
+  - `name_change_documents_replace`
+  - `name_change_extracted_fields_replace`
+  - `name_change_plan_snapshot_write`
+  - `name_change_reminders_replace`
+- Focused proof green:
+  - `npm test -- --run src/pages/dashboard/planning/nameChangeService.test.ts src/lib/dashboardDataBoundary.test.ts`
+  - `npm run typecheck -- --pretty false`
+  - `git diff --check`
+- Inventory note:
+  - `rg -n "\\.from\\('.*'\\)\\.(insert|update|upsert|delete)" src/pages/dashboard src/pages -g '!**/*.test.*'` now returns no matches
+- Not live yet: migration apply/deploy is still pending, so runtime proof remains gated until the local RPC batches are deployed.
+
+## 2026-05-11 08:18 PM PDT - Canonical Client Write Inventory Proof Added
+
+- Added `scripts/v1-proof-client-write-inventory.mjs`.
+- Added `npm run proof:v1:client-write-inventory`.
+- Wired the new guard into `test:launch`.
+- Focused proof green:
+  - `npm test -- --run src/lib/clientWriteInventoryProofScript.test.ts src/lib/proofBoardFreshness.test.ts src/lib/launchControlMatrices.test.ts`
+  - `npm run proof:v1:client-write-inventory`
+  - `git diff --check`
+- Result:
+  - the active `src/pages` / `src/pages/dashboard` no-direct-client-write claim is now a canonical rerunnable proof lane instead of a loose inventory note
+  - runtime truth is still unchanged until the local RPC batches are applied and redeployed
+- `PLAYWRIGHT_BASE_URL=https://dayof.love npm run proof:v1:canonical-smoke` -> `LIVE PASS`
+- `PLAYWRIGHT_BASE_URL=https://dayof.love npm run test:e2e:public-quality` -> `LIVE PASS`
+- `npm run proof:v1:guests-rsvp-ops` -> `LIVE PASS`
+- `npm run proof:v1:guest-lookup-scope` -> `LIVE PASS`
+- `npm run proof:v1:client-rls-matrix` -> `LIVE PASS`
+- `LIVE_GUEST_HUB_WRITE_READ=1 PLAYWRIGHT_BASE_URL=https://dayof.love npx playwright test --workers=1 tests/e2e/guest-hub-write-read.spec.ts` -> `LIVE PASS`
+- `LIVE_PHOTO_UPLOAD_WRITE_READ=1 LIVE_PHOTO_ANALYSIS_WRITE_READ=1 PLAYWRIGHT_BASE_URL=https://dayof.love npx playwright test --workers=1 tests/e2e/photo-upload-write-read.spec.ts` -> `LIVE PASS`
+- `npm run proof:v1:registry-preview-ssrf` -> `LIVE PASS`
+- `V1_AI_SECURE_MODEL_LIVE=1 npm run proof:v1:ai-secure-model` -> `LIVE PASS`
+- `V1_AI_CLEARANCE_LIVE=1 PLAYWRIGHT_BASE_URL=https://dayof.love npm run proof:v1:ai-clearance` -> `LIVE PASS`
+
+## 2026-05-11 08:48 PM PDT - Builder / Section / Itinerary / Seating RPC Sweep (Local Only)
+
+- Added local migrations:
+  - `20260512030000_builder_section_itinerary_write_rpcs.sql`
+  - `20260512031500_seating_assignment_version_rpcs.sql`
+- Moved the last known tracked-`src` direct-write clusters behind local RPCs:
+  - section create/update/upsert/reorder/delete
+  - builder project publish
+  - itinerary event insert/update/delete/reorder
+  - itinerary schedule mirror sync
+  - seating assignment write/delete/upsert/invalidate
+  - seating layout version create/restore
+- Focused proof green:
+  - `npm test -- --run src/data/siteRepository.test.ts src/builder/services/builderProjectService.test.ts src/pages/dashboard/itineraryService.test.ts src/pages/dashboard/seating/seatingService.test.ts src/lib/dashboardDataBoundary.test.ts src/lib/clientWriteInventoryProofScript.test.ts`
+  - `npm run proof:v1:client-write-inventory`
+  - `npm run typecheck -- --pretty false`
+  - `git diff --check`
+- Result:
+  - the tracked shipped `src` runtime is now locally clear of direct client `.insert/.update/.upsert/.delete` calls
+  - the remaining work is remote apply/deploy plus fresh live collaborator/client-RLS proof, not another known local direct-write cluster
+
+## 2026-05-11 09:02 PM PDT - Remote RPC Apply And Live Matrix Refresh
+
+- Ran `supabase db push` successfully against project `atuzuobpprjstfmdnwso`.
+- Applied the RPC migration sweep through:
+  - `20260511200000_guest_dashboard_settings_rpcs.sql`
+  - `20260511211500_planning_seating_write_rpcs.sql`
+  - `20260511220000_guest_core_write_rpcs.sql`
+  - `20260511233000_guest_invitation_rsvp_rpcs.sql`
+  - `20260511234500_registry_write_rpcs.sql`
+  - `20260512001000_message_coordinator_write_rpcs.sql`
+  - `20260512012000_settings_overview_write_rpcs.sql`
+  - `20260512013000_vault_planning_write_rpcs.sql`
+  - `20260512014500_onboarding_signup_write_rpcs.sql`
+  - `20260512020000_name_change_write_rpcs.sql`
+  - `20260512023000_media_audit_write_rpcs.sql`
+  - `20260512024500_guest_photo_misc_write_rpcs.sql`
+  - `20260512030000_builder_section_itinerary_write_rpcs.sql`
+  - `20260512031500_seating_assignment_version_rpcs.sql`
+- The first push exposed one real PostgreSQL function-signature issue; the migration was fixed locally and the second push landed cleanly.
+- Live reruns after the apply:
+  - `LIVE_GUEST_DASHBOARD_SETTINGS_RPCS=1 npm run proof:v1:collaborator-runtime` -> `LIVE PASS`
+  - `LIVE_GUEST_DASHBOARD_SETTINGS_RPCS=1 npm run proof:v1:client-rls-matrix` -> `LIVE PASS`
+- Result:
+  - guest-dashboard settings RPC proof is now part of the live role matrix
+  - the remaining work is breadth expansion and future guard upkeep, not pending RPC deployment
+
+## 2026-05-11 09:11 PM PDT - Broader Planner / Coordinator RPC Matrix Coverage
+
+- Expanded the live collaborator runtime proof beyond planning/seating:
+  - planner can create dashboard messages through `dashboard_message_write`
+  - planner is denied ungranted registry writes through `registry_item_write`
+  - coordinator can create builder media assets through `builder_media_asset_write`
+  - coordinator is denied ungranted dashboard message writes
+- Focused proof green:
+  - `npm test -- --run src/lib/collaboratorPermissionRlsProof.test.ts src/lib/clientRlsMatrixProofScript.test.ts`
+  - `npm run typecheck -- --pretty false`
+  - `LIVE_GUEST_DASHBOARD_SETTINGS_RPCS=1 npm run proof:v1:collaborator-runtime` -> `LIVE PASS`
+  - `LIVE_GUEST_DASHBOARD_SETTINGS_RPCS=1 npm run proof:v1:client-rls-matrix` -> `LIVE PASS`
+- Result:
+  - the live role matrix now covers guest, planning, seating, messages, registry, and photos
+  - the remaining work is owner-only / future-surface breadth, not the mainstream collaborator runtime
+
+## 2026-05-11 09:20 PM PDT - Registry And Coordinator RPC Matrix Coverage
+
+- Expanded the same live collaborator/client-RLS proof again:
+  - registry-scoped collaborator can create registry items through `registry_item_write`
+  - registry-scoped collaborator is denied `dashboard_message_write`
+  - coordinator-scoped collaborator can use `coordinator_guest_checkin_write`
+  - coordinator-scoped collaborator can use `coordinator_qna_write`
+- A first live attempt exposed a real fixture bug, not an auth bug:
+  - the proof was trying `item_type: 'gift'`
+  - live schema only allows `product` or `cash_fund`
+  - corrected fixture to `product` and reran green
+- Focused proof green:
+  - `npm test -- --run src/lib/collaboratorPermissionRlsProof.test.ts src/lib/clientRlsMatrixProofScript.test.ts`
+  - `npm run typecheck -- --pretty false`
+  - `LIVE_GUEST_DASHBOARD_SETTINGS_RPCS=1 npm run proof:v1:collaborator-runtime` -> `LIVE PASS`
+  - `LIVE_GUEST_DASHBOARD_SETTINGS_RPCS=1 npm run proof:v1:client-rls-matrix` -> `LIVE PASS`
+- Result:
+  - the live collaborator/client-RLS matrix now covers guest, planning, registry, seating, coordinator, messages, and photos
+  - the remaining work is owner-only / future-surface breadth, not mainstream collaborator auth
+
+## 2026-05-11 09:32 PM PDT - Settings RPC Type Repair And Settings-Scoped Matrix Coverage
+
+- Expanded the same live collaborator/client-RLS proof again:
+  - settings-scoped collaborator can patch site settings through `wedding_site_settings_patch`
+  - settings-scoped collaborator is denied `registry_item_write`
+- The first live attempt exposed a real PostgreSQL function bug, not an auth bug:
+  - `wedding_site_settings_patch` was mixing `text` and `uuid` in a `CASE` expression for `active_template_id`
+  - source migration `20260512012000_settings_overview_write_rpcs.sql` was corrected
+  - forward remote repair landed as `20260511212626_fix_wedding_site_settings_patch_types.sql`
+- Focused proof green:
+  - `npm test -- --run src/lib/settingsErrorSafety.test.ts src/lib/collaboratorPermissionRlsProof.test.ts src/lib/clientRlsMatrixProofScript.test.ts`
+  - `npm run typecheck -- --pretty false`
+  - `LIVE_GUEST_DASHBOARD_SETTINGS_RPCS=1 npm run proof:v1:collaborator-runtime` -> `LIVE PASS`
+  - `LIVE_GUEST_DASHBOARD_SETTINGS_RPCS=1 npm run proof:v1:client-rls-matrix` -> `LIVE PASS`
+- Result:
+  - the live collaborator/client-RLS matrix now covers guest, planning, settings, registry, seating, coordinator, messages, and photos
+  - the remaining work is owner-only / future-surface breadth, not mainstream collaborator auth
+
+## 2026-05-11 09:45 PM PDT - Photos / Vault RPC Matrix Coverage
+
+- Expanded the same live collaborator/client-RLS proof again:
+  - photos-scoped collaborator can create vault configs through `vault_config_write`
+  - photos-scoped collaborator can patch `vault_storage_provider` through `wedding_site_vault_provider_patch`
+  - photos-scoped collaborator is denied `dashboard_message_write`
+- The first live attempt exposed a real fixture bug, not an auth bug:
+  - the proof used an invalid `vault_index`
+  - live schema only allows `vault_index` between `1` and `5`
+  - corrected fixture to a valid vault slot and reran green
+- Focused proof green:
+  - `npm test -- --run src/lib/collaboratorPermissionRlsProof.test.ts src/lib/clientRlsMatrixProofScript.test.ts`
+  - `LIVE_GUEST_DASHBOARD_SETTINGS_RPCS=1 npm run proof:v1:collaborator-runtime` -> `LIVE PASS`
+  - `LIVE_GUEST_DASHBOARD_SETTINGS_RPCS=1 npm run proof:v1:client-rls-matrix` -> `LIVE PASS`
+- Result:
+  - the live collaborator/client-RLS matrix now covers guest, planning, settings, registry, seating, coordinator, messages, photos, vault-config writes, and vault-provider writes
+  - the remaining work is owner-only / future-surface breadth, not mainstream collaborator auth
+
+## Current Launch Call
+
+- Launch-critical runtime blockers are closed.
+- GitHub Actions `Release Launch Gate` is green on runs `25705386070` and `25705683563`.
+- Remaining items are deferred and non-launch.
+- `npm run proof:v1:ai-product-readiness` -> `PASS`
+- `npm run proof:v1:data-integrity` -> `PASS`
+- `npm run proof:v1:prereqs` -> `PASS`
+
+## Latest Changes In This Final Closeout
+
+### 2026-05-11 03:42 PM PDT - Exact-SHA Frontend Deploy And Postdeploy Proof Sweep
+
+- Pushed exact runtime commit `23bee092` (`Stabilize final proof suite and runtime safety`) to `codex/v1-finish-hard-gates-3`.
+- Promoted Vercel production deploy `dpl_EusbfjAFUJPpU5fiLwEU5fR1nEb4`.
+- Redeployed `public-site-access --no-verify-jwt`.
+- Reran:
+  - `PLAYWRIGHT_BASE_URL=https://dayof.love npm run proof:v1:canonical-smoke`
+  - `PLAYWRIGHT_BASE_URL=https://dayof.love npm run test:e2e:public-quality`
+  - `npm run proof:v1:guests-rsvp-ops`
+  - `npm run proof:v1:guest-lookup-scope`
+- Result:
+  - exact frontend SHA is now known
+  - postdeploy public/guest proof is green
+  - launch remains `GO`
+
+### 2026-05-11 03:42 PM PDT - Full Suite And Secure Closeout Refresh
+
+- Reran the full suite:
+  - `npm test` -> `PASS` (`537/537`, `3321/3321`)
+- Reran secure closeout with the provided secure key:
+  - `npm run proof:v1:service-role-authorization` -> `PASS`
+  - `npm run proof:v1:email-messaging-authorization` -> `PASS`
+  - `npm run proof:v1:launch-closeout` -> `PASS`
+- Reran collaborator runtime:
+  - `npm run proof:v1:collaborator-runtime` -> `LIVE PASS`
+- Result:
+  - final authorization, queue, and role-scoping truth is same-day evidence
+
+### 2026-05-11 05:33 PM PDT - Live Blocker-Fix Deploy And Release Gate Closure
+
+- Pushed blocker-fix runtime commit `f0cbf841` (`Fix payment gate and serialize RSVP capacity`) to `codex/v1-finish-hard-gates-3`.
+- Promoted Vercel production deploy `dpl_386dKTNkTVK95UfwJj9qEtnH1b8q`.
+- Applied migration `20260511170500_serialize_submit_rsvp_capacity.sql`.
+- Deployed `submit-rsvp --no-verify-jwt`.
+- Reran:
+  - `PLAYWRIGHT_BASE_URL=https://dayof.love npm run proof:v1:canonical-smoke`
+  - `PLAYWRIGHT_BASE_URL=https://dayof.love npm run test:e2e:public-quality`
+  - `npm run proof:v1:guests-rsvp-ops`
+  - `npm run proof:v1:guest-lookup-scope`
+- Confirmed GitHub Actions `Release Launch Gate` is green on run `25705683563`.
+- Result:
+  - exact current live frontend runtime is `f0cbf841`
+  - payment fail-open is closed in production
+  - RSVP capacity serialization is live and proven
+  - release-gate Supabase RSVP proof is enforced and green
+  - launch remains `GO`
+
+### 2026-05-11 06:24 PM PDT - Planning And Seating Direct-Write RLS Coverage Added
+
+- Expanded `tests/e2e/collaborator-permission-rls.spec.ts` so live collaborator proof now covers:
+  - planner direct `planning_tasks` writes
+  - coordinator direct `seating_events` writes
+  - coordinator direct `seating_tables` writes
+- Reran:
+  - `npm run proof:v1:collaborator-runtime`
+  - `npm run proof:v1:client-rls-matrix`
+- Result:
+  - live collaborator runtime proof is green with guest, planning, and seating direct-write coverage
+  - the canonical client-RLS matrix now carries that same broader role-scoped proof
+  - the remaining local-only gap in this cluster is the undeployed guest-dashboard settings RPC batch
+
+### 2026-05-11 06:35 PM PDT - Planning And Seating Core Write RPC Batch (Local Only)
+
+- Added migration `20260511211500_planning_seating_write_rpcs.sql`.
+- Moved these dashboard write paths off raw client table mutations in the working tree:
+  - `planning_tasks`
+  - `seating_events`
+  - `seating_tables`
+- Added focused service proof:
+  - `npm test -- --run src/pages/dashboard/planning/planningService.test.ts src/pages/dashboard/seating/seatingService.test.ts` -> `PASS`
+  - `npm run typecheck -- --pretty false` -> `PASS`
+  - `npm run lint -- --quiet` -> `PASS`
+  - `npm run build` -> `PASS`
+- Result:
+  - no live-state change yet
+  - apply/deploy plus fresh live proof are still required before this batch counts as runtime hardening
+
+### 2026-05-11 06:46 PM PDT - Guest Core Write RPC Batch (Local Only)
+
+- Added migration `20260511220000_guest_core_write_rpcs.sql`.
+- Moved guest core create/update/delete and bulk patch paths off raw client guest-table writes in the working tree.
+- Focused local proof is green:
+  - `npm test -- --run src/pages/dashboard/guests/guestService.test.ts src/pages/dashboard/planning/planningService.test.ts src/pages/dashboard/seating/seatingService.test.ts`
+  - `npm run typecheck -- --pretty false`
+  - `npm run lint -- --quiet`
+  - `npm run build`
+- Result:
+  - no live-state change yet
+  - apply/deploy plus fresh live proof are still required before this batch counts as runtime hardening
+
+### 2026-05-11 07:12 PM PDT - ProtectedRoute Role-Timing Hardening (Local Only)
+
+- Fixed a collaborator payment-gate timing race in `ProtectedRoute`.
+- Focused local proof is green:
+  - `npm test -- --run src/components/auth/ProtectedRoute.test.tsx`
+  - `npm run typecheck -- --pretty false`
+  - `npm run lint -- --quiet`
+  - `npm run build`
+- Result:
+  - no live-state change yet
+  - a frontend deploy is still required before this batch changes runtime truth
+
+### 2026-05-11 07:21 PM PDT - Guest Invitation / Import / RSVP RPC Batch (Local Only)
+
+- Added migration `20260511233000_guest_invitation_rsvp_rpcs.sql`.
+- Moved these guest dashboard write paths off raw client table mutations in the working tree:
+  - event invitation insert/delete flows
+  - imported guest insert flow
+  - imported RSVP replace flow
+  - assisted RSVP save flow
+  - guest dependency cleanup RSVP/event-invitation deletes
+- Focused local proof is green:
+  - `npm test -- --run src/pages/dashboard/guests/guestService.test.ts`
+  - `npm run typecheck -- --pretty false`
+  - `npm run lint -- --quiet`
+  - `npm run build`
+- Result:
+  - no live-state change yet
+  - apply/deploy plus fresh live collaborator/client-RLS proof are still required before this batch counts as runtime hardening
+
+### 2026-05-11 07:27 PM PDT - Itinerary Invitation RPC Reuse (Local Only)
+
+- Reused the new guest invitation RPCs from the itinerary dashboard service.
+- Event-level guest invite/uninvite flows no longer depend on direct client `event_invitations` upsert/delete paths in the working tree.
+- Focused local proof is green:
+  - `npm test -- --run src/pages/dashboard/itineraryService.test.ts src/pages/dashboard/itineraryQueryBounds.test.ts`
+  - `npm run typecheck -- --pretty false`
+- Result:
+  - no live-state change yet
+  - runtime truth still depends on the already-pending RPC migration apply/deploy and fresh live proof
+
+### 2026-05-11 07:33 PM PDT - Registry Owner Write RPC Batch (Local Only)
+
+### 2026-05-13 07:49 AM PDT - Registry Barcode Review / Provider Depth Batch (Deployed + Live-Proven)
+
+- Added a richer local-only registry barcode depth batch:
+  - provider-path metadata in the barcode lookup contract
+  - review-required match state for lower-confidence product matches
+  - explicit owner controls to use the best price, clear the store, or pivot back to manual/link editing
+  - Open Library fallback for ISBN barcode lookups
+  - optional `UPCITEMDB_API_KEY` provider-ladder support
+  - normalized retailer-option building and miss-cache attempt increments in `registry-barcode-lookup`
+- Focused/local proof is green:
+  - `npm test -- --run src/pages/dashboard/registry/RegistryItemForm.test.tsx src/pages/dashboard/registry/registryService.test.ts`
+  - `npm run typecheck -- --pretty false`
+  - `npm run build`
+  - `npm run proof:v1:registry`
+  - `git diff --check`
+- Deploy/runtime closeout:
+  - `supabase functions deploy registry-barcode-lookup --no-verify-jwt`
+  - `vercel deploy --prod --yes` -> `dpl_CRegyLrW91MBRXbkytcPZdy8g8BS`, aliased to [dayof.love](https://dayof.love)
+  - `LIVE_REGISTRY_WRITE_READ=1 PLAYWRIGHT_BASE_URL=https://dayof.love npx playwright test --workers=1 tests/e2e/registry-write-read.spec.ts`
+- Result:
+  - the richer barcode review/provider batch is deployed
+  - live owner barcode save/read plus public registry readability are green on the shipped runtime
+  - broader universal-registry product depth still remains future active work
+
+### 2026-05-13 08:59 AM PDT - Coordinator + Name-Change MVP Deploy Closeout (Deployed + Live-Proven)
+
+- Deploy/runtime closeout:
+  - `supabase db push --linked --include-all` -> applied `20260513170000_coordinator_event_checkin_write.sql`
+  - `vercel deploy --prod --yes` -> `dpl_AbFTbLY263caiCEhQdniH2wbuM9d`, aliased to [dayof.love](https://dayof.love)
+  - `V1_COORDINATOR_DAYOF_LIVE=1 npm run proof:v1:coordinator-dayof -- --require-live`
+  - `V1_NAME_CHANGE_RUNTIME_LIVE=1 npm run proof:v1:name-change-runtime -- --require-live`
+- Result:
+  - the deeper coordinator MVP batch is now shipped and live-proven on the production runtime
+  - the deeper claim-safe name-change MVP batch is now shipped and live-proven on the production runtime
+  - all three competitor-informed MVP lanes are now closed on the active board; remaining work is post-MVP/deferred depth only
+
+- Added migration `20260511234500_registry_write_rpcs.sql`.
+- Moved these registry dashboard owner-side write paths off raw client table mutations in the working tree:
+  - registry refresh budget writes
+  - registry refresh policy writes
+  - registry item create/update/delete
+  - registry item reorder
+- Focused local proof is green:
+  - `npm test -- --run src/pages/dashboard/registry/registryService.test.ts`
+  - `npm run typecheck -- --pretty false`
+- Result:
+  - no live-state change yet
+  - apply/deploy plus fresh live proof are still required before this batch counts as runtime hardening
+
+### 2026-05-11 07:40 PM PDT - Message And Coordinator Write RPC Batch (Local Only)
+
+- Added migration `20260512001000_message_coordinator_write_rpcs.sql`.
+- Moved these working-tree write paths off raw client table mutations:
+  - dashboard message create/update
+  - coordinator alert-message insert
+  - coordinator guest check-in update
+  - coordinator Q&A create/update
+- Focused local proof is green:
+  - `npm test -- --run src/pages/dashboard/messages/messageService.boundary.test.ts src/pages/dashboard/coordinator/coordinatorService.test.ts`
+  - `npm run typecheck -- --pretty false`
+  - `npm run lint -- --quiet`
+- Result:
+  - no live-state change yet
+  - apply/deploy plus fresh live proof are still required before this batch counts as runtime hardening
+
+### 2026-05-11 07:49 PM PDT - Settings And Overview Write RPC Batch (Local Only)
+
+- Added migration `20260512012000_settings_overview_write_rpcs.sql`.
+- Moved these working-tree write paths off raw client table mutations:
+  - owner settings site patch writes
+  - collaborator invite create/revoke
+  - overview wedding-data/site-json draft patch writes
+  - interactive suggestion hide
+- Focused local proof is green:
+  - `npm test -- --run src/pages/dashboard/overviewService.test.ts src/pages/dashboard/settings/settingsSiteData.test.ts`
+  - `npm run typecheck -- --pretty false`
+  - `npm run lint -- --quiet`
+- Result:
+  - no live-state change yet
+  - apply/deploy plus fresh live proof are still required before this batch counts as runtime hardening
+
+### 2026-05-11 03:42 PM PDT - Public Vault Contribution Downgraded To Deferred / Hard-Disabled
+
+- Attempted closeout redeploys:
+  - `vault-contribution-public --no-verify-jwt`
+  - `vault-entry-submit --no-verify-jwt`
+- Follow-up runtime checks found:
+  - direct probe to `vault-contribution-public` still returns `404 NOT_FOUND`
+  - `supabase functions list` still does not show `vault-contribution-public`
+  - `LIVE_VAULT_CONTRIBUTE_WRITE_READ=1 PLAYWRIGHT_BASE_URL=https://dayof.love npx playwright test --workers=1 tests/e2e/vault-contribute-write-read.spec.ts` still fails closed on the unavailable page
+- Result:
+  - public vault contribution is explicitly outside the current launch baseline
+  - the lane is deferred/non-launch, not silently broken
+
+## Historical Note
+
+Longer chronological detail now lives in [docs/PRODUCTION_HARDENING_CHANGELOG.md](/Users/ericgagnon/Documents/DayOfLove/wedding-site-Bolt/docs/PRODUCTION_HARDENING_CHANGELOG.md). This file stays focused on the current verified runtime picture.
+
+### 2026-05-12 05:36 PM PDT - Guest Contact Step-Up + Security Automation (Local Only)
+
+- Local hardening is green:
+  - `npm run proof:v1:security-automation`
+  - `npm run proof:v1:test-lanes`
+  - `npm test -- --run src/lib/securityAutomationProof.test.ts src/lib/routeCompositionBoundary.test.ts src/lib/internalToolingRouteBoundary.test.ts src/lib/guestLookupScopeProofScript.test.ts src/pages/GuestContactUpdate.test.ts src/lib/launchEdgeFunctions.test.ts`
+  - `npm run typecheck -- --pretty false`
+  - `npm run lint -- --quiet`
+  - `npm run build`
+- Added:
+  - phone-last-4 step-up verifier for household-wide guest-contact updates
+  - Dependabot, Semgrep, CodeQL, and Gitleaks repo automation
+  - grouped route modules under `src/routes/*`
+- No deploy was run in this batch.
+- Live follow-up truth:
+  - `npm run proof:v1:guest-lookup-scope` currently still exercises the older deployed guest-contact runtime
+  - until guest-contact functions/frontend are redeployed, this batch is branch-hardening rather than runtime-hardening

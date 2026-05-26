@@ -363,21 +363,22 @@ describe('sections registry resolution', () => {
 
   it('keeps registry proof output explicit about remaining runtime truth work', () => {
     const registryProof = readFileSync(resolve(__dirname, '../../scripts/v1-proof-registry.mjs'), 'utf8');
-    expect(registryProof).toContain("status: 'manual-proof-pending'");
-    expect(registryProof).toContain("highestRiskTrustGap: 'runtime_registry_truth_after_real_edits'");
-    expect(registryProof).toContain("secondaryTrustGap: 'registry_repair_and_import_persistence_manual_verification_missing'");
-    expect(registryProof).toContain('manualProofRequired: true');
-    expect(registryProof).toContain("truthGateSummary: 'automation_green_manual_truth_red'");
+    expect(registryProof).toContain("status: liveEnabled ? 'live-proof-green' : 'local-proof-green-live-proof-pending'");
+    expect(registryProof).toContain("highestRiskTrustGap: liveEnabled ? null : 'runtime_registry_truth_after_real_edits'");
+    expect(registryProof).toContain("secondaryTrustGap: liveEnabled ? null : 'barcode_lookup_runtime_truth_after_deploy'");
+    expect(registryProof).toContain('manualProofRequired: !liveEnabled,');
+    expect(registryProof).toContain("truthGateSummary: liveEnabled ? 'automation_green_live_truth_green' : 'automation_green_live_truth_pending'");
     expect(registryProof).toContain("evidenceLogPath: 'docs/v1-smoke-proof-log.md'");
-    expect(registryProof).toContain("manualProofStatus: 'pending_runtime_registry_notes'");
-    expect(registryProof).toContain('manualProofRequirements: [');
+    expect(registryProof).toContain("manualProofStatus: liveEnabled ? 'closed' : 'pending_live_registry_write_read'");
+    expect(registryProof).toContain('manualProofRequirements: liveEnabled ? [] : [');
     expect(registryProof).toContain("'owner_manage_import_persistence_runtime_pass'");
-    expect(registryProof).toContain("'owner_repair_cleanup_runtime_pass'");
-    expect(registryProof).toContain("'guest_visible_purchase_truth_runtime_pass'");
-    expect(registryProof).toContain('manualProofBlockingReasons: {');
-    expect(registryProof).toContain("owner_manage_import_persistence_runtime_pass: 'real owner add/import/edit persistence notes are not logged yet'");
-    expect(registryProof).toContain("owner_repair_cleanup_runtime_pass: 'repair or cleanup runtime notes are not logged yet'");
-    expect(registryProof).toContain("guest_visible_purchase_truth_runtime_pass: 'guest-visible purchase-state notes after owner edits are not logged yet'");
+    expect(registryProof).toContain("'owner_duplicate_merge_runtime_pass'");
+    expect(registryProof).toContain("'owner_barcode_lookup_save_runtime_pass'");
+    expect(registryProof).toContain("'guest_visible_registry_endpoint_runtime_pass'");
+    expect(registryProof).toContain('manualProofBlockingReasons: liveEnabled ? {} : {');
+    expect(registryProof).toContain("owner_manage_import_persistence_runtime_pass: 'run the authenticated live registry add/edit proof'");
+    expect(registryProof).toContain("owner_duplicate_merge_runtime_pass: 'run the live duplicate-merge proof against deployed runtime'");
+    expect(registryProof).toContain("guest_visible_registry_endpoint_runtime_pass: 'confirm the public registry endpoint stays readable after runtime edits'");
   });
 
   it('keeps builder registry compatibility tolerant of persisted trim casing and punctuation drift', () => {
@@ -533,6 +534,8 @@ describe('sections registry resolution', () => {
     const registryOwnerCard = readFileSync(resolve(__dirname, '../pages/dashboard/registry/RegistryItemCard.tsx'), 'utf8');
     const registryItemForm = readFileSync(resolve(__dirname, '../pages/dashboard/registry/RegistryItemForm.tsx'), 'utf8');
     const registryDashboard = readFileSync(resolve(__dirname, '../pages/dashboard/Registry.tsx'), 'utf8');
+    const registryDerivedState = readFileSync(resolve(__dirname, '../pages/dashboard/registry/buildRegistryDashboardDerivedState.ts'), 'utf8');
+    const registryRouteContent = readFileSync(resolve(__dirname, '../pages/dashboard/registry/RegistryDashboardRouteContent.tsx'), 'utf8');
     expect(registrySectionComponent).toContain("export function getRegistryPurchaserStatusLabel(item: Pick<RegistryItem, 'purchase_status' | 'purchaser_name'>): string | null {");
     expect(registrySectionComponent).toContain("if (!item.purchaser_name || item.purchase_status === 'available') return null;");
     expect(registrySectionComponent).toContain("? `Purchased by ${item.purchaser_name}`");
@@ -543,25 +546,22 @@ describe('sections registry resolution', () => {
     expect(registryOwnerCard).toContain('await onRefetchMetadata(normalizedItem);');
     expect(registryOwnerCard).toContain('onClick={() => onEdit(normalizedItem)}');
     expect(registryItemForm).toContain('canonical_url: nextUrl,');
-    expect(registryDashboard).toContain('const normalizedItems = items.map(normalizeOwnerDashboardRegistryItem);');
-    expect(registryDashboard).toContain('function normalizeOwnerDashboardRegistryItem(item: RegistryItem): RegistryItem {');
-    expect(registryDashboard).toContain('const duplicateGroups = findDuplicateRegistryGroups(normalizedItems);');
-    expect(registryDashboard).toContain('const actionableBadImportCount = normalizedItems.filter((item) => getRegistryItemMetadataState(item).hasBadImportTitle && !!(item.item_url || item.canonical_url)).length;');
-    expect(registryDashboard).toContain('setItems(data.map(normalizeOwnerDashboardRegistryItem));');
-    expect(registryDashboard).toContain('normalizeOwnerDashboardRegistryItem({ ...i, ...fields, updated_at: new Date().toISOString() })');
-    expect(registryDashboard).toContain('normalizeOwnerDashboardRegistryItem(updated)');
-    expect(registryDashboard).toContain('normalizeOwnerDashboardRegistryItem(created)');
-    expect(registryDashboard).toContain('const filtered = normalizedItems.filter(item => {');
-    expect(registryDashboard).toContain('const hasStale = normalizedItems.some((item) => ageExceedsMs(item.metadata_last_checked_at, WEEKLY_REFRESH_MS));');
-    expect(registryDashboard).toContain('purchaser_name: quantityState.purchaseStatus === \'available\' ? null : item.purchaser_name,');
-    expect(registryDashboard).toContain('badImports: normalizedItems.filter((i) => getRegistryItemMetadataState(i).hasBadImportTitle).length,');
-    expect(registryDashboard).toContain('repair: actionableBadImportCount,');
-    expect(registryDashboard).toContain('filter((i) => getRegistryItemMetadataState(i).hasBadImportTitle)');
-    expect(registryDashboard).toContain('repair: actionableBadImportCount,');
-    expect(registryDashboard).toContain("imageIssues: normalizedItems.filter((item) => !item.image_url || item.image_url.includes('thum.io') || item.image_url.includes('weserv.nl')).length,");
-    expect(registryDashboard).toContain('Repair states: {normalizedItems.filter((item) => getRegistryRepairStates(item).length > 0).length}');
-    expect(registryDashboard).toContain('Imported gifts to fix: {actionableBadImportCount}');
-    expect(registryDashboard).toContain('{actionableBadImportCount > 0 && (');
+    expect(registryDashboard).toContain('const normalizedItems = useMemo(');
+    expect(registryDashboard).toContain('() => items.map(normalizeOwnerDashboardRegistryItem),');
+    expect(registryDashboard).toContain("import { normalizeOwnerDashboardRegistryItem, useRegistryDashboardData } from './registry/useRegistryDashboardData';");
+    expect(registryDashboard).toContain('} = buildRegistryDashboardDerivedState({');
+    expect(registryDerivedState).toContain('const duplicateGroups = buildRegistryDuplicateGroups(items);');
+    expect(registryDerivedState).toContain('const {');
+    expect(registryDerivedState).toContain('actionableBadImportCount,');
+    expect(registryDashboard).toContain('setItems,');
+    expect(registryDashboard).toContain('normalizeOwnerDashboardRegistryItem,');
+    expect(registryDashboard).toContain('const hasStale = normalizedItems.some((item) => !item.metadata_last_checked_at || ageExceedsMs(item.metadata_last_checked_at, WEEKLY_REFRESH_MS));');
+    expect(registryDerivedState).toContain('badImports: items.filter((item) => {');
+    expect(registryDerivedState).toContain('repair: repairQueue.length,');
+    expect(registryDerivedState).toContain("imageIssues: items.filter((item) => hasImageIssue(item)).length,");
+    expect(registryRouteContent).toContain('Gifts needing detail touchup: {props.normalizedItems.filter((item) => getRegistryRepairStates(item).length > 0).length}');
+    expect(registryRouteContent).toContain('Clean up imported gifts');
+    expect(registryRouteContent).toContain('{props.actionableBadImportCount > 0 && (');
   });
 
   it('keeps template registry definitions cloned before import/edit flows mutate them', () => {
