@@ -199,7 +199,7 @@ describe('EventHubLiveContent', () => {
     expect(screen.getByText('Your status on this link')).toBeInTheDocument();
     expect(screen.getByText('Coordinator handoff status')).toBeInTheDocument();
     expect(screen.getByText('Access from this link')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Copy travel details' }));
+    fireEvent.click(screen.getByRole('button', { name: /copied travel details/i }));
     expect(onCopyTravelPlan).toHaveBeenCalledTimes(1);
 
     fireEvent.click(screen.getByRole('button', { name: 'Save travel details' }));
