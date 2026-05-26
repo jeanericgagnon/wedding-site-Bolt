@@ -5,7 +5,7 @@ import { ExternalLink, Gift, Package, CheckCircle2, Loader2, X, ShoppingBag } fr
 import { useSiteView } from '../../contexts/SiteViewContext';
 import { publicFetchRegistryItems, publicIncrementPurchase } from '../../pages/dashboard/registry/registryService';
 import type { RegistryItem } from '../../pages/dashboard/registry/registryTypes';
-import { sanitizeRegistryQuantityState } from '../../pages/dashboard/registry/registryTypes';
+import { deriveRegistryItemDisplayState, deriveRegistryItemStoreName, sanitizeRegistryQuantityState } from '../../pages/dashboard/registry/registryTypes';
 import { copyTextOrDownload } from '../../lib/copyText';
 import { readBuilderValue } from '../../lib/weddingProfile';
 import { getSafePublicImageUrl, getSafePublicWebUrl } from '../publicLinks';
@@ -26,21 +26,8 @@ const REGISTRY_PURCHASE_COOKIE_MAX_AGE = Math.floor(REGISTRY_PURCHASE_MEMORY_RET
 const MAX_REGISTRY_PURCHASE_MEMORY_IDS = 80;
 const MAX_REGISTRY_PURCHASE_MEMORY_ID_LENGTH = 120;
 
-const BROKEN_REGISTRY_TITLE_PATTERNS = [
-  /^page not found$/i,
-  /^404\b/i,
-  /^not found$/i,
-  /^sorry\b.*(?:couldn.t|could not|not find)/i,
-  /^access denied$/i,
-  /^gift from [a-z0-9.-]+\.[a-z]{2,}$/i,
-];
-
-export function isGuestReadyRegistryItem(item: Pick<RegistryItem, 'item_name' | 'item_type'>): boolean {
-  if (item.item_type === 'cash_fund') return true;
-
-  const title = String(item.item_name ?? '').replace(/\s+/g, ' ').trim();
-  if (!title) return false;
-  return !BROKEN_REGISTRY_TITLE_PATTERNS.some((pattern) => pattern.test(title));
+export function isGuestReadyRegistryItem(item: RegistryItem): boolean {
+  return deriveRegistryItemDisplayState(item).guestSafe;
 }
 
 function cleanPublicRegistryTitle(value: string): string {
@@ -240,14 +227,19 @@ export function shouldUseLiveRegistryItems(items: RegistryItem[] | null): items 
 
 export function normalizePublicRegistryItemState(item: RegistryItem): RegistryItem {
   const quantityState = sanitizeRegistryQuantityState(item.quantity_purchased, item.quantity_needed);
+  const displayState = deriveRegistryItemDisplayState(item);
+  const isLinkOnly = displayState.displayMode === 'link_card';
+  const storeName = deriveRegistryItemStoreName(item);
   return {
     ...item,
-    item_name: cleanPublicRegistryTitle(item.item_name),
-    merchant: cleanPublicRegistryMerchant(item.merchant),
-    store_name: cleanPublicRegistryMerchant(item.store_name),
-    image_url: getSafePublicImageUrl(item.image_url) || null,
-    item_url: getSafePublicRegistryUrl(item.item_url),
-    canonical_url: getSafePublicRegistryUrl(item.canonical_url),
+    item_name: cleanPublicRegistryTitle(displayState.safeTitle),
+    merchant: cleanPublicRegistryMerchant(item.merchant || storeName),
+    store_name: cleanPublicRegistryMerchant(item.store_name || storeName),
+    image_url: isLinkOnly ? null : getSafePublicImageUrl(item.image_url) || null,
+    item_url: getSafePublicRegistryUrl(item.item_url || item.selected_product_url),
+    canonical_url: getSafePublicRegistryUrl(item.canonical_url || item.selected_product_url || item.item_url),
+    price_amount: isLinkOnly ? null : item.price_amount,
+    price_label: isLinkOnly ? null : item.price_label,
     fund_venmo_url: getSafePublicRegistryUrl(item.fund_venmo_url),
     fund_paypal_url: getSafePublicRegistryUrl(item.fund_paypal_url),
     fund_custom_url: getSafePublicRegistryUrl(item.fund_custom_url),

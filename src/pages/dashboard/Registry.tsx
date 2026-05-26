@@ -15,12 +15,13 @@ import type { RegistryRepairActionKind, RegistryRepairQueueItem } from './regist
 import { getCurrentMonthKey, resolveRegistryRefreshBudgetState } from './registry/refreshBudget';
 import { normalizeOwnerDashboardRegistryItem, useRegistryDashboardData } from './registry/useRegistryDashboardData';
 import { useRegistryItemActions } from './registry/useRegistryItemActions';
-import { useRegistryMaintenanceActions } from './registry/useRegistryMaintenanceActions';
+import { useRegistryMaintenanceActions, type RegistryBulkImportSummaryItem } from './registry/useRegistryMaintenanceActions';
 import { useRegistryRefreshPolicyActions } from './registry/useRegistryRefreshPolicyActions';
 import { saveRegistryThankYouLedger } from './registry/registryThankYouLedger';
 import { writeDemoRegistryState } from './registry/registryDemoStorage';
 import {
   updateRegistryRefreshBudget,
+  type RegistryImportBatchRecord,
 } from './registry/registryService';
 import type { RegistryFilter, RegistryItem } from './registry/registryTypes';
 
@@ -63,6 +64,8 @@ export const DashboardRegistry: React.FC = () => {
   const [bulkImportOpen, setBulkImportOpen] = useState(false);
   const [bulkUrls, setBulkUrls] = useState('');
   const [registryActionsOpen, setRegistryActionsOpen] = useState(false);
+  const [latestImportBatchOverride, setLatestImportBatchOverride] = useState<RegistryImportBatchRecord | null>(null);
+  const [recentImportBatchesOverride, setRecentImportBatchesOverride] = useState<RegistryImportBatchRecord[] | null>(null);
   const [, setSavingRefreshPolicy] = useState(false);
   const [registryThankYouSyncing, setRegistryThankYouSyncing] = useState(false);
   const [registryThankYouBusyItemId, setRegistryThankYouBusyItemId] = useState<string | null>(null);
@@ -106,6 +109,8 @@ export const DashboardRegistry: React.FC = () => {
     siteSlug,
     weddingDate,
     weddingSiteId,
+    latestImportBatch,
+    recentImportBatches,
   } = useRegistryDashboardData({
     isDemoMode,
     userId: user?.id,
@@ -116,6 +121,8 @@ export const DashboardRegistry: React.FC = () => {
     () => items.map(normalizeOwnerDashboardRegistryItem),
     [items],
   );
+  const activeLatestImportBatch = latestImportBatchOverride ?? latestImportBatch;
+  const activeRecentImportBatches = recentImportBatchesOverride ?? recentImportBatches;
   const registryActionsRef = useRef<HTMLDivElement>(null);
 
   const resetRegistryDashboardInteractionState = React.useCallback(() => {
@@ -130,6 +137,8 @@ export const DashboardRegistry: React.FC = () => {
     setRegistryActionsOpen(false);
     setRegistryThankYouSyncing(false);
     setRegistryThankYouBusyItemId(null);
+    setLatestImportBatchOverride(null);
+    setRecentImportBatchesOverride(null);
   }, []);
 
   useEffect(() => {
@@ -240,6 +249,7 @@ export const DashboardRegistry: React.FC = () => {
     fundGoalCoverageRate,
     fundShareReadyRate,
     guestVisibilityStats,
+    legacyRepairReport,
     nearBudgetCap,
     recentActivity,
     repairQueue,
@@ -247,6 +257,7 @@ export const DashboardRegistry: React.FC = () => {
     refreshWindowOpen,
     registryInsights,
     registryLaunchReadiness,
+    revalidationPreviewItems,
     registryThankYouPlan,
     registryThankYouStats,
     topRegistryItems,
@@ -315,16 +326,21 @@ export const DashboardRegistry: React.FC = () => {
   const {
     autoRefreshing,
     bulkImportBusy,
+    bulkImportSummary,
     handleAutoRefreshStale,
     handleBulkImport,
     handleCopyDuplicateReviewList,
     handleMergeDuplicateGroup,
+    handleRevalidateRegistryTruth,
     handleRefetchMetadata,
     handleRefreshImageIssues,
     handleRepairBadImports,
     imageRefreshBusy,
+    lastRepairRunSummary,
     mergingDuplicateGroupId,
+    revalidatingRegistryTruth,
     repairingBadImports,
+    resetBulkImportSummary,
   } = useRegistryMaintenanceActions({
     duplicateGroups,
     ensureMonthlyBudgetState,
@@ -336,6 +352,8 @@ export const DashboardRegistry: React.FC = () => {
     refreshWindowOpen,
     setBulkImportOpen,
     setBulkUrls,
+    setLatestImportBatchSummary: setLatestImportBatchOverride,
+    setRecentImportBatchesSummary: setRecentImportBatchesOverride,
     setItems,
     setMonthlyRefreshCount,
     setMonthlyRefreshMonth,
@@ -433,6 +451,7 @@ export const DashboardRegistry: React.FC = () => {
         handleMergeDuplicateGroup={handleMergeDuplicateGroup}
         handleMarkPurchased={handleMarkPurchased}
         handleResetPurchaseState={handleResetPurchaseState}
+        handleRevalidateRegistryTruth={handleRevalidateRegistryTruth}
         handleRefetchMetadata={handleRefetchMetadata}
         handleRefreshImageIssues={handleRefreshImageIssues}
         handleRepairBadImports={handleRepairBadImports}
@@ -455,10 +474,16 @@ export const DashboardRegistry: React.FC = () => {
         registryActionsRef={registryActionsRef}
         registryInsights={registryInsights}
         registryLaunchReadiness={registryLaunchReadiness}
+        revalidationPreviewItems={revalidationPreviewItems}
         registryThankYouPlan={registryThankYouPlan}
         registryThankYouStats={registryThankYouStats}
+        latestImportBatch={activeLatestImportBatch}
+        lastRepairRunSummary={lastRepairRunSummary}
+        legacyRepairReport={legacyRepairReport}
+        recentImportBatches={activeRecentImportBatches}
         registryThankYouBusyItemId={registryThankYouBusyItemId}
         registryThankYouSyncing={registryThankYouSyncing}
+        revalidatingRegistryTruth={revalidatingRegistryTruth}
         repairingBadImports={repairingBadImports}
         handleRunRepairQueueAction={handleRunRepairQueueAction}
         search={search}
@@ -488,24 +513,75 @@ export const DashboardRegistry: React.FC = () => {
         <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="w-full max-w-2xl space-y-4 rounded-[20px] border border-border bg-surface p-5">
             <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-text-primary">Add gift links</h3>
-              <button className="text-text-tertiary hover:text-text-primary" onClick={() => setBulkImportOpen(false)}>Close</button>
+              <h3 className="text-lg font-semibold text-text-primary">{bulkImportSummary ? 'Import results' : 'Add gift links'}</h3>
+              <button className="text-text-tertiary hover:text-text-primary" onClick={() => { setBulkImportOpen(false); resetBulkImportSummary(); }}>Close</button>
             </div>
-            <p className="text-sm text-text-secondary">Paste one link per line (up to 30). We’ll fill what we can and add the gifts to your registry.</p>
-            <p className="text-xs text-text-tertiary">If some links need review, you’ll see a short note so you can fix and retry.</p>
-            <textarea
-              value={bulkUrls}
-              onChange={(event) => setBulkUrls(event.target.value)}
-              rows={10}
-              placeholder="https://www.amazon.com/...\nhttps://www.target.com/..."
-              className="w-full rounded-xl border border-border bg-surface-subtle px-3 py-2 text-sm text-text-primary placeholder:text-text-tertiary focus:border-transparent focus:outline-none focus:ring-2 focus:ring-primary"
-            />
-            <div className="flex items-center justify-end gap-2">
-              <Button variant="ghost" size="sm" onClick={() => setBulkImportOpen(false)}>Cancel</Button>
-              <Button variant="primary" size="sm" onClick={() => void handleBulkImport(bulkUrls)} disabled={bulkImportBusy}>
-                {bulkImportBusy ? 'Adding…' : 'Add links'}
-              </Button>
-            </div>
+            {bulkImportSummary ? (
+              <>
+                <p className="text-sm text-text-secondary">
+                  {bulkImportSummary.totalCount} links processed.
+                </p>
+                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+                  {[
+                    ['Imported cleanly', bulkImportSummary.cleanCount],
+                    ['Link-only', bulkImportSummary.linkOnlyCount],
+                    ['Needs review', bulkImportSummary.needsReviewCount],
+                    ['Duplicate skipped', bulkImportSummary.duplicateCount],
+                    ['Failed', bulkImportSummary.failedCount],
+                  ].map(([label, count]) => (
+                    <div key={label} className="rounded-xl border border-border bg-surface-subtle/30 px-3 py-3">
+                      <p className="text-xl font-semibold text-text-primary">{count}</p>
+                      <p className="mt-1 text-xs text-text-secondary">{label}</p>
+                    </div>
+                  ))}
+                </div>
+                <div className="max-h-[340px] space-y-2 overflow-y-auto rounded-xl border border-border bg-surface-subtle/20 p-3">
+                  {bulkImportSummary.items.map((item, index) => (
+                    <BulkImportSummaryRow key={`${item.url}-${index}`} item={item} />
+                  ))}
+                </div>
+                <div className="flex items-center justify-end gap-2">
+                  {bulkImportSummary.needsReviewCount > 0 ? (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setShowAlertsOnly(true);
+                        setShowImageIssuesOnly(false);
+                        setBulkImportOpen(false);
+                        resetBulkImportSummary();
+                      }}
+                    >
+                      Review items
+                    </Button>
+                  ) : null}
+                  <Button variant="ghost" size="sm" onClick={() => { resetBulkImportSummary(); setBulkUrls(''); }}>
+                    Import more links
+                  </Button>
+                  <Button variant="primary" size="sm" onClick={() => { setBulkImportOpen(false); resetBulkImportSummary(); }}>
+                    View registry
+                  </Button>
+                </div>
+              </>
+            ) : (
+              <>
+                <p className="text-sm text-text-secondary">Paste one link per line (up to 30). We’ll fill what we can and add the gifts to your registry.</p>
+                <p className="text-xs text-text-tertiary">Blocked stores will fall back to clean link-only gifts instead of broken guest-facing cards.</p>
+                <textarea
+                  value={bulkUrls}
+                  onChange={(event) => setBulkUrls(event.target.value)}
+                  rows={10}
+                  placeholder="https://www.amazon.com/...\nhttps://www.target.com/..."
+                  className="w-full rounded-xl border border-border bg-surface-subtle px-3 py-2 text-sm text-text-primary placeholder:text-text-tertiary focus:border-transparent focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+                <div className="flex items-center justify-end gap-2">
+                  <Button variant="ghost" size="sm" onClick={() => { setBulkImportOpen(false); resetBulkImportSummary(); }}>Cancel</Button>
+                  <Button variant="primary" size="sm" onClick={() => void handleBulkImport(bulkUrls)} disabled={bulkImportBusy}>
+                    {bulkImportBusy ? 'Adding…' : 'Add links'}
+                  </Button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}
@@ -514,3 +590,32 @@ export const DashboardRegistry: React.FC = () => {
     </DashboardLayout>
   );
 };
+
+function BulkImportSummaryRow({ item }: { item: RegistryBulkImportSummaryItem }) {
+  const badgeLabel = item.result === 'clean'
+    ? 'Imported cleanly'
+    : item.result === 'link_only'
+      ? 'Link-only'
+      : item.result === 'needs_review'
+        ? 'Needs review'
+        : item.result === 'duplicate'
+          ? 'Duplicate'
+          : 'Failed';
+
+  return (
+    <div className="rounded-xl border border-border bg-white px-3 py-3">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="text-sm font-semibold text-text-primary">{item.displayTitle}</p>
+          <p className="mt-1 text-xs text-text-secondary">
+            {item.storeName ? `${item.storeName} · ` : ''}{item.url}
+          </p>
+          {item.reason ? <p className="mt-2 text-xs text-text-tertiary">{item.reason}</p> : null}
+        </div>
+        <span className="rounded-xl border border-border px-2 py-1 text-[11px] font-medium text-text-secondary">
+          {badgeLabel}
+        </span>
+      </div>
+    </div>
+  );
+}

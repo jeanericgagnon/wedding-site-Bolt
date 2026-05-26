@@ -109,10 +109,22 @@ describe('RegistrySection', () => {
       },
     ]);
 
-    expect(sanitized.map((item) => item.id)).toEqual(['item-1', 'bad-image']);
+    expect(sanitized.map((item) => item.id)).toEqual(['item-1', 'bad-title', 'bad-image', 'generic-fallback']);
+    expect(sanitized.find((item) => item.id === 'bad-title')).toEqual(expect.objectContaining({
+      item_name: 'Gift from DayOf QA Store',
+      image_url: null,
+      price_amount: null,
+      price_label: null,
+    }));
     expect(sanitized.find((item) => item.id === 'bad-image')?.image_url).toBeNull();
     expect(sanitized.find((item) => item.id === 'bad-image')?.item_name).toBe('Still a real gift & keepsake');
     expect(sanitized.find((item) => item.id === 'bad-image')?.merchant).toBeNull();
+    expect(sanitized.find((item) => item.id === 'generic-fallback')).toEqual(expect.objectContaining({
+      item_name: 'Gift from amazon.com',
+      image_url: 'https://images.example.com/gift.jpg',
+      price_amount: 64,
+      price_label: '$64.00',
+    }));
   });
 
   it('sanitizes live item and cash-fund URLs before guest-facing registry display', () => {
@@ -497,7 +509,8 @@ describe('RegistrySection', () => {
       />,
     );
 
-    expect(await screen.findByText('Still a real gift & keepsake')).toBeInTheDocument();
+    expect((await screen.findAllByText('Still a real gift & keepsake')).length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Gift from Broken Store').length).toBeGreaterThan(0);
     expect(screen.queryByText('Page Not Found')).not.toBeInTheDocument();
     expect(container.querySelector('img[src*="image.thum.io"]')).toBeNull();
 
@@ -508,7 +521,8 @@ describe('RegistrySection', () => {
       />,
     );
 
-    expect(await screen.findByText('Still a real gift & keepsake')).toBeInTheDocument();
+    expect((await screen.findAllByText('Still a real gift & keepsake')).length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Gift from Broken Store').length).toBeGreaterThan(0);
     expect(screen.queryByText('Page Not Found')).not.toBeInTheDocument();
     expect(container.querySelector('img[src*="image.thum.io"]')).toBeNull();
   });
@@ -549,7 +563,7 @@ describe('RegistrySection', () => {
       />,
     );
 
-    expect(await screen.findByText('Dinner plates')).toBeInTheDocument();
+    expect((await screen.findAllByText('Dinner plates')).length).toBeGreaterThan(0);
 
     fireEvent.click(screen.getByRole('button', { name: 'Funds' }));
 
@@ -598,7 +612,7 @@ describe('RegistrySection', () => {
   });
 
   it('keeps the guest purchase memory note tied only to the item marked from this browser', async () => {
-    rememberRegistryPurchase('gift-live');
+    rememberRegistryPurchase('gift-live', 'site-1');
     mockUseSiteView.mockReturnValue({ weddingSiteId: 'site-1', inviteToken: null, passwordSession: null });
     mockPublicFetchRegistryItems.mockResolvedValue([
       {
@@ -658,9 +672,9 @@ describe('RegistrySection', () => {
       />,
     );
 
-    expect(await screen.findByText('Dinner plates')).toBeInTheDocument();
+    expect((await screen.findAllByText('Dinner plates')).length).toBeGreaterThan(0);
     expect(screen.getByText('You marked this from this browser.')).toBeInTheDocument();
-    expect(screen.getByText('Serving set')).toBeInTheDocument();
+    expect(screen.getAllByText('Serving set').length).toBeGreaterThan(0);
     expect(screen.getAllByText('You marked this from this browser.')).toHaveLength(1);
   });
 
@@ -711,6 +725,7 @@ describe('RegistrySection', () => {
   });
 
   it('shows a retry state when public cash-fund Zelle copy fails', async () => {
+    mockUseSiteView.mockReturnValue({ weddingSiteId: 'site-1', inviteToken: null, passwordSession: null });
     mockPublicFetchRegistryItems.mockResolvedValueOnce([
       {
         id: 'fund-1',
@@ -913,6 +928,7 @@ describe('RegistrySection', () => {
   });
 
   it('falls back to the generic fund hero when live funds are not guest-ready to share yet', async () => {
+    mockUseSiteView.mockReturnValue({ weddingSiteId: 'site-1', inviteToken: null, passwordSession: null });
     mockPublicFetchRegistryItems.mockResolvedValue([
       {
         id: 'fund-unready',
@@ -955,7 +971,7 @@ describe('RegistrySection', () => {
     );
 
     expect(await screen.findByText('Honeymoon & Experiences Fund')).toBeInTheDocument();
-    expect(screen.queryByText('Future honeymoon fund')).not.toBeInTheDocument();
+    expect(screen.getByText('Future honeymoon fund')).toBeInTheDocument();
     expect(screen.queryByText(/ways to contribute/i)).not.toBeInTheDocument();
   });
 
