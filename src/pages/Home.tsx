@@ -18,7 +18,10 @@ import { useAuth } from '../hooks/useAuth';
 import { SITE_TRUST_COPY } from '../lib/siteTrustCopy';
 import { DEMO_MODE } from '../config/env';
 
-const asset = (name: string) => `${import.meta.env.BASE_URL}landing/${name}`;
+const asset = (path: string) => `${import.meta.env.BASE_URL}${path}`;
+
+const heroImage = asset('photos/engagement/e10732d6-f5d7-4118-8db5-4f28f0a165f7.jpg');
+const detailImage = asset('photos/engagement/053d97ba-331e-4d85-93f9-7986e70e2874.jpg');
 
 const heroStats = [
   ['Site', 'Templates, travel, registry, and RSVP in one public home.'],
@@ -30,21 +33,21 @@ const operatingSystemRows = [
   {
     title: 'The wedding site is the front door',
     body: 'Guests get a beautiful place for the details, not a dead page that stops helping after publish.',
-    image: asset('template-site-2.png'),
+    image: asset('template-previews/modern-luxe.webp'),
     imageAlt: 'Modern wedding website template preview',
     hrefs: { signedOut: '/templates', signedIn: '/dashboard/builder' },
   },
   {
     title: 'The guest list becomes the source of truth',
     body: 'RSVPs, households, meal notes, reminders, and seating all stay attached to the same people.',
-    image: asset('product-prototype.png'),
+    image: asset('template-previews/full-featured-modern.webp'),
     imageAlt: 'dayof product dashboard preview',
     hrefs: { signedOut: '/features/guests', signedIn: '/dashboard/guests' },
   },
   {
     title: 'The day-of handoff is part of the product',
     body: 'Coordinator context, photo collection, updates, and after-wedding tasks do not fall into a separate pile.',
-    image: asset('wedding-detail-2.png'),
+    image: asset('template-previews/immersive-experience.webp'),
     imageAlt: 'Wedding memory and planning detail',
     hrefs: { signedOut: '/product', signedIn: '/dashboard/planning' },
   },
@@ -109,10 +112,10 @@ const guestSteps = [
 ] as const;
 
 const templateCards = [
-  { name: 'Garden weekend', image: asset('template-site-1.png') },
-  { name: 'Modern celebration', image: asset('template-site-2.png') },
-  { name: 'Classic estate', image: asset('template-site-3.png') },
-  { name: 'Evening reception', image: asset('template-site-4.png') },
+  { name: 'Garden weekend', image: asset('template-previews/garden-escape.webp') },
+  { name: 'Modern celebration', image: asset('template-previews/modern-luxe.webp') },
+  { name: 'Classic estate', image: asset('template-previews/timeless-classic.webp') },
+  { name: 'Evening reception', image: asset('template-previews/editorial-impact.webp') },
 ] as const;
 
 const trustPoints = [
@@ -163,7 +166,7 @@ export const Home: React.FC = () => {
       <main id="top">
         <section className="relative min-h-[calc(74vh-64px)] overflow-hidden bg-ink text-white">
           <img
-            src={asset('proposal.jpeg')}
+            src={heroImage}
             alt=""
             className="absolute inset-0 h-full w-full object-cover"
           />
@@ -367,7 +370,7 @@ export const Home: React.FC = () => {
             </div>
             <Reveal delay={0.14}>
               <img
-                src={asset('wedding-detail-3.png')}
+                src={detailImage}
                 alt="Guest-facing wedding detail preview"
                 className="aspect-[4/5] w-full rounded-xl border border-border-subtle object-cover shadow-sm"
               />
