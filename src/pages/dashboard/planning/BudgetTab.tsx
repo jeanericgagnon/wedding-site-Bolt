@@ -3,6 +3,8 @@ import { Plus, Edit2, Trash2, AlertTriangle } from 'lucide-react';
 import { Card } from '../../../components/ui/Card';
 import { Button } from '../../../components/ui/Button';
 import { PlanningBudgetItem, PlanningVendor } from './planningService';
+import { PlanningDecisionCard } from './PlanningDecisionCard';
+import { buildBudgetDecisionCard } from './planningDecisionAssistant';
 
 interface Props {
   items: PlanningBudgetItem[];
@@ -189,7 +191,6 @@ export const BudgetTab: React.FC<Props> = ({ items, vendors, totalBudget, onTota
 
   const totalEstimated = items.reduce((s, i) => s + (i.estimated_amount || 0), 0);
   const totalActual = items.reduce((s, i) => s + (i.actual_amount || 0), 0);
-  const totalPaid = items.reduce((s, i) => s + (i.paid_amount || 0), 0);
   const remaining = (totalBudget || 0) - totalActual;
   const usedPct = totalBudget > 0 ? Math.min(100, Math.max(0, (totalActual / totalBudget) * 100)) : 0;
 
@@ -199,9 +200,12 @@ export const BudgetTab: React.FC<Props> = ({ items, vendors, totalBudget, onTota
     const act = items.filter(i => i.category === cat).reduce((s, i) => s + i.actual_amount, 0);
     return act > est && est > 0;
   });
+  const budgetDecision = buildBudgetDecisionCard(items, totalBudget);
 
   return (
     <div className="space-y-4">
+      <PlanningDecisionCard model={budgetDecision} />
+
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {[
           { label: 'Budget goal', value: totalBudget || 0, color: 'text-text-primary', format: 'currency' },

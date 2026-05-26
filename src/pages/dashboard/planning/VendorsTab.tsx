@@ -1,10 +1,12 @@
 import React, { useMemo, useState } from 'react';
-import { Plus, Edit2, Trash2, Phone, Mail, Globe, AlertTriangle, ChevronDown, ChevronUp } from 'lucide-react';
+import { Plus, Edit2, Trash2, Phone, Mail, Globe, ChevronDown, ChevronUp } from 'lucide-react';
 import { Card } from '../../../components/ui/Card';
 import { Button } from '../../../components/ui/Button';
 import { Badge } from '../../../components/ui/Badge';
 import { PlanningVendor } from './planningService';
 import { formatVendorDate, isVendorDateOnOrBefore } from './vendorDate';
+import { PlanningDecisionCard } from './PlanningDecisionCard';
+import { buildVendorsDecisionCard } from './planningDecisionAssistant';
 
 interface Props {
   vendors: PlanningVendor[];
@@ -179,11 +181,17 @@ export const VendorsTab: React.FC<Props> = ({ vendors, onAdd, onUpdate, onDelete
     try {
       const raw = localStorage.getItem('dayof.vendor.meta.v1');
       if (raw) setVendorMeta(JSON.parse(raw));
-    } catch {}
+    } catch {
+      // Ignore malformed local state and fall back to a clean vendor meta map.
+    }
   }, []);
 
   React.useEffect(() => {
-    try { localStorage.setItem('dayof.vendor.meta.v1', JSON.stringify(vendorMeta)); } catch {}
+    try {
+      localStorage.setItem('dayof.vendor.meta.v1', JSON.stringify(vendorMeta));
+    } catch {
+      // Ignore storage write failures for optional vendor follow-up metadata.
+    }
   }, [vendorMeta]);
 
   const today = new Date();
@@ -219,9 +227,12 @@ export const VendorsTab: React.FC<Props> = ({ vendors, onAdd, onUpdate, onDelete
     'open-balance': filteredVendors.filter((v) => vendorStage(v) === 'open-balance'),
     paid: filteredVendors.filter((v) => vendorStage(v) === 'paid'),
   };
+  const vendorDecision = buildVendorsDecisionCard(vendors);
 
   return (
     <div className="space-y-4">
+      <PlanningDecisionCard model={vendorDecision} />
+
       {(totalBalance > 0 || followUpDueCount > 0) && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
           <div className="flex items-center justify-between p-3 bg-white rounded-xl border border-border/35 shadow-[0_4px_14px_rgba(15,23,42,0.05)] hover:shadow-[0_8px_20px_rgba(15,23,42,0.08)] transition-shadow">
