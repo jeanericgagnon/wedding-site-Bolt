@@ -8,6 +8,15 @@ _Launch call right now:_ `GO`
 
 ## Current Truth
 
+- 2026-05-21 08:46 PM PDT:
+  - added a headless registry maintenance proof lane in `scripts/v1-proof-registry-maintenance-report.mjs`
+  - the proof now reads the same shared registry maintenance snapshot as the dashboard cleanup surface
+  - `node scripts/v1-proof-registry-maintenance-report.mjs --input scripts/fixtures/registry-maintenance-proof.fixture.json --format json` -> `PASS`
+  - `npm run smoke:registry` -> `PASS`
+  - `npm run build` -> `PASS`
+  - `git diff --check` -> `PASS`
+  - the dedicated Vitest runner still stalls on this machine before returning results, so the maintenance lane is currently proven through the fixture command plus smoke/build
+  - no deploy was run
 - The main verified live runtime is exact frontend SHA `f2cc4811`.
 - Current branch head is `f29574dd`; the extra head commit is a board-sync cleanup and does not change deployed runtime behavior.
 - Public DTO minimization is closed and live-proven.

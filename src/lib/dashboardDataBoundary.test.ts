@@ -111,7 +111,8 @@ describe('dashboard data boundary guards', () => {
     expect(uiStateSource).toContain("const raw = readPlannerAccessRole('messages', weddingSite.id);");
     expect(uiStateSource).toContain("writePlannerAccessRole('messages', weddingSite.id, messagesRole);");
     expect(uiStateSource).not.toContain("from '../../lib/supabase'");
-    expect(billingActionsSource).toContain('const url = await createSmsCreditsSession(weddingSite.id, success, cancel, pack);');
+    expect(billingActionsSource).toContain('const requestSiteId = weddingSite.id;');
+    expect(billingActionsSource).toContain('const url = await createSmsCreditsSession(requestSiteId, success, cancel, pack);');
     expect(billingActionsSource).toContain("type: 'sms_credits_checkout_started'");
     expect(billingActionsSource).toContain('toast(safeMessagesError(err,');
     expect(billingActionsSource).not.toContain("from '../../lib/supabase'");
@@ -432,7 +433,7 @@ describe('dashboard data boundary guards', () => {
     expect(opsHook).toContain('const guestOpsContextVersionRef = useRef(0);');
     expect(opsHook).toContain('isGuestsReadOnly: boolean;');
     expect(opsHook).toContain("toast('Viewer mode is read-only.', 'info');");
-    expect(opsHook).toContain('if (isGuestsReadOnly) {\n      toast(\'Viewer mode is read-only.\', \'info\');\n      return;\n    }\n\n    if (!weddingSiteId || isDemoMode) return;');
+    expect(opsHook).toContain('if (isGuestsReadOnly) {\n      toast(\'Viewer mode is read-only.\', \'info\');\n      return false;\n    }\n\n    if (!weddingSiteId || isDemoMode) return false;');
     expect(opsHook).toContain('if (isGuestsReadOnly) {\n      toast(\'Viewer mode is read-only.\', \'info\');\n      return;\n    }\n\n    if (!weddingSiteId || isDemoMode) {');
     expect(opsHook).toContain('function isCurrentGuestOpsContext(contextVersion: number) {');
     expect(opsHook).toContain('const targetWeddingSiteId = weddingSiteId;');
@@ -811,7 +812,7 @@ describe('dashboard data boundary guards', () => {
     expect(service).toContain('export async function resolveItinerarySiteId()');
     expect(service).toContain("const ITINERARY_EVENT_MANAGER_SITE_SELECT = 'id'");
     expect(service).toContain("const ITINERARY_EVENT_MUTATION_SITE_SELECT = 'id'");
-    expect(service).toContain("const ITINERARY_EVENT_LIST_SITE_SELECT = 'id'");
+    expect(service).toContain("const ITINERARY_EVENT_LIST_SITE_SELECT = 'id, wedding_date, venue_date, wedding_data'");
     expect(service).toContain("export const ITINERARY_EVENT_SELECT = 'id, event_name, title, description, event_date, start_time, end_time, location_name, location_address, dress_code, notes, display_order, sort_order, is_visible' as const;");
     expect(service).toContain('export async function loadItineraryDashboardEvents(');
     expect(service).toContain(".select(ITINERARY_EVENT_SELECT)");
@@ -840,7 +841,7 @@ describe('dashboard data boundary guards', () => {
   it('loads registry service items with an explicit projection', () => {
     const source = readFileSync(join(process.cwd(), 'src/pages/dashboard/registry/registryService.ts'), 'utf8');
 
-    expect(source).toContain('const REGISTRY_ITEM_SELECT = ');
+    expect(source).toContain('REGISTRY_ITEM_SELECT,');
     expect(source).toContain('.select(REGISTRY_ITEM_SELECT)');
     expect(source).not.toContain(".from('registry_items')\n    .select('*')");
   });

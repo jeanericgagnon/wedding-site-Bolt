@@ -76,6 +76,7 @@
     "proof:v1:photo-memory-flow": "node scripts/v1-proof-photo-memory-flow.mjs",
     "proof:v1:qr-scanner": "node scripts/v1-proof-qr-scanner.mjs",
     "proof:v1:registry": "node scripts/v1-proof-registry.mjs",
+    "proof:v1:registry-maintenance-report": "node scripts/v1-proof-registry-maintenance-report.mjs",
     "proof:v1:full-suite-exit-gate": "node scripts/v1-proof-full-suite-exit-gate.mjs",
     "proof:v1:full-suite-features": "npm run typecheck -- --pretty false && npm run lint -- --quiet && npm run build && npm run proof:v1:name-change-runtime && npm run proof:v1:coordinator-dayof && npm run proof:v1:qr-scanner && npm run smoke:checkin",
     "proof:v1:registry-preview-ssrf": "node scripts/v1-proof-registry-preview-ssrf.mjs",

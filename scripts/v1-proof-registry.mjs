@@ -40,6 +40,12 @@ const localSteps = [
     required: true,
   },
   {
+    id: 'registry-maintenance-proof',
+    label: 'Registry maintenance report fixture proof',
+    command: 'node scripts/v1-proof-registry-maintenance-report.mjs --input scripts/fixtures/registry-maintenance-proof.fixture.json --format json',
+    required: true,
+  },
+  {
     id: 'build',
     label: 'Build integrity check',
     command: 'npm run build',
@@ -191,6 +197,7 @@ const output = {
   automatedCoverage: [
     'Purchased-state normalization and duplicate detection',
     'Metadata confidence / blocked retailer / repair-state attention truth',
+    'Headless registry maintenance report truth from shared cleanup and saved-truth sweep helpers',
     'Barcode normalization, provider breadth, and scanner fallback behavior',
     'Demo owner purchase-state, thank-you follow-up, import cleanup, and duplicate-merge continuity across reloads',
     'Registry dashboard guard coverage',

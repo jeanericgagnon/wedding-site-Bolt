@@ -8,6 +8,25 @@ When historical entries below mention only `npm run proof:v1:board:md`, read tha
 
 ---
 
+## 2026-05-21 08:46 PM PDT - Headless Registry Maintenance Proof Lane
+
+- Status: `LOCAL HARDENING + NO-DEPLOY PROOF`
+- What changed:
+  - added a shared registry maintenance snapshot layer so cleanup grouping, saved-truth sweep counts, and legacy bad-import reporting can be derived once and reused
+  - added `scripts/v1-proof-registry-maintenance-report.mjs` plus the package command `npm run proof:v1:registry-maintenance-report`
+  - added a committed registry proof fixture at `scripts/fixtures/registry-maintenance-proof.fixture.json`
+  - wired `scripts/v1-proof-registry.mjs` to run the new fixture-backed maintenance proof as part of the local registry proof lane
+  - updated `scripts/smoke_registry_guard.js` so the registry smoke guard follows the new shared maintenance snapshot path instead of the older inline repair-queue derivation
+- Proof:
+  - `node scripts/v1-proof-registry-maintenance-report.mjs --input scripts/fixtures/registry-maintenance-proof.fixture.json --format json`
+  - `npm run smoke:registry`
+  - `npm run build`
+  - `git diff --check`
+- Result:
+  - registry maintenance truth is no longer trapped inside the dashboard cleanup surface
+  - fixture-backed proof can now emit a reusable maintenance and saved-truth sweep report without requiring UI state
+  - no deploy was run
+
 ## 2026-05-12 10:14 PM PDT - Broader Strictness Cleanup And Board Demotion
 
 - Status: `LOCAL HARDENING + BOARD SYNC`
