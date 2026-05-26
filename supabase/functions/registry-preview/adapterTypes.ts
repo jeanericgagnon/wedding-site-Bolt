@@ -164,6 +164,16 @@ export function extractMetaTags(html: string): Record<string, string> {
     meta[match[2]] = match[1];
   }
 
+  const propertyRegex = /<meta[^>]*property=["']([^"']+)["'][^>]*content=["']([^"']+)["'][^>]*>/gi;
+  while ((match = propertyRegex.exec(html)) !== null) {
+    meta[match[1]] = match[2];
+  }
+
+  const propertyRegex2 = /<meta[^>]*content=["']([^"']+)["'][^>]*property=["']([^"']+)["'][^>]*>/gi;
+  while ((match = propertyRegex2.exec(html)) !== null) {
+    meta[match[2]] = match[1];
+  }
+
   return meta;
 }
 

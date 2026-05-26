@@ -4,8 +4,10 @@ import { normalizeUrl, isSameProduct } from './urlNormalizer.ts';
 import { TargetAdapter } from './targetAdapter.ts';
 import { AmazonAdapter } from './amazonAdapter.ts';
 import { WalmartAdapter } from './walmartAdapter.ts';
+import { IkeaAdapter } from './ikeaAdapter.ts';
 import { GenericAdapter } from './genericAdapter.ts';
-import type { RetailerAdapter, ProductData } from './adapterTypes.ts';
+import { extractTitle, type RetailerAdapter, type ProductData } from './adapterTypes.ts';
+import { createLinkOnlyPreview, deriveStoreName, finalizeRegistryPreview, isBadProductTitle } from './previewSafety.ts';
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -25,6 +27,7 @@ const adapters: RetailerAdapter[] = [
   new TargetAdapter(),
   new AmazonAdapter(),
   new WalmartAdapter(),
+  new IkeaAdapter(),
 ];
 
 const genericAdapter = new GenericAdapter();
@@ -53,6 +56,13 @@ const METADATA_HOSTS = new Set([
   "metadata.google.internal",
   "metadata",
 ]);
+
+class BlockedRegistryPreviewError extends Error {
+  constructor(message = "Store blocked product details.") {
+    super(message);
+    this.name = "BlockedRegistryPreviewError";
+  }
+}
 
 // Rate limiting
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
@@ -151,7 +161,7 @@ async function assertPublicPreviewTarget(url: string): Promise<URL> {
   return parsed;
 }
 
-async function fetchPreviewHtml(url: string): Promise<{ finalUrl: string; html: string; headers: Headers }> {
+async function fetchPreviewHtml(url: string): Promise<{ finalUrl: string; html: string; headers: Headers; status: number }> {
   let currentUrl = url;
 
   for (let redirects = 0; redirects <= MAX_PREVIEW_REDIRECTS; redirects++) {
@@ -181,8 +191,8 @@ async function fetchPreviewHtml(url: string): Promise<{ finalUrl: string; html: 
         continue;
       }
 
-      if (response.status === 403 || response.status === 429) {
-        throw new Error(`This store blocks automated access (HTTP ${response.status}). Please enter details manually.`);
+      if (response.status === 401 || response.status === 403 || response.status === 429) {
+        throw new BlockedRegistryPreviewError(`This store blocks automated access (HTTP ${response.status}).`);
       }
       if (!response.ok) throw new Error(`Page returned HTTP ${response.status}`);
 
@@ -201,7 +211,7 @@ async function fetchPreviewHtml(url: string): Promise<{ finalUrl: string; html: 
         throw new Error("Page is too large to preview");
       }
 
-      return { finalUrl: parsed.toString(), html, headers: response.headers };
+      return { finalUrl: parsed.toString(), html, headers: response.headers, status: response.status };
     } finally {
       clearTimeout(timeout);
     }
@@ -375,6 +385,29 @@ function deriveUltimateImageFallback(hostname: string, title: string): string {
   return `https://ui-avatars.com/api/?name=${label}&size=512&background=f3f4f6&color=374151&bold=true`;
 }
 
+function isBlockedPage(input: { html: string; title?: string | null; finalUrl?: string; status?: number }): boolean {
+  if ([401, 403, 429].includes(input.status ?? 0)) return true;
+  const haystack = [
+    input.title ?? "",
+    input.finalUrl ?? "",
+    input.html.slice(0, 5000),
+  ].join(" ").toLowerCase();
+  return [
+    "access denied",
+    "robot or human",
+    "verify you are human",
+    "are you a robot",
+    "captcha",
+    "forbidden",
+    "attention required",
+    "akamai",
+    "cloudflare",
+    "perimeterx",
+    "datadome",
+    "bot detection",
+  ].some((term) => haystack.includes(term));
+}
+
 function toDisplayableImageUrl(url: string | undefined): string | undefined {
   if (!url) return undefined;
   if (url.includes('images.weserv.nl')) return url;
@@ -474,6 +507,7 @@ function tuneConfidenceScore(base: number, source: ProductData['source_method'],
   if (source === 'jsonld') score = Math.max(score, 0.66);
   if (source === 'opengraph') score = Math.max(score, 0.5);
   if (source === 'fallback') score = Math.min(score, 0.45);
+  if (source === 'link_only') score = Math.min(score, 0.4);
 
   // Penalize missing fields to keep confidence interpretable in UI.
   score -= Math.min(0.3, missingCount * 0.12);
@@ -484,20 +518,34 @@ function tuneConfidenceScore(base: number, source: ProductData['source_method'],
 }
 
 function ensureBaselineMetadata(rawUrl: string, data: ProductData): ProductData {
+  const safeData = finalizeRegistryPreview(rawUrl, data);
+
+  if (safeData.display_mode === "link_card" || safeData.source_method === "link_only") {
+    return {
+      ...safeData,
+      title: safeData.title || `Gift from ${deriveStoreName(rawUrl)}`,
+      image_url: undefined,
+      price_label: undefined,
+      price_amount: undefined,
+      partial: false,
+      missing_fields: [],
+    };
+  }
+
   const normalized = normalizeUrl(rawUrl);
-  const title = data.title?.trim() || deriveFallbackTitle(rawUrl);
-  const rawImageUrl = data.image_url || deriveFallbackImage(rawUrl, normalized.hostname) || deriveUltimateImageFallback(normalized.hostname, title);
+  const title = safeData.title?.trim() || deriveFallbackTitle(rawUrl);
+  const rawImageUrl = safeData.image_url || deriveFallbackImage(rawUrl, normalized.hostname) || deriveUltimateImageFallback(normalized.hostname, title);
   const imageUrl = toDisplayableImageUrl(rawImageUrl) || deriveUltimateImageFallback(normalized.hostname, title);
 
-  const missing = new Set(data.missing_fields ?? []);
+  const missing = new Set(safeData.missing_fields ?? []);
   if (title) missing.delete('title'); else missing.add('title');
   if (imageUrl) missing.delete('image'); else missing.add('image');
 
   const missingList = missing.size ? Array.from(missing) : undefined;
-  const confidence = tuneConfidenceScore(data.confidence_score, data.source_method, missing.size);
+  const confidence = tuneConfidenceScore(safeData.confidence_score, safeData.source_method, missing.size);
 
   return {
-    ...data,
+    ...safeData,
     title,
     image_url: imageUrl,
     confidence_score: confidence,
@@ -522,10 +570,14 @@ async function extractProductData(url: string): Promise<ProductData> {
   console.log(`Using ${adapter.name} adapter for ${url}`);
 
   try {
-    const { finalUrl, html, headers } = await fetchPreviewHtml(url);
+    const { finalUrl, html, headers, status } = await fetchPreviewHtml(url);
 
     if (html.length < 200) {
       throw new Error("Page content too short — site may require login or block access");
+    }
+
+    if (isBlockedPage({ html, title: extractTitle(html), finalUrl, status })) {
+      throw new BlockedRegistryPreviewError();
     }
 
     // Parse with adapter
@@ -542,8 +594,12 @@ async function extractProductData(url: string): Promise<ProductData> {
     // If adapter failed but we have HTML, create a minimal fallback
     throw new Error("Could not extract product information from page");
   } catch (error) {
+    if (error instanceof BlockedRegistryPreviewError) {
+      return createLinkOnlyPreview(url, "blocked_by_store");
+    }
+
     const proxyData = await extractProxyTextData(url);
-    if (proxyData?.title) {
+    if (proxyData?.title && !isBadProductTitle(proxyData.title)) {
       const fallbackImage = proxyData.imageUrl || deriveFallbackImage(url, normalized.hostname);
       const missing: string[] = [];
       if (!fallbackImage) missing.push('image');
@@ -584,6 +640,10 @@ async function extractProductData(url: string): Promise<ProductData> {
         return "Product";
       }
     })();
+
+    if (isBadProductTitle(fallbackTitle)) {
+      return createLinkOnlyPreview(url, "weak_product_metadata");
+    }
 
     const fallbackImage = deriveFallbackImage(url, normalized.hostname);
     return {
@@ -698,7 +758,9 @@ Deno.serve(async (req: Request) => {
     if (!forceRefresh) {
       const cached = await getCached(supabaseAdmin, hash);
       if (cached) {
-        const normalizedCached = ensureBaselineMetadata(rawUrl, cached);
+        const normalizedCached = ensureBaselineMetadata(rawUrl, isBadProductTitle(cached.title)
+          ? createLinkOnlyPreview(normalized.canonical, "weak_cached_product_metadata")
+          : cached);
         return new Response(JSON.stringify({ ...normalizedCached, cached: true }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
@@ -707,7 +769,10 @@ Deno.serve(async (req: Request) => {
 
     // Extract product data
     const extracted = await extractProductData(normalized.canonical);
-    const result = ensureBaselineMetadata(normalized.canonical, extracted);
+    const result = ensureBaselineMetadata(
+      normalized.canonical,
+      isBadProductTitle(extracted.title) ? createLinkOnlyPreview(normalized.canonical, "weak_product_metadata") : extracted,
+    );
 
     // Save to cache in background
     EdgeRuntime.waitUntil(saveCache(supabaseAdmin, hash, normalized.canonical, result, normalized.retailer));
