@@ -114,7 +114,15 @@ Deno.serve(async (req: Request) => {
       refreshed,
       message: refreshed ? "Drive token refreshed and healthy." : "Drive connection healthy.",
     });
-  } catch (err) {
-    return json({ connected: true, healthy: false, needsReconnect: true, message: err instanceof Error ? err.message : "Health check failed." }, 500);
+  } catch {
+    console.error("GOOGLE_DRIVE_HEALTH_UNEXPECTED_FAILED", {
+      reason: "UNEXPECTED_GOOGLE_DRIVE_HEALTH_FAILURE",
+    });
+    return json({
+      connected: true,
+      healthy: false,
+      needsReconnect: true,
+      message: "Could not verify Google Drive health. Please reconnect and try again.",
+    }, 500);
   }
 });
