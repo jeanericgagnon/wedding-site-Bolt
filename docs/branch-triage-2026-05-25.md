@@ -24,6 +24,7 @@ Why not treat as PR-ready:
 
 Recommended next move:
 - salvage the desired parts onto a fresh branch from `main`
+- see `docs/launch-main-p0-salvage-plan-2026-05-25.md` for the current salvage split
 
 ### Preserve as working history
 
