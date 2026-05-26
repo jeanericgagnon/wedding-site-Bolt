@@ -64,7 +64,7 @@ export const DashboardMoreTools: React.FC = () => {
               ['Before the wedding', 'Guest details, hotel block, songs, and vendor notes stay nearby while plans are still taking shape.'],
               ['Wedding weekend', 'Seating, coordinator view, QR codes, and lookup tools stay ready for the day itself.'],
               ['After the wedding', 'Thank-you notes, photo recap, memory vaults, and name change stay grouped when you need them.'],
-              ['Preferences', 'Shared access, privacy, data export, and billing stay tucked away until they matter.'],
+              ['Preferences', 'Shared access, privacy, data export, and billing stay easy to reach without crowding the main navigation.'],
             ].map(([title, detail]) => (
               <div key={title} className="rounded-lg border border-border bg-surface-subtle/30 p-4">
                 <p className="text-sm font-semibold text-text-primary">{title}</p>
@@ -86,7 +86,7 @@ export const DashboardMoreTools: React.FC = () => {
             <div className="inline-flex flex-wrap gap-2 text-xs text-text-tertiary">
               <span className="rounded-lg border border-border bg-surface-subtle/30 px-3 py-1">Open the real home</span>
               <span className="rounded-lg border border-border bg-surface-subtle/30 px-3 py-1">Pin only what helps</span>
-              <span className="rounded-lg border border-border bg-surface-subtle/30 px-3 py-1">Keep the rest tucked away</span>
+              <span className="rounded-lg border border-border bg-surface-subtle/30 px-3 py-1">Leave the rest in the library</span>
             </div>
           </div>
         </section>
@@ -137,7 +137,7 @@ export const DashboardMoreTools: React.FC = () => {
                           }`}
                         >
                           {isShownInSidebar ? <PinOff className="h-4 w-4" /> : <Pin className="h-4 w-4" />}
-                          <span>{canShowInNav ? (isShownInSidebar ? 'Keep tucked away' : 'Show in sidebar') : 'Stays in More Tools'}</span>
+                          <span>{canShowInNav ? (isShownInSidebar ? 'Unpin from sidebar' : 'Pin to sidebar') : 'Available in More tools'}</span>
                         </button>
                         <button
                           type="button"
@@ -158,7 +158,7 @@ export const DashboardMoreTools: React.FC = () => {
                             More actions
                           </summary>
                           <div className="mt-2 rounded-lg border border-border bg-surface-subtle/40 p-2 text-xs text-text-secondary">
-                            <button type="button" className="block w-full rounded-lg px-2 py-1.5 text-left hover:bg-surface" onClick={() => writeStoredToolPins(DASHBOARD_NAV_PIN_STORAGE_KEY, navPins.filter((id) => id !== tool.id), getStoredActiveSiteId())}>Remove from sidebar</button>
+                            <button type="button" className="block w-full rounded-lg px-2 py-1.5 text-left hover:bg-surface" onClick={() => writeStoredToolPins(DASHBOARD_NAV_PIN_STORAGE_KEY, navPins.filter((id) => id !== tool.id), getStoredActiveSiteId())}>Unpin from sidebar</button>
                             <button type="button" className="block w-full rounded-lg px-2 py-1.5 text-left hover:bg-surface" onClick={() => writeStoredToolPins(DASHBOARD_HOME_PIN_STORAGE_KEY, homePins.filter((id) => id !== tool.id), getStoredActiveSiteId())}>Remove from Home</button>
                           </div>
                         </details>

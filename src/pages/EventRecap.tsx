@@ -408,7 +408,9 @@ export const EventRecap: React.FC = () => {
       const result = await copyTextOrDownload(storyCaption, `${slug || 'dayof'}-story-caption.txt`);
       if (!isCurrentShareAction()) return;
       setStoryCaptionNotice(result);
-      setShareStatus(result === 'copied' ? t('event_recap.link_copied') : t('event_recap.link_downloaded'));
+      setShareStatus(result === 'copied'
+        ? t('event_recap.caption_copied')
+        : t('event_recap.caption_downloaded'));
     } catch {
       if (!isCurrentShareAction()) return;
       setShareStatus('Couldn’t copy the story caption right now.');

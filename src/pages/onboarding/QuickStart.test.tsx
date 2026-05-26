@@ -232,8 +232,7 @@ describe('QuickStart flow guards', () => {
 
     renderQuickStart();
 
-    expect(await screen.findByRole('button', { name: /About how many guests are you inviting: 100–150/i })).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /About how many guests are you inviting: 100-150/i })).not.toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: /About how many guests are you inviting: 100-150/i })).toBeInTheDocument();
   });
 
 

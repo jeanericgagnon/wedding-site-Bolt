@@ -235,7 +235,7 @@ export const QuickStart: React.FC = () => {
       }
     };
     void fetchWeddingSite();
-  }, [searchParams]);
+  }, [quickStartStorageScope, searchParams]);
 
   useEffect(() => {
     if (!currentQuestion) return;

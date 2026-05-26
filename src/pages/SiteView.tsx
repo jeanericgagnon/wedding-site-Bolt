@@ -25,7 +25,7 @@ import {
 } from '../lib/publicAccessArtifacts';
 import { hasStoredGuestLanguagePreference } from '../lib/guestLanguagePreference';
 import { fetchPublicItineraryRows, hasLiveRegistryItems } from './siteViewService';
-import { combineDateAndTime, createAlexJordanDemoWeddingData } from './siteViewHelpers';
+import { combineDateAndTime } from './siteViewHelpers';
 import { SiteViewRouteView } from './SiteViewRouteView';
 import type { PublicSectionDTO } from '../lib/publicRenderContract';
 import { trackGuestHubEvent } from './guestHubPublicService';
