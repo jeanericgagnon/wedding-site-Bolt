@@ -1598,7 +1598,7 @@ export const DashboardSeating: React.FC = () => {
         {(() => {
           const seatingInsight = buildSeatingInsightCard({
             counters,
-            guests: eligibleGuests,
+            guests: allGuests,
             tables,
             assignments,
             invalidCount,

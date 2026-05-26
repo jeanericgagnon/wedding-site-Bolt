@@ -104,10 +104,10 @@ export const buildPhotoMemoryCuratorModel = (args: {
   const totalVisibleUploads = uploads.filter((upload) => !upload.is_hidden).length;
   const flaggedUploads = uploads.filter((upload) => upload.is_flagged && !upload.is_hidden).length;
   const readyAlbums = activeAlbums.filter((album) => countVisiblePhotoUploads(uploads, album.id) >= 3);
-  const signatureReadyCount = ['main-couple', 'couple-gallery'].filter(
+  const signatureReadyCount = (['main-couple', 'couple-gallery'] as PhotoBucketKind[]).filter(
     (bucketKey) => bucketStatus[bucketKey].tone === 'ready',
   ).length;
-  const atmosphereReadyCount = ['weekend-vibe', 'friends-family', 'extras'].filter(
+  const atmosphereReadyCount = (['weekend-vibe', 'friends-family', 'extras'] as PhotoBucketKind[]).filter(
     (bucketKey) => bucketStatus[bucketKey].tone === 'ready',
   ).length;
 

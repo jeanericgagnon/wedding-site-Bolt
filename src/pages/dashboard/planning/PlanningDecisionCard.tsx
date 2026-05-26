@@ -1,17 +1,19 @@
 import React from 'react';
 import { Brain, ArrowRight } from 'lucide-react';
 import { Card } from '../../../components/ui/Card';
-import type { PlanningDecisionCardModel } from './planningDecisionAssistant';
+import type { PlanningDecisionAction, PlanningDecisionCardModel } from './planningDecisionAssistant';
 
 interface Props {
   model: PlanningDecisionCardModel;
-  onAction?: (target: PlanningDecisionCardModel['primaryAction'] extends infer T ? T extends { target: infer U } ? U : never : never) => void;
+  onAction?: (target: PlanningDecisionAction['target']) => void;
 }
 
 export const PlanningDecisionCard: React.FC<Props> = ({ model, onAction }) => {
-  const handleAction = (target: Props['onAction'] extends (...args: infer A) => unknown ? A[0] : never) => {
+  const handleAction = (target: PlanningDecisionAction['target']) => {
     onAction?.(target);
   };
+  const primaryAction = model.primaryAction;
+  const secondaryAction = model.secondaryAction;
 
   return (
     <Card padding="md" className="border-primary/20 bg-primary/[0.04]">
@@ -32,25 +34,25 @@ export const PlanningDecisionCard: React.FC<Props> = ({ model, onAction }) => {
               ))}
             </div>
           )}
-          {(model.primaryAction || model.secondaryAction) && onAction && (
+          {(primaryAction || secondaryAction) && onAction && (
             <div className="mt-4 flex flex-wrap gap-2">
-              {model.primaryAction ? (
+              {primaryAction ? (
                 <button
                   type="button"
-                  onClick={() => handleAction(model.primaryAction?.target)}
+                  onClick={() => handleAction(primaryAction.target)}
                   className="inline-flex min-h-[38px] items-center rounded-full bg-primary px-3.5 py-2 text-sm font-medium text-white transition hover:bg-primary-hover"
                 >
-                  {model.primaryAction.label}
+                  {primaryAction.label}
                   <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
                 </button>
               ) : null}
-              {model.secondaryAction ? (
+              {secondaryAction ? (
                 <button
                   type="button"
-                  onClick={() => handleAction(model.secondaryAction?.target)}
+                  onClick={() => handleAction(secondaryAction.target)}
                   className="inline-flex min-h-[38px] items-center rounded-full border border-border bg-white px-3.5 py-2 text-sm font-medium text-text-primary transition hover:border-primary/40 hover:text-primary"
                 >
-                  {model.secondaryAction.label}
+                  {secondaryAction.label}
                 </button>
               ) : null}
             </div>

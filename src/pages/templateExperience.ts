@@ -1,4 +1,4 @@
-import type { TemplateManifest } from '../builder/constants/templateSupportManifest';
+import type { TemplateSupportManifest } from '../builder/constants/templateSupportManifest';
 
 export interface TemplateExperienceBrief {
   title: string;
@@ -11,7 +11,7 @@ export function buildTemplateExperienceBrief(args: {
   name: string;
   recommended: boolean;
   selected: boolean;
-  supportManifest: TemplateManifest | null;
+  supportManifest: TemplateSupportManifest | null;
   compareCount: number;
 }): TemplateExperienceBrief {
   const { name, recommended, selected, supportManifest, compareCount } = args;

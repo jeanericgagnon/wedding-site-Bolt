@@ -179,11 +179,6 @@ export const DashboardOverview: React.FC = () => {
   const [nameChangeInsights, setNameChangeInsights] = useState<NameChangeOverviewInsights>(DEFAULT_NAME_CHANGE_INSIGHTS);
 
   useEffect(() => {
-    if (!user) return;
-    void loadStats();
-  }, [loadStats, user, isDemoMode]);
-
-  useEffect(() => {
     const refreshProgress = () => setSetupDraftProgressPercent(setupDraftProgress(readSetupDraft()));
     refreshProgress();
     window.addEventListener('focus', refreshProgress);
@@ -219,7 +214,7 @@ export const DashboardOverview: React.FC = () => {
     };
   }, [stats?.siteSlug, isDemoMode]);
 
-  const loadStats = useCallback(async () => {
+  async function loadStats() {
     if (!user) return;
     setLoading(true);
     setError(null);
@@ -445,7 +440,12 @@ export const DashboardOverview: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [isDemoMode, user]);
+  }
+
+  useEffect(() => {
+    if (!user) return;
+    void loadStats();
+  }, [user, isDemoMode]);
 
   const nameChangeCard = buildNameChangeOverviewCardModel(nameChangeOverviewState);
 

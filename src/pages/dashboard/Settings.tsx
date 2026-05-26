@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, Button, Input, Select, Badge } from '../../components/ui';
@@ -146,10 +146,6 @@ export const DashboardSettings: React.FC = () => {
   const visibilityState = getSiteVisibilityState({ isPublished, privacyMode });
 
   useEffect(() => {
-    void loadSiteData();
-  }, [loadSiteData]);
-
-  useEffect(() => {
     if (activeTab === 'billing' && user && !billingInfo) {
       setBillingLoading(true);
       fetchBillingInfo(user.id)
@@ -175,7 +171,7 @@ export const DashboardSettings: React.FC = () => {
     setRevealedInviteLinks({});
   };
 
-  const loadSiteData = useCallback(async () => {
+  const loadSiteData = async () => {
     if (!user) {
       setWeddingSiteId(null);
       setCoupleNames('');
@@ -289,7 +285,11 @@ export const DashboardSettings: React.FC = () => {
     } catch (err) {
       setAccountError(err instanceof Error ? err.message : 'Could not load settings right now.');
     }
-  }, [isDemoMode, user]);
+  };
+
+  useEffect(() => {
+    void loadSiteData();
+  }, [user, isDemoMode]);
 
   const handleSaveAccount = async (e: React.FormEvent) => {
     e.preventDefault();
