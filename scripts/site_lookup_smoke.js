@@ -1,26 +1,6 @@
-import fs from 'node:fs';
+import { loadSmokeEnv, normalizeEnvValue } from './smokeEnv.mjs';
 
-const normalizeEnvValue = (value) => {
-  if (typeof value !== 'string') return '';
-  const trimmed = value.trim().replace(/[\r\n]+/g, '').replace(/\\n/g, '').replace(/\\r/g, '');
-  if ((trimmed.startsWith('"') && trimmed.endsWith('"')) || (trimmed.startsWith("'") && trimmed.endsWith("'"))) {
-    return trimmed.slice(1, -1).trim();
-  }
-  return trimmed;
-};
-
-const fileEnv = fs.existsSync('.env.local')
-  ? Object.fromEntries(
-      fs.readFileSync('.env.local', 'utf8')
-        .split('\n')
-        .map((l) => l.trim())
-        .filter((line) => line && !line.startsWith('#') && line.includes('='))
-        .map((line) => {
-          const i = line.indexOf('=');
-          return [line.slice(0, i), normalizeEnvValue(line.slice(i + 1))];
-        })
-    )
-  : {};
+const fileEnv = loadSmokeEnv();
 
 const base = normalizeEnvValue(process.env.VITE_SUPABASE_URL || fileEnv.VITE_SUPABASE_URL);
 const key = normalizeEnvValue(process.env.VITE_SUPABASE_ANON_KEY || fileEnv.VITE_SUPABASE_ANON_KEY);
