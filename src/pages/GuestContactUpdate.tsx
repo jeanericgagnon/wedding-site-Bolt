@@ -9,19 +9,30 @@ type Match = {
   household_size?: number;
 };
 
+type PublicFnSuccess = {
+  matches?: Match[];
+  error?: string;
+};
+
+type DemoGuestLike = {
+  id: string;
+  name: string;
+  household_id?: string | null;
+  household_size?: number;
+};
 
 async function callPublicFn(name: string, body: unknown) {
-  const base = ((import.meta as any).env?.VITE_SUPABASE_URL as string | undefined)?.trim();
+  const base = (import.meta.env.VITE_SUPABASE_URL as string | undefined)?.trim();
   if (!base) throw new Error('Missing Supabase URL');
   const res = await fetch(`${base}/functions/v1/${name}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
   });
-  const json = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error((json as any).error || `Request failed (${res.status})`);
-  if ((json as any)?.error) throw new Error((json as any).error);
-  return json as any;
+  const json = (await res.json().catch(() => ({}))) as PublicFnSuccess;
+  if (!res.ok) throw new Error(json.error || `Request failed (${res.status})`);
+  if (json.error) throw new Error(json.error);
+  return json;
 }
 
 export const GuestContactUpdate: React.FC = () => {
@@ -68,7 +79,7 @@ export const GuestContactUpdate: React.FC = () => {
     setSelectedHouseholdSize(1);
     try {
       const data = await callPublicFn('guest-contact-lookup', { site_ref: siteRef, query: query.trim() });
-      const rows = ((data as any)?.matches ?? []) as Match[];
+      const rows = data.matches ?? [];
       setMatches(rows);
       if (rows.length > 0) {
         setSelectedGuestId(rows[0].id);
@@ -82,7 +93,15 @@ export const GuestContactUpdate: React.FC = () => {
         const rows = demoGuests
           .filter((g) => (g.name || '').toLowerCase().includes(q))
           .slice(0, 10)
-          .map((g) => ({ id: g.id, name: g.name, household_id: (g as any).household_id ?? null, household_size: ((g as any).household_size as number | undefined) ?? 1 }));
+          .map((g) => {
+            const guest = g as DemoGuestLike;
+            return {
+              id: guest.id,
+              name: guest.name,
+              household_id: guest.household_id ?? null,
+              household_size: guest.household_size ?? 1,
+            };
+          });
         setMatches(rows);
         if (rows.length > 0) {
           setSelectedGuestId(rows[0].id);
@@ -105,7 +124,7 @@ export const GuestContactUpdate: React.FC = () => {
     setResult(null);
     try {
       if (!isDemoSiteRef) {
-        const data = await callPublicFn('guest-contact-submit', {
+        await callPublicFn('guest-contact-submit', {
           site_ref: siteRef,
           guest_id: selectedGuestId,
           apply_household: applyHousehold,
@@ -120,7 +139,6 @@ export const GuestContactUpdate: React.FC = () => {
           mailing_postal_code: mailingPostalCode.trim() || null,
           mailing_country: mailingCountry.trim() || null,
         });
-        if ((data as any)?.error) throw new Error((data as any).error);
       }
       setResult({ ok: true, message: 'Thanks! Your information has been updated.' });
     } catch (err) {
@@ -140,7 +158,7 @@ export const GuestContactUpdate: React.FC = () => {
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search your first or last name"
+            placeholder="Search your full name"
             className="flex-1 px-3 py-2 border border-border rounded-lg bg-surface-subtle"
           />
           <button onClick={handleSearch} disabled={searching || query.trim().length < 2} className="px-4 py-2 rounded-lg bg-primary text-white disabled:opacity-50">
@@ -201,7 +219,11 @@ export const GuestContactUpdate: React.FC = () => {
 
           <div>
             <label className="block text-sm font-medium text-text-primary mb-1">RSVP (optional)</label>
-            <select value={rsvpStatus} onChange={(e) => setRsvpStatus(e.target.value as any)} className="w-full px-3 py-2 border border-border rounded-lg bg-surface-subtle">
+            <select
+              value={rsvpStatus}
+              onChange={(e) => setRsvpStatus(e.target.value as '' | 'pending' | 'confirmed' | 'declined')}
+              className="w-full px-3 py-2 border border-border rounded-lg bg-surface-subtle"
+            >
               <option value="">No change</option>
               <option value="confirmed">Attending</option>
               <option value="declined">Can’t attend</option>

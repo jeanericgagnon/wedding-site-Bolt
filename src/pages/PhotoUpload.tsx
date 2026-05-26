@@ -27,6 +27,7 @@ const mapUploadError = (code?: string, fallback?: string): string => {
 export const PhotoUpload: React.FC = () => {
   const params = useMemo(() => new URLSearchParams(window.location.search), []);
   const initialToken = params.get('t')?.trim() ?? '';
+  const siteSlug = params.get('site')?.trim().toLowerCase() ?? '';
 
   const [token, setToken] = useState(initialToken);
   const [guestName, setGuestName] = useState('');
@@ -51,7 +52,7 @@ export const PhotoUpload: React.FC = () => {
       return;
     }
 
-    if (!token.trim()) {
+    if (!token.trim() && !siteSlug) {
       setError('Upload token is required.');
       return;
     }
@@ -64,7 +65,8 @@ export const PhotoUpload: React.FC = () => {
     try {
       setIsUploading(true);
       const form = new FormData();
-      form.append('token', token.trim());
+      if (token.trim()) form.append('token', token.trim());
+      if (siteSlug) form.append('siteSlug', siteSlug);
       if (guestName.trim()) form.append('guestName', guestName.trim());
       if (guestEmail.trim()) form.append('guestEmail', guestEmail.trim());
       if (note.trim()) form.append('note', note.trim());
@@ -110,17 +112,26 @@ export const PhotoUpload: React.FC = () => {
         <h1 className="text-3xl font-semibold text-gray-900">Share your photos</h1>
         <p className="mt-2 text-base text-gray-700">Upload photos and videos directly to the couple&apos;s shared album.</p>
 
+        {siteSlug && !token && (
+          <p className="mt-4 rounded-xl border border-rose-100 bg-rose-50/60 px-4 py-3 text-sm text-gray-700">
+            Uploading to {siteSlug}.dayof.love
+          </p>
+        )}
+
         <form onSubmit={onSubmit} className="mt-6 space-y-4">
-          <div>
-            <label className="mb-2 block text-base font-medium text-gray-800">Upload token</label>
-            <input
-              value={token}
-              onChange={(e) => setToken(e.target.value)}
-              className="w-full rounded-xl border border-gray-300 px-4 py-3 text-base"
-              placeholder="Paste upload token"
-              required
-            />
-          </div>
+          {!siteSlug && (
+            <div>
+              <label className="mb-2 block text-base font-medium text-gray-800">Upload token</label>
+              <input
+                id="photo-upload-token"
+                value={token}
+                onChange={(e) => setToken(e.target.value)}
+                className="w-full rounded-xl border border-gray-300 px-4 py-3 text-base"
+                placeholder="Paste upload token"
+                required
+              />
+            </div>
+          )}
 
           <div>
             <label className="mb-2 block text-base font-medium text-gray-800">Your name (optional)</label>

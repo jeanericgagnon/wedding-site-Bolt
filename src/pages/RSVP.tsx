@@ -1270,7 +1270,7 @@ export default function RSVP() {
                   required
                 />
                 <p className="text-xs text-gray-500 mt-1.5">
-                  Use the invitation code from your email for the fastest lookup
+                  Use the code from your invitation email for the fastest lookup.
                 </p>
                 {guestPredictions.length > 0 && (
                   <div className="mt-2 border border-gray-200 rounded-lg bg-white overflow-hidden">
