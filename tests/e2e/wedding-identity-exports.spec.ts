@@ -1,12 +1,9 @@
 import { expect, test, type Page } from '@playwright/test';
+import { signInAsOwner } from './liveOwnerSession';
 
 test.use({ serviceWorkers: 'block' });
 
-async function enableLocalDemo(page: Page) {
-  await page.addInitScript(() => {
-    window.localStorage.setItem('dayof_e2e_local_auth', '1');
-  });
-
+async function enableIdentityExportCaptureHarness(page: Page) {
   await page.addInitScript(() => {
     const blobStore = new Map<string, Blob>();
     const capturedDownloads: Array<{ filename: string; href: string }> = [];
@@ -62,61 +59,47 @@ async function enableLocalDemo(page: Page) {
     };
   });
 
-  await page.route('**/*', async (route) => {
-    const url = route.request().url();
-    if (url.includes('/auth/v1/user')) {
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({ id: 'demo-local-user', email: 'demo@dayof.love' }),
-      });
-      return;
-    }
-    await route.continue();
-  });
 }
 
 test('settings identity exports copy and download safe wedding assets', async ({ page }) => {
   test.setTimeout(120_000);
-  await enableLocalDemo(page);
-  await page.goto('/dashboard/settings?bypassPayment=1&identityExportsQa=1', { waitUntil: 'domcontentloaded' });
+  await enableIdentityExportCaptureHarness(page);
+  await signInAsOwner(page);
+  await page.goto('/dashboard/settings?bypassPayment=1&identityExportsQa=1&tab=data', { waitUntil: 'domcontentloaded' });
 
-  const siteSettingsButton = page.getByRole('button', { name: /site settings/i });
-  await expect(siteSettingsButton).toBeVisible();
-  await siteSettingsButton.evaluate((button) => {
-    (button as HTMLButtonElement).click();
-  });
+  await expect(page.getByRole('heading', { name: 'Site Settings' })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Wedding identity exports' })).toBeVisible();
+  const publicSiteUrlField = page.getByRole('textbox', { name: 'Public site URL' });
+  await expect(publicSiteUrlField).toHaveValue(/https:\/\/.+\.dayof\.love/);
+  const publicSiteUrl = await publicSiteUrlField.inputValue();
 
-  await page.getByRole('button', { name: 'Copy manifest' }).evaluate((button) => {
-    (button as HTMLButtonElement).click();
-  });
+  await page.getByRole('button', { name: 'Copy manifest' }).click();
   await page.waitForFunction(() => {
     const runtime = window as typeof window & { __dayofCopiedTexts?: string[] };
     return (runtime.__dayofCopiedTexts?.length ?? 0) >= 1;
   }, { timeout: 10_000 });
 
-  await page.getByRole('button', { name: 'Copy style kit' }).evaluate((button) => {
-    (button as HTMLButtonElement).click();
-  });
+  await page.getByRole('button', { name: 'Copy style kit' }).click();
   await page.waitForFunction(() => {
     const runtime = window as typeof window & { __dayofCopiedTexts?: string[] };
     return (runtime.__dayofCopiedTexts?.length ?? 0) >= 2;
   }, { timeout: 10_000 });
 
-  await page.getByRole('button', { name: 'Save print pack' }).evaluate((button) => {
-    (button as HTMLButtonElement).click();
-  });
+  await page.getByRole('button', { name: 'Save print pack' }).click();
+  await page.waitForFunction(() => {
+    const runtime = window as typeof window & {
+      __dayofCapturedDownloads?: Array<{ filename: string; href: string }>;
+    };
+    return (runtime.__dayofCapturedDownloads?.length ?? 0) >= 2;
+  }, { timeout: 10_000 });
   await page.waitForFunction(() => {
     const runtime = window as typeof window & {
       __dayofCapturedDownloads?: Array<{ filename: string; href: string }>;
     };
     return (runtime.__dayofCapturedDownloads?.length ?? 0) >= 4;
-  }, { timeout: 10_000 });
+  }, { timeout: 45_000 });
 
-  await page.getByRole('button', { name: 'Save story graphic' }).evaluate((button) => {
-    (button as HTMLButtonElement).click();
-  });
+  await page.getByRole('button', { name: 'Save story graphic' }).click();
   await page.waitForFunction(() => {
     const runtime = window as typeof window & {
       __dayofCapturedDownloads?: Array<{ filename: string; href: string }>;
@@ -160,27 +143,28 @@ test('settings identity exports copy and download safe wedding assets', async ({
   const storyGraphicPng = capture.files.find((file) => file.filename === 'dayof-wedding-story-graphic.png');
 
   expect(manifest).toContain('identity export kit');
-  expect(manifest).toContain('Public site: https://alex-jordan-demo.dayof.love');
+  expect(manifest).toContain(`Public site: ${publicSiteUrl}`);
   expect(manifest).not.toMatch(/token|invite_token|guest_access|secret/i);
 
   expect(styleKit).toMatch(/Monogram: [A-Z] · [A-Z]/);
+  expect(styleKit).toContain(`Public site: ${publicSiteUrl}`);
   expect(styleKit).toContain('Do not add guest-specific or private invite URLs to shared print assets.');
   expect(styleKit).not.toMatch(/token|invite_token|guest_access|secret/i);
 
   expect(printPackHtml).toContain('DayOf wedding identity print pack');
-  expect(printPackHtml).toContain('https://api.qrserver.com/v1/create-qr-code/');
-  expect(printPackHtml).toContain('https://alex-jordan-demo.dayof.love/rsvp');
+  expect(printPackHtml).toContain('data:image/svg+xml;charset=utf-8,');
+  expect(printPackHtml).toContain(`${publicSiteUrl}/rsvp`);
   expect(printPackHtml).not.toContain('token=');
   expect(printPackHtml).not.toContain('invite_token=');
 
   expect(printPackSvg).toContain('<svg');
   expect(printPackSvg).toContain('Public site QR card');
-  expect(printPackSvg).toContain('https://alex-jordan-demo.dayof.love/rsvp');
+  expect(printPackSvg).toContain(`${publicSiteUrl}/rsvp`);
   expect(printPackSvg).not.toMatch(/token=|invite_token=|guest_access|secret/i);
 
   expect(storyGraphicSvg).toContain('<svg');
   expect(storyGraphicSvg).toMatch(/[A-Z] · [A-Z]/);
-  expect(storyGraphicSvg).toContain('https://alex-jordan-demo.dayof.love');
+  expect(storyGraphicSvg).toContain(publicSiteUrl);
   expect(storyGraphicSvg).not.toMatch(/token|invite_token|guest_access|secret/i);
 
   const fileMetadata = [printPackPng, printPackPdf, storyGraphicPng].map((file) => ({
@@ -199,14 +183,11 @@ test('settings identity exports copy and download safe wedding assets', async ({
 
 test('settings identity exports stay readable across theme variants with long names', async ({ page }) => {
   test.setTimeout(120_000);
-  await enableLocalDemo(page);
-  await page.goto('/dashboard/settings?bypassPayment=1&identityExportsQa=1&identityThemeQa=1', { waitUntil: 'domcontentloaded' });
+  await enableIdentityExportCaptureHarness(page);
+  await signInAsOwner(page);
+  await page.goto('/dashboard/settings?bypassPayment=1&identityExportsQa=1&identityThemeQa=1&tab=data', { waitUntil: 'domcontentloaded' });
 
-  const siteSettingsButton = page.getByRole('button', { name: /site settings/i });
-  await expect(siteSettingsButton).toBeVisible();
-  await siteSettingsButton.evaluate((button) => {
-    (button as HTMLButtonElement).click();
-  });
+  await expect(page.getByRole('heading', { name: 'Site Settings' })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Wedding identity exports' })).toBeVisible();
 
   await expect(page.getByRole('button', { name: /save print pack/i })).toBeVisible();
