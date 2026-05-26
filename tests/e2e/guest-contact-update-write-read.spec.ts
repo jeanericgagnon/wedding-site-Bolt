@@ -31,7 +31,6 @@ test('guest contact page updates RSVP, address, SMS consent, and household membe
   const lastName = `ContactQA${runId}`;
   const primaryEmail = `dayof.contactqa.${runId}.primary@example.com`;
   const partnerEmail = `dayof.contactqa.${runId}.partner@example.com`;
-  const phoneLast4 = '0999';
   let ownerAccessToken = '';
   let siteId = '';
   let createdGuestIds: string[] = [];
@@ -153,16 +152,11 @@ test('guest contact page updates RSVP, address, SMS consent, and household membe
     expect(createdGuestIds).toHaveLength(2);
 
     await page.goto(`/guest-contact/${proofSiteSlug}?contactQa=${runId}`, { waitUntil: 'domcontentloaded' });
-    await expect(page.getByRole('heading', { name: /update contact & rsvp/i })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /update contact info or rsvp/i })).toBeVisible();
     await page.getByPlaceholder(/search your full name/i).fill(`Taylor ${lastName}`);
     await page.getByPlaceholder(/first few letters of your email/i).fill('primary');
     await page.getByRole('button', { name: /^find$/i }).click();
     await expect(page.getByRole('combobox').first()).toContainText(`Taylor ${lastName}`);
-    await expect(page.getByText(/apply these updates to my whole party \(2 guests\)/i)).toBeVisible();
-
-    await page.getByPlaceholder('Last 4 digits of your phone (for whole-party updates)').fill(phoneLast4);
-    await page.getByRole('button', { name: /^find$/i }).click();
-    await page.getByLabel(/apply these updates to my whole party/i).check();
     await page.getByPlaceholder('you@example.com').fill(`updated.contactqa.${runId}@example.com`);
     await page.getByPlaceholder('(555) 123-4567').fill('+15555550123');
     await page.getByPlaceholder('Address line 1').fill(`123 QA Lane ${runId}`);
@@ -172,23 +166,37 @@ test('guest contact page updates RSVP, address, SMS consent, and household membe
     await page.getByPlaceholder('Country').fill('USA');
     await page.getByRole('combobox').nth(1).selectOption('confirmed');
     await page.getByLabel(/i agree to receive wedding updates by sms/i).check();
-    await page.getByRole('button', { name: /^save update$/i }).click();
-    await expect(page.getByText(/thanks! your information has been updated/i)).toBeVisible();
+    await page.getByRole('button', { name: /^save contact info$/i }).click();
+    await expect(page.getByText(/thanks! your contact information has been updated/i)).toBeVisible();
+    await page.getByRole('button', { name: /^save rsvp$/i }).click();
+    await expect(page.getByText(/thanks! your rsvp update is saved/i)).toBeVisible();
 
     const rows = await fetchQaRows();
     expect(rows).toHaveLength(2);
-    for (const row of rows) {
-      expect(row).toMatchObject({
-        phone: '+15555550123',
-        rsvp_status: 'confirmed',
-        sms_consent: true,
-        mailing_address_line1: `123 QA Lane ${runId}`,
-        mailing_city: 'Testville',
-        mailing_state: 'CA',
-        mailing_postal_code: '90210',
-        mailing_country: 'USA',
-      });
-    }
+    const primaryRow = rows.find((row) => row.email === `updated.contactqa.${runId}@example.com`);
+    const partnerRow = rows.find((row) => row.email === partnerEmail);
+    expect(primaryRow).toMatchObject({
+      name: `Taylor ${lastName}`,
+      phone: '+15555550123',
+      rsvp_status: 'confirmed',
+      sms_consent: true,
+      mailing_address_line1: `123 QA Lane ${runId}`,
+      mailing_city: 'Testville',
+      mailing_state: 'CA',
+      mailing_postal_code: '90210',
+      mailing_country: 'USA',
+    });
+    expect(partnerRow).toMatchObject({
+      name: `Morgan ${lastName}`,
+      phone: null,
+      rsvp_status: 'pending',
+      sms_consent: false,
+      mailing_address_line1: null,
+      mailing_city: null,
+      mailing_state: null,
+      mailing_postal_code: null,
+      mailing_country: null,
+    });
   } finally {
     await cleanupQaGuests();
   }
