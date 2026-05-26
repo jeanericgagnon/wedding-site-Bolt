@@ -5,15 +5,17 @@ import { Card, Button } from '../../components/ui';
 import {
   Lock, Unlock, Plus, Trash2, ChevronDown, ChevronUp, Loader2,
   AlertCircle, Paperclip, Link2, Check, Settings2, ToggleLeft,
-  ToggleRight, GripVertical, X, Sparkles
+  ToggleRight, GripVertical, X
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { resolveActiveSiteForUser } from '../../lib/activeSite';
 import { useAuth } from '../../hooks/useAuth';
 import { getArchiveModeDescriptor } from '../../lib/archiveMode';
 import { sendAnniversaryReminder } from '../../lib/emailService';
+import { buildVaultMemoryCuratorModel } from '../../lib/memoryCurator';
+import { MemoryCuratorCard } from '../../components/dashboard/MemoryCuratorCard';
 import { formatVaultUnlockDate, getVaultUnlockDate, toValidDateOrNull } from './vaultDate';
-import { formatVaultEntryDate, getVaultEntryTimestamp } from './vaultEntryTime';
+import { formatVaultEntryDate } from './vaultEntryTime';
 
 const MAX_VAULTS = 5;
 const DEMO_VAULT_STORAGE_KEY = 'dayof_demo_vault_state_v1';
@@ -231,98 +233,6 @@ interface VaultCardProps {
   onEdit: (config: VaultConfig) => void;
 }
 
-function buildAnniversaryRecap(
-  entries: VaultEntry[],
-  years: number,
-  style: 'classic' | 'playful' | 'cinematic' = 'classic',
-  length: 'short' | 'medium' | 'long' = 'medium',
-  photosOnly = false,
-): string {
-  const source = photosOnly
-    ? entries.filter((e) => {
-        const media = (e.media_type || '').toLowerCase();
-        const file = (e.attachment_name || '').toLowerCase();
-        return media === 'photo' || /\.(jpg|jpeg|png|webp|heic)$/i.test(file);
-      })
-    : entries;
-
-  const sorted = [...source].sort((a, b) => getVaultEntryTimestamp(a.created_at) - getVaultEntryTimestamp(b.created_at));
-  const first = sorted[0];
-  const last = sorted[sorted.length - 1];
-
-  const photoEntries = sorted.filter((e) => {
-    const media = (e.media_type || '').toLowerCase();
-    const file = (e.attachment_name || '').toLowerCase();
-    return media === 'photo' || /\.(jpg|jpeg|png|webp|heic)$/i.test(file);
-  });
-
-  const timelineLimit = length === 'short' ? 5 : length === 'long' ? 14 : 10;
-  const photoLimit = length === 'short' ? 4 : length === 'long' ? 10 : 8;
-
-  const timelineMoments = sorted.slice(0, timelineLimit).map((entry) => {
-    const date = formatVaultEntryDate(entry.created_at);
-    const title = (entry.title || '').trim();
-    const fileName = (entry.attachment_name || '').trim();
-    const content = (entry.content || '').trim();
-
-    const core = title || content || fileName || 'A shared memory';
-    const cleanCore = core.length > 120 ? `${core.slice(0, 117)}…` : core;
-    return `- ${date}: ${cleanCore}`;
-  });
-
-  const photoHighlights = photoEntries.slice(0, photoLimit).map((entry) => {
-    const date = formatVaultEntryDate(entry.created_at, { month: 'short', year: 'numeric' });
-    const name = (entry.attachment_name || entry.title || 'Captured moment').replace(/[_-]+/g, ' ').trim();
-    return `- ${date}: ${name}`;
-  });
-
-  const textCorpus = sorted.map((e) => `${e.title || ''} ${e.content || ''} ${e.attachment_name || ''}`.toLowerCase()).join(' ');
-  const themes = [
-    'family', 'friends', 'dance', 'ceremony', 'sunset', 'travel', 'laughter', 'home', 'joy', 'gratitude'
-  ].filter((w) => textCorpus.includes(w)).slice(0, 4);
-
-  const openingDate = first ? formatVaultEntryDate(first.created_at, { month: 'long', year: 'numeric' }, '') : null;
-  const closingDate = last ? formatVaultEntryDate(last.created_at, { month: 'long', year: 'numeric' }, '') : null;
-
-  const openingBase = openingDate && closingDate
-    ? `Over ${openingDate} to ${closingDate}, this ${years}-year chapter unfolds through ${sorted.length} saved memories, including ${photoEntries.length} photo moments.`
-    : `This ${years}-year chapter unfolds through ${sorted.length} saved memories, including ${photoEntries.length} photo moments.`;
-
-  const themeLine = themes.length > 0
-    ? `The strongest threads are ${themes.join(', ')} — a story of presence, warmth, and shared celebration.`
-    : 'The strongest thread is closeness — the kind of love that shows up in small moments and big celebrations alike.';
-
-  const styleOpen = style === 'cinematic'
-    ? `${openingBase} It feels like a film told in frames, glances, and quiet gestures.`
-    : style === 'playful'
-    ? `${openingBase} It’s full of energy, laughter, and beautifully chaotic joy.`
-    : openingBase;
-
-  const closing = style === 'cinematic'
-    ? 'Looking back, these memories feel like scenes from a beautiful film: vivid, intimate, and timeless.'
-    : style === 'playful'
-    ? 'Looking back, this chapter is pure heart: big laughs, happy tears, and the kind of love that keeps getting better.'
-    : 'Looking back, these memories read like a promise kept: to keep choosing each other, to keep celebrating together, and to keep building a life full of meaning.';
-
-  return [
-    `${years}-Year Anniversary Recap (${style[0].toUpperCase()}${style.slice(1)})`,
-    photosOnly ? 'Photo-first mode enabled' : 'Mixed memories mode',
-    '',
-    styleOpen,
-    themeLine,
-    '',
-    'Story arc',
-    ...timelineMoments,
-    '',
-    photoHighlights.length > 0 ? 'Photo highlights' : 'Highlight moments',
-    ...(photoHighlights.length > 0 ? photoHighlights : timelineMoments.slice(0, 5)),
-    '',
-    closing,
-    '',
-    '— AI recap draft (editable)'
-  ].join('\n');
-}
-
 const VaultCard: React.FC<VaultCardProps> = ({
   config, entries, weddingDate, siteSlug, showForm,
   onAddEntry, onDeleteEntry, onSaveEntry, onCancelForm, onToggleEnabled, onEdit
@@ -330,17 +240,10 @@ const VaultCard: React.FC<VaultCardProps> = ({
   const [expanded, setExpanded] = useState(true);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
-  const [recapCopied, setRecapCopied] = useState(false);
   const [toggling, setToggling] = useState(false);
-  const [generatingRecap, setGeneratingRecap] = useState(false);
-  const [recapStyle, setRecapStyle] = useState<'classic' | 'playful' | 'cinematic'>('classic');
-  const [recapLength, setRecapLength] = useState<'short' | 'medium' | 'long'>('medium');
-  const [photosOnlyRecap, setPhotosOnlyRecap] = useState(true);
   const [resolvedEntryLinks, setResolvedEntryLinks] = useState<Record<string, string>>({});
   const [resolvingEntryId, setResolvingEntryId] = useState<string | null>(null);
-  const [entryOverrides, setEntryOverrides] = useState<Record<string, Partial<VaultEntry>>>({});
-
-  const displayEntries = entries.map((entry) => ({ ...entry, ...(entryOverrides[entry.id] ?? {}) }));
+  const displayEntries = entries;
 
   const unlockDate = getVaultUnlockDate(weddingDate, config.duration_years);
   const isUnlocked = unlockDate ? new Date() >= unlockDate : false;
@@ -413,81 +316,6 @@ const VaultCard: React.FC<VaultCardProps> = ({
     } finally {
       setToggling(false);
     }
-  }
-
-  async function handleGenerateRecap() {
-    if (displayEntries.length === 0 || generatingRecap) return;
-    setGeneratingRecap(true);
-    try {
-      await onSaveEntry({
-        vault_config_id: config.id,
-        vault_year: config.duration_years,
-        title: `${config.duration_years}-Year AI Recap`,
-        content: buildAnniversaryRecap(displayEntries, config.duration_years, recapStyle, recapLength, photosOnlyRecap),
-        author_name: 'DayOf AI Recap',
-        attachment_url: null,
-        attachment_name: null,
-      });
-    } finally {
-      setGeneratingRecap(false);
-    }
-  }
-
-  async function handleRegenerateLatestRecap() {
-    if (generatingRecap) return;
-    const latestRecap = [...displayEntries]
-      .filter((entry) => (entry.title || '').toLowerCase().includes('ai recap'))
-      .sort((a, b) => getVaultEntryTimestamp(b.created_at) - getVaultEntryTimestamp(a.created_at))[0];
-
-    if (!latestRecap) {
-      await handleGenerateRecap();
-      return;
-    }
-
-    setGeneratingRecap(true);
-    try {
-      const nextContent = buildAnniversaryRecap(displayEntries, config.duration_years, recapStyle, recapLength, photosOnlyRecap);
-      const nextTitle = `${config.duration_years}-Year AI Recap (${recapStyle[0].toUpperCase()}${recapStyle.slice(1)})`;
-      const { error } = await supabase
-        .from('vault_entries')
-        .update({
-          title: nextTitle,
-          content: nextContent,
-          author_name: 'DayOf AI Recap',
-        })
-        .eq('id', latestRecap.id);
-      if (error) throw error;
-      setEntryOverrides((prev) => ({
-        ...prev,
-        [latestRecap.id]: {
-          ...prev[latestRecap.id],
-          title: nextTitle,
-          content: nextContent,
-          author_name: 'DayOf AI Recap',
-        },
-      }));
-    } catch (err) {
-      window.alert(err instanceof Error ? err.message : 'Could not refresh the AI recap.');
-    } finally {
-      setGeneratingRecap(false);
-    }
-  }
-
-  const latestRecap = [...displayEntries]
-    .filter((entry) => (entry.title || '').toLowerCase().includes('ai recap'))
-    .sort((a, b) => getVaultEntryTimestamp(b.created_at) - getVaultEntryTimestamp(a.created_at))[0];
-  const hasRecap = !!latestRecap;
-
-  function handleCopyRecapLink() {
-    const base = buildVaultShareUrl();
-    if (!base || !latestRecap) return;
-    const url = `${base}?entry=${latestRecap.id}`;
-    navigator.clipboard.writeText(url).then(() => {
-      setRecapCopied(true);
-      setTimeout(() => setRecapCopied(false), 2000);
-    }).catch(() => {
-      window.prompt('Copy this recap link:', url);
-    });
   }
 
   return (
@@ -855,10 +683,10 @@ export const DashboardVault: React.FC = () => {
   const [editingConfig, setEditingConfig] = useState<VaultConfig | null>(null);
   const [addingVault, setAddingVault] = useState(false);
   const [toasts, setToasts] = useState<Toast[]>([]);
-  const [vaultStorageProvider, setVaultStorageProvider] = useState<'supabase' | 'google_drive'>('supabase');
+  const [, setVaultStorageProvider] = useState<'supabase' | 'google_drive'>('supabase');
   const [googleDriveConnected, setGoogleDriveConnected] = useState(false);
   const [connectingDrive, setConnectingDrive] = useState(false);
-  const [driveHealthChecking, setDriveHealthChecking] = useState(false);
+  const [, setDriveHealthChecking] = useState(false);
   const [driveHealthMessage, setDriveHealthMessage] = useState<string | null>(null);
   const [driveNeedsReconnect, setDriveNeedsReconnect] = useState(false);
   const [coupleEmail, setCoupleEmail] = useState<string | null>(null);
@@ -872,7 +700,7 @@ export const DashboardVault: React.FC = () => {
     setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 4000);
   }
 
-  async function forceGoogleDriveProvider(siteId: string) {
+  const forceGoogleDriveProvider = useCallback(async (siteId: string) => {
     if (isDemoMode && siteId === 'demo-site-id') {
       setVaultStorageProvider('google_drive');
       return;
@@ -885,10 +713,10 @@ export const DashboardVault: React.FC = () => {
 
     if (error) throw error;
     setVaultStorageProvider('google_drive');
-  }
+  }, [isDemoMode]);
 
 
-  async function checkGoogleDriveHealth() {
+  const checkGoogleDriveHealth = useCallback(async () => {
     if (!weddingSiteId || (isDemoMode && weddingSiteId === 'demo-site-id')) return;
     setDriveHealthChecking(true);
     try {
@@ -907,7 +735,7 @@ export const DashboardVault: React.FC = () => {
     } finally {
       setDriveHealthChecking(false);
     }
-  }
+  }, [isDemoMode, weddingSiteId]);
 
   async function handleConnectGoogleDrive() {
     if (!weddingSiteId) return;
@@ -987,7 +815,7 @@ export const DashboardVault: React.FC = () => {
     return { vaultConfigs, entries };
   }
 
-  function loadDemoState(): { vaultConfigs: VaultConfig[]; entries: VaultEntry[] } {
+  const loadDemoState = useCallback((): { vaultConfigs: VaultConfig[]; entries: VaultEntry[] } => {
     try {
       const raw = localStorage.getItem(DEMO_VAULT_STORAGE_KEY);
       if (!raw) {
@@ -1011,7 +839,7 @@ export const DashboardVault: React.FC = () => {
       saveDemoState(seeded.vaultConfigs, seeded.entries);
       return seeded;
     }
-  }
+  }, []);
 
   function saveDemoState(nextConfigs: VaultConfig[], nextEntries: VaultEntry[]) {
     localStorage.setItem(DEMO_VAULT_STORAGE_KEY, JSON.stringify({ vaultConfigs: nextConfigs, entries: nextEntries }));
@@ -1141,13 +969,13 @@ setWeddingSiteId('demo-site-id');
     } finally {
       setLoading(false);
     }
-  }, [user, isDemoMode]);
+  }, [forceGoogleDriveProvider, isDemoMode, loadDemoState, user]);
 
   useEffect(() => { loadData(); }, [loadData]);
 
   useEffect(() => {
     if (googleDriveConnected) checkGoogleDriveHealth();
-  }, [googleDriveConnected, weddingSiteId]);
+  }, [checkGoogleDriveHealth, googleDriveConnected, weddingSiteId]);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -1202,7 +1030,7 @@ setWeddingSiteId('demo-site-id');
         }
       })();
     });
-  }, [loadData, weddingSiteId]);
+  }, [checkGoogleDriveHealth, forceGoogleDriveProvider, loadData, weddingSiteId]);
 
   useEffect(() => {
     if (!weddingDate || vaultConfigs.length === 0) return;
@@ -1527,6 +1355,22 @@ setWeddingSiteId('demo-site-id');
   const archiveMode = getArchiveModeDescriptor({ weddingDate: weddingDate ? weddingDate.toISOString() : null });
   const driveConnectedHealthy = googleDriveConnected && !driveNeedsReconnect;
   const showReconnectButton = !googleDriveConnected || driveNeedsReconnect;
+  const vaultMemoryCurator = buildVaultMemoryCuratorModel({
+    configs: vaultConfigs.map((config) => ({
+      id: config.id,
+      duration_years: config.duration_years,
+      is_enabled: config.is_enabled,
+    })),
+    entries: entries.map((entry) => ({
+      vault_config_id: entry.vault_config_id,
+      title: entry.title,
+      author_name: entry.author_name,
+      attachment_name: entry.attachment_name,
+      media_type: entry.media_type,
+    })),
+    isArchiveLike: archiveMode.isArchiveLike,
+    driveConnectedHealthy,
+  });
 
   return (
     <DashboardLayout currentPage="vault">
@@ -1570,6 +1414,8 @@ setWeddingSiteId('demo-site-id');
             <p className="mt-2 text-xs text-stone-700">The event is behind you, so this should start feeling like the center of gravity for memory, anniversary notes, and what the site becomes next.</p>
           )}
         </div>
+
+        <MemoryCuratorCard model={vaultMemoryCurator} />
 
         <Card variant="bordered" padding="md">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
