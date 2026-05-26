@@ -308,7 +308,7 @@ Deno.serve(async (req: Request) => {
 
     const resendApiKey = Deno.env.get("RESEND_API_KEY");
     if (!resendApiKey) {
-      return new Response(JSON.stringify({ error: "Email service not configured" }), {
+      return new Response(JSON.stringify({ error: "Could not send this email. Please try again." }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -368,9 +368,8 @@ Deno.serve(async (req: Request) => {
     });
 
     if (!resendResponse.ok) {
-      const errorBody = await resendResponse.text();
-      console.error("Resend error:", errorBody);
-      return new Response(JSON.stringify({ error: "Failed to send email", details: errorBody }), {
+      console.error("SEND_WEDDING_EMAIL_PROVIDER_FAILED", { status: resendResponse.status });
+      return new Response(JSON.stringify({ error: "Could not send this email. Please try again." }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -382,9 +381,11 @@ Deno.serve(async (req: Request) => {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
-  } catch (err) {
-    const message = err instanceof Error ? err.message : "Internal server error";
-    return new Response(JSON.stringify({ error: message }), {
+  } catch {
+    console.error("SEND_WEDDING_EMAIL_UNEXPECTED_FAILED", {
+      reason: "UNEXPECTED_SEND_EMAIL_FAILURE",
+    });
+    return new Response(JSON.stringify({ error: "Could not send this email. Please try again." }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
