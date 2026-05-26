@@ -8,6 +8,7 @@ Operational source of truth for trust-critical claims.
 - Public-safe claim: **Custom wedding URL. No upsell.**
 - Actual truth: every couple gets a personalized DayOf URL
 - Not yet supported: connecting an external domain the couple already owns
+- Writing rule: say personalized DayOf URL or `dayof.love` URL, not bring-your-own custom domain
 
 ### Search visibility
 - Public-safe claim: **Hidden from search by default.**
@@ -33,13 +34,16 @@ Operational source of truth for trust-critical claims.
 - Public-safe claim: messages should report whether they are draft, queued, sent, or failed
 - Actual truth: delivery UI must not collapse queued/processing/failed into vague success language
 - Actual truth: provider telemetry is only as complete as the delivery logs captured
-- Writing rule: if a send path is incomplete or provider-dependent, say so plainly
+- Actual truth: the owner comms-center compose/save/review lane is runtime-proven, while provider-backed live delivery readback remains intentionally deferred until a safe send lane is explicitly reopened
+- Writing rule: if a send path is incomplete or provider-dependent, say so plainly, and do not imply reopened live-send proof when only the non-SMS owner workflow lane is green
 
 
 ### Analytics truth
 - Public-safe claim: show measured product signals first
 - Actual truth: do not present guessed conversion or traffic metrics as real analytics
-- Writing rule: label derived numbers as derived, and prefer measured counts whenever possible
+- Actual truth: the owner overview analytics readback and public/guest privacy boundary are live-proven on the shipped runtime
+- Not yet proven: fuller visit/open/QR event instrumentation, durable event storage, and richer traffic funnel depth beyond the current measured owner signals
+- Writing rule: label derived numbers as derived, prefer measured counts whenever possible, and do not imply deeper traffic instrumentation than the shipped runtime actually has
 
 
 ### Support audit truth
@@ -111,6 +115,34 @@ Operational source of truth for trust-critical claims.
 - Public-safe claim: DayOf gives couples a public wedding site that feels calmer and more useful than a simple brochure page, with stronger RSVP and logistics guidance
 - Actual truth: the public site is materially better at orientation, return visits, and planning support than before, but it is still not deeply personalized for every guest scenario
 - Writing rule: describe this as more useful guest guidance and logistics clarity, not fully individualized guest intelligence
+
+
+### Language-support truth
+- Public-safe claim: DayOf supports guest-facing language continuity and owner-triggered public-site translation
+- Actual truth: guest link language handling, guest-facing language resources, and owner-triggered public-site translation are real
+- Not yet proven: a fully translated dashboard or full planning-workspace internationalization
+- Writing rule: describe this as guest-facing and public-site language support, not a completely internationalized app
+
+
+### Vendor-profile truth
+- Public-safe claim: DayOf supports vendor profile pages, constrained vendor-profile creation, and public inquiry handoff
+- Actual truth: public vendor profiles, inquiry submission, and signed-in profile/template tooling are real
+- Not yet proven: marketplace-style vendor search, broad public discovery, sponsored placement, or deep moderation systems
+- Writing rule: describe this as vendor profile and inquiry tooling, not a full vendor marketplace or directory network
+
+
+### Vault-and-archive truth
+- Public-safe claim: DayOf supports anniversary vault contributions, owner vault management, and post-wedding archive moments
+- Actual truth: public vault contribution and the core owner vault/archive surfaces are real and more strongly proven than optional provider-specific storage integrations
+- Not yet proven: broad Google Drive provider connect/upload/recover depth as a premium-default proof lane
+- Writing rule: describe Drive-backed provider flows as optional and narrower than the core vault/archive experience unless live provider proof is freshly available
+
+
+### Guestbook truth
+- Public-safe claim: DayOf supports guestbook note submission as part of the guest-memory experience
+- Actual truth: the guestbook route, submit flow, guest-safe validation, and invite/access packaging are implemented
+- Not yet proven: deeper public submit/readback/moderation proof on the same level as the strongest RSVP, photo-upload, or vault-contribution lanes
+- Writing rule: describe this as implemented guestbook note capture with lighter proof depth, not as a deeply proven moderated guestbook system
 
 
 ### Registry repair truth
