@@ -152,7 +152,7 @@ const slugify = (value) => value
 const backlogText = readBacklog();
 const currentState = parseCurrentStateTable(backlogText);
 const sections = extractSections(backlogText);
-const generatedAt = formatPacificTimestamp();
+const generatedAt = process.env.V1_PROOF_BOARD_GENERATED_AT || formatPacificTimestamp();
 const currentStateFreshness = describeStateFreshness(currentState, generatedAt);
 const activeUngatedLaunchBlockers = extractSubheadings(sections['Current Launch Blockers'])
   .map((title) => title.replace(/^Critical \d+:\s*/, ''));

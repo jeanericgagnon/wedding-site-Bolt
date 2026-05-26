@@ -21,6 +21,7 @@ type ProofBoardOutput = {
 };
 
 const read = (path: string) => readFileSync(path, 'utf8');
+const FRESH_GENERATED_AT = '2026-05-24 04:16 PM PT';
 
 const parseCurrentStateTable = (text: string) => {
   const lines = text.split(/\r?\n/);
@@ -74,6 +75,10 @@ describe('proof board freshness', () => {
 
     const output = execFileSync('node', ['scripts/v1-proof-board.mjs'], {
       encoding: 'utf8',
+      env: {
+        ...process.env,
+        V1_PROOF_BOARD_GENERATED_AT: FRESH_GENERATED_AT,
+      },
     });
     const board = JSON.parse(output) as ProofBoardOutput;
 
@@ -94,7 +99,13 @@ describe('proof board freshness', () => {
     const output = execFileSync(
       'node',
       ['scripts/v1-proof-board.mjs', '--freshness-only', '--require-fresh-current-state'],
-      { encoding: 'utf8' },
+      {
+        encoding: 'utf8',
+        env: {
+          ...process.env,
+          V1_PROOF_BOARD_GENERATED_AT: FRESH_GENERATED_AT,
+        },
+      },
     );
 
     expect(output.trim()).toBe('[proof:v1:board] FRESH: Current state metadata is fresh.');
@@ -106,7 +117,7 @@ describe('proof board freshness', () => {
 
     const staleBacklogPath = join(tempDir, 'BACKLOG.md');
     const staleBacklog = read('BACKLOG.md').replace(
-      '| Current date/time | `2026-05-19 01:08 AM PDT` |',
+      '| Current date/time | `2026-05-24 04:16 PM PDT` |',
       '| Current date/time | `2026-05-15 02:26 PM PDT` |',
     );
     writeFileSync(staleBacklogPath, staleBacklog);
@@ -119,6 +130,7 @@ describe('proof board freshness', () => {
         env: {
           ...process.env,
           V1_PROOF_BOARD_BACKLOG_PATH: staleBacklogPath,
+          V1_PROOF_BOARD_GENERATED_AT: FRESH_GENERATED_AT,
         },
       },
     );
