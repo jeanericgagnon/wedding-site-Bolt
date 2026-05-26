@@ -117,7 +117,7 @@ describe('proof board freshness', () => {
 
     const staleBacklogPath = join(tempDir, 'BACKLOG.md');
     const staleBacklog = read('BACKLOG.md').replace(
-      '| Current date/time | `2026-05-26 11:22 PM PDT` |',
+      '| Current date/time | `2026-05-26 12:43 PM PDT` |',
       '| Current date/time | `2026-05-15 02:26 PM PDT` |',
     );
     writeFileSync(staleBacklogPath, staleBacklog);

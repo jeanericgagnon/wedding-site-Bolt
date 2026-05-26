@@ -5,6 +5,7 @@ import { getTemplateSupportManifest } from '../builder/constants/templateSupport
 import { TEMPLATE_USE_CASE_PACKS } from '../builder/constants/templateUseCasePacks';
 import { readSetupDraft, selectSetupDraftTemplate } from '../lib/setupDraft';
 import { getRecommendedTemplates } from '../lib/setupDraftRecommendations';
+import { buildTemplateExperienceBrief } from '../pages/templateExperience';
 
 type Facet = 'all' | string;
 
@@ -50,6 +51,20 @@ export const Templates: React.FC = () => {
   }, [style, season, colorway, sortBy, recommendedTemplateIds]);
 
   const comparedTemplates = useMemo(() => templateCatalog.filter((t) => compareIds.includes(t.id)).slice(0, 2), [compareIds]);
+  const selectedTemplate = useMemo(
+    () => templateCatalog.find((template) => template.id === selectedTemplateId) ?? filtered[0] ?? null,
+    [filtered, selectedTemplateId],
+  );
+  const selectedTemplateManifest = selectedTemplate ? getTemplateSupportManifest(selectedTemplate.id) : null;
+  const templateExperienceBrief = selectedTemplate
+    ? buildTemplateExperienceBrief({
+        name: selectedTemplate.name,
+        recommended: recommendedTemplateIds.includes(selectedTemplate.id),
+        selected: selectedTemplateId === selectedTemplate.id,
+        supportManifest: selectedTemplateManifest,
+        compareCount: compareIds.length,
+      })
+    : null;
   const sectionDiff = useMemo(() => {
     if (comparedTemplates.length !== 2) return null;
     const [a, b] = comparedTemplates;
@@ -79,7 +94,7 @@ export const Templates: React.FC = () => {
     });
   }, [groupByStyle, filtered]);
 
-  const useTemplate = (templateId: string) => {
+  const startWithTemplate = (templateId: string) => {
     selectSetupDraftTemplate(templateId);
     navigate('/setup/names');
   };
@@ -156,7 +171,7 @@ See details
           </button>
           <button
             type="button"
-            onClick={() => useTemplate(tpl.id)}
+            onClick={() => startWithTemplate(tpl.id)}
             className="rounded bg-rose-600 px-3 py-2 text-sm font-medium text-white hover:bg-rose-700"
           >
 Start with this
@@ -280,7 +295,7 @@ Start with this
                   </div>
                   <div className="mt-2 grid grid-cols-2 gap-1.5">
                     <Link to={`/template-scroll-capture?templateId=${tpl.id}`} className="rounded border border-neutral-300 px-2 py-1 text-center text-[11px] font-medium text-neutral-700 hover:bg-neutral-100">Open preview</Link>
-                    <button type="button" onClick={() => useTemplate(tpl.id)} className="rounded bg-rose-600 px-2 py-1 text-[11px] font-semibold text-white hover:bg-rose-700">Start here</button>
+                    <button type="button" onClick={() => startWithTemplate(tpl.id)} className="rounded bg-rose-600 px-2 py-1 text-[11px] font-semibold text-white hover:bg-rose-700">Start here</button>
                   </div>
                 </div>
               ))}
@@ -354,6 +369,35 @@ Start with this
           </div>
         )}
 
+        {templateExperienceBrief && (
+          <div className="mt-4 rounded-xl border border-neutral-200 bg-white p-4 shadow-sm">
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+              <div className="space-y-2">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">Template confidence</p>
+                  <h2 className="mt-1 text-lg font-semibold text-neutral-900">{templateExperienceBrief.title}</h2>
+                  <p className="mt-1 text-sm text-neutral-600">{templateExperienceBrief.detail}</p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[11px] font-medium text-emerald-700">
+                    {templateExperienceBrief.confidenceLabel}
+                  </span>
+                  {selectedTemplateManifest && (
+                    <span className="rounded-full border border-neutral-200 bg-neutral-50 px-2.5 py-1 text-[11px] font-medium text-neutral-700">
+                      {selectedTemplateManifest.sectionsIncluded} sections · {selectedTemplateManifest.modulesIncluded} modules
+                    </span>
+                  )}
+                </div>
+              </div>
+              <div className="min-w-0 space-y-1 lg:max-w-sm">
+                {templateExperienceBrief.callouts.map((callout) => (
+                  <p key={callout} className="text-sm text-neutral-600">{callout}</p>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
         {recommendedTemplateIds.length > 0 && (
           <div className="mt-4 rounded-xl border border-rose-200 bg-rose-50/60 p-3">
             <p className="text-xs font-semibold uppercase updates-wide text-rose-700 mb-2">Recommended for you</p>
@@ -365,7 +409,7 @@ Start with this
                   <button
                     key={`rec-${tpl.id}`}
                     type="button"
-                    onClick={() => useTemplate(tpl.id)}
+                    onClick={() => startWithTemplate(tpl.id)}
                     className="text-left rounded-lg border border-rose-200 bg-white p-2 hover:border-rose-300"
                   >
                     <img src={tpl.previewImage} alt={tpl.name} className="h-20 w-full object-cover rounded" />

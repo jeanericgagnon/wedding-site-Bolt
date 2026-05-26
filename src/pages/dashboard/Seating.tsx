@@ -32,6 +32,7 @@ import {
   getEventCounters, autoCreateTables, autoSeatGuests, exportSeatingCSV,
   exportPlaceCardsCSV, downloadCSV, invalidateDriftedAssignments, setGuestCheckedIn,
 } from './seating/seatingService';
+import { buildSeatingInsightCard } from './seating/seatingIntelligence';
 
 const UNASSIGNED_DROPPABLE = 'unassigned-pool';
 type TableShape = 'round' | 'rectangle' | 'bar' | 'dj_booth' | 'dance_floor';
@@ -1593,6 +1594,69 @@ export const DashboardSeating: React.FC = () => {
             </select>
           </div>
         </div>
+
+        {(() => {
+          const seatingInsight = buildSeatingInsightCard({
+            counters,
+            guests: allGuests,
+            tables,
+            assignments,
+            invalidCount,
+            arrivedCount,
+          });
+
+          const runInsightAction = (mode: 'auto-seat' | 'auto-create' | 'check-drift' | 'check-in') => {
+            if (mode === 'auto-seat') {
+              void handleAutoSeat();
+              return;
+            }
+            if (mode === 'auto-create') {
+              setShowAutoTablesModal(true);
+              return;
+            }
+            if (mode === 'check-drift') {
+              void handleCheckDrift();
+              return;
+            }
+            setCheckInMode(true);
+          };
+
+          return (
+            <Card variant="bordered" padding="lg" className="shadow-sm">
+              <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                <div className="space-y-3">
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.22em] text-text-tertiary">{seatingInsight.eyebrow}</p>
+                    <h2 className="mt-1 text-lg font-semibold text-text-primary">{seatingInsight.title}</h2>
+                    <p className="mt-1 text-sm text-text-secondary">{seatingInsight.detail}</p>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {seatingInsight.badges.map((badge) => (
+                      <Badge key={badge} variant="secondary">{badge}</Badge>
+                    ))}
+                  </div>
+                  <div className="space-y-1">
+                    {seatingInsight.callouts.map((callout) => (
+                      <p key={callout} className="text-sm text-text-secondary">{callout}</p>
+                    ))}
+                  </div>
+                </div>
+                <div className="flex flex-wrap gap-2 lg:max-w-xs lg:justify-end">
+                  {seatingInsight.primaryAction && (
+                    <Button size="sm" variant="primary" onClick={() => runInsightAction(seatingInsight.primaryAction!.mode)}>
+                      {seatingInsight.primaryAction.label}
+                    </Button>
+                  )}
+                  {seatingInsight.secondaryAction && (
+                    <Button size="sm" variant="outline" onClick={() => runInsightAction(seatingInsight.secondaryAction!.mode)}>
+                      {seatingInsight.secondaryAction.label}
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </Card>
+          );
+        })()}
 
         <details className="rounded-xl border border-border-subtle bg-surface-subtle/40 p-3">
           <summary className="cursor-pointer list-none flex items-center justify-between gap-2">

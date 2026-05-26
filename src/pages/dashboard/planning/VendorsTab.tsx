@@ -1,10 +1,15 @@
 import React, { useMemo, useState } from 'react';
-import { Plus, Edit2, Trash2, Phone, Mail, Globe, AlertTriangle, ChevronDown, ChevronUp } from 'lucide-react';
+import { Plus, Edit2, Trash2, Phone, Mail, Globe, ChevronDown, ChevronUp } from 'lucide-react';
 import { Card } from '../../../components/ui/Card';
 import { Button } from '../../../components/ui/Button';
 import { Badge } from '../../../components/ui/Badge';
 import { PlanningVendor } from './planningService';
 import { formatVendorDate, isVendorDateOnOrBefore } from './vendorDate';
+import { PlanningDecisionCard } from './PlanningDecisionCard';
+import { buildVendorsDecisionCard } from './planningDecisionAssistant';
+import { readVendorMetaStorage, writeVendorMetaStorage } from './vendorMetaStorage';
+import { buildVendorDecisionDeck, buildVendorFitSummary } from './vendorDecisionSupport';
+import { VendorDecisionDeck } from './VendorDecisionDeck';
 
 interface Props {
   vendors: PlanningVendor[];
@@ -177,13 +182,18 @@ export const VendorsTab: React.FC<Props> = ({ vendors, onAdd, onUpdate, onDelete
 
   React.useEffect(() => {
     try {
-      const raw = localStorage.getItem('dayof.vendor.meta.v1');
-      if (raw) setVendorMeta(JSON.parse(raw));
-    } catch {}
+      setVendorMeta(readVendorMetaStorage());
+    } catch {
+      // Ignore malformed local state and fall back to a clean vendor meta map.
+    }
   }, []);
 
   React.useEffect(() => {
-    try { localStorage.setItem('dayof.vendor.meta.v1', JSON.stringify(vendorMeta)); } catch {}
+    try {
+      writeVendorMetaStorage(vendorMeta);
+    } catch {
+      // Ignore storage write failures for optional vendor follow-up metadata.
+    }
   }, [vendorMeta]);
 
   const today = new Date();
@@ -219,9 +229,19 @@ export const VendorsTab: React.FC<Props> = ({ vendors, onAdd, onUpdate, onDelete
     'open-balance': filteredVendors.filter((v) => vendorStage(v) === 'open-balance'),
     paid: filteredVendors.filter((v) => vendorStage(v) === 'paid'),
   };
+  const vendorDecision = buildVendorsDecisionCard(vendors);
+  const vendorDeck = buildVendorDecisionDeck(vendors, vendorMeta, today);
 
   return (
     <div className="space-y-4">
+      <PlanningDecisionCard model={vendorDecision} />
+      {vendorDeck ? (
+        <VendorDecisionDeck
+          model={vendorDeck}
+          onSelectVendor={(vendorId) => setExpandedId(vendorId)}
+        />
+      ) : null}
+
       {(totalBalance > 0 || followUpDueCount > 0) && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
           <div className="flex items-center justify-between p-3 bg-white rounded-xl border border-border/35 shadow-[0_4px_14px_rgba(15,23,42,0.05)] hover:shadow-[0_8px_20px_rgba(15,23,42,0.08)] transition-shadow">
@@ -298,6 +318,7 @@ export const VendorsTab: React.FC<Props> = ({ vendors, onAdd, onUpdate, onDelete
             const isExpanded = expandedId === vendor.id;
             const isDueSoon = Boolean(vendor.balance_due > 0 && isVendorDateOnOrBefore(vendor.next_payment_due, in7Days));
             const balancePct = vendor.contract_total > 0 ? (vendor.amount_paid / vendor.contract_total) * 100 : 0;
+            const fitSummary = buildVendorFitSummary(vendor, vendorMeta, today);
 
             return (
               <div key={vendor.id}>
@@ -315,10 +336,20 @@ export const VendorsTab: React.FC<Props> = ({ vendors, onAdd, onUpdate, onDelete
                           <p className="text-sm font-semibold text-text-primary">{vendor.name}</p>
                           <Badge variant="neutral">{vendor.vendor_type}</Badge>
                           {isDueSoon && <Badge variant="warning">Payment due soon</Badge>}
+                          <span className={`rounded-full px-2 py-0.5 text-[11px] ${
+                            fitSummary.tone === 'urgent'
+                              ? 'bg-amber-100 text-amber-800'
+                              : fitSummary.tone === 'ready'
+                                ? 'bg-emerald-100 text-emerald-800'
+                                : 'bg-slate-100 text-slate-700'
+                          }`}>
+                            {fitSummary.label}
+                          </span>
                         </div>
                         {vendor.contact_name && (
                           <p className="text-xs text-text-tertiary mt-0.5">{vendor.contact_name}</p>
                         )}
+                        <p className="mt-2 text-xs text-text-secondary">{fitSummary.detail}</p>
                         <div className="flex items-center gap-3 mt-2">
                           <div className="flex-1">
                             <div className="flex items-center justify-between text-xs text-text-tertiary mb-1">

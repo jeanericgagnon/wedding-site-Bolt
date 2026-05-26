@@ -15,6 +15,8 @@ import { PhotoBucketKind } from '../../lib/aiPhotoBuckets';
 import { buildPhotoPlacementPlan } from '../../lib/aiPhotoPlacement';
 import { mergeGeneratedDraftIntoBuilderProject } from '../../lib/aiBuilderProjectPatch';
 import { buildQuickStartOverviewPath, readQuickStartDashboardContinuation } from '../../lib/quickStartContinuation';
+import { buildPhotoMemoryCuratorModel } from '../../lib/memoryCurator';
+import { MemoryCuratorCard } from '../../components/dashboard/MemoryCuratorCard';
 import { parseDatetimeLocalToIso, toDatetimeLocalOrEmpty } from './guestPhotoDateTime';
 import { formatGuestPhotoDate, formatGuestPhotoDateTime, getGuestPhotoSortTime, toGuestPhotoCsvTimestamp } from './guestPhotoUploadTime';
 import { formatGuestPhotoEventDate, getSuggestedGuestPhotoWindowStart } from './guestPhotoEventDate';
@@ -93,7 +95,6 @@ export const GuestPhotoSharing: React.FC = () => {
   const [success, setSuccess] = useState<string | null>(null);
 
   const [siteId, setSiteId] = useState<string | null>(null);
-  const [siteSlug, setSiteSlug] = useState<string | null>(null);
   const [events, setEvents] = useState<ItineraryEvent[]>([]);
   const [buckets, setBuckets] = useState<PhotoBucketRow[]>([]);
   const [uploads, setUploads] = useState<PhotoUploadRow[]>([]);
@@ -112,7 +113,6 @@ export const GuestPhotoSharing: React.FC = () => {
 
   const [windowDrafts, setWindowDrafts] = useState<Record<string, { opensAt: string; closesAt: string }>>({});
   const [bulkCreating, setBulkCreating] = useState(false);
-  const [bulkUpdatingStatus, setBulkUpdatingStatus] = useState(false);
   const [bulkRegenerating, setBulkRegenerating] = useState(false);
   const [bulkModerating, setBulkModerating] = useState(false);
   const [photoBuckets, setPhotoBuckets] = useState(() => createEmptyPhotoBuckets());
@@ -123,6 +123,16 @@ export const GuestPhotoSharing: React.FC = () => {
   const bucketFileInputRef = useRef<HTMLInputElement | null>(null);
   const [pendingBucket, setPendingBucket] = useState<PhotoBucketKind | null>(null);
   const archiveMode = useMemo(() => getArchiveModeDescriptor({ weddingDate: events[0]?.event_date ?? null }), [events]);
+  const photoMemoryCurator = useMemo(() => buildPhotoMemoryCuratorModel({
+    photoBuckets,
+    albums: buckets.map((bucket) => ({ id: bucket.id, name: bucket.name, is_active: bucket.is_active })),
+    uploads: uploads.map((upload) => ({
+      photo_bucket_id: upload.photo_bucket_id,
+      is_hidden: upload.is_hidden,
+      is_flagged: upload.is_flagged,
+    })),
+    isArchiveLike: archiveMode.isArchiveLike,
+  }), [archiveMode.isArchiveLike, buckets, photoBuckets, uploads]);
 
   useEffect(() => {
     void load();
@@ -263,7 +273,6 @@ export const GuestPhotoSharing: React.FC = () => {
       if (siteErr || !site) throw new Error(siteErr?.message ?? 'No wedding site found.');
 
       setSiteId(site.id as string);
-      setSiteSlug((site.site_slug as string) ?? null);
       const savedBuckets = ((((site.wedding_data as Record<string, unknown> | null)?.meta as Record<string, unknown> | undefined)?.photoBuckets as ReturnType<typeof createEmptyPhotoBuckets> | undefined) ?? null);
       if (savedBuckets) setPhotoBuckets(savedBuckets);
 
@@ -320,7 +329,6 @@ export const GuestPhotoSharing: React.FC = () => {
         return;
       }
       setSiteId(null);
-      setSiteSlug(null);
       setEvents([]);
       setBuckets([]);
       setUploads([]);
@@ -397,7 +405,13 @@ export const GuestPhotoSharing: React.FC = () => {
       selectedUploads = [...selectedUploads].sort((a, b) => a.uploadId.localeCompare(b.uploadId));
     }
 
-    return selectedUploads.slice(0, 24).map(({ uploadedAt: _uploadedAt, ...frame }) => frame);
+    return selectedUploads.slice(0, 24).map((frame) => ({
+      uploadId: frame.uploadId,
+      bucketId: frame.bucketId,
+      bucketName: frame.bucketName,
+      title: frame.title,
+      caption: frame.caption,
+    }));
   }, [buckets, uploads, countsByBucket, slideshowBucketFilter, slideshowOrder]);
 
   const slideshowThemeMeta: Record<SlideshowTheme, { label: string; cardClass: string; chipClass: string; helper: string }> = {
@@ -739,31 +753,6 @@ export const GuestPhotoSharing: React.FC = () => {
     }
   };
 
-  const setAllBucketsActive = async (isActive: boolean) => {
-    const targetBuckets = buckets.filter((a) => a.is_active !== isActive);
-    if (targetBuckets.length === 0) {
-      setSuccess(isActive ? 'All buckets are already active.' : 'All buckets are already paused.');
-      return;
-    }
-
-    try {
-      setBulkUpdatingStatus(true);
-      setError(null);
-      setSuccess(null);
-
-      for (const bucket of targetBuckets) {
-        await invokeOrThrow('photo-album-manage', { action: 'set_active', albumId: bucket.id, isActive });
-      }
-
-      await load();
-      setSuccess(`${isActive ? 'Activated' : 'Paused'} ${targetBuckets.length} bucket(s).`);
-    } catch (err: unknown) {
-      setError((err as Error)?.message || 'Failed to update bucket statuses.');
-    } finally {
-      setBulkUpdatingStatus(false);
-    }
-  };
-
   const moderateUpload = async (uploadId: string, patch: Partial<Pick<PhotoUploadRow, 'is_hidden' | 'is_flagged'>>) => {
     try {
       setError(null);
@@ -928,6 +917,8 @@ export const GuestPhotoSharing: React.FC = () => {
             </div>
           </div>
         </div>
+
+        <MemoryCuratorCard model={photoMemoryCurator} />
 
         <Card className="border-0 bg-neutral-950 text-white shadow-sm">
           <div className="flex flex-col gap-4 p-6 lg:flex-row lg:items-center lg:justify-between">

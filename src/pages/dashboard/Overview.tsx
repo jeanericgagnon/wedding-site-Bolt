@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { readSetupDraft, setupDraftProgress } from '../../lib/setupDraft';
 import { SITE_VISIBILITY_COPY } from '../../lib/siteVisibilityCopy';
 import {
@@ -15,7 +15,7 @@ import { DashboardStateBlock } from '../../components/dashboard/DashboardStateBl
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, Button, Badge } from '../../components/ui';
 import { Eye, Users, CheckCircle2, Calendar, ExternalLink, Edit, Clock, EyeOff, Radio } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
-import { buildDraftSitePatchFromProfile, getWeddingProfileRefineTargets, getWeddingProfileSummary, isWeddingProfile } from '../../lib/weddingProfile';
+import { buildDraftSitePatchFromProfile, getWeddingProfileSummary, isWeddingProfile } from '../../lib/weddingProfile';
 import { generateDraftFromWeddingProfile, mergeGeneratedDraftIntoWeddingData } from '../../lib/aiDraftGenerator';
 import { mergeGeneratedDraftIntoBuilderProject } from '../../lib/aiBuilderProjectPatch';
 import { createCanonicalContentFromDraft } from '../../lib/aiCanonicalContent';
@@ -24,11 +24,12 @@ import { demoWeddingSite, demoGuests } from '../../lib/demoData';
 import { resolvePublicSiteSlugFromRow } from '../../lib/publicSiteSlug';
 import { getSiteVisibilityState } from '../../lib/siteVisibilityState';
 import { getPublishStateDescriptor } from '../../lib/publishState';
-import { listBuilderRevisions, type BuilderRevision } from '../../builder/services/versionHistory';
+import type { BuilderRevision } from '../../builder/services/versionHistory';
 import { getArchiveModeDescriptor } from '../../lib/archiveMode';
 import { hasRespondedRsvpStatus, isAttendingRsvpStatus, isDeclinedRsvpStatus, isPendingRsvpStatus } from '../../lib/rsvpStatus';
 import { writeOnboardingResumeTarget } from '../../lib/onboardingResumeStorage';
 import { useToast } from '../../components/ui/Toast';
+import { buildGuestOpsCoach } from '../../lib/guestOpsCoach';
 import { calcOverviewDaysUntil, formatOverviewRelativeTime, formatOverviewWeddingDate, getOverviewTimestamp } from './overviewDate';
 import { getOverviewFallbackCoupleValue } from './overviewDraftBrief';
 import { buildNameChangeOverviewCardModel } from './nameChangeOverviewCard';
@@ -36,6 +37,8 @@ import { buildNameChangeOverviewInsights, type NameChangeOverviewInsights } from
 import { NAME_CHANGE_LIFECYCLE_LABELS } from './nameChangeLifecycleLabels';
 import { deriveNameChangeLifecycleStatus } from './nameChangeLifecycleStatus';
 import { hydrateNameChangeWorkspace, loadNameChangeWorkspace } from './planning/nameChangeService';
+import { buildControlTowerBriefing, type ControlTowerAction } from './controlTowerIntelligence';
+import { ControlTowerBriefingCard } from './ControlTowerBriefingCard';
 
 const DEFAULT_NAME_CHANGE_INSIGHTS: NameChangeOverviewInsights = {
   coreChainLabel: 'Certificate, SSA, and DMV stay together so the legal identity chain does not drift.',
@@ -101,47 +104,6 @@ function resolveWeddingDateFromData(
 
 export const DashboardOverview: React.FC = () => {
   const { toast } = useToast();
-
-
-  async function markBuilderFieldAsUserEdited(fieldPath: string) {
-    if (!stats?.siteId) return;
-
-    const { data, error } = await supabase
-      .from('wedding_sites')
-      .select('site_json')
-      .eq('id', stats.siteId)
-      .maybeSingle();
-
-    if (error) throw error;
-
-    const nextSiteJson = structuredClone((data?.site_json as Record<string, unknown> | null) ?? {});
-    const segments = fieldPath.split('.');
-    let cursor: Record<string, unknown> = nextSiteJson;
-
-    for (let i = 0; i < segments.length - 1; i += 1) {
-      const key = segments[i];
-      cursor[key] = ((cursor[key] as Record<string, unknown> | undefined) ?? {});
-      cursor = cursor[key] as Record<string, unknown>;
-    }
-
-    const leaf = segments[segments.length - 1];
-    const current = cursor[leaf];
-    if (current && typeof current === 'object' && 'value' in (current as Record<string, unknown>)) {
-      cursor[leaf] = {
-        ...(current as Record<string, unknown>),
-        source: 'user-edited',
-        updatedAt: new Date().toISOString(),
-      };
-    }
-
-    const { error: updateError } = await supabase
-      .from('wedding_sites')
-      .update({ site_json: nextSiteJson })
-      .eq('id', stats.siteId);
-
-    if (updateError) throw updateError;
-    await loadStats();
-  }
 
   async function refreshDraftFromBrief() {    if (!stats?.siteId || draftBrief.length === 0 || refreshingBrief) return;
 
@@ -210,19 +172,11 @@ export const DashboardOverview: React.FC = () => {
   const [setupDraftProgressPercent, setSetupDraftProgressPercent] = useState<number>(0);
   const [interactiveSuggestions, setInteractiveSuggestions] = useState<InteractiveSuggestion[]>([]);
   const [interactiveLoading, setInteractiveLoading] = useState(false);
-  const [recentSiteActivity, setRecentSiteActivity] = useState<BuilderRevision[]>([]);
+  const [recentSiteActivity] = useState<BuilderRevision[]>([]);
   const [draftBrief, setDraftBrief] = useState<Array<{ id: string; label: string; value: string; questionKey: string }>>([]);
-  const [briefUpdatedAt, setBriefUpdatedAt] = useState<string | null>(null);
   const [refreshingBrief, setRefreshingBrief] = useState(false);
-  const [draftRefineTargets, setDraftRefineTargets] = useState<Array<{ id: string; label: string; questionIndex: number; value: string }>>([]);
-  const [draftBriefDebug, setDraftBriefDebug] = useState<string>('init');
   const [nameChangeOverviewState, setNameChangeOverviewState] = useState<{ hasWorkspace: boolean; workflowStatus: 'draft' | 'ready' | 'in_progress' | 'complete' | null; hasExecutionActivity: boolean; }>({ hasWorkspace: false, workflowStatus: null, hasExecutionActivity: false });
   const [nameChangeInsights, setNameChangeInsights] = useState<NameChangeOverviewInsights>(DEFAULT_NAME_CHANGE_INSIGHTS);
-
-  useEffect(() => {
-    if (!user) return;
-    loadStats();
-  }, [user, isDemoMode]);
 
   useEffect(() => {
     const refreshProgress = () => setSetupDraftProgressPercent(setupDraftProgress(readSetupDraft()));
@@ -368,8 +322,6 @@ export const DashboardOverview: React.FC = () => {
         if (isWeddingProfile(site.onboarding_answers)) {
           const summary = getWeddingProfileSummary(site.onboarding_answers);
           setDraftBrief(summary);
-          setDraftRefineTargets(getWeddingProfileRefineTargets(site.onboarding_answers));
-          setDraftBriefDebug(`valid:${summary.length}`);
         } else {
           const weddingData = (site.wedding_data as Record<string, unknown> | null) ?? null;
           const fallbackCoupleValue = getOverviewFallbackCoupleValue(site.couple_name_1, site.couple_name_2);
@@ -381,8 +333,6 @@ export const DashboardOverview: React.FC = () => {
             typeof (weddingData?.couple as Record<string, unknown> | undefined)?.story === 'string' ? { id: 'story', label: 'Story', value: (weddingData?.couple as Record<string, unknown>).story as string, questionKey: 'story' } : null,
           ].filter(Boolean) as Array<{ id: string; label: string; value: string; questionKey: string }>;
           setDraftBrief(fallbackSummary);
-          setDraftRefineTargets([]);
-          setDraftBriefDebug(`fallback:${fallbackSummary.length}`);
         }
       }
 
@@ -492,6 +442,11 @@ export const DashboardOverview: React.FC = () => {
     }
   }
 
+  useEffect(() => {
+    if (!user) return;
+    void loadStats();
+  }, [user, isDemoMode]);
+
   const nameChangeCard = buildNameChangeOverviewCardModel(nameChangeOverviewState);
 
   const responseRate =
@@ -517,6 +472,16 @@ export const DashboardOverview: React.FC = () => {
     photoAlbumCount: stats?.photoAlbumCount ?? 0,
     activePhotoAlbumCount: stats?.activePhotoAlbumCount ?? 0,
     interactiveSuggestionCount: interactiveSuggestions.length,
+  });
+
+  const guestOpsCoach = buildGuestOpsCoach({
+    totalGuests: stats?.totalGuests ?? 0,
+    attendingGuests: stats?.confirmedGuests ?? 0,
+    pendingResponses: stats?.pendingGuests ?? 0,
+    pendingWithoutEmail: 0,
+    noContact: stats ? Math.max((stats.totalGuests ?? 0) - (stats.contactableGuestCount ?? 0), 0) : 0,
+    missingMealChoices: 0,
+    missingPlusOneNames: 0,
   });
 
   const hideSuggestion = async (id: string) => {
@@ -574,6 +539,36 @@ export const DashboardOverview: React.FC = () => {
   const publishProgress = getChecklistProgress(publishReadinessItems);
   const publishBlockers = getIncompleteChecklistItems(publishReadinessItems);
   const firstPublishBlocker = getFirstIncompleteChecklistItem(publishReadinessItems);
+  const controlTowerBriefing = buildControlTowerBriefing({
+    totalGuests: stats?.totalGuests ?? 0,
+    confirmedGuests: stats?.confirmedGuests ?? 0,
+    declinedGuests: stats?.declinedGuests ?? 0,
+    pendingGuests: stats?.pendingGuests ?? 0,
+    contactableGuestCount: stats?.contactableGuestCount ?? 0,
+    registryItemCount: stats?.registryItemCount ?? 0,
+    photoAlbumCount: stats?.photoAlbumCount ?? 0,
+    activePhotoAlbumCount: stats?.activePhotoAlbumCount ?? 0,
+    interactiveSuggestionCount: interactiveSuggestions.length,
+    recentRsvpCount: stats?.recentRsvps?.length ?? 0,
+    recentSiteActivityCount: recentSiteActivity.length,
+    publishBlockerCount: publishBlockers.length,
+    daysUntilWedding: stats?.daysUntilWedding ?? null,
+    isPublished: stats?.isPublished ?? false,
+    isArchiveLike: archiveMode.isArchiveLike,
+  });
+
+  function handleControlTowerAction(action: ControlTowerAction) {
+    const routeByTarget: Record<ControlTowerAction['target'], string> = {
+      builder: '/dashboard/builder',
+      guests: '/dashboard/guests',
+      messages: '/dashboard/messages',
+      photos: '/dashboard/photos',
+      planning: '/dashboard/planning',
+      registry: '/dashboard/registry',
+      vault: '/dashboard/vault',
+    };
+    navigate(routeByTarget[action.target]);
+  }
 
   return (
     <DashboardLayout currentPage="overview">
@@ -678,6 +673,8 @@ export const DashboardOverview: React.FC = () => {
           </div>
         ) : (
           <>
+            <ControlTowerBriefingCard briefing={controlTowerBriefing} onAction={handleControlTowerAction} />
+
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               <Card variant="bordered" padding="md" className="h-full shadow-sm">
                 <div className="flex items-start justify-between mb-4">
@@ -797,11 +794,30 @@ export const DashboardOverview: React.FC = () => {
                     </div>
                   </div>
                   <div className="rounded-xl border border-border-subtle bg-white px-4 py-4">
-                    <p className="text-sm font-semibold text-text-primary">Where to push next</p>
-                    <div className="mt-3 space-y-2 text-sm text-text-secondary">
-                      <p>{(stats?.pendingGuests ?? 0) > 0 ? `${stats?.pendingGuests ?? 0} guests still need an RSVP reply.` : 'RSVP backlog is clear right now.'}</p>
-                      <p>{(stats?.contactableGuestCount ?? 0) < (stats?.totalGuests ?? 0) ? `${(stats?.totalGuests ?? 0) - (stats?.contactableGuestCount ?? 0)} guests still need contact coverage.` : 'Guest contact coverage looks complete.'}</p>
-                      <p>{(stats?.registryItemCount ?? 0) === 0 ? 'Registry still needs live items.' : 'Registry has enough live items to be guest-facing.'}</p>
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="text-sm font-semibold text-text-primary">Guest ops coach</p>
+                        <p className="mt-1 text-xs text-text-secondary">{guestOpsCoach.summary}</p>
+                      </div>
+                      <Badge variant={guestOpsCoach.tone === 'urgent' ? 'error' : guestOpsCoach.tone === 'steady' ? 'warning' : 'success'}>
+                        {guestOpsCoach.statusLabel}
+                      </Badge>
+                    </div>
+                    <div className="mt-3 space-y-2">
+                      {guestOpsCoach.actions.slice(0, 3).map((action) => (
+                        <button
+                          key={action.id}
+                          type="button"
+                          onClick={() => navigate(action.area === 'messages' ? '/dashboard/messages' : '/dashboard/guests')}
+                          className="w-full rounded-lg border border-border-subtle bg-surface-secondary/20 px-3 py-2 text-left hover:border-primary/30 hover:bg-white"
+                        >
+                          <div className="flex items-center justify-between gap-3">
+                            <span className="text-sm font-medium text-text-primary">{action.title}</span>
+                            <span className="text-[11px] text-primary">{action.ctaLabel}</span>
+                          </div>
+                          <p className="mt-1 text-xs text-text-secondary">{action.detail}</p>
+                        </button>
+                      ))}
                     </div>
                   </div>
                 </div>

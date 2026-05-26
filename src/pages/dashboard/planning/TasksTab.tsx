@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
-import { Plus, Edit2, Trash2, CheckSquare, Square, Columns, List, Sparkles, X } from 'lucide-react';
+import { Plus, Edit2, Trash2, CheckSquare, Square, Columns, List, Sparkles } from 'lucide-react';
 import { Card } from '../../../components/ui/Card';
 import { Button } from '../../../components/ui/Button';
 import { Badge } from '../../../components/ui/Badge';
 import { PlanningTask } from './planningService';
 import { formatTaskDueDate, isTaskDueOnOrBefore } from './taskDueDate';
+import { PlanningDecisionCard } from './PlanningDecisionCard';
+import { buildTasksDecisionCard } from './planningDecisionAssistant';
 
 interface Props {
   tasks: PlanningTask[];
@@ -24,12 +26,6 @@ const PRIORITY_COLORS: Record<string, 'error' | 'warning' | 'neutral'> = {
   high: 'error',
   medium: 'warning',
   low: 'neutral',
-};
-
-const STATUS_LABELS: Record<string, string> = {
-  todo: 'To Do',
-  in_progress: 'In Progress',
-  done: 'Done',
 };
 
 function TaskForm({ initial, onSave, onCancel }: {
@@ -223,6 +219,8 @@ export const TasksTab: React.FC<Props> = ({ tasks, weddingDate, onAdd, onUpdate,
     setConfirmCreate(false);
   }
 
+  const taskDecision = buildTasksDecisionCard(tasks);
+
   const kanbanColumns: { status: PlanningTask['status']; label: string }[] = [
     { status: 'todo', label: 'To Do' },
     { status: 'in_progress', label: 'In Progress' },
@@ -231,6 +229,8 @@ export const TasksTab: React.FC<Props> = ({ tasks, weddingDate, onAdd, onUpdate,
 
   return (
     <div className="space-y-4">
+      <PlanningDecisionCard model={taskDecision} />
+
       <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
         <div className="flex items-center gap-2 flex-wrap">
           <select
