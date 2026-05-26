@@ -489,8 +489,10 @@ Deno.serve(async (req: Request) => {
     }
 
     return json({ error: "Unknown action" }, 400);
-  } catch (err) {
-    const message = err instanceof Error ? err.message : "Internal server error";
-    return json({ error: message }, 500);
+  } catch {
+    console.error("VALIDATE_RSVP_TOKEN_UNEXPECTED_FAILED", {
+      reason: "UNEXPECTED_RSVP_TOKEN_VALIDATION_FAILURE",
+    });
+    return json({ error: "Could not update this RSVP. Please try again." }, 500);
   }
 });
