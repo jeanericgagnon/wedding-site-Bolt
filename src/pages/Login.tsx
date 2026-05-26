@@ -4,6 +4,7 @@ import { Heart, Chrome, ArrowLeft, Mail, AlertCircle } from 'lucide-react';
 import { Button, Card, Input } from '../components/ui';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
+import { AuthSupportLinks } from '../components/auth/AuthSupportLinks';
 import { consumeSignupReturnPath, writeSignupReturnPath } from '../lib/signupContinuation';
 import { clearAuthEntryReturnPath } from '../lib/authEntryCleanup';
 import { resolveLoginReturnPath } from '../lib/loginReturnResolver';
@@ -420,6 +421,7 @@ export const Login: React.FC = () => {
               </Link>
             </p>
           </div>
+          <AuthSupportLinks />
         </Card>
       </div>
     </div>

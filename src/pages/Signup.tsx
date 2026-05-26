@@ -3,11 +3,11 @@ import { Link, useLocation, useNavigate, useSearchParams, createSearchParams } f
 import { Chrome, Heart } from 'lucide-react';
 import { Button, Card, Input } from '../components/ui';
 import { supabase } from '../lib/supabase';
+import { AuthSupportLinks } from '../components/auth/AuthSupportLinks';
 import { isPaymentGateEnabled } from '../lib/paymentGate';
 import { consumeSignupReturnPath, writeSignupReturnPath } from '../lib/signupContinuation';
 import { clearAuthEntryReturnPath } from '../lib/authEntryCleanup';
 import { resolveSignupReturnPath } from '../lib/signupReturnResolver';
-import { buildQuickStartEntryPath } from '../lib/quickStartContinuation';
 import { normalizeMeaningfulQuickStartDraftSnapshot, persistQuickStartDraftSnapshot } from '../lib/quickStartStateTransfer';
 
 const makeBaseSlug = (email: string) => {
@@ -313,6 +313,7 @@ export const Signup: React.FC = () => {
               </button>
             </p>
           </div>
+          <AuthSupportLinks />
         </Card>
       </div>
     </div>
