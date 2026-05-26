@@ -79,6 +79,7 @@ Why keep:
 
 Recommended next move:
 - preserve as later hardening history
+- see `docs/v1-finish-hard-gates-3-salvage-plan-2026-05-25.md` for the current preservation guidance
 
 #### `origin/feat/builder-v2-setup-route-skeleton`
 
