@@ -176,7 +176,12 @@ Deno.serve(async (req: Request) => {
       .select("id,name,slug,drive_folder_id,drive_folder_url")
       .single();
 
-    if (error) return fail("DB_ERROR", error.message, 400);
+    if (error) {
+      console.error("PHOTO_ALBUM_CREATE_INSERT_FAILED", {
+        reason: "PHOTO_ALBUM_CREATE_INSERT_ERROR",
+      });
+      return fail("DB_ERROR", "Could not create this album. Please try again.", 400);
+    }
 
     const uploadUrl = `${appUrl.replace(/\/$/, "")}/photos/upload?t=${encodeURIComponent(token)}`;
 
@@ -185,7 +190,10 @@ Deno.serve(async (req: Request) => {
       uploadUrl,
       uploadToken: token,
     });
-  } catch (err) {
-    return fail("INTERNAL_ERROR", err instanceof Error ? err.message : "Internal server error", 500);
+  } catch {
+    console.error("PHOTO_ALBUM_CREATE_UNEXPECTED_FAILED", {
+      reason: "UNEXPECTED_PHOTO_ALBUM_CREATE_FAILURE",
+    });
+    return fail("INTERNAL_ERROR", "Could not create this album. Please try again.", 500);
   }
 });
