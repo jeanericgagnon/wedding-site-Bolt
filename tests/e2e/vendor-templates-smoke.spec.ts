@@ -13,35 +13,36 @@ test('vendor template environment filters and previews vendor page designs', asy
   await expect(page).toHaveURL(/\/dashboard/);
 
   await page.goto('/vendor-templates?vendorTemplateQa=1', { waitUntil: 'domcontentloaded' });
-  await expect(page.getByRole('heading', { name: /Choose how each vendor should feel/i })).toBeVisible();
-  await expect(page.getByRole('button', { name: /Photography Portfolio/i })).toBeVisible();
-  await expect(page.getByRole('button', { name: /Floral Lookbook/i })).toBeVisible();
-  await expect(page.getByRole('button', { name: /Venue Estate/i })).toBeVisible();
-  await expect(page.getByRole('button', { name: /Food and Beverage/i })).toBeVisible();
-  await expect(page.getByRole('button', { name: /Beauty Atelier/i })).toBeVisible();
-  await expect(page.getByRole('button', { name: /Entertainment Stage/i })).toBeVisible();
-  await expect(page.getByRole('button', { name: /Planner Concierge/i })).toBeVisible();
-  await expect(page.getByRole('button', { name: /Travel Logistics/i })).toBeVisible();
+  await expect(page.getByRole('heading', { name: /Pick a page style\./i })).toBeVisible();
+  await expect(page.getByText('Check photos, notes, and ways to reply before you save.')).toBeVisible();
+  await expect(page.getByRole('button', { name: /Photo and video Photography/i })).toBeVisible();
+  await expect(page.getByRole('button', { name: /Flowers and decor Floral and decor/i })).toBeVisible();
+  await expect(page.getByRole('button', { name: /Venues Venue/i })).toBeVisible();
+  await expect(page.getByRole('button', { name: /Catering, cakes, and bar Food and drinks/i })).toBeVisible();
+  await expect(page.getByRole('button', { name: /Beauty, getting ready, and jewelry Beauty and getting ready/i })).toBeVisible();
+  await expect(page.getByRole('button', { name: /Music and entertainment Music and entertainment/i })).toBeVisible();
+  await expect(page.getByRole('button', { name: /Planning help Planning help/i })).toBeVisible();
+  await expect(page.getByRole('button', { name: /Travel and guest movement Travel and guest movement/i })).toBeVisible();
 
-  await page.getByPlaceholder('Search vendor, flowers, location...').fill('flowers');
+  await page.getByPlaceholder('Search name, flowers, location...').fill('flowers');
   await expect(page.getByRole('button', { name: /Marigold Floral House/i })).toBeVisible();
   await expect(page.getByRole('button', { name: /Everlight Studio/i })).toHaveCount(0);
 
-  await page.getByPlaceholder('Search vendor, flowers, location...').fill('');
+  await page.getByPlaceholder('Search name, flowers, location...').fill('');
   await page.locator('select').nth(0).selectOption('Transportation');
   await expect(page.getByRole('button', { name: /Northstar Transit Co/i })).toBeVisible();
-  await expect(page.locator('span').filter({ hasText: /^Needs images$/ }).first()).toBeVisible();
+  await expect(page.locator('span').filter({ hasText: /^Add photos$/ }).first()).toBeVisible();
 
-  await page.getByRole('button', { name: /Travel Logistics/i }).click();
-  await expect(page.getByText('Direct email and inquiry-only modes')).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Confirm logistics' })).toBeVisible();
-  await expect(page.getByText('Route clarity')).toBeVisible();
+  await page.getByRole('button', { name: /Travel and guest movement Travel and guest movement/i }).click();
+  await expect(page.getByRole('main').getByText('Travel and guest movement')).toBeVisible();
+  await expect(page.getByRole('main').getByText('Route clarity')).toBeVisible();
+  await expect(page.getByRole('main').getByRole('button', { name: 'Plan schedule' })).toBeVisible();
 
   await page.locator('select').nth(0).selectOption('All');
-  await page.locator('select').nth(2).selectOption('Website ready');
+  await page.locator('select').nth(2).selectOption('Website');
   await expect(page.getByRole('button', { name: /Everlight Studio/i })).toBeVisible();
-  await expect(page.locator('#review').getByText('Review checklist')).toBeVisible();
-  await expect(page.getByText('Inquiry inbox')).toBeVisible();
-  await expect(page.getByRole('heading', { name: /Recent vendor inquiries/i })).toBeVisible();
-  await expect(page.getByRole('button', { name: /Refresh|Refreshing/i })).toBeVisible();
+  await expect(page.locator('#review').getByText('Quick check')).toBeVisible();
+  await expect(page.getByText('Notes sent from pages appear here.')).toBeVisible();
+  await expect(page.getByRole('heading', { name: /^Notes$/i })).toBeVisible();
+  await expect(page.getByRole('button', { name: /Check again|Loading/i })).toBeVisible();
 });
