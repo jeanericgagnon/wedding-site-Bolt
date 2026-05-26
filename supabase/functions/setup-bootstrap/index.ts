@@ -135,7 +135,10 @@ Deno.serve(async (req: Request) => {
     if (updateErr) return fail("DB_ERROR", updateErr.message, 400);
 
     return json({ success: true, weddingSiteId: site.id });
-  } catch (err) {
-    return fail("INTERNAL_ERROR", err instanceof Error ? err.message : "Internal server error", 500);
+  } catch {
+    console.error("SETUP_BOOTSTRAP_UNEXPECTED_FAILED", {
+      reason: "UNEXPECTED_SETUP_BOOTSTRAP_FAILURE",
+    });
+    return fail("INTERNAL_ERROR", "Could not finish setup bootstrap. Please try again.", 500);
   }
 });
