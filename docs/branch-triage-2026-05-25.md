@@ -69,6 +69,7 @@ Why keep:
 
 Recommended next move:
 - preserve as older hardening history
+- see `docs/v1-finish-hard-gates-salvage-plan-2026-05-25.md` for the current preservation guidance
 
 #### `origin/codex/v1-finish-hard-gates-3`
 
