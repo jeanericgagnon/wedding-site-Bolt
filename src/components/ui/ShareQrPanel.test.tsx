@@ -26,7 +26,7 @@ describe('ShareQrPanel', () => {
     expect(screen.getByText('https://dayof.love/event/maya-and-leo')).toBeInTheDocument();
     expect(screen.getByRole('img', { name: 'Guest hub QR code' })).toHaveAttribute(
       'src',
-      expect.stringContaining('https://api.qrserver.com/v1/create-qr-code/'),
+      expect.stringContaining('data:image/svg+xml;charset=utf-8,'),
     );
   });
 

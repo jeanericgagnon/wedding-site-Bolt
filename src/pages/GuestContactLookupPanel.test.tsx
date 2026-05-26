@@ -9,19 +9,13 @@ describe('GuestContactLookupPanel', () => {
       <GuestContactLookupPanel
         query=""
         verifier=""
-        householdVerifier=""
         searching={false}
         matches={[]}
         selectedContactSession=""
-        selectedHouseholdSize={1}
-        selectedHouseholdAllowed={false}
-        applyHousehold={false}
         onQueryChange={vi.fn()}
         onVerifierChange={vi.fn()}
-        onHouseholdVerifierChange={vi.fn()}
         onSearch={vi.fn()}
         onSelectContactSession={vi.fn()}
-        onToggleApplyHousehold={vi.fn()}
         canSearch
       />,
     );
@@ -31,30 +25,24 @@ describe('GuestContactLookupPanel', () => {
     expect(screen.getByRole('button', { name: 'Find' })).toBeEnabled();
   });
 
-  it('shows the whole-party helper only when household updates still need phone verification', () => {
+  it('shows the match selector with party size details when results are available', () => {
     render(
       <GuestContactLookupPanel
         query="Maya Lee"
         verifier="maya"
-        householdVerifier=""
         searching={false}
-        matches={[{ contact_session: 'session-1', name: 'Maya Lee', household_size: 3, household_updates_allowed: false }]}
+        matches={[{ contact_session: 'session-1', name: 'Maya Lee', household_size: 3 }]}
         selectedContactSession="session-1"
-        selectedHouseholdSize={3}
-        selectedHouseholdAllowed={false}
-        applyHousehold={false}
         onQueryChange={vi.fn()}
         onVerifierChange={vi.fn()}
-        onHouseholdVerifierChange={vi.fn()}
         onSearch={vi.fn()}
         onSelectContactSession={vi.fn()}
-        onToggleApplyHousehold={vi.fn()}
         canSearch
       />,
     );
 
-    expect(screen.getByText('To update your whole party, add the last 4 digits of the phone number on file and search again.')).toBeInTheDocument();
-    expect(screen.getByRole('checkbox')).toBeDisabled();
+    expect(screen.getByLabelText('Select your name')).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'Maya Lee (party of 3)' })).toBeInTheDocument();
   });
 
   it('routes match selection through the shared lookup panel controls', () => {
@@ -65,22 +53,16 @@ describe('GuestContactLookupPanel', () => {
       <GuestContactLookupPanel
         query="Maya Lee"
         verifier="maya"
-        householdVerifier="1234"
         searching={false}
         matches={[
-          { contact_session: 'session-1', name: 'Maya Lee', household_size: 2, household_updates_allowed: true },
-          { contact_session: 'session-2', name: 'Leo Hart', household_size: 1, household_updates_allowed: false },
+          { contact_session: 'session-1', name: 'Maya Lee', household_size: 2 },
+          { contact_session: 'session-2', name: 'Leo Hart', household_size: 1 },
         ]}
         selectedContactSession="session-1"
-        selectedHouseholdSize={2}
-        selectedHouseholdAllowed={true}
-        applyHousehold={true}
         onQueryChange={vi.fn()}
         onVerifierChange={vi.fn()}
-        onHouseholdVerifierChange={vi.fn()}
         onSearch={onSearch}
         onSelectContactSession={onSelectContactSession}
-        onToggleApplyHousehold={vi.fn()}
         canSearch
       />,
     );
@@ -97,26 +79,18 @@ describe('GuestContactLookupPanel', () => {
       <GuestContactLookupPanel
         query="Maya Lee"
         verifier="maya"
-        householdVerifier=""
         searching={false}
         matches={[]}
         selectedContactSession=""
-        selectedHouseholdSize={1}
-        selectedHouseholdAllowed={false}
-        applyHousehold={false}
         onQueryChange={vi.fn()}
         onVerifierChange={vi.fn()}
-        onHouseholdVerifierChange={vi.fn()}
         onSearch={vi.fn()}
         onSelectContactSession={vi.fn()}
-        onToggleApplyHousehold={vi.fn()}
         canSearch
       />,
     );
 
     expect(screen.queryByLabelText('Select your name')).not.toBeInTheDocument();
-    expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
-    expect(screen.queryByText(/whole party/i)).not.toBeInTheDocument();
   });
 
   it('disables the shared search action while a lookup is already in progress', () => {
@@ -124,19 +98,13 @@ describe('GuestContactLookupPanel', () => {
       <GuestContactLookupPanel
         query="Maya Lee"
         verifier="maya"
-        householdVerifier=""
         searching
         matches={[]}
         selectedContactSession=""
-        selectedHouseholdSize={1}
-        selectedHouseholdAllowed={false}
-        applyHousehold={false}
         onQueryChange={vi.fn()}
         onVerifierChange={vi.fn()}
-        onHouseholdVerifierChange={vi.fn()}
         onSearch={vi.fn()}
         onSelectContactSession={vi.fn()}
-        onToggleApplyHousehold={vi.fn()}
         canSearch
       />,
     );

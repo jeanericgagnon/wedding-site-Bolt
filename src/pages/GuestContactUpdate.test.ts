@@ -5,6 +5,10 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
 import { buildGuestContactAccessPayload, buildGuestContactIdentityPayload, friendlyGuestContactError, GuestContactUpdate, safeGuestContactFunctionError } from './GuestContactUpdate';
 
+vi.mock('../components/site/OwnerPreviewBanner', () => ({
+  OwnerPreviewBanner: () => null,
+}));
+
 describe('friendlyGuestContactError', () => {
   it('packages invite and password artifacts for gated guest-contact lookup', () => {
     sessionStorage.setItem('dayof_invite_token_ericandkaras', 'stored-invite');
@@ -30,9 +34,9 @@ describe('friendlyGuestContactError', () => {
 
   it('keeps plain validation copy when it is already guest safe', () => {
     expect(friendlyGuestContactError(new Error('Add an email or phone first.'), 'Please try again.')).toBe('Add an email or phone first.');
-    expect(friendlyGuestContactError(new Error('Add the last 4 digits of the phone number on file before updating your whole party.'), 'Please try again.')).toBe('Add the last 4 digits of the phone number on file before updating your whole party.');
+    expect(friendlyGuestContactError(new Error('Add the last 4 digits of the phone number on file before updating your whole party.'), 'Please try again.')).toBe('Please try again.');
     expect(safeGuestContactFunctionError('Add an email or phone first.', 'Please try again.')).toBe('Add an email or phone first.');
-    expect(safeGuestContactFunctionError('Add the last 4 digits of the phone number on file before updating your whole party.', 'Please try again.')).toBe('Add the last 4 digits of the phone number on file before updating your whole party.');
+    expect(safeGuestContactFunctionError('Add the last 4 digits of the phone number on file before updating your whole party.', 'Please try again.')).toBe('Please try again.');
   });
 
   it('labels the guest lookup and contact update fields clearly', () => {
@@ -58,8 +62,7 @@ describe('friendlyGuestContactError', () => {
     expect(screen.getByText('Use your full name exactly as it appears on the invitation.')).toHaveAttribute('id', 'guest-contact-search-helper');
     expect(screen.getByPlaceholderText('First few letters of your email')).toHaveAttribute('id', 'guest-contact-verifier');
     expect(screen.getByText('Add the first few characters of the email address on your invitation. If you opened this from your invitation link, we can use that to help find your record too.')).toHaveAttribute('id', 'guest-contact-verifier-helper');
-    expect(screen.getByPlaceholderText('Last 4 digits of your phone (for whole-party updates)')).toHaveAttribute('id', 'guest-contact-household-verifier');
-    expect(screen.getByText('Add the last 4 digits of the phone number on file if you want to update your whole party.')).toHaveAttribute('id', 'guest-contact-household-verifier-helper');
+    expect(screen.queryByPlaceholderText('Last 4 digits of your phone (for whole-party updates)')).not.toBeInTheDocument();
     expect(screen.queryByText(/secure token/i)).not.toBeInTheDocument();
     expect(screen.getByText(/invitation link/i)).toBeInTheDocument();
 
@@ -68,7 +71,7 @@ describe('friendlyGuestContactError', () => {
     expect(screen.getByRole('group', { name: 'Mailing address (optional)' })).toBeInTheDocument();
     expect(screen.getByLabelText('Address line 1')).toHaveAttribute('id', 'guest-contact-address-line-1');
     expect(screen.getByLabelText('ZIP / Postal code')).toHaveAttribute('id', 'guest-contact-postal-code');
-    expect(screen.getByLabelText('RSVP (optional)')).toHaveAttribute('id', 'guest-contact-rsvp');
+    expect(screen.getByLabelText('RSVP update')).toHaveAttribute('id', 'guest-contact-rsvp');
   });
 
   it('routes guest lookup and match selection through the shared lookup panel', () => {
@@ -79,7 +82,6 @@ describe('friendlyGuestContactError', () => {
     expect(pageSource).toContain('<GuestContactLookupPanel');
     expect(panelSource).toContain('id="guest-contact-search"');
     expect(panelSource).toContain('id="guest-contact-verifier"');
-    expect(panelSource).toContain('id="guest-contact-household-verifier"');
     expect(panelSource).toContain('id="guest-contact-match"');
     expect(pageSource).toContain('buildGuestContactIdentityPayload');
   });

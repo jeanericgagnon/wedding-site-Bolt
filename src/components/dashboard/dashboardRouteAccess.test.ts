@@ -44,4 +44,11 @@ describe('dashboard route access guards', () => {
 
     expect(moreTools).toContain('export default DashboardMoreTools;');
   });
+
+  it('keeps the sidebar entrypoint aligned with pin-based tool management language', () => {
+    const layout = readFileSync(join(process.cwd(), 'src/components/dashboard/DashboardLayout.tsx'), 'utf8');
+
+    expect(layout).toContain('Manage pins');
+    expect(layout).not.toContain('Choose visible tools');
+  });
 });

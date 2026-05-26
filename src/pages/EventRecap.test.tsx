@@ -35,6 +35,8 @@ vi.mock('react-i18next', () => ({
         'event_recap.create_own': 'Create your own dayof',
         'event_recap.link_copied': 'Recap link copied.',
         'event_recap.link_downloaded': 'Recap link downloaded.',
+        'event_recap.caption_copied': 'Caption copied.',
+        'event_recap.caption_downloaded': 'Caption downloaded.',
         'guest_hub.saving': 'Saving...',
       };
       if (key === 'event_recap.shared_by') return `Shared by ${params?.name}`;
@@ -45,6 +47,10 @@ vi.mock('react-i18next', () => ({
 
 vi.mock('../components/ui/LanguageSwitcher', () => ({
   LanguageSwitcher: () => React.createElement('div', { 'data-testid': 'language-switcher' }),
+}));
+
+vi.mock('../components/site/OwnerPreviewBanner', () => ({
+  OwnerPreviewBanner: () => null,
 }));
 
 vi.mock('../lib/copyText', () => ({
@@ -317,6 +323,46 @@ describe('EventRecap opt-in form', () => {
 
     await waitFor(() => {
       expect(screen.getByText('Couldn’t copy the story caption right now.')).toBeInTheDocument();
+    });
+  });
+
+  it('reports story-caption-specific success copy after copying the caption', async () => {
+    copyTextOrDownloadMock.mockResolvedValueOnce('copied');
+
+    render(
+      <MemoryRouter initialEntries={['/event/ericandkaras/recap']}>
+        <Routes>
+          <Route path="/event/:siteRef/recap" element={<EventRecap />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    expect(await screen.findByRole('heading', { name: /eric & kara/i })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Copy caption' }));
+
+    await waitFor(() => {
+      expect(screen.getByRole('status')).toHaveTextContent('Caption copied.');
+    });
+  });
+
+  it('keeps recap-link success copy specific to the recap link action', async () => {
+    copyTextOrDownloadMock.mockResolvedValueOnce('downloaded');
+
+    render(
+      <MemoryRouter initialEntries={['/event/ericandkaras/recap']}>
+        <Routes>
+          <Route path="/event/:siteRef/recap" element={<EventRecap />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    expect(await screen.findByRole('heading', { name: /eric & kara/i })).toBeInTheDocument();
+
+    fireEvent.click(screen.getAllByRole('button', { name: 'Share recap' }).at(-1)!);
+
+    await waitFor(() => {
+      expect(screen.getByRole('status')).toHaveTextContent('Recap link downloaded.');
     });
   });
 

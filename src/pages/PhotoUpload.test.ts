@@ -64,6 +64,9 @@ vi.mock('react-i18next', () => ({
 vi.mock('../components/ui/LanguageSwitcher', () => ({
   LanguageSwitcher: () => React.createElement('div', { 'data-testid': 'language-switcher' }),
 }));
+vi.mock('../components/site/OwnerPreviewBanner', () => ({
+  OwnerPreviewBanner: () => null,
+}));
 
 afterEach(() => {
   sessionStorage.clear();

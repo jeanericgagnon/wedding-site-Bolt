@@ -23,6 +23,9 @@ vi.mock('react-i18next', () => ({
   }),
 }));
 vi.mock('../components/ui/LanguageSwitcher', () => ({ LanguageSwitcher: () => <div>LanguageSwitcher</div> }));
+vi.mock('../components/site/OwnerPreviewBanner', () => ({
+  OwnerPreviewBanner: () => null,
+}));
 vi.mock('./guestHubPublicService', () => ({
   trackGuestHubEvent: trackGuestHubEventMock,
 }));
