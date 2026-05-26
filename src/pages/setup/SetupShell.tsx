@@ -6,6 +6,7 @@ import { templateCatalog } from '../../builder/constants/templateCatalog';
 import { TEMPLATE_USE_CASE_PACKS } from '../../builder/constants/templateUseCasePacks';
 import { clearSetupDraft, clearSetupDraftOnly, readSetupDraft, setupDraftProgress, type SetupDraft, writeSetupDraft } from '../../lib/setupDraft';
 import { deriveSetupMode, getRecommendedTemplates, SETUP_STYLE_OPTIONS } from '../../lib/setupDraftRecommendations';
+import { buildSetupReviewModel, buildSetupTemplateReason } from '../../lib/setupConcierge';
 
 const steps = [
   { key: 'migration', label: 'Migration' },
@@ -127,11 +128,15 @@ export const SetupShell: React.FC<{ step?: string }> = ({ step }) => {
   const selectedTemplateName = useMemo(() => {
     return templateCatalog.find((t) => t.id === draft.selectedTemplateId)?.name ?? draft.selectedTemplateId;
   }, [draft.selectedTemplateId]);
+  const selectedTemplate = useMemo(() => {
+    return templateCatalog.find((t) => t.id === draft.selectedTemplateId) ?? null;
+  }, [draft.selectedTemplateId]);
 
 
   const setupMode = useMemo(() => deriveSetupMode(draft), [draft]);
 
   const recommendedTemplates = useMemo(() => getRecommendedTemplates(draft, templateCatalog), [draft]);
+  const reviewModel = useMemo(() => buildSetupReviewModel(draft, selectedTemplate), [draft, selectedTemplate]);
 
   const resetSetupDraft = () => {
     clearSetupDraft();
@@ -370,7 +375,8 @@ export const SetupShell: React.FC<{ step?: string }> = ({ step }) => {
                         className={`rounded border p-2 text-left ${active ? 'border-rose-500 bg-rose-50' : 'border-neutral-300 bg-white'}`}
                       >
                         <p className="text-sm font-medium text-neutral-900">{tpl.name}</p>
-                        <p className="text-xs text-neutral-500">{tpl.colorwayId}</p>
+                        <p className="mt-1 text-xs text-neutral-600">{buildSetupTemplateReason(tpl, draft)}</p>
+                        <p className="mt-2 text-[11px] text-neutral-500">{tpl.colorwayId} · {tpl.defaultSectionOrder.slice(0, 3).join(' · ')}</p>
                       </button>
                     );
                   })}
@@ -402,6 +408,11 @@ export const SetupShell: React.FC<{ step?: string }> = ({ step }) => {
 
           {activeStep === 'review' && (
             <div className="mt-4 space-y-4">
+              <div className="rounded-lg border border-rose-200 bg-rose-50 p-4">
+                <p className="text-sm font-semibold text-rose-900">{reviewModel.heading}</p>
+                <p className="mt-1 text-sm text-rose-800">{reviewModel.summary}</p>
+              </div>
+
               <div className="rounded border border-neutral-200 bg-neutral-50 p-3 text-sm text-neutral-700 space-y-1">
                 <p><strong>Partners:</strong> {draft.partnerOneFirstName} {draft.partnerOneLastName} & {draft.partnerTwoFirstName} {draft.partnerTwoLastName}</p>
                 <p><strong>Date:</strong> {draft.dateKnown ? (draft.weddingDate || 'Not set') : 'Still deciding'}</p>
@@ -415,6 +426,31 @@ export const SetupShell: React.FC<{ step?: string }> = ({ step }) => {
                 <p><strong>Template ID:</strong> {draft.selectedTemplateId}</p>
               </div>
 
+              <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+                <div className="rounded-lg border border-neutral-200 bg-white p-4">
+                  <p className="text-sm font-semibold text-neutral-900">DayOf will start with</p>
+                  <div className="mt-3 space-y-3">
+                    {reviewModel.starterChecklist.map((item) => (
+                      <div key={item.id} className="rounded-xl border border-neutral-200 bg-neutral-50 px-3 py-3">
+                        <p className="text-sm font-medium text-neutral-900">{item.title}</p>
+                        <p className="mt-1 text-xs leading-5 text-neutral-600">{item.detail}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <div className="rounded-lg border border-neutral-200 bg-white p-4">
+                  <p className="text-sm font-semibold text-neutral-900">Finish these first in the builder</p>
+                  <div className="mt-3 space-y-3">
+                    {reviewModel.builderChecklist.map((item) => (
+                      <div key={item.id} className="rounded-xl border border-neutral-200 bg-neutral-50 px-3 py-3">
+                        <p className="text-sm font-medium text-neutral-900">{item.title}</p>
+                        <p className="mt-1 text-xs leading-5 text-neutral-600">{item.detail}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
               <div className="rounded-lg border border-neutral-200 bg-neutral-50 p-3 text-xs text-neutral-600">
                 {setupMode.destination ? 'Next after setup: confirm travel details, hotel guidance, and weekend events before deciding the site is ready to publish.' : setupMode.weekend ? 'Next after setup: add your full weekend schedule so guests can follow the flow clearly.' : 'Next after setup: finish the main event details, RSVP settings, and guest list before you treat the site as launch-ready.'} {setupMode.bilingual ? 'Keep bilingual guest copy in mind while you fill out FAQs and key guest guidance.' : ''} {setupMode.interfaith ? 'Add a short ceremony note early so guests understand the traditions being honored.' : ''}
               </div>
@@ -424,7 +460,7 @@ export const SetupShell: React.FC<{ step?: string }> = ({ step }) => {
                 <button type="button" onClick={() => navigate('/templates')} className="rounded border border-neutral-300 px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-100">Choose a different template</button>
                 <button type="button" onClick={resetSetupDraft} className="rounded border border-neutral-300 px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-100">Start over</button>
                 <button type="button" onClick={() => void saveAndGoBuilder()} disabled={saving} className="rounded bg-rose-600 px-4 py-2 text-sm font-medium text-white hover:bg-rose-700 disabled:opacity-60">
-                  {saving ? 'Saving...' : 'Save and open your site editor'}
+                  {saving ? 'Saving...' : 'Save and build my first draft'}
                 </button>
               </div>
             </div>
