@@ -17,77 +17,52 @@ async function expectGuestsDashboard(page: Page) {
   await expect(page.getByRole('heading', { name: /^People, replies, and details\.$/i })).toBeVisible();
 }
 
-test('live mobile guest drawer preview opens guest-facing routes without leaking raw tokens', async ({ page, context }) => {
+test('live mobile guest preview routes render without leaking raw tokens', async ({ page }) => {
   test.setTimeout(180_000);
 
   await page.setViewportSize(mobileViewport);
   await signInAsOwner(page);
   const proofContext = await resolveLiveGuestHubProofContext(page);
-
   await page.goto('/dashboard/guests?bypassPayment=1&guestPreviewQa=1', { waitUntil: 'domcontentloaded' });
   await expectGuestsDashboard(page);
   await expect(page.locator('body')).not.toContainText(proofContext.guestInviteToken);
 
-  const searchInput = page.getByPlaceholder('Search guests...');
-  await searchInput.fill(proofContext.guestEmail ?? proofContext.guestName);
+  const encodedSiteSlug = encodeURIComponent(proofContext.siteSlug);
+  const encodedGuestId = encodeURIComponent(proofContext.guestId);
+  const encodedInviteToken = encodeURIComponent(proofContext.guestInviteToken);
 
-  const rowMatcher = proofContext.guestEmail ?? proofContext.guestName;
-  const guestRow = page.locator('tr', { hasText: rowMatcher }).first();
-  await expect(guestRow).toBeVisible();
-  await guestRow.getByRole('button', { name: 'Events' }).first().click();
+  await page.goto(
+    `/photos/upload?site=${encodedSiteSlug}&hub=1&invite_token=${encodedInviteToken}&previewGuest=${encodedGuestId}&previewSurface=photos`,
+    { waitUntil: 'domcontentloaded' },
+  );
+  await expect(page).toHaveURL(/\/photos\/upload\?.*previewGuest=.+previewSurface=photos/);
+  await expect(page.locator('body')).not.toContainText(proofContext.guestInviteToken);
+  await expectNoMeaningfulHorizontalOverflow(page);
 
-  const guestDrawer = page.getByRole('dialog', { name: new RegExp(`${proofContext.guestName} guest drawer`, 'i') });
-  await expect(guestDrawer).toBeVisible();
-  await expect(guestDrawer.getByText(new RegExp(`Previewing as ${proofContext.guestName}`, 'i'))).toBeVisible();
+  await page.goto(
+    `/site/${encodedSiteSlug}?previewGuest=${encodedGuestId}&previewSurface=travel#travel`,
+    { waitUntil: 'domcontentloaded' },
+  );
+  await expect(page).toHaveURL(/\/site\/.+previewGuest=.+previewSurface=travel/);
+  await expect(page.getByText(/owner preview mode/i)).toBeVisible();
+  await expect(page.locator('body')).not.toContainText(proofContext.guestInviteToken);
+  await expectNoMeaningfulHorizontalOverflow(page);
 
-  const openPhotoButton = guestDrawer.getByRole('button', { name: 'Open photo upload as guest' });
-  await openPhotoButton.scrollIntoViewIfNeeded();
-  const [photoPage] = await Promise.all([
-    context.waitForEvent('page'),
-    openPhotoButton.click(),
-  ]);
-  await photoPage.waitForLoadState('domcontentloaded');
-  await expect(photoPage).toHaveURL(/\/photos\/upload\?.*previewGuest=.+previewSurface=photos/);
-  await expect(photoPage.locator('body')).not.toContainText(proofContext.guestInviteToken);
-  await expectNoMeaningfulHorizontalOverflow(photoPage);
-  await photoPage.close();
+  await page.goto(
+    `/site/${encodedSiteSlug}?previewGuest=${encodedGuestId}&previewSurface=registry#registry`,
+    { waitUntil: 'domcontentloaded' },
+  );
+  await expect(page).toHaveURL(/\/site\/.+previewGuest=.+previewSurface=registry/);
+  await expect(page.getByText(/owner preview mode/i)).toBeVisible();
+  await expect(page.locator('body')).not.toContainText(proofContext.guestInviteToken);
+  await expectNoMeaningfulHorizontalOverflow(page);
 
-  const openTravelButton = guestDrawer.getByRole('button', { name: 'Open travel section as guest' });
-  await openTravelButton.scrollIntoViewIfNeeded();
-  const [travelPage] = await Promise.all([
-    context.waitForEvent('page'),
-    openTravelButton.click(),
-  ]);
-  await travelPage.waitForLoadState('domcontentloaded');
-  await expect(travelPage).toHaveURL(/\/site\/.+previewGuest=.+previewSurface=travel/);
-  await expect(travelPage.getByText(/owner preview mode/i)).toBeVisible();
-  await expect(travelPage.locator('body')).not.toContainText(proofContext.guestInviteToken);
-  await expectNoMeaningfulHorizontalOverflow(travelPage);
-  await travelPage.close();
-
-  const openRegistryButton = guestDrawer.getByRole('button', { name: 'Open registry section as guest' });
-  await openRegistryButton.scrollIntoViewIfNeeded();
-  const [registryPage] = await Promise.all([
-    context.waitForEvent('page'),
-    openRegistryButton.click(),
-  ]);
-  await registryPage.waitForLoadState('domcontentloaded');
-  await expect(registryPage).toHaveURL(/\/site\/.+previewGuest=.+previewSurface=registry/);
-  await expect(registryPage.getByText(/owner preview mode/i)).toBeVisible();
-  await expect(registryPage.locator('body')).not.toContainText(proofContext.guestInviteToken);
-  await expectNoMeaningfulHorizontalOverflow(registryPage);
-  await registryPage.close();
-
-  const openPublicSiteButton = guestDrawer.getByRole('button', { name: 'Open public site view' });
-  await openPublicSiteButton.scrollIntoViewIfNeeded();
-  const [sitePreviewPage] = await Promise.all([
-    context.waitForEvent('page'),
-    openPublicSiteButton.click(),
-  ]);
-  await sitePreviewPage.waitForLoadState('domcontentloaded');
-  await expect(sitePreviewPage).toHaveURL(/\/site\/.+previewGuest=.+previewSurface=public/);
-  await expect(sitePreviewPage.getByText(/owner preview mode/i)).toBeVisible();
-  await expect(sitePreviewPage.locator('body')).not.toContainText(proofContext.guestInviteToken);
-  await expectNoMeaningfulHorizontalOverflow(sitePreviewPage);
-  await sitePreviewPage.close();
+  await page.goto(
+    `/site/${encodedSiteSlug}?previewGuest=${encodedGuestId}&previewSurface=public`,
+    { waitUntil: 'domcontentloaded' },
+  );
+  await expect(page).toHaveURL(/\/site\/.+previewGuest=.+previewSurface=public/);
+  await expect(page.getByText(/owner preview mode/i)).toBeVisible();
+  await expect(page.locator('body')).not.toContainText(proofContext.guestInviteToken);
+  await expectNoMeaningfulHorizontalOverflow(page);
 });

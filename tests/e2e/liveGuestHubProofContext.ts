@@ -26,6 +26,7 @@ type GuestRow = {
 export type LiveGuestHubProofContext = {
   siteId: string;
   siteSlug: string;
+  guestId: string;
   guestInviteToken: string;
   guestName: string;
   guestEmail: string | null;
@@ -142,6 +143,7 @@ export async function resolveLiveGuestHubProofContext(page?: Page): Promise<Live
   return {
     siteId: siteRow!.id,
     siteSlug: siteRow!.site_slug!.trim(),
+    guestId: guestRow!.id,
     guestInviteToken: guestRow!.invite_token!,
     guestName: formatGuestName(guestRow!),
     guestEmail: guestRow!.email ?? null,

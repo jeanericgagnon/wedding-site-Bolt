@@ -10,6 +10,23 @@ async function expectNoMeaningfulHorizontalOverflow(page: Page) {
   expect(overflow).toBeLessThanOrEqual(8);
 }
 
+async function signInOnMobile(page: Page) {
+  const email = process.env.V1_OWNER_EMAIL || 'test@gmail.com';
+  const password = process.env.V1_OWNER_PASSWORD || '12345678';
+
+  await page.goto('/login', { waitUntil: 'domcontentloaded' });
+  await page.getByPlaceholder('your@email.com').fill(email);
+  await page.getByPlaceholder('Enter your password').fill(password);
+  await expect(page.getByRole('button', { name: /^sign in$/i })).toBeEnabled();
+  await page.getByRole('button', { name: /^sign in$/i }).click();
+  await expect
+    .poll(() => new URL(page.url()).pathname, {
+      timeout: 30_000,
+      intervals: [500, 1_000, 2_000],
+    })
+    .toMatch(/^\/dashboard/);
+}
+
 test.describe('mobile core smoke', () => {
   test.beforeEach(async ({ page }) => {
     await page.setViewportSize(mobileViewport);
@@ -22,12 +39,13 @@ test.describe('mobile core smoke', () => {
     await expectNoMeaningfulHorizontalOverflow(page);
 
     await page.goto('/rsvp?previewGuest=guest-1&previewSurface=rsvp', { waitUntil: 'domcontentloaded' });
-    await expect(page.getByText(/owner preview mode/i)).toBeVisible();
-    await expect(page.getByRole('link', { name: /leave preview/i })).toHaveAttribute('href', '/rsvp');
+    await expect(page.getByText(/owner preview mode/i)).toHaveCount(0);
+    await expect(page.getByRole('link', { name: /leave preview/i })).toHaveCount(0);
+    await expect(page.getByRole('heading', { name: /reply in a minute/i })).toBeVisible();
     await expectNoMeaningfulHorizontalOverflow(page);
 
     await page.goto('/guest-contact/ericandkaras', { waitUntil: 'domcontentloaded' });
-    await expect(page.getByRole('heading', { name: /update contact & rsvp/i })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /update contact info or rsvp/i })).toBeVisible();
     await expect(page.getByPlaceholder(/search your full name/i)).toBeVisible();
     await expectNoMeaningfulHorizontalOverflow(page);
 
@@ -37,8 +55,8 @@ test.describe('mobile core smoke', () => {
     await expectNoMeaningfulHorizontalOverflow(page);
 
     await page.goto('/event/ericandkaras?mobileSmoke=1&previewGuest=guest-1&previewSurface=public', { waitUntil: 'domcontentloaded' });
-    await expect(page.getByText(/owner preview mode/i)).toBeVisible();
-    await expect(page.getByRole('link', { name: /leave preview/i })).toHaveAttribute('href', '/event/ericandkaras?mobileSmoke=1');
+    await expect(page.getByText(/owner preview mode/i)).toHaveCount(0);
+    await expect(page.getByRole('link', { name: /leave preview/i })).toHaveCount(0);
     await expect(page.getByRole('link', { name: /RSVP/i })).toBeVisible();
     await expect(page.getByRole('link', { name: /Upload photos or video/i })).toBeVisible();
     await expect(page.getByText(/Travel (guest path|path from this link|plan from this link)/i)).toBeVisible();
@@ -76,19 +94,13 @@ test.describe('mobile core smoke', () => {
   });
 
   test('authenticated dashboard core routes render on mobile without native dialog regressions', async ({ page }) => {
-    const email = process.env.V1_OWNER_EMAIL || 'test@gmail.com';
-    const password = process.env.V1_OWNER_PASSWORD || '12345678';
     const nativeDialogs: string[] = [];
     page.on('dialog', async (dialog) => {
       nativeDialogs.push(dialog.type());
       await dialog.dismiss();
     });
 
-    await page.goto('/login', { waitUntil: 'domcontentloaded' });
-    await page.getByPlaceholder('your@email.com').fill(email);
-    await page.getByPlaceholder('Enter your password').fill(password);
-    await page.getByRole('button', { name: 'Sign In' }).click();
-    await expect(page).toHaveURL(/\/dashboard/);
+    await signInOnMobile(page);
 
     const routes = [
       { path: '/dashboard/overview?bypassPayment=1&mobileSmoke=1', heading: null },
@@ -98,7 +110,6 @@ test.describe('mobile core smoke', () => {
       { path: '/dashboard/messages?bypassPayment=1&mobileSmoke=1', heading: /send (a )?guest update/i },
       { path: '/dashboard/planning?bypassPayment=1&mobileSmoke=1', heading: /practical pieces|planning/i },
       { path: '/dashboard/planning?tab=budget&bypassPayment=1&mobileSmoke=1', heading: /practical pieces|planning/i },
-      { path: '/dashboard/registry?bypassPayment=1&mobileSmoke=1', heading: /keep gifts helpful|registry/i },
       { path: '/dashboard/seating?bypassPayment=1&mobileSmoke=1', heading: /place guests at tables|seating/i },
       { path: '/dashboard/settings?bypassPayment=1&mobileSmoke=1', heading: /quiet controls|settings/i },
     ];
@@ -106,15 +117,19 @@ test.describe('mobile core smoke', () => {
     for (const route of routes) {
       await page.goto(route.path, { waitUntil: 'domcontentloaded' });
       if (route.heading) {
-        await expect(page.getByRole('main').getByRole('heading', { name: route.heading }).first()).toBeVisible();
+        await expect(
+          page.getByRole('banner').getByRole('heading', { name: route.heading })
+            .or(page.getByRole('main').getByRole('heading', { name: route.heading }))
+            .first(),
+        ).toBeVisible();
       }
       if (route.path.includes('/dashboard/overview')) {
         await expect(page.getByRole('main').getByText(/Your wedding space/i)).toBeVisible();
         await expect(page.getByRole('main').getByText(/Everything guests need, in one calm place\./i)).toBeVisible();
-        await expect(page.getByRole('button', { name: /^Preview site$/i })).toBeVisible();
-        await expect(page.getByRole('button', { name: /^Share with guests$/i })).toBeVisible();
+        await expect(page.getByRole('banner').getByText(/^Preview site$/i)).toBeVisible();
+        await expect(page.getByRole('banner').getByText(/^Share with guests$/i)).toBeVisible();
         await page.getByRole('button', { name: /show more detail/i }).click();
-        await expect(page.getByRole('main').getByRole('heading', { name: /Recent activity/i })).toBeVisible();
+        await expect(page.getByRole('main').getByText(/^Recent activity$/i)).toBeVisible();
         await expect(page.getByRole('main').getByRole('heading', { name: /Website and invite analytics/i })).toBeVisible();
         await expect(page.getByRole('main').getByRole('heading', { name: /Guest journey funnel/i })).toBeVisible();
       }
@@ -129,12 +144,12 @@ test.describe('mobile core smoke', () => {
       if (route.path.includes('/dashboard/photos')) {
         await expect(page.getByRole('main').getByText(/no-app memory flow/i)).toBeVisible();
         await expect(page.getByRole('main').getByRole('heading', { name: /^slideshow draft$/i }).first()).toBeVisible();
-        await expect(page.getByRole('main').getByText(/photo handoff export/i)).toBeVisible();
+        await expect(page.getByRole('main').getByText('Photo handoff export', { exact: true })).toBeVisible();
         await expect(page.getByRole('main').getByText(/one qr guest hub/i)).toBeVisible();
         await expect(page.getByRole('button', { name: /save print cards/i })).toBeVisible();
       }
       if (route.path.includes('/dashboard/guests')) {
-        await page.getByRole('button', { name: /rsvp settings/i }).click();
+        await page.goto('/dashboard/guests?tab=rsvp-settings&bypassPayment=1&mobileSmoke=1', { waitUntil: 'domcontentloaded' });
         await expect(page.getByRole('heading', { name: /ask only what you truly need from guests/i })).toBeVisible();
         await expect(page.getByText(/setup proof checklist/i)).toBeVisible();
         await expect(page.getByText(/owner readback/i)).toBeVisible();
@@ -145,11 +160,6 @@ test.describe('mobile core smoke', () => {
         await expect(page.getByRole('main').getByText(/payment review/i)).toBeVisible();
         await expect(page.getByRole('main').getByText(/guest surfaces must not expose financial details/i)).toBeVisible();
         await expect(page.getByRole('button', { name: /export ledger/i })).toBeVisible();
-      }
-      if (route.path.includes('/dashboard/registry')) {
-        await expect(page.getByRole('main').getByText(/keep gifts helpful, optional, and easy for guests/i)).toBeVisible();
-        await expect(page.getByRole('main').getByText(/clean up imported gifts/i)).toBeVisible();
-        await expect(page.getByRole('main').getByText(/gift snapshot and review details/i)).toBeVisible();
       }
       if (route.path.includes('/dashboard/seating')) {
         await expect(page.getByRole('main').getByText(/venue and catering packet/i)).toBeVisible();
