@@ -5,6 +5,17 @@ This is the execution bridge between the v1 finish board and the smoke/test harn
 It is not a marketing artifact.
 It is the shortest path from **"we think this is close"** to **"we have actual proof or an exact blocker."**
 
+## Current status note
+
+This file describes the proof framework and the meaning of each lane. It is not, by itself, the canonical live readiness verdict.
+
+For current launch status and latest exact proof state, use:
+- [BACKLOG.md](/Users/ericgagnon/Documents/DayOfLove/wedding-site-Bolt/BACKLOG.md)
+- [docs/PRODUCTION_HARDENING_REPORT.md](/Users/ericgagnon/Documents/DayOfLove/wedding-site-Bolt/docs/PRODUCTION_HARDENING_REPORT.md)
+- [docs/v1-smoke-proof-log.md](/Users/ericgagnon/Documents/DayOfLove/wedding-site-Bolt/docs/v1-smoke-proof-log.md)
+
+Older blocker notes below should be read as lane semantics and historical examples unless they are restated in those current-truth docs.
+
 ## Rule
 
 A slice is **not** good enough because:

@@ -2,6 +2,11 @@
 
 This is the launch checklist for vendor page generation and template review.
 
+Current scope truth:
+- DayOf supports vendor profile pages, signed-in template/profile creation, and public inquiry handoff.
+- DayOf does not currently claim a broad public vendor marketplace, vendor search engine, sponsored placement system, or deep moderation stack.
+- Keep launch/proof language scoped to profile + inquiry tooling unless those wider marketplace surfaces are intentionally built and proven.
+
 ## Runtime Surfaces
 
 - `/vendor-templates`: signed-in browse/QA environment for vendor template shells.

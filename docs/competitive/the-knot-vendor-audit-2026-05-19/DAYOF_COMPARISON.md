@@ -31,6 +31,8 @@ Code references:
 
 DayOf is already less selly than The Knot. We do not have sponsored placement, competing vendor rails, repeated marketplace search, discount badges, "award winner" pressure, or a hard lead-capture feel on the vendor page. That is good.
 
+Current product-truth guardrail: DayOf should describe this surface as vendor profile and inquiry tooling, not as a proven broad marketplace or public vendor directory. The calmer handoff is part of the value proposition; marketplace-scale discovery and moderation are still future-scope ideas unless they are intentionally built and proven.
+
 The Knot is stronger at practical comparability. Their pages make category-specific details obvious: photographer deliverables, venue amenities, guest capacity, service offerings, review distribution, and local search/filter behavior. DayOf has the data model and layout slots for this, but the basic sample pages often collapse to hero, proof chips, gallery, about, links, and inquiry. The richer floral sample proves the system can carry more detail.
 
 Best product direction: keep DayOf calm, but make the page more concrete. Add a tighter top fact set and category-specific detail rows, then simplify the repeated inquiry copy.

@@ -108,6 +108,8 @@ Fresh secure/runtime proof:
 - `npm run proof:v1:service-role-authorization` -> `PASS`
 - `npm run proof:v1:email-messaging-authorization` -> `PASS`
 - `npm run proof:v1:launch-closeout` -> `PASS`
+- `tests/e2e/analytics-owner-live.spec.ts` -> `PASS`
+  - authenticated owner overview analytics readback is proven on the shipped runtime, with the guest/public privacy boundary held separately by `tests/e2e/analytics-public-privacy.spec.ts`
 - `npm run proof:v1:collaborator-runtime` -> `LIVE PASS`
 - collaborator runtime now also proves guest-scoped collaborators can directly mutate guest rows, planner-scoped collaborators can directly write planning tasks, itinerary events, and dashboard messages while registry RPC writes stay denied, settings-scoped collaborators can directly patch site settings and write sections while registry RPC writes stay denied, registry-scoped collaborators can directly write registry items and refresh policy while dashboard message/section RPC writes stay denied, photos-scoped collaborators can directly write vault configs and patch vault providers while dashboard message RPC writes stay denied, and coordinator-scoped collaborators can directly write seating events/tables, coordinator Q&A/check-in, and builder media assets while dashboard message RPC writes stay denied
 - reran green after the remote RPC migration apply with `LIVE_GUEST_DASHBOARD_SETTINGS_RPCS=1`
@@ -150,6 +152,7 @@ Fresh production proof after exact-SHA frontend deploy:
 Same-day still-valid supporting proof:
 - `LIVE_GUEST_HUB_WRITE_READ=1 PLAYWRIGHT_BASE_URL=https://dayof.love npx playwright test --workers=1 tests/e2e/guest-hub-write-read.spec.ts` -> `LIVE PASS`
 - `LIVE_PHOTO_UPLOAD_WRITE_READ=1 LIVE_PHOTO_ANALYSIS_WRITE_READ=1 PLAYWRIGHT_BASE_URL=https://dayof.love npx playwright test --workers=1 tests/e2e/photo-upload-write-read.spec.ts` -> `LIVE PASS`
+- broad authenticated production write/read proof already covered planning song requests and address collection alongside the other shipped owner/guest lanes
 - `V1_AI_SECURE_MODEL_LIVE=1 npm run proof:v1:ai-secure-model` -> `LIVE PASS`
 - `V1_AI_CLEARANCE_LIVE=1 PLAYWRIGHT_BASE_URL=https://dayof.love npm run proof:v1:ai-clearance` -> `LIVE PASS`
 - `npm run proof:v1:ai-product-readiness` -> `PASS`
