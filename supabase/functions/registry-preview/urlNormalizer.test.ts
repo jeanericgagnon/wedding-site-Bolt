@@ -21,14 +21,32 @@ Deno.test("normalizeUrl - extracts Amazon ASIN", () => {
   assertEquals(result.canonical, "https://amazon.com/dp/B07XYZ1234");
 });
 
+Deno.test("normalizeUrl - extracts Best Buy SKU", () => {
+  const url = "https://www.bestbuy.com/site/example-product/6484343.p?utm_source=google";
+  const result = normalizeUrl(url);
+  assertEquals(result.metadata.sku, "6484343");
+  assertEquals(result.canonical, "https://bestbuy.com/site/6484343.p");
+});
+
+Deno.test("normalizeUrl - extracts IKEA article number", () => {
+  const url = "https://www.ikea.com/us/en/p/kallax-shelf-unit-white-20562091/";
+  const result = normalizeUrl(url);
+  assertEquals(result.metadata.article_number, "20562091");
+  assertEquals(result.canonical, "https://ikea.com/us/en/p/20562091/");
+});
+
 Deno.test("normalizeUrl - detects retailer correctly", () => {
   const targetUrl = "https://www.target.com/p/product/-/A-12345678";
   const amazonUrl = "https://www.amazon.com/dp/B07XYZ1234";
   const walmartUrl = "https://www.walmart.com/ip/product/12345678";
+  const bestBuyUrl = "https://www.bestbuy.com/site/example-product/6484343.p";
+  const reiUrl = "https://www.rei.com/product/123456/example-tent";
 
   assertEquals(normalizeUrl(targetUrl).retailer, "target");
   assertEquals(normalizeUrl(amazonUrl).retailer, "amazon");
   assertEquals(normalizeUrl(walmartUrl).retailer, "walmart");
+  assertEquals(normalizeUrl(bestBuyUrl).retailer, "bestbuy");
+  assertEquals(normalizeUrl(reiUrl).retailer, "rei");
 });
 
 Deno.test("isSameProduct - matches by canonical URL", () => {
@@ -40,6 +58,18 @@ Deno.test("isSameProduct - matches by canonical URL", () => {
 Deno.test("isSameProduct - matches by TCIN", () => {
   const url1 = "https://target.com/p/product-a/-/A-12345678";
   const url2 = "https://target.com/p/product-b/-/A-12345678";
+  assertEquals(isSameProduct(url1, url2), true);
+});
+
+Deno.test("isSameProduct - matches Best Buy products by SKU", () => {
+  const url1 = "https://www.bestbuy.com/site/product-name/6484343.p?utm_source=google";
+  const url2 = "https://bestbuy.com/site/another-name/6484343.p";
+  assertEquals(isSameProduct(url1, url2), true);
+});
+
+Deno.test("isSameProduct - matches IKEA products by article number", () => {
+  const url1 = "https://www.ikea.com/us/en/p/kallax-shelf-unit-white-20562091/";
+  const url2 = "https://ikea.com/us/en/p/kallax-shelf-unit-black-brown-20562091/";
   assertEquals(isSameProduct(url1, url2), true);
 });
 

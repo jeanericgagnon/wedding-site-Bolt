@@ -62,5 +62,10 @@ Show:
 Archive mode v1 should be mostly **routing and emphasis**, not a giant new subsystem.
 That is the right move because the ingredients already exist.
 
+Provider truth:
+- the core archive/vault experience should stand on its own
+- optional Google Drive-backed provider paths are narrower than the base vault proof story
+- product language should not imply that Drive connect/upload/recovery depth is part of the already-proven archive baseline
+
 ## Next step
 - 8.3.3 ship archive-focused post-wedding view

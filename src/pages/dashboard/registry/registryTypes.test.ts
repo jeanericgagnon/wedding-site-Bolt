@@ -1,10 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import {
+  buildRegistryHiddenReviewPatch,
+  buildRegistryLinkOnlyRepairPatch,
+  buildRegistrySafetyRevalidationPatch,
   buildRegistryPreviewFromItem,
   computeConfidence,
   getBlockedMessage,
   getRegistryItemMetadataState,
+  getOwnerRegistryDisplayTitle,
   itemNeedsAttention,
+  isBadRegistryProductTitle,
   normalizeRegistryComparisonUrl,
   normalizeRegistryTitleForComparison,
   type RegistryItem,
@@ -85,7 +90,7 @@ describe('registry metadata confidence + attention state', () => {
     };
 
     expect(computeConfidence(preview)).toBe('manual');
-    expect(getBlockedMessage(preview)).toMatch(/Amazon blocks automated product lookups/i);
+    expect(getBlockedMessage(preview)).toMatch(/Amazon blocks automatic product lookups/i);
   });
 
   it('marks broken imports and missing fields as attention-worthy', () => {
@@ -109,6 +114,9 @@ describe('registry metadata confidence + attention state', () => {
   it('treats product unavailable titles as bad imports that need repair', () => {
     const item = makeItem({
       item_name: 'Product unavailable',
+      item_url: null,
+      canonical_url: null,
+      selected_product_url: null,
       metadata_fetch_status: 'success',
       metadata_confidence_score: 0.92,
     });
@@ -118,6 +126,128 @@ describe('registry metadata confidence + attention state', () => {
     expect(state.hasBadImportTitle).toBe(true);
     expect(state.repairStates).toEqual(expect.arrayContaining(['broken-import']));
     expect(itemNeedsAttention(item)).toBe(true);
+  });
+
+  it('keeps link-only fallback titles guest-safe instead of marking them broken', () => {
+    const item = makeItem({
+      item_name: 'Access Denied',
+      store_name: 'REI',
+      item_url: 'https://www.rei.com/product/example',
+      selected_product_url: 'https://www.rei.com/product/example',
+      image_url: null,
+      price_label: null,
+      price_amount: null,
+      metadata_fetch_status: 'blocked',
+      metadata_confidence_score: 0.4,
+      metadata_source_method: 'link_only',
+    });
+
+    const state = getRegistryItemMetadataState(item);
+
+    expect(isBadRegistryProductTitle('Access Denied')).toBe(true);
+    expect(isBadRegistryProductTitle('404 Not Found')).toBe(true);
+    expect(isBadRegistryProductTitle('Robot or human?')).toBe(true);
+    expect(isBadRegistryProductTitle('A 49168231')).toBe(true);
+    expect(isBadRegistryProductTitle('Gift link needs review')).toBe(true);
+    expect(state.displayMode).toBe('link_card');
+    expect(state.guestSafe).toBe(true);
+    expect(getOwnerRegistryDisplayTitle(item.item_name, item)).toBe('Gift from REI');
+  });
+
+  it('builds a clean link-only repair patch for legacy bad imports with a saved url', () => {
+    const item = makeItem({
+      item_name: 'Access Denied',
+      store_name: 'REI',
+      item_url: 'https://www.rei.com/product/example',
+      selected_product_url: 'https://www.rei.com/product/example',
+      image_url: 'https://example.com/bad.jpg',
+      price_label: '$12.00',
+      price_amount: 12,
+      metadata_fetch_status: 'blocked',
+      source_status: 'blocked',
+      product_metadata: {
+        selected_retailer: 'REI',
+      },
+    });
+
+    const patch = buildRegistryLinkOnlyRepairPatch(item);
+
+    expect(patch).toMatchObject({
+      item_name: 'Gift from REI',
+      display_mode: 'link_card',
+      guest_safe: true,
+      source_status: 'blocked',
+      review_status: 'blocked_source',
+      import_source_method: 'link_only',
+      price_label: null,
+      price_amount: null,
+      image_url: null,
+    });
+    expect(patch?.product_metadata).toEqual(expect.objectContaining({
+      registryDisplayMode: 'link_card',
+      registryGuestSafe: true,
+      registryImportSourceMethod: 'link_only',
+    }));
+  });
+
+  it('builds an owner-only hidden review patch for broken legacy imports with no safe url', () => {
+    const item = makeItem({
+      item_name: 'Robot or human?',
+      item_url: null,
+      canonical_url: null,
+      selected_product_url: null,
+      metadata_fetch_status: 'blocked',
+    });
+
+    const patch = buildRegistryHiddenReviewPatch(item);
+
+    expect(patch).toMatchObject({
+      item_name: 'Needs review',
+      display_mode: 'review_only',
+      guest_safe: false,
+      review_status: 'needs_review',
+    });
+    expect(patch?.product_metadata).toEqual(expect.objectContaining({
+      registryDisplayMode: 'review_only',
+      registryGuestSafe: false,
+      registryReviewStatus: 'needs_review',
+    }));
+  });
+
+  it('builds a safety revalidation patch when saved link-only truth is missing canonical fields', () => {
+    const item = makeItem({
+      item_name: 'Access Denied',
+      store_name: 'REI',
+      item_url: 'https://www.rei.com/product/example',
+      selected_product_url: 'https://www.rei.com/product/example',
+      image_url: null,
+      price_label: null,
+      price_amount: null,
+      metadata_fetch_status: 'blocked',
+      metadata_confidence_score: 0.4,
+      display_mode: null,
+      guest_safe: null,
+      review_status: null,
+      source_status: null,
+      product_metadata: {},
+    });
+
+    const patch = buildRegistrySafetyRevalidationPatch(item);
+
+    expect(patch).toMatchObject({
+      item_name: 'Gift from REI',
+      display_mode: 'link_card',
+      guest_safe: true,
+      review_status: 'blocked_source',
+      source_status: 'blocked',
+      import_source_method: 'link_only',
+    });
+    expect(patch?.product_metadata).toEqual(expect.objectContaining({
+      registryDisplayMode: 'link_card',
+      registryGuestSafe: true,
+      registryReviewStatus: 'blocked_source',
+      registrySourceStatus: 'blocked',
+    }));
   });
 
   it('builds preview data from stored registry item fields', () => {

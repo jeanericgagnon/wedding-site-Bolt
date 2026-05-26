@@ -9,8 +9,33 @@ const ownerPassword = process.argv[4] || '12345678';
 const collaboratorEmail = process.argv[5] || 'test1@gmail.com';
 const collaboratorPassword = process.argv[6] || '12345678';
 
-const env = fs.readFileSync(path.join(process.cwd(), '.env.local'), 'utf8');
-const getEnv = (k) => (env.match(new RegExp(`^${k}=(.*)$`, 'm')) || [])[1]?.replace(/^['\"]|['\"]$/g, '');
+const envFiles = ['.env', '.env.local', '.env.production', '.env.production.local', '.vercel/.env.production.local'];
+
+function parseEnvFile(filePath) {
+  if (!fs.existsSync(filePath)) return {};
+  const parsed = {};
+  for (const line of fs.readFileSync(filePath, 'utf8').split(/\r?\n/)) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith('#') || !trimmed.includes('=')) continue;
+    const index = trimmed.indexOf('=');
+    const key = trimmed.slice(0, index).trim();
+    let value = trimmed.slice(index + 1).trim();
+    if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
+      value = value.slice(1, -1);
+    }
+    parsed[key] = value.replace(/\\n$/, '').trim();
+  }
+  return parsed;
+}
+
+const fileEnv = envFiles.reduce((merged, filePath) => ({ ...merged, ...parseEnvFile(path.join(process.cwd(), filePath)) }), {});
+const getEnv = (key, fallback = '') => {
+  const runtimeValue = process.env[key];
+  if (runtimeValue && runtimeValue.trim()) return runtimeValue.trim();
+  const fileValue = fileEnv[key];
+  if (typeof fileValue === 'string' && fileValue.trim()) return fileValue.trim();
+  return fallback;
+};
 const adminSupabase = createClient(getEnv('VITE_SUPABASE_URL'), getEnv('VITE_SUPABASE_ANON_KEY'));
 
 const browser = await chromium.launch({ headless: true });
@@ -19,14 +44,33 @@ const ownerPage = await ownerContext.newPage();
 const collaboratorContext = await browser.newContext();
 const collaboratorPage = await collaboratorContext.newPage();
 const out = { steps: [] };
+const STEP_TIMEOUT_MS = 45_000;
+const startedAt = new Date().toISOString();
+
+function logProgress(message, detail = {}) {
+  const payload = { scope: 'collaborator-runtime', at: new Date().toISOString(), message, ...detail };
+  console.error(JSON.stringify(payload));
+}
+
+async function withStepTimeout(name, fn, timeoutMs = STEP_TIMEOUT_MS) {
+  return await Promise.race([
+    fn(),
+    new Promise((_, reject) => {
+      setTimeout(() => reject(new Error(`${name} timed out after ${timeoutMs}ms`)), timeoutMs);
+    }),
+  ]);
+}
 
 async function step(name, fn) {
   try {
-    const result = await fn();
+    logProgress('step:start', { step: name });
+    const result = await withStepTimeout(name, fn);
     out.steps.push({ name, ok: true, result });
+    logProgress('step:ok', { step: name });
     return result;
   } catch (error) {
     out.steps.push({ name, ok: false, error: String(error) });
+    logProgress('step:failed', { step: name, error: String(error) });
     throw error;
   }
 }
@@ -42,19 +86,21 @@ try {
   });
 
   await step('owner create collaborator invite', async () => {
-    await ownerPage.goto(`${baseUrl}/dashboard/settings`, { waitUntil: 'domcontentloaded' });
-    await ownerPage.waitForTimeout(2500);
-    await ownerPage.getByRole('button', { name: /team access/i }).click();
-    await ownerPage.waitForTimeout(1500);
+    await ownerPage.goto(`${baseUrl}/dashboard/settings?tab=team`, { waitUntil: 'domcontentloaded' });
+    await ownerPage.waitForTimeout(2000);
     const body = await ownerPage.locator('body').innerText();
-    const nameInput = ownerPage.getByLabel(/planner name/i);
-    const emailInput = ownerPage.getByLabel(/planner email/i);
+    const nameInput = ownerPage.locator('#planner-invite-name');
+    const emailInput = ownerPage.locator('#planner-invite-email');
+    await Promise.all([
+      nameInput.waitFor({ state: 'visible', timeout: 15_000 }).catch(() => {}),
+      emailInput.waitFor({ state: 'visible', timeout: 15_000 }).catch(() => {}),
+    ]);
     if (!(await nameInput.count()) || !(await emailInput.count())) {
       throw new Error(`Planner invite inputs not found. Body: ${body.slice(0, 2500)}`);
     }
     await nameInput.fill('Test One');
     await emailInput.fill(collaboratorEmail);
-    await ownerPage.getByRole('button', { name: /create db invite/i }).click();
+    await ownerPage.getByRole('button', { name: /create (db )?invite( link)?/i }).click();
     await ownerPage.waitForTimeout(1500);
     await ownerPage.locator(`text=${collaboratorEmail}`).first().waitFor({ state: 'visible', timeout: 15000 });
     const ownerSession = await ownerContext.storageState();
@@ -62,14 +108,12 @@ try {
     if (accessToken) {
       await adminSupabase.auth.setSession({ access_token: accessToken, refresh_token: accessToken });
     }
-    const siteRow = await adminSupabase.from('wedding_sites').select('id').eq('site_slug', 'testandkaras').maybeSingle();
-    if (siteRow.error) throw siteRow.error;
     const inviteRow = await adminSupabase
       .from('wedding_site_collaborator_invites')
       .select('invite_token')
-      .eq('wedding_site_id', siteRow.data.id)
       .eq('invite_email', collaboratorEmail)
       .eq('status', 'pending')
+      .order('updated_at', { ascending: false })
       .limit(1)
       .maybeSingle();
     if (inviteRow.error) throw inviteRow.error;
@@ -83,28 +127,43 @@ try {
     });
 
     await step('collaborator create account or sign in', async () => {
-      const createAccountTab = collaboratorPage.getByRole('button', { name: /create account/i });
-      if (await createAccountTab.count()) {
-        await createAccountTab.first().click().catch(async () => {
-          await collaboratorPage.getByText(/create account/i).first().click();
-        });
-        await collaboratorPage.waitForTimeout(500);
-      } else {
-        await collaboratorPage.getByText(/create account/i).first().click().catch(() => {});
-        await collaboratorPage.waitForTimeout(500);
-      }
-      await collaboratorPage.waitForTimeout(750);
       const fullName = collaboratorPage.getByLabel(/full name/i);
-      if (await fullName.count()) {
+      const createPassword = collaboratorPage.getByLabel(/create password/i);
+      await Promise.race([
+        fullName.waitFor({ state: 'visible', timeout: 2_500 }).catch(() => {}),
+        createPassword.waitFor({ state: 'visible', timeout: 2_500 }).catch(() => {}),
+      ]);
+
+      let hasCreateAccountFields = await fullName.isVisible().catch(() => false)
+        && await createPassword.isVisible().catch(() => false);
+      if (!hasCreateAccountFields) {
+        const createAccountTab = collaboratorPage
+          .locator('button, [role="button"], [role="tab"]')
+          .filter({ hasText: /^create account$/i });
+        if (await createAccountTab.count()) {
+          await createAccountTab.first().click();
+          await Promise.race([
+            fullName.waitFor({ state: 'visible', timeout: 5_000 }).catch(() => {}),
+            createPassword.waitFor({ state: 'visible', timeout: 5_000 }).catch(() => {}),
+          ]);
+        }
+      }
+
+      hasCreateAccountFields = await fullName.isVisible().catch(() => false)
+        && await createPassword.isVisible().catch(() => false);
+      if (hasCreateAccountFields) {
         await fullName.fill('Test One');
         await collaboratorPage.getByLabel(/invited email/i).fill(collaboratorEmail);
-        await collaboratorPage.getByLabel(/create password/i).fill(collaboratorPassword);
-        await collaboratorPage.getByLabel(/confirm password/i).fill(collaboratorPassword);
-        await collaboratorPage.getByRole('button', { name: /create account and join team/i }).click();
+        await createPassword.fill(collaboratorPassword);
+        const confirmPassword = collaboratorPage.getByLabel(/confirm password/i);
+        await confirmPassword.fill(collaboratorPassword);
+        await confirmPassword.press('Enter');
       } else {
         await collaboratorPage.getByLabel(/invited email|email/i).fill(collaboratorEmail);
         await collaboratorPage.getByLabel(/password/i).fill(collaboratorPassword);
-        await collaboratorPage.getByRole('button', { name: /sign in and join team/i }).click();
+        const signInJoinButton = collaboratorPage.getByRole('button', { name: /sign in and join team/i });
+        await signInJoinButton.scrollIntoViewIfNeeded();
+        await signInJoinButton.click({ noWaitAfter: true });
       }
       await collaboratorPage.waitForTimeout(8000);
       return {
@@ -114,7 +173,7 @@ try {
     });
   });
 } finally {
-  console.log(JSON.stringify(out, null, 2));
+  console.log(JSON.stringify({ startedAt, finishedAt: new Date().toISOString(), ...out }, null, 2));
   await ownerContext.close();
   await collaboratorContext.close();
   await browser.close();

@@ -1,23 +1,15 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
-import { supabase } from '../../lib/supabase';
-import {
-  applyInitialSetupAnswersToWeddingProfile,
-  createEmptyWeddingProfile,
-  evaluateWeddingProfileReadiness,
-} from '../../lib/weddingProfile';
 import {
   createEmptyInitialSetupAnswers,
   initialSetupAnswersToOnboardingFormShape,
   type InitialSetupAnswers,
 } from '../../lib/initialSetupAnswers';
 import { createEmptyInitialSetupFollowUps } from '../../lib/initialSetupFollowUps';
-import { buildInitialSetupSnapshot } from '../../lib/initialSetupSnapshot';
 import { buildInitialSetupDerivedOutputs } from '../../lib/initialSetupDerivedOutputs';
 import { mergeOnboardingFollowUpAnswers } from '../../lib/onboardingFollowUpMerge';
-import { createOnboardingSessionStateFromInitialSetup } from '../../lib/aiOnboarding';
-import { createClarifyingDecisionFromInitialSetup, createClarifyingPersistenceFromDecision } from '../../lib/aiOnboardingClarifyingAdapter';
+import { createClarifyingPersistenceFromDecision } from '../../lib/aiOnboardingClarifyingAdapter';
 import { buildClarifyingAnswerPatchSet } from '../../lib/aiClarifyingFlow';
 import { mapClarifyingPersistenceToTemplateSeed } from '../../lib/aiClarifyingMapper';
 import { buildOnboardingUpdateWithClarifying } from '../../lib/buildOnboardingUpdateWithClarifying';
@@ -26,7 +18,7 @@ import { applyQuickStartAnswer, mergeClarifyingAnswer, type ConciergeQuestion } 
 import { writeSignupReturnPath } from '../../lib/signupContinuation';
 import { clearOnboardingEntryReturnPath } from '../../lib/onboardingEntryCleanup';
 import { normalizeQuickStartDraftSnapshot } from '../../lib/quickStartPersistence';
-import { normalizeMeaningfulQuickStartDraftSnapshot, persistQuickStartDraftSnapshot, QUICK_START_STORAGE_KEY } from '../../lib/quickStartStateTransfer';
+import { clearQuickStartDraftSnapshot, migrateQuickStartDraftSnapshotScope, normalizeMeaningfulQuickStartDraftSnapshot, persistQuickStartDraftSnapshot, readQuickStartDraftSnapshot } from '../../lib/quickStartStateTransfer';
 import { buildQuickStartEntryPath, buildQuickStartGuestsPath } from '../../lib/quickStartContinuation';
 import { clearAllOnboardingContinuationState } from '../../lib/onboardingContinuationCleanup';
 import { hasMeaningfulQuickStartAnswers, mergeQuickStartSeedIntoDraft } from '../../lib/quickStartHydration';
@@ -36,123 +28,59 @@ import { clampQuickStartQuestionIndex } from '../../lib/quickStartQuestionBounds
 import { canResumeQuickStartFollowUps } from '../../lib/quickStartFollowUpGate';
 import { normalizeQuickStartClarifyingState } from '../../lib/quickStartClarifyingNormalize';
 import { normalizeQuickStartClarifyingMode } from '../../lib/quickStartClarifyingMode';
+import { runOnboardingAiOrchestration } from '../../lib/onboardingAiOrchestrator';
+import { generateDraftFromWeddingProfile, mergeGeneratedDraftIntoWeddingData } from '../../lib/aiDraftGenerator';
+import { createCanonicalContentFromDraft } from '../../lib/aiCanonicalContent';
+import { mergeGeneratedDraftIntoBuilderProject } from '../../lib/aiBuilderProjectPatch';
+import { customerSafeErrorMessage } from '../../lib/customerSafeError';
+import { useAuth } from '../../hooks/useAuth';
+import {
+  QUICK_START_PROCESSING_FINAL_STEP_MS,
+  QUICK_START_PROCESSING_STEP_MS,
+  quickStartProcessingSteps,
+  quickStartQuestions,
+  quickStartTheme,
+} from './quickStartContent';
+import {
+  fetchQuickStartPersistSite,
+  fetchQuickStartSeedSite,
+  requireAuthenticatedOnboardingUser,
+  updateQuickStartPersistSite,
+} from './onboardingService';
 
-type QuestionDef = {
-  key: ConciergeQuestion;
-  label: string;
-  prompt: string;
-  helper?: string;
-  type?: 'text' | 'date' | 'textarea' | 'choice';
-  placeholder?: string;
-  choices?: Array<{ label: string; value: string }>;
-  optional?: boolean;
-};
+function safeQuickStartError(err: unknown, fallback: string): string {
+  return customerSafeErrorMessage(err, fallback);
+}
 
-const questions: QuestionDef[] = [
-  { key: 'partnerNames', label: 'Who’s getting married?', prompt: 'Who’s getting married?', helper: 'Use the names exactly how you want guests to see them on the site.', placeholder: 'Alex & Jordan' },
-  {
-    key: 'partnerLabels',
-    label: 'Labels',
-    prompt: 'How should we refer to each of you on the site?',
-    helper: 'Choose the simplest option that fits best.',
-    type: 'choice',
-    choices: [
-      { label: 'Just our names', value: 'none|none' },
-      { label: 'Bride & Groom', value: 'bride|groom' },
-      { label: 'Bride & Bride', value: 'bride|bride' },
-      { label: 'Groom & Groom', value: 'groom|groom' },
-    ],
-  },
-  { key: 'venueLocation', label: 'When + where', prompt: 'When and where are you getting married?', helper: 'Use the date and city or region together so we can anchor the whole site in one step.', placeholder: 'January 17, 2027 — Sayulita, Mexico' },
-  { key: 'venueName', label: 'Venue', prompt: 'What venue are you getting married at?', helper: 'Use the venue name or write TBD if you are still deciding.', placeholder: 'Amor Boutique Hotel or TBD', optional: true },
-  { key: 'theme', label: 'Style', prompt: 'What style should the site lean into?', helper: 'A few words is enough. Tropical, modern, editorial, classic, relaxed.', placeholder: 'Tropical, relaxed' },
-  { key: 'guestFeel', label: 'Tone', prompt: 'If someone lands on your site, what should they feel right away?', helper: 'Think tone, not a perfect sentence. Warm, excited, relaxed, elegant, fun, emotional, welcoming, intimate. Anything like that works.', placeholder: 'Warm, excited, relaxed' },
-  { key: 'weekendEvents', label: 'Events', prompt: 'What events are happening over the wedding weekend?', type: 'textarea', helper: 'Use one short line or sentence. We will turn it into structured events.', placeholder: 'Friday welcome drinks, Saturday wedding, Sunday brunch' },
-  { key: 'ceremonyTime', label: 'Ceremony arrival', prompt: 'What time should guests arrive for the ceremony?', helper: 'A simple arrival time is enough.', placeholder: '4:30 PM' },
-  {
-    key: 'guestCount',
-    label: 'Guest count',
-    prompt: 'About how many guests are you inviting?',
-    helper: 'Pick the closest range.',
-    type: 'choice',
-    choices: [
-      { label: 'Under 50', value: 'under-50' },
-      { label: '50–100', value: '50-100' },
-      { label: '100–150', value: '100-150' },
-      { label: '150–250', value: '150-250' },
-      { label: '250+', value: '250-plus' },
-    ],
-  },
-  {
-    key: 'plusOnePolicy',
-    label: 'Plus-ones',
-    prompt: 'What’s your plus-one policy?',
-    helper: 'Choose the policy you want the RSVP flow to follow.',
-    type: 'choice',
-    choices: [
-      { label: 'No plus-ones', value: 'none' },
-      { label: 'Some plus-ones', value: 'some' },
-      { label: 'Everyone gets one', value: 'all' },
-    ],
-  },
-  {
-    key: 'childrenAllowed',
-    label: 'Children',
-    prompt: 'Are children invited?',
-    helper: 'Choose yes, no, or unsure for now.',
-    type: 'choice',
-    choices: [
-      { label: 'Yes', value: 'yes' },
-      { label: 'No', value: 'no' },
-      { label: 'Unsure', value: 'unsure' },
-    ],
-  },
-  { key: 'rsvpDeadline', label: 'RSVP', prompt: 'When do you want guests to RSVP by?', helper: 'This drives the RSVP setup immediately.', type: 'date' },
-  {
-    key: 'mealChoice',
-    label: 'Meals',
-    prompt: 'Do you want to collect meal choices?',
-    helper: 'Choose yes or no.',
-    type: 'choice',
-    choices: [
-      { label: 'Yes', value: 'yes' },
-      { label: 'No', value: 'no' },
-    ],
-  },
-  { key: 'story', label: 'Story', prompt: 'Want to add your story? (totally optional)', type: 'textarea', helper: 'Optional, but helpful for stronger copy.', placeholder: 'We met on Hinge, texted for a month, then finally met up for a concert...', optional: true },
-];
-
-const PAGE_BG = '#FAF9F7';
-const TEXT = '#2B2B2B';
-const MUTED = '#A0A0A0';
-const TRANSCRIPT = '#B0B0B0';
-const TRANSCRIPT_VALUE = '#909090';
-const WARM = '#8B7355';
-const SOFT = '#F5F4F2';
-const SOFT_HOVER = '#EEEDEB';
-const BORDER = '#E0DED9';
-const STORAGE_KEY = QUICK_START_STORAGE_KEY;
-const PROCESSING_STEPS = [
-  'Aggregating your answers',
-  'Mapping wedding details',
-  'Checking for missing guest-facing info',
-  'Shaping the first draft structure',
-  'Tuning tone and style',
-  'Deciding if we need anything else',
-  'Preparing your next step',
-];
-const PROCESSING_STEP_MS = 90;
-const PROCESSING_FINAL_STEP_MS = 140;
+const {
+  pageBg: PAGE_BG,
+  text: TEXT,
+  muted: MUTED,
+  transcript: TRANSCRIPT,
+  transcriptValue: TRANSCRIPT_VALUE,
+  warm: WARM,
+  soft: SOFT,
+  softHover: SOFT_HOVER,
+  border: BORDER,
+} = quickStartTheme;
+const questions = quickStartQuestions;
+const PROCESSING_STEPS = quickStartProcessingSteps;
+const PROCESSING_STEP_MS = QUICK_START_PROCESSING_STEP_MS;
+const PROCESSING_FINAL_STEP_MS = QUICK_START_PROCESSING_FINAL_STEP_MS;
 
 export const QuickStart: React.FC = () => {
+  const location = useLocation();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const { user } = useAuth();
+  const quickStartTransferSourceScope = user?.email?.trim().toLowerCase() || null;
+  const quickStartStorageScope = user?.id ?? null;
   const [currentIndex, setCurrentIndex] = useState(0);
   const [inputValue, setInputValue] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [aiDebug, setAiDebug] = useState('');
   const [showFollowUps, setShowFollowUps] = useState(false);
-  const [isThinking, setIsThinking] = useState(false);
   const [viewState, setViewState] = useState<'question' | 'thinking' | 'followups'>('question');
   const [processingStep, setProcessingStep] = useState(0);
   const [followUpAnswers, setFollowUpAnswers] = useState<Record<string, string>>({});
@@ -162,18 +90,18 @@ export const QuickStart: React.FC = () => {
   const [initialSetupAnswers, setInitialSetupAnswers] = useState<InitialSetupAnswers>(createEmptyInitialSetupAnswers());
   const initialSetupAnswersRef = useRef<InitialSetupAnswers>(createEmptyInitialSetupAnswers());
   const [initialSetupFollowUps] = useState(createEmptyInitialSetupFollowUps());
-  const [weddingProfile, setWeddingProfile] = useState(createEmptyWeddingProfile());
   const [hasLocalDraftHydration, setHasLocalDraftHydration] = useState(false);
   const hasLocalDraftHydrationRef = useRef(false);
   const [hasHydratedDraft, setHasHydratedDraft] = useState(false);
   const [isResettingDraft, setIsResettingDraft] = useState(false);
+  const [aiLoopCount, setAiLoopCount] = useState(0);
+  const [siteId, setSiteId] = useState<string | null>(null);
 
   const safeCurrentIndex = clampQuickStartQuestionIndex(currentIndex, questions.length);
   const currentQuestion = questions[safeCurrentIndex];
   const formData = initialSetupAnswersToOnboardingFormShape(initialSetupAnswers);
-  const readiness = evaluateWeddingProfileReadiness(weddingProfile);
-  const onboardingSession = createOnboardingSessionStateFromInitialSetup(initialSetupAnswers, currentQuestion ? [currentQuestion.key] : []);
   const activeClarifyingQuestions = clarifyingState?.clarifying.questions ?? [];
+  const showAiDebug = searchParams.get('quickStartDebug') === '1';
 
   useEffect(() => {
     if (currentIndex !== safeCurrentIndex) {
@@ -182,15 +110,32 @@ export const QuickStart: React.FC = () => {
   }, [currentIndex, safeCurrentIndex]);
 
   useEffect(() => {
-    clearOnboardingEntryReturnPath();
-  }, []);
+    clearOnboardingEntryReturnPath(quickStartStorageScope);
+  }, [quickStartStorageScope]);
 
   useEffect(() => {
-    const shouldReset = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('resetQuickStart') === '1';
+    if (!quickStartTransferSourceScope || !quickStartStorageScope) return;
+    migrateQuickStartDraftSnapshotScope(quickStartTransferSourceScope, quickStartStorageScope);
+  }, [quickStartStorageScope, quickStartTransferSourceScope]);
+
+  useEffect(() => {
+    const shouldReset = searchParams.get('resetQuickStart') === '1';
     if (shouldReset) {
+      const emptyAnswers = createEmptyInitialSetupAnswers();
+      const nextParams = new URLSearchParams(searchParams);
+      nextParams.delete('resetQuickStart');
+      navigate(
+        {
+          pathname: location.pathname,
+          search: nextParams.toString() ? `?${nextParams.toString()}` : '',
+          hash: location.hash,
+        },
+        { replace: true },
+      );
       setIsResettingDraft(true);
-      localStorage.removeItem(STORAGE_KEY);
-      setInitialSetupAnswers(createEmptyInitialSetupAnswers());
+      clearQuickStartDraftSnapshot(quickStartStorageScope);
+      initialSetupAnswersRef.current = emptyAnswers;
+      setInitialSetupAnswers(emptyAnswers);
       followUpAnswersRef.current = {};
       setFollowUpAnswers({});
       clarifyingStateRef.current = null;
@@ -199,6 +144,7 @@ export const QuickStart: React.FC = () => {
       setShowFollowUps(false);
       setViewState('question');
       setInputValue('');
+      setAiLoopCount(0);
       hasLocalDraftHydrationRef.current = false;
       setHasLocalDraftHydration(false);
       setHasHydratedDraft(true);
@@ -206,19 +152,17 @@ export const QuickStart: React.FC = () => {
       return;
     }
 
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (!saved) {
+    const parsed = readQuickStartDraftSnapshot(quickStartStorageScope);
+    if (!parsed) {
       setHasHydratedDraft(true);
       return;
     }
     try {
-      const parsed = normalizeQuickStartDraftSnapshot(JSON.parse(saved));
       const normalizedClarifyingState = normalizeQuickStartClarifyingMode(normalizeQuickStartClarifyingState(parsed.clarifyingState));
       const restoredFollowUps = deriveFollowUpAnswersFromClarifyingState(normalizedClarifyingState, parsed.followUpAnswers);
       const restoredIndex = clampQuickStartQuestionIndex(parsed.currentIndex, questions.length);
       const canResumeFollowUps = canResumeQuickStartFollowUps(parsed.showFollowUps, normalizedClarifyingState);
       setInitialSetupAnswers(parsed.initialSetupAnswers);
-      setWeddingProfile(applyInitialSetupAnswersToWeddingProfile(parsed.initialSetupAnswers));
       setCurrentIndex(restoredIndex);
       followUpAnswersRef.current = restoredFollowUps;
       setFollowUpAnswers(restoredFollowUps);
@@ -229,17 +173,19 @@ export const QuickStart: React.FC = () => {
       const nextHasLocalDraftHydration = hasMeaningfulQuickStartAnswers(parsed.initialSetupAnswers) || Object.keys(restoredFollowUps).length > 0 || Boolean(normalizedClarifyingState);
       hasLocalDraftHydrationRef.current = nextHasLocalDraftHydration;
       setHasLocalDraftHydration(nextHasLocalDraftHydration);
-    } catch {}
+    } catch {
+      // Ignore malformed local draft snapshots and continue with a clean in-memory state.
+    }
     finally {
       setHasHydratedDraft(true);
       setIsResettingDraft(false);
     }
-  }, [hasLocalDraftHydration]);
+  }, [hasLocalDraftHydration, location.hash, location.pathname, navigate, quickStartStorageScope, searchParams]);
 
   useEffect(() => {
     if (!hasHydratedDraft || isResettingDraft) return;
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ initialSetupAnswers, currentIndex: safeCurrentIndex, followUpAnswers, showFollowUps, clarifyingState, viewState }));
-  }, [initialSetupAnswers, safeCurrentIndex, followUpAnswers, showFollowUps, clarifyingState, viewState, hasHydratedDraft, isResettingDraft]);
+    persistQuickStartDraftSnapshot({ initialSetupAnswers, currentIndex: safeCurrentIndex, followUpAnswers, showFollowUps, clarifyingState, viewState }, quickStartStorageScope);
+  }, [initialSetupAnswers, safeCurrentIndex, followUpAnswers, showFollowUps, clarifyingState, viewState, hasHydratedDraft, isResettingDraft, quickStartStorageScope]);
 
   useEffect(() => {
     followUpAnswersRef.current = followUpAnswers;
@@ -255,21 +201,20 @@ export const QuickStart: React.FC = () => {
 
   useEffect(() => {
     const fetchWeddingSite = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-      clearOnboardingEntryReturnPath();
-      const { data } = await supabase
-        .from('wedding_sites')
-        .select('couple_name_1, couple_name_2, wedding_date, venue_name, venue_location, onboarding_answers')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: true })
-        .limit(1)
-        .maybeSingle();
+      let user: { id: string };
+      try {
+        user = await requireAuthenticatedOnboardingUser();
+      } catch {
+        return;
+      }
+      clearOnboardingEntryReturnPath(quickStartStorageScope);
+      const data = await fetchQuickStartSeedSite(user.id);
+      setSiteId(data?.id ?? null);
       if (data?.onboarding_answers && typeof data.onboarding_answers === 'object') {
         const restored = normalizeQuickStartDraftSnapshot({ initialSetupAnswers: data.onboarding_answers }).initialSetupAnswers;
         setInitialSetupAnswers((prev) => {
           const next = hasLocalDraftHydrationRef.current ? mergeQuickStartSeedIntoDraft(prev, restored) : { ...prev, ...restored };
-          setWeddingProfile(applyInitialSetupAnswersToWeddingProfile(next));
+          initialSetupAnswersRef.current = next;
           return next;
         });
         return;
@@ -279,21 +224,18 @@ export const QuickStart: React.FC = () => {
         const seededAnswers = {
           ...createEmptyInitialSetupAnswers(),
           names: seededNames,
-          whenWhere: data?.wedding_date && data?.venue_location ? `${data.wedding_date} — ${data.venue_location}` : (data?.venue_location || ''),
+          whenWhere: data?.wedding_date && data?.venue_location ? `${data.wedding_date} in ${data.venue_location}` : (data?.venue_location || ''),
           venueNameOrTbd: data?.venue_name || '',
         } as InitialSetupAnswers;
         setInitialSetupAnswers((prev) => {
           const next = hasLocalDraftHydrationRef.current ? mergeQuickStartSeedIntoDraft(prev, seededAnswers) : { ...prev, ...seededAnswers };
+          initialSetupAnswersRef.current = next;
           return next;
         });
       }
     };
     void fetchWeddingSite();
-  }, []);
-
-  useEffect(() => {
-    setWeddingProfile(applyInitialSetupAnswersToWeddingProfile(initialSetupAnswers));
-  }, [initialSetupAnswers]);
+  }, [quickStartStorageScope, searchParams]);
 
   useEffect(() => {
     if (!currentQuestion) return;
@@ -308,7 +250,7 @@ export const QuickStart: React.FC = () => {
     return choice?.label || value;
   };
 
-  const getValueForQuestion = (key: ConciergeQuestion, data: typeof formData): string => {
+  const getValueForQuestion = useCallback((key: ConciergeQuestion, data: typeof formData): string => {
     switch (key) {
       case 'partnerNames': return data.partnerNames || '';
       case 'partnerLabels': {
@@ -336,7 +278,7 @@ export const QuickStart: React.FC = () => {
       case 'story': return data.story || '';
       default: return '';
     }
-  };
+  }, []);
 
   useEffect(() => {
     if (!hasHydratedDraft || !currentQuestion) return;
@@ -351,15 +293,14 @@ export const QuickStart: React.FC = () => {
 
   const previousAnswers = useMemo(
     () => questions.slice(0, safeCurrentIndex).map((q) => ({ ...q, value: getValueForQuestion(q.key, formData) })).filter((entry) => entry.value.trim()),
-    [safeCurrentIndex, formData],
+    [safeCurrentIndex, formData, getValueForQuestion],
   );
 
   const applyAnswer = (questionKey: ConciergeQuestion, rawValue: string) => {
-    setInitialSetupAnswers((prev) => {
-      const next = applyQuickStartAnswer(prev, questionKey, rawValue);
-      initialSetupAnswersRef.current = next;
-      return next;
-    });
+    const next = applyQuickStartAnswer(initialSetupAnswersRef.current, questionKey, rawValue);
+    initialSetupAnswersRef.current = next;
+    setInitialSetupAnswers(next);
+    return next;
   };
 
   const finishFlow = async (
@@ -368,8 +309,10 @@ export const QuickStart: React.FC = () => {
   ) => {
     setLoading(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
+      let user: { id: string };
+      try {
+        user = await requireAuthenticatedOnboardingUser();
+      } catch {
         const carriedQuickStartDraft = normalizeMeaningfulQuickStartDraftSnapshot({
           initialSetupAnswers: answersOverride,
           currentIndex: safeCurrentIndex,
@@ -378,10 +321,9 @@ export const QuickStart: React.FC = () => {
           clarifyingState: clarifyingOverride,
           viewState,
         });
-        persistQuickStartDraftSnapshot(carriedQuickStartDraft);
-        writeSignupReturnPath(buildQuickStartEntryPath());
+        persistQuickStartDraftSnapshot(carriedQuickStartDraft, quickStartStorageScope);
+        writeSignupReturnPath(buildQuickStartEntryPath(), quickStartStorageScope);
         setLoading(false);
-        setIsThinking(false);
         navigate('/signup?bypassPayment=1', {
           replace: true,
           state: {
@@ -401,14 +343,7 @@ export const QuickStart: React.FC = () => {
         mergedFollowUpState.initialSetupAnswers,
         mergedFollowUpState.initialSetupFollowUps,
       );
-      const { data: site, error: siteError } = await supabase
-        .from('wedding_sites')
-        .select('id, wedding_data, active_template_id, template_id, wedding_date, venue_name, wedding_location, couple_name_1, couple_name_2')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: true })
-        .limit(1)
-        .maybeSingle();
-      if (siteError) throw siteError;
+      const site = await fetchQuickStartPersistSite(user.id);
       if (!site?.id) throw new Error('No wedding site found for this account');
       const clarifyingFieldPatches = clarifyingOverride ? buildClarifyingAnswerPatchSet(clarifyingOverride) : {};
       const existingWeddingData = site && 'wedding_data' in site ? ((site as { wedding_data?: Record<string, unknown> }).wedding_data || {}) : {};
@@ -436,46 +371,88 @@ export const QuickStart: React.FC = () => {
         clarifyingFieldPatches,
         draftOutputs: clarifyingOverride?.draftOutputs || {},
       };
-      const { error: updateError } = await supabase
-        .from('wedding_sites')
-        .update({
-          onboarding_answers: derivedProfile,
-          planning_status: 'quick_start_complete',
-          wedding_data: nextWeddingData,
-          layout_config: onboardingUpdate.layout_config,
-          active_template_id: onboardingUpdate.active_template_id,
-          template_id: onboardingUpdate.template_id,
-          site_slug: onboardingUpdate.site_slug,
-          couple_name_1: onboardingUpdate.couple_name_1,
-          couple_name_2: onboardingUpdate.couple_name_2,
-          wedding_date: onboardingUpdate.wedding_date,
-          venue_name: onboardingUpdate.venue_name,
-          wedding_location: onboardingUpdate.wedding_location,
-        })
-        .eq('id', site.id);
-      if (updateError) throw updateError;
-      localStorage.removeItem(STORAGE_KEY);
-      clearOnboardingEntryReturnPath();
+      const generatedDraft = await generateDraftFromWeddingProfile(derivedProfile);
+      const canonicalAiContent = createCanonicalContentFromDraft(generatedDraft);
+      const mergedWeddingData = await mergeGeneratedDraftIntoWeddingData(nextWeddingData, derivedProfile, generatedDraft) as Record<string, unknown>;
+      const existingSiteJson = ((site.site_json as Record<string, unknown> | null) ?? {});
+      const patchedBuilderProject = mergeGeneratedDraftIntoBuilderProject(
+        existingSiteJson,
+        generatedDraft,
+        canonicalAiContent,
+      );
+      const persistedWeddingData = {
+        ...mergedWeddingData,
+        clarifyingFieldPatches,
+        draftOutputs: clarifyingOverride?.draftOutputs || {},
+        meta: {
+          ...((((mergedWeddingData.meta as Record<string, unknown> | undefined) ?? {}))),
+          aiDraft: generatedDraft,
+          aiContent: canonicalAiContent,
+          aiOnboarding: {
+            qualityScore: clarifyingOverride?.meta?.qualityScore ?? null,
+            confidence: clarifyingOverride?.meta?.confidence ?? null,
+            loopCount: clarifyingOverride?.meta?.loopCount ?? null,
+            maxLoopCount: clarifyingOverride?.meta?.maxLoopCount ?? null,
+            fallbackUsed: clarifyingOverride?.meta?.fallbackUsed ?? false,
+            source: 'quick_start_concierge',
+            finalizedAt: new Date().toISOString(),
+          },
+          onboardingAutoAppliedAt: new Date().toISOString(),
+        },
+      };
+      try {
+        await updateQuickStartPersistSite({
+          siteId: site.id,
+          updateData: {
+            onboarding_answers: derivedProfile,
+            planning_status: 'quick_start_complete',
+            wedding_data: persistedWeddingData,
+            site_json: patchedBuilderProject,
+            layout_config: onboardingUpdate.layout_config,
+            active_template_id: onboardingUpdate.active_template_id,
+            template_id: onboardingUpdate.template_id,
+            site_slug: onboardingUpdate.site_slug,
+            couple_name_1: onboardingUpdate.couple_name_1,
+            couple_name_2: onboardingUpdate.couple_name_2,
+            wedding_date: onboardingUpdate.wedding_date,
+            venue_name: onboardingUpdate.venue_name,
+            wedding_location: onboardingUpdate.wedding_location,
+          },
+        });
+      } catch {
+        await updateQuickStartPersistSite({
+          siteId: site.id,
+          updateData: {
+            onboarding_answers: derivedProfile,
+            wedding_data: persistedWeddingData,
+            active_template_id: onboardingUpdate.active_template_id,
+            site_slug: onboardingUpdate.site_slug,
+            couple_name_1: onboardingUpdate.couple_name_1,
+            couple_name_2: onboardingUpdate.couple_name_2,
+            wedding_date: onboardingUpdate.wedding_date,
+            venue_name: onboardingUpdate.venue_name,
+            wedding_location: onboardingUpdate.wedding_location,
+          },
+        });
+      }
+      clearQuickStartDraftSnapshot(quickStartStorageScope);
+      clearOnboardingEntryReturnPath(quickStartStorageScope);
       navigate(buildQuickStartGuestsPath(), {
         state: { showWelcome: true, nextStep: 'guest-import' },
       });
     } catch (err) {
-      console.error('QUICK_START_FINISH_FAILED', err);
-      setError(err instanceof Error ? err.message : 'Failed to save. Please try again.');
-      setAiDebug(`finish_failed=${err instanceof Error ? err.message : String(err)}`);
+      setError(safeQuickStartError(err, 'Couldn’t save your draft. Please try again.'));
+      setAiDebug('finish_failed=retry_safe');
       setLoading(false);
-      setIsThinking(false);
     }
   };
 
   const runProcessingInterstitial = async () => {
-    setIsThinking(true);
     setViewState('thinking');
     for (let i = 0; i < PROCESSING_STEPS.length; i += 1) {
       setProcessingStep(i);
       await new Promise((resolve) => setTimeout(resolve, i === PROCESSING_STEPS.length - 1 ? PROCESSING_FINAL_STEP_MS : PROCESSING_STEP_MS));
     }
-    setIsThinking(false);
     setViewState(showFollowUps ? 'followups' : 'question');
   };
 
@@ -486,11 +463,9 @@ export const QuickStart: React.FC = () => {
     const answeredQuestion = currentQuestion;
     const answeredIndex = safeCurrentIndex;
 
-    applyAnswer(answeredQuestion.key, value);
+    const nextAnswers = applyAnswer(answeredQuestion.key, value);
     setError('');
     setAiDebug('');
-
-    const nextAnswers = applyQuickStartAnswer(initialSetupAnswers, answeredQuestion.key, value);
 
     const fallbackIndex = answeredIndex + 1;
     if (fallbackIndex < questions.length) {
@@ -504,9 +479,21 @@ export const QuickStart: React.FC = () => {
       }
 
       await runProcessingInterstitial();
-      const clarifyingDecision = await createClarifyingDecisionFromInitialSetup(nextAnswers);
+      const { decision: clarifyingDecision, meta } = await runOnboardingAiOrchestration({
+        answers: nextAnswers,
+        clarifyingState: clarifyingStateRef.current,
+        followUpAnswers: followUpAnswersRef.current,
+        loopCount: aiLoopCount,
+        siteId,
+      });
+      setAiLoopCount(meta.loopCount ?? aiLoopCount);
       setAiDebug(`mode=${clarifyingDecision.mode}; questions=${clarifyingDecision.questions.length}`);
-      const persistence = createClarifyingPersistenceFromDecision(clarifyingDecision);
+      const persistence = createClarifyingPersistenceFromDecision(clarifyingDecision, 1, {
+        qualityScore: meta.qualityScore,
+        loopCount: meta.loopCount,
+        maxLoopCount: meta.maxLoopCount,
+        fallbackUsed: meta.fallbackUsed,
+      });
       clarifyingStateRef.current = persistence;
       setClarifyingState(persistence);
       if (clarifyingDecision.mode === 'ask' && clarifyingDecision.questions.length > 0) {
@@ -515,16 +502,96 @@ export const QuickStart: React.FC = () => {
         setViewState('followups');
         return;
       }
-      const templateSeed = mapClarifyingPersistenceToTemplateSeed(persistence);
-      console.log('QUICK_START_DRAFT_TEMPLATE_SEED', templateSeed);
       await finishFlow(nextAnswers, persistence);
       return;
     } catch (err) {
-      console.error('QUICK_START_AI_STEP_FAILED', err);
-      setError(err instanceof Error ? err.message : 'AI step failed.');
+      setError(safeQuickStartError(err, 'That setup step did not finish. Try again in a moment.'));
       setAiDebug(`step=${answeredQuestion.key}; value=${value.trim().slice(0, 80)}`);
       setLoading(false);
-      setIsThinking(false);
+    }
+  };
+
+  const continueAiLoopFromFollowUps = async () => {
+    setLoading(true);
+    setError('');
+    setAiDebug('');
+    try {
+      const currentFollowUpQuestions = clarifyingStateRef.current?.clarifying.questions ?? [];
+      const answeredCurrentFollowUps = currentFollowUpQuestions.length > 0 && currentFollowUpQuestions.every((question) => {
+        const answer = followUpAnswersRef.current[question.id] || question.answer || '';
+        return answer.trim().length > 0;
+      });
+      await runProcessingInterstitial();
+      const nextLoopCount = aiLoopCount + 1;
+      const { decision, meta } = await runOnboardingAiOrchestration({
+        answers: initialSetupAnswersRef.current,
+        clarifyingState: clarifyingStateRef.current,
+        followUpAnswers: followUpAnswersRef.current,
+        loopCount: nextLoopCount,
+        siteId,
+      });
+      setAiLoopCount(meta.loopCount ?? nextLoopCount);
+      setAiDebug(`mode=${decision.mode}; questions=${decision.questions.length}`);
+      if (decision.mode === 'ask' && answeredCurrentFollowUps && nextLoopCount >= 1) {
+        const finalPersistence = clarifyingStateRef.current
+          ? {
+              ...clarifyingStateRef.current,
+              meta: {
+                ...(clarifyingStateRef.current.meta || {}),
+                confidence: decision.confidence,
+                qualityScore: meta.qualityScore,
+                loopCount: meta.loopCount,
+                maxLoopCount: meta.maxLoopCount,
+                fallbackUsed: meta.fallbackUsed,
+              },
+            }
+          : createClarifyingPersistenceFromDecision(decision, nextLoopCount + 1, {
+              qualityScore: meta.qualityScore,
+              loopCount: meta.loopCount,
+              maxLoopCount: meta.maxLoopCount,
+              fallbackUsed: meta.fallbackUsed,
+            });
+        clarifyingStateRef.current = finalPersistence;
+        setClarifyingState(finalPersistence);
+        await finishFlow(initialSetupAnswersRef.current, finalPersistence);
+        return;
+      }
+      const persistence = createClarifyingPersistenceFromDecision(decision, nextLoopCount + 1, {
+        qualityScore: meta.qualityScore,
+        loopCount: meta.loopCount,
+        maxLoopCount: meta.maxLoopCount,
+        fallbackUsed: meta.fallbackUsed,
+      });
+      clarifyingStateRef.current = persistence;
+      setClarifyingState(persistence);
+      if (decision.mode === 'ask' && decision.questions.length > 0) {
+        setLoading(false);
+        setShowFollowUps(true);
+        setViewState('followups');
+        return;
+      }
+      await finishFlow(initialSetupAnswersRef.current, persistence);
+    } catch (err) {
+      setError(safeQuickStartError(err, 'Those follow-ups did not save. Try again in a moment.'));
+      setLoading(false);
+      setViewState('followups');
+    }
+  };
+
+  const handleQuestionInputChange = (value: string) => {
+    setInputValue(value);
+    setError('');
+  };
+
+  const handleFollowUpInputChange = (questionId: string, value: string) => {
+    setError('');
+    const nextFollowUps = { ...followUpAnswersRef.current, [questionId]: value };
+    followUpAnswersRef.current = nextFollowUps;
+    setFollowUpAnswers(nextFollowUps);
+    const nextClarifying = mergeClarifyingAnswer(clarifyingStateRef.current, questionId, value);
+    clarifyingStateRef.current = nextClarifying;
+    if (nextClarifying) {
+      setClarifyingState(nextClarifying);
     }
   };
 
@@ -532,8 +599,8 @@ export const QuickStart: React.FC = () => {
     <div className="min-h-screen flex items-center justify-center px-6 py-12" style={{ backgroundColor: PAGE_BG }}>
       <div className="w-full max-w-[560px]">
         <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-16">
-          <p className="mb-1 text-[13px] uppercase tracking-wide" style={{ color: WARM }}>Day of Love Setup</p>
-          <p className="text-[13px]" style={{ color: MUTED }}>AI-guided, but with the real product brain behind it</p>
+          <p className="mb-1 text-[13px] font-medium" style={{ color: WARM }}>dayof setup</p>
+          <p className="text-[13px]" style={{ color: MUTED }}>A calm path to a starter draft you can review</p>
         </motion.div>
 
         {previousAnswers.length > 0 && (
@@ -570,7 +637,7 @@ export const QuickStart: React.FC = () => {
                 {PROCESSING_STEPS.map((step, index) => {
                   const active = index <= processingStep;
                   return (
-                    <div key={step} className="flex items-center gap-3 rounded-2xl px-4 py-3" style={{ backgroundColor: active ? SOFT : 'transparent', border: active ? `1px solid ${BORDER}` : '1px solid transparent' }}>
+                    <div key={step} className="flex items-center gap-3 rounded-xl px-4 py-3" style={{ backgroundColor: active ? SOFT : 'transparent', border: active ? `1px solid ${BORDER}` : '1px solid transparent' }}>
                       <div className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: active ? WARM : BORDER }} />
                       <p className="text-[14px]" style={{ color: active ? TEXT : MUTED }}>{step}</p>
                     </div>
@@ -587,14 +654,14 @@ export const QuickStart: React.FC = () => {
 
               {currentQuestion?.type === 'choice' ? (
                 <div className="space-y-3">
-                  {currentQuestion.choices?.map((choice, index) => (
+                  {currentQuestion.choices?.map((choice) => (
                     <motion.button
                       key={choice.value}
                       onClick={() => void goNext(choice.value)}
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.12 }}
-                      className="w-full rounded-2xl px-6 py-5 text-left transition-all duration-100"
+                      className="w-full rounded-xl px-6 py-5 text-left transition-all duration-100"
                       style={{ backgroundColor: SOFT, fontSize: '17px', color: TEXT, border: '1px solid transparent' }}
                       onMouseEnter={(event) => {
                         event.currentTarget.style.backgroundColor = SOFT_HOVER;
@@ -611,84 +678,74 @@ export const QuickStart: React.FC = () => {
                 </div>
               ) : currentQuestion?.type === 'textarea' ? (
                 <div className="space-y-4">
-                  <textarea value={inputValue} onChange={(event) => setInputValue(event.target.value)} onKeyDown={(event) => {
+                  <textarea value={inputValue} onChange={(event) => handleQuestionInputChange(event.target.value)} onKeyDown={(event) => {
                     if (event.key === 'Enter' && !event.shiftKey && !loading) {
                       event.preventDefault();
                       void goNext(inputValue);
                     }
-                  }} placeholder={currentQuestion.placeholder} rows={5} className="w-full rounded-2xl border-0 px-6 py-5 outline-none transition-all duration-200 resize-none" style={{ backgroundColor: SOFT, fontSize: '17px', color: TEXT }} />
+                  }} placeholder={currentQuestion.placeholder} rows={5} className="w-full rounded-xl border-0 px-6 py-5 outline-none transition-all duration-200 resize-none" style={{ backgroundColor: SOFT, fontSize: '17px', color: TEXT }} />
                   <div className="flex gap-3">
-                    {currentQuestion.optional && <button type="button" onClick={() => void goNext('')} className="rounded-full px-6 py-4" style={{ backgroundColor: SOFT, color: TEXT }}>Skip</button>}
-                    <button type="button" onClick={() => void goNext(inputValue)} disabled={loading || (!inputValue.trim() && !currentQuestion.optional)} className="rounded-full px-8 py-4 transition-all duration-200 disabled:opacity-30" style={{ backgroundColor: TEXT, color: '#FFFFFF', fontSize: '15px', fontWeight: 500 }}>
+                    {currentQuestion.optional && <button type="button" onClick={() => void goNext('')} className="rounded-xl px-6 py-4" style={{ backgroundColor: SOFT, color: TEXT }}>Skip</button>}
+                    <button type="button" onClick={() => void goNext(inputValue)} disabled={loading || (!inputValue.trim() && !currentQuestion.optional)} className="rounded-xl px-8 py-4 transition-all duration-200 disabled:opacity-30" style={{ backgroundColor: TEXT, color: '#FFFFFF', fontSize: '15px', fontWeight: 500 }}>
                       {loading ? 'Building...' : safeCurrentIndex === questions.length - 1 && !showFollowUps ? 'Build my draft' : 'Continue'}
                     </button>
                   </div>
                 </div>
               ) : (
                 <div className="space-y-4">
-                  <input type="text" value={inputValue} onChange={(event) => setInputValue(event.target.value)} onKeyDown={(event) => event.key === 'Enter' && !loading && void goNext(inputValue)} placeholder={currentQuestion?.type === 'date' ? 'YYYY-MM-DD or a clear date like 2026-12-01' : currentQuestion?.placeholder} autoFocus className="w-full rounded-2xl border-0 px-6 py-5 outline-none transition-all duration-200" style={{ backgroundColor: SOFT, fontSize: '17px', color: TEXT }} />
+                  <input type="text" value={inputValue} onChange={(event) => handleQuestionInputChange(event.target.value)} onKeyDown={(event) => event.key === 'Enter' && !loading && void goNext(inputValue)} placeholder={currentQuestion?.type === 'date' ? 'YYYY-MM-DD or a clear date like 2026-12-01' : currentQuestion?.placeholder} autoFocus className="w-full rounded-xl border-0 px-6 py-5 outline-none transition-all duration-200" style={{ backgroundColor: SOFT, fontSize: '17px', color: TEXT }} />
                   <div className="flex gap-3">
-                    {currentQuestion?.optional && <button type="button" onClick={() => void goNext('')} className="rounded-full px-6 py-4" style={{ backgroundColor: SOFT, color: TEXT }}>Skip</button>}
-                    <button type="button" onClick={() => void goNext(inputValue)} disabled={loading || (!inputValue.trim() && !currentQuestion?.optional)} className="rounded-full px-8 py-4 transition-all duration-200 disabled:opacity-30" style={{ backgroundColor: TEXT, color: '#FFFFFF', fontSize: '15px', fontWeight: 500 }}>
+                    {currentQuestion?.optional && <button type="button" onClick={() => void goNext('')} className="rounded-xl px-6 py-4" style={{ backgroundColor: SOFT, color: TEXT }}>Skip</button>}
+                    <button type="button" onClick={() => void goNext(inputValue)} disabled={loading || (!inputValue.trim() && !currentQuestion?.optional)} className="rounded-xl px-8 py-4 transition-all duration-200 disabled:opacity-30" style={{ backgroundColor: TEXT, color: '#FFFFFF', fontSize: '15px', fontWeight: 500 }}>
                       {loading ? 'Building...' : safeCurrentIndex === questions.length - 1 && !showFollowUps ? 'Build my draft' : 'Continue'}
                     </button>
                   </div>
                 </div>
               )}
-              {error && <p className="mt-4 text-sm text-red-600">{error}</p>}
+              {error && <p className="mt-4 text-sm" style={{ color: MUTED }}>{error}</p>}
             </motion.div>
           ) : (
             <motion.div key="followups" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}>
               <h1 className="mb-4" style={{ fontFamily: "'Playfair Display', serif", fontSize: '42px', lineHeight: '1.2', color: TEXT, fontWeight: 500 }}>
-                A few smart follow-ups before we build
+                A few useful follow-ups before we build
               </h1>
               <p className="mb-8 text-[14px]" style={{ color: MUTED }}>
-                We already have enough to draft. These are just the highest-leverage details the AI still wants.
+                We already have enough to draft. These are the details most likely to make the first version feel personal and useful.
               </p>
               <div className="space-y-4">
                 {activeClarifyingQuestions.slice(0, 3).map((question) => (
                   <div key={question.id}>
                     <p className="mb-2 text-[14px]" style={{ color: TEXT }}>{question.question}</p>
-                    <textarea value={followUpAnswers[question.id] || ''} onChange={(event) => {
-                      const nextValue = event.target.value;
-                      const nextFollowUps = { ...followUpAnswersRef.current, [question.id]: nextValue };
-                      followUpAnswersRef.current = nextFollowUps;
-                      setFollowUpAnswers(nextFollowUps);
-                      const nextClarifying = mergeClarifyingAnswer(clarifyingStateRef.current, question.id, nextValue);
-                      clarifyingStateRef.current = nextClarifying;
-                      if (nextClarifying) {
-                        setClarifyingState(nextClarifying);
-                      }
-                    }} rows={3} className="w-full rounded-2xl border-0 px-6 py-4 outline-none resize-none" style={{ backgroundColor: SOFT, fontSize: '16px', color: TEXT }} />
+                    <textarea value={followUpAnswers[question.id] || ''} onChange={(event) => handleFollowUpInputChange(question.id, event.target.value)} rows={3} className="w-full rounded-xl border-0 px-6 py-4 outline-none resize-none" style={{ backgroundColor: SOFT, fontSize: '16px', color: TEXT }} />
                   </div>
                 ))}
               </div>
               <div className="mt-6 flex gap-3">
-                <button type="button" onClick={() => void finishFlow(initialSetupAnswersRef.current, clarifyingStateRef.current)} disabled={loading} className="rounded-full px-8 py-4 transition-all duration-200 disabled:opacity-30" style={{ backgroundColor: TEXT, color: '#FFFFFF', fontSize: '15px', fontWeight: 500 }}>
+                <button type="button" onClick={() => void continueAiLoopFromFollowUps()} disabled={loading} className="rounded-xl px-8 py-4 transition-all duration-200 disabled:opacity-30" style={{ backgroundColor: TEXT, color: '#FFFFFF', fontSize: '15px', fontWeight: 500 }}>
                   {loading ? 'Building...' : 'Build my draft'}
                 </button>
                 <button type="button" onClick={() => {
                   setShowFollowUps(false);
                   setViewState('question');
-                }} className="rounded-full px-6 py-4" style={{ backgroundColor: SOFT, color: TEXT }}>
+                }} className="rounded-xl px-6 py-4" style={{ backgroundColor: SOFT, color: TEXT }}>
                   Back
                 </button>
               </div>
-              {error && <p className="mt-4 text-sm text-red-600">{error}</p>}
-              {aiDebug && <p className="mt-2 text-xs" style={{ color: MUTED }}>AI debug: {aiDebug}</p>}
+              {error && <p className="mt-4 text-sm" style={{ color: MUTED }}>{error}</p>}
+              {import.meta.env.DEV && showAiDebug && aiDebug && <p className="mt-2 text-xs" style={{ color: MUTED }}>Draft details: {aiDebug}</p>}
             </motion.div>
           )}
         </AnimatePresence>
 
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }} className="mt-16 flex items-center gap-4">
           <button className="text-[13px] transition-opacity duration-200 hover:opacity-60" style={{ color: MUTED }} onClick={() => {
-            localStorage.removeItem(STORAGE_KEY);
-            window.location.href = `${buildQuickStartEntryPath()}&resetQuickStart=1`;
+            clearQuickStartDraftSnapshot(quickStartStorageScope);
+            navigate(`${buildQuickStartEntryPath()}&resetQuickStart=1`);
           }}>
             Start over
           </button>
-          <button className="text-[13px] transition-opacity duration-200 hover:opacity-60" style={{ color: MUTED }} onClick={() => { clearAllOnboardingContinuationState(); navigate('/dashboard?bypassPayment=1'); }}>
-            Switch to manual setup
+          <button className="text-[13px] transition-opacity duration-200 hover:opacity-60" style={{ color: MUTED }} onClick={() => { clearAllOnboardingContinuationState(quickStartStorageScope); navigate('/dashboard?bypassPayment=1'); }}>
+            Open the editor instead
           </button>
         </motion.div>
       </div>

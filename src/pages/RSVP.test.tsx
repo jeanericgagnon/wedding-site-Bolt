@@ -1,13 +1,37 @@
-import React from 'react';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { BrowserRouter, MemoryRouter } from 'react-router-dom';
+const { trackGuestHubEventMock } = vi.hoisted(() => ({
+  trackGuestHubEventMock: vi.fn(),
+}));
 
 vi.mock('../config/env', () => ({ DEMO_MODE: false }));
-vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: (key: string) => {
+      if (key === 'rsvp.search_button') return 'Find My Invitation';
+      if (key === 'rsvp.searching') return 'Searching…';
+      if (key === 'rsvp.loading_invitation') return 'Loading your invitation...';
+      return key;
+    },
+    i18n: {
+      language: 'en',
+      changeLanguage: vi.fn(),
+    },
+  }),
+}));
 vi.mock('../components/ui/LanguageSwitcher', () => ({ LanguageSwitcher: () => <div>LanguageSwitcher</div> }));
+vi.mock('../components/site/OwnerPreviewBanner', () => ({
+  OwnerPreviewBanner: () => null,
+}));
+vi.mock('./guestHubPublicService', () => ({
+  trackGuestHubEvent: trackGuestHubEventMock,
+}));
 
 import RSVP from './RSVP';
+import { normalizeRsvpGuestError, normalizeRsvpSubmitError } from './rsvpTypes';
 
 function deferred<T>() {
   let resolve!: (value: T) => void;
@@ -24,12 +48,254 @@ describe('RSVP stale submit protection', () => {
 
   beforeEach(() => {
     fetchMock.mockReset();
+    trackGuestHubEventMock.mockReset();
+    trackGuestHubEventMock.mockResolvedValue(undefined);
     vi.stubGlobal('fetch', fetchMock);
   });
 
   afterEach(() => {
     cleanup();
     vi.unstubAllGlobals();
+  });
+
+  it('routes token auto-loading through the shared RSVP route view', () => {
+    const rsvpPage = readFileSync(join(process.cwd(), 'src/pages/RSVP.tsx'), 'utf8');
+    const derivedViewState = readFileSync(join(process.cwd(), 'src/pages/buildRsvpDerivedViewState.ts'), 'utf8');
+    const ambiguousLookupState = readFileSync(join(process.cwd(), 'src/pages/applyAmbiguousRsvpLookupState.ts'), 'utf8');
+    const manualLookupResult = readFileSync(join(process.cwd(), 'src/pages/applyManualRsvpLookupResult.ts'), 'utf8');
+    const resolvedGuest = readFileSync(join(process.cwd(), 'src/pages/applyResolvedRsvpGuest.ts'), 'utf8');
+    const guestSelection = readFileSync(join(process.cwd(), 'src/pages/applyRsvpGuestSelection.ts'), 'utf8');
+    const lookupGuest = readFileSync(join(process.cwd(), 'src/pages/lookupRsvpGuest.ts'), 'utf8');
+    const lookupToken = readFileSync(join(process.cwd(), 'src/pages/lookupRsvpToken.ts'), 'utf8');
+    const runGuestLookup = readFileSync(join(process.cwd(), 'src/pages/runRsvpGuestLookup.ts'), 'utf8');
+    const runSubmit = readFileSync(join(process.cwd(), 'src/pages/runRsvpSubmit.ts'), 'utf8');
+    const runTokenLookup = readFileSync(join(process.cwd(), 'src/pages/runRsvpTokenLookup.ts'), 'utf8');
+    const submitSuccess = readFileSync(join(process.cwd(), 'src/pages/applyRsvpSubmitSuccess.ts'), 'utf8');
+    const tokenLookupResult = readFileSync(join(process.cwd(), 'src/pages/applyTokenRsvpLookupResult.ts'), 'utf8');
+    const submitPayload = readFileSync(join(process.cwd(), 'src/pages/buildRsvpSubmitPayload.ts'), 'utf8');
+    const submitSuccessArgs = readFileSync(join(process.cwd(), 'src/pages/buildRsvpSubmitSuccessArgs.ts'), 'utf8');
+    const tokenLookupPreparation = readFileSync(join(process.cwd(), 'src/pages/prepareRsvpTokenLookupState.ts'), 'utf8');
+    const lookupClassification = readFileSync(join(process.cwd(), 'src/pages/classifyRsvpLookupResponse.ts'), 'utf8');
+    const liveContentActions = readFileSync(join(process.cwd(), 'src/pages/buildRsvpLiveContentActions.ts'), 'utf8');
+    const pageViewModel = readFileSync(join(process.cwd(), 'src/pages/buildRsvpPageViewModel.ts'), 'utf8');
+    const liveContentProps = readFileSync(join(process.cwd(), 'src/pages/buildRsvpLiveContentViewProps.ts'), 'utf8');
+    const resetLookupFlow = readFileSync(join(process.cwd(), 'src/pages/resetRsvpLookupFlow.ts'), 'utf8');
+    const resetPageState = readFileSync(join(process.cwd(), 'src/pages/resetRsvpPageState.ts'), 'utf8');
+    const validateAdvance = readFileSync(join(process.cwd(), 'src/pages/validateRsvpFormAdvance.ts'), 'utf8');
+    const validateSubmitReadiness = readFileSync(join(process.cwd(), 'src/pages/validateRsvpSubmitReadiness.ts'), 'utf8');
+    const demoSubmit = readFileSync(join(process.cwd(), 'src/pages/applyDemoRsvpSubmit.ts'), 'utf8');
+    const submitResponse = readFileSync(join(process.cwd(), 'src/pages/submitRsvpResponse.ts'), 'utf8');
+    const restoreLoadedState = readFileSync(join(process.cwd(), 'src/pages/restoreLoadedRsvpState.ts'), 'utf8');
+    const pageRouteView = readFileSync(join(process.cwd(), 'src/pages/RsvpPageRouteView.tsx'), 'utf8');
+    const flowView = readFileSync(join(process.cwd(), 'src/pages/RsvpFlowView.tsx'), 'utf8');
+    const formView = readFileSync(join(process.cwd(), 'src/pages/RsvpFormView.tsx'), 'utf8');
+    const liveContentView = readFileSync(join(process.cwd(), 'src/pages/RsvpLiveContentView.tsx'), 'utf8');
+    const routeView = readFileSync(join(process.cwd(), 'src/pages/RsvpRouteView.tsx'), 'utf8');
+    const tokenLoadingView = readFileSync(join(process.cwd(), 'src/pages/RsvpTokenLoadingView.tsx'), 'utf8');
+    const pickerView = readFileSync(join(process.cwd(), 'src/pages/RsvpGuestPickerView.tsx'), 'utf8');
+    const searchView = readFileSync(join(process.cwd(), 'src/pages/RsvpSearchView.tsx'), 'utf8');
+    const successView = readFileSync(join(process.cwd(), 'src/pages/RsvpSuccessView.tsx'), 'utf8');
+
+	    expect(rsvpPage).toContain("from './buildRsvpDerivedViewState'");
+	    expect(rsvpPage).toContain("from './applyManualRsvpLookupResult'");
+	    expect(rsvpPage).toContain("from './applyResolvedRsvpGuest'");
+	    expect(rsvpPage).toContain("from './applyRsvpSubmitSuccess'");
+	    expect(rsvpPage).toContain("from './applyTokenRsvpLookupResult'");
+	    expect(rsvpPage).toContain("from './runRsvpGuestLookup'");
+    expect(rsvpPage).toContain("from './runRsvpSubmit'");
+    expect(rsvpPage).toContain("from './runRsvpTokenLookup'");
+    expect(rsvpPage).toContain("from './buildRsvpSubmitPayload'");
+    expect(rsvpPage).toContain("from './buildRsvpSubmitSuccessArgs'");
+    expect(rsvpPage).toContain("from './prepareRsvpTokenLookupState'");
+    expect(rsvpPage).toContain("from './buildRsvpLiveContentActions'");
+    expect(rsvpPage).toContain("from './buildRsvpPageViewModel'");
+    expect(rsvpPage).toContain("from './buildRsvpLiveContentViewProps'");
+    expect(rsvpPage).toContain("from './resetRsvpLookupFlow'");
+    expect(rsvpPage).toContain("from './resetRsvpPageState'");
+    expect(rsvpPage).toContain("from './restoreLoadedRsvpState'");
+    expect(rsvpPage).toContain("from './RsvpPageRouteView'");
+    expect(rsvpPage).toContain("from './validateRsvpFormAdvance'");
+    expect(rsvpPage).toContain("from './validateRsvpSubmitReadiness'");
+    expect(rsvpPage).toContain("from './applyDemoRsvpSubmit'");
+    expect(rsvpPage).toContain("from './submitRsvpResponse'");
+    expect(rsvpPage).toContain('<RsvpPageRouteView');
+    expect(rsvpPage).toContain('buildRsvpDerivedViewState({');
+    expect(rsvpPage).toContain('applyResolvedRsvpGuest({');
+    expect(rsvpPage).toContain('runRsvpGuestLookup({');
+    expect(rsvpPage).toContain('runRsvpSubmit({');
+    expect(rsvpPage).toContain('runRsvpTokenLookup({');
+    expect(rsvpPage).toContain('prepareRsvpTokenLookupState({');
+    expect(rsvpPage).toContain('buildRsvpLiveContentActions({');
+    expect(rsvpPage).toContain('buildRsvpPageViewModel({');
+    expect(rsvpPage).toContain('resetRsvpLookupFlow({');
+    expect(rsvpPage).toContain('resetRsvpPageState({');
+    expect(rsvpPage).toContain('restoreLoadedRsvpState({');
+    expect(rsvpPage).toContain('const liveContentProps = buildRsvpLiveContentViewProps({');
+    expect(rsvpPage).toContain('validateRsvpFormAdvance({');
+    expect(derivedViewState).toContain('guestPredictions');
+    expect(derivedViewState).toContain('childCountOptions');
+    expect(derivedViewState).toContain('inheritedHouseholdMembers');
+    expect(ambiguousLookupState).toContain('setAmbiguousGuests(guests)');
+    expect(ambiguousLookupState).toContain('setSelectedHouseholdGuestIds(householdGuests.map((guest) => guest.id))');
+    expect(ambiguousLookupState).toContain("setStep('pick')");
+    expect(manualLookupResult).toContain('fallbackGuest');
+    expect(manualLookupResult).toContain('classifyRsvpLookupResponse(data as LookupResponse)');
+    expect(manualLookupResult).toContain('applyAmbiguousRsvpLookupState({');
+    expect(manualLookupResult).toContain('setError(normalizeRsvpGuestError(error))');
+    expect(manualLookupResult).toContain('setError(RSVP_LOOKUP_ERROR_COPY)');
+    expect(resolvedGuest).toContain("tokenLinkedSessionRef.current = source === 'token'");
+    expect(resolvedGuest).toContain('deriveSelectedHouseholdGuestIds(normalizedRsvp, household)');
+    expect(resolvedGuest).toContain('applyRsvpGuestSelection({');
+    expect(lookupGuest).toContain("action: 'lookup_guest'");
+    expect(lookupGuest).toContain("action: 'lookup'");
+    expect(lookupGuest).toContain('language,');
+    expect(lookupGuest).toContain("data: demoLookup(guestId ?? searchValue?.trim() ?? '')");
+    expect(runGuestLookup).toContain("from './lookupRsvpGuest'");
+    expect(runGuestLookup).toContain('await lookupRsvpGuest({');
+    expect(runGuestLookup).toContain('applyManualRsvpLookupResult({');
+    expect(runGuestLookup).toContain("lookupSource === 'pick' && fallbackGuest");
+    expect(runSubmit).toContain('validateRsvpSubmitReadiness({');
+    expect(runSubmit).toContain('buildRsvpSubmitPayload({');
+    expect(runSubmit).toContain('applyDemoRsvpSubmit({ payload, targetGuestIds: targetIds })');
+    expect(runSubmit).toContain('await submitRsvpResponse({');
+    expect(runSubmit).toContain('applyRsvpSubmitSuccess(buildRsvpSubmitSuccessArgs({');
+    expect(lookupToken).toContain("action: 'lookup'");
+    expect(lookupToken).toContain("language,");
+    expect(lookupToken).toContain("data: demoLookup(token) as unknown");
+    expect(runTokenLookup).toContain('await lookupRsvpToken({');
+    expect(runTokenLookup).toContain("from './lookupRsvpToken'");
+    expect(runTokenLookup).toContain('applyTokenRsvpLookupResult({');
+    expect(runTokenLookup).toContain('setError(RSVP_LOOKUP_ERROR_COPY);');
+    expect(guestSelection).toContain('existingFormData');
+    expect(guestSelection).toContain('setRsvpSessionToken(sessionToken)');
+    expect(guestSelection).toContain("setStep('form')");
+    expect(submitSuccess).toContain('onContinuityUpdate()');
+    expect(submitSuccess).toContain("setStep('success')");
+    expect(submitSuccess).toContain('normalizeSelectedHouseholdGuestIds(');
+    expect(tokenLookupResult).toContain("source?: 'manual' | 'token'");
+    expect(tokenLookupResult).toContain('shouldPreserveVisibleState');
+    expect(tokenLookupResult).toContain('setError(RSVP_LOOKUP_ERROR_COPY)');
+    expect(submitPayload).toContain('targetGuestIds');
+    expect(submitPayload).toContain('normalizedExistingRsvp');
+    expect(submitPayload).toContain('plusOneCount: plusOneName ? 1 : 0');
+    expect(submitSuccessArgs).toContain('ignoreNextLocalContinuityEventRef.current = true');
+    expect(submitSuccessArgs).toContain('notifyRsvpContinuityUpdate()');
+    expect(submitSuccessArgs).toContain("submitSource: tokenLinkedSession ? 'token' : 'manual'");
+    expect(tokenLookupPreparation).toContain("kind: 'empty'");
+    expect(tokenLookupPreparation).toContain("kind: 'lookup'");
+    expect(tokenLookupPreparation).toContain('searchValue: token');
+    expect(lookupClassification).toContain("kind: 'guest'");
+    expect(lookupClassification).toContain("kind: 'ambiguous'");
+    expect(lookupClassification).toContain("kind: 'not_found'");
+    expect(liveContentActions).toContain('onCancelLoading');
+    expect(liveContentActions).toContain('onDone');
+    expect(liveContentActions).toContain('onSubmitAnother');
+    expect(pageViewModel).toContain('guestDisplayName');
+    expect(pageViewModel).toContain('deadlinePassed');
+    expect(pageViewModel).toContain('searchInputId');
+    expect(resetLookupFlow).toContain('setFormData({');
+    expect(resetLookupFlow).toContain('setMealConfig(DEFAULT_MEAL_CONFIG)');
+    expect(resetLookupFlow).toContain('setSelectedHouseholdGuestIds([])');
+    expect(resetPageState).toContain('setTokenAutoLoading?.(false)');
+    expect(resetPageState).toContain("setStep('search')");
+    expect(resetPageState).toContain('setSearchValue(searchValue)');
+    expect(restoreLoadedState).toContain("setStep('form')");
+    expect(restoreLoadedState).toContain('setExistingRsvp(normalizedExistingRsvp)');
+    expect(restoreLoadedState).toContain('tokenLinkedSessionRef.current = !!activeToken');
+    expect(validateSubmitReadiness).toContain('The RSVP deadline has passed.');
+    expect(validateSubmitReadiness).toContain('Please use the RSVP button from your invitation email');
+    expect(validateSubmitReadiness).toContain('Please choose at least one event from your invitation');
+    expect(validateSubmitReadiness).toContain('Pick at least one household guest to share this RSVP with');
+    expect(demoSubmit).toContain('readDemoStoredResponses()');
+    expect(demoSubmit).toContain('writeDemoStoredResponses(stored)');
+    expect(demoSubmit).toContain("id: `demo-rsvp-${id}`");
+    expect(submitResponse).toContain("action: 'submit'");
+    expect(submitResponse).toContain('callValidateRsvpToken({');
+    expect(submitResponse).toContain('submitSucceeded');
+    expect(pageRouteView).toContain("from './RsvpRouteView'");
+    expect(pageRouteView).toContain("from './RsvpLiveContentView'");
+    expect(pageRouteView).toContain("from './RsvpTokenLoadingView'");
+    expect(pageRouteView).toContain('<RsvpRouteView');
+    expect(pageRouteView).toContain('<RsvpLiveContentView');
+    expect(pageRouteView).toContain('<RsvpTokenLoadingView');
+    expect(liveContentProps).toContain('return props;');
+    expect(validateAdvance).toContain('Please choose a meal option before review.');
+    expect(validateAdvance).toContain('Please answer:');
+    expect(routeView).toContain('if (tokenAutoLoading) return <>{tokenAutoLoadingView}</>;');
+    expect(tokenLoadingView).toContain('Loading your invitation…');
+    expect(tokenLoadingView).toContain('Enter invitation code instead');
+    expect(liveContentView).toContain("from './RsvpSearchView'");
+    expect(liveContentView).toContain("from './RsvpFlowView'");
+    expect(liveContentView).toContain("from './RsvpFormView'");
+    expect(liveContentView).toContain("from './RsvpGuestPickerView'");
+    expect(liveContentView).toContain("from './RsvpSuccessView'");
+    expect(liveContentView).toContain('step === \'search\' ?');
+    expect(liveContentView).toContain('<RsvpSearchView');
+    expect(liveContentView).toContain('<RsvpFlowView');
+    expect(liveContentView).toContain('<RsvpFormView');
+    expect(liveContentView).toContain('<RsvpGuestPickerView');
+    expect(liveContentView).toContain('<RsvpSuccessView');
+    expect(flowView).toContain("{step === 'pick' && pickerContent}");
+    expect(flowView).toContain("{step === 'form' && formContent}");
+    expect(flowView).toContain("{step === 'success' && successContent}");
+    expect(formView).toContain('Welcome, {guestDisplayName}!');
+    expect(formView).toContain("Can't submit — missing invitation link");
+    expect(formView).toContain("Continue to review");
+    expect(pickerView).toContain('Multiple matches found');
+    expect(pickerView).toContain('Search again');
+    expect(searchView).toContain("{t('rsvp.hero_title')}");
+    expect(searchView).toContain("{t('rsvp.search_button')}");
+    expect(successView).toContain(`{formData.attending ? "You're confirmed!" : "Response recorded"}`);
+    expect(successView).toContain('Submit another RSVP');
+  });
+
+  it('sanitizes internal RSVP lookup and submit errors before showing guest copy', () => {
+    expect(normalizeRsvpGuestError('missing-config')).toBe('Invitation not recognized. Please use the private RSVP link or code from your invitation.');
+    expect(normalizeRsvpGuestError('permission denied for table guests')).toBe('Invitation not recognized. Please use the private RSVP link or code from your invitation.');
+    expect(normalizeRsvpGuestError('Google OAuth service_role api-key refresh failed')).toBe('Invitation not recognized. Please use the private RSVP link or code from your invitation.');
+    expect(normalizeRsvpSubmitError('Failed to submit RSVP. Please try again.')).toBe('Couldn’t send your RSVP. Please try again.');
+    expect(normalizeRsvpSubmitError('request failed at functions/v1/validate-rsvp-token')).toBe('Couldn’t send your RSVP. Please try again.');
+    expect(normalizeRsvpGuestError('The RSVP deadline has passed.')).toBe('The RSVP deadline has passed.');
+  });
+
+  it('tracks private RSVP route opens as aggregate invite analytics without leaking the token', async () => {
+    fetchMock.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        guest: {
+          id: 'guest-1',
+          first_name: 'Taylor',
+          last_name: 'Rivera',
+          name: 'Taylor Rivera',
+          plus_one_allowed: false,
+          invited_to_ceremony: true,
+          invited_to_reception: true,
+        },
+        existingRsvp: null,
+        guests: null,
+        siteSlug: 'taylor-and-rivera',
+        rsvpDeadline: null,
+        rsvpQuestions: [],
+        rsvpMealConfig: { enabled: true, options: ['Chicken', 'Beef'] },
+        musicPlaylistUrl: null,
+        householdGuests: [],
+        rsvpSession: 'session-1',
+      }),
+    });
+
+    render(
+      <MemoryRouter initialEntries={['/rsvp?token=invite-token-1']}>
+        <RSVP />
+      </MemoryRouter>
+    );
+
+    expect(await screen.findByText('Welcome, Taylor Rivera!')).toBeInTheDocument();
+    expect(trackGuestHubEventMock).toHaveBeenCalledWith(
+      'taylor-and-rivera',
+      'view',
+      '/rsvp/invite',
+      { inviteToken: 'invite-token-1' },
+    );
   });
 
   it('does not switch into success after the guest backs out of an in-flight submit', async () => {
@@ -121,8 +387,23 @@ describe('RSVP stale submit protection', () => {
     fireEvent.change(screen.getByPlaceholderText('rsvp.search_placeholder'), { target: { value: 'Nobody' } });
     fireEvent.click(screen.getByText('Find My Invitation'));
 
-    expect(await screen.findByText('Invitation not recognized. Please search by name below.')).toBeInTheDocument();
+    expect(await screen.findByText('Invitation not recognized. Please use the private RSVP link or code from your invitation.')).toBeInTheDocument();
     expect(screen.queryByText('An error occurred. Please try again.')).not.toBeInTheDocument();
+  });
+
+  it('links the RSVP search field to its label and helper guidance', () => {
+    render(
+      <MemoryRouter initialEntries={['/rsvp']}>
+        <RSVP />
+      </MemoryRouter>
+    );
+
+    const searchInput = screen.getByLabelText('rsvp.search_label');
+    expect(searchInput).toHaveAttribute('id', 'rsvp-guest-search');
+    expect(searchInput).toHaveAttribute('aria-describedby', 'rsvp-search-hint');
+    expect(searchInput).toHaveAttribute('aria-autocomplete', 'list');
+    expect(searchInput).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.getByText('rsvp.search_hint')).toHaveAttribute('id', 'rsvp-search-hint');
   });
 
   it('shows invitation-not-recognized truth when search lookup returns no payload', async () => {
@@ -140,7 +421,7 @@ describe('RSVP stale submit protection', () => {
     fireEvent.change(screen.getByPlaceholderText('rsvp.search_placeholder'), { target: { value: 'Nobody' } });
     fireEvent.click(screen.getByText('Find My Invitation'));
 
-    expect(await screen.findByText('Invitation not recognized. Please search by name below.')).toBeInTheDocument();
+    expect(await screen.findByText('Invitation not recognized. Please use the private RSVP link or code from your invitation.')).toBeInTheDocument();
     expect(screen.queryByText('An error occurred. Please try again.')).not.toBeInTheDocument();
   });
 
@@ -394,7 +675,7 @@ describe('RSVP stale submit protection', () => {
     });
 
     expect(screen.getByText('Welcome, Taylor Rivera!')).toBeInTheDocument();
-    expect(screen.queryByText('Failed to load invitation. Please search by name below.')).not.toBeInTheDocument();
+    expect(screen.queryByText('Couldn’t load that invitation. Please search by name below.')).not.toBeInTheDocument();
 
     await act(async () => {
       window.dispatchEvent(new CustomEvent('dayof:rsvp-updated', { detail: { updatedAt: String(Date.now()) } }));
@@ -586,7 +867,7 @@ describe('RSVP stale submit protection', () => {
       </BrowserRouter>
     );
 
-    expect(await screen.findByText('Invitation not recognized. Please search by name below.')).toBeInTheDocument();
+    expect(await screen.findByText('Invitation not recognized. Please use the private RSVP link or code from your invitation.')).toBeInTheDocument();
 
     fireEvent.change(screen.getByPlaceholderText('rsvp.search_placeholder'), { target: { value: 'Jordan Rivera' } });
     fireEvent.click(screen.getByText('Find My Invitation'));
@@ -601,7 +882,7 @@ describe('RSVP stale submit protection', () => {
       expect(fetchMock).toHaveBeenCalledTimes(2);
     });
     expect(screen.getByText('Welcome, Jordan Rivera!')).toBeInTheDocument();
-    expect(screen.queryByText('Invitation not recognized. Please search by name below.')).not.toBeInTheDocument();
+    expect(screen.queryByText('Invitation not recognized. Please use the private RSVP link or code from your invitation.')).not.toBeInTheDocument();
   });
 
   it('does not let a manual-search submit swallow the next token-linked continuity refresh', async () => {
@@ -773,7 +1054,7 @@ describe('RSVP stale submit protection', () => {
     );
 
     expect(await screen.findByText('Welcome, Taylor Rivera!')).toBeInTheDocument();
-    expect(screen.queryByText('Invitation not recognized. Please search by name below.')).not.toBeInTheDocument();
+    expect(screen.queryByText('Invitation not recognized. Please use the private RSVP link or code from your invitation.')).not.toBeInTheDocument();
   });
 
   it('shows invitation-not-recognized truth when token lookup returns no payload', async () => {
@@ -790,7 +1071,7 @@ describe('RSVP stale submit protection', () => {
       </BrowserRouter>
     );
 
-    expect(await screen.findByText('Invitation not recognized. Please search by name below.')).toBeInTheDocument();
+    expect(await screen.findByText('Invitation not recognized. Please use the private RSVP link or code from your invitation.')).toBeInTheDocument();
     expect(screen.queryByText('Invalid invitation link. Please search by name below.')).not.toBeInTheDocument();
   });
 
@@ -2155,7 +2436,7 @@ describe('RSVP stale submit protection', () => {
     fetchMock
       .mockResolvedValueOnce({
         ok: false,
-        json: async () => ({ error: 'Invitation not recognized. Please search by name below.' }),
+        json: async () => ({ error: 'Invitation not recognized. Please use the private RSVP link or code from your invitation.' }),
       })
       .mockResolvedValueOnce({
         ok: true,
@@ -2195,7 +2476,7 @@ describe('RSVP stale submit protection', () => {
     fireEvent.change(screen.getByPlaceholderText('rsvp.search_placeholder'), { target: { value: 'nobody' } });
     fireEvent.click(screen.getByText('Find My Invitation'));
 
-    expect(await screen.findByText('Invitation not recognized. Please search by name below.')).toBeInTheDocument();
+    expect(await screen.findByText('Invitation not recognized. Please use the private RSVP link or code from your invitation.')).toBeInTheDocument();
 
     await act(async () => {
       window.history.pushState({}, '', '/rsvp?token=token-1');
@@ -2207,14 +2488,14 @@ describe('RSVP stale submit protection', () => {
       </BrowserRouter>
     );
 
-    expect(screen.queryByText('Invitation not recognized. Please search by name below.')).not.toBeInTheDocument();
+    expect(screen.queryByText('Invitation not recognized. Please use the private RSVP link or code from your invitation.')).not.toBeInTheDocument();
     expect(await screen.findByText('Welcome, Taylor Rivera!')).toBeInTheDocument();
   });
 
   it('clears stale search errors when the guest edits the search input before retrying', async () => {
     fetchMock.mockResolvedValueOnce({
       ok: false,
-      json: async () => ({ error: 'Invitation not recognized. Please search by name below.' }),
+      json: async () => ({ error: 'Invitation not recognized. Please use the private RSVP link or code from your invitation.' }),
     });
 
     render(
@@ -2227,11 +2508,11 @@ describe('RSVP stale submit protection', () => {
     fireEvent.change(searchInput, { target: { value: 'Nobody' } });
     fireEvent.click(screen.getByText('Find My Invitation'));
 
-    expect(await screen.findByText('Invitation not recognized. Please search by name below.')).toBeInTheDocument();
+    expect(await screen.findByText('Invitation not recognized. Please use the private RSVP link or code from your invitation.')).toBeInTheDocument();
 
     fireEvent.change(searchInput, { target: { value: 'Taylor' } });
 
-    expect(screen.queryByText('Invitation not recognized. Please search by name below.')).not.toBeInTheDocument();
+    expect(screen.queryByText('Invitation not recognized. Please use the private RSVP link or code from your invitation.')).not.toBeInTheDocument();
   });
 
   it('drops stale search results when the guest edits the search input before the lookup resolves', async () => {
@@ -2392,7 +2673,7 @@ describe('RSVP stale submit protection', () => {
 
     expect(await screen.findByText(/Loading your invitation/)).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Search by name instead' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Enter invitation code instead' }));
 
     expect(await screen.findByPlaceholderText('rsvp.search_placeholder')).toBeInTheDocument();
     expect(screen.getByDisplayValue('')).toBeInTheDocument();
@@ -2523,7 +2804,7 @@ describe('RSVP stale submit protection', () => {
       })
       .mockResolvedValueOnce({
         ok: false,
-        json: async () => ({ error: 'Failed to submit RSVP. Please try again.' }),
+        json: async () => ({ error: 'Couldn’t send your RSVP. Please try again.' }),
       });
 
     window.history.pushState({}, '', '/rsvp?token=token-1');
@@ -2539,7 +2820,7 @@ describe('RSVP stale submit protection', () => {
     fireEvent.click(screen.getByText('Continue to review'));
     fireEvent.click(screen.getByText('Submit RSVP'));
 
-    expect(await screen.findByText('Failed to submit RSVP. Please try again.')).toBeInTheDocument();
+    expect(await screen.findByText('Couldn’t send your RSVP. Please try again.')).toBeInTheDocument();
 
     fireEvent.click(screen.getByText('Back'));
     fireEvent.click(screen.getByText('Back'));
@@ -2548,7 +2829,7 @@ describe('RSVP stale submit protection', () => {
     expect(await screen.findByPlaceholderText('rsvp.search_placeholder')).toBeInTheDocument();
     expect(screen.getByDisplayValue('')).toBeInTheDocument();
     expect(window.location.search).toBe('');
-    expect(screen.queryByText('Failed to submit RSVP. Please try again.')).not.toBeInTheDocument();
+    expect(screen.queryByText('Couldn’t send your RSVP. Please try again.')).not.toBeInTheDocument();
   });
 
   it('clears stale token-loaded RSVP details when the guest cancels back to search', async () => {
@@ -3083,7 +3364,7 @@ describe('RSVP stale submit protection', () => {
     fireEvent.click(screen.getByText('Continue to review'));
     fireEvent.click(screen.getByText('Submit RSVP'));
 
-    expect(await screen.findByText('Failed to submit RSVP. Please try again.')).toBeInTheDocument();
+    expect(await screen.findByText('Couldn’t send your RSVP. Please try again.')).toBeInTheDocument();
     expect(screen.queryByText("You're confirmed!")).not.toBeInTheDocument();
   });
 
@@ -3217,7 +3498,7 @@ describe('RSVP stale submit protection', () => {
       })
       .mockResolvedValueOnce({
         ok: false,
-        json: async () => ({ error: 'Failed to submit RSVP. Please try again.' }),
+        json: async () => ({ error: 'Couldn’t send your RSVP. Please try again.' }),
       });
 
     render(
@@ -3235,14 +3516,14 @@ describe('RSVP stale submit protection', () => {
     fireEvent.click(screen.getByText('Continue to review'));
     fireEvent.click(screen.getByText('Submit RSVP'));
 
-    expect(await screen.findByText('Failed to submit RSVP. Please try again.')).toBeInTheDocument();
+    expect(await screen.findByText('Couldn’t send your RSVP. Please try again.')).toBeInTheDocument();
 
     fireEvent.click(screen.getByText('Back'));
     fireEvent.change(screen.getByRole('combobox'), {
       target: { value: 'Beef' },
     });
 
-    expect(screen.queryByText('Failed to submit RSVP. Please try again.')).not.toBeInTheDocument();
+    expect(screen.queryByText('Couldn’t send your RSVP. Please try again.')).not.toBeInTheDocument();
   });
 
   it('clears stale submit errors when the guest backs out of review before retrying', async () => {
@@ -3275,7 +3556,7 @@ describe('RSVP stale submit protection', () => {
       })
       .mockResolvedValueOnce({
         ok: false,
-        json: async () => ({ error: 'Failed to submit RSVP. Please try again.' }),
+        json: async () => ({ error: 'Couldn’t send your RSVP. Please try again.' }),
       });
 
     render(
@@ -3293,12 +3574,12 @@ describe('RSVP stale submit protection', () => {
     fireEvent.click(screen.getByText('Continue to review'));
     fireEvent.click(screen.getByText('Submit RSVP'));
 
-    expect(await screen.findByText('Failed to submit RSVP. Please try again.')).toBeInTheDocument();
+    expect(await screen.findByText('Couldn’t send your RSVP. Please try again.')).toBeInTheDocument();
 
     fireEvent.click(screen.getByText('Back'));
 
     await screen.findByText('Continue to review');
-    expect(screen.queryByText('Failed to submit RSVP. Please try again.')).not.toBeInTheDocument();
+    expect(screen.queryByText('Couldn’t send your RSVP. Please try again.')).not.toBeInTheDocument();
   });
 
   it('clears stale meal-selection errors when the guest changes their RSVP details before retrying', async () => {

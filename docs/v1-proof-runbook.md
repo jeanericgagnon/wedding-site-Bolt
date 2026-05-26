@@ -5,6 +5,17 @@ This is the execution bridge between the v1 finish board and the smoke/test harn
 It is not a marketing artifact.
 It is the shortest path from **"we think this is close"** to **"we have actual proof or an exact blocker."**
 
+## Current status note
+
+This file describes the proof framework and the meaning of each lane. It is not, by itself, the canonical live readiness verdict.
+
+For current launch status and latest exact proof state, use:
+- [BACKLOG.md](/Users/ericgagnon/Documents/DayOfLove/wedding-site-Bolt/BACKLOG.md)
+- [docs/PRODUCTION_HARDENING_REPORT.md](/Users/ericgagnon/Documents/DayOfLove/wedding-site-Bolt/docs/PRODUCTION_HARDENING_REPORT.md)
+- [docs/v1-smoke-proof-log.md](/Users/ericgagnon/Documents/DayOfLove/wedding-site-Bolt/docs/v1-smoke-proof-log.md)
+
+Older blocker notes below should be read as lane semantics and historical examples unless they are restated in those current-truth docs.
+
 ## Rule
 
 A slice is **not** good enough because:
@@ -40,10 +51,13 @@ npm run proof:v1:coordinator-dayof
 npm run proof:v1:registry
 npm run proof:v1:seating-continuity
 npm test -- src/pages/dashboard/registry/registryService.test.ts
-node scripts/v1-proof-board.mjs --markdown
+npm run proof:v1:board:freshness
+npm run proof:v1:board
+npm run proof:v1:board:md
 ```
 
-Use `node scripts/v1-proof-board.mjs` for the machine-readable version of the current proof board.
+Run `npm run proof:v1:board:freshness` before treating either board output as current truth.
+Workflow gates are intentionally narrower: `ci-hardpass` and `Release Launch Gate` enforce `npm run proof:v1:board:freshness`, but they do not regenerate `npm run proof:v1:board` or `npm run proof:v1:board:md`.
 That board now also carries the explicit real v1 line plus the ruthless next-3 queue, so the next finish move is executable instead of buried in prose.
 
 ---

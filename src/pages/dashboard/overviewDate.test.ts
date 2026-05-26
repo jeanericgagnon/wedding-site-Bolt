@@ -29,6 +29,17 @@ describe('overviewDate', () => {
       day: 'numeric',
       year: 'numeric',
     }));
-    expect(calcOverviewDaysUntil('2026-06-21T18:00:00.000Z', new Date('2026-06-20T18:00:00.000Z'))).toBe(1);
+    expect(calcOverviewDaysUntil('2026-06-22', new Date('2026-06-20T18:00:00.000Z'))).toBe(2);
+  });
+
+  it('formats and counts date-only overview values as the saved local calendar day', () => {
+    const value = '2026-09-12';
+    expect(getOverviewTimestamp(value)).toBe(new Date(2026, 8, 12).getTime());
+    expect(formatOverviewWeddingDate(value)).toBe(new Date(2026, 8, 12).toLocaleDateString('en-US', {
+      month: 'long',
+      day: 'numeric',
+      year: 'numeric',
+    }));
+    expect(calcOverviewDaysUntil(value, new Date(2026, 8, 10, 18))).toBe(2);
   });
 });

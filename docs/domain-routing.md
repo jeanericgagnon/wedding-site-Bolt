@@ -2,6 +2,17 @@
 
 How dayof.love domains and wedding site slugs work.
 
+## Current status note
+
+Canonical current truth:
+- path-based public wedding URLs are live
+- personalized `*.dayof.love` host routing is a proven supported surface
+- external custom domains are still future scope and should not be marketed as current functionality
+
+Use this file together with:
+- [docs/PRODUCTION_HARDENING_REPORT.md](/Users/ericgagnon/Documents/DayOfLove/wedding-site-Bolt/docs/PRODUCTION_HARDENING_REPORT.md)
+- [docs/v1-smoke-proof-log.md](/Users/ericgagnon/Documents/DayOfLove/wedding-site-Bolt/docs/v1-smoke-proof-log.md)
+
 ---
 
 ## Current URL Structure
@@ -63,7 +74,7 @@ Error page (no data at all)
 
 ---
 
-## Personalized DayOf URLs (Future)
+## Personalized DayOf URLs
 
 For `alexandjordan.dayof.love` style URLs:
 
@@ -96,6 +107,8 @@ These are personalized DayOf URLs. They feel custom to guests, but they are not 
 Use `_redirects` or `netlify.toml` with a `_redirects` wildcard rewrite rule that maps the Host header's first segment to `/site/<slug>`.
 
 No database schema changes are needed — the existing `site_slug` column handles both path-based and subdomain-based routing.
+
+Current product truth: this branded DayOf-host routing is the supported custom-URL story today.
 
 ---
 
