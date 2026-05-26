@@ -96,7 +96,10 @@ Deno.serve(async (req: Request) => {
       .eq("user_id", user.id);
 
     if (updateError) {
-      return new Response(JSON.stringify({ error: updateError.message }), {
+      console.error("STRIPE_VERIFY_CHECKOUT_SESSION_UPDATE_FAILED", {
+        reason: "STRIPE_VERIFY_CHECKOUT_SESSION_UPDATE_ERROR",
+      });
+      return new Response(JSON.stringify({ error: "Could not verify this checkout session. Please try again." }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -106,9 +109,11 @@ Deno.serve(async (req: Request) => {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
-  } catch (err) {
-    const message = err instanceof Error ? err.message : "Internal server error";
-    return new Response(JSON.stringify({ error: message }), {
+  } catch {
+    console.error("STRIPE_VERIFY_CHECKOUT_SESSION_UNEXPECTED_FAILED", {
+      reason: "UNEXPECTED_STRIPE_VERIFY_CHECKOUT_SESSION_FAILURE",
+    });
+    return new Response(JSON.stringify({ error: "Could not verify this checkout session. Please try again." }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
