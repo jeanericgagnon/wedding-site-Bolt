@@ -518,7 +518,7 @@ export const Home: React.FC = () => {
         <div className="container-custom">
           <div className="text-center mb-9">
             <h2 className="text-[2rem] font-serif font-bold text-ink mb-4 leading-[1.2] updates-tight">
-              Simple, honest pricing
+              Simple, honest pricing.
             </h2>
             <p className="text-[1.125rem] text-ink/70 leading-relaxed">
               One flat fee. No surprises. Auto-renew OFF by default.
