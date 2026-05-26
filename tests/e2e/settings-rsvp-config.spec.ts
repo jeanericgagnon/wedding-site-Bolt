@@ -97,9 +97,8 @@ test('owner can save RSVP meal choices and custom questions from settings', asyn
   originalMealConfig = site.rsvp_meal_config ?? { enabled: true, options: ['Chicken', 'Beef', 'Fish', 'Vegetarian', 'Vegan'] };
 
   try {
-    await page.goto('/dashboard/settings?bypassPayment=1&settingsRsvpQa=' + runId, { waitUntil: 'domcontentloaded' });
+    await page.goto('/dashboard/settings?bypassPayment=1&tab=rsvp&settingsRsvpQa=' + runId, { waitUntil: 'domcontentloaded' });
     await expect(page.getByRole('heading', { name: 'Settings' }).first()).toBeVisible();
-    await page.getByRole('button', { name: 'RSVP' }).click();
     await expect(page.getByText('Meal Choice')).toBeVisible();
 
     await page.getByRole('button', { name: 'Show' }).first().click();

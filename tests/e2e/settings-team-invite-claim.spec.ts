@@ -100,9 +100,8 @@ test('invited signed-in teammate can claim a collaborator invite', async ({ page
   expect(userId).toBeTruthy();
 
   try {
-    await page.goto('/dashboard/settings?bypassPayment=1&settingsTeamClaimQa=' + runId, { waitUntil: 'domcontentloaded' });
+    await page.goto('/dashboard/settings?bypassPayment=1&tab=team&settingsTeamClaimQa=' + runId, { waitUntil: 'domcontentloaded' });
     await expect(page.getByRole('heading', { name: 'Settings' }).first()).toBeVisible();
-    await page.getByRole('button', { name: 'Team Access' }).click();
     await expect(page.getByText('Planner access')).toBeVisible();
 
     await page.getByRole('button', { name: 'Coordinator' }).click();

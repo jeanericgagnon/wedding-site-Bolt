@@ -78,9 +78,8 @@ test('owner can create, persist permissions for, and revoke a collaborator invit
   expect(ownerAccessToken || supabaseAnonKey).toBeTruthy();
 
   try {
-    await page.goto('/dashboard/settings?bypassPayment=1&settingsTeamQa=' + runId, { waitUntil: 'domcontentloaded' });
+    await page.goto('/dashboard/settings?bypassPayment=1&tab=team&settingsTeamQa=' + runId, { waitUntil: 'domcontentloaded' });
     await expect(page.getByRole('heading', { name: 'Settings' }).first()).toBeVisible();
-    await page.getByRole('button', { name: 'Team Access' }).click();
     await expect(page.getByText('Planner access')).toBeVisible();
 
     await page.getByRole('button', { name: 'Coordinator' }).click();

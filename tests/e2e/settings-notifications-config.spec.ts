@@ -90,9 +90,8 @@ test('owner can save notification preferences from settings', async ({ page }) =
   originalPrefs = site.notification_prefs ?? { rsvp: true, photos: true, digest: false, updates: false };
 
   try {
-    await page.goto('/dashboard/settings?bypassPayment=1&settingsNotifQa=' + Date.now(), { waitUntil: 'domcontentloaded' });
+    await page.goto('/dashboard/settings?bypassPayment=1&tab=notifications&settingsNotifQa=' + Date.now(), { waitUntil: 'domcontentloaded' });
     await expect(page.getByRole('heading', { name: 'Settings' }).first()).toBeVisible();
-    await page.getByRole('button', { name: 'Notifications' }).click();
     await page.getByRole('button', { name: 'Show' }).click();
 
     await page.getByLabel('New RSVPs').check();
