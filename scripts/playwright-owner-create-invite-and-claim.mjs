@@ -86,13 +86,15 @@ try {
   });
 
   await step('owner create collaborator invite', async () => {
-    await ownerPage.goto(`${baseUrl}/dashboard/settings`, { waitUntil: 'domcontentloaded' });
-    await ownerPage.waitForTimeout(2500);
-    await ownerPage.getByRole('button', { name: /team access/i }).click();
-    await ownerPage.waitForTimeout(1500);
+    await ownerPage.goto(`${baseUrl}/dashboard/settings?tab=team`, { waitUntil: 'domcontentloaded' });
+    await ownerPage.waitForTimeout(2000);
     const body = await ownerPage.locator('body').innerText();
-    const nameInput = ownerPage.getByLabel(/planner name/i);
-    const emailInput = ownerPage.getByLabel(/planner email/i);
+    const nameInput = ownerPage.locator('#planner-invite-name');
+    const emailInput = ownerPage.locator('#planner-invite-email');
+    await Promise.all([
+      nameInput.waitFor({ state: 'visible', timeout: 15_000 }).catch(() => {}),
+      emailInput.waitFor({ state: 'visible', timeout: 15_000 }).catch(() => {}),
+    ]);
     if (!(await nameInput.count()) || !(await emailInput.count())) {
       throw new Error(`Planner invite inputs not found. Body: ${body.slice(0, 2500)}`);
     }
