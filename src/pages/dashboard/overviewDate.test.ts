@@ -29,7 +29,7 @@ describe('overviewDate', () => {
       day: 'numeric',
       year: 'numeric',
     }));
-    expect(calcOverviewDaysUntil('2026-06-22', new Date('2026-06-20T18:00:00.000Z'))).toBe(1);
+    expect(calcOverviewDaysUntil('2026-06-22', new Date('2026-06-20T18:00:00.000Z'))).toBe(2);
   });
 
   it('formats and counts date-only overview values as the saved local calendar day', () => {

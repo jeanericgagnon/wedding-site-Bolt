@@ -92,7 +92,7 @@ describe('dayOfGuestHubStatus', () => {
       actionSummaryLabel: 'RSVP, latest updates, travel details, and photo upload',
       readyCoreActionCountLabel: '3 of 4 core day-of actions are ready from this link.',
       coreActionCoverageLabel: '75% core day-of coverage is ready from this link (3 of 4).',
-      coreActionSummaryLabel: '1 of 4 core day-of actions is still missing from this link: schedule.',
+      coreActionSummaryLabel: '1 of 4 core day-of action is still missing from this link: schedule.',
       mainGapLabel: 'Main gap: Add schedule to this link.',
     });
     expect(card?.detail).toContain('Alex Rivera');

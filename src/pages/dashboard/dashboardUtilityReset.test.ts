@@ -73,10 +73,12 @@ describe('dashboard utility reset wiring', () => {
     expect(errorSource).toContain('const previousUserIdRef = useRef<string | null>(null);');
     expect(errorSource).toContain('const adminCheckRequestIdRef = useRef(0);');
     expect(errorSource).toContain('const errorLogsRequestIdRef = useRef(0);');
+    expect(errorSource).toContain('const copyStatusRequestIdRef = useRef(0);');
     expect(errorSource).toContain('const isCurrentRequest = () => mounted && requestId === adminCheckRequestIdRef.current;');
+    expect(errorSource).toContain('if (!adminCheckComplete) return;');
     expect(errorSource).toContain(
       "if (previousUserIdRef.current && userId && previousUserIdRef.current !== userId) {\n      resetErrorLogsState();\n    }",
     );
-    expect(errorSource).toContain("if (!isAdmin) {\n      errorLogsRequestIdRef.current += 1;\n      setRows([]);\n      setExpandedId(null);\n      setCopyStatus(null);\n      setLogsLoading(false);\n      return;\n    }");
+    expect(errorSource).toContain("if (!isAdmin) {\n      errorLogsRequestIdRef.current += 1;\n      copyStatusRequestIdRef.current += 1;\n      setRows([]);\n      setExpandedId(null);\n      setCopyStatus(null);\n      setLogsLoading(false);\n      return;\n    }");
   });
 });

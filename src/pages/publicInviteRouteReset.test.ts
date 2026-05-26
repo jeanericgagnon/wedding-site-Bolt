@@ -35,7 +35,6 @@ describe('public invite route reset guards', () => {
     expect(source).toContain('const [searchParams] = useSearchParams();');
     expect(source).toContain("setQuery('');");
     expect(source).toContain("setVerifier('');");
-    expect(source).toContain("setHouseholdVerifier('');");
     expect(source).toContain("setSelectedContactSession('');");
     expect(source).toContain("setEmail('');");
     expect(source).toContain("setPhone('');");

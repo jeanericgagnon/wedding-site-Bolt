@@ -10,6 +10,7 @@ describe('SettingsSiteUrlPanel', () => {
         hideFromSearch={false}
         isGuestFacingReady={false}
         isPublished={false}
+        onDownloadIdentityPrintPack={vi.fn()}
         onSiteSlugChange={vi.fn()}
         onSubmit={vi.fn((event) => event.preventDefault())}
         privacyMode="public"
@@ -33,6 +34,7 @@ describe('SettingsSiteUrlPanel', () => {
         hideFromSearch={false}
         isGuestFacingReady
         isPublished
+        onDownloadIdentityPrintPack={vi.fn()}
         onSiteSlugChange={vi.fn()}
         onSubmit={vi.fn((event) => event.preventDefault())}
         privacyMode="invite_only"
@@ -44,7 +46,7 @@ describe('SettingsSiteUrlPanel', () => {
       />,
     );
 
-    expect(screen.getByText('Your site is accessible at')).toBeInTheDocument();
+    expect(screen.getByText('Guests can reach your live site at this address.')).toBeInTheDocument();
     expect(screen.getByText('Public site QR')).toBeInTheDocument();
   });
 
@@ -55,6 +57,7 @@ describe('SettingsSiteUrlPanel', () => {
         hideFromSearch={false}
         isGuestFacingReady={false}
         isPublished={false}
+        onDownloadIdentityPrintPack={vi.fn()}
         onSiteSlugChange={vi.fn()}
         onSubmit={vi.fn((event) => event.preventDefault())}
         privacyMode="invite_only"
@@ -79,6 +82,7 @@ describe('SettingsSiteUrlPanel', () => {
         hideFromSearch={false}
         isGuestFacingReady
         isPublished
+        onDownloadIdentityPrintPack={vi.fn()}
         onSiteSlugChange={vi.fn()}
         onSubmit={vi.fn((event) => event.preventDefault())}
         privacyMode="public"
