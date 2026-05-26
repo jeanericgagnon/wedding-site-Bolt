@@ -42,7 +42,6 @@ export function SettingsNavigation({ activeTab, tabs, onTabChange }: SettingsNav
       <div className="rounded-[20px] border border-border-subtle bg-white p-3 shadow-none">
         <div className="px-2 pb-3">
           <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary/75">Sections</p>
-          <p className="mt-2 text-sm leading-6 text-text-secondary">Open one area at a time so access, billing, and privacy changes stay easy to scan.</p>
         </div>
         {tabs.map((tab) => {
           const Icon = tab.icon;
@@ -50,6 +49,7 @@ export function SettingsNavigation({ activeTab, tabs, onTabChange }: SettingsNav
             <button
               key={tab.id}
               onClick={() => onTabChange(tab.id)}
+              aria-current={activeTab === tab.id ? 'page' : undefined}
               className={`
                 flex min-h-[48px] w-full items-center gap-3 rounded-xl px-4 py-3 text-left transition-colors
                 ${activeTab === tab.id

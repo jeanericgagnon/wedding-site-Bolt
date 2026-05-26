@@ -213,6 +213,13 @@ export function summarizeBuilderPageStructure(pages: PublicLinkBuilderPageWithSe
   };
 }
 
+export function getBuilderStructureButtonLabel(summary: ReturnType<typeof summarizeBuilderPageStructure>): string {
+  if (summary.mode === 'multi-page') {
+    return `Manage sections · ${summary.visiblePageCount} pages`;
+  }
+  return 'Manage sections';
+}
+
 export function getSuggestedBuilderPages(pages: Array<Pick<PublicLinkBuilderPage, 'id' | 'slug' | 'title' | 'meta'>>): Array<{ title: string; slug: string; initialSectionType?: BuilderSectionType }> {
   const existingSlugs = new Set(
     pages
@@ -301,6 +308,7 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
   const [showLeaveConfirm, setShowLeaveConfirm] = React.useState(false);
   const [showBlockedDetails, setShowBlockedDetails] = React.useState(false);
   const [showPageManager, setShowPageManager] = React.useState(false);
+  const [showAdvancedStructureDetails, setShowAdvancedStructureDetails] = React.useState(false);
   const [newPageTitle, setNewPageTitle] = React.useState('');
   const [copiedPageLink, setCopiedPageLink] = React.useState<{ key: string; mode: 'copied' | 'downloaded' } | null>(null);
   const [copiedAnchorLink, setCopiedAnchorLink] = React.useState<{ key: string; mode: 'copied' | 'downloaded' } | null>(null);
@@ -438,16 +446,16 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
 
       <button
         type="button"
-        onClick={() => setShowPageManager(true)}
-        aria-label={`Manage pages: ${pageStructureSummary.label}`}
+        onClick={() => {
+          setShowPageManager(true);
+          setShowAdvancedStructureDetails(false);
+        }}
+        aria-label={`${getBuilderStructureButtonLabel(pageStructureSummary)}: ${pageStructureSummary.label}`}
         className={toolbarButtonClass}
         title={pageStructureSummary.label}
       >
         <Files size={13} />
-        Pages · {pageStructureSummary.visiblePageCount}
-        {pageStructureSummary.anchorLinkCount > 0 ? (
-          <span className="hidden text-[var(--color-text-tertiary)] sm:inline">· {pageStructureSummary.anchorLinkCount} anchors</span>
-        ) : null}
+        {getBuilderStructureButtonLabel(pageStructureSummary)}
       </button>
 
       <div className="relative flex items-center gap-1 rounded-[20px] border border-[var(--color-border-subtle)] bg-[var(--color-surface-subtle)]/60 p-1">
@@ -886,8 +894,9 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
         <div className="w-full max-w-2xl rounded-xl bg-white shadow-none border border-[var(--color-border-subtle)] p-4">
           <div className="flex items-center justify-between mb-3">
             <div>
-              <h3 className="text-sm font-semibold text-gray-900">Pages</h3>
-              <p className="text-[11px] text-gray-500 mt-1">{pageStructureSummary.label}</p>
+              <h3 className="text-sm font-semibold text-gray-900">Manage sections</h3>
+              <p className="text-[11px] text-gray-500 mt-1">Organize the guest-facing pages first. Open advanced details only when you need link structure or anchor-level review.</p>
+              <p className="text-[11px] text-gray-400 mt-1">{pageStructureSummary.label}</p>
             </div>
             <button type="button" onClick={() => setShowPageManager(false)} aria-label="Close pages manager" className="rounded border border-gray-200 px-2 py-1 text-xs text-gray-600 hover:bg-gray-50">Close</button>
           </div>
@@ -929,6 +938,20 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
               ))}
             </div>
           )}
+
+          <div className="mb-3 flex items-center justify-between rounded-xl border border-gray-200 bg-gray-50 px-3 py-2">
+            <div>
+              <p className="text-[12px] font-medium text-gray-800">Advanced link details</p>
+              <p className="text-[11px] text-gray-500">Public paths, share links, and section anchors stay tucked away until you need them.</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowAdvancedStructureDetails((value) => !value)}
+              className="rounded border border-gray-200 bg-white px-2.5 py-1 text-[11px] font-medium text-gray-700 hover:bg-gray-100"
+            >
+              {showAdvancedStructureDetails ? 'Hide details' : 'Show details'}
+            </button>
+          </div>
 
           <div className="max-h-[50vh] overflow-y-auto border border-gray-200 rounded-xl divide-y divide-gray-100">
             {projectPages.map((page, idx) => {
@@ -989,7 +1012,7 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
                     {page.meta.isHome ? <span>• Home</span> : null}
                     {page.meta.isHidden ? <span>• Hidden from navigation</span> : null}
                   </div>
-                  {publicPagePath ? (
+                  {showAdvancedStructureDetails && publicPagePath ? (
                     <div className="mt-1.5 flex items-center gap-2 rounded bg-gray-50 px-2 py-1 text-[11px] text-gray-500">
                       <span className="min-w-0 flex-1 truncate font-mono">{publicPagePath}</span>
                       <button
@@ -1025,12 +1048,12 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
                           : 'Copy'}
                       </button>
                     </div>
-                  ) : page.meta.isHidden ? (
+                  ) : showAdvancedStructureDetails && page.meta.isHidden ? (
                     <div className="mt-1.5 rounded bg-gray-50 px-2 py-1 text-[11px] text-gray-500">
                       Hidden pages stay out of guest navigation and do not show share links.
                     </div>
                   ) : null}
-                  {sectionAnchorLinks.length > 0 && (
+                  {showAdvancedStructureDetails && sectionAnchorLinks.length > 0 && (
                     <div className="mt-1.5 rounded bg-gray-50 px-2 py-1.5">
                       <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-gray-400">Anchor links</p>
                       <div className="space-y-1">
@@ -1076,7 +1099,7 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
                       </div>
                     </div>
                   )}
-                  {publicPagePath && sectionAnchorLinks.length === 0 && hasRedundantSectionAnchors ? (
+                  {showAdvancedStructureDetails && publicPagePath && sectionAnchorLinks.length === 0 && hasRedundantSectionAnchors ? (
                     <div className="mt-1.5 rounded bg-gray-50 px-2 py-1 text-[11px] text-gray-500">
                       This page link already opens the matching guest section.
                     </div>

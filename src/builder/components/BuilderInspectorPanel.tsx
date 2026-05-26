@@ -73,6 +73,7 @@ export const BuilderInspectorPanel: React.FC = () => {
   const [showVariantPicker, setShowVariantPicker] = React.useState(false);
   const [variantSearch, setVariantSearch] = React.useState('');
   const [copiedAnchorLink, setCopiedAnchorLink] = React.useState<'copied' | 'downloaded' | null>(null);
+  const [showSectionLinkTools, setShowSectionLinkTools] = React.useState(false);
   const anchorCopyRequestIdRef = useRef(0);
   const selectedSection = selectSelectedSection(state);
   const activePage = selectActivePage(state);
@@ -90,6 +91,7 @@ export const BuilderInspectorPanel: React.FC = () => {
     if (selectedSection) {
       setActiveTab('content');
       setVariantSearch('');
+      setShowSectionLinkTools(false);
     }
   }, [selectedSection?.id]);
 
@@ -98,6 +100,12 @@ export const BuilderInspectorPanel: React.FC = () => {
       setActiveTab('content');
     }
   }, [simpleMode, activeTab]);
+
+  useEffect(() => {
+    if (simpleMode) {
+      setShowSectionLinkTools(false);
+    }
+  }, [simpleMode]);
 
   useEffect(() => {
     if (!copiedAnchorLink) return;
@@ -528,54 +536,77 @@ export const BuilderInspectorPanel: React.FC = () => {
         {activeTab === 'content' && (
           <div className="p-4 space-y-1">
             <div className="mb-3 rounded-xl border border-[var(--color-border-subtle)] bg-[var(--color-surface-subtle)] px-3 py-3">
-              <label htmlFor={`section-anchor-${selectedSection.id}`} className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold text-[var(--color-text-primary)]">
-                <Link2 size={12} />
-                Section anchor
-              </label>
-              <div className="flex items-center rounded-xl border border-[var(--color-border-subtle)] bg-white px-2.5 py-2 text-sm">
-                <span className="mr-1 text-[var(--color-text-tertiary)]">#</span>
-                <input
-                  id={`section-anchor-${selectedSection.id}`}
-                  value={sectionAnchorValue}
-                  onChange={(event) => handleUpdateSetting('anchorId', sanitizeSectionAnchorId(event.target.value))}
-                  placeholder={defaultSectionAnchorId ?? selectedSection.id}
-                  className="min-w-0 flex-1 bg-transparent text-[var(--color-text-primary)] outline-none"
-                />
-              </div>
-              <div className="mt-2 flex min-w-0 items-center gap-2">
-                {sectionAnchorPath ? (
-                  <>
-                    <code className="min-w-0 flex-1 truncate rounded-xl border border-[var(--color-border-subtle)] bg-white px-2.5 py-1.5 text-[11px] text-[var(--color-text-secondary)]">
-                      {sectionAnchorPath}
-                    </code>
-                    <button
-                      type="button"
-                      aria-label={`Copy section anchor link ${sectionAnchorPath}`}
-                      title={`Copy ${sectionAnchorPath}`}
-                      onClick={handleCopySectionAnchor}
-                      className="inline-flex shrink-0 items-center gap-1 rounded-xl border border-[var(--color-border-subtle)] bg-white px-2.5 py-1.5 text-[11px] font-medium text-[var(--color-text-primary)] hover:border-[var(--color-border)] hover:bg-[var(--color-surface)]"
-                    >
-                      <Copy size={12} />
-                      {copiedAnchorLink === 'downloaded' ? 'Downloaded' : copiedAnchorLink === 'copied' ? 'Copied' : 'Copy'}
-                    </button>
-                  </>
-                ) : (
-                  <p className="min-w-0 flex-1 rounded-xl border border-[var(--color-border-subtle)] bg-white px-2.5 py-1.5 text-[11px] text-[var(--color-text-tertiary)]">
-                    This section uses the page link or is hidden from guests.
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="flex items-center gap-1.5 text-xs font-semibold text-[var(--color-text-primary)]">
+                    <Link2 size={12} />
+                    Section link
                   </p>
-                )}
-                {defaultSectionAnchorId && sectionAnchorValue !== defaultSectionAnchorId ? (
-                  <button
-                    type="button"
-                    aria-label={`Use default anchor ${defaultSectionAnchorId}`}
-                    title={`Use #${defaultSectionAnchorId}`}
-                    onClick={() => handleUpdateSetting('anchorId', defaultSectionAnchorId)}
-                    className="inline-flex shrink-0 items-center rounded-xl border border-[var(--color-border-subtle)] bg-white px-2.5 py-1.5 text-[11px] font-medium text-[var(--color-text-primary)] hover:border-[var(--color-border)] hover:bg-[var(--color-surface)]"
-                  >
-                    Use default
-                  </button>
-                ) : null}
+                  <p className="mt-1 text-xs leading-5 text-[var(--color-text-secondary)]">
+                    Most sections can use the page link as-is. Open advanced link settings only if you need a custom anchor.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowSectionLinkTools((current) => !current)}
+                  aria-expanded={showSectionLinkTools}
+                  className="inline-flex shrink-0 items-center rounded-xl border border-[var(--color-border-subtle)] bg-white px-2.5 py-1.5 text-[11px] font-medium text-[var(--color-text-primary)] hover:border-[var(--color-border)] hover:bg-[var(--color-surface)]"
+                >
+                  {showSectionLinkTools ? 'Hide advanced link settings' : 'Show advanced link settings'}
+                </button>
               </div>
+              {showSectionLinkTools ? (
+                <div className="mt-3 space-y-2">
+                  <label htmlFor={`section-anchor-${selectedSection.id}`} className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold text-[var(--color-text-primary)]">
+                    <Link2 size={12} />
+                    Section anchor
+                  </label>
+                  <div className="flex items-center rounded-xl border border-[var(--color-border-subtle)] bg-white px-2.5 py-2 text-sm">
+                    <span className="mr-1 text-[var(--color-text-tertiary)]">#</span>
+                    <input
+                      id={`section-anchor-${selectedSection.id}`}
+                      value={sectionAnchorValue}
+                      onChange={(event) => handleUpdateSetting('anchorId', sanitizeSectionAnchorId(event.target.value))}
+                      placeholder={defaultSectionAnchorId ?? selectedSection.id}
+                      className="min-w-0 flex-1 bg-transparent text-[var(--color-text-primary)] outline-none"
+                    />
+                  </div>
+                  <div className="mt-2 flex min-w-0 items-center gap-2">
+                    {sectionAnchorPath ? (
+                      <>
+                        <code className="min-w-0 flex-1 truncate rounded-xl border border-[var(--color-border-subtle)] bg-white px-2.5 py-1.5 text-[11px] text-[var(--color-text-secondary)]">
+                          {sectionAnchorPath}
+                        </code>
+                        <button
+                          type="button"
+                          aria-label={`Copy section anchor link ${sectionAnchorPath}`}
+                          title={`Copy ${sectionAnchorPath}`}
+                          onClick={handleCopySectionAnchor}
+                          className="inline-flex shrink-0 items-center gap-1 rounded-xl border border-[var(--color-border-subtle)] bg-white px-2.5 py-1.5 text-[11px] font-medium text-[var(--color-text-primary)] hover:border-[var(--color-border)] hover:bg-[var(--color-surface)]"
+                        >
+                          <Copy size={12} />
+                          {copiedAnchorLink === 'downloaded' ? 'Downloaded' : copiedAnchorLink === 'copied' ? 'Copied' : 'Copy'}
+                        </button>
+                      </>
+                    ) : (
+                      <p className="min-w-0 flex-1 rounded-xl border border-[var(--color-border-subtle)] bg-white px-2.5 py-1.5 text-[11px] text-[var(--color-text-tertiary)]">
+                        This section uses the page link or is hidden from guests.
+                      </p>
+                    )}
+                    {defaultSectionAnchorId && sectionAnchorValue !== defaultSectionAnchorId ? (
+                      <button
+                        type="button"
+                        aria-label={`Use default anchor ${defaultSectionAnchorId}`}
+                        title={`Use #${defaultSectionAnchorId}`}
+                        onClick={() => handleUpdateSetting('anchorId', defaultSectionAnchorId)}
+                        className="inline-flex shrink-0 items-center rounded-xl border border-[var(--color-border-subtle)] bg-white px-2.5 py-1.5 text-[11px] font-medium text-[var(--color-text-primary)] hover:border-[var(--color-border)] hover:bg-[var(--color-surface)]"
+                      >
+                        Use default
+                      </button>
+                    ) : null}
+                  </div>
+                </div>
+              ) : null}
             </div>
             {(copyHealth.flags.length > 0 || copyHealth.missingDetails.length > 0 || copyHealth.duplicateSignals.length > 0) && (
               <div className="mb-3 rounded-xl border border-[var(--color-border-subtle)] bg-[var(--color-surface-subtle)] px-3 py-3">

@@ -126,14 +126,14 @@ export function SettingsTeamAccessPanel({
               <Users className="h-5 w-5" />
               Planner access
             </CardTitle>
-            <CardDescription>Invite planners, coordinators, or trusted helpers with role-based access that stays separate from couple ownership and billing.</CardDescription>
+            <CardDescription>Invite planners and helpers without sharing ownership or billing.</CardDescription>
           </div>
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="space-y-2 rounded-xl border border-border-subtle bg-surface-subtle/40 p-4">
-          <p className="text-sm font-medium text-text-primary">Invite your planner, not a generic staff account</p>
-          <p className="text-sm text-text-secondary">Keep ownership with the couple while sharing the parts of dayof that help someone run the event well. Helpers claim access from a secure invite link and do not touch billing.</p>
+          <p className="text-sm font-medium text-text-primary">Keep ownership with the couple.</p>
+          <p className="text-sm text-text-secondary">Helpers join through a secure invite link and only see the areas you allow.</p>
         </div>
 
         {plannerInviteSuccess && (
@@ -172,7 +172,7 @@ export function SettingsTeamAccessPanel({
         <div className="space-y-3 rounded-xl border border-dashed border-border bg-surface-subtle/20 p-4">
           <div>
             <p className="text-sm font-medium text-text-primary">Permissions</p>
-            <p className="mt-1 text-sm text-text-secondary">Start with a role preset, then tighten or expand access simply before you send the invite.</p>
+            <p className="mt-1 text-sm text-text-secondary">Start with a role preset, then tighten or expand access before you send the invite.</p>
           </div>
           <div className="grid gap-3 md:grid-cols-2">
             {PLANNER_PERMISSION_GROUPS.map((permission) => {
@@ -196,7 +196,7 @@ export function SettingsTeamAccessPanel({
               );
             })}
           </div>
-          <p className="text-xs text-text-tertiary">Billing and couple ownership stay with the owner. This selector is for support access only.</p>
+          <p className="text-xs text-text-tertiary">Billing and couple ownership stay with the owner.</p>
         </div>
 
         {plannerInvite && (
@@ -214,7 +214,7 @@ export function SettingsTeamAccessPanel({
         <div className="space-y-3 rounded-xl border border-border-subtle bg-surface-subtle/20 p-4">
           <div>
             <p className="text-sm font-medium text-text-primary">Collaborator list</p>
-            <p className="mt-1 text-xs text-text-secondary">Track pending and accepted access links, copy invite URLs, and revoke pending access before it is claimed.</p>
+            <p className="mt-1 text-xs text-text-secondary">Track pending and accepted access links in one place.</p>
           </div>
 
           {plannerInvite ? (

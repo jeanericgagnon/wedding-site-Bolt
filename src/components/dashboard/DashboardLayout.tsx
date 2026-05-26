@@ -472,7 +472,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
                         className="block rounded-lg px-3 py-2 text-xs font-semibold text-primary no-underline hover:bg-primary/5"
                         onClick={() => setSidebarOpen(false)}
                       >
-                        Choose visible tools
+                        Manage pins
                       </Link>
                       {filteredMoreToolGroups.map((group, groupIndex) => (
                         <div key={group.title}>

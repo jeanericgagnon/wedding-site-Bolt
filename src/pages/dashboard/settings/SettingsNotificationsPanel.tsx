@@ -67,7 +67,7 @@ export function SettingsNotificationsPanel({
         <div className="flex items-start justify-between gap-4">
           <div>
             <CardTitle>Email Notifications</CardTitle>
-            <CardDescription>Choose what updates you want to receive</CardDescription>
+            <CardDescription>Choose which owner updates are worth the inbox space.</CardDescription>
           </div>
           <Button type="button" variant="outline" size="sm" onClick={onToggleVisibility}>
             {showNotificationSettings ? 'Hide' : 'Show'}
@@ -77,7 +77,7 @@ export function SettingsNotificationsPanel({
       <CardContent>
         {!showNotificationSettings ? (
           <div className="rounded-[20px] border border-border-subtle bg-surface-subtle/40 p-4 text-sm text-text-secondary">
-            Hidden by default to keep this page easy to scan. Open it when you want to choose which updates you get.
+            Hidden by default. Open it when you want to tune owner email updates.
           </div>
         ) : (
           <form onSubmit={onSaveNotifications} className="space-y-4">
@@ -146,7 +146,7 @@ export function SettingsNotificationsPanel({
                   <option value="paused">Paused</option>
                 </select>
                 <p className="text-xs leading-5 text-text-secondary">
-                  This saves cadence, next-send timing, and review state now. Live inbox delivery still depends on the connected email pipeline.
+                  Saves cadence and timing here now. Live inbox delivery still depends on the connected email pipeline.
                 </p>
               </div>
 
@@ -178,7 +178,7 @@ export function SettingsNotificationsPanel({
                   className="w-full rounded-xl border border-border bg-white px-3 py-2 text-sm text-text-primary placeholder:text-text-tertiary focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15"
                 />
                 <p className="text-xs leading-5 text-text-secondary">
-                  Use a plain-language note so the overview can reflect when you want this lane to stay quiet.
+                  Use a plain-language note for when this lane should stay quiet.
                 </p>
               </div>
 
@@ -216,7 +216,7 @@ export function SettingsNotificationsPanel({
                 </div>
                 {(notifDigestNextDeliveryAt || notifDigestLastReviewedAt) && (
                   <p className="text-xs leading-5 text-text-tertiary">
-                    Saved schedule and review state stay with this wedding so overview and settings read back the same digest timing.
+                    Saved schedule and review state stay aligned between overview and settings.
                   </p>
                 )}
               </div>
