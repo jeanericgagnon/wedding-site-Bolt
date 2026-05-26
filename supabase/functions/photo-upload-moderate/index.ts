@@ -63,10 +63,18 @@ Deno.serve(async (req: Request) => {
       })
       .in("id", uploadIds);
 
-    if (updateErr) return fail("DB_ERROR", updateErr.message, 400);
+    if (updateErr) {
+      console.error("PHOTO_UPLOAD_MODERATE_UPDATE_FAILED", {
+        reason: "PHOTO_UPLOAD_MODERATION_UPDATE_ERROR",
+      });
+      return fail("DB_ERROR", "Could not update photo moderation. Please try again.", 400);
+    }
 
     return json({ success: true, updated: uploadIds.length });
-  } catch (err) {
-    return fail("INTERNAL_ERROR", err instanceof Error ? err.message : "Internal server error", 500);
+  } catch {
+    console.error("PHOTO_UPLOAD_MODERATE_UNEXPECTED_FAILED", {
+      reason: "UNEXPECTED_PHOTO_UPLOAD_MODERATION_FAILURE",
+    });
+    return fail("INTERNAL_ERROR", "Could not update photo moderation. Please try again.", 500);
   }
 });
