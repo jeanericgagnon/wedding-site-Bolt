@@ -64,7 +64,12 @@ Deno.serve(async (req: Request) => {
       .eq("id", albumId)
       .maybeSingle();
 
-    if (albumErr || !album) return json({ error: albumErr?.message ?? "Album not found" }, 404);
+    if (albumErr || !album) {
+      console.error("PHOTO_ALBUM_MANAGE_LOOKUP_FAILED", {
+        reason: "PHOTO_ALBUM_LOOKUP_ERROR",
+      });
+      return json({ error: "Could not manage this album. Please try again." }, 404);
+    }
 
     const { data: site } = await admin
       .from("wedding_sites")
@@ -80,7 +85,12 @@ Deno.serve(async (req: Request) => {
         .from("photo_albums")
         .update({ is_active: isActive })
         .eq("id", albumId);
-      if (error) return json({ error: error.message }, 400);
+      if (error) {
+        console.error("PHOTO_ALBUM_MANAGE_SET_ACTIVE_FAILED", {
+          reason: "PHOTO_ALBUM_SET_ACTIVE_ERROR",
+        });
+        return json({ error: "Could not update this album. Please try again." }, 400);
+      }
       return json({ success: true, albumId, isActive });
     }
 
@@ -89,7 +99,12 @@ Deno.serve(async (req: Request) => {
         .from("photo_albums")
         .update({ opens_at: opensAt, closes_at: closesAt })
         .eq("id", albumId);
-      if (error) return json({ error: error.message }, 400);
+      if (error) {
+        console.error("PHOTO_ALBUM_MANAGE_SET_WINDOW_FAILED", {
+          reason: "PHOTO_ALBUM_SET_WINDOW_ERROR",
+        });
+        return json({ error: "Could not update this album. Please try again." }, 400);
+      }
       return json({ success: true, albumId, opensAt, closesAt });
     }
 
@@ -101,14 +116,22 @@ Deno.serve(async (req: Request) => {
         .update({ upload_token_hash: tokenHash, is_active: true })
         .eq("id", albumId);
 
-      if (error) return json({ error: error.message }, 400);
+      if (error) {
+        console.error("PHOTO_ALBUM_MANAGE_REGENERATE_LINK_FAILED", {
+          reason: "PHOTO_ALBUM_REGENERATE_LINK_ERROR",
+        });
+        return json({ error: "Could not update this album. Please try again." }, 400);
+      }
 
       const uploadUrl = `${appUrl.replace(/\/$/, "")}/photos/upload?t=${encodeURIComponent(token)}`;
       return json({ success: true, albumId, uploadUrl, uploadToken: token });
     }
 
     return json({ error: "Unsupported action" }, 400);
-  } catch (err) {
-    return json({ error: err instanceof Error ? err.message : "Internal server error" }, 500);
+  } catch {
+    console.error("PHOTO_ALBUM_MANAGE_UNEXPECTED_FAILED", {
+      reason: "UNEXPECTED_PHOTO_ALBUM_MANAGE_FAILURE",
+    });
+    return json({ error: "Could not manage this album. Please try again." }, 500);
   }
 });
