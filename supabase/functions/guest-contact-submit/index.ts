@@ -18,7 +18,6 @@ Deno.serve(async (req: Request) => {
     const email = String(body.email ?? "").trim() || null;
     const phone = String(body.phone ?? "").trim() || null;
     const rsvpStatus = String(body.rsvp_status ?? "").trim() || null;
-    const smsConsent = Boolean(body.sms_consent ?? false);
     const mailingAddressLine1 = String(body.mailing_address_line1 ?? '').trim() || null;
     const mailingAddressLine2 = String(body.mailing_address_line2 ?? '').trim() || null;
     const mailingCity = String(body.mailing_city ?? '').trim() || null;
@@ -78,15 +77,24 @@ Deno.serve(async (req: Request) => {
 
     const { error: updateError } = await query;
     if (updateError) {
-      return new Response(JSON.stringify({ error: updateError.message }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      console.error("GUEST_CONTACT_SUBMIT_UPDATE_FAILED", {
+        reason: "GUEST_CONTACT_SUBMIT_UPDATE_ERROR",
+      });
+      return new Response(JSON.stringify({ error: "Could not update this guest. Please try again." }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     return new Response(JSON.stringify({ ok: true }), {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
-  } catch (err) {
-    return new Response(JSON.stringify({ error: err instanceof Error ? err.message : "Internal error" }), {
+  } catch {
+    console.error("GUEST_CONTACT_SUBMIT_UNEXPECTED_FAILED", {
+      reason: "UNEXPECTED_GUEST_CONTACT_SUBMIT_FAILURE",
+    });
+    return new Response(JSON.stringify({ error: "Could not update this guest. Please try again." }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
