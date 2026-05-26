@@ -4,7 +4,7 @@ import { Button } from '../../../components/ui';
 import { fetchUrlPreview, findDuplicateItem, lookupRegistryBarcode } from './registryService';
 import { normalizeUrl, isValidUrl } from '../../../lib/urlUtils';
 import type { RegistryBarcodeLookupResult, RegistryItem, RegistryItemDraft, RegistryPreview, MetadataConfidence, RegistrySourceType } from './registryTypes';
-import { computeConfidence, getBlockedMessage } from './registryTypes';
+import { computeConfidence, deriveRegistryStoreNameFromUrl, getRegistryLinkOnlyTitle, isBadRegistryProductTitle } from './registryTypes';
 import { getSafePublicImageUrl, getSafePublicWebUrl } from '../../../sections/publicLinks';
 import { customerSafeErrorMessage } from '../../../lib/customerSafeError';
 import { normalizeRegistryBarcode } from '../../../lib/registryBarcode';
@@ -435,10 +435,19 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [],
       setLastPreview(preview);
       const confidence = computeConfidence(preview);
       setFetchConfidence(confidence);
-      const blockedMsg = getBlockedMessage(preview);
+      const previewStoreName = preview.store_name
+        ?? preview.merchant
+        ?? preview.retailer
+        ?? preview.brand
+        ?? deriveRegistryStoreNameFromUrl(preview.canonical_url ?? normalized);
+      const shouldUseLinkOnlyPreview = Boolean(
+        preview.display_mode === 'link_card'
+        || preview.fetch_status === 'blocked'
+        || isBadRegistryProductTitle(preview.title)
+      );
 
-      if (blockedMsg) {
-        setFetchError(blockedMsg);
+      if (shouldUseLinkOnlyPreview) {
+        setFetchError(preview.owner_message || 'Store blocked product details. We added this as a clean link-only gift so guests can still open it.');
       } else if (preview.partial && preview.missing_fields && preview.missing_fields.length > 0) {
         const missing = preview.missing_fields.join(', ');
         setFetchError(`We could only import part of this item (missing: ${missing}). Please confirm the details below.`);
@@ -452,7 +461,7 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [],
         setFetchDone(true);
       }
       const canonicalToCheck = preview.canonical_url ?? normalized;
-      const duplicate = findDuplicateItem(canonicalToCheck, preview.title, existingItems, initial?.id);
+      const duplicate = findDuplicateItem(canonicalToCheck, shouldUseLinkOnlyPreview ? null : preview.title, existingItems, initial?.id);
       if (duplicate) {
         setDedupeWarning(`"${duplicate.item_name}" is already in your registry. Review the existing gift before keeping another copy.`);
       } else {
@@ -464,11 +473,10 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [],
         const urlChanged = previousNormalized !== targetUrl;
         const missing = new Set(preview.missing_fields ?? []);
 
-        const nextMerchant = preview.store_name
-          ?? preview.merchant
-          ?? preview.retailer
-          ?? preview.brand
-          ?? (urlChanged ? '' : prev.merchant);
+        const nextMerchant = previewStoreName ?? (urlChanged ? '' : prev.merchant);
+        const nextTitle = shouldUseLinkOnlyPreview
+          ? getRegistryLinkOnlyTitle(nextMerchant)
+          : preview.title ?? (urlChanged ? '' : prev.item_name);
 
         const nextNotes = (() => {
           const existing = (prev.notes || '').trim();
@@ -483,20 +491,27 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [],
         return {
           ...prev,
           source_type: 'link',
-          item_name: preview.title ?? (urlChanged ? '' : prev.item_name),
-          price_label: preview.price_label ?? (urlChanged ? '' : prev.price_label),
-          price_amount: preview.price_amount != null ? String(preview.price_amount) : (urlChanged ? '' : prev.price_amount),
+          item_name: nextTitle,
+          price_label: shouldUseLinkOnlyPreview ? '' : preview.price_label ?? (urlChanged ? '' : prev.price_label),
+          price_amount: shouldUseLinkOnlyPreview ? '' : preview.price_amount != null ? String(preview.price_amount) : (urlChanged ? '' : prev.price_amount),
           merchant: nextMerchant,
           item_url: targetUrl,
           selected_product_url: targetUrl,
           selected_retailer: nextMerchant ?? prev.selected_retailer ?? '',
-          estimated_price_cents: preview.price_amount != null ? String(Math.round(preview.price_amount * 100)) : prev.estimated_price_cents,
-          product_metadata: prev.product_metadata,
-          image_url: preview.image_url ?? (urlChanged || missing.has('image') ? '' : prev.image_url),
+          estimated_price_cents: shouldUseLinkOnlyPreview ? '' : preview.price_amount != null ? String(Math.round(preview.price_amount * 100)) : prev.estimated_price_cents,
+          product_metadata: {
+            ...(prev.product_metadata ?? {}),
+            registryDisplayMode: shouldUseLinkOnlyPreview ? 'link_card' : 'product_card',
+            registryGuestSafe: true,
+            registryReviewStatus: shouldUseLinkOnlyPreview ? preview.review_status ?? 'blocked_source' : preview.review_status ?? 'clean',
+            registrySourceStatus: shouldUseLinkOnlyPreview ? preview.source_status ?? 'blocked' : preview.source_status ?? 'clean',
+            registryImportReason: preview.import_reason ?? preview.owner_message ?? null,
+          },
+          image_url: shouldUseLinkOnlyPreview ? '' : preview.image_url ?? (urlChanged || missing.has('image') ? '' : prev.image_url),
           notes: nextNotes,
           canonical_url: preview.canonical_url ?? prev.canonical_url ?? '',
-          description: preview.description ?? prev.description ?? '',
-          availability: preview.availability ?? prev.availability ?? '',
+          description: shouldUseLinkOnlyPreview ? prev.description ?? '' : preview.description ?? prev.description ?? '',
+          availability: shouldUseLinkOnlyPreview ? 'unknown' : preview.availability ?? prev.availability ?? '',
           metadata_fetch_status: preview.fetch_status ?? '',
           metadata_confidence_score: preview.confidence_score ?? null,
           metadata_source_method: preview.source_method ?? null,

@@ -4,11 +4,14 @@ import { describe, expect, it } from 'vitest';
 
 describe('registry dashboard copy notices', () => {
   it('loads site slugs for a real guest registry link', () => {
+    const registryQueries = readFileSync(join(process.cwd(), 'src/pages/dashboard/registry/registryQueries.ts'), 'utf8');
     const registryService = readFileSync(join(process.cwd(), 'src/pages/dashboard/registry/registryService.ts'), 'utf8');
     const registryDataHook = readFileSync(join(process.cwd(), 'src/pages/dashboard/registry/useRegistryDashboardData.ts'), 'utf8');
     const registryRoute = readFileSync(join(process.cwd(), 'src/pages/dashboard/Registry.tsx'), 'utf8');
 
-    expect(registryService).toContain("export const REGISTRY_DASHBOARD_SITE_SELECT = 'id, site_slug, wedding_date");
+    expect(registryQueries).toContain("export const REGISTRY_DASHBOARD_SITE_SELECT = 'id, site_slug, wedding_date");
+    expect(registryService).toContain("REGISTRY_DASHBOARD_SITE_SELECT,");
+    expect(registryService).toContain("from './registryQueries';");
     expect(registryDataHook).toContain('const [siteSlug, setSiteSlug] = useState<string | null>(null);');
     expect(registryDataHook).toContain('setSiteSlug(site.site_slug ?? null);');
     expect(registryRoute).toContain('siteSlug={siteSlug}');

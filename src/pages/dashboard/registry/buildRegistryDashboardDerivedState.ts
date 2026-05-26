@@ -4,13 +4,14 @@ import { isGuestReadyRegistryItem } from '../../../sections/components/RegistryS
 import { getSafePublicWebUrl } from '../../../sections/publicLinks';
 import { ageExceedsMs, getRegistryItemTimestamp } from '../registryItemTime';
 import { buildRegistryDuplicateGroups } from './duplicateRegistryItems';
-import { getRegistryItemMetadataState } from './registryTypes';
+import { deriveRegistryItemDisplayState, getRegistryItemMetadataState } from './registryTypes';
 import type { RegistryFilter, RegistryItem } from './registryTypes';
-import { buildRegistryRepairQueue } from './repairState';
+import { buildRegistryMaintenanceSnapshot } from './registryMaintenanceSnapshot';
 
 const WEEKLY_REFRESH_MS = 1000 * 60 * 60 * 24 * 7;
 
 function hasImageIssue(item: RegistryItem) {
+  if (deriveRegistryItemDisplayState(item).displayMode === 'link_card') return false;
   const src = (item.image_url || '').toLowerCase();
   return !item.image_url || src.includes('thum.io') || src.includes('weserv.nl') || src.includes('ui-avatars');
 }
@@ -75,8 +76,12 @@ export function buildRegistryDashboardDerivedState(args: BuildRegistryDashboardD
   } = args;
 
   const duplicateGroups = buildRegistryDuplicateGroups(items);
-  const actionableBadImportCount = items.filter((item) => getRegistryItemMetadataState(item).hasBadImportTitle && !!(item.item_url || item.canonical_url)).length;
-  const repairQueue = buildRegistryRepairQueue(items);
+  const {
+    actionableBadImportCount,
+    legacyRepairReport,
+    repairQueue,
+    truthSweepPrediction,
+  } = buildRegistryMaintenanceSnapshot(items);
   const bulkReviewCounts = {
     repair: repairQueue.length,
     duplicates: duplicateGroups.reduce((sum, group) => sum + group.items.length, 0),
@@ -262,7 +267,10 @@ export function buildRegistryDashboardDerivedState(args: BuildRegistryDashboardD
     priceChanged: items.filter((item) => item.previous_price_amount != null && item.price_amount != null && item.previous_price_amount !== item.price_amount).length,
     outOfStock: items.filter((item) => (item.availability || '').toLowerCase().includes('out')).length,
     imageIssues: items.filter((item) => hasImageIssue(item)).length,
-    badImports: items.filter((item) => getRegistryItemMetadataState(item).hasBadImportTitle).length,
+    badImports: items.filter((item) => {
+      const metadataState = getRegistryItemMetadataState(item);
+      return metadataState.hasBadImportTitle && metadataState.displayMode !== 'link_card';
+    }).length,
   };
 
   return {
@@ -291,6 +299,8 @@ export function buildRegistryDashboardDerivedState(args: BuildRegistryDashboardD
     repairQueue,
     refreshBudgetRemaining,
     refreshWindowOpen,
+    legacyRepairReport,
+    revalidationPreviewItems: truthSweepPrediction.previewItems,
     registryInsights,
     registryLaunchReadiness,
     registryThankYouPlan,

@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { RegistryItemForm } from './RegistryItemForm';
@@ -69,6 +69,18 @@ function makeItem(overrides: Partial<RegistryItem> = {}): RegistryItem {
   };
 }
 
+async function click(element: HTMLElement) {
+  await act(async () => {
+    fireEvent.click(element);
+  });
+}
+
+async function change(element: HTMLElement, value: string) {
+  await act(async () => {
+    fireEvent.change(element, { target: { value } });
+  });
+}
+
 describe('RegistryItemForm', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -108,11 +120,8 @@ describe('RegistryItemForm', () => {
       />,
     );
 
-    fireEvent.change(screen.getAllByDisplayValue('https://example.com/original-product')[0], {
-      target: { value: 'https://example.com/updated-product' },
-    });
-
-    fireEvent.click(screen.getByRole('button', { name: /save changes/i }));
+    await change(screen.getAllByDisplayValue('https://example.com/original-product')[0], 'https://example.com/updated-product');
+    await click(screen.getByRole('button', { name: /save changes/i }));
 
     expect(onSave).toHaveBeenCalledWith(expect.objectContaining({
       item_url: 'https://example.com/updated-product',
@@ -137,9 +146,9 @@ describe('RegistryItemForm', () => {
       />,
     );
 
-    fireEvent.change(screen.getByLabelText(/purchased so far/i), { target: { value: '3' } });
-    fireEvent.change(screen.getByLabelText(/purchaser name/i), { target: { value: 'Jordan' } });
-    fireEvent.click(screen.getByRole('button', { name: /save changes/i }));
+    await change(screen.getByLabelText(/purchased so far/i), '3');
+    await change(screen.getByLabelText(/purchaser name/i), 'Jordan');
+    await click(screen.getByRole('button', { name: /save changes/i }));
 
     expect(onSave).toHaveBeenCalledWith(expect.objectContaining({
       quantity_purchased: '3',
@@ -165,12 +174,12 @@ describe('RegistryItemForm', () => {
       />,
     );
 
-    fireEvent.change(screen.getByLabelText(/purchased so far/i), { target: { value: '3' } });
+    await change(screen.getByLabelText(/purchased so far/i), '3');
 
     expect(screen.getByRole('alert')).toHaveTextContent('Purchased so far cannot be greater than desired quantity.');
     expect(screen.getByRole('button', { name: /save changes/i })).toBeDisabled();
 
-    fireEvent.click(screen.getByRole('button', { name: /save changes/i }));
+    await click(screen.getByRole('button', { name: /save changes/i }));
     expect(onSave).not.toHaveBeenCalled();
   });
 
@@ -197,7 +206,7 @@ describe('RegistryItemForm', () => {
     expect(screen.getByRole('alert')).toHaveTextContent('Add at least one way guests can contribute to this fund before saving.');
     expect(screen.getByRole('button', { name: /save changes/i })).toBeDisabled();
 
-    fireEvent.click(screen.getByRole('button', { name: /save changes/i }));
+    await click(screen.getByRole('button', { name: /save changes/i }));
     expect(onSave).not.toHaveBeenCalled();
   });
 
@@ -218,7 +227,7 @@ describe('RegistryItemForm', () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole('button', { name: /save changes/i }));
+    await click(screen.getByRole('button', { name: /save changes/i }));
 
     expect(onSave).toHaveBeenCalledWith(expect.objectContaining({
       item_type: 'cash_fund',
@@ -260,7 +269,7 @@ describe('RegistryItemForm', () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole('button', { name: /save changes/i }));
+    await click(screen.getByRole('button', { name: /save changes/i }));
 
     expect(onSave).toHaveBeenCalledWith(expect.objectContaining({
       item_url: '',

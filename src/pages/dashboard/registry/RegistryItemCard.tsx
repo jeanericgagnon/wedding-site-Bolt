@@ -221,7 +221,7 @@ export const RegistryItemCard: React.FC<Props> = ({ item, onEdit, onDelete, onMa
   const venmoUrl = normalizedItem.fund_venmo_url;
   const paypalUrl = normalizedItem.fund_paypal_url;
   const customFundUrl = normalizedItem.fund_custom_url;
-  const displayTitle = getOwnerRegistryDisplayTitle(normalizedItem.item_name);
+  const displayTitle = getOwnerRegistryDisplayTitle(normalizedItem.item_name, normalizedItem);
   const copyContextKey = JSON.stringify([
     normalizedItem.id,
     venmoUrl,

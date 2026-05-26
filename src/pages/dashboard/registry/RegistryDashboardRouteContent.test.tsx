@@ -6,6 +6,7 @@ import { RegistryDashboardRouteContent } from './RegistryDashboardRouteContent';
 import { buildRegistryDashboardDerivedState } from './buildRegistryDashboardDerivedState';
 import type { RegistryItem } from './registryTypes';
 import * as copyTextModule from '../../../lib/copyText';
+import type { RegistryImportBatchRecord } from './registryService';
 
 function makeItem(overrides: Partial<RegistryItem> = {}): RegistryItem {
   return {
@@ -93,6 +94,7 @@ function makeBaseProps(overrides: Partial<RegistryDashboardRouteContentProps> = 
     handleEdit: vi.fn(),
     handleMergeDuplicateGroup: vi.fn(async () => {}),
     handleMarkPurchased: vi.fn(async () => {}),
+    handleRevalidateRegistryTruth: vi.fn(async () => {}),
     handleResetPurchaseState: vi.fn(async () => {}),
     handleRefetchMetadata: vi.fn(async () => true),
     handleRefreshImageIssues: vi.fn(async () => {}),
@@ -102,6 +104,17 @@ function makeBaseProps(overrides: Partial<RegistryDashboardRouteContentProps> = 
     handleToggleRegistryThankYouTask: vi.fn(async () => {}),
     imageRefreshBusy: false,
     items: [item],
+    legacyRepairReport: {
+      candidateCount: 0,
+      autoConvertibleCount: 0,
+      hiddenReviewCount: 0,
+      blockedSourceCount: 0,
+      manualQueueCount: 0,
+      revalidationCandidateCount: 0,
+      revalidationProductCount: 0,
+      revalidationLinkOnlyCount: 0,
+      revalidationReviewOnlyCount: 0,
+    },
     loading: false,
     monthlyRefreshCap: 100,
     monthlyRefreshCount: 0,
@@ -109,10 +122,13 @@ function makeBaseProps(overrides: Partial<RegistryDashboardRouteContentProps> = 
     nearBudgetCap: false,
     normalizedItems: [item],
     recentActivity: [item],
+    latestImportBatch: null,
+    recentImportBatches: [],
     registryActionsOpen: false,
     registryActionsRef: { current: null },
     registryInsights: [],
     registryLaunchReadiness: { headline: 'Ready', summary: 'Ready', status: 'ready', reviewCount: 0, items: [] },
+    revalidationPreviewItems: [],
     registryThankYouPlan: {
       headline: 'Thank-you follow-up list',
       summary: '1 purchased gift is in the thank-you list.',
@@ -141,6 +157,7 @@ function makeBaseProps(overrides: Partial<RegistryDashboardRouteContentProps> = 
     },
     registryThankYouBusyItemId: null,
     registryThankYouSyncing: false,
+    revalidatingRegistryTruth: false,
     repairingBadImports: false,
     repairQueue: [],
     refreshBudgetRemaining: 100,
@@ -161,7 +178,319 @@ function makeBaseProps(overrides: Partial<RegistryDashboardRouteContentProps> = 
   };
 }
 
+function makeImportBatch(overrides: Partial<RegistryImportBatchRecord> = {}): RegistryImportBatchRecord {
+  return {
+    id: 'batch-1',
+    wedding_site_id: 'site-1',
+    created_by: 'user-1',
+    total_count: 3,
+    clean_count: 1,
+    link_only_count: 1,
+    needs_review_count: 1,
+    duplicate_count: 0,
+    failed_count: 0,
+    status: 'complete',
+    created_at: '2026-05-20T17:00:00.000Z',
+    completed_at: '2026-05-20T17:02:00.000Z',
+    items: [
+      {
+        id: 'batch-item-1',
+        original_url: 'https://www.ikea.com/us/en/p/kallax-shelf-unit-20409936/',
+        normalized_url: 'https://www.ikea.com/us/en/p/kallax-shelf-unit-20409936/',
+        registry_item_id: 'gift-1',
+        result: 'clean',
+        store_name: 'IKEA',
+        display_title: 'KALLAX Shelf Unit',
+        reason: 'Imported cleanly.',
+        created_at: '2026-05-20T17:02:00.000Z',
+      },
+    ],
+    ...overrides,
+  };
+}
+
 describe('RegistryDashboardRouteContent', () => {
+  it('shows saved import runs and lets owners drill into the selected batch', () => {
+    const latestBatch = makeImportBatch();
+    const olderBatch = makeImportBatch({
+      id: 'batch-2',
+      total_count: 2,
+      clean_count: 0,
+      link_only_count: 2,
+      needs_review_count: 0,
+      items: [
+        {
+          id: 'batch-item-2',
+          original_url: 'https://www.walmart.com/ip/example',
+          normalized_url: 'https://www.walmart.com/ip/example',
+          registry_item_id: null,
+          result: 'link_only',
+          store_name: 'Walmart',
+          display_title: 'Gift from Walmart',
+          reason: 'Store blocked product details.',
+          created_at: '2026-05-19T16:00:00.000Z',
+        },
+      ],
+      created_at: '2026-05-19T16:00:00.000Z',
+      completed_at: '2026-05-19T16:01:00.000Z',
+    });
+
+    render(
+      <RegistryDashboardRouteContent
+        {...makeBaseProps({
+          latestImportBatch: latestBatch,
+          recentImportBatches: [latestBatch, olderBatch],
+        })}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Imports' }));
+
+    expect(screen.getByText('Recent registry imports stay here, with the exact result for each pasted link.')).toBeInTheDocument();
+    expect(screen.getByText('KALLAX Shelf Unit')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /2 links on/i }));
+
+    expect(screen.getAllByText('Gift from Walmart').length).toBeGreaterThan(0);
+    expect(
+      screen.getByText((_, element) => element?.textContent === 'Walmart · Store blocked product details.'),
+    ).toBeInTheDocument();
+  });
+
+  it('filters saved import runs by store or link details', () => {
+    const latestBatch = makeImportBatch();
+    const olderBatch = makeImportBatch({
+      id: 'batch-2',
+      total_count: 2,
+      clean_count: 0,
+      link_only_count: 2,
+      needs_review_count: 0,
+      items: [
+        {
+          id: 'batch-item-2',
+          original_url: 'https://www.walmart.com/ip/example',
+          normalized_url: 'https://www.walmart.com/ip/example',
+          registry_item_id: null,
+          result: 'link_only',
+          store_name: 'Walmart',
+          display_title: 'Gift from Walmart',
+          reason: 'Store blocked product details.',
+          created_at: '2026-05-19T16:00:00.000Z',
+        },
+      ],
+      created_at: '2026-05-19T16:00:00.000Z',
+      completed_at: '2026-05-19T16:01:00.000Z',
+    });
+
+    render(
+      <RegistryDashboardRouteContent
+        {...makeBaseProps({
+          latestImportBatch: latestBatch,
+          recentImportBatches: [latestBatch, olderBatch],
+        })}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Imports' }));
+
+    fireEvent.change(
+      screen.getByPlaceholderText('Search imports by store, result, or pasted link…'),
+      { target: { value: 'walmart' } },
+    );
+
+    expect(screen.getByRole('button', { name: /2 links on/i })).toBeInTheDocument();
+  });
+
+  it('switches the workspace between items, imports, and thank-yous', () => {
+    const latestBatch = makeImportBatch();
+
+    render(
+      <RegistryDashboardRouteContent
+        {...makeBaseProps({
+          latestImportBatch: latestBatch,
+          recentImportBatches: [latestBatch],
+        })}
+      />,
+    );
+
+    expect(screen.getByText('Gift workspace')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Imports' }));
+    expect(screen.getByText('Recent registry imports stay here, with the exact result for each pasted link.')).toBeInTheDocument();
+    expect(screen.queryByText('Gift workspace')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Thank-yous' }));
+    expect(screen.getByText('Keep purchased gifts and follow-up notes in one calm list.')).toBeInTheDocument();
+    expect(screen.queryByText('Recent registry imports stay here, with the exact result for each pasted link.')).not.toBeInTheDocument();
+  });
+
+  it('opens a saved imported item directly from the imports workspace when the batch row is linked', () => {
+    const handleEdit = vi.fn();
+    const latestBatch = makeImportBatch();
+
+    render(
+      <RegistryDashboardRouteContent
+        {...makeBaseProps({
+          handleEdit,
+          latestImportBatch: latestBatch,
+          recentImportBatches: [latestBatch],
+        })}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Imports' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Open item' }));
+
+    expect(handleEdit).toHaveBeenCalledWith(expect.objectContaining({ id: 'gift-1' }));
+  });
+
+  it('groups cleanup work by problem type instead of one flat queue', () => {
+    const brokenItem = makeItem({
+      id: 'gift-broken',
+      item_name: 'Gift from Store',
+      image_url: null,
+      price_label: null,
+      price_amount: null,
+    });
+    const imageItem = makeItem({
+      id: 'gift-image',
+      item_name: 'Stand Mixer',
+      image_url: 'https://images.weserv.nl/example.png',
+      quantity_purchased: 0,
+      purchaser_name: null,
+      purchase_status: 'available',
+    });
+
+    render(
+      <RegistryDashboardRouteContent
+        {...makeBaseProps({
+          bulkReviewCounts: { repair: 2, duplicates: 0, imageIssues: 1 },
+          repairQueue: [
+            {
+              id: 'broken-entry',
+              item: brokenItem,
+              states: ['broken-import'],
+              severity: 'high',
+              summary: 'Re-import weak product details',
+              detail: 'Broken import details need review.',
+              primaryAction: 'reimport-source',
+              primaryActionLabel: 'Re-import source',
+              secondaryAction: 'review-item',
+              secondaryActionLabel: 'Review item',
+            },
+            {
+              id: 'image-entry',
+              item: imageItem,
+              states: ['proxy-image'],
+              severity: 'medium',
+              summary: 'Upgrade the guest-facing image',
+              detail: 'This gift still relies on a proxy image.',
+              primaryAction: 'review-item',
+              primaryActionLabel: 'Review item',
+              secondaryAction: 'refresh-details',
+              secondaryActionLabel: 'Refresh details',
+            },
+          ],
+        })}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Cleanup' }));
+
+    expect(screen.getAllByText('Needs review').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Missing image or details').length).toBeGreaterThan(0);
+    expect(screen.getByText('Run cleanup first, then open anything still unresolved.')).toBeInTheDocument();
+    expect(screen.getAllByText('Refresh photos or review item details before sharing widely.').length).toBeGreaterThan(0);
+    expect(screen.getByText('Broken import details need review.')).toBeInTheDocument();
+    expect(screen.getByText('This gift still relies on a proxy image.')).toBeInTheDocument();
+
+    fireEvent.click(screen.getAllByRole('button', { name: /Missing image or details/i })[0]);
+
+    expect(screen.getByText('This gift still relies on a proxy image.')).toBeInTheDocument();
+    expect(screen.queryByText('Broken import details need review.')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Back to all cleanup' })).toBeInTheDocument();
+    expect(screen.getAllByText('Refresh photos or review item details before sharing widely.').length).toBeGreaterThan(0);
+    expect(screen.getByRole('button', { name: 'Refresh item details' })).toBeInTheDocument();
+  });
+
+  it('shows the latest cleanup run summary in the cleanup workspace', () => {
+    render(
+      <RegistryDashboardRouteContent
+        {...makeBaseProps({
+          lastRepairRunSummary: {
+            candidateCount: 4,
+            repairedCount: 4,
+            revalidatedCount: 1,
+            revalidatedProductCount: 1,
+            revalidatedLinkOnlyCount: 0,
+            revalidatedReviewOnlyCount: 0,
+            convertedCount: 2,
+            hiddenForReviewCount: 1,
+            refreshedCount: 1,
+            completedAt: '2026-05-21T18:00:00.000Z',
+          },
+        })}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Cleanup' }));
+
+    expect(screen.getByText(/Last cleanup on/i)).toBeInTheDocument();
+    expect(screen.getByText(/1 revalidated/i)).toBeInTheDocument();
+    expect(screen.getByText(/1 kept as product cards/i)).toBeInTheDocument();
+    expect(screen.getByText(/2 converted to link-only/i)).toBeInTheDocument();
+    expect(screen.getByText(/1 hidden for review/i)).toBeInTheDocument();
+    expect(screen.getByText(/1 refreshed/i)).toBeInTheDocument();
+  });
+
+  it('shows a legacy repair report for bad imports in the cleanup workspace', () => {
+    render(
+      <RegistryDashboardRouteContent
+        {...makeBaseProps({
+          legacyRepairReport: {
+            candidateCount: 7,
+            autoConvertibleCount: 4,
+            hiddenReviewCount: 2,
+            blockedSourceCount: 5,
+            manualQueueCount: 1,
+            revalidationCandidateCount: 6,
+            revalidationProductCount: 2,
+            revalidationLinkOnlyCount: 3,
+            revalidationReviewOnlyCount: 1,
+          },
+          revalidationPreviewItems: [
+            { id: 'gift-1', title: 'Dinner plates', targetMode: 'link_card' },
+            { id: 'gift-2', title: 'Serving bowl', targetMode: 'review_only' },
+          ],
+        })}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Cleanup' }));
+
+    expect(screen.getByText('Legacy bad imports')).toBeInTheDocument();
+    expect(screen.getByText('Auto-convertible')).toBeInTheDocument();
+    expect(screen.getByText('Hide for review')).toBeInTheDocument();
+    expect(screen.getByText('Blocked source')).toBeInTheDocument();
+    expect(screen.getByText('Manual review queue')).toBeInTheDocument();
+    expect(screen.getByText('Saved-truth sweep preview')).toBeInTheDocument();
+    expect(screen.getByText('Keep as product cards')).toBeInTheDocument();
+    expect(screen.getByText('Shift to link-only')).toBeInTheDocument();
+    expect(screen.getByText('Shift to review-only')).toBeInTheDocument();
+    expect(screen.getByText('Likely changes')).toBeInTheDocument();
+    expect(screen.getByText('Serving bowl')).toBeInTheDocument();
+    expect(screen.getByText('Would become link-only')).toBeInTheDocument();
+    expect(screen.getByText('Would move to review-only')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Copy sweep preview' })).toBeInTheDocument();
+    expect(screen.getByText('7')).toBeInTheDocument();
+    expect(screen.getByText('6')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Copy maintenance report' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Copy cleanup report' })).toBeInTheDocument();
+
+    fireEvent.click(screen.getAllByRole('button', { name: /Auto-convertible/i })[0]);
+    expect(screen.getByText('Saved-truth sweep preview')).toBeInTheDocument();
+  });
+
   it('keeps registry filter tabs inside a mobile-safe horizontal rail', () => {
     render(<RegistryDashboardRouteContent {...makeBaseProps()} />);
 
@@ -1056,6 +1385,9 @@ describe('RegistryDashboardRouteContent', () => {
     ).toBeInTheDocument();
     expect(screen.getByText('No purchased gifts need a thank-you yet.')).toBeInTheDocument();
     expect(screen.getByText('No image issues or duplicate groups')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Cleanup' }));
+
     expect(screen.getByText('No imported-gift cleanup work is open right now.')).toBeInTheDocument();
     expect(screen.getByText('No gifts are waiting in the cleanup queue right now.')).toBeInTheDocument();
   });
@@ -1166,9 +1498,13 @@ describe('RegistryDashboardRouteContent', () => {
       />,
     );
 
+    fireEvent.click(screen.getByRole('button', { name: 'Cleanup' }));
+
     expect(screen.getByText('Cleanup queue')).toBeInTheDocument();
     expect(screen.getByText('1 fix now · 1 look soon · 1 keep fresh.')).toBeInTheDocument();
-    expect(screen.getByText('3 gifts still need stronger detail truth, store repair, or fresher product photos.')).toBeInTheDocument();
+    expect(
+      screen.getAllByText((_, element) => element?.textContent?.includes('3 gifts still need stronger detail truth, store repair, or fresher product photos. 1 needs review · 1 missing image or details · 1 refresh later.') ?? false).length,
+    ).toBeGreaterThan(0);
     expect(screen.getByText('3 waiting')).toBeInTheDocument();
     expect(screen.getByText('Re-import weak product details')).toBeInTheDocument();
     expect(screen.getByText('Upgrade the product photo')).toBeInTheDocument();
@@ -1264,7 +1600,9 @@ describe('RegistryDashboardRouteContent', () => {
       />,
     );
 
-    expect(screen.getAllByText('Duplicate checks').length).toBeGreaterThan(1);
+    fireEvent.click(screen.getByRole('button', { name: 'Cleanup' }));
+
+    expect(screen.getByText('Duplicate checks')).toBeInTheDocument();
     expect(screen.getByText('1 merge candidate covering 2 repeated gifts.')).toBeInTheDocument();
     expect(screen.getByText('2 match clues are already grouped to compare.')).toBeInTheDocument();
     expect(screen.getByText('Possible repeat group')).toBeInTheDocument();
@@ -1301,6 +1639,7 @@ describe('RegistryDashboardRouteContent', () => {
       />,
     );
 
+    fireEvent.click(screen.getByRole('button', { name: 'Cleanup' }));
     fireEvent.click(screen.getByRole('button', { name: 'Copy duplicate list' }));
     expect(screen.getByRole('button', { name: 'Copying duplicate list...' })).toBeDisabled();
 
@@ -1439,14 +1778,12 @@ describe('RegistryDashboardRouteContent', () => {
       />,
     );
 
-    expect(screen.getByText('Detail touchups')).toBeInTheDocument();
-    expect(screen.getByText('Duplicate checks')).toBeInTheDocument();
-    expect(screen.getByText('Photo refresh')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Cleanup' }));
+
     expect(screen.getByText('2 detail touchups · 1 duplicate check · 2 photo refreshes still worth a pass.')).toBeInTheDocument();
     expect(screen.getByText('These tools help tidy imported links, repeated gifts, and product photos without merging or deleting anything unless you choose it.')).toBeInTheDocument();
     expect(screen.getByText('Refresh details')).toBeInTheDocument();
     expect(screen.getByText('Refresh image issues')).toBeInTheDocument();
-    expect(screen.getByText('Clean up imported gifts')).toBeInTheDocument();
   });
 
   it('uses owner-facing labels in the registry toolbar and refresh strip', () => {
@@ -1838,12 +2175,11 @@ describe('RegistryDashboardRouteContent', () => {
       />,
     );
 
-    expect(screen.getByText('Thank-yous')).toBeInTheDocument();
     expect(screen.getByText('2 still need a thank-you · 1 still missing purchaser')).toBeInTheDocument();
     expect(screen.getByText('33% ready to send · 33% already sent · 33% still missing purchaser')).toBeInTheDocument();
     expect(screen.getByText('1 ready to send · 1 still missing purchaser · 67% with purchaser named')).toBeInTheDocument();
     expect(screen.getByText('Main gap: 1 still missing a purchaser name')).toBeInTheDocument();
-    expect(screen.getByText('Main watchouts: 1 gift still missing a purchaser name · 2 thank-yous still pending.')).toBeInTheDocument();
+    expect(screen.getByText('Main review items: 1 gift still missing a purchaser name · 2 thank-yous still pending.')).toBeInTheDocument();
     expect(
       screen.getByText((_, element) => element?.textContent === 'Thank-yous sent: 1 · Still pending: 2'),
     ).toBeInTheDocument();
@@ -1929,7 +2265,7 @@ describe('RegistryDashboardRouteContent', () => {
     expect(screen.getByText('1 ready now · 1 already claimed')).toBeInTheDocument();
     expect(screen.getByText('1 older link · 1 price shift · 1 out of stock')).toBeInTheDocument();
     expect(screen.getByText('Snapshot focus: 1 gift still missing a purchaser name · 1 blocked from guests · 1 thank-you still pending · 3 items worth a closer look.')).toBeInTheDocument();
-    expect(screen.getByText('Main watchouts: 1 gift still missing a purchaser name · 1 blocked from guests · 1 thank-you still pending · 3 items worth a closer look.')).toBeInTheDocument();
+    expect(screen.getByText('Main review items: 1 gift still missing a purchaser name · 1 blocked from guests · 1 thank-you still pending · 3 items worth a closer look.')).toBeInTheDocument();
     expect(screen.getByText('50% visible to guests · 75% ready for guests · 1 hidden when bought · 1 blocked from guests')).toBeInTheDocument();
     expect(screen.getByText('Main gap: 1 still blocked from guests')).toBeInTheDocument();
     expect(

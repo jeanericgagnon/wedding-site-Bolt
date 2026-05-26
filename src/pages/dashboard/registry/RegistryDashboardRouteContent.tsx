@@ -1,13 +1,28 @@
-import { useEffect, useRef, useState, type MouseEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type MouseEvent } from 'react';
 import { DashboardPageHero } from '../../../components/dashboard/DashboardPageHero';
 import { DashboardStateBlock } from '../../../components/dashboard/DashboardStateBlock';
 import { ActionsMenu, Button, Card } from '../../../components/ui';
 import { CheckCircle2, DollarSign, Gift, Package, Plus, Search, Sparkles } from 'lucide-react';
 import { copyTextOrDownload } from '../../../lib/copyText';
+import {
+  buildRegistryCleanupReportText,
+  normalizeRegistryCleanupReportLegacySummary,
+} from './registryCleanupReport';
+import {
+  buildRegistryCleanupGroups,
+  REGISTRY_CLEANUP_GROUPS,
+  type RegistryCleanupFocus,
+} from './registryCleanupGroups';
+import { buildRegistryMaintenanceReportText } from './registryMaintenanceReport';
+import type { RegistryLegacyRepairReport } from './registryMaintenanceSnapshot';
 import { RegistryItemCard } from './RegistryItemCard';
 import type { RegistryDuplicateGroup } from './duplicateRegistryItems';
 import { getRegistryRepairStates } from './repairState';
 import type { RegistryRepairActionKind, RegistryRepairQueueItem } from './repairState';
+import { buildRegistryRepairRunSummaryParts, type RegistryRepairRunSummary } from './registryRepairSummary';
+import type { RegistryImportBatchRecord } from './registryService';
+import { getRegistryTruthSweepTargetLabel } from './registryTruthSweep';
+import { buildRegistryTruthSweepReportText } from './registryTruthSweepReport';
 import { getOwnerRegistryDisplayTitle, type RegistryFilter, type RegistryItem } from './registryTypes';
 import { formatRegistryItemDate } from '../registryItemTime';
 
@@ -33,6 +48,18 @@ function formatRegistryActivityDetail(item: RegistryItem) {
   }
 
   return 'Still available';
+}
+
+function formatRegistryImportResultLabel(result: RegistryImportBatchRecord['items'][number]['result']) {
+  if (result === 'link_only') return 'Link-only';
+  if (result === 'needs_review') return 'Needs review';
+  if (result === 'failed') return 'Failed';
+  if (result === 'duplicate') return 'Duplicate skipped';
+  return 'Imported cleanly';
+}
+
+function formatRegistryImportBatchSummary(batch: RegistryImportBatchRecord) {
+  return `${batch.clean_count} clean · ${batch.link_only_count} link-only · ${batch.needs_review_count} review · ${batch.duplicate_count} duplicates · ${batch.failed_count} failed`;
 }
 
 function getRegistryProgressState(item: TopRegistryItem) {
@@ -152,7 +179,21 @@ type BulkReviewCounts = {
   imageIssues: number;
 };
 
+type RegistryRevalidationPreviewItem = {
+  id: string;
+  title: string;
+  targetMode: 'product_card' | 'link_card' | 'review_only' | 'hidden' | 'manual_card' | 'cash_fund';
+};
+
 type CopyActionResult = 'copied' | 'downloaded';
+type RegistryWorkspaceTab = 'items' | 'imports' | 'cleanup' | 'thank_yous';
+
+const REGISTRY_WORKSPACE_TABS: Array<{ key: RegistryWorkspaceTab; label: string }> = [
+  { key: 'items', label: 'Items' },
+  { key: 'imports', label: 'Imports' },
+  { key: 'cleanup', label: 'Cleanup' },
+  { key: 'thank_yous', label: 'Thank-yous' },
+];
 
 export function RegistryDashboardRouteContent(props: {
   actionableBadImportCount: number;
@@ -182,6 +223,7 @@ export function RegistryDashboardRouteContent(props: {
   handleEdit: (item: RegistryItem) => void;
   handleMergeDuplicateGroup: (group: RegistryDuplicateGroup) => Promise<void>;
   handleMarkPurchased: (item: RegistryItem, qty: number) => Promise<void>;
+  handleRevalidateRegistryTruth: () => Promise<void>;
   handleResetPurchaseState: (item: RegistryItem) => Promise<void>;
   handleRefetchMetadata: (item: RegistryItem, silent?: boolean, replaceExisting?: boolean) => Promise<boolean>;
   handleRefreshImageIssues: () => Promise<void>;
@@ -205,11 +247,17 @@ export function RegistryDashboardRouteContent(props: {
   registryActionsOpen: boolean;
   registryActionsRef: React.RefObject<HTMLDivElement>;
   registryInsights: RegistryInsight[];
+  latestImportBatch?: RegistryImportBatchRecord | null;
+  lastRepairRunSummary?: RegistryRepairRunSummary | null;
+  legacyRepairReport: RegistryLegacyRepairReport;
+  recentImportBatches?: RegistryImportBatchRecord[];
   registryLaunchReadiness: RegistryLaunchReadiness;
+  revalidationPreviewItems: RegistryRevalidationPreviewItem[];
   registryThankYouPlan: RegistryThankYouPlan;
   registryThankYouStats: RegistryThankYouStats;
   registryThankYouBusyItemId: string | null;
   registryThankYouSyncing: boolean;
+  revalidatingRegistryTruth: boolean;
   repairingBadImports: boolean;
   search: string;
   setBulkImportOpen: React.Dispatch<React.SetStateAction<boolean>>;
@@ -226,10 +274,23 @@ export function RegistryDashboardRouteContent(props: {
 }) {
   const [guestRegistryLinkNotice, setGuestRegistryLinkNotice] = useState<CopyActionResult | null>(null);
   const [copyingGuestRegistryLink, setCopyingGuestRegistryLink] = useState(false);
+  const [cleanupReportCopyNotice, setCleanupReportCopyNotice] = useState<CopyActionResult | null>(null);
+  const [copyingCleanupReport, setCopyingCleanupReport] = useState(false);
+  const [maintenanceReportCopyNotice, setMaintenanceReportCopyNotice] = useState<CopyActionResult | null>(null);
+  const [copyingMaintenanceReport, setCopyingMaintenanceReport] = useState(false);
+  const [truthSweepCopyNotice, setTruthSweepCopyNotice] = useState<CopyActionResult | null>(null);
+  const [copyingTruthSweepReport, setCopyingTruthSweepReport] = useState(false);
   const [duplicateReviewCopyNotice, setDuplicateReviewCopyNotice] = useState<CopyActionResult | null>(null);
   const [copyingDuplicateReviewList, setCopyingDuplicateReviewList] = useState(false);
+  const [selectedImportBatchId, setSelectedImportBatchId] = useState<string | null>(props.latestImportBatch?.id ?? null);
+  const [importHistorySearch, setImportHistorySearch] = useState('');
+  const [workspaceTab, setWorkspaceTab] = useState<RegistryWorkspaceTab>('items');
+  const [cleanupFocus, setCleanupFocus] = useState<RegistryCleanupFocus>('all');
   const guestRegistryUrl = props.siteSlug ? `https://${props.siteSlug}.dayof.love/#registry` : null;
+  const cleanupReportCopyRequestIdRef = useRef(0);
+  const maintenanceReportCopyRequestIdRef = useRef(0);
   const guestRegistryLinkCopyRequestIdRef = useRef(0);
+  const truthSweepCopyRequestIdRef = useRef(0);
   const duplicateReviewCopyRequestIdRef = useRef(0);
   const mountedRef = useRef(true);
   const guestRegistryUrlRef = useRef(guestRegistryUrl);
@@ -246,7 +307,10 @@ export function RegistryDashboardRouteContent(props: {
 
   useEffect(() => () => {
     mountedRef.current = false;
+    cleanupReportCopyRequestIdRef.current += 1;
+    maintenanceReportCopyRequestIdRef.current += 1;
     guestRegistryLinkCopyRequestIdRef.current += 1;
+    truthSweepCopyRequestIdRef.current += 1;
     duplicateReviewCopyRequestIdRef.current += 1;
   }, []);
 
@@ -255,6 +319,131 @@ export function RegistryDashboardRouteContent(props: {
     setGuestRegistryLinkNotice(null);
     setCopyingGuestRegistryLink(false);
   }, [guestRegistryUrl]);
+
+  const cleanupQueueGroups = useMemo(
+    () => buildRegistryCleanupGroups(props.repairQueue),
+    [props.repairQueue],
+  );
+  const normalizedLegacyRepairReport = useMemo(
+    () => normalizeRegistryCleanupReportLegacySummary(props.legacyRepairReport),
+    [props.legacyRepairReport],
+  );
+  const cleanupReportText = useMemo(() => {
+    return buildRegistryCleanupReportText({
+      legacyRepairReport: normalizedLegacyRepairReport,
+      cleanupQueueCount: props.repairQueue.length,
+      cleanupGroups: cleanupQueueGroups.map((group) => ({
+        label: group.label,
+        count: group.items.length,
+      })),
+      lastRepairRunSummary: props.lastRepairRunSummary,
+    });
+  }, [cleanupQueueGroups, props.lastRepairRunSummary, normalizedLegacyRepairReport, props.repairQueue.length]);
+  const truthSweepReportText = useMemo(() => buildRegistryTruthSweepReportText({
+    candidates: [],
+    candidateCount: normalizedLegacyRepairReport.revalidationCandidateCount,
+    productCount: normalizedLegacyRepairReport.revalidationProductCount,
+    linkOnlyCount: normalizedLegacyRepairReport.revalidationLinkOnlyCount,
+    reviewOnlyCount: normalizedLegacyRepairReport.revalidationReviewOnlyCount,
+    previewItems: props.revalidationPreviewItems,
+  }), [normalizedLegacyRepairReport, props.revalidationPreviewItems]);
+  const maintenanceReportText = useMemo(() => buildRegistryMaintenanceReportText({
+    legacyRepairReport: normalizedLegacyRepairReport,
+    cleanupQueueCount: props.repairQueue.length,
+    cleanupGroups: cleanupQueueGroups.map((group) => ({
+      label: group.label,
+      count: group.items.length,
+    })),
+    lastRepairRunSummary: props.lastRepairRunSummary,
+    truthSweepPrediction: {
+      candidates: [],
+      candidateCount: normalizedLegacyRepairReport.revalidationCandidateCount,
+      productCount: normalizedLegacyRepairReport.revalidationProductCount,
+      linkOnlyCount: normalizedLegacyRepairReport.revalidationLinkOnlyCount,
+      reviewOnlyCount: normalizedLegacyRepairReport.revalidationReviewOnlyCount,
+      previewItems: props.revalidationPreviewItems,
+    },
+  }), [cleanupQueueGroups, props.lastRepairRunSummary, normalizedLegacyRepairReport, props.repairQueue.length, props.revalidationPreviewItems]);
+
+  const importBatches = useMemo(() => {
+    const seen = new Set<string>();
+    const combined = [props.latestImportBatch, ...(props.recentImportBatches ?? [])].filter((batch): batch is RegistryImportBatchRecord => Boolean(batch));
+    return combined.filter((batch) => {
+      if (seen.has(batch.id)) return false;
+      seen.add(batch.id);
+      return true;
+    });
+  }, [props.latestImportBatch, props.recentImportBatches]);
+
+  useEffect(() => {
+    if (importBatches.length === 0) {
+      setSelectedImportBatchId(null);
+      return;
+    }
+
+    if (!selectedImportBatchId || !importBatches.some((batch) => batch.id === selectedImportBatchId)) {
+      setSelectedImportBatchId(importBatches[0]?.id ?? null);
+    }
+  }, [importBatches, selectedImportBatchId]);
+
+  const filteredImportBatches = useMemo(() => {
+    const query = importHistorySearch.trim().toLowerCase();
+    if (!query) return importBatches;
+
+    return importBatches.filter((batch) => {
+      const haystack = [
+        batch.status,
+        batch.created_at,
+        batch.completed_at,
+        ...batch.items.flatMap((item) => [
+          item.original_url,
+          item.normalized_url,
+          item.display_title,
+          item.store_name,
+          item.reason,
+          item.result,
+        ]),
+      ]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase();
+
+      return haystack.includes(query);
+    });
+  }, [importBatches, importHistorySearch]);
+
+  const selectedImportBatch = filteredImportBatches.find((batch) => batch.id === selectedImportBatchId)
+    ?? importBatches.find((batch) => batch.id === selectedImportBatchId)
+    ?? filteredImportBatches[0]
+    ?? importBatches[0]
+    ?? null;
+  const registryItemsById = useMemo(
+    () => new Map(props.items.map((item) => [item.id, item])),
+    [props.items],
+  );
+  const visibleCleanupQueueGroups = useMemo(
+    () => cleanupFocus === 'all'
+      ? cleanupQueueGroups
+      : cleanupQueueGroups.filter((group) => group.key === cleanupFocus),
+    [cleanupFocus, cleanupQueueGroups],
+  );
+  const activeCleanupFocusGroup = useMemo(
+    () => cleanupQueueGroups.find((group) => group.key === cleanupFocus) ?? null,
+    [cleanupFocus, cleanupQueueGroups],
+  );
+
+  useEffect(() => {
+    if (workspaceTab !== 'cleanup' && cleanupFocus !== 'all') {
+      setCleanupFocus('all');
+    }
+  }, [cleanupFocus, workspaceTab]);
+
+  useEffect(() => {
+    if (cleanupFocus === 'all') return;
+    if (!cleanupQueueGroups.some((group) => group.key === cleanupFocus)) {
+      setCleanupFocus('all');
+    }
+  }, [cleanupFocus, cleanupQueueGroups]);
 
   useEffect(() => {
     duplicateReviewCopyRequestIdRef.current += 1;
@@ -312,6 +501,69 @@ export function RegistryDashboardRouteContent(props: {
     } finally {
       if (isCurrentDuplicateReviewCopy()) {
         setCopyingDuplicateReviewList(false);
+      }
+    }
+  };
+
+  const handleCopyCleanupReport = async () => {
+    if (copyingCleanupReport) return;
+    const requestId = cleanupReportCopyRequestIdRef.current + 1;
+    cleanupReportCopyRequestIdRef.current = requestId;
+    const isCurrentCleanupReportCopy = () => (
+      mountedRef.current &&
+      requestId === cleanupReportCopyRequestIdRef.current
+    );
+    setCleanupReportCopyNotice(null);
+    setCopyingCleanupReport(true);
+    try {
+      const result = await copyTextOrDownload(cleanupReportText, 'dayof-registry-cleanup-report.txt');
+      if (!isCurrentCleanupReportCopy()) return;
+      if (result) setCleanupReportCopyNotice(result);
+    } finally {
+      if (isCurrentCleanupReportCopy()) {
+        setCopyingCleanupReport(false);
+      }
+    }
+  };
+
+  const handleCopyMaintenanceReport = async () => {
+    if (copyingMaintenanceReport) return;
+    const requestId = maintenanceReportCopyRequestIdRef.current + 1;
+    maintenanceReportCopyRequestIdRef.current = requestId;
+    const isCurrentMaintenanceCopy = () => (
+      mountedRef.current &&
+      requestId === maintenanceReportCopyRequestIdRef.current
+    );
+    setMaintenanceReportCopyNotice(null);
+    setCopyingMaintenanceReport(true);
+    try {
+      const result = await copyTextOrDownload(maintenanceReportText, 'dayof-registry-maintenance-report.txt');
+      if (!isCurrentMaintenanceCopy()) return;
+      if (result) setMaintenanceReportCopyNotice(result);
+    } finally {
+      if (isCurrentMaintenanceCopy()) {
+        setCopyingMaintenanceReport(false);
+      }
+    }
+  };
+
+  const handleCopyTruthSweepReport = async () => {
+    if (copyingTruthSweepReport) return;
+    const requestId = truthSweepCopyRequestIdRef.current + 1;
+    truthSweepCopyRequestIdRef.current = requestId;
+    const isCurrentTruthSweepCopy = () => (
+      mountedRef.current &&
+      requestId === truthSweepCopyRequestIdRef.current
+    );
+    setTruthSweepCopyNotice(null);
+    setCopyingTruthSweepReport(true);
+    try {
+      const result = await copyTextOrDownload(truthSweepReportText, 'dayof-registry-truth-sweep-preview.txt');
+      if (!isCurrentTruthSweepCopy()) return;
+      if (result) setTruthSweepCopyNotice(result);
+    } finally {
+      if (isCurrentTruthSweepCopy()) {
+        setCopyingTruthSweepReport(false);
       }
     }
   };
@@ -488,6 +740,11 @@ export function RegistryDashboardRouteContent(props: {
         cleanupMediumCount > 0 ? `${cleanupMediumCount} look soon` : null,
         cleanupLowCount > 0 ? `${cleanupLowCount} keep fresh` : null,
       ].filter(Boolean).join(' · ')}.`;
+  const cleanupQueueGroupedSummary = cleanupQueueGroups.length === 0
+    ? null
+    : cleanupQueueGroups
+      .map((group) => `${group.items.length} ${group.label.toLowerCase()}`)
+      .join(' · ');
   const duplicateSecondaryItemCount = props.duplicateGroups.reduce((sum, group) => sum + group.secondaryItems.length, 0);
   const duplicateSignalCount = props.duplicateGroups.reduce((sum, group) => sum + group.signals.length, 0);
   const duplicateQueueSummary = props.duplicateGroups.length === 0
@@ -512,6 +769,38 @@ export function RegistryDashboardRouteContent(props: {
     && props.actionableBadImportCount === 0
     ? 'No imported-gift cleanup work is open right now.'
     : null;
+  const lastRepairRunSummaryLabel = props.lastRepairRunSummary
+    ? buildRegistryRepairRunSummaryParts(props.lastRepairRunSummary).join(' · ')
+    : null;
+  const registryReadiness = (() => {
+    if (props.counts.total === 0) {
+      return {
+        label: 'Draft',
+        detail: 'Add gifts, funds, or links to start your registry.',
+      };
+    }
+    if (props.guestVisibilityStats.guestReadyItems === 0) {
+      return {
+        label: 'Needs review',
+        detail: 'No registry items are ready for guests yet.',
+      };
+    }
+    if (
+      props.guestVisibilityStats.blockedGuestItems > 0
+      || props.guestVisibilityStats.hiddenPurchasedItems > 0
+      || props.repairQueue.length > 0
+      || props.bulkReviewCounts.duplicates > 0
+    ) {
+      return {
+        label: 'Partially ready',
+        detail: `${props.guestVisibilityStats.guestReadyItems} guest-safe · ${props.guestVisibilityStats.blockedGuestItems + props.guestVisibilityStats.hiddenPurchasedItems + props.repairQueue.length} need attention`,
+      };
+    }
+    return {
+      label: 'Ready',
+      detail: `${props.guestVisibilityStats.guestReadyItems} items are ready for guests.`,
+    };
+  })();
 
   const tabCount = (key: RegistryFilter) => {
     if (key === 'all') return props.counts.total;
@@ -528,7 +817,7 @@ export function RegistryDashboardRouteContent(props: {
         title="Gifts and funds, clearly shared."
         description="Add the places guests should look first. Keep it simple with links, or add individual gifts and funds later."
         stats={[
-          { label: 'Registry', value: props.counts.total > 0 ? 'Ready to share' : 'Nothing added yet', detail: `${props.counts.total} gifts or links` },
+          { label: 'Registry', value: registryReadiness.label, detail: registryReadiness.detail },
           { label: 'Purchased', value: props.counts.purchased > 0 ? `${props.counts.purchased} already purchased` : 'Nothing purchased yet', detail: `${props.fulfillmentRate}% complete` },
           { label: 'Review', value: props.alertCounts.stale + props.alertCounts.priceChanged + props.alertCounts.outOfStock > 0 ? 'Needs a quick pass' : 'Quiet right now', detail: 'links, prices, and photos' },
         ]}
@@ -575,7 +864,7 @@ export function RegistryDashboardRouteContent(props: {
         </div>
       </DashboardPageHero>
 
-      <section className="grid gap-4 lg:grid-cols-[minmax(0,1.05fr)_340px]">
+      <section className="grid gap-4">
         <article className="rounded-[20px] border border-border bg-white p-5 shadow-none">
           <div className="grid gap-5 lg:grid-cols-[minmax(0,0.95fr)_minmax(280px,0.85fr)] lg:items-center">
             <div>
@@ -610,7 +899,7 @@ export function RegistryDashboardRouteContent(props: {
                 <div className="mt-4 space-y-2">
                   {props.topRegistryItems.slice(0, 3).map((item) => (
                     <div key={item.id} className="rounded-xl border border-border bg-surface-subtle/20 px-3 py-3">
-                      <p className="text-sm font-semibold text-text-primary">{getOwnerRegistryDisplayTitle(item.item_name)}</p>
+                      <p className="text-sm font-semibold text-text-primary">{getOwnerRegistryDisplayTitle(item.item_name, item)}</p>
                       <p className="mt-1 text-xs text-text-secondary">{formatRegistryPurchaseStatusLabel(item.purchase_status)}</p>
                     </div>
                   ))}
@@ -625,24 +914,24 @@ export function RegistryDashboardRouteContent(props: {
             </div>
           </div>
         </article>
+      </section>
 
-        <aside className="rounded-[20px] border border-border bg-white p-5 shadow-none">
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary">Manage when needed</p>
-          <div className="mt-4 space-y-3">
-            {[
-              ['Registry links', 'Add or adjust the places guests should look first.', 'Manage'],
-              ['Gifts and funds', 'Keep gifts, funds, and display order together.', 'Manage'],
-              ['Thank-you notes', 'Purchaser names and gift status for later.', 'Track'],
-              ['Import, scanner, and cleanup', 'Use deeper tools only when you are adding or polishing items.', 'More'],
-            ].map(([title, detail, action]) => (
-              <div key={title} className="rounded-xl border border-border bg-surface-subtle/30 p-4">
-                <p className="text-sm font-semibold text-text-primary">{title}</p>
-                <p className="mt-2 text-sm leading-6 text-text-secondary">{detail}</p>
-                <p className="mt-4 text-sm font-semibold text-primary">{action}</p>
-              </div>
-            ))}
-          </div>
-        </aside>
+      <section className="rounded-[20px] border border-border bg-white p-5 shadow-none">
+        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary">Manage when needed</p>
+        <div className="mt-4 grid gap-3 md:grid-cols-2">
+          {[
+            ['Registry links', 'Add or adjust the places guests should look first.', 'Manage'],
+            ['Gifts and funds', 'Keep gifts, funds, and display order together.', 'Manage'],
+            ['Thank-you notes', 'Purchaser names and gift status for later.', 'Track'],
+            ['Import, scanner, and cleanup', 'Use deeper tools only when you are adding or polishing items.', 'More'],
+          ].map(([title, detail, action]) => (
+            <div key={title} className="rounded-xl border border-border bg-surface-subtle/30 p-4">
+              <p className="text-sm font-semibold text-text-primary">{title}</p>
+              <p className="mt-2 text-sm leading-6 text-text-secondary">{detail}</p>
+              <p className="mt-4 text-sm font-semibold text-primary">{action}</p>
+            </div>
+          ))}
+        </div>
       </section>
 
       <details className="rounded-[20px] border border-border bg-white/80 p-5">
@@ -949,7 +1238,7 @@ export function RegistryDashboardRouteContent(props: {
                   return (
                     <div key={item.id} className="rounded-xl border border-border-subtle bg-surface-subtle/20 px-3 py-3">
                       <div className="flex items-center justify-between gap-3">
-                        <p className="text-sm font-medium text-text-primary">{getOwnerRegistryDisplayTitle(item.item_name)}</p>
+                        <p className="text-sm font-medium text-text-primary">{getOwnerRegistryDisplayTitle(item.item_name, item)}</p>
                         <span className="text-xs text-text-tertiary">{quantityPurchased}/{quantityNeeded}</span>
                       </div>
                       <div className="mt-2 h-2 overflow-hidden rounded-xl bg-surface-subtle">
@@ -977,7 +1266,7 @@ export function RegistryDashboardRouteContent(props: {
                 ) : props.recentActivity.map((item) => (
                   <div key={item.id} className="rounded-xl border border-border-subtle bg-surface-subtle/20 px-3 py-3">
                     <div className="flex items-center justify-between gap-3">
-                      <p className="text-sm font-medium text-text-primary">{getOwnerRegistryDisplayTitle(item.item_name)}</p>
+                      <p className="text-sm font-medium text-text-primary">{getOwnerRegistryDisplayTitle(item.item_name, item)}</p>
                       <span className="text-xs text-text-tertiary">{formatRegistryPurchaseStatusLabel(item.purchase_status)}</span>
                     </div>
                     <p className="mt-1 text-xs text-text-secondary">{formatRegistryActivityDetail(item)} · Updated {formatRegistryItemDate(item.updated_at ?? item.created_at)}</p>
@@ -1084,6 +1373,26 @@ export function RegistryDashboardRouteContent(props: {
           <p className="mt-2 text-sm leading-6 text-text-secondary">Search gifts, narrow the view, and open the maintenance lanes only when you need them.</p>
         </div>
 
+        <div className="mb-6 max-w-full overflow-x-auto pb-1" aria-label="Registry workspace tabs">
+          <div className="flex min-w-max items-center gap-1 rounded-xl border border-border bg-surface-subtle p-1">
+            {REGISTRY_WORKSPACE_TABS.map((tab) => (
+              <button
+                key={tab.key}
+                type="button"
+                onClick={() => setWorkspaceTab(tab.key)}
+                className={`rounded-xl px-3 py-1.5 text-sm font-medium transition-all whitespace-nowrap ${
+                  workspaceTab === tab.key
+                    ? 'bg-surface text-text-primary ring-1 ring-border-subtle'
+                    : 'text-text-secondary hover:text-text-primary'
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {(workspaceTab === 'items' || workspaceTab === 'cleanup') && (
         <div className="flex flex-col sm:flex-row gap-4 mb-6">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-tertiary" />
@@ -1114,7 +1423,9 @@ export function RegistryDashboardRouteContent(props: {
             </div>
           </div>
         </div>
+        )}
 
+        {workspaceTab === 'items' && (
         <div className="mb-4 flex flex-wrap items-center gap-2 text-xs">
           <button
             onClick={() => props.setShowAlertsOnly((value) => !value)}
@@ -1173,7 +1484,9 @@ export function RegistryDashboardRouteContent(props: {
             Monthly refresh budget used: {Math.round(props.budgetUtilization * 100)}%
           </span>
         </div>
+        )}
 
+        {workspaceTab === 'items' && (
         <div className="mb-4 grid grid-cols-1 md:grid-cols-3 gap-3">
           <div className="rounded-xl border border-border-subtle bg-surface-subtle/20 p-4">
             <p className="text-xs text-text-tertiary">Detail touchups</p>
@@ -1188,17 +1501,342 @@ export function RegistryDashboardRouteContent(props: {
             <p className="mt-1 text-lg font-semibold text-text-primary">{props.bulkReviewCounts.imageIssues}</p>
           </div>
         </div>
+        )}
 
+        {workspaceTab === 'imports' && importBatches.length === 0 ? (
+          <div className="mb-4 rounded-[20px] border border-border-subtle bg-surface-subtle/20 p-5">
+            <p className="text-sm font-semibold text-text-primary">No import runs yet.</p>
+            <p className="mt-2 text-sm text-text-secondary">Pasted-link imports will show up here once you start bringing gifts in by URL, along with clean, link-only, review-needed, duplicate, and failed results.</p>
+          </div>
+        ) : null}
+
+        {workspaceTab === 'imports' && importBatches.length > 0 ? (
+          <div className="mb-4 rounded-[20px] border border-border-subtle bg-surface-subtle/20 p-4">
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary/75">Imports</p>
+                <p className="mt-3 text-sm font-semibold text-text-primary">Recent registry imports stay here, with the exact result for each pasted link.</p>
+                <p className="mt-2 text-sm text-text-secondary">Imported products, link-only fallbacks, review-needed rows, duplicates, and failed links all stay visible after refresh so cleanup can happen on your timing.</p>
+              </div>
+              <span className="rounded-xl border border-border px-2 py-1 text-xs font-medium text-text-tertiary">
+                {importBatches.length} saved run{importBatches.length === 1 ? '' : 's'}
+              </span>
+            </div>
+
+            <div className="mt-4 grid gap-4 xl:grid-cols-[minmax(0,0.95fr)_minmax(0,1.35fr)]">
+              <div className="space-y-3">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-text-tertiary" />
+                  <input
+                    type="search"
+                    value={importHistorySearch}
+                    onChange={(event) => setImportHistorySearch(event.target.value)}
+                    placeholder="Search imports by store, result, or pasted link…"
+                    className="w-full rounded-xl border border-border bg-white py-2.5 pl-9 pr-4 text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  {filteredImportBatches.length > 0 ? filteredImportBatches.map((batch) => {
+                    const isSelected = batch.id === selectedImportBatch?.id;
+                    return (
+                      <button
+                        key={batch.id}
+                        type="button"
+                        onClick={() => setSelectedImportBatchId(batch.id)}
+                        className={`w-full rounded-xl border px-3 py-3 text-left transition-colors ${
+                          isSelected
+                            ? 'border-border-subtle bg-white ring-1 ring-border-subtle'
+                            : 'border-border bg-white hover:border-border-subtle'
+                        }`}
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <p className="text-sm font-medium text-text-primary">
+                              {batch.total_count} links on {formatRegistryItemDate(batch.completed_at ?? batch.created_at)}
+                            </p>
+                            <p className="mt-1 text-xs text-text-secondary">{formatRegistryImportBatchSummary(batch)}</p>
+                          </div>
+                          <span className="rounded-xl border border-border px-2 py-1 text-[11px] font-medium text-text-tertiary">
+                            {batch.status === 'failed' ? 'Failed' : 'Saved'}
+                          </span>
+                        </div>
+                      </button>
+                    );
+                  }) : (
+                    <div className="rounded-xl border border-border bg-white px-4 py-4">
+                      <p className="text-sm font-medium text-text-primary">No imports match that search.</p>
+                      <p className="mt-1 text-xs text-text-secondary">Try a store name, link fragment, or result like link-only or failed.</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="rounded-xl border border-border bg-white p-4">
+                {selectedImportBatch ? (
+                  <>
+                    <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                      <div>
+                        <p className="text-sm font-semibold text-text-primary">
+                          {selectedImportBatch.total_count} links processed on {formatRegistryItemDate(selectedImportBatch.completed_at ?? selectedImportBatch.created_at)}
+                        </p>
+                        <p className="mt-1 text-sm text-text-secondary">{formatRegistryImportBatchSummary(selectedImportBatch)}</p>
+                      </div>
+                      <span className="rounded-xl border border-border px-2 py-1 text-xs font-medium text-text-tertiary">
+                        {selectedImportBatch.status === 'failed' ? 'Import failed' : 'Saved'}
+                      </span>
+                    </div>
+
+                    <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+                      <div className="rounded-xl border border-border-subtle bg-surface-subtle/20 p-3">
+                        <p className="text-xs text-text-tertiary">Clean</p>
+                        <p className="mt-1 text-lg font-semibold text-text-primary">{selectedImportBatch.clean_count}</p>
+                      </div>
+                      <div className="rounded-xl border border-border-subtle bg-surface-subtle/20 p-3">
+                        <p className="text-xs text-text-tertiary">Link-only</p>
+                        <p className="mt-1 text-lg font-semibold text-text-primary">{selectedImportBatch.link_only_count}</p>
+                      </div>
+                      <div className="rounded-xl border border-border-subtle bg-surface-subtle/20 p-3">
+                        <p className="text-xs text-text-tertiary">Needs review</p>
+                        <p className="mt-1 text-lg font-semibold text-text-primary">{selectedImportBatch.needs_review_count}</p>
+                      </div>
+                      <div className="rounded-xl border border-border-subtle bg-surface-subtle/20 p-3">
+                        <p className="text-xs text-text-tertiary">Duplicates</p>
+                        <p className="mt-1 text-lg font-semibold text-text-primary">{selectedImportBatch.duplicate_count}</p>
+                      </div>
+                      <div className="rounded-xl border border-border-subtle bg-surface-subtle/20 p-3">
+                        <p className="text-xs text-text-tertiary">Failed</p>
+                        <p className="mt-1 text-lg font-semibold text-text-primary">{selectedImportBatch.failed_count}</p>
+                      </div>
+                    </div>
+
+                    {selectedImportBatch.items.length > 0 ? (
+                      <div className="mt-4 space-y-2">
+                        {selectedImportBatch.items.map((item) => {
+                          const linkedRegistryItem = item.registry_item_id ? registryItemsById.get(item.registry_item_id) ?? null : null;
+                          return (
+                            <div key={item.id} className="rounded-xl border border-border-subtle bg-surface-subtle/20 px-3 py-3">
+                              <div className="flex flex-col gap-2 lg:flex-row lg:items-start lg:justify-between">
+                                <div className="min-w-0">
+                                  <p className="text-sm font-medium text-text-primary">{item.display_title || 'Imported item'}</p>
+                                  <p className="mt-1 text-xs text-text-secondary">
+                                    {item.store_name ? `${item.store_name} · ` : ''}{item.reason || formatRegistryImportResultLabel(item.result)}
+                                  </p>
+                                  <p className="mt-1 break-all text-[11px] text-text-tertiary">{item.original_url}</p>
+                                </div>
+                                <span className="rounded-xl border border-border bg-white px-2 py-1 text-[11px] font-medium text-text-tertiary">
+                                  {formatRegistryImportResultLabel(item.result)}
+                                </span>
+                              </div>
+                              {linkedRegistryItem ? (
+                                <div className="mt-3 flex justify-end">
+                                  <button
+                                    type="button"
+                                    onClick={() => props.handleEdit(linkedRegistryItem)}
+                                    className="rounded-xl border border-border px-3 py-1.5 text-xs font-medium text-text-secondary"
+                                  >
+                                    Open item
+                                  </button>
+                                </div>
+                              ) : null}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <p className="mt-4 text-sm text-text-secondary">This import saved its top-line counts, but no per-link rows were stored.</p>
+                    )}
+                  </>
+                ) : (
+                  <div className="rounded-xl border border-dashed border-border px-4 py-8 text-center">
+                    <p className="text-sm font-medium text-text-primary">No import run selected.</p>
+                    <p className="mt-1 text-xs text-text-secondary">Pick a saved run on the left to inspect each pasted link and its result.</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        ) : null}
+
+        {workspaceTab === 'cleanup' && (
         <div className="mb-3 rounded-[20px] border border-border-subtle bg-surface-subtle/20 p-4 text-sm text-text-secondary">
           <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary/75">Cleanup tools</p>
           <p className="mt-3 leading-6">{cleanupToolsLeadSummary}</p>
           <p className="mt-2 leading-6">These tools help tidy imported links, repeated gifts, and product photos without merging or deleting anything unless you choose it.</p>
+          {props.lastRepairRunSummary && lastRepairRunSummaryLabel ? (
+            <p className="mt-2 text-xs text-text-tertiary">
+              Last cleanup on {formatRegistryItemDate(props.lastRepairRunSummary.completedAt)}: {lastRepairRunSummaryLabel} from {props.lastRepairRunSummary.candidateCount} candidate{props.lastRepairRunSummary.candidateCount === 1 ? '' : 's'}.
+            </p>
+          ) : null}
           {cleanupToolsAllClearLabel ? <p className="mt-2">{cleanupToolsAllClearLabel}</p> : null}
         </div>
+        )}
 
+        {workspaceTab === 'cleanup' && normalizedLegacyRepairReport.candidateCount > 0 ? (
+          <div className="mb-4 grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+            <button
+              type="button"
+              onClick={() => setCleanupFocus('review')}
+              className="rounded-xl border border-border-subtle bg-white p-4 text-left transition-colors hover:border-border"
+            >
+              <p className="text-xs text-text-tertiary">Legacy bad imports</p>
+              <p className="mt-1 text-lg font-semibold text-text-primary">{normalizedLegacyRepairReport.candidateCount}</p>
+              <p className="mt-3 text-xs text-text-secondary">Open the review lane</p>
+            </button>
+            <button
+              type="button"
+              onClick={() => setCleanupFocus('review')}
+              className="rounded-xl border border-border-subtle bg-white p-4 text-left transition-colors hover:border-border"
+            >
+              <p className="text-xs text-text-tertiary">Auto-convertible</p>
+              <p className="mt-1 text-lg font-semibold text-text-primary">{normalizedLegacyRepairReport.autoConvertibleCount}</p>
+              <p className="mt-3 text-xs text-text-secondary">Run cleanup for weak imports</p>
+            </button>
+            <button
+              type="button"
+              onClick={() => setCleanupFocus('review')}
+              className="rounded-xl border border-border-subtle bg-white p-4 text-left transition-colors hover:border-border"
+            >
+              <p className="text-xs text-text-tertiary">Hide for review</p>
+              <p className="mt-1 text-lg font-semibold text-text-primary">{normalizedLegacyRepairReport.hiddenReviewCount}</p>
+              <p className="mt-3 text-xs text-text-secondary">Review unrecoverable items</p>
+            </button>
+            <button
+              type="button"
+              onClick={() => setCleanupFocus('review')}
+              className="rounded-xl border border-border-subtle bg-white p-4 text-left transition-colors hover:border-border"
+            >
+              <p className="text-xs text-text-tertiary">Blocked source</p>
+              <p className="mt-1 text-lg font-semibold text-text-primary">{normalizedLegacyRepairReport.blockedSourceCount}</p>
+              <p className="mt-3 text-xs text-text-secondary">Compare blocked-store imports</p>
+            </button>
+            <button
+              type="button"
+              onClick={() => setCleanupFocus('review')}
+              className="rounded-xl border border-border-subtle bg-white p-4 text-left transition-colors hover:border-border"
+            >
+              <p className="text-xs text-text-tertiary">Manual review queue</p>
+              <p className="mt-1 text-lg font-semibold text-text-primary">{normalizedLegacyRepairReport.manualQueueCount}</p>
+              <p className="mt-3 text-xs text-text-secondary">Open manual review items</p>
+            </button>
+          </div>
+        ) : null}
+
+        {workspaceTab === 'cleanup' && normalizedLegacyRepairReport.revalidationCandidateCount > 0 ? (
+          <div className="mb-4 rounded-[20px] border border-border-subtle bg-white p-4">
+            <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary/75">Saved-truth sweep preview</p>
+                <p className="mt-2 text-sm text-text-secondary">See what a local truth revalidation would likely change before you run it.</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setCleanupFocus('review')}
+                className="text-xs font-medium text-primary transition-colors hover:text-primary/80"
+              >
+                Open review lane
+              </button>
+            </div>
+            <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+              <div className="rounded-xl border border-border-subtle bg-surface-subtle/30 p-4">
+                <p className="text-xs text-text-tertiary">Sweep candidates</p>
+                <p className="mt-1 text-lg font-semibold text-text-primary">{normalizedLegacyRepairReport.revalidationCandidateCount}</p>
+                <p className="mt-3 text-xs text-text-secondary">Items with saved truth that would change under the latest rules.</p>
+              </div>
+              <div className="rounded-xl border border-border-subtle bg-surface-subtle/30 p-4">
+                <p className="text-xs text-text-tertiary">Keep as product cards</p>
+                <p className="mt-1 text-lg font-semibold text-text-primary">{normalizedLegacyRepairReport.revalidationProductCount}</p>
+                <p className="mt-3 text-xs text-text-secondary">Still strong enough to stay fully detailed after the sweep.</p>
+              </div>
+              <div className="rounded-xl border border-border-subtle bg-surface-subtle/30 p-4">
+                <p className="text-xs text-text-tertiary">Shift to link-only</p>
+                <p className="mt-1 text-lg font-semibold text-text-primary">{normalizedLegacyRepairReport.revalidationLinkOnlyCount}</p>
+                <p className="mt-3 text-xs text-text-secondary">Would stay guest-safe, but as cleaner store links.</p>
+              </div>
+              <div className="rounded-xl border border-border-subtle bg-surface-subtle/30 p-4">
+                <p className="text-xs text-text-tertiary">Shift to review-only</p>
+                <p className="mt-1 text-lg font-semibold text-text-primary">{normalizedLegacyRepairReport.revalidationReviewOnlyCount}</p>
+                <p className="mt-3 text-xs text-text-secondary">Would be pulled from guest view until an owner reviews them.</p>
+              </div>
+            </div>
+            {props.revalidationPreviewItems.length > 0 ? (
+              <div className="mt-4 rounded-xl border border-border-subtle bg-surface-subtle/20 p-4">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <p className="text-xs font-semibold uppercase tracking-[0.14em] text-text-tertiary">Likely changes</p>
+                  <button
+                    type="button"
+                    onClick={() => { void handleCopyTruthSweepReport(); }}
+                    disabled={copyingTruthSweepReport}
+                    className="text-xs font-medium text-text-secondary transition-colors hover:text-text-primary disabled:opacity-60"
+                  >
+                    {copyingTruthSweepReport
+                      ? 'Copying sweep preview...'
+                      : truthSweepCopyNotice === 'downloaded'
+                        ? 'Downloaded sweep preview'
+                        : truthSweepCopyNotice === 'copied'
+                          ? 'Copied sweep preview'
+                          : 'Copy sweep preview'}
+                  </button>
+                </div>
+                <div className="mt-3 space-y-2">
+                  {props.revalidationPreviewItems.map((item) => (
+                    <div key={item.id} className="flex items-center justify-between gap-3 rounded-lg border border-border-subtle bg-white px-3 py-2">
+                      <p className="min-w-0 truncate text-sm text-text-primary">{item.title}</p>
+                      <span className="shrink-0 text-xs text-text-secondary">{getRegistryTruthSweepTargetLabel(item.targetMode)}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+          </div>
+        ) : null}
+
+        {workspaceTab === 'cleanup' && (
         <div className="mb-4 flex flex-wrap gap-2">
+          {(normalizedLegacyRepairReport.candidateCount > 0 || props.repairQueue.length > 0) && (
+            <button
+              onClick={() => void props.handleRevalidateRegistryTruth()}
+              disabled={props.revalidatingRegistryTruth}
+              className="rounded-xl border border-border-subtle bg-primary-light px-3 py-1.5 text-xs font-medium text-primary disabled:opacity-60"
+              title="Re-evaluate saved registry truth using the latest safety rules without fetching new metadata"
+            >
+              {props.revalidatingRegistryTruth ? 'Revalidating…' : 'Revalidate saved truth'}
+            </button>
+          )}
           {props.bulkReviewCounts.repair > 0 && <button onClick={() => void props.handleRepairBadImports()} disabled={props.repairingBadImports} className="rounded-xl border border-border-subtle bg-primary-light px-3 py-1.5 text-xs font-medium text-primary disabled:opacity-60" title="Refresh weaker gift details without deleting items">{props.repairingBadImports ? 'Cleaning up…' : 'Refresh details'}</button>}
           {props.bulkReviewCounts.imageIssues > 0 && <button onClick={() => void props.handleRefreshImageIssues()} disabled={props.imageRefreshBusy} className="rounded-xl border border-border-subtle bg-primary-light px-3 py-1.5 text-xs font-medium text-primary disabled:opacity-60">{props.imageRefreshBusy ? 'Refreshing…' : 'Refresh image issues'}</button>}
+          {(normalizedLegacyRepairReport.candidateCount > 0 || props.repairQueue.length > 0) && (
+            <button
+              onClick={() => { void handleCopyMaintenanceReport(); }}
+              disabled={copyingMaintenanceReport}
+              className="px-3 py-1.5 rounded-xl border border-border text-text-secondary text-xs font-medium disabled:opacity-60"
+              title="Copy or download the full cleanup plus truth-sweep report"
+            >
+              {copyingMaintenanceReport
+                ? 'Copying maintenance report...'
+                : maintenanceReportCopyNotice === 'downloaded'
+                  ? 'Downloaded maintenance report'
+                  : maintenanceReportCopyNotice === 'copied'
+                    ? 'Copied maintenance report'
+                    : 'Copy maintenance report'}
+            </button>
+          )}
+          {(normalizedLegacyRepairReport.candidateCount > 0 || props.repairQueue.length > 0) && (
+            <button
+              onClick={() => { void handleCopyCleanupReport(); }}
+              disabled={copyingCleanupReport}
+              className="px-3 py-1.5 rounded-xl border border-border text-text-secondary text-xs font-medium disabled:opacity-60"
+              title="Copy or download a cleanup snapshot"
+            >
+              {copyingCleanupReport
+                ? 'Copying cleanup report...'
+                : cleanupReportCopyNotice === 'downloaded'
+                  ? 'Downloaded cleanup report'
+                  : cleanupReportCopyNotice === 'copied'
+                    ? 'Copied cleanup report'
+                    : 'Copy cleanup report'}
+            </button>
+          )}
           {props.duplicateGroups.length > 0 && (
             <button
               onClick={() => { void handleCopyDuplicateReviewList(); }}
@@ -1216,80 +1854,182 @@ export function RegistryDashboardRouteContent(props: {
             </button>
           )}
         </div>
+        )}
 
-        {props.repairQueue.length > 0 && (
+        {workspaceTab === 'cleanup' && activeCleanupFocusGroup ? (
+          <div className="mb-4 rounded-xl border border-border-subtle bg-primary-light/35 p-4">
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary/80">{activeCleanupFocusGroup.label}</p>
+                <p className="mt-2 text-sm font-semibold text-text-primary">{activeCleanupFocusGroup.recommendedAction}</p>
+                <p className="mt-1 text-sm text-text-secondary">
+                  {activeCleanupFocusGroup.items.length} item{activeCleanupFocusGroup.items.length === 1 ? '' : 's'} are in this lane right now.
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {cleanupFocus === 'review' ? (
+                  <button
+                    type="button"
+                    onClick={() => void props.handleRepairBadImports()}
+                    disabled={props.repairingBadImports}
+                    className="rounded-xl border border-border-subtle bg-white px-3 py-1.5 text-xs font-medium text-primary disabled:opacity-60"
+                  >
+                    {props.repairingBadImports ? 'Cleaning up…' : activeCleanupFocusGroup.focusCtaLabel}
+                  </button>
+                ) : cleanupFocus === 'details' || cleanupFocus === 'freshness' ? (
+                  <button
+                    type="button"
+                    onClick={() => void props.handleRefreshImageIssues()}
+                    disabled={props.imageRefreshBusy}
+                    className="rounded-xl border border-border-subtle bg-white px-3 py-1.5 text-xs font-medium text-primary disabled:opacity-60"
+                  >
+                    {props.imageRefreshBusy ? 'Refreshing…' : activeCleanupFocusGroup.focusCtaLabel}
+                  </button>
+                ) : null}
+                <button
+                  type="button"
+                  onClick={() => setCleanupFocus('all')}
+                  className="rounded-xl border border-border bg-white px-3 py-1.5 text-xs font-medium text-text-secondary"
+                >
+                  Back to all cleanup
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : null}
+
+        {workspaceTab === 'cleanup' && cleanupQueueGroups.length > 0 && (
+          <div className="mb-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+            {cleanupQueueGroups.map((group) => (
+              <button
+                key={`summary-${group.key}`}
+                type="button"
+                onClick={() => setCleanupFocus(group.key as RegistryCleanupFocus)}
+                className={`rounded-xl border bg-white p-4 text-left transition-colors ${
+                  cleanupFocus === group.key
+                    ? 'border-border-subtle ring-1 ring-border-subtle'
+                    : 'border-border-subtle hover:border-border'
+                }`}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-semibold text-text-primary">{group.label}</p>
+                    <p className="mt-1 text-xs text-text-tertiary">{group.items.length} waiting</p>
+                  </div>
+                  <span className="rounded-xl border border-border bg-surface-subtle/20 px-2 py-1 text-[11px] font-medium text-text-tertiary">
+                    {group.items.length}
+                  </span>
+                </div>
+                <p className="mt-3 text-sm leading-6 text-text-secondary">{group.summary}</p>
+                <p className="mt-3 text-xs text-text-tertiary">{group.recommendedAction}</p>
+              </button>
+            ))}
+          </div>
+        )}
+
+        {workspaceTab === 'cleanup' && props.repairQueue.length > 0 && (
           <div className="mb-4 space-y-3">
             <div className="flex items-center justify-between gap-3">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary/75">Cleanup queue</p>
                 <p className="mt-3 text-sm font-semibold text-text-primary">The items that still need a hands-on pass.</p>
                 <p className="mt-2 text-sm text-text-secondary">{cleanupQueueLeadSummary}</p>
-                <p className="mt-1 text-xs text-text-tertiary">{cleanupQueueSummary}</p>
+                <p className="mt-1 text-xs text-text-tertiary">
+                  {cleanupQueueGroupedSummary ? `${cleanupQueueSummary} ${cleanupQueueGroupedSummary}.` : cleanupQueueSummary}
+                </p>
               </div>
-              <span className="rounded-xl border border-border px-2 py-1 text-xs font-medium text-text-tertiary">
-                {props.repairQueue.length} waiting
-              </span>
+              <div className="flex flex-wrap items-center justify-end gap-2">
+                {cleanupFocus !== 'all' ? (
+                  <button
+                    type="button"
+                    onClick={() => setCleanupFocus('all')}
+                    className="rounded-xl border border-border px-2 py-1 text-xs font-medium text-text-secondary"
+                  >
+                    Show all
+                  </button>
+                ) : null}
+                <span className="rounded-xl border border-border px-2 py-1 text-xs font-medium text-text-tertiary">
+                  {cleanupFocus === 'all'
+                    ? `${props.repairQueue.length} waiting`
+                    : `${visibleCleanupQueueGroups.reduce((sum, group) => sum + group.items.length, 0)} in focus`}
+                </span>
+              </div>
             </div>
-            {props.repairQueue.slice(0, 6).map((queueItem) => (
-              <div key={queueItem.id} className="rounded-xl border border-border-subtle bg-surface-subtle/20 p-4">
-                <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-                  <div className="space-y-2">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <p className="text-sm font-medium text-text-primary">{getOwnerRegistryDisplayTitle(queueItem.item.item_name)}</p>
-                      <span className={`rounded-xl border px-2 py-1 text-[11px] ${
-                        queueItem.severity === 'high'
-                          ? 'border-border-subtle bg-primary-light text-primary'
-                          : queueItem.severity === 'medium'
-                          ? 'border-border bg-white text-text-secondary'
-                          : 'border-border bg-white text-text-tertiary'
-                      }`}>
-                        {queueItem.severity === 'high' ? 'Fix now' : queueItem.severity === 'medium' ? 'Look soon' : 'Keep fresh'}
-                      </span>
-                    </div>
-                    <p className="text-sm text-text-secondary">{queueItem.summary}</p>
-                    <p className="text-xs text-text-secondary">{queueItem.detail}</p>
-                    <div className="flex flex-wrap gap-2 text-[11px]">
-                      {queueItem.states.map((state) => (
-                        <span key={`${queueItem.id}-${state}`} className="rounded-xl border border-border bg-white px-2 py-1 text-text-tertiary">
-                          {state.replace(/-/g, ' ')}
-                        </span>
-                      ))}
-                    </div>
+            {visibleCleanupQueueGroups.map((group) => (
+              <div key={group.key} className="space-y-3 rounded-xl border border-border-subtle bg-surface-subtle/15 p-4">
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                  <div>
+                    <p className="text-sm font-semibold text-text-primary">{group.label}</p>
+                    <p className="mt-1 text-sm text-text-secondary">{group.summary}</p>
                   </div>
-                  <div className="flex flex-wrap gap-2 lg:max-w-[250px] lg:justify-end">
-                    <button
-                      type="button"
-                      onClick={() => void props.handleRunRepairQueueAction(queueItem, queueItem.secondaryAction)}
-                      className="rounded-xl border border-border px-3 py-1.5 text-xs font-medium text-text-secondary"
-                    >
-                      {queueItem.secondaryActionLabel}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => void props.handleRunRepairQueueAction(queueItem, queueItem.primaryAction)}
-                      className="rounded-xl border border-border-subtle bg-primary-light px-3 py-1.5 text-xs font-medium text-primary"
-                    >
-                      {queueItem.primaryActionLabel}
-                    </button>
-                  </div>
+                  <span className="rounded-xl border border-border bg-white px-2 py-1 text-[11px] font-medium text-text-tertiary">
+                    {group.items.length} waiting
+                  </span>
                 </div>
+                <div className="space-y-3">
+                  {group.items.slice(0, 4).map((queueItem) => (
+                    <div key={queueItem.id} className="rounded-xl border border-border-subtle bg-white p-4">
+                      <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                        <div className="space-y-2">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <p className="text-sm font-medium text-text-primary">{getOwnerRegistryDisplayTitle(queueItem.item.item_name, queueItem.item)}</p>
+                            <span className={`rounded-xl border px-2 py-1 text-[11px] ${
+                              queueItem.severity === 'high'
+                                ? 'border-border-subtle bg-primary-light text-primary'
+                                : queueItem.severity === 'medium'
+                                ? 'border-border bg-white text-text-secondary'
+                                : 'border-border bg-white text-text-tertiary'
+                            }`}>
+                              {queueItem.severity === 'high' ? 'Fix now' : queueItem.severity === 'medium' ? 'Look soon' : 'Keep fresh'}
+                            </span>
+                          </div>
+                          <p className="text-sm text-text-secondary">{queueItem.summary}</p>
+                          <p className="text-xs text-text-secondary">{queueItem.detail}</p>
+                          <div className="flex flex-wrap gap-2 text-[11px]">
+                            {queueItem.states.map((state) => (
+                              <span key={`${queueItem.id}-${state}`} className="rounded-xl border border-border bg-surface-subtle/20 px-2 py-1 text-text-tertiary">
+                                {state.replace(/-/g, ' ')}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                        <div className="flex flex-wrap gap-2 lg:max-w-[250px] lg:justify-end">
+                          <button
+                            type="button"
+                            onClick={() => void props.handleRunRepairQueueAction(queueItem, queueItem.secondaryAction)}
+                            className="rounded-xl border border-border px-3 py-1.5 text-xs font-medium text-text-secondary"
+                          >
+                            {queueItem.secondaryActionLabel}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => void props.handleRunRepairQueueAction(queueItem, queueItem.primaryAction)}
+                            className="rounded-xl border border-border-subtle bg-primary-light px-3 py-1.5 text-xs font-medium text-primary"
+                          >
+                            {queueItem.primaryActionLabel}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                {group.items.length > 4 ? (
+                  <p className="text-xs text-text-tertiary">
+                    {group.items.length - 4} more {group.label.toLowerCase()} item{group.items.length - 4 === 1 ? '' : 's'} are still waiting below the fold.
+                  </p>
+                ) : null}
               </div>
             ))}
-            {props.repairQueue.length > 6 && (
-              <p className="text-xs text-text-tertiary">
-                {props.repairQueue.length - 6} more cleanup item{props.repairQueue.length - 6 === 1 ? '' : 's'} are still waiting below the fold.
-              </p>
-            )}
           </div>
         )}
-        {props.repairQueue.length === 0 && (
+        {workspaceTab === 'cleanup' && props.repairQueue.length === 0 && (
           <div className="mb-4 rounded-xl border border-border-subtle bg-surface-subtle/20 p-4">
             <p className="text-sm font-semibold text-text-primary">Cleanup queue</p>
             <p className="mt-1 text-sm text-text-secondary">{cleanupQueueSummary}</p>
           </div>
         )}
 
-        {props.duplicateGroups.length > 0 && (
+        {workspaceTab === 'cleanup' && props.duplicateGroups.length > 0 && (
           <div className="mb-4 space-y-3">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary/75">Duplicate checks</p>
@@ -1304,7 +2044,7 @@ export function RegistryDashboardRouteContent(props: {
                     <div>
                       <p className="text-sm font-medium text-text-primary">Possible repeat group</p>
                       <p className="mt-1 text-xs text-text-secondary">
-                        Keep <span className="font-medium text-text-primary">{getOwnerRegistryDisplayTitle(group.primaryItem.item_name)}</span> and merge {group.secondaryItems.length} repeat{group.secondaryItems.length === 1 ? '' : 's'} into it.
+                        Keep <span className="font-medium text-text-primary">{getOwnerRegistryDisplayTitle(group.primaryItem.item_name, group.primaryItem)}</span> and merge {group.secondaryItems.length} repeat{group.secondaryItems.length === 1 ? '' : 's'} into it.
                       </p>
                     </div>
                     <div className="flex flex-wrap gap-2 text-[11px]">
@@ -1320,7 +2060,7 @@ export function RegistryDashboardRouteContent(props: {
                     <div className="space-y-1 text-xs text-text-secondary">
                       {group.items.map((item) => (
                         <p key={item.id}>
-                          • {getOwnerRegistryDisplayTitle(item.item_name)}
+                          • {getOwnerRegistryDisplayTitle(item.item_name, item)}
                           {item.id === group.primaryItem.id ? ' (keep)' : ''}
                           {item.merchant || item.store_name ? ` — ${item.merchant || item.store_name}` : ''}
                           {item.quantity_purchased > 0 || item.quantity_needed > 1 ? ` — ${item.quantity_purchased}/${item.quantity_needed}` : ''}
@@ -1354,13 +2094,104 @@ export function RegistryDashboardRouteContent(props: {
           </div>
         )}
 
-        {props.loading && props.items.length === 0 ? (
+        {workspaceTab === 'thank_yous' ? (
+          <section className="space-y-4">
+            <div className="rounded-[20px] border border-border-subtle bg-white p-5 shadow-none">
+              <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary/75">Thank-yous</p>
+                  <h2 className="mt-3 text-lg font-semibold text-text-primary">Keep purchased gifts and follow-up notes in one calm list.</h2>
+                  <p className="mt-2 max-w-2xl text-sm leading-6 text-text-secondary">
+                    This view stays focused on purchased gifts, purchaser coverage, and note follow-up so it does not get buried inside imports or cleanup work.
+                  </p>
+                </div>
+                <div className="inline-flex flex-wrap gap-2 text-xs text-text-tertiary">
+                  <span className="rounded-xl border border-border-subtle bg-surface-subtle/30 px-3 py-1">Purchased gifts {props.registryThankYouPlan.purchasedCount}</span>
+                  <span className="rounded-xl border border-border-subtle bg-surface-subtle/30 px-3 py-1">Ready to send {props.registryThankYouStats.readyToSendCount}</span>
+                  <span className="rounded-xl border border-border-subtle bg-surface-subtle/30 px-3 py-1">Sent {props.registryThankYouStats.completedCount}</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="grid gap-3 md:grid-cols-3">
+              <div className="rounded-xl border border-border-subtle bg-surface-subtle/20 p-4">
+                <p className="text-xs text-text-tertiary">Purchasers named</p>
+                <p className="mt-1 text-lg font-semibold text-text-primary">{props.registryThankYouStats.attributionCoverageRate}%</p>
+              </div>
+              <div className="rounded-xl border border-border-subtle bg-surface-subtle/20 p-4">
+                <p className="text-xs text-text-tertiary">Thank-yous sent</p>
+                <p className="mt-1 text-lg font-semibold text-text-primary">{props.registryThankYouStats.completedCount}</p>
+              </div>
+              <div className="rounded-xl border border-border-subtle bg-surface-subtle/20 p-4">
+                <p className="text-xs text-text-tertiary">Still pending</p>
+                <p className="mt-1 text-lg font-semibold text-text-primary">{props.registryThankYouStats.pendingCount}</p>
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-border-subtle bg-white p-4">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-sm font-semibold text-text-primary">{props.registryThankYouPlan.headline}</p>
+                  <p className="mt-1 text-sm text-text-secondary">{props.registryThankYouPlan.summary}</p>
+                </div>
+                <Button variant="outline" size="sm" onClick={() => void props.handleSyncRegistryThankYouTasks()} disabled={props.registryThankYouSyncing}>
+                  {props.registryThankYouSyncing ? 'Saving…' : 'Save thank-you updates'}
+                </Button>
+              </div>
+
+              {props.registryThankYouPlan.items.length === 0 ? (
+                <p className="mt-4 text-sm text-text-secondary">No purchased gifts need a thank-you yet.</p>
+              ) : (
+                <div className="mt-4 space-y-3">
+                  {props.registryThankYouPlan.items.map((item) => (
+                    <div key={item.id} className="rounded-xl border border-border-subtle bg-surface-subtle/20 p-4">
+                      <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                        <div>
+                          <p className="text-sm font-medium text-text-primary">{item.giftName}</p>
+                          <p className="mt-1 text-xs text-text-secondary">{item.purchaserLabel}</p>
+                          <p className="mt-2 text-sm text-text-secondary">{item.detail}</p>
+                        </div>
+                        <div className="flex flex-wrap gap-2 lg:justify-end">
+                          {item.taskStatus === 'needs-purchaser' ? (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                const targetItem = props.items.find((entry) => entry.id === item.id) ?? props.normalizedItems.find((entry) => entry.id === item.id);
+                                if (targetItem) props.handleEdit(targetItem);
+                              }}
+                            >
+                              Open gift
+                            </Button>
+                          ) : (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => void props.handleToggleRegistryThankYouTask(item.id)}
+                              disabled={props.registryThankYouBusyItemId === item.id}
+                            >
+                              {props.registryThankYouBusyItemId === item.id
+                                ? 'Saving…'
+                                : item.taskStatus === 'done'
+                                  ? 'Clear sent'
+                                  : 'Mark sent'}
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </section>
+        ) : props.loading && props.items.length === 0 ? (
           <DashboardStateBlock title="Loading registry…" description="Pulling your latest items and settings." />
         ) : props.error && props.items.length === 0 ? (
           <DashboardStateBlock title="Couldn’t open registry right now" description={props.error} tone="error" />
         ) : !props.weddingSiteId ? (
           <DashboardStateBlock title="No wedding site found" description="Complete onboarding first to set up your registry." />
-        ) : props.filtered.length === 0 ? (
+        ) : workspaceTab === 'items' && props.filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 gap-4 text-center">
             <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-surface-subtle">
               <Gift className="w-8 h-8 text-text-tertiary" />
@@ -1382,7 +2213,7 @@ export function RegistryDashboardRouteContent(props: {
               </Button>
             )}
           </div>
-        ) : (
+        ) : workspaceTab === 'items' ? (
           <section className="space-y-4">
             <div className="rounded-[20px] border border-border-subtle bg-white p-5 shadow-none">
               <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
@@ -1415,7 +2246,7 @@ export function RegistryDashboardRouteContent(props: {
               ))}
             </div>
           </section>
-        )}
+        ) : null}
       </Card>
     </div>
   );

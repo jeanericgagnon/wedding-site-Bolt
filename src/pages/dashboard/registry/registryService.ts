@@ -8,6 +8,12 @@ import {
   normalizeRegistryTitleForComparison,
   sanitizeRegistryQuantityState,
 } from './registryTypes';
+import {
+  MAX_REGISTRY_ITEMS,
+  MAX_REGISTRY_SORT_LOOKUP_ROWS,
+  REGISTRY_DASHBOARD_SITE_SELECT,
+  REGISTRY_ITEM_SELECT,
+} from './registryQueries';
 
 const REGISTRY_PREVIEW_ERROR_COPY = 'Couldn’t fill in gift details from that link. You can still add the item by hand.';
 const REGISTRY_LOAD_ERROR_COPY = 'Couldn’t load registry items. Please refresh and try again.';
@@ -15,10 +21,33 @@ const REGISTRY_SAVE_ERROR_COPY = 'Couldn’t save this gift. Please try again.';
 const REGISTRY_DELETE_ERROR_COPY = 'Couldn’t remove that gift. Please try again.';
 const REGISTRY_PURCHASE_ERROR_COPY = 'Couldn’t update that gift right now. Please try again.';
 
-const REGISTRY_ITEM_SELECT = 'id, wedding_site_id, item_type, item_name, price_label, price_amount, store_name, merchant, source_type, barcode, item_url, canonical_url, image_url, selected_retailer, selected_product_url, estimated_price_cents, product_metadata, description, notes, quantity_needed, quantity_purchased, purchaser_name, purchase_status, hide_when_purchased, sort_order, priority, availability, metadata_last_checked_at, metadata_fetch_status, metadata_confidence_score, metadata_source_method, metadata_retailer, previous_price_amount, price_last_changed_at, next_refresh_at, last_auto_refreshed_at, refresh_fail_count, fund_goal_amount, fund_received_amount, fund_venmo_url, fund_paypal_url, fund_zelle_handle, fund_custom_url, fund_custom_label, created_at, updated_at' as const;
-export const REGISTRY_DASHBOARD_SITE_SELECT = 'id, site_slug, wedding_date, registry_refresh_enabled_until, registry_monthly_refresh_cap, registry_monthly_refresh_count, registry_monthly_refresh_month, registry_auto_refresh_enabled, registry_refresh_include_purchased, registry_refresh_policy_updated_at, registry_refresh_policy_updated_by' as const;
-export const MAX_REGISTRY_ITEMS = 500;
-export const MAX_REGISTRY_SORT_LOOKUP_ROWS = 1;
+export interface RegistryImportBatchItemRecord {
+  id: string;
+  original_url: string;
+  normalized_url: string | null;
+  registry_item_id: string | null;
+  result: 'clean' | 'link_only' | 'needs_review' | 'duplicate' | 'failed';
+  store_name: string | null;
+  display_title: string | null;
+  reason: string | null;
+  created_at: string;
+}
+
+export interface RegistryImportBatchRecord {
+  id: string;
+  wedding_site_id: string;
+  created_by: string;
+  total_count: number;
+  clean_count: number;
+  link_only_count: number;
+  needs_review_count: number;
+  duplicate_count: number;
+  failed_count: number;
+  status: 'processing' | 'complete' | 'failed';
+  created_at: string;
+  completed_at: string | null;
+  items: RegistryImportBatchItemRecord[];
+}
 
 export interface RegistryDashboardSiteRow {
   id: string;
@@ -104,6 +133,108 @@ export async function saveRegistryRefreshPolicy(
   });
 
   if (error) throw error;
+}
+
+export async function fetchLatestRegistryImportBatch(weddingSiteId: string): Promise<RegistryImportBatchRecord | null> {
+  const { data, error } = await supabase
+    .from('registry_import_batches')
+    .select('id, wedding_site_id, created_by, total_count, clean_count, link_only_count, needs_review_count, duplicate_count, failed_count, status, created_at, completed_at, items:registry_import_batch_items(id, original_url, normalized_url, registry_item_id, result, store_name, display_title, reason, created_at)')
+    .eq('wedding_site_id', weddingSiteId)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (error) throw error;
+  return (data as RegistryImportBatchRecord | null) ?? null;
+}
+
+export async function fetchRecentRegistryImportBatches(
+  weddingSiteId: string,
+  limit = 5,
+): Promise<RegistryImportBatchRecord[]> {
+  const { data, error } = await supabase
+    .from('registry_import_batches')
+    .select('id, wedding_site_id, created_by, total_count, clean_count, link_only_count, needs_review_count, duplicate_count, failed_count, status, created_at, completed_at, items:registry_import_batch_items(id, original_url, normalized_url, registry_item_id, result, store_name, display_title, reason, created_at)')
+    .eq('wedding_site_id', weddingSiteId)
+    .order('created_at', { ascending: false })
+    .limit(limit);
+
+  if (error) throw error;
+  return (data as RegistryImportBatchRecord[] | null) ?? [];
+}
+
+export async function saveRegistryImportBatch(
+  weddingSiteId: string,
+  summary: {
+    totalCount: number;
+    cleanCount: number;
+    linkOnlyCount: number;
+    needsReviewCount: number;
+    duplicateCount: number;
+    failedCount: number;
+    items: Array<{
+      url: string;
+      result: 'clean' | 'link_only' | 'needs_review' | 'duplicate' | 'failed';
+      displayTitle: string;
+      storeName: string | null;
+      reason: string | null;
+      registryItemId?: string | null;
+    }>;
+  },
+): Promise<RegistryImportBatchRecord | null> {
+  const { data: authData } = await supabase.auth.getUser();
+  const userId = authData.user?.id;
+  if (!userId) return null;
+
+  const { data: batch, error: batchError } = await supabase
+    .from('registry_import_batches')
+    .insert({
+      wedding_site_id: weddingSiteId,
+      created_by: userId,
+      total_count: summary.totalCount,
+      clean_count: summary.cleanCount,
+      link_only_count: summary.linkOnlyCount,
+      needs_review_count: summary.needsReviewCount,
+      duplicate_count: summary.duplicateCount,
+      failed_count: summary.failedCount,
+      status: 'processing',
+    })
+    .select('id, wedding_site_id, created_by, total_count, clean_count, link_only_count, needs_review_count, duplicate_count, failed_count, status, created_at, completed_at')
+    .single();
+
+  if (batchError) throw batchError;
+
+  if (summary.items.length > 0) {
+    const { error: itemsError } = await supabase
+      .from('registry_import_batch_items')
+      .insert(summary.items.map((item) => ({
+        batch_id: batch.id,
+        original_url: item.url,
+        normalized_url: normalizeRegistryComparisonUrl(item.url),
+        registry_item_id: item.registryItemId ?? null,
+        result: item.result,
+        store_name: item.storeName,
+        display_title: item.displayTitle,
+        reason: item.reason,
+      })));
+
+    if (itemsError) throw itemsError;
+  }
+
+  const finalStatus: RegistryImportBatchRecord['status'] = summary.failedCount >= summary.totalCount ? 'failed' : 'complete';
+  const completedAt = new Date().toISOString();
+  const { data: completedBatch, error: completedError } = await supabase
+    .from('registry_import_batches')
+    .update({
+      status: finalStatus,
+      completed_at: completedAt,
+    })
+    .eq('id', batch.id)
+    .select('id, wedding_site_id, created_by, total_count, clean_count, link_only_count, needs_review_count, duplicate_count, failed_count, status, created_at, completed_at, items:registry_import_batch_items(id, original_url, normalized_url, registry_item_id, result, store_name, display_title, reason, created_at)')
+    .single();
+
+  if (completedError) throw completedError;
+  return (completedBatch as RegistryImportBatchRecord | null) ?? null;
 }
 
 export async function createRegistryItem(

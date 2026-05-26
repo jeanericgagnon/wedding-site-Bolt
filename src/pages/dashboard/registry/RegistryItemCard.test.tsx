@@ -78,7 +78,7 @@ describe('RegistryItemCard', () => {
       />,
     );
 
-    expect(screen.getByText('Gift link needs review')).toBeInTheDocument();
+    expect(screen.getByText('Needs review')).toBeInTheDocument();
     expect(screen.queryByText('Page Not Found')).not.toBeInTheDocument();
   });
 
@@ -96,8 +96,10 @@ describe('RegistryItemCard', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /edit/i }));
     fireEvent.click(screen.getByRole('button', { name: /delete/i }));
+    expect(screen.getByRole('button', { name: /confirm/i })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /confirm/i }));
 
-    expect(screen.getByText('Gift link needs review')).toBeInTheDocument();
+    expect(screen.getByText('Needs review')).toBeInTheDocument();
     expect(onEdit).toHaveBeenCalledTimes(1);
     expect(onDelete).toHaveBeenCalledTimes(1);
   });
@@ -329,7 +331,7 @@ describe('RegistryItemCard', () => {
       />,
     );
 
-    expect(screen.getByText('Gift link needs review')).toBeInTheDocument();
+    expect(screen.getByText('Needs review')).toBeInTheDocument();
     expect(screen.getByText(/This imported link resolved to a broken page title\./i)).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: /view/i })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: /edit/i })).toBeInTheDocument();
@@ -348,7 +350,7 @@ describe('RegistryItemCard', () => {
       />,
     );
 
-    expect(screen.getByText('Gift link needs review')).toBeInTheDocument();
+    expect(screen.getByText('Gift from Amazon')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /view/i })).toHaveAttribute('href', 'https://example.com/recovered-gift');
     expect(screen.getByRole('button', { name: /edit/i })).toBeInTheDocument();
   });

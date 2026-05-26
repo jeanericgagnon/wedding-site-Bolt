@@ -5,7 +5,7 @@ import { getCurrentMonthKey, resolveRegistryRefreshBudgetState } from './refresh
 import { readDemoRegistryState, writeDemoRegistryState } from './registryDemoStorage';
 import { loadRegistryThankYouLedger } from './registryThankYouLedger';
 import { toDateInputValueOrEmpty } from '../registryRefreshWindow';
-import { fetchRegistryItems, loadRegistryDashboardSite } from './registryService';
+import { fetchLatestRegistryImportBatch, fetchRecentRegistryImportBatches, fetchRegistryItems, loadRegistryDashboardSite, type RegistryImportBatchRecord } from './registryService';
 import type { RegistryItem } from './registryTypes';
 import { demoWeddingSite } from '../../../lib/demoData';
 
@@ -72,6 +72,8 @@ export function useRegistryDashboardData(args: UseRegistryDashboardDataArgs) {
   const [policyUpdatedAt, setPolicyUpdatedAt] = useState<string | null>(null);
   const [policyUpdatedBy, setPolicyUpdatedBy] = useState<string | null>(null);
   const [registryThankYouLedgerState, setRegistryThankYouLedgerState] = useState<RegistryThankYouLedger>({});
+  const [latestImportBatch, setLatestImportBatch] = useState<RegistryImportBatchRecord | null>(null);
+  const [recentImportBatches, setRecentImportBatches] = useState<RegistryImportBatchRecord[]>([]);
   const initRequestIdRef = useRef(0);
 
   const resetRegistryDashboardState = useCallback(() => {
@@ -91,6 +93,8 @@ export function useRegistryDashboardData(args: UseRegistryDashboardDataArgs) {
     setPolicyUpdatedBy(null);
     setItemsState([]);
     setRegistryThankYouLedgerState({});
+    setLatestImportBatch(null);
+    setRecentImportBatches([]);
   }, []);
 
   const setItems: Dispatch<SetStateAction<RegistryItem[]>> = useCallback((value) => {
@@ -156,6 +160,8 @@ export function useRegistryDashboardData(args: UseRegistryDashboardDataArgs) {
           setPolicyUpdatedBy(null);
           setItemsState(demoState.items.map(normalizeOwnerDashboardRegistryItem));
           setRegistryThankYouLedgerState(demoState.thankYouLedger);
+          setLatestImportBatch(null);
+          setRecentImportBatches([]);
           return;
         }
 
@@ -193,15 +199,19 @@ export function useRegistryDashboardData(args: UseRegistryDashboardDataArgs) {
         setRefreshCapDraft(loadedCap);
         setRefreshPreset(loadedCap <= 60 ? 'lean' : loadedCap <= 160 ? 'balanced' : 'aggressive');
         setMonthlyRefreshCount(budgetState.count);
-        const [_, ledger] = await runRegistryDashboardTimed(
+        const [_, ledger, importBatch, importBatches] = await runRegistryDashboardTimed(
           Promise.all([
             loadItems(site.id, () => !isCurrentInit()),
             loadRegistryThankYouLedger(site.id),
+            fetchLatestRegistryImportBatch(site.id),
+            fetchRecentRegistryImportBatches(site.id),
           ]),
           REGISTRY_DASHBOARD_LOAD_TIMEOUT_MS,
         );
         if (!isCurrentInit()) return;
         setRegistryThankYouLedger(ledger);
+        setLatestImportBatch(importBatch);
+        setRecentImportBatches(importBatches);
       } catch {
         if (requestId !== initRequestIdRef.current) return;
         resetRegistryDashboardState();
@@ -243,11 +253,15 @@ export function useRegistryDashboardData(args: UseRegistryDashboardDataArgs) {
     setRefreshIncludePurchased,
     setRefreshPreset,
     setRegistryThankYouLedger,
+    setLatestImportBatch,
+    setRecentImportBatches,
     setRefreshWindowDraft,
     weddingDate,
     siteSlug,
     weddingSiteId,
     loadItems,
     registryThankYouLedger: registryThankYouLedgerState,
+    latestImportBatch,
+    recentImportBatches,
   };
 }
