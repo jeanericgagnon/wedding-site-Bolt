@@ -13,6 +13,18 @@ interface Props {
   canEdit?: boolean;
 }
 
+function buildAddressCollectionSmsTemplate(collectionUrl: string) {
+  if (!collectionUrl) return '';
+
+  const preferredMessage = `Please update your wedding mailing address and contact info: ${collectionUrl}`;
+  if (preferredMessage.length <= 160) return preferredMessage;
+
+  const shorterMessage = `Wedding address update: ${collectionUrl}`;
+  if (shorterMessage.length <= 160) return shorterMessage;
+
+  return collectionUrl;
+}
+
 export const AddressCollectionTab: React.FC<Props> = ({ siteId, isDemoMode = false, canEdit = true }) => {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -131,6 +143,7 @@ export const AddressCollectionTab: React.FC<Props> = ({ siteId, isDemoMode = fal
   }
 
   const emailTemplate = `Hi! We are collecting mailing addresses and contact details for the wedding. Please update yours here: ${collectionUrl}`;
+  const smsTemplate = buildAddressCollectionSmsTemplate(collectionUrl);
   const followUpGuests = view === 'missing-contact'
     ? stats.missingContact
     : view === 'all'
@@ -142,7 +155,7 @@ export const AddressCollectionTab: React.FC<Props> = ({ siteId, isDemoMode = fal
     const params = new URLSearchParams({
       prefillCampaignName: 'Address collection',
       prefillSubject: 'Quick wedding address update',
-      prefillBody: emailTemplate,
+      prefillBody: channel === 'sms' ? smsTemplate : emailTemplate,
       prefillAudience: 'all',
       prefillChannel: channel,
     });
@@ -261,7 +274,7 @@ export const AddressCollectionTab: React.FC<Props> = ({ siteId, isDemoMode = fal
                   : 'Copied email copy'
                 : 'Copy email copy'}
           </Button>
-          <Button size="sm" variant="outline" onClick={() => void runCopyAction('text-copy', emailTemplate.slice(0, 155), 'Text copy', 'dayof-text-copy.txt')} disabled={!collectionUrl || copyingKey === 'text-copy'}>
+          <Button size="sm" variant="outline" onClick={() => void runCopyAction('text-copy', smsTemplate, 'Text copy', 'dayof-text-copy.txt')} disabled={!collectionUrl || copyingKey === 'text-copy'}>
             <MessageSquare className="w-4 h-4 mr-1" />
             {copyingKey === 'text-copy'
               ? 'Copying...'

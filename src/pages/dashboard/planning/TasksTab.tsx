@@ -297,12 +297,13 @@ export const TasksTab: React.FC<Props> = ({ tasks, weddingDate, onAdd, onUpdate,
       if (!canEditRef.current) return;
       toast(errorMessage, 'error');
     } finally {
-      if (!canEditRef.current) return;
-      setPendingTaskIds((current) => {
-        const next = new Set(current);
-        next.delete(taskId);
-        return next;
-      });
+      if (canEditRef.current) {
+        setPendingTaskIds((current) => {
+          const next = new Set(current);
+          next.delete(taskId);
+          return next;
+        });
+      }
     }
   }
 

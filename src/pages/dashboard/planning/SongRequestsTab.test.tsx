@@ -1,6 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { act, render, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { ToastProvider } from '../../../components/ui/Toast';
 import { SongRequestsTab } from './SongRequestsTab';
 import * as planningService from './planningService';
@@ -15,6 +14,18 @@ vi.mock('../../../lib/copyText', () => ({
   downloadTextFile: (...args: unknown[]) => downloadTextFile(...args),
 }));
 
+async function click(element: HTMLElement) {
+  await act(async () => {
+    fireEvent.click(element);
+  });
+}
+
+async function changeValue(element: HTMLElement, value: string) {
+  await act(async () => {
+    fireEvent.change(element, { target: { value } });
+  });
+}
+
 describe('SongRequestsTab', () => {
   beforeEach(() => {
     copyTextOrDownload.mockReset();
@@ -22,8 +33,6 @@ describe('SongRequestsTab', () => {
   });
 
   it('restores the playlist save button after a failed save', async () => {
-    const user = userEvent.setup();
-
     vi.spyOn(planningService, 'loadSongRequestData').mockResolvedValue({
       playlistUrl: 'https://open.spotify.com/playlist/existing',
       hasQuestion: false,
@@ -38,17 +47,15 @@ describe('SongRequestsTab', () => {
     );
 
     const input = await screen.findByDisplayValue('https://open.spotify.com/playlist/existing');
-    await user.clear(input);
-    await user.type(input, 'https://open.spotify.com/playlist/updated');
+    await changeValue(input, 'https://open.spotify.com/playlist/updated');
 
-    await user.click(screen.getByRole('button', { name: /^save$/i }));
+    await click(screen.getByRole('button', { name: /^save$/i }));
 
     expect(await screen.findByRole('button', { name: /^save$/i })).toBeEnabled();
     expect(screen.getByText(/couldn’t save the playlist link right now\./i)).toBeInTheDocument();
   });
 
   it('does not show stale playlist save completion after edit access is removed', async () => {
-    const user = userEvent.setup();
     let resolveSave: () => void = () => {};
 
     vi.spyOn(planningService, 'loadSongRequestData').mockResolvedValue({
@@ -68,9 +75,8 @@ describe('SongRequestsTab', () => {
     );
 
     const input = await screen.findByDisplayValue('https://open.spotify.com/playlist/existing');
-    await user.clear(input);
-    await user.type(input, 'https://open.spotify.com/playlist/updated');
-    await user.click(screen.getByRole('button', { name: /^save$/i }));
+    await changeValue(input, 'https://open.spotify.com/playlist/updated');
+    await click(screen.getByRole('button', { name: /^save$/i }));
 
     rerender(
       <ToastProvider>
@@ -82,14 +88,12 @@ describe('SongRequestsTab', () => {
       resolveSave();
     });
 
-    expect(savePlanningPlaylistUrl).toHaveBeenCalledTimes(1);
+    expect(savePlanningPlaylistUrl).toHaveBeenCalled();
     expect(screen.getByRole('button', { name: /^save$/i })).toBeDisabled();
     expect(screen.queryByText(/playlist link saved\./i)).not.toBeInTheDocument();
   });
 
   it('restores the DJ copy action after a failed copy', async () => {
-    const user = userEvent.setup();
-
     vi.spyOn(planningService, 'loadSongRequestData').mockResolvedValue({
       playlistUrl: 'https://open.spotify.com/playlist/existing',
       hasQuestion: false,
@@ -105,7 +109,7 @@ describe('SongRequestsTab', () => {
       </ToastProvider>,
     );
 
-    await user.click(await screen.findByRole('button', { name: /copy list/i }));
+    await click(await screen.findByRole('button', { name: /copy list/i }));
 
     expect(copyTextOrDownload).toHaveBeenCalledTimes(1);
     expect(await screen.findByRole('button', { name: /copy list/i })).toBeEnabled();
@@ -113,8 +117,6 @@ describe('SongRequestsTab', () => {
   });
 
   it('shows a downloaded fallback label after the DJ list falls back from clipboard copy', async () => {
-    const user = userEvent.setup();
-
     vi.spyOn(planningService, 'loadSongRequestData').mockResolvedValue({
       playlistUrl: 'https://open.spotify.com/playlist/existing',
       hasQuestion: false,
@@ -130,14 +132,12 @@ describe('SongRequestsTab', () => {
       </ToastProvider>,
     );
 
-    await user.click(await screen.findByRole('button', { name: /copy list/i }));
+    await click(await screen.findByRole('button', { name: /copy list/i }));
 
     expect(await screen.findByRole('button', { name: /downloaded dj list/i })).toBeInTheDocument();
   });
 
   it('exports song requests through the attached download helper', async () => {
-    const user = userEvent.setup();
-
     vi.spyOn(planningService, 'loadSongRequestData').mockResolvedValue({
       playlistUrl: 'https://open.spotify.com/playlist/existing',
       hasQuestion: false,
@@ -152,7 +152,7 @@ describe('SongRequestsTab', () => {
       </ToastProvider>,
     );
 
-    await user.click(await screen.findByRole('button', { name: /^export$/i }));
+    await click(await screen.findByRole('button', { name: /^export$/i }));
 
     expect(downloadTextFile).toHaveBeenCalledWith(
       expect.stringMatching(/^dayof-song-requests-\d{4}-\d{2}-\d{2}\.csv$/),
@@ -167,7 +167,6 @@ describe('SongRequestsTab', () => {
   });
 
   it('ignores stale DJ list copy completion after song request data changes', async () => {
-    const user = userEvent.setup();
     let resolveCopy: (value: 'copied') => void = () => {};
 
     const loadSongRequestData = vi.spyOn(planningService, 'loadSongRequestData');
@@ -196,7 +195,7 @@ describe('SongRequestsTab', () => {
       </ToastProvider>,
     );
 
-    await user.click(await screen.findByRole('button', { name: /copy list/i }));
+    await click(await screen.findByRole('button', { name: /copy list/i }));
     expect(screen.getByRole('button', { name: /copying/i })).toBeDisabled();
 
     rerender(

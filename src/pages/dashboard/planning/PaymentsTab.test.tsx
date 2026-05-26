@@ -1,6 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { act, render, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { ToastProvider } from '../../../components/ui/Toast';
 import { PaymentsTab } from './PaymentsTab';
 import type { PlanningBudgetItem, PlanningVendor } from './planningService';
@@ -14,6 +13,12 @@ vi.mock('../../../lib/copyText', () => ({
   copyTextOrDownload: (...args: unknown[]) => copyTextOrDownload(...args),
   downloadTextFile: (...args: unknown[]) => downloadTextFile(...args),
 }));
+
+async function click(element: HTMLElement) {
+  await act(async () => {
+    fireEvent.click(element);
+  });
+}
 
 const items: PlanningBudgetItem[] = [
   {
@@ -64,7 +69,6 @@ describe('PaymentsTab', () => {
   });
 
   it('restores the paid action after a failed payment update', async () => {
-    const user = userEvent.setup();
     const onUpdateBudgetItem = vi.fn().mockRejectedValueOnce(new Error('update failed'));
 
     render(
@@ -81,7 +85,7 @@ describe('PaymentsTab', () => {
 
     const paidButton = screen.getAllByRole('button', { name: /^paid$/i }).at(-1);
     if (!paidButton) throw new Error('Expected a row paid action');
-    await user.click(paidButton);
+    await click(paidButton);
 
     expect(onUpdateBudgetItem).toHaveBeenCalledTimes(1);
     await waitFor(() => expect(paidButton).toBeEnabled());
@@ -89,7 +93,6 @@ describe('PaymentsTab', () => {
   });
 
   it('restores the copy-summary action after a failed copy', async () => {
-    const user = userEvent.setup();
     copyTextOrDownload.mockRejectedValueOnce(new Error('copy failed'));
 
     render(
@@ -104,7 +107,7 @@ describe('PaymentsTab', () => {
       </ToastProvider>,
     );
 
-    await user.click(screen.getByRole('button', { name: /copy summary/i }));
+    await click(screen.getByRole('button', { name: /copy summary/i }));
 
     expect(copyTextOrDownload).toHaveBeenCalledTimes(1);
     expect(await screen.findByRole('button', { name: /copy summary/i })).toBeEnabled();
@@ -112,7 +115,6 @@ describe('PaymentsTab', () => {
   });
 
   it('clears pending paid actions when payment editing is revoked', async () => {
-    const user = userEvent.setup();
     let finishUpdate: (() => void) | undefined;
     const onUpdateBudgetItem = vi.fn().mockReturnValueOnce(new Promise<void>((resolve) => {
       finishUpdate = resolve;
@@ -132,7 +134,7 @@ describe('PaymentsTab', () => {
 
     const paidButton = screen.getAllByRole('button', { name: /^paid$/i }).at(-1);
     if (!paidButton) throw new Error('Expected a row paid action');
-    await user.click(paidButton);
+    await click(paidButton);
     expect(paidButton).toBeDisabled();
 
     rerender(
@@ -158,7 +160,6 @@ describe('PaymentsTab', () => {
   });
 
   it('shows a downloaded fallback label after the payment summary falls back from clipboard copy', async () => {
-    const user = userEvent.setup();
     copyTextOrDownload.mockResolvedValueOnce('downloaded');
 
     render(
@@ -173,14 +174,12 @@ describe('PaymentsTab', () => {
       </ToastProvider>,
     );
 
-    await user.click(screen.getByRole('button', { name: /copy summary/i }));
+    await click(screen.getByRole('button', { name: /copy summary/i }));
 
     expect(await screen.findByRole('button', { name: /downloaded payment summary/i })).toBeInTheDocument();
   });
 
   it('exports the payment ledger through the attached download helper', async () => {
-    const user = userEvent.setup();
-
     render(
       <ToastProvider>
         <PaymentsTab
@@ -193,7 +192,7 @@ describe('PaymentsTab', () => {
       </ToastProvider>,
     );
 
-    await user.click(screen.getByRole('button', { name: /^export$/i }));
+    await click(screen.getByRole('button', { name: /^export$/i }));
 
     expect(downloadTextFile).toHaveBeenCalledWith(
       expect.stringMatching(/^dayof-payments-\d{4}-\d{2}-\d{2}\.csv$/),
@@ -208,7 +207,6 @@ describe('PaymentsTab', () => {
   });
 
   it('ignores a stale payment summary copy after payment data changes', async () => {
-    const user = userEvent.setup();
     let resolveCopy: (value: 'copied') => void = () => {};
     copyTextOrDownload.mockReturnValueOnce(new Promise((resolve) => {
       resolveCopy = resolve;
@@ -226,7 +224,7 @@ describe('PaymentsTab', () => {
       </ToastProvider>,
     );
 
-    await user.click(screen.getByRole('button', { name: /copy summary/i }));
+    await click(screen.getByRole('button', { name: /copy summary/i }));
     expect(screen.getByRole('button', { name: /copying/i })).toBeDisabled();
 
     rerender(

@@ -314,12 +314,13 @@ export const BudgetTab: React.FC<Props> = ({ items, vendors, vendorMeta = {}, to
       if (!canEditRef.current) return;
       toast('Couldn’t delete that budget item right now.', 'error');
     } finally {
-      if (!canEditRef.current) return;
-      setPendingDeleteIds((current) => {
-        const next = new Set(current);
-        next.delete(itemId);
-        return next;
-      });
+      if (canEditRef.current) {
+        setPendingDeleteIds((current) => {
+          const next = new Set(current);
+          next.delete(itemId);
+          return next;
+        });
+      }
     }
   }
 

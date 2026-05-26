@@ -1,6 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { act, render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import { ToastProvider } from '../../../components/ui/Toast';
 import { AddressCollectionTab } from './AddressCollectionTab';
 
@@ -24,6 +23,18 @@ vi.mock('./planningService', () => ({
   loadAddressCollectionData: (...args: unknown[]) => loadAddressCollectionData(...args),
 }));
 
+async function click(element: HTMLElement) {
+  await act(async () => {
+    fireEvent.click(element);
+  });
+}
+
+async function select(element: HTMLElement, value: string) {
+  await act(async () => {
+    fireEvent.change(element, { target: { value } });
+  });
+}
+
 describe('AddressCollectionTab', () => {
   beforeEach(() => {
     copyTextOrDownload.mockReset();
@@ -33,7 +44,6 @@ describe('AddressCollectionTab', () => {
   });
 
   it('restores the address-link copy action after a failed copy', async () => {
-    const user = userEvent.setup();
     copyTextOrDownload.mockRejectedValueOnce(new Error('copy failed'));
 
     render(
@@ -43,7 +53,7 @@ describe('AddressCollectionTab', () => {
     );
 
     const copyButton = await screen.findByRole('button', { name: /copy link/i });
-    await user.click(copyButton);
+    await click(copyButton);
 
     expect(copyTextOrDownload).toHaveBeenCalledTimes(1);
     expect(await screen.findByRole('button', { name: /copy link/i })).toBeEnabled();
@@ -51,7 +61,6 @@ describe('AddressCollectionTab', () => {
   });
 
   it('restores the follow-up copy action after a failed copy', async () => {
-    const user = userEvent.setup();
     copyTextOrDownload.mockRejectedValueOnce(new Error('copy failed'));
 
     render(
@@ -61,7 +70,7 @@ describe('AddressCollectionTab', () => {
     );
 
     const copyButton = await screen.findByRole('button', { name: /copy follow-ups/i });
-    await user.click(copyButton);
+    await click(copyButton);
 
     expect(copyTextOrDownload).toHaveBeenCalledTimes(1);
     expect(await screen.findByRole('button', { name: /copy follow-ups/i })).toBeEnabled();
@@ -69,7 +78,6 @@ describe('AddressCollectionTab', () => {
   });
 
   it('shows downloaded fallback labels after copy actions fall back from the clipboard', async () => {
-    const user = userEvent.setup();
     copyTextOrDownload
       .mockResolvedValueOnce('downloaded')
       .mockResolvedValueOnce('downloaded');
@@ -81,16 +89,15 @@ describe('AddressCollectionTab', () => {
     );
 
     const linkButton = await screen.findByRole('button', { name: /copy link/i });
-    await user.click(linkButton);
+    await click(linkButton);
     expect(await screen.findByRole('button', { name: /downloaded address link/i })).toBeInTheDocument();
 
     const followUpsButton = screen.getByRole('button', { name: /copy follow-ups/i });
-    await user.click(followUpsButton);
+    await click(followUpsButton);
     expect(await screen.findByRole('button', { name: /downloaded guest follow-ups/i })).toBeInTheDocument();
   });
 
   it('ignores stale address-link copy completions after the active site changes', async () => {
-    const user = userEvent.setup();
     let finishCopy: ((value: 'copied') => void) | undefined;
     loadAddressCollectionData
       .mockResolvedValueOnce({ siteSlug: 'site-one', guests: [] })
@@ -106,7 +113,7 @@ describe('AddressCollectionTab', () => {
     );
 
     await screen.findByText(/guest-contact\/site-one/i);
-    await user.click(screen.getByRole('button', { name: /copy link/i }));
+    await click(screen.getByRole('button', { name: /copy link/i }));
 
     rerender(
       <ToastProvider>
@@ -125,7 +132,6 @@ describe('AddressCollectionTab', () => {
   });
 
   it('ignores stale follow-up copy completions after the visible segment changes', async () => {
-    const user = userEvent.setup();
     let finishCopy: ((value: 'copied') => void) | undefined;
     copyTextOrDownload.mockReturnValueOnce(new Promise((resolve) => {
       finishCopy = resolve;
@@ -137,8 +143,8 @@ describe('AddressCollectionTab', () => {
       </ToastProvider>,
     );
 
-    await user.click(await screen.findByRole('button', { name: /copy follow-ups/i }));
-    await user.selectOptions(screen.getByRole('combobox'), 'missing-contact');
+    await click(await screen.findByRole('button', { name: /copy follow-ups/i }));
+    await select(screen.getByRole('combobox'), 'missing-contact');
 
     await act(async () => {
       finishCopy?.('copied');
@@ -150,7 +156,6 @@ describe('AddressCollectionTab', () => {
   });
 
   it('copies the same follow-up guests as the active filter view', async () => {
-    const user = userEvent.setup();
     copyTextOrDownload.mockResolvedValue('copied');
     loadAddressCollectionData.mockResolvedValue({
       siteSlug: 'site-one',
@@ -183,9 +188,9 @@ describe('AddressCollectionTab', () => {
     );
 
     await screen.findByText('Needs Address');
-    await user.selectOptions(screen.getByRole('combobox'), 'missing-contact');
+    await select(screen.getByRole('combobox'), 'missing-contact');
     await screen.findByText('Needs Contact');
-    await user.click(screen.getByRole('button', { name: /copy follow-ups/i }));
+    await click(screen.getByRole('button', { name: /copy follow-ups/i }));
 
     expect(copyTextOrDownload).toHaveBeenCalledWith(
       'Needs Contact — no direct contact — household',
@@ -198,7 +203,6 @@ describe('AddressCollectionTab', () => {
   });
 
   it('exports the same guests as the active filter view', async () => {
-    const user = userEvent.setup();
     loadAddressCollectionData.mockResolvedValue({
       siteSlug: 'site-one',
       guests: [
@@ -230,9 +234,9 @@ describe('AddressCollectionTab', () => {
     );
 
     await screen.findByText('Needs Address');
-    await user.selectOptions(screen.getByRole('combobox'), 'missing-contact');
+    await select(screen.getByRole('combobox'), 'missing-contact');
     await screen.findByText('Needs Contact');
-    await user.click(screen.getByRole('button', { name: /^export$/i }));
+    await click(screen.getByRole('button', { name: /^export$/i }));
 
     expect(downloadTextFile).toHaveBeenCalledWith(
       expect.stringMatching(/^dayof-address-list-missing-contact-\d{4}-\d{2}-\d{2}\.csv$/),
@@ -247,8 +251,6 @@ describe('AddressCollectionTab', () => {
   });
 
   it('blocks draft-message actions when address planning is read-only', async () => {
-    const user = userEvent.setup();
-
     render(
       <ToastProvider>
         <AddressCollectionTab siteId="site-1" isDemoMode canEdit={false} />
@@ -261,9 +263,56 @@ describe('AddressCollectionTab', () => {
     expect(emailButton).toBeDisabled();
     expect(smsButton).toBeDisabled();
 
-    await user.click(emailButton);
-    await user.click(smsButton);
+    await click(emailButton);
+    await click(smsButton);
 
     expect(navigate).not.toHaveBeenCalled();
+  });
+
+  it('copies SMS-safe text without truncating a long guest update link', async () => {
+    copyTextOrDownload.mockResolvedValue('copied');
+    loadAddressCollectionData.mockResolvedValue({
+      siteSlug: `maya-and-leo-${'very-long-slug-'.repeat(8)}guest-updates`,
+      guests: [],
+    });
+
+    render(
+      <ToastProvider>
+        <AddressCollectionTab siteId="site-1" />
+      </ToastProvider>,
+    );
+
+    await screen.findByText(/guest-contact\//i);
+    await click(screen.getByRole('button', { name: /copy text copy/i }));
+
+    const copiedText = copyTextOrDownload.mock.calls.at(-1)?.[0];
+    expect(typeof copiedText).toBe('string');
+    expect(copiedText).toContain('/guest-contact/');
+    expect(copiedText).toMatch(/guest-updates$/);
+    expect(copiedText).not.toContain('...');
+  });
+
+  it('uses the SMS-safe template when opening the SMS draft composer', async () => {
+    loadAddressCollectionData.mockResolvedValue({
+      siteSlug: `maya-and-leo-${'very-long-slug-'.repeat(8)}guest-updates`,
+      guests: [],
+    });
+
+    render(
+      <ToastProvider>
+        <AddressCollectionTab siteId="site-1" />
+      </ToastProvider>,
+    );
+
+    await screen.findByText(/guest-contact\//i);
+    await click(screen.getByRole('button', { name: /draft sms/i }));
+
+    const navigationCall = navigate.mock.calls.at(-1)?.[0];
+    expect(navigationCall?.pathname).toBe('/dashboard/messages');
+
+    const params = new URLSearchParams(String(navigationCall?.search ?? '').replace(/^\?/, ''));
+    expect(params.get('prefillChannel')).toBe('sms');
+    expect(params.get('prefillBody')).toContain('/guest-contact/');
+    expect(params.get('prefillBody')).toMatch(/guest-updates$/);
   });
 });
