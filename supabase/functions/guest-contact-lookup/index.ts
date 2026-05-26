@@ -38,8 +38,10 @@ Deno.serve(async (req: Request) => {
       .or(`name.ilike.%${query}%,first_name.ilike.%${query}%,last_name.ilike.%${query}%`)
       .limit(10);
 
-    const householdIds = Array.from(new Set((guests ?? []).map((g: any) => g.household_id).filter(Boolean)));
-    let householdCounts: Record<string, number> = {};
+    const householdIds = Array.from(
+      new Set(((guests ?? []) as Array<{ household_id?: string | null }>).map((guest) => guest.household_id).filter(Boolean)),
+    );
+    const householdCounts: Record<string, number> = {};
 
     if (householdIds.length > 0) {
       const { data: hh } = await admin
@@ -47,13 +49,13 @@ Deno.serve(async (req: Request) => {
         .select("household_id")
         .eq("wedding_site_id", site.id)
         .in("household_id", householdIds as string[]);
-      for (const row of (hh ?? []) as any[]) {
+      for (const row of (hh ?? []) as Array<{ household_id?: string | null }>) {
         if (!row.household_id) continue;
         householdCounts[row.household_id] = (householdCounts[row.household_id] ?? 0) + 1;
       }
     }
 
-    const matches = (guests ?? []).map((g: any) => ({
+    const matches = ((guests ?? []) as Array<{ id: string; name?: string | null; first_name?: string | null; last_name?: string | null; household_id?: string | null }>).map((g) => ({
       id: g.id,
       name: g.name || [g.first_name, g.last_name].filter(Boolean).join(" "),
       household_id: g.household_id,
@@ -64,8 +66,11 @@ Deno.serve(async (req: Request) => {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
-  } catch (err) {
-    return new Response(JSON.stringify({ error: err instanceof Error ? err.message : "Internal error" }), {
+  } catch {
+    console.error("GUEST_CONTACT_LOOKUP_UNEXPECTED_FAILED", {
+      reason: "UNEXPECTED_GUEST_CONTACT_LOOKUP_FAILURE",
+    });
+    return new Response(JSON.stringify({ error: "Could not look up guests. Please try again." }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
