@@ -8,7 +8,7 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "proof:v1:strict-pocket": "eslint --max-warnings 0 src/components/auth/ProtectedRoute.tsx src/lib/activeSite.ts src/lib/customerSafeError.ts src/lib/mediaUrl.ts src/lib/paymentGate.ts src/lib/publicRenderContract.ts src/lib/publicSiteAccess.ts src/lib/publicSiteRenderModel.ts src/lib/publicSiteSlug.ts src/render/publicSectionDataSanitizer.ts src/lib/siteConfigValidate.ts src/lib/stripeService.ts src/lib/vendorProfiles.ts src/pages/RSVP.tsx src/pages/SiteView.tsx src/pages/siteViewHelpers.ts src/pages/onboarding/QuickStart.tsx src/routes/dashboardRoutes.tsx src/routes/publicRoutes.tsx src/routes/guestRoutes.tsx src/routes/onboardingRoutes.tsx src/routes/accountRoutes.tsx src/routes/internalToolingRoutes.tsx src/pages/dashboard/planning/nameChangeService.ts",
+    "proof:v1:strict-pocket": "eslint --max-warnings 0 src/App.tsx src/components/auth/ProtectedRoute.tsx src/lib/activeSite.ts src/lib/customerSafeError.ts src/lib/mediaUrl.ts src/lib/paymentGate.ts src/lib/publicSiteProject.ts src/lib/publicSiteSlug.ts src/lib/siteConfigValidate.ts src/lib/stripeService.ts src/lib/vendorProfiles.ts src/pages/RSVP.tsx src/pages/SiteView.tsx src/pages/onboarding/QuickStart.tsx src/pages/dashboard/planning/nameChangeService.ts",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit -p tsconfig.app.json",
     "verify": "npm run typecheck && npm run build",

@@ -308,7 +308,7 @@ function parseEventSelectionsFromNotes(notes: string | null, guest: Guest): { cl
     };
   }
 
-  const legacyMatch = notes.match(/^Attending events(?:\s*[:\-])?\s+([^\r\n]+)(?:\r?\n([\s\S]*))?$/i);
+  const legacyMatch = notes.match(/^Attending events(?:\s*[:-])?\s+([^\r\n]+)(?:\r?\n([\s\S]*))?$/i);
   if (!legacyMatch) return fallback;
 
   const selectedEvents = new Set(
@@ -867,8 +867,9 @@ export default function RSVP() {
       if (activeLookupRequestRef.current !== requestId) return;
       setError('An error occurred. Please try again.');
     } finally {
-      if (activeLookupRequestRef.current !== requestId) return;
-      setLoading(false);
+      if (activeLookupRequestRef.current === requestId) {
+        setLoading(false);
+      }
     }
   };
 
@@ -959,8 +960,9 @@ export default function RSVP() {
       if (activeLookupRequestRef.current !== requestId) return;
       selectGuest(picked, null, null, [], DEFAULT_MEAL_CONFIG, [], null);
     } finally {
-      if (activeLookupRequestRef.current !== requestId) return;
-      setLoading(false);
+      if (activeLookupRequestRef.current === requestId) {
+        setLoading(false);
+      }
     }
   };
 
@@ -1067,10 +1069,11 @@ export default function RSVP() {
       if (activeSubmitRequestRef.current !== requestId) return;
       setError('Failed to submit RSVP. Please try again.');
     } finally {
-      if (activeSubmitRequestRef.current !== requestId) return;
-      submitInFlightRef.current = false;
-      setLoading(false);
-      setSubmitting(false);
+      if (activeSubmitRequestRef.current === requestId) {
+        submitInFlightRef.current = false;
+        setLoading(false);
+        setSubmitting(false);
+      }
     }
   };
 

@@ -42,19 +42,21 @@ function normalizeSlugPart(input: string): string {
     .slice(0, 64);
 }
 
-function normalizeVendorProfile(row: any): VendorProfile {
+function normalizeVendorProfile(row: Record<string, unknown>): VendorProfile {
   return {
-    id: row.id,
-    slug: row.slug,
-    vendor_name: row.vendor_name,
-    descriptor: row.descriptor ?? null,
-    about: row.about,
-    hero_image_url: row.hero_image_url ?? null,
+    id: typeof row.id === 'string' ? row.id : '',
+    slug: typeof row.slug === 'string' ? row.slug : '',
+    vendor_name: typeof row.vendor_name === 'string' ? row.vendor_name : '',
+    descriptor: typeof row.descriptor === 'string' ? row.descriptor : null,
+    about: typeof row.about === 'string' ? row.about : '',
+    hero_image_url: typeof row.hero_image_url === 'string' ? row.hero_image_url : null,
     image_urls: Array.isArray(row.image_urls) ? row.image_urls.filter((item: unknown): item is string => typeof item === 'string') : [],
-    instagram_url: row.instagram_url ?? null,
-    website_url: row.website_url ?? null,
-    contact_email: row.contact_email ?? null,
-    source_payload: row.source_payload ?? null,
+    instagram_url: typeof row.instagram_url === 'string' ? row.instagram_url : null,
+    website_url: typeof row.website_url === 'string' ? row.website_url : null,
+    contact_email: typeof row.contact_email === 'string' ? row.contact_email : null,
+    source_payload: row.source_payload && typeof row.source_payload === 'object'
+      ? row.source_payload as Record<string, unknown>
+      : null,
   };
 }
 

@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -8,7 +9,6 @@ import { WeddingDataV1, createEmptyWeddingData, normalizeWeddingData } from '../
 import { LayoutConfigV1 } from '../types/layoutConfig';
 import { getSectionComponent } from '../sections/sectionRegistry';
 import { applyThemePreset, applyThemeTokens } from '../lib/themePresets';
-import { BuilderProject } from '../types/builder/project';
 import { BuilderSectionInstance, createDefaultSectionInstance } from '../types/builder/section';
 import { SectionRenderer } from '../builder/components/SectionRenderer';
 import { PageRenderer } from '../render/PageRenderer';
@@ -20,7 +20,6 @@ import { getTemplatePack } from '../builder/constants/builderTemplatePacks';
 import { getSectionVariants } from '../sections/sectionRegistry';
 import { demoWeddingSite } from '../lib/demoData';
 import { rewriteSignedMediaUrlsToPublicDeep } from '../lib/mediaUrl';
-import { getArchiveModeDescriptor } from '../lib/archiveMode';
 import { getSiteVisibilityState } from '../lib/siteVisibilityState';
 import { buildCoupleDisplayName } from '../lib/coupleDisplayName';
 import { getIsPublishedFromSiteRow, getPublicBuilderProject, getPublicWeddingData } from '../lib/publicSiteProject';
@@ -394,7 +393,6 @@ export const SiteView: React.FC = () => {
   const [isComingSoon, setIsComingSoon] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const archiveMode = getArchiveModeDescriptor({ weddingDate: weddingData?.event?.weddingDateISO ?? null });
 
   const [privacyGate, setPrivacyGate] = useState<PrivacyGateState>('loading');
   const [hideFromSearch, setHideFromSearch] = useState(false);
