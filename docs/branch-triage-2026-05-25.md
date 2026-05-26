@@ -62,6 +62,7 @@ Why keep:
 
 Recommended next move:
 - preserve until there is clear product/design appetite to revisit
+- see `docs/brand-phase-5-imagery-system-salvage-plan-2026-05-25.md` for the current preservation guidance
 
 #### `origin/codex/v1-finish-hard-gates`
 
