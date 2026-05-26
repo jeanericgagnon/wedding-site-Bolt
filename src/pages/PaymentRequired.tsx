@@ -4,10 +4,9 @@ import { Heart, CreditCard, Check, Loader2, AlertCircle, RefreshCw } from 'lucid
 import { Button } from '../components/ui';
 import { useAuth } from '../hooks/useAuth';
 import { supabase } from '../lib/supabase';
+import { AuthSupportLinks } from '../components/auth/AuthSupportLinks';
 import { createCheckoutSession, fetchPaymentStatus, fetchWeddingSiteId, SessionExpiredError } from '../lib/stripeService';
-import { isPaymentGateEnabled } from '../lib/paymentGate';
 import { clearAllOnboardingContinuationState } from '../lib/onboardingContinuationCleanup';
-import { buildQuickStartEntryPath } from '../lib/quickStartContinuation';
 
 const FEATURES = [
   'Your own wedding website with custom URL',
@@ -58,7 +57,6 @@ const ensureMinimalWeddingSite = async (userId: string, email?: string | null): 
 
 export const PaymentRequired: React.FC = () => {
   const { user } = useAuth();
-  const paymentGateEnabled = isPaymentGateEnabled();
   const paymentBypassAllowed = true;
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
@@ -253,6 +251,7 @@ export const PaymentRequired: React.FC = () => {
             <p className="text-xs text-text-tertiary text-center">
               Secure payment powered by Stripe. We never store your card details.
             </p>
+            <AuthSupportLinks />
           </div>
         </div>
       </div>
