@@ -104,10 +104,17 @@ Deno.serve(async (req: Request) => {
       metadata,
     });
 
-    if (error) return json({ error: error.message }, 500);
+    if (error) {
+      console.error("LOG_CLIENT_ERROR_INSERT_FAILED", {
+        reason: "APP_ERROR_LOG_INSERT_FAILED",
+      });
+      return json({ error: "Could not record this error report. Please try again." }, 500);
+    }
     return json({ ok: true });
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : "Internal error";
-    return json({ error: msg }, 500);
+  } catch {
+    console.error("LOG_CLIENT_ERROR_UNEXPECTED_FAILED", {
+      reason: "UNEXPECTED_CLIENT_ERROR_LOG_FAILURE",
+    });
+    return json({ error: "Could not record this error report. Please try again." }, 500);
   }
 });
