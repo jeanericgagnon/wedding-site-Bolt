@@ -8,8 +8,6 @@ import {
   deleteRegistryItem,
   fetchUrlPreview,
   findDuplicateItem,
-  MAX_REGISTRY_ITEMS,
-  MAX_REGISTRY_SORT_LOOKUP_ROWS,
   mergeDuplicateRegistryItems,
   ownerMarkPurchased,
   publicIncrementPurchase,
@@ -18,6 +16,7 @@ import {
   updateRegistryItem,
   updateRegistryRefreshBudget,
 } from './registryService';
+import { MAX_REGISTRY_ITEMS, MAX_REGISTRY_SORT_LOOKUP_ROWS } from './registryQueries';
 
 const mockRpcResult = {
   data: null as unknown,
