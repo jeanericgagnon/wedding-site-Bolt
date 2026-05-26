@@ -223,7 +223,7 @@ export function RegistryDashboardRouteContent(props: {
   handleEdit: (item: RegistryItem) => void;
   handleMergeDuplicateGroup: (group: RegistryDuplicateGroup) => Promise<void>;
   handleMarkPurchased: (item: RegistryItem, qty: number) => Promise<void>;
-  handleRevalidateRegistryTruth: () => Promise<void>;
+  handleRevalidateRegistryTruth?: () => Promise<void>;
   handleResetPurchaseState: (item: RegistryItem) => Promise<void>;
   handleRefetchMetadata: (item: RegistryItem, silent?: boolean, replaceExisting?: boolean) => Promise<boolean>;
   handleRefreshImageIssues: () => Promise<void>;
@@ -249,15 +249,15 @@ export function RegistryDashboardRouteContent(props: {
   registryInsights: RegistryInsight[];
   latestImportBatch?: RegistryImportBatchRecord | null;
   lastRepairRunSummary?: RegistryRepairRunSummary | null;
-  legacyRepairReport: RegistryLegacyRepairReport;
+  legacyRepairReport?: RegistryLegacyRepairReport;
   recentImportBatches?: RegistryImportBatchRecord[];
   registryLaunchReadiness: RegistryLaunchReadiness;
-  revalidationPreviewItems: RegistryRevalidationPreviewItem[];
+  revalidationPreviewItems?: RegistryRevalidationPreviewItem[];
   registryThankYouPlan: RegistryThankYouPlan;
   registryThankYouStats: RegistryThankYouStats;
   registryThankYouBusyItemId: string | null;
   registryThankYouSyncing: boolean;
-  revalidatingRegistryTruth: boolean;
+  revalidatingRegistryTruth?: boolean;
   repairingBadImports: boolean;
   search: string;
   setBulkImportOpen: React.Dispatch<React.SetStateAction<boolean>>;
@@ -272,6 +272,20 @@ export function RegistryDashboardRouteContent(props: {
   topRegistryItems: TopRegistryItem[];
   weddingSiteId: string | null;
 }) {
+  const legacyRepairReport = props.legacyRepairReport ?? {
+    candidateCount: 0,
+    autoConvertibleCount: 0,
+    hiddenReviewCount: 0,
+    blockedSourceCount: 0,
+    manualQueueCount: 0,
+    revalidationCandidateCount: 0,
+    revalidationProductCount: 0,
+    revalidationLinkOnlyCount: 0,
+    revalidationReviewOnlyCount: 0,
+  };
+  const revalidationPreviewItems = props.revalidationPreviewItems ?? [];
+  const revalidatingRegistryTruth = props.revalidatingRegistryTruth ?? false;
+  const handleRevalidateRegistryTruth = props.handleRevalidateRegistryTruth ?? (async () => {});
   const [guestRegistryLinkNotice, setGuestRegistryLinkNotice] = useState<CopyActionResult | null>(null);
   const [copyingGuestRegistryLink, setCopyingGuestRegistryLink] = useState(false);
   const [cleanupReportCopyNotice, setCleanupReportCopyNotice] = useState<CopyActionResult | null>(null);
@@ -325,8 +339,8 @@ export function RegistryDashboardRouteContent(props: {
     [props.repairQueue],
   );
   const normalizedLegacyRepairReport = useMemo(
-    () => normalizeRegistryCleanupReportLegacySummary(props.legacyRepairReport),
-    [props.legacyRepairReport],
+    () => normalizeRegistryCleanupReportLegacySummary(legacyRepairReport),
+    [legacyRepairReport],
   );
   const cleanupReportText = useMemo(() => {
     return buildRegistryCleanupReportText({
@@ -345,8 +359,8 @@ export function RegistryDashboardRouteContent(props: {
     productCount: normalizedLegacyRepairReport.revalidationProductCount,
     linkOnlyCount: normalizedLegacyRepairReport.revalidationLinkOnlyCount,
     reviewOnlyCount: normalizedLegacyRepairReport.revalidationReviewOnlyCount,
-    previewItems: props.revalidationPreviewItems,
-  }), [normalizedLegacyRepairReport, props.revalidationPreviewItems]);
+    previewItems: revalidationPreviewItems,
+  }), [normalizedLegacyRepairReport, revalidationPreviewItems]);
   const maintenanceReportText = useMemo(() => buildRegistryMaintenanceReportText({
     legacyRepairReport: normalizedLegacyRepairReport,
     cleanupQueueCount: props.repairQueue.length,
@@ -361,9 +375,9 @@ export function RegistryDashboardRouteContent(props: {
       productCount: normalizedLegacyRepairReport.revalidationProductCount,
       linkOnlyCount: normalizedLegacyRepairReport.revalidationLinkOnlyCount,
       reviewOnlyCount: normalizedLegacyRepairReport.revalidationReviewOnlyCount,
-      previewItems: props.revalidationPreviewItems,
+      previewItems: revalidationPreviewItems,
     },
-  }), [cleanupQueueGroups, props.lastRepairRunSummary, normalizedLegacyRepairReport, props.repairQueue.length, props.revalidationPreviewItems]);
+  }), [cleanupQueueGroups, props.lastRepairRunSummary, normalizedLegacyRepairReport, props.repairQueue.length, revalidationPreviewItems]);
 
   const importBatches = useMemo(() => {
     const seen = new Set<string>();
@@ -1759,7 +1773,7 @@ export function RegistryDashboardRouteContent(props: {
                 <p className="mt-3 text-xs text-text-secondary">Would be pulled from guest view until an owner reviews them.</p>
               </div>
             </div>
-            {props.revalidationPreviewItems.length > 0 ? (
+            {revalidationPreviewItems.length > 0 ? (
               <div className="mt-4 rounded-xl border border-border-subtle bg-surface-subtle/20 p-4">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <p className="text-xs font-semibold uppercase tracking-[0.14em] text-text-tertiary">Likely changes</p>
@@ -1779,7 +1793,7 @@ export function RegistryDashboardRouteContent(props: {
                   </button>
                 </div>
                 <div className="mt-3 space-y-2">
-                  {props.revalidationPreviewItems.map((item) => (
+                  {revalidationPreviewItems.map((item) => (
                     <div key={item.id} className="flex items-center justify-between gap-3 rounded-lg border border-border-subtle bg-white px-3 py-2">
                       <p className="min-w-0 truncate text-sm text-text-primary">{item.title}</p>
                       <span className="shrink-0 text-xs text-text-secondary">{getRegistryTruthSweepTargetLabel(item.targetMode)}</span>
@@ -1795,12 +1809,12 @@ export function RegistryDashboardRouteContent(props: {
         <div className="mb-4 flex flex-wrap gap-2">
           {(normalizedLegacyRepairReport.candidateCount > 0 || props.repairQueue.length > 0) && (
             <button
-              onClick={() => void props.handleRevalidateRegistryTruth()}
-              disabled={props.revalidatingRegistryTruth}
+              onClick={() => void handleRevalidateRegistryTruth()}
+              disabled={revalidatingRegistryTruth}
               className="rounded-xl border border-border-subtle bg-primary-light px-3 py-1.5 text-xs font-medium text-primary disabled:opacity-60"
               title="Re-evaluate saved registry truth using the latest safety rules without fetching new metadata"
             >
-              {props.revalidatingRegistryTruth ? 'Revalidating…' : 'Revalidate saved truth'}
+              {revalidatingRegistryTruth ? 'Revalidating…' : 'Revalidate saved truth'}
             </button>
           )}
           {props.bulkReviewCounts.repair > 0 && <button onClick={() => void props.handleRepairBadImports()} disabled={props.repairingBadImports} className="rounded-xl border border-border-subtle bg-primary-light px-3 py-1.5 text-xs font-medium text-primary disabled:opacity-60" title="Refresh weaker gift details without deleting items">{props.repairingBadImports ? 'Cleaning up…' : 'Refresh details'}</button>}

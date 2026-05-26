@@ -101,7 +101,19 @@ export class TargetAdapter implements RetailerAdapter {
 
       const title = product.title || product.name || product.item?.product_description?.title;
       const rawPrice = product.price?.current_retail || product.price?.current || product.price;
-      const price = this.sanitizePrice(typeof rawPrice === 'number' ? rawPrice : Number.parseFloat(String(rawPrice?.value || rawPrice?.amount || rawPrice || '')));
+      const priceRecord = typeof rawPrice === 'object' && rawPrice !== null
+        ? rawPrice as {
+          value?: string | number | null;
+          amount?: string | number | null;
+          currency_code?: string | null;
+          formatted?: string | null;
+        }
+        : null;
+      const price = this.sanitizePrice(
+        typeof rawPrice === 'number'
+          ? rawPrice
+          : Number.parseFloat(String(priceRecord?.value || priceRecord?.amount || rawPrice || '')),
+      );
       const image =
         product.images?.[0]?.base_url ||
         product.image ||
@@ -121,10 +133,10 @@ export class TargetAdapter implements RetailerAdapter {
         if (typeof price === 'number') {
           priceAmount = this.sanitizePrice(price);
           if (priceAmount) priceLabel = `$${priceAmount.toFixed(2)}`;
-        } else if (typeof price === 'object') {
-          priceAmount = this.sanitizePrice(parseFloat(price.value || price.amount));
-          currency = price.currency_code || 'USD';
-          if (priceAmount) priceLabel = price.formatted || `$${priceAmount.toFixed(2)}`;
+        } else if (priceRecord) {
+          priceAmount = this.sanitizePrice(parseFloat(String(priceRecord.value || priceRecord.amount || '')));
+          currency = priceRecord.currency_code || 'USD';
+          if (priceAmount) priceLabel = priceRecord.formatted || `$${priceAmount.toFixed(2)}`;
         }
       }
 

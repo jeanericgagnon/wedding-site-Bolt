@@ -145,7 +145,9 @@ export function useRegistryDashboardData(args: UseRegistryDashboardDataArgs) {
         if (isDemoMode) {
           const demoState = readDemoRegistryState();
           setWeddingSiteId(demoWeddingSite.id);
-          setSiteSlug(demoWeddingSite.site_slug);
+          setSiteSlug(('site_slug' in demoWeddingSite
+            ? (demoWeddingSite as { site_slug?: string | null }).site_slug
+            : null) ?? null);
           setWeddingDate(demoWeddingSite.wedding_date);
           setRefreshEnabledUntil(null);
           setMonthlyRefreshCap(100);

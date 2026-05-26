@@ -456,17 +456,17 @@ export function useRegistryMaintenanceActions(args: UseRegistryMaintenanceAction
     let revalidatedLinkOnlyCount = 0;
     let revalidatedReviewOnlyCount = 0;
     for (const candidate of candidates) {
-      const { item, safetyPatch } = candidate;
-      if (!safetyPatch) continue;
+      const { item, patch } = candidate;
+      if (!patch) continue;
       try {
         const updated = isDemoMode
           ? normalizeOwnerDashboardRegistryItem({
             ...item,
-            ...safetyPatch,
-            product_metadata: safetyPatch.product_metadata ?? item.product_metadata ?? null,
+            ...patch,
+            product_metadata: patch.product_metadata ?? item.product_metadata ?? null,
             updated_at: new Date().toISOString(),
           } as RegistryItem)
-          : normalizeOwnerDashboardRegistryItem(await updateRegistryItem(item.id, safetyPatch));
+          : normalizeOwnerDashboardRegistryItem(await updateRegistryItem(item.id, patch));
 
         setItems((prev) => prev.map((existing) => (existing.id === updated.id ? updated : existing)));
         revalidatedCount += 1;

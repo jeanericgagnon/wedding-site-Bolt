@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
+// @ts-ignore Test imports a Node script module with named exports.
 import { buildRegistryBatchProbePreview } from '../../scripts/registry-batch-probe.mjs';
 
 describe('registry batch probe', () => {

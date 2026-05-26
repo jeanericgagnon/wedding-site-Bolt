@@ -1,159 +1,154 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import {
+  Heart,
+  LayoutDashboard,
+  Palette,
+  Users,
+  Image,
+  Camera,
+  Gift,
+  Settings,
   Menu,
   X,
+  Mail,
+  Calendar,
   ExternalLink,
+  ClipboardList,
+  Armchair,
+  Radio,
+  ScrollText,
   ChevronDown,
-  Search,
-  Pin,
-  PinOff,
-  Bell,
+  ChevronRight,
+  Globe,
+  Archive,
+  type LucideIcon,
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
+import { BillingModal } from '../billing/BillingModal';
+import { supabase } from '../../lib/supabase';
+import { resolvePublicSiteSlugFromRow } from '../../lib/publicSiteSlug';
 import { getSiteVisibilityState } from '../../lib/siteVisibilityState';
-import { ACTIVE_SITE_STORAGE_CHANGED_EVENT, getStoredActiveSiteId, setStoredActiveSiteId } from '../../lib/activeSiteStorage';
-import { hasPlannerPermission, type PlannerPermissionKey } from '../../lib/plannerAccess';
-import {
-  createDemoDashboardLayoutSiteContext,
-  loadDashboardLayoutSiteContext,
-  type DashboardLayoutSiteContext,
-  type DashboardRole,
-  type SiteMembershipOption,
-} from './dashboardLayoutSiteContext';
-import {
-  DASHBOARD_NAV_PIN_STORAGE_KEY,
-  DASHBOARD_TOOL_GROUPS,
-  DEFAULT_DASHBOARD_TOOLS,
-  getAllDashboardTools,
-  readStoredToolPins,
-  writeStoredToolPins,
-  type DashboardTool,
-  type DashboardToolId,
-} from '../../pages/dashboard/dashboardToolLibrary';
+import { resolveActiveSiteForUser, resolveActiveSiteRoleForUser } from '../../lib/activeSite';
+import { getStoredActiveSiteId, setStoredActiveSiteId } from '../../lib/activeSiteStorage';
+import { getDemoDashboardSiteContext } from './dashboardDemoContext';
+import { buildSiteMembershipLabel } from './siteMembershipLabel';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
   currentPage: string;
 }
 
-function togglePin(ids: DashboardToolId[], id: DashboardToolId) {
-  return ids.includes(id) ? ids.filter((item) => item !== id) : [...ids, id];
-}
+type SiteMembershipOption = {
+  id: string;
+  label: string;
+  slug: string | null;
+  role: string;
+};
 
-function buildWorkspaceLabel(siteMemberships: SiteMembershipOption[], siteId: string | null, siteSlug: string | null, isDemoMode: boolean) {
-  if (isDemoMode) return 'Alex & Jordan';
-  const activeMembership = siteMemberships.find((site) => site.id === siteId);
-  if (activeMembership?.label) {
-    return activeMembership.label.split('—')[0]?.trim() || activeMembership.label;
-  }
-  if (siteSlug) {
-    return siteSlug
-      .split('-')
-      .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-      .join(' ');
-  }
-  return 'Your wedding';
-}
-
-function applySiteContext(
-  siteContext: DashboardLayoutSiteContext,
-  setters: {
-    setActiveSitePermissions: React.Dispatch<React.SetStateAction<PlannerPermissionKey[] | null>>;
-    setActiveSiteRole: React.Dispatch<React.SetStateAction<DashboardRole | null>>;
-    setSiteGuestFacingReady: React.Dispatch<React.SetStateAction<boolean>>;
-    setSiteId: React.Dispatch<React.SetStateAction<string | null>>;
-    setSiteIsPublished: React.Dispatch<React.SetStateAction<boolean>>;
-    setSiteJsonState: React.Dispatch<React.SetStateAction<Record<string, unknown> | null>>;
-    setSiteMemberships: React.Dispatch<React.SetStateAction<SiteMembershipOption[]>>;
-    setSitePrivacyMode: React.Dispatch<React.SetStateAction<'public' | 'password_protected' | 'invite_only' | 'hidden'>>;
-    setSiteSlug: React.Dispatch<React.SetStateAction<string | null>>;
-  },
-) {
-  setters.setActiveSitePermissions(siteContext.activeSitePermissions);
-  setters.setActiveSiteRole(siteContext.activeSiteRole);
-  setters.setSiteGuestFacingReady(siteContext.siteGuestFacingReady);
-  setters.setSiteId(siteContext.siteId);
-  setters.setSiteIsPublished(siteContext.siteIsPublished);
-  setters.setSiteJsonState(siteContext.siteJsonState);
-  setters.setSiteMemberships(siteContext.siteMemberships);
-  setters.setSitePrivacyMode(siteContext.sitePrivacyMode);
-  setters.setSiteSlug(siteContext.siteSlug);
-}
+type DashboardRole = 'owner' | 'planner' | 'coordinator' | 'viewer';
 
 export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, currentPage }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [siteContextReady, setSiteContextReady] = useState(false);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [siteSlug, setSiteSlug] = useState<string | null>(null);
   const [siteId, setSiteId] = useState<string | null>(null);
   const [siteJsonState, setSiteJsonState] = useState<Record<string, unknown> | null>(null);
   const [siteIsPublished, setSiteIsPublished] = useState(false);
-  const [siteGuestFacingReady, setSiteGuestFacingReady] = useState(false);
-  const [sitePrivacyMode, setSitePrivacyMode] = useState<'public' | 'password_protected' | 'invite_only' | 'hidden'>('public');
-  const [moreToolsOpen, setMoreToolsOpen] = useState(false);
-  const [moreToolsQuery, setMoreToolsQuery] = useState('');
-  const [openMoreGroup, setOpenMoreGroup] = useState<string | null>(null);
-  const [navPins, setNavPins] = useState<DashboardToolId[]>([]);
+  const [sitePrivacyMode, setSitePrivacyMode] = useState<'public' | 'password_protected' | 'invite_only'>('public');
+  const [showMoreFeatures, setShowMoreFeatures] = useState(false);
   const [siteMemberships, setSiteMemberships] = useState<SiteMembershipOption[]>([]);
   const [activeSiteRole, setActiveSiteRole] = useState<DashboardRole | null>(null);
-  const [activeSitePermissions, setActiveSitePermissions] = useState<PlannerPermissionKey[] | null>(null);
   const { user, isDemoMode } = useAuth();
-  const location = useLocation();
   const navigate = useNavigate();
-  const siteContextRequestIdRef = useRef(0);
 
   useEffect(() => {
-    const requestId = ++siteContextRequestIdRef.current;
-    const isCurrentSiteContextRequest = () => requestId === siteContextRequestIdRef.current;
-
-    const applyLoadedSiteContext = (siteContext: DashboardLayoutSiteContext) => applySiteContext(siteContext, {
-      setActiveSitePermissions,
-      setActiveSiteRole,
-      setSiteGuestFacingReady,
-      setSiteId,
-      setSiteIsPublished,
-      setSiteJsonState,
-      setSiteMemberships,
-      setSitePrivacyMode,
-      setSiteSlug,
-    });
-    const applyEmptySiteContext = () => applyLoadedSiteContext({
-      activeSitePermissions: null,
-      activeSiteRole: null,
-      siteGuestFacingReady: false,
-      siteId: null,
-      siteIsPublished: false,
-      siteJsonState: null,
-      siteMemberships: [],
-      sitePrivacyMode: 'public',
-      siteSlug: null,
-    });
-
-    if (!user) {
-      applyEmptySiteContext();
-      setSiteContextReady(false);
-      return;
-    }
+    if (!user) return;
 
     if (isDemoMode) {
-      if (!isCurrentSiteContextRequest()) return;
-      applyLoadedSiteContext(createDemoDashboardLayoutSiteContext());
-      setSiteContextReady(true);
+      const demoSiteContext = getDemoDashboardSiteContext();
+      setSiteSlug(demoSiteContext.siteSlug);
+      setSiteId(demoSiteContext.siteId);
+      setSiteIsPublished(demoSiteContext.isPublished);
+      setSitePrivacyMode(demoSiteContext.privacyMode);
+      setSiteJsonState(demoSiteContext.siteJson);
+      setActiveSiteRole(demoSiteContext.role);
       return;
     }
 
     const loadSiteContext = async () => {
-      setSiteContextReady(false);
+      const persistedSiteId = getStoredActiveSiteId();
+      const resolvedActiveSite = await resolveActiveSiteForUser(user.id);
+      const resolvedRole = await resolveActiveSiteRoleForUser(user.id);
+      setActiveSiteRole(resolvedRole);
+      const preferredSiteId = persistedSiteId || resolvedActiveSite?.id || null;
 
-      try {
-        const siteContext = await loadDashboardLayoutSiteContext(user.id);
-        if (!isCurrentSiteContextRequest()) return;
-        applyLoadedSiteContext(siteContext);
-        setSiteContextReady(true);
-      } catch {
-        if (!isCurrentSiteContextRequest()) return;
-        applyEmptySiteContext();
-        setSiteContextReady(true);
+      const { data: ownedSites } = await supabase
+        .from('wedding_sites')
+        .select('id, site_slug, couple_name_1, couple_name_2')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: true });
+
+      const ownerMemberships: SiteMembershipOption[] = (ownedSites || []).map((site) => ({
+        id: site.id,
+        label: buildSiteMembershipLabel(site.couple_name_1, site.couple_name_2, site.site_slug),
+        slug: site.site_slug,
+        role: 'owner',
+      }));
+
+      const { data: collaboratorMembershipsRaw } = await supabase
+        .from('wedding_site_collaborators')
+        .select('wedding_site_id, role, wedding_sites!inner(id, site_slug, couple_name_1, couple_name_2)')
+        .eq('user_id', user.id);
+
+      const collaboratorMemberships: SiteMembershipOption[] = ((collaboratorMembershipsRaw as Array<{
+        wedding_site_id: string;
+        role: string;
+        wedding_sites: { id: string; site_slug: string | null; couple_name_1: string | null; couple_name_2: string | null };
+      }> | null) || []).map((row) => ({
+        id: row.wedding_site_id,
+        label: buildSiteMembershipLabel(
+          row.wedding_sites?.couple_name_1,
+          row.wedding_sites?.couple_name_2,
+          row.wedding_sites?.site_slug,
+        ),
+        slug: row.wedding_sites?.site_slug || null,
+        role: row.role,
+      }));
+
+      const mergedMemberships = [...ownerMemberships, ...collaboratorMemberships.filter((candidate) => !ownerMemberships.some((ownerSite) => ownerSite.id === candidate.id))];
+      setSiteMemberships(mergedMemberships);
+
+      const targetSiteId = preferredSiteId && mergedMemberships.some((site) => site.id === preferredSiteId)
+        ? preferredSiteId
+        : mergedMemberships[0]?.id || null;
+
+      if (targetSiteId) {
+        setStoredActiveSiteId(targetSiteId);
+      }
+
+      if (!targetSiteId) return;
+
+      const { data } = await supabase
+        .from('wedding_sites')
+        .select('id, site_slug, site_url, site_json, is_published')
+        .eq('id', targetSiteId)
+        .maybeSingle();
+
+      const row = (data as Record<string, unknown> | null) ?? null;
+      const resolved = resolvePublicSiteSlugFromRow(row);
+      if (resolved) setSiteSlug(resolved);
+      if (row?.id && typeof row.id === 'string') setSiteId(row.id);
+      setSiteIsPublished(row?.is_published === true);
+
+      const siteJson = row?.site_json;
+      if (siteJson && typeof siteJson === 'object' && !Array.isArray(siteJson)) {
+        const parsedSiteJson = siteJson as Record<string, unknown>;
+        setSiteJsonState(parsedSiteJson);
+        const dashboard = parsedSiteJson.dashboard;
+        if (dashboard && typeof dashboard === 'object' && !Array.isArray(dashboard)) {
+          // legacy sidebar feature state ignored after nav rollup
+        }
       }
     };
 
@@ -167,73 +162,45 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
     return 'U';
   };
 
-  useEffect(() => {
-    const syncPins = () => setNavPins(readStoredToolPins(DASHBOARD_NAV_PIN_STORAGE_KEY, siteId ?? getStoredActiveSiteId()));
-    syncPins();
-    window.addEventListener('dayof:dashboard-tool-pins-changed', syncPins);
-    window.addEventListener('storage', syncPins);
-    window.addEventListener(ACTIVE_SITE_STORAGE_CHANGED_EVENT, syncPins);
-    return () => {
-      window.removeEventListener('dayof:dashboard-tool-pins-changed', syncPins);
-      window.removeEventListener('storage', syncPins);
-      window.removeEventListener(ACTIVE_SITE_STORAGE_CHANGED_EVENT, syncPins);
-    };
-  }, [siteId]);
-
-  const defaultNavTools = DEFAULT_DASHBOARD_TOOLS
-    .filter((tool) => tool.id !== 'tools')
-    .map((tool) => ({ ...tool, label: tool.name }));
-  const optionalNavTools = getAllDashboardTools()
-    .filter((tool) => navPins.includes(tool.id) && !defaultNavTools.some((navTool) => navTool.id === tool.id))
-    .map((tool) => ({ ...tool, label: tool.name }));
-
   const navSections: Array<{
     title?: string;
-    items: Array<DashboardTool & { label: string }>;
+    items: Array<{ id: string; label: string; icon: LucideIcon; path: string }>;
   }> = [
     {
-      items: [...defaultNavTools, ...optionalNavTools],
+      items: [
+        { id: 'overview', label: 'Overview', icon: LayoutDashboard, path: '/dashboard/overview' },
+      ],
+    },
+    {
+      title: 'Core',
+      items: [
+        { id: 'builder', label: 'Website', icon: Globe, path: '/dashboard/builder' },
+        { id: 'registry', label: 'Registry', icon: Gift, path: '/dashboard/registry' },
+        { id: 'guests', label: 'Guests & RSVP', icon: Users, path: '/dashboard/guests' },
+        { id: 'itinerary', label: 'Events & Seating', icon: Calendar, path: '/dashboard/itinerary' },
+        { id: 'messages', label: 'Messaging', icon: Mail, path: '/dashboard/messages' },
+        { id: 'photos', label: 'Memories', icon: Archive, path: '/dashboard/photos' },
+        { id: 'planning', label: 'Planning', icon: ClipboardList, path: '/dashboard/planning' },
+        { id: 'settings', label: 'Settings', icon: Settings, path: '/dashboard/settings' },
+      ],
+    },
+    {
+      title: 'More',
+      items: [
+        { id: 'seating', label: 'Seating', icon: Armchair, path: '/dashboard/seating' },
+        { id: 'coordinator', label: 'Coordinator Mode', icon: Radio, path: '/dashboard/coordinator' },
+        { id: 'vault', label: 'Archive Vaults', icon: Image, path: '/dashboard/vault' },
+        { id: 'audit-logs', label: 'Audit Logs', icon: ScrollText, path: '/dashboard/audit-logs' },
+      ],
     },
   ];
 
   const role = activeSiteRole ?? 'owner';
   const canSeeNavItem = (itemId: string) => {
     if (role === 'owner') return true;
-    if (itemId === 'overview' || itemId === 'tools') return true;
-    if (itemId === 'activity') return true;
-    if (
-      itemId === 'guests'
-      || itemId === 'address-collection'
-      || itemId === 'guest-details'
-      || itemId === 'guest-questions'
-      || itemId === 'import-export'
-      || itemId === 'thank-you-notes'
-    ) return hasPlannerPermission(role, activeSitePermissions, 'guests');
-    if (itemId === 'messages') return hasPlannerPermission(role, activeSitePermissions, 'messages');
-    if (itemId === 'planning' || itemId === 'vendors' || itemId === 'name-change' || itemId === 'song-requests') return hasPlannerPermission(role, activeSitePermissions, 'planning')
-      || hasPlannerPermission(role, activeSitePermissions, 'budget')
-      || hasPlannerPermission(role, activeSitePermissions, 'vendors');
-    if (
-      itemId === 'builder'
-      || itemId === 'advanced-design'
-      || itemId === 'qr-codes'
-      || itemId === 'travel-stay'
-    ) return hasPlannerPermission(role, activeSitePermissions, 'settings');
-    if (itemId === 'itinerary') return hasPlannerPermission(role, activeSitePermissions, 'timeline');
-    if (itemId === 'seating') return hasPlannerPermission(role, activeSitePermissions, 'seating');
-    if (itemId === 'coordinator' || itemId === 'wedding-day') return hasPlannerPermission(role, activeSitePermissions, 'coordinator');
-    if (itemId === 'registry') return hasPlannerPermission(role, activeSitePermissions, 'registry');
-    if (
-      itemId === 'photos'
-      || itemId === 'anniversary-capsules'
-      || itemId === 'guestbook-prompts'
-      || itemId === 'photo-recap'
-      || itemId === 'vault'
-      || itemId === 'vaults'
-      || itemId === 'video-uploads'
-    ) return hasPlannerPermission(role, activeSitePermissions, 'photos');
-    if (itemId === 'settings' || itemId === 'privacy-access' || itemId === 'data-settings') return hasPlannerPermission(role, activeSitePermissions, 'settings');
-    return false;
+    if (role === 'planner') return itemId !== 'builder' && itemId !== 'audit-logs';
+    if (role === 'coordinator') return ['overview', 'guests', 'itinerary', 'messages', 'photos', 'planning', 'seating', 'coordinator', 'vault'].includes(itemId);
+    return ['overview', 'registry', 'guests', 'itinerary', 'messages', 'photos', 'planning', 'vault'].includes(itemId);
   };
 
   const visibleNavSections = navSections
@@ -242,150 +209,64 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
       items: section.items.filter((item) => canSeeNavItem(item.id)),
     }))
     .filter((section) => section.items.length > 0);
-  const moreToolGroups = DASHBOARD_TOOL_GROUPS.map((group) => ({
-    ...group,
-    tools: group.tools.filter((tool) => !tool.adminOnly && canSeeNavItem(tool.id)),
-  })).filter((group) => group.tools.length > 0);
-  const filteredMoreToolGroups = useMemo(() => {
-    const query = moreToolsQuery.trim().toLowerCase();
-    if (!query) return moreToolGroups;
-    return moreToolGroups
-      .map((group) => ({
-        ...group,
-        tools: group.tools.filter((tool) => {
-          const haystack = `${tool.name} ${tool.description} ${group.title}`.toLowerCase();
-          return haystack.includes(query);
-        }),
-      }))
-      .filter((group) => group.tools.length > 0);
-  }, [moreToolGroups, moreToolsQuery]);
-  const moreToolsActive = currentPage === 'tools' || DASHBOARD_TOOL_GROUPS.some((group) => group.tools.some((tool) => tool.id === currentPage));
-  const navPinSet = useMemo(() => new Set(navPins), [navPins]);
-  const handleToggleNavPin = (toolId: DashboardToolId) => {
-    writeStoredToolPins(DASHBOARD_NAV_PIN_STORAGE_KEY, togglePin(navPins, toolId), siteId ?? getStoredActiveSiteId());
-  };
-  const currentSearchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
-  const navItems = useMemo(
-    () => visibleNavSections.flatMap((section) => section.items),
-    [visibleNavSections]
-  );
-  const defaultNavToolIds = useMemo(
-    () => new Set(defaultNavTools.map((tool) => tool.id)),
-    [defaultNavTools]
-  );
-  const isNavItemActive = (itemPath: string) => {
-    try {
-      const parsedPath = new URL(itemPath, 'https://dayof.local');
-      if (parsedPath.pathname !== location.pathname) return false;
-      const pathParams = Array.from(parsedPath.searchParams.entries());
-      const queryMatches = pathParams.every(([key, value]) => currentSearchParams.get(key) === value);
-      if (!queryMatches) return false;
-      if (pathParams.length > 0) return true;
-      const hasMoreSpecificMatch = navItems.some((candidate) => {
-        if (candidate.path === itemPath) return false;
-        const parsedCandidate = new URL(candidate.path, 'https://dayof.local');
-        if (parsedCandidate.pathname !== location.pathname) return false;
-        const candidateParams = Array.from(parsedCandidate.searchParams.entries());
-        if (candidateParams.length === 0) return false;
-        return candidateParams.every(([key, value]) => currentSearchParams.get(key) === value);
-      });
-      return !hasMoreSpecificMatch;
-    } catch {
-      return false;
-    }
-  };
 
   useEffect(() => {
-    if (!siteContextReady || !activeSiteRole) return;
-    const knownHiddenTool = getAllDashboardTools().some((tool) => tool.id === currentPage);
-    const knownLegacyTool = ['itinerary', 'vault', 'coordinator', 'audit-logs', 'seating-lookup'].includes(currentPage);
-    const canAccessCurrentPage = visibleNavSections.some((section) => section.items.some((item) => item.id === currentPage))
-      || ((knownHiddenTool || knownLegacyTool) && canSeeNavItem(currentPage));
+    if (!activeSiteRole) return;
+    const canAccessCurrentPage = visibleNavSections.some((section) => section.items.some((item) => item.id === currentPage));
     if (!canAccessCurrentPage) {
       navigate('/dashboard/overview', { replace: true });
     }
-  }, [activeSitePermissions, activeSiteRole, currentPage, navigate, siteContextReady, visibleNavSections]);
-
-  useEffect(() => {
-    setSidebarOpen(false);
-  }, [currentPage]);
-  useEffect(() => {
-    if (moreToolsOpen) {
-      setOpenMoreGroup('Planning');
-      return;
-    }
-    setMoreToolsQuery('');
-    setOpenMoreGroup(null);
-  }, [moreToolsOpen]);
+  }, [activeSiteRole, currentPage, navigate, visibleNavSections]);
 
   const handleSiteSwitch = (nextSiteId: string) => {
     setStoredActiveSiteId(nextSiteId);
     window.location.reload();
   };
 
-  const siteVisibility = useMemo(() => getSiteVisibilityState({
-    isPublished: siteIsPublished,
-    privacyMode: sitePrivacyMode,
-    hideFromSearch: siteJsonState?.hide_from_search === true,
-    isGuestFacingReady: siteGuestFacingReady,
-  }), [siteGuestFacingReady, siteIsPublished, sitePrivacyMode, siteJsonState]);
-  const workspaceLabel = useMemo(
-    () => buildWorkspaceLabel(siteMemberships, siteId, siteSlug, isDemoMode),
-    [isDemoMode, siteId, siteMemberships, siteSlug]
-  );
-  const previewShareHref = siteVisibility.state === 'draft' ? '/dashboard/builder' : siteSlug ? `/site/${siteSlug}` : '/dashboard/builder';
-  const previewShareExternal = siteVisibility.state !== 'draft' && Boolean(siteSlug);
-  const shareHref = siteVisibility.isLive ? '/dashboard/builder?tool=share' : '/dashboard/builder?publishNow=1';
-  const previewCtaLabel = siteVisibility.isLive ? 'Preview site' : 'Preview draft';
-  const shareCtaLabel = siteVisibility.isLive ? 'Share with guests' : 'Finish setup';
-  const currentNavLabel = visibleNavSections.flatMap((section) => section.items).find((item) => item.id === currentPage)?.label
-    || getAllDashboardTools().find((tool) => tool.id === currentPage)?.name
-    || (currentPage === 'itinerary' ? 'Schedule'
-      : currentPage === 'vault' ? 'Vaults'
-        : currentPage === 'coordinator' ? 'Day-of'
-          : currentPage === 'audit-logs' ? 'Activity'
-            : 'Dashboard');
+  const siteVisibility = useMemo(() => getSiteVisibilityState({ isPublished: siteIsPublished, privacyMode: sitePrivacyMode, hideFromSearch: siteJsonState?.hide_from_search === true }), [siteIsPublished, sitePrivacyMode, siteJsonState]);
+  const currentNavLabel = visibleNavSections.flatMap((section) => section.items).find((item) => item.id === currentPage)?.label || 'Dashboard';
+
   return (
-    <div className="min-h-screen bg-background text-text-primary lg:grid lg:grid-cols-[var(--dashboard-sidebar-width)_minmax(0,1fr)]">
+    <div className="min-h-screen bg-background flex">
       <aside
         className={`
-          fixed inset-y-0 left-0 z-50 w-[var(--dashboard-sidebar-width)] border-r border-border bg-[color-mix(in_srgb,var(--color-background)_84%,white)]
+          fixed inset-y-0 left-0 z-50 w-64 bg-surface border-r border-border-subtle
           transform transition-transform duration-200 ease-in-out
           lg:translate-x-0 lg:static
           ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
         `}
       >
         <div className="flex flex-col h-full">
-          <div className="px-5 py-6">
-            <div className="flex items-center justify-between">
-              <div className="flex min-w-0 items-center gap-3">
-                <img
-                  src="/brand/dayof-topbar-side.png"
-                  alt="dayof"
-                  className="h-auto w-full max-w-[230px] shrink-0 object-contain"
-                />
-                <div className="min-w-0">
-                  <p className="mt-1 truncate text-xs text-text-secondary">{workspaceLabel}</p>
-                </div>
-              </div>
-              <button
-                onClick={() => setSidebarOpen(false)}
-                className="rounded-lg p-2 transition-colors hover:bg-surface-subtle lg:hidden"
-                aria-label="Close menu"
-              >
-                <X className="w-5 h-5" />
-              </button>
+          <div className="flex items-center justify-between p-6 border-b border-border-subtle">
+            <div className="flex items-center gap-2">
+              <Heart className="w-6 h-6 text-accent" aria-hidden="true" />
+              <span className="text-xl font-semibold text-text-primary">Dayof</span>
             </div>
+            <button
+              onClick={() => setSidebarOpen(false)}
+              className="lg:hidden p-2 hover:bg-surface-subtle rounded-lg transition-colors"
+              aria-label="Close menu"
+            >
+              <X className="w-5 h-5" />
+            </button>
           </div>
 
-          <nav className="flex-1 overflow-y-auto px-4 pb-5" aria-label="Wedding space navigation">
+          <nav className="flex-1 p-4 overflow-y-auto" aria-label="Dashboard navigation">
+            <div className="mb-4 rounded-xl border border-border-subtle bg-surface-subtle/40 px-4 py-3">
+              <p className="text-[11px] uppercase tracking-wide text-text-tertiary">Site visibility</p>
+              <p className="mt-1 text-sm font-medium text-text-primary">{siteVisibility.label}</p>
+              {siteSlug && <p className="mt-1 text-xs text-text-secondary">{siteSlug}.dayof.love</p>}
+              <p className="mt-1 text-[11px] text-text-tertiary">{siteVisibility.searchLabel}</p>
+              <p className="mt-1 text-[11px] text-text-tertiary">{siteVisibility.explainer}</p>
+            </div>
+
             {siteMemberships.length > 1 && (
-              <div className="mb-4 rounded-lg bg-surface px-4 py-3 ring-1 ring-border-subtle">
-                <p className="text-[11px] font-medium text-text-tertiary">Switch wedding</p>
+              <div className="mb-4 rounded-xl border border-border-subtle bg-surface-subtle/40 px-4 py-3">
+                <p className="text-[11px] uppercase tracking-wide text-text-tertiary">Switch wedding</p>
                 <select
                   value={siteId || ''}
                   onChange={(e) => handleSiteSwitch(e.target.value)}
-                  className="mt-2 w-full rounded-lg border border-border-subtle bg-surface px-3 py-2 text-sm text-text-primary"
+                  className="mt-2 w-full rounded-lg border border-border-subtle bg-white px-3 py-2 text-sm text-text-primary"
                 >
                   {siteMemberships.map((site) => (
                     <option key={site.id} value={site.id}>
@@ -396,142 +277,55 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
               </div>
             )}
 
-            <div className="space-y-5">
+            <div className="space-y-6">
               {visibleNavSections.map((section, sectionIndex) => (
                 <div key={section.title || `section-${sectionIndex}`}>
-                  <ul className="space-y-1.5">
-                    {section.items.map((item) => {
-                      const isActive = isNavItemActive(item.path);
-                      const canUnpinFromNav = !defaultNavToolIds.has(item.id) && navPinSet.has(item.id);
-                      return (
-                        <li key={item.id} className="flex items-center gap-1">
-                          <Link
-                            to={item.path}
-                            className={`
-                                flex min-h-[44px] min-w-0 flex-1 items-center rounded-lg border px-3 text-[15px]
-                                transition-colors no-underline
+                  {section.title && (
+                    <button
+                      type="button"
+                      onClick={() => section.title === 'More' && setShowMoreFeatures((prev) => !prev)}
+                      className={`mb-2 flex w-full items-center justify-between px-4 py-2 text-xs font-semibold uppercase tracking-wide ${section.title === 'More' ? 'text-text-secondary hover:text-text-primary' : 'text-text-tertiary'}`}
+                    >
+                      <span>{section.title}</span>
+                      {section.title === 'More' ? (showMoreFeatures ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />) : null}
+                    </button>
+                  )}
+
+                  {(section.title !== 'More' || showMoreFeatures) && (
+                    <ul className="space-y-1">
+                      {section.items.map((item) => {
+                        const Icon = item.icon;
+                        const isActive = currentPage === item.id;
+                        return (
+                          <li key={item.id}>
+                            <Link
+                              to={item.path}
+                              className={`
+                                flex items-center gap-3 px-4 py-3 rounded-lg text-base
+                                transition-colors no-underline min-h-[44px]
                                 ${isActive
-                                  ? 'border-[color-mix(in_srgb,var(--color-border)_72%,var(--color-primary))] bg-surface-subtle text-text-primary'
-                                  : 'border-transparent text-text-primary hover:border-border hover:bg-surface-subtle'
+                                  ? 'bg-primary text-white shadow-sm'
+                                  : 'text-text-secondary hover:text-text-primary hover:bg-surface-subtle'
                                 }
                               `}
-                            onClick={() => setSidebarOpen(false)}
-                          >
-                            <span className="truncate">{item.label}</span>
-                          </Link>
-                          {canUnpinFromNav && (
-                            <button
-                              type="button"
-                              onClick={() => handleToggleNavPin(item.id)}
-                              className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-primary/25 bg-primary/10 text-primary transition-colors hover:bg-primary/20"
-                              aria-label={`Unpin ${item.label} from sidebar`}
+                              onClick={() => setSidebarOpen(false)}
                             >
-                              <PinOff className="h-3.5 w-3.5" />
-                            </button>
-                          )}
-                        </li>
-                      );
-                    })}
-                  </ul>
-                </div>
-              ))}
-
-              {moreToolGroups.length > 0 && (
-                <div className="pt-2">
-                  <button
-                    type="button"
-                    onClick={() => setMoreToolsOpen((value) => !value)}
-                    className={`
-                      flex min-h-[44px] w-full items-center gap-3 rounded-lg border px-3 text-[15px] transition-colors
-                      ${moreToolsActive || moreToolsOpen
-                        ? 'border-border bg-surface text-text-primary'
-                        : 'border-border bg-surface/70 text-text-primary hover:bg-surface'
-                      }
-                    `}
-                    aria-expanded={moreToolsOpen}
-                  >
-                    <span className="flex-1 text-left">More</span>
-                    <ChevronDown className={`h-4 w-4 transition-transform ${moreToolsOpen ? 'rotate-180' : ''}`} aria-hidden="true" />
-                  </button>
-                  <p className="mt-3 px-1 text-xs leading-5 text-text-secondary">Pin favorites to keep the sidebar calm.</p>
-
-                  {moreToolsOpen && (
-                    <div className="mt-2 space-y-3 rounded-lg border border-border bg-surface p-2 shadow-none">
-                      <label className="flex items-center gap-2 rounded-lg border border-border-subtle bg-white px-3 py-2 text-xs text-text-secondary">
-                        <Search className="h-3.5 w-3.5" aria-hidden="true" />
-                        <input
-                          value={moreToolsQuery}
-                          onChange={(event) => setMoreToolsQuery(event.target.value)}
-                          placeholder="Find a tool"
-                          className="w-full bg-transparent text-xs text-text-primary outline-none placeholder:text-text-tertiary"
-                          aria-label="Find a tool"
-                        />
-                      </label>
-                      <Link
-                        to="/dashboard/tools"
-                        className="block rounded-lg px-3 py-2 text-xs font-semibold text-primary no-underline hover:bg-primary/5"
-                        onClick={() => setSidebarOpen(false)}
-                      >
-                        Manage pins
-                      </Link>
-                      {filteredMoreToolGroups.map((group, groupIndex) => (
-                        <div key={group.title}>
-                          <button
-                            type="button"
-                            onClick={() => setOpenMoreGroup((current) => (current === group.title ? null : group.title))}
-                            className="flex w-full items-center justify-between px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-text-tertiary"
-                            aria-expanded={openMoreGroup === group.title || (!!moreToolsQuery.trim() && groupIndex === 0)}
-                          >
-                            <span>{group.title}</span>
-                            <ChevronDown className={`h-3.5 w-3.5 transition-transform ${openMoreGroup === group.title ? 'rotate-180' : ''}`} />
-                          </button>
-                          {(openMoreGroup === group.title || (!!moreToolsQuery.trim() && groupIndex === 0)) && (
-                            <ul className="space-y-1">
-                              {group.tools.map((tool) => {
-                              const Icon = tool.icon;
-                              const canPin = tool.id !== 'tools' && !tool.adminOnly;
-                              const isPinned = navPinSet.has(tool.id);
-                              return (
-                                <li key={tool.id} className="flex items-center gap-1">
-                                  <Link
-                                    to={tool.path}
-                                    className="flex min-h-[38px] min-w-0 flex-1 items-center gap-2 rounded-lg px-3 py-2 text-xs text-text-secondary no-underline hover:bg-surface-subtle hover:text-text-primary"
-                                    onClick={() => setSidebarOpen(false)}
-                                  >
-                                    <Icon className="h-4 w-4 shrink-0" aria-hidden="true" />
-                                    <span className="truncate">{tool.name}</span>
-                                  </Link>
-                                  {canPin && (
-                                    <button
-                                      type="button"
-                                      onClick={() => handleToggleNavPin(tool.id)}
-                                      className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-md border transition-colors ${
-                                        isPinned
-                                          ? 'border-primary/25 bg-primary/10 text-primary'
-                                          : 'border-border-subtle bg-surface text-text-tertiary hover:text-text-primary'
-                                      }`}
-                                      aria-label={isPinned ? `Unpin ${tool.name} from sidebar` : `Pin ${tool.name} to sidebar`}
-                                    >
-                                      <Pin className="h-3.5 w-3.5" />
-                                    </button>
-                                  )}
-                                </li>
-                              );
-                              })}
-                            </ul>
-                          )}
-                        </div>
-                      ))}
-                    </div>
+                              <Icon className="w-5 h-5 flex-shrink-0" aria-hidden="true" />
+                              <span>{item.label}</span>
+                            </Link>
+                          </li>
+                        );
+                      })}
+                    </ul>
                   )}
                 </div>
-              )}
+              ))}
             </div>
           </nav>
 
-          <div className="p-4">
-            <div className="flex items-center gap-3 rounded-lg bg-surface px-3 py-3 ring-1 ring-border">
-              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-sm font-semibold text-white">
+          <div className="p-4 border-t border-border-subtle">
+            <div className="flex items-center gap-3 px-4 py-3 rounded-lg bg-surface-subtle">
+              <div className="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center text-sm font-semibold">
                 {getUserInitials()}
               </div>
               <div className="min-w-0">
@@ -543,76 +337,54 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
         </div>
       </aside>
 
-      <div className="min-w-0 max-w-full overflow-x-hidden">
-        <header className="sticky top-0 z-30 border-b border-border bg-[color-mix(in_srgb,var(--color-background)_92%,white)]">
-          <div className="mx-auto flex min-h-[96px] max-w-[var(--container-dashboard)] items-center justify-between gap-6 px-6 py-6 lg:px-[72px]">
+      <div className="flex-1 min-w-0">
+        <header className="sticky top-0 z-30 border-b border-border-subtle bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
+          <div className="flex items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8">
             <div className="flex items-center gap-3">
               <button
                 type="button"
                 onClick={() => setSidebarOpen(true)}
-                className="inline-flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm font-medium text-text-secondary hover:bg-surface-subtle hover:text-text-primary lg:hidden"
-                aria-label="Open sections"
+                className="inline-flex items-center justify-center rounded-lg border border-border-subtle p-2 text-text-secondary hover:text-text-primary hover:bg-surface-subtle lg:hidden"
+                aria-label="Open menu"
               >
-                <Menu className="w-4 h-4" />
-                <span>Sections</span>
+                <Menu className="w-5 h-5" />
               </button>
               <div>
-                <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">{workspaceLabel}</p>
-                <h1 className="mt-1 max-w-[360px] text-base font-bold leading-snug text-text-primary sm:text-lg">
-                  {currentNavLabel}
-                </h1>
+                <h1 className="text-lg font-semibold text-text-primary">{currentNavLabel}</h1>
+                <p className="text-sm text-text-secondary">Manage your wedding site and guest experience.</p>
               </div>
             </div>
 
-            <div className="flex flex-wrap items-center justify-end gap-2">
-              <span className="hidden h-10 w-10 items-center justify-center rounded-full border border-border bg-surface md:inline-flex">
-                <img
-                  src="/brand/dayof-calendar-mark.png"
-                  alt="dayof calendar"
-                  className="h-5 w-5 object-contain"
-                />
-              </span>
-              <span className="hidden min-h-9 items-center gap-2 rounded-full border border-border bg-surface px-3 text-sm text-text-secondary md:inline-flex">
-                <span className={`h-2.5 w-2.5 rounded-full ${siteVisibility.isLive ? 'bg-success' : 'bg-warning'}`} />
-                {siteVisibility.isLive ? 'Guest-ready' : siteVisibility.shortLabel}
-              </span>
-              <a
-                href={previewShareHref}
-                target={previewShareExternal ? '_blank' : undefined}
-                rel={previewShareExternal ? 'noopener' : undefined}
-                className="inline-flex min-h-[44px] items-center gap-2 rounded-lg border border-border-strong bg-surface px-4 text-sm font-medium text-text-primary no-underline hover:bg-surface-subtle hover:text-text-primary"
-              >
-                <ExternalLink className="w-4 h-4" />
-                {previewCtaLabel}
-              </a>
-              <Link
-                to={shareHref}
-                className="inline-flex min-h-[44px] items-center rounded-lg border border-primary bg-primary px-4 text-sm font-medium text-white no-underline hover:bg-primary-hover hover:text-white"
-              >
-                {shareCtaLabel}
-              </Link>
-              <button
-                type="button"
-                className="hidden h-10 w-10 items-center justify-center rounded-full border border-border bg-surface text-primary hover:bg-surface-subtle md:inline-flex"
-                aria-label="Notifications"
-              >
-                <Bell className="h-4 w-4" />
-              </button>
-              {activeSiteRole === 'owner' && (
-                <Link
-                  to="/dashboard/settings?tab=team"
-                  className="hidden items-center gap-2 rounded-full border border-primary bg-primary px-3 py-2 text-sm font-semibold text-white hover:bg-primary-hover sm:inline-flex"
-                  aria-label="Open team settings"
+            <div className="flex items-center gap-3">
+              {siteSlug && (
+                <a
+                  href={`/${siteSlug}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="hidden items-center gap-2 rounded-lg border border-border-subtle px-3 py-2 text-sm font-medium text-text-primary hover:bg-surface-subtle sm:inline-flex"
                 >
-                  {getUserInitials()}
-                </Link>
+                  <ExternalLink className="w-4 h-4" />
+                  View site
+                </a>
+              )}
+              {activeSiteRole === 'owner' && (
+                <button
+                  type="button"
+                  onClick={() => setShowUpgradeModal(true)}
+                  className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary/90"
+                >
+                  <Heart className="w-4 h-4" />
+                  Upgrade
+                </button>
               )}
             </div>
           </div>
         </header>
 
-        <main className="mx-auto max-w-[var(--container-dashboard)] px-6 py-10 lg:px-[72px] lg:pb-24">{children}</main>
+        <main className="px-4 py-6 sm:px-6 lg:px-8">{children}</main>
       </div>
+
+      {showUpgradeModal && <BillingModal onClose={() => setShowUpgradeModal(false)} />}
     </div>
   );
 };

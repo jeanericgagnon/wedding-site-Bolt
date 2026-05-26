@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
+// @ts-ignore Test imports a Node script module with named exports.
 import { buildRegistryMaintenanceProofReport } from '../../scripts/v1-proof-registry-maintenance-report.mjs';
 
 describe('registry maintenance proof script', () => {
