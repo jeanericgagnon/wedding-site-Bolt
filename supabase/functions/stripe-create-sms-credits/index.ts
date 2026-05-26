@@ -106,9 +106,11 @@ Deno.serve(async (req: Request) => {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
-  } catch (err) {
-    const message = err instanceof Error ? err.message : "Internal server error";
-    return new Response(JSON.stringify({ error: message }), {
+  } catch {
+    console.error("STRIPE_CREATE_SMS_CREDITS_UNEXPECTED_FAILED", {
+      reason: "UNEXPECTED_STRIPE_CREATE_SMS_CREDITS_FAILURE",
+    });
+    return new Response(JSON.stringify({ error: "Could not start SMS credits checkout. Please try again." }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
