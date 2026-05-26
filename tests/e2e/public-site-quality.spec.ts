@@ -65,12 +65,11 @@ test.describe('public site quality', () => {
     await expectGuestReadyPublicSite(page);
   });
 
-  test('public site owner preview banner is visible and removable', async ({ page }) => {
+  test('public site preview params do not leak owner preview chrome to public visitors', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto('/site/alex-jordan-demo?publicQualitySmoke=preview&previewGuest=guest-1&previewSurface=public', { waitUntil: 'domcontentloaded' });
-    await expect(page.getByText(/owner preview mode/i)).toBeVisible();
-    await expect(page.getByText(/private event access still follows/i)).toBeVisible();
-    await expect(page.getByRole('link', { name: /leave preview/i })).toHaveAttribute('href', '/site/alex-jordan-demo?publicQualitySmoke=preview');
+    await expect(page.getByText(/owner preview mode/i)).toHaveCount(0);
+    await expect(page.getByRole('link', { name: /leave preview/i })).toHaveCount(0);
     await expectGuestReadyPublicSite(page);
   });
 

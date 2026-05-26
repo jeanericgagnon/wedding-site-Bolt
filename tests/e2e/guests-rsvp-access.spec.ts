@@ -87,10 +87,12 @@ test('guest RSVP settings persist supported access truth while future modes stay
   await expect(page.getByText(/Setup proof checklist/i)).toBeVisible();
   await expect(page.getByRole('button', { name: 'Dietary notes' })).toBeVisible();
 
-  const switchPrimaryButton = page.getByRole('button', { name: 'Use as primary access' }).first();
-  if (await switchPrimaryButton.isVisible().catch(() => false)) {
+  const privateLinkSummary = page.getByText(/Guests reply through private RSVP links/i);
+  if (!(await privateLinkSummary.isVisible().catch(() => false))) {
+    const switchPrimaryButton = page.getByRole('button', { name: 'Use as primary access' }).first();
     await switchPrimaryButton.scrollIntoViewIfNeeded();
     await switchPrimaryButton.click();
+    await expect(privateLinkSummary).toBeVisible();
   }
 
   const backupCheckbox = page.getByRole('checkbox', { name: /Keep name lookup as the backup/i });
