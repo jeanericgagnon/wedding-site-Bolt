@@ -59,7 +59,13 @@ Deno.serve(async (req: Request) => {
       .eq("wedding_site_id", requestRow.wedding_site_id);
 
     if (guestErr) {
-      return new Response(JSON.stringify({ error: guestErr.message }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      console.error("SUBMIT_CONTACT_REQUEST_UPDATE_FAILED", {
+        reason: "GUEST_CONTACT_REQUEST_UPDATE_FAILED",
+      });
+      return new Response(JSON.stringify({ error: "Could not update this guest. Please try again." }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     await admin
@@ -68,8 +74,11 @@ Deno.serve(async (req: Request) => {
       .eq("id", requestRow.id);
 
     return new Response(JSON.stringify({ ok: true }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-  } catch (err) {
-    return new Response(JSON.stringify({ error: err instanceof Error ? err.message : "Internal error" }), {
+  } catch {
+    console.error("SUBMIT_CONTACT_REQUEST_UNEXPECTED_FAILED", {
+      reason: "UNEXPECTED_CONTACT_REQUEST_FAILURE",
+    });
+    return new Response(JSON.stringify({ error: "Could not update this guest. Please try again." }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
