@@ -221,11 +221,16 @@ export const Trust: React.FC = () => {
               <button
                 type="button"
                 onClick={handleStartDraft}
+                aria-label={user ? 'Review your draft' : 'Start your draft'}
                 className="rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-primary/90"
               >
                 {user ? 'Continue your site' : 'Start your draft'}
               </button>
-              <Link to={user ? '/dashboard/planning' : '/product'} className="rounded-xl border border-border bg-surface px-4 py-2.5 text-sm font-medium text-text-primary transition hover:border-primary/30 hover:text-primary">
+              <Link
+                to={user ? '/dashboard/planning' : '/product'}
+                aria-label={user ? 'Open planner workspace' : 'See product tour'}
+                className="rounded-xl border border-border bg-surface px-4 py-2.5 text-sm font-medium text-text-primary transition hover:border-primary/30 hover:text-primary"
+              >
                 {user ? 'Continue planning' : 'See product tour'}
               </Link>
             </div>
@@ -278,6 +283,7 @@ export const Trust: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => navigate('/settings')}
+                    aria-label="Open account settings"
                     className="rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-primary/90"
                   >
                     Account settings
@@ -285,6 +291,7 @@ export const Trust: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => navigate('/dashboard/builder')}
+                    aria-label="Open your builder"
                     className="rounded-xl border border-border bg-surface px-4 py-2.5 text-sm font-medium text-text-primary transition hover:border-primary/30 hover:text-primary"
                   >
                     Edit your site
@@ -292,6 +299,7 @@ export const Trust: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => navigate('/dashboard/planning')}
+                    aria-label="Open planner workspace"
                     className="rounded-xl border border-border bg-surface px-4 py-2.5 text-sm font-medium text-text-primary transition hover:border-primary/30 hover:text-primary"
                   >
                     Continue planning
@@ -299,6 +307,7 @@ export const Trust: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => navigate('/dashboard/coordinator')}
+                    aria-label="Open coordinator workspace"
                     className="rounded-xl border border-border bg-surface px-4 py-2.5 text-sm font-medium text-text-primary transition hover:border-primary/30 hover:text-primary"
                   >
                     Day-of view
@@ -306,6 +315,7 @@ export const Trust: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => navigate('/dashboard/guests')}
+                    aria-label="Open guest list"
                     className="rounded-xl border border-border bg-surface px-4 py-2.5 text-sm font-medium text-text-primary transition hover:border-primary/30 hover:text-primary"
                   >
                     Manage guests
@@ -313,6 +323,7 @@ export const Trust: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => navigate('/dashboard/messages')}
+                    aria-label="Open message drafts"
                     className="rounded-xl border border-border bg-surface px-4 py-2.5 text-sm font-medium text-text-primary transition hover:border-primary/30 hover:text-primary"
                   >
                     Guest messages
@@ -320,6 +331,7 @@ export const Trust: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => navigate('/dashboard/rsvp-board')}
+                    aria-label="Open RSVP board"
                     className="rounded-xl border border-border bg-surface px-4 py-2.5 text-sm font-medium text-text-primary transition hover:border-primary/30 hover:text-primary"
                   >
                     Open RSVP board
@@ -327,6 +339,7 @@ export const Trust: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => navigate('/dashboard/overview')}
+                    aria-label="Open your dashboard"
                     className="rounded-xl border border-border bg-surface px-4 py-2.5 text-sm font-medium text-text-primary transition hover:border-primary/30 hover:text-primary"
                   >
                     Open wedding home
