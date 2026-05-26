@@ -52,6 +52,7 @@ Why keep:
 
 Recommended next move:
 - leave preserved unless there is explicit product appetite to resurrect pieces
+- see `docs/non-registry-live-fixes-salvage-plan-2026-05-25.md` for the current preservation guidance
 
 #### `origin/brand-phase-5-imagery-system`
 
