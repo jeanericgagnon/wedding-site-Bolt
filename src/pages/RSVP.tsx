@@ -6,6 +6,7 @@ import { Input } from '../components/ui/Input';
 import { Select } from '../components/ui/Select';
 import { Textarea } from '../components/ui/Textarea';
 import { Card } from '../components/ui/Card';
+import { GuestJourneyCompanion } from '../components/guest/GuestJourneyCompanion';
 import { LanguageSwitcher } from '../components/ui/LanguageSwitcher';
 import { CheckCircle, Search, AlertCircle, User } from 'lucide-react';
 import { demoGuests, demoRSVPs } from '../lib/demoData';
@@ -443,6 +444,8 @@ export default function RSVP() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const siteSlug = searchParams.get('site')?.trim().toLowerCase() ?? '';
+  const previewGuest = searchParams.get('previewGuest')?.trim() ?? '';
   const [step, setStep] = useState<'search' | 'pick' | 'form' | 'success'>('search');
   const [searchValue, setSearchValue] = useState('');
   const [guest, setGuest] = useState<Guest | null>(null);
@@ -1411,6 +1414,14 @@ export default function RSVP() {
                 </div>
               </>
             )}
+
+            <GuestJourneyCompanion
+              currentSurface="rsvp"
+              siteSlug={siteSlug || undefined}
+              inviteToken={activeToken || undefined}
+              previewGuest={previewGuest || undefined}
+              className="mb-6"
+            />
 
             {deadlinePassed && existingRsvp && (
               <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-lg text-amber-800 text-sm flex items-start gap-2">
