@@ -37,6 +37,7 @@ describe('memoryCurator', () => {
     expect(model.title).toContain('Start with the one photo guests should remember first');
     expect(model.readinessLabel).toBe('Needs a signature anchor');
     expect(model.focusTitle).toBe('Lock the couple anchor first');
+    expect(model.bestNextMove).toContain('Main photo of you two');
     expect(model.decisionRule).toMatch(/guest-facing|signature couple photo/i);
     expect(model.qualitySignals[0]).toContain('Hero photo');
     expect(model.nextMoves[0]).toContain('Main photo of you two');
@@ -57,6 +58,7 @@ describe('memoryCurator', () => {
     expect(model.title).toContain('first recap');
     expect(model.readinessLabel).toBe('Recap-ready');
     expect(model.focusTitle).toBe('Synthesize while the archive is still compact');
+    expect(model.bestNextMove).toContain('Generate the first AI recap');
     expect(model.decisionRule).toMatch(/synthesis beats adding raw volume/i);
     expect(model.curationNote).toMatch(/synthesis|more valuable/i);
     expect(model.nextMoves[0]).toContain('Generate the first AI recap');

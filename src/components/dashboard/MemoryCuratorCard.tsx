@@ -29,6 +29,12 @@ export const MemoryCuratorCard: React.FC<Props> = ({ model }) => {
               <p className="mt-2 text-xs leading-5 text-neutral-700">{model.focusDetail}</p>
             </div>
             <div className="rounded-2xl border border-white/70 bg-white/75 px-3 py-3">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-neutral-500">Best next move</p>
+              <p className="mt-1 text-sm font-medium text-neutral-800">{model.bestNextMove}</p>
+            </div>
+          </div>
+          <div className="mt-2 grid gap-2 sm:grid-cols-1">
+            <div className="rounded-2xl border border-white/70 bg-white/75 px-3 py-3">
               <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-neutral-500">Decision rule</p>
               <p className="mt-1 text-sm font-medium text-neutral-800">{model.decisionRule}</p>
             </div>

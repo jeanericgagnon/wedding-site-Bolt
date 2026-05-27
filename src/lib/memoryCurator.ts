@@ -33,6 +33,7 @@ export interface MemoryCuratorModel {
   detail: string;
   focusTitle: string;
   focusDetail: string;
+  bestNextMove: string;
   decisionRule: string;
   curationNote: string;
   badges: string[];
@@ -125,6 +126,7 @@ export const buildPhotoMemoryCuratorModel = (args: {
       detail: 'The system still needs a signature couple photo before it can make the hero feel intentional. Everything else gets easier once that anchor is in place.',
       focusTitle: 'Lock the couple anchor first',
       focusDetail: 'Until the hero photo feels unmistakable, every other memory choice is still provisional.',
+      bestNextMove: 'Upload one favorite couple portrait into Main photo of you two.',
       decisionRule: 'Do not widen guest-facing collection before the signature couple photo feels settled.',
       curationNote: 'This is still collection mode. Do not widen the guest upload story until the couple anchor feels unmistakable.',
       badges: [
@@ -151,6 +153,7 @@ export const buildPhotoMemoryCuratorModel = (args: {
       detail: 'The private bucket board has enough direction now. The next step is turning that into one or two clear guest upload moments instead of a long list of options.',
       focusTitle: 'Open one guest lane on purpose',
       focusDetail: 'The private story is strong enough now that one clear upload moment will help more than adding lots of options.',
+      bestNextMove: 'Create the first live bucket for the one moment you care about most.',
       decisionRule: 'Launch the clearest guest upload path first, then add more only when the first one proves useful.',
       curationNote: 'The visual story is strong enough to open one clear upload lane without overwhelming guests.',
       badges: [
@@ -177,6 +180,7 @@ export const buildPhotoMemoryCuratorModel = (args: {
       detail: 'Guests are sending photos, but no active bucket has enough visible uploads to feel slideshow-ready yet. A little curation now will give the memory flow some shape.',
       focusTitle: 'Finish one strong bucket first',
       focusDetail: 'A single complete bucket creates more trust than several half-formed ones.',
+      bestNextMove: 'Push one live bucket to at least three strong visible uploads.',
       decisionRule: 'Push one bucket to “worth revisiting” before you spread attention across every upload lane.',
       curationNote: 'You have signal now. The job is turning that signal into one complete, trustworthy memory lane first.',
       badges: [
@@ -203,6 +207,7 @@ export const buildPhotoMemoryCuratorModel = (args: {
       detail: 'The wedding is behind you and the upload flow has enough signal now. This is the moment to preserve the strongest moments in the vault instead of collecting forever.',
       focusTitle: 'Shift from collection to preservation',
       focusDetail: 'The archive is strongest when it starts favoring memorable clusters over endless intake.',
+      bestNextMove: 'Use the strongest bucket to shape a first slideshow or recap draft.',
       decisionRule: 'Once enough strong uploads exist, preserving the best moments beats collecting every remaining one.',
       curationNote: 'The best next upgrade is permanence: recap, archive, and stop treating every new upload as equally important.',
       badges: [
@@ -228,6 +233,7 @@ export const buildPhotoMemoryCuratorModel = (args: {
     detail: 'You have the couple anchors, live guest paths, and enough uploads to make this feel intentional. The next wins are about taste and continuity, not more buckets.',
     focusTitle: 'Curate depth, not volume',
     focusDetail: 'The system is healthy enough that restraint will usually improve it more than expansion.',
+    bestNextMove: 'Preview the slideshow while the best moments are still easy to spot.',
     decisionRule: 'When the memory flow feels balanced, choose continuity and taste over opening new lanes.',
     curationNote: 'This is the sweet spot where fewer, better buckets will usually create a stronger memory system than opening more lanes.',
     badges: [
@@ -270,6 +276,7 @@ export const buildVaultMemoryCuratorModel = (args: {
       detail: 'The vault only feels trustworthy when storage is healthy. Fix that first so every note, photo, and recap lands somewhere dependable.',
       focusTitle: 'Restore trust before sentiment',
       focusDetail: 'The emotional value of the vault only works when the storage path is dependable.',
+      bestNextMove: 'Reconnect Google Drive so future entries land cleanly.',
       decisionRule: 'When storage trust is broken, repair storage before adding or sharing more memories.',
       curationNote: 'Trust comes before sentiment here. Reconnect storage before you ask anyone to rely on the vault long term.',
       badges: [
@@ -295,6 +302,7 @@ export const buildVaultMemoryCuratorModel = (args: {
       detail: 'The best first vault entry is not a perfect one. It is the note you write while the feeling is still fresh enough to be honest.',
       focusTitle: 'Land the first honest entry',
       focusDetail: 'The first real note teaches the vault what kind of archive this will become.',
+      bestNextMove: 'Add one short note for your first anniversary.',
       decisionRule: 'A real first note is more valuable than waiting for the perfect future memory artifact.',
       curationNote: 'One meaningful first entry will teach the system more than a batch of filler notes.',
       badges: [
@@ -321,6 +329,7 @@ export const buildVaultMemoryCuratorModel = (args: {
       detail: 'Right now the vault reads like a private notebook. That is good, but it gets more powerful once one or two people who matter most add their side of the story.',
       focusTitle: 'Add a few meaningful outside voices',
       focusDetail: 'Selective participation will deepen the archive without turning it into noise.',
+      bestNextMove: 'Share a single vault with the people whose memories you most want back.',
       decisionRule: 'Invite the people whose memories change the story, not everyone who happens to be available.',
       curationNote: 'Selective participation usually produces a better archive than opening every lane to everyone.',
       badges: [
@@ -347,6 +356,7 @@ export const buildVaultMemoryCuratorModel = (args: {
       detail: 'The vault is carrying a real story now. A recap will help you turn scattered notes and photos into something you can revisit later without digging through everything.',
       focusTitle: 'Synthesize while the archive is still compact',
       focusDetail: 'This is the moment where one recap can give the collection shape before it becomes harder to hold in your head.',
+      bestNextMove: 'Generate the first AI recap while the collection is still compact.',
       decisionRule: 'Once the vault has enough material, synthesis beats adding raw volume for a while.',
       curationNote: 'This is the point where synthesis becomes more valuable than collecting even more raw material.',
       badges: [
@@ -372,6 +382,7 @@ export const buildVaultMemoryCuratorModel = (args: {
     detail: 'You have enough notes, media, and structure for this to feel like a living archive instead of a hidden feature. The next job is gentle maintenance, not reinvention.',
     focusTitle: 'Keep the archive editorial',
     focusDetail: 'The system is healthy now, so future value comes from taste and rhythm instead of more volume.',
+    bestNextMove: 'Refresh the recap after each meaningful new cluster of entries.',
     decisionRule: 'Use the vault to mature the best memories, not to store every possible artifact forever.',
     curationNote: 'The vault is ready for editorial taste now: keep what deepens the story, not just what adds more volume.',
     badges: [
