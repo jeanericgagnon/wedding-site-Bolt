@@ -696,6 +696,8 @@ export const DashboardPlanning: React.FC = () => {
             <p className="text-[11px] font-semibold uppercase tracking-[0.16em]">Main focus</p>
             <p className="mt-1 text-sm font-semibold">{plannerHandoff.focusTitle}</p>
             <p className="mt-1 text-xs leading-5 opacity-90">{plannerHandoff.focusDetail}</p>
+            <p className="mt-3 text-[11px] font-semibold uppercase tracking-[0.16em]">Best next move</p>
+            <p className="mt-1 text-xs leading-5 opacity-90">{plannerHandoff.nextMove}</p>
             <p className="mt-3 text-[11px] font-semibold uppercase tracking-[0.16em]">Decision rule</p>
             <p className="mt-1 text-xs leading-5 opacity-90">{plannerHandoff.decisionRule}</p>
           </div>

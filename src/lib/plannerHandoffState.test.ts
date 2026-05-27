@@ -8,6 +8,7 @@ describe('getPlannerHandoffCopy', () => {
     expect(model.title).toMatch(/Planner actively driving/i);
     expect(model.focusTitle).toMatch(/working lane/i);
     expect(model.focusDetail).toMatch(/guest readiness/i);
+    expect(model.nextMove).toMatch(/loudest pressure inside guest readiness/i);
     expect(model.decisionRule).toMatch(/escalate/i);
   });
 
@@ -16,6 +17,7 @@ describe('getPlannerHandoffCopy', () => {
 
     expect(model.focusTitle).toMatch(/live flow/i);
     expect(model.focusDetail).toMatch(/timeline decisions|day-of updates/i);
+    expect(model.nextMove).toMatch(/live pressure that guests can already feel/i);
     expect(model.decisionRule).toMatch(/live guest flow/i);
   });
 
@@ -24,6 +26,7 @@ describe('getPlannerHandoffCopy', () => {
 
     expect(model.title).toMatch(/Viewer access only/i);
     expect(model.focusTitle).toMatch(/clarity, not control/i);
+    expect(model.nextMove).toMatch(/confirm facts and collect questions/i);
     expect(model.decisionRule).toMatch(/do not turn viewer access into another editing lane/i);
   });
 });
