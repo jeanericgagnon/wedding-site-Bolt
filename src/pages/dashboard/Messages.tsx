@@ -15,6 +15,8 @@ import { buildRsvpReminderDraft } from '../../lib/reminderDraftHelper';
 import { buildDayOfUpdateDraft } from '../../lib/dayOfUpdateHelper';
 import { buildEventReminderDraft } from '../../lib/eventReminderHelper';
 import { buildGuestOpsCoach, buildGuestOutreachSequence, buildMessageOpsCoach } from '../../lib/guestOpsCoach';
+import { buildDayOfDispatchModel } from './dayOfDispatch';
+import { getFlowStatusLabel } from '../../lib/flowLabels';
 import { formatMessageEventOptionLabel } from './messageEventDate';
 import { formatMessageHistoryDate, formatMessageHistoryDateTime, getMessageHistoryTimestamp } from './messageHistoryTime';
 import { formatScheduledMessageDateTime, parseScheduleInputToIso, toScheduleInputValue } from './messageScheduleTime';
@@ -2734,6 +2736,17 @@ export const DashboardMessages: React.FC = () => {
     failedCount: historyStatusCounts.failed,
     unreachedRecipientCount: messages.reduce((sum, message) => sum + getUnreachedCount(message, deliveries), 0),
   }), [deliveryHealth.overdueScheduled, deliveries, guests, historyStatusCounts.failed, historyStatusCounts.partial, historyStatusCounts.scheduled, messages]);
+  const dayOfDispatch = useMemo(() => buildDayOfDispatchModel({
+    daysUntilWedding: weddingSite?.wedding_date
+      ? Math.ceil((new Date(`${weddingSite.wedding_date}T00:00:00`).getTime() - new Date().setHours(0, 0, 0, 0)) / (1000 * 60 * 60 * 24))
+      : null,
+    venueName: weddingSite?.venue_name ?? null,
+    pendingGuests: guests.filter((guest) => isPendingStatus(guest.rsvp_status)).length,
+    itineraryAudienceCount: itineraryAudienceOptions.length,
+    scheduledDayOfCount: messages.filter((message) => message.status === 'scheduled' && getCampaignTypeLabel(message) === 'day-of-update').length,
+    sentDayOfCount: messages.filter((message) => (message.status === 'sent' || message.status === 'partial') && getCampaignTypeLabel(message) === 'day-of-update').length,
+    overdueDayOfCount: messages.filter((message) => message.status === 'scheduled' && getCampaignTypeLabel(message) === 'day-of-update' && isPastScheduledTime(message.scheduled_for)).length,
+  }), [guests, itineraryAudienceOptions.length, messages, weddingSite?.venue_name, weddingSite?.wedding_date]);
 
   const campaignThreads = useMemo(() => {
     const map = new Map<string, {
@@ -2976,6 +2989,59 @@ export const DashboardMessages: React.FC = () => {
               </div>
             ))}
           </div>
+        </div>
+
+        <div className="rounded-[28px] border border-border-subtle bg-white p-5 shadow-sm">
+          <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+            <div className="max-w-3xl">
+              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-text-tertiary">Day-of dispatch</p>
+              <h2 className="mt-2 text-2xl font-semibold text-text-primary">{dayOfDispatch.title}</h2>
+              <p className="mt-2 text-sm text-text-secondary">{dayOfDispatch.detail}</p>
+            </div>
+            <div className="rounded-2xl border border-border-subtle bg-surface-subtle/30 px-4 py-3 md:min-w-[220px]">
+              <p className="text-[11px] uppercase tracking-[0.22em] text-text-tertiary">Live message posture</p>
+              <p className="mt-1 text-xs text-text-secondary">This keeps operational messaging tied to the real wedding timeline instead of turning the composer into a second command center.</p>
+            </div>
+          </div>
+          <div className="mt-4 flex flex-wrap gap-2">
+            {dayOfDispatch.badges.map((badge) => (
+              <span key={badge} className="rounded-full border border-border-subtle bg-surface-subtle/20 px-2.5 py-1 text-[11px] font-medium text-text-secondary">
+                {badge}
+              </span>
+            ))}
+          </div>
+          <div className="mt-4 grid gap-3 md:grid-cols-3">
+            {dayOfDispatch.sequence.map((step) => (
+              <div key={step.id} className="rounded-2xl border border-border-subtle bg-surface-subtle/20 px-4 py-4">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-sm font-semibold text-text-primary">{step.title}</p>
+                  <span className="rounded-full border border-border-subtle bg-white px-2.5 py-1 text-[11px] font-medium text-text-secondary">
+                    {getFlowStatusLabel(step.status)}
+                  </span>
+                </div>
+                <p className="mt-2 text-xs leading-5 text-text-secondary">{step.detail}</p>
+              </div>
+            ))}
+          </div>
+          {dayOfDispatch.primaryAction.action !== 'none' && (
+            <div className="mt-4">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => runMessageOpsCoachPlay({
+                  id: dayOfDispatch.primaryAction.action === 'run-due-scheduled' ? 'run-due-scheduled' : 'stage-day-of-update',
+                  status: dayOfDispatch.primaryAction.action === 'run-due-scheduled' ? 'ready' : 'ready',
+                  title: dayOfDispatch.primaryAction.label,
+                  detail: dayOfDispatch.detail,
+                  actionLabel: dayOfDispatch.primaryAction.label,
+                  action: dayOfDispatch.primaryAction.action,
+                })}
+                disabled={!canCompose && dayOfDispatch.primaryAction.action !== 'none'}
+              >
+                {dayOfDispatch.primaryAction.label}
+              </Button>
+            </div>
+          )}
         </div>
 
         <div className="rounded-[28px] border border-border-subtle bg-white p-5 shadow-sm">
