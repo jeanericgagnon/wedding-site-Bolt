@@ -5,7 +5,7 @@ import { WeddingDataV1, createEmptyWeddingData } from '../../types/weddingData';
 import { safeJsonParse } from '../../lib/jsonUtils';
 import { fromExistingLayoutToBuilderProject, fromBuilderProjectToExistingLayout } from '../adapters/layoutAdapter';
 import { serializeBuilderProject } from '../serializers/projectSerializer';
-import { getBuilderRevision, listBuilderRevisions, recordBuilderRevision } from './versionHistory';
+import { BuilderRevision, getBuilderRevision, listBuilderRevisions, recordBuilderRevision } from './versionHistory';
 import { rewriteSignedMediaUrlsToPublicDeep } from '../../lib/mediaUrl';
 import { buildCoupleDisplayName } from '../../lib/coupleDisplayName';
 
@@ -276,13 +276,13 @@ export const builderProjectService = {
     return { publishedAt, version: nextPublishedVersion };
   },
 
-  async listProjectRevisions(weddingSiteId: string) {
+  listProjectRevisions(weddingSiteId: string) {
     return listBuilderRevisions(weddingSiteId);
   },
 
-  async rollbackToRevision(weddingSiteId: string, revisionId: string): Promise<boolean> {
+  async rollbackToRevision(weddingSiteId: string, revisionId: string): Promise<BuilderRevision | null> {
     const revision = getBuilderRevision(weddingSiteId, revisionId);
-    if (!revision) return false;
+    if (!revision) return null;
 
     await this.saveDraft(revision.project, revision.weddingData);
     recordBuilderRevision({
@@ -292,6 +292,6 @@ export const builderProjectService = {
       action: 'rollback',
       actor: 'builder',
     });
-    return true;
+    return revision;
   },
 };

@@ -23,6 +23,8 @@ import { getFlowStatusLabel } from '../../lib/flowLabels';
 import { templateCatalog } from '../constants/templateCatalog';
 import { getBuilderWorkbenchGuidance } from './builderWorkbenchGuidance';
 import { getPublishGuidance } from './builderPublishGuidance';
+import { buildBuilderDraftContinuityModel } from './builderDraftContinuity';
+import { builderProjectService } from '../services/builderProjectService';
 
 interface BuilderShellProps {
   initialProject: BuilderProject;
@@ -31,6 +33,7 @@ interface BuilderShellProps {
   isDemoMode?: boolean;
   onSave?: (project: BuilderProject, weddingData?: WeddingDataV1 | null) => Promise<void>;
   onPublish?: (projectId: string) => Promise<{ version: number; publishedAt: string }>;
+  onRestoreRevision?: (revisionId: string) => Promise<{ project: BuilderProject; weddingData?: WeddingDataV1 | null } | null>;
 }
 
 export const BuilderShell: React.FC<BuilderShellProps> = ({ 
@@ -40,6 +43,7 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
   isDemoMode = false,
   onSave,
   onPublish,
+  onRestoreRevision,
 }) => {
   const [state, dispatch] = useReducer(builderReducer, {
     ...initialBuilderState,
@@ -82,10 +86,16 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
   const [publishAttemptedAt, setPublishAttemptedAt] = useState<string | null>(null);
   const [showCoachmarks, setShowCoachmarks] = useState(false);
   const [inspectorHidden, setInspectorHidden] = useState(false);
+  const [revisions, setRevisions] = useState(() => builderProjectService.listProjectRevisions(initialProject.weddingId));
+  const [restoringRevisionId, setRestoringRevisionId] = useState<string | null>(null);
 
   const stateRef = useRef(state);
   stateRef.current = state;
   const shouldAutoPublishRef = useRef(shouldAutoPublishFromSearch(window.location.search));
+
+  const refreshRevisionHistory = useCallback(() => {
+    setRevisions(builderProjectService.listProjectRevisions(initialProject.weddingId));
+  }, [initialProject.weddingId]);
 
   useEffect(() => {
     const weddingId = initialProject.weddingId;
@@ -149,6 +159,16 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
     }),
     [activePage?.sections.length, activePage?.title, inspectorHidden, selectedSection, state.isDirty, state.mode],
   );
+  const draftContinuity = useMemo(
+    () => buildBuilderDraftContinuityModel({
+      revisions,
+      isDirty: state.isDirty,
+      isSaving: state.isSaving,
+      isPublishing: state.isPublishing,
+      publishedVersion: state.project?.publishedVersion ?? null,
+    }),
+    [revisions, state.isDirty, state.isPublishing, state.isSaving, state.project?.publishedVersion],
+  );
 
   const handleSave = useCallback(async (): Promise<boolean> => {
     const currentState = stateRef.current;
@@ -158,6 +178,7 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
     try {
       await onSave(currentState.project, currentState.weddingData);
       dispatch(builderActions.markSaved(new Date().toISOString()));
+      refreshRevisionHistory();
       return true;
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Failed to save';
@@ -165,7 +186,7 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
       dispatch({ type: 'SET_SAVING', payload: false });
       return false;
     }
-  }, [onSave]);
+  }, [onSave, refreshRevisionHistory]);
 
   const handleFixPublishBlockers = useCallback(() => {
     const project = stateRef.current.project;
@@ -231,13 +252,42 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
           publishMeta.publishedAt
         )
       );
+      refreshRevisionHistory();
       setPublishNotice(`Live site updated successfully (v${publishMeta.version})`);
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Failed to make the site live';
       setPublishError(msg);
       dispatch({ type: 'SET_PUBLISHING', payload: false });
     }
-  }, [onPublish, handleSave]);
+  }, [onPublish, handleSave, refreshRevisionHistory]);
+
+  const handleRestoreRevision = useCallback(async (revisionId: string) => {
+    if (!onRestoreRevision || restoringRevisionId) return;
+    setRestoringRevisionId(revisionId);
+    setPublishError(null);
+    setSaveError(null);
+    try {
+      const restored = await onRestoreRevision(revisionId);
+      if (!restored?.project) {
+        setPublishError('That local checkpoint is no longer available.');
+        return;
+      }
+
+      dispatch({ type: 'LOAD_PROJECT', payload: restored.project });
+      if (restored.weddingData) {
+        dispatch({ type: 'SET_WEDDING_DATA', payload: restored.weddingData });
+      }
+      dispatch(builderActions.setMode('edit'));
+      dispatch(builderActions.selectSection(null));
+      dispatch(builderActions.markSaved(new Date().toISOString()));
+      refreshRevisionHistory();
+      setPublishNotice('Restored a local Builder checkpoint. Review the draft, then keep going from this steadier base.');
+    } catch (err) {
+      setPublishError(err instanceof Error ? err.message : 'Could not restore that local checkpoint.');
+    } finally {
+      setRestoringRevisionId(null);
+    }
+  }, [onRestoreRevision, refreshRevisionHistory, restoringRevisionId]);
 
   const handleLaunchConfidenceAction = useCallback(() => {
     if (!launchConfidence) return;
@@ -256,6 +306,20 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
     }
     void handlePublish();
   }, [handleFixPublishBlockers, handlePublish, launchConfidence]);
+
+  const handleDraftContinuityAction = useCallback(async () => {
+    if (draftContinuity.primaryAction.kind === 'save') {
+      await handleSave();
+      return;
+    }
+    if (draftContinuity.primaryAction.kind === 'publish') {
+      await handlePublish();
+      return;
+    }
+    if (draftContinuity.primaryAction.kind === 'restore' && draftContinuity.primaryAction.revisionId) {
+      await handleRestoreRevision(draftContinuity.primaryAction.revisionId);
+    }
+  }, [draftContinuity.primaryAction, handlePublish, handleRestoreRevision, handleSave]);
 
   const handleWorkbenchAction = useCallback(async () => {
     switch (workbenchGuidance.primaryAction.kind) {
@@ -560,6 +624,110 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
                     </div>
                   </div>
                 )}
+                <div id="draft-continuity" className="rounded-2xl border border-border-subtle bg-white px-4 py-3">
+                  <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2">
+                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-text-tertiary">Draft continuity</p>
+                        <span className="rounded-full border border-primary/20 bg-primary/5 px-2.5 py-1 text-[11px] font-medium text-primary">
+                          {draftContinuity.badge}
+                        </span>
+                      </div>
+                      <p className="text-sm font-medium text-text-primary">{draftContinuity.heading}</p>
+                      <p className="text-sm text-text-secondary">{draftContinuity.summary}</p>
+                      <div className="grid gap-2 sm:grid-cols-2">
+                        <div className="rounded-2xl border border-border-subtle bg-surface-subtle/30 px-3 py-3">
+                          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-text-tertiary">Main focus</p>
+                          <p className="mt-1 text-sm font-medium text-text-primary">{draftContinuity.focusTitle}</p>
+                          <p className="mt-2 text-xs leading-5 text-text-secondary">{draftContinuity.focusDetail}</p>
+                        </div>
+                        <div className="rounded-2xl border border-border-subtle bg-surface-subtle/30 px-3 py-3">
+                          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-text-tertiary">Best next move</p>
+                          <p className="mt-1 text-sm font-medium text-text-primary">{draftContinuity.bestNextMove}</p>
+                          <div className="mt-3 border-t border-border-subtle pt-3">
+                            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-text-tertiary">Decision rule</p>
+                            <p className="mt-1 text-sm leading-5 text-text-secondary">{draftContinuity.decisionRule}</p>
+                            <p className="mt-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-text-tertiary">Watchout</p>
+                            <p className="mt-1 text-sm leading-5 text-text-secondary">{draftContinuity.watchout}</p>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="grid gap-2 md:grid-cols-3">
+                        {[
+                          { title: 'Current', detail: draftContinuity.currentStep, status: 'current' as const },
+                          { title: 'Next', detail: draftContinuity.nextStep, status: 'next' as const },
+                          { title: 'Then', detail: draftContinuity.thenStep, status: 'then' as const },
+                        ].map((step) => (
+                          <div key={`${step.status}-${step.title}`} className="rounded-xl border border-border-subtle bg-surface-subtle/40 px-3 py-3">
+                            <div className="flex items-center justify-between gap-2">
+                              <p className="text-xs font-semibold text-text-primary">{step.title}</p>
+                              <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${
+                                step.status === 'current'
+                                  ? 'border border-primary/20 bg-primary-light text-primary'
+                                  : step.status === 'next'
+                                    ? 'border border-warning/20 bg-warning-light text-warning'
+                                    : 'border border-border-subtle bg-white text-text-secondary'
+                              }`}>
+                                {getFlowStatusLabel(step.status)}
+                              </span>
+                            </div>
+                            <p className="mt-2 text-xs leading-5 text-text-secondary">{step.detail}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="lg:pl-4">
+                      {draftContinuity.primaryAction.kind !== 'none' && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            void handleDraftContinuityAction();
+                          }}
+                          disabled={restoringRevisionId !== null}
+                          className={`rounded-lg px-3 py-2 text-sm font-medium ${
+                            draftContinuity.primaryAction.kind === 'restore'
+                              ? 'border border-amber-200 bg-amber-50 text-amber-800 hover:bg-amber-100'
+                              : 'bg-gray-900 text-white hover:bg-gray-800'
+                          } disabled:cursor-not-allowed disabled:opacity-60`}
+                        >
+                          {restoringRevisionId && draftContinuity.primaryAction.kind === 'restore'
+                            ? 'Restoring…'
+                            : draftContinuity.primaryAction.label}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                  {draftContinuity.events.length > 0 && (
+                    <div className="mt-4 grid gap-2">
+                      {draftContinuity.events.map((event) => (
+                        <div key={event.id} className="rounded-xl border border-border-subtle bg-surface-subtle/30 px-3 py-3">
+                          <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                            <div>
+                              <div className="flex flex-wrap items-center gap-2">
+                                <p className="text-sm font-medium text-text-primary">{event.title}</p>
+                                <span className="rounded-full border border-border-subtle bg-white px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-text-secondary">
+                                  {event.badge}
+                                </span>
+                              </div>
+                              <p className="mt-1 text-xs leading-5 text-text-secondary">{event.detail}</p>
+                            </div>
+                            <button
+                              type="button"
+                              disabled={!event.canRestore || !onRestoreRevision || restoringRevisionId !== null}
+                              onClick={() => {
+                                if (!event.canRestore) return;
+                                void handleRestoreRevision(event.id);
+                              }}
+                              className="rounded-lg border border-border-subtle bg-white px-3 py-2 text-xs font-medium text-text-primary hover:bg-surface disabled:cursor-not-allowed disabled:opacity-60"
+                            >
+                              {restoringRevisionId === event.id ? 'Restoring…' : event.restoreLabel}
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </div>

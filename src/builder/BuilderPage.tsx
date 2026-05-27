@@ -162,6 +162,27 @@ export const BuilderPage: React.FC = () => {
     return { version: result.version, publishedAt: result.publishedAt };
   };
 
+  const handleRestoreRevision = async (revisionId: string): Promise<{ project: BuilderProject; weddingData?: WeddingDataV1 | null } | null> => {
+    if (isDemoMode) return null;
+
+    const weddingSiteId = project?.weddingId;
+    if (!weddingSiteId) return null;
+
+    const restored = await builderProjectService.rollbackToRevision(weddingSiteId, revisionId);
+    if (!restored) return null;
+
+    const [nextProject, nextWeddingData] = await Promise.all([
+      builderProjectService.loadProject(weddingSiteId),
+      builderProjectService.loadWeddingData(weddingSiteId),
+    ]);
+
+    const resolvedProject = nextProject ?? restored.project;
+    const resolvedWeddingData = nextWeddingData ?? restored.weddingData ?? null;
+    setProject(resolvedProject);
+    setWeddingData(resolvedWeddingData);
+    return { project: resolvedProject, weddingData: resolvedWeddingData };
+  };
+
   if (loading) {
     return (
       <div className="h-screen flex items-center justify-center bg-gray-50">
@@ -302,6 +323,7 @@ export const BuilderPage: React.FC = () => {
       isDemoMode={isDemoMode}
       onSave={handleSave}
       onPublish={handlePublish}
+      onRestoreRevision={handleRestoreRevision}
     />
   );
 };
