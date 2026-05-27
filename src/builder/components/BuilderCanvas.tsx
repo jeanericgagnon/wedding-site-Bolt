@@ -30,6 +30,7 @@ import { getBuilderCanvasEmptyState } from './builderCanvasEmptyState';
 import { getPublishIssue } from '../utils/publishReadiness';
 import { getPublishBlockerUiState } from './builderTopBarModel';
 import { getBuilderPreviewReviewSummary } from './builderPreviewReviewSummary';
+import { runBuilderPageEditingAction } from './builderPageEditingActions';
 
 const THEME_STYLE_ID = 'builder-canvas-theme';
 const CANVAS_SCOPE = '.builder-themed-canvas';
@@ -115,29 +116,7 @@ export const BuilderCanvas: React.FC = () => {
     : null;
   const handlePageEditingAction = useCallback((action: NonNullable<typeof pageEditingSummary>['primaryAction']) => {
     if (!activePage) return;
-
-    switch (action.kind) {
-      case 'add-section':
-        dispatch(builderActions.addSectionByType(activePage.id, action.sectionType));
-        return;
-      case 'add-essential-kit':
-        action.sectionTypes.forEach((sectionType) => {
-          dispatch(builderActions.addSectionByType(activePage.id, sectionType));
-        });
-        return;
-      case 'select-section':
-        dispatch(builderActions.selectSection(action.sectionId));
-        requestAnimationFrame(() => {
-          const el = document.querySelector(`[data-section-id="${action.sectionId}"]`);
-          if (el) (el as HTMLElement).scrollIntoView({ behavior: 'smooth', block: 'start' });
-        });
-        return;
-      case 'open-template-gallery':
-        dispatch(builderActions.openTemplateGallery());
-        return;
-      default:
-        return;
-    }
+    runBuilderPageEditingAction({ action, activePageId: activePage.id, dispatch });
   }, [activePage, dispatch]);
 
   if (!activePage) {

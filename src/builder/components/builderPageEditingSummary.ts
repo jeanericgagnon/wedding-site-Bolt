@@ -2,7 +2,7 @@ import { getAllSectionManifests, getSectionManifest } from '../registry/sectionM
 import { BuilderSectionInstance, BuilderSectionType } from '../../types/builder/section';
 import { getBuilderSectionLibrarySummary } from './builderSectionLibrarySummary';
 
-type BuilderPageEditingAction =
+export type BuilderPageEditingAction =
   | {
       kind: 'add-section';
       label: string;

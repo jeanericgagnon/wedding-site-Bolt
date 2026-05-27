@@ -25,6 +25,7 @@ import { getBuilderWorkbenchGuidance } from './builderWorkbenchGuidance';
 import { getBuilderPageEditingSummary } from './builderPageEditingSummary';
 import { getPublishGuidance } from './builderPublishGuidance';
 import { buildBuilderDraftContinuityModel } from './builderDraftContinuity';
+import { runBuilderPageEditingAction } from './builderPageEditingActions';
 import { builderProjectService } from '../services/builderProjectService';
 
 interface BuilderShellProps {
@@ -374,30 +375,13 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
       }
       case 'apply-page-recovery': {
         if (!activePage || !activePageEditingSummary) return;
-        const action = activePageEditingSummary.primaryAction;
-        switch (action.kind) {
-          case 'add-section':
-            dispatch(builderActions.addSectionByType(activePage.id, action.sectionType));
-            return;
-          case 'add-essential-kit':
-            action.sectionTypes.forEach((sectionType) => {
-              dispatch(builderActions.addSectionByType(activePage.id, sectionType));
-            });
-            return;
-          case 'select-section':
-            dispatch(builderActions.selectSection(action.sectionId));
-            setInspectorHidden(false);
-            requestAnimationFrame(() => {
-              const el = document.querySelector(`[data-section-id="${action.sectionId}"]`);
-              if (el) (el as HTMLElement).scrollIntoView({ behavior: 'smooth', block: 'start' });
-            });
-            return;
-          case 'open-template-gallery':
-            dispatch(builderActions.openTemplateGallery());
-            return;
-          default:
-            return;
-        }
+        runBuilderPageEditingAction({
+          action: activePageEditingSummary.primaryAction,
+          activePageId: activePage.id,
+          dispatch,
+          revealInspector: () => setInspectorHidden(false),
+        });
+        return;
       }
     }
   }, [activePage, activePageEditingSummary, dispatch, handleSave, workbenchGuidance.primaryAction.kind]);

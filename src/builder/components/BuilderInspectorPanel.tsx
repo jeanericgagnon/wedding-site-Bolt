@@ -13,6 +13,7 @@ import { BuilderSectionType } from '../../types/builder/section';
 import { getBuilderPageEditingSummary } from './builderPageEditingSummary';
 import { getBuilderSectionEditingGuidance } from './builderSectionEditingGuidance';
 import { getBuilderInspectorTabGuidance } from './builderInspectorTabGuidance';
+import { runBuilderPageEditingAction } from './builderPageEditingActions';
 
 type InspectorTab = 'guide' | 'content' | 'style' | 'layout' | 'data';
 
@@ -79,23 +80,7 @@ export const BuilderInspectorPanel: React.FC = () => {
   const handlePageSummaryAction = (kind: 'primary' | 'secondary') => {
     if (!activePage || !pageEditingSummary) return;
     const action = kind === 'primary' ? pageEditingSummary.primaryAction : pageEditingSummary.secondaryAction;
-
-    if (action.kind === 'add-section') {
-      dispatch(builderActions.addSectionByType(activePage.id, action.sectionType));
-      return;
-    }
-
-    if (action.kind === 'select-section') {
-      dispatch(builderActions.selectSection(action.sectionId));
-      requestAnimationFrame(() => {
-        const el = document.querySelector(`[data-section-id="${action.sectionId}"]`);
-        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      });
-      return;
-    }
-
-    dispatch(builderActions.selectSection(null));
-    dispatch(builderActions.openTemplateGallery());
+    runBuilderPageEditingAction({ action, activePageId: activePage.id, dispatch });
   };
 
   if (!selectedSection) {

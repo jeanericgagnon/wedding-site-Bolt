@@ -40,6 +40,7 @@ import {
   getBuilderSectionRecoverySummary,
   getBuilderStarterContentPatch,
 } from './builderSectionRecoverySummary';
+import { runBuilderPageEditingAction } from './builderPageEditingActions';
 
 
 type SidebarTab = 'sections' | 'layers' | 'templates' | 'media';
@@ -389,6 +390,18 @@ export const BuilderSidebarLibrary: React.FC<BuilderSidebarLibraryProps> = ({ ac
       scrollToSection(action.sectionId);
     }
   };
+  const runSectionLibraryAction = (action: { kind: 'add-section'; label: string; sectionType: BuilderSectionType } | { kind: 'add-essential-kit'; label: string; sectionTypes: BuilderSectionType[] }) => {
+    if (!activePageId) return;
+    runBuilderPageEditingAction({
+      action,
+      activePageId,
+      dispatch,
+      afterAction: () => {
+        setActiveTab('layers');
+        setExpandedType(null);
+      },
+    });
+  };
 
   const sidebarExpanded = activeTab === 'sections';
 
@@ -580,8 +593,11 @@ export const BuilderSidebarLibrary: React.FC<BuilderSidebarLibraryProps> = ({ ac
                 <button
                   type="button"
                   onClick={() => {
-                    const manifest = getSectionManifest(sectionLibrarySummary.primarySuggestedType!);
-                    addSection(manifest.type, manifest.defaultVariant);
+                    runSectionLibraryAction({
+                      kind: 'add-section',
+                      label: `Add ${getSectionManifest(sectionLibrarySummary.primarySuggestedType!).label}`,
+                      sectionType: sectionLibrarySummary.primarySuggestedType!,
+                    });
                   }}
                   className="mt-3 inline-flex items-center rounded-lg border border-sky-300 bg-white px-3 py-1.5 text-[11px] font-semibold text-sky-800 hover:bg-sky-100"
                 >
@@ -593,15 +609,22 @@ export const BuilderSidebarLibrary: React.FC<BuilderSidebarLibraryProps> = ({ ac
               <p className="px-1 text-[11px] font-semibold uppercase tracking-wide text-rose-700 mb-2">Quick presets</p>
               <button
                 onClick={() => {
-                  const starter: BuilderSectionType[] = ['hero', 'story', 'schedule', 'travel', 'rsvp', 'gallery', 'faq'];
-                  starter.forEach((type) => {
-                    const manifest = getSectionManifest(type);
-                    if (manifest) addSection(manifest.type, manifest.defaultVariant);
+                  const starter = sectionLibrarySummary.missingEssentialTypes.length > 0
+                    ? sectionLibrarySummary.missingEssentialTypes
+                    : (['hero', 'story', 'schedule', 'travel', 'rsvp', 'gallery', 'faq'] as BuilderSectionType[]);
+                  runSectionLibraryAction({
+                    kind: 'add-essential-kit',
+                    label: sectionLibrarySummary.missingEssentialTypes.length > 0
+                      ? `Add missing essentials (${sectionLibrarySummary.missingEssentialTypes.length})`
+                      : 'Add starter pack',
+                    sectionTypes: starter,
                   });
                 }}
                 className="mb-2 w-full rounded border border-rose-300 bg-white px-2 py-1.5 text-xs font-semibold text-rose-700 hover:bg-rose-100 transition-colors"
               >
-                Add starter pack
+                {sectionLibrarySummary.missingEssentialTypes.length > 0
+                  ? `Add missing essentials (${sectionLibrarySummary.missingEssentialTypes.length})`
+                  : 'Add starter pack'}
               </button>
 
               <div className="mb-2 flex items-center gap-1 rounded-md border border-rose-200 bg-white p-1">

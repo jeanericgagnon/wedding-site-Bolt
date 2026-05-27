@@ -57,6 +57,7 @@ import {
   getBuilderLaunchBasicsSummary,
   type BuilderLaunchBasicsDraft,
 } from './builderLaunchBasics';
+import { runBuilderPageEditingAction } from './builderPageEditingActions';
 
 interface BuilderTopBarProps {
   onSave: () => void;
@@ -334,6 +335,20 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
         return;
     }
   }, [dispatch, handleFixNext, onPublish, onSave, state.activePageId]);
+
+  const handlePageGuideAction = React.useCallback((
+    pageId: string,
+    action: NonNullable<typeof activePageEditingSummary>['primaryAction'],
+  ) => {
+    runBuilderPageEditingAction({
+      action,
+      activePageId: pageId,
+      dispatch,
+      afterAction: () => {
+        setShowPageManager(false);
+      },
+    });
+  }, [dispatch]);
 
   return (
     <>
@@ -1298,6 +1313,22 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
                   <p className="mt-3 text-xs text-gray-600">
                     <span className="font-semibold text-gray-900">Best next move:</span> {activePageEditingSummary.bestNextMove}
                   </p>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={() => handlePageGuideAction(activePage.id, activePageEditingSummary.primaryAction)}
+                      className="rounded border border-sky-200 bg-sky-50 px-2.5 py-1 text-[11px] font-medium text-sky-800 hover:bg-sky-100"
+                    >
+                      {activePageEditingSummary.primaryAction.label}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handlePageGuideAction(activePage.id, activePageEditingSummary.secondaryAction)}
+                      className="rounded border border-gray-200 bg-white px-2.5 py-1 text-[11px] font-medium text-gray-700 hover:bg-gray-50"
+                    >
+                      {activePageEditingSummary.secondaryAction.label}
+                    </button>
+                  </div>
                 </>
               ) : (
                 <>
@@ -1415,6 +1446,22 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
                           </div>
                           <p className="mt-3 text-xs font-medium text-gray-900">{pageGuide.focusTitle}</p>
                           <p className="mt-1 text-xs text-gray-600">{pageGuide.bestNextMove}</p>
+                          <div className="mt-3 flex flex-wrap gap-2">
+                            <button
+                              type="button"
+                              onClick={() => handlePageGuideAction(page.id, pageGuide.primaryAction)}
+                              className="rounded border border-sky-200 bg-sky-50 px-2.5 py-1 text-[11px] font-medium text-sky-800 hover:bg-sky-100"
+                            >
+                              {pageGuide.primaryAction.label}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handlePageGuideAction(page.id, pageGuide.secondaryAction)}
+                              className="rounded border border-gray-200 bg-white px-2.5 py-1 text-[11px] font-medium text-gray-700 hover:bg-gray-50"
+                            >
+                              {pageGuide.secondaryAction.label}
+                            </button>
+                          </div>
                         </div>
                         <div className="flex flex-wrap gap-2 lg:w-[220px] lg:justify-end">
                           <button
