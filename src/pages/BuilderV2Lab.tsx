@@ -27,6 +27,7 @@ import {
 } from './builderV2WorkflowGuidance';
 import { buildBuilderV2DocumentAudit, type BuilderV2DocumentAuditIssue } from './builderV2DocumentAudit';
 import { buildBuilderV2HandoffGuidance } from './builderV2HandoffGuidance';
+import { buildBuilderV2HandoffPacket } from './builderV2HandoffPacket';
 import { buildBuilderV2StructureGuidance } from './builderV2StructureGuidance';
 import { buildBuilderV2SelectionGuidance } from './builderV2SelectionGuidance';
 import { cloneBuilderV2Sections } from './builderV2SectionClone';
@@ -883,6 +884,18 @@ export const BuilderV2Lab: React.FC = () => {
     }),
     [previewDevice, sectionBlocks, sections],
   );
+  const handoffPacket = useMemo(
+    () => buildBuilderV2HandoffPacket({
+      sections: sections.map((section) => ({
+        id: section.id,
+        title: section.title,
+        enabled: section.enabled,
+        blockCount: (sectionBlocks[section.id] ?? []).length,
+        warningCount: (sectionBlocks[section.id] ?? []).filter((block) => getBlockValidationWarning(block)).length,
+      })),
+    }),
+    [sectionBlocks, sections],
+  );
   const selectedSectionLimit = useMemo(() => getSectionLimitConfig(selected.type), [selected.type]);
   const recommendedBlockTypesForSelected = useMemo(
     () => getRecommendedBlockTypes(selected.type, addableBlocksForSelected),
@@ -1017,6 +1030,15 @@ export const BuilderV2Lab: React.FC = () => {
     await navigator.clipboard.writeText(payload);
     notify('Copied V2 JSON');
   }, [buildExportDocument, notify]);
+
+  const copyHandoffPacket = useCallback(async () => {
+    if (!navigator.clipboard?.writeText) {
+      notify('Clipboard is unavailable in this browser context');
+      return;
+    }
+    await navigator.clipboard.writeText(handoffPacket.summaryText);
+    notify('Copied handoff packet');
+  }, [handoffPacket.summaryText, notify]);
 
   const openImportPanel = useCallback(() => {
     setImportError('');
@@ -1167,6 +1189,7 @@ export const BuilderV2Lab: React.FC = () => {
       { id: 'export-open', group: 'Handoff', label: 'Open export handoff', keywords: ['export', 'handoff', 'json', 'share'], action: () => runCommand('Open export handoff', openExportPanel) },
       { id: 'export-download', group: 'Handoff', label: 'Download layout JSON', keywords: ['export', 'download', 'json', 'handoff'], action: () => runCommand('Download layout JSON', downloadV2Json) },
       { id: 'export-copy', group: 'Handoff', label: 'Copy layout JSON', keywords: ['copy', 'json', 'handoff', 'clipboard'], action: () => runCommand('Copy layout JSON', () => { void copyV2Json(); }) },
+      { id: 'handoff-copy-packet', group: 'Handoff', label: 'Copy handoff packet', keywords: ['copy', 'handoff', 'packet', 'summary', 'clipboard'], action: () => runCommand('Copy handoff packet', () => { void copyHandoffPacket(); }) },
       { id: 'import-open', group: 'Handoff', label: 'Open import layout', keywords: ['import', 'json', 'recover', 'handoff'], action: () => runCommand('Open import layout', openImportPanel) },
       { id: 'handoff-fix', group: 'Handoff', label: handoffGuidance.primaryActionLabel, keywords: ['fix', 'next', 'handoff', 'review', 'document'], action: () => runCommand(handoffGuidance.primaryActionLabel, runHandoffAction) },
     ];
@@ -1186,7 +1209,7 @@ export const BuilderV2Lab: React.FC = () => {
       .filter((x) => x.s > 0)
       .sort((a, b) => b.s - a.s)
       .map((x) => x.item);
-  }, [commandQuery, sections, addRecommendedBlockPack, addSection, clearSelection, copyV2Json, downloadV2Json, duplicateSelectedSections, handoffGuidance.primaryActionLabel, hideSelectedSections, invertSelection, openExportPanel, openImportPanel, removeSelectedSections, restoreSelectedSectionsToStarterBlocks, reviewSelectionInPreview, runHandoffAction, selectAllSections, setSelectedDensity, showSelectedSections, updateVariant]);
+  }, [commandQuery, sections, addRecommendedBlockPack, addSection, clearSelection, copyHandoffPacket, copyV2Json, downloadV2Json, duplicateSelectedSections, handoffGuidance.primaryActionLabel, hideSelectedSections, invertSelection, openExportPanel, openImportPanel, removeSelectedSections, restoreSelectedSectionsToStarterBlocks, reviewSelectionInPreview, runHandoffAction, selectAllSections, setSelectedDensity, showSelectedSections, updateVariant]);
   const importGuidance = useMemo(
     () => buildBuilderV2ImportGuidance(lastImportReport, lastImportSource),
     [lastImportReport, lastImportSource],
@@ -1397,6 +1420,46 @@ export const BuilderV2Lab: React.FC = () => {
               </div>
               <div className="rounded-md border border-border-subtle bg-white px-3 py-3">
                 <div className="rounded-md border border-border-subtle bg-surface-subtle px-2.5 py-2">
+                  <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary">Handoff packet</p>
+                  <p className="mt-1 text-sm font-semibold text-text-primary">{handoffPacket.headline}</p>
+                  <p className="mt-1 text-xs leading-relaxed text-text-secondary">{handoffPacket.detail}</p>
+                </div>
+                <div className="mt-3 grid gap-2 md:grid-cols-2">
+                  <div className="rounded-md border border-border-subtle bg-white px-2.5 py-2">
+                    <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary">Visible order</p>
+                    <p className="mt-1 text-xs leading-relaxed text-text-primary">
+                      {handoffPacket.visibleTitles.length > 0 ? handoffPacket.visibleTitles.join(' -> ') : 'No visible lanes yet'}
+                    </p>
+                  </div>
+                  <div className="rounded-md border border-border-subtle bg-white px-2.5 py-2">
+                    <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary">Hidden backlog</p>
+                    <p className="mt-1 text-xs leading-relaxed text-text-primary">
+                      {handoffPacket.hiddenTitles.length > 0 ? handoffPacket.hiddenTitles.join(', ') : 'No hidden lanes'}
+                    </p>
+                  </div>
+                </div>
+                <div className="mt-3 space-y-2">
+                  {handoffPacket.entries.slice(0, 5).map((entry) => (
+                    <div key={`packet-${entry.sectionId}`} className="rounded-md border border-border-subtle bg-white px-2.5 py-2">
+                      <div className="flex items-center gap-2">
+                        <span className={`rounded-full border px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.14em] ${
+                          entry.status === 'empty'
+                            ? 'border-rose-200 bg-rose-50 text-rose-800'
+                            : entry.status === 'warning'
+                              ? 'border-amber-200 bg-amber-50 text-amber-800'
+                              : entry.status === 'hidden'
+                                ? 'border-slate-200 bg-slate-50 text-slate-700'
+                                : 'border-emerald-200 bg-emerald-50 text-emerald-800'
+                        }`}>
+                          {entry.status}
+                        </span>
+                        <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary">{entry.sectionTitle}</p>
+                      </div>
+                      <p className="mt-1 text-xs leading-relaxed text-text-primary">{entry.summary}</p>
+                    </div>
+                  ))}
+                </div>
+                <div className="rounded-md border border-border-subtle bg-surface-subtle px-2.5 py-2">
                   <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary">Audit queue</p>
                   <p className="mt-1 text-sm font-semibold text-text-primary">{documentAudit.headline}</p>
                   <p className="mt-1 text-xs leading-relaxed text-text-secondary">{documentAudit.detail}</p>
@@ -1451,6 +1514,9 @@ export const BuilderV2Lab: React.FC = () => {
                   </button>
                   <button onClick={openExportPanel} className="rounded-md border border-border-subtle bg-white px-3 py-2 text-left text-sm font-semibold text-text-primary hover:border-primary/40 hover:bg-primary/5">
                     Open export panel
+                  </button>
+                  <button onClick={() => { void copyHandoffPacket(); }} className="rounded-md border border-border-subtle bg-white px-3 py-2 text-left text-sm font-semibold text-text-primary hover:border-primary/40 hover:bg-primary/5">
+                    Copy handoff packet
                   </button>
                   <button onClick={downloadV2Json} className="rounded-md border border-border-subtle bg-white px-3 py-2 text-left text-sm font-semibold text-text-primary hover:border-primary/40 hover:bg-primary/5">
                     Download layout JSON
@@ -2738,9 +2804,49 @@ export const BuilderV2Lab: React.FC = () => {
               </div>
 
               <div className="grid gap-3 md:grid-cols-2">
-                  <div className="rounded-md border border-border-subtle bg-surface-subtle px-3 py-3">
-                    <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary">Audit queue</p>
-                    <p className="mt-1 text-sm font-semibold text-text-primary">{documentAudit.headline}</p>
+                <div className="rounded-md border border-border-subtle bg-surface-subtle px-3 py-3">
+                  <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary">Handoff packet</p>
+                  <p className="mt-1 text-sm font-semibold text-text-primary">{handoffPacket.headline}</p>
+                  <p className="mt-1 text-xs leading-relaxed text-text-secondary">{handoffPacket.detail}</p>
+                  <div className="mt-3 grid gap-2">
+                    <div className="rounded-md border border-border-subtle bg-white px-2.5 py-2">
+                      <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary">Visible order</p>
+                      <p className="mt-1 text-xs leading-relaxed text-text-primary">
+                        {handoffPacket.visibleTitles.length > 0 ? handoffPacket.visibleTitles.join(' -> ') : 'No visible lanes yet'}
+                      </p>
+                    </div>
+                    <div className="rounded-md border border-border-subtle bg-white px-2.5 py-2">
+                      <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary">Hidden backlog</p>
+                      <p className="mt-1 text-xs leading-relaxed text-text-primary">
+                        {handoffPacket.hiddenTitles.length > 0 ? handoffPacket.hiddenTitles.join(', ') : 'No hidden lanes'}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="mt-3 space-y-2 max-h-56 overflow-auto pr-1">
+                    {handoffPacket.entries.map((entry) => (
+                      <div key={`export-packet-${entry.sectionId}`} className="rounded-md border border-border-subtle bg-white px-2.5 py-2">
+                        <div className="flex items-center gap-2">
+                          <span className={`rounded-full border px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.14em] ${
+                            entry.status === 'empty'
+                              ? 'border-rose-200 bg-rose-50 text-rose-800'
+                              : entry.status === 'warning'
+                                ? 'border-amber-200 bg-amber-50 text-amber-800'
+                                : entry.status === 'hidden'
+                                  ? 'border-slate-200 bg-slate-50 text-slate-700'
+                                  : 'border-emerald-200 bg-emerald-50 text-emerald-800'
+                          }`}>
+                            {entry.status}
+                          </span>
+                          <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary">{entry.sectionTitle}</p>
+                        </div>
+                        <p className="mt-1 text-xs leading-relaxed text-text-primary">{entry.summary}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <div className="rounded-md border border-border-subtle bg-surface-subtle px-3 py-3">
+                  <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary">Audit queue</p>
+                  <p className="mt-1 text-sm font-semibold text-text-primary">{documentAudit.headline}</p>
                     <p className="mt-1 text-xs leading-relaxed text-text-secondary">{documentAudit.detail}</p>
                     {documentAudit.issues.length > 0 && (
                       <div className="mt-3 space-y-2">
@@ -2797,6 +2903,9 @@ export const BuilderV2Lab: React.FC = () => {
               <div className="flex items-center gap-2">
                 <button onClick={() => setShowExportPanel(false)} className="rounded-sm border border-border-subtle px-3 py-1.5 text-xs font-medium hover:border-primary/40 hover:bg-primary/5">
                   Close
+                </button>
+                <button onClick={() => { void copyHandoffPacket(); }} className="rounded-sm border border-border-subtle px-3 py-1.5 text-xs font-medium hover:border-primary/40 hover:bg-primary/5">
+                  Copy handoff packet
                 </button>
                 <button onClick={() => { void copyV2Json(); }} className="rounded-sm border border-border-subtle px-3 py-1.5 text-xs font-medium hover:border-primary/40 hover:bg-primary/5">
                   Copy JSON
