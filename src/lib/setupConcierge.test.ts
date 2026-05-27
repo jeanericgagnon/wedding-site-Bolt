@@ -39,6 +39,7 @@ describe('setupConcierge', () => {
     expect(review.confidenceLabel).toMatch(/confidence|first draft/i);
     expect(review.nextBestMove).toMatch(/travel|weekend|guest/i);
     expect(review.decisionRule).toMatch(/guest|travel|weekend/i);
+    expect(review.watchouts.some((watchout) => /destination guests|guest/i.test(watchout))).toBe(true);
     expect(review.launchSequence.map((item) => item.status)).toEqual(['current', 'next', 'then']);
   });
 
@@ -58,6 +59,7 @@ describe('setupConcierge', () => {
     expect(plan.guestPromise).toMatch(/guests/i);
     expect(plan.confidenceLabel).toMatch(/guided|ready/i);
     expect(plan.decisionRule).toMatch(/guest|travel|polish/i);
+    expect(plan.watchouts.some((watchout) => /travel|FAQ|RSVP/i.test(watchout))).toBe(true);
     expect(plan.launchSequence[0]?.title).toMatch(/trustworthy|site/i);
   });
 });

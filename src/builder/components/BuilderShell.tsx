@@ -452,9 +452,16 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
                     </div>
                   ))}
                 </div>
-                {conciergePlan.watchouts.map((watchout) => (
-                  <p key={watchout} className="text-xs text-amber-700">{watchout}</p>
-                ))}
+                {conciergePlan.watchouts.length > 0 && (
+                  <div className="rounded-xl border border-amber-200 bg-amber-50/70 px-3 py-3">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-amber-700">Watchouts</p>
+                    <div className="mt-2 space-y-1.5">
+                      {conciergePlan.watchouts.map((watchout) => (
+                        <p key={watchout} className="text-xs leading-5 text-amber-800">{watchout}</p>
+                      ))}
+                    </div>
+                  </div>
+                )}
                 {launchConfidence && (
                   <div id="launch-confidence" className="rounded-2xl border border-border-subtle bg-white px-4 py-3">
                     <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">

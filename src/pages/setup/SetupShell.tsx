@@ -419,10 +419,13 @@ export const SetupShell: React.FC<{ step?: string }> = ({ step }) => {
                 <p className="mt-2 text-xs text-rose-700">{reviewModel.nextBestMove}</p>
                 <p className="mt-1 text-xs text-rose-700">Decision rule · {reviewModel.decisionRule}</p>
                 {reviewModel.watchouts.length > 0 && (
-                  <div className="mt-3 space-y-1">
-                    {reviewModel.watchouts.map((watchout) => (
-                      <p key={watchout} className="text-xs text-rose-700">{watchout}</p>
-                    ))}
+                  <div className="mt-3 rounded-xl border border-rose-200 bg-white/70 px-3 py-3">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-rose-700">Watchouts</p>
+                    <div className="mt-2 space-y-1.5">
+                      {reviewModel.watchouts.map((watchout) => (
+                        <p key={watchout} className="text-xs leading-5 text-rose-700">{watchout}</p>
+                      ))}
+                    </div>
                   </div>
                 )}
               </div>
