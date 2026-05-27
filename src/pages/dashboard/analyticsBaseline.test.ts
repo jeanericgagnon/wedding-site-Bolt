@@ -34,6 +34,7 @@ describe('analyticsBaseline', () => {
 
     expect(summary.tone).toBe('success');
     expect(summary.statusLabel).toMatch(/high confidence/i);
+    expect(summary.bestNextMove).toMatch(/calm window|guest-facing polish/i);
     expect(summary.decisionRule).toMatch(/refinement|reopen solved basics/i);
   });
 
@@ -46,6 +47,7 @@ describe('analyticsBaseline', () => {
 
     expect(summary.title).toMatch(/few more replies/i);
     expect(summary.tone).toBe('warning');
+    expect(summary.bestNextMove).toMatch(/still-pending guests|reply pockets/i);
     expect(summary.decisionRule).toMatch(/RSVP picture/i);
   });
 
@@ -113,6 +115,7 @@ describe('analyticsBaseline', () => {
     }));
 
     expect(summary.title).toMatch(/access handoff/i);
+    expect(summary.bestNextMove).toMatch(/password handoff|access instructions/i);
     expect(summary.decisionRule).toMatch(/access instructions/i);
     expect(nextMove.ctaLabel).toMatch(/review guest access/i);
     expect(nextMove.priorityLabel).toBe('Access handoff');

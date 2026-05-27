@@ -22,6 +22,7 @@ export interface AnalyticsConfidenceSummary {
   title: string;
   detail: string;
   statusLabel: string;
+  bestNextMove: string;
   decisionRule: string;
   tone: 'success' | 'warning' | 'error';
 }
@@ -111,6 +112,7 @@ export function buildAnalyticsConfidenceSummary(input: AnalyticsBaselineInput): 
       title: 'Guest confidence still depends on a few more replies',
       detail: 'The board has enough signal to guide you, but the next meaningful lift is still getting the pending RSVP group smaller before you trust the picture completely.',
       statusLabel: `${input.pendingGuests} still pending`,
+      bestNextMove: 'Review the still-pending guests first, clear the biggest reply pockets, and only then let the calmer-looking metrics influence bigger decisions.',
       decisionRule: 'Do not let healthy vanity metrics outrank a still-noisy RSVP picture.',
       tone: 'warning',
     };
@@ -121,6 +123,7 @@ export function buildAnalyticsConfidenceSummary(input: AnalyticsBaselineInput): 
       title: 'The board is useful, but contact coverage is still softer than it should be',
       detail: 'When direct email or phone coverage is thin, every later RSVP, reminder, and day-of update feels shakier than it needs to.',
       statusLabel: `${contactCoverage}% contact coverage`,
+      bestNextMove: 'Fix the missing contact paths now, then come back to reminders or day-of messaging once the list can actually hear from you cleanly.',
       decisionRule: 'Tighten the contact layer before assuming later outreach will behave cleanly.',
       tone: 'warning',
     };
@@ -131,6 +134,9 @@ export function buildAnalyticsConfidenceSummary(input: AnalyticsBaselineInput): 
       title: 'Guests can find the site, but the experience still feels a little thin',
       detail: 'Response signals are healthy enough, yet registry and photo follow-through are not both fully carrying their share of guest confidence.',
       statusLabel: guestExperienceReady ? 'Guest-facing extras ready' : 'Guest-facing extras still growing',
+      bestNextMove: input.registryItemCount === 0
+        ? 'Add one honest registry lane first, then return to the memory side once gifting no longer feels blank.'
+        : 'Turn on one active photo contribution path next, then let the rest of the guest experience build from that living signal.',
       decisionRule: 'Treat guest-facing depth as part of trust, not as decorative polish.',
       tone: 'warning',
     };
@@ -141,6 +147,9 @@ export function buildAnalyticsConfidenceSummary(input: AnalyticsBaselineInput): 
       title: 'Guest trust also depends on a clean access handoff right now',
       detail: `The board looks healthy, but the site is ${accessLabel}. That means guest confidence now depends on whether the right password or invite path is traveling with every handoff.`,
       statusLabel: `${accessLabel} access in play`,
+      bestNextMove: input.privacyMode === 'invite_only'
+        ? 'Run one invite-path pass now, then make sure the real guest links are the ones getting reused everywhere.'
+        : 'Check the password handoff once now, then reuse the same access instructions anywhere the site gets shared or printed.',
       decisionRule: 'A strong board still needs the right access instructions traveling with it.',
       tone: 'warning',
     };
@@ -151,6 +160,7 @@ export function buildAnalyticsConfidenceSummary(input: AnalyticsBaselineInput): 
       title: 'The measured baseline looks trustworthy right now',
       detail: 'Guests are responding, the contact layer is strong, and the public extras are active enough that the board reads like product truth instead of wishful thinking.',
       statusLabel: 'High confidence baseline',
+      bestNextMove: 'Use this calm window for one guest-facing polish pass, then leave the solved basics alone unless real guest feedback says otherwise.',
       decisionRule: 'This is the moment to improve the guest-facing finish, not to reopen solved basics.',
       tone: 'success',
     };
@@ -160,6 +170,7 @@ export function buildAnalyticsConfidenceSummary(input: AnalyticsBaselineInput): 
     title: 'The baseline is healthy enough to guide your next moves',
     detail: 'Nothing here is shouting, but the board still benefits from one more pass on replies, contact coverage, or guest-facing depth before you treat it as fully settled.',
     statusLabel: 'Useful, still maturing',
+    bestNextMove: 'Follow the highest-friction guest-facing signal next, then let the quieter metrics stay in support instead of chasing all of them at once.',
     decisionRule: 'Keep following the highest-friction signal instead of spreading effort evenly everywhere.',
     tone: 'warning',
   };

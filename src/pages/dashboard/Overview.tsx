@@ -1506,9 +1506,18 @@ export const DashboardOverview: React.FC = () => {
                     <div>
                       <p className="text-sm font-medium text-text-primary">{analyticsConfidenceSummary.title}</p>
                       <p className="mt-1 text-xs text-text-secondary">{analyticsConfidenceSummary.detail}</p>
-                      <p className="mt-2 text-[11px] text-text-tertiary">{analyticsConfidenceSummary.decisionRule}</p>
                     </div>
                     <Badge variant={analyticsConfidenceSummary.tone}>{analyticsConfidenceSummary.statusLabel}</Badge>
+                  </div>
+                  <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                    <div className="rounded-lg border border-border-subtle bg-white px-3 py-2.5">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-text-tertiary">Best next move</p>
+                      <p className="mt-1 text-[11px] leading-5 text-text-tertiary">{analyticsConfidenceSummary.bestNextMove}</p>
+                    </div>
+                    <div className="rounded-lg border border-border-subtle bg-white px-3 py-2.5">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-text-tertiary">Decision rule</p>
+                      <p className="mt-1 text-[11px] leading-5 text-text-tertiary">{analyticsConfidenceSummary.decisionRule}</p>
+                    </div>
                   </div>
                 </div>
                 <div className="grid gap-2 md:grid-cols-3">
