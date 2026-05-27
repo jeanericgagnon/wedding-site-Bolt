@@ -177,7 +177,7 @@ export const PlanningOverviewTab: React.FC<Props> = ({ tasks, budgetItems, vendo
     }
     if (step.target === 'itinerary') {
       if (typeof window !== 'undefined') {
-        window.location.assign('/dashboard/itinerary');
+        window.location.assign('/dashboard/itinerary#itinerary-readiness');
       }
       return;
     }
@@ -186,7 +186,7 @@ export const PlanningOverviewTab: React.FC<Props> = ({ tasks, budgetItems, vendo
         builder: '/dashboard/builder',
         guests: '/dashboard/guests',
         messages: '/dashboard/messages',
-        settings: '/dashboard/settings?tab=site',
+        settings: '/dashboard/settings?tab=site#guest-access-handoff',
         photos: '/dashboard/photos',
         vault: '/dashboard/vault',
       };
@@ -248,7 +248,7 @@ export const PlanningOverviewTab: React.FC<Props> = ({ tasks, budgetItems, vendo
           }
           if (target === 'itinerary') {
             if (typeof window !== 'undefined') {
-              window.location.assign('/dashboard/itinerary');
+              window.location.assign('/dashboard/itinerary#itinerary-readiness');
             }
             return;
           }

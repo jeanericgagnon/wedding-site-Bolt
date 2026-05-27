@@ -661,12 +661,12 @@ export const DashboardOverview: React.FC = () => {
       builder: '/dashboard/builder',
       coordinator: '/dashboard/coordinator',
       guests: '/dashboard/guests',
-      itinerary: '/dashboard/itinerary',
+      itinerary: '/dashboard/itinerary#itinerary-readiness',
       messages: '/dashboard/messages',
       photos: '/dashboard/photos',
       planning: '/dashboard/planning',
       registry: '/dashboard/registry',
-      settings: '/dashboard/settings?tab=site',
+      settings: '/dashboard/settings?tab=site#guest-access-handoff',
       suggestions: '/dashboard/overview',
       seating: '/dashboard/seating',
       vault: '/dashboard/vault',
@@ -685,7 +685,7 @@ export const DashboardOverview: React.FC = () => {
       registry: '/dashboard/registry',
       photos: '/dashboard/photos',
       builder: '/dashboard/builder',
-      settings: '/dashboard/settings?tab=site',
+      settings: '/dashboard/settings?tab=site#guest-access-handoff',
     };
     navigate(routeByTarget[analyticsNextMove.target]);
   }
@@ -696,10 +696,10 @@ export const DashboardOverview: React.FC = () => {
       planning: '/dashboard/planning',
       'planning-tasks': '/dashboard/planning?tab=tasks',
       'planning-vendors': '/dashboard/planning?tab=vendors',
-      itinerary: '/dashboard/itinerary',
+      itinerary: '/dashboard/itinerary#itinerary-readiness',
       guests: '/dashboard/guests',
       messages: '/dashboard/messages',
-      settings: '/dashboard/settings?tab=site',
+      settings: '/dashboard/settings?tab=site#guest-access-handoff',
       seating: '/dashboard/seating',
       coordinator: '/dashboard/coordinator',
       photos: '/dashboard/photos',
@@ -1378,7 +1378,7 @@ export const DashboardOverview: React.FC = () => {
                       <p className="mt-1 text-amber-800">{guestAccessNote}</p>
                       <button
                         type="button"
-                        onClick={() => navigate('/dashboard/settings?tab=site')}
+                        onClick={() => navigate('/dashboard/settings?tab=site#guest-access-handoff')}
                         className="mt-2 text-xs font-medium text-amber-900 underline underline-offset-2"
                       >
                         Review site access settings

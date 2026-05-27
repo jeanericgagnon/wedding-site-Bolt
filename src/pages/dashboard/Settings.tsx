@@ -1505,7 +1505,7 @@ export const DashboardSettings: React.FC = () => {
                         </ul>
                       </div>
 
-                      <div className="rounded-xl border border-border-subtle bg-surface-subtle/40 p-4 space-y-3">
+                      <div id="guest-access-handoff" className="rounded-xl border border-border-subtle bg-surface-subtle/40 p-4 space-y-3">
                         <div>
                           <p className="text-sm font-medium text-text-primary">Guest access handoff</p>
                           <p className="mt-1 text-xs text-text-secondary">Keep launch state, access rules, and the actual guest-facing path aligned before you fan links and print packs out broadly.</p>

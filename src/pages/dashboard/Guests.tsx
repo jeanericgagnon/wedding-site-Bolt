@@ -3297,7 +3297,7 @@ Proceed with send?`)) return;
                       <p className="text-[11px] text-text-tertiary">No itinerary events yet — using Ceremony/Reception defaults for now.</p>
                       <button
                         type="button"
-                        onClick={() => navigate('/dashboard/itinerary')}
+                        onClick={() => navigate('/dashboard/itinerary#itinerary-readiness')}
                         className="rounded border border-border px-2.5 py-1 text-[11px] text-text-secondary hover:border-primary/40 hover:text-primary"
                       >
                         Open itinerary

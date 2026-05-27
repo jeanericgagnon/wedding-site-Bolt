@@ -285,7 +285,7 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
     if (!launchConfidence) return;
     if (launchConfidence.primaryAction.kind === 'fix') {
       if (launchConfidence.primaryAction.target === 'itinerary') {
-        window.location.assign('/dashboard/itinerary');
+        window.location.assign('/dashboard/itinerary#itinerary-readiness');
         return;
       }
       handleFixPublishBlockers();

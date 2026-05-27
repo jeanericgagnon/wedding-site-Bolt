@@ -1548,7 +1548,7 @@ export const DashboardSeating: React.FC = () => {
             <Users className="w-12 h-12 text-text-tertiary mx-auto mb-3" />
             <h2 className="text-xl font-semibold text-text-primary mb-2">No Events Yet</h2>
             <p className="text-text-secondary mb-4">Create itinerary events first to start managing seating.</p>
-            <Button onClick={() => window.location.href = '/dashboard/itinerary'}>
+            <Button onClick={() => window.location.href = '/dashboard/itinerary#itinerary-readiness'}>
               Go to Itinerary
             </Button>
           </div>

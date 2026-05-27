@@ -614,7 +614,7 @@ Add to itinerary
         </Button>
       </div>
 
-      <Card padding="md" className="border-primary/20 bg-primary/[0.04]">
+      <Card id="itinerary-readiness" padding="md" className="border-primary/20 bg-primary/[0.04]">
         <div className="space-y-4">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
             <div className="min-w-0">

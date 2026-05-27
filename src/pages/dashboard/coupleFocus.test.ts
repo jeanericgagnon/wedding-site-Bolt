@@ -87,7 +87,7 @@ describe('buildCoupleFocusModel', () => {
     });
 
     expect(model.headline).toMatch(/weekend timeline/i);
-    expect(model.steps[0]?.id).toBe('planning');
+    expect(model.steps[0]).toMatchObject({ id: 'itinerary', target: 'itinerary' });
     expect(model.steps[1]?.id).toBe('launch');
   });
 

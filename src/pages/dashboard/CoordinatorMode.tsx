@@ -1140,7 +1140,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
     }
 
     if (action.target === 'itinerary') {
-      window.location.assign('/dashboard/itinerary');
+      window.location.assign('/dashboard/itinerary#itinerary-readiness');
     }
   };
 
@@ -1843,7 +1843,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
               <div className="mt-3 flex flex-wrap gap-2">
               <a href="/dashboard/rsvp-board" className="rounded border border-border px-2.5 py-1 text-[11px] text-text-secondary hover:border-primary/40 hover:text-primary">Open RSVP board</a>
               <a href="/dashboard/seating-lookup" className="rounded border border-border px-2.5 py-1 text-[11px] text-text-secondary hover:border-primary/40 hover:text-primary">Open seating lookup</a>
-              <a href="/dashboard/itinerary" className="rounded border border-border px-2.5 py-1 text-[11px] text-text-secondary hover:border-primary/40 hover:text-primary">Open itinerary</a>
+              <a href="/dashboard/itinerary#itinerary-readiness" className="rounded border border-border px-2.5 py-1 text-[11px] text-text-secondary hover:border-primary/40 hover:text-primary">Open itinerary</a>
               </div>
             </div>
           </div>
@@ -2430,7 +2430,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
                   <div className="flex items-center justify-between gap-3 rounded-lg border border-border/40 bg-surface-subtle/30 px-3 py-2">
                     <p className="text-xs text-text-tertiary">No itinerary events yet.</p>
                     <a
-                      href="/dashboard/itinerary"
+                      href="/dashboard/itinerary#itinerary-readiness"
                       className="rounded border border-border px-2.5 py-1 text-[11px] text-text-secondary hover:border-primary/40 hover:text-primary"
                     >
                       Open itinerary

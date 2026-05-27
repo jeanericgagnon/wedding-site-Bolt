@@ -192,11 +192,11 @@ export function buildCoupleFocusModel(input: CoupleFocusInput): CoupleFocusModel
       summary: 'The date is close enough now that schedule clarity matters more than another polish pass. Give guests a clean itinerary spine before asking the live layer to do extra work.',
       steps: [
         step('current', {
-          id: 'planning',
+          id: 'itinerary',
           title: 'Add the anchor itinerary events',
           detail: 'Start with the ceremony, reception, and any guest-facing welcome or farewell events so the weekend stops feeling implied.',
-          target: 'planning',
-          ctaLabel: 'Open planning',
+          target: 'itinerary',
+          ctaLabel: 'Open itinerary',
         }),
         step('next', {
           id: 'launch',
