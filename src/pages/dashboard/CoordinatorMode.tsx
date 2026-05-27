@@ -1806,6 +1806,21 @@ export const DashboardCoordinatorMode: React.FC = () => {
                   <p className="mt-1 text-[11px] text-text-secondary">{item.bestNextMove}</p>
                   <p className="mt-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-text-tertiary">Decision rule</p>
                   <p className="mt-1 text-[11px] text-text-secondary">{item.decisionRule}</p>
+                  <p className="mt-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-text-tertiary">Watchout</p>
+                  <p className="mt-1 text-[11px] text-text-secondary">{item.watchout}</p>
+                  <div className="mt-3 grid gap-2">
+                    {item.sequence.map((step) => (
+                      <div key={`${item.key}-${step.status}`} className="rounded-md border border-white/60 bg-white/70 px-2.5 py-2">
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="text-[11px] font-medium text-text-primary">{step.title}</p>
+                          <span className="rounded-full border border-border/60 bg-surface px-2 py-0.5 text-[10px] uppercase tracking-[0.14em] text-text-tertiary">
+                            {step.status === 'current' ? 'Current' : step.status === 'next' ? 'Next' : 'Then'}
+                          </span>
+                        </div>
+                        <p className="mt-1 text-[11px] leading-5 text-text-secondary">{step.detail}</p>
+                      </div>
+                    ))}
+                  </div>
                   <p className="mt-1 text-[10px] text-text-tertiary/80">{getCoordinatorActionHint('escalation')}</p>
                 </button>
               ))}
