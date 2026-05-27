@@ -416,7 +416,7 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
         {conciergePlan && (
           <div id="builder-concierge" className="border-t border-border/30 bg-white/90 px-4 py-3 shadow-[0_-6px_18px_rgba(15,23,42,0.04)]">
             <div className="mx-auto flex max-w-7xl flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-              <div className="space-y-2">
+              <div className="space-y-3">
                 <div className="flex flex-wrap items-center gap-2">
                   <p className="text-xs font-semibold uppercase tracking-[0.18em] text-text-tertiary">Builder concierge</p>
                   <span className="rounded-full border border-primary/20 bg-primary/5 px-2.5 py-1 text-[11px] font-medium text-primary">
@@ -426,17 +426,28 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
                 <div>
                   <p className="text-sm font-semibold text-text-primary">{conciergePlan.heading}</p>
                   <p className="mt-1 text-sm text-text-secondary">{conciergePlan.summary}</p>
-                  <p className="mt-1 text-xs text-text-tertiary">{conciergePlan.nextBestMove}</p>
-                  <p className="mt-1 text-xs text-text-tertiary">Decision rule · {conciergePlan.decisionRule}</p>
+                </div>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  <div className="rounded-2xl border border-border-subtle bg-surface-subtle/30 px-3 py-3">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-text-tertiary">Main focus</p>
+                    <p className="mt-1 text-sm font-medium text-text-primary">{conciergePlan.guestPromise}</p>
+                  </div>
+                  <div className="rounded-2xl border border-border-subtle bg-surface-subtle/30 px-3 py-3">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-text-tertiary">Best next move</p>
+                    <p className="mt-1 text-sm font-medium text-text-primary">{conciergePlan.nextBestMove}</p>
+                    <div className="mt-3 border-t border-border-subtle pt-3">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-text-tertiary">Decision rule</p>
+                      <p className="mt-1 text-sm leading-5 text-text-secondary">{conciergePlan.decisionRule}</p>
+                    </div>
+                  </div>
                 </div>
               </div>
               <div className="grid gap-3 text-sm lg:max-w-2xl">
-                <p className="text-xs font-medium text-text-secondary">{conciergePlan.guestPromise}</p>
                 <div className="grid gap-2 md:grid-cols-3">
                   {conciergePlan.launchSequence.map((item) => (
                     <div key={item.id} className="rounded-xl border border-border-subtle bg-surface-subtle/40 px-3 py-3">
                       <div className="flex items-center justify-between gap-2">
-                        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-text-tertiary">{item.status}</p>
+                        <p className="text-xs font-semibold text-text-primary">{item.title}</p>
                         <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${
                           item.status === 'current'
                             ? 'border border-primary/20 bg-primary-light text-primary'
@@ -447,8 +458,7 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
                           {getFlowStatusLabel(item.status)}
                         </span>
                       </div>
-                      <p className="mt-2 text-xs font-medium text-text-primary">{item.title}</p>
-                      <p className="mt-1 text-[11px] leading-5 text-text-secondary">{item.detail}</p>
+                      <p className="mt-2 text-[11px] leading-5 text-text-secondary">{item.detail}</p>
                     </div>
                   ))}
                 </div>
