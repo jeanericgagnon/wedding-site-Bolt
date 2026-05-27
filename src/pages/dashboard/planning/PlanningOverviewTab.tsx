@@ -355,6 +355,15 @@ export const PlanningOverviewTab: React.FC<Props> = ({ tasks, budgetItems, vendo
                       <p className="mt-1 text-xs leading-5 text-text-secondary">{nameChangeCard.decisionRule}</p>
                     </div>
                   </div>
+                  <div className="mt-3 grid gap-2 sm:grid-cols-3">
+                    {nameChangeCard.sequence.map((step) => (
+                      <div key={step.status} className="rounded-xl border border-border-subtle bg-white px-3 py-3">
+                        <p className="text-[11px] uppercase tracking-wide text-text-secondary">{step.status}</p>
+                        <p className="mt-1 text-sm font-medium text-text-primary">{step.title}</p>
+                        <p className="mt-1 text-xs leading-5 text-text-secondary">{step.detail}</p>
+                      </div>
+                    ))}
+                  </div>
                   <p className="mt-2 text-xs text-text-secondary">
                     {nameChangeCompletedCount} complete · {nameChangeReadyCount} ready now
                   </p>

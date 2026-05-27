@@ -1197,6 +1197,18 @@ export const DashboardOverview: React.FC = () => {
                         <p className="mt-1 text-xs leading-5 text-sky-900">{nameChangeCard.decisionRule}</p>
                       </div>
                       <div className="rounded-xl border border-sky-300 bg-sky-100/80 px-4 py-3">
+                        <p className="text-xs uppercase tracking-wide text-sky-700">Current / next / then</p>
+                        <div className="mt-2 space-y-2">
+                          {nameChangeCard.sequence.map((step) => (
+                            <div key={step.status} className="rounded-lg border border-sky-200 bg-white/80 px-3 py-2">
+                              <p className="text-[11px] uppercase tracking-wide text-sky-700">{step.status}</p>
+                              <p className="mt-1 text-sm font-semibold text-sky-950">{step.title}</p>
+                              <p className="mt-1 text-xs leading-5 text-sky-900">{step.detail}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                      <div className="rounded-xl border border-sky-300 bg-sky-100/80 px-4 py-3 md:col-span-3">
                         <p className="text-xs uppercase tracking-wide text-sky-700">Optional next step</p>
                         <p className="mt-1 text-sm font-semibold text-sky-950">{nameChangeCard.optionalNextStep}</p>
                         <p className="mt-1 text-xs text-sky-900">{nameChangeCard.statusLabel}</p>
