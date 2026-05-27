@@ -79,6 +79,24 @@ export function builderReducer(state: BuilderState, action: BuilderAction): Buil
     case 'SET_WEDDING_DATA':
       return { ...state, weddingData: action.payload };
 
+    case 'UPDATE_WEDDING_DATA': {
+      if (!state.project) {
+        return { ...state, weddingData: action.payload };
+      }
+      const newHistory = pushHistory(
+        state.history,
+        state.project,
+        'Update wedding basics',
+        'UPDATE_SECTION_SETTINGS',
+      );
+      return {
+        ...state,
+        weddingData: action.payload,
+        isDirty: true,
+        history: newHistory,
+      };
+    }
+
     case 'SET_ACTIVE_PAGE':
       return { ...state, activePageId: action.payload, selectedSectionId: null };
 

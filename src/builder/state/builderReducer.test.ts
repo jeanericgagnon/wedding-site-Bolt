@@ -3,6 +3,7 @@ import { builderReducer } from './builderReducer';
 import { initialBuilderState, BuilderState } from './builderStore';
 import { createEmptyBuilderProject } from '../../types/builder/project';
 import { BuilderSectionInstance } from '../../types/builder/section';
+import { createEmptyWeddingData } from '../../types/weddingData';
 
 function makeSection(overrides?: Partial<BuilderSectionInstance>): BuilderSectionInstance {
   const now = new Date().toISOString();
@@ -54,6 +55,30 @@ describe('builderReducer — SET_MODE', () => {
     const next = builderReducer(s, { type: 'SET_MODE', payload: 'preview' });
     expect(next.mode).toBe('preview');
     expect(next.selectedSectionId).toBeNull();
+  });
+});
+
+describe('builderReducer — UPDATE_WEDDING_DATA', () => {
+  it('marks the draft dirty and updates wedding data through the builder state', () => {
+    const weddingData = createEmptyWeddingData();
+    const s = makeState({ weddingData });
+
+    const next = builderReducer(s, {
+      type: 'UPDATE_WEDDING_DATA',
+      payload: {
+        ...weddingData,
+        couple: {
+          ...weddingData.couple,
+          partner1Name: 'Alex',
+          partner2Name: 'Jordan',
+        },
+      },
+    });
+
+    expect(next.weddingData?.couple.partner1Name).toBe('Alex');
+    expect(next.weddingData?.couple.partner2Name).toBe('Jordan');
+    expect(next.isDirty).toBe(true);
+    expect(next.history.currentIndex).toBe(0);
   });
 });
 

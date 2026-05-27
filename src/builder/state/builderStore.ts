@@ -81,6 +81,7 @@ export function useBuilderContext(): BuilderContextValue {
 export type BuilderAction =
   | { type: 'LOAD_PROJECT'; payload: BuilderProject }
   | { type: 'SET_WEDDING_DATA'; payload: WeddingDataV1 }
+  | { type: 'UPDATE_WEDDING_DATA'; payload: WeddingDataV1 }
   | { type: 'SET_ACTIVE_PAGE'; payload: string }
   | { type: 'ADD_PAGE'; payload: { title?: string } }
   | { type: 'UPDATE_PAGE'; payload: { pageId: string; patch: Partial<BuilderPage> } }

@@ -51,6 +51,12 @@ import {
   getBuilderPageIntegritySummary,
   sanitizePageSlug,
 } from '../utils/pageMapIntegrity';
+import {
+  applyBuilderLaunchBasicsDraft,
+  createBuilderLaunchBasicsDraft,
+  getBuilderLaunchBasicsSummary,
+  type BuilderLaunchBasicsDraft,
+} from './builderLaunchBasics';
 
 interface BuilderTopBarProps {
   onSave: () => void;
@@ -106,6 +112,13 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
   const [newPageTitle, setNewPageTitle] = React.useState('');
   const [showPhotoTips, setShowPhotoTips] = React.useState(() => shouldOpenPhotoTipsFromSearch(location.search));
   const [showPublishChecklist, setShowPublishChecklist] = React.useState(false);
+  const [showLaunchBasics, setShowLaunchBasics] = React.useState(false);
+  const [launchBasicsDraft, setLaunchBasicsDraft] = React.useState<BuilderLaunchBasicsDraft>(() =>
+    createBuilderLaunchBasicsDraft(state.weddingData),
+  );
+  const [launchBasicsIssueKind, setLaunchBasicsIssueKind] = React.useState<
+    'missing-couple-names' | 'missing-event-date' | 'missing-venue' | 'rsvp-disabled' | null
+  >(null);
   const launchPrep = React.useMemo(
     () => (
       state.project
@@ -180,6 +193,11 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
     ),
     [activePage, canAutoSaveBeforePublish, hasHardPublishBlocker, isDirty, isPublished, previewViewport],
   );
+  const launchBasicsSummary = React.useMemo(
+    () => getBuilderLaunchBasicsSummary(launchBasicsDraft, launchBasicsIssueKind),
+    [launchBasicsDraft, launchBasicsIssueKind],
+  );
+  const launchBasicsStatusLabel = `${launchBasicsSummary.completedCount}/${launchBasicsSummary.totalCount}`;
 
   React.useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -205,6 +223,37 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
       return () => window.clearTimeout(t);
     }
   }, [showPublishChecklist, checklistDoneCount, checklistItems.length]);
+
+  const openLaunchBasics = React.useCallback((
+    issueKind: 'missing-couple-names' | 'missing-event-date' | 'missing-venue' | 'rsvp-disabled' | null = null,
+  ) => {
+    setLaunchBasicsDraft(createBuilderLaunchBasicsDraft(state.weddingData));
+    setLaunchBasicsIssueKind(issueKind);
+    setShowLaunchBasics(true);
+    setShowPublishChecklist(false);
+    setShowBlockedDetails(false);
+  }, [state.weddingData]);
+
+  const handleApplyLaunchBasics = React.useCallback(() => {
+    if (!state.weddingData) return;
+    dispatch(builderActions.updateWeddingData(applyBuilderLaunchBasicsDraft(state.weddingData, launchBasicsDraft)));
+    setShowLaunchBasics(false);
+    setLaunchBasicsIssueKind(null);
+  }, [dispatch, launchBasicsDraft, state.weddingData]);
+
+  const handleFixNext = React.useCallback(() => {
+    if (
+      publishIssueKind === 'missing-couple-names'
+      || publishIssueKind === 'missing-event-date'
+      || publishIssueKind === 'missing-venue'
+      || publishIssueKind === 'rsvp-disabled'
+    ) {
+      openLaunchBasics(publishIssueKind);
+      return;
+    }
+
+    onFixPublishBlockers?.();
+  }, [onFixPublishBlockers, openLaunchBasics, publishIssueKind]);
 
   const handlePageManagerAction = React.useCallback((action: BuilderPageManagerAction) => {
     switch (action.kind) {
@@ -235,7 +284,7 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
         onSave();
         return;
       case 'fix-blockers':
-        onFixPublishBlockers?.();
+        handleFixNext();
         setShowPublishChecklist(true);
         setShowBlockedDetails(true);
         return;
@@ -250,7 +299,7 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
       default:
         return;
     }
-  }, [dispatch, onFixPublishBlockers, onPublish, onSave, previewReview]);
+  }, [dispatch, handleFixNext, onPublish, onSave, previewReview]);
 
   const handleLaunchPrepAction = React.useCallback((actionKind: 'add-page' | 'add-section' | 'save-draft' | 'fix-blockers' | 'publish') => {
     switch (actionKind) {
@@ -274,7 +323,7 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
         setShowPublishChecklist(false);
         return;
       case 'fix-blockers':
-        onFixPublishBlockers?.();
+        handleFixNext();
         setShowPublishChecklist(false);
         return;
       case 'publish':
@@ -284,7 +333,7 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
       default:
         return;
     }
-  }, [dispatch, onFixPublishBlockers, onPublish, onSave, state.activePageId]);
+  }, [dispatch, handleFixNext, onPublish, onSave, state.activePageId]);
 
   return (
     <>
@@ -313,6 +362,21 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
         <Files size={13} />
         Pages · {projectPages.length}
       </button>
+
+      {state.weddingData && (
+        <button
+          type="button"
+          onClick={() => openLaunchBasics(null)}
+          className={`inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-xs font-medium transition-colors ${
+            launchBasicsSummary.completedCount === launchBasicsSummary.totalCount
+              ? 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
+              : 'border-amber-200 bg-amber-50 text-amber-800 hover:bg-amber-100'
+          }`}
+        >
+          <CheckCircle2 size={13} />
+          Launch basics · {launchBasicsStatusLabel}
+        </button>
+      )}
 
       <div className={`hidden min-w-0 md:flex md:max-w-[360px] md:flex-1 md:items-center md:gap-3 md:rounded-lg md:border md:px-3 md:py-1.5 ${publishToneClass}`}>
         <div className="min-w-0 flex-1">
@@ -752,7 +816,7 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
             {onFixPublishBlockers && (
               <button
                 type="button"
-                onClick={onFixPublishBlockers}
+                onClick={handleFixNext}
                 className="text-[11px] rounded border border-amber-300 bg-amber-50 px-2 py-1 font-medium text-amber-800 hover:bg-amber-100"
               >
                 Fix next
@@ -768,7 +832,7 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
               Left?
             </button>
             {onFixPublishBlockers && (
-              <button type="button" onClick={onFixPublishBlockers} className="shrink-0 rounded border border-amber-300 bg-white px-1.5 py-0.5 text-[11px] font-medium text-amber-800 hover:bg-amber-50">
+              <button type="button" onClick={handleFixNext} className="shrink-0 rounded border border-amber-300 bg-white px-1.5 py-0.5 text-[11px] font-medium text-amber-800 hover:bg-amber-50">
                 Fix next
               </button>
             )}
@@ -817,16 +881,16 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
                     <button onClick={() => { onSave(); setShowPublishChecklist(false); }} className="rounded border border-gray-200 bg-gray-50 px-1.5 py-0.5 text-[10px] font-medium text-gray-700 transition-colors hover:bg-gray-100">Save now</button>
                   )}
                   {!item.done && item.label === 'No active go-live blockers' && onFixPublishBlockers && (
-                    <button onClick={() => { onFixPublishBlockers(); setShowPublishChecklist(false); }} className="rounded border border-amber-300 bg-amber-50 px-1.5 py-0.5 text-[10px] font-medium text-amber-800 transition-colors hover:bg-amber-100">Fix this</button>
+                    <button onClick={() => { handleFixNext(); setShowPublishChecklist(false); }} className="rounded border border-amber-300 bg-amber-50 px-1.5 py-0.5 text-[10px] font-medium text-amber-800 transition-colors hover:bg-amber-100">Fix this</button>
                   )}
                   {!item.done && item.label === 'No active go-live blockers' && publishIssueKind === 'no-enabled-sections' && onFixPublishBlockers && (
-                    <button onClick={() => { onFixPublishBlockers(); setShowPublishChecklist(false); }} className="rounded border border-sky-300 bg-sky-50 px-1.5 py-0.5 text-[10px] font-medium text-sky-800 transition-colors hover:bg-sky-100">Open section</button>
+                    <button onClick={() => { handleFixNext(); setShowPublishChecklist(false); }} className="rounded border border-sky-300 bg-sky-50 px-1.5 py-0.5 text-[10px] font-medium text-sky-800 transition-colors hover:bg-sky-100">Open section</button>
                   )}
                   {!item.done && item.label === 'No active go-live blockers' && publishIssueKind === 'no-pages' && onFixPublishBlockers && (
-                    <button onClick={() => { onFixPublishBlockers(); setShowPublishChecklist(false); }} className="rounded border border-sky-300 bg-sky-50 px-1.5 py-0.5 text-[10px] font-medium text-sky-800 transition-colors hover:bg-sky-100">Choose a design</button>
+                    <button onClick={() => { handleFixNext(); setShowPublishChecklist(false); }} className="rounded border border-sky-300 bg-sky-50 px-1.5 py-0.5 text-[10px] font-medium text-sky-800 transition-colors hover:bg-sky-100">Choose a design</button>
                   )}
                   {!item.done && item.label === 'No active go-live blockers' && ['missing-couple-names', 'missing-event-date', 'missing-venue', 'rsvp-disabled'].includes(publishIssueKind ?? '') && onFixPublishBlockers && (
-                    <button onClick={() => { onFixPublishBlockers(); setShowPublishChecklist(false); }} className="rounded border border-sky-300 bg-sky-50 px-1.5 py-0.5 text-[10px] font-medium text-sky-800 transition-colors hover:bg-sky-100">Open guidance</button>
+                    <button onClick={() => { handleFixNext(); setShowPublishChecklist(false); }} className="rounded border border-sky-300 bg-sky-50 px-1.5 py-0.5 text-[10px] font-medium text-sky-800 transition-colors hover:bg-sky-100">Open guidance</button>
                   )}
                   {!item.done && item.label === 'At least one page exists' && (
                     <button
@@ -859,6 +923,151 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
                 </li>
               ))}
             </ul>
+          </div>
+        )}
+
+        {showLaunchBasics && state.weddingData && (
+          <div className="w-full rounded-xl border border-sky-200 bg-white px-3 py-3 shadow-sm">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-sky-900">Launch basics</p>
+                <p className="mt-1 text-sm font-medium text-gray-900">{launchBasicsSummary.focusTitle}</p>
+                <p className="mt-1 text-xs text-gray-600">{launchBasicsSummary.focusDetail}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowLaunchBasics(false);
+                  setLaunchBasicsIssueKind(null);
+                }}
+                className="rounded border border-gray-200 bg-white px-2 py-1 text-[11px] font-medium text-gray-600 hover:bg-gray-50"
+              >
+                Done
+              </button>
+            </div>
+
+            <div className="mt-3 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2.5">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-gray-500">Best next move</p>
+              <p className="mt-1 text-sm font-medium text-gray-900">{launchBasicsSummary.bestNextMove}</p>
+              <p className="mt-2 text-xs text-gray-600">
+                <span className="font-semibold text-gray-800">Decision rule:</span> {launchBasicsSummary.decisionRule}
+              </p>
+              <p className="mt-1 text-xs text-gray-600">
+                <span className="font-semibold text-gray-800">Watchout:</span> {launchBasicsSummary.watchout}
+              </p>
+            </div>
+
+            <div className="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+              {launchBasicsSummary.items.map((item) => (
+                <div
+                  key={item.id}
+                  className={`rounded-lg border px-3 py-2 ${
+                    item.done ? 'border-emerald-200 bg-emerald-50' : 'border-amber-200 bg-amber-50'
+                  }`}
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-xs font-semibold text-gray-900">{item.label}</p>
+                    <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] ${
+                      item.done ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-800'
+                    }`}>
+                      {item.done ? 'Ready' : 'Needs care'}
+                    </span>
+                  </div>
+                  <p className="mt-1 text-[11px] text-gray-600">{item.detail}</p>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-3 grid gap-3 lg:grid-cols-2">
+              <label className="space-y-1">
+                <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-gray-500">Partner 1</span>
+                <input
+                  autoFocus={launchBasicsSummary.suggestedField === 'partner1Name'}
+                  value={launchBasicsDraft.partner1Name}
+                  onChange={(event) => setLaunchBasicsDraft((current) => ({ ...current, partner1Name: event.target.value }))}
+                  placeholder="First partner name"
+                  className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-800 outline-none transition-colors focus:border-sky-300 focus:ring-2 focus:ring-sky-100"
+                />
+              </label>
+              <label className="space-y-1">
+                <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-gray-500">Partner 2</span>
+                <input
+                  value={launchBasicsDraft.partner2Name}
+                  onChange={(event) => setLaunchBasicsDraft((current) => ({ ...current, partner2Name: event.target.value }))}
+                  placeholder="Second partner name"
+                  className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-800 outline-none transition-colors focus:border-sky-300 focus:ring-2 focus:ring-sky-100"
+                />
+              </label>
+              <label className="space-y-1">
+                <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-gray-500">Wedding date</span>
+                <input
+                  autoFocus={launchBasicsSummary.suggestedField === 'weddingDate'}
+                  type="date"
+                  value={launchBasicsDraft.weddingDate}
+                  onChange={(event) => setLaunchBasicsDraft((current) => ({ ...current, weddingDate: event.target.value }))}
+                  className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-800 outline-none transition-colors focus:border-sky-300 focus:ring-2 focus:ring-sky-100"
+                />
+              </label>
+              <label className="space-y-1">
+                <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-gray-500">RSVP</span>
+                <button
+                  type="button"
+                  onClick={() => setLaunchBasicsDraft((current) => ({ ...current, rsvpEnabled: !current.rsvpEnabled }))}
+                  className={`flex w-full items-center justify-between rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${
+                    launchBasicsDraft.rsvpEnabled
+                      ? 'border-emerald-200 bg-emerald-50 text-emerald-800'
+                      : 'border-amber-200 bg-amber-50 text-amber-800'
+                  }`}
+                >
+                  <span>{launchBasicsDraft.rsvpEnabled ? 'RSVP is on' : 'RSVP is off'}</span>
+                  <span className="text-[11px] uppercase tracking-[0.14em]">
+                    {launchBasicsDraft.rsvpEnabled ? 'Enabled' : 'Disabled'}
+                  </span>
+                </button>
+              </label>
+              <label className="space-y-1">
+                <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-gray-500">Venue name</span>
+                <input
+                  autoFocus={launchBasicsSummary.suggestedField === 'venueName'}
+                  value={launchBasicsDraft.venueName}
+                  onChange={(event) => setLaunchBasicsDraft((current) => ({ ...current, venueName: event.target.value }))}
+                  placeholder="Ceremony or main venue"
+                  className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-800 outline-none transition-colors focus:border-sky-300 focus:ring-2 focus:ring-sky-100"
+                />
+              </label>
+              <label className="space-y-1">
+                <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-gray-500">Venue address</span>
+                <input
+                  value={launchBasicsDraft.venueAddress}
+                  onChange={(event) => setLaunchBasicsDraft((current) => ({ ...current, venueAddress: event.target.value }))}
+                  placeholder="Street, city, or venue anchor"
+                  className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-800 outline-none transition-colors focus:border-sky-300 focus:ring-2 focus:ring-sky-100"
+                />
+              </label>
+            </div>
+
+            <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+              <p className="text-[11px] text-gray-500">Apply the draft basics here, then save before you go live.</p>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setLaunchBasicsDraft(createBuilderLaunchBasicsDraft(state.weddingData));
+                    setLaunchBasicsIssueKind(null);
+                  }}
+                  className="rounded border border-gray-200 bg-white px-2.5 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50"
+                >
+                  Reset
+                </button>
+                <button
+                  type="button"
+                  onClick={handleApplyLaunchBasics}
+                  className="rounded border border-sky-300 bg-sky-600 px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-sky-700"
+                >
+                  Apply basics
+                </button>
+              </div>
+            </div>
           </div>
         )}
 

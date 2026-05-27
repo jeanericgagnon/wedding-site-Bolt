@@ -8,6 +8,7 @@ import { ThemeTokens } from '../../lib/themePresets';
 export const builderActions = {
   loadProject: (project: BuilderProject): BuilderAction => ({ type: 'LOAD_PROJECT', payload: project }),
   setWeddingData: (data: WeddingDataV1): BuilderAction => ({ type: 'SET_WEDDING_DATA', payload: data }),
+  updateWeddingData: (data: WeddingDataV1): BuilderAction => ({ type: 'UPDATE_WEDDING_DATA', payload: data }),
   setActivePage: (pageId: string): BuilderAction => ({ type: 'SET_ACTIVE_PAGE', payload: pageId }),
   addPage: (title?: string): BuilderAction => ({ type: 'ADD_PAGE', payload: { title } }),
   updatePage: (pageId: string, patch: Partial<BuilderProject['pages'][number]>): BuilderAction => ({ type: 'UPDATE_PAGE', payload: { pageId, patch } }),
