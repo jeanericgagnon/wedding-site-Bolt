@@ -1843,7 +1843,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
               <div className="mt-3 flex flex-wrap gap-2">
               <a href="/dashboard/rsvp-board" className="rounded border border-border px-2.5 py-1 text-[11px] text-text-secondary hover:border-primary/40 hover:text-primary">Open RSVP board</a>
               <a href="/dashboard/seating-lookup" className="rounded border border-border px-2.5 py-1 text-[11px] text-text-secondary hover:border-primary/40 hover:text-primary">Open seating lookup</a>
-              <a href="/dashboard/planning" className="rounded border border-border px-2.5 py-1 text-[11px] text-text-secondary hover:border-primary/40 hover:text-primary">Open planning workspace</a>
+              <a href="/dashboard/itinerary" className="rounded border border-border px-2.5 py-1 text-[11px] text-text-secondary hover:border-primary/40 hover:text-primary">Open itinerary</a>
               </div>
             </div>
           </div>
@@ -2427,7 +2427,15 @@ export const DashboardCoordinatorMode: React.FC = () => {
               )}
               <div className="space-y-2">
                 {events.length === 0 ? (
-                  <p className="text-xs text-text-tertiary">No itinerary events yet.</p>
+                  <div className="flex items-center justify-between gap-3 rounded-lg border border-border/40 bg-surface-subtle/30 px-3 py-2">
+                    <p className="text-xs text-text-tertiary">No itinerary events yet.</p>
+                    <a
+                      href="/dashboard/itinerary"
+                      className="rounded border border-border px-2.5 py-1 text-[11px] text-text-secondary hover:border-primary/40 hover:text-primary"
+                    >
+                      Open itinerary
+                    </a>
+                  </div>
                 ) : (
                   events.map((e) => {
                     const state = timelineState[e.id] || 'up-next';
