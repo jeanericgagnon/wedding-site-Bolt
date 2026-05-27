@@ -72,6 +72,7 @@ describe('analyticsBaseline', () => {
     expect(nextMove.target).toBe('guests');
     expect(nextMove.priorityLabel).toBe('Response pressure');
     expect(nextMove.whyNow).toMatch(/Pending replies/i);
+    expect(nextMove.decisionRule).toMatch(/Reply truth beats polish/i);
     expect(nextMove.ctaLabel).toMatch(/review guests/i);
   });
 
@@ -87,6 +88,7 @@ describe('analyticsBaseline', () => {
 
     expect(nextMove.target).toBe('builder-polish');
     expect(nextMove.priorityLabel).toBe('Polish window');
+    expect(nextMove.decisionRule).toMatch(/refinement beats reopening/i);
   });
 
   it('calls out access handoff when the site is restricted even if the measured baseline is otherwise strong', () => {
@@ -114,6 +116,7 @@ describe('analyticsBaseline', () => {
     expect(summary.decisionRule).toMatch(/access instructions/i);
     expect(nextMove.ctaLabel).toMatch(/review guest access/i);
     expect(nextMove.priorityLabel).toBe('Access handoff');
+    expect(nextMove.decisionRule).toMatch(/Access clarity beats broader sharing/i);
     expect(nextMove.target).toBe('settings');
   });
 });

@@ -1521,6 +1521,7 @@ export const DashboardOverview: React.FC = () => {
                       <p className="text-sm font-medium text-text-primary">{analyticsNextMove.title}</p>
                       <p className="mt-1 text-xs text-text-secondary">{analyticsNextMove.detail}</p>
                       <p className="mt-2 text-[11px] text-text-tertiary">{analyticsNextMove.whyNow}</p>
+                      <p className="mt-2 text-[11px] text-text-tertiary">{analyticsNextMove.decisionRule}</p>
                     </div>
                     <Button variant="outline" size="sm" onClick={handleAnalyticsNextMove}>
                       {analyticsNextMove.ctaLabel}

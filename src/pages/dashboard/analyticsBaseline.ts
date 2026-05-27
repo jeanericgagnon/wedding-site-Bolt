@@ -38,6 +38,7 @@ export interface AnalyticsNextMove {
   title: string;
   detail: string;
   whyNow: string;
+  decisionRule: string;
   ctaLabel: string;
   target: 'guests' | 'messages' | 'registry' | 'photos' | 'builder-polish' | 'settings';
 }
@@ -214,6 +215,7 @@ export function buildAnalyticsNextMove(input: AnalyticsBaselineInput): Analytics
       title: 'Close the RSVP gap before trusting the board more deeply',
       detail: `${input.pendingGuests} guests can still materially change how the rest of the board feels. Follow-up is worth more than extra polish right now.`,
       whyNow: 'Pending replies can still change the truth of every later planning and messaging decision.',
+      decisionRule: 'Reply truth beats polish while the RSVP board can still swing meaningfully.',
       ctaLabel: 'Review guests',
       target: 'guests',
     };
@@ -225,6 +227,7 @@ export function buildAnalyticsNextMove(input: AnalyticsBaselineInput): Analytics
       title: 'Tighten contact coverage before the next message wave',
       detail: 'A softer reachability layer makes every reminder and day-of update less reliable than it needs to be.',
       whyNow: 'Missing direct contact paths quietly weaken every later guest-facing move.',
+      decisionRule: 'Reachability beats cadence when too much of the list still cannot hear from you directly.',
       ctaLabel: 'Fix guest contacts',
       target: 'guests',
     };
@@ -236,6 +239,7 @@ export function buildAnalyticsNextMove(input: AnalyticsBaselineInput): Analytics
       title: 'Give guests one stronger gifting signal',
       detail: 'A small live registry set does more for guest confidence than waiting for a perfect one.',
       whyNow: 'Registry readiness is one of the easiest visible signals that the site is genuinely being carried through.',
+      decisionRule: 'A small honest registry beats a blank lane that asks guests to guess.',
       ctaLabel: 'Open registry',
       target: 'registry',
     };
@@ -247,6 +251,7 @@ export function buildAnalyticsNextMove(input: AnalyticsBaselineInput): Analytics
       title: 'Turn on one guest-ready photo path',
       detail: 'Photo contribution is one of the easiest ways to make the guest experience feel alive instead of merely published.',
       whyNow: 'A live memory lane makes the site feel active, not just informative.',
+      decisionRule: 'A working contribution path beats a dormant memory promise.',
       ctaLabel: 'Open photos',
       target: 'photos',
     };
@@ -260,6 +265,7 @@ export function buildAnalyticsNextMove(input: AnalyticsBaselineInput): Analytics
         ? 'The guest-facing site is not public, so make sure the real invite path is what guests are receiving instead of a generic broad-share link.'
         : 'The site is password-protected, so the next lift is making sure the password instructions travel with every guest-facing link or print pack.',
       whyNow: 'A good board still fails guests if the wrong access instructions travel with it.',
+      decisionRule: 'Access clarity beats broader sharing when the site is live but still protected.',
       ctaLabel: 'Review guest access',
       target: 'settings',
     };
@@ -271,6 +277,7 @@ export function buildAnalyticsNextMove(input: AnalyticsBaselineInput): Analytics
       title: 'The measured baseline is healthy enough for a polish pass',
       detail: 'This is a good moment to improve the live guest-facing story instead of chasing missing basics.',
       whyNow: 'The baseline is finally strong enough that refinement will actually be felt by guests.',
+      decisionRule: 'When the measured baseline is calm, refinement beats reopening solved operational work.',
       ctaLabel: 'Open site polish',
       target: 'builder-polish',
     };
@@ -281,6 +288,7 @@ export function buildAnalyticsNextMove(input: AnalyticsBaselineInput): Analytics
     title: 'Use messages to keep the baseline moving',
     detail: 'The board is useful already, and the next lift is turning that signal into one clean guest-facing nudge.',
     whyNow: 'A clean message pass is usually the fastest way to turn a decent board into a stronger one.',
+    decisionRule: 'A focused guest-facing nudge beats broad polishing when the board still wants momentum.',
     ctaLabel: 'Open messages',
     target: 'messages',
   };
