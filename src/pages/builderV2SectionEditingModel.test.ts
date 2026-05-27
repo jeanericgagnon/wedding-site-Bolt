@@ -10,6 +10,8 @@ describe('builderV2SectionEditingModel', () => {
   it('recommends section-specific anchor blocks', () => {
     expect(getRecommendedBlockTypes('schedule', ['title', 'text', 'event', 'photo'])).toEqual(['event', 'title', 'text']);
     expect(getRecommendedBlockTypes('directions', ['title', 'text', 'travelTip', 'photo'])).toEqual(['travelTip', 'text', 'title']);
+    expect(getRecommendedBlockTypes('menu', ['title', 'travelTip', 'story', 'text'])).toEqual(['title', 'travelTip', 'story']);
+    expect(getRecommendedBlockTypes('video', ['photo', 'travelTip', 'title', 'text'])).toEqual(['photo', 'travelTip', 'title']);
     expect(getRecommendedBlockTypes('unknown', ['title', 'text', 'photo'])).toEqual(['title', 'text', 'photo']);
   });
 

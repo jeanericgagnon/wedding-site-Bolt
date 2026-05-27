@@ -11,6 +11,7 @@ describe('builderV2SectionStarter', () => {
   it('builds section-specific starter block plans', () => {
     expect(getBuilderV2StarterBlockTypes('schedule', ['event', 'title', 'text', 'photo'])).toEqual(['event', 'title']);
     expect(getBuilderV2StarterBlockTypes('gallery', ['photo', 'title', 'text'])).toEqual(['photo', 'title']);
+    expect(getBuilderV2StarterBlockTypes('menu', ['title', 'travelTip', 'story', 'text'])).toEqual(['title', 'travelTip', 'story']);
   });
 
   it('falls back to the first available block types when recommendations are unavailable', () => {
@@ -32,6 +33,23 @@ describe('builderV2SectionStarter', () => {
     expect(summary.blockTypes).toEqual(['travelTip', 'hotelCard']);
     expect(summary.headline).toContain('Travel Tip + Hotel Card');
     expect(summary.detail).toContain('seed a first readable spine');
+  });
+
+  it('builds long-tail starter summaries with the richer section spine', () => {
+    const summary = buildBuilderV2SectionStarterSummary(
+      'Music',
+      'music',
+      ['title', 'travelTip', 'story', 'text'],
+      {
+        title: 'Title',
+        travelTip: 'Link or Track',
+        story: 'Request Note',
+        text: 'Text Block',
+      },
+    );
+
+    expect(summary.blockTypes).toEqual(['title', 'travelTip', 'story']);
+    expect(summary.headline).toContain('Title + Link or Track + Request Note');
   });
 
   it('builds starter blocks with deterministic starter ids and default data', () => {

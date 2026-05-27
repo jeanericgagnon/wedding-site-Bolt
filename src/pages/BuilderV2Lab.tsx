@@ -189,6 +189,12 @@ const SECTION_BLOCK_CATALOG: Record<string, BlockType[]> = {
   'dress-code': ['title', 'text', 'photo', 'divider'],
   directions: ['travelTip', 'title', 'text', 'photo', 'divider'],
   accommodations: ['hotelCard', 'travelTip', 'text', 'divider'],
+  contact: ['travelTip', 'text', 'qna', 'story', 'title', 'divider'],
+  quotes: ['photo', 'title', 'text', 'qna', 'divider'],
+  menu: ['title', 'travelTip', 'story', 'text', 'qna', 'divider'],
+  music: ['title', 'travelTip', 'story', 'text', 'qna', 'divider'],
+  video: ['photo', 'travelTip', 'title', 'text', 'qna', 'divider'],
+  custom: ['title', 'text', 'photo', 'qna', 'story', 'divider'],
 };
 
 const SECTION_BLOCK_LIMITS: Record<string, { total: number; perType?: Partial<Record<BlockType, number>> }> = {
@@ -205,6 +211,12 @@ const SECTION_BLOCK_LIMITS: Record<string, { total: number; perType?: Partial<Re
   'dress-code': { total: 8 },
   directions: { total: 8 },
   accommodations: { total: 10, perType: { hotelCard: 5 } },
+  contact: { total: 10, perType: { travelTip: 5, qna: 3 } },
+  quotes: { total: 12, perType: { photo: 8 } },
+  menu: { total: 14, perType: { travelTip: 10, title: 5 } },
+  music: { total: 16, perType: { travelTip: 12, title: 4 } },
+  video: { total: 12, perType: { photo: 6, travelTip: 6 } },
+  custom: { total: 12 },
 };
 
 
@@ -246,7 +258,7 @@ const INITIAL_SECTIONS: LabSection[] = [
   { id: 'rsvp', type: 'rsvp', title: 'RSVP', subtitle: 'Let us know', variant: 'card', enabled: true, density: 'comfortable' },
 ];
 
-const ADDABLE_SECTIONS = ['Gallery', 'FAQ', 'Venue', 'Countdown', 'Wedding Party', 'Dress Code', 'Accommodations', 'Directions'];
+const ADDABLE_SECTIONS = ['Gallery', 'FAQ', 'Venue', 'Countdown', 'Wedding Party', 'Dress Code', 'Accommodations', 'Directions', 'Contact', 'Quotes', 'Menu', 'Music', 'Video', 'Custom'];
 
 const VARIANTS_BY_TYPE: Record<string, string[]> = {
   hero: ['default', 'countdown'],
@@ -258,6 +270,16 @@ const VARIANTS_BY_TYPE: Record<string, string[]> = {
   venue: ['default'],
   countdown: ['default'],
   rsvp: ['default'],
+  accommodations: ['default', 'cards'],
+  contact: ['default', 'minimal'],
+  'wedding-party': ['default', 'minimal', 'split-sides', 'scroll'],
+  'dress-code': ['default', 'banner', 'mood-board'],
+  directions: ['default', 'pin', 'split', 'card'],
+  quotes: ['default', 'carousel', 'grid', 'featured', 'guestbook'],
+  menu: ['default', 'tabs', 'card', 'simple'],
+  music: ['default', 'playlist', 'setlist', 'compact'],
+  video: ['default', 'full', 'card', 'inline'],
+  custom: ['default'],
 };
 
 const isRegistryBuilderSectionType = (type: string) => {
@@ -281,6 +303,11 @@ const SECTION_TYPE_MAP: Record<string, SectionType> = {
   'wedding-party': 'wedding-party',
   'dress-code': 'dress-code',
   directions: 'directions',
+  quotes: 'quotes',
+  menu: 'menu',
+  music: 'music',
+  video: 'video',
+  custom: 'custom',
 };
 
 type StructureItemProps = {

@@ -44,6 +44,12 @@ const preferredStarterCounts: Record<string, number> = {
   rsvp: 2,
   faq: 2,
   gallery: 2,
+  contact: 2,
+  quotes: 2,
+  menu: 3,
+  music: 3,
+  video: 2,
+  custom: 2,
 };
 
 export const getBuilderV2StarterBlockTypes = (

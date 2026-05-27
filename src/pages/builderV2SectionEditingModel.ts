@@ -90,6 +90,12 @@ export const getRecommendedBlockTypes = (
     'dress-code': ['photo', 'text', 'title'],
     directions: ['travelTip', 'text', 'title'],
     accommodations: ['hotelCard', 'travelTip', 'text'],
+    contact: ['travelTip', 'text', 'qna'],
+    quotes: ['photo', 'title', 'text'],
+    menu: ['title', 'travelTip', 'story'],
+    music: ['title', 'travelTip', 'story'],
+    video: ['photo', 'travelTip', 'title'],
+    custom: ['title', 'text', 'photo'],
   };
 
   const fallback = ['title', 'text', 'photo'];
