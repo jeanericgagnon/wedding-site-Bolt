@@ -16,15 +16,23 @@ export const PlannerHandoffCard: React.FC<PlannerHandoffCardProps> = ({ tone, ha
 
   return (
     <div className={`rounded-xl border px-3 py-3 ${toneClassName}`}>
-      <p className="text-[11px] font-semibold uppercase tracking-[0.16em]">Main focus</p>
-      <p className="mt-1 text-sm font-semibold">{handoff.focusTitle}</p>
-      <p className="mt-1 text-xs leading-5 opacity-90">{handoff.focusDetail}</p>
-      <p className="mt-3 text-[11px] font-semibold uppercase tracking-[0.16em]">Best next move</p>
-      <p className="mt-1 text-xs leading-5 opacity-90">{handoff.nextMove}</p>
-      <p className="mt-3 text-[11px] font-semibold uppercase tracking-[0.16em]">Decision rule</p>
-      <p className="mt-1 text-xs leading-5 opacity-90">{handoff.decisionRule}</p>
-      <p className="mt-3 text-[11px] font-semibold uppercase tracking-[0.16em]">Watchout</p>
-      <p className="mt-1 text-xs leading-5 opacity-90">{handoff.watchout}</p>
+      <div className="grid gap-2">
+        <div className="rounded-lg border border-current/15 bg-white/70 px-3 py-2">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.16em]">Main focus</p>
+          <p className="mt-1 text-sm font-semibold">{handoff.focusTitle}</p>
+          <p className="mt-1 text-xs leading-5 opacity-90">{handoff.focusDetail}</p>
+        </div>
+        <div className="rounded-lg border border-current/15 bg-white/70 px-3 py-2">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.16em]">Best next move</p>
+          <p className="mt-1 text-xs leading-5 opacity-90">{handoff.nextMove}</p>
+          <div className="mt-2 border-t border-current/15 pt-2">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.16em]">Decision rule</p>
+            <p className="mt-1 text-xs leading-5 opacity-90">{handoff.decisionRule}</p>
+            <p className="mt-3 text-[11px] font-semibold uppercase tracking-[0.16em]">Watchout</p>
+            <p className="mt-1 text-xs leading-5 opacity-90">{handoff.watchout}</p>
+          </div>
+        </div>
+      </div>
       <div className="mt-3 space-y-2">
         {handoff.sequence.map((step) => (
           <div key={step.id} className="rounded-lg border border-current/15 bg-white/70 px-3 py-2">
