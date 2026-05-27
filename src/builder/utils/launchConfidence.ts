@@ -5,6 +5,7 @@ import { getPublishIssue, type PublishIssue } from './publishReadiness';
 export interface LaunchConfidenceAction {
   kind: 'fix' | 'preview' | 'publish';
   label: string;
+  target?: 'publish-blockers' | 'itinerary';
 }
 
 export interface LaunchConfidenceModel {
@@ -64,6 +65,7 @@ export function buildLaunchConfidence(
       primaryAction: {
         kind: issue.kind === 'unsaved-changes' ? 'publish' : 'fix',
         label: issue.kind === 'unsaved-changes' ? 'Save and publish' : 'Fix launch blockers',
+        target: issue.kind === 'unsaved-changes' ? undefined : 'publish-blockers',
       },
     };
   }
@@ -78,6 +80,7 @@ export function buildLaunchConfidence(
       primaryAction: {
         kind: 'fix',
         label: 'Add itinerary anchors',
+        target: 'itinerary',
       },
     };
   }

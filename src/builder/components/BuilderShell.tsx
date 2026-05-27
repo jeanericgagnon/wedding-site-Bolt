@@ -284,6 +284,10 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
   const handleLaunchConfidenceAction = useCallback(() => {
     if (!launchConfidence) return;
     if (launchConfidence.primaryAction.kind === 'fix') {
+      if (launchConfidence.primaryAction.target === 'itinerary') {
+        window.location.assign('/dashboard/itinerary');
+        return;
+      }
       handleFixPublishBlockers();
       return;
     }

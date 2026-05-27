@@ -72,7 +72,7 @@ describe('buildLaunchConfidence', () => {
     } as WeddingDataV1);
 
     expect(confidence.tone).toBe('warning');
-    expect(confidence.primaryAction).toMatchObject({ kind: 'fix' });
+    expect(confidence.primaryAction).toMatchObject({ kind: 'fix', target: 'publish-blockers' });
     expect(confidence.summary).toContain('RSVP');
   });
 
@@ -97,7 +97,7 @@ describe('buildLaunchConfidence', () => {
     } as WeddingDataV1, { isDirty: false });
 
     expect(confidence.tone).toBe('warning');
-    expect(confidence.primaryAction).toMatchObject({ kind: 'fix' });
+    expect(confidence.primaryAction).toMatchObject({ kind: 'fix', target: 'itinerary' });
     expect(confidence.summary).toMatch(/itinerary event|timeline/i);
   });
 
