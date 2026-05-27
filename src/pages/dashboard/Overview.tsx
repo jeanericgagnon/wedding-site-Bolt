@@ -42,6 +42,7 @@ import { ControlTowerBriefingCard } from './ControlTowerBriefingCard';
 import { buildDayOfBrainBriefing, type DayOfBrainAction } from './dayOfBrain';
 import { DayOfBrainCard } from './DayOfBrainCard';
 import { buildCoupleFocusModel, type CoupleFocusStep } from './coupleFocus';
+import { buildOverviewThroughline } from './overviewThroughline';
 
 const DEFAULT_NAME_CHANGE_INSIGHTS: NameChangeOverviewInsights = {
   coreChainLabel: 'Certificate, SSA, and DMV stay together so the legal identity chain does not drift.',
@@ -618,6 +619,11 @@ export const DashboardOverview: React.FC = () => {
     dueSoonVendorCount: 0,
     seatingUnassignedCount: 0,
   });
+  const overviewThroughline = buildOverviewThroughline({
+    coupleFocus,
+    analyticsNextMove,
+    controlTowerBriefing,
+  });
 
   function handleControlTowerAction(action: ControlTowerAction) {
     const routeByTarget: Record<ControlTowerAction['target'], string> = {
@@ -802,6 +808,38 @@ export const DashboardOverview: React.FC = () => {
                     >
                       {step.ctaLabel}
                     </Button>
+                  </div>
+                ))}
+              </div>
+            </Card>
+            <Card variant="bordered" padding="lg" className="shadow-sm border-border-subtle">
+              <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                <div className="max-w-3xl">
+                  <p className="text-xs font-semibold uppercase tracking-[0.24em] text-text-tertiary">{overviewThroughline.eyebrow}</p>
+                  <h2 className="mt-2 text-xl font-semibold text-text-primary">{overviewThroughline.title}</h2>
+                  <p className="mt-2 text-sm text-text-secondary">{overviewThroughline.detail}</p>
+                </div>
+                <div className="rounded-2xl border border-border-subtle bg-surface-subtle/30 px-4 py-3 lg:min-w-[220px]">
+                  <p className="text-[11px] uppercase tracking-[0.22em] text-text-tertiary">Why this helps</p>
+                  <p className="mt-1 text-xs text-text-secondary">It keeps the smart surfaces aligned so you do not have to mentally merge the board yourself.</p>
+                </div>
+              </div>
+              <div className="mt-4 grid gap-3 md:grid-cols-3">
+                {overviewThroughline.steps.map((step) => (
+                  <div key={`${step.status}-${step.title}`} className="rounded-2xl border border-border-subtle bg-white px-4 py-4 shadow-[0_4px_14px_rgba(15,23,42,0.04)]">
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="text-sm font-semibold text-text-primary">{step.title}</p>
+                      <span className={`rounded-full px-2.5 py-1 text-[11px] font-medium ${
+                        step.status === 'current'
+                          ? 'border border-primary/20 bg-primary-light text-primary'
+                          : step.status === 'next'
+                            ? 'border border-warning/20 bg-warning-light text-warning'
+                            : 'border border-border-subtle bg-surface-subtle text-text-secondary'
+                      }`}>
+                        {step.status === 'current' ? 'Current' : step.status === 'next' ? 'Next' : 'Then'}
+                      </span>
+                    </div>
+                    <p className="mt-2 text-xs leading-5 text-text-secondary">{step.detail}</p>
                   </div>
                 ))}
               </div>
