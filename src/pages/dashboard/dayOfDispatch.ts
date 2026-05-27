@@ -15,6 +15,7 @@ export interface DayOfDispatchModel {
   focusDetail: string;
   bestNextMove: string;
   decisionRule: string;
+  watchout: string;
   badges: string[];
   sequence: Array<{
     id: 'stage' | 'send' | 'settle';
@@ -44,6 +45,7 @@ export function buildDayOfDispatchModel(snapshot: DayOfDispatchSnapshot): DayOfD
       focusDetail: 'Earlier in the runway, the job is keeping guest details, RSVP truth, and itinerary basics reliable enough that a future day-of note will not have to repair old confusion.',
       bestNextMove: 'Leave day-of messaging alone for now, tighten RSVP and itinerary truth first, and only stage a live note once the weekend is actually close.',
       decisionRule: 'Do not use day-of messaging to compensate for guest-list or itinerary drift that should be fixed upstream.',
+      watchout: 'If you stage live-day language too early, guests start treating a draft operations plan like final truth and will carry that confusion forward once the real weekend arrives.',
       badges: [
         snapshot.daysUntilWedding === null ? 'Wedding date not set' : `${snapshot.daysUntilWedding} days out`,
         pluralize(snapshot.pendingGuests, 'pending RSVP'),
@@ -83,6 +85,7 @@ export function buildDayOfDispatchModel(snapshot: DayOfDispatchSnapshot): DayOfD
       focusDetail: 'Once a day-of operational update is overdue, the main risk is overlapping or contradictory messaging. Clear the due note first, then reassess.',
       bestNextMove: 'Run the overdue day-of send first, then review itinerary and audience truth before you touch any new live draft.',
       decisionRule: 'Delivery order beats copy perfection when guests are already waiting on operational truth.',
+      watchout: 'The quickest way to make the live lane feel unreliable is sending a fresher note before the already-due one, because guests will remember the contradiction more than the correction.',
       badges: [
         pluralize(snapshot.overdueDayOfCount, 'due update'),
         snapshot.venueName ? snapshot.venueName : 'Venue still flexible',
@@ -122,6 +125,7 @@ export function buildDayOfDispatchModel(snapshot: DayOfDispatchSnapshot): DayOfD
       focusDetail: 'When a message is already scheduled or recently sent, the work shifts from drafting into alignment: itinerary truth, audience fit, and whether anything truly changed.',
       bestNextMove: 'Keep the active live note steady, verify the itinerary and audience still match it, and only reopen drafting if real event flow changed.',
       decisionRule: 'Stability beats churn once the live note is already in flight.',
+      watchout: 'If you reopen a mostly-correct live note for small wording nerves, you can create more uncertainty than the original message ever caused.',
       badges: [
         snapshot.scheduledDayOfCount > 0 ? pluralize(snapshot.scheduledDayOfCount, 'scheduled update') : pluralize(snapshot.sentDayOfCount, 'sent update'),
         `${snapshot.itineraryAudienceCount} itinerary audience${snapshot.itineraryAudienceCount === 1 ? '' : 's'}`,
@@ -172,6 +176,9 @@ export function buildDayOfDispatchModel(snapshot: DayOfDispatchSnapshot): DayOfD
     decisionRule: snapshot.itineraryAudienceCount > 0
       ? 'One good operational message beats a stream of anxious check-ins.'
       : 'Audience precision beats urgency when the operational note would otherwise stay vague.',
+    watchout: snapshot.itineraryAudienceCount > 0
+      ? 'Do not let nervous live-day energy turn one useful operational note into a drip of overlapping updates that guests have to reconcile for themselves.'
+      : 'A vague day-of note feels worse than waiting, because it teaches guests that even the “urgent” guidance still needs translation.',
     badges: [
       weddingToday ? 'Wedding day' : `${snapshot.daysUntilWedding} days left`,
       snapshot.itineraryAudienceCount > 0 ? `${snapshot.itineraryAudienceCount} itinerary audience${snapshot.itineraryAudienceCount === 1 ? '' : 's'}` : 'No itinerary segments yet',
