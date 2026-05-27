@@ -3036,7 +3036,7 @@ export const DashboardMessages: React.FC = () => {
                   actionLabel: dayOfDispatch.primaryAction.label,
                   action: dayOfDispatch.primaryAction.action,
                 })}
-                disabled={!canCompose && dayOfDispatch.primaryAction.action !== 'none'}
+                disabled={!canCompose && dayOfDispatch.primaryAction.action === 'compose-day-of-update'}
               >
                 {dayOfDispatch.primaryAction.label}
               </Button>

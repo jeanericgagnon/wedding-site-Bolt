@@ -5,7 +5,7 @@ import { useToast } from '../../components/ui/Toast';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../hooks/useAuth';
 import { resolveActiveSiteForUser } from '../../lib/activeSite';
-import { demoWeddingSite, demoPlanningTasks, demoBudgetItems, demoVendors, demoNameChangeCase, demoNameChangeDocuments, demoNameChangeExtractedFields } from '../../lib/demoData';
+import { demoWeddingSite, demoPlanningTasks, demoBudgetItems, demoVendors, demoNameChangeCase, demoNameChangeDocuments, demoNameChangeExtractedFields, demoEvents } from '../../lib/demoData';
 import { PLANNER_ROLE_OPTIONS, canEditPlanningBudget, canEditPlanningTasks, canEditPlanningVendors, writePlannerAccessRole, type PlannerAccessRole } from '../../lib/plannerAccess';
 import {
   PlanningTask, PlanningBudgetItem, PlanningVendor,

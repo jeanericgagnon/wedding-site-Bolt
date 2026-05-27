@@ -43,7 +43,7 @@ export const ControlTowerBriefingCard: React.FC<ControlTowerBriefingCardProps> =
           <div key={`${step.status}-${step.label}`} className="rounded-xl border border-border-subtle bg-white px-3 py-3">
             <div className="flex items-center justify-between gap-2">
               <p className="text-xs font-semibold text-text-primary">{step.label}</p>
-              <Badge variant={step.status === 'current' ? 'accent' : 'secondary'}>
+              <Badge variant={step.status === 'current' ? 'primary' : 'secondary'}>
                 {getFlowStatusLabel(step.status)}
               </Badge>
             </div>

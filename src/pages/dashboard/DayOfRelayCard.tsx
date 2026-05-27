@@ -37,7 +37,7 @@ export const DayOfRelayCard: React.FC<DayOfRelayCardProps> = ({ relay, onAction 
             <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
-                  <Badge variant={step.status === 'current' ? 'accent' : step.status === 'steady' ? 'success' : 'secondary'}>
+                  <Badge variant={step.status === 'current' ? 'primary' : step.status === 'steady' ? 'success' : 'secondary'}>
                     {step.status === 'steady' ? 'Steady' : getFlowStatusLabel(step.status)}
                   </Badge>
                   <p className="text-sm font-semibold text-text-primary">{step.title}</p>

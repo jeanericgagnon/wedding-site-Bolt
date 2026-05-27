@@ -1,5 +1,5 @@
 export interface CoupleFocusStep {
-  id: 'launch' | 'planning' | 'guests' | 'seating' | 'day-of' | 'polish' | 'archive';
+  id: 'launch' | 'planning' | 'itinerary' | 'guests' | 'seating' | 'day-of' | 'polish' | 'archive';
   status: 'current' | 'next' | 'then';
   title: string;
   detail: string;

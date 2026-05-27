@@ -9,6 +9,7 @@ describe('buildTemplateExperienceBrief', () => {
       selected: false,
       supportManifest: {
         templateId: 'destination-minimal',
+        templateName: 'Destination Minimal',
         templateExistsInBuilder: true,
         previewStatus: 'verified',
         previewLabel: 'Verified preview',
@@ -16,6 +17,7 @@ describe('buildTemplateExperienceBrief', () => {
         sectionsIncluded: 8,
         modulesIncluded: 5,
         highlightedSections: ['Travel', 'Schedule'],
+        supportNotes: [],
       },
       compareCount: 0,
     });
@@ -35,13 +37,15 @@ describe('buildTemplateExperienceBrief', () => {
       selected: false,
       supportManifest: {
         templateId: 'modern-keepsake',
+        templateName: 'Modern Keepsake',
         templateExistsInBuilder: false,
-        previewStatus: 'planned',
-        previewLabel: 'Planned preview',
-        previewDetail: 'Planned',
+        previewStatus: 'fallback',
+        previewLabel: 'Fallback preview',
+        previewDetail: 'Fallback',
         sectionsIncluded: 5,
         modulesIncluded: 2,
         highlightedSections: [],
+        supportNotes: [],
       },
       compareCount: 1,
     });

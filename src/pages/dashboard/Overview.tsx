@@ -20,7 +20,7 @@ import { generateDraftFromWeddingProfile, mergeGeneratedDraftIntoWeddingData } f
 import { mergeGeneratedDraftIntoBuilderProject } from '../../lib/aiBuilderProjectPatch';
 import { createCanonicalContentFromDraft } from '../../lib/aiCanonicalContent';
 import { useAuth } from '../../hooks/useAuth';
-import { demoWeddingSite, demoGuests } from '../../lib/demoData';
+import { demoWeddingSite, demoGuests, demoEvents } from '../../lib/demoData';
 import { resolvePublicSiteSlugFromRow } from '../../lib/publicSiteSlug';
 import { getSiteVisibilityState } from '../../lib/siteVisibilityState';
 import { getPublishStateDescriptor } from '../../lib/publishState';
