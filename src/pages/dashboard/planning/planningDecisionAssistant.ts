@@ -16,6 +16,12 @@ export interface PlanningDecisionCardModel {
   bestNextMove: string;
   decisionRule: string;
   badges: string[];
+  sequence: Array<{
+    id: 'stabilize' | 'check' | 'settle';
+    status: 'current' | 'next' | 'then';
+    title: string;
+    detail: string;
+  }>;
   primaryAction?: PlanningDecisionAction;
   secondaryAction?: PlanningDecisionAction;
 }
@@ -40,6 +46,33 @@ function currency(n: number) {
     currency: 'USD',
     maximumFractionDigits: 0,
   });
+}
+
+function buildPlanningSequence(
+  current: { title: string; detail: string },
+  next: { title: string; detail: string },
+  then: { title: string; detail: string },
+) {
+  return [
+    {
+      id: 'stabilize' as const,
+      status: 'current' as const,
+      title: current.title,
+      detail: current.detail,
+    },
+    {
+      id: 'check' as const,
+      status: 'next' as const,
+      title: next.title,
+      detail: next.detail,
+    },
+    {
+      id: 'settle' as const,
+      status: 'then' as const,
+      title: then.title,
+      detail: then.detail,
+    },
+  ];
 }
 
 export function buildPlanningOverviewDecisionCard(args: {
@@ -72,6 +105,20 @@ export function buildPlanningOverviewDecisionCard(args: {
         `${overdueTasks.length} overdue`,
         `${tasks.filter((task) => task.priority === 'high' && task.status !== 'done').length} high priority still open`,
       ],
+      sequence: buildPlanningSequence(
+        {
+          title: 'Resolve or reschedule the late work',
+          detail: 'Use the overdue items to restore date truth before you trust any calmer-looking part of the board.',
+        },
+        {
+          title: 'Re-check the next pressure point',
+          detail: 'Once the dates are honest again, look at whether seating, vendor timing, or budget drift still deserves the next pass.',
+        },
+        {
+          title: 'Return to polish only after truth holds',
+          detail: 'Let the board earn its calmer state before you spend energy on softer optimization.',
+        },
+      ),
       primaryAction: { label: 'Open tasks', target: 'tasks' },
       secondaryAction: seatingReadiness.unassigned > 0 ? { label: 'Check seating', target: 'seating' } : undefined,
     };
@@ -90,6 +137,20 @@ export function buildPlanningOverviewDecisionCard(args: {
         `${currency(dueSoonVendors.reduce((sum, vendor) => sum + (vendor.balance_due || 0), 0))} due soon`,
         `${vendors.filter((vendor) => (vendor.balance_due || 0) > 0).length} vendors still open`,
       ],
+      sequence: buildPlanningSequence(
+        {
+          title: 'Confirm the next due payment',
+          detail: 'Use the next week as the boundary and decide exactly which vendor money move matters first.',
+        },
+        {
+          title: 'Check whether budget drift changes the call',
+          detail: 'After the timing move is clear, verify whether the surrounding spend story still supports it cleanly.',
+        },
+        {
+          title: 'Reopen broader vendor thinking later',
+          detail: 'Once the time-sensitive payment is handled, deeper sourcing and note cleanup can happen without pressure distortion.',
+        },
+      ),
       primaryAction: { label: 'Review vendors', target: 'vendors' },
       secondaryAction: overBudget ? { label: 'Check budget', target: 'budget' } : undefined,
     };
@@ -108,6 +169,20 @@ export function buildPlanningOverviewDecisionCard(args: {
         `${currency(totalActual)} spent`,
         `${currency(Math.max(totalActual - totalEstimated, 0))} over plan`,
       ],
+      sequence: buildPlanningSequence(
+        {
+          title: 'Steady the drifting categories first',
+          detail: 'Separate real committed overages from avoidable drift before you trust the larger budget story.',
+        },
+        {
+          title: 'Check what still deserves real money',
+          detail: 'Once the overages are honest, decide what upcoming spend still earns space in the plan.',
+        },
+        {
+          title: 'Let the rest of the budget stay light',
+          detail: 'After the pressure categories settle, avoid turning the whole budget into a heavier review than it needs.',
+        },
+      ),
       primaryAction: { label: 'Review budget', target: 'budget' },
       secondaryAction: seatingReadiness.unassigned > 0 ? { label: 'Check seating', target: 'seating' } : undefined,
     };
@@ -126,6 +201,20 @@ export function buildPlanningOverviewDecisionCard(args: {
         `${seatingReadiness.seated}/${seatingReadiness.attending} seated`,
         `${tasks.filter((task) => task.status === 'in_progress').length} tasks in progress`,
       ],
+      sequence: buildPlanningSequence(
+        {
+          title: 'Place the floating confirmed guests',
+          detail: 'Turn RSVP truth into a real room before you ask the rest of the plan to behave as if seating is settled.',
+        },
+        {
+          title: 'Check the board again once the room is real',
+          detail: 'After the placements exist, you can see more honestly whether tasks or timeline work still deserve the next pass.',
+        },
+        {
+          title: 'Return to polish after the room holds',
+          detail: 'Once seating matches the guest truth, the calmer parts of planning become worth touching again.',
+        },
+      ),
       primaryAction: { label: 'Open seating', target: 'seating' },
       secondaryAction: { label: 'Open tasks', target: 'tasks' },
     };
@@ -144,6 +233,20 @@ export function buildPlanningOverviewDecisionCard(args: {
         daysUntilWedding === 0 ? 'Wedding day' : `${daysUntilWedding} days left`,
         'No itinerary events yet',
       ],
+      sequence: buildPlanningSequence(
+        {
+          title: 'Add the anchor events now',
+          detail: 'Give the weekend a ceremony, reception, and other guest-critical anchors before you spend time on softer polish.',
+        },
+        {
+          title: 'Preview the guest-facing timeline',
+          detail: 'Use the first honest itinerary pass to make sure the weekend reads clearly once the anchors exist.',
+        },
+        {
+          title: 'Return to seating or planning polish after the spine is real',
+          detail: 'Once the schedule can carry trust, the rest of the board can improve without guessing around a missing timeline.',
+        },
+      ),
       primaryAction: { label: 'Build itinerary anchors', target: 'itinerary' },
       secondaryAction: { label: 'Check seating', target: 'seating' },
     };
@@ -161,6 +264,20 @@ export function buildPlanningOverviewDecisionCard(args: {
       `${tasks.filter((task) => task.status !== 'done').length} tasks still open`,
       `${vendors.filter((vendor) => (vendor.balance_due || 0) === 0).length} vendors fully paid`,
     ],
+    sequence: buildPlanningSequence(
+      {
+        title: 'Pick one calm edge to tighten',
+        detail: 'Use the lack of pressure to improve one believable next step instead of manufacturing a bigger planning churn.',
+      },
+      {
+        title: 'Check that the board still feels honest',
+        detail: 'After the small improvement, verify that you did not disturb a steadier part of the system unnecessarily.',
+      },
+      {
+        title: 'Leave the rest of the board alone',
+        detail: 'The calmer move is preserving the healthy surfaces once the one useful edge has been tightened.',
+      },
+    ),
     primaryAction: { label: 'Review tasks', target: 'tasks' },
   };
 }
@@ -184,6 +301,20 @@ export function buildTasksDecisionCard(tasks: PlanningTask[]): PlanningDecisionC
         `${overdueTasks.length} overdue`,
         `${dueSoonHighPriority.length} high-priority due this week`,
       ],
+      sequence: buildPlanningSequence(
+        {
+          title: 'Resolve the late tasks first',
+          detail: 'Clear the tasks whose dates already stopped telling the truth before you add or reorder anything else.',
+        },
+        {
+          title: 'Check the upcoming high-priority lane',
+          detail: 'Once the overdue pressure is gone, confirm whether this week’s important work still needs owner or date tightening.',
+        },
+        {
+          title: 'Return to calmer task hygiene later',
+          detail: 'Only after the list is honest again should you reopen softer organization or cleanup passes.',
+        },
+      ),
     };
   }
 
@@ -200,6 +331,20 @@ export function buildTasksDecisionCard(tasks: PlanningTask[]): PlanningDecisionC
         `${dueSoonHighPriority.length} high-priority due soon`,
         `${inProgressCount} already in progress`,
       ],
+      sequence: buildPlanningSequence(
+        {
+          title: 'Tighten the owners and due dates',
+          detail: 'Use this pass to make the short-horizon tasks believable before they become next week’s overdue cleanup.',
+        },
+        {
+          title: 'Check the in-progress work next',
+          detail: 'After the due-soon tasks are grounded, verify that the work already underway still has the right shape and owner.',
+        },
+        {
+          title: 'Leave the calmer list structure alone',
+          detail: 'The stable parts of the task board do not need a reorganization pass just because one weekly lane got attention.',
+        },
+      ),
     };
   }
 
@@ -215,6 +360,20 @@ export function buildTasksDecisionCard(tasks: PlanningTask[]): PlanningDecisionC
       `${tasks.filter((task) => task.status !== 'done').length} open`,
       `${inProgressCount} in progress`,
     ],
+    sequence: buildPlanningSequence(
+      {
+        title: 'Tighten one fuzzy task into a real move',
+        detail: 'Use the calm to improve one owner-and-next-step pair instead of broadening the task list.',
+      },
+      {
+        title: 'Check that ownership still feels clear',
+        detail: 'After the small correction, make sure the visible in-progress lane still reads cleanly.',
+      },
+      {
+        title: 'Leave the stable tasks alone',
+        detail: 'Once the list is clear enough again, preserve that calm instead of creating more churn.',
+      },
+    ),
   };
 }
 
@@ -240,6 +399,20 @@ export function buildBudgetDecisionCard(items: PlanningBudgetItem[], totalBudget
         `${currency(totalActual)} spent`,
         `${currency(Math.max(totalActual - totalBudget, 0))} over goal`,
       ],
+      sequence: buildPlanningSequence(
+        {
+          title: 'Audit the categories that breached the goal',
+          detail: 'Start where actual money already outran the plan so the budget story becomes honest again.',
+        },
+        {
+          title: 'Check what still deserves funding',
+          detail: 'Once the drift is real on paper, decide which remaining spends are still meaningful enough to keep.',
+        },
+        {
+          title: 'Let the rest of the budget settle',
+          detail: 'After the pressure categories are decided, avoid widening the review into a general ledger obsession.',
+        },
+      ),
     };
   }
 
@@ -256,6 +429,20 @@ export function buildBudgetDecisionCard(items: PlanningBudgetItem[], totalBudget
         `${overBudgetCategories.length} categories over estimate`,
         `${currency(remaining)} remaining`,
       ],
+      sequence: buildPlanningSequence(
+        {
+          title: 'Review the few categories that drifted',
+          detail: 'Keep the pass narrow so the real problem categories stop teaching the wrong story.',
+        },
+        {
+          title: 'Check whether the remaining budget still holds',
+          detail: 'After those categories are honest, see whether the rest of the plan still feels calm without reopening every line item.',
+        },
+        {
+          title: 'Return to lightweight budget maintenance',
+          detail: 'Once the drift is understood, let the steadier categories stay quiet instead of dragging them into extra review.',
+        },
+      ),
     };
   }
 
@@ -271,6 +458,20 @@ export function buildBudgetDecisionCard(items: PlanningBudgetItem[], totalBudget
       `${currency(totalEstimated)} estimated`,
       `${currency(remaining)} remaining`,
     ],
+    sequence: buildPlanningSequence(
+      {
+        title: 'Use the calm to decide the next real spend',
+        detail: 'Treat the budget as a forward-looking decision tool instead of a place to linger on old receipts.',
+      },
+      {
+        title: 'Check whether that spend preserves the plan',
+        detail: 'After the next funding move is clear, confirm the overall budget still feels believable and light.',
+      },
+      {
+        title: 'Leave the steady categories alone',
+        detail: 'The healthiest budget is the one that stays quiet once the next choice is made cleanly.',
+      },
+    ),
   };
 }
 
@@ -293,6 +494,20 @@ export function buildVendorsDecisionCard(vendors: PlanningVendor[]): PlanningDec
         `${currency(dueSoonVendors.reduce((sum, vendor) => sum + (vendor.balance_due || 0), 0))} due soon`,
         `${openBalanceCount} vendors still open`,
       ],
+      sequence: buildPlanningSequence(
+        {
+          title: 'Confirm the next due vendor move',
+          detail: 'Use the upcoming due dates to decide which payment or reply needs attention before the rest of the lane.',
+        },
+        {
+          title: 'Check whether budget or contact truth changes it',
+          detail: 'Once the timing call is clear, verify that the supporting budget and contact details still hold cleanly.',
+        },
+        {
+          title: 'Return to broader vendor research later',
+          detail: 'After the due move is handled, deeper notes and sourcing work can stay calm instead of reactive.',
+        },
+      ),
     };
   }
 
@@ -309,6 +524,20 @@ export function buildVendorsDecisionCard(vendors: PlanningVendor[]): PlanningDec
         `${missingContactCount} missing direct contact`,
         `${openBalanceCount} still carrying balance`,
       ],
+      sequence: buildPlanningSequence(
+        {
+          title: 'Fill in one reliable contact path',
+          detail: 'Give each active vendor a reachable phone or email before you keep expanding the record.',
+        },
+        {
+          title: 'Check whether follow-up timing is now usable',
+          detail: 'After the missing contacts exist, make sure the board can actually support the next real vendor question.',
+        },
+        {
+          title: 'Leave deeper note cleanup for later',
+          detail: 'Once contact truth is solid, broader comparisons and extra notes can happen without blocking follow-through.',
+        },
+      ),
     };
   }
 
@@ -324,5 +553,19 @@ export function buildVendorsDecisionCard(vendors: PlanningVendor[]): PlanningDec
       `${openBalanceCount} open balances`,
       `${vendors.length} total vendors`,
     ],
+    sequence: buildPlanningSequence(
+      {
+        title: 'Refresh the next real vendor follow-up',
+        detail: 'Use the calm to keep one upcoming payment or contact move truthful without turning the board into archive work.',
+      },
+      {
+        title: 'Check that the rest of the lane stays readable',
+        detail: 'After the next move is clear, confirm the board still shows enough truth without collecting noise.',
+      },
+      {
+        title: 'Leave the steady vendor records alone',
+        detail: 'The calm win is preserving a ready board, not expanding it just because it looks quiet.',
+      },
+    ),
   };
 }

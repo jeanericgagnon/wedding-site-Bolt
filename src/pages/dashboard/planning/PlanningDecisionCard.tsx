@@ -1,6 +1,8 @@
 import React from 'react';
 import { Brain, ArrowRight } from 'lucide-react';
 import { Card } from '../../../components/ui/Card';
+import { Badge } from '../../../components/ui';
+import { getFlowStatusLabel } from '../../../lib/flowLabels';
 import type { PlanningDecisionAction, PlanningDecisionCardModel } from './planningDecisionAssistant';
 
 interface Props {
@@ -49,6 +51,19 @@ export const PlanningDecisionCard: React.FC<Props> = ({ model, onAction }) => {
               ))}
             </div>
           )}
+          <div className="mt-3 grid gap-2 sm:grid-cols-3">
+            {model.sequence.map((step) => (
+              <div key={step.id} className="rounded-2xl border border-border/60 bg-white/80 px-3 py-3">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-xs font-semibold text-text-primary">{step.title}</p>
+                  <Badge variant={step.status === 'current' ? 'primary' : 'secondary'}>
+                    {getFlowStatusLabel(step.status)}
+                  </Badge>
+                </div>
+                <p className="mt-2 text-xs leading-5 text-text-secondary">{step.detail}</p>
+              </div>
+            ))}
+          </div>
           {(primaryAction || secondaryAction) && onAction && (
             <div className="mt-4 flex flex-wrap gap-2">
               {primaryAction ? (

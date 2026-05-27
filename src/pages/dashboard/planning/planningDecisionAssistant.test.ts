@@ -74,6 +74,8 @@ describe('planningDecisionAssistant', () => {
     expect(model.focusTitle).toMatch(/task board/i);
     expect(model.bestNextMove).toMatch(/overdue tasks|dates are honest/i);
     expect(model.decisionRule).toMatch(/fix that truth before you optimize/i);
+    expect(model.sequence.map((step) => step.status)).toEqual(['current', 'next', 'then']);
+    expect(model.sequence[0]?.title).toMatch(/Resolve or reschedule|late work/i);
     expect(model.primaryAction?.target).toBe('tasks');
     expect(model.secondaryAction?.target).toBe('seating');
   });
@@ -106,6 +108,7 @@ describe('planningDecisionAssistant', () => {
     expect(model.focusTitle).toMatch(/schedule spine/i);
     expect(model.bestNextMove).toMatch(/ceremony, reception|preview the itinerary/i);
     expect(model.decisionRule).toMatch(/schedule anchors beat aesthetic polish/i);
+    expect(model.sequence[1]?.detail).toMatch(/guest-facing timeline|weekend reads clearly/i);
     expect(model.primaryAction?.target).toBe('itinerary');
     expect(model.secondaryAction?.target).toBe('seating');
   });
@@ -120,6 +123,7 @@ describe('planningDecisionAssistant', () => {
     expect(model.focusTitle).toMatch(/reliable contact path/i);
     expect(model.bestNextMove).toMatch(/reliable contact path|notes, comparisons/i);
     expect(model.decisionRule).toMatch(/contact truth is missing/i);
+    expect(model.sequence[2]?.title).toMatch(/deeper note cleanup|later/i);
     expect(model.badges[0]).toMatch(/2 missing direct contact/i);
   });
 
