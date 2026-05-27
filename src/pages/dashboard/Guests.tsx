@@ -3293,7 +3293,16 @@ Proceed with send?`)) return;
                 <div className="pt-1 border-t border-border-subtle">
                   <p className="text-xs font-medium text-text-secondary mb-2">Itinerary invitations</p>
                   {itineraryFilterEvents.length === 0 && (
-                    <p className="text-[11px] text-text-tertiary mb-2">No itinerary events yet — using Ceremony/Reception defaults for now.</p>
+                    <div className="mb-2 flex items-center justify-between gap-3 rounded-lg border border-border-subtle bg-surface-subtle/30 px-3 py-2">
+                      <p className="text-[11px] text-text-tertiary">No itinerary events yet — using Ceremony/Reception defaults for now.</p>
+                      <button
+                        type="button"
+                        onClick={() => navigate('/dashboard/itinerary')}
+                        className="rounded border border-border px-2.5 py-1 text-[11px] text-text-secondary hover:border-primary/40 hover:text-primary"
+                      >
+                        Open itinerary
+                      </button>
+                    </div>
                   )}
                   <div className="space-y-1.5 max-h-40 overflow-auto pr-1">
                     {effectiveItineraryEvents.map((event) => {
