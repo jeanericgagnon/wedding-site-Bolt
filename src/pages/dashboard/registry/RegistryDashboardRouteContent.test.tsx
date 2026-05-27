@@ -2715,9 +2715,9 @@ describe('RegistryDashboardRouteContent', () => {
     expect(screen.getByText('Registry share readiness')).toBeInTheDocument();
     expect(screen.getByText('Registry share setup looks ready to share.')).toBeInTheDocument();
     expect(screen.getByText('No registry share blockers right now.')).toBeInTheDocument();
-    expect(screen.getByText('Main focus')).toBeInTheDocument();
     expect(screen.getByText('Keep the registry easy to trust at a glance')).toBeInTheDocument();
-    expect(screen.getByText('Decision rule')).toBeInTheDocument();
+    expect(screen.getByText('Turn the most visible open gifts into confident choices')).toBeInTheDocument();
+    expect(screen.getByText(/improve their clarity before you spend energy polishing lower-priority items/i)).toBeInTheDocument();
     expect(screen.getByText('0 to check')).toBeInTheDocument();
     expect(screen.getAllByText('Ready to share').length).toBeGreaterThan(0);
   });
@@ -2810,6 +2810,23 @@ describe('RegistryDashboardRouteContent', () => {
     expect(screen.getByText('2 to check')).toBeInTheDocument();
     expect(screen.getAllByText('Needs a look').length).toBeGreaterThan(0);
     expect(screen.getByText('Fund links ready to share')).toBeInTheDocument();
+  });
+
+  it('frames fully claimed top gifts as a stability lane instead of more churn', () => {
+    render(
+      <RegistryDashboardRouteContent
+        {...makeBaseProps({
+          topRegistryItems: [
+            makeItem({ id: 'gift-1', item_name: 'Dinner plates', purchase_status: 'purchased', quantity_needed: 1, quantity_purchased: 1 }),
+            makeItem({ id: 'gift-2', item_name: 'Serving set', purchase_status: 'purchased', quantity_needed: 1, quantity_purchased: 1 }),
+          ],
+        })}
+      />,
+    );
+
+    expect(screen.getByText('Top gifts are already fully claimed right now.')).toBeInTheDocument();
+    expect(screen.getByText('Protect the calm in the top lane')).toBeInTheDocument();
+    expect(screen.getByText(/keep it stable unless a better guest-facing priority truly replaces it/i)).toBeInTheDocument();
   });
 
   it('summarizes mixed registry quick-check prompts before the cards', () => {

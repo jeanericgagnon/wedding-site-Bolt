@@ -735,6 +735,29 @@ export function RegistryDashboardRouteContent(props: {
     : topRegistryProgressCounts.open === 0 && topRegistryProgressCounts.partial === 0
       ? 'Top gifts are already fully claimed right now.'
       : `Top gifts: ${topRegistryProgressCounts.claimed} fully claimed · ${topRegistryProgressCounts.partial} partially claimed · ${topRegistryProgressCounts.open} still fully open.`;
+  const topRegistryProgressGuide = props.topRegistryItems.length === 0
+    ? {
+        focusTitle: 'Pick the gifts that deserve top-billing first',
+        focusDetail: 'The top section works best once it reflects the gifts or funds guests are most likely to notice and act on first.',
+        decisionRule: 'Do not fill the top lane just to make it look busy; use it for the items that make the registry feel easy to understand.',
+      }
+    : topRegistryProgressCounts.open > 0
+      ? {
+          focusTitle: 'Turn the most visible open gifts into confident choices',
+          focusDetail: 'If the top lane still has fully open gifts, the next best move is making sure those gifts feel complete, compelling, and easy to claim.',
+          decisionRule: 'When top gifts are still fully open, improve their clarity before you spend energy polishing lower-priority items.',
+        }
+      : topRegistryProgressCounts.partial > 0
+        ? {
+            focusTitle: 'Finish the gifts that are already moving',
+            focusDetail: 'Partial claims are a good sign, but the highest-value cleanup now is helping those visible gifts cross the line into fully claimed.',
+            decisionRule: 'When top gifts are partially claimed, completion beats expansion.',
+          }
+        : {
+            focusTitle: 'Protect the calm in the top lane',
+            focusDetail: 'The top gifts are already in a good place, so the job is preserving that clarity instead of rotating in new noise.',
+            decisionRule: 'When the top lane is already fully claimed, keep it stable unless a better guest-facing priority truly replaces it.',
+          };
   const recentActivitySummary = props.recentActivity.length === 0
     ? 'No recent registry changes yet.'
     : [
@@ -1286,6 +1309,17 @@ export function RegistryDashboardRouteContent(props: {
             <Card variant="bordered" padding="lg">
               <p className="text-sm font-semibold text-text-primary">Top registry progress</p>
               <p className="mt-1 text-sm text-text-secondary">{topRegistryProgressSummary}</p>
+              <div className="mt-3 grid gap-3 md:grid-cols-2">
+                <div className="rounded-xl border border-border-subtle bg-surface-subtle/20 px-3 py-3">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-text-tertiary">Main focus</p>
+                  <p className="mt-1 text-sm font-semibold text-text-primary">{topRegistryProgressGuide.focusTitle}</p>
+                  <p className="mt-2 text-xs leading-5 text-text-secondary">{topRegistryProgressGuide.focusDetail}</p>
+                </div>
+                <div className="rounded-xl border border-border-subtle bg-surface-subtle/20 px-3 py-3">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-text-tertiary">Decision rule</p>
+                  <p className="mt-1 text-sm font-semibold text-text-primary">{topRegistryProgressGuide.decisionRule}</p>
+                </div>
+              </div>
               <div className="mt-3 space-y-2.5">
                 {props.topRegistryItems.length === 0 ? (
                   <p className="text-sm text-text-secondary">No top registry gifts to track yet.</p>
