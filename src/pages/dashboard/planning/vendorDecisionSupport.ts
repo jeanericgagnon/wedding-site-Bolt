@@ -47,8 +47,14 @@ export interface VendorProfileGuideModel {
   focusDetail: string;
   nextMove: string;
   decisionRule: string;
+  watchout: string;
   trustSignals: string[];
   checks: string[];
+  sequence: Array<{
+    status: 'current' | 'next' | 'then';
+    title: string;
+    detail: string;
+  }>;
 }
 
 function createWindows(today = new Date()) {
@@ -89,6 +95,30 @@ function buildVendorSequence(
     },
     {
       id: 'decide' as const,
+      status: 'then' as const,
+      title: then.title,
+      detail: then.detail,
+    },
+  ];
+}
+
+function buildVendorProfileSequence(
+  current: { title: string; detail: string },
+  next: { title: string; detail: string },
+  then: { title: string; detail: string },
+) {
+  return [
+    {
+      status: 'current' as const,
+      title: current.title,
+      detail: current.detail,
+    },
+    {
+      status: 'next' as const,
+      title: next.title,
+      detail: next.detail,
+    },
+    {
       status: 'then' as const,
       title: then.title,
       detail: then.detail,
@@ -303,6 +333,7 @@ export function buildVendorProfileGuide(profile: VendorProfile): VendorProfileGu
         ? 'Review the gallery and public links first, then send one direct email when the fit feels real.'
         : 'Review the gallery and public links first, then use the inquiry path once the fit feels real.',
       decisionRule: 'Do not start with outreach when the visual fit is still uncertain; use the proof first so the first conversation is warmer and more specific.',
+      watchout: 'The easy mistake here is contacting a visually polished vendor before you have actually pressure-tested fit and freshness. A fast first email can create false momentum around a profile that only looked right at a glance.',
       trustSignals: [
         'Gallery depth is strong enough to judge style',
         'Public links can verify recent work',
@@ -313,6 +344,20 @@ export function buildVendorProfileGuide(profile: VendorProfile): VendorProfileGu
         'Use the direct email when you already know you want to reach out.',
         'Use the public links to verify that recent work still matches the tone here.',
       ],
+      sequence: buildVendorProfileSequence(
+        {
+          title: 'Check style fit first',
+          detail: 'Use the gallery and descriptor to decide whether this vendor even belongs in your real shortlist.',
+        },
+        {
+          title: 'Verify freshness next',
+          detail: 'Confirm through public links that recent work still matches the tone and quality you are reacting to here.',
+        },
+        {
+          title: 'Open the conversation last',
+          detail: 'Reach out only after the fit feels real, so the first contact starts specific instead of exploratory.',
+        },
+      ),
     };
   }
 
@@ -334,6 +379,9 @@ export function buildVendorProfileGuide(profile: VendorProfile): VendorProfileGu
     decisionRule: hasPublicLinks
       ? 'When the page is lighter, verify recent public work before you let convenience turn into a premature yes.'
       : 'When both proof and contact are thin, treat this as a maybe until one stronger signal appears.',
+    watchout: hasPublicLinks
+      ? 'Do not let the existence of a clean website or social link substitute for real confidence. Lighter profiles can feel more decision-ready than they are if you skip the freshness check.'
+      : 'Do not promote a thin profile into the shortlist just because it is available. When both proof and contact are light, convenience can masquerade as fit.',
     trustSignals: [
       hasGalleryDepth ? 'Visual proof exists, but still wants a closer read.' : 'Gallery depth is still light.',
       hasPublicLinks ? 'Public proof is available for a freshness check.' : 'Public proof is still thin.',
@@ -344,5 +392,25 @@ export function buildVendorProfileGuide(profile: VendorProfile): VendorProfileGu
       hasPublicLinks ? `${linkCount} public link${linkCount === 1 ? '' : 's'} can help verify freshness and fit.` : 'The profile is missing broader public proof, so outreach may need more caution.',
       hasDirectEmail ? 'Direct email is available once the fit feels real.' : 'Use the inquiry form when you want a low-friction first contact.',
     ],
+    sequence: buildVendorProfileSequence(
+      {
+        title: 'Use the strongest signal first',
+        detail: hasGalleryDepth
+          ? 'Start with the best visual proof on the page to decide whether the style even belongs in contention.'
+          : 'Start with the strongest public clue available, because the page itself is still too light to carry the whole decision.',
+      },
+      {
+        title: 'Pressure-test the profile next',
+        detail: hasPublicLinks
+          ? 'Use the public links to verify freshness and consistency before you treat this like a real shortlist yes.'
+          : 'Look for one more layer of proof before you let this move from maybe to serious option.',
+      },
+      {
+        title: 'Reach out only after the proof holds',
+        detail: hasDirectEmail
+          ? 'Use the direct email once the fit feels earned, not as a substitute for deciding whether the fit is real.'
+          : 'Use the inquiry path only after the available proof is strong enough to justify the time.',
+      },
+    ),
   };
 }

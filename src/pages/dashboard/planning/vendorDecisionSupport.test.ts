@@ -80,6 +80,9 @@ describe('vendorDecisionSupport', () => {
     expect(guide.focusTitle).toBe('Use proof before outreach');
     expect(guide.nextMove).toMatch(/gallery|public links/i);
     expect(guide.decisionRule).toMatch(/proof first|visual fit/i);
+    expect(guide.watchout).toMatch(/false momentum|first email|glance/i);
+    expect(guide.sequence.map((step) => step.status)).toEqual(['current', 'next', 'then']);
+    expect(guide.sequence[0]?.title).toMatch(/style fit/i);
   });
 
   it('keeps lighter profiles in a cautious evaluation sequence', () => {
@@ -103,5 +106,7 @@ describe('vendorDecisionSupport', () => {
     expect(guide.focusTitle).toMatch(/Gather one more layer of proof/i);
     expect(guide.nextMove).toMatch(/first-touch inquiry/i);
     expect(guide.decisionRule).toMatch(/maybe until one stronger signal appears/i);
+    expect(guide.watchout).toMatch(/thin profile|convenience/i);
+    expect(guide.sequence[1]?.detail).toMatch(/proof|freshness|shortlist/i);
   });
 });

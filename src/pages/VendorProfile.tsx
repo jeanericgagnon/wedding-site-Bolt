@@ -192,6 +192,24 @@ export const VendorProfilePage: React.FC = () => {
                     <p className="mt-1 text-sm font-medium text-[#2f261d]">{profileGuide.decisionRule}</p>
                   </div>
                 </div>
+                <div className="rounded-2xl bg-white px-3 py-3 shadow-sm">
+                  <p className="text-[11px] uppercase tracking-[0.18em] text-[#8b6f53]">Watchout</p>
+                  <p className="mt-1 text-sm text-[#6f5843]">{profileGuide.watchout}</p>
+                </div>
+                <div className="grid gap-2 md:grid-cols-3">
+                  {profileGuide.sequence.map((step) => (
+                    <div key={`${step.status}-${step.title}`} className="rounded-2xl bg-white px-3 py-3 shadow-sm">
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="text-[11px] uppercase tracking-[0.18em] text-[#8b6f53]">{step.status}</p>
+                        <span className="rounded-full bg-[#f8f3ec] px-2 py-0.5 text-[10px] text-[#6f5843]">
+                          {step.status === 'current' ? 'Current' : step.status === 'next' ? 'Next' : 'Then'}
+                        </span>
+                      </div>
+                      <p className="mt-2 text-sm font-medium text-[#2f261d]">{step.title}</p>
+                      <p className="mt-2 text-xs leading-5 text-[#6f5843]">{step.detail}</p>
+                    </div>
+                  ))}
+                </div>
                 <div className="flex flex-wrap gap-2">
                   {profileGuide.trustSignals.map((signal) => (
                     <span key={signal} className="rounded-full bg-white px-2.5 py-1 text-[11px] text-[#6f5843] shadow-sm">
