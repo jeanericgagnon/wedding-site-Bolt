@@ -572,6 +572,11 @@ export const DashboardOverview: React.FC = () => {
     templateName: stats?.templateName ?? '',
   }).map((item) => ({ ...item, action: () => navigate(item.route) }));
   const siteVisibility = getSiteVisibilityState({ isPublished: stats?.isPublished, privacyMode: stats?.privacyMode, hideFromSearch: stats?.hideFromSearch });
+  const guestAccessNote = siteVisibility.isPrivatePreview
+    ? siteVisibility.state === 'private_preview_password'
+      ? 'Guests still need the site password, so every reminder, print pack, and planner handoff should carry those instructions clearly.'
+      : 'Guests still need the invite-only path, so broad-share links and handoff assets should match the real access route.'
+    : null;
   const archiveMode = getArchiveModeDescriptor({ weddingDate: stats?.weddingDate ?? null });
   const publishState = getPublishStateDescriptor({
     isPublished: stats?.isPublished,
@@ -1351,6 +1356,19 @@ export const DashboardOverview: React.FC = () => {
                     <span className="text-text-secondary">Status</span>
                     <span className="text-text-primary">{siteVisibility.label}</span>
                   </div>
+                  {guestAccessNote && (
+                    <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-sm">
+                      <p className="font-medium text-amber-900">Guest access needs one shared instruction set</p>
+                      <p className="mt-1 text-amber-800">{guestAccessNote}</p>
+                      <button
+                        type="button"
+                        onClick={() => navigate('/dashboard/settings?tab=site')}
+                        className="mt-2 text-xs font-medium text-amber-900 underline underline-offset-2"
+                      >
+                        Review site access settings
+                      </button>
+                    </div>
+                  )}
                   <div className="flex items-center justify-between py-3 border-b border-border-subtle">
                     <span className="text-text-secondary">Last live update</span>
                     <span className="text-text-primary">{stats?.lastPublishedAt ? formatOverviewRelativeTime(stats.lastPublishedAt) : '—'}</span>
