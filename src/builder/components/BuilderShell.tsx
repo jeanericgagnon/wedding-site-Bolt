@@ -471,6 +471,26 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
                         <p className="text-sm font-medium text-text-primary">{launchConfidence.summary}</p>
                         <p className="text-[11px] text-text-secondary">Current · {launchConfidence.current}</p>
                         <p className="text-[11px] text-text-secondary">Next · {launchConfidence.next}</p>
+                        <p className="text-[11px] text-amber-700">Watchout · {launchConfidence.watchout}</p>
+                        <div className="grid gap-2 pt-1 md:grid-cols-3">
+                          {launchConfidence.sequence.map((step) => (
+                            <div key={`${step.status}-${step.label}`} className="rounded-xl border border-border-subtle bg-surface-subtle/40 px-3 py-3">
+                              <div className="flex items-center justify-between gap-2">
+                                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-text-tertiary">{step.status}</p>
+                                <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${
+                                  step.status === 'current'
+                                    ? 'border border-primary/20 bg-primary-light text-primary'
+                                    : step.status === 'next'
+                                      ? 'border border-warning/20 bg-warning-light text-warning'
+                                      : 'border border-border-subtle bg-white text-text-secondary'
+                                }`}>
+                                  {step.label}
+                                </span>
+                              </div>
+                              <p className="mt-2 text-xs leading-5 text-text-secondary">{step.detail}</p>
+                            </div>
+                          ))}
+                        </div>
                       </div>
                       <div className="lg:pl-4">
                         <button

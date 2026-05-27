@@ -8,13 +8,29 @@ export interface LaunchConfidenceAction {
   target?: 'publish-blockers' | 'itinerary';
 }
 
+export interface LaunchConfidenceSequenceItem {
+  status: 'current' | 'next' | 'then';
+  label: string;
+  detail: string;
+}
+
 export interface LaunchConfidenceModel {
   label: string;
   tone: 'steady' | 'warning' | 'ready';
   summary: string;
   current: string;
   next: string;
+  watchout: string;
+  sequence: LaunchConfidenceSequenceItem[];
   primaryAction: LaunchConfidenceAction;
+}
+
+function buildLaunchSequence(current: string, next: string, then: string): LaunchConfidenceSequenceItem[] {
+  return [
+    { status: 'current', label: 'Current', detail: current },
+    { status: 'next', label: 'Next', detail: next },
+    { status: 'then', label: 'Then', detail: then },
+  ];
 }
 
 function isProjectPublished(project: BuilderProject) {
@@ -62,6 +78,18 @@ export function buildLaunchConfidence(
         ? 'The structure is close, but the latest edit still needs to be saved before launch truth is real.'
         : 'The guest-facing basics are not fully trustworthy yet, so publishing now would make the site feel thinner than it should.',
       next: getIssueNext(issue.kind),
+      watchout: issue.kind === 'unsaved-changes'
+        ? 'Do not keep polishing a draft whose launch truth is already stale. When save state is the blocker, more editing usually creates more uncertainty, not more readiness.'
+        : 'The easiest mistake here is treating visible design progress like launch progress. If the guest-facing basics are still thin, publish pressure should stay pointed at the blocker itself.',
+      sequence: buildLaunchSequence(
+        issue.kind === 'unsaved-changes'
+          ? 'Save the latest draft so launch confidence matches the work you are actually looking at.'
+          : 'Repair the missing guest-facing basic that is still keeping launch truth thin.',
+        getIssueNext(issue.kind),
+        issue.kind === 'unsaved-changes'
+          ? 'Then preview once and publish from a synchronized draft instead of reopening a new polish loop.'
+          : 'Then preview the guest path once the blocker is fixed before you decide whether any extra polish is still worth it.',
+      ),
       primaryAction: {
         kind: issue.kind === 'unsaved-changes' ? 'publish' : 'fix',
         label: issue.kind === 'unsaved-changes' ? 'Save and publish' : 'Fix launch blockers',
@@ -77,6 +105,12 @@ export function buildLaunchConfidence(
       summary: 'The site has the structural basics, but guests still need at least one real itinerary event before the launch feels trustworthy.',
       current: 'Names, date, venue, and RSVP can all be present while the weekend still feels vague to a guest who is trying to picture the day.',
       next: 'Add the first real schedule event so the public timeline has an anchor before you publish.',
+      watchout: 'A site can look launchable from the editor while still feeling empty to a guest. If the schedule has no real anchor, the launch asks messaging and memory to compensate for a weekend that was never clearly introduced.',
+      sequence: buildLaunchSequence(
+        'Treat the missing itinerary anchor as the real launch blocker, not as optional polish.',
+        'Add the first guest-facing schedule event so the timeline can carry at least one concrete promise.',
+        'Then preview the public flow again and publish only once the weekend feels pictureable instead of abstract.',
+      ),
       primaryAction: {
         kind: 'fix',
         label: 'Add itinerary anchors',
@@ -94,6 +128,12 @@ export function buildLaunchConfidence(
         : 'The guest-facing site is already live, so this is now about making the next update feel intentional.',
       current: 'Guests can already rely on the live site without waiting for another structural fix.',
       next: 'Preview your changes once, then publish only if this draft meaningfully improves clarity or polish.',
+      watchout: 'Do not turn a live, trustworthy site into a constant-update habit. Once the public path is steady, extra edits should earn their way in instead of shipping just because they exist.',
+      sequence: buildLaunchSequence(
+        'Start from the assumption that the live site is already doing its job for guests.',
+        'Preview the draft once and decide whether the change clearly improves guest clarity or confidence.',
+        'Then publish deliberately or leave the live version alone if this update is only marginally better.',
+      ),
       primaryAction: {
         kind: 'preview',
         label: 'Preview before updating',
@@ -107,6 +147,12 @@ export function buildLaunchConfidence(
     summary: 'The draft has the essentials in place, so the best remaining move is one preview pass and a calm publish.',
     current: 'The structure, names, date, venue, and RSVP path are all present enough to support guests well.',
     next: 'Preview the guest-facing flow once on mobile, then publish from this draft instead of over-polishing in edit mode.',
+    watchout: 'The main risk now is nervous extra editing. Once the draft is structurally sound, another round of tinkering can create more churn than confidence.',
+    sequence: buildLaunchSequence(
+      'Hold the draft steady now that the essential guest-facing structure is already in place.',
+      'Preview the mobile guest flow once and confirm that the basics feel easy to trust.',
+      'Then publish from this draft instead of reopening a longer polish loop just because there is still time.',
+    ),
     primaryAction: {
       kind: 'publish',
       label: 'Publish with confidence',

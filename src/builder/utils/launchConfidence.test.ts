@@ -82,6 +82,8 @@ describe('buildLaunchConfidence', () => {
     expect(confidence.tone).toBe('warning');
     expect(confidence.primaryAction).toMatchObject({ kind: 'fix', target: 'publish-blockers' });
     expect(confidence.summary).toContain('RSVP');
+    expect(confidence.watchout).toMatch(/design progress|blocker/i);
+    expect(confidence.sequence.map((step) => step.status)).toEqual(['current', 'next', 'then']);
   });
 
   it('encourages a save-and-publish pass when unsaved changes are the only blocker', () => {
@@ -89,6 +91,7 @@ describe('buildLaunchConfidence', () => {
 
     expect(confidence.label).toContain('Almost');
     expect(confidence.primaryAction).toMatchObject({ kind: 'publish' });
+    expect(confidence.watchout).toMatch(/save state|stale/i);
   });
 
   it('treats a structurally sound draft as ready for launch', () => {
@@ -96,6 +99,7 @@ describe('buildLaunchConfidence', () => {
 
     expect(confidence.tone).toBe('ready');
     expect(confidence.primaryAction).toMatchObject({ kind: 'publish' });
+    expect(confidence.sequence[1]?.detail).toMatch(/mobile|preview/i);
   });
 
   it('keeps launch confidence in warning mode when the itinerary has no real anchor events yet', () => {
@@ -107,6 +111,7 @@ describe('buildLaunchConfidence', () => {
     expect(confidence.tone).toBe('warning');
     expect(confidence.primaryAction).toMatchObject({ kind: 'fix', target: 'itinerary' });
     expect(confidence.summary).toMatch(/itinerary event|timeline/i);
+    expect(confidence.watchout).toMatch(/schedule|weekend/i);
   });
 
   it('switches to polish framing once the site is already live', () => {
@@ -119,5 +124,6 @@ describe('buildLaunchConfidence', () => {
 
     expect(confidence.label).toContain('Live');
     expect(confidence.primaryAction).toMatchObject({ kind: 'preview' });
+    expect(confidence.watchout).toMatch(/constant-update|live/i);
   });
 });
