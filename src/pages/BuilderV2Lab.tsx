@@ -27,6 +27,7 @@ import {
 } from './builderV2WorkflowGuidance';
 import { buildBuilderV2ImportComparison } from './builderV2ImportComparison';
 import { buildBuilderV2ImportReviewSummary } from './builderV2ImportReviewSummary';
+import { buildBuilderV2UpgradeIntake } from './builderV2UpgradeIntake';
 import { buildBuilderV2DocumentAudit, type BuilderV2DocumentAuditIssue } from './builderV2DocumentAudit';
 import { buildBuilderV2HandoffGuidance } from './builderV2HandoffGuidance';
 import { buildBuilderV2HandoffPacket } from './builderV2HandoffPacket';
@@ -340,6 +341,11 @@ export const BuilderV2Lab: React.FC = () => {
   const [importError, setImportError] = useState('');
   const [lastImportReport, setLastImportReport] = useState<BuilderV2ImportReport | null>(null);
   const [lastImportSource, setLastImportSource] = useState('Pasted JSON');
+  const [upgradeIntakeState, setUpgradeIntakeState] = useState<{
+    sourceName: string;
+    report: BuilderV2ImportReport;
+    hydratedWeddingData: boolean;
+  } | null>(null);
   const [propertyTab, setPropertyTab] = useState<'content' | 'layout' | 'data'>('content');
   const [recentCommands, setRecentCommands] = useState<string[]>([]);
   const [actionNotice, setActionNotice] = useState<string>('');
@@ -1276,7 +1282,12 @@ export const BuilderV2Lab: React.FC = () => {
     setPropertyTab('content');
   }, [focusSectionById, scrollToPreviewSection]);
 
-  const applyImportedDocument = useCallback((doc: BuilderV2Document, report: BuilderV2ImportReport, sourceLabel: string) => {
+  const applyImportedDocument = useCallback((
+    doc: BuilderV2Document,
+    report: BuilderV2ImportReport,
+    sourceLabel: string,
+    options?: { upgradeHydratedWeddingData?: boolean },
+  ) => {
     const nextPages = getLabPagesFromBuilderV2Document(doc);
     const sourceSections = (doc.pages ?? []).flatMap((page) => page.sections);
     const nextBlocks = Object.fromEntries(
@@ -1301,6 +1312,15 @@ export const BuilderV2Lab: React.FC = () => {
     setCollapsedBlocks({});
     setLastImportReport(report);
     setLastImportSource(sourceLabel);
+    setUpgradeIntakeState(
+      options?.upgradeHydratedWeddingData !== undefined
+        ? {
+            sourceName: sourceLabel,
+            report,
+            hydratedWeddingData: options.upgradeHydratedWeddingData,
+          }
+        : null,
+    );
     setShowImportPanel(false);
     setImportError('');
     setImportDraft('');
@@ -1329,8 +1349,20 @@ export const BuilderV2Lab: React.FC = () => {
       return;
     }
 
-    applyImportedDocument(prepared.doc, prepared.report, upgradeBridge.sourceName);
+    applyImportedDocument(prepared.doc, prepared.report, upgradeBridge.sourceName, {
+      upgradeHydratedWeddingData: Boolean(upgradeBridge.weddingData),
+    });
   }, [applyImportedDocument, notify]);
+  const upgradeIntake = useMemo(
+    () => (
+      upgradeIntakeState
+        ? buildBuilderV2UpgradeIntake(upgradeIntakeState.sourceName, upgradeIntakeState.report, {
+            hydratedWeddingData: upgradeIntakeState.hydratedWeddingData,
+          })
+        : null
+    ),
+    [upgradeIntakeState],
+  );
 
   const importV2Json = () => {
     if (!importDraft.trim()) {
@@ -1605,6 +1637,55 @@ export const BuilderV2Lab: React.FC = () => {
             <button onClick={() => setShowStructure((v) => !v)} className="px-2 py-1.5 border rounded-sm hover:border-primary/40">{showStructure ? 'Hide' : 'Reorder or add'} sections</button>
           </div>
         </div>
+
+        {upgradeIntake && (
+          <div className="px-2 md:px-3 py-2 border-b border-border-subtle bg-white">
+            <div className="rounded-sm border border-sky-200 bg-sky-50 px-3 py-2 text-xs text-sky-900">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                    <span className="font-semibold">V2 upgrade intake</span>
+                    <span>{upgradeIntakeState?.sourceName}</span>
+                  </div>
+                  <p className="mt-1 text-sm font-semibold">{upgradeIntake.title}</p>
+                  <p className="mt-1 max-w-3xl leading-relaxed">{upgradeIntake.detail}</p>
+                </div>
+                <div className="flex flex-wrap gap-1.5 text-[10px]">
+                  {upgradeIntake.keyStats.map((stat) => (
+                    <span key={stat} className="rounded-full border border-sky-200 bg-white/80 px-2 py-1">
+                      {stat}
+                    </span>
+                  ))}
+                </div>
+              </div>
+              <div className="mt-3 grid gap-2 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)]">
+                <div className="rounded-md border border-sky-200 bg-white/80 px-3 py-3">
+                  <p className="text-[11px] uppercase tracking-[0.18em] text-sky-900">Main focus</p>
+                  <p className="mt-1 text-sm font-semibold text-text-primary">{upgradeIntake.steps[0]?.detail}</p>
+                  <p className="mt-2 text-xs leading-relaxed text-text-secondary">{upgradeIntake.steps[1]?.detail}</p>
+                </div>
+                <div className="rounded-md border border-sky-200 bg-white/80 px-3 py-3">
+                  <p className="text-[11px] uppercase tracking-[0.18em] text-sky-900">Best next move</p>
+                  <p className="mt-1 text-sm font-semibold text-text-primary">{upgradeIntake.bestNextMove}</p>
+                  <p className="mt-2 text-xs leading-relaxed text-text-primary">
+                    <span className="font-semibold">Decision rule:</span> {upgradeIntake.decisionRule}
+                  </p>
+                  <p className="mt-1 text-xs leading-relaxed text-text-primary">
+                    <span className="font-semibold">Watchout:</span> {upgradeIntake.watchout}
+                  </p>
+                </div>
+              </div>
+              <div className="mt-3 grid gap-2 md:grid-cols-3">
+                {upgradeIntake.steps.map((step) => (
+                  <div key={step.label} className="rounded-md border border-sky-200 bg-white/80 px-2.5 py-2">
+                    <p className="text-[11px] uppercase tracking-[0.18em] text-sky-900">{step.label}</p>
+                    <p className="mt-1 text-xs leading-relaxed text-text-primary">{step.detail}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
 
         {lastImportReport && lastImportSummary && (
           <div className="px-2 md:px-3 py-2 border-b border-border-subtle bg-white">
