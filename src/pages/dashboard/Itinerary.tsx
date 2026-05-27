@@ -630,7 +630,7 @@ Add to itinerary
               ))}
             </div>
           </div>
-          <div className="grid gap-3 md:grid-cols-2">
+          <div className="grid gap-3 md:grid-cols-3">
             <div className="rounded-2xl border border-border-subtle bg-white px-4 py-4 shadow-sm">
               <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-text-secondary">Main focus</p>
               <p className="mt-1 text-sm font-semibold text-text-primary">{itineraryReadiness.focusTitle}</p>
@@ -641,6 +641,10 @@ Add to itinerary
               <p className="mt-1 text-sm font-semibold text-text-primary">{itineraryReadiness.bestNextMove}</p>
               <p className="mt-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-text-secondary">Decision rule</p>
               <p className="mt-1 text-sm font-semibold text-text-primary">{itineraryReadiness.decisionRule}</p>
+            </div>
+            <div className="rounded-2xl border border-border-subtle bg-white px-4 py-4 shadow-sm">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-text-secondary">Watchout</p>
+              <p className="mt-1 text-sm text-text-secondary">{itineraryReadiness.watchout}</p>
             </div>
           </div>
           <div className="grid gap-3 md:grid-cols-3">

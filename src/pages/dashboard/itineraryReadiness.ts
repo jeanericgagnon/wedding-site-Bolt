@@ -15,6 +15,7 @@ export interface ItineraryReadinessModel {
   focusDetail: string;
   bestNextMove: string;
   decisionRule: string;
+  watchout: string;
   badges: string[];
   sequence: Array<{
     id: 'details' | 'guest-view' | 'handoff';
@@ -42,6 +43,7 @@ export function buildItineraryReadiness(events: ItineraryReadinessEvent[]): Itin
       focusDetail: 'Guests do not need every detail yet, but they do need the anchor moments that make the weekend feel real and trustworthy.',
       bestNextMove: 'Add the ceremony, reception, and any other guest-critical anchor events before you spend time on polish.',
       decisionRule: 'Start with the guest-critical events first; a short honest itinerary beats a fuller one that still leaves the weekend shape unclear.',
+      watchout: 'If the first version of the schedule feels decorative instead of dependable, guests will keep asking humans to translate a weekend the site was supposed to explain.',
       badges: ['No events yet', 'Guest view not started'],
       sequence: [
         {
@@ -74,6 +76,7 @@ export function buildItineraryReadiness(events: ItineraryReadinessEvent[]): Itin
       focusDetail: 'Once an event is visible, guests should not have to guess the date, time, or location just because the schedule looks mostly done.',
       bestNextMove: 'Finish the missing date, start time, or location fields on every visible event before you rewrite notes.',
       decisionRule: 'If any visible event still lacks its basics, fix that before you invest energy in notes, copy, or day-of messaging.',
+      watchout: 'A schedule with missing basics feels worse than a shorter one, because it teaches guests to distrust the events that do look complete too.',
       badges: [pluralize(visibleEvents.length, 'visible event'), pluralize(missingCoreDetails, 'event') + ' incomplete'],
       sequence: [
         {
@@ -106,6 +109,7 @@ export function buildItineraryReadiness(events: ItineraryReadinessEvent[]): Itin
       focusDetail: 'The structure is there now, so the next improvement is relevance: show the right events and give each one just enough context to prevent questions.',
       bestNextMove: 'Hide planning-only events and add the last guest-facing notes before you treat the schedule as handoff-ready.',
       decisionRule: 'Once the event basics hold, use this pass to reduce guest confusion rather than expanding the schedule with more planning-only noise.',
+      watchout: 'The easiest way to muddy a decent schedule now is mixing planning-only noise or half-helpful notes into the guest path just because there is room.',
       badges: [pluralize(visibleEvents.length, 'visible event'), hiddenEvents > 0 ? pluralize(hiddenEvents, 'event') + ' hidden' : pluralize(missingGuestNotes, 'event') + ' need notes'],
       sequence: [
         {
@@ -137,6 +141,7 @@ export function buildItineraryReadiness(events: ItineraryReadinessEvent[]): Itin
     focusDetail: 'At this point the itinerary helps most by staying steady so guests and the team can trust the same version of the weekend.',
     bestNextMove: 'Do one final public preview, then let the schedule stay steady unless the real weekend plan changes.',
     decisionRule: 'When the public schedule is complete, keep edits tied to real plan changes and let live ops handle the exceptions.',
+    watchout: 'Once the schedule is trustworthy, casual last-minute tinkering can create more confusion than the small imperfections you were trying to fix.',
     badges: [pluralize(visibleEvents.length, 'visible event'), 'Guest-facing timeline ready'],
     sequence: [
       {
