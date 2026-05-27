@@ -378,6 +378,7 @@ Start with this
                   <h2 className="mt-1 text-lg font-semibold text-neutral-900">{templateExperienceBrief.title}</h2>
                   <p className="mt-1 text-sm text-neutral-600">{templateExperienceBrief.detail}</p>
                   <p className="mt-2 text-xs text-neutral-500">{templateExperienceBrief.bestNextStep}</p>
+                  <p className="mt-2 text-xs font-medium text-neutral-700">{templateExperienceBrief.launchUse}</p>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[11px] font-medium text-emerald-700">

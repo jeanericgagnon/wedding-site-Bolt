@@ -5,6 +5,7 @@ export interface TemplateExperienceBrief {
   detail: string;
   confidenceLabel: string;
   bestNextStep: string;
+  launchUse: string;
   watchouts: string[];
   callouts: string[];
 }
@@ -27,6 +28,7 @@ export function buildTemplateExperienceBrief(args: {
       detail: 'This design is already the one your setup draft is shaping around, so the next best move is refining it rather than restarting from scratch.',
       confidenceLabel: 'Selected',
       bestNextStep: 'Keep this direction and focus on making the guest-facing sections feel real before swapping designs.',
+      launchUse: 'Best when you want to keep momentum and make the current draft feel more trustworthy instead of starting over.',
       watchouts: [],
       callouts: [
         `${sectionsIncluded} starter sections already mapped`,
@@ -43,6 +45,9 @@ export function buildTemplateExperienceBrief(args: {
       bestNextStep: previewStatus === 'verified'
         ? 'Use this as your starting point and spend the next pass on content clarity, not design churn.'
         : 'This fit is strong, but preview it once before you fully commit so the structure feels right.',
+      launchUse: previewStatus === 'verified'
+        ? 'Best when you want the lowest-friction path from setup to a guest-ready first draft.'
+        : 'Best when the fit looks strong but you still want one structure check before committing.',
       watchouts: supportManifest?.templateExistsInBuilder
         ? []
         : ['Builder support for this design still needs a closer look before you treat it as the easiest launch path.'],
@@ -62,6 +67,9 @@ export function buildTemplateExperienceBrief(args: {
     bestNextStep: compareCount > 0
       ? 'Use compare mode, then choose the option that needs the least structural cleanup after setup.'
       : 'Open the full detail view and make sure the section flow matches how you want guests to read the weekend.',
+    launchUse: compareCount > 0
+      ? 'Best when you are choosing between two visual directions and want the one that creates less cleanup later.'
+      : 'Best when the style feels promising and you want to confirm the structure before it becomes your first draft.',
     watchouts: supportManifest?.templateExistsInBuilder
       ? []
       : ['This design may still need extra builder cleanup compared with the stronger recommended options.'],

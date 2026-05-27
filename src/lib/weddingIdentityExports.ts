@@ -42,6 +42,8 @@ export interface WeddingIdentityExportKit {
     label: string;
     detail: string;
     readiness: 'ready' | 'needs-info';
+    bestFor: string;
+    includes: string[];
   }>;
 }
 
@@ -210,6 +212,8 @@ export function buildWeddingIdentityExportKit(input: WeddingIdentityExportKitInp
           ? 'Use the share graphic, RSVP card, and public QR card when you need one fast guest-facing set.'
           : 'Set the public site URL first so the guest-facing share pack can be generated safely.',
         readiness: hasPublicUrl ? 'ready' : 'needs-info',
+        bestFor: 'Best when you need one quick guest-facing kit for text, DM, or email right now.',
+        includes: ['Share graphic', 'RSVP card', 'Public QR card'],
       },
       {
         id: 'print-table',
@@ -218,12 +222,16 @@ export function buildWeddingIdentityExportKit(input: WeddingIdentityExportKitInp
           ? 'Use the details insert, table card, and photo sign for welcome tables, bags, and event signage.'
           : 'Add the public site, date, and venue so the print-table pack feels complete instead of partial.',
         readiness: hasPublicUrl && hasDate && hasVenue ? 'ready' : 'needs-info',
+        bestFor: 'Best for welcome tables, hotel bags, reception signage, and guest-visible print surfaces.',
+        includes: ['Details insert', 'Table card', 'Photo upload sign'],
       },
       {
         id: 'planner-handoff',
         label: 'Planner handoff pack',
         detail: 'Use the identity summary and style kit when you want one consistent reference for planners, stationers, and print partners.',
         readiness: 'ready',
+        bestFor: 'Best when someone else needs the wedding identity quickly without asking you to repeat basics.',
+        includes: ['Identity summary', 'Style kit', 'Public site URL'],
       },
     ],
   };

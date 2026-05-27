@@ -22,6 +22,7 @@ describe('buildTemplateExperienceBrief', () => {
 
     expect(brief.confidenceLabel).toBe('High confidence');
     expect(brief.bestNextStep).toMatch(/starting point|content clarity|design churn/i);
+    expect(brief.launchUse).toMatch(/lowest-friction|starting point|guest-ready/i);
     expect(brief.watchouts).toEqual([]);
   });
 
@@ -44,5 +45,6 @@ describe('buildTemplateExperienceBrief', () => {
     });
 
     expect(brief.watchouts[0]).toMatch(/builder/i);
+    expect(brief.launchUse).toMatch(/visual directions|cleanup later|committing/i);
   });
 });

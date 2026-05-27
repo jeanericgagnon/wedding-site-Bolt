@@ -31,6 +31,7 @@ describe('weddingIdentityExports', () => {
     expect(kit.items.find((item) => item.id === 'share-graphic')?.status).toBe('ready');
     expect(kit.warnings).toEqual([]);
     expect(kit.quickPacks.find((pack) => pack.id === 'share-now')?.readiness).toBe('ready');
+    expect(kit.quickPacks.find((pack) => pack.id === 'share-now')?.includes).toContain('Share graphic');
   });
 
   it('keeps print assets from looking ready when launch identity inputs are missing', () => {
@@ -49,6 +50,7 @@ describe('weddingIdentityExports', () => {
     ]);
     expect(kit.warnings).toContain('Set a public site URL before printing QR-based assets.');
     expect(kit.quickPacks.find((pack) => pack.id === 'print-table')?.readiness).toBe('needs-info');
+    expect(kit.quickPacks.find((pack) => pack.id === 'planner-handoff')?.bestFor).toMatch(/someone else|repeat basics/i);
   });
 
   it('builds a planner-safe manifest without private guest access tokens', () => {

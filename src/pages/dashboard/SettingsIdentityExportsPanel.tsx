@@ -84,6 +84,14 @@ export function SettingsIdentityExportsPanel({
                     </span>
                   </div>
                   <p className="mt-1 text-xs text-text-secondary">{pack.detail}</p>
+                  <p className="mt-2 text-[11px] text-text-tertiary">{pack.bestFor}</p>
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    {pack.includes.map((item) => (
+                      <span key={item} className="rounded-full border border-border-subtle bg-surface-subtle px-2 py-0.5 text-[11px] text-text-secondary">
+                        {item}
+                      </span>
+                    ))}
+                  </div>
                 </div>
               ))}
             </div>
