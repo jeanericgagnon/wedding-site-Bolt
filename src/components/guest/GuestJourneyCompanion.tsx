@@ -52,7 +52,7 @@ export const GuestJourneyCompanion: React.FC<GuestJourneyCompanionProps> = ({
           </span>
         ))}
       </div>
-      <div className="mt-4 grid gap-3 lg:grid-cols-2">
+      <div className="mt-4 grid gap-3 lg:grid-cols-3">
         <div className="rounded-2xl border border-border bg-white px-4 py-3">
           <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-text-tertiary">Main focus</p>
           <p className="mt-1 text-sm font-semibold text-text-primary">{copy.focusTitle}</p>
@@ -65,6 +65,10 @@ export const GuestJourneyCompanion: React.FC<GuestJourneyCompanionProps> = ({
             <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-text-tertiary">Decision rule</p>
             <p className="mt-1 text-sm leading-6 text-text-secondary">{copy.decisionRule}</p>
           </div>
+        </div>
+        <div className="rounded-2xl border border-border bg-white px-4 py-3">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-text-tertiary">Watchout</p>
+          <p className="mt-1 text-sm leading-6 text-text-secondary">{copy.watchout}</p>
         </div>
       </div>
       <div className="mt-4 grid gap-3 md:grid-cols-3">

@@ -25,6 +25,7 @@ export interface GuestJourneyCopy {
   focusDetail: string;
   bestNextMove: string;
   decisionRule: string;
+  watchout: string;
   sequence: Array<{
     status: 'current' | 'next' | 'then';
     title: string;
@@ -93,6 +94,7 @@ export function getGuestJourneyCopy(surface: GuestJourneySurface): GuestJourneyC
         focusDetail: 'Once the reply is in, the best next move is whichever surface helps the guest actually arrive prepared: travel details, photos, or a small update.',
         bestNextMove: 'Submit the RSVP first, then open travel details or a quick guest update while the same wedding path is still in front of you.',
         decisionRule: 'Do not make guests re-enter the wedding story from scratch just to finish one more task.',
+        watchout: 'If the RSVP lane dumps guests into a dead end, even helpful nearby surfaces start to feel like separate chores instead of one calm wedding path.',
         sequence: [
           {
             status: 'current',
@@ -122,6 +124,7 @@ export function getGuestJourneyCopy(surface: GuestJourneySurface): GuestJourneyC
         focusDetail: 'Photos can be joyful and spontaneous, but the surrounding guest tasks should still stay one tap away so the weekend never fragments.',
         bestNextMove: 'Upload the moment you came to share, then return to RSVP or travel if any practical step is still open.',
         decisionRule: 'Let delight live on top of continuity, not instead of it.',
+        watchout: 'A fun photo lane stops feeling generous the moment it strands guests away from RSVP, travel, or the one practical step they still needed.',
         sequence: [
           {
             status: 'current',
@@ -151,6 +154,7 @@ export function getGuestJourneyCopy(surface: GuestJourneySurface): GuestJourneyC
         focusDetail: 'A contact edit should feel quick and surgical. Once it is done, the guest should be back on the wedding path instead of stranded in admin mode.',
         bestNextMove: 'Save the corrected guest details, then return the guest to RSVP, photos, or travel before the update turns into a dead end.',
         decisionRule: 'Correcting details should tighten the path, not turn into a separate workflow.',
+        watchout: 'If a simple detail correction feels like admin purgatory, guests will postpone it and carry bad contact or RSVP context into every later step.',
         sequence: [
           {
             status: 'current',
@@ -180,6 +184,7 @@ export function getGuestJourneyCopy(surface: GuestJourneySurface): GuestJourneyC
         focusDetail: 'Keepsake mode can feel softer and more reflective, but reopening the wedding path should still be obvious whenever the guest needs it.',
         bestNextMove: 'Leave one anniversary note or memory, then reopen the wedding hub or photo path the moment a practical task comes back into view.',
         decisionRule: 'Memory should extend the wedding experience, not obscure the practical path back into it.',
+        watchout: 'If keepsake mode makes the live wedding path feel buried, memory starts competing with continuity instead of enriching it.',
         sequence: [
           {
             status: 'current',
@@ -209,6 +214,7 @@ export function getGuestJourneyCopy(surface: GuestJourneySurface): GuestJourneyC
         focusDetail: 'Travel details should make the trip feel easier, then hand the guest back to RSVP, updates, or photos without a context reset.',
         bestNextMove: 'Use the travel details to get oriented, then jump straight into RSVP or the one update that still affects the trip.',
         decisionRule: 'Treat travel as part of the wedding path, not a detached planning appendix.',
+        watchout: 'If travel reads like a separate planning tool, guests will miss the one RSVP or update step that was supposed to ride right alongside it.',
         sequence: [
           {
             status: 'current',
@@ -238,6 +244,7 @@ export function getGuestJourneyCopy(surface: GuestJourneySurface): GuestJourneyC
         focusDetail: 'The path works best when each follow-up surface still feels like the same wedding, not a stack of separate tools.',
         bestNextMove: 'Take the next practical guest step from the same path instead of backing out and re-finding the wedding from scratch.',
         decisionRule: 'Continuity beats cleverness when guests are moving quickly.',
+        watchout: 'Every extra reset teaches guests to trust their own memory over the path you built for them, which is how useful surfaces quietly stop getting used.',
         sequence: [
           {
             status: 'current',

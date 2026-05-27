@@ -41,11 +41,19 @@ describe('guestJourney', () => {
       title: 'The story stretches past the wedding weekend',
       detail: 'Anniversary notes live later in the story, but the wedding hub, RSVP, travel details, and photos should still be easy to reopen from here.',
       bestNextMove: expect.stringMatching(/anniversary note|memory/i),
+      watchout: expect.stringMatching(/live wedding path feel buried|continuity/i),
       sequence: [
         expect.objectContaining({ status: 'current' }),
         expect.objectContaining({ status: 'next' }),
         expect.objectContaining({ status: 'then' }),
       ],
     });
+  });
+
+  it('warns when the RSVP path turns continuity into separate chores', () => {
+    const copy = getGuestJourneyCopy('rsvp');
+
+    expect(copy.watchout).toMatch(/dead end|separate chores/i);
+    expect(copy.decisionRule).toMatch(/re-enter the wedding story/i);
   });
 });
