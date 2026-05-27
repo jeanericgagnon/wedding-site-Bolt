@@ -21,6 +21,7 @@ export interface SetupReviewModel {
   summary: string;
   confidenceLabel: string;
   nextBestMove: string;
+  decisionRule: string;
   watchouts: string[];
   launchSequence: ConciergeSequenceItem[];
   starterChecklist: ConciergeChecklistItem[];
@@ -32,6 +33,7 @@ export interface BuilderConciergeModel {
   summary: string;
   confidenceLabel: string;
   nextBestMove: string;
+  decisionRule: string;
   guestPromise: string;
   watchouts: string[];
   launchSequence: ConciergeSequenceItem[];
@@ -128,6 +130,11 @@ export const buildSetupReviewModel = (
     : weekendMode
       ? 'Next, lock the real event flow so the site feels trustworthy before it tries to feel finished.'
       : 'Next, make the welcome, RSVP, and core guest guidance feel real before touching smaller visual details.';
+  const decisionRule = destinationMode
+    ? 'If a change helps a guest arrive, orient, or follow the weekend faster, it beats visual polish right now.'
+    : weekendMode
+      ? 'If a change makes the event flow easier to trust in one scan, it beats extra styling right now.'
+      : 'If a change strengthens guest basics or removes uncertainty, it wins over cosmetic refinement right now.';
   const watchouts = [
     !draft.weddingCity.trim() ? 'Guests still do not have a clear city anchor yet.' : null,
     !draft.guestEstimateBand ? 'Guest scale is still fuzzy, so the first draft may feel too light or too big.' : null,
@@ -206,7 +213,7 @@ export const buildSetupReviewModel = (
     },
   ];
 
-  return { heading, summary, confidenceLabel, nextBestMove, watchouts, launchSequence, starterChecklist, builderChecklist };
+  return { heading, summary, confidenceLabel, nextBestMove, decisionRule, watchouts, launchSequence, starterChecklist, builderChecklist };
 };
 
 export const buildBuilderConciergeModel = (
@@ -298,6 +305,13 @@ export const buildBuilderConciergeModel = (
         : `${templateName} is now a real first draft. The next wins are making it feel personal, useful, and easy for guests to follow.`;
   const confidenceLabel = checklist.some((item) => item.id === 'publish') ? 'Ready for polish' : 'Guided next moves';
   const nextBestMove = checklist[0]?.detail ?? 'Keep the next move guest-facing and practical before polishing extras.';
+  const decisionRule = packs.has('destination')
+    ? 'If the change helps guests travel, orient, or follow the weekend with less friction, it wins over design polish.'
+    : packs.has('bilingual')
+      ? 'If the change makes the guest path easier to understand on first read, it wins over adding more surface area.'
+      : packs.has('interfaith')
+        ? 'If the change explains the flow or ceremony context more clearly, it wins over decorative refinement.'
+        : 'If the change makes the draft more useful or trustworthy for guests, it wins over extra polish.';
   const guestPromise = packs.has('destination')
     ? 'Guests should understand where to go, where to stay, and what happens next without texting you.'
     : packs.has('bilingual')
@@ -342,6 +356,7 @@ export const buildBuilderConciergeModel = (
     summary,
     confidenceLabel,
     nextBestMove,
+    decisionRule,
     guestPromise,
     watchouts,
     launchSequence,

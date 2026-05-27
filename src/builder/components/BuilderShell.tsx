@@ -427,6 +427,7 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
                   <p className="text-sm font-semibold text-text-primary">{conciergePlan.heading}</p>
                   <p className="mt-1 text-sm text-text-secondary">{conciergePlan.summary}</p>
                   <p className="mt-1 text-xs text-text-tertiary">{conciergePlan.nextBestMove}</p>
+                  <p className="mt-1 text-xs text-text-tertiary">Decision rule · {conciergePlan.decisionRule}</p>
                 </div>
               </div>
               <div className="grid gap-3 text-sm lg:max-w-2xl">
