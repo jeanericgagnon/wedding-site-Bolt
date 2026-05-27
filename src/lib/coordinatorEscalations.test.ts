@@ -15,6 +15,7 @@ describe('buildCoordinatorEscalations', () => {
     expect(escalations[0]?.title).toMatch(/Door exceptions/i);
     expect(escalations[0]?.focusTitle).toMatch(/door decisions/i);
     expect(escalations[0]?.focusDetail).toMatch(/improvise around the check-in path/i);
+    expect(escalations[0]?.bestNextMove).toMatch(/Resolve the door exceptions first|normal check-in flow/i);
     expect(escalations[0]?.decisionRule).toMatch(/line keeps trusting/i);
   });
 
@@ -29,6 +30,7 @@ describe('buildCoordinatorEscalations', () => {
     expect(escalations[0]?.title).toMatch(/calm/i);
     expect(escalations[0]?.focusTitle).toMatch(/command board in reserve/i);
     expect(escalations[0]?.focusDetail).toMatch(/not an invitation to manufacture motion/i);
+    expect(escalations[0]?.bestNextMove).toMatch(/Leave the board calm|next-best action/i);
     expect(escalations[0]?.decisionRule).toMatch(/preserve the calm/i);
   });
 });
