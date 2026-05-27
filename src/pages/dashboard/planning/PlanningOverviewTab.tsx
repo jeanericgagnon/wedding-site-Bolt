@@ -31,6 +31,7 @@ interface Props {
   vendors: PlanningVendor[];
   seatingReadiness: SeatingReadiness;
   itineraryEventCount: number;
+  privacyMode: 'public' | 'password_protected' | 'invite_only';
   weddingDate: string | null;
   nameChangePlan: NameChangePlan;
   onTabChange: (tab: string) => void;
@@ -50,7 +51,7 @@ function routeToNameChangeLane(primaryHref: string, onTabChange: (tab: string) =
   onTabChange('nameChange');
 }
 
-export const PlanningOverviewTab: React.FC<Props> = ({ tasks, budgetItems, vendors, seatingReadiness, itineraryEventCount, weddingDate, nameChangePlan, onTabChange }) => {
+export const PlanningOverviewTab: React.FC<Props> = ({ tasks, budgetItems, vendors, seatingReadiness, itineraryEventCount, privacyMode, weddingDate, nameChangePlan, onTabChange }) => {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const in7Days = new Date(today);
@@ -140,6 +141,7 @@ export const PlanningOverviewTab: React.FC<Props> = ({ tasks, budgetItems, vendo
     daysUntilWedding: weddingDateValue ? Math.ceil((weddingDateValue.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)) : null,
     isPublished: true,
     isArchiveLike: isPostWedding,
+    privacyMode,
     publishBlockerCount: 0,
     pendingGuestCount: 0,
     contactGapCount: 0,

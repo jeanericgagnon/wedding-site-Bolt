@@ -77,6 +77,7 @@ export const DashboardPlanning: React.FC = () => {
   const [totalBudget, setTotalBudget] = useState(0);
   const [seatingReadiness, setSeatingReadiness] = useState({ attending: 0, seated: 0, unassigned: 0 });
   const [itineraryEventCount, setItineraryEventCount] = useState(0);
+  const [privacyMode, setPrivacyMode] = useState<'public' | 'password_protected' | 'invite_only'>('public');
   const [pendingVendorForBudget, setPendingVendorForBudget] = useState<PlanningVendor | null>(null);
   const [planningRole, setPlanningRole] = useState<PlannerAccessRole>('owner');
   const [activeSiteRole, setActiveSiteRole] = useState<PlannerAccessRole>('owner');
@@ -168,7 +169,7 @@ export const DashboardPlanning: React.FC = () => {
         loadTasks(id),
         loadBudgetItems(id),
         loadVendors(id),
-        supabase.from('wedding_sites').select('wedding_data').eq('id', id).maybeSingle(),
+        supabase.from('wedding_sites').select('wedding_data, privacy_mode').eq('id', id).maybeSingle(),
         supabase.from('itinerary_events').select('id', { count: 'exact', head: true }).eq('wedding_site_id', id),
       ]);
       setTasks(tasksData);
@@ -179,6 +180,11 @@ export const DashboardPlanning: React.FC = () => {
       const planningMeta = (weddingData?.planning as Record<string, unknown> | undefined) ?? {};
       setTotalBudget(Number(planningMeta.totalBudget) || 0);
       setItineraryEventCount(itineraryMeta.count ?? 0);
+      setPrivacyMode(
+        siteMeta.data?.privacy_mode === 'password_protected' || siteMeta.data?.privacy_mode === 'invite_only'
+          ? siteMeta.data.privacy_mode
+          : 'public',
+      );
 
       await loadSeatingReadiness(id);
 
@@ -706,6 +712,7 @@ export const DashboardPlanning: React.FC = () => {
                 vendors={vendors}
                 seatingReadiness={seatingReadiness}
                 itineraryEventCount={itineraryEventCount}
+                privacyMode={privacyMode}
                 weddingDate={weddingDate}
                 nameChangePlan={nameChangePlan}
                 onTabChange={(tab) => setActiveTab(tab as Tab)}
