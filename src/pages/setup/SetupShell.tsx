@@ -409,15 +409,29 @@ export const SetupShell: React.FC<{ step?: string }> = ({ step }) => {
           {activeStep === 'review' && (
             <div className="mt-4 space-y-4">
               <div className="rounded-lg border border-rose-200 bg-rose-50 p-4">
-                <div className="flex flex-wrap items-center gap-2">
-                  <p className="text-sm font-semibold text-rose-900">{reviewModel.heading}</p>
-                  <span className="rounded-full border border-rose-200 bg-white px-2.5 py-1 text-[11px] font-medium text-rose-700">
-                    {reviewModel.confidenceLabel}
-                  </span>
+                <div className="space-y-3">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className="text-sm font-semibold text-rose-900">{reviewModel.heading}</p>
+                    <span className="rounded-full border border-rose-200 bg-white px-2.5 py-1 text-[11px] font-medium text-rose-700">
+                      {reviewModel.confidenceLabel}
+                    </span>
+                  </div>
+                  <p className="text-sm text-rose-800">{reviewModel.summary}</p>
+                  <div className="grid gap-3 md:grid-cols-2">
+                    <div className="rounded-xl border border-rose-200 bg-white/70 px-3 py-3">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-rose-700">Main focus</p>
+                      <p className="mt-1 text-sm font-medium text-rose-900">{reviewModel.launchSequence[0]?.detail ?? reviewModel.summary}</p>
+                    </div>
+                    <div className="rounded-xl border border-rose-200 bg-white/70 px-3 py-3">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-rose-700">Best next move</p>
+                      <p className="mt-1 text-sm font-medium text-rose-900">{reviewModel.nextBestMove}</p>
+                      <div className="mt-3 border-t border-rose-200 pt-3">
+                        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-rose-700">Decision rule</p>
+                        <p className="mt-1 text-sm leading-5 text-rose-800">{reviewModel.decisionRule}</p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <p className="mt-1 text-sm text-rose-800">{reviewModel.summary}</p>
-                <p className="mt-2 text-xs text-rose-700">{reviewModel.nextBestMove}</p>
-                <p className="mt-1 text-xs text-rose-700">Decision rule · {reviewModel.decisionRule}</p>
                 {reviewModel.watchouts.length > 0 && (
                   <div className="mt-3 rounded-xl border border-rose-200 bg-white/70 px-3 py-3">
                     <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-rose-700">Watchouts</p>
