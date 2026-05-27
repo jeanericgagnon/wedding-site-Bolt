@@ -25,6 +25,7 @@ import {
   summarizeImportRepairCount,
 } from './builderV2WorkflowGuidance';
 import { buildBuilderV2ImportComparison } from './builderV2ImportComparison';
+import { buildBuilderV2ImportReviewSummary } from './builderV2ImportReviewSummary';
 import { buildBuilderV2DocumentAudit, type BuilderV2DocumentAuditIssue } from './builderV2DocumentAudit';
 import { buildBuilderV2HandoffGuidance } from './builderV2HandoffGuidance';
 import { buildBuilderV2HandoffPacket } from './builderV2HandoffPacket';
@@ -1305,7 +1306,8 @@ export const BuilderV2Lab: React.FC = () => {
     markSaving();
 
     const repairs = summarizeImportRepairCount(report);
-    notify(repairs > 0 ? `Imported layout with ${repairs} repair${repairs === 1 ? '' : 's'}` : 'Imported clean V2 layout');
+    const importSummary = buildBuilderV2ImportReviewSummary(report, sourceLabel);
+    notify(repairs > 0 || report.sourceKind !== 'builder-v2' ? importSummary.toastMessage : 'Imported clean V2 layout');
   };
 
   const importV2Json = () => {
@@ -1395,6 +1397,10 @@ export const BuilderV2Lab: React.FC = () => {
   }, [commandQuery, sections, pages, activePage.id, addPage, addRecommendedBlockPack, addSection, clearSelection, copyHandoffPacket, copyV2Json, downloadV2Json, duplicatePage, duplicateSelectedSections, handoffGuidance.primaryActionLabel, hideSelectedSections, invertSelection, moveSelectedSectionsToPage, openExportPanel, openImportPanel, removeSelectedSections, restoreSelectedSectionsToStarterBlocks, reviewSelectionInPreview, runHandoffAction, selectAllSections, selectPage, setSelectedDensity, showSelectedSections, updateVariant]);
   const importGuidance = useMemo(
     () => buildBuilderV2ImportGuidance(lastImportReport, lastImportSource),
+    [lastImportReport, lastImportSource],
+  );
+  const lastImportSummary = useMemo(
+    () => (lastImportReport ? buildBuilderV2ImportReviewSummary(lastImportReport, lastImportSource) : null),
     [lastImportReport, lastImportSource],
   );
   const preparedImportPreview = useMemo(() => {
@@ -1578,7 +1584,7 @@ export const BuilderV2Lab: React.FC = () => {
           </div>
         </div>
 
-        {lastImportReport && (
+        {lastImportReport && lastImportSummary && (
           <div className="px-2 md:px-3 py-2 border-b border-border-subtle bg-white">
             <div className={`rounded-sm border px-3 py-2 text-xs ${
               getImportSummaryTone(lastImportReport) === 'clean'
@@ -1587,19 +1593,32 @@ export const BuilderV2Lab: React.FC = () => {
                   ? 'border-sky-200 bg-sky-50 text-sky-800'
                   : 'border-amber-200 bg-amber-50 text-amber-900'
             }`}>
-              <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                <span className="font-semibold">Last import</span>
-                <span>{lastImportSource}</span>
-                <span>{lastImportReport.sectionCount} sections</span>
-                <span>{lastImportReport.blockCount} blocks</span>
-                <span>{summarizeImportRepairCount(lastImportReport)} repairs</span>
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                    <span className="font-semibold">Last import</span>
+                    <span>{lastImportSource}</span>
+                  </div>
+                  <p className="mt-1 text-sm font-semibold">{lastImportSummary.headline}</p>
+                  <p className="mt-1 max-w-3xl leading-relaxed">{lastImportSummary.detail}</p>
+                </div>
+                <div className="flex flex-wrap gap-1.5 text-[10px]">
+                  {lastImportSummary.keyStats.map((stat) => (
+                    <span key={stat} className="rounded-full border border-current/20 bg-white/70 px-2 py-1">
+                      {stat}
+                    </span>
+                  ))}
+                </div>
               </div>
-              {lastImportReport.notes.length > 0 && (
-                <ul className="mt-2 list-disc space-y-1 pl-4">
-                  {lastImportReport.notes.slice(0, 3).map((note) => (
+              {lastImportSummary.topNotes.length > 0 && (
+                <>
+                  <p className="mt-2 font-semibold">{lastImportSummary.notesTitle}</p>
+                  <ul className="mt-1 list-disc space-y-1 pl-4">
+                    {lastImportSummary.topNotes.map((note) => (
                     <li key={note}>{note}</li>
                   ))}
-                </ul>
+                  </ul>
+                </>
               )}
             </div>
           </div>
@@ -3077,6 +3096,38 @@ export const BuilderV2Lab: React.FC = () => {
 
               {preparedImportPreview.state === 'ready' && (
                 <div className="rounded-md border border-border-subtle bg-surface-subtle px-3 py-3 space-y-3">
+                  {(() => {
+                    const importReviewSummary = buildBuilderV2ImportReviewSummary(
+                      preparedImportPreview.prepared.report,
+                      lastImportSource,
+                    );
+                    return (
+                      <div className="rounded-md border border-border-subtle bg-white px-3 py-3">
+                        <div className="flex flex-wrap items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary">Migration summary</p>
+                            <p className="mt-1 text-sm font-semibold text-text-primary">{importReviewSummary.headline}</p>
+                            <p className="mt-1 text-xs leading-relaxed text-text-secondary">{importReviewSummary.detail}</p>
+                          </div>
+                          <div className="flex flex-wrap gap-1.5 text-[10px]">
+                            {importReviewSummary.keyStats.map((stat) => (
+                              <span key={stat} className="rounded-full border border-border-subtle bg-surface-subtle px-2 py-1 text-text-secondary">{stat}</span>
+                            ))}
+                          </div>
+                        </div>
+                        {importReviewSummary.topNotes.length > 0 && (
+                          <div className="mt-3 rounded-md border border-border-subtle bg-surface-subtle px-2.5 py-2">
+                            <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary">{importReviewSummary.notesTitle}</p>
+                            <ul className="mt-1 list-disc space-y-1 pl-4 text-xs leading-relaxed text-text-primary">
+                              {importReviewSummary.topNotes.map((note) => (
+                                <li key={note}>{note}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
                   <div>
                     <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary">Replacement impact</p>
                     <p className="mt-1 text-sm font-semibold text-text-primary">{preparedImportPreview.comparison.headline}</p>
