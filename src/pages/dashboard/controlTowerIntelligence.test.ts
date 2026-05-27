@@ -48,6 +48,7 @@ describe('buildControlTowerBriefing', () => {
     expect(briefing.focusDetail).toMatch(/date is close|launch path/i);
     expect(briefing.bestNextMove).toMatch(/publish blockers|preview the live guest path/i);
     expect(briefing.decisionRule).toMatch(/launch truth beats visual polish/i);
+    expect(briefing.watchout).toMatch(/design cleanup|guest path is still blocked/i);
     expect(briefing.primaryAction).toMatchObject({ target: 'builder-launch' });
     expect(briefing.badges).toContain('3 blockers');
     expect(briefing.sequence[0]).toMatchObject({ status: 'current' });
@@ -67,6 +68,7 @@ describe('buildControlTowerBriefing', () => {
     expect(briefing.focusDetail).toMatch(/dashboard watching|outreach pass/i);
     expect(briefing.bestNextMove).toMatch(/pending guests|RSVP reminder/i);
     expect(briefing.decisionRule).toMatch(/follow-up beats passive monitoring/i);
+    expect(briefing.watchout).toMatch(/constant nudging|give the board room/i);
     expect(briefing.primaryAction).toMatchObject({ target: 'guests' });
     expect(briefing.secondaryAction).toMatchObject({ target: 'messages' });
     expect(briefing.sequence.map((step) => step.status)).toEqual(['current', 'next', 'then']);
@@ -132,6 +134,7 @@ describe('buildControlTowerBriefing', () => {
     expect(briefing.title).toContain('Guest access instructions');
     expect(briefing.bestNextMove).toMatch(/settings|reminders|QR packs/i);
     expect(briefing.decisionRule).toMatch(/access clarity beats launch aesthetics/i);
+    expect(briefing.watchout).toMatch(/wrong path|site as broken/i);
     expect(briefing.primaryAction).toMatchObject({ target: 'settings' });
     expect(briefing.secondaryAction).toMatchObject({ target: 'messages' });
   });
@@ -152,6 +155,7 @@ describe('buildControlTowerBriefing', () => {
     expect(briefing.title).toContain('Guest input is arriving');
     expect(briefing.primaryAction).toMatchObject({ target: 'suggestions' });
     expect(briefing.secondaryAction).toMatchObject({ target: 'photos' });
+    expect(briefing.watchout).toMatch(/guest prompts pile up|more valuable than guessing/i);
   });
 
   it('falls back to a calm guidance mode when the board is steady', () => {
@@ -170,6 +174,7 @@ describe('buildControlTowerBriefing', () => {
     expect(briefing.title).toContain('board looks calm');
     expect(briefing.bestNextMove).toMatch(/contained quality pass|board stay calm/i);
     expect(briefing.decisionRule).toMatch(/restraint beats churn/i);
+    expect(briefing.watchout).toMatch(/available time|unnecessary churn/i);
     expect(briefing.primaryAction).toMatchObject({ target: 'builder-polish' });
     expect(briefing.sequence[2]?.detail).toMatch(/leave the rest of the system steady/i);
   });

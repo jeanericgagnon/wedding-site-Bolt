@@ -39,6 +39,8 @@ export const ControlTowerBriefingCard: React.FC<ControlTowerBriefingCardProps> =
           <div className="mt-3 border-t border-border-subtle pt-3">
             <p className="text-xs uppercase tracking-wide text-text-tertiary">Decision rule</p>
             <p className="mt-2 text-sm text-text-secondary">{briefing.decisionRule}</p>
+            <p className="mt-3 text-xs uppercase tracking-wide text-text-tertiary">Watchout</p>
+            <p className="mt-2 text-sm text-text-secondary">{briefing.watchout}</p>
           </div>
         </div>
       </div>

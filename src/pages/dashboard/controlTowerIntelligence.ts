@@ -35,6 +35,7 @@ export interface ControlTowerBriefing {
   focusDetail: string;
   bestNextMove: string;
   decisionRule: string;
+  watchout: string;
   badges: string[];
   signals: ControlTowerSignal[];
   sequence: Array<{
@@ -153,6 +154,9 @@ export function buildControlTowerBriefing(input: ControlTowerIntelligenceInput):
       decisionRule: input.activePhotoAlbumCount > 0
         ? 'Preservation beats live intervention once the event itself is over.'
         : 'Open one real keepsake lane before you try to polish the archive story around it.',
+      watchout: input.activePhotoAlbumCount > 0
+        ? 'Do not turn archive polish into a fresh operations board. Once the memory lane is working, preserve what matters without reactivating solved live pressure.'
+        : 'Do not spend time polishing archive framing before one real keepsake lane exists. Guests need a living memory path before they need a nicer archive wrapper.',
       badges: [
         `${pluralize(input.activePhotoAlbumCount, 'active album')}`,
         `${pluralize(input.interactiveSuggestionCount, 'guest note')}`,
@@ -177,6 +181,7 @@ export function buildControlTowerBriefing(input: ControlTowerIntelligenceInput):
       focusDetail: 'When the date is close and the site is still not fully live, quality polish comes second to getting the launch path truly ready.',
       bestNextMove: 'Clear the remaining publish blockers, then preview the live guest path before you spend any more attention on secondary polish.',
       decisionRule: 'Launch truth beats visual polish when guests still do not have a clean live path.',
+      watchout: 'Do not let a near-launch site drift into endless design cleanup while the guest path is still blocked. If guests cannot move through the live path cleanly, polish is not the work yet.',
       badges: [
         `${pluralize(input.publishBlockerCount, 'blocker')}`,
         input.daysUntilWedding === 0 ? 'Wedding day' : `${input.daysUntilWedding} days left`,
@@ -201,6 +206,7 @@ export function buildControlTowerBriefing(input: ControlTowerIntelligenceInput):
       focusDetail: 'A restricted live site only feels trustworthy if every handoff carries the right path with it, not just the pretty URL.',
       bestNextMove: 'Verify the exact guest access path in settings, then reuse that same route in reminders, QR packs, and coordinator handoffs.',
       decisionRule: 'Access clarity beats launch aesthetics when the site is live but not openly public.',
+      watchout: 'Do not assume a live restricted site explains itself. If reminders, printed packs, or helpers carry the wrong path, guests will experience the site as broken even when the page itself is fine.',
       badges: [
         accessLabel,
         input.daysUntilWedding === 0 ? 'Wedding day' : `${input.daysUntilWedding} days left`,
@@ -236,6 +242,7 @@ export function buildControlTowerBriefing(input: ControlTowerIntelligenceInput):
         ? 'Stay in coordinator mode and only leave it for live room or seating exceptions that genuinely need intervention.'
         : 'Use coordinator mode and seating together for the next pass, then let solved launch work stay solved.',
       decisionRule: 'Once guest basics are steady, execution readiness beats reopening solved launch work.',
+      watchout: 'Do not reopen solved launch work just because it feels easier than live execution. Once the basics are steady, the real risk is losing calm in the room, not missing another polish pass.',
       badges: [
         input.daysUntilWedding === 0 ? 'Wedding day' : `${input.daysUntilWedding} days left`,
         `${responseRate}% replied`,
@@ -260,6 +267,7 @@ export function buildControlTowerBriefing(input: ControlTowerIntelligenceInput):
       focusDetail: 'When replies are lagging, the job is not more dashboard watching; it is one clean outreach pass that moves the board forward.',
       bestNextMove: 'Review the pending guests, send the next RSVP reminder, and only then come back to the board to see what actually changed.',
       decisionRule: 'Direct follow-up beats passive monitoring when the RSVP picture is still lagging.',
+      watchout: 'Do not confuse stagnant reply counts with a need for constant nudging. Send one clean follow-up pass, then give the board room to respond before you escalate again.',
       badges: [
         `${pluralize(input.pendingGuests, 'pending RSVP')}`,
         `${responseRate}% replied`,
@@ -284,6 +292,7 @@ export function buildControlTowerBriefing(input: ControlTowerIntelligenceInput):
       focusDetail: 'Every later reminder and day-of nudge gets easier once the guest list has real contact paths instead of hopeful placeholders.',
       bestNextMove: 'Close the missing contact gaps first, then queue the next communication wave only after the list can actually hear it.',
       decisionRule: 'Reachability beats cadence when the list still cannot reliably hear from you.',
+      watchout: 'Do not stack more reminders onto a list that still cannot hear them. If contact paths are thin, cadence work only creates noisier failure.',
       badges: [
         `${pluralize(contactGap, 'missing contact')}`,
         `${pluralize(input.contactableGuestCount, 'contact-ready guest')}`,
@@ -308,6 +317,7 @@ export function buildControlTowerBriefing(input: ControlTowerIntelligenceInput):
       focusDetail: 'When the itinerary is still empty, messaging and ops can only paper over the gap. A real schedule anchor is the honest next move.',
       bestNextMove: 'Add the ceremony, reception, and other guest-critical anchor events now, then preview the timeline before you return to polish.',
       decisionRule: 'Schedule truth beats polish when the wedding is close and guests still need a usable weekend spine.',
+      watchout: 'Do not ask messaging or coordinator tools to compensate for a missing guest schedule. If the weekend spine is empty, every later layer inherits that confusion.',
       badges: [
         'No itinerary events yet',
         input.daysUntilWedding === 0 ? 'Wedding day' : `${input.daysUntilWedding} days left`,
@@ -332,6 +342,7 @@ export function buildControlTowerBriefing(input: ControlTowerIntelligenceInput):
       focusDetail: 'Guests read an empty gifting lane as uncertainty, so even a small truthful registry does more good than waiting for perfection.',
       bestNextMove: 'Publish a small truthful set of registry items now, then check the guest-facing page before you widen the list.',
       decisionRule: 'A small honest registry beats a blank lane that asks guests to guess.',
+      watchout: 'Do not wait for the perfect registry build before showing anything real. A blank gifting lane teaches guests to doubt the rest of the site faster than a small honest set does.',
       badges: [
         'Registry still empty',
         `${pluralize(input.activePhotoAlbumCount, 'active album')}`,
@@ -360,6 +371,7 @@ export function buildControlTowerBriefing(input: ControlTowerIntelligenceInput):
         ? 'Create and activate one guest-ready photo path now, then test the upload flow before you move back into polish.'
         : 'Turn one existing album on for guests, then verify the upload path while the entry point is still fresh.',
       decisionRule: 'A working contribution path beats a dormant memory promise.',
+      watchout: 'Do not leave memory contribution in promise mode. If guests cannot actually upload, the photo lane teaches them that the site is more aspirational than live.',
       badges: [
         `${input.activePhotoAlbumCount}/${input.photoAlbumCount} active`,
         `${pluralize(input.interactiveSuggestionCount, 'guest prompt')}`,
@@ -384,6 +396,7 @@ export function buildControlTowerBriefing(input: ControlTowerIntelligenceInput):
       focusDetail: 'When guests are already engaging, the best move is to shape the experience with that signal instead of leaving their feedback parked.',
       bestNextMove: 'Review the incoming guest suggestions, make the one visible adjustment that matters most, then re-check the guest-facing story.',
       decisionRule: 'Real guest signals beat hypothetical polish once feedback is already arriving.',
+      watchout: 'Do not let incoming guest prompts pile up while you polish adjacent surfaces. If guests are already telling you where the friction is, that signal is more valuable than guessing.',
       badges: [
         `${pluralize(input.interactiveSuggestionCount, 'suggestion')}`,
         `${pluralize(input.recentSiteActivityCount, 'recent site change')}`,
@@ -407,6 +420,7 @@ export function buildControlTowerBriefing(input: ControlTowerIntelligenceInput):
     focusDetail: 'A steady board is the right moment for one clean quality pass, not a random re-opening of solved decisions.',
     bestNextMove: 'Make one contained quality pass in the live guest experience, then let the board stay calm unless a real signal changes.',
     decisionRule: 'When the board is calm, restraint beats churn.',
+    watchout: 'Do not mistake available time for a reason to reopen every surface. The risk in a calm board is turning quiet momentum back into unnecessary churn.',
     badges: [
       `${responseRate}% replied`,
       input.recentSiteActivityCount > 0 ? `${pluralize(input.recentSiteActivityCount, 'recent site update')}` : 'No recent site churn',

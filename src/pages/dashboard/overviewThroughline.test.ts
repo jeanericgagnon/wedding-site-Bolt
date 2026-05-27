@@ -35,6 +35,7 @@ describe('buildOverviewThroughline', () => {
         focusDetail: 'The job is one clean outreach pass, not more passive dashboard watching.',
         bestNextMove: 'Review the pending guests, send the next reminder, and only then come back to the board.',
         decisionRule: 'If reply pressure is still real, outreach beats passive monitoring.',
+        watchout: 'Do not confuse stagnant reply counts with a need for constant nudging.',
         badges: ['12 pending RSVP'],
         signals: [],
         sequence: [
