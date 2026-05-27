@@ -23,6 +23,12 @@ export interface DayOfBrainBriefing {
   decisionRule: string;
   badges: string[];
   signals: DayOfBrainSignal[];
+  sequence: Array<{
+    id: 'stabilize' | 'check' | 'handoff';
+    status: 'current' | 'next' | 'then';
+    title: string;
+    detail: string;
+  }>;
   primaryAction?: DayOfBrainAction;
   secondaryAction?: DayOfBrainAction;
 }
@@ -57,6 +63,33 @@ function getSignalVariant(value: number, calmThreshold: number, watchThreshold: 
   if (value <= calmThreshold) return 'success';
   if (value <= watchThreshold) return 'warning';
   return 'error';
+}
+
+function buildDayOfSequence(
+  current: { title: string; detail: string },
+  next: { title: string; detail: string },
+  then: { title: string; detail: string },
+) {
+  return [
+    {
+      id: 'stabilize' as const,
+      status: 'current' as const,
+      title: current.title,
+      detail: current.detail,
+    },
+    {
+      id: 'check' as const,
+      status: 'next' as const,
+      title: next.title,
+      detail: next.detail,
+    },
+    {
+      id: 'handoff' as const,
+      status: 'then' as const,
+      title: then.title,
+      detail: then.detail,
+    },
+  ];
 }
 
 export function buildDayOfBrainBriefing(input: DayOfBrainInput): DayOfBrainBriefing {
@@ -134,6 +167,20 @@ export function buildDayOfBrainBriefing(input: DayOfBrainInput): DayOfBrainBrief
         `${checkedInCount} checked in`,
       ],
       signals,
+      sequence: buildDayOfSequence(
+        {
+          title: 'Leave the live board quiet',
+          detail: 'Do not wake the operations layer back up unless a real post-wedding need actually appears.',
+        },
+        {
+          title: 'Preserve the strongest memories',
+          detail: 'Use photos or the vault to keep the wedding story graceful while the operational pressure fades.',
+        },
+        {
+          title: 'Treat follow-up as archive work',
+          detail: 'If anything else needs attention, let it happen through closure and keepsake lanes rather than live coordination.',
+        },
+      ),
       primaryAction: { label: 'Review photos', target: 'photos' },
       secondaryAction: { label: 'Open vault', target: 'vault' },
     };
@@ -153,6 +200,20 @@ export function buildDayOfBrainBriefing(input: DayOfBrainInput): DayOfBrainBrief
         `${checkedInCount} checked in`,
       ],
       signals,
+      sequence: buildDayOfSequence(
+        {
+          title: 'Clear the live exceptions first',
+          detail: 'Treat the active questions, watch items, and escalations as the room’s real pressure right now.',
+        },
+        {
+          title: 'Use messages or seating only for leverage',
+          detail: 'Step out only when a room or messaging move clearly reduces the active friction instead of adding fresh churn.',
+        },
+        {
+          title: 'Return to a calm support posture',
+          detail: 'Once the exceptions settle, let coordinator mode stay ready without dragging the whole board back into emergency motion.',
+        },
+      ),
       primaryAction: { label: 'Run coordinator mode', target: 'coordinator' },
       secondaryAction: openQnaCount > 0 ? { label: 'Open messages', target: 'messages' } : { label: 'Review seating', target: 'seating' },
     };
@@ -172,6 +233,20 @@ export function buildDayOfBrainBriefing(input: DayOfBrainInput): DayOfBrainBrief
         weddingSoon && input.daysUntilWedding !== null ? `${input.daysUntilWedding} days left` : `${pluralize(input.pendingGuests, 'pending RSVP')}`,
       ],
       signals,
+      sequence: buildDayOfSequence(
+        {
+          title: 'Repair the stale seats first',
+          detail: 'Reconcile the assignments that no longer match RSVP truth before you trust the room in any other workflow.',
+        },
+        {
+          title: 'Re-check the live room against coordination',
+          detail: 'Once the stale seats are fixed, confirm the corrected room still supports the guest flow and handoff plan cleanly.',
+        },
+        {
+          title: 'Let the live layer use the repaired room',
+          detail: 'After the room truth is solid again, messages and coordinator moves can safely build on top of it.',
+        },
+      ),
       primaryAction: { label: 'Open seating', target: 'seating' },
       secondaryAction: { label: 'Open coordinator mode', target: 'coordinator' },
     };
@@ -191,6 +266,20 @@ export function buildDayOfBrainBriefing(input: DayOfBrainInput): DayOfBrainBrief
         input.daysUntilWedding === 0 ? 'Wedding day' : `${input.daysUntilWedding} days left`,
       ],
       signals,
+      sequence: buildDayOfSequence(
+        {
+          title: 'Place every confirmed guest',
+          detail: 'Use this pass to turn the remaining floating confirmations into a real room before the timeline tightens further.',
+        },
+        {
+          title: 'Check the room for comfort after coverage exists',
+          detail: 'Only move into balance or comfort passes once every confirmed guest actually has a seat.',
+        },
+        {
+          title: 'Hand the finished room to live support',
+          detail: 'After placement is complete, let coordinator mode and check-in operate from a room that no longer needs rescue.',
+        },
+      ),
       primaryAction: { label: 'Open seating', target: 'seating' },
       secondaryAction: { label: 'Review guests', target: 'guests' },
     };
@@ -210,6 +299,20 @@ export function buildDayOfBrainBriefing(input: DayOfBrainInput): DayOfBrainBrief
         'No itinerary events yet',
       ],
       signals,
+      sequence: buildDayOfSequence(
+        {
+          title: 'Add the anchor events first',
+          detail: 'Give guests a ceremony, reception, and other key weekend anchors before you try to support them with live tools.',
+        },
+        {
+          title: 'Use the real timeline to steady updates',
+          detail: 'Once the schedule exists, let messages and guest guidance build from that shared version of the weekend.',
+        },
+        {
+          title: 'Return to live coordination on top of the spine',
+          detail: 'After the itinerary is real, the live layer can support exceptions without compensating for a missing timeline.',
+        },
+      ),
       primaryAction: { label: 'Open itinerary', target: 'itinerary' },
       secondaryAction: { label: 'Open messages', target: 'messages' },
     };
@@ -229,6 +332,20 @@ export function buildDayOfBrainBriefing(input: DayOfBrainInput): DayOfBrainBrief
         input.daysUntilWedding === null ? `${confirmedCoverage}% confirmed` : `${input.daysUntilWedding} days left`,
       ],
       signals,
+      sequence: buildDayOfSequence(
+        {
+          title: 'Close the reply gap first',
+          detail: 'Use the remaining runway to turn the undecided or unreachable guests into a steadier live-day guest list.',
+        },
+        {
+          title: 'Send one clean nudge pass',
+          detail: 'Use guests and messages together so the follow-up is deliberate instead of passive waiting.',
+        },
+        {
+          title: 'Return to day-of polish once the list steadies',
+          detail: 'After the list stops moving, the live-day layer can focus on support instead of guesswork.',
+        },
+      ),
       primaryAction: { label: 'Review guests', target: 'guests' },
       secondaryAction: { label: 'Open messages', target: 'messages' },
     };
@@ -256,6 +373,26 @@ export function buildDayOfBrainBriefing(input: DayOfBrainInput): DayOfBrainBrief
         `${confirmedCoverage}% confirmed`,
       ],
       signals,
+      sequence: buildDayOfSequence(
+        {
+          title: weddingToday ? 'Stay close to the live board' : 'Do one calm readiness pass',
+          detail: weddingToday
+            ? 'Use coordinator mode, check-in, and seating support to keep the room moving quickly without creating extra churn.'
+            : 'Walk the live-day board once so the tools stay warm without reopening stable systems.',
+        },
+        {
+          title: weddingToday ? 'Only step out for real exceptions' : 'Tighten the few edges that slow handoff',
+          detail: weddingToday
+            ? 'Use messages or seating adjustments only when a real live exception calls for them.'
+            : 'Keep edits limited to the details that would genuinely slow the team down later.',
+        },
+        {
+          title: weddingToday ? 'Let the calm room stay calm' : 'Leave the stable systems alone',
+          detail: weddingToday
+            ? 'Once the live support layer is steady, resist dragging the whole board back into broad edit mode.'
+            : 'After the readiness pass, protect the parts of the system that are already working cleanly.',
+        },
+      ),
       primaryAction: { label: 'Open coordinator mode', target: 'coordinator' },
       secondaryAction: { label: 'Open seating', target: 'seating' },
     };
@@ -274,6 +411,20 @@ export function buildDayOfBrainBriefing(input: DayOfBrainInput): DayOfBrainBrief
       scheduledAlertCount > 0 ? `${pluralize(scheduledAlertCount, 'scheduled alert')}` : 'No live alerts queued',
     ],
     signals,
+    sequence: buildDayOfSequence(
+      {
+        title: 'Keep the live layer in the background',
+        detail: 'Let planning stay in front while the day-of tooling remains ready but quiet.',
+      },
+      {
+        title: 'Watch for real drift or a closer date',
+        detail: 'Bring the live layer forward again only when the wedding gets closer or the board starts showing real pressure.',
+      },
+      {
+        title: 'Use planning to keep future handoff clean',
+        detail: 'The calmer move now is improving upstream planning so the operations layer stays easy later.',
+      },
+    ),
     primaryAction: { label: 'Open planning', target: 'planning' },
     secondaryAction: { label: 'Review guests', target: 'guests' },
   };

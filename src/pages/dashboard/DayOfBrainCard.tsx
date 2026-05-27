@@ -1,5 +1,6 @@
 import React from 'react';
 import { Button, Card, CardDescription, CardHeader, CardTitle, Badge } from '../../components/ui';
+import { getFlowStatusLabel } from '../../lib/flowLabels';
 import type { DayOfBrainAction, DayOfBrainBriefing } from './dayOfBrain';
 
 interface DayOfBrainCardProps {
@@ -47,6 +48,20 @@ export const DayOfBrainCard: React.FC<DayOfBrainCardProps> = ({ briefing, onActi
                 <Badge variant={signal.variant}>{signal.value}</Badge>
               </div>
               <p className="mt-2 text-xs text-text-tertiary">{signal.detail}</p>
+            </div>
+          ))}
+        </div>
+
+        <div className="grid gap-3 md:grid-cols-3">
+          {briefing.sequence.map((step) => (
+            <div key={step.id} className="rounded-xl border border-border/40 bg-white px-3 py-3">
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-xs font-semibold text-text-primary">{step.title}</p>
+                <Badge variant={step.status === 'current' ? 'primary' : 'secondary'}>
+                  {getFlowStatusLabel(step.status)}
+                </Badge>
+              </div>
+              <p className="mt-2 text-xs leading-5 text-text-secondary">{step.detail}</p>
             </div>
           ))}
         </div>
