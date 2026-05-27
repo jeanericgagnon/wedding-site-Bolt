@@ -38,6 +38,7 @@ describe('setupConcierge', () => {
     expect(review.builderChecklist[1]?.detail).toMatch(/travel|weekend/i);
     expect(review.confidenceLabel).toMatch(/confidence|first draft/i);
     expect(review.nextBestMove).toMatch(/travel|weekend|guest/i);
+    expect(review.launchSequence.map((item) => item.status)).toEqual(['current', 'next', 'then']);
   });
 
   it('builds a first-draft builder plan from wedding data', () => {
@@ -55,5 +56,6 @@ describe('setupConcierge', () => {
     expect(plan.checklist.map((item) => item.id)).toContain('travel');
     expect(plan.guestPromise).toMatch(/guests/i);
     expect(plan.confidenceLabel).toMatch(/guided|ready/i);
+    expect(plan.launchSequence[0]?.title).toMatch(/trustworthy|site/i);
   });
 });

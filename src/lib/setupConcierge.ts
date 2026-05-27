@@ -9,12 +9,20 @@ export interface ConciergeChecklistItem {
   detail: string;
 }
 
+export interface ConciergeSequenceItem {
+  id: string;
+  status: 'current' | 'next' | 'then';
+  title: string;
+  detail: string;
+}
+
 export interface SetupReviewModel {
   heading: string;
   summary: string;
   confidenceLabel: string;
   nextBestMove: string;
   watchouts: string[];
+  launchSequence: ConciergeSequenceItem[];
   starterChecklist: ConciergeChecklistItem[];
   builderChecklist: ConciergeChecklistItem[];
 }
@@ -26,6 +34,7 @@ export interface BuilderConciergeModel {
   nextBestMove: string;
   guestPromise: string;
   watchouts: string[];
+  launchSequence: ConciergeSequenceItem[];
   checklist: ConciergeChecklistItem[];
 }
 
@@ -170,7 +179,34 @@ export const buildSetupReviewModel = (
     },
   ];
 
-  return { heading, summary, confidenceLabel, nextBestMove, watchouts, starterChecklist, builderChecklist };
+  const launchSequence: ConciergeSequenceItem[] = [
+    {
+      id: 'anchors',
+      status: 'current',
+      title: 'Lock the real anchors first',
+      detail: destinationMode
+        ? 'Names, date, city, and travel context should feel undeniably real before anything looks polished.'
+        : 'Names, date, location, and RSVP basics should feel trustworthy before you chase visual polish.',
+    },
+    {
+      id: 'guest-path',
+      status: 'next',
+      title: destinationMode || weekendMode ? 'Then shape the guest path' : 'Then shape the guest guidance',
+      detail: destinationMode
+        ? 'Make hotel, arrival, and weekend flow easy to skim on a phone.'
+        : weekendMode
+          ? 'Make the multi-event flow easy to follow in one scan.'
+          : 'Make RSVP, FAQs, and core event details feel complete enough that guests do not have to ask for basics.',
+    },
+    {
+      id: 'polish',
+      status: 'then',
+      title: 'Only then spend energy on polish',
+      detail: 'Once the draft is trustworthy, design tweaks and tone refinements start paying off instead of hiding missing basics.',
+    },
+  ];
+
+  return { heading, summary, confidenceLabel, nextBestMove, watchouts, launchSequence, starterChecklist, builderChecklist };
 };
 
 export const buildBuilderConciergeModel = (
@@ -274,6 +310,32 @@ export const buildBuilderConciergeModel = (
     !hasFaq ? 'The obvious guest questions are still mostly living in your head.' : null,
     !hasDeadline ? 'RSVP still lacks a clear deadline, which weakens guest confidence fast.' : null,
   ].filter((value): value is string => Boolean(value));
+  const launchSequence: ConciergeSequenceItem[] = [
+    {
+      id: 'trust',
+      status: 'current',
+      title: 'Make the site trustworthy first',
+      detail: !hasVenue || !hasDeadline
+        ? 'Real venue details and a clear RSVP path still matter more than cosmetic changes.'
+        : 'The basics are in place, so the job now is making the guest path feel undeniably real.',
+    },
+    {
+      id: 'guidance',
+      status: 'next',
+      title: packs.has('destination') ? 'Then strengthen travel confidence' : 'Then strengthen guest guidance',
+      detail: packs.has('destination')
+        ? 'Travel, schedule, and weekend logistics should feel easier than texting you.'
+        : !hasFaq
+          ? 'FAQ and timing clarity should answer the obvious questions before guests ask them.'
+          : 'Use the next pass to make the guest-facing sections feel easy to trust on mobile.',
+    },
+    {
+      id: 'launch',
+      status: 'then',
+      title: 'Then use launch polish intentionally',
+      detail: 'Once the guest path is calm, publish checks and visual polish become the right final pass instead of a distraction.',
+    },
+  ];
 
   return {
     heading,
@@ -282,6 +344,7 @@ export const buildBuilderConciergeModel = (
     nextBestMove,
     guestPromise,
     watchouts,
+    launchSequence,
     checklist: checklist.slice(0, 3),
   };
 };

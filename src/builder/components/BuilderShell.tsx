@@ -407,6 +407,26 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
               </div>
               <div className="grid gap-2 text-sm lg:max-w-xl">
                 <p className="text-xs font-medium text-text-secondary">{conciergePlan.guestPromise}</p>
+                <div className="grid gap-2 md:grid-cols-3">
+                  {conciergePlan.launchSequence.map((item) => (
+                    <div key={item.id} className="rounded-xl border border-border-subtle bg-surface-subtle/40 px-3 py-3">
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-text-tertiary">{item.status}</p>
+                        <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${
+                          item.status === 'current'
+                            ? 'border border-primary/20 bg-primary-light text-primary'
+                            : item.status === 'next'
+                              ? 'border border-warning/20 bg-warning-light text-warning'
+                              : 'border border-border-subtle bg-white text-text-secondary'
+                        }`}>
+                          {item.status === 'current' ? 'Now' : item.status === 'next' ? 'Next' : 'Then'}
+                        </span>
+                      </div>
+                      <p className="mt-2 text-xs font-medium text-text-primary">{item.title}</p>
+                      <p className="mt-1 text-[11px] leading-5 text-text-secondary">{item.detail}</p>
+                    </div>
+                  ))}
+                </div>
                 {conciergePlan.watchouts.map((watchout) => (
                   <p key={watchout} className="text-xs text-amber-700">{watchout}</p>
                 ))}

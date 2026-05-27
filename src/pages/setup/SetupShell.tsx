@@ -426,6 +426,26 @@ export const SetupShell: React.FC<{ step?: string }> = ({ step }) => {
                 )}
               </div>
 
+              <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+                {reviewModel.launchSequence.map((item) => (
+                  <div key={item.id} className="rounded-xl border border-neutral-200 bg-white px-4 py-4">
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="text-sm font-medium text-neutral-900">{item.title}</p>
+                      <span className={`rounded-full px-2.5 py-1 text-[11px] font-medium ${
+                        item.status === 'current'
+                          ? 'border border-rose-200 bg-rose-50 text-rose-700'
+                          : item.status === 'next'
+                            ? 'border border-amber-200 bg-amber-50 text-amber-700'
+                            : 'border border-neutral-200 bg-neutral-50 text-neutral-600'
+                      }`}>
+                        {item.status === 'current' ? 'Current' : item.status === 'next' ? 'Next' : 'Then'}
+                      </span>
+                    </div>
+                    <p className="mt-2 text-xs leading-5 text-neutral-600">{item.detail}</p>
+                  </div>
+                ))}
+              </div>
+
               <div className="rounded border border-neutral-200 bg-neutral-50 p-3 text-sm text-neutral-700 space-y-1">
                 <p><strong>Partners:</strong> {draft.partnerOneFirstName} {draft.partnerOneLastName} & {draft.partnerTwoFirstName} {draft.partnerTwoLastName}</p>
                 <p><strong>Date:</strong> {draft.dateKnown ? (draft.weddingDate || 'Not set') : 'Still deciding'}</p>
