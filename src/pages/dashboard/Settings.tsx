@@ -1577,7 +1577,9 @@ export const DashboardSettings: React.FC = () => {
                             <p className="mt-1 text-xs leading-5 text-text-secondary">{siteAccessPlan.focusDetail}</p>
                           </div>
                           <div>
-                            <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary">Decision rule</p>
+                            <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary">Best next move</p>
+                            <p className="mt-1 text-sm font-semibold text-text-primary">{siteAccessPlan.bestNextMove}</p>
+                            <p className="mt-3 text-[11px] uppercase tracking-[0.18em] text-text-tertiary">Decision rule</p>
                             <p className="mt-1 text-sm font-semibold text-text-primary">{siteAccessPlan.decisionRule}</p>
                           </div>
                         </div>

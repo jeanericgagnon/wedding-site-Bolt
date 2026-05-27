@@ -10,6 +10,7 @@ describe('buildSiteAccessPlan', () => {
     });
 
     expect(plan.focusTitle).toMatch(/launch the live guest path/i);
+    expect(plan.bestNextMove).toMatch(/Publish the live guest-facing site/i);
     expect(plan.decisionRule).toMatch(/clear live path/i);
     expect(plan.steps[0]).toMatchObject({ status: 'current', id: 'publish' });
     expect(plan.steps[1]?.title).toMatch(/password/i);
@@ -23,6 +24,7 @@ describe('buildSiteAccessPlan', () => {
     });
 
     expect(plan.focusTitle).toMatch(/password instructions/i);
+    expect(plan.bestNextMove).toMatch(/Attach the password instructions/i);
     expect(plan.steps[0]).toMatchObject({ status: 'current', id: 'access' });
     expect(plan.steps[0]?.detail).toMatch(/password/i);
   });
@@ -36,6 +38,7 @@ describe('buildSiteAccessPlan', () => {
     });
 
     expect(plan.focusTitle).toMatch(/invite-only route|front door/i);
+    expect(plan.bestNextMove).toMatch(/Share and print the exact invite-only route/i);
     expect(plan.steps[0]).toMatchObject({ status: 'current', id: 'access' });
     expect(plan.steps[0]?.title).toMatch(/invite-only path/i);
   });
@@ -48,6 +51,7 @@ describe('buildSiteAccessPlan', () => {
     });
 
     expect(plan.focusTitle).toMatch(/reuse one public path/i);
+    expect(plan.bestNextMove).toMatch(/Reuse the same public URL/i);
     expect(plan.steps[0]).toMatchObject({ status: 'current', id: 'share' });
     expect(plan.steps[1]?.title).toMatch(/republish/i);
   });
