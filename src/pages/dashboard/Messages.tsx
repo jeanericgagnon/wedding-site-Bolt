@@ -3019,11 +3019,12 @@ export const DashboardMessages: React.FC = () => {
             <div className="rounded-2xl border border-border-subtle bg-surface-subtle/20 px-4 py-4">
               <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-text-tertiary">Best next move</p>
               <p className="mt-1 text-xs leading-5 text-text-secondary">{dayOfDispatch.bestNextMove}</p>
-              <div className="mt-3 h-px bg-black/5" />
-              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-text-tertiary">Decision rule</p>
-              <p className="mt-1 text-xs leading-5 text-text-secondary">{dayOfDispatch.decisionRule}</p>
-              <p className="mt-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-text-tertiary">Watchout</p>
-              <p className="mt-1 text-xs leading-5 text-text-secondary">{dayOfDispatch.watchout}</p>
+              <div className="mt-3 border-t border-border-subtle pt-3">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-text-tertiary">Decision rule</p>
+                <p className="mt-1 text-xs leading-5 text-text-secondary">{dayOfDispatch.decisionRule}</p>
+                <p className="mt-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-text-tertiary">Watchout</p>
+                <p className="mt-1 text-xs leading-5 text-text-secondary">{dayOfDispatch.watchout}</p>
+              </div>
             </div>
           </div>
           <div className="mt-4 grid gap-3 md:grid-cols-3">
