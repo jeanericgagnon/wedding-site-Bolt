@@ -44,6 +44,8 @@ describe('buildSeatingInsightCard', () => {
 
     expect(result.title).toContain('RSVP drift');
     expect(result.readinessLabel).toBe('Needs drift cleanup');
+    expect(result.focusTitle).toMatch(/attendance truth/i);
+    expect(result.focusDetail).toMatch(/Fix the truth first/i);
     expect(result.decisionRule).toMatch(/attendance truth/i);
     expect(result.primaryAction).toMatchObject({ mode: 'check-drift' });
   });
@@ -77,6 +79,8 @@ describe('buildSeatingInsightCard', () => {
     });
 
     expect(result.primaryAction).toMatchObject({ mode: 'auto-seat' });
+    expect(result.focusTitle).toMatch(/everyone placed/i);
+    expect(result.focusDetail).toMatch(/placement beats polish/i);
     expect(result.decisionRule).toMatch(/Get everyone into a seat/i);
     expect(result.badges[0]).toContain('open seat');
   });
@@ -95,6 +99,8 @@ describe('buildSeatingInsightCard', () => {
 
     expect(result.title).toContain('room is set');
     expect(result.readinessLabel).toBe('Live-day ready');
+    expect(result.focusTitle).toMatch(/live support/i);
+    expect(result.focusDetail).toMatch(/door and the coordinator/i);
     expect(result.primaryAction).toMatchObject({ mode: 'check-in' });
     expect(result.secondaryAction).toMatchObject({ mode: 'open-coordinator' });
   });
