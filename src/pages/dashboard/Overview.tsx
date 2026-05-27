@@ -658,6 +658,7 @@ export const DashboardOverview: React.FC = () => {
       photos: '/dashboard/photos',
       planning: '/dashboard/planning',
       registry: '/dashboard/registry',
+      settings: '/dashboard/settings?tab=site',
       seating: '/dashboard/seating',
       vault: '/dashboard/vault',
     };
@@ -675,6 +676,7 @@ export const DashboardOverview: React.FC = () => {
       registry: '/dashboard/registry',
       photos: '/dashboard/photos',
       builder: '/dashboard/builder',
+      settings: '/dashboard/settings?tab=site',
     };
     navigate(routeByTarget[analyticsNextMove.target]);
   }
@@ -686,6 +688,7 @@ export const DashboardOverview: React.FC = () => {
       itinerary: '/dashboard/itinerary',
       guests: '/dashboard/guests',
       messages: '/dashboard/messages',
+      settings: '/dashboard/settings?tab=site',
       seating: '/dashboard/seating',
       coordinator: '/dashboard/coordinator',
       photos: '/dashboard/photos',

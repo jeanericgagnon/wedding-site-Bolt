@@ -89,7 +89,7 @@ describe('buildCoupleFocusModel', () => {
     });
 
     expect(model.headline).toMatch(/guest access/i);
-    expect(model.steps[0]?.id).toBe('launch');
+    expect(model.steps[0]).toMatchObject({ id: 'launch', target: 'settings' });
     expect(model.steps[1]?.id).toBe('guests');
   });
 });

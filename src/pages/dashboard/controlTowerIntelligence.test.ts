@@ -120,7 +120,7 @@ describe('buildControlTowerBriefing', () => {
     }));
 
     expect(briefing.title).toContain('Guest access instructions');
-    expect(briefing.primaryAction).toMatchObject({ target: 'builder' });
+    expect(briefing.primaryAction).toMatchObject({ target: 'settings' });
     expect(briefing.secondaryAction).toMatchObject({ target: 'messages' });
   });
 

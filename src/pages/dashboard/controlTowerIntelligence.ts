@@ -9,6 +9,7 @@ export type ControlTowerActionTarget =
   | 'photos'
   | 'planning'
   | 'registry'
+  | 'settings'
   | 'seating'
   | 'vault';
 
@@ -185,7 +186,7 @@ export function buildControlTowerBriefing(input: ControlTowerIntelligenceInput):
         { label: 'Preview the restricted flow', status: 'next' },
         { label: 'Return to live-day polish', status: 'then' },
       ],
-      primaryAction: { label: 'Open builder', target: 'builder' },
+      primaryAction: { label: 'Review guest access settings', target: 'settings' },
       secondaryAction: { label: 'Open messages', target: 'messages' },
     };
   }

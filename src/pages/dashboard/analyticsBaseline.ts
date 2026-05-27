@@ -36,7 +36,7 @@ export interface AnalyticsNextMove {
   title: string;
   detail: string;
   ctaLabel: string;
-  target: 'guests' | 'messages' | 'registry' | 'photos' | 'builder';
+  target: 'guests' | 'messages' | 'registry' | 'photos' | 'builder' | 'settings';
 }
 
 function pct(numerator: number, denominator: number): number {
@@ -241,8 +241,8 @@ export function buildAnalyticsNextMove(input: AnalyticsBaselineInput): Analytics
       detail: input.privacyMode === 'invite_only'
         ? 'The guest-facing site is not public, so make sure the real invite path is what guests are receiving instead of a generic broad-share link.'
         : 'The site is password-protected, so the next lift is making sure the password instructions travel with every guest-facing link or print pack.',
-      ctaLabel: 'Preview guest access',
-      target: 'builder',
+      ctaLabel: 'Review guest access',
+      target: 'settings',
     };
   }
 

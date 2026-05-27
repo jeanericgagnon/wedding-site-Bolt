@@ -178,6 +178,7 @@ export const PlanningOverviewTab: React.FC<Props> = ({ tasks, budgetItems, vendo
         builder: '/dashboard/builder',
         guests: '/dashboard/guests',
         messages: '/dashboard/messages',
+        settings: '/dashboard/settings?tab=site',
         photos: '/dashboard/photos',
         vault: '/dashboard/vault',
       };

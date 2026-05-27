@@ -106,7 +106,7 @@ describe('analyticsBaseline', () => {
     }));
 
     expect(summary.title).toMatch(/access handoff/i);
-    expect(nextMove.ctaLabel).toMatch(/preview guest access/i);
-    expect(nextMove.target).toBe('builder');
+    expect(nextMove.ctaLabel).toMatch(/review guest access/i);
+    expect(nextMove.target).toBe('settings');
   });
 });

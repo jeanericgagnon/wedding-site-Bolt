@@ -3,7 +3,7 @@ export interface CoupleFocusStep {
   status: 'current' | 'next' | 'then';
   title: string;
   detail: string;
-  target: 'builder' | 'planning' | 'itinerary' | 'guests' | 'messages' | 'seating' | 'coordinator' | 'photos' | 'vault';
+  target: 'builder' | 'planning' | 'itinerary' | 'guests' | 'messages' | 'settings' | 'seating' | 'coordinator' | 'photos' | 'vault';
   ctaLabel: string;
 }
 
@@ -156,8 +156,8 @@ export function buildCoupleFocusModel(input: CoupleFocusInput): CoupleFocusModel
           id: 'polish',
           title: 'Then return to polish with confidence',
           detail: 'That is when the site polish actually helps instead of covering for unanswered guest basics.',
-          target: 'builder',
-          ctaLabel: 'Open builder',
+          target: 'settings',
+          ctaLabel: 'Review access settings',
         }),
       ],
     };
@@ -227,8 +227,8 @@ export function buildCoupleFocusModel(input: CoupleFocusInput): CoupleFocusModel
           detail: input.privacyMode === 'invite_only'
             ? 'Open the live flow the same way a guest will, then make sure the invite path is what your reminders and handoff assets actually point to.'
             : 'Check the live flow with the password gate in mind so links, print packs, and reminders all carry the right instructions.',
-          target: 'builder',
-          ctaLabel: 'Open builder',
+          target: 'settings',
+          ctaLabel: 'Review access settings',
         }),
         step('next', {
           id: 'guests',
