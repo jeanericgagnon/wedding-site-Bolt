@@ -21,6 +21,7 @@ import {
   getImportSummaryTone,
   summarizeImportRepairCount,
 } from './builderV2WorkflowGuidance';
+import { buildBuilderV2StructureGuidance } from './builderV2StructureGuidance';
 import {
   DndContext,
   PointerSensor,
@@ -643,6 +644,18 @@ export const BuilderV2Lab: React.FC = () => {
 
   const orderedVisible = useMemo(() => sections.filter((s) => s.enabled), [sections]);
   const filteredAddables = useMemo(() => ADDABLE_SECTIONS.filter((name) => name.toLowerCase().includes(addQuery.trim().toLowerCase())), [addQuery]);
+  const structureGuidance = useMemo(
+    () => buildBuilderV2StructureGuidance({
+      sections,
+      selectedSectionId: selected.id,
+      addQuery,
+      filteredAddableCount: filteredAddables.length,
+      previewDevice,
+      previewScale,
+      showMinimap,
+    }),
+    [sections, selected.id, addQuery, filteredAddables.length, previewDevice, previewScale, showMinimap],
+  );
 
   const previewData: WeddingDataV1 = useMemo(() => ({
     version: '1',
@@ -1105,7 +1118,42 @@ export const BuilderV2Lab: React.FC = () => {
               <Layers className="w-4 h-4 text-primary" />
               <h2 className="text-sm font-semibold">Pages</h2>
             </div>
-            <div className="mb-3 text-[11px] text-text-tertiary">Drag to reorder sections. Select one to focus it in preview.</div>
+            <div className="mb-3 rounded-md border border-border-subtle bg-white p-2.5 space-y-2">
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary font-medium">Structure read</p>
+                  <p className="mt-1 text-sm font-semibold text-text-primary">{structureGuidance.title}</p>
+                  <p className="mt-1 text-xs leading-relaxed text-text-secondary">{structureGuidance.detail}</p>
+                </div>
+                <div className="shrink-0 flex flex-wrap justify-end gap-1 text-[10px]">
+                  {structureGuidance.keyStats.map((stat) => (
+                    <span key={stat} className="rounded-full border border-border-subtle bg-surface-subtle px-2 py-1 text-text-secondary">{stat}</span>
+                  ))}
+                </div>
+              </div>
+              <div className="rounded-md border border-primary/15 bg-primary/[0.04] px-2.5 py-2">
+                <p className="text-[11px] uppercase tracking-[0.18em] text-primary font-semibold">Best next move</p>
+                <p className="mt-1 text-xs leading-relaxed text-text-primary">{structureGuidance.bestNextMove}</p>
+              </div>
+              <div className="grid gap-2">
+                <div className="rounded-md border border-border-subtle bg-surface-subtle px-2.5 py-2">
+                  <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary">Decision rule</p>
+                  <p className="mt-1 text-xs leading-relaxed text-text-primary">{structureGuidance.decisionRule}</p>
+                </div>
+                <div className="rounded-md border border-border-subtle bg-surface-subtle px-2.5 py-2">
+                  <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary">Watchout</p>
+                  <p className="mt-1 text-xs leading-relaxed text-text-primary">{structureGuidance.watchout}</p>
+                </div>
+                <div className="grid gap-2">
+                  {structureGuidance.steps.map((step) => (
+                    <div key={step.label} className="rounded-md border border-border-subtle bg-white px-2.5 py-2">
+                      <p className="text-[10px] uppercase tracking-[0.18em] text-text-tertiary">{step.label}</p>
+                      <p className="mt-1 text-xs leading-relaxed text-text-primary">{step.detail}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
               <SortableContext items={sections.map((s) => s.id)} strategy={verticalListSortingStrategy}>
                 <div className="space-y-2 overflow-auto pr-1 max-h-[38vh]">
@@ -1142,6 +1190,11 @@ export const BuilderV2Lab: React.FC = () => {
 
               {showAddPicker && (
                 <div className="rounded-md border border-border bg-white p-2 space-y-2">
+                  <div className="rounded-md border border-border-subtle bg-surface-subtle px-2.5 py-2">
+                    <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary">Picker read</p>
+                    <p className="mt-1 text-xs font-medium text-text-primary">{structureGuidance.addSectionHeadline}</p>
+                    <p className="mt-1 text-[11px] leading-relaxed text-text-secondary">{structureGuidance.addSectionDetail}</p>
+                  </div>
                   {!addPickerType ? (
                     <>
                       <input
@@ -1247,9 +1300,12 @@ export const BuilderV2Lab: React.FC = () => {
             </div>
           </aside>)}
 
-          <main className="relative border-r border-border bg-surface p-3 h-full min-h-0 overflow-hidden">
+          <main className="relative flex min-h-0 flex-col border-r border-border bg-surface p-3 h-full overflow-hidden">
             <div className="sticky top-0 z-20 h-12 bg-white/95 backdrop-blur border-b border-border-subtle -mx-3 px-3 mb-2 flex items-center justify-between">
-              <h2 className="text-sm font-semibold">Preview</h2>
+              <div className="min-w-0">
+                <h2 className="text-sm font-semibold">Preview</h2>
+                <p className="text-[11px] leading-relaxed text-text-tertiary">{structureGuidance.previewHeadline}</p>
+              </div>
               <div className="flex items-center gap-2">
                 <div className="flex items-center gap-1.5">
                   {(['desktop','mobile'] as const).map((d) => (
@@ -1264,7 +1320,20 @@ export const BuilderV2Lab: React.FC = () => {
                 <button onClick={() => canRedo && setHistoryIndex((i) => i + 1)} disabled={!canRedo} className="text-xs border rounded px-2 py-1 disabled:opacity-40 inline-flex items-center gap-1"><Redo2 className="w-3.5 h-3.5" />Redo</button>
               </div>
             </div>
-            <div className="h-[calc(100%-56px)] border border-border-subtle bg-[#f3f3f3] p-1.5 overflow-auto scroll-smooth [scrollbar-gutter:stable]">
+            <div className="mb-2 rounded-md border border-border-subtle bg-white px-3 py-2.5">
+              <div className="grid gap-2 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
+                <div>
+                  <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary">Preview read</p>
+                  <p className="mt-1 text-sm font-semibold text-text-primary">{structureGuidance.previewHeadline}</p>
+                  <p className="mt-1 text-xs leading-relaxed text-text-secondary">{structureGuidance.previewDetail}</p>
+                </div>
+                <div className="rounded-md border border-border-subtle bg-surface-subtle px-2.5 py-2">
+                  <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary">Best next move</p>
+                  <p className="mt-1 text-xs leading-relaxed text-text-primary">{structureGuidance.bestNextMove}</p>
+                </div>
+              </div>
+            </div>
+            <div className="flex-1 min-h-0 border border-border-subtle bg-[#f3f3f3] p-1.5 overflow-auto scroll-smooth [scrollbar-gutter:stable]">
               <div className={`mx-auto bg-white border border-border-subtle overflow-hidden ${previewDevice === 'desktop' ? 'w-full max-w-[1240px]' : 'w-[430px] max-w-full'}`} style={{ transform: `scale(${previewScale / 100})`, transformOrigin: 'top center' }}>
                 {previewInstances.map((instance) => {
                   const sectionState = orderedVisible.find((x) => x.id === instance.id);
