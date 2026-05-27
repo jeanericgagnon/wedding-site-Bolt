@@ -16,12 +16,45 @@ export interface SeatingInsightCardModel {
   decisionRule: string;
   badges: string[];
   callouts: string[];
+  sequence: Array<{
+    id: 'stabilize' | 'shape' | 'handoff';
+    status: 'current' | 'next' | 'then';
+    title: string;
+    detail: string;
+  }>;
   primaryAction?: SeatingInsightAction;
   secondaryAction?: SeatingInsightAction;
 }
 
 function pluralize(count: number, singular: string, plural = `${singular}s`) {
   return `${count} ${count === 1 ? singular : plural}`;
+}
+
+function buildSeatingSequence(
+  current: { title: string; detail: string },
+  next: { title: string; detail: string },
+  then: { title: string; detail: string },
+) {
+  return [
+    {
+      id: 'stabilize' as const,
+      status: 'current' as const,
+      title: current.title,
+      detail: current.detail,
+    },
+    {
+      id: 'shape' as const,
+      status: 'next' as const,
+      title: next.title,
+      detail: next.detail,
+    },
+    {
+      id: 'handoff' as const,
+      status: 'then' as const,
+      title: then.title,
+      detail: then.detail,
+    },
+  ];
 }
 
 function buildHouseholdStats(guests: EligibleGuest[], assignments: SeatingAssignment[]) {
@@ -104,6 +137,22 @@ export function buildSeatingInsightCard(args: {
         'Run the assignment check before moving more guests.',
         'Once the drift is clear, auto-seat can help with the remaining open guests.',
       ],
+      sequence: buildSeatingSequence(
+        {
+          title: 'Clear the stale assignments first',
+          detail: 'Fix the seats that no longer match RSVP truth before you trust any later room decision.',
+        },
+        {
+          title: 'Place the remaining open guests next',
+          detail: safeCounters.unassigned > 0
+            ? 'Once the drift is gone, finish the open placements so the room becomes fully readable again.'
+            : 'After the drift clears, confirm the room shape still holds without reopening every table.',
+        },
+        {
+          title: 'Return to balance only after truth holds',
+          detail: 'Let rebalancing or live support happen after the room is honest, not while it is still compensating for stale attendance.',
+        },
+      ),
       primaryAction: { label: 'Check assignments', mode: 'check-drift' },
       secondaryAction: safeCounters.unassigned > 0 ? { label: 'Auto-seat guests', mode: 'auto-seat' } : undefined,
     };
@@ -126,6 +175,20 @@ export function buildSeatingInsightCard(args: {
       callouts: [
         'Start with a sensible table count, then tighten special cases manually.',
       ],
+      sequence: buildSeatingSequence(
+        {
+          title: 'Auto-create the first room shape',
+          detail: 'Give the guest list a visible room outline before you spend time placing or polishing individual tables.',
+        },
+        {
+          title: 'Check the full guest shape against that room',
+          detail: 'Once the first layout exists, you can see whether the table count and capacities actually support the attendance truth.',
+        },
+        {
+          title: 'Save manual edits for special cases later',
+          detail: 'Only after the room exists should hand-crafted tweaks start solving real edge cases instead of guessing ahead of the shape.',
+        },
+      ),
       primaryAction: { label: 'Auto-create tables', mode: 'auto-create' },
     };
   }
@@ -152,6 +215,20 @@ export function buildSeatingInsightCard(args: {
           ? `${pluralize(tableStats.tightTableCount, 'table')} are already full.`
           : 'You still have enough breathing room to auto-seat safely.',
       ],
+      sequence: buildSeatingSequence(
+        {
+          title: 'Get every attending guest into a seat',
+          detail: 'Use this pass to turn the full guest list into a complete room before you judge comfort or aesthetics.',
+        },
+        {
+          title: 'Check the room for household and capacity friction',
+          detail: 'Once everyone is placed, look at the few split or tight pockets that still deserve attention.',
+        },
+        {
+          title: 'Return for comfort passes only after coverage exists',
+          detail: 'Let balance work happen after the room is fully seated instead of while the basic shape is still incomplete.',
+        },
+      ),
       primaryAction: { label: 'Auto-seat guests', mode: 'auto-seat' },
       secondaryAction: householdStats.splitHouseholdCount > 0 ? { label: 'Check arrivals', mode: 'check-in' } : undefined,
     };
@@ -177,6 +254,20 @@ export function buildSeatingInsightCard(args: {
         householdStats.largestHouseholdSize > 3 ? `Largest attending household size: ${householdStats.largestHouseholdSize}.` : 'No very large households are complicating the room.',
         `${arrivedCount} guests already marked arrived in this event.`,
       ],
+      sequence: buildSeatingSequence(
+        {
+          title: 'Tighten the awkward pockets first',
+          detail: 'Use sparse tables or split households as the only places that still deserve room attention.',
+        },
+        {
+          title: 'Check the room against arrival flow',
+          detail: 'Once the comfort pockets improve, verify that the room still supports easy check-in and live movement.',
+        },
+        {
+          title: 'Leave the rest of the room alone',
+          detail: 'After the comfort pass, preserve the stable parts of the layout instead of reopening the whole seating plan.',
+        },
+      ),
       primaryAction: { label: 'Open check-in mode', mode: 'check-in' },
       secondaryAction: { label: 'Check assignments', mode: 'check-drift' },
     };
@@ -204,6 +295,20 @@ export function buildSeatingInsightCard(args: {
           ? 'There is already live coordinator pressure building, so avoid extra room churn.'
           : 'If something changes, adjust only the tables that truly need it.',
       ],
+      sequence: buildSeatingSequence(
+        {
+          title: 'Use the room to support the door first',
+          detail: 'Check-in and arrival clarity matter more now than one more round of table tinkering.',
+        },
+        {
+          title: 'Check live issues for room-aware exceptions',
+          detail: 'After the door is steady, use coordinator pressure to decide whether any table change actually matters.',
+        },
+        {
+          title: 'Leave the settled tables settled',
+          detail: 'Once live support is working, protect the room from unnecessary churn unless reality truly changes.',
+        },
+      ),
       primaryAction: { label: 'Open check-in mode', mode: 'check-in' },
       secondaryAction: { label: 'Open coordinator mode', mode: 'open-coordinator' },
     };
@@ -225,6 +330,20 @@ export function buildSeatingInsightCard(args: {
     callouts: [
       'Use check-in mode as the live tool and avoid unnecessary table churn now.',
     ],
+    sequence: buildSeatingSequence(
+      {
+        title: 'Keep the room steady',
+        detail: 'Treat the settled layout as a support asset, not as a design surface that needs more work.',
+      },
+      {
+        title: 'Check live conditions before reopening anything',
+        detail: 'Only guest-truth changes or real arrival friction should pull the room back into active editing.',
+      },
+      {
+        title: 'Let check-in and coordination carry the rest',
+        detail: 'When the room is calm, the live-day tools should handle the day without dragging seating back into churn.',
+      },
+    ),
     primaryAction: { label: 'Open check-in mode', mode: 'check-in' },
   };
 }

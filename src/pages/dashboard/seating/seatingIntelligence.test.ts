@@ -48,6 +48,8 @@ describe('buildSeatingInsightCard', () => {
     expect(result.focusDetail).toMatch(/Fix the truth first/i);
     expect(result.bestNextMove).toMatch(/assignment check|invalid seats|rebalancing/i);
     expect(result.decisionRule).toMatch(/attendance truth/i);
+    expect(result.sequence.map((step) => step.status)).toEqual(['current', 'next', 'then']);
+    expect(result.sequence[0]?.title).toMatch(/stale assignments|Clear/i);
     expect(result.primaryAction).toMatchObject({ mode: 'check-drift' });
   });
 
@@ -84,6 +86,7 @@ describe('buildSeatingInsightCard', () => {
     expect(result.focusDetail).toMatch(/placement beats polish/i);
     expect(result.bestNextMove).toMatch(/Auto-seat the remaining guests|every attending guest/i);
     expect(result.decisionRule).toMatch(/Get everyone into a seat/i);
+    expect(result.sequence[2]?.detail).toMatch(/comfort pass|fully seated|coverage/i);
     expect(result.badges[0]).toContain('open seat');
   });
 
@@ -104,6 +107,7 @@ describe('buildSeatingInsightCard', () => {
     expect(result.focusTitle).toMatch(/live support/i);
     expect(result.focusDetail).toMatch(/door and the coordinator/i);
     expect(result.bestNextMove).toMatch(/Open check-in first|coordinator mode/i);
+    expect(result.sequence[1]?.title).toMatch(/room-aware exceptions|live issues/i);
     expect(result.primaryAction).toMatchObject({ mode: 'check-in' });
     expect(result.secondaryAction).toMatchObject({ mode: 'open-coordinator' });
   });

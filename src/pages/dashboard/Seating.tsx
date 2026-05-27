@@ -33,6 +33,7 @@ import {
   exportPlaceCardsCSV, downloadCSV, invalidateDriftedAssignments, setGuestCheckedIn,
 } from './seating/seatingService';
 import { buildSeatingInsightCard } from './seating/seatingIntelligence';
+import { getFlowStatusLabel } from '../../lib/flowLabels';
 import { buildDayOfRelayModel, type DayOfRelayStep } from './dayOfRelay';
 import { DayOfRelayCard } from './DayOfRelayCard';
 
@@ -1711,6 +1712,19 @@ export const DashboardSeating: React.FC = () => {
                         <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-text-tertiary">Decision rule</p>
                         <p className="mt-1 text-sm text-text-secondary">{seatingInsight.decisionRule}</p>
                       </div>
+                    </div>
+                    <div className="grid gap-2 sm:grid-cols-3">
+                      {seatingInsight.sequence.map((step) => (
+                        <div key={step.id} className="rounded-xl border border-border-subtle bg-surface-subtle px-3 py-2">
+                          <div className="flex items-center justify-between gap-2">
+                            <p className="text-xs font-semibold text-text-primary">{step.title}</p>
+                            <Badge variant={step.status === 'current' ? 'primary' : 'secondary'}>
+                              {getFlowStatusLabel(step.status)}
+                            </Badge>
+                          </div>
+                          <p className="mt-2 text-xs leading-5 text-text-secondary">{step.detail}</p>
+                        </div>
+                      ))}
                     </div>
                     <div className="flex flex-wrap gap-2">
                       {seatingInsight.badges.map((badge) => (
