@@ -4,7 +4,7 @@ import { SkeletonPickerModal } from './SkeletonPickerModal';
 import {
   Image, Heart, MapPin, Clock, Plane, Gift, HelpCircle, Mail, Images,
   Layout, Palette, FolderOpen, ChevronRight, ArrowLeft, Plus, LucideIcon,
-  Layers, Eye, EyeOff, Trash2, GripVertical, Sparkles,
+  Layers, Eye, EyeOff, Trash2, GripVertical, Sparkles, Search,
 } from 'lucide-react';
 import {
   DndContext,
@@ -34,6 +34,7 @@ import { selectActivePageSections } from '../state/builderSelectors';
 import { CustomSectionSkeleton } from '../../sections/variants/custom/skeletons';
 import { getDefinition } from '../../sections/registry';
 import { SECTION_REGISTRY as LEGACY_SECTION_REGISTRY } from '../../sections/sectionRegistry';
+import { getBuilderSectionLibrarySummary } from './builderSectionLibrarySummary';
 
 
 type SidebarTab = 'sections' | 'layers' | 'templates' | 'media';
@@ -291,7 +292,7 @@ export const BuilderSidebarLibrary: React.FC<BuilderSidebarLibraryProps> = ({ ac
   const [showSkeletonPicker, setShowSkeletonPicker] = useState(false);
   const [previewPhotoSet, setPreviewPhotoSet] = useState<PreviewPhotoSet>('romantic');
   const [quickPresetGroup, setQuickPresetGroup] = useState<'essentials' | 'extras'>('essentials');
-  const previewWeddingData = useMemo(() => buildPreviewWeddingData(previewPhotoSet), [previewPhotoSet]);
+  const [sectionSearchQuery, setSectionSearchQuery] = useState('');
   const manifests = getAllSectionManifests();
 
   const expandedManifest = expandedType
@@ -337,6 +338,14 @@ export const BuilderSidebarLibrary: React.FC<BuilderSidebarLibraryProps> = ({ ac
   }
 
   const sections = selectActivePageSections(state);
+  const sectionLibrarySummary = useMemo(
+    () => getBuilderSectionLibrarySummary({
+      manifests,
+      sections,
+      searchQuery: sectionSearchQuery,
+    }),
+    [manifests, sections, sectionSearchQuery],
+  );
   const [layerDragId, setLayerDragId] = useState<string | null>(null);
 
   const layerSensors = useSensors(
@@ -454,6 +463,28 @@ export const BuilderSidebarLibrary: React.FC<BuilderSidebarLibraryProps> = ({ ac
 
         {activeTab === 'sections' && !expandedManifest && (
           <div className="p-3">
+            <div className="mb-3 rounded-lg border border-sky-100 bg-sky-50/70 p-3">
+              <div className="flex items-start justify-between gap-2">
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-sky-700">Section plan</p>
+                  <p className="mt-1 text-xs font-semibold text-sky-950">{sectionLibrarySummary.title}</p>
+                  <p className="mt-1 text-[11px] leading-relaxed text-sky-900">{sectionLibrarySummary.detail}</p>
+                </div>
+                <div className="rounded-full border border-sky-200 bg-white px-2 py-1 text-[10px] font-semibold text-sky-800">
+                  {sectionLibrarySummary.filteredCount} shown
+                </div>
+              </div>
+              <p className="mt-2 text-[11px] leading-relaxed text-sky-800">{sectionLibrarySummary.nextMove}</p>
+              {sectionLibrarySummary.missingEssentialLabels.length > 0 && (
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  {sectionLibrarySummary.missingEssentialLabels.map((label) => (
+                    <span key={label} className="rounded-full border border-sky-200 bg-white px-2 py-1 text-[10px] font-medium text-sky-800">
+                      Missing: {label}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
             <div className="mb-3 rounded-lg border border-rose-100 bg-rose-50/60 p-2">
               <p className="px-1 text-[11px] font-semibold uppercase tracking-wide text-rose-700 mb-2">Quick presets</p>
               <button
@@ -545,6 +576,16 @@ export const BuilderSidebarLibrary: React.FC<BuilderSidebarLibraryProps> = ({ ac
               </p>
               <span className="ml-auto text-[10px] text-gray-300">{manifests.length} types</span>
             </div>
+            <label className="mb-3 flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2">
+              <Search size={14} className="text-gray-400" />
+              <input
+                type="text"
+                value={sectionSearchQuery}
+                onChange={(event) => setSectionSearchQuery(event.target.value)}
+                placeholder="Search sections by purpose or layout"
+                className="w-full bg-transparent text-xs text-gray-700 outline-none placeholder:text-gray-400"
+              />
+            </label>
             <div className="mb-2.5 flex items-center gap-1.5 px-1">
               <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-400">Preview mood</span>
               <div className="ml-auto flex items-center gap-1">
@@ -564,9 +605,11 @@ export const BuilderSidebarLibrary: React.FC<BuilderSidebarLibraryProps> = ({ ac
                 ))}
               </div>
             </div>
+            {sectionLibrarySummary.filteredManifests.length > 0 ? (
             <div className="grid grid-cols-2 gap-2">
-              {manifests.map(manifest => {
+              {sectionLibrarySummary.filteredManifests.map(manifest => {
                 const isCustom = manifest.type === 'custom';
+                const isMissingEssential = sectionLibrarySummary.missingEssentialLabels.includes(manifest.label);
                 return (
                   <button
                     key={manifest.type}
@@ -574,7 +617,9 @@ export const BuilderSidebarLibrary: React.FC<BuilderSidebarLibraryProps> = ({ ac
                     className={`w-full text-left rounded-xl border transition-all duration-300 ease-out overflow-hidden group focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-400/80 focus-visible:ring-offset-2 active:scale-[0.992] ${
                       isCustom
                         ? 'border-amber-200 bg-amber-50/50 hover:border-amber-300 hover:bg-amber-50 hover:shadow-[0_10px_20px_-16px_rgba(217,119,6,0.5)]'
-                        : 'border-gray-200 bg-white hover:border-rose-300 hover:shadow-[0_14px_30px_-18px_rgba(190,24,93,0.45)]'
+                        : isMissingEssential
+                          ? 'border-sky-200 bg-sky-50/50 hover:border-sky-300 hover:bg-sky-50 hover:shadow-[0_12px_24px_-18px_rgba(14,116,144,0.45)]'
+                          : 'border-gray-200 bg-white hover:border-rose-300 hover:shadow-[0_14px_30px_-18px_rgba(190,24,93,0.45)]'
                     }`}
                   >
                     <div className="pointer-events-none relative">
@@ -591,16 +636,21 @@ export const BuilderSidebarLibrary: React.FC<BuilderSidebarLibraryProps> = ({ ac
                       <div className="absolute top-1.5 left-1.5 rounded bg-white/85 px-1.5 py-0.5 text-[8px] font-semibold uppercase tracking-wide text-gray-600 shadow-sm">
                         {SECTION_PICKER_STORY_LABEL[manifest.type] ?? 'Section'}
                       </div>
+                      {isMissingEssential && (
+                        <div className="absolute bottom-1.5 left-1.5 rounded bg-sky-600 px-1.5 py-0.5 text-[8px] font-semibold uppercase tracking-wide text-white shadow-sm">
+                          Fill gap
+                        </div>
+                      )}
                     </div>
-                    <div className={`px-2.5 py-2 border-t ${isCustom ? 'border-amber-100' : 'border-gray-100'}`}>
+                    <div className={`px-2.5 py-2 border-t ${isCustom ? 'border-amber-100' : isMissingEssential ? 'border-sky-100' : 'border-gray-100'}`}>
                       <div className="flex items-center justify-between gap-1.5">
                         <div className="min-w-0">
-                          <p className={`text-[11px] font-semibold truncate ${isCustom ? 'text-amber-800' : 'text-gray-700'}`}>{manifest.label}</p>
+                          <p className={`text-[11px] font-semibold truncate ${isCustom ? 'text-amber-800' : isMissingEssential ? 'text-sky-900' : 'text-gray-700'}`}>{manifest.label}</p>
                           <p className="text-[9px] text-gray-400 truncate">
                             {isCustom ? '8 starter layouts' : `${manifest.variantMeta.length} ${manifest.variantMeta.length === 1 ? 'layout' : 'layouts'}`}
                           </p>
                         </div>
-                        <ChevronRight size={12} className={`flex-shrink-0 transition-colors ${isCustom ? 'text-amber-300 group-hover:text-amber-500' : 'text-gray-300 group-hover:text-rose-400'}`} />
+                        <ChevronRight size={12} className={`flex-shrink-0 transition-colors ${isCustom ? 'text-amber-300 group-hover:text-amber-500' : isMissingEssential ? 'text-sky-300 group-hover:text-sky-500' : 'text-gray-300 group-hover:text-rose-400'}`} />
                       </div>
                       <p className="mt-1 text-[9px] leading-relaxed text-gray-500 line-clamp-2">
                         {SECTION_PICKER_EDITORIAL_NOTES[manifest.type] ?? 'A strong starting section with clear structure and balanced spacing.'}
@@ -613,6 +663,14 @@ export const BuilderSidebarLibrary: React.FC<BuilderSidebarLibraryProps> = ({ ac
                 );
               })}
             </div>
+            ) : (
+              <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50 px-4 py-8 text-center">
+                <div className="text-sm font-medium text-gray-700">No sections match that search</div>
+                <p className="mt-1 text-xs leading-relaxed text-gray-500">
+                  Try the section goal instead of the exact label, or clear search to scan the full library again.
+                </p>
+              </div>
+            )}
           </div>
         )}
 
@@ -623,7 +681,6 @@ export const BuilderSidebarLibrary: React.FC<BuilderSidebarLibraryProps> = ({ ac
             onSelect={(variant) => addSection(expandedManifest.type, variant)}
             previewPhotoSet={previewPhotoSet}
             onPreviewPhotoSetChange={setPreviewPhotoSet}
-            previewWeddingData={previewWeddingData}
           />
         )}
       </div>
@@ -645,7 +702,6 @@ interface VariantPickerProps {
   onSelect: (variantId: string) => void;
   previewPhotoSet: PreviewPhotoSet;
   onPreviewPhotoSetChange: (photoSet: PreviewPhotoSet) => void;
-  previewWeddingData: WeddingDataV1;
 }
 
 const VariantPicker: React.FC<VariantPickerProps> = ({
@@ -654,7 +710,6 @@ const VariantPicker: React.FC<VariantPickerProps> = ({
   onSelect,
   previewPhotoSet,
   onPreviewPhotoSetChange,
-  previewWeddingData,
 }) => {
   const [hoveredVariant, setHoveredVariant] = useState<string | null>(null);
   const [activeVariantIndex, setActiveVariantIndex] = useState(0);
@@ -765,7 +820,6 @@ const VariantPicker: React.FC<VariantPickerProps> = ({
               onHover={setHoveredVariant}
               onSelect={onSelect}
               onFocusIndex={() => setActiveVariantIndex(idx)}
-              previewWeddingData={previewWeddingData}
               previewPhotoSet={previewPhotoSet}
             />
           ))}
@@ -784,7 +838,6 @@ interface VariantCardProps {
   onHover: (id: string | null) => void;
   onSelect: (id: string) => void;
   onFocusIndex: () => void;
-  previewWeddingData: WeddingDataV1;
   previewPhotoSet: PreviewPhotoSet;
 }
 
@@ -1061,14 +1114,13 @@ const VariantCard: React.FC<VariantCardProps> = ({
   onHover,
   onSelect,
   onFocusIndex,
-  previewWeddingData,
   previewPhotoSet,
 }) => {
   const tone = getVariantTone(variant.id);
   const artDirection = getVariantArtDirection(sectionType, variant.id);
   const curatedWeddingData = useMemo(() => (
     buildVariantPreviewWeddingData(sectionType, variant.id, previewPhotoSet)
-  ), [sectionType, variant.id, previewPhotoSet, previewWeddingData]);
+  ), [sectionType, variant.id, previewPhotoSet]);
   const description = artDirection.description ?? variant.description;
   const sequenceCue = getVariantSequenceCue(sectionType, variant.id);
   const compositionCue = getVariantCompositionCue(sectionType, variant.id);

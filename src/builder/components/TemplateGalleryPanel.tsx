@@ -11,6 +11,7 @@ import { selectActivePage } from '../state/builderSelectors';
 import { getTemplatePreviewSource } from '../constants/templatePreviewSource';
 import { SectionRenderer } from './SectionRenderer';
 import { createEmptyWeddingData } from '../../types/weddingData';
+import { getTemplateGallerySummary } from './templateGallerySummary';
 
 function preserveContentAcrossTemplate(
   existingSections: BuilderSectionInstance[],
@@ -566,7 +567,6 @@ export const TemplateGalleryPanel: React.FC<TemplateGalleryPanelProps> = ({ onSa
 
   const currentTemplateId = state.project?.templateId;
   const activePage = selectActivePage(state);
-  const currentTemplate = templates.find((t) => t.id === currentTemplateId) ?? null;
   const pageCount = state.project?.pages.length ?? 0;
   const sectionCount = state.project?.pages.reduce((total, page) => total + page.sections.length, 0) ?? 0;
   const currentPageSectionCount = activePage?.sections.length ?? 0;
@@ -574,6 +574,23 @@ export const TemplateGalleryPanel: React.FC<TemplateGalleryPanelProps> = ({ onSa
   const compareTemplates = compareTemplateIds
     .map((id) => templates.find((t) => t.id === id))
     .filter((t): t is BuilderTemplateDefinition => Boolean(t));
+  const gallerySummary = getTemplateGallerySummary({
+    templates,
+    filtered,
+    currentTemplateId,
+    compareTemplateIds,
+    pageCount,
+    sectionCount,
+    currentPageSectionCount,
+  });
+
+  const handleCloseGallery = useCallback(() => {
+    setConfirmTemplate(null);
+    setDetailsTemplate(null);
+    setShowCompareModal(false);
+    setCompareTemplateIds([]);
+    dispatch(builderActions.closeTemplateGallery());
+  }, [dispatch]);
 
   React.useEffect(() => {
     if (!state.templateGalleryOpen && !applyResult) return;
@@ -611,14 +628,6 @@ export const TemplateGalleryPanel: React.FC<TemplateGalleryPanelProps> = ({ onSa
     showCompareModal,
     handleCloseGallery,
   ]);
-
-  function handleCloseGallery() {
-    setConfirmTemplate(null);
-    setDetailsTemplate(null);
-    setShowCompareModal(false);
-    setCompareTemplateIds([]);
-    dispatch(builderActions.closeTemplateGallery());
-  }
 
   const toggleCompareTemplate = useCallback((templateId: string) => {
     setCompareTemplateIds((prev) => {
@@ -821,22 +830,27 @@ export const TemplateGalleryPanel: React.FC<TemplateGalleryPanelProps> = ({ onSa
             <div className="rounded-2xl border border-neutral-200 bg-neutral-50 px-4 py-3">
               <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-neutral-500">Current draft</p>
               <p className="mt-2 text-sm font-semibold text-neutral-900">
-                {currentTemplate?.displayName ?? 'No design selected yet'}
+                {gallerySummary.currentTemplateName}
               </p>
               <p className="mt-1 text-xs text-neutral-600">
-                {pageCount} page{pageCount === 1 ? '' : 's'} · {sectionCount} total section{sectionCount === 1 ? '' : 's'} · {currentPageSectionCount} on this page
+                {gallerySummary.currentDraftDetail}
               </p>
               <p className="mt-2 text-xs text-neutral-600">
-                Switching designs keeps your section content where possible, then updates the overall visual direction.
+                {gallerySummary.currentDraftRecommendation}
               </p>
             </div>
             <div className="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-3">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-sky-700">Best way to choose</p>
-              <ul className="mt-2 space-y-1.5 text-xs text-sky-900">
-                <li>Start with the closest mood, not the perfect final version.</li>
-                <li>Use compare when two directions are genuinely close.</li>
-                <li>After switching, tighten layout and photos before editing copy again.</li>
-              </ul>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-sky-700">{gallerySummary.filteredHeadline}</p>
+              <p className="mt-2 text-xs leading-relaxed text-sky-900">{gallerySummary.filteredDetail}</p>
+              {gallerySummary.strongestFilteredTemplate && (
+                <button
+                  type="button"
+                  onClick={() => setConfirmTemplate(gallerySummary.strongestFilteredTemplate)}
+                  className="mt-3 inline-flex items-center rounded-lg border border-sky-300 bg-white px-3 py-1.5 text-xs font-semibold text-sky-800 hover:bg-sky-100"
+                >
+                  Start with {gallerySummary.strongestFilteredTemplate.displayName}
+                </button>
+              )}
             </div>
           </div>
 
@@ -863,11 +877,7 @@ export const TemplateGalleryPanel: React.FC<TemplateGalleryPanelProps> = ({ onSa
           </div>
 
           <div className="mb-4 rounded-xl border border-neutral-200 bg-white px-3 py-2 flex items-center justify-between gap-3">
-            <div className="text-xs text-sky-900">
-              {compareTemplates.length === 0 && 'Select up to 2 designs to compare side by side.'}
-              {compareTemplates.length === 1 && `Selected for compare: ${compareTemplates[0].displayName}. Choose one more.`}
-              {compareTemplates.length === 2 && `Ready to compare: ${compareTemplates[0].displayName} vs ${compareTemplates[1].displayName}.`}
-            </div>
+            <div className="text-xs text-sky-900">{gallerySummary.compareMessage}</div>
             <div className="flex items-center gap-2">
               <button
                 type="button"
@@ -880,7 +890,7 @@ export const TemplateGalleryPanel: React.FC<TemplateGalleryPanelProps> = ({ onSa
               <button
                 type="button"
                 onClick={() => setShowCompareModal(true)}
-                disabled={compareTemplates.length !== 2}
+                disabled={!gallerySummary.compareReady}
                 className="rounded border border-sky-300 bg-sky-600 px-2 py-1 text-xs font-semibold text-white hover:bg-sky-700 disabled:opacity-40"
               >
                 Compare
