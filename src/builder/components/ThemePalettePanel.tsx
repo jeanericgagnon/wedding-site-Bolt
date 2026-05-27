@@ -2,7 +2,13 @@ import React, { useState, useEffect, useRef } from 'react';
 import { X, Palette, Check, ChevronRight, Pipette } from 'lucide-react';
 import { useBuilderContext } from '../state/builderStore';
 import { builderActions } from '../state/builderActions';
-import { getAllThemePresets, getThemePacks, ThemeTokens, applyThemePreset } from '../../lib/themePresets';
+import {
+  getAllThemePresets,
+  getThemePacks,
+  ThemeTokens,
+  applyThemePreset,
+} from '../../lib/themePresets';
+import { getThemePanelSummary } from './themePanelSummary';
 
 interface ThemePalettePanelProps {
   isOpen: boolean;
@@ -163,6 +169,14 @@ export const ThemePalettePanel: React.FC<ThemePalettePanelProps> = ({ isOpen, on
   const filteredPresets = selectedPack === 'all'
     ? presets
     : presets.filter((preset) => preset.pack === selectedPack);
+  const activePreset = presets.find((preset) => preset.id === activeThemeId) ?? presets[0];
+  const themeSummary = getThemePanelSummary({
+    view,
+    selectedPack,
+    filteredCount: filteredPresets.length,
+    activePreset,
+    customApplied,
+  });
 
   const grouped = TOKEN_LABELS.reduce<Record<string, typeof TOKEN_LABELS>>((acc, t) => {
     if (!acc[t.group]) acc[t.group] = [];
@@ -234,6 +248,24 @@ export const ThemePalettePanel: React.FC<ThemePalettePanelProps> = ({ isOpen, on
         <div className="flex-1 overflow-y-auto">
           {view === 'presets' && (
             <div className="p-3 space-y-2">
+              <div className="rounded-xl border border-gray-200 bg-gray-50 px-3 py-3 space-y-2">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <div className="text-sm font-semibold text-gray-800">{themeSummary.title}</div>
+                    <p className="mt-1 text-xs leading-relaxed text-gray-500">{themeSummary.detail}</p>
+                  </div>
+                  <div className="rounded-full bg-white px-2 py-1 text-[11px] font-medium text-gray-500 border border-gray-200">
+                    {themeSummary.filteredCount} options
+                  </div>
+                </div>
+                <div className="rounded-lg bg-white border border-gray-200 px-3 py-2.5">
+                  <div className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">
+                    {themeSummary.actionLabel}
+                  </div>
+                  <p className="mt-1 text-xs leading-relaxed text-gray-600">{themeSummary.actionDetail}</p>
+                </div>
+              </div>
+
               <div className="flex flex-wrap gap-1.5 pb-2 border-b border-gray-100">
                 <button
                   onClick={() => setSelectedPack('all')}
@@ -252,14 +284,23 @@ export const ThemePalettePanel: React.FC<ThemePalettePanelProps> = ({ isOpen, on
                 ))}
               </div>
 
-              {filteredPresets.map(preset => (
-                <PresetRow
-                  key={preset.id}
-                  preset={preset}
-                  isActive={activeThemeId === preset.id && !customApplied}
-                  onSelect={() => handleSelectPreset(preset.id)}
-                />
-              ))}
+              {filteredPresets.length > 0 ? (
+                filteredPresets.map(preset => (
+                  <PresetRow
+                    key={preset.id}
+                    preset={preset}
+                    isActive={activeThemeId === preset.id && !customApplied}
+                    onSelect={() => handleSelectPreset(preset.id)}
+                  />
+                ))
+              ) : (
+                <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50 px-4 py-6 text-center">
+                  <div className="text-sm font-medium text-gray-700">No presets in this pack yet</div>
+                  <p className="mt-1 text-xs leading-relaxed text-gray-500">
+                    Jump back to all packs to choose a stronger starting mood, then come back to custom only if you still need a tighter fit.
+                  </p>
+                </div>
+              )}
 
               <div className="pt-3 border-t border-gray-100 mt-3">
                 <button
@@ -278,9 +319,16 @@ export const ThemePalettePanel: React.FC<ThemePalettePanelProps> = ({ isOpen, on
 
           {view === 'custom' && (
             <div className="p-4 space-y-5">
-              <p className="text-xs text-gray-400 leading-relaxed">
-                Customize individual colors. Changes preview instantly on the canvas.
-              </p>
+              <div className="rounded-xl border border-gray-200 bg-gray-50 px-3 py-3 space-y-2">
+                <div className="text-sm font-semibold text-gray-800">{themeSummary.title}</div>
+                <p className="text-xs leading-relaxed text-gray-500">{themeSummary.detail}</p>
+                <div className="rounded-lg bg-white border border-gray-200 px-3 py-2.5">
+                  <div className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">
+                    {themeSummary.actionLabel}
+                  </div>
+                  <p className="mt-1 text-xs leading-relaxed text-gray-600">{themeSummary.actionDetail}</p>
+                </div>
+              </div>
 
               {Object.entries(grouped).map(([group, tokens]) => (
                 <div key={group}>

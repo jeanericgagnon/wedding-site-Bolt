@@ -1,21 +1,12 @@
 import React, { useState } from 'react';
-import { X, Check } from 'lucide-react';
+import { X, Check, Search } from 'lucide-react';
 import { CUSTOM_SKELETONS, CustomSectionSkeleton } from '../../sections/variants/custom/skeletons';
+import { CATEGORY_LABELS, getSkeletonPickerSummary } from './skeletonPickerSummary';
 
 interface SkeletonPickerModalProps {
   onSelect: (skeleton: CustomSectionSkeleton) => void;
   onClose: () => void;
 }
-
-const CATEGORY_LABELS: Record<string, string> = {
-  blank: 'Blank',
-  announcement: 'Announcements',
-  content: 'Content',
-  cta: 'Call to Action',
-  details: 'Details',
-  stats: 'Stats',
-  numbers: 'Numbers',
-};
 
 const SkeletonThumbnail: React.FC<{ skeleton: CustomSectionSkeleton; selected: boolean }> = ({ skeleton, selected }) => {
   const bg = skeleton.backgroundColor;
@@ -569,12 +560,10 @@ const CATEGORIES = ['blank', 'stats', 'numbers', 'announcement', 'content', 'cta
 export const SkeletonPickerModal: React.FC<SkeletonPickerModalProps> = ({ onSelect, onClose }) => {
   const [selected, setSelected] = useState<string>(CUSTOM_SKELETONS[0].id);
   const [activeCategory, setActiveCategory] = useState<string>('all');
-
-  const filtered = activeCategory === 'all'
-    ? CUSTOM_SKELETONS
-    : CUSTOM_SKELETONS.filter(s => s.category === activeCategory);
-
-  const selectedSkeleton = CUSTOM_SKELETONS.find(s => s.id === selected) ?? CUSTOM_SKELETONS[0];
+  const [search, setSearch] = useState('');
+  const summary = getSkeletonPickerSummary({ activeCategory, search, selectedId: selected });
+  const filtered = summary.filtered;
+  const selectedSkeleton = summary.selectedSkeleton;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
@@ -614,32 +603,92 @@ export const SkeletonPickerModal: React.FC<SkeletonPickerModalProps> = ({ onSele
           ))}
         </div>
 
+        <div className="px-6 pb-3">
+          <div className="rounded-xl border border-gray-200 bg-gray-50 px-3 py-3 space-y-3">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <div className="text-sm font-semibold text-gray-800">{summary.detailTitle}</div>
+                <p className="mt-1 text-xs leading-relaxed text-gray-500">{summary.detailText}</p>
+              </div>
+              <div className="rounded-full bg-white px-2 py-1 text-[11px] font-medium text-gray-500 border border-gray-200">
+                {summary.filteredCount}/{summary.totalCount}
+              </div>
+            </div>
+            <div className="rounded-lg bg-white border border-gray-200 px-3 py-2.5">
+              <div className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Best next move</div>
+              <p className="mt-1 text-xs leading-relaxed text-gray-600">{summary.actionText}</p>
+            </div>
+            <label className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2">
+              <Search size={14} className="text-gray-400" />
+              <input
+                type="text"
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                placeholder="Search layouts by mood, content, or structure"
+                className="w-full bg-transparent text-xs text-gray-700 outline-none placeholder:text-gray-400"
+              />
+            </label>
+          </div>
+        </div>
+
         <div className="flex-1 overflow-y-auto px-6 pb-4">
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-2">
-            {filtered.map(skeleton => (
-              <button
-                key={skeleton.id}
-                onClick={() => setSelected(skeleton.id)}
-                className={`group text-left rounded-xl overflow-hidden border-2 transition-all ${
-                  selected === skeleton.id
-                    ? 'border-rose-500 shadow-sm'
-                    : 'border-gray-200 hover:border-gray-300'
-                }`}
-              >
-                <SkeletonThumbnail skeleton={skeleton} selected={selected === skeleton.id} />
-                <div className="px-3 py-2 bg-white">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-semibold text-gray-700">{skeleton.label}</span>
-                    {selected === skeleton.id && (
-                      <div className="w-4 h-4 rounded-full bg-rose-500 flex items-center justify-center flex-shrink-0">
-                        <Check size={9} className="text-white" />
+          {filtered.length > 0 ? (
+            <>
+              <div className="text-[11px] font-semibold uppercase tracking-wide text-gray-500 mt-2 mb-2">
+                {summary.selectedCategoryLabel}
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                {filtered.map(skeleton => (
+                  <button
+                    key={skeleton.id}
+                    onClick={() => setSelected(skeleton.id)}
+                    className={`group text-left rounded-xl overflow-hidden border-2 transition-all ${
+                      selected === skeleton.id
+                        ? 'border-rose-500 shadow-sm'
+                        : 'border-gray-200 hover:border-gray-300'
+                    }`}
+                  >
+                    <SkeletonThumbnail skeleton={skeleton} selected={selected === skeleton.id} />
+                    <div className="px-3 py-2 bg-white">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-semibold text-gray-700">{skeleton.label}</span>
+                        {selected === skeleton.id && (
+                          <div className="w-4 h-4 rounded-full bg-rose-500 flex items-center justify-center flex-shrink-0">
+                            <Check size={9} className="text-white" />
+                          </div>
+                        )}
                       </div>
-                    )}
-                  </div>
-                  <p className="text-[10px] text-gray-400 leading-tight mt-0.5">{skeleton.description}</p>
-                </div>
-              </button>
-            ))}
+                      <p className="text-[10px] text-gray-400 leading-tight mt-0.5">{skeleton.description}</p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </>
+          ) : (
+            <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50 px-4 py-8 mt-2 text-center">
+              <div className="text-sm font-medium text-gray-700">No layouts match this search</div>
+              <p className="mt-1 text-xs leading-relaxed text-gray-500">
+                Try a broader category or search for the section goal instead of exact wording.
+              </p>
+            </div>
+          )}
+
+          <div className="rounded-xl border border-gray-200 bg-white px-4 py-3 mt-4">
+            <div className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Selected layout</div>
+            <div className="mt-2 text-sm font-semibold text-gray-800">{selectedSkeleton.label}</div>
+            <p className="mt-1 text-xs leading-relaxed text-gray-500">{selectedSkeleton.description}</p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <div className="rounded-full bg-gray-100 px-2.5 py-1 text-[11px] font-medium text-gray-600">
+                {CATEGORY_LABELS[selectedSkeleton.category]}
+              </div>
+              <div className="rounded-full bg-gray-100 px-2.5 py-1 text-[11px] font-medium text-gray-600">
+                {selectedSkeleton.blocks.length} starter blocks
+              </div>
+              <div className="rounded-full bg-gray-100 px-2.5 py-1 text-[11px] font-medium text-gray-600">
+                {selectedSkeleton.paddingSize.toUpperCase()} spacing
+              </div>
+            </div>
+            <p className="mt-3 text-xs leading-relaxed text-gray-600">{summary.actionText}</p>
           </div>
         </div>
 
