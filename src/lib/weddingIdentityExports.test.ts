@@ -59,6 +59,21 @@ describe('weddingIdentityExports', () => {
     expect(kit.quickPacks.find((pack) => pack.id === 'print-table')?.nextStep).toMatch(/Add the date, venue, and public site/i);
   });
 
+  it('keeps the export handoff honest when the public URL exists but the site is not live yet', () => {
+    const kit = buildWeddingIdentityExportKit({
+      coupleNames: 'Maya & Leo',
+      publicSiteUrl: 'https://maya-leo.dayof.love',
+      isPublished: false,
+      weddingDate: '2026-09-12',
+      venueName: 'Garden House',
+    });
+
+    expect(kit.handoffSequence[0]?.title).toMatch(/live first/i);
+    expect(kit.handoffSequence[1]?.title).toMatch(/after the live publish/i);
+    expect(kit.quickPacks.find((pack) => pack.id === 'share-now')?.readiness).toBe('ready');
+    expect(kit.quickPacks.find((pack) => pack.id === 'share-now')?.nextStep).toMatch(/Publish the live site once/i);
+  });
+
   it('builds a planner-safe manifest without private guest access tokens', () => {
     const kit = buildWeddingIdentityExportKit({
       coupleNames: 'Maya & Leo',

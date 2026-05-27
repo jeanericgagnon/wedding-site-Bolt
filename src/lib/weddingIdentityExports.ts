@@ -15,6 +15,7 @@ export type WeddingIdentityExportStatus = 'ready' | 'needs-info' | 'planned';
 export interface WeddingIdentityExportKitInput {
   coupleNames: string;
   publicSiteUrl: string;
+  isPublished?: boolean | null;
   weddingDate?: string | null;
   venueName?: string | null;
   templateName?: string | null;
@@ -126,6 +127,7 @@ export function buildWeddingIdentityExportKit(input: WeddingIdentityExportKitInp
   const hasPublicUrl = hasValue(safePublicSiteUrl);
   const hasDate = hasValue(input.weddingDate);
   const hasVenue = hasValue(input.venueName);
+  const launchIsLive = input.isPublished !== false;
   const templateName = input.templateName?.trim() || 'Current site theme';
   const defaultLanguage = input.defaultLanguage?.trim() || 'en';
 
@@ -215,18 +217,34 @@ export function buildWeddingIdentityExportKit(input: WeddingIdentityExportKitInp
       {
         id: 'share-now',
         status: 'current',
-        title: hasPublicUrl ? 'Share one safe guest-facing pack' : 'Set the public site first',
-        detail: hasPublicUrl
-          ? 'Lead with the share graphic, RSVP card, and public QR so every guest-facing surface starts from the same URL.'
-          : 'The public site URL is the first ingredient for safe QR cards, story graphics, and RSVP handoff.',
+        title: !hasPublicUrl
+          ? 'Set the public site first'
+          : !launchIsLive
+            ? 'Make the guest-facing site live first'
+            : 'Share one safe guest-facing pack',
+        detail: !hasPublicUrl
+          ? 'The public site URL is the first ingredient for safe QR cards, story graphics, and RSVP handoff.'
+          : !launchIsLive
+            ? 'The URL is set, but the guest-facing site still needs one live publish before print and share packs feel trustworthy.'
+            : 'Lead with the share graphic, RSVP card, and public QR so every guest-facing surface starts from the same URL.',
       },
       {
         id: 'print-table',
         status: 'next',
-        title: hasPublicUrl && hasDate && hasVenue ? 'Carry the same identity into print' : 'Finish the print details next',
-        detail: hasPublicUrl && hasDate && hasVenue
-          ? 'Once the share pack is steady, use the table card, insert, and photo sign so print surfaces stay aligned.'
-          : 'Add the date, venue, and public site so welcome-table and signage assets stop feeling provisional.',
+        title: !hasPublicUrl
+          ? 'Finish the print details next'
+          : !launchIsLive
+            ? 'Share and print after the live publish'
+            : hasDate && hasVenue
+              ? 'Carry the same identity into print'
+              : 'Finish the print details next',
+        detail: !hasPublicUrl
+          ? 'Add the date, venue, and public site so welcome-table and signage assets stop feeling provisional.'
+          : !launchIsLive
+            ? 'Once the live publish is up, use the share pack, table card, insert, and photo sign from the same guest-safe URL.'
+            : hasDate && hasVenue
+              ? 'Once the share pack is steady, use the table card, insert, and photo sign so print surfaces stay aligned.'
+              : 'Add the date, venue, and public site so welcome-table and signage assets stop feeling provisional.',
       },
       {
         id: 'planner-handoff',
@@ -240,12 +258,18 @@ export function buildWeddingIdentityExportKit(input: WeddingIdentityExportKitInp
         id: 'share-now',
         label: 'Share-now pack',
         detail: hasPublicUrl
-          ? 'Use the share graphic, RSVP card, and public QR card when you need one fast guest-facing set.'
+          ? launchIsLive
+            ? 'Use the share graphic, RSVP card, and public QR card when you need one fast guest-facing set.'
+            : 'The share pack is assembled, but it should wait until the guest-facing site has one real live publish.'
           : 'Set the public site URL first so the guest-facing share pack can be generated safely.',
         readiness: hasPublicUrl ? 'ready' : 'needs-info',
         bestFor: 'Best when you need one quick guest-facing kit for text, DM, or email right now.',
         includes: ['Share graphic', 'RSVP card', 'Public QR card'],
-        nextStep: hasPublicUrl ? 'Send the share graphic first, then reuse the same URL on RSVP and QR surfaces.' : 'Set the public site URL so the guest-facing share pack is safe to copy or print.',
+        nextStep: hasPublicUrl
+          ? launchIsLive
+            ? 'Send the share graphic first, then reuse the same URL on RSVP and QR surfaces.'
+            : 'Publish the live site once, then send the share graphic so every guest-facing link resolves with confidence.'
+          : 'Set the public site URL so the guest-facing share pack is safe to copy or print.',
       },
       {
         id: 'print-table',

@@ -671,12 +671,13 @@ export const DashboardSettings: React.FC = () => {
   const weddingIdentityExportKit = useMemo(() => buildWeddingIdentityExportKit({
     coupleNames: exportCoupleNames,
     publicSiteUrl: exportPublicSiteUrl,
+    isPublished,
     weddingDate: exportWeddingDate,
     venueName: exportVenueName,
     templateId: currentTemplate,
     templateName: exportTemplateName,
     defaultLanguage,
-  }), [exportCoupleNames, exportPublicSiteUrl, exportWeddingDate, exportVenueName, currentTemplate, exportTemplateName, defaultLanguage]);
+  }), [exportCoupleNames, exportPublicSiteUrl, isPublished, exportWeddingDate, exportVenueName, currentTemplate, exportTemplateName, defaultLanguage]);
   const weddingIdentityPrintAssets = useMemo(() => buildWeddingIdentityPrintAssets({
     coupleNames: exportCoupleNames,
     publicSiteUrl: exportPublicSiteUrl,
