@@ -74,9 +74,19 @@ export const GuestJourneyCompanion: React.FC<GuestJourneyCompanionProps> = ({
       <div className="mt-4 grid gap-3 md:grid-cols-3">
         {copy.sequence.map((step) => (
           <div key={step.status} className="rounded-2xl border border-border bg-white px-4 py-3">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-text-tertiary">{step.status}</p>
-            <p className="mt-1 text-sm font-semibold text-text-primary">{step.title}</p>
-            <p className="mt-1.5 text-sm leading-6 text-text-secondary">{step.detail}</p>
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-sm font-semibold text-text-primary">{step.title}</p>
+              <span className={`rounded-full px-2.5 py-1 text-[11px] font-medium ${
+                step.status === 'current'
+                  ? 'border border-primary/20 bg-primary-light text-primary'
+                  : step.status === 'next'
+                    ? 'border border-warning/20 bg-warning-light text-warning'
+                    : 'border border-border-subtle bg-surface-subtle text-text-secondary'
+              }`}>
+                {step.status === 'current' ? 'Current' : step.status === 'next' ? 'Next' : 'Then'}
+              </span>
+            </div>
+            <p className="mt-2 text-sm leading-6 text-text-secondary">{step.detail}</p>
           </div>
         ))}
       </div>
