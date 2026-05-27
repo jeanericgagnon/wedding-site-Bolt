@@ -59,8 +59,12 @@ export const GuestJourneyCompanion: React.FC<GuestJourneyCompanionProps> = ({
           <p className="mt-1.5 text-sm leading-6 text-text-secondary">{copy.focusDetail}</p>
         </div>
         <div className="rounded-2xl border border-border bg-white px-4 py-3">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-text-tertiary">Decision rule</p>
-          <p className="mt-1 text-sm leading-6 text-text-secondary">{copy.decisionRule}</p>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-text-tertiary">Best next move</p>
+          <p className="mt-1 text-sm font-semibold text-text-primary">{copy.bestNextMove}</p>
+          <div className="mt-3 border-t border-border pt-3">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-text-tertiary">Decision rule</p>
+            <p className="mt-1 text-sm leading-6 text-text-secondary">{copy.decisionRule}</p>
+          </div>
         </div>
       </div>
       <div className="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">

@@ -40,6 +40,7 @@ describe('guestJourney', () => {
     expect(getGuestJourneyCopy('vault')).toMatchObject({
       title: 'The story stretches past the wedding weekend',
       detail: 'Anniversary notes live later in the story, but the wedding hub, RSVP, travel details, and photos should still be easy to reopen from here.',
+      bestNextMove: expect.stringMatching(/anniversary note|memory/i),
     });
   });
 });

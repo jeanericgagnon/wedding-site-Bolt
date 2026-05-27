@@ -34,6 +34,8 @@ describe('GuestJourneyCompanion', () => {
     expect(screen.getByText(/next useful moves/i)).toBeInTheDocument();
     expect(screen.getByText('Main focus')).toBeInTheDocument();
     expect(screen.getByText(/fix the guest record, then return them to momentum/i)).toBeInTheDocument();
+    expect(screen.getByText('Best next move')).toBeInTheDocument();
+    expect(screen.getByText(/save the corrected guest details/i)).toBeInTheDocument();
     expect(screen.getByText('Decision rule')).toBeInTheDocument();
     expect(screen.getByText(/Correcting details should tighten the path/i)).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Wedding hub' })).toHaveAttribute('href', '/site/ericandkaras?previewGuest=guest-42&previewSurface=public&token=invite-123');
