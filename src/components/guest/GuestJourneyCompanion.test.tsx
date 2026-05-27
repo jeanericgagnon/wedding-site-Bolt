@@ -38,6 +38,11 @@ describe('GuestJourneyCompanion', () => {
     expect(screen.getByText(/save the corrected guest details/i)).toBeInTheDocument();
     expect(screen.getByText('Decision rule')).toBeInTheDocument();
     expect(screen.getByText(/Correcting details should tighten the path/i)).toBeInTheDocument();
+    expect(screen.getByText('current')).toBeInTheDocument();
+    expect(screen.getByText('next')).toBeInTheDocument();
+    expect(screen.getByText('then')).toBeInTheDocument();
+    expect(screen.getByText(/Correct the details cleanly/i)).toBeInTheDocument();
+    expect(screen.getByText(/Return to the real wedding task/i)).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Wedding hub' })).toHaveAttribute('href', '/site/ericandkaras?previewGuest=guest-42&previewSurface=public&token=invite-123');
     expect(screen.getByRole('link', { name: 'Travel details' })).toHaveAttribute('href', '/site/ericandkaras?previewGuest=guest-42&previewSurface=travel&token=invite-123#travel');
     expect(screen.getByRole('link', { name: 'RSVP' })).toHaveAttribute('href', '/rsvp?site=ericandkaras&token=invite-123');

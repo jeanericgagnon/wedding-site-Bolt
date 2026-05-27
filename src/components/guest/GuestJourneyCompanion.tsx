@@ -67,6 +67,15 @@ export const GuestJourneyCompanion: React.FC<GuestJourneyCompanionProps> = ({
           </div>
         </div>
       </div>
+      <div className="mt-4 grid gap-3 md:grid-cols-3">
+        {copy.sequence.map((step) => (
+          <div key={step.status} className="rounded-2xl border border-border bg-white px-4 py-3">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-text-tertiary">{step.status}</p>
+            <p className="mt-1 text-sm font-semibold text-text-primary">{step.title}</p>
+            <p className="mt-1.5 text-sm leading-6 text-text-secondary">{step.detail}</p>
+          </div>
+        ))}
+      </div>
       <div className="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
         {steps.map((step) => (
           <div key={step.key} className={`rounded-xl border px-3 py-2.5 ${getStepTone(step.status)}`}>
