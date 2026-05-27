@@ -439,7 +439,7 @@ export const AcceptCollaboratorInvite: React.FC = () => {
                     </div>
                   </dl>
 
-                  <div className="grid gap-4 rounded-2xl border border-border-subtle bg-white/80 p-4 lg:grid-cols-3">
+                  <div className="grid gap-4 rounded-2xl border border-border-subtle bg-white/80 p-4 lg:grid-cols-2">
                     <div>
                       <p className="text-xs uppercase tracking-[0.18em] text-text-tertiary">Main focus</p>
                       <p className="mt-2 text-sm font-semibold text-text-primary">{collaboratorRoleGuide.focusTitle}</p>
@@ -448,14 +448,12 @@ export const AcceptCollaboratorInvite: React.FC = () => {
                     <div>
                       <p className="text-xs uppercase tracking-[0.18em] text-text-tertiary">Best next move</p>
                       <p className="mt-2 text-sm font-semibold text-text-primary">{collaboratorRoleGuide.nextMove}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs uppercase tracking-[0.18em] text-text-tertiary">Decision rule</p>
-                      <p className="mt-2 text-sm font-semibold text-text-primary">{collaboratorRoleGuide.decisionRule}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs uppercase tracking-[0.18em] text-text-tertiary">Watchout</p>
-                      <p className="mt-2 text-sm font-semibold text-text-primary">{collaboratorRoleGuide.watchout}</p>
+                      <div className="mt-3 border-t border-border-subtle pt-3">
+                        <p className="text-xs uppercase tracking-[0.18em] text-text-tertiary">Decision rule</p>
+                        <p className="mt-2 text-sm font-semibold text-text-primary">{collaboratorRoleGuide.decisionRule}</p>
+                        <p className="mt-3 text-xs uppercase tracking-[0.18em] text-text-tertiary">Watchout</p>
+                        <p className="mt-2 text-sm font-semibold text-text-primary">{collaboratorRoleGuide.watchout}</p>
+                      </div>
                     </div>
                   </div>
                   <div className="mt-4 grid gap-3 lg:grid-cols-3">
