@@ -16,6 +16,7 @@ export interface WeddingIdentityExportKitInput {
   coupleNames: string;
   publicSiteUrl: string;
   isPublished?: boolean | null;
+  privacyMode?: 'public' | 'password_protected' | 'invite_only' | null;
   weddingDate?: string | null;
   venueName?: string | null;
   templateName?: string | null;
@@ -128,6 +129,12 @@ export function buildWeddingIdentityExportKit(input: WeddingIdentityExportKitInp
   const hasDate = hasValue(input.weddingDate);
   const hasVenue = hasValue(input.venueName);
   const launchIsLive = input.isPublished !== false;
+  const restrictedAccess = input.privacyMode === 'password_protected' || input.privacyMode === 'invite_only';
+  const privacyModeLabel = input.privacyMode === 'invite_only'
+    ? 'invite-only'
+    : input.privacyMode === 'password_protected'
+      ? 'password-protected'
+      : 'public';
   const templateName = input.templateName?.trim() || 'Current site theme';
   const defaultLanguage = input.defaultLanguage?.trim() || 'en';
 
@@ -196,6 +203,7 @@ export function buildWeddingIdentityExportKit(input: WeddingIdentityExportKitInp
 
   const warnings = [
     ...(!hasPublicUrl ? ['Set a public site URL before printing QR-based assets.'] : []),
+    ...(hasPublicUrl && restrictedAccess ? [`The site is currently ${privacyModeLabel}, so guest-facing packs should only be shared with the right access instructions.`] : []),
     ...(!hasDate ? ['Add a wedding date for print inserts.'] : []),
     ...(!hasVenue ? ['Add a venue name for detail inserts.'] : []),
   ];
@@ -219,11 +227,15 @@ export function buildWeddingIdentityExportKit(input: WeddingIdentityExportKitInp
         status: 'current',
         title: !hasPublicUrl
           ? 'Set the public site first'
+          : restrictedAccess
+            ? 'Confirm the guest access instructions first'
           : !launchIsLive
             ? 'Make the guest-facing site live first'
             : 'Share one safe guest-facing pack',
         detail: !hasPublicUrl
           ? 'The public site URL is the first ingredient for safe QR cards, story graphics, and RSVP handoff.'
+          : restrictedAccess
+            ? `These packs point to a ${privacyModeLabel} site, so make sure guests will receive the right password or invite path before you share them widely.`
           : !launchIsLive
             ? 'The URL is set, but the guest-facing site still needs one live publish before print and share packs feel trustworthy.'
             : 'Lead with the share graphic, RSVP card, and public QR so every guest-facing surface starts from the same URL.',
@@ -258,7 +270,9 @@ export function buildWeddingIdentityExportKit(input: WeddingIdentityExportKitInp
         id: 'share-now',
         label: 'Share-now pack',
         detail: hasPublicUrl
-          ? launchIsLive
+          ? restrictedAccess
+            ? `The share pack is assembled, but it should travel with the ${privacyModeLabel === 'invite-only' ? 'invite-only access path' : 'password instructions'} so guests are not stranded.`
+            : launchIsLive
             ? 'Use the share graphic, RSVP card, and public QR card when you need one fast guest-facing set.'
             : 'The share pack is assembled, but it should wait until the guest-facing site has one real live publish.'
           : 'Set the public site URL first so the guest-facing share pack can be generated safely.',
@@ -266,7 +280,11 @@ export function buildWeddingIdentityExportKit(input: WeddingIdentityExportKitInp
         bestFor: 'Best when you need one quick guest-facing kit for text, DM, or email right now.',
         includes: ['Share graphic', 'RSVP card', 'Public QR card'],
         nextStep: hasPublicUrl
-          ? launchIsLive
+          ? restrictedAccess
+            ? privacyModeLabel === 'invite-only'
+              ? 'Pair the share pack with the invite-only guest path so the right people land in the right place without confusion.'
+              : 'Share the password instructions with the pack so guests can actually use the link you hand them.'
+            : launchIsLive
             ? 'Send the share graphic first, then reuse the same URL on RSVP and QR surfaces.'
             : 'Publish the live site once, then send the share graphic so every guest-facing link resolves with confidence.'
           : 'Set the public site URL so the guest-facing share pack is safe to copy or print.',

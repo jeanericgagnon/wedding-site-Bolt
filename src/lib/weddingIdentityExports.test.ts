@@ -74,6 +74,22 @@ describe('weddingIdentityExports', () => {
     expect(kit.quickPacks.find((pack) => pack.id === 'share-now')?.nextStep).toMatch(/Publish the live site once/i);
   });
 
+  it('keeps guest-facing export guidance honest when the site is access-restricted', () => {
+    const kit = buildWeddingIdentityExportKit({
+      coupleNames: 'Maya & Leo',
+      publicSiteUrl: 'https://maya-leo.dayof.love',
+      isPublished: true,
+      privacyMode: 'password_protected',
+      weddingDate: '2026-09-12',
+      venueName: 'Garden House',
+    });
+
+    expect(kit.warnings).toContain('The site is currently password-protected, so guest-facing packs should only be shared with the right access instructions.');
+    expect(kit.handoffSequence[0]?.title).toMatch(/access instructions/i);
+    expect(kit.quickPacks.find((pack) => pack.id === 'share-now')?.detail).toMatch(/password/i);
+    expect(kit.quickPacks.find((pack) => pack.id === 'share-now')?.nextStep).toMatch(/password instructions/i);
+  });
+
   it('builds a planner-safe manifest without private guest access tokens', () => {
     const kit = buildWeddingIdentityExportKit({
       coupleNames: 'Maya & Leo',
