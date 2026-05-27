@@ -15,13 +15,19 @@ function toIcsDateTime(iso: string): string {
   return `${d.getUTCFullYear()}${pad(d.getUTCMonth() + 1)}${pad(d.getUTCDate())}T${pad(d.getUTCHours())}${pad(d.getUTCMinutes())}00Z`;
 }
 
+function hasCalendarReadyTimestamp(value?: string): value is string {
+  if (!value) return false;
+  const date = new Date(value);
+  return !Number.isNaN(date.getTime());
+}
+
 function escapeIcs(text: string): string {
   return text.replace(/\\/g, '\\\\').replace(/\n/g, '\\n').replace(/,/g, '\\,').replace(/;/g, '\\;');
 }
 
 function downloadIcs(data: WeddingDataV1, onlyEventId?: string) {
   const scheduleItems = (onlyEventId ? data.schedule.filter(s => s.id === onlyEventId) : data.schedule)
-    .filter(s => !!s.startTimeISO);
+    .filter((s) => hasCalendarReadyTimestamp(s.startTimeISO));
   if (!scheduleItems.length) return;
 
   const venueMap = new Map(data.venues.map(v => [v.id, v]));
@@ -40,7 +46,7 @@ function downloadIcs(data: WeddingDataV1, onlyEventId?: string) {
     lines.push(`UID:${uid}`);
     lines.push(`DTSTAMP:${toIcsDateTime(new Date().toISOString())}`);
     lines.push(`DTSTART:${toIcsDateTime(item.startTimeISO!)}`);
-    if (item.endTimeISO) lines.push(`DTEND:${toIcsDateTime(item.endTimeISO)}`);
+    if (hasCalendarReadyTimestamp(item.endTimeISO)) lines.push(`DTEND:${toIcsDateTime(item.endTimeISO)}`);
     lines.push(`SUMMARY:${escapeIcs(item.label)}`);
     if (venue?.name) lines.push(`LOCATION:${escapeIcs([venue.name, venue.address].filter(Boolean).join(' — '))}`);
     if (item.notes) lines.push(`DESCRIPTION:${escapeIcs(item.notes)}`);
@@ -59,6 +65,10 @@ function downloadIcs(data: WeddingDataV1, onlyEventId?: string) {
   URL.revokeObjectURL(url);
 }
 
+function hasCalendarReadyScheduleItems(data: WeddingDataV1) {
+  return data.schedule.some((item) => hasCalendarReadyTimestamp(item.startTimeISO));
+}
+
 function TimezoneBadge({ tz }: { tz: string }) {
   return <span className="inline-flex items-center px-2 py-1 text-xs rounded-full border border-border bg-surface-subtle text-text-secondary">Times shown in {tz}</span>;
 }
@@ -68,6 +78,7 @@ export const TravelSection: React.FC<Props> = ({ data, instance }) => {
   const { venues, travel } = data;
   const timezone = data.event?.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone || 'local time';
   const hasContent = venues.length > 0 || travel?.notes || travel?.flightInfo || travel?.hotelInfo || travel?.parkingInfo;
+  const canDownloadCalendar = hasCalendarReadyScheduleItems(data);
   const title = readBuilderValue(settings.title as string | { value: string } | undefined, 'Travel & Accommodations');
 
   return (
@@ -81,7 +92,7 @@ export const TravelSection: React.FC<Props> = ({ data, instance }) => {
         {(settings.showTimezoneBadge !== false || settings.showIcsButton !== false) && (
           <div className="flex flex-wrap items-center justify-center gap-2 mb-6">
             {settings.showTimezoneBadge !== false && <TimezoneBadge tz={timezone} />}
-            {settings.showIcsButton !== false && data.schedule.length > 0 && (
+            {settings.showIcsButton !== false && canDownloadCalendar && (
               <button
                 onClick={() => downloadIcs(data)}
                 className="inline-flex items-center px-3.5 py-2 text-xs font-medium rounded-full border border-border bg-surface hover:border-primary hover:text-primary transition-colors"
@@ -169,6 +180,7 @@ export const TravelCards: React.FC<Props> = ({ data, instance }) => {
   const { settings } = instance;
   const { venues, travel } = data;
   const timezone = data.event?.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone || 'local time';
+  const canDownloadCalendar = hasCalendarReadyScheduleItems(data);
   const title = readBuilderValue(settings.title as string | { value: string } | undefined, 'Travel & Accommodations');
 
   return (
@@ -185,7 +197,7 @@ export const TravelCards: React.FC<Props> = ({ data, instance }) => {
         {(settings.showTimezoneBadge !== false || settings.showIcsButton !== false) && (
           <div className="flex flex-wrap items-center justify-center gap-2 mb-8">
             {settings.showTimezoneBadge !== false && <TimezoneBadge tz={timezone} />}
-            {settings.showIcsButton !== false && data.schedule.length > 0 && (
+            {settings.showIcsButton !== false && canDownloadCalendar && (
               <button
                 onClick={() => downloadIcs(data)}
                 className="inline-flex items-center px-3.5 py-2 text-xs font-medium rounded-full border border-border bg-surface hover:border-primary hover:text-primary transition-colors"
@@ -266,6 +278,7 @@ export const TravelLocalGuide: React.FC<Props> = ({ data, instance }) => {
   const { settings } = instance;
   const { venues, travel } = data;
   const timezone = data.event?.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone || 'local time';
+  const canDownloadCalendar = hasCalendarReadyScheduleItems(data);
   const title = readBuilderValue(settings.title as string | { value: string } | undefined, 'Travel & Local Guide');
 
   const localTips = (travel?.notes || '')
@@ -288,7 +301,7 @@ export const TravelLocalGuide: React.FC<Props> = ({ data, instance }) => {
         {(settings.showTimezoneBadge !== false || settings.showIcsButton !== false) && (
           <div className="flex flex-wrap items-center justify-center gap-2 mb-6">
             {settings.showTimezoneBadge !== false && <TimezoneBadge tz={timezone} />}
-            {settings.showIcsButton !== false && data.schedule.length > 0 && (
+            {settings.showIcsButton !== false && canDownloadCalendar && (
               <button
                 onClick={() => downloadIcs(data)}
                 className="inline-flex items-center px-3.5 py-2 text-xs font-medium rounded-full border border-border bg-surface hover:border-primary hover:text-primary transition-colors"

@@ -103,4 +103,34 @@ describe('TravelSection', () => {
 
     expect(screen.getByText('Local weekend guide')).toBeInTheDocument();
   });
+
+  it('only shows the calendar download when schedule items have real timestamps', () => {
+    const invalidTimeData = createWeddingData();
+    invalidTimeData.schedule = [
+      { id: 'event-1', label: 'Ceremony', startTimeISO: '4:00 PM' },
+    ] as WeddingDataV1['schedule'];
+
+    const { rerender } = render(
+      <TravelSection
+        data={invalidTimeData}
+        instance={makeInstance({})}
+      />,
+    );
+
+    expect(screen.queryByText('Add weekend plans to your calendar (.ics)')).not.toBeInTheDocument();
+
+    const validTimeData = createWeddingData();
+    validTimeData.schedule = [
+      { id: 'event-1', label: 'Ceremony', startTimeISO: '2026-06-20T21:00:00.000Z' },
+    ] as WeddingDataV1['schedule'];
+
+    rerender(
+      <TravelSection
+        data={validTimeData}
+        instance={makeInstance({})}
+      />,
+    );
+
+    expect(screen.getByText('Add weekend plans to your calendar (.ics)')).toBeInTheDocument();
+  });
 });
