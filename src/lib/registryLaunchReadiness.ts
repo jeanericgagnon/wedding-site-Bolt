@@ -12,6 +12,12 @@ export interface RegistryLaunchReadinessItem {
   count: number;
 }
 
+export interface RegistryLaunchReadinessSequenceItem {
+  status: 'current' | 'next' | 'then';
+  title: string;
+  detail: string;
+}
+
 export interface RegistryLaunchReadiness {
   status: RegistryLaunchReadinessStatus;
   headline: string;
@@ -21,6 +27,7 @@ export interface RegistryLaunchReadiness {
   bestNextMove: string;
   decisionRule: string;
   watchout: string;
+  sequence: RegistryLaunchReadinessSequenceItem[];
   reviewCount: number;
   readyCount: number;
   items: RegistryLaunchReadinessItem[];
@@ -91,6 +98,18 @@ function hasSafeLink(value: string | null | undefined): boolean {
 function hasUnsafeLink(value: string | null | undefined): boolean {
   const raw = (value ?? '').trim();
   return Boolean(raw) && !hasSafeLink(raw);
+}
+
+function buildRegistryReadinessSequence(
+  current: string,
+  next: string,
+  then: string,
+): RegistryLaunchReadinessSequenceItem[] {
+  return [
+    { status: 'current', title: 'Current', detail: current },
+    { status: 'next', title: 'Next', detail: next },
+    { status: 'then', title: 'Then', detail: then },
+  ];
 }
 
 function safePaymentLinkCount(item: RegistryItem): number {
@@ -205,6 +224,23 @@ export function buildRegistryLaunchReadiness(items: RegistryItem[], ledger: Regi
     : status === 'needs-review'
       ? 'Every missing link or half-configured fund teaches guests to doubt the rest of the registry, even when most of it is already fine.'
       : 'Once the registry feels trustworthy, the main risk is reopening it with weaker additions that make the whole lane feel less curated.';
+  const sequence = status === 'empty'
+    ? buildRegistryReadinessSequence(
+        'Treat the first real gift or fund path as the work that makes the registry exist for guests at all.',
+        'Add one shareable gift or fund path that a guest can actually use without translation or fallback.',
+        'Then preview the registry once and expand the list only after that first path already feels trustworthy.',
+      )
+    : status === 'needs-review'
+      ? buildRegistryReadinessSequence(
+          'Use the missing links or half-configured funds as the true blockers instead of hiding them behind broader registry polish.',
+          'Repair the broken share paths first so guests can move through the visible registry without hitting dead ends.',
+          'Then return to curation, copy, or expansion only after the share basics feel quiet and dependable.',
+        )
+      : buildRegistryReadinessSequence(
+          'Keep the current share paths steady now that guests can already trust what is visible.',
+          'Do one quick guest-eye preview to confirm the links still feel clean and obvious.',
+          'Then leave the registry stable unless a new item can match the same trust level on day one.',
+        );
 
   return {
     status,
@@ -223,6 +259,7 @@ export function buildRegistryLaunchReadiness(items: RegistryItem[], ledger: Regi
     bestNextMove,
     decisionRule,
     watchout,
+    sequence,
     reviewCount,
     readyCount,
     items: itemsOut,

@@ -89,6 +89,11 @@ type RegistryLaunchReadiness = {
   bestNextMove?: string;
   decisionRule?: string;
   watchout?: string;
+  sequence?: Array<{
+    status: 'current' | 'next' | 'then';
+    title: string;
+    detail: string;
+  }>;
   reviewCount: number;
   items: Array<{ id: string; label: string; detail: string; tone: string }>;
 };
@@ -1214,6 +1219,27 @@ export function RegistryDashboardRouteContent(props: {
                     <p className="text-xs text-text-tertiary">Watchout</p>
                     <p className="mt-1 text-sm text-text-secondary">{props.registryLaunchReadiness.watchout}</p>
                   </div>
+                </div>
+              ) : null}
+              {props.registryLaunchReadiness.sequence?.length ? (
+                <div className="mt-4 grid gap-3 md:grid-cols-3">
+                  {props.registryLaunchReadiness.sequence.map((step) => (
+                    <div key={`${step.status}-${step.title}`} className="rounded-xl border border-border-subtle bg-surface-subtle/20 p-4">
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-text-tertiary">{step.status}</p>
+                        <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${
+                          step.status === 'current'
+                            ? 'border border-primary/20 bg-primary-light text-primary'
+                            : step.status === 'next'
+                              ? 'border border-warning/20 bg-warning-light text-warning'
+                              : 'border border-border-subtle bg-white text-text-secondary'
+                        }`}>
+                          {step.title}
+                        </span>
+                      </div>
+                      <p className="mt-2 text-xs leading-5 text-text-secondary">{step.detail}</p>
+                    </div>
+                  ))}
                 </div>
               ) : null}
               <div className="mt-4 space-y-2.5">

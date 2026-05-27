@@ -977,6 +977,8 @@ describe('RegistryDashboardRouteContent', () => {
     expect(derived.registryLaunchReadiness.bestNextMove).toMatch(/guest-eye preview|leave the registry stable/i);
     expect(derived.registryLaunchReadiness.decisionRule).toMatch(/protect that trust/i);
     expect(derived.registryLaunchReadiness.watchout).toMatch(/weaker additions|less curated/i);
+    expect(derived.registryLaunchReadiness.sequence?.map((step) => step.status)).toEqual(['current', 'next', 'then']);
+    expect(derived.registryLaunchReadiness.sequence?.[1]?.detail).toMatch(/guest-eye preview/i);
     expect(derived.registryLaunchReadiness.items.find((item) => item.id === 'purchase-state')?.detail).toBe('No gifts are marked purchased yet.');
     expect(derived.registryLaunchReadiness.items.find((item) => item.id === 'hide-purchased')?.detail).toBe('No gifts hide after purchase right now.');
   });
@@ -1002,6 +1004,7 @@ describe('RegistryDashboardRouteContent', () => {
     expect(derived.registryLaunchReadiness.bestNextMove).toMatch(/one gift or fund with a real share path/i);
     expect(derived.registryLaunchReadiness.decisionRule).toMatch(/small honest registry/i);
     expect(derived.registryLaunchReadiness.watchout).toMatch(/blank or half-real/i);
+    expect(derived.registryLaunchReadiness.sequence?.[0]?.detail).toMatch(/first real gift or fund path/i);
     expect(derived.registryLaunchReadiness.items.find((item) => item.id === 'external-links')?.detail).toBe('No product gifts are listed yet, so there are no gift links to share right now.');
     expect(derived.registryLaunchReadiness.items.find((item) => item.id === 'cash-funds')?.detail).toBe('No cash funds are listed right now, which is fine for a gift-only registry.');
   });
@@ -2692,6 +2695,11 @@ describe('RegistryDashboardRouteContent', () => {
           bestNextMove: 'Do one quick guest-eye preview of the current links, then leave the registry stable unless a new gift can match that same clarity.',
           decisionRule: 'If the links and share paths already hold, protect that trust and only broaden the registry when the additions stay equally clean.',
           watchout: 'Once the registry feels trustworthy, the main risk is reopening it with weaker additions that make the whole lane feel less curated.',
+          sequence: [
+            { status: 'current', title: 'Current', detail: 'Keep the current share paths steady now that guests can already trust what is visible.' },
+            { status: 'next', title: 'Next', detail: 'Do one quick guest-eye preview to confirm the links still feel clean and obvious.' },
+            { status: 'then', title: 'Then', detail: 'Then leave the registry stable unless a new item can match the same trust level on day one.' },
+          ],
           reviewCount: 0,
           items: [
             { id: 'external-links', label: 'Gift links ready to share', detail: '1 product gift is ready to share (100% coverage).', tone: 'ready' },
@@ -2726,6 +2734,7 @@ describe('RegistryDashboardRouteContent', () => {
     expect(screen.getByText('Keep the registry easy to trust at a glance')).toBeInTheDocument();
     expect(screen.getByText(/guest-eye preview of the current links/i)).toBeInTheDocument();
     expect(screen.getByText(/weaker additions that make the whole lane feel less curated/i)).toBeInTheDocument();
+    expect(screen.getByText('Then leave the registry stable unless a new item can match the same trust level on day one.')).toBeInTheDocument();
     expect(screen.getByText('Turn the most visible open gifts into confident choices')).toBeInTheDocument();
     expect(screen.getByText(/tighten the open top gifts first/i)).toBeInTheDocument();
     expect(screen.getByText(/improve their clarity before you spend energy polishing lower-priority items/i)).toBeInTheDocument();
@@ -2788,6 +2797,11 @@ describe('RegistryDashboardRouteContent', () => {
           bestNextMove: 'Open the share blockers first, clear the missing gift or fund paths, and only then come back to polish or expansion.',
           decisionRule: 'When share blockers exist, clear those before you polish copy or expand the list.',
           watchout: 'Every missing link or half-configured fund teaches guests to doubt the rest of the registry, even when most of it is already fine.',
+          sequence: [
+            { status: 'current', title: 'Current', detail: 'Use the missing links or half-configured funds as the true blockers instead of hiding them behind broader registry polish.' },
+            { status: 'next', title: 'Next', detail: 'Repair the broken share paths first so guests can move through the visible registry without hitting dead ends.' },
+            { status: 'then', title: 'Then', detail: 'Then return to curation, copy, or expansion only after the share basics feel quiet and dependable.' },
+          ],
           reviewCount: 2,
           items: [
             { id: 'external-links', label: 'Gift links ready to share', detail: '0 product gifts are ready to share (0% coverage). 1 product gift still need a share link.', tone: 'review' },
@@ -2821,6 +2835,7 @@ describe('RegistryDashboardRouteContent', () => {
     expect(screen.getByText('Clear the share blockers before the registry starts teaching guests the wrong behavior')).toBeInTheDocument();
     expect(screen.getByText(/Open the share blockers first/i)).toBeInTheDocument();
     expect(screen.getByText('When share blockers exist, clear those before you polish copy or expand the list.')).toBeInTheDocument();
+    expect(screen.getByText(/Repair the broken share paths first/i)).toBeInTheDocument();
     expect(screen.getByText('2 to check')).toBeInTheDocument();
     expect(screen.getAllByText('Needs a look').length).toBeGreaterThan(0);
     expect(screen.getByText('Fund links ready to share')).toBeInTheDocument();
