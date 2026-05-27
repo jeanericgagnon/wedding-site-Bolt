@@ -2998,10 +2998,6 @@ export const DashboardMessages: React.FC = () => {
               <h2 className="mt-2 text-2xl font-semibold text-text-primary">{dayOfDispatch.title}</h2>
               <p className="mt-2 text-sm text-text-secondary">{dayOfDispatch.detail}</p>
             </div>
-            <div className="rounded-2xl border border-border-subtle bg-surface-subtle/30 px-4 py-3 md:min-w-[220px]">
-              <p className="text-[11px] uppercase tracking-[0.22em] text-text-tertiary">Live message posture</p>
-              <p className="mt-1 text-xs text-text-secondary">This keeps operational messaging tied to the real wedding timeline instead of turning the composer into a second command center.</p>
-            </div>
           </div>
           <div className="mt-4 flex flex-wrap gap-2">
             {dayOfDispatch.badges.map((badge) => (
@@ -3009,6 +3005,17 @@ export const DashboardMessages: React.FC = () => {
                 {badge}
               </span>
             ))}
+          </div>
+          <div className="mt-4 grid gap-3 lg:grid-cols-2">
+            <div className="rounded-2xl border border-border-subtle bg-surface-subtle/20 px-4 py-4">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-text-tertiary">Main focus</p>
+              <p className="mt-1 text-sm font-semibold text-text-primary">{dayOfDispatch.focusTitle}</p>
+              <p className="mt-2 text-xs leading-5 text-text-secondary">{dayOfDispatch.focusDetail}</p>
+            </div>
+            <div className="rounded-2xl border border-border-subtle bg-surface-subtle/20 px-4 py-4">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-text-tertiary">Decision rule</p>
+              <p className="mt-1 text-xs leading-5 text-text-secondary">{dayOfDispatch.decisionRule}</p>
+            </div>
           </div>
           <div className="mt-4 grid gap-3 md:grid-cols-3">
             {dayOfDispatch.sequence.map((step) => (

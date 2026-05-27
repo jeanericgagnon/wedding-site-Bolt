@@ -11,6 +11,9 @@ export interface DayOfDispatchSnapshot {
 export interface DayOfDispatchModel {
   title: string;
   detail: string;
+  focusTitle: string;
+  focusDetail: string;
+  decisionRule: string;
   badges: string[];
   sequence: Array<{
     id: 'stage' | 'send' | 'settle';
@@ -36,6 +39,9 @@ export function buildDayOfDispatchModel(snapshot: DayOfDispatchSnapshot): DayOfD
     return {
       title: 'Day-of messaging can stay in the background for now',
       detail: 'You do not need a live update plan yet. Keep guest contact clean and let the itinerary mature before you stage a true day-of note.',
+      focusTitle: 'Protect clarity before you open a live dispatch lane',
+      focusDetail: 'Earlier in the runway, the job is keeping guest details, RSVP truth, and itinerary basics reliable enough that a future day-of note will not have to repair old confusion.',
+      decisionRule: 'Do not use day-of messaging to compensate for guest-list or itinerary drift that should be fixed upstream.',
       badges: [
         snapshot.daysUntilWedding === null ? 'Wedding date not set' : `${snapshot.daysUntilWedding} days out`,
         pluralize(snapshot.pendingGuests, 'pending RSVP'),
@@ -71,6 +77,9 @@ export function buildDayOfDispatchModel(snapshot: DayOfDispatchSnapshot): DayOfD
     return {
       title: 'A day-of update is already due and should go out first',
       detail: 'The most helpful move now is sending the overdue operational update before you draft anything new.',
+      focusTitle: 'Send the live note that is already owed',
+      focusDetail: 'Once a day-of operational update is overdue, the main risk is overlapping or contradictory messaging. Clear the due note first, then reassess.',
+      decisionRule: 'Delivery order beats copy perfection when guests are already waiting on operational truth.',
       badges: [
         pluralize(snapshot.overdueDayOfCount, 'due update'),
         snapshot.venueName ? snapshot.venueName : 'Venue still flexible',
@@ -106,6 +115,9 @@ export function buildDayOfDispatchModel(snapshot: DayOfDispatchSnapshot): DayOfD
     return {
       title: 'The day-of message lane is already staged',
       detail: 'You have a live operational note in motion, so the next best move is checking whether the itinerary and guest list still support it cleanly.',
+      focusTitle: 'Keep the active live note aligned with reality',
+      focusDetail: 'When a message is already scheduled or recently sent, the work shifts from drafting into alignment: itinerary truth, audience fit, and whether anything truly changed.',
+      decisionRule: 'Stability beats churn once the live note is already in flight.',
       badges: [
         snapshot.scheduledDayOfCount > 0 ? pluralize(snapshot.scheduledDayOfCount, 'scheduled update') : pluralize(snapshot.sentDayOfCount, 'sent update'),
         `${snapshot.itineraryAudienceCount} itinerary audience${snapshot.itineraryAudienceCount === 1 ? '' : 's'}`,
@@ -144,6 +156,15 @@ export function buildDayOfDispatchModel(snapshot: DayOfDispatchSnapshot): DayOfD
     detail: snapshot.itineraryAudienceCount > 0
       ? 'The itinerary audience and guest list are ready enough that one short operational note can carry the day without extra clutter.'
       : 'Before sending anything operational, make sure the itinerary and audience segments are specific enough to support a clear guest update.',
+    focusTitle: snapshot.itineraryAudienceCount > 0
+      ? 'Use one calm note to carry the live day'
+      : 'Tighten the audience and schedule before you broadcast',
+    focusDetail: snapshot.itineraryAudienceCount > 0
+      ? 'When the schedule spine and audience are real enough, one operational note should handle arrival timing, orientation, and where guests should look for updates.'
+      : 'A day-of note only helps when the guest segments and itinerary anchors are specific enough to make the message trustworthy.',
+    decisionRule: snapshot.itineraryAudienceCount > 0
+      ? 'One good operational message beats a stream of anxious check-ins.'
+      : 'Audience precision beats urgency when the operational note would otherwise stay vague.',
     badges: [
       weddingToday ? 'Wedding day' : `${snapshot.daysUntilWedding} days left`,
       snapshot.itineraryAudienceCount > 0 ? `${snapshot.itineraryAudienceCount} itinerary audience${snapshot.itineraryAudienceCount === 1 ? '' : 's'}` : 'No itinerary segments yet',
