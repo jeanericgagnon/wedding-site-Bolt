@@ -25,6 +25,7 @@ import {
   getImportSummaryTone,
   summarizeImportRepairCount,
 } from './builderV2WorkflowGuidance';
+import { buildBuilderV2DocumentAudit, type BuilderV2DocumentAuditIssue } from './builderV2DocumentAudit';
 import { buildBuilderV2HandoffGuidance } from './builderV2HandoffGuidance';
 import { buildBuilderV2StructureGuidance } from './builderV2StructureGuidance';
 import { buildBuilderV2SelectionGuidance } from './builderV2SelectionGuidance';
@@ -869,6 +870,19 @@ export const BuilderV2Lab: React.FC = () => {
     }),
     [previewDevice, sectionBlocks, sections],
   );
+  const documentAudit = useMemo(
+    () => buildBuilderV2DocumentAudit({
+      sections: sections.map((section) => ({
+        id: section.id,
+        title: section.title,
+        enabled: section.enabled,
+        blockCount: (sectionBlocks[section.id] ?? []).length,
+        warningCount: (sectionBlocks[section.id] ?? []).filter((block) => getBlockValidationWarning(block)).length,
+      })),
+      previewDevice,
+    }),
+    [previewDevice, sectionBlocks, sections],
+  );
   const selectedSectionLimit = useMemo(() => getSectionLimitConfig(selected.type), [selected.type]);
   const recommendedBlockTypesForSelected = useMemo(
     () => getRecommendedBlockTypes(selected.type, addableBlocksForSelected),
@@ -1037,6 +1051,22 @@ export const BuilderV2Lab: React.FC = () => {
         break;
     }
   }, [handoffGuidance, scrollToPreviewSection, selectSection]);
+
+  const reviewDocumentAuditIssue = useCallback((issue: BuilderV2DocumentAuditIssue) => {
+    if (issue.actionLabel === 'Review on mobile') {
+      setPreviewDevice('mobile');
+      setFocusPreview(true);
+      setShowMinimap(true);
+      scrollToPreviewSection(issue.sectionId);
+      return;
+    }
+
+    selectSection(issue.sectionId, false, false, true, true);
+    setFocusPreview(false);
+    setShowStructure(issue.actionLabel === 'Review hidden lane');
+    setShowProperties(true);
+    setPropertyTab('content');
+  }, [scrollToPreviewSection, selectSection]);
 
   const applyImportedDocument = (doc: BuilderV2Document, report: BuilderV2ImportReport, sourceLabel: string) => {
     const nextSections = doc.sections.map((sec) => ({
@@ -1366,6 +1396,43 @@ export const BuilderV2Lab: React.FC = () => {
                 </div>
               </div>
               <div className="rounded-md border border-border-subtle bg-white px-3 py-3">
+                <div className="rounded-md border border-border-subtle bg-surface-subtle px-2.5 py-2">
+                  <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary">Audit queue</p>
+                  <p className="mt-1 text-sm font-semibold text-text-primary">{documentAudit.headline}</p>
+                  <p className="mt-1 text-xs leading-relaxed text-text-secondary">{documentAudit.detail}</p>
+                </div>
+                {documentAudit.issues.length > 0 && (
+                  <div className="mt-3 space-y-2">
+                    {documentAudit.issues.slice(0, 4).map((issue) => (
+                      <div key={`${issue.sectionId}-${issue.title}`} className="rounded-md border border-border-subtle bg-white px-2.5 py-2.5">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-2">
+                              <span className={`rounded-full border px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.14em] ${
+                                issue.severity === 'critical'
+                                  ? 'border-rose-200 bg-rose-50 text-rose-800'
+                                  : issue.severity === 'warning'
+                                    ? 'border-amber-200 bg-amber-50 text-amber-800'
+                                    : 'border-sky-200 bg-sky-50 text-sky-800'
+                              }`}>
+                                {issue.severity}
+                              </span>
+                              <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary">{issue.sectionTitle}</p>
+                            </div>
+                            <p className="mt-1 text-sm font-semibold text-text-primary">{issue.title}</p>
+                            <p className="mt-1 text-xs leading-relaxed text-text-secondary">{issue.detail}</p>
+                          </div>
+                          <button
+                            onClick={() => reviewDocumentAuditIssue(issue)}
+                            className="shrink-0 rounded-md border border-border-subtle bg-surface-subtle px-2.5 py-2 text-[11px] font-semibold text-text-primary hover:border-primary/40 hover:bg-primary/5"
+                          >
+                            {issue.actionLabel}
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
                 <div className="grid gap-2 md:grid-cols-2">
                   <div className="rounded-md border border-border-subtle bg-surface-subtle px-2.5 py-2">
                     <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary">Export read</p>
@@ -2671,11 +2738,51 @@ export const BuilderV2Lab: React.FC = () => {
               </div>
 
               <div className="grid gap-3 md:grid-cols-2">
-                <div className="rounded-md border border-border-subtle bg-surface-subtle px-3 py-3">
-                  <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary">Export read</p>
-                  <p className="mt-1 text-sm font-semibold text-text-primary">{handoffGuidance.exportHeadline}</p>
-                  <p className="mt-1 text-xs leading-relaxed text-text-secondary">{handoffGuidance.exportDetail}</p>
-                </div>
+                  <div className="rounded-md border border-border-subtle bg-surface-subtle px-3 py-3">
+                    <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary">Audit queue</p>
+                    <p className="mt-1 text-sm font-semibold text-text-primary">{documentAudit.headline}</p>
+                    <p className="mt-1 text-xs leading-relaxed text-text-secondary">{documentAudit.detail}</p>
+                    {documentAudit.issues.length > 0 && (
+                      <div className="mt-3 space-y-2">
+                        {documentAudit.issues.slice(0, 6).map((issue) => (
+                          <div key={`export-${issue.sectionId}-${issue.title}`} className="rounded-md border border-border-subtle bg-white px-2.5 py-2.5">
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="min-w-0">
+                                <div className="flex items-center gap-2">
+                                  <span className={`rounded-full border px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.14em] ${
+                                    issue.severity === 'critical'
+                                      ? 'border-rose-200 bg-rose-50 text-rose-800'
+                                      : issue.severity === 'warning'
+                                        ? 'border-amber-200 bg-amber-50 text-amber-800'
+                                        : 'border-sky-200 bg-sky-50 text-sky-800'
+                                  }`}>
+                                    {issue.severity}
+                                  </span>
+                                  <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary">{issue.sectionTitle}</p>
+                                </div>
+                                <p className="mt-1 text-xs font-semibold text-text-primary">{issue.title}</p>
+                                <p className="mt-1 text-xs leading-relaxed text-text-secondary">{issue.detail}</p>
+                              </div>
+                              <button
+                                onClick={() => {
+                                  setShowExportPanel(false);
+                                  reviewDocumentAuditIssue(issue);
+                                }}
+                                className="shrink-0 rounded-md border border-border-subtle bg-surface-subtle px-2.5 py-2 text-[11px] font-semibold text-text-primary hover:border-primary/40 hover:bg-primary/5"
+                              >
+                                {issue.actionLabel}
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  <div className="rounded-md border border-border-subtle bg-surface-subtle px-3 py-3">
+                    <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary">Export read</p>
+                    <p className="mt-1 text-sm font-semibold text-text-primary">{handoffGuidance.exportHeadline}</p>
+                    <p className="mt-1 text-xs leading-relaxed text-text-secondary">{handoffGuidance.exportDetail}</p>
+                  </div>
                 <div className="rounded-md border border-border-subtle bg-surface-subtle px-3 py-3">
                   <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary">Copy read</p>
                   <p className="mt-1 text-sm font-semibold text-text-primary">{handoffGuidance.copyHeadline}</p>
