@@ -278,6 +278,108 @@ const getLegacyDirectionsTransport = (settings: Record<string, unknown> | undefi
     .filter((item) => item.title || item.note)
 );
 
+const getLegacyQuotes = (settings: Record<string, unknown> | undefined) => (
+  getSettingRecordList<{
+    id?: string;
+    text?: string;
+    author?: string;
+    role?: string;
+    photo?: string;
+  }>(settings, 'quotes')
+    .map((item, index) => ({
+      id: typeof item.id === 'string' && item.id.trim() ? item.id.trim() : `quote-${index + 1}`,
+      text: typeof item.text === 'string' && item.text.trim() ? item.text.trim() : '',
+      author: typeof item.author === 'string' && item.author.trim() ? item.author.trim() : '',
+      role: typeof item.role === 'string' && item.role.trim() ? item.role.trim() : '',
+      photo: typeof item.photo === 'string' && item.photo.trim() ? item.photo.trim() : '',
+    }))
+    .filter((item) => item.text || item.author || item.role || item.photo)
+);
+
+const getLegacyMenuCourses = (settings: Record<string, unknown> | undefined) => (
+  getSettingRecordList<{
+    id?: string;
+    label?: string;
+    items?: Array<{
+      id?: string;
+      name?: string;
+      description?: string;
+      dietary?: string[];
+    }>;
+  }>(settings, 'courses')
+    .map((course, courseIndex) => ({
+      id: typeof course.id === 'string' && course.id.trim() ? course.id.trim() : `course-${courseIndex + 1}`,
+      label: typeof course.label === 'string' && course.label.trim() ? course.label.trim() : '',
+      items: Array.isArray(course.items)
+        ? course.items
+          .filter((item) => typeof item === 'object' && item !== null)
+          .map((item, itemIndex) => ({
+            id: typeof item.id === 'string' && item.id.trim() ? item.id.trim() : `course-${courseIndex + 1}-item-${itemIndex + 1}`,
+            name: typeof item.name === 'string' && item.name.trim() ? item.name.trim() : '',
+            description: typeof item.description === 'string' && item.description.trim() ? item.description.trim() : '',
+            dietary: Array.isArray(item.dietary)
+              ? item.dietary.filter((value): value is string => typeof value === 'string' && value.trim().length > 0).map((value) => value.trim())
+              : [],
+          }))
+          .filter((item) => item.name || item.description || item.dietary.length > 0)
+        : [],
+    }))
+    .filter((course) => course.label || course.items.length > 0)
+);
+
+const getLegacyMusicPlaylists = (settings: Record<string, unknown> | undefined) => (
+  getSettingRecordList<{
+    id?: string;
+    label?: string;
+    spotifyUrl?: string;
+    appleMusicUrl?: string;
+    tracks?: Array<{
+      id?: string;
+      title?: string;
+      artist?: string;
+      moment?: string;
+    }>;
+  }>(settings, 'playlists')
+    .map((playlist, playlistIndex) => ({
+      id: typeof playlist.id === 'string' && playlist.id.trim() ? playlist.id.trim() : `playlist-${playlistIndex + 1}`,
+      label: typeof playlist.label === 'string' && playlist.label.trim() ? playlist.label.trim() : '',
+      spotifyUrl: typeof playlist.spotifyUrl === 'string' && playlist.spotifyUrl.trim() ? playlist.spotifyUrl.trim() : '',
+      appleMusicUrl: typeof playlist.appleMusicUrl === 'string' && playlist.appleMusicUrl.trim() ? playlist.appleMusicUrl.trim() : '',
+      tracks: Array.isArray(playlist.tracks)
+        ? playlist.tracks
+          .filter((item) => typeof item === 'object' && item !== null)
+          .map((track, trackIndex) => ({
+            id: typeof track.id === 'string' && track.id.trim() ? track.id.trim() : `playlist-${playlistIndex + 1}-track-${trackIndex + 1}`,
+            title: typeof track.title === 'string' && track.title.trim() ? track.title.trim() : '',
+            artist: typeof track.artist === 'string' && track.artist.trim() ? track.artist.trim() : '',
+            moment: typeof track.moment === 'string' && track.moment.trim() ? track.moment.trim() : '',
+          }))
+          .filter((track) => track.title || track.artist || track.moment)
+        : [],
+    }))
+    .filter((playlist) => playlist.label || playlist.spotifyUrl || playlist.appleMusicUrl || playlist.tracks.length > 0)
+);
+
+const getLegacyVideos = (settings: Record<string, unknown> | undefined) => (
+  getSettingRecordList<{
+    id?: string;
+    title?: string;
+    description?: string;
+    videoUrl?: string;
+    thumbnailUrl?: string;
+    videoType?: string;
+  }>(settings, 'videos')
+    .map((video, index) => ({
+      id: typeof video.id === 'string' && video.id.trim() ? video.id.trim() : `video-${index + 1}`,
+      title: typeof video.title === 'string' && video.title.trim() ? video.title.trim() : '',
+      description: typeof video.description === 'string' && video.description.trim() ? video.description.trim() : '',
+      videoUrl: typeof video.videoUrl === 'string' && video.videoUrl.trim() ? video.videoUrl.trim() : '',
+      thumbnailUrl: typeof video.thumbnailUrl === 'string' && video.thumbnailUrl.trim() ? video.thumbnailUrl.trim() : '',
+      videoType: typeof video.videoType === 'string' && video.videoType.trim() ? video.videoType.trim() : '',
+    }))
+    .filter((video) => video.title || video.description || video.videoUrl || video.thumbnailUrl || video.videoType)
+);
+
 const makeDefaultBlocksForType = (
   type: string,
   settings: Record<string, unknown> | undefined,
@@ -617,6 +719,136 @@ const makeDefaultBlocksForType = (
         ...(subtext ? [{ id: 'b-text', type: 'text', data: { text: subtext } } satisfies BuilderV2Block] : []),
         ...((buttonLabel || rsvpUrl) ? [{ id: 'b-cta', type: 'travelTip', data: { title: buttonLabel || undefined, url: rsvpUrl || undefined, note: 'Primary action' } } satisfies BuilderV2Block] : []),
         ...(footerNote ? [{ id: 'b-story', type: 'story', data: { text: footerNote } } satisfies BuilderV2Block] : []),
+      ];
+    }
+    case 'quotes': {
+      const eyebrow = getSettingString(settings, 'eyebrow');
+      const columns = getSettingString(settings, 'columns');
+      const background = getSettingString(settings, 'background');
+      const quotes = getLegacyQuotes(settings);
+      return [
+        ...(eyebrow ? [{ id: 'b-quotes-eyebrow', type: 'qna', data: { question: 'Eyebrow', answer: eyebrow } } satisfies BuilderV2Block] : []),
+        ...(columns ? [{ id: 'b-quotes-columns', type: 'qna', data: { question: 'Columns', answer: columns } } satisfies BuilderV2Block] : []),
+        ...(background ? [{ id: 'b-quotes-background', type: 'qna', data: { question: 'Background', answer: background } } satisfies BuilderV2Block] : []),
+        ...quotes.map((quote) => ({
+          id: `b-${quote.id}`,
+          type: 'photo' as const,
+          data: {
+            title: quote.author || undefined,
+            role: quote.role || undefined,
+            note: quote.text || undefined,
+            imageUrl: quote.photo || undefined,
+            subtitle: 'quote',
+          },
+        })),
+      ];
+    }
+    case 'menu': {
+      const eyebrow = getSettingString(settings, 'eyebrow');
+      const note = getSettingString(settings, 'note');
+      const showDietaryIcons = settings?.showDietaryIcons === false ? false : undefined;
+      const courses = getLegacyMenuCourses(settings);
+      return [
+        ...(eyebrow ? [{ id: 'b-menu-eyebrow', type: 'qna', data: { question: 'Eyebrow', answer: eyebrow } } satisfies BuilderV2Block] : []),
+        ...(showDietaryIcons === false ? [{ id: 'b-menu-show-dietary', type: 'qna', data: { question: 'Show dietary icons', answer: 'false' } } satisfies BuilderV2Block] : []),
+        ...courses.flatMap((course, courseIndex) => ([
+          ...(course.label ? [{
+            id: `b-menu-course-${courseIndex + 1}`,
+            type: 'title' as const,
+            data: { text: course.label, subtitle: `course:${course.id}` },
+          }] : []),
+          ...course.items.map((item, itemIndex) => ({
+            id: `b-menu-course-${courseIndex + 1}-item-${itemIndex + 1}`,
+            type: 'travelTip' as const,
+            data: {
+              title: item.name || undefined,
+              note: item.description || undefined,
+              role: item.dietary.join('|') || undefined,
+              subtitle: `course:${course.id}`,
+            },
+          })),
+        ])),
+        ...(note ? [{ id: 'b-menu-note', type: 'story', data: { text: note } } satisfies BuilderV2Block] : []),
+      ];
+    }
+    case 'music': {
+      const eyebrow = getSettingString(settings, 'eyebrow');
+      const requestNote = getSettingString(settings, 'requestNote');
+      const showRequestNote = settings?.showRequestNote === false ? false : undefined;
+      const playlists = getLegacyMusicPlaylists(settings);
+      return [
+        ...(eyebrow ? [{ id: 'b-music-eyebrow', type: 'qna', data: { question: 'Eyebrow', answer: eyebrow } } satisfies BuilderV2Block] : []),
+        ...(showRequestNote === false ? [{ id: 'b-music-show-request', type: 'qna', data: { question: 'Show request note', answer: 'false' } } satisfies BuilderV2Block] : []),
+        ...playlists.flatMap((playlist, playlistIndex) => ([
+          ...(playlist.label ? [{
+            id: `b-music-playlist-${playlistIndex + 1}`,
+            type: 'title' as const,
+            data: { text: playlist.label, subtitle: `playlist:${playlist.id}` },
+          }] : []),
+          ...(playlist.spotifyUrl ? [{
+            id: `b-music-playlist-${playlistIndex + 1}-spotify`,
+            type: 'travelTip' as const,
+            data: {
+              title: 'Spotify',
+              url: playlist.spotifyUrl,
+              role: 'spotify',
+              subtitle: `playlist-link:${playlist.id}`,
+            },
+          }] : []),
+          ...(playlist.appleMusicUrl ? [{
+            id: `b-music-playlist-${playlistIndex + 1}-apple`,
+            type: 'travelTip' as const,
+            data: {
+              title: 'Apple Music',
+              url: playlist.appleMusicUrl,
+              role: 'appleMusic',
+              subtitle: `playlist-link:${playlist.id}`,
+            },
+          }] : []),
+          ...playlist.tracks.map((track, trackIndex) => ({
+            id: `b-music-playlist-${playlistIndex + 1}-track-${trackIndex + 1}`,
+            type: 'travelTip' as const,
+            data: {
+              title: track.title || undefined,
+              note: track.artist || undefined,
+              role: track.moment || undefined,
+              subtitle: `playlist-track:${playlist.id}`,
+            },
+          })),
+        ])),
+        ...(requestNote ? [{ id: 'b-music-request-note', type: 'story', data: { text: requestNote } } satisfies BuilderV2Block] : []),
+      ];
+    }
+    case 'video': {
+      const eyebrow = getSettingString(settings, 'eyebrow');
+      const background = getSettingString(settings, 'background');
+      const videos = getLegacyVideos(settings);
+      return [
+        ...(eyebrow ? [{ id: 'b-video-eyebrow', type: 'qna', data: { question: 'Eyebrow', answer: eyebrow } } satisfies BuilderV2Block] : []),
+        ...(background ? [{ id: 'b-video-background', type: 'qna', data: { question: 'Background', answer: background } } satisfies BuilderV2Block] : []),
+        ...videos.flatMap((video) => ([
+          {
+            id: `b-${video.id}-photo`,
+            type: 'photo' as const,
+            data: {
+              title: video.title || undefined,
+              note: video.description || undefined,
+              imageUrl: video.thumbnailUrl || undefined,
+              role: video.videoType || undefined,
+              subtitle: `video:${video.id}`,
+            },
+          },
+          ...(video.videoUrl ? [{
+            id: `b-${video.id}-link`,
+            type: 'travelTip' as const,
+            data: {
+              title: video.title || 'Video link',
+              url: video.videoUrl,
+              role: video.videoType || undefined,
+              subtitle: `video:${video.id}`,
+            },
+          }] : []),
+        ])),
       ];
     }
     default:
@@ -1140,6 +1372,120 @@ const toLegacyBuilderSettings = (section: BuilderV2Section): Record<string, unkn
         buttonLabel: ctaCard?.title || undefined,
         rsvpUrl: ctaCard?.url || undefined,
         footerNote,
+      };
+    }
+    case 'quotes': {
+      const quoteBlocks = getMeaningfulBlocks(section.blocks, ['photo'])
+        .filter((block) => (typeof block.data.subtitle !== 'string' || block.data.subtitle.trim() === 'quote'));
+
+      return {
+        ...common,
+        eyebrow: getNamedAnswerValue(section, 'Eyebrow') || undefined,
+        headline: getFirstMeaningfulString(section, [section.title, common.headline as string | undefined]),
+        columns: getNamedAnswerValue(section, 'Columns') || undefined,
+        background: getNamedAnswerValue(section, 'Background') || undefined,
+        quotes: quoteBlocks.map((block, index) => ({
+          id: `${section.id}-quote-${index}`,
+          text: block.data.note || block.data.caption || '',
+          author: block.data.title || '',
+          role: block.data.role || '',
+          photo: block.data.imageUrl || '',
+        })),
+      };
+    }
+    case 'menu': {
+      const noteParts = getSectionNarrativeParts(section);
+      const courseLabels = getMeaningfulBlocks(section.blocks, ['title'])
+        .filter((block) => typeof block.data.subtitle === 'string' && block.data.subtitle.startsWith('course:'))
+        .map((block, index) => ({
+          id: block.data.subtitle!.slice('course:'.length) || `course-${index + 1}`,
+          label: block.data.text || '',
+        }));
+      const itemBlocks = getMeaningfulBlocks(section.blocks, ['travelTip'])
+        .filter((block) => typeof block.data.subtitle === 'string' && block.data.subtitle.startsWith('course:'));
+
+      return {
+        ...common,
+        eyebrow: getNamedAnswerValue(section, 'Eyebrow') || undefined,
+        headline: getFirstMeaningfulString(section, [section.title, common.headline as string | undefined]),
+        subtitle: getFirstMeaningfulString(section, [section.subtitle, common.subtitle as string | undefined]),
+        note: noteParts[0] || '',
+        showDietaryIcons: getNamedBooleanValue(section, 'Show dietary icons') ?? true,
+        courses: courseLabels.map((course) => ({
+          id: course.id,
+          label: course.label,
+          items: itemBlocks
+            .filter((block) => block.data.subtitle === `course:${course.id}`)
+            .map((block, index) => ({
+              id: `${section.id}-${course.id}-item-${index}`,
+              name: block.data.title || '',
+              description: block.data.note || '',
+              dietary: typeof block.data.role === 'string' && block.data.role.trim()
+                ? block.data.role.split('|').map((value) => value.trim()).filter(Boolean)
+                : [],
+            })),
+        })),
+      };
+    }
+    case 'music': {
+      const noteParts = getSectionNarrativeParts(section);
+      const playlistLabels = getMeaningfulBlocks(section.blocks, ['title'])
+        .filter((block) => typeof block.data.subtitle === 'string' && block.data.subtitle.startsWith('playlist:'))
+        .map((block, index) => ({
+          id: block.data.subtitle!.slice('playlist:'.length) || `playlist-${index + 1}`,
+          label: block.data.text || '',
+        }));
+      const playlistLinks = getMeaningfulBlocks(section.blocks, ['travelTip'])
+        .filter((block) => typeof block.data.subtitle === 'string' && block.data.subtitle.startsWith('playlist-link:'));
+      const trackBlocks = getMeaningfulBlocks(section.blocks, ['travelTip'])
+        .filter((block) => typeof block.data.subtitle === 'string' && block.data.subtitle.startsWith('playlist-track:'));
+
+      return {
+        ...common,
+        eyebrow: getNamedAnswerValue(section, 'Eyebrow') || undefined,
+        headline: getFirstMeaningfulString(section, [section.title, common.headline as string | undefined]),
+        subtitle: getFirstMeaningfulString(section, [section.subtitle, common.subtitle as string | undefined]),
+        requestNote: noteParts[0] || '',
+        showRequestNote: getNamedBooleanValue(section, 'Show request note') ?? true,
+        playlists: playlistLabels.map((playlist) => ({
+          id: playlist.id,
+          label: playlist.label,
+          spotifyUrl: playlistLinks.find((block) => block.data.subtitle === `playlist-link:${playlist.id}` && block.data.role === 'spotify')?.data.url || '',
+          appleMusicUrl: playlistLinks.find((block) => block.data.subtitle === `playlist-link:${playlist.id}` && block.data.role === 'appleMusic')?.data.url || '',
+          tracks: trackBlocks
+            .filter((block) => block.data.subtitle === `playlist-track:${playlist.id}`)
+            .map((block, index) => ({
+              id: `${section.id}-${playlist.id}-track-${index}`,
+              title: block.data.title || '',
+              artist: block.data.note || '',
+              moment: block.data.role || '',
+            })),
+        })),
+      };
+    }
+    case 'video': {
+      const photoBlocks = getMeaningfulBlocks(section.blocks, ['photo'])
+        .filter((block) => typeof block.data.subtitle === 'string' && block.data.subtitle.startsWith('video:'));
+      const linkBlocks = getMeaningfulBlocks(section.blocks, ['travelTip'])
+        .filter((block) => typeof block.data.subtitle === 'string' && block.data.subtitle.startsWith('video:'));
+
+      return {
+        ...common,
+        eyebrow: getNamedAnswerValue(section, 'Eyebrow') || undefined,
+        headline: getFirstMeaningfulString(section, [section.title, common.headline as string | undefined]),
+        background: getNamedAnswerValue(section, 'Background') || undefined,
+        videos: photoBlocks.map((block, index) => {
+          const videoId = block.data.subtitle!.slice('video:'.length) || `video-${index + 1}`;
+          const link = linkBlocks.find((candidate) => candidate.data.subtitle === `video:${videoId}`);
+          return {
+            id: videoId,
+            title: block.data.title || link?.data.title || '',
+            description: block.data.note || '',
+            videoUrl: link?.data.url || '',
+            thumbnailUrl: block.data.imageUrl || '',
+            videoType: link?.data.role || block.data.role || 'youtube',
+          };
+        }),
       };
     }
     default:

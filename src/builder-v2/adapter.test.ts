@@ -262,6 +262,143 @@ describe('toBuilderV2Document', () => {
     ]);
   });
 
+  it('preserves long-tail quotes, menu, music, and video content when migrating legacy sections into v2', () => {
+    const quotesSection = toBuilderV2Section({
+      id: 'quotes-1',
+      type: 'quotes',
+      variant: 'grid',
+      enabled: true,
+      bindings: {},
+      settings: {
+        headline: 'From the people we love',
+        eyebrow: 'Wishes & Words',
+        columns: '2',
+        background: 'soft',
+        quotes: [
+          {
+            id: 'q1',
+            text: 'You two are such a gift to each other.',
+            author: 'Maya',
+            role: 'Friend',
+            photo: 'https://example.com/maya.jpg',
+          },
+        ],
+      },
+    });
+
+    const menuSection = toBuilderV2Section({
+      id: 'menu-1',
+      type: 'menu',
+      variant: 'tabs',
+      enabled: true,
+      bindings: {},
+      settings: {
+        headline: 'Dinner',
+        eyebrow: 'Dining',
+        subtitle: 'A few favorites for the night.',
+        note: 'Please tell us about dietary restrictions.',
+        showDietaryIcons: false,
+        courses: [
+          {
+            id: 'course-1',
+            label: 'Main Course',
+            items: [
+              {
+                id: 'item-1',
+                name: 'Wild Mushroom Risotto',
+                description: 'With parmesan and herbs.',
+                dietary: ['vegetarian', 'gluten-free'],
+              },
+            ],
+          },
+        ],
+      },
+    });
+
+    const musicSection = toBuilderV2Section({
+      id: 'music-1',
+      type: 'music',
+      variant: 'playlist',
+      enabled: true,
+      bindings: {},
+      settings: {
+        headline: 'Our soundtrack',
+        eyebrow: 'The Soundtrack',
+        subtitle: 'Songs tied to the whole weekend.',
+        requestNote: 'Send requests with your RSVP.',
+        showRequestNote: false,
+        playlists: [
+          {
+            id: 'pl-1',
+            label: 'Ceremony',
+            spotifyUrl: 'https://open.spotify.com/playlist/ceremony',
+            appleMusicUrl: 'https://music.apple.com/ceremony',
+            tracks: [
+              {
+                id: 'track-1',
+                title: 'Bloom',
+                artist: 'The Paper Kites',
+                moment: 'Signing',
+              },
+            ],
+          },
+        ],
+      },
+    });
+
+    const videoSection = toBuilderV2Section({
+      id: 'video-1',
+      type: 'video',
+      variant: 'card',
+      enabled: true,
+      bindings: {},
+      settings: {
+        headline: 'Weekend films',
+        eyebrow: 'Moments on Film',
+        background: 'soft',
+        videos: [
+          {
+            id: 'v1',
+            title: 'Save the Date',
+            description: 'A little preview of the weekend.',
+            videoUrl: 'https://youtu.be/abcdefghijk',
+            thumbnailUrl: 'https://example.com/video.jpg',
+            videoType: 'youtube',
+          },
+        ],
+      },
+    });
+
+    expect(quotesSection.blocks).toMatchObject([
+      { type: 'qna', data: { question: 'Eyebrow', answer: 'Wishes & Words' } },
+      { type: 'qna', data: { question: 'Columns', answer: '2' } },
+      { type: 'qna', data: { question: 'Background', answer: 'soft' } },
+      { type: 'photo', data: { title: 'Maya', role: 'Friend', note: 'You two are such a gift to each other.', imageUrl: 'https://example.com/maya.jpg', subtitle: 'quote' } },
+    ]);
+    expect(menuSection.blocks).toMatchObject([
+      { type: 'qna', data: { question: 'Eyebrow', answer: 'Dining' } },
+      { type: 'qna', data: { question: 'Show dietary icons', answer: 'false' } },
+      { type: 'title', data: { text: 'Main Course', subtitle: 'course:course-1' } },
+      { type: 'travelTip', data: { title: 'Wild Mushroom Risotto', note: 'With parmesan and herbs.', role: 'vegetarian|gluten-free', subtitle: 'course:course-1' } },
+      { type: 'story', data: { text: 'Please tell us about dietary restrictions.' } },
+    ]);
+    expect(musicSection.blocks).toMatchObject([
+      { type: 'qna', data: { question: 'Eyebrow', answer: 'The Soundtrack' } },
+      { type: 'qna', data: { question: 'Show request note', answer: 'false' } },
+      { type: 'title', data: { text: 'Ceremony', subtitle: 'playlist:pl-1' } },
+      { type: 'travelTip', data: { title: 'Spotify', url: 'https://open.spotify.com/playlist/ceremony', role: 'spotify', subtitle: 'playlist-link:pl-1' } },
+      { type: 'travelTip', data: { title: 'Apple Music', url: 'https://music.apple.com/ceremony', role: 'appleMusic', subtitle: 'playlist-link:pl-1' } },
+      { type: 'travelTip', data: { title: 'Bloom', note: 'The Paper Kites', role: 'Signing', subtitle: 'playlist-track:pl-1' } },
+      { type: 'story', data: { text: 'Send requests with your RSVP.' } },
+    ]);
+    expect(videoSection.blocks).toMatchObject([
+      { type: 'qna', data: { question: 'Eyebrow', answer: 'Moments on Film' } },
+      { type: 'qna', data: { question: 'Background', answer: 'soft' } },
+      { type: 'photo', data: { title: 'Save the Date', note: 'A little preview of the weekend.', imageUrl: 'https://example.com/video.jpg', role: 'youtube', subtitle: 'video:v1' } },
+      { type: 'travelTip', data: { title: 'Save the Date', url: 'https://youtu.be/abcdefghijk', role: 'youtube', subtitle: 'video:v1' } },
+    ]);
+  });
+
   it('preserves wedding party side labels and members when migrating legacy sections into v2', () => {
     const partySection = toBuilderV2Section({
       id: 'party-1',
@@ -857,6 +994,151 @@ describe('legacy adapters', () => {
       linkIds: ['link-1'],
       faqIds: ['faq-1'],
       mediaAssetIds: ['asset-1'],
+    });
+  });
+
+  it('maps builder v2 quotes, menu, music, and video sections back into legacy runtime settings with structured content', () => {
+    const project = builderV2DocumentToBuilderProject({
+      version: 'v2',
+      updatedAtISO: '2026-05-27T21:00:00.000Z',
+      pages: [
+        {
+          id: 'details',
+          title: 'Details',
+          slug: 'details',
+          isHome: true,
+          hidden: false,
+          sections: [
+            {
+              id: 'quotes-1',
+              type: 'quotes',
+              variant: 'grid',
+              enabled: true,
+              title: 'From the people we love',
+              blocks: [
+                { id: 'quotes-eyebrow', type: 'qna', data: { question: 'Eyebrow', answer: 'Wishes & Words' } },
+                { id: 'quotes-columns', type: 'qna', data: { question: 'Columns', answer: '2' } },
+                { id: 'quotes-background', type: 'qna', data: { question: 'Background', answer: 'soft' } },
+                { id: 'quote-1', type: 'photo', data: { title: 'Maya', role: 'Friend', note: 'You two are such a gift to each other.', imageUrl: 'https://example.com/maya.jpg', subtitle: 'quote' } },
+              ],
+            },
+            {
+              id: 'menu-1',
+              type: 'menu',
+              variant: 'tabs',
+              enabled: true,
+              title: 'Dinner',
+              subtitle: 'A few favorites for the night.',
+              blocks: [
+                { id: 'menu-eyebrow', type: 'qna', data: { question: 'Eyebrow', answer: 'Dining' } },
+                { id: 'menu-dietary', type: 'qna', data: { question: 'Show dietary icons', answer: 'false' } },
+                { id: 'menu-course', type: 'title', data: { text: 'Main Course', subtitle: 'course:course-1' } },
+                { id: 'menu-item', type: 'travelTip', data: { title: 'Wild Mushroom Risotto', note: 'With parmesan and herbs.', role: 'vegetarian|gluten-free', subtitle: 'course:course-1' } },
+                { id: 'menu-note', type: 'story', data: { text: 'Please tell us about dietary restrictions.' } },
+              ],
+            },
+            {
+              id: 'music-1',
+              type: 'music',
+              variant: 'playlist',
+              enabled: true,
+              title: 'Our soundtrack',
+              subtitle: 'Songs tied to the whole weekend.',
+              blocks: [
+                { id: 'music-eyebrow', type: 'qna', data: { question: 'Eyebrow', answer: 'The Soundtrack' } },
+                { id: 'music-request', type: 'qna', data: { question: 'Show request note', answer: 'false' } },
+                { id: 'music-playlist', type: 'title', data: { text: 'Ceremony', subtitle: 'playlist:pl-1' } },
+                { id: 'music-spotify', type: 'travelTip', data: { title: 'Spotify', url: 'https://open.spotify.com/playlist/ceremony', role: 'spotify', subtitle: 'playlist-link:pl-1' } },
+                { id: 'music-apple', type: 'travelTip', data: { title: 'Apple Music', url: 'https://music.apple.com/ceremony', role: 'appleMusic', subtitle: 'playlist-link:pl-1' } },
+                { id: 'music-track', type: 'travelTip', data: { title: 'Bloom', note: 'The Paper Kites', role: 'Signing', subtitle: 'playlist-track:pl-1' } },
+                { id: 'music-note', type: 'story', data: { text: 'Send requests with your RSVP.' } },
+              ],
+            },
+            {
+              id: 'video-1',
+              type: 'video',
+              variant: 'card',
+              enabled: true,
+              title: 'Weekend films',
+              blocks: [
+                { id: 'video-eyebrow', type: 'qna', data: { question: 'Eyebrow', answer: 'Moments on Film' } },
+                { id: 'video-background', type: 'qna', data: { question: 'Background', answer: 'soft' } },
+                { id: 'video-photo', type: 'photo', data: { title: 'Save the Date', note: 'A little preview of the weekend.', imageUrl: 'https://example.com/video.jpg', role: 'youtube', subtitle: 'video:v1' } },
+                { id: 'video-link', type: 'travelTip', data: { title: 'Save the Date', url: 'https://youtu.be/abcdefghijk', role: 'youtube', subtitle: 'video:v1' } },
+              ],
+            },
+          ],
+        },
+      ],
+    });
+
+    expect(project.pages[0].sections[0].settings).toMatchObject({
+      eyebrow: 'Wishes & Words',
+      headline: 'From the people we love',
+      columns: '2',
+      background: 'soft',
+      quotes: [
+        {
+          text: 'You two are such a gift to each other.',
+          author: 'Maya',
+          role: 'Friend',
+          photo: 'https://example.com/maya.jpg',
+        },
+      ],
+    });
+    expect(project.pages[0].sections[1].settings).toMatchObject({
+      eyebrow: 'Dining',
+      headline: 'Dinner',
+      subtitle: 'A few favorites for the night.',
+      note: 'Please tell us about dietary restrictions.',
+      showDietaryIcons: false,
+      courses: [
+        {
+          label: 'Main Course',
+          items: [
+            {
+              name: 'Wild Mushroom Risotto',
+              description: 'With parmesan and herbs.',
+              dietary: ['vegetarian', 'gluten-free'],
+            },
+          ],
+        },
+      ],
+    });
+    expect(project.pages[0].sections[2].settings).toMatchObject({
+      eyebrow: 'The Soundtrack',
+      headline: 'Our soundtrack',
+      subtitle: 'Songs tied to the whole weekend.',
+      requestNote: 'Send requests with your RSVP.',
+      showRequestNote: false,
+      playlists: [
+        {
+          label: 'Ceremony',
+          spotifyUrl: 'https://open.spotify.com/playlist/ceremony',
+          appleMusicUrl: 'https://music.apple.com/ceremony',
+          tracks: [
+            {
+              title: 'Bloom',
+              artist: 'The Paper Kites',
+              moment: 'Signing',
+            },
+          ],
+        },
+      ],
+    });
+    expect(project.pages[0].sections[3].settings).toMatchObject({
+      eyebrow: 'Moments on Film',
+      headline: 'Weekend films',
+      background: 'soft',
+      videos: [
+        {
+          title: 'Save the Date',
+          description: 'A little preview of the weekend.',
+          videoUrl: 'https://youtu.be/abcdefghijk',
+          thumbnailUrl: 'https://example.com/video.jpg',
+          videoType: 'youtube',
+        },
+      ],
     });
   });
 
