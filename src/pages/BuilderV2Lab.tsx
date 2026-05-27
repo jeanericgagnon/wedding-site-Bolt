@@ -32,6 +32,10 @@ import { buildBuilderV2StructureGuidance } from './builderV2StructureGuidance';
 import { buildBuilderV2SelectionGuidance } from './builderV2SelectionGuidance';
 import { cloneBuilderV2Sections } from './builderV2SectionClone';
 import {
+  duplicateBuilderV2Page,
+  moveBuilderV2SectionsToPage,
+} from './builderV2PageOperations';
+import {
   buildBuilderV2SectionLifecycleSummary,
   removeBuilderV2Sections,
 } from './builderV2SectionLifecycle';
@@ -869,6 +873,51 @@ export const BuilderV2Lab: React.FC = () => {
     notify('Page removed');
   }, [commit, notify, pages, selectPage, selectedPageId]);
 
+  const duplicatePage = useCallback((pageId: string) => {
+    const result = duplicateBuilderV2Page({
+      pages,
+      sectionBlocks,
+      pageId,
+    });
+    if (!result.duplicatedPageId) {
+      notify('We could not duplicate that page yet');
+      return;
+    }
+    setSectionBlocks(result.sectionBlocks);
+    commit(result.pages);
+    setSelectedPageId(result.duplicatedPageId);
+    setSelectedId(result.duplicatedSectionIds[0] ?? '');
+    setLastSelectedId(result.duplicatedSectionIds[0] ?? '');
+    setMultiSelectedIds(result.duplicatedSectionIds.slice(1));
+    notify('Page duplicated');
+  }, [commit, notify, pages, sectionBlocks]);
+
+  const moveSelectedSectionsToPage = useCallback((targetPageId: string) => {
+    if (!activePage) return;
+    const result = moveBuilderV2SectionsToPage({
+      pages,
+      sectionBlocks,
+      sourcePageId: activePage.id,
+      targetPageId,
+      selectedIds,
+    });
+    if (!result.movedSectionIds.length) {
+      notify('Pick sections from the current page before you move them');
+      return;
+    }
+    setSectionBlocks(result.sectionBlocks);
+    commit(result.pages);
+    setSelectedPageId(targetPageId);
+    setSelectedId(result.movedSectionIds[0] ?? '');
+    setLastSelectedId(result.movedSectionIds[0] ?? '');
+    setMultiSelectedIds(result.movedSectionIds.slice(1));
+    notify(
+      result.movedSectionIds.length === 1
+        ? 'Moved section to another page'
+        : `Moved ${result.movedSectionIds.length} sections to another page`,
+    );
+  }, [activePage, commit, notify, pages, sectionBlocks, selectedIds]);
+
   const restoreSelectedSectionsToStarterBlocks = useCallback(() => {
     const result = restoreBuilderV2SectionStarterBlocks({
       sections,
@@ -1293,6 +1342,10 @@ export const BuilderV2Lab: React.FC = () => {
     const base = [
       { id: 'page-add', group: 'Pages', label: 'Add page', keywords: ['page', 'new', 'navigation'], action: () => runCommand('Add page', addPage) },
       ...pages.map((page) => ({ id: `page-${page.id}`, group: 'Pages', label: `Open page: ${page.title}`, keywords: ['page', 'open', page.title.toLowerCase(), page.slug.toLowerCase()], action: () => runCommand(`Open page: ${page.title}`, () => selectPage(page.id)) })),
+      ...pages.map((page) => ({ id: `page-duplicate-${page.id}`, group: 'Pages', label: `Duplicate page: ${page.title}`, keywords: ['page', 'duplicate', 'copy', page.title.toLowerCase()], action: () => runCommand(`Duplicate page: ${page.title}`, () => duplicatePage(page.id)) })),
+      ...pages
+        .filter((page) => page.id !== activePage.id)
+        .map((page) => ({ id: `page-move-selection-${page.id}`, group: 'Pages', label: `Move selection to page: ${page.title}`, keywords: ['page', 'move', 'selection', page.title.toLowerCase()], action: () => runCommand(`Move selection to page: ${page.title}`, () => moveSelectedSectionsToPage(page.id)) })),
       ...ADDABLE_SECTIONS.map((name) => ({ id: `add-${name}`, group: 'Add', label: `Add section: ${name}`, keywords: ['insert', 'new', name.toLowerCase()], action: () => runCommand(`Add section: ${name}`, () => addSection(name)) })),
       ...sections.map((s) => ({ id: `select-${s.id}`, group: 'Select', label: `Select section: ${s.title}`, keywords: ['focus', 'go to', s.title.toLowerCase()], action: () => runCommand(`Select section: ${s.title}`, () => setSelectedId(s.id)) })),
       ...['default', 'countdown', 'timeline', 'dayTabs', 'localGuide', 'iconGrid', 'cards', 'grid', 'fundHighlight', 'featured', 'minimal', 'honeymoon', 'tabs', 'illustrated', 'classic', 'luxury', 'experiences', 'modern', 'playful'].map((v) => ({ id: `variant-${v}`, group: 'Variant', label: `Set variant: ${v}`, keywords: ['layout', 'style', v.toLowerCase()], action: () => runCommand(`Set variant: ${v}`, () => updateVariant(v)) })),
@@ -1331,7 +1384,7 @@ export const BuilderV2Lab: React.FC = () => {
       .filter((x) => x.s > 0)
       .sort((a, b) => b.s - a.s)
       .map((x) => x.item);
-  }, [commandQuery, sections, pages, addPage, addRecommendedBlockPack, addSection, clearSelection, copyHandoffPacket, copyV2Json, downloadV2Json, duplicateSelectedSections, handoffGuidance.primaryActionLabel, hideSelectedSections, invertSelection, openExportPanel, openImportPanel, removeSelectedSections, restoreSelectedSectionsToStarterBlocks, reviewSelectionInPreview, runHandoffAction, selectAllSections, selectPage, setSelectedDensity, showSelectedSections, updateVariant]);
+  }, [commandQuery, sections, pages, activePage.id, addPage, addRecommendedBlockPack, addSection, clearSelection, copyHandoffPacket, copyV2Json, downloadV2Json, duplicatePage, duplicateSelectedSections, handoffGuidance.primaryActionLabel, hideSelectedSections, invertSelection, moveSelectedSectionsToPage, openExportPanel, openImportPanel, removeSelectedSections, restoreSelectedSectionsToStarterBlocks, reviewSelectionInPreview, runHandoffAction, selectAllSections, selectPage, setSelectedDensity, showSelectedSections, updateVariant]);
   const importGuidance = useMemo(
     () => buildBuilderV2ImportGuidance(lastImportReport, lastImportSource),
     [lastImportReport, lastImportSource],
@@ -1858,6 +1911,22 @@ export const BuilderV2Lab: React.FC = () => {
                         >
                           {page.hidden ? 'Show page' : 'Hide page'}
                         </button>
+                        <button
+                          type="button"
+                          onClick={() => duplicatePage(page.id)}
+                          className="col-span-2 rounded-md border border-border-subtle bg-white px-2 py-1.5 text-[11px] font-medium text-text-primary hover:border-primary/40"
+                        >
+                          Duplicate page
+                        </button>
+                        {selectedSections.length > 0 && page.id !== activePage.id && (
+                          <button
+                            type="button"
+                            onClick={() => moveSelectedSectionsToPage(page.id)}
+                            className="col-span-2 rounded-md border border-primary/30 bg-primary/10 px-2 py-1.5 text-[11px] font-semibold text-primary hover:bg-primary/15"
+                          >
+                            Move selection here
+                          </button>
+                        )}
                         <button
                           type="button"
                           onClick={() => removePage(page.id)}
