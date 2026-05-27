@@ -24,6 +24,8 @@ export interface VendorDecisionDeckItem {
 export interface VendorDecisionDeckModel {
   heading: string;
   summary: string;
+  focusTitle: string;
+  focusDetail: string;
   decisionRule: string;
   badges: string[];
   items: VendorDecisionDeckItem[];
@@ -174,6 +176,12 @@ export function buildVendorDecisionDeck(
     summary: urgentCount > 0
       ? 'These are the vendor decisions most likely to get noisy next. Handle the contact gaps and money timing first, then decide who is genuinely ready.'
       : 'Your vendor list is stable enough to compare calmly. Focus on who is decision-ready instead of reopening every vendor at once.',
+    focusTitle: urgentCount > 0
+      ? 'Clear urgency before you compare taste'
+      : 'Use the quiet board to make one real decision',
+    focusDetail: urgentCount > 0
+      ? 'When vendors are missing contact paths or carrying payment pressure, the calm move is to remove that noise before you reopen style debates.'
+      : 'When the board is stable, the job is not to keep browsing; it is to choose the next vendor that is truly ready for a yes.',
     decisionRule: urgentCount > 0
       ? 'Clear missing contact paths and payment pressure before you spend energy comparing aesthetics.'
       : 'Use this board to choose the next real yes, not to reopen every maybe.',

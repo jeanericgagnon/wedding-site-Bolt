@@ -24,7 +24,17 @@ export const VendorDecisionDeck: React.FC<Props> = ({ model, onSelectVendor }) =
         <div className="min-w-0 flex-1">
           <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-text-secondary">{model.heading}</p>
           <p className="mt-1 text-sm leading-6 text-text-secondary">{model.summary}</p>
-          <p className="mt-2 text-xs leading-5 text-text-tertiary">{model.decisionRule}</p>
+          <div className="mt-4 grid gap-3 md:grid-cols-2">
+            <div className="rounded-xl border border-white/70 bg-white/75 px-3 py-3">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-text-tertiary">Main focus</p>
+              <p className="mt-1 text-sm font-semibold text-text-primary">{model.focusTitle}</p>
+              <p className="mt-1 text-xs leading-5 text-text-secondary">{model.focusDetail}</p>
+            </div>
+            <div className="rounded-xl border border-white/70 bg-white/75 px-3 py-3">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-text-tertiary">Decision rule</p>
+              <p className="mt-1 text-sm text-text-secondary">{model.decisionRule}</p>
+            </div>
+          </div>
           <div className="mt-3 flex flex-wrap gap-2 text-[11px] text-text-secondary">
             {model.badges.map((badge) => (
               <span key={badge} className="rounded-full bg-white px-2.5 py-1 shadow-sm">
