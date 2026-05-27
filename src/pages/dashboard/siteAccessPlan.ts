@@ -21,6 +21,19 @@ export interface SiteAccessPlanModel {
   decisionRule: string;
   watchout: string;
   steps: SiteAccessPlanStep[];
+  sequence: SiteAccessPlanStep[];
+}
+
+function buildSiteAccessSequence(
+  current: { id: SiteAccessPlanStep['id']; title: string; detail: string },
+  next: { id: SiteAccessPlanStep['id']; title: string; detail: string },
+  then: { id: SiteAccessPlanStep['id']; title: string; detail: string },
+): SiteAccessPlanStep[] {
+  return [
+    { status: 'current', ...current },
+    { status: 'next', ...next },
+    { status: 'then', ...then },
+  ];
 }
 
 export function buildSiteAccessPlan(input: SiteAccessPlanInput): SiteAccessPlanModel {
@@ -62,6 +75,27 @@ export function buildSiteAccessPlan(input: SiteAccessPlanInput): SiteAccessPlanM
           detail: 'Only after the live site and access rules are steady should guest-facing handoff links, QR cards, and reminders fan out broadly.',
         },
       ],
+      sequence: buildSiteAccessSequence(
+        {
+          id: 'publish',
+          title: 'Launch the real guest front door',
+          detail: 'Make the site genuinely live first so every later access choice points to a route guests can actually trust.',
+        },
+        {
+          id: 'access',
+          title: input.privacyMode === 'public' ? 'Confirm the open route' : input.privacyMode === 'password_protected' ? 'Lock the protected instructions' : 'Create the invite-only route',
+          detail: input.privacyMode === 'public'
+            ? 'Once live, confirm the public route is the exact one you want every guest-facing asset to inherit.'
+            : input.privacyMode === 'password_protected'
+              ? 'Once live, make the password instructions travel with the route before you widen the handoff.'
+              : 'Once live, create and save the invite-only path before you print or send anything that depends on it.',
+        },
+        {
+          id: 'share',
+          title: 'Only then fan the route out broadly',
+          detail: 'After launch and access truth are real, let reminders, QR packs, and handoff notes all repeat the same stable path.',
+        },
+      ),
     };
   }
 
@@ -94,6 +128,23 @@ export function buildSiteAccessPlan(input: SiteAccessPlanInput): SiteAccessPlanM
           detail: 'After that, the right move is usually restraint: let the guest-facing route stay stable unless something important changed.',
         },
       ],
+      sequence: buildSiteAccessSequence(
+        {
+          id: 'access',
+          title: 'Finish the broken part of the route',
+          detail: 'Repair the missing guest URL or invite path before you ask any handoff surface to reuse it.',
+        },
+        {
+          id: 'share',
+          title: 'Repeat only the working path',
+          detail: 'Once the route works end to end, make sure reminders and printed assets all inherit that same path.',
+        },
+        {
+          id: 'publish',
+          title: 'Then leave the live layer steady',
+          detail: 'After the route is fixed, protect the now-working front door instead of reopening churn around it.',
+        },
+      ),
     };
   }
 
@@ -124,6 +175,23 @@ export function buildSiteAccessPlan(input: SiteAccessPlanInput): SiteAccessPlanM
           detail: 'Because the site is public, the main job now is making sure no guest-facing copy accidentally suggests a hidden password or special route.',
         },
       ],
+      sequence: buildSiteAccessSequence(
+        {
+          id: 'share',
+          title: 'Keep one public path everywhere',
+          detail: 'Use the same live URL across reminders, QR packs, and planner handoffs so guests learn one trustworthy route.',
+        },
+        {
+          id: 'publish',
+          title: 'Republish only for clearer guest trust',
+          detail: 'If you change the live site, do it because guest clarity improves, not because editing time is available.',
+        },
+        {
+          id: 'access',
+          title: 'Guard against hidden-route language',
+          detail: 'Keep the copy simple so nothing accidentally suggests guests need a password or special backdoor.',
+        },
+      ),
     };
   }
 
@@ -154,6 +222,23 @@ export function buildSiteAccessPlan(input: SiteAccessPlanInput): SiteAccessPlanM
           detail: 'After the access instructions are aligned, only republish when the guest-facing experience materially improves.',
         },
       ],
+      sequence: buildSiteAccessSequence(
+        {
+          id: 'access',
+          title: 'Carry the password with the route',
+          detail: 'Treat password instructions as part of the front door, not as a separate note guests have to go hunting for.',
+        },
+        {
+          id: 'share',
+          title: 'Reuse the protected path consistently',
+          detail: 'Once the password rides with the route, let reminders, QR cards, and handoff notes repeat that same path.',
+        },
+        {
+          id: 'publish',
+          title: 'Then keep the live layer steady',
+          detail: 'After access clarity is solved, republish only when the guest-facing experience materially improves.',
+        },
+      ),
     };
   }
 
@@ -183,5 +268,22 @@ export function buildSiteAccessPlan(input: SiteAccessPlanInput): SiteAccessPlanM
         detail: 'After the route is aligned, the best move is usually to avoid extra churn unless a guest-facing improvement is clearly worth it.',
       },
     ],
+    sequence: buildSiteAccessSequence(
+      {
+        id: 'access',
+        title: 'Lead with the real invite-only route',
+        detail: 'Treat the invite-only link as the actual front door and make sure that exact path is what gets shared and printed.',
+      },
+      {
+        id: 'share',
+        title: 'Keep every handoff on that same route',
+        detail: 'Once the route is confirmed, let reminders, coordinator notes, and QR materials all reinforce the same specific path.',
+      },
+      {
+        id: 'publish',
+        title: 'Then protect the stable live experience',
+        detail: 'After the route is aligned, resist extra churn unless a guest-facing improvement is clearly worth the change.',
+      },
+    ),
   };
 }

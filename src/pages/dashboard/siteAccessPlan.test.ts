@@ -15,6 +15,8 @@ describe('buildSiteAccessPlan', () => {
     expect(plan.watchout).toMatch(/dead end/i);
     expect(plan.steps[0]).toMatchObject({ status: 'current', id: 'publish' });
     expect(plan.steps[1]?.title).toMatch(/password/i);
+    expect(plan.sequence.map((step) => step.status)).toEqual(['current', 'next', 'then']);
+    expect(plan.sequence[0]?.title).toMatch(/front door|launch/i);
   });
 
   it('pushes password handoff first for a protected live site', () => {
@@ -29,6 +31,7 @@ describe('buildSiteAccessPlan', () => {
     expect(plan.watchout).toMatch(/password is missing/i);
     expect(plan.steps[0]).toMatchObject({ status: 'current', id: 'access' });
     expect(plan.steps[0]?.detail).toMatch(/password/i);
+    expect(plan.sequence[1]?.detail).toMatch(/reminders|QR cards|handoff/i);
   });
 
   it('pushes the invite-only path first for an invite-only live site', () => {
@@ -44,6 +47,7 @@ describe('buildSiteAccessPlan', () => {
     expect(plan.watchout).toMatch(/generic fallback link/i);
     expect(plan.steps[0]).toMatchObject({ status: 'current', id: 'access' });
     expect(plan.steps[0]?.title).toMatch(/invite-only path/i);
+    expect(plan.sequence[2]?.detail).toMatch(/stable live experience|worth the change/i);
   });
 
   it('treats a public live site as a consistency and restraint problem, not an access problem', () => {
@@ -58,5 +62,6 @@ describe('buildSiteAccessPlan', () => {
     expect(plan.watchout).toMatch(/alternate links|mixed instructions/i);
     expect(plan.steps[0]).toMatchObject({ status: 'current', id: 'share' });
     expect(plan.steps[1]?.title).toMatch(/republish/i);
+    expect(plan.sequence[0]?.detail).toMatch(/same live URL|trustworthy route/i);
   });
 });

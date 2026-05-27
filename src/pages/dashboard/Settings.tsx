@@ -1588,6 +1588,19 @@ export const DashboardSettings: React.FC = () => {
                           <p className="mt-1 text-sm text-text-secondary">{siteAccessPlan.watchout}</p>
                         </div>
                         <div className="grid gap-3 lg:grid-cols-3">
+                          {siteAccessPlan.sequence.map((step) => (
+                            <div key={`sequence-${step.id}-${step.status}`} className="rounded-lg border border-border-subtle bg-white px-3 py-3">
+                              <div className="flex items-center justify-between gap-2">
+                                <p className="text-sm font-semibold text-text-primary">{step.title}</p>
+                                <span className="rounded-full border border-border-subtle bg-surface-subtle px-2 py-0.5 text-[11px] font-medium text-text-secondary">
+                                  {getFlowStatusLabel(step.status)}
+                                </span>
+                              </div>
+                              <p className="mt-2 text-xs leading-5 text-text-secondary">{step.detail}</p>
+                            </div>
+                          ))}
+                        </div>
+                        <div className="grid gap-3 lg:grid-cols-3">
                           {siteAccessPlan.steps.map((step) => (
                             <div key={step.id} className="rounded-lg border border-border-subtle bg-white px-3 py-3">
                               <div className="flex items-center justify-between gap-2">
