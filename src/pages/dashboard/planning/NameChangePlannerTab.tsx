@@ -1237,10 +1237,12 @@ export const NameChangePlannerTab: React.FC<Props> = ({
               <div className="rounded-xl border border-sky-200 bg-white/80 px-4 py-3">
                 <p className="text-xs uppercase tracking-wide text-sky-700">Best next move</p>
                 <p className="mt-1 text-sm font-semibold text-sky-950">{resumeCard.bestNextMove}</p>
-                <p className="mt-3 text-xs uppercase tracking-wide text-sky-700">Decision rule</p>
-                <p className="mt-1 text-sm text-sky-900">{resumeCard.decisionRule}</p>
-                <p className="mt-3 text-xs uppercase tracking-wide text-sky-700">Watchout</p>
-                <p className="mt-1 text-sm text-sky-900">{resumeCard.watchout}</p>
+                <div className="mt-3 border-t border-sky-200 pt-3">
+                  <p className="text-xs uppercase tracking-wide text-sky-700">Decision rule</p>
+                  <p className="mt-1 text-sm text-sky-900">{resumeCard.decisionRule}</p>
+                  <p className="mt-3 text-xs uppercase tracking-wide text-sky-700">Watchout</p>
+                  <p className="mt-1 text-sm text-sky-900">{resumeCard.watchout}</p>
+                </div>
               </div>
             </div>
             <div className="mt-3 grid gap-3 md:grid-cols-3">
