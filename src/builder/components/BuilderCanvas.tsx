@@ -24,23 +24,11 @@ import { BuilderSectionInstance } from '../../types/builder/section';
 import { getSectionManifest } from '../registry/sectionManifests';
 import { createEmptyWeddingData } from '../../types/weddingData';
 import { injectThemeStyle, removeThemeStyle } from '../../lib/themeInjector';
+import { getBuilderPageEditingSummary } from './builderPageEditingSummary';
+import { getBuilderCanvasEmptyState } from './builderCanvasEmptyState';
 
 const THEME_STYLE_ID = 'builder-canvas-theme';
 const CANVAS_SCOPE = '.builder-themed-canvas';
-
-export function getBuilderCanvasEmptyState(pageTitle: string, isPreview: boolean) {
-  if (isPreview) {
-    return {
-      title: `${pageTitle} has no sections yet`,
-      detail: 'Exit preview and add a first section before sharing this page.',
-    };
-  }
-
-  return {
-    title: `${pageTitle} is ready for its first section`,
-    detail: 'Start with a hero or schedule block so this page has something real to shape.',
-  };
-}
 
 export const BuilderCanvas: React.FC = () => {
   const { state, dispatch } = useBuilderContext();
@@ -95,20 +83,26 @@ export const BuilderCanvas: React.FC = () => {
         globalAnimationPreset={state.project?.globalAnimationPreset}
       />
     ),
-    [weddingData, isPreview]
+    [weddingData, isPreview, state.project?.globalAnimationPreset]
   );
 
   const dragActiveSection = dragActiveId ? sections.find(s => s.id === dragActiveId) : null;
 
   if (!activePage) {
     return (
-      <div className="flex-1 flex items-center justify-center text-gray-400">
-        No page selected
+      <div className="flex-1 flex items-center justify-center px-6 py-10 text-center">
+        <div className="max-w-md rounded-2xl border border-dashed border-[var(--color-border)] bg-[var(--color-surface-subtle)] px-6 py-8">
+          <p className="text-sm font-semibold text-[var(--color-text-primary)]">Choose a page to keep editing</p>
+          <p className="mt-2 text-sm text-[var(--color-text-secondary)]">
+            Pick a page from the top bar first. Once a page is active, the canvas and inspector will stay in sync while you shape it.
+          </p>
+        </div>
       </div>
     );
   }
 
   const emptyState = getBuilderCanvasEmptyState(activePage.title, isPreview);
+  const pageEditingSummary = getBuilderPageEditingSummary(activePage.title, sections);
 
   return (
     <div
@@ -137,20 +131,67 @@ export const BuilderCanvas: React.FC = () => {
                 <p className="text-sm font-semibold text-[var(--color-text-primary)]">{emptyState.title}</p>
                 <p className="mt-2 text-sm text-[var(--color-text-secondary)]">{emptyState.detail}</p>
                 {!isPreview && (
+                  <div className="mt-4 rounded-xl border border-sky-100 bg-sky-50 px-4 py-3 text-left">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-sky-900">Main focus</p>
+                    <p className="mt-1 text-sm font-medium text-sky-950">{pageEditingSummary.focusTitle}</p>
+                    <p className="mt-1 text-xs text-sky-800">{pageEditingSummary.focusDetail}</p>
+                  </div>
+                )}
+                {!isPreview && (
+                  <div className="mt-5 grid gap-3 text-left sm:grid-cols-3">
+                    <div className="rounded-xl border border-[var(--color-border-subtle)] bg-white px-3 py-3">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--color-text-tertiary)]">Current</p>
+                      <p className="mt-1 text-xs text-[var(--color-text-secondary)]">{pageEditingSummary.currentStep}</p>
+                    </div>
+                    <div className="rounded-xl border border-[var(--color-border-subtle)] bg-white px-3 py-3">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--color-text-tertiary)]">Next</p>
+                      <p className="mt-1 text-xs text-[var(--color-text-secondary)]">{pageEditingSummary.nextStep}</p>
+                    </div>
+                    <div className="rounded-xl border border-[var(--color-border-subtle)] bg-white px-3 py-3">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--color-text-tertiary)]">Then</p>
+                      <p className="mt-1 text-xs text-[var(--color-text-secondary)]">{pageEditingSummary.thenStep}</p>
+                    </div>
+                  </div>
+                )}
+                {!isPreview && (
+                  <div className="mt-5 rounded-xl border border-[var(--color-border-subtle)] bg-white px-4 py-3 text-left">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--color-text-tertiary)]">Best next move</p>
+                    <p className="mt-1 text-sm font-medium text-[var(--color-text-primary)]">{pageEditingSummary.bestNextMove}</p>
+                    <p className="mt-2 text-xs text-[var(--color-text-secondary)]">
+                      <span className="font-semibold text-[var(--color-text-primary)]">Decision rule:</span> {pageEditingSummary.decisionRule}
+                    </p>
+                    <p className="mt-1 text-xs text-[var(--color-text-secondary)]">
+                      <span className="font-semibold text-[var(--color-text-primary)]">Watchout:</span> {pageEditingSummary.watchout}
+                    </p>
+                  </div>
+                )}
+                {!isPreview && (
                   <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
                     <button
                       type="button"
-                      onClick={() => dispatch(builderActions.addSectionByType(activePage.id, 'hero'))}
+                      onClick={() => {
+                        if (pageEditingSummary.primaryAction.kind === 'add-section') {
+                          dispatch(builderActions.addSectionByType(activePage.id, pageEditingSummary.primaryAction.sectionType));
+                        } else if (pageEditingSummary.primaryAction.kind === 'open-template-gallery') {
+                          dispatch(builderActions.openTemplateGallery());
+                        }
+                      }}
                       className="rounded-lg bg-[var(--color-accent)] px-3 py-2 text-sm font-medium text-[var(--color-text-inverse)] hover:bg-[var(--color-accent-hover)]"
                     >
-                      Add hero section
+                      {pageEditingSummary.primaryAction.label}
                     </button>
                     <button
                       type="button"
-                      onClick={() => dispatch(builderActions.addSectionByType(activePage.id, 'schedule'))}
+                      onClick={() => {
+                        if (pageEditingSummary.secondaryAction.kind === 'add-section') {
+                          dispatch(builderActions.addSectionByType(activePage.id, pageEditingSummary.secondaryAction.sectionType));
+                        } else if (pageEditingSummary.secondaryAction.kind === 'open-template-gallery') {
+                          dispatch(builderActions.openTemplateGallery());
+                        }
+                      }}
                       className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-sm font-medium text-[var(--color-text-primary)] hover:bg-[var(--color-surface-subtle)]"
                     >
-                      Add schedule
+                      {pageEditingSummary.secondaryAction.label}
                     </button>
                   </div>
                 )}

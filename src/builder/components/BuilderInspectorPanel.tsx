@@ -10,6 +10,7 @@ import { BuilderSectionRail } from './BuilderSectionRail';
 import { BuilderSettingsField } from '../../types/builder/section';
 import { CustomBlock } from '../../sections/variants/custom/skeletons';
 import { BuilderSectionType } from '../../types/builder/section';
+import { getBuilderPageEditingSummary } from './builderPageEditingSummary';
 
 type InspectorTab = 'guide' | 'content' | 'style' | 'layout' | 'data';
 
@@ -25,7 +26,7 @@ export const BuilderInspectorPanel: React.FC = () => {
 
   useEffect(() => {
     if (selectedSection) setActiveTab('content');
-  }, [selectedSection?.id]);
+  }, [selectedSection]);
 
   useEffect(() => {
     if (simpleMode && (activeTab === 'style' || activeTab === 'data' || activeTab === 'guide')) {
@@ -36,6 +37,7 @@ export const BuilderInspectorPanel: React.FC = () => {
   const selectedIndex = activeSections.findIndex((s) => s.id === state.selectedSectionId);
   const previousSection = selectedIndex > 0 ? activeSections[selectedIndex - 1] : null;
   const nextSectionInRail = selectedIndex >= 0 && selectedIndex < activeSections.length - 1 ? activeSections[selectedIndex + 1] : null;
+  const pageEditingSummary = activePage ? getBuilderPageEditingSummary(activePage.title, activeSections) : null;
 
   const quickSectionRail = activePage ? (
     <BuilderSectionRail
@@ -61,15 +63,131 @@ export const BuilderInspectorPanel: React.FC = () => {
     return (
       <aside className="w-full lg:w-[520px] bg-white border-t lg:border-t-0 lg:border-l border-neutral-200 flex flex-col h-full overflow-hidden">
         <div className="flex-1 flex items-center justify-center p-6 text-center">
-          <p className="text-sm text-[var(--color-text-tertiary)]">Choose a page to keep editing.</p>
+          <div className="max-w-sm rounded-2xl border border-dashed border-[var(--color-border)] bg-[var(--color-surface-subtle)] px-5 py-7">
+            <p className="text-sm font-semibold text-[var(--color-text-primary)]">Choose a page to keep editing</p>
+            <p className="mt-2 text-sm text-[var(--color-text-secondary)]">
+              The inspector will switch from page guidance to section controls as soon as you pick a page and start shaping it.
+            </p>
+          </div>
         </div>
       </aside>
     );
   }
 
+  const handlePageSummaryAction = (kind: 'primary' | 'secondary') => {
+    if (!activePage || !pageEditingSummary) return;
+    const action = kind === 'primary' ? pageEditingSummary.primaryAction : pageEditingSummary.secondaryAction;
+
+    if (action.kind === 'add-section') {
+      dispatch(builderActions.addSectionByType(activePage.id, action.sectionType));
+      return;
+    }
+
+    if (action.kind === 'select-section') {
+      dispatch(builderActions.selectSection(action.sectionId));
+      requestAnimationFrame(() => {
+        const el = document.querySelector(`[data-section-id="${action.sectionId}"]`);
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+      return;
+    }
+
+    dispatch(builderActions.selectSection(null));
+    dispatch(builderActions.openTemplateGallery());
+  };
+
   if (!selectedSection) {
     return (
       <aside className="w-full lg:w-[520px] bg-white border-t lg:border-t-0 lg:border-l border-neutral-200 flex flex-col h-full overflow-hidden">
+        {pageEditingSummary && (
+          <div className="border-b border-[var(--color-border-subtle)] bg-[var(--color-surface)] px-4 py-4 space-y-4">
+            <div>
+              <h3 className="text-[22px] font-semibold text-[var(--color-text-primary)]">{activePage.title}</h3>
+              <p className="mt-1 text-[14px] text-[var(--color-text-secondary)]">Choose the right next move for this page before you dive into a single section.</p>
+            </div>
+            <div className="flex flex-wrap gap-2 text-[11px] text-[var(--color-text-secondary)]">
+              <span className="rounded-full border border-[var(--color-border-subtle)] bg-white px-2 py-1 font-medium">
+                {pageEditingSummary.totalCount} sections
+              </span>
+              <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-1 font-medium text-emerald-700">
+                {pageEditingSummary.visibleCount} visible
+              </span>
+              {pageEditingSummary.hiddenCount > 0 && (
+                <span className="rounded-full border border-amber-200 bg-amber-50 px-2 py-1 font-medium text-amber-700">
+                  {pageEditingSummary.hiddenCount} hidden
+                </span>
+              )}
+              {pageEditingSummary.lockedCount > 0 && (
+                <span className="rounded-full border border-slate-200 bg-slate-100 px-2 py-1 font-medium text-slate-700">
+                  {pageEditingSummary.lockedCount} locked
+                </span>
+              )}
+              {pageEditingSummary.customCount > 0 && (
+                <span className="rounded-full border border-violet-200 bg-violet-50 px-2 py-1 font-medium text-violet-700">
+                  {pageEditingSummary.customCount} custom
+                </span>
+              )}
+            </div>
+            {pageEditingSummary.missingEssentialLabels.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {pageEditingSummary.missingEssentialLabels.map((label) => (
+                  <span
+                    key={label}
+                    className="rounded-full border border-sky-200 bg-sky-50 px-2 py-1 text-[11px] font-medium text-sky-800"
+                  >
+                    Missing {label}
+                  </span>
+                ))}
+              </div>
+            )}
+            <div className="rounded-xl border border-sky-100 bg-sky-50 px-4 py-3">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-sky-900">Main focus</p>
+              <p className="mt-1 text-sm font-medium text-sky-950">{pageEditingSummary.focusTitle}</p>
+              <p className="mt-1 text-xs text-sky-800">{pageEditingSummary.focusDetail}</p>
+            </div>
+            <div className="rounded-xl border border-[var(--color-border-subtle)] bg-white px-4 py-3">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--color-text-tertiary)]">Best next move</p>
+              <p className="mt-1 text-sm font-medium text-[var(--color-text-primary)]">{pageEditingSummary.bestNextMove}</p>
+              <p className="mt-2 text-xs text-[var(--color-text-secondary)]">
+                <span className="font-semibold text-[var(--color-text-primary)]">Decision rule:</span> {pageEditingSummary.decisionRule}
+              </p>
+              <p className="mt-1 text-xs text-[var(--color-text-secondary)]">
+                <span className="font-semibold text-[var(--color-text-primary)]">Watchout:</span> {pageEditingSummary.watchout}
+              </p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() => handlePageSummaryAction('primary')}
+                  className="rounded-lg bg-[var(--color-accent)] px-3 py-2 text-sm font-medium text-[var(--color-text-inverse)] hover:bg-[var(--color-accent-hover)]"
+                >
+                  {pageEditingSummary.primaryAction.label}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handlePageSummaryAction('secondary')}
+                  className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-sm font-medium text-[var(--color-text-primary)] hover:bg-[var(--color-surface-subtle)]"
+                >
+                  {pageEditingSummary.secondaryAction.label}
+                </button>
+              </div>
+            </div>
+            <div className="grid gap-2 sm:grid-cols-3">
+              {[
+                { label: 'Current', detail: pageEditingSummary.currentStep },
+                { label: 'Next', detail: pageEditingSummary.nextStep },
+                { label: 'Then', detail: pageEditingSummary.thenStep },
+              ].map((step) => (
+                <div
+                  key={step.label}
+                  className="rounded-xl border border-[var(--color-border-subtle)] bg-white px-3 py-3"
+                >
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--color-text-tertiary)]">{step.label}</p>
+                  <p className="mt-1 text-xs text-[var(--color-text-secondary)]">{step.detail}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
         {quickSectionRail}
       </aside>
     );

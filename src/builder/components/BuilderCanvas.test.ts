@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { getBuilderCanvasEmptyState } from './BuilderCanvas';
+import { getBuilderCanvasEmptyState } from './builderCanvasEmptyState';
 
 describe('getBuilderCanvasEmptyState', () => {
   it('keeps edit-mode empty pages framed as buildable', () => {
     expect(getBuilderCanvasEmptyState('Travel', false)).toEqual({
       title: 'Travel is ready for its first section',
-      detail: 'Start with a hero or schedule block so this page has something real to shape.',
+      detail: 'Start with a hero or another anchor section so this page has something real to shape.',
     });
   });
 
