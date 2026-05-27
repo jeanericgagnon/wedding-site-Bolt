@@ -10,6 +10,7 @@ describe('getPlannerHandoffCopy', () => {
     expect(model.focusDetail).toMatch(/guest readiness/i);
     expect(model.nextMove).toMatch(/loudest pressure inside guest readiness/i);
     expect(model.decisionRule).toMatch(/escalate/i);
+    expect(model.watchout).toMatch(/pseudo-owner decision|real blocker/i);
     expect(model.sequence.map((step) => step.status)).toEqual(['current', 'next', 'then']);
     expect(model.sequence[0]?.title).toMatch(/operational pressure/i);
   });
@@ -21,6 +22,7 @@ describe('getPlannerHandoffCopy', () => {
     expect(model.focusDetail).toMatch(/timeline decisions|day-of updates/i);
     expect(model.nextMove).toMatch(/live pressure that guests can already feel/i);
     expect(model.decisionRule).toMatch(/live guest flow/i);
+    expect(model.watchout).toMatch(/absorbs broader planning truth|team loses clarity/i);
     expect(model.sequence[1]?.detail).toMatch(/real time|live lane|broader planning/i);
   });
 
@@ -31,6 +33,7 @@ describe('getPlannerHandoffCopy', () => {
     expect(model.focusTitle).toMatch(/clarity, not control/i);
     expect(model.nextMove).toMatch(/confirm facts and collect questions/i);
     expect(model.decisionRule).toMatch(/do not turn viewer access into another editing lane/i);
+    expect(model.watchout).toMatch(/good intentions|really carrying the lane/i);
     expect(model.sequence[2]?.title).toMatch(/working owner/i);
   });
 });

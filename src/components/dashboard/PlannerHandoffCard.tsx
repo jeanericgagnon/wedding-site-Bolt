@@ -23,6 +23,8 @@ export const PlannerHandoffCard: React.FC<PlannerHandoffCardProps> = ({ tone, ha
       <p className="mt-1 text-xs leading-5 opacity-90">{handoff.nextMove}</p>
       <p className="mt-3 text-[11px] font-semibold uppercase tracking-[0.16em]">Decision rule</p>
       <p className="mt-1 text-xs leading-5 opacity-90">{handoff.decisionRule}</p>
+      <p className="mt-3 text-[11px] font-semibold uppercase tracking-[0.16em]">Watchout</p>
+      <p className="mt-1 text-xs leading-5 opacity-90">{handoff.watchout}</p>
       <div className="mt-3 space-y-2">
         {handoff.sequence.map((step) => (
           <div key={step.id} className="rounded-lg border border-current/15 bg-white/70 px-3 py-2">
