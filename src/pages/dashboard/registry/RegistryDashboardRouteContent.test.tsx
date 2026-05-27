@@ -1047,6 +1047,9 @@ describe('RegistryDashboardRouteContent', () => {
       attributionCoverageRate: 67,
       completionRate: 33,
     });
+    expect(derived.registryThankYouPlan.focusTitle).toBe('Recover purchaser names first');
+    expect(derived.registryThankYouPlan.nextMove).toBe('Open the gifts still missing attribution first, then come back here to send notes in one pass.');
+    expect(derived.registryThankYouPlan.decisionRule).toBe('Missing attribution beats writing speed: get the name first, then send the note.');
   });
 
   it('derives a quiet thank-you plan when no purchased gifts need follow-up yet', () => {
@@ -1075,6 +1078,7 @@ describe('RegistryDashboardRouteContent', () => {
 
     expect(derived.registryThankYouPlan.headline).toBe('Thank-you follow-up is quiet right now');
     expect(derived.registryThankYouPlan.summary).toBe('No purchased gifts need thank-you follow-up right now.');
+    expect(derived.registryThankYouPlan.focusTitle).toBe('Nothing needs a thank-you yet');
   });
 
   it('derives guest-visible registry analytics from hidden purchased and blocked guest items', () => {
@@ -2153,7 +2157,19 @@ describe('RegistryDashboardRouteContent', () => {
         registryActionsRef={{ current: null }}
         registryInsights={[]}
         registryLaunchReadiness={{ headline: 'Ready', summary: 'Ready', status: 'ready', reviewCount: 0, items: [] }}
-        registryThankYouPlan={{ headline: 'Thank-you follow-up list', summary: '1 thank-you marked sent. 2 gifts still need follow-up.', purchasedCount: 3, namedPurchaserCount: 2, missingPurchaserCount: 1, completedCount: 1, items: [] }}
+        registryThankYouPlan={{
+          headline: 'Thank-you follow-up list',
+          summary: '1 thank-you marked sent. 2 gifts still need follow-up.',
+          focusTitle: 'Recover purchaser names first',
+          focusDetail: '1 purchased gift still needs a purchaser name before the thank-you list is truly ready.',
+          nextMove: 'Open the gifts still missing attribution first, then come back here to send notes in one pass.',
+          decisionRule: 'Missing attribution beats writing speed: get the name first, then send the note.',
+          purchasedCount: 3,
+          namedPurchaserCount: 2,
+          missingPurchaserCount: 1,
+          completedCount: 1,
+          items: [],
+        }}
         registryThankYouStats={{ purchasedCount: 3, completedCount: 1, pendingCount: 2, readyToSendCount: 1, blockedByMissingPurchaserCount: 1, attributionCoverageRate: 67, completionRate: 33 }}
         registryThankYouBusyItemId={null}
         registryThankYouSyncing={false}
@@ -2189,6 +2205,9 @@ describe('RegistryDashboardRouteContent', () => {
     expect(
       screen.getByText((_, element) => element?.textContent === 'Purchasers named: 67% · Thank-yous sent: 33%'),
     ).toBeInTheDocument();
+    expect(screen.getByText('Recover purchaser names first')).toBeInTheDocument();
+    expect(screen.getByText('Open the gifts still missing attribution first, then come back here to send notes in one pass.')).toBeInTheDocument();
+    expect(screen.getByText('Missing attribution beats writing speed: get the name first, then send the note.')).toBeInTheDocument();
   });
 
   it('renders guest-visible inventory analytics for hidden and blocked gifts', () => {

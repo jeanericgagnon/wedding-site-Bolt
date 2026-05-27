@@ -42,6 +42,7 @@ export interface RegistryThankYouPlanItem {
   giftName: string;
   purchaserLabel: string;
   detail: string;
+  nextStep?: string;
   status: RegistryThankYouPlanStatus;
   taskStatus: RegistryThankYouTaskStatus;
   completedAt: string | null;
@@ -50,6 +51,10 @@ export interface RegistryThankYouPlanItem {
 export interface RegistryThankYouPlan {
   headline: string;
   summary: string;
+  focusTitle?: string;
+  focusDetail?: string;
+  nextMove?: string;
+  decisionRule?: string;
   purchasedCount: number;
   namedPurchaserCount: number;
   missingPurchaserCount: number;
@@ -280,6 +285,8 @@ export function buildRegistryThankYouPlanWithLedger(items: RegistryItem[], ledge
   const namedPurchasers = purchasedItems.filter((item) => Boolean(item.purchaser_name?.trim()));
   const missingPurchasers = purchasedItems.length - namedPurchasers.length;
   const completedCount = Object.values(syncedLedger).filter((entry) => entry.status === 'done').length;
+  const pendingCount = Math.max(purchasedItems.length - completedCount, 0);
+  const readyToSendCount = Object.values(syncedLedger).filter((entry) => entry.status === 'todo').length;
   const planItems = Object.values(syncedLedger).slice(0, 6).map((entry): RegistryThankYouPlanItem => {
     const purchaser = entry.purchaserName;
     const partiallyPurchased = entry.quantityPurchased > 0 && entry.quantityPurchased < entry.quantityNeeded;
@@ -292,16 +299,53 @@ export function buildRegistryThankYouPlanWithLedger(items: RegistryItem[], ledge
         : partiallyPurchased
           ? `${entry.quantityPurchased} of ${entry.quantityNeeded} marked purchased. Add the purchaser before you send a thank-you.`
           : 'Add the purchaser before you send a thank-you.';
+    const nextStep = entry.status === 'done'
+      ? 'Keep this closed unless purchaser details change.'
+      : purchaser
+        ? 'Send the thank-you now, then mark it sent here.'
+        : 'Open the gift, add the purchaser, then send the thank-you.';
     return {
       id: entry.itemId,
       giftName: entry.giftName,
       purchaserLabel: purchaser ? `Purchaser: ${purchaser}` : 'Purchaser still missing',
       detail,
+      nextStep,
       status: entry.status === 'done' ? 'planned' : entry.status === 'todo' ? 'ready' : 'quiet',
       taskStatus: entry.status,
       completedAt: entry.completedAt,
     };
   });
+
+  const focusTitle = purchasedItems.length === 0
+    ? 'Nothing needs a thank-you yet'
+    : missingPurchasers > 0
+      ? 'Recover purchaser names first'
+      : pendingCount > 0
+        ? pendingCount === 1
+          ? 'One thank-you is ready to send'
+          : `${pendingCount} thank-yous still need follow-up`
+        : 'Thank-you follow-up is caught up';
+  const focusDetail = purchasedItems.length === 0
+    ? 'This lane stays quiet until the first registry gift is actually claimed.'
+    : missingPurchasers > 0
+      ? `${plural(missingPurchasers, 'purchased gift')} still need a purchaser name before the thank-you list is truly ready.`
+      : pendingCount > 0
+        ? `${plural(readyToSendCount, 'gift')} can be thanked right now, and there are no purchaser-name blockers slowing you down.`
+        : 'Every purchased gift already has a recorded thank-you, so you only need to come back when a new purchase lands.';
+  const nextMove = purchasedItems.length === 0
+    ? 'Leave thank-you follow-up quiet and keep purchaser tracking clean as gifts start to land.'
+    : missingPurchasers > 0
+      ? 'Open the gifts still missing attribution first, then come back here to send notes in one pass.'
+      : pendingCount > 0
+        ? 'Start with the oldest unsent gift, clear the ready notes, then save the updated list.'
+        : 'Treat new purchases or changed purchaser details as the only reason to reopen this queue.';
+  const decisionRule = purchasedItems.length === 0
+    ? 'Do not open thank-you work before a gift is actually purchased.'
+    : missingPurchasers > 0
+      ? 'Missing attribution beats writing speed: get the name first, then send the note.'
+      : pendingCount > 0
+        ? 'When purchaser names are complete, sending the next thank-you beats any extra registry cleanup.'
+        : 'If everything is sent, keep this lane closed and spend attention elsewhere.';
 
   return {
     headline: purchasedItems.length > 0 ? 'Thank-you follow-up list' : 'Thank-you follow-up is quiet right now',
@@ -310,6 +354,10 @@ export function buildRegistryThankYouPlanWithLedger(items: RegistryItem[], ledge
         ? `${plural(completedCount, 'thank-you')} marked sent. ${plural(purchasedItems.length - completedCount, 'gift')} still need follow-up.`
         : `${plural(purchasedItems.length, 'purchased gift')} are in the thank-you list.`
       : 'No purchased gifts need thank-you follow-up right now.',
+    focusTitle,
+    focusDetail,
+    nextMove,
+    decisionRule,
     purchasedCount: purchasedItems.length,
     namedPurchaserCount: namedPurchasers.length,
     missingPurchaserCount: missingPurchasers,

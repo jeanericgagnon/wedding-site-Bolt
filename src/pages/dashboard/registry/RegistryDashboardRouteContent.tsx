@@ -91,6 +91,10 @@ type RegistryLaunchReadiness = {
 type RegistryThankYouPlan = {
   headline: string;
   summary: string;
+  focusTitle?: string;
+  focusDetail?: string;
+  nextMove?: string;
+  decisionRule?: string;
   namedPurchaserCount: number;
   purchasedCount: number;
   missingPurchaserCount: number;
@@ -100,6 +104,7 @@ type RegistryThankYouPlan = {
     giftName: string;
     purchaserLabel: string;
     detail: string;
+    nextStep?: string;
     status: string;
     taskStatus: 'todo' | 'done' | 'needs-purchaser';
     completedAt: string | null;
@@ -194,6 +199,28 @@ const REGISTRY_WORKSPACE_TABS: Array<{ key: RegistryWorkspaceTab; label: string 
   { key: 'cleanup', label: 'Cleanup' },
   { key: 'thank_yous', label: 'Thank-yous' },
 ];
+
+function RegistryThankYouGuidance({ plan }: { plan: RegistryThankYouPlan }) {
+  if (!plan.focusTitle && !plan.focusDetail && !plan.nextMove && !plan.decisionRule) return null;
+
+  return (
+    <div className="mt-4 grid gap-3 md:grid-cols-3">
+      <div className="rounded-xl border border-border-subtle bg-surface-subtle/20 p-4">
+        <p className="text-xs text-text-tertiary">Main focus</p>
+        <p className="mt-1 text-sm font-semibold text-text-primary">{plan.focusTitle}</p>
+        {plan.focusDetail ? <p className="mt-2 text-xs leading-5 text-text-secondary">{plan.focusDetail}</p> : null}
+      </div>
+      <div className="rounded-xl border border-border-subtle bg-surface-subtle/20 p-4">
+        <p className="text-xs text-text-tertiary">Best next move</p>
+        <p className="mt-1 text-sm font-semibold text-text-primary">{plan.nextMove}</p>
+      </div>
+      <div className="rounded-xl border border-border-subtle bg-surface-subtle/20 p-4">
+        <p className="text-xs text-text-tertiary">Decision rule</p>
+        <p className="mt-1 text-sm font-semibold text-text-primary">{plan.decisionRule}</p>
+      </div>
+    </div>
+  );
+}
 
 export function RegistryDashboardRouteContent(props: {
   actionableBadImportCount: number;
@@ -1320,6 +1347,7 @@ export function RegistryDashboardRouteContent(props: {
                 Thank-yous sent: {props.registryThankYouPlan.completedCount}
               </span>
             </div>
+            <RegistryThankYouGuidance plan={props.registryThankYouPlan} />
             <div className="mt-4 space-y-3">
               {props.registryThankYouPlan.items.length === 0 ? (
                 <p className="text-sm text-text-secondary">No purchased gifts need a thank-you yet.</p>
@@ -1330,6 +1358,7 @@ export function RegistryDashboardRouteContent(props: {
                       <p className="text-sm font-medium text-text-primary">{item.giftName}</p>
                       <p className="mt-1 text-xs text-text-secondary">{item.purchaserLabel}</p>
                       <p className="mt-2 text-sm text-text-secondary">{item.detail}</p>
+                      {item.nextStep ? <p className="mt-2 text-xs font-medium text-text-tertiary">{item.nextStep}</p> : null}
                     </div>
                     <div className="flex flex-wrap gap-2 lg:justify-end">
                       {item.taskStatus === 'needs-purchaser' ? (
@@ -2152,6 +2181,7 @@ export function RegistryDashboardRouteContent(props: {
                   {props.registryThankYouSyncing ? 'Saving…' : 'Save thank-you updates'}
                 </Button>
               </div>
+              <RegistryThankYouGuidance plan={props.registryThankYouPlan} />
 
               {props.registryThankYouPlan.items.length === 0 ? (
                 <p className="mt-4 text-sm text-text-secondary">No purchased gifts need a thank-you yet.</p>
@@ -2164,6 +2194,7 @@ export function RegistryDashboardRouteContent(props: {
                           <p className="text-sm font-medium text-text-primary">{item.giftName}</p>
                           <p className="mt-1 text-xs text-text-secondary">{item.purchaserLabel}</p>
                           <p className="mt-2 text-sm text-text-secondary">{item.detail}</p>
+                          {item.nextStep ? <p className="mt-2 text-xs font-medium text-text-tertiary">{item.nextStep}</p> : null}
                         </div>
                         <div className="flex flex-wrap gap-2 lg:justify-end">
                           {item.taskStatus === 'needs-purchaser' ? (
