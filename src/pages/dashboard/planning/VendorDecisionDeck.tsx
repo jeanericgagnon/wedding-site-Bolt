@@ -1,6 +1,8 @@
 import React from 'react';
 import { ArrowRight, Sparkles } from 'lucide-react';
 import { Card } from '../../../components/ui/Card';
+import { Badge } from '../../../components/ui';
+import { getFlowStatusLabel } from '../../../lib/flowLabels';
 import type { VendorDecisionDeckModel } from './vendorDecisionSupport';
 
 interface Props {
@@ -43,6 +45,19 @@ export const VendorDecisionDeck: React.FC<Props> = ({ model, onSelectVendor }) =
               <span key={badge} className="rounded-full bg-white px-2.5 py-1 shadow-sm">
                 {badge}
               </span>
+            ))}
+          </div>
+          <div className="mt-4 grid gap-3 md:grid-cols-3">
+            {model.sequence.map((step) => (
+              <div key={step.id} className="rounded-xl border border-white/70 bg-white/75 px-3 py-3">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-xs font-semibold text-text-primary">{step.title}</p>
+                  <Badge variant={step.status === 'current' ? 'primary' : 'secondary'}>
+                    {getFlowStatusLabel(step.status)}
+                  </Badge>
+                </div>
+                <p className="mt-2 text-xs leading-5 text-text-secondary">{step.detail}</p>
+              </div>
             ))}
           </div>
           <div className="mt-4 grid gap-3 lg:grid-cols-3">

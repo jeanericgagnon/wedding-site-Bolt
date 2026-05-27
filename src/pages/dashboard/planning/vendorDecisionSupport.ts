@@ -29,6 +29,12 @@ export interface VendorDecisionDeckModel {
   bestNextMove: string;
   decisionRule: string;
   badges: string[];
+  sequence: Array<{
+    id: 'stabilize' | 'compare' | 'decide';
+    status: 'current' | 'next' | 'then';
+    title: string;
+    detail: string;
+  }>;
   items: VendorDecisionDeckItem[];
 }
 
@@ -60,6 +66,33 @@ function countFilled(...values: Array<unknown>) {
     if (typeof value === 'number') return Number.isFinite(value) && value > 0;
     return Boolean(value);
   }).length;
+}
+
+function buildVendorSequence(
+  current: { title: string; detail: string },
+  next: { title: string; detail: string },
+  then: { title: string; detail: string },
+) {
+  return [
+    {
+      id: 'stabilize' as const,
+      status: 'current' as const,
+      title: current.title,
+      detail: current.detail,
+    },
+    {
+      id: 'compare' as const,
+      status: 'next' as const,
+      title: next.title,
+      detail: next.detail,
+    },
+    {
+      id: 'decide' as const,
+      status: 'then' as const,
+      title: then.title,
+      detail: then.detail,
+    },
+  ];
 }
 
 export function buildVendorFitSummary(
@@ -194,6 +227,35 @@ export function buildVendorDecisionDeck(
       `${readyCount} ready to choose`,
       `${needsContactCount} missing direct contact`,
     ],
+    sequence: urgentCount > 0
+      ? buildVendorSequence(
+          {
+            title: 'Clear the contact and timing noise first',
+            detail: 'Use the urgent vendors to remove missing contact paths and due-soon payment pressure before you reopen taste questions.',
+          },
+          {
+            title: 'Compare only the vendors that still deserve attention',
+            detail: 'Once the noisy records are steadier, review the shortlist that still has a believable path to yes.',
+          },
+          {
+            title: 'Make one real vendor decision',
+            detail: 'After the board is quieter, use the proof you already have to land the next yes or deliberate pause.',
+          },
+        )
+      : buildVendorSequence(
+          {
+            title: 'Choose the next vendor that is truly ready',
+            detail: 'Start with the option that already has enough proof, contact clarity, and financial truth to support a real answer.',
+          },
+          {
+            title: 'Keep the shortlist narrow while you compare',
+            detail: 'Use the calm board to compare only the vendors that still have a realistic path to yes.',
+          },
+          {
+            title: 'Let the rest of the vendor list stay quiet',
+            detail: 'Once the next decision is made, preserve the calmer records instead of reopening every maybe.',
+          },
+        ),
     items: ranked.slice(0, 3).map(({ vendor, summary }) => ({
       id: vendor.id,
       tone: summary.tone,
