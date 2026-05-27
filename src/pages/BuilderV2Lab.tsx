@@ -5,9 +5,10 @@ import { getSectionRenderer } from '../builder/registry';
 import type { SectionType, SectionInstance } from '../types/layoutConfig';
 import type { WeddingDataV1 } from '../types/weddingData';
 import { demoWeddingSite, demoEvents } from '../lib/demoData';
-import { getInitialBuilderV2LabPreviewFields } from './builderV2LabPreview';
+import { buildBuilderV2LabPreviewFieldsFromWeddingData, getInitialBuilderV2LabPreviewFields } from './builderV2LabPreview';
 import type { BuilderV2Document } from '../builder-v2/contracts';
 import { prepareImportedBuilderV2Document, type BuilderV2ImportReport } from '../builder-v2/importPrepare';
+import { consumeBuilderV2UpgradeBridge } from '../builder-v2/upgradeBridge';
 import {
   buildBuilderV2AddBlockLibrary,
   buildBuilderV2SectionEditingGuidance,
@@ -1275,7 +1276,7 @@ export const BuilderV2Lab: React.FC = () => {
     setPropertyTab('content');
   }, [focusSectionById, scrollToPreviewSection]);
 
-  const applyImportedDocument = (doc: BuilderV2Document, report: BuilderV2ImportReport, sourceLabel: string) => {
+  const applyImportedDocument = useCallback((doc: BuilderV2Document, report: BuilderV2ImportReport, sourceLabel: string) => {
     const nextPages = getLabPagesFromBuilderV2Document(doc);
     const sourceSections = (doc.pages ?? []).flatMap((page) => page.sections);
     const nextBlocks = Object.fromEntries(
@@ -1308,7 +1309,28 @@ export const BuilderV2Lab: React.FC = () => {
     const repairs = summarizeImportRepairCount(report);
     const importSummary = buildBuilderV2ImportReviewSummary(report, sourceLabel);
     notify(repairs > 0 || report.sourceKind !== 'builder-v2' ? importSummary.toastMessage : 'Imported clean V2 layout');
-  };
+  }, [markSaving, notify]);
+
+  useEffect(() => {
+    const upgradeBridge = consumeBuilderV2UpgradeBridge();
+    if (!upgradeBridge) return;
+
+    if (upgradeBridge.weddingData) {
+      setPreviewFields((prev) => buildBuilderV2LabPreviewFieldsFromWeddingData(upgradeBridge.weddingData as WeddingDataV1, prev));
+    }
+
+    const prepared = prepareImportedBuilderV2Document(upgradeBridge.project);
+    if (!prepared.ok) {
+      setImportDraft(JSON.stringify(upgradeBridge.project, null, 2));
+      setImportError(prepared.error);
+      setLastImportSource(upgradeBridge.sourceName);
+      setShowImportPanel(true);
+      notify('Could not open that Builder draft in V2 yet. Review the import details and try again.');
+      return;
+    }
+
+    applyImportedDocument(prepared.doc, prepared.report, upgradeBridge.sourceName);
+  }, [applyImportedDocument, notify]);
 
   const importV2Json = () => {
     if (!importDraft.trim()) {

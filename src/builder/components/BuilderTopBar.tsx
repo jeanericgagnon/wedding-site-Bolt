@@ -16,6 +16,7 @@ import {
   Tablet,
   Smartphone,
   Files,
+  Layers,
   FilePlus2,
   Copy,
   Trash2,
@@ -58,6 +59,7 @@ import {
   type BuilderLaunchBasicsDraft,
 } from './builderLaunchBasics';
 import { runBuilderPageEditingAction } from './builderPageEditingActions';
+import { saveBuilderV2UpgradeBridge } from '../../builder-v2/upgradeBridge';
 
 interface BuilderTopBarProps {
   onSave: () => void;
@@ -374,6 +376,20 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
     });
   }, [dispatch]);
 
+  const handleOpenBuilderV2Lab = React.useCallback(() => {
+    if (!state.project) return;
+
+    const sourceName = `${projectName?.trim() || state.weddingData?.couple.displayName?.trim() || 'Current builder draft'} builder upgrade`;
+    const saved = saveBuilderV2UpgradeBridge({
+      sourceName,
+      project: state.project,
+      weddingData: state.weddingData,
+    });
+
+    if (!saved) return;
+    navigate('/builder-v2-lab');
+  }, [navigate, projectName, state.project, state.weddingData]);
+
   return (
     <>
     <header className="min-h-[42px] bg-[var(--color-surface)] border-b border-[var(--color-border-subtle)] flex items-center flex-wrap md:flex-nowrap px-2 md:px-2.5 py-1 gap-1 z-50 sticky top-0">
@@ -400,6 +416,17 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
       >
         <Files size={13} />
         Pages · {projectPages.length}
+      </button>
+
+      <button
+        type="button"
+        onClick={handleOpenBuilderV2Lab}
+        disabled={!state.project}
+        className="inline-flex items-center gap-1.5 rounded-md border border-sky-200 bg-sky-50 px-2.5 py-1.5 text-xs font-medium text-sky-800 transition-colors hover:bg-sky-100 disabled:cursor-not-allowed disabled:opacity-50"
+        title="Open a working V2 copy of this draft"
+      >
+        <Layers size={13} />
+        V2 upgrade
       </button>
 
       {state.weddingData && (
