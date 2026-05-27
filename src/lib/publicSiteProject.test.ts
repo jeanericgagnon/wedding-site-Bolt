@@ -64,6 +64,44 @@ describe('publicSiteProject', () => {
     expect(getPublicBuilderProject(row)?.pages[0].sections[0].settings.headline).toBe('Draft headline');
   });
 
+  it('adapts builder v2 site_json into a public builder project for runtime rendering', () => {
+    const row = {
+      is_published: false,
+      site_json: {
+        version: 'v2',
+        updatedAtISO: '2026-05-27T22:00:00.000Z',
+        pages: [
+          {
+            id: 'home',
+            title: 'Home',
+            slug: 'home',
+            isHome: true,
+            hidden: false,
+            sections: [
+              {
+                id: 'hero-v2',
+                type: 'hero',
+                variant: 'default',
+                enabled: true,
+                title: 'Alex & Jordan',
+                subtitle: 'September 14, 2027',
+                blocks: [
+                  { id: 'title-1', type: 'title', data: { text: 'Alex & Jordan' } },
+                  { id: 'text-1', type: 'text', data: { text: 'September 14, 2027' } },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    };
+
+    const project = getPublicBuilderProject(row);
+    expect(project?.pages[0].meta).toEqual({ isHome: true, isHidden: false });
+    expect(project?.pages[0].sections[0].settings.headline).toBe('Alex & Jordan');
+    expect(project?.pages[0].sections[0].settings.subheadline).toBe('September 14, 2027');
+  });
+
   it('recognizes published state from published_json metadata even without is_published', () => {
     const row = {
       site_json: draftProject,
@@ -71,6 +109,46 @@ describe('publicSiteProject', () => {
     };
 
     expect(getIsPublishedFromSiteRow(row)).toBe(true);
+  });
+
+  it('prefers published builder v2 snapshots over draft builder projects for guest-facing render', () => {
+    const row = {
+      is_published: true,
+      site_json: draftProject,
+      published_json: {
+        version: 'v2',
+        updatedAtISO: '2026-05-27T22:30:00.000Z',
+        pages: [
+          {
+            id: 'home',
+            title: 'Home',
+            slug: 'home',
+            isHome: true,
+            hidden: false,
+            sections: [
+              {
+                id: 's1',
+                type: 'hero',
+                variant: 'default',
+                enabled: true,
+                title: 'Published V2 headline',
+                subtitle: 'Published V2 subheadline',
+                blocks: [
+                  { id: 'title-1', type: 'title', data: { text: 'Published V2 headline' } },
+                  { id: 'text-1', type: 'text', data: { text: 'Published V2 subheadline' } },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    };
+
+    const project = getPublicBuilderProject(row);
+    expect(project?.pages[0].sections[0].settings.headline).toBe('Published V2 headline');
+    expect(project?.pages[0].sections[0].settings.subheadline).toBe('Published V2 subheadline');
+    expect(project?.templateId).toBe('modern-luxe');
+    expect(project?.themeId).toBe('romantic');
   });
 
   it('prefers published wedding data snapshot for guest-facing content', () => {

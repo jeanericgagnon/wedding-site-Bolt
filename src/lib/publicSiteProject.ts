@@ -1,6 +1,7 @@
 import type { BuilderProject } from '../types/builder/project';
 import type { BuilderSectionInstance } from '../types/builder/section';
 import type { WeddingDataV1 } from '../types/weddingData';
+import { builderV2DocumentToBuilderProject, looksLikeBuilderProject, looksLikeBuilderV2Document } from '../builder-v2/adapter';
 import { buildCoupleDisplayName } from './coupleDisplayName';
 import { safeJsonParse } from './jsonUtils';
 import { rewriteSignedMediaUrlsToPublicDeep } from './mediaUrl';
@@ -50,6 +51,17 @@ export const getIsPublishedFromSiteRow = (row: Record<string, unknown>): boolean
 const getProjectPages = (project: unknown): unknown[] => {
   const parsed = safeJsonParse<Record<string, unknown> | null>(project, null);
   return Array.isArray(parsed?.pages) ? parsed.pages : [];
+};
+
+const toPublicBuilderProject = (
+  source: unknown,
+  fallbackProject?: BuilderProject | null,
+): BuilderProject | null => {
+  const parsed = safeJsonParse<unknown>(source, null);
+  if (!parsed) return null;
+  if (looksLikeBuilderProject(parsed)) return parsed;
+  if (looksLikeBuilderV2Document(parsed)) return builderV2DocumentToBuilderProject(parsed, fallbackProject);
+  return null;
 };
 
 const mergePublishedSection = (
@@ -145,10 +157,11 @@ const mergePublishedProjectWithFallback = (
 export const getPublicBuilderProject = (row: Record<string, unknown>): BuilderProject | null => {
   const isPublished = getIsPublishedFromSiteRow(row);
   const preferredSource = isPublished ? (row.published_json ?? row.site_json) : row.site_json;
-  const preferredProject = safeJsonParse<BuilderProject | null>(preferredSource, null);
-  const fallbackProject = preferredSource === row.site_json
-    ? null
-    : safeJsonParse<BuilderProject | null>(row.site_json, null);
+  const fallbackProject = toPublicBuilderProject(row.site_json, null);
+  const preferredProject = toPublicBuilderProject(
+    preferredSource,
+    preferredSource === row.site_json ? fallbackProject : fallbackProject,
+  );
   const mergedProject = mergePublishedProjectWithFallback(preferredProject, fallbackProject);
 
   if (mergedProject && getProjectPages(mergedProject).length > 0) {

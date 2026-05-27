@@ -1,9 +1,11 @@
 import { describe, it, expect } from 'vitest';
 import type { SectionInstance } from '../types/layoutConfig';
 import {
+  builderV2DocumentToBuilderProject,
   builderProjectToBuilderV2Document,
   layoutConfigToBuilderV2Document,
   looksLikeBuilderProject,
+  looksLikeBuilderV2Document,
   looksLikeLayoutConfigV1,
   toBuilderV2Document,
   toBuilderV2Section,
@@ -187,9 +189,101 @@ describe('legacy adapters', () => {
     });
   });
 
+  it('maps builder v2 pages back into legacy builder projects for public runtime', () => {
+    const project = builderV2DocumentToBuilderProject({
+      version: 'v2',
+      updatedAtISO: '2026-05-27T21:00:00.000Z',
+      pages: [
+        {
+          id: 'home',
+          title: 'Home',
+          slug: 'home',
+          isHome: true,
+          hidden: false,
+          sections: [
+            {
+              id: 'hero',
+              type: 'hero',
+              variant: 'default',
+              enabled: true,
+              title: 'Welcome to our weekend',
+              subtitle: 'Join us in Napa',
+              blocks: [
+                { id: 'b1', type: 'title', data: { text: 'Welcome to our weekend' } },
+                { id: 'b2', type: 'text', data: { text: 'Join us in Napa' } },
+                { id: 'b3', type: 'photo', data: { imageUrl: 'https://example.com/hero.jpg' } },
+              ],
+            },
+          ],
+        },
+        {
+          id: 'faq',
+          title: 'FAQ',
+          slug: 'faq',
+          isHome: false,
+          hidden: true,
+          sections: [
+            {
+              id: 'faq-1',
+              type: 'faq',
+              variant: 'default',
+              enabled: true,
+              title: 'FAQ',
+              subtitle: 'Things to know',
+              blocks: [
+                { id: 'b4', type: 'faqItem', data: { question: 'Is there parking?', answer: 'Yes, valet is available.' } },
+              ],
+            },
+          ],
+        },
+      ],
+    }, {
+      id: 'project-1',
+      weddingId: 'w1',
+      templateId: 'modern-luxe',
+      themeId: 'romantic',
+      draftVersion: 4,
+      publishedVersion: 3,
+      publishStatus: 'published',
+      lastPublishedAt: '2026-05-27T21:00:00.000Z',
+      meta: {
+        createdAtISO: '2026-05-27T18:00:00.000Z',
+        updatedAtISO: '2026-05-27T20:00:00.000Z',
+      },
+    });
+
+    expect(project).toMatchObject({
+      id: 'project-1',
+      weddingId: 'w1',
+      templateId: 'modern-luxe',
+      themeId: 'romantic',
+      draftVersion: 4,
+      publishedVersion: 3,
+      publishStatus: 'published',
+      pages: [
+        {
+          id: 'home',
+          slug: 'home',
+          meta: { isHome: true, isHidden: false },
+        },
+        {
+          id: 'faq',
+          slug: 'faq',
+          meta: { isHome: false, isHidden: true },
+        },
+      ],
+    });
+    expect(project.pages[0].sections[0].settings.headline).toBe('Welcome to our weekend');
+    expect(project.pages[0].sections[0].settings.heroImage).toBe('https://example.com/hero.jpg');
+    expect(project.pages[1].sections[0].settings.faqItems).toEqual([
+      { id: 'faq-1-faq-0', q: 'Is there parking?', a: 'Yes, valet is available.' },
+    ]);
+  });
+
   it('detects legacy input shapes safely', () => {
     expect(looksLikeLayoutConfigV1({ version: '1', templateId: 'modern-luxe', pages: [] })).toBe(true);
     expect(looksLikeBuilderProject({ weddingId: 'w1', templateId: 'modern-luxe', themeId: 'romantic', pages: [] })).toBe(true);
+    expect(looksLikeBuilderV2Document({ version: 'v2', pages: [] })).toBe(true);
     expect(looksLikeLayoutConfigV1({ version: 'v2', pages: [] })).toBe(false);
     expect(looksLikeBuilderProject({ version: '1', pages: [] })).toBe(false);
   });
