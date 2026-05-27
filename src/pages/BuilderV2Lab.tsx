@@ -23,6 +23,7 @@ import {
 } from './builderV2WorkflowGuidance';
 import { buildBuilderV2StructureGuidance } from './builderV2StructureGuidance';
 import { buildBuilderV2SelectionGuidance } from './builderV2SelectionGuidance';
+import { cloneBuilderV2Sections } from './builderV2SectionClone';
 import {
   DndContext,
   PointerSensor,
@@ -658,6 +659,21 @@ export const BuilderV2Lab: React.FC = () => {
     notify(`Reviewing ${selectedSections.length} selected section${selectedSections.length === 1 ? '' : 's'} in preview`);
   }, [notify, scrollToPreviewSection, selectedSections]);
 
+  const duplicateSelectedSections = useCallback(() => {
+    const result = cloneBuilderV2Sections({
+      sections,
+      sectionBlocks,
+      selectedIds,
+    });
+    if (!result.duplicatedIds.length) return;
+    setSectionBlocks(result.sectionBlocks);
+    setSelectedId(result.duplicatedIds[0]);
+    setLastSelectedId(result.duplicatedIds[0]);
+    setMultiSelectedIds(result.duplicatedIds.slice(1));
+    commit(result.sections);
+    notify(`Duplicated ${result.duplicatedIds.length} section${result.duplicatedIds.length === 1 ? '' : 's'}`);
+  }, [commit, notify, sectionBlocks, sections, selectedIds]);
+
   const addSection = useCallback((typeLabel: string, variant?: string) => {
     const normalizedType = typeLabel.toLowerCase().replace(/\s+/g, '-');
     const id = `${normalizedType}-${Date.now()}`;
@@ -928,6 +944,7 @@ export const BuilderV2Lab: React.FC = () => {
       { id: 'sel-invert', group: 'Selection', label: 'Invert selection', keywords: ['invert', 'selection'], action: () => runCommand('Invert selection', invertSelection) },
       { id: 'sel-hide', group: 'Selection', label: 'Hide selected sections', keywords: ['hide', 'selection', 'batch', 'visibility'], action: () => runCommand('Hide selected sections', hideSelectedSections) },
       { id: 'sel-show', group: 'Selection', label: 'Show selected sections', keywords: ['show', 'selection', 'batch', 'visibility'], action: () => runCommand('Show selected sections', showSelectedSections) },
+      { id: 'sel-duplicate', group: 'Selection', label: 'Duplicate selected sections', keywords: ['duplicate', 'copy', 'selection', 'batch', 'reuse'], action: () => runCommand('Duplicate selected sections', duplicateSelectedSections) },
       { id: 'sel-compact', group: 'Selection', label: 'Set selected density: compact', keywords: ['compact', 'density', 'selection', 'batch'], action: () => runCommand('Set selected density: compact', () => setSelectedDensity('compact')) },
       { id: 'sel-comfortable', group: 'Selection', label: 'Set selected density: comfortable', keywords: ['comfortable', 'density', 'selection', 'batch', 'open'], action: () => runCommand('Set selected density: comfortable', () => setSelectedDensity('comfortable')) },
       { id: 'sel-review', group: 'Selection', label: 'Review selected sections in preview', keywords: ['preview', 'selection', 'review', 'batch'], action: () => runCommand('Review selected sections in preview', reviewSelectionInPreview) },
@@ -948,7 +965,7 @@ export const BuilderV2Lab: React.FC = () => {
       .filter((x) => x.s > 0)
       .sort((a, b) => b.s - a.s)
       .map((x) => x.item);
-  }, [commandQuery, sections, addSection, clearSelection, hideSelectedSections, invertSelection, reviewSelectionInPreview, selectAllSections, setSelectedDensity, showSelectedSections, updateVariant]);
+  }, [commandQuery, sections, addSection, clearSelection, duplicateSelectedSections, hideSelectedSections, invertSelection, reviewSelectionInPreview, selectAllSections, setSelectedDensity, showSelectedSections, updateVariant]);
   const importGuidance = useMemo(
     () => buildBuilderV2ImportGuidance(lastImportReport, lastImportSource),
     [lastImportReport, lastImportSource],
@@ -1242,6 +1259,7 @@ export const BuilderV2Lab: React.FC = () => {
                   <div className="grid grid-cols-2 gap-2">
                     <button onClick={hideSelectedSections} className="rounded-md border border-border-subtle bg-white px-2.5 py-2 text-xs font-medium text-text-primary hover:border-primary/40">Hide selected</button>
                     <button onClick={showSelectedSections} className="rounded-md border border-border-subtle bg-white px-2.5 py-2 text-xs font-medium text-text-primary hover:border-primary/40">Show selected</button>
+                    <button onClick={duplicateSelectedSections} className="col-span-2 rounded-md border border-border-subtle bg-white px-2.5 py-2 text-xs font-medium text-text-primary hover:border-primary/40">Duplicate batch</button>
                     <button onClick={() => setSelectedDensity('compact')} className="rounded-md border border-border-subtle bg-white px-2.5 py-2 text-xs font-medium text-text-primary hover:border-primary/40">Make compact</button>
                     <button onClick={() => setSelectedDensity('comfortable')} className="rounded-md border border-border-subtle bg-white px-2.5 py-2 text-xs font-medium text-text-primary hover:border-primary/40">Make open</button>
                     <button onClick={reviewSelectionInPreview} className="col-span-2 rounded-md border border-primary/30 bg-primary/10 px-2.5 py-2 text-xs font-semibold text-primary hover:bg-primary/15">Review batch in preview</button>
