@@ -203,6 +203,7 @@ export const BuilderCanvas: React.FC = () => {
               sections={sections}
               selectedSectionId={state.selectedSectionId}
               hoveredSectionId={state.hoveredSectionId}
+              onSelectSection={(sectionId) => dispatch(builderActions.selectSection(sectionId))}
               renderSection={renderSection}
               isPreview={isPreview}
             />

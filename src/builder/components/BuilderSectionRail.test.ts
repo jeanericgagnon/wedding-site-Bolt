@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { summarizeBuilderSectionRail } from './BuilderSectionRail';
+import { summarizeBuilderSectionRail } from './builderSectionRailSummary';
 
 describe('summarizeBuilderSectionRail', () => {
   it('reports visible, hidden, locked, and missing essentials', () => {

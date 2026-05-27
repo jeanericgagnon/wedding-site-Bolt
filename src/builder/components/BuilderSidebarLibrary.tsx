@@ -35,6 +35,11 @@ import { CustomSectionSkeleton } from '../../sections/variants/custom/skeletons'
 import { getDefinition } from '../../sections/registry';
 import { SECTION_REGISTRY as LEGACY_SECTION_REGISTRY } from '../../sections/sectionRegistry';
 import { getBuilderSectionLibrarySummary } from './builderSectionLibrarySummary';
+import {
+  getBuilderSectionHealth,
+  getBuilderSectionRecoverySummary,
+  getBuilderStarterContentPatch,
+} from './builderSectionRecoverySummary';
 
 
 type SidebarTab = 'sections' | 'layers' | 'templates' | 'media';
@@ -346,6 +351,10 @@ export const BuilderSidebarLibrary: React.FC<BuilderSidebarLibraryProps> = ({ ac
     }),
     [manifests, sections, sectionSearchQuery],
   );
+  const sectionRecoverySummary = useMemo(
+    () => getBuilderSectionRecoverySummary(sections),
+    [sections],
+  );
   const [layerDragId, setLayerDragId] = useState<string | null>(null);
 
   const layerSensors = useSensors(
@@ -368,6 +377,18 @@ export const BuilderSidebarLibrary: React.FC<BuilderSidebarLibraryProps> = ({ ac
   }, [sections, activePageId, dispatch]);
 
   const dragActiveSection = layerDragId ? sections.find(s => s.id === layerDragId) : null;
+  const runRecoveryAction = (action: typeof sectionRecoverySummary.primaryAction) => {
+    if (!activePageId) return;
+    if (action.kind === 'add-essential' && action.sectionType) {
+      const manifest = getSectionManifest(action.sectionType);
+      addSection(manifest.type, manifest.defaultVariant);
+      return;
+    }
+    if (action.sectionId) {
+      dispatch(builderActions.selectSection(action.sectionId));
+      scrollToSection(action.sectionId);
+    }
+  };
 
   const sidebarExpanded = activeTab === 'sections';
 
@@ -416,6 +437,56 @@ export const BuilderSidebarLibrary: React.FC<BuilderSidebarLibraryProps> = ({ ac
                 <Plus size={12} />
                 Add
               </button>
+            </div>
+            <div className="mb-3 rounded-lg border border-sky-100 bg-sky-50/70 p-3">
+              <div className="flex items-start justify-between gap-2">
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-sky-700">Section recovery</p>
+                  <p className="mt-1 text-xs font-semibold text-sky-950">{sectionRecoverySummary.focusTitle}</p>
+                  <p className="mt-1 text-[11px] leading-relaxed text-sky-900">{sectionRecoverySummary.focusDetail}</p>
+                </div>
+                <div className="rounded-full border border-sky-200 bg-white px-2 py-1 text-[10px] font-semibold text-sky-800">
+                  {sectionRecoverySummary.ready} ready
+                </div>
+              </div>
+              <div className="mt-3 rounded-lg border border-white/80 bg-white/80 px-3 py-2">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-sky-700">Best next move</p>
+                <p className="mt-1 text-[11px] font-semibold text-sky-950">{sectionRecoverySummary.bestNextMove}</p>
+                <p className="mt-1 text-[10px] leading-relaxed text-sky-800">
+                  <span className="font-semibold text-sky-950">Decision rule:</span> {sectionRecoverySummary.decisionRule}
+                </p>
+                <p className="mt-1 text-[10px] leading-relaxed text-sky-800">
+                  <span className="font-semibold text-sky-950">Watchout:</span> {sectionRecoverySummary.watchout}
+                </p>
+              </div>
+              <div className="mt-2 grid grid-cols-3 gap-1.5">
+                {[
+                  { label: 'Current', detail: sectionRecoverySummary.currentStep },
+                  { label: 'Next', detail: sectionRecoverySummary.nextStep },
+                  { label: 'Then', detail: sectionRecoverySummary.thenStep },
+                ].map((step) => (
+                  <div key={step.label} className="rounded-lg border border-white/80 bg-white/80 px-2 py-2">
+                    <p className="text-[9px] font-semibold uppercase tracking-[0.16em] text-sky-700">{step.label}</p>
+                    <p className="mt-1 text-[10px] leading-relaxed text-sky-900">{step.detail}</p>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() => runRecoveryAction(sectionRecoverySummary.primaryAction)}
+                  className="rounded-lg border border-sky-300 bg-white px-3 py-1.5 text-[11px] font-semibold text-sky-800 hover:bg-sky-100"
+                >
+                  {sectionRecoverySummary.primaryAction.label}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => runRecoveryAction(sectionRecoverySummary.secondaryAction)}
+                  className="rounded-lg border border-sky-200 bg-white px-3 py-1.5 text-[11px] font-medium text-sky-800 hover:bg-sky-100"
+                >
+                  {sectionRecoverySummary.secondaryAction.label}
+                </button>
+              </div>
             </div>
             {sections.length === 0 ? (
               <div className="text-center py-8 text-gray-400">
@@ -3167,62 +3238,6 @@ const VariantPreviewSwatch: React.FC<{ variantId: string; sectionType?: string; 
   return <div className={`w-full h-20 transition-colors ${h ? 'bg-rose-50' : 'bg-gray-100'}`} />;
 };
 
-type SectionHealth = 'empty' | 'draft' | 'ready';
-
-function getSectionHealth(section: BuilderSectionInstance): SectionHealth {
-  if (!section.enabled) return 'draft';
-
-  const bindingCount = Object.values(section.bindings ?? {}).reduce((sum, value) => {
-    if (Array.isArray(value)) return sum + value.filter(Boolean).length;
-    return sum;
-  }, 0);
-
-  const meaningfulSettingEntries = Object.entries(section.settings ?? {}).filter(([key, value]) => {
-    if (key === 'showTitle') return false;
-    if (typeof value === 'string') return value.trim().length > 0;
-    if (Array.isArray(value)) return value.length > 0;
-    if (typeof value === 'number') return true;
-    if (typeof value === 'boolean') return value;
-    if (value && typeof value === 'object') return Object.keys(value as Record<string, unknown>).length > 0;
-    return false;
-  }).length;
-
-  const styleCount = Object.keys(section.styleOverrides ?? {}).length;
-
-  const signalScore = bindingCount + meaningfulSettingEntries + styleCount;
-  if (signalScore === 0) return 'empty';
-  if (signalScore >= 3) return 'ready';
-  return 'draft';
-}
-
-function getStarterContentPatch(section: BuilderSectionInstance): Partial<BuilderSectionInstance> {
-  const now = new Date().toISOString();
-  const starterByType: Partial<Record<BuilderSectionType, Record<string, unknown>>> = {
-    hero: { title: 'We are getting married', headline: 'Alex & Sam', subtitle: 'January 17, 2027 · Rosewood Estate' },
-    story: { title: 'Our Story', content: 'From first coffee to forever — we cannot wait to celebrate with you.' },
-    schedule: { title: 'Weekend Schedule' },
-    travel: { title: 'Travel & Stay', notes: 'Use the recommended hotels for easiest shuttle access.' },
-    registry: { title: 'Registry', message: 'Your presence is the best gift, but here are a few ideas if you wish.' },
-    faq: { title: 'FAQ' },
-    rsvp: { title: 'RSVP' },
-    venue: { title: 'Venue Details' },
-    contact: { title: 'Questions?' },
-    'footer-cta': { headline: 'Join us for our big day', buttonLabel: 'RSVP' },
-  };
-
-  return {
-    settings: {
-      ...section.settings,
-      showTitle: true,
-      ...(starterByType[section.type] ?? {}),
-    },
-    meta: {
-      ...section.meta,
-      updatedAtISO: now,
-    },
-  };
-}
-
 interface SortableLayerItemProps {
   section: BuilderSectionInstance;
   index: number;
@@ -3251,7 +3266,7 @@ const SortableLayerItem: React.FC<SortableLayerItemProps> = ({ section, index, p
 
   const manifest = getSectionManifest(section.type);
   const IconComp = SECTION_ICONS[manifest.icon] ?? Layout;
-  const health = getSectionHealth(section);
+  const health = getBuilderSectionHealth(section);
   const healthPill = {
     empty: 'bg-gray-100 text-gray-500',
     draft: 'bg-amber-100 text-amber-700',
@@ -3310,7 +3325,7 @@ const SortableLayerItem: React.FC<SortableLayerItemProps> = ({ section, index, p
             onClick={e => {
               e.stopPropagation();
               if (!pageId) return;
-              dispatch(builderActions.updateSection(pageId, section.id, getStarterContentPatch(section)));
+              dispatch(builderActions.updateSection(pageId, section.id, getBuilderStarterContentPatch(section)));
             }}
             title="Insert starter content"
             className="inline-flex items-center gap-1 rounded bg-rose-50 px-1.5 py-1 text-[9px] font-semibold uppercase tracking-wide text-rose-600 hover:bg-rose-100"

@@ -2,34 +2,25 @@ import React from 'react';
 import { ChevronRight, GripVertical, ArrowUp, ArrowDown, Sparkles } from 'lucide-react';
 import { getAllSectionManifests, getSectionManifest } from '../registry/sectionManifests';
 import { getVariantPreviewSource } from '../registry/variantPreviewSource';
+import { getBuilderSectionRecoverySummary } from './builderSectionRecoverySummary';
+import { summarizeBuilderSectionRail } from './builderSectionRailSummary';
+import { BuilderSectionType } from '../../types/builder/section';
 
 interface RailSection {
   id: string;
-  type: string;
+  type: BuilderSectionType;
   enabled?: boolean;
   locked?: boolean;
-}
-
-type RailSummary = {
-  total: number;
-  visible: number;
-  hidden: number;
-  locked: number;
-  missingEssentials: string[];
-};
-
-const ESSENTIAL_SECTION_TYPES = ['hero', 'venue', 'schedule', 'travel', 'rsvp', 'faq', 'registry'] as const;
-
-export function summarizeBuilderSectionRail(activeSections: RailSection[]): RailSummary {
-  const presentTypes = new Set(activeSections.map((section) => section.type));
-  return {
-    total: activeSections.length,
-    visible: activeSections.filter((section) => section.enabled !== false).length,
-    hidden: activeSections.filter((section) => section.enabled === false).length,
-    locked: activeSections.filter((section) => section.locked).length,
-    missingEssentials: ESSENTIAL_SECTION_TYPES.filter((type) => !presentTypes.has(type)).map((type) => getSectionManifest(type).label),
+  settings?: Record<string, unknown>;
+  bindings?: Record<string, unknown>;
+  styleOverrides?: Record<string, unknown>;
+  meta?: {
+    createdAtISO: string;
+    updatedAtISO: string;
   };
 }
+
+const ESSENTIAL_SECTION_TYPES = ['hero', 'venue', 'schedule', 'travel', 'rsvp', 'faq', 'registry'] as const;
 
 interface BuilderSectionRailProps {
   activePageId?: string;
@@ -56,7 +47,23 @@ export const BuilderSectionRail: React.FC<BuilderSectionRailProps> = ({
   const addTypeManifest = addSectionType ? sectionManifests.find((m) => m.type === addSectionType) ?? null : null;
   const essentialManifests = sectionManifests.filter((m) => ESSENTIAL_SECTION_TYPES.includes(m.type as typeof ESSENTIAL_SECTION_TYPES[number]));
   const railSummary = summarizeBuilderSectionRail(activeSections);
+  const recoverySummary = getBuilderSectionRecoverySummary(activeSections);
   const quickAddManifests = essentialManifests.filter((manifest) => railSummary.missingEssentials.includes(manifest.label)).slice(0, 4);
+
+  const runRecoveryAction = (action: typeof recoverySummary.primaryAction) => {
+    if (action.kind === 'add-essential' && action.sectionType) {
+      const manifest = getSectionManifest(action.sectionType);
+      onAddSection(manifest.type, manifest.defaultVariant);
+      return;
+    }
+    if (action.sectionId) {
+      onSelectSection(action.sectionId);
+      requestAnimationFrame(() => {
+        const el = document.querySelector(`[data-section-id="${action.sectionId}"]`);
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    }
+  };
 
   const moveSection = (fromIndex: number, toIndex: number) => {
     if (toIndex < 0 || toIndex >= activeSections.length || fromIndex === toIndex) return;
@@ -82,6 +89,56 @@ export const BuilderSectionRail: React.FC<BuilderSectionRailProps> = ({
           <div className="rounded-lg border border-[var(--color-border-subtle)] bg-[var(--color-surface-subtle)] px-3 py-2">
             <p className="text-[11px] uppercase tracking-wide text-[var(--color-text-tertiary)]">Locked</p>
             <p className="mt-1 text-sm font-semibold text-[var(--color-text-primary)]">{railSummary.locked}</p>
+          </div>
+        </div>
+        <div className="mt-3 rounded-lg border border-sky-100 bg-sky-50 px-3 py-3">
+          <div className="flex items-start justify-between gap-2">
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-sky-800">Section recovery</p>
+              <p className="mt-1 text-sm font-semibold text-sky-950">{recoverySummary.focusTitle}</p>
+              <p className="mt-1 text-[11px] leading-relaxed text-sky-900">{recoverySummary.focusDetail}</p>
+            </div>
+            <div className="rounded-full border border-sky-200 bg-white px-2 py-1 text-[10px] font-semibold text-sky-800">
+              {recoverySummary.ready} ready
+            </div>
+          </div>
+          <div className="mt-3 rounded-lg border border-white/80 bg-white/80 px-3 py-2">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-sky-700">Best next move</p>
+            <p className="mt-1 text-[11px] font-semibold text-sky-950">{recoverySummary.bestNextMove}</p>
+            <p className="mt-1 text-[10px] leading-relaxed text-sky-800">
+              <span className="font-semibold text-sky-950">Decision rule:</span> {recoverySummary.decisionRule}
+            </p>
+            <p className="mt-1 text-[10px] leading-relaxed text-sky-800">
+              <span className="font-semibold text-sky-950">Watchout:</span> {recoverySummary.watchout}
+            </p>
+          </div>
+          <div className="mt-2 grid grid-cols-3 gap-1.5">
+            {[
+              { label: 'Current', detail: recoverySummary.currentStep },
+              { label: 'Next', detail: recoverySummary.nextStep },
+              { label: 'Then', detail: recoverySummary.thenStep },
+            ].map((step) => (
+              <div key={step.label} className="rounded-lg border border-white/80 bg-white/80 px-2 py-2">
+                <p className="text-[9px] font-semibold uppercase tracking-[0.16em] text-sky-700">{step.label}</p>
+                <p className="mt-1 text-[10px] leading-relaxed text-sky-900">{step.detail}</p>
+              </div>
+            ))}
+          </div>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => runRecoveryAction(recoverySummary.primaryAction)}
+              className="rounded-lg border border-sky-300 bg-white px-3 py-1.5 text-[11px] font-semibold text-sky-800 hover:bg-sky-100"
+            >
+              {recoverySummary.primaryAction.label}
+            </button>
+            <button
+              type="button"
+              onClick={() => runRecoveryAction(recoverySummary.secondaryAction)}
+              className="rounded-lg border border-sky-200 bg-white px-3 py-1.5 text-[11px] font-medium text-sky-800 hover:bg-sky-100"
+            >
+              {recoverySummary.secondaryAction.label}
+            </button>
           </div>
         </div>
         {quickAddManifests.length > 0 && (
