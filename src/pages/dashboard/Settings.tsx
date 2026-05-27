@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, Button, Input, Select, Badge } from '../../components/ui';
 import { Save, ExternalLink, CreditCard, User, Globe, Bell, Lock, Layout, Check, Sparkles, AlertCircle, Loader2, Calendar, Repeat, Eye, EyeOff, Copy, CheckCheck, Plus, Trash2, ChevronDown, LogOut, Users } from 'lucide-react';
@@ -30,6 +30,9 @@ import {
 import { formatSettingsDate } from './settingsDate';
 import { SETTINGS_SITE_SELECT } from './settingsSiteSelect';
 import { SettingsIdentityExportsPanel } from './SettingsIdentityExportsPanel';
+import { buildSiteAccessPlan } from './siteAccessPlan';
+import { getFlowStatusLabel } from '../../lib/flowLabels';
+import { resolveSettingsTabFromSearch, type SettingsTab } from './settingsTab';
 
 
 interface RSVPQuestionSetting {
@@ -56,8 +59,9 @@ const LOCAL_RSVP_MEAL_KEY = 'dayof_demo_rsvp_meal_config_v1';
 export const DashboardSettings: React.FC = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, isDemoMode, signOut } = useAuth();
-  const [activeTab, setActiveTab] = useState<'account' | 'team' | 'site' | 'rsvp' | 'notifications' | 'billing'>('account');
+  const [activeTab, setActiveTab] = useState<SettingsTab>(() => resolveSettingsTabFromSearch(location.search));
 
   const [coupleNames, setCoupleNames] = useState('');
   const [weddingDate, setWeddingDate] = useState<string | null>(null);
@@ -144,6 +148,12 @@ export const DashboardSettings: React.FC = () => {
       ? 'Password protected'
       : 'Public';
   const visibilityState = getSiteVisibilityState({ isPublished, privacyMode });
+  const siteAccessPlan = useMemo(() => buildSiteAccessPlan({
+    isPublished,
+    privacyMode,
+    siteSlug,
+    guestAccessToken,
+  }), [guestAccessToken, isPublished, privacyMode, siteSlug]);
 
   useEffect(() => {
     if (activeTab === 'billing' && user && !billingInfo) {
@@ -154,6 +164,10 @@ export const DashboardSettings: React.FC = () => {
         .finally(() => setBillingLoading(false));
     }
   }, [activeTab, billingInfo, user]);
+
+  useEffect(() => {
+    setActiveTab(resolveSettingsTabFromSearch(location.search));
+  }, [location.search]);
 
   const handleLogout = async () => {
     await signOut();
@@ -671,12 +685,14 @@ export const DashboardSettings: React.FC = () => {
   const weddingIdentityExportKit = useMemo(() => buildWeddingIdentityExportKit({
     coupleNames: exportCoupleNames,
     publicSiteUrl: exportPublicSiteUrl,
+    isPublished,
+    privacyMode,
     weddingDate: exportWeddingDate,
     venueName: exportVenueName,
     templateId: currentTemplate,
     templateName: exportTemplateName,
     defaultLanguage,
-  }), [exportCoupleNames, exportPublicSiteUrl, exportWeddingDate, exportVenueName, currentTemplate, exportTemplateName, defaultLanguage]);
+  }), [exportCoupleNames, exportPublicSiteUrl, isPublished, privacyMode, exportWeddingDate, exportVenueName, currentTemplate, exportTemplateName, defaultLanguage]);
   const weddingIdentityPrintAssets = useMemo(() => buildWeddingIdentityPrintAssets({
     coupleNames: exportCoupleNames,
     publicSiteUrl: exportPublicSiteUrl,
@@ -1487,6 +1503,26 @@ export const DashboardSettings: React.FC = () => {
                           <li>• <span className="font-medium text-text-primary">Protected live access</span> lets you limit who can open the guest-facing site once it is live.</li>
                           <li>• <span className="font-medium text-text-primary">Guest-facing launch</span> makes the site live at your DayOf URL.</li>
                         </ul>
+                      </div>
+
+                      <div id="guest-access-handoff" className="rounded-xl border border-border-subtle bg-surface-subtle/40 p-4 space-y-3">
+                        <div>
+                          <p className="text-sm font-medium text-text-primary">Guest access handoff</p>
+                          <p className="mt-1 text-xs text-text-secondary">Keep launch state, access rules, and the actual guest-facing path aligned before you fan links and print packs out broadly.</p>
+                        </div>
+                        <div className="grid gap-3 lg:grid-cols-3">
+                          {siteAccessPlan.map((step) => (
+                            <div key={step.id} className="rounded-lg border border-border-subtle bg-white px-3 py-3">
+                              <div className="flex items-center justify-between gap-2">
+                                <p className="text-sm font-semibold text-text-primary">{step.title}</p>
+                                <span className="rounded-full border border-border-subtle bg-surface-subtle px-2 py-0.5 text-[11px] font-medium text-text-secondary">
+                                  {getFlowStatusLabel(step.status)}
+                                </span>
+                              </div>
+                              <p className="mt-2 text-xs leading-5 text-text-secondary">{step.detail}</p>
+                            </div>
+                          ))}
+                        </div>
                       </div>
 
                       <div className="space-y-3">

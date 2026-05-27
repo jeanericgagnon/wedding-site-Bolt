@@ -8,6 +8,7 @@ function makeInput(overrides: Partial<Parameters<typeof buildControlTowerBriefin
     declinedGuests: 8,
     pendingGuests: 50,
     contactableGuestCount: 84,
+    itineraryEventCount: 2,
     registryItemCount: 12,
     photoAlbumCount: 2,
     activePhotoAlbumCount: 1,
@@ -43,8 +44,9 @@ describe('buildControlTowerBriefing', () => {
     }));
 
     expect(briefing.title).toContain('Launch readiness');
-    expect(briefing.primaryAction).toMatchObject({ target: 'builder' });
+    expect(briefing.primaryAction).toMatchObject({ target: 'builder-launch' });
     expect(briefing.badges).toContain('3 blockers');
+    expect(briefing.sequence[0]).toMatchObject({ status: 'current' });
   });
 
   it('prioritizes RSVP follow-up when replies are lagging', () => {
@@ -58,6 +60,7 @@ describe('buildControlTowerBriefing', () => {
     expect(briefing.title).toContain('Guest response follow-up');
     expect(briefing.primaryAction).toMatchObject({ target: 'guests' });
     expect(briefing.secondaryAction).toMatchObject({ target: 'messages' });
+    expect(briefing.sequence.map((step) => step.status)).toEqual(['current', 'next', 'then']);
   });
 
   it('switches into coordinator-first guidance when launch basics are steady and the wedding is close', () => {
@@ -80,6 +83,65 @@ describe('buildControlTowerBriefing', () => {
     expect(briefing.secondaryAction).toMatchObject({ target: 'seating' });
   });
 
+  it('pushes schedule work first when the wedding is close and no itinerary exists yet', () => {
+    const briefing = buildControlTowerBriefing(makeInput({
+      confirmedGuests: 78,
+      declinedGuests: 14,
+      pendingGuests: 8,
+      contactableGuestCount: 100,
+      itineraryEventCount: 0,
+      registryItemCount: 18,
+      activePhotoAlbumCount: 2,
+      photoAlbumCount: 2,
+      recentRsvpCount: 5,
+      daysUntilWedding: 6,
+      isPublished: true,
+    }));
+
+    expect(briefing.title).toContain('guest-facing schedule');
+    expect(briefing.primaryAction).toMatchObject({ target: 'itinerary' });
+    expect(briefing.secondaryAction).toMatchObject({ target: 'builder-polish' });
+  });
+
+  it('surfaces guest access handoff when a live site is restricted close to the wedding', () => {
+    const briefing = buildControlTowerBriefing(makeInput({
+      confirmedGuests: 78,
+      declinedGuests: 14,
+      pendingGuests: 8,
+      contactableGuestCount: 100,
+      itineraryEventCount: 2,
+      registryItemCount: 18,
+      activePhotoAlbumCount: 2,
+      photoAlbumCount: 2,
+      recentRsvpCount: 5,
+      daysUntilWedding: 6,
+      isPublished: true,
+      privacyMode: 'invite_only',
+    }));
+
+    expect(briefing.title).toContain('Guest access instructions');
+    expect(briefing.primaryAction).toMatchObject({ target: 'settings' });
+    expect(briefing.secondaryAction).toMatchObject({ target: 'messages' });
+  });
+
+  it('points guest prompt review back to the overview suggestions lane', () => {
+    const briefing = buildControlTowerBriefing(makeInput({
+      confirmedGuests: 74,
+      declinedGuests: 12,
+      pendingGuests: 14,
+      contactableGuestCount: 100,
+      registryItemCount: 20,
+      activePhotoAlbumCount: 2,
+      photoAlbumCount: 2,
+      interactiveSuggestionCount: 4,
+      recentSiteActivityCount: 2,
+    }));
+
+    expect(briefing.title).toContain('Guest input is arriving');
+    expect(briefing.primaryAction).toMatchObject({ target: 'suggestions' });
+    expect(briefing.secondaryAction).toMatchObject({ target: 'photos' });
+  });
+
   it('falls back to a calm guidance mode when the board is steady', () => {
     const briefing = buildControlTowerBriefing(makeInput({
       confirmedGuests: 74,
@@ -94,6 +156,6 @@ describe('buildControlTowerBriefing', () => {
     }));
 
     expect(briefing.title).toContain('board looks calm');
-    expect(briefing.primaryAction).toMatchObject({ target: 'builder' });
+    expect(briefing.primaryAction).toMatchObject({ target: 'builder-polish' });
   });
 });

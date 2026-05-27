@@ -1420,6 +1420,7 @@ export default function RSVP() {
               siteSlug={siteSlug || undefined}
               inviteToken={activeToken || undefined}
               previewGuest={previewGuest || undefined}
+              completedSurfaces={existingRsvp ? ['rsvp'] : []}
               className="mb-6"
             />
 

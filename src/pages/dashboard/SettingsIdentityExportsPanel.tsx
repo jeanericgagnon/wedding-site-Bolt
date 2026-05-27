@@ -1,5 +1,6 @@
 import { Copy, Image, Layout, Palette } from 'lucide-react';
 import { Badge, Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Input } from '../../components/ui';
+import { getFlowStatusLabel } from '../../lib/flowLabels';
 import type { WeddingIdentityExportKit, WeddingIdentityPrintAsset } from '../../lib/weddingIdentityExports';
 
 type SettingsIdentityExportsPanelProps = {
@@ -74,6 +75,41 @@ export function SettingsIdentityExportsPanel({
           </div>
 
           <div className="rounded-lg border border-border-subtle bg-surface-subtle/40 p-4">
+            <div className="mb-4 grid gap-3 lg:grid-cols-3">
+              {weddingIdentityExportKit.handoffSequence.map((step) => (
+                <div key={step.id} className="rounded-lg border border-border-subtle bg-white px-3 py-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-sm font-semibold text-text-primary">{step.title}</p>
+                    <span className="rounded-full border border-border-subtle bg-surface-subtle px-2 py-0.5 text-[11px] font-medium text-text-secondary">
+                      {getFlowStatusLabel(step.status)}
+                    </span>
+                  </div>
+                  <p className="mt-2 text-xs leading-5 text-text-secondary">{step.detail}</p>
+                </div>
+              ))}
+            </div>
+            <div className="mb-4 grid gap-3 lg:grid-cols-3">
+              {weddingIdentityExportKit.quickPacks.map((pack) => (
+                <div key={pack.id} className="rounded-lg border border-border-subtle bg-white px-3 py-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-sm font-semibold text-text-primary">{pack.label}</p>
+                    <span className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${pack.readiness === 'ready' ? 'bg-success/10 text-success' : 'bg-warning/10 text-warning'}`}>
+                      {pack.readiness === 'ready' ? 'Ready' : 'Needs info'}
+                    </span>
+                  </div>
+                  <p className="mt-1 text-xs text-text-secondary">{pack.detail}</p>
+                  <p className="mt-2 text-[11px] text-text-tertiary">{pack.bestFor}</p>
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    {pack.includes.map((item) => (
+                      <span key={item} className="rounded-full border border-border-subtle bg-surface-subtle px-2 py-0.5 text-[11px] text-text-secondary">
+                        {item}
+                      </span>
+                    ))}
+                  </div>
+                  <p className="mt-3 text-[11px] leading-5 text-text-secondary">{pack.nextStep}</p>
+                </div>
+              ))}
+            </div>
             <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
               {weddingIdentityExportKit.manifest.map((entry) => (
                 <div key={entry.label}>

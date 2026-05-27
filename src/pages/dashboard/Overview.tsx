@@ -8,7 +8,7 @@ import {
   getFirstIncompleteChecklistItem,
   getIncompleteChecklistItems,
 } from './overviewUtils';
-import { buildAnalyticsBaseline } from './analyticsBaseline';
+import { buildAnalyticsBaseline, buildAnalyticsConfidenceCards, buildAnalyticsConfidenceSummary, buildAnalyticsNextMove } from './analyticsBaseline';
 import { Link, useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { DashboardStateBlock } from '../../components/dashboard/DashboardStateBlock';
@@ -20,7 +20,7 @@ import { generateDraftFromWeddingProfile, mergeGeneratedDraftIntoWeddingData } f
 import { mergeGeneratedDraftIntoBuilderProject } from '../../lib/aiBuilderProjectPatch';
 import { createCanonicalContentFromDraft } from '../../lib/aiCanonicalContent';
 import { useAuth } from '../../hooks/useAuth';
-import { demoWeddingSite, demoGuests } from '../../lib/demoData';
+import { demoWeddingSite, demoGuests, demoEvents } from '../../lib/demoData';
 import { resolvePublicSiteSlugFromRow } from '../../lib/publicSiteSlug';
 import { getSiteVisibilityState } from '../../lib/siteVisibilityState';
 import { getPublishStateDescriptor } from '../../lib/publishState';
@@ -41,6 +41,9 @@ import { buildControlTowerBriefing, type ControlTowerAction } from './controlTow
 import { ControlTowerBriefingCard } from './ControlTowerBriefingCard';
 import { buildDayOfBrainBriefing, type DayOfBrainAction } from './dayOfBrain';
 import { DayOfBrainCard } from './DayOfBrainCard';
+import { buildCoupleFocusModel, type CoupleFocusStep } from './coupleFocus';
+import { buildOverviewThroughline } from './overviewThroughline';
+import { getFlowStatusLabel } from '../../lib/flowLabels';
 
 const DEFAULT_NAME_CHANGE_INSIGHTS: NameChangeOverviewInsights = {
   coreChainLabel: 'Certificate, SSA, and DMV stay together so the legal identity chain does not drift.',
@@ -62,6 +65,7 @@ interface OverviewStats {
   confirmedGuests: number;
   declinedGuests: number;
   pendingGuests: number;
+  itineraryEventCount: number;
   daysUntilWedding: number | null;
   weddingDate: string | null;
   siteSlug: string | null;
@@ -246,7 +250,8 @@ export const DashboardOverview: React.FC = () => {
           confirmedGuests: confirmed.length,
           declinedGuests: declined.length,
           pendingGuests: pending.length,
-              daysUntilWedding: calcOverviewDaysUntil(weddingDate),
+          itineraryEventCount: demoEvents.length,
+          daysUntilWedding: calcOverviewDaysUntil(weddingDate),
           weddingDate,
           siteSlug: resolvePublicSiteSlugFromRow(demoWeddingSite as unknown as Record<string, unknown>),
           isPublished: true,
@@ -351,6 +356,11 @@ export const DashboardOverview: React.FC = () => {
         .select('id', { count: 'exact', head: true })
         .eq('wedding_site_id', site?.id ?? '');
 
+      const { count: itineraryEventCount } = await supabase
+        .from('itinerary_events')
+        .select('id', { count: 'exact', head: true })
+        .eq('wedding_site_id', site?.id ?? '');
+
       const { count: photoAlbumCount } = await supabase
         .from('photo_albums')
         .select('id', { count: 'exact', head: true })
@@ -419,6 +429,7 @@ export const DashboardOverview: React.FC = () => {
         confirmedGuests: confirmed.length,
         declinedGuests: declined.length,
         pendingGuests: pending.length,
+        itineraryEventCount: itineraryEventCount ?? 0,
         daysUntilWedding: calcOverviewDaysUntil(weddingDate),
         weddingDate,
         siteSlug: resolvePublicSiteSlugFromRow((site as unknown as Record<string, unknown> | null) ?? null),
@@ -470,6 +481,43 @@ export const DashboardOverview: React.FC = () => {
     declinedGuests: stats?.declinedGuests ?? 0,
     pendingGuests: stats?.pendingGuests ?? 0,
     contactableGuests: stats?.contactableGuestCount ?? 0,
+    privacyMode: stats?.privacyMode ?? 'public',
+    registryItemCount: stats?.registryItemCount ?? 0,
+    photoAlbumCount: stats?.photoAlbumCount ?? 0,
+    activePhotoAlbumCount: stats?.activePhotoAlbumCount ?? 0,
+    interactiveSuggestionCount: interactiveSuggestions.length,
+  });
+  const analyticsConfidenceSummary = buildAnalyticsConfidenceSummary({
+    totalGuests: stats?.totalGuests ?? 0,
+    confirmedGuests: stats?.confirmedGuests ?? 0,
+    declinedGuests: stats?.declinedGuests ?? 0,
+    pendingGuests: stats?.pendingGuests ?? 0,
+    contactableGuests: stats?.contactableGuestCount ?? 0,
+    privacyMode: stats?.privacyMode ?? 'public',
+    registryItemCount: stats?.registryItemCount ?? 0,
+    photoAlbumCount: stats?.photoAlbumCount ?? 0,
+    activePhotoAlbumCount: stats?.activePhotoAlbumCount ?? 0,
+    interactiveSuggestionCount: interactiveSuggestions.length,
+  });
+  const analyticsConfidenceCards = buildAnalyticsConfidenceCards({
+    totalGuests: stats?.totalGuests ?? 0,
+    confirmedGuests: stats?.confirmedGuests ?? 0,
+    declinedGuests: stats?.declinedGuests ?? 0,
+    pendingGuests: stats?.pendingGuests ?? 0,
+    contactableGuests: stats?.contactableGuestCount ?? 0,
+    privacyMode: stats?.privacyMode ?? 'public',
+    registryItemCount: stats?.registryItemCount ?? 0,
+    photoAlbumCount: stats?.photoAlbumCount ?? 0,
+    activePhotoAlbumCount: stats?.activePhotoAlbumCount ?? 0,
+    interactiveSuggestionCount: interactiveSuggestions.length,
+  });
+  const analyticsNextMove = buildAnalyticsNextMove({
+    totalGuests: stats?.totalGuests ?? 0,
+    confirmedGuests: stats?.confirmedGuests ?? 0,
+    declinedGuests: stats?.declinedGuests ?? 0,
+    pendingGuests: stats?.pendingGuests ?? 0,
+    contactableGuests: stats?.contactableGuestCount ?? 0,
+    privacyMode: stats?.privacyMode ?? 'public',
     registryItemCount: stats?.registryItemCount ?? 0,
     photoAlbumCount: stats?.photoAlbumCount ?? 0,
     activePhotoAlbumCount: stats?.activePhotoAlbumCount ?? 0,
@@ -524,6 +572,11 @@ export const DashboardOverview: React.FC = () => {
     templateName: stats?.templateName ?? '',
   }).map((item) => ({ ...item, action: () => navigate(item.route) }));
   const siteVisibility = getSiteVisibilityState({ isPublished: stats?.isPublished, privacyMode: stats?.privacyMode, hideFromSearch: stats?.hideFromSearch });
+  const guestAccessNote = siteVisibility.isPrivatePreview
+    ? siteVisibility.state === 'private_preview_password'
+      ? 'Guests still need the site password, so every reminder, print pack, and planner handoff should carry those instructions clearly.'
+      : 'Guests still need the invite-only path, so broad-share links and handoff assets should match the real access route.'
+    : null;
   const archiveMode = getArchiveModeDescriptor({ weddingDate: stats?.weddingDate ?? null });
   const publishState = getPublishStateDescriptor({
     isPublished: stats?.isPublished,
@@ -547,6 +600,7 @@ export const DashboardOverview: React.FC = () => {
     declinedGuests: stats?.declinedGuests ?? 0,
     pendingGuests: stats?.pendingGuests ?? 0,
     contactableGuestCount: stats?.contactableGuestCount ?? 0,
+    itineraryEventCount: stats?.itineraryEventCount ?? 0,
     registryItemCount: stats?.registryItemCount ?? 0,
     photoAlbumCount: stats?.photoAlbumCount ?? 0,
     activePhotoAlbumCount: stats?.activePhotoAlbumCount ?? 0,
@@ -556,6 +610,7 @@ export const DashboardOverview: React.FC = () => {
     publishBlockerCount: publishBlockers.length,
     daysUntilWedding: stats?.daysUntilWedding ?? null,
     isPublished: stats?.isPublished ?? false,
+    privacyMode: stats?.privacyMode ?? 'public',
     isArchiveLike: archiveMode.isArchiveLike,
   });
   const dayOfBrainBriefing = buildDayOfBrainBriefing({
@@ -563,6 +618,7 @@ export const DashboardOverview: React.FC = () => {
     totalGuests: stats?.totalGuests ?? 0,
     confirmedGuests: stats?.confirmedGuests ?? 0,
     pendingGuests: stats?.pendingGuests ?? 0,
+    itineraryEventCount: stats?.itineraryEventCount ?? 0,
     checkedInCount: 0,
     liveIssueCount: 0,
     watchCount: 0,
@@ -573,16 +629,46 @@ export const DashboardOverview: React.FC = () => {
     splitHouseholdCount: 0,
     isArchiveLike: archiveMode.isArchiveLike,
   });
+  const coupleFocus = buildCoupleFocusModel({
+    daysUntilWedding: stats?.daysUntilWedding ?? null,
+    isPublished: stats?.isPublished ?? false,
+    isArchiveLike: archiveMode.isArchiveLike,
+    privacyMode: stats?.privacyMode ?? 'public',
+    publishBlockerCount: publishBlockers.length,
+    pendingGuestCount: stats?.pendingGuests ?? 0,
+    contactGapCount: stats ? Math.max((stats.totalGuests ?? 0) - (stats.contactableGuestCount ?? 0), 0) : 0,
+    overdueTaskCount: 0,
+    dueSoonVendorCount: 0,
+    seatingUnassignedCount: 0,
+    itineraryEventCount: stats?.itineraryEventCount ?? null,
+  });
+  const overviewThroughline = buildOverviewThroughline({
+    coupleFocus,
+    analyticsNextMove,
+    controlTowerBriefing,
+  });
 
   function handleControlTowerAction(action: ControlTowerAction) {
+    if (action.target === 'suggestions') {
+      const suggestionsCard = document.getElementById('interactive-suggestions');
+      if (suggestionsCard) {
+        suggestionsCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        return;
+      }
+    }
+
     const routeByTarget: Record<ControlTowerAction['target'], string> = {
-      builder: '/dashboard/builder',
+      'builder-launch': '/dashboard/builder#launch-confidence',
+      'builder-polish': '/dashboard/builder#builder-concierge',
       coordinator: '/dashboard/coordinator',
       guests: '/dashboard/guests',
+      itinerary: '/dashboard/itinerary#itinerary-readiness',
       messages: '/dashboard/messages',
       photos: '/dashboard/photos',
       planning: '/dashboard/planning',
       registry: '/dashboard/registry',
+      settings: '/dashboard/settings?tab=site#guest-access-handoff',
+      suggestions: '/dashboard/overview',
       seating: '/dashboard/seating',
       vault: '/dashboard/vault',
     };
@@ -591,6 +677,37 @@ export const DashboardOverview: React.FC = () => {
 
   function handleDayOfBrainAction(action: DayOfBrainAction) {
     handleControlTowerAction(action as ControlTowerAction);
+  }
+
+  function handleAnalyticsNextMove() {
+    const routeByTarget: Record<typeof analyticsNextMove.target, string> = {
+      guests: '/dashboard/guests',
+      messages: '/dashboard/messages',
+      registry: '/dashboard/registry',
+      photos: '/dashboard/photos',
+      'builder-polish': '/dashboard/builder#builder-concierge',
+      settings: '/dashboard/settings?tab=site#guest-access-handoff',
+    };
+    navigate(routeByTarget[analyticsNextMove.target]);
+  }
+
+  function handleCoupleFocusAction(step: CoupleFocusStep) {
+    const routeByTarget: Record<CoupleFocusStep['target'], string> = {
+      'builder-launch': '/dashboard/builder#launch-confidence',
+      'builder-polish': '/dashboard/builder#builder-concierge',
+      planning: '/dashboard/planning',
+      'planning-tasks': '/dashboard/planning?tab=tasks',
+      'planning-vendors': '/dashboard/planning?tab=vendors',
+      itinerary: '/dashboard/itinerary#itinerary-readiness',
+      guests: '/dashboard/guests',
+      messages: '/dashboard/messages',
+      settings: '/dashboard/settings?tab=site#guest-access-handoff',
+      seating: '/dashboard/seating',
+      coordinator: '/dashboard/coordinator',
+      photos: '/dashboard/photos',
+      vault: '/dashboard/vault',
+    };
+    navigate(routeByTarget[step.target]);
   }
 
   return (
@@ -696,6 +813,78 @@ export const DashboardOverview: React.FC = () => {
           </div>
         ) : (
           <>
+            <Card variant="bordered" padding="lg" className="shadow-sm border-border-subtle">
+              <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                <div className="max-w-3xl">
+                  <p className="text-xs font-semibold uppercase tracking-[0.24em] text-text-tertiary">Couple focus</p>
+                  <h2 className="mt-2 text-2xl font-semibold text-text-primary">{coupleFocus.headline}</h2>
+                  <p className="mt-2 text-sm text-text-secondary">{coupleFocus.summary}</p>
+                </div>
+                <div className="rounded-2xl border border-border-subtle bg-surface-subtle/30 px-4 py-3 lg:min-w-[220px]">
+                  <p className="text-[11px] uppercase tracking-[0.22em] text-text-tertiary">How to use this</p>
+                  <p className="mt-1 text-xs text-text-secondary">This is the one order of operations that should matter most to the couple right now.</p>
+                </div>
+              </div>
+              <div className="mt-4 grid gap-3 md:grid-cols-3">
+                {coupleFocus.steps.map((step) => (
+                  <div key={step.id} className="rounded-2xl border border-border-subtle bg-white px-4 py-4 shadow-[0_4px_14px_rgba(15,23,42,0.04)]">
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="text-sm font-semibold text-text-primary">{step.title}</p>
+                      <span className={`rounded-full px-2.5 py-1 text-[11px] font-medium ${
+                        step.status === 'current'
+                          ? 'border border-primary/20 bg-primary-light text-primary'
+                          : step.status === 'next'
+                            ? 'border border-warning/20 bg-warning-light text-warning'
+                            : 'border border-border-subtle bg-surface-subtle text-text-secondary'
+                      }`}>
+                        {getFlowStatusLabel(step.status)}
+                      </span>
+                    </div>
+                    <p className="mt-2 text-xs leading-5 text-text-secondary">{step.detail}</p>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="mt-3"
+                      onClick={() => handleCoupleFocusAction(step)}
+                    >
+                      {step.ctaLabel}
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </Card>
+            <Card variant="bordered" padding="lg" className="shadow-sm border-border-subtle">
+              <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                <div className="max-w-3xl">
+                  <p className="text-xs font-semibold uppercase tracking-[0.24em] text-text-tertiary">{overviewThroughline.eyebrow}</p>
+                  <h2 className="mt-2 text-xl font-semibold text-text-primary">{overviewThroughline.title}</h2>
+                  <p className="mt-2 text-sm text-text-secondary">{overviewThroughline.detail}</p>
+                </div>
+                <div className="rounded-2xl border border-border-subtle bg-surface-subtle/30 px-4 py-3 lg:min-w-[220px]">
+                  <p className="text-[11px] uppercase tracking-[0.22em] text-text-tertiary">Why this helps</p>
+                  <p className="mt-1 text-xs text-text-secondary">It keeps the smart surfaces aligned so you do not have to mentally merge the board yourself.</p>
+                </div>
+              </div>
+              <div className="mt-4 grid gap-3 md:grid-cols-3">
+                {overviewThroughline.steps.map((step) => (
+                  <div key={`${step.status}-${step.title}`} className="rounded-2xl border border-border-subtle bg-white px-4 py-4 shadow-[0_4px_14px_rgba(15,23,42,0.04)]">
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="text-sm font-semibold text-text-primary">{step.title}</p>
+                      <span className={`rounded-full px-2.5 py-1 text-[11px] font-medium ${
+                        step.status === 'current'
+                          ? 'border border-primary/20 bg-primary-light text-primary'
+                          : step.status === 'next'
+                            ? 'border border-warning/20 bg-warning-light text-warning'
+                            : 'border border-border-subtle bg-surface-subtle text-text-secondary'
+                      }`}>
+                        {getFlowStatusLabel(step.status)}
+                      </span>
+                    </div>
+                    <p className="mt-2 text-xs leading-5 text-text-secondary">{step.detail}</p>
+                  </div>
+                ))}
+              </div>
+            </Card>
             <ControlTowerBriefingCard briefing={controlTowerBriefing} onAction={handleControlTowerAction} />
             {(stats?.daysUntilWedding !== null || archiveMode.isArchiveLike) && (
               <DayOfBrainCard briefing={dayOfBrainBriefing} onAction={handleDayOfBrainAction} />
@@ -1185,6 +1374,19 @@ export const DashboardOverview: React.FC = () => {
                     <span className="text-text-secondary">Status</span>
                     <span className="text-text-primary">{siteVisibility.label}</span>
                   </div>
+                  {guestAccessNote && (
+                    <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-sm">
+                      <p className="font-medium text-amber-900">Guest access needs one shared instruction set</p>
+                      <p className="mt-1 text-amber-800">{guestAccessNote}</p>
+                      <button
+                        type="button"
+                        onClick={() => navigate('/dashboard/settings?tab=site#guest-access-handoff')}
+                        className="mt-2 text-xs font-medium text-amber-900 underline underline-offset-2"
+                      >
+                        Review site access settings
+                      </button>
+                    </div>
+                  )}
                   <div className="flex items-center justify-between py-3 border-b border-border-subtle">
                     <span className="text-text-secondary">Last live update</span>
                     <span className="text-text-primary">{stats?.lastPublishedAt ? formatOverviewRelativeTime(stats.lastPublishedAt) : '—'}</span>
@@ -1288,8 +1490,39 @@ export const DashboardOverview: React.FC = () => {
                 <CardDescription>Only measured product signals shown here. No guessed conversion metrics.</CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
-                <div className="rounded-lg border border-border-subtle bg-surface-secondary/30 px-3 py-2.5 text-xs text-text-secondary">
-                  This is the clean baseline before fuller analytics lands: response counts, registry readiness, photo setup, and guest prompts.
+                <div className="rounded-lg border border-border-subtle bg-surface-secondary/30 px-3 py-3">
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-text-primary">{analyticsConfidenceSummary.title}</p>
+                      <p className="mt-1 text-xs text-text-secondary">{analyticsConfidenceSummary.detail}</p>
+                    </div>
+                    <Badge variant={analyticsConfidenceSummary.tone}>{analyticsConfidenceSummary.statusLabel}</Badge>
+                  </div>
+                </div>
+                <div className="grid gap-2 md:grid-cols-3">
+                  {analyticsConfidenceCards.map((card) => (
+                    <div key={card.label} className="rounded-lg border border-border-subtle bg-surface-secondary/20 px-3 py-2.5">
+                      <div className="flex items-center justify-between gap-3">
+                        <p className="text-sm font-medium text-text-primary">{card.label}</p>
+                        <Badge variant={card.tone}>{card.value}</Badge>
+                      </div>
+                      <p className="mt-1 text-xs text-text-secondary">{card.detail}</p>
+                    </div>
+                  ))}
+                </div>
+                <div className="rounded-lg border border-border-subtle bg-surface-secondary/20 px-3 py-2.5 text-xs text-text-secondary">
+                  This is still the measured baseline before fuller analytics lands: response counts, registry readiness, photo setup, and guest prompts. The difference now is that the board also tells you how much confidence to place in those signals.
+                </div>
+                <div className="rounded-lg border border-border-subtle bg-white px-3 py-3">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-text-primary">{analyticsNextMove.title}</p>
+                      <p className="mt-1 text-xs text-text-secondary">{analyticsNextMove.detail}</p>
+                    </div>
+                    <Button variant="outline" size="sm" onClick={handleAnalyticsNextMove}>
+                      {analyticsNextMove.ctaLabel}
+                    </Button>
+                  </div>
                 </div>
                 <div className="space-y-2.5">
                   {analyticsBaseline.map((metric) => (
@@ -1340,7 +1573,7 @@ export const DashboardOverview: React.FC = () => {
                 </CardContent>
               </Card>
 
-              <Card variant="bordered" padding="lg" className="shadow-sm">
+              <Card id="interactive-suggestions" variant="bordered" padding="lg" className="shadow-sm">
                 <CardHeader>
                   <CardTitle>Interactive suggestions</CardTitle>
                   <CardDescription>Latest guest prompt responses (moderation)</CardDescription>

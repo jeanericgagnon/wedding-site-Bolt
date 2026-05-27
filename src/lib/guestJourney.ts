@@ -12,11 +12,45 @@ export interface GuestJourneyContext {
   inviteToken?: string | null;
   previewGuest?: string | null;
   isHubEntry?: boolean;
+  completedSurfaces?: GuestJourneySurface[];
 }
 
 export interface GuestJourneyCopy {
   title: string;
   detail: string;
+  statusLabel: string;
+  nextStepLabel: string;
+  helperBadges: string[];
+}
+
+export interface GuestJourneyStep {
+  key: GuestJourneySurface;
+  label: string;
+  status: 'done' | 'current' | 'next' | 'available';
+}
+
+const SURFACE_LABELS: Record<GuestJourneySurface, string> = {
+  rsvp: 'RSVP',
+  travel: 'Travel',
+  photos: 'Photos',
+  contact: 'Details',
+  vault: 'Keepsake',
+};
+
+function getJourneyOrder(surface: GuestJourneySurface): GuestJourneySurface[] {
+  switch (surface) {
+    case 'travel':
+      return ['travel', 'rsvp', 'contact', 'photos'];
+    case 'photos':
+      return ['photos', 'rsvp', 'travel', 'contact'];
+    case 'contact':
+      return ['contact', 'rsvp', 'photos', 'travel'];
+    case 'vault':
+      return ['vault', 'photos', 'rsvp', 'travel'];
+    case 'rsvp':
+    default:
+      return ['rsvp', 'travel', 'photos', 'contact'];
+  }
 }
 
 function toSearchString(params: URLSearchParams): string {
@@ -43,31 +77,49 @@ export function getGuestJourneyCopy(surface: GuestJourneySurface): GuestJourneyC
       return {
         title: 'Everything stays on the same guest path',
         detail: 'Reply here, then jump to travel, photos, or contact updates from the same wedding path whenever you need them.',
+        statusLabel: 'Reply path ready',
+        nextStepLabel: 'Next useful moves: travel details, photo sharing, or a quick contact update.',
+        helperBadges: ['Reply here', 'Travel nearby', 'Photos nearby'],
       };
     case 'photos':
       return {
         title: 'Share now, keep the rest within reach',
         detail: 'Photo sharing does not strand you. RSVP, travel details, and contact updates should still feel like part of one calm guest flow.',
+        statusLabel: 'Photo path ready',
+        nextStepLabel: 'Next useful moves: RSVP if you have not replied yet, then travel or guest updates.',
+        helperBadges: ['Photo upload', 'RSVP nearby', 'Travel nearby'],
       };
     case 'contact':
       return {
         title: 'Update details without losing your place',
         detail: 'You can handle contact updates here, then head back to RSVP, travel details, or photo sharing from the same wedding path.',
+        statusLabel: 'Update path ready',
+        nextStepLabel: 'Next useful moves: RSVP first if needed, then photos or travel details.',
+        helperBadges: ['Contact update', 'RSVP nearby', 'Photos nearby'],
       };
     case 'vault':
       return {
         title: 'The story stretches past the wedding weekend',
         detail: 'Anniversary notes live later in the story, but the wedding hub, RSVP, travel details, and photos should still be easy to reopen from here.',
+        statusLabel: 'Keepsake path ready',
+        nextStepLabel: 'The wedding path is still easy to reopen from here if you need it.',
+        helperBadges: ['Keepsake mode', 'Hub nearby', 'Photos nearby'],
       };
     case 'travel':
       return {
         title: 'Travel is part of the same guest journey',
         detail: 'Guests should be able to move from travel details to RSVP, photos, and updates without feeling like they entered a different tool.',
+        statusLabel: 'Travel path ready',
+        nextStepLabel: 'Next useful moves: RSVP if needed, then photos or a quick contact update.',
+        helperBadges: ['Travel details', 'RSVP nearby', 'Updates nearby'],
       };
     default:
       return {
         title: 'Everything guests need stays connected',
         detail: 'The wedding path should keep RSVP, updates, travel, and photos easy to reopen from one place.',
+        statusLabel: 'Guest path ready',
+        nextStepLabel: 'Use the next useful surface without re-entering a different flow.',
+        helperBadges: ['One guest path', 'Travel nearby', 'Photos nearby'],
       };
   }
 }
@@ -150,5 +202,24 @@ export function buildGuestJourneyLinks(context: GuestJourneyContext): GuestJourn
       default:
         return true;
     }
+  });
+}
+
+export function buildGuestJourneySteps(context: GuestJourneyContext): GuestJourneyStep[] {
+  const completed = new Set(context.completedSurfaces ?? []);
+  const order = getJourneyOrder(context.currentSurface);
+  const nextSurface = order.find((surface) => surface !== context.currentSurface && !completed.has(surface)) ?? null;
+
+  return order.map((surface) => {
+    if (surface === context.currentSurface) {
+      return { key: surface, label: SURFACE_LABELS[surface], status: 'current' };
+    }
+    if (completed.has(surface)) {
+      return { key: surface, label: SURFACE_LABELS[surface], status: 'done' };
+    }
+    if (surface === nextSurface) {
+      return { key: surface, label: SURFACE_LABELS[surface], status: 'next' };
+    }
+    return { key: surface, label: SURFACE_LABELS[surface], status: 'available' };
   });
 }

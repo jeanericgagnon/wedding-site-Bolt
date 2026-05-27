@@ -4,7 +4,7 @@ import { isVendorDateBetween } from './vendorDate';
 
 export interface PlanningDecisionAction {
   label: string;
-  target: 'overview' | 'tasks' | 'budget' | 'vendors' | 'seating';
+  target: 'overview' | 'tasks' | 'budget' | 'vendors' | 'seating' | 'itinerary';
 }
 
 export interface PlanningDecisionCardModel {
@@ -43,14 +43,17 @@ export function buildPlanningOverviewDecisionCard(args: {
   budgetItems: PlanningBudgetItem[];
   vendors: PlanningVendor[];
   seatingReadiness: SeatingReadiness;
+  daysUntilWedding?: number | null;
+  itineraryEventCount?: number | null;
 }): PlanningDecisionCardModel {
-  const { tasks, budgetItems, vendors, seatingReadiness } = args;
+  const { tasks, budgetItems, vendors, seatingReadiness, daysUntilWedding = null, itineraryEventCount = null } = args;
   const { today, in7Days } = dueWindows();
   const overdueTasks = tasks.filter((task) => task.status !== 'done' && isTaskDueOnOrBefore(task.due_date, today));
   const dueSoonVendors = vendors.filter((vendor) => vendor.balance_due > 0 && isVendorDateBetween(vendor.next_payment_due, today, in7Days));
   const totalEstimated = budgetItems.reduce((sum, item) => sum + (item.estimated_amount || 0), 0);
   const totalActual = budgetItems.reduce((sum, item) => sum + (item.actual_amount || 0), 0);
   const overBudget = totalEstimated > 0 && totalActual > totalEstimated;
+  const weddingSoon = daysUntilWedding !== null && daysUntilWedding >= 0 && daysUntilWedding <= 21;
 
   if (overdueTasks.length > 0) {
     return {
@@ -105,6 +108,20 @@ export function buildPlanningOverviewDecisionCard(args: {
       ],
       primaryAction: { label: 'Open seating', target: 'seating' },
       secondaryAction: { label: 'Open tasks', target: 'tasks' },
+    };
+  }
+
+  if (weddingSoon && itineraryEventCount === 0) {
+    return {
+      eyebrow: 'Planning assistant',
+      title: 'The weekend still needs its schedule anchors',
+      detail: 'Before the final stretch feels calm, guests need a real ceremony, reception, and key event timeline to trust. Add those anchor events before you spend energy on softer polish.',
+      badges: [
+        daysUntilWedding === 0 ? 'Wedding day' : `${daysUntilWedding} days left`,
+        'No itinerary events yet',
+      ],
+      primaryAction: { label: 'Build itinerary anchors', target: 'itinerary' },
+      secondaryAction: { label: 'Check seating', target: 'seating' },
     };
   }
 

@@ -18,6 +18,8 @@ import { buildBuilderConciergeModel } from '../../lib/setupConcierge';
 import { getPublishIssue, getPublishValidationError } from '../utils/publishReadiness';
 import { shouldAutoPublishFromSearch } from '../utils/publishUiHints';
 import { getPublishNowAction } from '../utils/publishNowFlow';
+import { buildLaunchConfidence } from '../utils/launchConfidence';
+import { getFlowStatusLabel } from '../../lib/flowLabels';
 import { templateCatalog } from '../constants/templateCatalog';
 
 interface BuilderShellProps {
@@ -185,6 +187,10 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
     const templateName = templateCatalog.find((template) => template.id === state.project?.templateId)?.name ?? null;
     return buildBuilderConciergeModel(state.weddingData, { templateName });
   }, [state.project?.templateId, state.weddingData]);
+  const launchConfidence = useMemo(() => {
+    if (!state.project || !state.weddingData) return null;
+    return buildLaunchConfidence(state.project, state.weddingData, { isDirty: state.isDirty });
+  }, [state.isDirty, state.project, state.weddingData]);
 
   const handleSave = useCallback(async (): Promise<boolean> => {
     const currentState = stateRef.current;
@@ -274,6 +280,24 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
       dispatch({ type: 'SET_PUBLISHING', payload: false });
     }
   }, [onPublish, handleSave]);
+
+  const handleLaunchConfidenceAction = useCallback(() => {
+    if (!launchConfidence) return;
+    if (launchConfidence.primaryAction.kind === 'fix') {
+      if (launchConfidence.primaryAction.target === 'itinerary') {
+        window.location.assign('/dashboard/itinerary#itinerary-readiness');
+        return;
+      }
+      handleFixPublishBlockers();
+      return;
+    }
+    if (launchConfidence.primaryAction.kind === 'preview') {
+      dispatch(builderActions.setMode('preview'));
+      setPublishNotice('Preview mode is open so you can verify the guest-facing flow before updating the live site.');
+      return;
+    }
+    void handlePublish();
+  }, [handleFixPublishBlockers, handlePublish, launchConfidence]);
 
   useEffect(() => {
     if (!shouldAutoPublishRef.current) return;
@@ -389,6 +413,86 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
           )}
         </div>
 
+        {conciergePlan && (
+          <div id="builder-concierge" className="border-t border-border/30 bg-white/90 px-4 py-3 shadow-[0_-6px_18px_rgba(15,23,42,0.04)]">
+            <div className="mx-auto flex max-w-7xl flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+              <div className="space-y-2">
+                <div className="flex flex-wrap items-center gap-2">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-text-tertiary">Builder concierge</p>
+                  <span className="rounded-full border border-primary/20 bg-primary/5 px-2.5 py-1 text-[11px] font-medium text-primary">
+                    {conciergePlan.confidenceLabel}
+                  </span>
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-text-primary">{conciergePlan.heading}</p>
+                  <p className="mt-1 text-sm text-text-secondary">{conciergePlan.summary}</p>
+                  <p className="mt-1 text-xs text-text-tertiary">{conciergePlan.nextBestMove}</p>
+                </div>
+              </div>
+              <div className="grid gap-3 text-sm lg:max-w-2xl">
+                <p className="text-xs font-medium text-text-secondary">{conciergePlan.guestPromise}</p>
+                <div className="grid gap-2 md:grid-cols-3">
+                  {conciergePlan.launchSequence.map((item) => (
+                    <div key={item.id} className="rounded-xl border border-border-subtle bg-surface-subtle/40 px-3 py-3">
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-text-tertiary">{item.status}</p>
+                        <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${
+                          item.status === 'current'
+                            ? 'border border-primary/20 bg-primary-light text-primary'
+                            : item.status === 'next'
+                              ? 'border border-warning/20 bg-warning-light text-warning'
+                              : 'border border-border-subtle bg-white text-text-secondary'
+                        }`}>
+                          {getFlowStatusLabel(item.status)}
+                        </span>
+                      </div>
+                      <p className="mt-2 text-xs font-medium text-text-primary">{item.title}</p>
+                      <p className="mt-1 text-[11px] leading-5 text-text-secondary">{item.detail}</p>
+                    </div>
+                  ))}
+                </div>
+                {conciergePlan.watchouts.map((watchout) => (
+                  <p key={watchout} className="text-xs text-amber-700">{watchout}</p>
+                ))}
+                {launchConfidence && (
+                  <div id="launch-confidence" className="rounded-2xl border border-border-subtle bg-white px-4 py-3">
+                    <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-text-tertiary">Launch confidence</p>
+                          <span className={`rounded-full px-2.5 py-1 text-[11px] font-medium ${
+                            launchConfidence.tone === 'ready'
+                              ? 'border border-emerald-200 bg-emerald-50 text-emerald-700'
+                              : 'border border-amber-200 bg-amber-50 text-amber-700'
+                          }`}>
+                            {launchConfidence.label}
+                          </span>
+                        </div>
+                        <p className="text-sm font-medium text-text-primary">{launchConfidence.summary}</p>
+                        <p className="text-[11px] text-text-secondary">Current · {launchConfidence.current}</p>
+                        <p className="text-[11px] text-text-secondary">Next · {launchConfidence.next}</p>
+                      </div>
+                      <div className="lg:pl-4">
+                        <button
+                          type="button"
+                          onClick={handleLaunchConfidenceAction}
+                          className={`rounded-lg px-3 py-2 text-sm font-medium ${
+                            launchConfidence.primaryAction.kind === 'fix'
+                              ? 'border border-amber-200 bg-amber-50 text-amber-800 hover:bg-amber-100'
+                              : 'bg-gray-900 text-white hover:bg-gray-800'
+                          }`}
+                        >
+                          {launchConfidence.primaryAction.label}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
         {publishNotice && (
           <div className="fixed bottom-4 left-4 bg-green-600 text-white px-4 py-3 rounded-xl shadow-lg text-sm flex items-center gap-2 z-50 max-w-sm">
             <span className="flex-1">{publishNotice}</span>
@@ -467,7 +571,11 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
                   type="button"
                   onClick={() => {
                     setShowCoachmarks(false);
-                    try { window.localStorage.setItem('builder_coachmarks_seen_v1', '1'); } catch {}
+                    try {
+                      window.localStorage.setItem('builder_coachmarks_seen_v1', '1');
+                    } catch {
+                      // Non-persistent environments can still dismiss the guide for this session.
+                    }
                   }}
                   className="rounded-lg bg-gray-900 px-3 py-1.5 text-sm font-semibold text-white hover:bg-gray-800"
                 >

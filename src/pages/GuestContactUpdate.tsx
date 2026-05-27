@@ -163,6 +163,7 @@ export const GuestContactUpdate: React.FC = () => {
           siteSlug={siteRef || undefined}
           inviteToken={inviteToken || undefined}
           previewGuest={previewGuest || undefined}
+          completedSurfaces={result?.ok ? ['contact'] : []}
           className="mt-4"
         />
 

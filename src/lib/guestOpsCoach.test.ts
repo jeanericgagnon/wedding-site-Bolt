@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildGuestOpsCoach, buildMessageOpsCoach } from './guestOpsCoach';
+import { buildGuestOpsCoach, buildGuestOutreachSequence, buildMessageOpsCoach } from './guestOpsCoach';
 
 describe('buildGuestOpsCoach', () => {
   it('prioritizes missing pending email before reminder work', () => {
@@ -84,5 +84,81 @@ describe('buildMessageOpsCoach', () => {
 
     expect(coach.plays[0]?.id).toBe('send-rsvp-reminder');
     expect(coach.plays.map((play) => play.id)).toContain('stage-day-of-update');
+  });
+});
+
+describe('buildGuestOutreachSequence', () => {
+  it('treats contact gaps as the first unlock when pending guests are unreachable', () => {
+    const plan = buildGuestOutreachSequence(
+      {
+        totalGuests: 64,
+        attendingGuests: 28,
+        pendingResponses: 12,
+        pendingWithoutEmail: 5,
+        noContact: 7,
+        missingMealChoices: 0,
+        missingPlusOneNames: 0,
+      },
+      {
+        scheduledCount: 0,
+        overdueScheduledCount: 0,
+        partialCount: 0,
+        failedCount: 0,
+        unreachedRecipientCount: 7,
+      },
+    );
+
+    expect(plan.headline).toMatch(/unlock clean outreach/i);
+    expect(plan.steps[0]?.id).toBe('close-contact-gaps');
+    expect(plan.steps[1]?.id).toBe('send-rsvp-reminder');
+  });
+
+  it('prioritizes delivery review before another push when message health is noisy', () => {
+    const plan = buildGuestOutreachSequence(
+      {
+        totalGuests: 64,
+        attendingGuests: 28,
+        pendingResponses: 9,
+        pendingWithoutEmail: 0,
+        noContact: 0,
+        missingMealChoices: 0,
+        missingPlusOneNames: 0,
+      },
+      {
+        scheduledCount: 2,
+        overdueScheduledCount: 0,
+        partialCount: 2,
+        failedCount: 1,
+        unreachedRecipientCount: 4,
+      },
+    );
+
+    expect(plan.steps[0]?.id).toBe('review-delivery');
+    expect(plan.steps[0]?.area).toBe('messages');
+    expect(plan.steps[1]?.id).toBe('send-rsvp-reminder');
+  });
+
+  it('stages day-of prep when the guest lane is already calm', () => {
+    const plan = buildGuestOutreachSequence(
+      {
+        totalGuests: 64,
+        attendingGuests: 41,
+        pendingResponses: 0,
+        pendingWithoutEmail: 0,
+        noContact: 0,
+        missingMealChoices: 0,
+        missingPlusOneNames: 0,
+      },
+      {
+        scheduledCount: 0,
+        overdueScheduledCount: 0,
+        partialCount: 0,
+        failedCount: 0,
+        unreachedRecipientCount: 0,
+      },
+    );
+
+    expect(plan.steps[0]?.id).toBe('stage-day-of-update');
+    expect(plan.headline).toMatch(/work ahead/i);
   });
 });

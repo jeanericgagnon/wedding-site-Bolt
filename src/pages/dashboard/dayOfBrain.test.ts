@@ -47,6 +47,7 @@ describe('buildDayOfBrainBriefing', () => {
   it('pushes guest follow-up when RSVP pressure is still high', () => {
     const briefing = buildDayOfBrainBriefing(makeInput({
       daysUntilWedding: 12,
+      itineraryEventCount: 2,
       totalGuests: 80,
       confirmedGuests: 41,
       pendingGuests: 18,
@@ -61,6 +62,7 @@ describe('buildDayOfBrainBriefing', () => {
   it('moves into a calm day-of readiness mode once the core work is steady', () => {
     const briefing = buildDayOfBrainBriefing(makeInput({
       daysUntilWedding: 6,
+      itineraryEventCount: 2,
       pendingGuests: 4,
       confirmedGuests: 104,
       scheduledAlertCount: 2,
@@ -69,5 +71,19 @@ describe('buildDayOfBrainBriefing', () => {
     expect(briefing.title).toContain('keep the live tools warm');
     expect(briefing.primaryAction).toMatchObject({ target: 'coordinator' });
     expect(briefing.secondaryAction).toMatchObject({ target: 'seating' });
+  });
+
+  it('asks for the itinerary spine first when the wedding is close but the schedule is empty', () => {
+    const briefing = buildDayOfBrainBriefing(makeInput({
+      daysUntilWedding: 5,
+      itineraryEventCount: 0,
+      pendingGuests: 3,
+      confirmedGuests: 96,
+      scheduledAlertCount: 0,
+    }));
+
+    expect(briefing.title).toContain('guest-facing schedule spine');
+    expect(briefing.primaryAction).toMatchObject({ target: 'itinerary' });
+    expect(briefing.secondaryAction).toMatchObject({ target: 'messages' });
   });
 });

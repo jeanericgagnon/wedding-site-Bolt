@@ -5,7 +5,7 @@ import { useToast } from '../../components/ui/Toast';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../hooks/useAuth';
 import { resolveActiveSiteForUser } from '../../lib/activeSite';
-import { demoWeddingSite, demoPlanningTasks, demoBudgetItems, demoVendors, demoNameChangeCase, demoNameChangeDocuments, demoNameChangeExtractedFields } from '../../lib/demoData';
+import { demoWeddingSite, demoPlanningTasks, demoBudgetItems, demoVendors, demoNameChangeCase, demoNameChangeDocuments, demoNameChangeExtractedFields, demoEvents } from '../../lib/demoData';
 import { PLANNER_ROLE_OPTIONS, canEditPlanningBudget, canEditPlanningTasks, canEditPlanningVendors, writePlannerAccessRole, type PlannerAccessRole } from '../../lib/plannerAccess';
 import {
   PlanningTask, PlanningBudgetItem, PlanningVendor,
@@ -76,6 +76,8 @@ export const DashboardPlanning: React.FC = () => {
   const [vendors, setVendors] = useState<PlanningVendor[]>([]);
   const [totalBudget, setTotalBudget] = useState(0);
   const [seatingReadiness, setSeatingReadiness] = useState({ attending: 0, seated: 0, unassigned: 0 });
+  const [itineraryEventCount, setItineraryEventCount] = useState(0);
+  const [privacyMode, setPrivacyMode] = useState<'public' | 'password_protected' | 'invite_only'>('public');
   const [pendingVendorForBudget, setPendingVendorForBudget] = useState<PlanningVendor | null>(null);
   const [planningRole, setPlanningRole] = useState<PlannerAccessRole>('owner');
   const [activeSiteRole, setActiveSiteRole] = useState<PlannerAccessRole>('owner');
@@ -126,6 +128,7 @@ export const DashboardPlanning: React.FC = () => {
         setVendors(demoVendors as unknown as PlanningVendor[]);
         setTotalBudget(30000);
         setSeatingReadiness({ attending: 68, seated: 52, unassigned: 16 });
+        setItineraryEventCount(demoEvents.length);
         const demoCase: NameChangeCaseInput = {
           ...defaultNameChangeCaseInput,
           ...demoNameChangeCase,
@@ -156,15 +159,18 @@ export const DashboardPlanning: React.FC = () => {
       try {
         const rawRole = localStorage.getItem(`dayof.planning.role.${id}`) as PlannerAccessRole | null;
         if (rawRole === 'owner' || rawRole === 'planner' || rawRole === 'coordinator' || rawRole === 'viewer') setPlanningRole(rawRole);
-      } catch {}
+      } catch {
+        setPlanningRole(activeSiteRole);
+      }
       const wDate = await getWeddingDate();
       setWeddingDate(wDate);
 
-      const [tasksData, budgetData, vendorsData, siteMeta] = await Promise.all([
+      const [tasksData, budgetData, vendorsData, siteMeta, itineraryMeta] = await Promise.all([
         loadTasks(id),
         loadBudgetItems(id),
         loadVendors(id),
-        supabase.from('wedding_sites').select('wedding_data').eq('id', id).maybeSingle(),
+        supabase.from('wedding_sites').select('wedding_data, privacy_mode').eq('id', id).maybeSingle(),
+        supabase.from('itinerary_events').select('id', { count: 'exact', head: true }).eq('wedding_site_id', id),
       ]);
       setTasks(tasksData);
       setBudgetItems(budgetData);
@@ -173,6 +179,12 @@ export const DashboardPlanning: React.FC = () => {
       const weddingData = (siteMeta.data?.wedding_data as Record<string, unknown> | null) ?? null;
       const planningMeta = (weddingData?.planning as Record<string, unknown> | undefined) ?? {};
       setTotalBudget(Number(planningMeta.totalBudget) || 0);
+      setItineraryEventCount(itineraryMeta.count ?? 0);
+      setPrivacyMode(
+        siteMeta.data?.privacy_mode === 'password_protected' || siteMeta.data?.privacy_mode === 'invite_only'
+          ? siteMeta.data.privacy_mode
+          : 'public',
+      );
 
       await loadSeatingReadiness(id);
 
@@ -227,6 +239,7 @@ export const DashboardPlanning: React.FC = () => {
         unassigned: Math.max(0, attending - seatedCount),
       });
     } catch {
+      setSeatingReadiness({ attending: 0, seated: 0, unassigned: 0 });
     }
   }
 
@@ -698,6 +711,8 @@ export const DashboardPlanning: React.FC = () => {
                 budgetItems={budgetItems}
                 vendors={vendors}
                 seatingReadiness={seatingReadiness}
+                itineraryEventCount={itineraryEventCount}
+                privacyMode={privacyMode}
                 weddingDate={weddingDate}
                 nameChangePlan={nameChangePlan}
                 onTabChange={(tab) => setActiveTab(tab as Tab)}

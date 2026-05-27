@@ -30,6 +30,11 @@ describe('weddingIdentityExports', () => {
     });
     expect(kit.items.find((item) => item.id === 'share-graphic')?.status).toBe('ready');
     expect(kit.warnings).toEqual([]);
+    expect(kit.handoffSequence.map((step) => step.status)).toEqual(['current', 'next', 'then']);
+    expect(kit.handoffSequence[0]?.title).toMatch(/share|guest-facing/i);
+    expect(kit.quickPacks.find((pack) => pack.id === 'share-now')?.readiness).toBe('ready');
+    expect(kit.quickPacks.find((pack) => pack.id === 'share-now')?.includes).toContain('Share graphic');
+    expect(kit.quickPacks.find((pack) => pack.id === 'share-now')?.nextStep).toMatch(/share graphic first/i);
   });
 
   it('keeps print assets from looking ready when launch identity inputs are missing', () => {
@@ -46,7 +51,43 @@ describe('weddingIdentityExports', () => {
       'Add a wedding date.',
       'Add a venue name.',
     ]);
+    expect(kit.handoffSequence[0]?.title).toMatch(/public site/i);
+    expect(kit.handoffSequence[1]?.detail).toMatch(/date|venue|public site/i);
     expect(kit.warnings).toContain('Set a public site URL before printing QR-based assets.');
+    expect(kit.quickPacks.find((pack) => pack.id === 'print-table')?.readiness).toBe('needs-info');
+    expect(kit.quickPacks.find((pack) => pack.id === 'planner-handoff')?.bestFor).toMatch(/someone else|repeat basics/i);
+    expect(kit.quickPacks.find((pack) => pack.id === 'print-table')?.nextStep).toMatch(/Add the date, venue, and public site/i);
+  });
+
+  it('keeps the export handoff honest when the public URL exists but the site is not live yet', () => {
+    const kit = buildWeddingIdentityExportKit({
+      coupleNames: 'Maya & Leo',
+      publicSiteUrl: 'https://maya-leo.dayof.love',
+      isPublished: false,
+      weddingDate: '2026-09-12',
+      venueName: 'Garden House',
+    });
+
+    expect(kit.handoffSequence[0]?.title).toMatch(/live first/i);
+    expect(kit.handoffSequence[1]?.title).toMatch(/after the live publish/i);
+    expect(kit.quickPacks.find((pack) => pack.id === 'share-now')?.readiness).toBe('ready');
+    expect(kit.quickPacks.find((pack) => pack.id === 'share-now')?.nextStep).toMatch(/Publish the live site once/i);
+  });
+
+  it('keeps guest-facing export guidance honest when the site is access-restricted', () => {
+    const kit = buildWeddingIdentityExportKit({
+      coupleNames: 'Maya & Leo',
+      publicSiteUrl: 'https://maya-leo.dayof.love',
+      isPublished: true,
+      privacyMode: 'password_protected',
+      weddingDate: '2026-09-12',
+      venueName: 'Garden House',
+    });
+
+    expect(kit.warnings).toContain('The site is currently password-protected, so guest-facing packs should only be shared with the right access instructions.');
+    expect(kit.handoffSequence[0]?.title).toMatch(/access instructions/i);
+    expect(kit.quickPacks.find((pack) => pack.id === 'share-now')?.detail).toMatch(/password/i);
+    expect(kit.quickPacks.find((pack) => pack.id === 'share-now')?.nextStep).toMatch(/password instructions/i);
   });
 
   it('builds a planner-safe manifest without private guest access tokens', () => {

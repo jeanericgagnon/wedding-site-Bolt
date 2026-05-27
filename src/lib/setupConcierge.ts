@@ -9,9 +9,20 @@ export interface ConciergeChecklistItem {
   detail: string;
 }
 
+export interface ConciergeSequenceItem {
+  id: string;
+  status: 'current' | 'next' | 'then';
+  title: string;
+  detail: string;
+}
+
 export interface SetupReviewModel {
   heading: string;
   summary: string;
+  confidenceLabel: string;
+  nextBestMove: string;
+  watchouts: string[];
+  launchSequence: ConciergeSequenceItem[];
   starterChecklist: ConciergeChecklistItem[];
   builderChecklist: ConciergeChecklistItem[];
 }
@@ -19,6 +30,11 @@ export interface SetupReviewModel {
 export interface BuilderConciergeModel {
   heading: string;
   summary: string;
+  confidenceLabel: string;
+  nextBestMove: string;
+  guestPromise: string;
+  watchouts: string[];
+  launchSequence: ConciergeSequenceItem[];
   checklist: ConciergeChecklistItem[];
 }
 
@@ -100,12 +116,24 @@ export const buildSetupReviewModel = (
     : weekendMode
       ? 'DayOf will start this as a weekend-aware draft'
       : 'DayOf will start this as a calm first draft';
+  const confidenceLabel = destinationMode || weekendMode ? 'High-confidence first draft' : 'Strong first draft';
 
   const summary = destinationMode
     ? `${templateName} is a good base for ${guestEstimate}, with extra weight on travel, arrival, and the weekend flow.`
     : weekendMode
       ? `${templateName} is a good base for ${guestEstimate}, with enough structure for more than one event without making the site feel busy.`
       : `${templateName} is a good base for ${guestEstimate}, with the essentials guests need first and plenty of room to polish later.`;
+  const nextBestMove = destinationMode
+    ? 'Next, make the travel path and weekend rhythm feel undeniably real before chasing design polish.'
+    : weekendMode
+      ? 'Next, lock the real event flow so the site feels trustworthy before it tries to feel finished.'
+      : 'Next, make the welcome, RSVP, and core guest guidance feel real before touching smaller visual details.';
+  const watchouts = [
+    !draft.weddingCity.trim() ? 'Guests still do not have a clear city anchor yet.' : null,
+    !draft.guestEstimateBand ? 'Guest scale is still fuzzy, so the first draft may feel too light or too big.' : null,
+    destinationMode ? 'Destination guests will judge clarity faster than style.' : null,
+    draft.migrationSource && draft.migrationSource !== 'other' ? 'If you are migrating, keep the first move focused on trusted basics, not a full redesign.' : null,
+  ].filter((value): value is string => Boolean(value));
 
   const starterChecklist: ConciergeChecklistItem[] = [
     {
@@ -151,7 +179,34 @@ export const buildSetupReviewModel = (
     },
   ];
 
-  return { heading, summary, starterChecklist, builderChecklist };
+  const launchSequence: ConciergeSequenceItem[] = [
+    {
+      id: 'anchors',
+      status: 'current',
+      title: 'Lock the real anchors first',
+      detail: destinationMode
+        ? 'Names, date, city, and travel context should feel undeniably real before anything looks polished.'
+        : 'Names, date, location, and RSVP basics should feel trustworthy before you chase visual polish.',
+    },
+    {
+      id: 'guest-path',
+      status: 'next',
+      title: destinationMode || weekendMode ? 'Then shape the guest path' : 'Then shape the guest guidance',
+      detail: destinationMode
+        ? 'Make hotel, arrival, and weekend flow easy to skim on a phone.'
+        : weekendMode
+          ? 'Make the multi-event flow easy to follow in one scan.'
+          : 'Make RSVP, FAQs, and core event details feel complete enough that guests do not have to ask for basics.',
+    },
+    {
+      id: 'polish',
+      status: 'then',
+      title: 'Only then spend energy on polish',
+      detail: 'Once the draft is trustworthy, design tweaks and tone refinements start paying off instead of hiding missing basics.',
+    },
+  ];
+
+  return { heading, summary, confidenceLabel, nextBestMove, watchouts, launchSequence, starterChecklist, builderChecklist };
 };
 
 export const buildBuilderConciergeModel = (
@@ -239,12 +294,57 @@ export const buildBuilderConciergeModel = (
     : packs.has('interfaith')
       ? `${templateName} is now carrying more ceremony and guest-context potential, so the next wins are clarity and warmth rather than more complexity.`
       : packs.has('bilingual')
-        ? `${templateName} is now set up to support a more bilingual guest path, so the next wins are clear guidance and cleaner translation-friendly copy.`
+      ? `${templateName} is now set up to support a more bilingual guest path, so the next wins are clear guidance and cleaner translation-friendly copy.`
         : `${templateName} is now a real first draft. The next wins are making it feel personal, useful, and easy for guests to follow.`;
+  const confidenceLabel = checklist.some((item) => item.id === 'publish') ? 'Ready for polish' : 'Guided next moves';
+  const nextBestMove = checklist[0]?.detail ?? 'Keep the next move guest-facing and practical before polishing extras.';
+  const guestPromise = packs.has('destination')
+    ? 'Guests should understand where to go, where to stay, and what happens next without texting you.'
+    : packs.has('bilingual')
+      ? 'Guests should feel guided even if they only skim the key sections in one language first.'
+      : packs.has('interfaith')
+        ? 'Guests should understand the flow and ceremony context without needing a private explanation.'
+        : 'Guests should understand the weekend flow quickly from a phone without hunting for basics.';
+  const watchouts = [
+    !hasTravelCoverage && packs.has('destination') ? 'Travel still feels thin for a destination-style weekend.' : null,
+    !hasFaq ? 'The obvious guest questions are still mostly living in your head.' : null,
+    !hasDeadline ? 'RSVP still lacks a clear deadline, which weakens guest confidence fast.' : null,
+  ].filter((value): value is string => Boolean(value));
+  const launchSequence: ConciergeSequenceItem[] = [
+    {
+      id: 'trust',
+      status: 'current',
+      title: 'Make the site trustworthy first',
+      detail: !hasVenue || !hasDeadline
+        ? 'Real venue details and a clear RSVP path still matter more than cosmetic changes.'
+        : 'The basics are in place, so the job now is making the guest path feel undeniably real.',
+    },
+    {
+      id: 'guidance',
+      status: 'next',
+      title: packs.has('destination') ? 'Then strengthen travel confidence' : 'Then strengthen guest guidance',
+      detail: packs.has('destination')
+        ? 'Travel, schedule, and weekend logistics should feel easier than texting you.'
+        : !hasFaq
+          ? 'FAQ and timing clarity should answer the obvious questions before guests ask them.'
+          : 'Use the next pass to make the guest-facing sections feel easy to trust on mobile.',
+    },
+    {
+      id: 'launch',
+      status: 'then',
+      title: 'Then use launch polish intentionally',
+      detail: 'Once the guest path is calm, publish checks and visual polish become the right final pass instead of a distraction.',
+    },
+  ];
 
   return {
     heading,
     summary,
+    confidenceLabel,
+    nextBestMove,
+    guestPromise,
+    watchouts,
+    launchSequence,
     checklist: checklist.slice(0, 3),
   };
 };

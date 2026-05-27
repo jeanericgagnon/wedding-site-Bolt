@@ -409,8 +409,41 @@ export const SetupShell: React.FC<{ step?: string }> = ({ step }) => {
           {activeStep === 'review' && (
             <div className="mt-4 space-y-4">
               <div className="rounded-lg border border-rose-200 bg-rose-50 p-4">
-                <p className="text-sm font-semibold text-rose-900">{reviewModel.heading}</p>
+                <div className="flex flex-wrap items-center gap-2">
+                  <p className="text-sm font-semibold text-rose-900">{reviewModel.heading}</p>
+                  <span className="rounded-full border border-rose-200 bg-white px-2.5 py-1 text-[11px] font-medium text-rose-700">
+                    {reviewModel.confidenceLabel}
+                  </span>
+                </div>
                 <p className="mt-1 text-sm text-rose-800">{reviewModel.summary}</p>
+                <p className="mt-2 text-xs text-rose-700">{reviewModel.nextBestMove}</p>
+                {reviewModel.watchouts.length > 0 && (
+                  <div className="mt-3 space-y-1">
+                    {reviewModel.watchouts.map((watchout) => (
+                      <p key={watchout} className="text-xs text-rose-700">{watchout}</p>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+                {reviewModel.launchSequence.map((item) => (
+                  <div key={item.id} className="rounded-xl border border-neutral-200 bg-white px-4 py-4">
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="text-sm font-medium text-neutral-900">{item.title}</p>
+                      <span className={`rounded-full px-2.5 py-1 text-[11px] font-medium ${
+                        item.status === 'current'
+                          ? 'border border-rose-200 bg-rose-50 text-rose-700'
+                          : item.status === 'next'
+                            ? 'border border-amber-200 bg-amber-50 text-amber-700'
+                            : 'border border-neutral-200 bg-neutral-50 text-neutral-600'
+                      }`}>
+                        {item.status === 'current' ? 'Current' : item.status === 'next' ? 'Next' : 'Then'}
+                      </span>
+                    </div>
+                    <p className="mt-2 text-xs leading-5 text-neutral-600">{item.detail}</p>
+                  </div>
+                ))}
               </div>
 
               <div className="rounded border border-neutral-200 bg-neutral-50 p-3 text-sm text-neutral-700 space-y-1">

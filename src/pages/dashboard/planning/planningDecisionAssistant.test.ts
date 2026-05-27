@@ -67,6 +67,7 @@ describe('planningDecisionAssistant', () => {
       budgetItems: [],
       vendors: [],
       seatingReadiness: { attending: 10, seated: 7, unassigned: 3 },
+      itineraryEventCount: 2,
     });
 
     expect(model.title).toMatch(/Clear the overdue work first/i);
@@ -83,6 +84,21 @@ describe('planningDecisionAssistant', () => {
     expect(model.title).toMatch(/A few categories need a second pass/i);
     expect(model.detail).toMatch(/Venue/i);
     expect(model.detail).toMatch(/Florals/i);
+  });
+
+  it('pushes itinerary anchors first when the wedding is close and schedule truth is still missing', () => {
+    const model = buildPlanningOverviewDecisionCard({
+      tasks: [],
+      budgetItems: [],
+      vendors: [],
+      seatingReadiness: { attending: 10, seated: 10, unassigned: 0 },
+      daysUntilWedding: 10,
+      itineraryEventCount: 0,
+    });
+
+    expect(model.title).toMatch(/schedule anchors/i);
+    expect(model.primaryAction?.target).toBe('itinerary');
+    expect(model.secondaryAction?.target).toBe('seating');
   });
 
   it('keeps the vendor model focused on missing contact truth when money is not urgent', () => {

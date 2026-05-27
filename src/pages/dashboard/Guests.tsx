@@ -27,7 +27,7 @@ import { demoWeddingSite, demoGuests, demoRSVPs } from '../../lib/demoData';
 import { buildQuickStartPhotosPath, readQuickStartDashboardContinuation } from '../../lib/quickStartContinuation';
 import { sendWeddingInvitation } from '../../lib/emailService';
 import { resolvePublicSiteSlugFromRow } from '../../lib/publicSiteSlug';
-import { buildGuestOpsCoach } from '../../lib/guestOpsCoach';
+import { buildGuestOpsCoach, buildGuestOutreachSequence } from '../../lib/guestOpsCoach';
 import * as XLSX from 'xlsx';
 
 interface Guest {
@@ -3101,6 +3101,23 @@ Proceed with send?`)) return;
     manualFollowUp: manualFollowUpCount,
     manualHandled: manualHandledCount,
   });
+  const guestOutreachSequence = buildGuestOutreachSequence({
+    totalGuests: guests.length,
+    attendingGuests: guests.filter((guest) => isAttendingRsvpStatus(guest.rsvp_status)).length,
+    pendingResponses: rsvpOps.noResponse,
+    pendingWithoutEmail: rsvpOps.pendingNoEmail,
+    noContact: contactStats.withNoContact,
+    missingMealChoices: rsvpOps.missingMeal,
+    missingPlusOneNames: rsvpOps.plusOneMissingName,
+    manualFollowUp: manualFollowUpCount,
+    manualHandled: manualHandledCount,
+  }, {
+    scheduledCount: campaignLog.length,
+    overdueScheduledCount: 0,
+    partialCount: 0,
+    failedCount: 0,
+    unreachedRecipientCount: contactStats.withNoContact,
+  });
 
   const recommendedAction = guestOpsCoach.primaryAction
     ? {
@@ -3276,7 +3293,16 @@ Proceed with send?`)) return;
                 <div className="pt-1 border-t border-border-subtle">
                   <p className="text-xs font-medium text-text-secondary mb-2">Itinerary invitations</p>
                   {itineraryFilterEvents.length === 0 && (
-                    <p className="text-[11px] text-text-tertiary mb-2">No itinerary events yet — using Ceremony/Reception defaults for now.</p>
+                    <div className="mb-2 flex items-center justify-between gap-3 rounded-lg border border-border-subtle bg-surface-subtle/30 px-3 py-2">
+                      <p className="text-[11px] text-text-tertiary">No itinerary events yet — using Ceremony/Reception defaults for now.</p>
+                      <button
+                        type="button"
+                        onClick={() => navigate('/dashboard/itinerary#itinerary-readiness')}
+                        className="rounded border border-border px-2.5 py-1 text-[11px] text-text-secondary hover:border-primary/40 hover:text-primary"
+                      >
+                        Open itinerary
+                      </button>
+                    </div>
                   )}
                   <div className="space-y-1.5 max-h-40 overflow-auto pr-1">
                     {effectiveItineraryEvents.map((event) => {
@@ -3894,6 +3920,67 @@ Proceed with send?`)) return;
                       variant="ghost"
                       size="sm"
                       onClick={() => addFollowUpTask(action.taskLabel)}
+                    >
+                      Save task
+                    </Button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
+
+        <Card variant="bordered" padding="lg" className="border-border-subtle shadow-sm">
+          <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+            <div className="max-w-3xl">
+              <p className="text-sm font-semibold text-text-primary">Outreach sequence</p>
+              <h3 className="mt-2 text-xl font-semibold text-text-primary">{guestOutreachSequence.headline}</h3>
+              <p className="mt-2 text-sm text-text-secondary">{guestOutreachSequence.summary}</p>
+            </div>
+            <div className="rounded-2xl border border-border-subtle bg-surface-subtle/30 px-4 py-3 md:min-w-[220px]">
+              <p className="text-[11px] uppercase tracking-[0.22em] text-text-tertiary">Why this order</p>
+              <p className="mt-1 text-sm text-text-secondary">Guests, reminders, and live updates now share one order of operations instead of competing for attention.</p>
+            </div>
+          </div>
+          <div className="mt-4 grid gap-3 md:grid-cols-3">
+            {guestOutreachSequence.steps.map((step) => (
+              <div key={step.id} className="rounded-2xl border border-border-subtle bg-white px-4 py-4 shadow-[0_4px_14px_rgba(15,23,42,0.04)]">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-sm font-semibold text-text-primary">{step.title}</p>
+                  <span className={`rounded-full px-2.5 py-1 text-[11px] font-medium ${
+                    step.status === 'current'
+                      ? 'border border-primary/20 bg-primary-light text-primary'
+                      : step.status === 'next'
+                        ? 'border border-warning/20 bg-warning-light text-warning'
+                        : step.status === 'then'
+                          ? 'border border-border-subtle bg-surface-subtle text-text-secondary'
+                          : 'border border-success/20 bg-success-light text-success'
+                  }`}>
+                    {step.status === 'current' ? 'Current' : step.status === 'next' ? 'Next' : step.status === 'then' ? 'Then' : 'Steady'}
+                  </span>
+                </div>
+                <p className="mt-2 text-xs leading-5 text-text-secondary">{step.detail}</p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      if (step.area === 'messages') {
+                        navigate('/dashboard/messages');
+                        return;
+                      }
+                      setFilterStatus((step.filter ?? 'all') as typeof filterStatus);
+                      setViewMode('list');
+                      setSearchQuery('');
+                    }}
+                  >
+                    {step.ctaLabel}
+                  </Button>
+                  {step.id !== 'steady' && step.id !== 'import-guests' && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => addFollowUpTask(step.title)}
                     >
                       Save task
                     </Button>

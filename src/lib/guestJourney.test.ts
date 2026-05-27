@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { buildGuestJourneyLinks, getGuestJourneyCopy } from './guestJourney';
+import { buildGuestJourneyLinks, buildGuestJourneySteps, getGuestJourneyCopy } from './guestJourney';
 
 describe('guestJourney', () => {
   it('builds stable guest journey links from a site slug and invite token', () => {
@@ -23,8 +23,21 @@ describe('guestJourney', () => {
     expect(buildGuestJourneyLinks({ currentSurface: 'rsvp' })).toEqual([]);
   });
 
+  it('marks completed and next guest-path steps clearly', () => {
+    const steps = buildGuestJourneySteps({
+      currentSurface: 'contact',
+      completedSurfaces: ['rsvp'],
+    });
+
+    expect(steps).toEqual(expect.arrayContaining([
+      expect.objectContaining({ key: 'contact', status: 'current' }),
+      expect.objectContaining({ key: 'rsvp', status: 'done' }),
+      expect.objectContaining({ key: 'photos', status: 'next' }),
+    ]));
+  });
+
   it('keeps the guest path copy intentional for vault surfaces', () => {
-    expect(getGuestJourneyCopy('vault')).toEqual({
+    expect(getGuestJourneyCopy('vault')).toMatchObject({
       title: 'The story stretches past the wedding weekend',
       detail: 'Anniversary notes live later in the story, but the wedding hub, RSVP, travel details, and photos should still be easy to reopen from here.',
     });

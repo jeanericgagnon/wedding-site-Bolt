@@ -28,6 +28,7 @@ export interface DayOfBrainInput {
   totalGuests: number;
   confirmedGuests: number;
   pendingGuests: number;
+  itineraryEventCount?: number | null;
   checkedInCount?: number | null;
   liveIssueCount?: number | null;
   watchCount?: number | null;
@@ -56,6 +57,7 @@ function getSignalVariant(value: number, calmThreshold: number, watchThreshold: 
 
 export function buildDayOfBrainBriefing(input: DayOfBrainInput): DayOfBrainBriefing {
   const checkedInCount = Math.max(input.checkedInCount ?? 0, 0);
+  const itineraryEventCount = Math.max(input.itineraryEventCount ?? 0, 0);
   const liveIssueCount = Math.max(input.liveIssueCount ?? 0, 0);
   const watchCount = Math.max(input.watchCount ?? 0, 0);
   const openQnaCount = Math.max(input.openQnaCount ?? 0, 0);
@@ -171,6 +173,21 @@ export function buildDayOfBrainBriefing(input: DayOfBrainInput): DayOfBrainBrief
       signals,
       primaryAction: { label: 'Open seating', target: 'seating' },
       secondaryAction: { label: 'Review guests', target: 'guests' },
+    };
+  }
+
+  if (weddingSoon && itineraryEventCount === 0) {
+    return {
+      eyebrow: 'Day-of brain',
+      title: 'The weekend still needs a guest-facing schedule spine',
+      detail: 'Before the live layer can truly help, guests need a real timeline to trust. Add the anchor events first, then let messages and coordinator mode build on top of that truth.',
+      badges: [
+        input.daysUntilWedding === 0 ? 'Wedding day' : `${input.daysUntilWedding} days left`,
+        'No itinerary events yet',
+      ],
+      signals,
+      primaryAction: { label: 'Open itinerary', target: 'itinerary' },
+      secondaryAction: { label: 'Open messages', target: 'messages' },
     };
   }
 

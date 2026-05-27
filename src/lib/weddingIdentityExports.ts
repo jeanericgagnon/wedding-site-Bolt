@@ -15,6 +15,8 @@ export type WeddingIdentityExportStatus = 'ready' | 'needs-info' | 'planned';
 export interface WeddingIdentityExportKitInput {
   coupleNames: string;
   publicSiteUrl: string;
+  isPublished?: boolean | null;
+  privacyMode?: 'public' | 'password_protected' | 'invite_only' | null;
   weddingDate?: string | null;
   venueName?: string | null;
   templateName?: string | null;
@@ -37,6 +39,21 @@ export interface WeddingIdentityExportKit {
   items: WeddingIdentityExportItem[];
   manifest: Array<{ label: string; value: string }>;
   warnings: string[];
+  handoffSequence: Array<{
+    id: 'share-now' | 'print-table' | 'planner-handoff';
+    status: 'current' | 'next' | 'then';
+    title: string;
+    detail: string;
+  }>;
+  quickPacks: Array<{
+    id: 'share-now' | 'print-table' | 'planner-handoff';
+    label: string;
+    detail: string;
+    readiness: 'ready' | 'needs-info';
+    bestFor: string;
+    includes: string[];
+    nextStep: string;
+  }>;
 }
 
 export interface WeddingIdentityPrintAsset {
@@ -111,6 +128,13 @@ export function buildWeddingIdentityExportKit(input: WeddingIdentityExportKitInp
   const hasPublicUrl = hasValue(safePublicSiteUrl);
   const hasDate = hasValue(input.weddingDate);
   const hasVenue = hasValue(input.venueName);
+  const launchIsLive = input.isPublished !== false;
+  const restrictedAccess = input.privacyMode === 'password_protected' || input.privacyMode === 'invite_only';
+  const privacyModeLabel = input.privacyMode === 'invite_only'
+    ? 'invite-only'
+    : input.privacyMode === 'password_protected'
+      ? 'password-protected'
+      : 'public';
   const templateName = input.templateName?.trim() || 'Current site theme';
   const defaultLanguage = input.defaultLanguage?.trim() || 'en';
 
@@ -179,6 +203,7 @@ export function buildWeddingIdentityExportKit(input: WeddingIdentityExportKitInp
 
   const warnings = [
     ...(!hasPublicUrl ? ['Set a public site URL before printing QR-based assets.'] : []),
+    ...(hasPublicUrl && restrictedAccess ? [`The site is currently ${privacyModeLabel}, so guest-facing packs should only be shared with the right access instructions.`] : []),
     ...(!hasDate ? ['Add a wedding date for print inserts.'] : []),
     ...(!hasVenue ? ['Add a venue name for detail inserts.'] : []),
   ];
@@ -196,6 +221,95 @@ export function buildWeddingIdentityExportKit(input: WeddingIdentityExportKitInp
       { label: 'Default language', value: defaultLanguage },
     ],
     warnings,
+    handoffSequence: [
+      {
+        id: 'share-now',
+        status: 'current',
+        title: !hasPublicUrl
+          ? 'Set the public site first'
+          : restrictedAccess
+            ? 'Confirm the guest access instructions first'
+          : !launchIsLive
+            ? 'Make the guest-facing site live first'
+            : 'Share one safe guest-facing pack',
+        detail: !hasPublicUrl
+          ? 'The public site URL is the first ingredient for safe QR cards, story graphics, and RSVP handoff.'
+          : restrictedAccess
+            ? `These packs point to a ${privacyModeLabel} site, so make sure guests will receive the right password or invite path before you share them widely.`
+          : !launchIsLive
+            ? 'The URL is set, but the guest-facing site still needs one live publish before print and share packs feel trustworthy.'
+            : 'Lead with the share graphic, RSVP card, and public QR so every guest-facing surface starts from the same URL.',
+      },
+      {
+        id: 'print-table',
+        status: 'next',
+        title: !hasPublicUrl
+          ? 'Finish the print details next'
+          : !launchIsLive
+            ? 'Share and print after the live publish'
+            : hasDate && hasVenue
+              ? 'Carry the same identity into print'
+              : 'Finish the print details next',
+        detail: !hasPublicUrl
+          ? 'Add the date, venue, and public site so welcome-table and signage assets stop feeling provisional.'
+          : !launchIsLive
+            ? 'Once the live publish is up, use the share pack, table card, insert, and photo sign from the same guest-safe URL.'
+            : hasDate && hasVenue
+              ? 'Once the share pack is steady, use the table card, insert, and photo sign so print surfaces stay aligned.'
+              : 'Add the date, venue, and public site so welcome-table and signage assets stop feeling provisional.',
+      },
+      {
+        id: 'planner-handoff',
+        status: 'then',
+        title: 'Hand vendors one clean reference',
+        detail: 'Close the loop with the manifest and style kit so planners and stationers stop asking you for repeat basics.',
+      },
+    ],
+    quickPacks: [
+      {
+        id: 'share-now',
+        label: 'Share-now pack',
+        detail: hasPublicUrl
+          ? restrictedAccess
+            ? `The share pack is assembled, but it should travel with the ${privacyModeLabel === 'invite-only' ? 'invite-only access path' : 'password instructions'} so guests are not stranded.`
+            : launchIsLive
+            ? 'Use the share graphic, RSVP card, and public QR card when you need one fast guest-facing set.'
+            : 'The share pack is assembled, but it should wait until the guest-facing site has one real live publish.'
+          : 'Set the public site URL first so the guest-facing share pack can be generated safely.',
+        readiness: hasPublicUrl ? 'ready' : 'needs-info',
+        bestFor: 'Best when you need one quick guest-facing kit for text, DM, or email right now.',
+        includes: ['Share graphic', 'RSVP card', 'Public QR card'],
+        nextStep: hasPublicUrl
+          ? restrictedAccess
+            ? privacyModeLabel === 'invite-only'
+              ? 'Pair the share pack with the invite-only guest path so the right people land in the right place without confusion.'
+              : 'Share the password instructions with the pack so guests can actually use the link you hand them.'
+            : launchIsLive
+            ? 'Send the share graphic first, then reuse the same URL on RSVP and QR surfaces.'
+            : 'Publish the live site once, then send the share graphic so every guest-facing link resolves with confidence.'
+          : 'Set the public site URL so the guest-facing share pack is safe to copy or print.',
+      },
+      {
+        id: 'print-table',
+        label: 'Print-table pack',
+        detail: hasPublicUrl && hasDate && hasVenue
+          ? 'Use the details insert, table card, and photo sign for welcome tables, bags, and event signage.'
+          : 'Add the public site, date, and venue so the print-table pack feels complete instead of partial.',
+        readiness: hasPublicUrl && hasDate && hasVenue ? 'ready' : 'needs-info',
+        bestFor: 'Best for welcome tables, hotel bags, reception signage, and guest-visible print surfaces.',
+        includes: ['Details insert', 'Table card', 'Photo upload sign'],
+        nextStep: hasPublicUrl && hasDate && hasVenue ? 'Print the details insert and table card together so signage and guest handouts never drift apart.' : 'Add the date, venue, and public site so the print surfaces feel complete instead of provisional.',
+      },
+      {
+        id: 'planner-handoff',
+        label: 'Planner handoff pack',
+        detail: 'Use the identity summary and style kit when you want one consistent reference for planners, stationers, and print partners.',
+        readiness: 'ready',
+        bestFor: 'Best when someone else needs the wedding identity quickly without asking you to repeat basics.',
+        includes: ['Identity summary', 'Style kit', 'Public site URL'],
+        nextStep: 'Copy the manifest and style kit together so vendors get the same URL, language, and visual direction in one pass.',
+      },
+    ],
   };
 }
 

@@ -1,13 +1,17 @@
 import type { BadgeProps } from '../../components/ui';
 
 export type ControlTowerActionTarget =
-  | 'builder'
+  | 'builder-launch'
+  | 'builder-polish'
   | 'coordinator'
   | 'guests'
+  | 'itinerary'
   | 'messages'
   | 'photos'
   | 'planning'
   | 'registry'
+  | 'settings'
+  | 'suggestions'
   | 'seating'
   | 'vault';
 
@@ -29,6 +33,10 @@ export interface ControlTowerBriefing {
   detail: string;
   badges: string[];
   signals: ControlTowerSignal[];
+  sequence: Array<{
+    label: string;
+    status: 'current' | 'next' | 'then';
+  }>;
   primaryAction?: ControlTowerAction;
   secondaryAction?: ControlTowerAction;
 }
@@ -39,6 +47,7 @@ export interface ControlTowerIntelligenceInput {
   declinedGuests: number;
   pendingGuests: number;
   contactableGuestCount: number;
+  itineraryEventCount: number;
   registryItemCount: number;
   photoAlbumCount: number;
   activePhotoAlbumCount: number;
@@ -48,6 +57,7 @@ export interface ControlTowerIntelligenceInput {
   publishBlockerCount: number;
   daysUntilWedding: number | null;
   isPublished: boolean;
+  privacyMode?: 'public' | 'password_protected' | 'invite_only';
   isArchiveLike: boolean;
 }
 
@@ -64,12 +74,15 @@ function buildSignals(input: ControlTowerIntelligenceInput): ControlTowerSignal[
   const respondedGuests = input.confirmedGuests + input.declinedGuests;
   const responseRate = pct(respondedGuests, input.totalGuests);
   const contactCoverage = pct(input.contactableGuestCount, input.totalGuests);
-  const publishedExperienceReady = input.registryItemCount > 0 && input.activePhotoAlbumCount > 0;
+  const restrictedAccess = input.privacyMode === 'password_protected' || input.privacyMode === 'invite_only';
+  const publishedExperienceReady = input.registryItemCount > 0 && input.activePhotoAlbumCount > 0 && input.itineraryEventCount > 0;
   const guestExperienceValue = input.isArchiveLike
     ? `${input.activePhotoAlbumCount}/${input.photoAlbumCount}`
+    : restrictedAccess
+      ? 'Guarded'
     : publishedExperienceReady
       ? 'Ready'
-      : input.registryItemCount === 0 && input.activePhotoAlbumCount === 0
+      : input.registryItemCount === 0 && input.activePhotoAlbumCount === 0 && input.itineraryEventCount === 0
         ? 'Thin'
         : 'Growing';
 
@@ -97,12 +110,16 @@ function buildSignals(input: ControlTowerIntelligenceInput): ControlTowerSignal[
         ? input.activePhotoAlbumCount > 0
           ? `${pluralize(input.activePhotoAlbumCount, 'album')} already carrying memories.`
           : 'No active memory album is guiding guests yet.'
-        : input.registryItemCount === 0
+        : restrictedAccess
+          ? `The guest-facing path is live, but it still depends on ${input.privacyMode === 'invite_only' ? 'invite-only routing' : 'password instructions'} traveling with it.`
+        : input.itineraryEventCount === 0
+          ? 'Guests still need a real public schedule to trust.'
+          : input.registryItemCount === 0
           ? 'Registry still needs live items for guests.'
           : input.activePhotoAlbumCount === 0
             ? 'Photo sharing is not really live yet.'
-            : 'Registry and photos are ready to support guests.',
-      variant: guestExperienceValue === 'Ready' || input.activePhotoAlbumCount > 0 ? 'success' : guestExperienceValue === 'Growing' ? 'warning' : 'error',
+            : 'Registry, schedule, and photos are ready to support guests.',
+      variant: guestExperienceValue === 'Ready' ? 'success' : guestExperienceValue === 'Growing' ? 'warning' : 'error',
     },
   ];
 }
@@ -111,6 +128,8 @@ export function buildControlTowerBriefing(input: ControlTowerIntelligenceInput):
   const responseRate = pct(input.confirmedGuests + input.declinedGuests, input.totalGuests);
   const contactGap = Math.max(input.totalGuests - input.contactableGuestCount, 0);
   const weddingSoon = input.daysUntilWedding !== null && input.daysUntilWedding >= 0 && input.daysUntilWedding <= 45;
+  const restrictedAccess = input.privacyMode === 'password_protected' || input.privacyMode === 'invite_only';
+  const accessLabel = input.privacyMode === 'invite_only' ? 'invite-only' : 'password-protected';
 
   if (input.isArchiveLike) {
     return {
@@ -124,6 +143,11 @@ export function buildControlTowerBriefing(input: ControlTowerIntelligenceInput):
         `${pluralize(input.interactiveSuggestionCount, 'guest note')}`,
       ],
       signals: buildSignals(input),
+      sequence: [
+        { label: 'Curate photos', status: 'current' },
+        { label: 'Open keepsake vaults', status: 'next' },
+        { label: 'Polish the archive story', status: 'then' },
+      ],
       primaryAction: { label: 'Open vault', target: 'vault' },
       secondaryAction: { label: 'Review photos', target: 'photos' },
     };
@@ -139,8 +163,33 @@ export function buildControlTowerBriefing(input: ControlTowerIntelligenceInput):
         input.daysUntilWedding === 0 ? 'Wedding day' : `${input.daysUntilWedding} days left`,
       ],
       signals: buildSignals(input),
-      primaryAction: { label: 'Open launch checklist', target: 'builder' },
+      sequence: [
+        { label: 'Clear launch blockers', status: 'current' },
+        { label: 'Preview guest-facing flow', status: 'next' },
+        { label: 'Publish the live site', status: 'then' },
+      ],
+      primaryAction: { label: 'Open launch checklist', target: 'builder-launch' },
       secondaryAction: { label: 'Check planning', target: 'planning' },
+    };
+  }
+
+  if (input.isPublished && restrictedAccess && weddingSoon) {
+    return {
+      eyebrow: 'Control tower briefing',
+      title: 'Guest access instructions are part of readiness now',
+      detail: `The site is live, but it is ${accessLabel}. The most useful next move is making sure every reminder, print pack, and coordinator handoff carries the right access path so guests are not stranded.`,
+      badges: [
+        accessLabel,
+        input.daysUntilWedding === 0 ? 'Wedding day' : `${input.daysUntilWedding} days left`,
+      ],
+      signals: buildSignals(input),
+      sequence: [
+        { label: 'Confirm guest access path', status: 'current' },
+        { label: 'Preview the restricted flow', status: 'next' },
+        { label: 'Return to live-day polish', status: 'then' },
+      ],
+      primaryAction: { label: 'Review guest access settings', target: 'settings' },
+      secondaryAction: { label: 'Open messages', target: 'messages' },
     };
   }
 
@@ -149,6 +198,7 @@ export function buildControlTowerBriefing(input: ControlTowerIntelligenceInput):
     && input.isPublished
     && input.pendingGuests <= Math.max(5, Math.round(input.totalGuests * 0.1))
     && input.contactableGuestCount >= Math.max(input.totalGuests - 2, 0)
+    && input.itineraryEventCount > 0
     && input.activePhotoAlbumCount > 0
   ) {
     return {
@@ -162,6 +212,11 @@ export function buildControlTowerBriefing(input: ControlTowerIntelligenceInput):
         `${responseRate}% replied`,
       ],
       signals: buildSignals(input),
+      sequence: [
+        { label: 'Stay in coordinator mode', status: 'current' },
+        { label: 'Keep seating stable', status: 'next' },
+        { label: 'Only react to live exceptions', status: 'then' },
+      ],
       primaryAction: { label: 'Open coordinator mode', target: 'coordinator' },
       secondaryAction: { label: 'Check seating', target: 'seating' },
     };
@@ -177,6 +232,11 @@ export function buildControlTowerBriefing(input: ControlTowerIntelligenceInput):
         `${responseRate}% replied`,
       ],
       signals: buildSignals(input),
+      sequence: [
+        { label: 'Review pending guests', status: 'current' },
+        { label: 'Send the next reminder', status: 'next' },
+        { label: 'Re-check the board', status: 'then' },
+      ],
       primaryAction: { label: 'Review guests', target: 'guests' },
       secondaryAction: { label: 'Open messages', target: 'messages' },
     };
@@ -192,8 +252,33 @@ export function buildControlTowerBriefing(input: ControlTowerIntelligenceInput):
         `${pluralize(input.contactableGuestCount, 'contact-ready guest')}`,
       ],
       signals: buildSignals(input),
+      sequence: [
+        { label: 'Fix missing contacts', status: 'current' },
+        { label: 'Queue the next outreach wave', status: 'next' },
+        { label: 'Return to RSVP follow-through', status: 'then' },
+      ],
       primaryAction: { label: 'Fix guest contacts', target: 'guests' },
       secondaryAction: { label: 'Open messages', target: 'messages' },
+    };
+  }
+
+  if (weddingSoon && input.itineraryEventCount === 0) {
+    return {
+      eyebrow: 'Control tower briefing',
+      title: 'The site still needs a real guest-facing schedule before the live layer can carry it',
+      detail: 'RSVP and contact progress help, but guests still need an itinerary spine to trust. Add the core weekend events before leaning on messaging or coordinator tools to cover the gap.',
+      badges: [
+        'No itinerary events yet',
+        input.daysUntilWedding === 0 ? 'Wedding day' : `${input.daysUntilWedding} days left`,
+      ],
+      signals: buildSignals(input),
+      sequence: [
+        { label: 'Add the anchor schedule', status: 'current' },
+        { label: 'Preview the guest-facing timeline', status: 'next' },
+        { label: 'Return to live-day polish', status: 'then' },
+      ],
+      primaryAction: { label: 'Open itinerary', target: 'itinerary' },
+      secondaryAction: { label: 'Open site polish', target: 'builder-polish' },
     };
   }
 
@@ -207,8 +292,13 @@ export function buildControlTowerBriefing(input: ControlTowerIntelligenceInput):
         `${pluralize(input.activePhotoAlbumCount, 'active album')}`,
       ],
       signals: buildSignals(input),
+      sequence: [
+        { label: 'Add live registry items', status: 'current' },
+        { label: 'Check the guest-facing page', status: 'next' },
+        { label: 'Return to broader polish', status: 'then' },
+      ],
       primaryAction: { label: 'Open registry', target: 'registry' },
-      secondaryAction: { label: 'Open builder', target: 'builder' },
+      secondaryAction: { label: 'Open site polish', target: 'builder-polish' },
     };
   }
 
@@ -224,8 +314,13 @@ export function buildControlTowerBriefing(input: ControlTowerIntelligenceInput):
         `${pluralize(input.interactiveSuggestionCount, 'guest prompt')}`,
       ],
       signals: buildSignals(input),
+      sequence: [
+        { label: 'Activate a photo path', status: 'current' },
+        { label: 'Check the guest upload flow', status: 'next' },
+        { label: 'Return to site polish', status: 'then' },
+      ],
       primaryAction: { label: 'Review photos', target: 'photos' },
-      secondaryAction: { label: 'Open builder', target: 'builder' },
+      secondaryAction: { label: 'Open site polish', target: 'builder-polish' },
     };
   }
 
@@ -239,7 +334,12 @@ export function buildControlTowerBriefing(input: ControlTowerIntelligenceInput):
         `${pluralize(input.recentSiteActivityCount, 'recent site change')}`,
       ],
       signals: buildSignals(input),
-      primaryAction: { label: 'Review guest prompts', target: 'builder' },
+      sequence: [
+        { label: 'Review guest input', status: 'current' },
+        { label: 'Adjust the site story', status: 'next' },
+        { label: 'Re-check guest experience', status: 'then' },
+      ],
+      primaryAction: { label: 'Review guest prompts', target: 'suggestions' },
       secondaryAction: { label: 'Open photos', target: 'photos' },
     };
   }
@@ -253,7 +353,12 @@ export function buildControlTowerBriefing(input: ControlTowerIntelligenceInput):
       input.recentSiteActivityCount > 0 ? `${pluralize(input.recentSiteActivityCount, 'recent site update')}` : 'No recent site churn',
     ],
     signals: buildSignals(input),
-    primaryAction: { label: 'Open builder', target: 'builder' },
+    sequence: [
+      { label: 'Make one quality pass', status: 'current' },
+      { label: 'Review guests if needed', status: 'next' },
+      { label: 'Leave the board calm', status: 'then' },
+    ],
+    primaryAction: { label: 'Open site polish', target: 'builder-polish' },
     secondaryAction: { label: 'Review guests', target: 'guests' },
   };
 }

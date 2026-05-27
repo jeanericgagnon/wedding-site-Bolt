@@ -16,6 +16,8 @@ import { buildNameChangeOverviewInsights } from '../nameChangeOverviewInsights';
 import { deriveNameChangeLifecycleStatus } from '../nameChangeLifecycleStatus';
 import { PlanningDecisionCard } from './PlanningDecisionCard';
 import { buildPlanningOverviewDecisionCard } from './planningDecisionAssistant';
+import { buildCoupleFocusModel, type CoupleFocusStep } from '../coupleFocus';
+import { getFlowStatusLabel } from '../../../lib/flowLabels';
 
 interface SeatingReadiness {
   attending: number;
@@ -28,6 +30,8 @@ interface Props {
   budgetItems: PlanningBudgetItem[];
   vendors: PlanningVendor[];
   seatingReadiness: SeatingReadiness;
+  itineraryEventCount: number;
+  privacyMode: 'public' | 'password_protected' | 'invite_only';
   weddingDate: string | null;
   nameChangePlan: NameChangePlan;
   onTabChange: (tab: string) => void;
@@ -47,7 +51,7 @@ function routeToNameChangeLane(primaryHref: string, onTabChange: (tab: string) =
   onTabChange('nameChange');
 }
 
-export const PlanningOverviewTab: React.FC<Props> = ({ tasks, budgetItems, vendors, seatingReadiness, weddingDate, nameChangePlan, onTabChange }) => {
+export const PlanningOverviewTab: React.FC<Props> = ({ tasks, budgetItems, vendors, seatingReadiness, itineraryEventCount, privacyMode, weddingDate, nameChangePlan, onTabChange }) => {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const in7Days = new Date(today);
@@ -130,16 +134,122 @@ export const PlanningOverviewTab: React.FC<Props> = ({ tasks, budgetItems, vendo
     budgetItems,
     vendors,
     seatingReadiness,
+    daysUntilWedding: weddingDateValue ? Math.ceil((weddingDateValue.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)) : null,
+    itineraryEventCount,
   });
+  const coupleFocus = buildCoupleFocusModel({
+    daysUntilWedding: weddingDateValue ? Math.ceil((weddingDateValue.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)) : null,
+    isPublished: true,
+    isArchiveLike: isPostWedding,
+    privacyMode,
+    publishBlockerCount: 0,
+    pendingGuestCount: 0,
+    contactGapCount: 0,
+    overdueTaskCount: overdueTasks.length,
+    dueSoonVendorCount: dueSoonVendors.length,
+    seatingUnassignedCount: seatingReadiness.unassigned,
+  });
+
+  const handleCoupleFocusAction = (step: CoupleFocusStep) => {
+    if (step.target === 'seating') {
+      if (typeof window !== 'undefined') {
+        window.location.assign('/dashboard/seating');
+      }
+      return;
+    }
+    if (step.target === 'coordinator') {
+      if (typeof window !== 'undefined') {
+        window.location.assign('/dashboard/coordinator');
+      }
+      return;
+    }
+    if (step.target === 'planning') {
+      onTabChange('overview');
+      return;
+    }
+    if (step.target === 'planning-tasks') {
+      onTabChange('tasks');
+      return;
+    }
+    if (step.target === 'planning-vendors') {
+      onTabChange('vendors');
+      return;
+    }
+    if (step.target === 'itinerary') {
+      if (typeof window !== 'undefined') {
+        window.location.assign('/dashboard/itinerary#itinerary-readiness');
+      }
+      return;
+    }
+    if (typeof window !== 'undefined') {
+      const routeByTarget: Record<Exclude<CoupleFocusStep['target'], 'planning' | 'planning-tasks' | 'planning-vendors' | 'itinerary' | 'seating' | 'coordinator'>, string> = {
+        'builder-launch': '/dashboard/builder#launch-confidence',
+        'builder-polish': '/dashboard/builder#builder-concierge',
+        guests: '/dashboard/guests',
+        messages: '/dashboard/messages',
+        settings: '/dashboard/settings?tab=site#guest-access-handoff',
+        photos: '/dashboard/photos',
+        vault: '/dashboard/vault',
+      };
+      window.location.assign(routeByTarget[step.target as keyof typeof routeByTarget]);
+    }
+  };
 
   return (
     <div className="space-y-6">
+      <Card padding="md" className="border-primary/20 bg-primary/[0.04]">
+        <div className="space-y-4">
+          <div className="flex items-start gap-3">
+            <div className="rounded-xl bg-primary/10 p-2">
+              <Users className="h-5 w-5 text-primary" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-text-secondary">Couple focus</p>
+              <h3 className="mt-1 text-base font-semibold text-text-primary">{coupleFocus.headline}</h3>
+              <p className="mt-1.5 text-sm leading-6 text-text-secondary">{coupleFocus.summary}</p>
+            </div>
+          </div>
+          <div className="grid gap-3 md:grid-cols-3">
+            {coupleFocus.steps.map((step) => (
+              <div key={step.id} className="rounded-2xl border border-border-subtle bg-white px-4 py-4 shadow-sm">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-sm font-semibold text-text-primary">{step.title}</p>
+                  <span className={`rounded-full px-2.5 py-1 text-[11px] font-medium ${
+                    step.status === 'current'
+                      ? 'border border-primary/20 bg-primary-light text-primary'
+                      : step.status === 'next'
+                        ? 'border border-warning/20 bg-warning-light text-warning'
+                        : 'border border-border-subtle bg-surface-subtle text-text-secondary'
+                  }`}>
+                    {getFlowStatusLabel(step.status)}
+                  </span>
+                </div>
+                <p className="mt-2 text-xs leading-5 text-text-secondary">{step.detail}</p>
+                <button
+                  type="button"
+                  onClick={() => handleCoupleFocusAction(step)}
+                  className="mt-3 inline-flex min-h-[36px] items-center rounded-full border border-border bg-white px-3.5 py-2 text-sm font-medium text-text-primary transition hover:border-primary/40 hover:text-primary"
+                >
+                  {step.ctaLabel}
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      </Card>
+
       <PlanningDecisionCard
         model={planningDecision}
         onAction={(target) => {
           if (target === 'seating') {
             if (typeof window !== 'undefined') {
               window.location.assign('/dashboard/seating');
+            }
+            return;
+          }
+          if (target === 'itinerary') {
+            if (typeof window !== 'undefined') {
+              window.location.assign('/dashboard/itinerary#itinerary-readiness');
             }
             return;
           }
