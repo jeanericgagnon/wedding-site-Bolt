@@ -1,45 +1,32 @@
 import { describe, expect, it } from 'vitest';
 import { buildCoordinatorEscalations } from './coordinatorEscalations';
 
-describe('coordinatorEscalations', () => {
-  it('surfaces door review, q&a, and timeline gaps together', () => {
-    const items = buildCoordinatorEscalations({
+describe('buildCoordinatorEscalations', () => {
+  it('adds judgment framing to door exceptions', () => {
+    const escalations = buildCoordinatorEscalations({
       guests: [
-        { id: '1', first_name: 'Alex', last_name: 'Rivera', name: 'Alex Rivera', rsvp_status: 'pending', checked_in_at: null },
+        { id: 'g1', name: 'Alex', rsvp_status: 'pending', checked_in_at: null } as any,
       ],
-      qnaItems: [
-        { id: 'q1', question: 'Where do I park?', status: 'new' },
-      ],
-      events: [
-        { id: 'ceremony', event_name: 'Ceremony', start_time: '2026-04-19T15:00:00' },
-      ],
+      qnaItems: [],
+      events: [],
       timelineState: {},
     });
 
-    expect(items.map((item) => item.key)).toEqual(['door-review', 'open-qna', 'timeline-live']);
+    expect(escalations[0]?.title).toMatch(/Door exceptions/i);
+    expect(escalations[0]?.focusTitle).toMatch(/door decisions/i);
+    expect(escalations[0]?.decisionRule).toMatch(/line keeps trusting/i);
   });
 
-  it('falls back to an all-clear item when nothing urgent is open', () => {
-    const items = buildCoordinatorEscalations({
-      guests: [
-        { id: '1', first_name: 'Alex', last_name: 'Rivera', name: 'Alex Rivera', rsvp_status: 'confirmed', checked_in_at: '2026-04-19T10:00:00.000Z' },
-      ],
-      qnaItems: [
-        { id: 'q1', question: 'Where do I park?', status: 'answered', answer: 'Use the valet lot.' },
-      ],
-      events: [
-        { id: 'ceremony', event_name: 'Ceremony', start_time: '2026-04-19T15:00:00' },
-      ],
-      timelineState: { ceremony: 'live' },
+  it('keeps the all-clear state framed as restraint', () => {
+    const escalations = buildCoordinatorEscalations({
+      guests: [],
+      qnaItems: [],
+      events: [],
+      timelineState: {},
     });
 
-    expect(items).toEqual([
-      {
-        key: 'all-clear',
-        title: 'Ops board looks calm',
-        detail: 'No urgent escalations need attention right now.',
-        tone: 'success',
-      },
-    ]);
+    expect(escalations[0]?.title).toMatch(/calm/i);
+    expect(escalations[0]?.focusTitle).toMatch(/command board in reserve/i);
+    expect(escalations[0]?.decisionRule).toMatch(/preserve the calm/i);
   });
 });
