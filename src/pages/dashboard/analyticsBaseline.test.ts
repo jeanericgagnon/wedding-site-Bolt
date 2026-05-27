@@ -83,4 +83,30 @@ describe('analyticsBaseline', () => {
 
     expect(nextMove.target).toBe('builder');
   });
+
+  it('calls out access handoff when the site is restricted even if the measured baseline is otherwise strong', () => {
+    const summary = buildAnalyticsConfidenceSummary(makeInput({
+      confirmedGuests: 70,
+      declinedGuests: 20,
+      pendingGuests: 10,
+      contactableGuests: 96,
+      registryItemCount: 10,
+      activePhotoAlbumCount: 2,
+      privacyMode: 'password_protected',
+    }));
+
+    const nextMove = buildAnalyticsNextMove(makeInput({
+      confirmedGuests: 70,
+      declinedGuests: 20,
+      pendingGuests: 10,
+      contactableGuests: 96,
+      registryItemCount: 10,
+      activePhotoAlbumCount: 2,
+      privacyMode: 'password_protected',
+    }));
+
+    expect(summary.title).toMatch(/access handoff/i);
+    expect(nextMove.ctaLabel).toMatch(/preview guest access/i);
+    expect(nextMove.target).toBe('builder');
+  });
 });

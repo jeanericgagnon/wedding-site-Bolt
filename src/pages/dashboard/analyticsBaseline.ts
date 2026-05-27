@@ -4,6 +4,7 @@ export interface AnalyticsBaselineInput {
   declinedGuests: number;
   pendingGuests: number;
   contactableGuests: number;
+  privacyMode?: 'public' | 'password_protected' | 'invite_only';
   registryItemCount: number;
   photoAlbumCount: number;
   activePhotoAlbumCount: number;
@@ -98,6 +99,8 @@ export function buildAnalyticsConfidenceSummary(input: AnalyticsBaselineInput): 
   const responseRate = input.totalGuests > 0 ? pct(respondedGuests * 100, input.totalGuests) : 0;
   const contactCoverage = input.totalGuests > 0 ? pct(input.contactableGuests * 100, input.totalGuests) : 0;
   const guestExperienceReady = input.registryItemCount > 0 && input.activePhotoAlbumCount > 0;
+  const restrictedAccess = input.privacyMode === 'password_protected' || input.privacyMode === 'invite_only';
+  const accessLabel = input.privacyMode === 'invite_only' ? 'invite-only' : 'password-protected';
 
   if (input.pendingGuests >= Math.max(8, Math.round(input.totalGuests * 0.12))) {
     return {
@@ -122,6 +125,15 @@ export function buildAnalyticsConfidenceSummary(input: AnalyticsBaselineInput): 
       title: 'Guests can find the site, but the experience still feels a little thin',
       detail: 'Response signals are healthy enough, yet registry and photo follow-through are not both fully carrying their share of guest confidence.',
       statusLabel: guestExperienceReady ? 'Guest-facing extras ready' : 'Guest-facing extras still growing',
+      tone: 'warning',
+    };
+  }
+
+  if (restrictedAccess) {
+    return {
+      title: 'Guest trust also depends on a clean access handoff right now',
+      detail: `The board looks healthy, but the site is ${accessLabel}. That means guest confidence now depends on whether the right password or invite path is traveling with every handoff.`,
+      statusLabel: `${accessLabel} access in play`,
       tone: 'warning',
     };
   }
@@ -185,6 +197,7 @@ export function buildAnalyticsNextMove(input: AnalyticsBaselineInput): Analytics
   const respondedGuests = input.confirmedGuests + input.declinedGuests;
   const responseRate = input.totalGuests > 0 ? pct(respondedGuests * 100, input.totalGuests) : 0;
   const contactCoverage = input.totalGuests > 0 ? pct(input.contactableGuests * 100, input.totalGuests) : 0;
+  const restrictedAccess = input.privacyMode === 'password_protected' || input.privacyMode === 'invite_only';
 
   if (input.pendingGuests >= Math.max(8, Math.round(input.totalGuests * 0.12))) {
     return {
@@ -219,6 +232,17 @@ export function buildAnalyticsNextMove(input: AnalyticsBaselineInput): Analytics
       detail: 'Photo contribution is one of the easiest ways to make the guest experience feel alive instead of merely published.',
       ctaLabel: 'Open photos',
       target: 'photos',
+    };
+  }
+
+  if (restrictedAccess) {
+    return {
+      title: 'Run one guest access pass before broader sharing',
+      detail: input.privacyMode === 'invite_only'
+        ? 'The guest-facing site is not public, so make sure the real invite path is what guests are receiving instead of a generic broad-share link.'
+        : 'The site is password-protected, so the next lift is making sure the password instructions travel with every guest-facing link or print pack.',
+      ctaLabel: 'Preview guest access',
+      target: 'builder',
     };
   }
 

@@ -103,6 +103,27 @@ describe('buildControlTowerBriefing', () => {
     expect(briefing.secondaryAction).toMatchObject({ target: 'builder' });
   });
 
+  it('surfaces guest access handoff when a live site is restricted close to the wedding', () => {
+    const briefing = buildControlTowerBriefing(makeInput({
+      confirmedGuests: 78,
+      declinedGuests: 14,
+      pendingGuests: 8,
+      contactableGuestCount: 100,
+      itineraryEventCount: 2,
+      registryItemCount: 18,
+      activePhotoAlbumCount: 2,
+      photoAlbumCount: 2,
+      recentRsvpCount: 5,
+      daysUntilWedding: 6,
+      isPublished: true,
+      privacyMode: 'invite_only',
+    }));
+
+    expect(briefing.title).toContain('Guest access instructions');
+    expect(briefing.primaryAction).toMatchObject({ target: 'builder' });
+    expect(briefing.secondaryAction).toMatchObject({ target: 'messages' });
+  });
+
   it('falls back to a calm guidance mode when the board is steady', () => {
     const briefing = buildControlTowerBriefing(makeInput({
       confirmedGuests: 74,
