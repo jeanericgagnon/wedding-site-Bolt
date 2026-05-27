@@ -1246,7 +1246,20 @@ export const NameChangePlannerTab: React.FC<Props> = ({
             <div className="mt-3 grid gap-3 md:grid-cols-3">
               {resumeCard.sequence.map((step) => (
                 <div key={step.status} className="rounded-xl border border-sky-200 bg-white/80 px-4 py-3">
-                  <p className="text-xs uppercase tracking-wide text-sky-700">{step.status}</p>
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-xs uppercase tracking-wide text-sky-700">
+                      {step.status === 'current' ? 'Current' : step.status === 'next' ? 'Next' : 'Then'}
+                    </p>
+                    <span className={`rounded-full px-2.5 py-1 text-[11px] font-medium ${
+                      step.status === 'current'
+                        ? 'border border-sky-300 bg-sky-100 text-sky-700'
+                        : step.status === 'next'
+                          ? 'border border-amber-200 bg-amber-50 text-amber-700'
+                          : 'border border-sky-200 bg-white text-sky-700'
+                    }`}>
+                      {step.status === 'current' ? 'Current' : step.status === 'next' ? 'Next' : 'Then'}
+                    </span>
+                  </div>
                   <p className="mt-1 text-sm font-semibold text-sky-950">{step.title}</p>
                   <p className="mt-1 text-sm text-sky-900">{step.detail}</p>
                 </div>

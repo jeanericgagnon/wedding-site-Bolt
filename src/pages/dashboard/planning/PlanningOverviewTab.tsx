@@ -364,7 +364,20 @@ export const PlanningOverviewTab: React.FC<Props> = ({ tasks, budgetItems, vendo
                   <div className="mt-3 grid gap-2 sm:grid-cols-3">
                     {nameChangeCard.sequence.map((step) => (
                       <div key={step.status} className="rounded-xl border border-border-subtle bg-white px-3 py-3">
-                        <p className="text-[11px] uppercase tracking-wide text-text-secondary">{step.status}</p>
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="text-[11px] uppercase tracking-wide text-text-secondary">
+                            {step.status === 'current' ? 'Current' : step.status === 'next' ? 'Next' : 'Then'}
+                          </p>
+                          <span className={`rounded-full px-2.5 py-1 text-[11px] font-medium ${
+                            step.status === 'current'
+                              ? 'border border-sky-300 bg-sky-100 text-sky-700'
+                              : step.status === 'next'
+                                ? 'border border-amber-200 bg-amber-50 text-amber-700'
+                                : 'border border-sky-200 bg-white text-sky-700'
+                          }`}>
+                            {step.status === 'current' ? 'Current' : step.status === 'next' ? 'Next' : 'Then'}
+                          </span>
+                        </div>
                         <p className="mt-1 text-sm font-medium text-text-primary">{step.title}</p>
                         <p className="mt-1 text-xs leading-5 text-text-secondary">{step.detail}</p>
                       </div>
