@@ -67,14 +67,13 @@ export function SettingsIdentityExportsPanel({
             <div className="rounded-lg border border-border-subtle bg-white p-4 lg:col-span-2">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-text-tertiary">Best next move</p>
               <p className="mt-2 text-sm leading-6 text-text-secondary">{weddingIdentityExportKit.bestNextMove}</p>
-              <div className="mt-3 h-px bg-black/5" />
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-text-tertiary">Decision rule</p>
-              <p className="mt-2 text-sm leading-6 text-text-secondary">{weddingIdentityExportKit.decisionRule}</p>
+              <div className="mt-3 border-t border-border-subtle pt-3">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-text-tertiary">Decision rule</p>
+                <p className="mt-2 text-sm leading-6 text-text-secondary">{weddingIdentityExportKit.decisionRule}</p>
+                <p className="mt-3 text-xs font-semibold uppercase tracking-[0.18em] text-text-tertiary">Watchout</p>
+                <p className="mt-2 text-sm leading-6 text-text-secondary">{weddingIdentityExportKit.watchout}</p>
+              </div>
             </div>
-          </div>
-          <div className="rounded-lg border border-border-subtle bg-white p-4">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-text-tertiary">Watchout</p>
-            <p className="mt-2 text-sm leading-6 text-text-secondary">{weddingIdentityExportKit.watchout}</p>
           </div>
 
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
