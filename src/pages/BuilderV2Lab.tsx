@@ -9,6 +9,7 @@ import { buildBuilderV2LabPreviewFieldsFromWeddingData, getInitialBuilderV2LabPr
 import type { BuilderV2Document } from '../builder-v2/contracts';
 import { prepareImportedBuilderV2Document, type BuilderV2ImportReport } from '../builder-v2/importPrepare';
 import { consumeBuilderV2UpgradeBridge } from '../builder-v2/upgradeBridge';
+import { readSetupDraft } from '../lib/setupDraft';
 import {
   buildBuilderV2AddBlockLibrary,
   buildBuilderV2SectionEditingGuidance,
@@ -28,6 +29,7 @@ import {
 import { buildBuilderV2ImportComparison } from './builderV2ImportComparison';
 import { buildBuilderV2ImportReviewSummary } from './builderV2ImportReviewSummary';
 import { buildBuilderV2UpgradeIntake } from './builderV2UpgradeIntake';
+import { buildBuilderV2SetupIntake } from './builderV2SetupIntake';
 import { buildBuilderV2DocumentAudit, type BuilderV2DocumentAuditIssue } from './builderV2DocumentAudit';
 import { buildBuilderV2HandoffGuidance } from './builderV2HandoffGuidance';
 import { buildBuilderV2HandoffPacket } from './builderV2HandoffPacket';
@@ -73,6 +75,7 @@ import {
   type LabSection,
 } from './builderV2PageState';
 import type { BuilderV2ReviewPageSnapshot } from './builderV2DocumentReviewState';
+import { buildBuilderV2SetupSeed } from './builderV2SetupSeed';
 
 type BlockType =
   | 'title'
@@ -326,15 +329,19 @@ const StructureItem: React.FC<StructureItemProps> = ({ section, selected, multiS
 };
 
 export const BuilderV2Lab: React.FC = () => {
-  const [history, setHistory] = useState<LabPage[][]>([createInitialBuilderV2Pages(INITIAL_SECTIONS)]);
+  const initialSetupSeed = useMemo(() => buildBuilderV2SetupSeed(readSetupDraft()), []);
+  const initialPages = initialSetupSeed?.pages ?? createInitialBuilderV2Pages(INITIAL_SECTIONS);
+  const initialSelectedPageId = initialSetupSeed?.selectedPageId ?? 'home';
+  const initialSelectedSectionId = initialSetupSeed?.selectedSectionId ?? INITIAL_SECTIONS[0].id;
+  const [history, setHistory] = useState<LabPage[][]>([initialPages]);
   const [historyIndex, setHistoryIndex] = useState(0);
-  const [selectedPageId, setSelectedPageId] = useState('home');
-  const [selectedId, setSelectedId] = useState(INITIAL_SECTIONS[0].id);
+  const [selectedPageId, setSelectedPageId] = useState(initialSelectedPageId);
+  const [selectedId, setSelectedId] = useState(initialSelectedSectionId);
   const [multiSelectedIds, setMultiSelectedIds] = useState<string[]>([]);
-  const [lastSelectedId, setLastSelectedId] = useState<string>(INITIAL_SECTIONS[0].id);
+  const [lastSelectedId, setLastSelectedId] = useState<string>(initialSelectedSectionId);
   const [saveState, setSaveState] = useState<'saved' | 'saving'>('saved');
   const [lastSavedAt, setLastSavedAt] = useState<string>('');
-  const [previewFields, setPreviewFields] = useState(getInitialBuilderV2LabPreviewFields);
+  const [previewFields, setPreviewFields] = useState(() => initialSetupSeed?.previewFields ?? getInitialBuilderV2LabPreviewFields());
   const [addQuery, setAddQuery] = useState('');
   const [showAddPicker, setShowAddPicker] = useState(false);
   const [addPickerType, setAddPickerType] = useState<string | null>(null);
@@ -354,6 +361,7 @@ export const BuilderV2Lab: React.FC = () => {
     report: BuilderV2ImportReport;
     hydratedWeddingData: boolean;
   } | null>(null);
+  const [setupSeedState, setSetupSeedState] = useState(initialSetupSeed);
   const [propertyTab, setPropertyTab] = useState<'content' | 'layout' | 'data'>('content');
   const [recentCommands, setRecentCommands] = useState<string[]>([]);
   const [actionNotice, setActionNotice] = useState<string>('');
@@ -1342,6 +1350,7 @@ export const BuilderV2Lab: React.FC = () => {
   useEffect(() => {
     const upgradeBridge = consumeBuilderV2UpgradeBridge();
     if (!upgradeBridge) return;
+    setSetupSeedState(null);
 
     if (upgradeBridge.weddingData) {
       setPreviewFields((prev) => buildBuilderV2LabPreviewFieldsFromWeddingData(upgradeBridge.weddingData as WeddingDataV1, prev));
@@ -1370,6 +1379,10 @@ export const BuilderV2Lab: React.FC = () => {
         : null
     ),
     [upgradeIntakeState],
+  );
+  const setupIntake = useMemo(
+    () => (setupSeedState ? buildBuilderV2SetupIntake(setupSeedState) : null),
+    [setupSeedState],
   );
 
   const importV2Json = () => {
@@ -1645,6 +1658,60 @@ export const BuilderV2Lab: React.FC = () => {
             <button onClick={() => setShowStructure((v) => !v)} className="px-2 py-1.5 border rounded-sm hover:border-primary/40">{showStructure ? 'Hide' : 'Reorder or add'} sections</button>
           </div>
         </div>
+
+        {!upgradeIntake && setupIntake && setupSeedState && (
+          <div className="px-2 md:px-3 py-2 border-b border-border-subtle bg-white">
+            <div className="rounded-sm border border-violet-200 bg-violet-50 px-3 py-2 text-xs text-violet-950">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                    <span className="font-semibold">Setup-to-V2 intake</span>
+                    <span>{setupSeedState.sourceName}</span>
+                  </div>
+                  <p className="mt-1 text-sm font-semibold">{setupIntake.title}</p>
+                  <p className="mt-1 max-w-3xl leading-relaxed">{setupIntake.detail}</p>
+                  {setupSeedState.setupFacts.length > 0 && (
+                    <p className="mt-2 text-[11px] leading-relaxed text-violet-900/80">
+                      Seed facts: {setupSeedState.setupFacts.join(' · ')}
+                    </p>
+                  )}
+                </div>
+                <div className="flex flex-wrap gap-1.5 text-[10px]">
+                  {setupIntake.keyStats.map((stat) => (
+                    <span key={stat} className="rounded-full border border-violet-200 bg-white/80 px-2 py-1">
+                      {stat}
+                    </span>
+                  ))}
+                </div>
+              </div>
+              <div className="mt-3 grid gap-2 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)]">
+                <div className="rounded-md border border-violet-200 bg-white/80 px-3 py-3">
+                  <p className="text-[11px] uppercase tracking-[0.18em] text-violet-900">Main focus</p>
+                  <p className="mt-1 text-sm font-semibold text-text-primary">{setupIntake.steps[0]?.detail}</p>
+                  <p className="mt-2 text-xs leading-relaxed text-text-secondary">{setupIntake.steps[1]?.detail}</p>
+                </div>
+                <div className="rounded-md border border-violet-200 bg-white/80 px-3 py-3">
+                  <p className="text-[11px] uppercase tracking-[0.18em] text-violet-900">Best next move</p>
+                  <p className="mt-1 text-sm font-semibold text-text-primary">{setupIntake.bestNextMove}</p>
+                  <p className="mt-2 text-xs leading-relaxed text-text-primary">
+                    <span className="font-semibold">Decision rule:</span> {setupIntake.decisionRule}
+                  </p>
+                  <p className="mt-1 text-xs leading-relaxed text-text-primary">
+                    <span className="font-semibold">Watchout:</span> {setupIntake.watchout}
+                  </p>
+                </div>
+              </div>
+              <div className="mt-3 grid gap-2 md:grid-cols-3">
+                {setupIntake.steps.map((step) => (
+                  <div key={step.label} className="rounded-md border border-violet-200 bg-white/80 px-2.5 py-2">
+                    <p className="text-[11px] uppercase tracking-[0.18em] text-violet-900">{step.label}</p>
+                    <p className="mt-1 text-xs leading-relaxed text-text-primary">{step.detail}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
 
         {upgradeIntake && (
           <div className="px-2 md:px-3 py-2 border-b border-border-subtle bg-white">
