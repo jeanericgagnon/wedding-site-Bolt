@@ -1799,15 +1799,23 @@ export const DashboardCoordinatorMode: React.FC = () => {
                 >
                   <p className="text-sm font-medium text-text-primary">{item.title}</p>
                   <p className="mt-1 text-xs text-text-secondary">{item.detail}</p>
-                  <p className="mt-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-text-tertiary">Main focus</p>
-                  <p className="mt-1 text-[11px] text-text-secondary">{item.focusTitle}</p>
-                  <p className="mt-1 text-[11px] text-text-secondary/90">{item.focusDetail}</p>
-                  <p className="mt-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-text-tertiary">Best next move</p>
-                  <p className="mt-1 text-[11px] text-text-secondary">{item.bestNextMove}</p>
-                  <p className="mt-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-text-tertiary">Decision rule</p>
-                  <p className="mt-1 text-[11px] text-text-secondary">{item.decisionRule}</p>
-                  <p className="mt-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-text-tertiary">Watchout</p>
-                  <p className="mt-1 text-[11px] text-text-secondary">{item.watchout}</p>
+                  <div className="mt-3 grid gap-2 md:grid-cols-2">
+                    <div className="rounded-md border border-white/60 bg-white/70 px-2.5 py-2">
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-text-tertiary">Main focus</p>
+                      <p className="mt-1 text-[11px] text-text-secondary">{item.focusTitle}</p>
+                      <p className="mt-1 text-[11px] text-text-secondary/90">{item.focusDetail}</p>
+                    </div>
+                    <div className="rounded-md border border-white/60 bg-white/70 px-2.5 py-2">
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-text-tertiary">Best next move</p>
+                      <p className="mt-1 text-[11px] text-text-secondary">{item.bestNextMove}</p>
+                      <div className="mt-2 border-t border-white/60 pt-2">
+                        <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-text-tertiary">Decision rule</p>
+                        <p className="mt-1 text-[11px] text-text-secondary">{item.decisionRule}</p>
+                        <p className="mt-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-text-tertiary">Watchout</p>
+                        <p className="mt-1 text-[11px] text-text-secondary">{item.watchout}</p>
+                      </div>
+                    </div>
+                  </div>
                   <div className="mt-3 grid gap-2">
                     {item.sequence.map((step) => (
                       <div key={`${item.key}-${step.status}`} className="rounded-md border border-white/60 bg-white/70 px-2.5 py-2">
