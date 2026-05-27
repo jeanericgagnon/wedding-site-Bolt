@@ -24,6 +24,7 @@ import { rewriteSignedMediaUrlsToPublicDeep } from '../lib/mediaUrl';
 import { getSiteVisibilityState } from '../lib/siteVisibilityState';
 import { buildCoupleDisplayName } from '../lib/coupleDisplayName';
 import { getPublicBuilderPagesFromV2Document } from '../lib/publicBuilderV2Runtime';
+import { deriveWeddingDataFromBuilderV2Document, mergeWeddingDataWithBuilderV2Supplement } from '../lib/publicBuilderV2WeddingData';
 import { getIsPublishedFromSiteRow, getPublicBuilderProject, getPublicBuilderV2Document, getPublicWeddingData } from '../lib/publicSiteProject';
 import { getPublicBuilderActivePage, getVisiblePublicBuilderPages } from '../lib/publicPageSelection';
 
@@ -548,10 +549,14 @@ export const SiteView: React.FC = () => {
         const persistedSections = await siteRepository.fetchPublishedSections(data.id as string).catch(() => []);
 
         if (isPublished && persistedSections.length > 0 && !(siteJson && siteJson.pages?.length > 0)) {
+          const supplementedWData = rawBuilderV2Document
+            ? mergeWeddingDataWithBuilderV2Supplement(
+                getPublicWeddingData(row),
+                deriveWeddingDataFromBuilderV2Document(rawBuilderV2Document),
+              )
+            : (getPublicWeddingData(row) ?? createEmptyWeddingData());
           const rawWData = normalizeWeddingData(
-            rewriteSignedMediaUrlsToPublicDeep(
-              getPublicWeddingData(row) ?? createEmptyWeddingData()
-            )
+            rewriteSignedMediaUrlsToPublicDeep(supplementedWData)
           );
           const wData = await hydrateWeddingDataFromItinerary(data.id as string, resolvedSlug, rawWData);
           setUseNewRenderer(true);
@@ -600,10 +605,14 @@ export const SiteView: React.FC = () => {
             return;
           }
 
+          const supplementedWData = rawBuilderV2Document
+            ? mergeWeddingDataWithBuilderV2Supplement(
+                getPublicWeddingData(row),
+                deriveWeddingDataFromBuilderV2Document(rawBuilderV2Document),
+              )
+            : (getPublicWeddingData(row) ?? createEmptyWeddingData());
           const rawWData = normalizeWeddingData(
-            rewriteSignedMediaUrlsToPublicDeep(
-              getPublicWeddingData(row) ?? createEmptyWeddingData()
-            )
+            rewriteSignedMediaUrlsToPublicDeep(supplementedWData)
           );
           const wData = await hydrateWeddingDataFromItinerary(data.id as string, resolvedSlug, rawWData);
 
@@ -619,7 +628,12 @@ export const SiteView: React.FC = () => {
           setBuilderSections(normalizeSectionVariants(homePage.sections.filter(s => s.enabled)));
           setWeddingData(wData);
         } else {
-          const parsedWData = getPublicWeddingData(row);
+          const parsedWData = rawBuilderV2Document
+            ? mergeWeddingDataWithBuilderV2Supplement(
+                getPublicWeddingData(row),
+                deriveWeddingDataFromBuilderV2Document(rawBuilderV2Document),
+              )
+            : getPublicWeddingData(row);
           const rawWData = parsedWData
             ? normalizeWeddingData(rewriteSignedMediaUrlsToPublicDeep(parsedWData))
             : null;
