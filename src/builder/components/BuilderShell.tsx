@@ -389,6 +389,32 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
           )}
         </div>
 
+        {conciergePlan && (
+          <div className="border-t border-border/30 bg-white/90 px-4 py-3 shadow-[0_-6px_18px_rgba(15,23,42,0.04)]">
+            <div className="mx-auto flex max-w-7xl flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+              <div className="space-y-2">
+                <div className="flex flex-wrap items-center gap-2">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-text-tertiary">Builder concierge</p>
+                  <span className="rounded-full border border-primary/20 bg-primary/5 px-2.5 py-1 text-[11px] font-medium text-primary">
+                    {conciergePlan.confidenceLabel}
+                  </span>
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-text-primary">{conciergePlan.heading}</p>
+                  <p className="mt-1 text-sm text-text-secondary">{conciergePlan.summary}</p>
+                  <p className="mt-1 text-xs text-text-tertiary">{conciergePlan.nextBestMove}</p>
+                </div>
+              </div>
+              <div className="grid gap-2 text-sm lg:max-w-xl">
+                <p className="text-xs font-medium text-text-secondary">{conciergePlan.guestPromise}</p>
+                {conciergePlan.watchouts.map((watchout) => (
+                  <p key={watchout} className="text-xs text-amber-700">{watchout}</p>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
         {publishNotice && (
           <div className="fixed bottom-4 left-4 bg-green-600 text-white px-4 py-3 rounded-xl shadow-lg text-sm flex items-center gap-2 z-50 max-w-sm">
             <span className="flex-1">{publishNotice}</span>
@@ -467,7 +493,11 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
                   type="button"
                   onClick={() => {
                     setShowCoachmarks(false);
-                    try { window.localStorage.setItem('builder_coachmarks_seen_v1', '1'); } catch {}
+                    try {
+                      window.localStorage.setItem('builder_coachmarks_seen_v1', '1');
+                    } catch {
+                      // Non-persistent environments can still dismiss the guide for this session.
+                    }
                   }}
                   className="rounded-lg bg-gray-900 px-3 py-1.5 text-sm font-semibold text-white hover:bg-gray-800"
                 >

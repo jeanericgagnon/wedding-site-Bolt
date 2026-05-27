@@ -37,6 +37,12 @@ export interface WeddingIdentityExportKit {
   items: WeddingIdentityExportItem[];
   manifest: Array<{ label: string; value: string }>;
   warnings: string[];
+  quickPacks: Array<{
+    id: 'share-now' | 'print-table' | 'planner-handoff';
+    label: string;
+    detail: string;
+    readiness: 'ready' | 'needs-info';
+  }>;
 }
 
 export interface WeddingIdentityPrintAsset {
@@ -196,6 +202,30 @@ export function buildWeddingIdentityExportKit(input: WeddingIdentityExportKitInp
       { label: 'Default language', value: defaultLanguage },
     ],
     warnings,
+    quickPacks: [
+      {
+        id: 'share-now',
+        label: 'Share-now pack',
+        detail: hasPublicUrl
+          ? 'Use the share graphic, RSVP card, and public QR card when you need one fast guest-facing set.'
+          : 'Set the public site URL first so the guest-facing share pack can be generated safely.',
+        readiness: hasPublicUrl ? 'ready' : 'needs-info',
+      },
+      {
+        id: 'print-table',
+        label: 'Print-table pack',
+        detail: hasPublicUrl && hasDate && hasVenue
+          ? 'Use the details insert, table card, and photo sign for welcome tables, bags, and event signage.'
+          : 'Add the public site, date, and venue so the print-table pack feels complete instead of partial.',
+        readiness: hasPublicUrl && hasDate && hasVenue ? 'ready' : 'needs-info',
+      },
+      {
+        id: 'planner-handoff',
+        label: 'Planner handoff pack',
+        detail: 'Use the identity summary and style kit when you want one consistent reference for planners, stationers, and print partners.',
+        readiness: 'ready',
+      },
+    ],
   };
 }
 

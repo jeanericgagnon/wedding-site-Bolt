@@ -29,6 +29,8 @@ describe('GuestJourneyCompanion', () => {
     );
 
     expect(screen.getByRole('heading', { name: /update details without losing your place/i })).toBeInTheDocument();
+    expect(screen.getByText(/update path ready/i)).toBeInTheDocument();
+    expect(screen.getByText(/next useful moves/i)).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Wedding hub' })).toHaveAttribute('href', '/site/ericandkaras?previewGuest=guest-42&previewSurface=public&token=invite-123');
     expect(screen.getByRole('link', { name: 'Travel details' })).toHaveAttribute('href', '/site/ericandkaras?previewGuest=guest-42&previewSurface=travel&token=invite-123#travel');
     expect(screen.getByRole('link', { name: 'RSVP' })).toHaveAttribute('href', '/rsvp?site=ericandkaras&token=invite-123');
