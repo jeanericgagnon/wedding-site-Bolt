@@ -41,6 +41,7 @@ import { buildControlTowerBriefing, type ControlTowerAction } from './controlTow
 import { ControlTowerBriefingCard } from './ControlTowerBriefingCard';
 import { buildDayOfBrainBriefing, type DayOfBrainAction } from './dayOfBrain';
 import { DayOfBrainCard } from './DayOfBrainCard';
+import { buildCoupleFocusModel, type CoupleFocusStep } from './coupleFocus';
 
 const DEFAULT_NAME_CHANGE_INSIGHTS: NameChangeOverviewInsights = {
   coreChainLabel: 'Certificate, SSA, and DMV stay together so the legal identity chain does not drift.',
@@ -595,6 +596,17 @@ export const DashboardOverview: React.FC = () => {
     splitHouseholdCount: 0,
     isArchiveLike: archiveMode.isArchiveLike,
   });
+  const coupleFocus = buildCoupleFocusModel({
+    daysUntilWedding: stats?.daysUntilWedding ?? null,
+    isPublished: stats?.isPublished ?? false,
+    isArchiveLike: archiveMode.isArchiveLike,
+    publishBlockerCount: publishBlockers.length,
+    pendingGuestCount: stats?.pendingGuests ?? 0,
+    contactGapCount: stats ? Math.max((stats.totalGuests ?? 0) - (stats.contactableGuestCount ?? 0), 0) : 0,
+    overdueTaskCount: 0,
+    dueSoonVendorCount: 0,
+    seatingUnassignedCount: 0,
+  });
 
   function handleControlTowerAction(action: ControlTowerAction) {
     const routeByTarget: Record<ControlTowerAction['target'], string> = {
@@ -613,6 +625,20 @@ export const DashboardOverview: React.FC = () => {
 
   function handleDayOfBrainAction(action: DayOfBrainAction) {
     handleControlTowerAction(action as ControlTowerAction);
+  }
+
+  function handleCoupleFocusAction(step: CoupleFocusStep) {
+    const routeByTarget: Record<CoupleFocusStep['target'], string> = {
+      builder: '/dashboard/builder',
+      planning: '/dashboard/planning',
+      guests: '/dashboard/guests',
+      messages: '/dashboard/messages',
+      seating: '/dashboard/seating',
+      coordinator: '/dashboard/coordinator',
+      photos: '/dashboard/photos',
+      vault: '/dashboard/vault',
+    };
+    navigate(routeByTarget[step.target]);
   }
 
   return (
@@ -718,6 +744,46 @@ export const DashboardOverview: React.FC = () => {
           </div>
         ) : (
           <>
+            <Card variant="bordered" padding="lg" className="shadow-sm border-border-subtle">
+              <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                <div className="max-w-3xl">
+                  <p className="text-xs font-semibold uppercase tracking-[0.24em] text-text-tertiary">Couple focus</p>
+                  <h2 className="mt-2 text-2xl font-semibold text-text-primary">{coupleFocus.headline}</h2>
+                  <p className="mt-2 text-sm text-text-secondary">{coupleFocus.summary}</p>
+                </div>
+                <div className="rounded-2xl border border-border-subtle bg-surface-subtle/30 px-4 py-3 lg:min-w-[220px]">
+                  <p className="text-[11px] uppercase tracking-[0.22em] text-text-tertiary">How to use this</p>
+                  <p className="mt-1 text-xs text-text-secondary">This is the one order of operations that should matter most to the couple right now.</p>
+                </div>
+              </div>
+              <div className="mt-4 grid gap-3 md:grid-cols-3">
+                {coupleFocus.steps.map((step) => (
+                  <div key={step.id} className="rounded-2xl border border-border-subtle bg-white px-4 py-4 shadow-[0_4px_14px_rgba(15,23,42,0.04)]">
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="text-sm font-semibold text-text-primary">{step.title}</p>
+                      <span className={`rounded-full px-2.5 py-1 text-[11px] font-medium ${
+                        step.status === 'current'
+                          ? 'border border-primary/20 bg-primary-light text-primary'
+                          : step.status === 'next'
+                            ? 'border border-warning/20 bg-warning-light text-warning'
+                            : 'border border-border-subtle bg-surface-subtle text-text-secondary'
+                      }`}>
+                        {step.status === 'current' ? 'Current' : step.status === 'next' ? 'Next' : 'Then'}
+                      </span>
+                    </div>
+                    <p className="mt-2 text-xs leading-5 text-text-secondary">{step.detail}</p>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="mt-3"
+                      onClick={() => handleCoupleFocusAction(step)}
+                    >
+                      {step.ctaLabel}
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </Card>
             <ControlTowerBriefingCard briefing={controlTowerBriefing} onAction={handleControlTowerAction} />
             {(stats?.daysUntilWedding !== null || archiveMode.isArchiveLike) && (
               <DayOfBrainCard briefing={dayOfBrainBriefing} onAction={handleDayOfBrainAction} />

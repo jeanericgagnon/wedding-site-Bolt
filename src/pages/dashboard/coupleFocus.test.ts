@@ -1,0 +1,56 @@
+import { describe, expect, it } from 'vitest';
+import { buildCoupleFocusModel } from './coupleFocus';
+
+describe('buildCoupleFocusModel', () => {
+  it('prioritizes launch blockers before other work', () => {
+    const model = buildCoupleFocusModel({
+      daysUntilWedding: 40,
+      isPublished: false,
+      isArchiveLike: false,
+      publishBlockerCount: 3,
+      pendingGuestCount: 8,
+      contactGapCount: 2,
+      overdueTaskCount: 1,
+      dueSoonVendorCount: 0,
+      seatingUnassignedCount: 4,
+    });
+
+    expect(model.headline).toMatch(/launch readiness/i);
+    expect(model.steps[0]?.id).toBe('launch');
+    expect(model.steps[1]?.id).toBe('guests');
+  });
+
+  it('prioritizes planning pressure when launch is already stable', () => {
+    const model = buildCoupleFocusModel({
+      daysUntilWedding: 80,
+      isPublished: true,
+      isArchiveLike: false,
+      publishBlockerCount: 0,
+      pendingGuestCount: 0,
+      contactGapCount: 0,
+      overdueTaskCount: 2,
+      dueSoonVendorCount: 1,
+      seatingUnassignedCount: 0,
+    });
+
+    expect(model.headline).toMatch(/planning pressure/i);
+    expect(model.steps[0]?.id).toBe('planning');
+  });
+
+  it('shifts toward day-of readiness when the wedding is close and the list is calm', () => {
+    const model = buildCoupleFocusModel({
+      daysUntilWedding: 12,
+      isPublished: true,
+      isArchiveLike: false,
+      publishBlockerCount: 0,
+      pendingGuestCount: 0,
+      contactGapCount: 0,
+      overdueTaskCount: 0,
+      dueSoonVendorCount: 0,
+      seatingUnassignedCount: 0,
+    });
+
+    expect(model.steps[0]?.id).toBe('day-of');
+    expect(model.headline).toMatch(/live readiness/i);
+  });
+});
