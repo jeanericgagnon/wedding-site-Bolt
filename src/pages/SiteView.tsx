@@ -1,6 +1,6 @@
 /* eslint-disable react-refresh/only-export-components */
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { useParams, useSearchParams } from 'react-router-dom';
+import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { AlertCircle, Lock, Eye, EyeOff } from 'lucide-react';
 import { LanguageSwitcher } from '../components/ui/LanguageSwitcher';
@@ -10,6 +10,7 @@ import { LayoutConfigV1 } from '../types/layoutConfig';
 import { getSectionComponent } from '../sections/sectionRegistry';
 import { applyThemePreset, applyThemeTokens } from '../lib/themePresets';
 import { BuilderSectionInstance, createDefaultSectionInstance } from '../types/builder/section';
+import type { BuilderPage } from '../types/builder/project';
 import { SectionRenderer } from '../builder/components/SectionRenderer';
 import { PageRenderer } from '../render/PageRenderer';
 import { safeJsonParse } from '../lib/jsonUtils';
@@ -23,6 +24,7 @@ import { rewriteSignedMediaUrlsToPublicDeep } from '../lib/mediaUrl';
 import { getSiteVisibilityState } from '../lib/siteVisibilityState';
 import { buildCoupleDisplayName } from '../lib/coupleDisplayName';
 import { getIsPublishedFromSiteRow, getPublicBuilderProject, getPublicWeddingData } from '../lib/publicSiteProject';
+import { getPublicBuilderActivePage, getVisiblePublicBuilderPages } from '../lib/publicPageSelection';
 
 interface PublicItineraryRow {
   id?: string;
@@ -386,6 +388,7 @@ export const SiteView: React.FC = () => {
   const [searchParams] = useSearchParams();
   const { i18n } = useTranslation();
   const [weddingData, setWeddingData] = useState<WeddingDataV1 | null>(null);
+  const [builderPages, setBuilderPages] = useState<BuilderPage[] | null>(null);
   const [builderSections, setBuilderSections] = useState<BuilderSectionInstance[] | null>(null);
   const [layoutConfig, setLayoutConfig] = useState<LayoutConfigV1 | null>(null);
   const [weddingSiteId, setWeddingSiteId] = useState<string | null>(null);
@@ -443,6 +446,7 @@ export const SiteView: React.FC = () => {
       const clearSiteState = () => {
         setWeddingSiteId(null);
         setWeddingData(null);
+        setBuilderPages(null);
         setLayoutConfig(null);
         setBuilderSections(null);
         setUseNewRenderer(false);
@@ -555,12 +559,27 @@ export const SiteView: React.FC = () => {
 
         if (siteJson && siteJson.pages?.length > 0) {
           const homePage = siteJson.pages.find(p => p.id === 'home') ?? siteJson.pages[0];
-          const sections = normalizeSectionVariants(homePage.sections.filter(s => s.enabled));
+          const normalizedPages = siteJson.pages.map((page) => ({
+            ...page,
+            sections: normalizeSectionVariants(page.sections ?? []),
+          }));
+          const visiblePages = getVisiblePublicBuilderPages(normalizedPages);
+          const hasVisibleSections = visiblePages.some((page) => page.sections.some((section) => section.enabled));
 
-          if (sections.length === 0) {
+          if (!hasVisibleSections) {
             if (resolvedSlug === 'alex-jordan-demo') {
               const demoSections = createDemoFallbackSections(siteJson.templateId || 'modern-luxe');
               if (demoSections.length > 0) {
+                setBuilderPages([
+                  {
+                    id: 'home',
+                    title: 'Home',
+                    slug: 'home',
+                    orderIndex: 0,
+                    sections: demoSections,
+                    meta: { isHome: true, isHidden: false },
+                  },
+                ]);
                 setBuilderSections(demoSections);
                 setWeddingData(createAlexJordanDemoWeddingData());
                 if (siteJson.themeId) {
@@ -591,7 +610,8 @@ export const SiteView: React.FC = () => {
             applyThemePreset(wData.theme.preset);
           }
 
-          setBuilderSections(sections);
+          setBuilderPages(normalizedPages);
+          setBuilderSections(normalizeSectionVariants(homePage.sections.filter(s => s.enabled)));
           setWeddingData(wData);
         } else {
           const parsedWData = getPublicWeddingData(row);
@@ -702,10 +722,45 @@ export const SiteView: React.FC = () => {
   }
 
   if (builderSections && builderSections.length > 0 && weddingData) {
+    const visiblePages = builderPages ? getVisiblePublicBuilderPages(builderPages) : [];
+    const activeBuilderPage = visiblePages.length > 0
+      ? getPublicBuilderActivePage(visiblePages, searchParams.get('page'))
+      : null;
+    const renderedSections = activeBuilderPage
+      ? activeBuilderPage.sections.filter((section) => section.enabled)
+      : builderSections;
+
     return (
       <SiteViewContext.Provider value={{ weddingSiteId }}>
         <div className="builder-themed-canvas min-h-screen bg-background" onErrorCapture={handleImageErrorCapture}>
-          {builderSections.map(section => (
+          {visiblePages.length > 1 && resolvedSlug && (
+            <div className="sticky top-0 z-20 border-b border-border-subtle bg-background/95 backdrop-blur">
+              <div className="mx-auto flex w-full max-w-5xl flex-wrap items-center gap-2 px-4 py-3">
+                <p className="mr-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-text-tertiary">Pages</p>
+                {visiblePages.map((page) => {
+                  const isActive = page.id === activeBuilderPage?.id;
+                  const href = page.meta.isHome
+                    ? `/${resolvedSlug}`
+                    : `/${resolvedSlug}?page=${encodeURIComponent(page.slug)}`;
+
+                  return (
+                    <Link
+                      key={page.id}
+                      to={href}
+                      className={`rounded-full border px-3 py-1.5 text-sm transition-colors ${
+                        isActive
+                          ? 'border-primary/40 bg-primary/10 text-primary'
+                          : 'border-border-subtle bg-white text-text-secondary hover:border-primary/30 hover:bg-primary/5 hover:text-text-primary'
+                      }`}
+                    >
+                      {page.title}
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+          {renderedSections.map(section => (
             <SectionRenderer key={section.id} section={section} weddingData={weddingData} />
           ))}
         </div>
