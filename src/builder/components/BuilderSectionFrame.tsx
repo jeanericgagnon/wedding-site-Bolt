@@ -9,6 +9,7 @@ import { builderActions } from '../state/builderActions';
 import { markFieldAsUserEdited, readBuilderValue } from '../../lib/weddingProfile';
 import { getSectionManifest } from '../registry/sectionManifests';
 import { getBuilderSectionEditingGuidance } from './builderSectionEditingGuidance';
+import { getBuilderInspectorTabGuidance } from './builderInspectorTabGuidance';
 
 interface BuilderSectionFrameProps {
   section: BuilderSectionInstance;
@@ -125,6 +126,16 @@ export const BuilderSectionFrame: React.FC<BuilderSectionFrameProps> = ({
     dataConfigured,
     enabled: section.enabled,
   });
+  const laneGuidance = getBuilderInspectorTabGuidance({
+    sectionLabel: manifest.label,
+    hasMeaningfulContent,
+    hasStyleOverrides,
+    hasLayoutCustomization,
+    hasBindings: manifest.capabilities.hasBindings,
+    dataConfigured,
+    enabled: section.enabled,
+    recommendedTab: sectionGuidance.nextActionTab,
+  }).find((item) => item.id === sectionGuidance.nextActionTab);
 
   if (isPreview) {
     return (
@@ -292,6 +303,14 @@ export const BuilderSectionFrame: React.FC<BuilderSectionFrameProps> = ({
           <div className="border-t border-blue-500/70 px-3 py-2 text-[11px]">
             <p className="font-semibold">{sectionGuidance.focusTitle}</p>
             <p className="mt-0.5 text-blue-100">{sectionGuidance.nextActionDetail}</p>
+            {laneGuidance && (
+              <div className="mt-2 flex items-center gap-2 text-[10px] uppercase tracking-[0.12em] text-blue-100/90">
+                <span className="rounded-full border border-blue-400/70 bg-blue-700 px-1.5 py-0.5 font-semibold">
+                  {laneGuidance.label}
+                </span>
+                <span>{laneGuidance.badge}</span>
+              </div>
+            )}
           </div>
         </div>
       )}

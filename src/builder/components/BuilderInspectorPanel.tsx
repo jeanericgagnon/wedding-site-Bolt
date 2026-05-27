@@ -12,6 +12,7 @@ import { CustomBlock } from '../../sections/variants/custom/skeletons';
 import { BuilderSectionType } from '../../types/builder/section';
 import { getBuilderPageEditingSummary } from './builderPageEditingSummary';
 import { getBuilderSectionEditingGuidance } from './builderSectionEditingGuidance';
+import { getBuilderInspectorTabGuidance } from './builderInspectorTabGuidance';
 
 type InspectorTab = 'guide' | 'content' | 'style' | 'layout' | 'data';
 
@@ -196,6 +197,7 @@ export const BuilderInspectorPanel: React.FC = () => {
 
   const manifest = getSectionManifest(selectedSection.type);
   const hasBindings = manifest.capabilities.hasBindings && manifest.bindingsSchema.slots.length > 0;
+  const hasContentControls = manifest.settingsSchema.fields.length > 0 || selectedSection.type === 'custom' || manifest.capabilities.mediaAware;
 
   const hasMeaningfulContent = Object.entries(selectedSection.settings ?? {}).some(([k, v]) => {
     if (k === 'showTitle') return false;
@@ -234,6 +236,18 @@ export const BuilderInspectorPanel: React.FC = () => {
     dataConfigured,
     enabled: selectedSection.enabled,
   });
+  const tabGuidance = getBuilderInspectorTabGuidance({
+    sectionLabel: manifest.label,
+    hasContentControls,
+    hasMeaningfulContent,
+    hasStyleOverrides,
+    hasLayoutCustomization,
+    hasBindings,
+    dataConfigured,
+    enabled: selectedSection.enabled,
+    recommendedTab: sectionEditingGuidance.nextActionTab,
+  });
+  const activeTabGuidance = tabGuidance.find((item) => item.id === activeTab) ?? null;
 
   const handleUpdateSetting = (key: string, value: string | boolean | number) => {
     const nextValue = typeof value === 'string' ? markFieldAsUserEdited(value) : value;
@@ -395,25 +409,82 @@ export const BuilderInspectorPanel: React.FC = () => {
             <p className="mt-0.5 truncate">{nextSectionInRail ? getSectionManifest(nextSectionInRail.type).label : 'This is the last section'}</p>
           </button>
         </div>
+        <div className="grid gap-2 sm:grid-cols-2">
+          {tabGuidance.filter((item) => item.show).map((item) => {
+            const statusClass = item.status === 'done'
+              ? 'border-emerald-200 bg-emerald-50 text-emerald-800'
+              : item.status === 'recommended'
+                ? 'border-sky-200 bg-sky-50 text-sky-900'
+                : item.status === 'optional'
+                  ? 'border-slate-200 bg-slate-50 text-slate-700'
+                  : item.status === 'blocked'
+                    ? 'border-amber-200 bg-amber-50 text-amber-800'
+                    : 'border-[var(--color-border-subtle)] bg-white text-[var(--color-text-primary)]';
+
+            return (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => {
+                  if (item.id !== 'content') {
+                    setShowAdvanced(true);
+                    setSimpleMode(false);
+                  }
+                  setActiveTab(item.id);
+                }}
+                className={`rounded-xl border px-3 py-3 text-left transition-colors hover:border-[var(--color-border)] hover:bg-[var(--color-surface-subtle)] ${statusClass}`}
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-sm font-semibold">{item.label}</p>
+                  <span className="rounded-full border border-current/15 bg-white/70 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em]">
+                    {item.badge}
+                  </span>
+                </div>
+                <p className="mt-1 text-xs font-medium">{item.summary}</p>
+                <p className="mt-1 text-[11px] opacity-80">{item.detail}</p>
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {!simpleMode && (
         <div className="px-3 py-2 border-b border-[var(--color-border-subtle)] bg-[var(--color-surface)]">
           <div className="flex items-center flex-wrap gap-1">
-            {visibleTabs.map(tab => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-1 px-2.5 py-1.5 text-[11px] font-medium rounded-md border transition-colors ${
-                  activeTab === tab.id
-                    ? 'border-[var(--color-accent)] text-[var(--color-accent)] bg-[var(--color-accent-light)]'
-                    : 'border-[var(--color-border-subtle)] text-[var(--color-text-tertiary)] hover:text-[var(--color-text-secondary)]'
-                }`}
-              >
-                <tab.icon size={12} />
-                {tab.label}
-              </button>
-            ))}
+            {visibleTabs.map(tab => {
+              const tabState = tab.id === 'guide' ? null : tabGuidance.find((item) => item.id === tab.id);
+              const badgeClass = !tabState
+                ? 'border-[var(--color-border-subtle)] bg-white text-[var(--color-text-tertiary)]'
+                : tabState.status === 'done'
+                  ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                  : tabState.status === 'recommended'
+                    ? 'border-sky-200 bg-sky-50 text-sky-800'
+                    : tabState.status === 'optional'
+                      ? 'border-slate-200 bg-slate-100 text-slate-600'
+                      : tabState.status === 'blocked'
+                        ? 'border-amber-200 bg-amber-50 text-amber-700'
+                        : 'border-[var(--color-border-subtle)] bg-white text-[var(--color-text-tertiary)]';
+
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`flex items-center gap-1 px-2.5 py-1.5 text-[11px] font-medium rounded-md border transition-colors ${
+                    activeTab === tab.id
+                      ? 'border-[var(--color-accent)] text-[var(--color-accent)] bg-[var(--color-accent-light)]'
+                      : 'border-[var(--color-border-subtle)] text-[var(--color-text-tertiary)] hover:text-[var(--color-text-secondary)]'
+                  }`}
+                >
+                  <tab.icon size={12} />
+                  {tab.label}
+                  {tabState && (
+                    <span className={`rounded-full border px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-[0.12em] ${badgeClass}`}>
+                      {tabState.badge}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
           </div>
         </div>
       )}
@@ -464,6 +535,22 @@ export const BuilderInspectorPanel: React.FC = () => {
       )}
 
       <div className="flex-1 overflow-y-auto">
+        {activeTabGuidance && activeTab !== 'guide' && (
+          <div className="border-b border-[var(--color-border-subtle)] bg-[var(--color-surface)] px-4 py-3">
+            <div className="rounded-xl border border-[var(--color-border-subtle)] bg-white px-4 py-3">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--color-text-tertiary)]">{activeTabGuidance.label} lane</p>
+                  <p className="mt-1 text-sm font-medium text-[var(--color-text-primary)]">{activeTabGuidance.summary}</p>
+                  <p className="mt-1 text-xs text-[var(--color-text-secondary)]">{activeTabGuidance.detail}</p>
+                </div>
+                <span className="rounded-full border border-[var(--color-border-subtle)] bg-[var(--color-surface-subtle)] px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--color-text-secondary)]">
+                  {activeTabGuidance.badge}
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
         {activeTab === 'guide' && (
           <div className="p-4 space-y-4">
             <div className="rounded-xl border border-sky-100 bg-sky-50 p-3">
