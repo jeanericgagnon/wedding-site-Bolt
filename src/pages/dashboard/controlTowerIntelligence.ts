@@ -33,6 +33,7 @@ export interface ControlTowerBriefing {
   detail: string;
   focusTitle: string;
   focusDetail: string;
+  decisionRule: string;
   badges: string[];
   signals: ControlTowerSignal[];
   sequence: Array<{
@@ -144,6 +145,9 @@ export function buildControlTowerBriefing(input: ControlTowerIntelligenceInput):
       focusDetail: input.activePhotoAlbumCount > 0
         ? 'The wedding no longer needs active command-center energy, so the best use of attention is curating what should last.'
         : 'Before the archive can feel intentional, it still needs one real memory path that guests and the couple can recognize as the keepsake layer.',
+      decisionRule: input.activePhotoAlbumCount > 0
+        ? 'Preservation beats live intervention once the event itself is over.'
+        : 'Open one real keepsake lane before you try to polish the archive story around it.',
       badges: [
         `${pluralize(input.activePhotoAlbumCount, 'active album')}`,
         `${pluralize(input.interactiveSuggestionCount, 'guest note')}`,
@@ -166,6 +170,7 @@ export function buildControlTowerBriefing(input: ControlTowerIntelligenceInput):
       detail: `${pluralize(input.publishBlockerCount, 'publish blocker')} still stand between this site and a clean guest-facing launch. With the date getting closer, the best use of time is clearing those blockers before polishing extras.`,
       focusTitle: 'Clear the blockers before you polish',
       focusDetail: 'When the date is close and the site is still not fully live, quality polish comes second to getting the launch path truly ready.',
+      decisionRule: 'Launch truth beats visual polish when guests still do not have a clean live path.',
       badges: [
         `${pluralize(input.publishBlockerCount, 'blocker')}`,
         input.daysUntilWedding === 0 ? 'Wedding day' : `${input.daysUntilWedding} days left`,
@@ -188,6 +193,7 @@ export function buildControlTowerBriefing(input: ControlTowerIntelligenceInput):
       detail: `The site is live, but it is ${accessLabel}. The most useful next move is making sure every reminder, print pack, and coordinator handoff carries the right access path so guests are not stranded.`,
       focusTitle: 'Treat access instructions like part of the product',
       focusDetail: 'A restricted live site only feels trustworthy if every handoff carries the right path with it, not just the pretty URL.',
+      decisionRule: 'Access clarity beats launch aesthetics when the site is live but not openly public.',
       badges: [
         accessLabel,
         input.daysUntilWedding === 0 ? 'Wedding day' : `${input.daysUntilWedding} days left`,
@@ -219,6 +225,7 @@ export function buildControlTowerBriefing(input: ControlTowerIntelligenceInput):
         : 'The guest-facing basics look healthy enough that the next meaningful polish lives in the live-day layer: run-of-show, seating confidence, and handoff readiness.',
       focusTitle: 'Move your attention into live execution',
       focusDetail: 'The public-facing basics are steady enough that the next wins now come from coordinator calm, room stability, and handoff sharpness.',
+      decisionRule: 'Once guest basics are steady, execution readiness beats reopening solved launch work.',
       badges: [
         input.daysUntilWedding === 0 ? 'Wedding day' : `${input.daysUntilWedding} days left`,
         `${responseRate}% replied`,
@@ -241,6 +248,7 @@ export function buildControlTowerBriefing(input: ControlTowerIntelligenceInput):
       detail: `${pluralize(input.pendingGuests, 'guest')} still need an RSVP reply${input.recentRsvpCount === 0 ? ', and nothing new has landed recently' : ''}. The calmest next move is tightening outreach instead of waiting for the board to improve on its own.`,
       focusTitle: 'Turn waiting into deliberate follow-up',
       focusDetail: 'When replies are lagging, the job is not more dashboard watching; it is one clean outreach pass that moves the board forward.',
+      decisionRule: 'Direct follow-up beats passive monitoring when the RSVP picture is still lagging.',
       badges: [
         `${pluralize(input.pendingGuests, 'pending RSVP')}`,
         `${responseRate}% replied`,
@@ -263,6 +271,7 @@ export function buildControlTowerBriefing(input: ControlTowerIntelligenceInput):
       detail: `${pluralize(contactGap, 'guest')} still do not have direct email or phone coverage. Cleaning that up now makes every later RSVP, reminder, and day-of action easier.`,
       focusTitle: 'Fix reachability before you scale communication',
       focusDetail: 'Every later reminder and day-of nudge gets easier once the guest list has real contact paths instead of hopeful placeholders.',
+      decisionRule: 'Reachability beats cadence when the list still cannot reliably hear from you.',
       badges: [
         `${pluralize(contactGap, 'missing contact')}`,
         `${pluralize(input.contactableGuestCount, 'contact-ready guest')}`,
@@ -285,6 +294,7 @@ export function buildControlTowerBriefing(input: ControlTowerIntelligenceInput):
       detail: 'RSVP and contact progress help, but guests still need an itinerary spine to trust. Add the core weekend events before leaning on messaging or coordinator tools to cover the gap.',
       focusTitle: 'Give guests a schedule spine first',
       focusDetail: 'When the itinerary is still empty, messaging and ops can only paper over the gap. A real schedule anchor is the honest next move.',
+      decisionRule: 'Schedule truth beats polish when the wedding is close and guests still need a usable weekend spine.',
       badges: [
         'No itinerary events yet',
         input.daysUntilWedding === 0 ? 'Wedding day' : `${input.daysUntilWedding} days left`,
@@ -307,6 +317,7 @@ export function buildControlTowerBriefing(input: ControlTowerIntelligenceInput):
       detail: 'Registry is one of the easiest trust-building surfaces for guests. Even a small live set is better than making visitors guess what is ready yet.',
       focusTitle: 'Use the registry to make the site feel real',
       focusDetail: 'Guests read an empty gifting lane as uncertainty, so even a small truthful registry does more good than waiting for perfection.',
+      decisionRule: 'A small honest registry beats a blank lane that asks guests to guess.',
       badges: [
         'Registry still empty',
         `${pluralize(input.activePhotoAlbumCount, 'active album')}`,
@@ -331,6 +342,7 @@ export function buildControlTowerBriefing(input: ControlTowerIntelligenceInput):
         : 'Albums exist, but none are active yet. Turning one on is a quick way to make the guest experience feel more alive.',
       focusTitle: 'Make memory contribution easy before the moment passes',
       focusDetail: 'A guest-ready photo path is one of the fastest ways to make the site feel active instead of merely informational.',
+      decisionRule: 'A working contribution path beats a dormant memory promise.',
       badges: [
         `${input.activePhotoAlbumCount}/${input.photoAlbumCount} active`,
         `${pluralize(input.interactiveSuggestionCount, 'guest prompt')}`,
@@ -353,6 +365,7 @@ export function buildControlTowerBriefing(input: ControlTowerIntelligenceInput):
       detail: `${pluralize(input.interactiveSuggestionCount, 'guest suggestion')} already came in. This is a good moment to review what guests are telling you and make sure the site still feels cared for.`,
       focusTitle: 'Use live guest input to refine the story',
       focusDetail: 'When guests are already engaging, the best move is to shape the experience with that signal instead of leaving their feedback parked.',
+      decisionRule: 'Real guest signals beat hypothetical polish once feedback is already arriving.',
       badges: [
         `${pluralize(input.interactiveSuggestionCount, 'suggestion')}`,
         `${pluralize(input.recentSiteActivityCount, 'recent site change')}`,
@@ -374,6 +387,7 @@ export function buildControlTowerBriefing(input: ControlTowerIntelligenceInput):
     detail: 'Nothing is obviously drifting right now. Use this moment to keep the guest experience polished and make small quality moves before they become deadline work.',
     focusTitle: 'Use the calm to improve trust, not reopen chaos',
     focusDetail: 'A steady board is the right moment for one clean quality pass, not a random re-opening of solved decisions.',
+    decisionRule: 'When the board is calm, restraint beats churn.',
     badges: [
       `${responseRate}% replied`,
       input.recentSiteActivityCount > 0 ? `${pluralize(input.recentSiteActivityCount, 'recent site update')}` : 'No recent site churn',
