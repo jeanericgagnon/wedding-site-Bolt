@@ -24,8 +24,12 @@ import { BuilderSectionInstance } from '../../types/builder/section';
 import { getSectionManifest } from '../registry/sectionManifests';
 import { createEmptyWeddingData } from '../../types/weddingData';
 import { injectThemeStyle, removeThemeStyle } from '../../lib/themeInjector';
+import { getFlowStatusLabel } from '../../lib/flowLabels';
 import { getBuilderPageEditingSummary } from './builderPageEditingSummary';
 import { getBuilderCanvasEmptyState } from './builderCanvasEmptyState';
+import { getPublishIssue } from '../utils/publishReadiness';
+import { getPublishBlockerUiState } from './builderTopBarModel';
+import { getBuilderPreviewReviewSummary } from './builderPreviewReviewSummary';
 
 const THEME_STYLE_ID = 'builder-canvas-theme';
 const CANVAS_SCOPE = '.builder-themed-canvas';
@@ -103,6 +107,22 @@ export const BuilderCanvas: React.FC = () => {
 
   const emptyState = getBuilderCanvasEmptyState(activePage.title, isPreview);
   const pageEditingSummary = getBuilderPageEditingSummary(activePage.title, sections);
+  const publishIssue = state.project
+    ? getPublishIssue(state.project, state.weddingData, { isDirty: state.isDirty })
+    : null;
+  const previewBlockerUi = getPublishBlockerUiState({
+    publishValidationError: publishIssue?.message ?? null,
+    publishIssueKind: publishIssue?.kind ?? null,
+  });
+  const previewReview = getBuilderPreviewReviewSummary({
+    activePageTitle: activePage.title,
+    sectionCount: sections.length,
+    previewViewport,
+    hasHardPublishBlocker: previewBlockerUi.hasHardPublishBlocker,
+    canAutoSaveBeforePublish: previewBlockerUi.canAutoSaveBeforePublish,
+    isDirty: state.isDirty,
+    isPublished: state.project?.publishStatus === 'published' || typeof state.project?.publishedVersion === 'number',
+  });
 
   return (
     <div
@@ -125,6 +145,57 @@ export const BuilderCanvas: React.FC = () => {
                 : undefined
             : undefined}
         >
+          {isPreview && sections.length > 0 && (
+            <div className="border-b border-[var(--color-border-subtle)] bg-[var(--color-surface-subtle)] px-4 py-4 md:px-5">
+              <div className="flex flex-wrap items-center gap-2">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--color-text-tertiary)]">Guest rehearsal</p>
+                <span className="rounded-full border border-sky-200 bg-sky-50 px-2.5 py-1 text-[11px] font-medium text-sky-800">
+                  {previewReview.badge}
+                </span>
+                <span className="rounded-full border border-[var(--color-border-subtle)] bg-white px-2.5 py-1 text-[11px] font-medium text-[var(--color-text-secondary)]">
+                  {previewViewport === 'desktop' ? 'Desktop' : previewViewport === 'tablet' ? 'Tablet' : 'Mobile'}
+                </span>
+              </div>
+              <p className="mt-3 text-sm font-medium text-[var(--color-text-primary)]">{previewReview.heading}</p>
+              <p className="mt-1 text-sm text-[var(--color-text-secondary)]">{previewReview.summary}</p>
+              <div className="mt-4 grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
+                <div className="rounded-xl border border-sky-100 bg-sky-50 px-4 py-3">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-sky-900">Main focus</p>
+                  <p className="mt-1 text-sm font-medium text-sky-950">{previewReview.focusTitle}</p>
+                  <p className="mt-2 text-xs leading-5 text-sky-800">{previewReview.focusDetail}</p>
+                </div>
+                <div className="rounded-xl border border-[var(--color-border-subtle)] bg-white px-4 py-3">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--color-text-tertiary)]">Best next move</p>
+                  <p className="mt-1 text-sm font-medium text-[var(--color-text-primary)]">{previewReview.bestNextMove}</p>
+                  <p className="mt-3 text-xs leading-5 text-[var(--color-text-secondary)]">
+                    <span className="font-semibold text-[var(--color-text-primary)]">Decision rule:</span> {previewReview.decisionRule}
+                  </p>
+                  <p className="mt-2 text-xs leading-5 text-[var(--color-text-secondary)]">
+                    <span className="font-semibold text-[var(--color-text-primary)]">Watchout:</span> {previewReview.watchout}
+                  </p>
+                </div>
+              </div>
+              <div className="mt-4 grid gap-2 md:grid-cols-3">
+                {previewReview.sequence.map((step) => (
+                  <div key={`${step.status}-${step.label}`} className="rounded-xl border border-[var(--color-border-subtle)] bg-white px-3 py-3">
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-xs font-semibold text-[var(--color-text-primary)]">{step.label}</p>
+                      <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${
+                        step.status === 'current'
+                          ? 'border border-primary/20 bg-primary-light text-primary'
+                          : step.status === 'next'
+                            ? 'border border-warning/20 bg-warning-light text-warning'
+                            : 'border border-[var(--color-border-subtle)] bg-[var(--color-surface-subtle)] text-[var(--color-text-secondary)]'
+                      }`}>
+                        {getFlowStatusLabel(step.status)}
+                      </span>
+                    </div>
+                    <p className="mt-2 text-xs leading-5 text-[var(--color-text-secondary)]">{step.detail}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
           {sections.length === 0 ? (
             <div className="flex min-h-[420px] items-center justify-center px-6 py-10">
               <div className="w-full max-w-xl rounded-2xl border border-dashed border-[var(--color-border)] bg-[var(--color-surface-subtle)] px-6 py-8 text-center">

@@ -32,9 +32,11 @@ import { getPublishBlockedHints, shouldOpenPhotoTipsFromSearch } from '../utils/
 import { selectUndoRedo, selectIsPreviewMode, selectPublishStatus, selectIsDirty } from '../state/builderSelectors';
 import { getPublishStateDescriptor } from '../../lib/publishState';
 import { SITE_VISIBILITY_COPY } from '../../lib/siteVisibilityState';
+import { getFlowStatusLabel } from '../../lib/flowLabels';
 import { BuilderPage } from '../../types/builder/project';
 import { getBuilderPageEditingSummary } from './builderPageEditingSummary';
 import { BuilderPageManagerAction, getBuilderPageManagerGuidance } from './builderPageManagerGuidance';
+import { getBuilderPreviewReviewSummary } from './builderPreviewReviewSummary';
 import {
   formatPublishedAt,
   formatSavedAt,
@@ -162,6 +164,22 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
     () => (activePage ? getBuilderPageEditingSummary(activePage.title, activePage.sections) : null),
     [activePage],
   );
+  const previewReview = React.useMemo(
+    () => (
+      activePage
+        ? getBuilderPreviewReviewSummary({
+            activePageTitle: activePage.title,
+            sectionCount: activePage.sections.length,
+            previewViewport,
+            hasHardPublishBlocker,
+            canAutoSaveBeforePublish,
+            isDirty,
+            isPublished,
+          })
+        : null
+    ),
+    [activePage, canAutoSaveBeforePublish, hasHardPublishBlocker, isDirty, isPublished, previewViewport],
+  );
 
   React.useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -206,6 +224,33 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
         return;
     }
   }, [dispatch, projectPages.length]);
+
+  const handlePreviewPrimaryAction = React.useCallback(() => {
+    if (!previewReview) return;
+    switch (previewReview.primaryAction.kind) {
+      case 'switch-to-edit':
+        dispatch(builderActions.setMode('edit'));
+        return;
+      case 'save-draft':
+        onSave();
+        return;
+      case 'fix-blockers':
+        onFixPublishBlockers?.();
+        setShowPublishChecklist(true);
+        setShowBlockedDetails(true);
+        return;
+      case 'publish':
+        onPublish();
+        return;
+      case 'switch-viewport':
+        if (previewReview.primaryAction.viewport) {
+          dispatch(builderActions.setPreviewViewport(previewReview.primaryAction.viewport));
+        }
+        return;
+      default:
+        return;
+    }
+  }, [dispatch, onFixPublishBlockers, onPublish, onSave, previewReview]);
 
   return (
     <>
@@ -311,6 +356,30 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
           </button>
         )}
         <button
+          type="button"
+          onClick={() => dispatch(builderActions.setMode(isPreview ? 'edit' : 'preview'))}
+          className={`inline-flex items-center gap-1 rounded-md border px-2 py-1 text-[12px] font-medium transition-colors ${
+            isPreview
+              ? 'border-gray-900 bg-gray-900 text-white hover:bg-gray-800'
+              : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
+          }`}
+        >
+          {isPreview ? <EyeOff size={14} /> : <Eye size={14} />}
+          {isPreview ? 'Edit' : 'Preview'}
+        </button>
+        <button
+          type="button"
+          onClick={() => setShowPublishChecklist((value) => !value)}
+          className={`inline-flex items-center gap-1 rounded-md border px-2 py-1 text-[12px] font-medium transition-colors ${
+            checklistDoneCount === checklistItems.length
+              ? 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
+              : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
+          }`}
+        >
+          <CheckCircle2 size={13} />
+          Launch check {checklistDoneCount}/{checklistItems.length}
+        </button>
+        <button
           onClick={() => {
             if (hasHardPublishBlocker) {
               setShowPublishChecklist(true);
@@ -343,6 +412,186 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
           </div>
           <p className="mt-1 opacity-90">{commandCenterCopy.detail}</p>
         </div>
+
+        {(isPreview || showPublishChecklist || (showBlockedDetails && effectivePublishValidationError)) && (
+          <div className="w-full space-y-3 rounded-xl border border-gray-200 bg-white p-3 shadow-sm">
+            {isPreview && previewReview && (
+              <div className="space-y-3">
+                <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                  <div className="space-y-3">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-gray-500">Preview rehearsal</p>
+                      <span className="rounded-full border border-sky-200 bg-sky-50 px-2.5 py-1 text-[11px] font-medium text-sky-800">
+                        {previewReview.badge}
+                      </span>
+                      <span className="rounded-full border border-gray-200 bg-gray-50 px-2.5 py-1 text-[11px] font-medium text-gray-700">
+                        {previewViewport === 'desktop' ? 'Desktop' : previewViewport === 'tablet' ? 'Tablet' : 'Mobile'}
+                      </span>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-gray-900">{previewReview.heading}</p>
+                      <p className="mt-1 text-sm text-gray-600">{previewReview.summary}</p>
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={handlePreviewPrimaryAction}
+                      className={`rounded-lg px-3 py-2 text-sm font-medium ${
+                        previewReview.primaryAction.kind === 'publish'
+                          ? 'bg-gray-900 text-white hover:bg-gray-800'
+                          : 'border border-gray-200 bg-gray-50 text-gray-700 hover:bg-gray-100'
+                      }`}
+                    >
+                      {previewReview.primaryAction.label}
+                    </button>
+                    {isPreview && (
+                      <div className="inline-flex rounded-lg border border-gray-200 bg-gray-50 p-1">
+                        {[
+                          { viewport: 'desktop' as const, label: 'Desktop', icon: Monitor },
+                          { viewport: 'tablet' as const, label: 'Tablet', icon: Tablet },
+                          { viewport: 'mobile' as const, label: 'Mobile', icon: Smartphone },
+                        ].map((option) => {
+                          const Icon = option.icon;
+                          const active = previewViewport === option.viewport;
+                          return (
+                            <button
+                              key={option.viewport}
+                              type="button"
+                              onClick={() => dispatch(builderActions.setPreviewViewport(option.viewport))}
+                              className={`inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-medium transition-colors ${
+                                active
+                                  ? 'bg-gray-900 text-white'
+                                  : 'text-gray-600 hover:bg-white'
+                              }`}
+                            >
+                              <Icon size={12} />
+                              {option.label}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  <div className="rounded-xl border border-sky-100 bg-sky-50 px-4 py-3">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-sky-900">Main focus</p>
+                    <p className="mt-1 text-sm font-medium text-sky-950">{previewReview.focusTitle}</p>
+                    <p className="mt-2 text-xs leading-5 text-sky-800">{previewReview.focusDetail}</p>
+                  </div>
+                  <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-gray-500">Best next move</p>
+                    <p className="mt-1 text-sm font-medium text-gray-900">{previewReview.bestNextMove}</p>
+                    <p className="mt-3 text-xs leading-5 text-gray-600">
+                      <span className="font-semibold text-gray-900">Decision rule:</span> {previewReview.decisionRule}
+                    </p>
+                    <p className="mt-2 text-xs leading-5 text-gray-600">
+                      <span className="font-semibold text-gray-900">Watchout:</span> {previewReview.watchout}
+                    </p>
+                  </div>
+                </div>
+                <div className="grid gap-2 md:grid-cols-3">
+                  {previewReview.sequence.map((step) => (
+                    <div key={`${step.status}-${step.label}`} className="rounded-xl border border-gray-200 bg-white px-3 py-3">
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="text-xs font-semibold text-gray-900">{step.label}</p>
+                        <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${
+                          step.status === 'current'
+                            ? 'border border-primary/20 bg-primary-light text-primary'
+                            : step.status === 'next'
+                              ? 'border border-warning/20 bg-warning-light text-warning'
+                              : 'border border-gray-200 bg-gray-50 text-gray-600'
+                        }`}>
+                          {getFlowStatusLabel(step.status)}
+                        </span>
+                      </div>
+                      <p className="mt-2 text-xs leading-5 text-gray-600">{step.detail}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {showBlockedDetails && effectivePublishValidationError && (
+              <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+                <p className="font-medium">{effectivePublishValidationError}</p>
+                <ul className="mt-2 list-disc space-y-1 pl-5 text-xs">
+                  {blockedHints.map((hint) => (
+                    <li key={hint}>{hint}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {showPublishChecklist && (
+              <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-700">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div>
+                    <p className="text-sm font-semibold text-gray-900">What is left before guest-facing launch</p>
+                    <p className="mt-1 text-xs text-gray-500">{SITE_VISIBILITY_COPY.draftExplainer} {SITE_VISIBILITY_COPY.publishedExplainer}</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setShowPublishChecklist(false)}
+                    className="rounded border border-gray-200 bg-white px-2 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50"
+                  >
+                    Hide checklist
+                  </button>
+                </div>
+                <ul className="mt-3 space-y-2">
+                  {checklistItems.map((item) => (
+                    <li key={item.label} className="flex flex-col gap-2 rounded-lg border border-gray-200 bg-white px-3 py-3 sm:flex-row sm:items-start sm:justify-between">
+                      <div className="flex items-start gap-2">
+                        <span className={`mt-0.5 ${item.done ? 'text-emerald-600' : 'text-amber-600'}`}>{item.done ? '✓' : '•'}</span>
+                        <div className="text-xs leading-5">
+                          <p className="font-medium text-gray-900">{item.label}</p>
+                          {item.detail ? <p className={item.done ? 'text-gray-500' : 'text-amber-700'}>{item.detail}</p> : null}
+                        </div>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {!item.done && item.label === 'Latest edits are saved' && (
+                          <button onClick={() => { onSave(); setShowPublishChecklist(false); }} className="rounded border border-gray-200 bg-gray-50 px-2 py-1 text-[11px] font-medium text-gray-700 transition-colors hover:bg-gray-100">Save now</button>
+                        )}
+                        {!item.done && item.label === 'No active go-live blockers' && onFixPublishBlockers && (
+                          <button onClick={() => { onFixPublishBlockers(); setShowPublishChecklist(false); }} className="rounded border border-amber-300 bg-amber-50 px-2 py-1 text-[11px] font-medium text-amber-800 transition-colors hover:bg-amber-100">Fix next</button>
+                        )}
+                        {!item.done && item.label === 'At least one page exists' && (
+                          <button
+                            onClick={() => {
+                              dispatch(builderActions.addPage('Home'));
+                              setShowPublishChecklist(false);
+                            }}
+                            className="rounded border border-gray-200 bg-gray-50 px-2 py-1 text-[11px] font-medium text-gray-700 transition-colors hover:bg-gray-100"
+                          >
+                            Add first page
+                          </button>
+                        )}
+                        {!item.done && item.label === 'Current page has at least one section' && (
+                          <button
+                            onClick={() => {
+                              const pageId = state.activePageId;
+                              if (!pageId) {
+                                setShowPageManager(true);
+                                setShowPublishChecklist(false);
+                                return;
+                              }
+                              dispatch(builderActions.addSectionByType(pageId, 'hero'));
+                              setShowPublishChecklist(false);
+                            }}
+                            className="rounded border border-gray-200 bg-gray-50 px-2 py-1 text-[11px] font-medium text-gray-700 transition-colors hover:bg-gray-100"
+                          >
+                            Add first section
+                          </button>
+                        )}
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+        )}
 
       <div className="hidden">
         <div className="ml-auto flex w-full sm:w-auto items-center justify-end gap-2">
