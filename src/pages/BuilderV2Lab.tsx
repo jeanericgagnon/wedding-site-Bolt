@@ -25,6 +25,7 @@ import {
   getImportSummaryTone,
   summarizeImportRepairCount,
 } from './builderV2WorkflowGuidance';
+import { buildBuilderV2ImportComparison } from './builderV2ImportComparison';
 import { buildBuilderV2DocumentAudit, type BuilderV2DocumentAuditIssue } from './builderV2DocumentAudit';
 import { buildBuilderV2HandoffGuidance } from './builderV2HandoffGuidance';
 import { buildBuilderV2HandoffPacket } from './builderV2HandoffPacket';
@@ -896,6 +897,16 @@ export const BuilderV2Lab: React.FC = () => {
     }),
     [sectionBlocks, sections],
   );
+  const currentDocumentSnapshot = useMemo(
+    () => sections.map((section) => ({
+      id: section.id,
+      title: section.title,
+      type: section.type,
+      enabled: section.enabled,
+      blockCount: (sectionBlocks[section.id] ?? []).length,
+    })),
+    [sectionBlocks, sections],
+  );
   const selectedSectionLimit = useMemo(() => getSectionLimitConfig(selected.type), [selected.type]);
   const recommendedBlockTypesForSelected = useMemo(
     () => getRecommendedBlockTypes(selected.type, addableBlocksForSelected),
@@ -1136,17 +1147,16 @@ export const BuilderV2Lab: React.FC = () => {
       return;
     }
 
-    try {
-      const parsed = JSON.parse(importDraft) as unknown;
-      const prepared = prepareImportedBuilderV2Document(parsed);
-      if (!prepared.ok) {
-        setImportError(prepared.error);
-        return;
-      }
-      applyImportedDocument(prepared.doc, prepared.report, lastImportSource);
-    } catch {
-      setImportError('We could not parse that JSON. Check the formatting and try again.');
+    if (preparedImportPreview.state !== 'ready') {
+      setImportError(preparedImportPreview.state === 'invalid' ? preparedImportPreview.error : 'Paste Builder V2 JSON or upload a file first.');
+      return;
     }
+
+    applyImportedDocument(
+      preparedImportPreview.prepared.doc,
+      preparedImportPreview.prepared.report,
+      lastImportSource,
+    );
   };
 
   const handleImportFile = async (file: File) => {
@@ -1214,6 +1224,38 @@ export const BuilderV2Lab: React.FC = () => {
     () => buildBuilderV2ImportGuidance(lastImportReport, lastImportSource),
     [lastImportReport, lastImportSource],
   );
+  const preparedImportPreview = useMemo(() => {
+    if (!importDraft.trim()) {
+      return { state: 'idle' as const };
+    }
+
+    try {
+      const parsed = JSON.parse(importDraft) as unknown;
+      const prepared = prepareImportedBuilderV2Document(parsed);
+      if (!prepared.ok) {
+        return { state: 'invalid' as const, error: prepared.error };
+      }
+
+      const incomingSections = prepared.doc.sections.map((section) => ({
+        id: section.id,
+        title: section.title || section.type,
+        type: section.type,
+        enabled: section.enabled !== false,
+        blockCount: section.blocks.length,
+      }));
+
+      return {
+        state: 'ready' as const,
+        prepared,
+        comparison: buildBuilderV2ImportComparison({
+          currentSections: currentDocumentSnapshot,
+          incomingSections,
+        }),
+      };
+    } catch {
+      return { state: 'invalid' as const, error: 'We could not parse that JSON. Check the formatting and try again.' };
+    }
+  }, [currentDocumentSnapshot, importDraft]);
   const commandPaletteGuidance = useMemo(
     () => buildBuilderV2CommandPaletteGuidance(commandQuery, commandItems, recentCommands, pinnedCommands),
     [commandItems, commandQuery, pinnedCommands, recentCommands],
@@ -2716,6 +2758,66 @@ export const BuilderV2Lab: React.FC = () => {
                 placeholder={`{\n  "version": "v2",\n  "sections": [\n    {\n      "type": "hero",\n      "variant": "default",\n      "enabled": true,\n      "blocks": []\n    }\n  ]\n}`}
                 className="min-h-[320px] w-full rounded-lg border border-border-subtle bg-surface px-3 py-3 font-mono text-xs text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
               />
+
+              {preparedImportPreview.state === 'ready' && (
+                <div className="rounded-md border border-border-subtle bg-surface-subtle px-3 py-3 space-y-3">
+                  <div>
+                    <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary">Replacement impact</p>
+                    <p className="mt-1 text-sm font-semibold text-text-primary">{preparedImportPreview.comparison.headline}</p>
+                    <p className="mt-1 text-xs leading-relaxed text-text-secondary">{preparedImportPreview.comparison.detail}</p>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5 text-[10px]">
+                    {preparedImportPreview.comparison.keyStats.map((stat) => (
+                      <span key={stat} className="rounded-full border border-border-subtle bg-white px-2 py-1 text-text-secondary">{stat}</span>
+                    ))}
+                  </div>
+                  <div className="grid gap-2 md:grid-cols-2">
+                    <div className="rounded-md border border-border-subtle bg-white px-2.5 py-2">
+                      <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary">Incoming visible order</p>
+                      <p className="mt-1 text-xs leading-relaxed text-text-primary">
+                        {preparedImportPreview.comparison.incomingVisibleOrder.length > 0
+                          ? preparedImportPreview.comparison.incomingVisibleOrder.join(' -> ')
+                          : 'No visible lanes in incoming layout'}
+                      </p>
+                    </div>
+                    <div className="rounded-md border border-border-subtle bg-white px-2.5 py-2">
+                      <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary">Incoming hidden backlog</p>
+                      <p className="mt-1 text-xs leading-relaxed text-text-primary">
+                        {preparedImportPreview.comparison.incomingHiddenTitles.length > 0
+                          ? preparedImportPreview.comparison.incomingHiddenTitles.join(', ')
+                          : 'No hidden incoming lanes'}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="space-y-2 max-h-56 overflow-auto pr-1">
+                    {preparedImportPreview.comparison.entries.slice(0, 8).map((entry) => (
+                      <div key={`${entry.sectionTitle}-${entry.status}`} className="rounded-md border border-border-subtle bg-white px-2.5 py-2">
+                        <div className="flex items-center gap-2">
+                          <span className={`rounded-full border px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.14em] ${
+                            entry.status === 'added'
+                              ? 'border-emerald-200 bg-emerald-50 text-emerald-800'
+                              : entry.status === 'removed'
+                                ? 'border-rose-200 bg-rose-50 text-rose-800'
+                                : entry.status === 'changed'
+                                  ? 'border-amber-200 bg-amber-50 text-amber-800'
+                                  : 'border-slate-200 bg-slate-50 text-slate-700'
+                          }`}>
+                            {entry.status}
+                          </span>
+                          <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary">{entry.sectionTitle}</p>
+                        </div>
+                        <p className="mt-1 text-xs leading-relaxed text-text-primary">{entry.detail}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {preparedImportPreview.state === 'invalid' && importDraft.trim() && (
+                <div className="rounded-sm border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+                  {preparedImportPreview.error}
+                </div>
+              )}
 
               {importError && (
                 <div className="rounded-sm border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
