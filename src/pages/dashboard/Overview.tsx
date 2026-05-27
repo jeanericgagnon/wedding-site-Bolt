@@ -653,6 +653,7 @@ export const DashboardOverview: React.FC = () => {
       builder: '/dashboard/builder',
       coordinator: '/dashboard/coordinator',
       guests: '/dashboard/guests',
+      itinerary: '/dashboard/itinerary',
       messages: '/dashboard/messages',
       photos: '/dashboard/photos',
       planning: '/dashboard/planning',
@@ -682,6 +683,7 @@ export const DashboardOverview: React.FC = () => {
     const routeByTarget: Record<CoupleFocusStep['target'], string> = {
       builder: '/dashboard/builder',
       planning: '/dashboard/planning',
+      itinerary: '/dashboard/itinerary',
       guests: '/dashboard/guests',
       messages: '/dashboard/messages',
       seating: '/dashboard/seating',

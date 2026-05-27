@@ -186,7 +186,7 @@ export function buildDayOfBrainBriefing(input: DayOfBrainInput): DayOfBrainBrief
         'No itinerary events yet',
       ],
       signals,
-      primaryAction: { label: 'Open planning', target: 'planning' },
+      primaryAction: { label: 'Open itinerary', target: 'itinerary' },
       secondaryAction: { label: 'Open messages', target: 'messages' },
     };
   }

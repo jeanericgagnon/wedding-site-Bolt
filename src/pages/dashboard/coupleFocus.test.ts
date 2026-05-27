@@ -34,7 +34,7 @@ describe('buildCoupleFocusModel', () => {
     });
 
     expect(model.headline).toMatch(/planning pressure/i);
-    expect(model.steps[0]?.id).toBe('planning');
+    expect(model.steps[0]).toMatchObject({ id: 'planning', target: 'planning' });
   });
 
   it('shifts toward day-of readiness when the wedding is close and the list is calm', () => {

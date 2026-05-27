@@ -4,6 +4,7 @@ export type ControlTowerActionTarget =
   | 'builder'
   | 'coordinator'
   | 'guests'
+  | 'itinerary'
   | 'messages'
   | 'photos'
   | 'planning'
@@ -273,7 +274,7 @@ export function buildControlTowerBriefing(input: ControlTowerIntelligenceInput):
         { label: 'Preview the guest-facing timeline', status: 'next' },
         { label: 'Return to live-day polish', status: 'then' },
       ],
-      primaryAction: { label: 'Open planning', target: 'planning' },
+      primaryAction: { label: 'Open itinerary', target: 'itinerary' },
       secondaryAction: { label: 'Open builder', target: 'builder' },
     };
   }

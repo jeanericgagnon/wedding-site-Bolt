@@ -4,7 +4,7 @@ import { isVendorDateBetween } from './vendorDate';
 
 export interface PlanningDecisionAction {
   label: string;
-  target: 'overview' | 'tasks' | 'budget' | 'vendors' | 'seating';
+  target: 'overview' | 'tasks' | 'budget' | 'vendors' | 'seating' | 'itinerary';
 }
 
 export interface PlanningDecisionCardModel {
@@ -120,7 +120,7 @@ export function buildPlanningOverviewDecisionCard(args: {
         daysUntilWedding === 0 ? 'Wedding day' : `${daysUntilWedding} days left`,
         'No itinerary events yet',
       ],
-      primaryAction: { label: 'Build itinerary anchors', target: 'overview' },
+      primaryAction: { label: 'Build itinerary anchors', target: 'itinerary' },
       secondaryAction: { label: 'Check seating', target: 'seating' },
     };
   }

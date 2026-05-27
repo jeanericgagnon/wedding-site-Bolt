@@ -3,7 +3,7 @@ export interface CoupleFocusStep {
   status: 'current' | 'next' | 'then';
   title: string;
   detail: string;
-  target: 'builder' | 'planning' | 'guests' | 'messages' | 'seating' | 'coordinator' | 'photos' | 'vault';
+  target: 'builder' | 'planning' | 'itinerary' | 'guests' | 'messages' | 'seating' | 'coordinator' | 'photos' | 'vault';
   ctaLabel: string;
 }
 
@@ -90,8 +90,8 @@ export function buildCoupleFocusModel(input: CoupleFocusInput): CoupleFocusModel
           id: 'planning',
           title: 'Then return to planning pressure',
           detail: 'Only after the launch lane is stable should you spend more energy on the broader planning board.',
-          target: 'planning',
-          ctaLabel: 'Open planning',
+          target: 'itinerary',
+          ctaLabel: 'Open itinerary',
         }),
       ],
     };

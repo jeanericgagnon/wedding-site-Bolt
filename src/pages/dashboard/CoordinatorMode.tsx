@@ -1136,6 +1136,11 @@ export const DashboardCoordinatorMode: React.FC = () => {
 
     if (action.target === 'planning') {
       window.location.assign('/dashboard/planning');
+      return;
+    }
+
+    if (action.target === 'itinerary') {
+      window.location.assign('/dashboard/itinerary');
     }
   };
 

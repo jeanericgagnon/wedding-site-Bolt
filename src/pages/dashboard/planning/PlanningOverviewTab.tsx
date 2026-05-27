@@ -167,8 +167,14 @@ export const PlanningOverviewTab: React.FC<Props> = ({ tasks, budgetItems, vendo
       onTabChange('overview');
       return;
     }
+    if (step.target === 'itinerary') {
+      if (typeof window !== 'undefined') {
+        window.location.assign('/dashboard/itinerary');
+      }
+      return;
+    }
     if (typeof window !== 'undefined') {
-      const routeByTarget: Record<Exclude<CoupleFocusStep['target'], 'planning' | 'seating' | 'coordinator'>, string> = {
+      const routeByTarget: Record<Exclude<CoupleFocusStep['target'], 'planning' | 'itinerary' | 'seating' | 'coordinator'>, string> = {
         builder: '/dashboard/builder',
         guests: '/dashboard/guests',
         messages: '/dashboard/messages',
@@ -228,6 +234,12 @@ export const PlanningOverviewTab: React.FC<Props> = ({ tasks, budgetItems, vendo
           if (target === 'seating') {
             if (typeof window !== 'undefined') {
               window.location.assign('/dashboard/seating');
+            }
+            return;
+          }
+          if (target === 'itinerary') {
+            if (typeof window !== 'undefined') {
+              window.location.assign('/dashboard/itinerary');
             }
             return;
           }

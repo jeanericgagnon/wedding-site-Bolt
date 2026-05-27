@@ -99,7 +99,7 @@ describe('buildControlTowerBriefing', () => {
     }));
 
     expect(briefing.title).toContain('guest-facing schedule');
-    expect(briefing.primaryAction).toMatchObject({ target: 'planning' });
+    expect(briefing.primaryAction).toMatchObject({ target: 'itinerary' });
     expect(briefing.secondaryAction).toMatchObject({ target: 'builder' });
   });
 

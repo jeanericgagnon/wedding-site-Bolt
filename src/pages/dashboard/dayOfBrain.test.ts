@@ -83,7 +83,7 @@ describe('buildDayOfBrainBriefing', () => {
     }));
 
     expect(briefing.title).toContain('guest-facing schedule spine');
-    expect(briefing.primaryAction).toMatchObject({ target: 'planning' });
+    expect(briefing.primaryAction).toMatchObject({ target: 'itinerary' });
     expect(briefing.secondaryAction).toMatchObject({ target: 'messages' });
   });
 });

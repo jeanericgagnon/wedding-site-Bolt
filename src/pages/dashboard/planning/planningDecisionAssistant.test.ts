@@ -97,7 +97,7 @@ describe('planningDecisionAssistant', () => {
     });
 
     expect(model.title).toMatch(/schedule anchors/i);
-    expect(model.primaryAction?.target).toBe('overview');
+    expect(model.primaryAction?.target).toBe('itinerary');
     expect(model.secondaryAction?.target).toBe('seating');
   });
 
