@@ -1228,6 +1228,17 @@ export const NameChangePlannerTab: React.FC<Props> = ({
             <p className="mt-1 text-sm text-sky-900">
               {resumeCard.helperCopy}
             </p>
+            <div className="mt-3 grid gap-3 md:grid-cols-2">
+              <div className="rounded-xl border border-sky-200 bg-white/80 px-4 py-3">
+                <p className="text-xs uppercase tracking-wide text-sky-700">Main focus</p>
+                <p className="mt-1 text-sm font-semibold text-sky-950">{resumeCard.focusTitle}</p>
+                <p className="mt-1 text-sm text-sky-900">{resumeCard.focusDetail}</p>
+              </div>
+              <div className="rounded-xl border border-sky-200 bg-white/80 px-4 py-3">
+                <p className="text-xs uppercase tracking-wide text-sky-700">Decision rule</p>
+                <p className="mt-1 text-sm text-sky-900">{resumeCard.decisionRule}</p>
+              </div>
+            </div>
             <p className="mt-2 text-sm text-sky-900">Optional next step: {resumeCard.optionalNextStep}</p>
             {nextOptionalMilestone ? (
               <p className="mt-1 text-sm text-sky-900">

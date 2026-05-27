@@ -1186,6 +1186,15 @@ export const DashboardOverview: React.FC = () => {
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                       <div className="rounded-xl border border-sky-300 bg-sky-100/80 px-4 py-3">
+                        <p className="text-xs uppercase tracking-wide text-sky-700">Main focus</p>
+                        <p className="mt-1 text-sm font-semibold text-sky-950">{nameChangeCard.focusTitle}</p>
+                        <p className="mt-1 text-xs leading-5 text-sky-900">{nameChangeCard.focusDetail}</p>
+                      </div>
+                      <div className="rounded-xl border border-sky-300 bg-white px-4 py-3">
+                        <p className="text-xs uppercase tracking-wide text-sky-700">Decision rule</p>
+                        <p className="mt-1 text-xs leading-5 text-sky-900">{nameChangeCard.decisionRule}</p>
+                      </div>
+                      <div className="rounded-xl border border-sky-300 bg-sky-100/80 px-4 py-3">
                         <p className="text-xs uppercase tracking-wide text-sky-700">Optional next step</p>
                         <p className="mt-1 text-sm font-semibold text-sky-950">{nameChangeCard.optionalNextStep}</p>
                         <p className="mt-1 text-xs text-sky-900">{nameChangeCard.statusLabel}</p>

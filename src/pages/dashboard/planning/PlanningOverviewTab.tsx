@@ -342,6 +342,17 @@ export const PlanningOverviewTab: React.FC<Props> = ({ tasks, budgetItems, vendo
                   <p className="mt-1 text-[11px] uppercase tracking-wide text-text-secondary">Free assistant · status vault · proof tracking</p>
                   <p className="mt-1 text-sm font-medium text-text-primary">{nameChangeCard.headline}</p>
                   <p className="mt-1 text-sm text-text-secondary">{nameChangeCard.helperCopy}</p>
+                  <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                    <div className="rounded-xl border border-border-subtle bg-white px-3 py-3">
+                      <p className="text-[11px] uppercase tracking-wide text-text-secondary">Main focus</p>
+                      <p className="mt-1 text-sm font-medium text-text-primary">{nameChangeCard.focusTitle}</p>
+                      <p className="mt-1 text-xs leading-5 text-text-secondary">{nameChangeCard.focusDetail}</p>
+                    </div>
+                    <div className="rounded-xl border border-border-subtle bg-white px-3 py-3">
+                      <p className="text-[11px] uppercase tracking-wide text-text-secondary">Decision rule</p>
+                      <p className="mt-1 text-xs leading-5 text-text-secondary">{nameChangeCard.decisionRule}</p>
+                    </div>
+                  </div>
                   <p className="mt-2 text-xs text-text-secondary">
                     {nameChangeCompletedCount} complete · {nameChangeReadyCount} ready now
                   </p>
