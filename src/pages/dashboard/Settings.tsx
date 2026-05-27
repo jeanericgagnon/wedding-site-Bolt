@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, Button, Input, Select, Badge } from '../../components/ui';
 import { Save, ExternalLink, CreditCard, User, Globe, Bell, Lock, Layout, Check, Sparkles, AlertCircle, Loader2, Calendar, Repeat, Eye, EyeOff, Copy, CheckCheck, Plus, Trash2, ChevronDown, LogOut, Users } from 'lucide-react';
@@ -32,6 +32,7 @@ import { SETTINGS_SITE_SELECT } from './settingsSiteSelect';
 import { SettingsIdentityExportsPanel } from './SettingsIdentityExportsPanel';
 import { buildSiteAccessPlan } from './siteAccessPlan';
 import { getFlowStatusLabel } from '../../lib/flowLabels';
+import { resolveSettingsTabFromSearch, type SettingsTab } from './settingsTab';
 
 
 interface RSVPQuestionSetting {
@@ -58,8 +59,9 @@ const LOCAL_RSVP_MEAL_KEY = 'dayof_demo_rsvp_meal_config_v1';
 export const DashboardSettings: React.FC = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, isDemoMode, signOut } = useAuth();
-  const [activeTab, setActiveTab] = useState<'account' | 'team' | 'site' | 'rsvp' | 'notifications' | 'billing'>('account');
+  const [activeTab, setActiveTab] = useState<SettingsTab>(() => resolveSettingsTabFromSearch(location.search));
 
   const [coupleNames, setCoupleNames] = useState('');
   const [weddingDate, setWeddingDate] = useState<string | null>(null);
@@ -162,6 +164,10 @@ export const DashboardSettings: React.FC = () => {
         .finally(() => setBillingLoading(false));
     }
   }, [activeTab, billingInfo, user]);
+
+  useEffect(() => {
+    setActiveTab(resolveSettingsTabFromSearch(location.search));
+  }, [location.search]);
 
   const handleLogout = async () => {
     await signOut();
