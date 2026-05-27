@@ -30,7 +30,7 @@ describe('buildTemplateExperienceBrief', () => {
     expect(brief.launchUse).toMatch(/lowest-friction|starting point|guest-ready/i);
     expect(brief.bestFor).toMatch(/easiest path|first publish|guest-ready/i);
     expect(brief.decisionRule).toMatch(/minimizes structural cleanup|trust|tone|guest clarity/i);
-    expect(brief.watchouts).toEqual([]);
+    expect(brief.watchouts[0]).toMatch(/extra browsing|guest clarity|stop browsing/i);
     expect(brief.launchSequence.map((step) => step.status)).toEqual(['current', 'next', 'then']);
     expect(brief.launchSequence[0]?.title).toMatch(/strongest fit|start/i);
   });
@@ -56,6 +56,7 @@ describe('buildTemplateExperienceBrief', () => {
     });
 
     expect(brief.watchouts[0]).toMatch(/builder/i);
+    expect(brief.watchouts[1]).toMatch(/first-impression style|structural cleanup/i);
     expect(brief.confidenceDetail).toMatch(/promising|proven|cleanup/i);
     expect(brief.focusTitle).toMatch(/Compare the structure|promising until the structure proves itself/i);
     expect(brief.focusDetail).toMatch(/less section cleanup|guest story/i);
@@ -63,5 +64,29 @@ describe('buildTemplateExperienceBrief', () => {
     expect(brief.bestFor).toMatch(/strong moods|operational path|prettier card/i);
     expect(brief.decisionRule).toMatch(/less structural repair|aesthetics alone/i);
     expect(brief.launchSequence[1]?.detail).toMatch(/page order|guests|event/i);
+  });
+
+  it('keeps selected templates honest about restart churn', () => {
+    const brief = buildTemplateExperienceBrief({
+      name: 'Modern Keepsake',
+      recommended: false,
+      selected: true,
+      supportManifest: {
+        templateId: 'modern-keepsake',
+        templateName: 'Modern Keepsake',
+        templateExistsInBuilder: true,
+        previewStatus: 'verified',
+        previewLabel: 'Verified preview',
+        previewDetail: 'Verified',
+        sectionsIncluded: 6,
+        modulesIncluded: 4,
+        highlightedSections: [],
+        supportNotes: [],
+      },
+      compareCount: 0,
+    });
+
+    expect(brief.watchouts[0]).toMatch(/restless browsing|momentum/i);
+    expect(brief.decisionRule).toMatch(/fundamentally wrong|keep the momentum/i);
   });
 });

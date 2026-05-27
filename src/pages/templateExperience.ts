@@ -45,7 +45,9 @@ export function buildTemplateExperienceBrief(args: {
       launchUse: 'Best when you want to keep momentum and make the current draft feel more trustworthy instead of starting over.',
       bestFor: 'Couples who already like the direction and want calmer progress instead of another restart.',
       decisionRule: 'Only restart the design if the guest story or section shape is fundamentally wrong; otherwise keep the momentum and improve the current draft.',
-      watchouts: [],
+      watchouts: [
+        'Do not let restless browsing turn a viable live draft back into a template search. If the guest story basically works, a restart usually costs more momentum than it returns.',
+      ],
       callouts: [
         `${sectionsIncluded} starter sections already mapped`,
         `${modulesIncluded} modules included in the first pass`,
@@ -97,9 +99,14 @@ export function buildTemplateExperienceBrief(args: {
       decisionRule: previewStatus === 'verified'
         ? 'Choose the option that minimizes structural cleanup, then spend the next pass on trust, tone, and guest clarity.'
         : 'If the structure still feels right after one preview pass, commit and move forward instead of continuing to browse.',
-      watchouts: supportManifest?.templateExistsInBuilder
-        ? []
-        : ['Builder support for this design still needs a closer look before you treat it as the easiest launch path.'],
+      watchouts: [
+        ...(supportManifest?.templateExistsInBuilder
+          ? []
+          : ['Builder support for this design still needs a closer look before you treat it as the easiest launch path.']),
+        previewStatus === 'verified'
+          ? 'Do not confuse extra browsing with better judgment once the fit is already verified. The calmer move is usually to keep the fit and spend the next pass on guest clarity.'
+          : 'If the preview confirms the structure, stop browsing and let the draft start carrying real guest-facing weight.',
+      ],
       callouts: [
         previewStatus === 'verified' ? 'Builder preview support is already verified.' : 'Support is still growing, but the recommendation fit is strong.',
         `${sectionsIncluded} starter sections · ${modulesIncluded} modules`,
@@ -154,9 +161,14 @@ export function buildTemplateExperienceBrief(args: {
     decisionRule: compareCount > 0
       ? 'Choose the option that needs less structural repair after setup, even if another one wins slightly on first impression.'
       : 'Do not commit on aesthetics alone; keep the option only if the guest-facing flow still feels easy to understand.',
-    watchouts: supportManifest?.templateExistsInBuilder
-      ? []
-      : ['This design may still need extra builder cleanup compared with the stronger recommended options.'],
+    watchouts: [
+      ...(supportManifest?.templateExistsInBuilder
+        ? []
+        : ['This design may still need extra builder cleanup compared with the stronger recommended options.']),
+      compareCount > 0
+        ? 'Side-by-side comparison can over-reward first-impression style. If one option clearly needs less structural cleanup, let that operational truth outrank the prettier thumbnail.'
+        : 'A promising visual direction can still create guest confusion later. Keep it only if the full flow still reads clearly once real wedding details land.',
+    ],
     callouts: [
       `${sectionsIncluded} starter sections · ${modulesIncluded} modules`,
       supportManifest?.templateExistsInBuilder ? 'Builder pack is already mapped.' : 'Builder pack mapping still needs a closer look.',
