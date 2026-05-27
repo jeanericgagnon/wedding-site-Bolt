@@ -4,6 +4,7 @@ export interface CollaboratorRoleGuideModel {
   focusDetail: string;
   nextMove: string;
   decisionRule: string;
+  watchout: string;
   sequence: Array<{
     id: 'orient' | 'enter' | 'escalate';
     status: 'current' | 'next' | 'then';
@@ -18,6 +19,7 @@ const OWNER_GUIDE: CollaboratorRoleGuideModel = {
   focusDetail: 'Use this lane when the decision changes the wedding story, billing, launch state, or who owns the next move.',
   nextMove: 'Start from Overview, then open the surface where the decision will actually be resolved.',
   decisionRule: 'If it changes multiple surfaces or changes ownership, resolve it as an owner first.',
+  watchout: 'Do not let helper lanes become the source of truth for launch, billing, or final ownership calls. Settle those here, then let the rest of the system inherit them.',
   sequence: [
     {
       id: 'orient',
@@ -48,6 +50,7 @@ export function buildCollaboratorRoleGuide(role?: string | null): CollaboratorRo
       focusDetail: 'This lane is strongest for guests, planning, messaging, seating, and day-of logistics that keep the wedding moving.',
       nextMove: 'Start in Overview, then move into Guests, Planning, or Messages depending on the pressure you need to clear first.',
       decisionRule: 'If the work changes operations, handle it here. If it changes brand, billing, or final ownership calls, leave it with the couple.',
+      watchout: 'Do not let planning help quietly turn into owner-call carry. If a blocker changes brand voice, billing, or final wedding truth, narrow the escalation instead of absorbing it.',
       sequence: [
         {
           id: 'orient',
@@ -78,6 +81,7 @@ export function buildCollaboratorRoleGuide(role?: string | null): CollaboratorRo
       focusDetail: 'This lane is for calm day-of operations: timeline clarity, guest movement, seating stability, and live communication.',
       nextMove: 'Land in Overview, then move into Coordinator Mode or Itinerary once the real live pressure is visible.',
       decisionRule: 'If it affects guest flow or day-of calm, treat it as urgent. If it can wait until after the pressure passes, let it wait.',
+      watchout: 'Do not absorb long-horizon planning truth while the room is live. If a choice can wait until the pressure passes, capture it and hand it back later.',
       sequence: [
         {
           id: 'orient',
@@ -108,6 +112,7 @@ export function buildCollaboratorRoleGuide(role?: string | null): CollaboratorRo
       focusDetail: 'This lane is for shared visibility when someone needs to confirm details without carrying editing risk.',
       nextMove: 'Start in Overview, then open the relevant page to confirm facts or collect questions for the couple.',
       decisionRule: 'Use this lane to review and surface questions, not to become another editing path.',
+      watchout: 'Do not let read-only visibility become shadow ownership. Route questions back clearly instead of quietly becoming the person expected to fix them.',
       sequence: [
         {
           id: 'orient',

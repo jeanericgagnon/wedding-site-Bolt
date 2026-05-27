@@ -453,6 +453,10 @@ export const AcceptCollaboratorInvite: React.FC = () => {
                       <p className="text-xs uppercase tracking-[0.18em] text-text-tertiary">Decision rule</p>
                       <p className="mt-2 text-sm font-semibold text-text-primary">{collaboratorRoleGuide.decisionRule}</p>
                     </div>
+                    <div>
+                      <p className="text-xs uppercase tracking-[0.18em] text-text-tertiary">Watchout</p>
+                      <p className="mt-2 text-sm font-semibold text-text-primary">{collaboratorRoleGuide.watchout}</p>
+                    </div>
                   </div>
                   <div className="mt-4 grid gap-3 lg:grid-cols-3">
                     {collaboratorRoleGuide.sequence.map((step) => (

@@ -9,6 +9,7 @@ describe('buildCollaboratorRoleGuide', () => {
     expect(guide.focusTitle).toMatch(/planning pressure/i);
     expect(guide.nextMove).toMatch(/Guests, Planning, or Messages/i);
     expect(guide.decisionRule).toMatch(/brand, billing, or final ownership calls/i);
+    expect(guide.watchout).toMatch(/owner-call carry|final wedding truth/i);
     expect(guide.sequence.map((step) => step.status)).toEqual(['current', 'next', 'then']);
     expect(guide.sequence[0]?.title).toMatch(/operational pressure|find/i);
   });
@@ -20,6 +21,7 @@ describe('buildCollaboratorRoleGuide', () => {
     expect(guide.focusTitle).toMatch(/live path/i);
     expect(guide.nextMove).toMatch(/Coordinator Mode|Itinerary/i);
     expect(guide.decisionRule).toMatch(/guest flow|day-of calm/i);
+    expect(guide.watchout).toMatch(/long-horizon planning truth|pressure passes/i);
     expect(guide.sequence[1]?.detail).toMatch(/Coordinator Mode|Itinerary|guest experience/i);
   });
 
@@ -29,6 +31,7 @@ describe('buildCollaboratorRoleGuide', () => {
     expect(guide.label).toBe('Read-only access');
     expect(guide.focusTitle).toMatch(/Review for clarity/i);
     expect(guide.decisionRule).toMatch(/review and surface questions/i);
+    expect(guide.watchout).toMatch(/shadow ownership|Route questions back clearly/i);
     expect(guide.sequence[2]?.title).toMatch(/questions|owners/i);
   });
 });
