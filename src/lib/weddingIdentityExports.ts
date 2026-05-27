@@ -42,6 +42,7 @@ export interface WeddingIdentityExportKit {
   focusDetail: string;
   bestNextMove: string;
   decisionRule: string;
+  watchout: string;
   deliveryNote: string;
   items: WeddingIdentityExportItem[];
   manifest: Array<{ label: string; value: string }>;
@@ -260,6 +261,13 @@ export function buildWeddingIdentityExportKit(input: WeddingIdentityExportKitInp
         : !launchIsLive
           ? 'If the packs are ready but the site is not live, publish before you scale the handoff.'
           : 'Once the public path is trustworthy, reuse the same identity everywhere instead of improvising by channel.',
+    watchout: !hasPublicUrl
+      ? 'If you print or circulate the kit before the public URL exists, guests will learn the broken route faster than they learn the correction.'
+      : restrictedAccess
+        ? `The biggest failure mode now is forgetting to pair the ${privacyModeLabel} instructions with the share pack guests actually open first.`
+        : !launchIsLive
+          ? 'The packs can look finished before the live site is real, which is exactly how couples end up handing guests a polished dead end.'
+          : 'Once the handoff is working, the risk is channel drift: alternate URLs, old assets, or remixed wording can quietly weaken trust.',
     deliveryNote: restrictedAccess
       ? `Every guest-facing export should travel with the same ${privacyModeLabel} instructions so the handoff still feels deliberate.`
       : !launchIsLive

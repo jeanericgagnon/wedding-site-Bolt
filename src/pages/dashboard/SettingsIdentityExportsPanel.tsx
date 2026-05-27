@@ -72,6 +72,10 @@ export function SettingsIdentityExportsPanel({
               <p className="mt-2 text-sm leading-6 text-text-secondary">{weddingIdentityExportKit.decisionRule}</p>
             </div>
           </div>
+          <div className="rounded-lg border border-border-subtle bg-white p-4">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-text-tertiary">Watchout</p>
+            <p className="mt-2 text-sm leading-6 text-text-secondary">{weddingIdentityExportKit.watchout}</p>
+          </div>
 
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {weddingIdentityExportKit.items.map((item) => (

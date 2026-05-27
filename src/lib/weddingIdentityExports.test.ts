@@ -29,6 +29,7 @@ describe('weddingIdentityExports', () => {
     expect(kit.focusTitle).toBe('Carry one wedding identity across every handoff');
     expect(kit.bestNextMove).toMatch(/share-now pack|print and planner handoff/i);
     expect(kit.decisionRule).toMatch(/reuse the same identity everywhere/i);
+    expect(kit.watchout).toMatch(/channel drift|alternate URLs|old assets/i);
     expect(kit.items.find((item) => item.id === 'public-qr-card')).toMatchObject({
       status: 'ready',
       blockers: [],
@@ -55,6 +56,7 @@ describe('weddingIdentityExports', () => {
     expect(kit.focusTitle).toBe('Give the kit one trustworthy public URL');
     expect(kit.bestNextMove).toMatch(/Set the clean public URL first|QR and print packs/i);
     expect(kit.decisionRule).toMatch(/Do not print or share QR-led assets/i);
+    expect(kit.watchout).toMatch(/broken route|correction/i);
     expect(kit.items.find((item) => item.id === 'details-insert')?.blockers).toEqual([
       'Set a public site URL.',
       'Add a wedding date.',
@@ -82,6 +84,7 @@ describe('weddingIdentityExports', () => {
     expect(kit.focusTitle).toMatch(/Make the guest-facing site live/i);
     expect(kit.bestNextMove).toMatch(/Publish the guest-facing site first|share and print packs/i);
     expect(kit.decisionRule).toMatch(/publish before you scale/i);
+    expect(kit.watchout).toMatch(/polished dead end/i);
     expect(kit.handoffSequence[1]?.title).toMatch(/after the live publish/i);
     expect(kit.quickPacks.find((pack) => pack.id === 'share-now')?.readiness).toBe('ready');
     expect(kit.quickPacks.find((pack) => pack.id === 'share-now')?.nextStep).toMatch(/Publish the live site once/i);
@@ -102,6 +105,7 @@ describe('weddingIdentityExports', () => {
     expect(kit.focusTitle).toMatch(/access instructions/i);
     expect(kit.bestNextMove).toMatch(/password-protected instructions first|front-door clarity/i);
     expect(kit.decisionRule).toMatch(/clarity beats aesthetics/i);
+    expect(kit.watchout).toMatch(/password-protected instructions/i);
     expect(kit.handoffSequence[0]?.title).toMatch(/access instructions/i);
     expect(kit.quickPacks.find((pack) => pack.id === 'share-now')?.detail).toMatch(/password/i);
     expect(kit.quickPacks.find((pack) => pack.id === 'share-now')?.nextStep).toMatch(/password instructions/i);
