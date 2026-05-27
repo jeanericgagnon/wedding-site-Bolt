@@ -88,6 +88,7 @@ type RegistryLaunchReadiness = {
   focusDetail?: string;
   bestNextMove?: string;
   decisionRule?: string;
+  watchout?: string;
   reviewCount: number;
   items: Array<{ id: string; label: string; detail: string; tone: string }>;
 };
@@ -1193,7 +1194,7 @@ export function RegistryDashboardRouteContent(props: {
               <p className="mt-3 text-sm text-text-secondary">{props.registryLaunchReadiness.summary}</p>
               <p className="mt-2 text-xs text-text-tertiary">{registryShareReadinessSummary}</p>
               {props.registryLaunchReadiness.focusTitle || props.registryLaunchReadiness.focusDetail || props.registryLaunchReadiness.bestNextMove || props.registryLaunchReadiness.decisionRule ? (
-                <div className="mt-4 grid gap-3 md:grid-cols-3">
+                <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
                   <div className="rounded-xl border border-border-subtle bg-surface-subtle/20 p-4">
                     <p className="text-xs text-text-tertiary">Main focus</p>
                     <p className="mt-1 text-sm font-semibold text-text-primary">{props.registryLaunchReadiness.focusTitle}</p>
@@ -1208,6 +1209,10 @@ export function RegistryDashboardRouteContent(props: {
                   <div className="rounded-xl border border-border-subtle bg-surface-subtle/20 p-4">
                     <p className="text-xs text-text-tertiary">Decision rule</p>
                     <p className="mt-1 text-sm font-semibold text-text-primary">{props.registryLaunchReadiness.decisionRule}</p>
+                  </div>
+                  <div className="rounded-xl border border-border-subtle bg-surface-subtle/20 p-4">
+                    <p className="text-xs text-text-tertiary">Watchout</p>
+                    <p className="mt-1 text-sm text-text-secondary">{props.registryLaunchReadiness.watchout}</p>
                   </div>
                 </div>
               ) : null}

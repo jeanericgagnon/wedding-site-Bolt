@@ -20,6 +20,7 @@ export interface RegistryLaunchReadiness {
   focusDetail: string;
   bestNextMove: string;
   decisionRule: string;
+  watchout: string;
   reviewCount: number;
   readyCount: number;
   items: RegistryLaunchReadinessItem[];
@@ -199,6 +200,11 @@ export function buildRegistryLaunchReadiness(items: RegistryItem[], ledger: Regi
     : status === 'needs-review'
       ? 'When share blockers exist, clear those before you polish copy or expand the list.'
       : 'If the links and share paths already hold, protect that trust and only broaden the registry when the additions stay equally clean.';
+  const watchout = status === 'empty'
+    ? 'If the first registry lane guests see is blank or half-real, they will treat the whole registry as optional rather than trustworthy.'
+    : status === 'needs-review'
+      ? 'Every missing link or half-configured fund teaches guests to doubt the rest of the registry, even when most of it is already fine.'
+      : 'Once the registry feels trustworthy, the main risk is reopening it with weaker additions that make the whole lane feel less curated.';
 
   return {
     status,
@@ -216,6 +222,7 @@ export function buildRegistryLaunchReadiness(items: RegistryItem[], ledger: Regi
     focusDetail,
     bestNextMove,
     decisionRule,
+    watchout,
     reviewCount,
     readyCount,
     items: itemsOut,
