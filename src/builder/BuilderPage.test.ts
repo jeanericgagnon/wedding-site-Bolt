@@ -66,7 +66,7 @@ vi.mock('../lib/coupleDisplayName', async () => {
   return actual;
 });
 
-import { createDemoWeddingDataFromSite } from './BuilderPage';
+import { createDemoWeddingDataFromSite } from './builderDemoWeddingData';
 
 describe('createDemoWeddingDataFromSite', () => {
   it('skips invalid demo wedding dates instead of crashing builder demo hydration', () => {

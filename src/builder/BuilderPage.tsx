@@ -1,37 +1,19 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Loader2, AlertCircle, ArrowLeft, RefreshCw } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { BuilderShell } from './components/BuilderShell';
 import { builderProjectService } from './services/builderProjectService';
 import { publishService } from './services/publishService';
-import { BuilderProject, createEmptyBuilderProject } from '../types/builder/project';
-import { WeddingDataV1, createEmptyWeddingData } from '../types/weddingData';
+import { BuilderProject } from '../types/builder/project';
+import { WeddingDataV1 } from '../types/weddingData';
 import { createDefaultSectionInstance } from '../types/builder/section';
 import { supabase } from '../lib/supabase';
-import { demoWeddingSite } from '../lib/demoData';
-import { buildCoupleDisplayName } from '../lib/coupleDisplayName';
 import { getTemplatePack } from './constants/builderTemplatePacks';
 import { readSetupDraft } from '../lib/setupDraft';
 import { applySetupDraftToWeddingData, hasMeaningfulSetupDraft } from './utils/setupDraftHydration';
-
-function createDemoBuilderProject(): BuilderProject {
-  const templateId = 'modern-luxe';
-  const project = createEmptyBuilderProject(demoWeddingSite.id, templateId);
-  const template = getTemplatePack(templateId);
-
-  if (template) {
-    project.themeId = template.defaultThemeId;
-    project.pages[0].sections = template.sectionComposition.map((section, index) => ({
-      ...createDefaultSectionInstance(section.type, section.variant, index),
-      enabled: section.enabled,
-      locked: section.locked,
-      settings: { ...section.settings },
-    }));
-  }
-
-  return project;
-}
+import { getBuilderEntryExperience } from './builderEntryExperience';
+import { createDemoBuilderProject, createDemoWeddingDataFromSite } from './builderDemoWeddingData';
 
 function applyTemplateDefaultsToProject(project: BuilderProject, templateId: string): BuilderProject {
   const template = getTemplatePack(templateId);
@@ -71,78 +53,6 @@ function applyTemplateDefaultsToProject(project: BuilderProject, templateId: str
   };
 }
 
-const toIsoDateOrUndefined = (value: string): string | undefined => {
-  const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? undefined : date.toISOString();
-};
-
-const buildDemoSchedule = (weddingDateISO?: string) => {
-  if (!weddingDateISO) return [];
-  const weddingDate = new Date(weddingDateISO);
-
-  return [
-    { id: 'sched-1', label: 'Guest Arrival', startTimeISO: new Date(weddingDate.getTime() - 60 * 60 * 1000).toISOString(), venueId: 'venue-ceremony' },
-    { id: 'sched-2', label: 'Ceremony', startTimeISO: weddingDate.toISOString(), venueId: 'venue-ceremony' },
-    { id: 'sched-3', label: 'Cocktail Hour', startTimeISO: new Date(weddingDate.getTime() + 90 * 60 * 1000).toISOString(), venueId: 'venue-reception' },
-    { id: 'sched-4', label: 'Dinner & Toasts', startTimeISO: new Date(weddingDate.getTime() + 150 * 60 * 1000).toISOString(), venueId: 'venue-reception' },
-    { id: 'sched-5', label: 'Dancing', startTimeISO: new Date(weddingDate.getTime() + 240 * 60 * 1000).toISOString(), venueId: 'venue-reception' },
-  ];
-};
-
-export function createDemoWeddingDataFromSite(overrides: Partial<typeof demoWeddingSite> = {}): WeddingDataV1 {
-  const data = createEmptyWeddingData();
-  const now = new Date();
-  const site = { ...demoWeddingSite, ...overrides };
-  const weddingDateISO = toIsoDateOrUndefined(site.wedding_date);
-
-  data.couple.partner1Name = site.couple_name_1;
-  data.couple.partner2Name = site.couple_name_2;
-  data.couple.displayName = buildCoupleDisplayName(site.couple_name_1, site.couple_name_2, 'The couple');
-  data.couple.story = 'We met on a rainy Tuesday in Seattle and spent our first date talking for six hours in a tiny coffee shop. Years later, after moving cities, building a home, and collecting too many plants, we got engaged at sunset with our families nearby. We cannot wait to celebrate with everyone we love.';
-  data.event.weddingDateISO = weddingDateISO;
-  data.event.timezone = 'America/Los_Angeles';
-
-  data.venues = [
-    { id: 'venue-ceremony', name: 'Sunset Gardens Estate', address: site.venue_location, notes: 'Ceremony lawn opens at 3:30 PM.' },
-    { id: 'venue-reception', name: 'Grand Ballroom', address: '123 Garden Lane, Napa Valley, CA 94558', notes: 'Cocktail hour and reception.' },
-  ];
-
-  data.schedule = buildDemoSchedule(weddingDateISO);
-
-  data.rsvp.deadlineISO = new Date(now.getTime() + 45 * 86400000).toISOString();
-  data.travel.hotelInfo = 'We reserved room blocks at Hotel Indigo Napa Valley and The Archer. Mention "Thompson-Rivera Wedding" for discounted rates.';
-  data.travel.parkingInfo = 'Complimentary valet is available at the main entrance. Rideshare drop-off is at the Garden Gate.';
-  data.travel.flightInfo = 'Closest airports: OAK and SFO. From either airport, expect a 70–90 minute drive.';
-
-  data.registry.links = [
-    { id: 'reg-1', label: 'Honeyfund', url: 'https://www.honeyfund.com/' },
-    { id: 'reg-2', label: 'Crate & Barrel', url: 'https://www.crateandbarrel.com/gift-registry/' },
-    { id: 'reg-3', label: 'Amazon', url: 'https://www.amazon.com/wedding' },
-  ];
-  data.registry.notes = 'Your presence is the best gift. If you would like, you can contribute to our honeymoon and first-home fund.';
-
-  data.faq = [
-    { id: 'faq-1', q: 'What is the dress code?', a: 'Garden formal: suits, cocktail dresses, and comfortable shoes for lawn paths.' },
-    { id: 'faq-2', q: 'Can I bring a plus one?', a: 'Please refer to your invitation. If your invite includes a plus one, it will be reflected in RSVP.' },
-    { id: 'faq-3', q: 'Are kids invited?', a: 'We love your little ones, but this will be an adults-only celebration.' },
-    { id: 'faq-4', q: 'What time should I arrive?', a: 'Please arrive 30 minutes before the ceremony so we can begin on time.' },
-  ];
-
-  data.media.heroImageUrl = site.hero_image_url;
-  data.media.gallery = [
-    { id: 'g-1', url: 'https://images.pexels.com/photos/1024993/pexels-photo-1024993.jpeg', caption: 'Our favorite weekend trip' },
-    { id: 'g-2', url: 'https://images.pexels.com/photos/169193/pexels-photo-169193.jpeg', caption: 'Engagement day' },
-    { id: 'g-3', url: 'https://images.pexels.com/photos/1468379/pexels-photo-1468379.jpeg', caption: 'City sunset walk' },
-    { id: 'g-4', url: 'https://images.pexels.com/photos/265947/pexels-photo-265947.jpeg', caption: 'Celebrating with family' },
-    { id: 'g-5', url: 'https://images.pexels.com/photos/2253842/pexels-photo-2253842.jpeg', caption: 'Weekend market tradition' },
-    { id: 'g-6', url: 'https://images.pexels.com/photos/3171837/pexels-photo-3171837.jpeg', caption: 'Countdown mode' },
-  ];
-
-  data.theme.preset = 'elegant';
-  data.meta.updatedAtISO = new Date().toISOString();
-  return data;
-}
-
 export const BuilderPage: React.FC = () => {
   const { user, isDemoMode } = useAuth();
   const navigate = useNavigate();
@@ -151,13 +61,12 @@ export const BuilderPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [coupleName, setCoupleName] = useState<string>('');
+  const setupDraft = readSetupDraft();
+  const loadingExperience = getBuilderEntryExperience({ mode: 'loading', isDemoMode, draft: setupDraft });
+  const noSiteExperience = getBuilderEntryExperience({ mode: 'no-site', draft: setupDraft });
+  const errorExperience = getBuilderEntryExperience({ mode: 'error', errorMessage: error, draft: setupDraft });
 
-  useEffect(() => {
-    if (!user) return;
-    loadBuilderProject(user.id);
-  }, [user, isDemoMode]);
-
-  const loadBuilderProject = async (userId: string) => {
+  const loadBuilderProject = useCallback(async (userId: string) => {
     try {
       setLoading(true);
       setError(null);
@@ -224,7 +133,12 @@ export const BuilderPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [isDemoMode]);
+
+  useEffect(() => {
+    if (!user) return;
+    loadBuilderProject(user.id);
+  }, [loadBuilderProject, user]);
 
   const handleSave = async (updatedProject: BuilderProject, updatedWeddingData?: WeddingDataV1 | null) => {
     if (isDemoMode) {
@@ -251,9 +165,27 @@ export const BuilderPage: React.FC = () => {
   if (loading) {
     return (
       <div className="h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center">
+        <div className="max-w-xl px-6 text-center">
           <Loader2 size={32} className="animate-spin text-rose-500 mx-auto mb-3" />
-          <p className="text-sm text-gray-500">Loading your site editor…</p>
+          <p className="text-base font-semibold text-gray-800">{loadingExperience.title}</p>
+          <p className="mt-2 text-sm text-gray-500">{loadingExperience.detail}</p>
+          <div className="mt-5 rounded-2xl border border-sky-100 bg-sky-50 px-5 py-4 text-left">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-sky-900">Main focus</p>
+            <p className="mt-1 text-sm font-medium text-sky-950">{loadingExperience.focusTitle}</p>
+            <p className="mt-1 text-xs text-sky-800">{loadingExperience.focusDetail}</p>
+          </div>
+          <div className="mt-4 grid gap-3 text-left sm:grid-cols-3">
+            {[
+              { label: 'Current', detail: loadingExperience.currentStep },
+              { label: 'Next', detail: loadingExperience.nextStep },
+              { label: 'Then', detail: loadingExperience.thenStep },
+            ].map((step) => (
+              <div key={step.label} className="rounded-xl border border-gray-200 bg-white px-4 py-3">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-gray-500">{step.label}</p>
+                <p className="mt-1 text-xs text-gray-600">{step.detail}</p>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     );
@@ -262,27 +194,47 @@ export const BuilderPage: React.FC = () => {
   if (error === 'no-site') {
     return (
       <div className="h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center max-w-sm px-4">
+        <div className="text-center max-w-2xl px-4">
           <div className="w-14 h-14 bg-rose-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <span className="text-2xl">💍</span>
           </div>
-          <h2 className="text-lg font-semibold text-gray-800 mb-2">No website yet</h2>
-          <p className="text-sm text-gray-500 mb-6">
-            Finish setup first and Dayof will create a strong first version of your website for you.
-          </p>
-          <p className="text-xs text-gray-400 mb-6">That first draft will give you something real to refine instead of a blank editor.</p>
+          <h2 className="text-lg font-semibold text-gray-800 mb-2">{noSiteExperience.title}</h2>
+          <p className="text-sm text-gray-500 mb-4">{noSiteExperience.detail}</p>
+          <div className="rounded-2xl border border-sky-100 bg-sky-50 px-5 py-4 text-left mb-4">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-sky-900">Main focus</p>
+            <p className="mt-1 text-sm font-medium text-sky-950">{noSiteExperience.focusTitle}</p>
+            <p className="mt-1 text-xs text-sky-800">{noSiteExperience.focusDetail}</p>
+          </div>
+          <div className="rounded-2xl border border-gray-200 bg-white px-5 py-4 text-left mb-5">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-gray-500">Best next move</p>
+            <p className="mt-1 text-sm font-medium text-gray-900">{noSiteExperience.bestNextMove}</p>
+            <p className="mt-2 text-xs text-gray-600"><span className="font-semibold text-gray-800">Decision rule:</span> {noSiteExperience.decisionRule}</p>
+            <p className="mt-1 text-xs text-gray-600"><span className="font-semibold text-gray-800">Watchout:</span> {noSiteExperience.watchout}</p>
+          </div>
+          <div className="grid gap-3 text-left mb-6 sm:grid-cols-3">
+            {[
+              { label: 'Current', detail: noSiteExperience.currentStep },
+              { label: 'Next', detail: noSiteExperience.nextStep },
+              { label: 'Then', detail: noSiteExperience.thenStep },
+            ].map((step) => (
+              <div key={step.label} className="rounded-xl border border-gray-200 bg-white px-4 py-3">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-gray-500">{step.label}</p>
+                <p className="mt-1 text-xs text-gray-600">{step.detail}</p>
+              </div>
+            ))}
+          </div>
           <button
             onClick={() => navigate('/setup/names')}
             className="inline-flex items-center px-5 py-2.5 bg-rose-600 text-white text-sm font-medium rounded-xl hover:bg-rose-700 transition-colors"
           >
-            Start setup
+            {noSiteExperience.primaryActionLabel}
           </button>
           <button
             onClick={() => navigate('/dashboard')}
             className="mt-3 flex items-center gap-1.5 mx-auto text-sm text-gray-400 hover:text-gray-600 transition-colors"
           >
             <ArrowLeft size={14} />
-            Back to dashboard
+            {noSiteExperience.secondaryActionLabel}
           </button>
         </div>
       </div>
@@ -292,27 +244,49 @@ export const BuilderPage: React.FC = () => {
   if (error || !project) {
     return (
       <div className="h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center max-w-sm px-4">
+        <div className="text-center max-w-2xl px-4">
           <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <AlertCircle size={24} className="text-red-500" />
           </div>
-          <h2 className="text-base font-semibold text-gray-800 mb-2">Site editor unavailable</h2>
-          <p className="text-sm text-gray-500 mb-5">{error ?? 'Unable to load your project right now.'}</p>
-          <p className="text-xs text-gray-400 mb-5">If this keeps happening, go back to the dashboard and reopen your site editor.</p>
+          <h2 className="text-base font-semibold text-gray-800 mb-2">{errorExperience.title}</h2>
+          <p className="text-sm text-gray-500 mb-4">{errorExperience.detail}</p>
+          <div className="rounded-2xl border border-red-100 bg-red-50 px-5 py-4 text-left mb-4">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-red-900">Main focus</p>
+            <p className="mt-1 text-sm font-medium text-red-950">{errorExperience.focusTitle}</p>
+            <p className="mt-1 text-xs text-red-800">{errorExperience.focusDetail}</p>
+          </div>
+          <div className="rounded-2xl border border-gray-200 bg-white px-5 py-4 text-left mb-5">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-gray-500">Best next move</p>
+            <p className="mt-1 text-sm font-medium text-gray-900">{errorExperience.bestNextMove}</p>
+            <p className="mt-2 text-xs text-gray-600"><span className="font-semibold text-gray-800">Decision rule:</span> {errorExperience.decisionRule}</p>
+            <p className="mt-1 text-xs text-gray-600"><span className="font-semibold text-gray-800">Watchout:</span> {errorExperience.watchout}</p>
+          </div>
+          <div className="grid gap-3 text-left mb-5 sm:grid-cols-3">
+            {[
+              { label: 'Current', detail: errorExperience.currentStep },
+              { label: 'Next', detail: errorExperience.nextStep },
+              { label: 'Then', detail: errorExperience.thenStep },
+            ].map((step) => (
+              <div key={step.label} className="rounded-xl border border-gray-200 bg-white px-4 py-3">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-gray-500">{step.label}</p>
+                <p className="mt-1 text-xs text-gray-600">{step.detail}</p>
+              </div>
+            ))}
+          </div>
           <div className="flex flex-col items-center gap-3">
             <button
               onClick={() => user && loadBuilderProject(user.id)}
               className="inline-flex items-center gap-1.5 px-4 py-2 bg-rose-600 text-white text-sm font-medium rounded-lg hover:bg-rose-700 transition-colors"
             >
               <RefreshCw size={14} />
-              Try again
+              {errorExperience.primaryActionLabel}
             </button>
             <button
               onClick={() => navigate('/dashboard')}
               className="inline-flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-600 transition-colors"
             >
               <ArrowLeft size={14} />
-              Back to dashboard
+              {errorExperience.secondaryActionLabel}
             </button>
           </div>
         </div>
