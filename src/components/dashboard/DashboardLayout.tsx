@@ -267,6 +267,17 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
               <p className="text-[11px] uppercase tracking-wide text-text-tertiary">{roleGuide.label}</p>
               <p className="mt-1 text-sm font-medium text-text-primary">{roleGuide.title}</p>
               <p className="mt-1 text-[11px] leading-5 text-text-tertiary">{roleGuide.detail}</p>
+              <div className="mt-3 space-y-2">
+                <div className="rounded-lg border border-border-subtle bg-white/80 px-3 py-2">
+                  <p className="text-[11px] uppercase tracking-wide text-text-tertiary">Main focus</p>
+                  <p className="mt-1 text-sm font-medium text-text-primary">{roleGuide.focusTitle}</p>
+                  <p className="mt-1 text-[11px] leading-5 text-text-tertiary">{roleGuide.focusDetail}</p>
+                </div>
+                <div className="rounded-lg border border-border-subtle bg-white/80 px-3 py-2">
+                  <p className="text-[11px] uppercase tracking-wide text-text-tertiary">Decision rule</p>
+                  <p className="mt-1 text-[11px] leading-5 text-text-tertiary">{roleGuide.decisionRule}</p>
+                </div>
+              </div>
             </div>
 
             {siteMemberships.length > 1 && (
