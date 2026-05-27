@@ -12,6 +12,7 @@ export interface DayOfRelayModel {
   summary: string;
   focusTitle: string;
   focusDetail: string;
+  bestNextMove: string;
   decisionRule: string;
   steps: DayOfRelayStep[];
 }
@@ -44,6 +45,7 @@ export function buildDayOfRelayModel(input: DayOfRelayInput): DayOfRelayModel {
       summary: 'This is still a seating-truth problem first. Clear the drift now so coordinator mode is not compensating for stale room data later.',
       focusTitle: 'Restore room truth before live speed matters',
       focusDetail: 'The room cannot hand off cleanly until the seating plan matches the actual RSVP picture again.',
+      bestNextMove: 'Clear the seating drift first, then finish any remaining seat placement before you let coordinator mode trust the room.',
       decisionRule: 'If seat assignments are stale, fix that truth before you ask live ops to absorb the mismatch.',
       steps: [
         step('current', {
@@ -79,6 +81,7 @@ export function buildDayOfRelayModel(input: DayOfRelayInput): DayOfRelayModel {
       summary: 'You do not need perfection here. You do need everyone seated so live check-in is not absorbing unfinished room work later.',
       focusTitle: 'Complete placement before the room becomes live support',
       focusDetail: 'The job now is not elegant reshuffling. It is making sure every confirmed guest is grounded in a real seat before arrival pressure rises.',
+      bestNextMove: 'Place the remaining guests now, then switch the room into arrival support instead of spending another pass on layout polish.',
       decisionRule: 'Near the wedding, complete placement beats perfect layout.',
       steps: [
         step('current', {
@@ -112,6 +115,7 @@ export function buildDayOfRelayModel(input: DayOfRelayInput): DayOfRelayModel {
       summary: 'Seating is now here to make the door, timeline, and guest questions easier. Live coordination should lead unless the room truly breaks.',
       focusTitle: 'Use the room to support the live day',
       focusDetail: 'Once guests are already moving, seating is valuable because it reduces friction at the door and in the timeline, not because it keeps evolving.',
+      bestNextMove: 'Run check-in first, then let coordinator mode absorb live exceptions unless the room itself truly breaks.',
       decisionRule: 'When the live day is underway, coordination speed beats more seating tinkering.',
       steps: [
         step('current', {
@@ -142,6 +146,7 @@ export function buildDayOfRelayModel(input: DayOfRelayInput): DayOfRelayModel {
       summary: 'This is not a room-layout issue yet. The fastest risk reduction is getting the remaining replies before the live day gets any closer.',
       focusTitle: 'Close the RSVP truth gap before you trust the room',
       focusDetail: 'A final response pass is more valuable right now than pretending the seating plan is settled while guest truth is still moving.',
+      bestNextMove: 'Review the pending guests, send the last clean message nudge, and only come back to room work once the RSVP truth stops moving.',
       decisionRule: 'If replies are still materially open, guest follow-up beats room work.',
       steps: [
         step('current', {
@@ -174,6 +179,7 @@ export function buildDayOfRelayModel(input: DayOfRelayInput): DayOfRelayModel {
     summary: 'Nothing here is demanding intervention right now. Keep seating stable and only pull it forward again if guest truth or live timing changes.',
     focusTitle: 'Protect the calm without reopening the room',
     focusDetail: 'A steady seating plan is something to preserve. The best move now is leaving it available for support without inventing new churn.',
+    bestNextMove: 'Leave the room stable and in reserve, and only reopen it when guest truth or live timing actually changes.',
     decisionRule: 'If the room is already calm, leave it steady until truth or live timing actually changes.',
     steps: [
       step('steady', {

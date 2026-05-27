@@ -38,8 +38,12 @@ export const DayOfRelayCard: React.FC<DayOfRelayCardProps> = ({ relay, onAction 
           <p className="mt-2 text-sm text-text-secondary">{relay.focusDetail}</p>
         </div>
         <div className="rounded-xl border border-border/50 bg-surface-subtle/35 px-3 py-3">
-          <p className="text-xs uppercase tracking-wide text-text-tertiary">Decision rule</p>
-          <p className="mt-2 text-sm text-text-secondary">{relay.decisionRule}</p>
+          <p className="text-xs uppercase tracking-wide text-text-tertiary">Best next move</p>
+          <p className="mt-2 text-sm font-semibold text-text-primary">{relay.bestNextMove}</p>
+          <div className="mt-3 border-t border-border/50 pt-3">
+            <p className="text-xs uppercase tracking-wide text-text-tertiary">Decision rule</p>
+            <p className="mt-2 text-sm text-text-secondary">{relay.decisionRule}</p>
+          </div>
         </div>
       </div>
 
