@@ -19,6 +19,7 @@ export interface SiteAccessPlanModel {
   focusDetail: string;
   bestNextMove: string;
   decisionRule: string;
+  watchout: string;
   steps: SiteAccessPlanStep[];
 }
 
@@ -32,6 +33,7 @@ export function buildSiteAccessPlan(input: SiteAccessPlanInput): SiteAccessPlanM
       focusDetail: 'Until the site is genuinely live, every access decision is still theoretical. Make the guest-facing route real first, then lock the handoff around it.',
       bestNextMove: 'Publish the live guest-facing site before you polish password, invite, or print-pack language.',
       decisionRule: 'A clear live path beats polished access instructions that still point to a draft.',
+      watchout: 'If you start printing cards or sharing reminders before the live path exists, guests will remember the dead end longer than the later fix.',
       steps: [
         {
           id: 'publish',
@@ -69,6 +71,7 @@ export function buildSiteAccessPlan(input: SiteAccessPlanInput): SiteAccessPlanM
       focusDetail: 'The site may be live, but guests still need a path that actually works end to end. Tighten the route first, then let reminders and packs inherit it.',
       bestNextMove: 'Finish the missing guest URL or invite path before you let any reminder, QR, or print asset reuse it.',
       decisionRule: 'Never scale a guest handoff that still depends on a missing URL or missing invite path.',
+      watchout: 'A half-working route is worse than a delayed one, because every reused pack teaches guests to trust a path that still breaks.',
       steps: [
         {
           id: 'access',
@@ -100,6 +103,7 @@ export function buildSiteAccessPlan(input: SiteAccessPlanInput): SiteAccessPlanM
       focusDetail: 'Once the site is live and public, the work becomes consistency and restraint: one URL, one expectation, and no accidental secret-route language.',
       bestNextMove: 'Reuse the same public URL across reminders, QR packs, and planner handoffs instead of inventing alternate routes.',
       decisionRule: 'Consistency beats novelty once the public guest path is already working.',
+      watchout: 'The main risk now is accidental creativity: alternate links, old drafts, or mixed instructions can make a public path feel less trustworthy than it really is.',
       steps: [
         {
           id: 'share',
@@ -129,6 +133,7 @@ export function buildSiteAccessPlan(input: SiteAccessPlanInput): SiteAccessPlanM
       focusDetail: 'A protected site only feels trustworthy when the password rides with every reminder, QR pack, and planner handoff instead of living in one forgotten place.',
       bestNextMove: 'Attach the password instructions to every reminder, QR card, and planner handoff before you assume guests can get through.',
       decisionRule: 'Access clarity beats design neatness when guests need a password to get through the front door.',
+      watchout: 'Guests rarely blame the password itself; they blame the wedding when the password is missing from the place they actually opened.',
       steps: [
         {
           id: 'access',
@@ -157,6 +162,7 @@ export function buildSiteAccessPlan(input: SiteAccessPlanInput): SiteAccessPlanM
     focusDetail: 'When access depends on a specific invite path, every reminder and print asset needs to reinforce that exact route instead of improvising broader links.',
     bestNextMove: 'Share and print the exact invite-only route guests need instead of falling back to a broader generic link.',
     decisionRule: 'Route precision beats reach when the site is intentionally invite-only.',
+    watchout: 'One generic fallback link can undo the whole invite-only promise by sending guests to a route that looks official but does not actually admit them.',
     steps: [
       {
         id: 'access',

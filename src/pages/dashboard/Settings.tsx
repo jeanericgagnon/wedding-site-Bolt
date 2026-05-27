@@ -1583,6 +1583,10 @@ export const DashboardSettings: React.FC = () => {
                             <p className="mt-1 text-sm font-semibold text-text-primary">{siteAccessPlan.decisionRule}</p>
                           </div>
                         </div>
+                        <div className="rounded-xl border border-border-subtle bg-white p-4">
+                          <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary">Watchout</p>
+                          <p className="mt-1 text-sm text-text-secondary">{siteAccessPlan.watchout}</p>
+                        </div>
                         <div className="grid gap-3 lg:grid-cols-3">
                           {siteAccessPlan.steps.map((step) => (
                             <div key={step.id} className="rounded-lg border border-border-subtle bg-white px-3 py-3">
