@@ -34,6 +34,7 @@ describe('analyticsBaseline', () => {
 
     expect(summary.tone).toBe('success');
     expect(summary.statusLabel).toMatch(/high confidence/i);
+    expect(summary.decisionRule).toMatch(/refinement|reopen solved basics/i);
   });
 
   it('calls out pending RSVP pressure before other polish', () => {
@@ -45,6 +46,7 @@ describe('analyticsBaseline', () => {
 
     expect(summary.title).toMatch(/few more replies/i);
     expect(summary.tone).toBe('warning');
+    expect(summary.decisionRule).toMatch(/RSVP picture/i);
   });
 
   it('builds compact confidence cards from the measured baseline', () => {
@@ -68,6 +70,8 @@ describe('analyticsBaseline', () => {
     }));
 
     expect(nextMove.target).toBe('guests');
+    expect(nextMove.priorityLabel).toBe('Response pressure');
+    expect(nextMove.whyNow).toMatch(/Pending replies/i);
     expect(nextMove.ctaLabel).toMatch(/review guests/i);
   });
 
@@ -82,6 +86,7 @@ describe('analyticsBaseline', () => {
     }));
 
     expect(nextMove.target).toBe('builder-polish');
+    expect(nextMove.priorityLabel).toBe('Polish window');
   });
 
   it('calls out access handoff when the site is restricted even if the measured baseline is otherwise strong', () => {
@@ -106,7 +111,9 @@ describe('analyticsBaseline', () => {
     }));
 
     expect(summary.title).toMatch(/access handoff/i);
+    expect(summary.decisionRule).toMatch(/access instructions/i);
     expect(nextMove.ctaLabel).toMatch(/review guest access/i);
+    expect(nextMove.priorityLabel).toBe('Access handoff');
     expect(nextMove.target).toBe('settings');
   });
 });

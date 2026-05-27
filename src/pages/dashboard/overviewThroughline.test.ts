@@ -19,8 +19,10 @@ describe('buildOverviewThroughline', () => {
         ],
       },
       analyticsNextMove: {
+        priorityLabel: 'Response pressure',
         title: 'Close the RSVP gap before trusting the board more deeply',
         detail: '12 guests can still materially change how the rest of the board feels.',
+        whyNow: 'Pending replies can still change the truth of every later planning and messaging decision.',
         ctaLabel: 'Review guests',
         target: 'guests',
       },

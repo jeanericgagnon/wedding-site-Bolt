@@ -1495,6 +1495,7 @@ export const DashboardOverview: React.FC = () => {
                     <div>
                       <p className="text-sm font-medium text-text-primary">{analyticsConfidenceSummary.title}</p>
                       <p className="mt-1 text-xs text-text-secondary">{analyticsConfidenceSummary.detail}</p>
+                      <p className="mt-2 text-[11px] text-text-tertiary">{analyticsConfidenceSummary.decisionRule}</p>
                     </div>
                     <Badge variant={analyticsConfidenceSummary.tone}>{analyticsConfidenceSummary.statusLabel}</Badge>
                   </div>
@@ -1516,8 +1517,10 @@ export const DashboardOverview: React.FC = () => {
                 <div className="rounded-lg border border-border-subtle bg-white px-3 py-3">
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     <div>
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-text-tertiary">{analyticsNextMove.priorityLabel}</p>
                       <p className="text-sm font-medium text-text-primary">{analyticsNextMove.title}</p>
                       <p className="mt-1 text-xs text-text-secondary">{analyticsNextMove.detail}</p>
+                      <p className="mt-2 text-[11px] text-text-tertiary">{analyticsNextMove.whyNow}</p>
                     </div>
                     <Button variant="outline" size="sm" onClick={handleAnalyticsNextMove}>
                       {analyticsNextMove.ctaLabel}

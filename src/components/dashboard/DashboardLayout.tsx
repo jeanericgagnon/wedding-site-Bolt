@@ -31,6 +31,7 @@ import { resolveActiveSiteForUser, resolveActiveSiteRoleForUser } from '../../li
 import { getStoredActiveSiteId, setStoredActiveSiteId } from '../../lib/activeSiteStorage';
 import { getDemoDashboardSiteContext } from './dashboardDemoContext';
 import { buildSiteMembershipLabel } from './siteMembershipLabel';
+import { buildDashboardRoleGuide } from './dashboardRoleGuide';
 import { resolveDashboardLayoutSiteContext } from './dashboardSiteContext';
 
 interface DashboardLayoutProps {
@@ -226,6 +227,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
 
   const siteVisibility = useMemo(() => getSiteVisibilityState({ isPublished: siteIsPublished, privacyMode: sitePrivacyMode, hideFromSearch: siteJsonState?.hide_from_search === true }), [siteIsPublished, sitePrivacyMode, siteJsonState]);
   const currentNavLabel = visibleNavSections.flatMap((section) => section.items).find((item) => item.id === currentPage)?.label || 'Dashboard';
+  const roleGuide = useMemo(() => buildDashboardRoleGuide(role), [role]);
 
   return (
     <div className="min-h-screen bg-background flex">
@@ -259,6 +261,12 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
               {siteSlug && <p className="mt-1 text-xs text-text-secondary">{siteSlug}.dayof.love</p>}
               <p className="mt-1 text-[11px] text-text-tertiary">{siteVisibility.searchLabel}</p>
               <p className="mt-1 text-[11px] text-text-tertiary">{siteVisibility.explainer}</p>
+            </div>
+
+            <div className="mb-4 rounded-xl border border-border-subtle bg-surface-subtle/40 px-4 py-3">
+              <p className="text-[11px] uppercase tracking-wide text-text-tertiary">{roleGuide.label}</p>
+              <p className="mt-1 text-sm font-medium text-text-primary">{roleGuide.title}</p>
+              <p className="mt-1 text-[11px] leading-5 text-text-tertiary">{roleGuide.detail}</p>
             </div>
 
             {siteMemberships.length > 1 && (

@@ -22,6 +22,7 @@ export interface AnalyticsConfidenceSummary {
   title: string;
   detail: string;
   statusLabel: string;
+  decisionRule: string;
   tone: 'success' | 'warning' | 'error';
 }
 
@@ -33,8 +34,10 @@ export interface AnalyticsConfidenceCard {
 }
 
 export interface AnalyticsNextMove {
+  priorityLabel: string;
   title: string;
   detail: string;
+  whyNow: string;
   ctaLabel: string;
   target: 'guests' | 'messages' | 'registry' | 'photos' | 'builder-polish' | 'settings';
 }
@@ -107,6 +110,7 @@ export function buildAnalyticsConfidenceSummary(input: AnalyticsBaselineInput): 
       title: 'Guest confidence still depends on a few more replies',
       detail: 'The board has enough signal to guide you, but the next meaningful lift is still getting the pending RSVP group smaller before you trust the picture completely.',
       statusLabel: `${input.pendingGuests} still pending`,
+      decisionRule: 'Do not let healthy vanity metrics outrank a still-noisy RSVP picture.',
       tone: 'warning',
     };
   }
@@ -116,6 +120,7 @@ export function buildAnalyticsConfidenceSummary(input: AnalyticsBaselineInput): 
       title: 'The board is useful, but contact coverage is still softer than it should be',
       detail: 'When direct email or phone coverage is thin, every later RSVP, reminder, and day-of update feels shakier than it needs to.',
       statusLabel: `${contactCoverage}% contact coverage`,
+      decisionRule: 'Tighten the contact layer before assuming later outreach will behave cleanly.',
       tone: 'warning',
     };
   }
@@ -125,6 +130,7 @@ export function buildAnalyticsConfidenceSummary(input: AnalyticsBaselineInput): 
       title: 'Guests can find the site, but the experience still feels a little thin',
       detail: 'Response signals are healthy enough, yet registry and photo follow-through are not both fully carrying their share of guest confidence.',
       statusLabel: guestExperienceReady ? 'Guest-facing extras ready' : 'Guest-facing extras still growing',
+      decisionRule: 'Treat guest-facing depth as part of trust, not as decorative polish.',
       tone: 'warning',
     };
   }
@@ -134,6 +140,7 @@ export function buildAnalyticsConfidenceSummary(input: AnalyticsBaselineInput): 
       title: 'Guest trust also depends on a clean access handoff right now',
       detail: `The board looks healthy, but the site is ${accessLabel}. That means guest confidence now depends on whether the right password or invite path is traveling with every handoff.`,
       statusLabel: `${accessLabel} access in play`,
+      decisionRule: 'A strong board still needs the right access instructions traveling with it.',
       tone: 'warning',
     };
   }
@@ -143,6 +150,7 @@ export function buildAnalyticsConfidenceSummary(input: AnalyticsBaselineInput): 
       title: 'The measured baseline looks trustworthy right now',
       detail: 'Guests are responding, the contact layer is strong, and the public extras are active enough that the board reads like product truth instead of wishful thinking.',
       statusLabel: 'High confidence baseline',
+      decisionRule: 'This is the moment to improve the guest-facing finish, not to reopen solved basics.',
       tone: 'success',
     };
   }
@@ -151,6 +159,7 @@ export function buildAnalyticsConfidenceSummary(input: AnalyticsBaselineInput): 
     title: 'The baseline is healthy enough to guide your next moves',
     detail: 'Nothing here is shouting, but the board still benefits from one more pass on replies, contact coverage, or guest-facing depth before you treat it as fully settled.',
     statusLabel: 'Useful, still maturing',
+    decisionRule: 'Keep following the highest-friction signal instead of spreading effort evenly everywhere.',
     tone: 'warning',
   };
 }
@@ -201,8 +210,10 @@ export function buildAnalyticsNextMove(input: AnalyticsBaselineInput): Analytics
 
   if (input.pendingGuests >= Math.max(8, Math.round(input.totalGuests * 0.12))) {
     return {
+      priorityLabel: 'Response pressure',
       title: 'Close the RSVP gap before trusting the board more deeply',
       detail: `${input.pendingGuests} guests can still materially change how the rest of the board feels. Follow-up is worth more than extra polish right now.`,
+      whyNow: 'Pending replies can still change the truth of every later planning and messaging decision.',
       ctaLabel: 'Review guests',
       target: 'guests',
     };
@@ -210,8 +221,10 @@ export function buildAnalyticsNextMove(input: AnalyticsBaselineInput): Analytics
 
   if (contactCoverage < 85) {
     return {
+      priorityLabel: 'Reachability gap',
       title: 'Tighten contact coverage before the next message wave',
       detail: 'A softer reachability layer makes every reminder and day-of update less reliable than it needs to be.',
+      whyNow: 'Missing direct contact paths quietly weaken every later guest-facing move.',
       ctaLabel: 'Fix guest contacts',
       target: 'guests',
     };
@@ -219,8 +232,10 @@ export function buildAnalyticsNextMove(input: AnalyticsBaselineInput): Analytics
 
   if (input.registryItemCount === 0) {
     return {
+      priorityLabel: 'Guest-facing depth',
       title: 'Give guests one stronger gifting signal',
       detail: 'A small live registry set does more for guest confidence than waiting for a perfect one.',
+      whyNow: 'Registry readiness is one of the easiest visible signals that the site is genuinely being carried through.',
       ctaLabel: 'Open registry',
       target: 'registry',
     };
@@ -228,8 +243,10 @@ export function buildAnalyticsNextMove(input: AnalyticsBaselineInput): Analytics
 
   if (input.activePhotoAlbumCount === 0) {
     return {
+      priorityLabel: 'Guest-facing depth',
       title: 'Turn on one guest-ready photo path',
       detail: 'Photo contribution is one of the easiest ways to make the guest experience feel alive instead of merely published.',
+      whyNow: 'A live memory lane makes the site feel active, not just informative.',
       ctaLabel: 'Open photos',
       target: 'photos',
     };
@@ -237,10 +254,12 @@ export function buildAnalyticsNextMove(input: AnalyticsBaselineInput): Analytics
 
   if (restrictedAccess) {
     return {
+      priorityLabel: 'Access handoff',
       title: 'Run one guest access pass before broader sharing',
       detail: input.privacyMode === 'invite_only'
         ? 'The guest-facing site is not public, so make sure the real invite path is what guests are receiving instead of a generic broad-share link.'
         : 'The site is password-protected, so the next lift is making sure the password instructions travel with every guest-facing link or print pack.',
+      whyNow: 'A good board still fails guests if the wrong access instructions travel with it.',
       ctaLabel: 'Review guest access',
       target: 'settings',
     };
@@ -248,16 +267,20 @@ export function buildAnalyticsNextMove(input: AnalyticsBaselineInput): Analytics
 
   if (responseRate >= 80 && contactCoverage >= 90) {
     return {
+      priorityLabel: 'Polish window',
       title: 'The measured baseline is healthy enough for a polish pass',
       detail: 'This is a good moment to improve the live guest-facing story instead of chasing missing basics.',
+      whyNow: 'The baseline is finally strong enough that refinement will actually be felt by guests.',
       ctaLabel: 'Open site polish',
       target: 'builder-polish',
     };
   }
 
   return {
+    priorityLabel: 'Momentum nudge',
     title: 'Use messages to keep the baseline moving',
     detail: 'The board is useful already, and the next lift is turning that signal into one clean guest-facing nudge.',
+    whyNow: 'A clean message pass is usually the fastest way to turn a decent board into a stronger one.',
     ctaLabel: 'Open messages',
     target: 'messages',
   };
