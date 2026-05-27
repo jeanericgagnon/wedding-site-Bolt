@@ -7,6 +7,11 @@ import { readSetupDraft, selectSetupDraftTemplate } from '../lib/setupDraft';
 import { getRecommendedTemplates } from '../lib/setupDraftRecommendations';
 import { buildTemplateExperienceBrief } from '../pages/templateExperience';
 import { getFlowStatusLabel } from '../lib/flowLabels';
+import {
+  buildTemplateCompareBrief,
+  buildTemplateFilterSummary,
+  filterAndSortTemplates,
+} from './templateDecisionModel';
 
 type Facet = 'all' | string;
 
@@ -16,6 +21,7 @@ export const Templates: React.FC = () => {
   const [style, setStyle] = useState<Facet>('all');
   const [season, setSeason] = useState<Facet>('all');
   const [colorway, setColorway] = useState<Facet>('all');
+  const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<'recommended' | 'name' | 'style'>('recommended');
   const [groupByStyle, setGroupByStyle] = useState(false);
   const [compareIds, setCompareIds] = useState<string[]>([]);
@@ -26,30 +32,15 @@ export const Templates: React.FC = () => {
     return getRecommendedTemplates(draft, templateCatalog).map((template) => template.id);
   }, []);
 
-  const filtered = useMemo(() => {
-    const rows = templateCatalog.filter((t) => {
-      const styleOk = style === 'all' || t.styleTags.includes(style);
-      const seasonOk = season === 'all' || t.seasonTags.includes(season);
-      const colorOk = colorway === 'all' || t.colorwayId === colorway;
-      return styleOk && seasonOk && colorOk;
-    });
-
-    const sorted = [...rows];
-    if (sortBy === 'name') {
-      sorted.sort((a, b) => a.name.localeCompare(b.name));
-    } else if (sortBy === 'style') {
-      sorted.sort((a, b) => (a.styleTags[0] ?? '').localeCompare(b.styleTags[0] ?? ''));
-    } else {
-      sorted.sort((a, b) => {
-        const aRec = recommendedTemplateIds.includes(a.id) ? 1 : 0;
-        const bRec = recommendedTemplateIds.includes(b.id) ? 1 : 0;
-        if (aRec !== bRec) return bRec - aRec;
-        return a.name.localeCompare(b.name);
-      });
-    }
-
-    return sorted;
-  }, [style, season, colorway, sortBy, recommendedTemplateIds]);
+  const filtered = useMemo(() => filterAndSortTemplates({
+    templates: templateCatalog,
+    style,
+    season,
+    colorway,
+    searchQuery,
+    sortBy,
+    recommendedTemplateIds,
+  }), [style, season, colorway, searchQuery, sortBy, recommendedTemplateIds]);
 
   const comparedTemplates = useMemo(() => templateCatalog.filter((t) => compareIds.includes(t.id)).slice(0, 2), [compareIds]);
   const selectedTemplate = useMemo(
@@ -66,6 +57,25 @@ export const Templates: React.FC = () => {
         compareCount: compareIds.length,
       })
     : null;
+  const manifestsByTemplateId = useMemo(
+    () => Object.fromEntries(templateCatalog.map((template) => [template.id, getTemplateSupportManifest(template.id)])),
+    [],
+  );
+  const filterSummary = useMemo(() => buildTemplateFilterSummary({
+    filtered,
+    style,
+    season,
+    colorway,
+    searchQuery,
+    selectedTemplateId: selectedTemplateId ?? null,
+    recommendedTemplateIds,
+  }), [filtered, style, season, colorway, searchQuery, selectedTemplateId, recommendedTemplateIds]);
+  const compareBrief = useMemo(() => buildTemplateCompareBrief({
+    comparedTemplates,
+    manifestsByTemplateId,
+    recommendedTemplateIds,
+    selectedTemplateId: selectedTemplateId ?? null,
+  }), [comparedTemplates, manifestsByTemplateId, recommendedTemplateIds, selectedTemplateId]);
   const sectionDiff = useMemo(() => {
     if (comparedTemplates.length !== 2) return null;
     const [a, b] = comparedTemplates;
@@ -305,6 +315,13 @@ Start with this
         </div>
 
         <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
+          <input
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search by style, mood, module, or section"
+            className="rounded border border-neutral-300 px-3 py-2 text-sm"
+          />
+
           <select value={style} onChange={(e) => setStyle(e.target.value)} className="rounded border border-neutral-300 px-3 py-2 text-sm">
             <option value="all">All styles</option>
             {templateStyleFacets.map((s) => <option key={s} value={s}>{s}</option>)}
@@ -334,6 +351,7 @@ Start with this
               setStyle('all');
               setSeason('all');
               setColorway('all');
+              setSearchQuery('');
               setSortBy('recommended');
               setGroupByStyle(false);
               setCompareIds([]);
@@ -355,6 +373,52 @@ Start with this
             >
               {groupByStyle ? 'Show all together' : 'Group by style'}
             </button>
+          </div>
+        </div>
+
+        <div className="mt-4 rounded-xl border border-neutral-200 bg-white p-4 shadow-sm">
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+            <div className="min-w-0">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-neutral-500">Catalog read</p>
+              <h2 className="mt-1 text-lg font-semibold text-neutral-900">{filterSummary.headline}</h2>
+              <p className="mt-1.5 max-w-3xl text-sm leading-6 text-neutral-600">{filterSummary.detail}</p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <span className="rounded-full border border-neutral-200 bg-neutral-50 px-3 py-1 text-xs font-medium text-neutral-700">
+                {filterSummary.visibleCount} visible
+              </span>
+              <span className="rounded-full border border-rose-200 bg-rose-50 px-3 py-1 text-xs font-medium text-rose-700">
+                {filterSummary.recommendedVisibleCount} recommended visible
+              </span>
+              {filterSummary.selectedVisible && (
+                <span className="rounded-full border border-brand/20 bg-brand/5 px-3 py-1 text-xs font-medium text-brand">
+                  Selected template still visible
+                </span>
+              )}
+            </div>
+          </div>
+          {filterSummary.activeFilters.length > 0 && (
+            <div className="mt-3 flex flex-wrap gap-2">
+              {filterSummary.activeFilters.map((filter) => (
+                <span key={filter} className="rounded-full border border-neutral-200 bg-neutral-50 px-2.5 py-1 text-[11px] text-neutral-700">
+                  {filter}
+                </span>
+              ))}
+            </div>
+          )}
+          <div className="mt-4 grid gap-3 md:grid-cols-2">
+            <div className="rounded-xl border border-neutral-200 bg-neutral-50 px-3 py-3">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-neutral-500">Best next move</p>
+              <p className="mt-1.5 text-sm text-neutral-700">{filterSummary.bestNextMove}</p>
+              <div className="mt-3 border-t border-neutral-200 pt-3">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-neutral-500">Decision rule</p>
+                <p className="mt-1.5 text-sm text-neutral-700">{filterSummary.decisionRule}</p>
+              </div>
+            </div>
+            <div className="rounded-xl border border-amber-200 bg-amber-50/70 px-3 py-3">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-700">Watchout</p>
+              <p className="mt-1.5 text-sm text-amber-900">{filterSummary.watchout}</p>
+            </div>
           </div>
         </div>
 
@@ -383,6 +447,50 @@ Start with this
             {!sectionDiff && comparedTemplates.length === 1 && (
               <div className="mt-2 rounded-lg border border-brand/20 bg-white px-2.5 py-2 text-[11px] text-brand">
                 Select one more design to compare the section flow side by side.
+              </div>
+            )}
+            {compareBrief && (
+              <div className="mt-3 rounded-lg border border-brand/20 bg-white p-3">
+                <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
+                  <div className="min-w-0">
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-neutral-500">Compare read</p>
+                    <h3 className="mt-1 text-sm font-semibold text-neutral-900">{compareBrief.title}</h3>
+                    <p className="mt-1 text-xs leading-5 text-neutral-600">{compareBrief.detail}</p>
+                  </div>
+                  {compareBrief.recommendedWinnerId && (
+                    <span className="rounded-full border border-rose-200 bg-rose-50 px-3 py-1 text-[11px] font-medium text-rose-700">
+                      Steadier pick: {templateCatalog.find((template) => template.id === compareBrief.recommendedWinnerId)?.name}
+                    </span>
+                  )}
+                </div>
+                <div className="mt-3 grid gap-3 md:grid-cols-2">
+                  <div className="rounded-xl border border-neutral-200 bg-neutral-50 px-3 py-3">
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-neutral-500">Best next move</p>
+                    <p className="mt-1.5 text-sm text-neutral-700">{compareBrief.bestNextMove}</p>
+                    <div className="mt-3 border-t border-neutral-200 pt-3">
+                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-neutral-500">Decision rule</p>
+                      <p className="mt-1.5 text-sm text-neutral-700">{compareBrief.decisionRule}</p>
+                    </div>
+                  </div>
+                  <div className="rounded-xl border border-amber-200 bg-amber-50/70 px-3 py-3">
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-700">Watchout</p>
+                    <p className="mt-1.5 text-sm text-amber-900">{compareBrief.watchout}</p>
+                  </div>
+                </div>
+                <div className="mt-3 grid gap-2 md:grid-cols-3">
+                  <div className="rounded-xl border border-neutral-200 bg-neutral-50 px-3 py-3">
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-neutral-500">Current</p>
+                    <p className="mt-1.5 text-sm text-neutral-700">{compareBrief.current}</p>
+                  </div>
+                  <div className="rounded-xl border border-neutral-200 bg-neutral-50 px-3 py-3">
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-neutral-500">Next</p>
+                    <p className="mt-1.5 text-sm text-neutral-700">{compareBrief.next}</p>
+                  </div>
+                  <div className="rounded-xl border border-neutral-200 bg-neutral-50 px-3 py-3">
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-neutral-500">Then</p>
+                    <p className="mt-1.5 text-sm text-neutral-700">{compareBrief.then}</p>
+                  </div>
+                </div>
               </div>
             )}
 
@@ -446,40 +554,6 @@ Start with this
                 </div>
               </div>
             )}
-          </div>
-        )}
-
-        {templateExperienceBrief && (
-          <div className="mt-4 rounded-xl border border-neutral-200 bg-white p-4 shadow-sm">
-            <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-              <div className="space-y-2">
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">Template confidence</p>
-                  <h2 className="mt-1 text-lg font-semibold text-neutral-900">{templateExperienceBrief.title}</h2>
-                  <p className="mt-1 text-sm text-neutral-600">{templateExperienceBrief.detail}</p>
-                  <p className="mt-2 text-xs text-neutral-500">{templateExperienceBrief.bestNextStep}</p>
-                  <p className="mt-2 text-xs font-medium text-neutral-700">{templateExperienceBrief.launchUse}</p>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[11px] font-medium text-emerald-700">
-                    {templateExperienceBrief.confidenceLabel}
-                  </span>
-                  {selectedTemplateManifest && (
-                    <span className="rounded-full border border-neutral-200 bg-neutral-50 px-2.5 py-1 text-[11px] font-medium text-neutral-700">
-                      {selectedTemplateManifest.sectionsIncluded} sections · {selectedTemplateManifest.modulesIncluded} modules
-                    </span>
-                  )}
-                </div>
-              </div>
-              <div className="min-w-0 space-y-1 lg:max-w-sm">
-                {templateExperienceBrief.callouts.map((callout) => (
-                  <p key={callout} className="text-sm text-neutral-600">{callout}</p>
-                ))}
-                {templateExperienceBrief.watchouts.map((watchout) => (
-                  <p key={watchout} className="text-sm text-amber-700">{watchout}</p>
-                ))}
-              </div>
-            </div>
           </div>
         )}
 
