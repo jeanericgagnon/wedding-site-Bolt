@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   buildAnalyticsBaseline,
   buildAnalyticsConfidenceCards,
+  buildAnalyticsNextMove,
   buildAnalyticsConfidenceSummary,
 } from './analyticsBaseline';
 
@@ -57,5 +58,29 @@ describe('analyticsBaseline', () => {
     expect(cards).toHaveLength(3);
     expect(cards[1]).toMatchObject({ label: 'Reachability trust', tone: 'error' });
     expect(cards[2].value).toBe('0/3');
+  });
+
+  it('recommends guest follow-up first when RSVP pressure is still high', () => {
+    const nextMove = buildAnalyticsNextMove(makeInput({
+      pendingGuests: 24,
+      confirmedGuests: 50,
+      declinedGuests: 10,
+    }));
+
+    expect(nextMove.target).toBe('guests');
+    expect(nextMove.ctaLabel).toMatch(/review guests/i);
+  });
+
+  it('recommends a builder polish pass once the baseline is strong', () => {
+    const nextMove = buildAnalyticsNextMove(makeInput({
+      confirmedGuests: 70,
+      declinedGuests: 20,
+      pendingGuests: 10,
+      contactableGuests: 96,
+      registryItemCount: 10,
+      activePhotoAlbumCount: 2,
+    }));
+
+    expect(nextMove.target).toBe('builder');
   });
 });

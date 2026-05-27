@@ -8,7 +8,7 @@ import {
   getFirstIncompleteChecklistItem,
   getIncompleteChecklistItems,
 } from './overviewUtils';
-import { buildAnalyticsBaseline, buildAnalyticsConfidenceCards, buildAnalyticsConfidenceSummary } from './analyticsBaseline';
+import { buildAnalyticsBaseline, buildAnalyticsConfidenceCards, buildAnalyticsConfidenceSummary, buildAnalyticsNextMove } from './analyticsBaseline';
 import { Link, useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { DashboardStateBlock } from '../../components/dashboard/DashboardStateBlock';
@@ -498,6 +498,17 @@ export const DashboardOverview: React.FC = () => {
     activePhotoAlbumCount: stats?.activePhotoAlbumCount ?? 0,
     interactiveSuggestionCount: interactiveSuggestions.length,
   });
+  const analyticsNextMove = buildAnalyticsNextMove({
+    totalGuests: stats?.totalGuests ?? 0,
+    confirmedGuests: stats?.confirmedGuests ?? 0,
+    declinedGuests: stats?.declinedGuests ?? 0,
+    pendingGuests: stats?.pendingGuests ?? 0,
+    contactableGuests: stats?.contactableGuestCount ?? 0,
+    registryItemCount: stats?.registryItemCount ?? 0,
+    photoAlbumCount: stats?.photoAlbumCount ?? 0,
+    activePhotoAlbumCount: stats?.activePhotoAlbumCount ?? 0,
+    interactiveSuggestionCount: interactiveSuggestions.length,
+  });
 
   const guestOpsCoach = buildGuestOpsCoach({
     totalGuests: stats?.totalGuests ?? 0,
@@ -625,6 +636,17 @@ export const DashboardOverview: React.FC = () => {
 
   function handleDayOfBrainAction(action: DayOfBrainAction) {
     handleControlTowerAction(action as ControlTowerAction);
+  }
+
+  function handleAnalyticsNextMove() {
+    const routeByTarget: Record<typeof analyticsNextMove.target, string> = {
+      guests: '/dashboard/guests',
+      messages: '/dashboard/messages',
+      registry: '/dashboard/registry',
+      photos: '/dashboard/photos',
+      builder: '/dashboard/builder',
+    };
+    navigate(routeByTarget[analyticsNextMove.target]);
   }
 
   function handleCoupleFocusAction(step: CoupleFocusStep) {
@@ -1398,6 +1420,17 @@ export const DashboardOverview: React.FC = () => {
                 </div>
                 <div className="rounded-lg border border-border-subtle bg-surface-secondary/20 px-3 py-2.5 text-xs text-text-secondary">
                   This is still the measured baseline before fuller analytics lands: response counts, registry readiness, photo setup, and guest prompts. The difference now is that the board also tells you how much confidence to place in those signals.
+                </div>
+                <div className="rounded-lg border border-border-subtle bg-white px-3 py-3">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-text-primary">{analyticsNextMove.title}</p>
+                      <p className="mt-1 text-xs text-text-secondary">{analyticsNextMove.detail}</p>
+                    </div>
+                    <Button variant="outline" size="sm" onClick={handleAnalyticsNextMove}>
+                      {analyticsNextMove.ctaLabel}
+                    </Button>
+                  </div>
                 </div>
                 <div className="space-y-2.5">
                   {analyticsBaseline.map((metric) => (

@@ -31,6 +31,13 @@ export interface AnalyticsConfidenceCard {
   tone: 'success' | 'warning' | 'error';
 }
 
+export interface AnalyticsNextMove {
+  title: string;
+  detail: string;
+  ctaLabel: string;
+  target: 'guests' | 'messages' | 'registry' | 'photos' | 'builder';
+}
+
 function pct(numerator: number, denominator: number): number {
   if (!denominator || denominator <= 0) return 0;
   return Math.round((numerator / denominator) * 10) / 10;
@@ -172,4 +179,62 @@ export function buildAnalyticsConfidenceCards(input: AnalyticsBaselineInput): An
       tone: guestFacingDepth === 3 ? 'success' : guestFacingDepth === 2 ? 'warning' : 'error',
     },
   ];
+}
+
+export function buildAnalyticsNextMove(input: AnalyticsBaselineInput): AnalyticsNextMove {
+  const respondedGuests = input.confirmedGuests + input.declinedGuests;
+  const responseRate = input.totalGuests > 0 ? pct(respondedGuests * 100, input.totalGuests) : 0;
+  const contactCoverage = input.totalGuests > 0 ? pct(input.contactableGuests * 100, input.totalGuests) : 0;
+
+  if (input.pendingGuests >= Math.max(8, Math.round(input.totalGuests * 0.12))) {
+    return {
+      title: 'Close the RSVP gap before trusting the board more deeply',
+      detail: `${input.pendingGuests} guests can still materially change how the rest of the board feels. Follow-up is worth more than extra polish right now.`,
+      ctaLabel: 'Review guests',
+      target: 'guests',
+    };
+  }
+
+  if (contactCoverage < 85) {
+    return {
+      title: 'Tighten contact coverage before the next message wave',
+      detail: 'A softer reachability layer makes every reminder and day-of update less reliable than it needs to be.',
+      ctaLabel: 'Fix guest contacts',
+      target: 'guests',
+    };
+  }
+
+  if (input.registryItemCount === 0) {
+    return {
+      title: 'Give guests one stronger gifting signal',
+      detail: 'A small live registry set does more for guest confidence than waiting for a perfect one.',
+      ctaLabel: 'Open registry',
+      target: 'registry',
+    };
+  }
+
+  if (input.activePhotoAlbumCount === 0) {
+    return {
+      title: 'Turn on one guest-ready photo path',
+      detail: 'Photo contribution is one of the easiest ways to make the guest experience feel alive instead of merely published.',
+      ctaLabel: 'Open photos',
+      target: 'photos',
+    };
+  }
+
+  if (responseRate >= 80 && contactCoverage >= 90) {
+    return {
+      title: 'The measured baseline is healthy enough for a polish pass',
+      detail: 'This is a good moment to improve the live guest-facing story instead of chasing missing basics.',
+      ctaLabel: 'Open builder',
+      target: 'builder',
+    };
+  }
+
+  return {
+    title: 'Use messages to keep the baseline moving',
+    detail: 'The board is useful already, and the next lift is turning that signal into one clean guest-facing nudge.',
+    ctaLabel: 'Open messages',
+    target: 'messages',
+  };
 }

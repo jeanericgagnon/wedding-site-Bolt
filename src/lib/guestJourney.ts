@@ -12,6 +12,7 @@ export interface GuestJourneyContext {
   inviteToken?: string | null;
   previewGuest?: string | null;
   isHubEntry?: boolean;
+  completedSurfaces?: GuestJourneySurface[];
 }
 
 export interface GuestJourneyCopy {
@@ -20,6 +21,36 @@ export interface GuestJourneyCopy {
   statusLabel: string;
   nextStepLabel: string;
   helperBadges: string[];
+}
+
+export interface GuestJourneyStep {
+  key: GuestJourneySurface;
+  label: string;
+  status: 'done' | 'current' | 'next' | 'available';
+}
+
+const SURFACE_LABELS: Record<GuestJourneySurface, string> = {
+  rsvp: 'RSVP',
+  travel: 'Travel',
+  photos: 'Photos',
+  contact: 'Details',
+  vault: 'Keepsake',
+};
+
+function getJourneyOrder(surface: GuestJourneySurface): GuestJourneySurface[] {
+  switch (surface) {
+    case 'travel':
+      return ['travel', 'rsvp', 'contact', 'photos'];
+    case 'photos':
+      return ['photos', 'rsvp', 'travel', 'contact'];
+    case 'contact':
+      return ['contact', 'rsvp', 'photos', 'travel'];
+    case 'vault':
+      return ['vault', 'photos', 'rsvp', 'travel'];
+    case 'rsvp':
+    default:
+      return ['rsvp', 'travel', 'photos', 'contact'];
+  }
 }
 
 function toSearchString(params: URLSearchParams): string {
@@ -171,5 +202,24 @@ export function buildGuestJourneyLinks(context: GuestJourneyContext): GuestJourn
       default:
         return true;
     }
+  });
+}
+
+export function buildGuestJourneySteps(context: GuestJourneyContext): GuestJourneyStep[] {
+  const completed = new Set(context.completedSurfaces ?? []);
+  const order = getJourneyOrder(context.currentSurface);
+  const nextSurface = order.find((surface) => surface !== context.currentSurface && !completed.has(surface)) ?? null;
+
+  return order.map((surface) => {
+    if (surface === context.currentSurface) {
+      return { key: surface, label: SURFACE_LABELS[surface], status: 'current' };
+    }
+    if (completed.has(surface)) {
+      return { key: surface, label: SURFACE_LABELS[surface], status: 'done' };
+    }
+    if (surface === nextSurface) {
+      return { key: surface, label: SURFACE_LABELS[surface], status: 'next' };
+    }
+    return { key: surface, label: SURFACE_LABELS[surface], status: 'available' };
   });
 }
