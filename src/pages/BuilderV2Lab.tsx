@@ -76,6 +76,7 @@ import {
 } from './builderV2PageState';
 import type { BuilderV2ReviewPageSnapshot } from './builderV2DocumentReviewState';
 import { buildBuilderV2SetupSeed } from './builderV2SetupSeed';
+import { buildBuilderV2PreviewInstances } from './builderV2PreviewProjection';
 
 type BlockType =
   | 'title'
@@ -1441,14 +1442,23 @@ export const BuilderV2Lab: React.FC = () => {
     }
   };
 
-  const previewInstances: SectionInstance[] = useMemo(() => orderedVisible.map((s) => ({
-    id: s.id,
-    type: (SECTION_TYPE_MAP[s.type] ?? 'custom') as SectionType,
-    variant: s.variant,
-    enabled: s.enabled,
-    bindings: {},
-    settings: { showTitle: true, title: s.type === 'rsvp' ? previewFields.rsvpTitle : s.title, subtitle: s.subtitle },
-  })), [orderedVisible, previewFields.rsvpTitle]);
+  const previewInstances: SectionInstance[] = useMemo(() => (
+    buildBuilderV2PreviewInstances({
+      pages,
+      activePageId: activePage.id,
+      sectionBlocks,
+    }).map((instance) => (
+      instance.type === 'rsvp'
+        ? {
+            ...instance,
+            settings: {
+              ...instance.settings,
+              title: previewFields.rsvpTitle || instance.settings.title,
+            },
+          }
+        : instance
+    ))
+  ), [activePage.id, pages, previewFields.rsvpTitle, sectionBlocks]);
 
   const commandItems = useMemo(() => {
     const base = [
