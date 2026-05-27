@@ -65,6 +65,17 @@ describe('publicBuilderV2WeddingData', () => {
               ],
             },
             {
+              id: 'venue-1',
+              type: 'venue',
+              variant: 'splitMap',
+              enabled: true,
+              title: 'Main Lawn',
+              subtitle: 'Ceremony on the lower terrace.',
+              blocks: [
+                { id: 'v1', type: 'text', data: { text: 'Shuttles return to downtown after dinner.' } },
+              ],
+            },
+            {
               id: 'registry-1',
               type: 'registry',
               variant: 'default',
@@ -119,7 +130,11 @@ describe('publicBuilderV2WeddingData', () => {
 
     expect(supplement.media?.heroImageUrl).toBe('https://example.com/hero.jpg');
     expect(supplement.couple?.displayName).toBe('Alex & Jordan');
-    expect(supplement.venues).toEqual([{ id: 'schedule-1-venue-0', name: 'Main Lawn' }]);
+    expect(supplement.venues).toEqual([{
+      id: 'schedule-1-venue-0',
+      name: 'Main Lawn',
+      notes: 'Ceremony on the lower terrace.\n\nShuttles return to downtown after dinner.',
+    }]);
     expect(supplement.schedule).toEqual([
       {
         id: 'schedule-1-event-0',
@@ -201,6 +216,41 @@ describe('publicBuilderV2WeddingData', () => {
     expect(supplement.couple?.displayName).toBe('Morgan & Avery');
     expect(supplement.event?.weddingDateISO).toBe('2027-09-14T16:00:00.000Z');
     expect(supplement.rsvp?.enabled).toBe(true);
+  });
+
+  it('derives visible venue sections into guest-facing venue entries when schedule locations are absent', () => {
+    const supplement = deriveWeddingDataFromBuilderV2Document({
+      version: 'v2',
+      updatedAtISO: '2026-05-28T00:00:00.000Z',
+      pages: [
+        {
+          id: 'home',
+          title: 'Home',
+          slug: 'home',
+          isHome: true,
+          hidden: false,
+          sections: [
+            {
+              id: 'venue-1',
+              type: 'venue',
+              variant: 'detailsFirst',
+              enabled: true,
+              title: 'Garden Terrace',
+              subtitle: 'Outdoor ceremony overlooking the vines.',
+              blocks: [
+                { id: 'v1', type: 'text', data: { text: 'Use the east gate for arrival and check-in.' } },
+              ],
+            },
+          ],
+        },
+      ],
+    });
+
+    expect(supplement.venues).toEqual([{
+      id: 'venue-1-venue',
+      name: 'Garden Terrace',
+      notes: 'Outdoor ceremony overlooking the vines.\n\nUse the east gate for arrival and check-in.',
+    }]);
   });
 
   it('merges supplemental builder v2 wedding data only into thin public snapshots', () => {

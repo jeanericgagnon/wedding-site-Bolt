@@ -2,6 +2,7 @@ import { getBuilderV2Pages, type BuilderV2Block, type BuilderV2Document, type Bu
 import { createEmptyWeddingData, type WeddingDataV1 } from '../types/weddingData';
 
 const hasMeaningfulString = (value: unknown): value is string => typeof value === 'string' && value.trim().length > 0;
+type WeddingVenue = WeddingDataV1['venues'][number];
 
 const getVisibleSections = (document: BuilderV2Document): BuilderV2Section[] => (
   getBuilderV2Pages(document)
@@ -72,6 +73,66 @@ const deriveFaq = (sections: BuilderV2Section[]): WeddingDataV1['faq'] => (
       }))
       .filter((item) => item.q || item.a))
 );
+
+const deriveVenueSectionEntries = (sections: BuilderV2Section[]): WeddingDataV1['venues'] => (
+  sections
+    .filter((section) => section.type === 'venue')
+    .map((section): WeddingVenue | null => {
+      const name = [
+        hasMeaningfulString(section.title) ? section.title.trim() : '',
+        ...section.blocks
+          .filter((block) => block.type === 'title')
+          .map((block) => (hasMeaningfulString(block.data.text) ? block.data.text.trim() : '')),
+      ].find(hasMeaningfulString) ?? '';
+
+      const notes = [
+        hasMeaningfulString(section.subtitle) ? section.subtitle.trim() : '',
+        ...section.blocks
+          .filter((block) => block.type === 'text' || block.type === 'story')
+          .map((block) => getBlockText(block))
+          .filter(hasMeaningfulString),
+      ].join('\n\n').trim();
+
+      if (!name && !notes) return null;
+
+      return {
+        id: `${section.id}-venue`,
+        name: name || undefined,
+        notes: notes || undefined,
+      };
+    })
+    .filter((venue): venue is WeddingVenue => venue !== null)
+);
+
+const mergeDerivedVenues = (
+  scheduleVenues: WeddingDataV1['venues'],
+  venueSections: WeddingDataV1['venues'],
+): WeddingDataV1['venues'] => {
+  if (venueSections.length === 0) return scheduleVenues;
+  if (scheduleVenues.length === 0) return venueSections;
+
+  const merged = [...scheduleVenues];
+
+  venueSections.forEach((venueSection) => {
+    const matchingIndex = merged.findIndex((venue) => (
+      hasMeaningfulString(venue.name)
+      && hasMeaningfulString(venueSection.name)
+      && venue.name.trim().toLowerCase() === venueSection.name.trim().toLowerCase()
+    ));
+
+    if (matchingIndex >= 0) {
+      merged[matchingIndex] = {
+        ...merged[matchingIndex],
+        notes: merged[matchingIndex]?.notes || venueSection.notes || undefined,
+      };
+      return;
+    }
+
+    merged.push(venueSection);
+  });
+
+  return merged;
+};
 
 const deriveSchedule = (sections: BuilderV2Section[]) => {
   const venues: WeddingDataV1['venues'] = [];
@@ -223,7 +284,8 @@ const deriveGallery = (sections: BuilderV2Section[]): WeddingDataV1['media']['ga
 
 export const deriveWeddingDataFromBuilderV2Document = (document: BuilderV2Document): Partial<WeddingDataV1> => {
   const sections = getVisibleSections(document);
-  const { venues, schedule, weddingDateISO } = deriveSchedule(sections);
+  const { venues: scheduleVenues, schedule, weddingDateISO } = deriveSchedule(sections);
+  const venues = mergeDerivedVenues(scheduleVenues, deriveVenueSectionEntries(sections));
   const faq = deriveFaq(sections);
   const travel = deriveTravel(sections);
   const registry = deriveRegistry(sections);
