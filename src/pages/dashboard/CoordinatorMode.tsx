@@ -20,6 +20,7 @@ import { getCoordinatorCorrectionEventId, getCoordinatorCorrectionGuestId } from
 import { resolveCoordinatorPrimaryActionTarget } from '../../lib/coordinatorPrimaryActionTarget';
 import { resolveCoordinatorQueueFocus } from '../../lib/coordinatorQueueFocus';
 import { resolveCoordinatorPanelFocus, type CoordinatorPanelFocus } from '../../lib/coordinatorPanelFocus';
+import { getPlannerHandoffCopy } from '../../lib/plannerHandoffState';
 import { resolveCoordinatorEscalationTimelineTarget } from '../../lib/coordinatorEscalationAction';
 import { normalizeCoordinatorModeSessionState } from '../../lib/coordinatorModeSessionState';
 import { normalizeCoordinatorDraftState } from '../../lib/coordinatorDraftState';
@@ -164,6 +165,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
   const [alertBusy, setAlertBusy] = useState(false);
   const [qnaItems, setQnaItems] = useState<QnaItem[]>([]);
   const [coordinatorRole, setCoordinatorRole] = useState<PlannerAccessRole>('owner');
+  const plannerHandoff = getPlannerHandoffCopy(coordinatorRole, 'coordinator');
   const [activeSiteRole, setActiveSiteRole] = useState<PlannerAccessRole>('owner');
   const [alertChannelFilter, setAlertChannelFilter] = useState<'all' | 'email' | 'sms'>('all');
   const [alertTimingFilter, setAlertTimingFilter] = useState<'all' | 'now' | 'scheduled'>('all');
@@ -2168,14 +2170,19 @@ export const DashboardCoordinatorMode: React.FC = () => {
           </div>
         </div>
 
-        {coordinatorRole === 'planner' && (
-          <div className="rounded-lg border border-primary/20 bg-primary/5 px-3 py-2 text-xs text-primary">
-            Planner view is on — this workspace stays focused on live guest movement, timeline decisions, and day-of updates.
-          </div>
-        )}
-        {coordinatorRole === 'viewer' && (
-          <div className="rounded-lg border border-border/40 bg-surface-subtle px-3 py-2 text-xs text-text-tertiary">
-            Viewer mode is on — timeline, check-in, alerts, and Q&A edits are turned off here.
+        {coordinatorRole !== 'owner' && (
+          <div className={`rounded-xl border px-3 py-3 ${
+            coordinatorRole === 'planner'
+              ? 'border-primary/20 bg-primary/5 text-primary'
+              : coordinatorRole === 'coordinator'
+                ? 'border-amber-200 bg-amber-50 text-amber-800'
+                : 'border-border/40 bg-surface-subtle text-text-tertiary'
+          }`}>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.16em]">Main focus</p>
+            <p className="mt-1 text-sm font-semibold">{plannerHandoff.focusTitle}</p>
+            <p className="mt-1 text-xs leading-5 opacity-90">{plannerHandoff.focusDetail}</p>
+            <p className="mt-3 text-[11px] font-semibold uppercase tracking-[0.16em]">Decision rule</p>
+            <p className="mt-1 text-xs leading-5 opacity-90">{plannerHandoff.decisionRule}</p>
           </div>
         )}
 

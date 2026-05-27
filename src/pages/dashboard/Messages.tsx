@@ -15,6 +15,7 @@ import { buildRsvpReminderDraft } from '../../lib/reminderDraftHelper';
 import { buildDayOfUpdateDraft } from '../../lib/dayOfUpdateHelper';
 import { buildEventReminderDraft } from '../../lib/eventReminderHelper';
 import { buildGuestOpsCoach, buildGuestOutreachSequence, buildMessageOpsCoach } from '../../lib/guestOpsCoach';
+import { getPlannerHandoffCopy } from '../../lib/plannerHandoffState';
 import { buildDayOfDispatchModel } from './dayOfDispatch';
 import { getFlowStatusLabel } from '../../lib/flowLabels';
 import { formatMessageEventOptionLabel } from './messageEventDate';
@@ -976,6 +977,7 @@ export const DashboardMessages: React.FC = () => {
   const [itineraryAudienceOptions, setItineraryAudienceOptions] = useState<AudienceOption[]>([]);
   const [eventGuestIds, setEventGuestIds] = useState<Record<string, Set<string>>>({});
   const [messagesRole, setMessagesRole] = useState<PlannerAccessRole>('owner');
+  const plannerHandoff = getPlannerHandoffCopy(messagesRole, 'messages');
   const [activeSiteRole, setActiveSiteRole] = useState<PlannerAccessRole>('owner');
   const [historyStatusFilter, setHistoryStatusFilter] = useState<'all' | 'active' | 'sent' | 'scheduled' | 'draft' | 'failed' | 'partial'>('all');
   const [historyChannelFilter, setHistoryChannelFilter] = useState<'all' | 'email' | 'sms'>('all');
@@ -2919,9 +2921,19 @@ export const DashboardMessages: React.FC = () => {
           </div>
         </div>
 
-        {messagesRole === 'planner' && (
-          <div className="rounded-lg border border-primary/20 bg-primary/5 px-3 py-2 text-xs text-primary">
-            Planner view is on — this workspace stays focused on guest communications, reminders, and day-of updates.
+        {messagesRole !== 'owner' && (
+          <div className={`rounded-xl border px-3 py-3 ${
+            messagesRole === 'planner'
+              ? 'border-primary/20 bg-primary/5 text-primary'
+              : messagesRole === 'coordinator'
+                ? 'border-amber-200 bg-amber-50 text-amber-800'
+                : 'border-border/40 bg-surface-subtle text-text-tertiary'
+          }`}>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.16em]">Main focus</p>
+            <p className="mt-1 text-sm font-semibold">{plannerHandoff.focusTitle}</p>
+            <p className="mt-1 text-xs leading-5 opacity-90">{plannerHandoff.focusDetail}</p>
+            <p className="mt-3 text-[11px] font-semibold uppercase tracking-[0.16em]">Decision rule</p>
+            <p className="mt-1 text-xs leading-5 opacity-90">{plannerHandoff.decisionRule}</p>
           </div>
         )}
 
