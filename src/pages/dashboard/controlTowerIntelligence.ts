@@ -2,11 +2,13 @@ import type { BadgeProps } from '../../components/ui';
 
 export type ControlTowerActionTarget =
   | 'builder'
+  | 'coordinator'
   | 'guests'
   | 'messages'
   | 'photos'
   | 'planning'
   | 'registry'
+  | 'seating'
   | 'vault';
 
 export interface ControlTowerAction {
@@ -139,6 +141,29 @@ export function buildControlTowerBriefing(input: ControlTowerIntelligenceInput):
       signals: buildSignals(input),
       primaryAction: { label: 'Open launch checklist', target: 'builder' },
       secondaryAction: { label: 'Check planning', target: 'planning' },
+    };
+  }
+
+  if (
+    weddingSoon
+    && input.isPublished
+    && input.pendingGuests <= Math.max(5, Math.round(input.totalGuests * 0.1))
+    && input.contactableGuestCount >= Math.max(input.totalGuests - 2, 0)
+    && input.activePhotoAlbumCount > 0
+  ) {
+    return {
+      eyebrow: 'Control tower briefing',
+      title: 'Guest-facing launch looks steady, so day-of readiness should lead now',
+      detail: input.daysUntilWedding === 0
+        ? 'The site is already carrying guests well. The highest-value move now is staying close to coordinator mode, check-in, and the room itself.'
+        : 'The guest-facing basics look healthy enough that the next meaningful polish lives in the live-day layer: run-of-show, seating confidence, and handoff readiness.',
+      badges: [
+        input.daysUntilWedding === 0 ? 'Wedding day' : `${input.daysUntilWedding} days left`,
+        `${responseRate}% replied`,
+      ],
+      signals: buildSignals(input),
+      primaryAction: { label: 'Open coordinator mode', target: 'coordinator' },
+      secondaryAction: { label: 'Check seating', target: 'seating' },
     };
   }
 

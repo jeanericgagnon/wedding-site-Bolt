@@ -1483,6 +1483,9 @@ export const DashboardSeating: React.FC = () => {
   }
 
   const selectedItineraryEvent = itineraryEvents.find(e => e.id === selectedEventId);
+  const daysUntilWedding = selectedItineraryEvent?.event_date
+    ? Math.ceil((new Date(`${selectedItineraryEvent.event_date}T12:00:00`).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+    : null;
   const arrivedGuestIds = new Set(assignments.filter(a => !!a.checked_in_at).map(a => a.guest_id));
   const assignedGuestIdSet = new Set(assignments.map(a => a.guest_id));
   const arrivedCount = allGuests.filter(g => g.is_attending && arrivedGuestIds.has(g.id)).length;
@@ -1603,9 +1606,11 @@ export const DashboardSeating: React.FC = () => {
             assignments,
             invalidCount,
             arrivedCount,
+            daysUntilWedding,
+            liveIssueCount: invalidCount + (checkInMode ? 1 : 0),
           });
 
-          const runInsightAction = (mode: 'auto-seat' | 'auto-create' | 'check-drift' | 'check-in') => {
+          const runInsightAction = (mode: 'auto-seat' | 'auto-create' | 'check-drift' | 'check-in' | 'open-coordinator') => {
             if (mode === 'auto-seat') {
               void handleAutoSeat();
               return;
@@ -1616,6 +1621,10 @@ export const DashboardSeating: React.FC = () => {
             }
             if (mode === 'check-drift') {
               void handleCheckDrift();
+              return;
+            }
+            if (mode === 'open-coordinator') {
+              window.location.assign('/dashboard/coordinator');
               return;
             }
             setCheckInMode(true);

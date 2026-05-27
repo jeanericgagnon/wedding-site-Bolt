@@ -60,6 +60,26 @@ describe('buildControlTowerBriefing', () => {
     expect(briefing.secondaryAction).toMatchObject({ target: 'messages' });
   });
 
+  it('switches into coordinator-first guidance when launch basics are steady and the wedding is close', () => {
+    const briefing = buildControlTowerBriefing(makeInput({
+      confirmedGuests: 78,
+      declinedGuests: 14,
+      pendingGuests: 8,
+      contactableGuestCount: 99,
+      registryItemCount: 18,
+      activePhotoAlbumCount: 2,
+      photoAlbumCount: 2,
+      interactiveSuggestionCount: 1,
+      recentRsvpCount: 5,
+      daysUntilWedding: 6,
+      isPublished: true,
+    }));
+
+    expect(briefing.title).toContain('day-of readiness');
+    expect(briefing.primaryAction).toMatchObject({ target: 'coordinator' });
+    expect(briefing.secondaryAction).toMatchObject({ target: 'seating' });
+  });
+
   it('falls back to a calm guidance mode when the board is steady', () => {
     const briefing = buildControlTowerBriefing(makeInput({
       confirmedGuests: 74,

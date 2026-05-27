@@ -118,6 +118,8 @@ import { buildCoordinatorExecutionBoard } from '../../lib/coordinatorExecutionBo
 import { buildCoordinatorAlertLogView } from '../../lib/coordinatorAlertLogView';
 import { buildCoordinatorNavigationBoard } from '../../lib/coordinatorNavigationBoard';
 import { getCoordinatorDemoSiteId } from './coordinatorDemoContext';
+import { buildDayOfBrainBriefing, type DayOfBrainAction } from './dayOfBrain';
+import { DayOfBrainCard } from './DayOfBrainCard';
 
 
 type AudienceOption = { value: string; label: string; count: number };
@@ -934,6 +936,31 @@ export const DashboardCoordinatorMode: React.FC = () => {
   }), [guests, events, timelineState]);
   const correctionGuestId = useMemo(() => getCoordinatorCorrectionGuestId(sortedGuests), [sortedGuests]);
   const correctionEventId = useMemo(() => getCoordinatorCorrectionEventId(events, timelineState), [events, timelineState]);
+  const dayOfBrainBriefing = useMemo(() => buildDayOfBrainBriefing({
+    daysUntilWedding: 0,
+    totalGuests: stats.total,
+    confirmedGuests: stats.confirmed,
+    pendingGuests: stats.pending,
+    checkedInCount: stats.checkedIn,
+    liveIssueCount: liveIssues.length + correctionCues.length,
+    watchCount: checkInWatchCount,
+    openQnaCount: qnaCounts.open,
+    scheduledAlertCount: alertStats.scheduled,
+    invalidSeatCount: 0,
+    unassignedSeatCount: 0,
+    splitHouseholdCount: 0,
+    isArchiveLike: false,
+  }), [
+    stats.total,
+    stats.confirmed,
+    stats.pending,
+    stats.checkedIn,
+    liveIssues.length,
+    correctionCues.length,
+    checkInWatchCount,
+    qnaCounts.open,
+    alertStats.scheduled,
+  ]);
   const activeTimelineEvent = useMemo(
     () => events.find((event) => event.id === activeTimelineEventId) ?? null,
     [events, activeTimelineEventId],
@@ -1058,6 +1085,46 @@ export const DashboardCoordinatorMode: React.FC = () => {
     focusCoordinatorQnaLane();
     setQnaFilter('open');
     setActiveQnaId(nextQnaId);
+  };
+
+  const runDayOfBrainAction = (action: DayOfBrainAction) => {
+    if (action.target === 'coordinator') {
+      if (liveIssues.length > 0 || checkInWatchCount > 0 || nextArrivals.length > 0) {
+        focusCoordinatorCheckInLane();
+        setCheckInFilter('arrivals');
+        setCheckInReviewOnly(checkInWatchCount > 0);
+        setActiveGuestId((checkInWatchCount > 0 ? checkInBoardTargetId : nextArrivals[0]?.id) ?? activeGuestId);
+        return;
+      }
+      if (qnaCounts.open > 0) {
+        focusCoordinatorQnaLane();
+        setQnaFilter('open');
+        setActiveQnaId(getFirstOpenCoordinatorQnaId(qnaItems));
+        return;
+      }
+      focusCoordinatorTimelineLane();
+      setActiveTimelineEventId(liveEventId ?? upNextEventId ?? activeTimelineEventId);
+      return;
+    }
+
+    if (action.target === 'messages') {
+      focusCoordinatorAlertLane();
+      return;
+    }
+
+    if (action.target === 'seating') {
+      window.location.assign('/dashboard/seating');
+      return;
+    }
+
+    if (action.target === 'guests') {
+      window.location.assign('/dashboard/guests');
+      return;
+    }
+
+    if (action.target === 'planning') {
+      window.location.assign('/dashboard/planning');
+    }
   };
 
   const jumpToOpsSnapshotLane = (key: 'check-in' | 'timeline' | 'qna' | 'alerting') => {
@@ -1640,10 +1707,13 @@ export const DashboardCoordinatorMode: React.FC = () => {
             ))}
           </div>
 
-          <div className="rounded-2xl border border-border/35 bg-white shadow-[0_4px_14px_rgba(15,23,42,0.05)] p-4">
-            <p className="text-sm font-medium text-text-primary mb-2">Attention now</p>
-            <p className="text-[11px] text-text-tertiary mb-2">This pulls together the live exceptions the coordinator should resolve first.</p>
-            <div className="space-y-2">
+          <div className="space-y-4">
+            <DayOfBrainCard briefing={dayOfBrainBriefing} onAction={runDayOfBrainAction} />
+
+            <div className="rounded-2xl border border-border/35 bg-white shadow-[0_4px_14px_rgba(15,23,42,0.05)] p-4">
+              <p className="text-sm font-medium text-text-primary mb-2">Attention now</p>
+              <p className="text-[11px] text-text-tertiary mb-2">This pulls together the live exceptions the coordinator should resolve first.</p>
+              <div className="space-y-2">
               {liveIssues.length === 0 && correctionCues.length === 0 && (
                 <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2">
                   <p className="text-sm font-medium text-emerald-800">Board is clear right now</p>
@@ -1687,8 +1757,8 @@ export const DashboardCoordinatorMode: React.FC = () => {
                   <p className="mt-1 text-[10px] text-text-tertiary/80">{getCoordinatorActionHint('correction')}</p>
                 </button>
               ))}
-            </div>
-            <div className="mt-3 rounded-lg border border-border/50 bg-surface-subtle/30 px-3 py-2">
+              </div>
+              <div className="mt-3 rounded-lg border border-border/50 bg-surface-subtle/30 px-3 py-2">
               <p className="text-xs font-medium text-text-primary">Next arrivals</p>
               {nextArrivals.length === 0 ? (
                 <p className="mt-1 text-xs text-text-tertiary">
@@ -1715,11 +1785,12 @@ export const DashboardCoordinatorMode: React.FC = () => {
                   ))}
                 </div>
               )}
-            </div>
-            <div className="mt-3 flex flex-wrap gap-2">
+              </div>
+              <div className="mt-3 flex flex-wrap gap-2">
               <a href="/dashboard/rsvp-board" className="rounded border border-border px-2.5 py-1 text-[11px] text-text-secondary hover:border-primary/40 hover:text-primary">Open RSVP board</a>
               <a href="/dashboard/seating-lookup" className="rounded border border-border px-2.5 py-1 text-[11px] text-text-secondary hover:border-primary/40 hover:text-primary">Open seating lookup</a>
               <a href="/dashboard/planning" className="rounded border border-border px-2.5 py-1 text-[11px] text-text-secondary hover:border-primary/40 hover:text-primary">Open planning workspace</a>
+              </div>
             </div>
           </div>
         </div>

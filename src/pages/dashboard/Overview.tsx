@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { readSetupDraft, setupDraftProgress } from '../../lib/setupDraft';
 import { SITE_VISIBILITY_COPY } from '../../lib/siteVisibilityCopy';
 import {
@@ -39,6 +39,8 @@ import { deriveNameChangeLifecycleStatus } from './nameChangeLifecycleStatus';
 import { hydrateNameChangeWorkspace, loadNameChangeWorkspace } from './planning/nameChangeService';
 import { buildControlTowerBriefing, type ControlTowerAction } from './controlTowerIntelligence';
 import { ControlTowerBriefingCard } from './ControlTowerBriefingCard';
+import { buildDayOfBrainBriefing, type DayOfBrainAction } from './dayOfBrain';
+import { DayOfBrainCard } from './DayOfBrainCard';
 
 const DEFAULT_NAME_CHANGE_INSIGHTS: NameChangeOverviewInsights = {
   coreChainLabel: 'Certificate, SSA, and DMV stay together so the legal identity chain does not drift.',
@@ -556,18 +558,39 @@ export const DashboardOverview: React.FC = () => {
     isPublished: stats?.isPublished ?? false,
     isArchiveLike: archiveMode.isArchiveLike,
   });
+  const dayOfBrainBriefing = buildDayOfBrainBriefing({
+    daysUntilWedding: stats?.daysUntilWedding ?? null,
+    totalGuests: stats?.totalGuests ?? 0,
+    confirmedGuests: stats?.confirmedGuests ?? 0,
+    pendingGuests: stats?.pendingGuests ?? 0,
+    checkedInCount: 0,
+    liveIssueCount: 0,
+    watchCount: 0,
+    openQnaCount: 0,
+    scheduledAlertCount: 0,
+    invalidSeatCount: 0,
+    unassignedSeatCount: 0,
+    splitHouseholdCount: 0,
+    isArchiveLike: archiveMode.isArchiveLike,
+  });
 
   function handleControlTowerAction(action: ControlTowerAction) {
     const routeByTarget: Record<ControlTowerAction['target'], string> = {
       builder: '/dashboard/builder',
+      coordinator: '/dashboard/coordinator',
       guests: '/dashboard/guests',
       messages: '/dashboard/messages',
       photos: '/dashboard/photos',
       planning: '/dashboard/planning',
       registry: '/dashboard/registry',
+      seating: '/dashboard/seating',
       vault: '/dashboard/vault',
     };
     navigate(routeByTarget[action.target]);
+  }
+
+  function handleDayOfBrainAction(action: DayOfBrainAction) {
+    handleControlTowerAction(action as ControlTowerAction);
   }
 
   return (
@@ -674,6 +697,9 @@ export const DashboardOverview: React.FC = () => {
         ) : (
           <>
             <ControlTowerBriefingCard briefing={controlTowerBriefing} onAction={handleControlTowerAction} />
+            {(stats?.daysUntilWedding !== null || archiveMode.isArchiveLike) && (
+              <DayOfBrainCard briefing={dayOfBrainBriefing} onAction={handleDayOfBrainAction} />
+            )}
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               <Card variant="bordered" padding="md" className="h-full shadow-sm">

@@ -76,4 +76,21 @@ describe('buildSeatingInsightCard', () => {
     expect(result.primaryAction).toMatchObject({ mode: 'auto-seat' });
     expect(result.badges[0]).toContain('open seat');
   });
+
+  it('shifts from layout work to live coordination once the room is settled near the wedding', () => {
+    const result = buildSeatingInsightCard({
+      counters: { invited: 8, attending: 8, declined: 0, pending: 0, seated: 8, unassigned: 0 },
+      guests: [makeGuest('1'), makeGuest('2')],
+      tables: baseTables,
+      assignments: [makeAssignment('a1', '1', 't1'), makeAssignment('a2', '2', 't1')],
+      invalidCount: 0,
+      arrivedCount: 3,
+      daysUntilWedding: 2,
+      liveIssueCount: 1,
+    });
+
+    expect(result.title).toContain('room is set');
+    expect(result.primaryAction).toMatchObject({ mode: 'check-in' });
+    expect(result.secondaryAction).toMatchObject({ mode: 'open-coordinator' });
+  });
 });

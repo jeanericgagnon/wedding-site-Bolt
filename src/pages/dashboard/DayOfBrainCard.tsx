@@ -1,0 +1,53 @@
+import React from 'react';
+import { Button, Card, CardDescription, CardHeader, CardTitle, Badge } from '../../components/ui';
+import type { DayOfBrainAction, DayOfBrainBriefing } from './dayOfBrain';
+
+interface DayOfBrainCardProps {
+  briefing: DayOfBrainBriefing;
+  onAction: (action: DayOfBrainAction) => void;
+}
+
+export const DayOfBrainCard: React.FC<DayOfBrainCardProps> = ({ briefing, onAction }) => (
+  <Card variant="bordered" padding="lg" className="shadow-sm">
+    <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+      <div className="space-y-4">
+        <CardHeader className="mb-0">
+          <p className="text-xs uppercase tracking-[0.22em] text-text-tertiary">{briefing.eyebrow}</p>
+          <CardTitle className="mt-1">{briefing.title}</CardTitle>
+          <CardDescription>{briefing.detail}</CardDescription>
+        </CardHeader>
+
+        <div className="flex flex-wrap gap-2">
+          {briefing.badges.map((badge) => (
+            <Badge key={badge} variant="secondary">{badge}</Badge>
+          ))}
+        </div>
+
+        <div className="grid gap-3 md:grid-cols-3">
+          {briefing.signals.map((signal) => (
+            <div key={signal.label} className="rounded-xl border border-border/40 bg-surface-subtle/35 px-3 py-3">
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-xs font-medium text-text-secondary">{signal.label}</p>
+                <Badge variant={signal.variant}>{signal.value}</Badge>
+              </div>
+              <p className="mt-2 text-xs text-text-tertiary">{signal.detail}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="flex flex-wrap gap-2 lg:max-w-xs lg:justify-end">
+        {briefing.primaryAction && (
+          <Button size="sm" variant="accent" onClick={() => onAction(briefing.primaryAction!)}>
+            {briefing.primaryAction.label}
+          </Button>
+        )}
+        {briefing.secondaryAction && (
+          <Button size="sm" variant="outline" onClick={() => onAction(briefing.secondaryAction!)}>
+            {briefing.secondaryAction.label}
+          </Button>
+        )}
+      </div>
+    </div>
+  </Card>
+);

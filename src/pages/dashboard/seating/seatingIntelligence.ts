@@ -2,7 +2,7 @@ import type { EventCounters, EligibleGuest, SeatingAssignment, SeatingTable } fr
 
 export interface SeatingInsightAction {
   label: string;
-  mode: 'auto-seat' | 'auto-create' | 'check-drift' | 'check-in';
+  mode: 'auto-seat' | 'auto-create' | 'check-drift' | 'check-in' | 'open-coordinator';
 }
 
 export interface SeatingInsightCardModel {
@@ -65,8 +65,10 @@ export function buildSeatingInsightCard(args: {
   assignments: SeatingAssignment[];
   invalidCount: number;
   arrivedCount: number;
+  daysUntilWedding?: number | null;
+  liveIssueCount?: number;
 }): SeatingInsightCardModel {
-  const { counters, guests, tables, assignments, invalidCount, arrivedCount } = args;
+  const { counters, guests, tables, assignments, invalidCount, arrivedCount, daysUntilWedding = null, liveIssueCount = 0 } = args;
   const safeCounters = counters ?? {
     invited: 0,
     attending: 0,
@@ -152,6 +154,28 @@ export function buildSeatingInsightCard(args: {
       ],
       primaryAction: { label: 'Open check-in mode', mode: 'check-in' },
       secondaryAction: { label: 'Check assignments', mode: 'check-drift' },
+    };
+  }
+
+  if (daysUntilWedding !== null && daysUntilWedding <= 7) {
+    return {
+      eyebrow: 'Seating coach',
+      title: 'The room is set, so live handoff matters more than more reshuffling',
+      detail: daysUntilWedding === 0
+        ? 'Guests already have seats, so the best move now is using the room to support check-in speed and live coordinator clarity instead of reopening settled tables.'
+        : 'With the wedding this close, seat changes should stay intentional. Keep the room stable and use coordinator mode for the live day plan around it.',
+      badges: [
+        `${pluralize(safeCounters.seated, 'guest')} seated`,
+        liveIssueCount > 0 ? `${pluralize(liveIssueCount, 'live issue')}` : `${arrivedCount} arrived`,
+      ],
+      callouts: [
+        'Treat seating as support for the door, not a separate project now.',
+        liveIssueCount > 0
+          ? 'There is already live coordinator pressure building, so avoid extra room churn.'
+          : 'If something changes, adjust only the tables that truly need it.',
+      ],
+      primaryAction: { label: 'Open check-in mode', mode: 'check-in' },
+      secondaryAction: { label: 'Open coordinator mode', mode: 'open-coordinator' },
     };
   }
 
