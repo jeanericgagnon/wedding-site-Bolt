@@ -165,6 +165,13 @@ const getSectionNarrativeText = (section: BuilderV2Section) => {
   return parts.join('\n\n');
 };
 
+const getDressCodeSuggestionText = (section: BuilderV2Section) => (
+  getMeaningfulBlocks(section.blocks, ['qna', 'faqItem'])
+    .flatMap((block) => [block.data.answer, block.data.text, block.data.question, block.data.title])
+    .filter((value): value is string => typeof value === 'string' && value.trim().length > 0)
+    .map((value) => value.trim())
+);
+
 const getSectionNoteCards = (
   section: BuilderV2Section,
   types: BuilderV2Block['type'][],
@@ -296,6 +303,21 @@ const toLegacyBuilderSettings = (section: BuilderV2Section): Record<string, unkn
           section.subtitle,
         ]),
       };
+    case 'dress-code': {
+      const description = getFirstMeaningfulString(section, [
+        getSectionNarrativeText(section),
+        section.subtitle,
+      ]);
+      const suggestions = getDressCodeSuggestionText(section);
+
+      return {
+        ...common,
+        dressCodeLabel: getFirstMeaningfulString(section, [section.title, common.title as string | undefined, 'Dress Code']),
+        description,
+        suggestions,
+        additionalNote: '',
+      };
+    }
     case 'contact':
       return {
         ...common,

@@ -399,6 +399,79 @@ describe('legacy adapters', () => {
     ]);
   });
 
+  it('maps builder v2 dress-code sections into legacy public runtime settings without inventing extras', () => {
+    const project = builderV2DocumentToBuilderProject({
+      version: 'v2',
+      updatedAtISO: '2026-05-27T21:00:00.000Z',
+      pages: [
+        {
+          id: 'home',
+          title: 'Home',
+          slug: 'home',
+          isHome: true,
+          hidden: false,
+          sections: [
+            {
+              id: 'dress-code-1',
+              type: 'dress-code',
+              variant: 'default',
+              enabled: true,
+              title: 'Cocktail Attire',
+              subtitle: 'Dressy, comfortable, and ready for an outdoor evening.',
+              blocks: [
+                { id: 'dress-note', type: 'text', data: { text: 'Think polished looks with layers for a cool night.' } },
+                { id: 'dress-tip-1', type: 'qna', data: { answer: 'Block heels and loafers work well on the lawn.' } },
+                { id: 'dress-tip-2', type: 'faqItem', data: { answer: 'Please skip denim and athletic wear.' } },
+              ],
+            },
+          ],
+        },
+      ],
+    });
+
+    expect(project.pages[0].sections[0].settings).toMatchObject({
+      dressCodeLabel: 'Cocktail Attire',
+      description: 'Think polished looks with layers for a cool night.',
+      suggestions: [
+        'Block heels and loafers work well on the lawn.',
+        'Please skip denim and athletic wear.',
+      ],
+    });
+    expect(project.pages[0].sections[0].settings.additionalNote).toBe('');
+  });
+
+  it('keeps builder v2 dress-code sections sparse when the source is sparse', () => {
+    const project = builderV2DocumentToBuilderProject({
+      version: 'v2',
+      updatedAtISO: '2026-05-27T21:00:00.000Z',
+      pages: [
+        {
+          id: 'home',
+          title: 'Home',
+          slug: 'home',
+          isHome: true,
+          hidden: false,
+          sections: [
+            {
+              id: 'dress-code-2',
+              type: 'dress-code',
+              variant: 'default',
+              enabled: true,
+              title: 'Dress Code',
+              blocks: [],
+            },
+          ],
+        },
+      ],
+    });
+
+    expect(project.pages[0].sections[0].settings).toMatchObject({
+      dressCodeLabel: 'Dress Code',
+      description: '',
+      suggestions: [],
+    });
+  });
+
   it('detects legacy input shapes safely', () => {
     expect(looksLikeLayoutConfigV1({ version: '1', templateId: 'modern-luxe', pages: [] })).toBe(true);
     expect(looksLikeBuilderProject({ weddingId: 'w1', templateId: 'modern-luxe', themeId: 'romantic', pages: [] })).toBe(true);
