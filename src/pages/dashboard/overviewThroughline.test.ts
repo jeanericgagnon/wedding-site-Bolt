@@ -38,9 +38,9 @@ describe('buildOverviewThroughline', () => {
         badges: ['12 pending RSVP'],
         signals: [],
         sequence: [
-          { label: 'Review pending guests', status: 'current' },
-          { label: 'Send the next reminder', status: 'next' },
-          { label: 'Re-check the board', status: 'then' },
+          { label: 'Review pending guests', detail: 'Start with the guests who can still materially change how the board feels.', status: 'current' },
+          { label: 'Send the next reminder', detail: 'Turn that guest list review into one clean outreach pass instead of waiting for passive movement.', status: 'next' },
+          { label: 'Re-check the board', detail: 'Let the reminder results change the next move before you reopen any softer polish work.', status: 'then' },
         ],
         primaryAction: { label: 'Review guests', target: 'guests' },
         secondaryAction: { label: 'Open messages', target: 'messages' },

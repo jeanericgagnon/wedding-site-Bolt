@@ -39,6 +39,7 @@ export interface ControlTowerBriefing {
   signals: ControlTowerSignal[];
   sequence: Array<{
     label: string;
+    detail: string;
     status: 'current' | 'next' | 'then';
   }>;
   primaryAction?: ControlTowerAction;
@@ -158,9 +159,9 @@ export function buildControlTowerBriefing(input: ControlTowerIntelligenceInput):
       ],
       signals: buildSignals(input),
       sequence: [
-        { label: 'Curate photos', status: 'current' },
-        { label: 'Open keepsake vaults', status: 'next' },
-        { label: 'Polish the archive story', status: 'then' },
+        { label: 'Curate photos', detail: 'Use the strongest active album to decide what belongs in the first real keepsake pass.', status: 'current' },
+        { label: 'Open keepsake vaults', detail: 'Let the memory lane become a shared archive path instead of leaving it implied.', status: 'next' },
+        { label: 'Polish the archive story', detail: 'Only after the living memory path exists should you widen the archive framing.', status: 'then' },
       ],
       primaryAction: { label: 'Open vault', target: 'vault' },
       secondaryAction: { label: 'Review photos', target: 'photos' },
@@ -182,9 +183,9 @@ export function buildControlTowerBriefing(input: ControlTowerIntelligenceInput):
       ],
       signals: buildSignals(input),
       sequence: [
-        { label: 'Clear launch blockers', status: 'current' },
-        { label: 'Preview guest-facing flow', status: 'next' },
-        { label: 'Publish the live site', status: 'then' },
+        { label: 'Clear launch blockers', detail: 'Remove the remaining publish truth gaps before you spend energy on anything secondary.', status: 'current' },
+        { label: 'Preview guest-facing flow', detail: 'Walk the real guest path once the blockers are gone so launch confidence comes from lived truth.', status: 'next' },
+        { label: 'Publish the live site', detail: 'Only publish once the path guests will actually use feels clean and steady.', status: 'then' },
       ],
       primaryAction: { label: 'Open launch checklist', target: 'builder-launch' },
       secondaryAction: { label: 'Check planning', target: 'planning' },
@@ -206,9 +207,9 @@ export function buildControlTowerBriefing(input: ControlTowerIntelligenceInput):
       ],
       signals: buildSignals(input),
       sequence: [
-        { label: 'Confirm guest access path', status: 'current' },
-        { label: 'Preview the restricted flow', status: 'next' },
-        { label: 'Return to live-day polish', status: 'then' },
+        { label: 'Confirm guest access path', detail: 'Make sure the real password or invite route is the one every handoff is carrying.', status: 'current' },
+        { label: 'Preview the restricted flow', detail: 'Walk the protected guest path once so reminders and print packs are not sending people into guesswork.', status: 'next' },
+        { label: 'Return to live-day polish', detail: 'Once the restricted path is trustworthy, let the rest of readiness stay focused on the live day.', status: 'then' },
       ],
       primaryAction: { label: 'Review guest access settings', target: 'settings' },
       secondaryAction: { label: 'Open messages', target: 'messages' },
@@ -241,9 +242,9 @@ export function buildControlTowerBriefing(input: ControlTowerIntelligenceInput):
       ],
       signals: buildSignals(input),
       sequence: [
-        { label: 'Stay in coordinator mode', status: 'current' },
-        { label: 'Keep seating stable', status: 'next' },
-        { label: 'Only react to live exceptions', status: 'then' },
+        { label: 'Stay in coordinator mode', detail: 'Let the live board lead while guests, timing, and questions are the highest-value surface.', status: 'current' },
+        { label: 'Keep seating stable', detail: 'Use seating as a support layer now instead of reopening the room as a design project.', status: 'next' },
+        { label: 'Only react to live exceptions', detail: 'Keep the rest of the system calm unless reality actually changes in front of the team.', status: 'then' },
       ],
       primaryAction: { label: 'Open coordinator mode', target: 'coordinator' },
       secondaryAction: { label: 'Check seating', target: 'seating' },
@@ -265,9 +266,9 @@ export function buildControlTowerBriefing(input: ControlTowerIntelligenceInput):
       ],
       signals: buildSignals(input),
       sequence: [
-        { label: 'Review pending guests', status: 'current' },
-        { label: 'Send the next reminder', status: 'next' },
-        { label: 'Re-check the board', status: 'then' },
+        { label: 'Review pending guests', detail: 'Start with the guests who can still materially change how the board feels.', status: 'current' },
+        { label: 'Send the next reminder', detail: 'Turn that guest list review into one clean outreach pass instead of waiting for passive movement.', status: 'next' },
+        { label: 'Re-check the board', detail: 'Let the reminder results change the next move before you reopen any softer polish work.', status: 'then' },
       ],
       primaryAction: { label: 'Review guests', target: 'guests' },
       secondaryAction: { label: 'Open messages', target: 'messages' },
@@ -289,9 +290,9 @@ export function buildControlTowerBriefing(input: ControlTowerIntelligenceInput):
       ],
       signals: buildSignals(input),
       sequence: [
-        { label: 'Fix missing contacts', status: 'current' },
-        { label: 'Queue the next outreach wave', status: 'next' },
-        { label: 'Return to RSVP follow-through', status: 'then' },
+        { label: 'Fix missing contacts', detail: 'Close the direct reachability gaps first so future reminders are not working through a broken list.', status: 'current' },
+        { label: 'Queue the next outreach wave', detail: 'Once the guest list can hear from you cleanly, the reminder lane becomes much more trustworthy.', status: 'next' },
+        { label: 'Return to RSVP follow-through', detail: 'The payoff is a quieter, more dependable guest board in every later stage.', status: 'then' },
       ],
       primaryAction: { label: 'Fix guest contacts', target: 'guests' },
       secondaryAction: { label: 'Open messages', target: 'messages' },
@@ -313,9 +314,9 @@ export function buildControlTowerBriefing(input: ControlTowerIntelligenceInput):
       ],
       signals: buildSignals(input),
       sequence: [
-        { label: 'Add the anchor schedule', status: 'current' },
-        { label: 'Preview the guest-facing timeline', status: 'next' },
-        { label: 'Return to live-day polish', status: 'then' },
+        { label: 'Add the anchor schedule', detail: 'Give guests the ceremony, reception, and other must-know events before you ask messaging or polish to carry the gap.', status: 'current' },
+        { label: 'Preview the guest-facing timeline', detail: 'Once the schedule spine exists, confirm that the public weekend story now reads cleanly.', status: 'next' },
+        { label: 'Return to live-day polish', detail: 'Only after the schedule is trustworthy should the softer guest-facing layers regain attention.', status: 'then' },
       ],
       primaryAction: { label: 'Open itinerary', target: 'itinerary' },
       secondaryAction: { label: 'Open site polish', target: 'builder-polish' },
@@ -337,9 +338,9 @@ export function buildControlTowerBriefing(input: ControlTowerIntelligenceInput):
       ],
       signals: buildSignals(input),
       sequence: [
-        { label: 'Add live registry items', status: 'current' },
-        { label: 'Check the guest-facing page', status: 'next' },
-        { label: 'Return to broader polish', status: 'then' },
+        { label: 'Add live registry items', detail: 'Use one honest gifting path to make the site feel more real right away.', status: 'current' },
+        { label: 'Check the guest-facing page', detail: 'Let the first few gifts carry clarity before you expand the list for its own sake.', status: 'next' },
+        { label: 'Return to broader polish', detail: 'Broaden the lane only once the initial registry path already feels dependable.', status: 'then' },
       ],
       primaryAction: { label: 'Open registry', target: 'registry' },
       secondaryAction: { label: 'Open site polish', target: 'builder-polish' },
@@ -365,9 +366,9 @@ export function buildControlTowerBriefing(input: ControlTowerIntelligenceInput):
       ],
       signals: buildSignals(input),
       sequence: [
-        { label: 'Activate a photo path', status: 'current' },
-        { label: 'Check the guest upload flow', status: 'next' },
-        { label: 'Return to site polish', status: 'then' },
+        { label: 'Activate a photo path', detail: 'Open the simplest live contribution path first so the memory layer actually starts moving.', status: 'current' },
+        { label: 'Check the guest upload flow', detail: 'A single working lane teaches you more than several empty promises.', status: 'next' },
+        { label: 'Return to site polish', detail: 'Once guests are participating, let that real signal shape the next polish decisions.', status: 'then' },
       ],
       primaryAction: { label: 'Review photos', target: 'photos' },
       secondaryAction: { label: 'Open site polish', target: 'builder-polish' },
@@ -389,9 +390,9 @@ export function buildControlTowerBriefing(input: ControlTowerIntelligenceInput):
       ],
       signals: buildSignals(input),
       sequence: [
-        { label: 'Review guest input', status: 'current' },
-        { label: 'Adjust the site story', status: 'next' },
-        { label: 'Re-check guest experience', status: 'then' },
+        { label: 'Review guest input', detail: 'Start with the feedback guests are already giving you instead of inventing hypothetical polish work.', status: 'current' },
+        { label: 'Adjust the site story', detail: 'Use the clearest suggestion to improve one real surface before widening the response.', status: 'next' },
+        { label: 'Re-check guest experience', detail: 'Let the best real guest cue inform the next polish move across the site.', status: 'then' },
       ],
       primaryAction: { label: 'Review guest prompts', target: 'suggestions' },
       secondaryAction: { label: 'Open photos', target: 'photos' },
@@ -412,9 +413,9 @@ export function buildControlTowerBriefing(input: ControlTowerIntelligenceInput):
     ],
     signals: buildSignals(input),
     sequence: [
-      { label: 'Make one quality pass', status: 'current' },
-      { label: 'Review guests if needed', status: 'next' },
-      { label: 'Leave the board calm', status: 'then' },
+      { label: 'Make one quality pass', detail: 'Choose one guest-facing trust edge to improve instead of spreading attention everywhere.', status: 'current' },
+      { label: 'Review guests if needed', detail: 'If a real guest signal rises, let it redirect the next move instead of reopening everything by default.', status: 'next' },
+      { label: 'Leave the board calm', detail: 'Once that contained move is done, leave the rest of the system steady until reality changes.', status: 'then' },
     ],
     primaryAction: { label: 'Open site polish', target: 'builder-polish' },
     secondaryAction: { label: 'Review guests', target: 'guests' },

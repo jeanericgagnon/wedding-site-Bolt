@@ -62,6 +62,7 @@ export const ControlTowerBriefingCard: React.FC<ControlTowerBriefingCardProps> =
                 {getFlowStatusLabel(step.status)}
               </Badge>
             </div>
+            <p className="mt-2 text-xs leading-5 text-text-secondary">{step.detail}</p>
           </div>
         ))}
       </div>

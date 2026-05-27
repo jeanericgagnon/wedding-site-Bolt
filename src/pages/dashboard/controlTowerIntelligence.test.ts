@@ -51,6 +51,7 @@ describe('buildControlTowerBriefing', () => {
     expect(briefing.primaryAction).toMatchObject({ target: 'builder-launch' });
     expect(briefing.badges).toContain('3 blockers');
     expect(briefing.sequence[0]).toMatchObject({ status: 'current' });
+    expect(briefing.sequence[0]?.detail).toMatch(/publish truth gaps/i);
   });
 
   it('prioritizes RSVP follow-up when replies are lagging', () => {
@@ -69,6 +70,7 @@ describe('buildControlTowerBriefing', () => {
     expect(briefing.primaryAction).toMatchObject({ target: 'guests' });
     expect(briefing.secondaryAction).toMatchObject({ target: 'messages' });
     expect(briefing.sequence.map((step) => step.status)).toEqual(['current', 'next', 'then']);
+    expect(briefing.sequence[1]?.detail).toMatch(/clean outreach pass/i);
   });
 
   it('switches into coordinator-first guidance when launch basics are steady and the wedding is close', () => {
@@ -169,5 +171,6 @@ describe('buildControlTowerBriefing', () => {
     expect(briefing.bestNextMove).toMatch(/contained quality pass|board stay calm/i);
     expect(briefing.decisionRule).toMatch(/restraint beats churn/i);
     expect(briefing.primaryAction).toMatchObject({ target: 'builder-polish' });
+    expect(briefing.sequence[2]?.detail).toMatch(/leave the rest of the system steady/i);
   });
 });
