@@ -71,6 +71,8 @@ describe('planningDecisionAssistant', () => {
     });
 
     expect(model.title).toMatch(/Clear the overdue work first/i);
+    expect(model.focusTitle).toMatch(/task board/i);
+    expect(model.decisionRule).toMatch(/fix that truth before you optimize/i);
     expect(model.primaryAction?.target).toBe('tasks');
     expect(model.secondaryAction?.target).toBe('seating');
   });
@@ -82,6 +84,8 @@ describe('planningDecisionAssistant', () => {
     ], 10000);
 
     expect(model.title).toMatch(/A few categories need a second pass/i);
+    expect(model.focusTitle).toMatch(/wrong story/i);
+    expect(model.decisionRule).toMatch(/fix those first/i);
     expect(model.detail).toMatch(/Venue/i);
     expect(model.detail).toMatch(/Florals/i);
   });
@@ -97,6 +101,8 @@ describe('planningDecisionAssistant', () => {
     });
 
     expect(model.title).toMatch(/schedule anchors/i);
+    expect(model.focusTitle).toMatch(/schedule spine/i);
+    expect(model.decisionRule).toMatch(/schedule anchors beat aesthetic polish/i);
     expect(model.primaryAction?.target).toBe('itinerary');
     expect(model.secondaryAction?.target).toBe('seating');
   });
@@ -108,6 +114,8 @@ describe('planningDecisionAssistant', () => {
     ]);
 
     expect(model.title).toMatch(/still need cleaner contact details/i);
+    expect(model.focusTitle).toMatch(/reliable contact path/i);
+    expect(model.decisionRule).toMatch(/contact truth is missing/i);
     expect(model.badges[0]).toMatch(/2 missing direct contact/i);
   });
 
@@ -121,6 +129,8 @@ describe('planningDecisionAssistant', () => {
     ]);
 
     expect(model.title).toMatch(/High-priority work needs a short weekly pass/i);
+    expect(model.focusTitle).toMatch(/matter this week/i);
+    expect(model.decisionRule).toMatch(/tighten owners and dates/i);
     expect(model.badges[0]).toMatch(/1 high-priority due soon/i);
   });
 });

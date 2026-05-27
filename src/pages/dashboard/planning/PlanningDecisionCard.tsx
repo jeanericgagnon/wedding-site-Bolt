@@ -25,6 +25,17 @@ export const PlanningDecisionCard: React.FC<Props> = ({ model, onAction }) => {
           <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-text-secondary">{model.eyebrow}</p>
           <h3 className="mt-1 text-base font-semibold text-text-primary">{model.title}</h3>
           <p className="mt-1.5 text-sm leading-6 text-text-secondary">{model.detail}</p>
+          <div className="mt-3 grid gap-2 sm:grid-cols-2">
+            <div className="rounded-2xl border border-border/60 bg-white/80 px-3 py-3">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-text-tertiary">Main focus</p>
+              <p className="mt-1 text-sm font-medium text-text-primary">{model.focusTitle}</p>
+              <p className="mt-1.5 text-xs leading-5 text-text-secondary">{model.focusDetail}</p>
+            </div>
+            <div className="rounded-2xl border border-border/60 bg-white/80 px-3 py-3">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-text-tertiary">Decision rule</p>
+              <p className="mt-1 text-sm leading-5 text-text-secondary">{model.decisionRule}</p>
+            </div>
+          </div>
           {model.badges.length > 0 && (
             <div className="mt-3 flex flex-wrap gap-2 text-[11px] text-text-secondary">
               {model.badges.map((badge) => (

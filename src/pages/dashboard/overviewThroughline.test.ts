@@ -23,6 +23,7 @@ describe('buildOverviewThroughline', () => {
         title: 'Close the RSVP gap before trusting the board more deeply',
         detail: '12 guests can still materially change how the rest of the board feels.',
         whyNow: 'Pending replies can still change the truth of every later planning and messaging decision.',
+        decisionRule: 'If RSVPs can still materially move the board, close that gap before you trust calmer-looking metrics.',
         ctaLabel: 'Review guests',
         target: 'guests',
       },
@@ -32,6 +33,7 @@ describe('buildOverviewThroughline', () => {
         detail: 'The calmest next move is tightening outreach instead of waiting for the board to improve on its own.',
         focusTitle: 'Turn waiting into deliberate follow-up',
         focusDetail: 'The job is one clean outreach pass, not more passive dashboard watching.',
+        decisionRule: 'If reply pressure is still real, outreach beats passive monitoring.',
         badges: ['12 pending RSVP'],
         signals: [],
         sequence: [

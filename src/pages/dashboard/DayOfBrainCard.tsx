@@ -23,6 +23,18 @@ export const DayOfBrainCard: React.FC<DayOfBrainCardProps> = ({ briefing, onActi
           ))}
         </div>
 
+        <div className="grid gap-3 md:grid-cols-2">
+          <div className="rounded-xl border border-border/50 bg-surface-subtle/35 px-3 py-3">
+            <p className="text-xs uppercase tracking-wide text-text-tertiary">Main focus</p>
+            <p className="mt-2 text-sm font-semibold text-text-primary">{briefing.focusTitle}</p>
+            <p className="mt-2 text-sm text-text-secondary">{briefing.focusDetail}</p>
+          </div>
+          <div className="rounded-xl border border-border/50 bg-surface-subtle/35 px-3 py-3">
+            <p className="text-xs uppercase tracking-wide text-text-tertiary">Decision rule</p>
+            <p className="mt-2 text-sm text-text-secondary">{briefing.decisionRule}</p>
+          </div>
+        </div>
+
         <div className="grid gap-3 md:grid-cols-3">
           {briefing.signals.map((signal) => (
             <div key={signal.label} className="rounded-xl border border-border/40 bg-surface-subtle/35 px-3 py-3">
