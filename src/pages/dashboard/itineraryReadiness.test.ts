@@ -7,6 +7,7 @@ describe('buildItineraryReadiness', () => {
 
     expect(model.title).toMatch(/first anchors/i);
     expect(model.focusTitle).toMatch(/schedule spine/i);
+    expect(model.bestNextMove).toMatch(/ceremony, reception/i);
     expect(model.decisionRule).toMatch(/short honest itinerary/i);
     expect(model.sequence.map((step) => step.status)).toEqual(['current', 'next', 'then']);
     expect(model.sequence[0]?.title).toMatch(/anchor events/i);
@@ -27,6 +28,7 @@ describe('buildItineraryReadiness', () => {
 
     expect(model.badges[1]).toMatch(/incomplete/i);
     expect(model.focusTitle).toMatch(/trust-critical details/i);
+    expect(model.bestNextMove).toMatch(/date, start time, or location/i);
     expect(model.decisionRule).toMatch(/fix that before/i);
     expect(model.sequence[0]?.detail).toMatch(/date, start time, and location/i);
   });
@@ -55,6 +57,7 @@ describe('buildItineraryReadiness', () => {
 
     expect(model.title).toMatch(/ready to support the live weekend/i);
     expect(model.focusTitle).toMatch(/live truth/i);
+    expect(model.bestNextMove).toMatch(/final public preview/i);
     expect(model.decisionRule).toMatch(/real plan changes/i);
     expect(model.badges[1]).toMatch(/timeline ready/i);
     expect(model.sequence[2]?.detail).toMatch(/exceptions/i);

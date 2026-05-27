@@ -13,6 +13,7 @@ export interface ItineraryReadinessModel {
   detail: string;
   focusTitle: string;
   focusDetail: string;
+  bestNextMove: string;
   decisionRule: string;
   badges: string[];
   sequence: Array<{
@@ -39,6 +40,7 @@ export function buildItineraryReadiness(events: ItineraryReadinessEvent[]): Itin
       detail: 'Start with the events guests absolutely need so the weekend has a trustworthy spine before you polish the rest.',
       focusTitle: 'Give the weekend a schedule spine before you decorate it',
       focusDetail: 'Guests do not need every detail yet, but they do need the anchor moments that make the weekend feel real and trustworthy.',
+      bestNextMove: 'Add the ceremony, reception, and any other guest-critical anchor events before you spend time on polish.',
       decisionRule: 'Start with the guest-critical events first; a short honest itinerary beats a fuller one that still leaves the weekend shape unclear.',
       badges: ['No events yet', 'Guest view not started'],
       sequence: [
@@ -70,6 +72,7 @@ export function buildItineraryReadiness(events: ItineraryReadinessEvent[]): Itin
       detail: 'The fastest way to make the weekend feel trustworthy is finishing the date, time, and location gaps before polishing anything else.',
       focusTitle: 'Complete the trust-critical details before you polish tone',
       focusDetail: 'Once an event is visible, guests should not have to guess the date, time, or location just because the schedule looks mostly done.',
+      bestNextMove: 'Finish the missing date, start time, or location fields on every visible event before you rewrite notes.',
       decisionRule: 'If any visible event still lacks its basics, fix that before you invest energy in notes, copy, or day-of messaging.',
       badges: [pluralize(visibleEvents.length, 'visible event'), pluralize(missingCoreDetails, 'event') + ' incomplete'],
       sequence: [
@@ -101,6 +104,7 @@ export function buildItineraryReadiness(events: ItineraryReadinessEvent[]): Itin
       detail: 'The schedule exists now. This pass is about making sure guests only see the right events with just enough context to follow the weekend confidently.',
       focusTitle: 'Turn the schedule from accurate into guest-legible',
       focusDetail: 'The structure is there now, so the next improvement is relevance: show the right events and give each one just enough context to prevent questions.',
+      bestNextMove: 'Hide planning-only events and add the last guest-facing notes before you treat the schedule as handoff-ready.',
       decisionRule: 'Once the event basics hold, use this pass to reduce guest confusion rather than expanding the schedule with more planning-only noise.',
       badges: [pluralize(visibleEvents.length, 'visible event'), hiddenEvents > 0 ? pluralize(hiddenEvents, 'event') + ' hidden' : pluralize(missingGuestNotes, 'event') + ' need notes'],
       sequence: [
@@ -131,6 +135,7 @@ export function buildItineraryReadiness(events: ItineraryReadinessEvent[]): Itin
     detail: 'The public schedule is complete enough now that the next best move is handoff, not more timeline tinkering.',
     focusTitle: 'Protect the schedule as live truth, not an editing sandbox',
     focusDetail: 'At this point the itinerary helps most by staying steady so guests and the team can trust the same version of the weekend.',
+    bestNextMove: 'Do one final public preview, then let the schedule stay steady unless the real weekend plan changes.',
     decisionRule: 'When the public schedule is complete, keep edits tied to real plan changes and let live ops handle the exceptions.',
     badges: [pluralize(visibleEvents.length, 'visible event'), 'Guest-facing timeline ready'],
     sequence: [
