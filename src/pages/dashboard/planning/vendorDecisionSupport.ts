@@ -26,6 +26,7 @@ export interface VendorDecisionDeckModel {
   summary: string;
   focusTitle: string;
   focusDetail: string;
+  bestNextMove: string;
   decisionRule: string;
   badges: string[];
   items: VendorDecisionDeckItem[];
@@ -182,6 +183,9 @@ export function buildVendorDecisionDeck(
     focusDetail: urgentCount > 0
       ? 'When vendors are missing contact paths or carrying payment pressure, the calm move is to remove that noise before you reopen style debates.'
       : 'When the board is stable, the job is not to keep browsing; it is to choose the next vendor that is truly ready for a yes.',
+    bestNextMove: urgentCount > 0
+      ? 'Clear the missing contact paths and any due-soon payment pressure first, then compare only the vendors that still deserve real attention.'
+      : 'Choose the next vendor that is already decision-ready, then let the rest of the board stay quiet until that yes or no is settled.',
     decisionRule: urgentCount > 0
       ? 'Clear missing contact paths and payment pressure before you spend energy comparing aesthetics.'
       : 'Use this board to choose the next real yes, not to reopen every maybe.',

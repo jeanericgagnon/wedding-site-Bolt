@@ -49,6 +49,7 @@ describe('vendorDecisionSupport', () => {
     expect(deck?.badges).toContain('1 urgent');
     expect(deck?.focusTitle).toMatch(/urgency before you compare taste/i);
     expect(deck?.focusDetail).toMatch(/contact paths|payment pressure|style debates/i);
+    expect(deck?.bestNextMove).toMatch(/missing contact paths|payment pressure|compare only the vendors/i);
     expect(deck?.decisionRule).toMatch(/contact paths|payment pressure/i);
     expect(deck?.items[0]?.nextBestMove).toMatch(/contact path/i);
   });

@@ -31,7 +31,10 @@ export const VendorDecisionDeck: React.FC<Props> = ({ model, onSelectVendor }) =
               <p className="mt-1 text-xs leading-5 text-text-secondary">{model.focusDetail}</p>
             </div>
             <div className="rounded-xl border border-white/70 bg-white/75 px-3 py-3">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-text-tertiary">Decision rule</p>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-text-tertiary">Best next move</p>
+              <p className="mt-1 text-sm text-text-secondary">{model.bestNextMove}</p>
+              <div className="mt-3 h-px bg-black/5" />
+              <p className="mt-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-text-tertiary">Decision rule</p>
               <p className="mt-1 text-sm text-text-secondary">{model.decisionRule}</p>
             </div>
           </div>
