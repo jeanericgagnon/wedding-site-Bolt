@@ -57,6 +57,33 @@ describe('getBuilderLaunchPrepSummary', () => {
     });
   });
 
+  it('routes section launch blockers through the active page recovery action', () => {
+    const project = createEmptyBuilderProject('w1', 'modern-luxe');
+    project.pages[0].sections = [createDefaultSectionInstance('faq', 'default', 0)];
+    project.pages[0].sections[0].enabled = false;
+
+    const summary = getBuilderLaunchPrepSummary({
+      project,
+      weddingData: createLaunchReadyWeddingData(),
+      isDirty: false,
+      activePageId: project.pages[0].id,
+      isPublished: false,
+    });
+
+    expect(summary.issue?.kind).toBe('no-enabled-sections');
+    expect(summary.primaryAction).toEqual({
+      kind: 'apply-page-guide',
+      label: 'Add missing essentials (5)',
+      pageId: project.pages[0].id,
+      pageAction: {
+        kind: 'add-essential-kit',
+        label: 'Add missing essentials (5)',
+        sectionTypes: ['hero', 'story', 'schedule', 'travel', 'rsvp'],
+      },
+    });
+    expect(summary.checklistItems.find((item) => item.id === 'sections')?.action).toEqual(summary.primaryAction);
+  });
+
   it('treats clean drafts as publish-ready launch prep', () => {
     const project = createEmptyBuilderProject('w1', 'modern-luxe');
     project.pages[0].sections = [createDefaultSectionInstance('hero', 'default', 0)];

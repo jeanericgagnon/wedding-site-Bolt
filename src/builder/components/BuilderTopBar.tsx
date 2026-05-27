@@ -336,6 +336,30 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
     }
   }, [dispatch, handleFixNext, onPublish, onSave, state.activePageId]);
 
+  const handleLaunchPrepChecklistAction = React.useCallback((action: NonNullable<(typeof checklistItems)[number]['action']>) => {
+    switch (action.kind) {
+      case 'add-page':
+      case 'add-section':
+      case 'save-draft':
+      case 'fix-blockers':
+      case 'publish':
+        handleLaunchPrepAction(action.kind);
+        return;
+      case 'apply-page-guide':
+        runBuilderPageEditingAction({
+          action: action.pageAction,
+          activePageId: action.pageId,
+          dispatch,
+          afterAction: () => {
+            setShowPublishChecklist(false);
+          },
+        });
+        return;
+      default:
+        return;
+    }
+  }, [dispatch, handleLaunchPrepAction]);
+
   const handlePageGuideAction = React.useCallback((
     pageId: string,
     action: NonNullable<typeof activePageEditingSummary>['primaryAction'],
@@ -689,7 +713,7 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
                       <div className="flex flex-wrap gap-2">
                         {!item.done && item.action && (
                           <button
-                            onClick={() => handleLaunchPrepAction(item.action!.kind)}
+                            onClick={() => handleLaunchPrepChecklistAction(item.action!)}
                             className={`rounded px-2 py-1 text-[11px] font-medium transition-colors ${
                               item.action.kind === 'fix-blockers'
                                 ? 'border border-amber-300 bg-amber-50 text-amber-800 hover:bg-amber-100'

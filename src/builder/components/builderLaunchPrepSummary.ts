@@ -1,10 +1,12 @@
 import type { BuilderProject } from '../../types/builder/project';
 import type { WeddingDataV1 } from '../../types/weddingData';
 import { buildPublishReadiness, getPublishIssue, type PublishIssue } from '../utils/publishReadiness';
+import { getBuilderPageEditingSummary, type BuilderPageEditingAction } from './builderPageEditingSummary';
 
 export type BuilderLaunchPrepAction =
   | { kind: 'add-page'; label: string }
   | { kind: 'add-section'; label: string }
+  | { kind: 'apply-page-guide'; label: string; pageId: string; pageAction: BuilderPageEditingAction }
   | { kind: 'save-draft'; label: string }
   | { kind: 'fix-blockers'; label: string }
   | { kind: 'publish'; label: string };
@@ -87,13 +89,34 @@ function getHintsForIssue(issue: PublishIssue | null): string[] {
   }
 }
 
-function getActionForIssue(issue: PublishIssue | null): BuilderLaunchPrepAction {
+function getPageGuideAction(project: BuilderProject, activePageId?: string | null): BuilderLaunchPrepAction | null {
+  const activePage = project.pages.find((page) => page.id === activePageId)
+    ?? project.pages[0]
+    ?? null;
+
+  if (!activePage) return null;
+
+  const pageGuide = getBuilderPageEditingSummary(activePage.title, activePage.sections);
+
+  return {
+    kind: 'apply-page-guide',
+    label: pageGuide.primaryAction.label,
+    pageId: activePage.id,
+    pageAction: pageGuide.primaryAction,
+  };
+}
+
+function getActionForIssue(
+  issue: PublishIssue | null,
+  project: BuilderProject,
+  activePageId?: string | null,
+): BuilderLaunchPrepAction {
   if (!issue) return { kind: 'publish', label: 'Publish with confidence' };
   switch (issue.kind) {
     case 'no-pages':
       return { kind: 'add-page', label: 'Add first page' };
     case 'no-enabled-sections':
-      return { kind: 'add-section', label: 'Add or show a section' };
+      return getPageGuideAction(project, activePageId) ?? { kind: 'add-section', label: 'Add or show a section' };
     case 'unsaved-changes':
       return { kind: 'save-draft', label: 'Save draft first' };
     default:
@@ -104,7 +127,11 @@ function getActionForIssue(issue: PublishIssue | null): BuilderLaunchPrepAction 
 function withActions(
   items: ReturnType<typeof buildPublishReadiness>,
   issue: PublishIssue | null,
+  project: BuilderProject,
+  activePageId?: string | null,
 ): BuilderLaunchPrepChecklistItem[] {
+  const pageGuideAction = getPageGuideAction(project, activePageId);
+
   return items.map((item) => {
     if (item.done) {
       return { ...item, action: null };
@@ -115,7 +142,7 @@ function withActions(
         return { ...item, action: { kind: 'add-page', label: 'Add first page' } };
       case 'sections':
       case 'current-page':
-        return { ...item, action: { kind: 'add-section', label: 'Add first section' } };
+        return { ...item, action: pageGuideAction ?? { kind: 'add-section', label: 'Add first section' } };
       case 'saved':
         return { ...item, action: { kind: 'save-draft', label: 'Save now' } };
       default:
@@ -135,6 +162,8 @@ export function getBuilderLaunchPrepSummary({
   const checklistItems = withActions(
     buildPublishReadiness(project, weddingData, { isDirty, activePageId }),
     issue,
+    project,
+    activePageId,
   );
 
   if (!issue) {
@@ -161,7 +190,7 @@ export function getBuilderLaunchPrepSummary({
         ? 'Publish the update only if it materially improves the live experience.'
         : 'Publish from this draft instead of reopening a speculative edit lap.',
       blockerHints: getHintsForIssue(issue),
-      primaryAction: getActionForIssue(issue),
+      primaryAction: getActionForIssue(issue, project, activePageId),
     };
   }
 
@@ -194,6 +223,6 @@ export function getBuilderLaunchPrepSummary({
       ? 'Re-open the launch check only after the draft is synchronized.'
       : 'Preview again once the blocker is repaired, then decide whether anything else still matters.',
     blockerHints: getHintsForIssue(issue),
-    primaryAction: getActionForIssue(issue),
+    primaryAction: getActionForIssue(issue, project, activePageId),
   };
 }
