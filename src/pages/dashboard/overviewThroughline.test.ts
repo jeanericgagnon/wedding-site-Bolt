@@ -7,6 +7,7 @@ describe('buildOverviewThroughline', () => {
       coupleFocus: {
         headline: 'Guest follow-through is the main couple focus',
         summary: 'The right next move is guest confidence, not more internal tweaking.',
+        watchout: 'If guest basics stay fuzzy, later lanes can look calmer than they really are.',
         steps: [
           {
             id: 'guests',

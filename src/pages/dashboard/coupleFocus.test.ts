@@ -16,6 +16,7 @@ describe('buildCoupleFocusModel', () => {
     });
 
     expect(model.headline).toMatch(/launch readiness/i);
+    expect(model.watchout).toMatch(/polishing around the blockers|safer to share/i);
     expect(model.steps[0]?.id).toBe('launch');
     expect(model.steps[1]?.id).toBe('guests');
     expect(model.steps[2]).toMatchObject({ id: 'planning', target: 'planning' });
@@ -35,6 +36,7 @@ describe('buildCoupleFocusModel', () => {
     });
 
     expect(model.headline).toMatch(/planning pressure/i);
+    expect(model.watchout).toMatch(/real deadlines|productive-feeling detour/i);
     expect(model.steps[0]).toMatchObject({ id: 'planning', target: 'planning-tasks' });
   });
 
@@ -87,6 +89,7 @@ describe('buildCoupleFocusModel', () => {
     });
 
     expect(model.headline).toMatch(/weekend timeline/i);
+    expect(model.watchout).toMatch(/itinerary spine|site never clearly explained/i);
     expect(model.steps[0]).toMatchObject({ id: 'itinerary', target: 'itinerary' });
     expect(model.steps[1]?.id).toBe('launch');
   });
@@ -107,6 +110,7 @@ describe('buildCoupleFocusModel', () => {
     });
 
     expect(model.headline).toMatch(/guest access/i);
+    expect(model.watchout).toMatch(/entry instructions/i);
     expect(model.steps[0]).toMatchObject({ id: 'launch', target: 'settings' });
     expect(model.steps[1]?.id).toBe('guests');
   });

@@ -852,6 +852,10 @@ export const DashboardOverview: React.FC = () => {
                   </div>
                 ))}
               </div>
+              <div className="mt-4 rounded-2xl border border-border-subtle bg-surface-subtle/30 px-4 py-3">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-text-tertiary">Watchout</p>
+                <p className="mt-1 text-sm text-text-secondary">{coupleFocus.watchout}</p>
+              </div>
             </Card>
             <Card variant="bordered" padding="lg" className="shadow-sm border-border-subtle">
               <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">

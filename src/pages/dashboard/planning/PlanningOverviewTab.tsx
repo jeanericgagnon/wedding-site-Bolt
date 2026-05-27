@@ -235,6 +235,10 @@ export const PlanningOverviewTab: React.FC<Props> = ({ tasks, budgetItems, vendo
               </div>
             ))}
           </div>
+          <div className="rounded-2xl border border-border-subtle bg-white/80 px-4 py-3 shadow-sm">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-text-tertiary">Watchout</p>
+            <p className="mt-1 text-sm leading-6 text-text-secondary">{coupleFocus.watchout}</p>
+          </div>
         </div>
       </Card>
 

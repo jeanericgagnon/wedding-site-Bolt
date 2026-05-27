@@ -10,6 +10,7 @@ export interface CoupleFocusStep {
 export interface CoupleFocusModel {
   headline: string;
   summary: string;
+  watchout: string;
   steps: CoupleFocusStep[];
 }
 
@@ -46,6 +47,7 @@ export function buildCoupleFocusModel(input: CoupleFocusInput): CoupleFocusModel
     return {
       headline: 'Shift from operations to keepsake mode',
       summary: 'The urgent wedding work is behind you now, so the highest-value move is turning the site into something worth revisiting.',
+      watchout: 'If you keep grading the archive by live-ops standards, you can miss the quieter work that actually makes the wedding feel worth revisiting later.',
       steps: [
         step('current', {
           id: 'archive',
@@ -69,6 +71,7 @@ export function buildCoupleFocusModel(input: CoupleFocusInput): CoupleFocusModel
     return {
       headline: 'Launch readiness is still the couple focus',
       summary: 'The right move is to finish the guest-facing basics before spending more time on secondary polish or planning extras.',
+      watchout: 'The tempting mistake here is polishing around the blockers instead of clearing them, which can make the draft feel busier without making it safer to share.',
       steps: [
         step('current', {
           id: 'launch',
@@ -101,6 +104,7 @@ export function buildCoupleFocusModel(input: CoupleFocusInput): CoupleFocusModel
     return {
       headline: 'Planning pressure is the main couple focus',
       summary: 'The site is not the thing slipping now. Clearing the operational pressure will buy back more calm than more website tweaks.',
+      watchout: 'If real deadlines are still pulling focus, using site polish as a productive-feeling detour can leave the calendar just as risky and the couple more tired.',
       steps: [
         step('current', {
           id: 'planning',
@@ -135,6 +139,7 @@ export function buildCoupleFocusModel(input: CoupleFocusInput): CoupleFocusModel
     return {
       headline: 'Guest follow-through is the main couple focus',
       summary: 'The right next move is guest confidence, not more internal tweaking.',
+      watchout: 'If guest basics stay fuzzy, almost every later lane will look calmer than it really is because the board is grading from incomplete trust.',
       steps: [
         step('current', {
           id: 'guests',
@@ -167,6 +172,7 @@ export function buildCoupleFocusModel(input: CoupleFocusInput): CoupleFocusModel
     return {
       headline: 'The room itself is the couple focus now',
       summary: 'The guest list is calm enough that the next stress saver is finishing the live room, not polishing more static surfaces.',
+      watchout: 'If the room keeps waiting behind lower-stakes polish, the last week starts carrying quiet seating risk that is much harder to absorb live.',
       steps: [
         step('current', {
           id: 'seating',
@@ -190,6 +196,7 @@ export function buildCoupleFocusModel(input: CoupleFocusInput): CoupleFocusModel
     return {
       headline: 'Guests still need a real weekend timeline to trust',
       summary: 'The date is close enough now that schedule clarity matters more than another polish pass. Give guests a clean itinerary spine before asking the live layer to do extra work.',
+      watchout: 'Without a real itinerary spine, every reminder, update, and coordinator save starts compensating for a weekend that the site never clearly explained.',
       steps: [
         step('current', {
           id: 'itinerary',
@@ -220,6 +227,7 @@ export function buildCoupleFocusModel(input: CoupleFocusInput): CoupleFocusModel
     return {
       headline: 'Guest access is the couple focus now',
       summary: `The site is live, but it is ${accessLabel}. The next trust move is making sure the right password or invite path travels with every guest-facing handoff.`,
+      watchout: `A live ${accessLabel} site can still feel broken if guest handoff assets, reminders, or print pieces carry inconsistent entry instructions.`,
       steps: [
         step('current', {
           id: 'launch',
@@ -252,6 +260,7 @@ export function buildCoupleFocusModel(input: CoupleFocusInput): CoupleFocusModel
     return {
       headline: 'Stay close to live readiness now',
       summary: 'The biggest value now is staying near the surfaces that reduce day-of surprise, not inventing more work.',
+      watchout: 'Late-stage calm is fragile. Reopening solved work just because there is time left can create more surprise than the untouched imperfection ever would.',
       steps: [
         step('current', {
           id: 'day-of',
@@ -274,6 +283,7 @@ export function buildCoupleFocusModel(input: CoupleFocusInput): CoupleFocusModel
   return {
     headline: 'You have room to make thoughtful quality moves',
     summary: 'Nothing is shouting for rescue right now, so this is the right moment to improve the guest-facing experience deliberately.',
+    watchout: 'Calm periods are useful, but they can turn into drift if every nice-to-have starts competing equally with the few quality moves guests will actually notice.',
     steps: [
       step('current', {
         id: 'polish',
