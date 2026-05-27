@@ -10,6 +10,11 @@ import { toBuilderV2Document } from '../builder-v2/adapter';
 import type { BuilderV2Document } from '../builder-v2/contracts';
 import { prepareImportedBuilderV2Document, type BuilderV2ImportReport } from '../builder-v2/importPrepare';
 import {
+  buildBuilderV2AddBlockLibrary,
+  buildBuilderV2SectionEditingGuidance,
+  getRecommendedBlockTypes,
+} from './builderV2SectionEditingModel';
+import {
   DndContext,
   PointerSensor,
   closestCenter,
@@ -339,6 +344,7 @@ export const BuilderV2Lab: React.FC = () => {
   const [hoveredPreviewId, setHoveredPreviewId] = useState<string | null>(null);
   const [primedPreviewSectionId, setPrimedPreviewSectionId] = useState<string | null>(null);
   const [showAddBlockPicker, setShowAddBlockPicker] = useState(false);
+  const [addBlockQuery, setAddBlockQuery] = useState('');
   const [sectionBlocks, setSectionBlocks] = useState<Record<string, AddedBlock[]>>({});
   const [collapsedBlocks, setCollapsedBlocks] = useState<Record<string, boolean>>({});
   const importFileInputRef = useRef<HTMLInputElement | null>(null);
@@ -504,7 +510,7 @@ export const BuilderV2Lab: React.FC = () => {
   const getSectionLimitConfig = (sectionType: string) =>
     SECTION_BLOCK_LIMITS[sectionType] ?? { total: 10, perType: {} };
 
-  const canAddBlockToSection = (sectionId: string, sectionType: string, blockType: BlockType) => {
+  const canAddBlockToSection = useCallback((sectionId: string, sectionType: string, blockType: BlockType) => {
     const cfg = getSectionLimitConfig(sectionType);
     const blocks = sectionBlocks[sectionId] ?? [];
     if (blocks.length >= cfg.total) return { ok: false, reason: `Max ${cfg.total} blocks for this section` };
@@ -514,7 +520,7 @@ export const BuilderV2Lab: React.FC = () => {
       if (count >= perType) return { ok: false, reason: `Max ${perType} ${BLOCK_LABELS[blockType]} block(s)` };
     }
     return { ok: true as const, reason: '' };
-  };
+  }, [sectionBlocks]);
 
   const addBlockToSection = (blockType: BlockType) => {
     const allowed = canAddBlockToSection(selected.id, selected.type, blockType);
@@ -691,6 +697,7 @@ export const BuilderV2Lab: React.FC = () => {
   }), [previewFields]);
 
   const addableBlocksForSelected = useMemo(() => SECTION_BLOCK_CATALOG[selected.type] ?? ['title', 'text', 'photo', 'qna'], [selected.type]);
+  const selectedBlocks = useMemo(() => sectionBlocks[selected.id] ?? [], [sectionBlocks, selected.id]);
 
 
   const getBlockValidationWarning = (block: AddedBlock) => {
@@ -701,6 +708,47 @@ export const BuilderV2Lab: React.FC = () => {
     if ((block.type === 'registryItem' || block.type === 'fundHighlight') && !(d.title || '').trim()) return 'Item title is required';
     return '';
   };
+
+  const selectedBlockWarnings = useMemo(
+    () => selectedBlocks.filter((block) => getBlockValidationWarning(block)).length,
+    [selectedBlocks],
+  );
+  const selectedSectionLimit = useMemo(() => getSectionLimitConfig(selected.type), [selected.type]);
+  const recommendedBlockTypesForSelected = useMemo(
+    () => getRecommendedBlockTypes(selected.type, addableBlocksForSelected),
+    [selected.type, addableBlocksForSelected],
+  );
+  const sectionEditingGuidance = useMemo(
+    () => buildBuilderV2SectionEditingGuidance({
+      section: selected,
+      blocks: selectedBlocks,
+      warningCount: selectedBlockWarnings,
+      availableBlockTypes: addableBlocksForSelected,
+      recommendedBlockTypes: recommendedBlockTypesForSelected,
+      limitTotal: selectedSectionLimit.total,
+    }),
+    [selected, selectedBlocks, selectedBlockWarnings, addableBlocksForSelected, recommendedBlockTypesForSelected, selectedSectionLimit.total],
+  );
+  const addBlockAvailability = useMemo(
+    () => Object.fromEntries(
+      addableBlocksForSelected.map((type) => [type, canAddBlockToSection(selected.id, selected.type, type)]),
+    ) as Record<string, { ok: boolean; reason: string }>,
+    [addableBlocksForSelected, canAddBlockToSection, selected.id, selected.type],
+  );
+  const addBlockLibrary = useMemo(
+    () => buildBuilderV2AddBlockLibrary({
+      query: addBlockQuery,
+      availableBlockTypes: addableBlocksForSelected,
+      currentBlockTypes: selectedBlocks.map((block) => block.type),
+      recommendedBlockTypes: recommendedBlockTypesForSelected,
+      labels: BLOCK_LABELS,
+      descriptions: Object.fromEntries(
+        Object.entries(BLOCK_META).map(([type, meta]) => [type, meta.desc]),
+      ) as Record<string, string>,
+      availability: addBlockAvailability,
+    }),
+    [addBlockQuery, addableBlocksForSelected, selectedBlocks, recommendedBlockTypesForSelected, addBlockAvailability],
+  );
 
 
   const allInstancesForExport: SectionInstance[] = useMemo(() => sections.map((s) => ({
@@ -857,6 +905,9 @@ export const BuilderV2Lab: React.FC = () => {
       setSelectedId(sections[0].id);
     }
   }, [sections, selectedId]);
+  useEffect(() => {
+    setAddBlockQuery('');
+  }, [selected.id, showAddBlockPicker]);
   useEffect(() => {
     setCommandIndex(0);
   }, [commandQuery, showCommand]);
@@ -1309,6 +1360,74 @@ export const BuilderV2Lab: React.FC = () => {
                 <p className="text-[11px] uppercase updates-wide text-text-tertiary font-medium">{propertyTab === 'content' ? 'Content' : 'Settings'}</p>
                 {propertyTab === 'content' && (
                   <>
+                    <div className="rounded-md border border-primary/15 bg-primary/[0.04] p-3 space-y-3">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="text-[11px] uppercase tracking-[0.2em] text-primary font-semibold">Section read</p>
+                          <p className="mt-1 text-sm font-semibold text-text-primary">{sectionEditingGuidance.title}</p>
+                          <p className="mt-1 text-xs leading-relaxed text-text-secondary">{sectionEditingGuidance.detail}</p>
+                        </div>
+                        <div className="shrink-0 flex flex-wrap justify-end gap-1.5 text-[10px]">
+                          <span className="rounded-full border border-border-subtle bg-white px-2 py-1 text-text-secondary">
+                            {sectionEditingGuidance.blockCount} block{sectionEditingGuidance.blockCount === 1 ? '' : 's'}
+                          </span>
+                          <span className={`rounded-full border px-2 py-1 ${sectionEditingGuidance.warningCount > 0 ? 'border-amber-200 bg-amber-50 text-amber-700' : 'border-emerald-200 bg-emerald-50 text-emerald-700'}`}>
+                            {sectionEditingGuidance.warningCount > 0 ? `${sectionEditingGuidance.warningCount} warning${sectionEditingGuidance.warningCount === 1 ? '' : 's'}` : 'Ready to refine'}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="grid gap-2 md:grid-cols-2">
+                        <div className="rounded-md border border-border-subtle bg-white p-2.5">
+                          <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary">Main focus</p>
+                          <p className="mt-1 text-sm text-text-primary">{sectionEditingGuidance.mainFocus}</p>
+                        </div>
+                        <div className="rounded-md border border-border-subtle bg-white p-2.5">
+                          <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary">Best next move</p>
+                          <p className="mt-1 text-sm text-text-primary">{sectionEditingGuidance.bestNextMove}</p>
+                        </div>
+                      </div>
+
+                      <div className="rounded-md border border-border-subtle bg-white p-2.5 space-y-2">
+                        <div className="grid gap-2 md:grid-cols-2">
+                          <div>
+                            <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary">Decision rule</p>
+                            <p className="mt-1 text-xs leading-relaxed text-text-secondary">{sectionEditingGuidance.decisionRule}</p>
+                          </div>
+                          <div>
+                            <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary">Watchout</p>
+                            <p className="mt-1 text-xs leading-relaxed text-text-secondary">{sectionEditingGuidance.watchout}</p>
+                          </div>
+                        </div>
+                        <div className="grid gap-2 md:grid-cols-3">
+                          {sectionEditingGuidance.steps.map((step) => (
+                            <div key={step.label} className="rounded-md border border-border-subtle bg-surface-subtle px-2.5 py-2">
+                              <p className="text-[10px] uppercase tracking-[0.18em] text-text-tertiary">{step.label}</p>
+                              <p className="mt-1 text-xs leading-relaxed text-text-primary">{step.detail}</p>
+                            </div>
+                          ))}
+                        </div>
+                        {sectionEditingGuidance.suggestedBlockTypes.length > 0 && (
+                          <div className="flex flex-wrap gap-1.5">
+                            {sectionEditingGuidance.suggestedBlockTypes.map((type) => (
+                              <button
+                                key={`suggested-${type}`}
+                                onClick={() => {
+                                  setShowAddBlockPicker(true);
+                                  addBlockToSection(type as BlockType);
+                                }}
+                                disabled={!addBlockAvailability[type]?.ok}
+                                className={`rounded-full border px-2.5 py-1 text-[11px] transition-all ${addBlockAvailability[type]?.ok ? 'border-primary/30 bg-primary/10 text-primary hover:bg-primary/15' : 'border-border-subtle bg-surface-subtle text-text-tertiary cursor-not-allowed'}`}
+                                title={addBlockAvailability[type]?.ok ? `Add ${BLOCK_LABELS[type as BlockType]}` : addBlockAvailability[type]?.reason}
+                              >
+                                Add {BLOCK_LABELS[type as BlockType]}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
                     <button
                       onClick={() => setShowAddBlockPicker((v) => !v)}
                       className="w-full border rounded-md px-3 py-2.5 text-left text-sm font-medium hover:border-primary/40 bg-white shadow-sm hover:shadow transition-all"
@@ -1318,35 +1437,92 @@ export const BuilderV2Lab: React.FC = () => {
 
                     {showAddBlockPicker && (
                       <div className="border border-border-subtle rounded-md p-2.5 bg-white">
-                        <p className="text-[11px] text-text-tertiary mb-2">Add blocks to this section (limits apply)</p>
-                        <div className="grid grid-cols-2 gap-2.5">
-                        {addableBlocksForSelected.map((k) => {
-                          const allowed = canAddBlockToSection(selected.id, selected.type, k);
-                          return (
-                            <button
-                              key={k}
-                              onClick={() => addBlockToSection(k)}
-                              disabled={!allowed.ok}
-                              title={allowed.ok ? `Add ${BLOCK_LABELS[k]}` : allowed.reason}
-                              className={`text-left text-xs border border-border rounded-md px-2.5 py-2.5 transition-all ${allowed.ok ? 'hover:border-primary/40 hover:bg-primary/5' : 'opacity-60 cursor-not-allowed bg-surface-subtle border-dashed'}`}
-                            >
-                              <div className="flex items-start gap-2">
-                                <span className="text-[12px] leading-none mt-[1px]">{BLOCK_META[k].icon}</span>
-                                <span className="min-w-0">
-                                  <span className="block text-[12px] font-medium text-text-primary">{BLOCK_LABELS[k]}</span>
-                                  <span className="block text-[10px] text-text-tertiary mt-0.5 leading-snug">{BLOCK_META[k].desc}</span>
+                        <div className="space-y-2.5">
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="min-w-0">
+                              <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary">Block library</p>
+                              <p className="mt-1 text-sm font-medium text-text-primary">{addBlockLibrary.headline}</p>
+                              <p className="mt-1 text-xs leading-relaxed text-text-secondary">{addBlockLibrary.detail}</p>
+                            </div>
+                            <div className="shrink-0 flex flex-wrap justify-end gap-1.5 text-[10px]">
+                              <span className="rounded-full border border-border-subtle bg-surface-subtle px-2 py-1 text-text-secondary">
+                                {addBlockLibrary.visibleCount} visible
+                              </span>
+                              {addBlockLibrary.recommendedVisibleCount > 0 && (
+                                <span className="rounded-full border border-primary/20 bg-primary/10 px-2 py-1 text-primary">
+                                  {addBlockLibrary.recommendedVisibleCount} recommended
                                 </span>
-                              </div>
-                            </button>
-                          );
-                        })}
+                              )}
+                            </div>
+                          </div>
+
+                          <input
+                            value={addBlockQuery}
+                            onChange={(e) => setAddBlockQuery(e.target.value)}
+                            placeholder="Search block types..."
+                            className="w-full rounded-md border border-border-subtle px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+                          />
+
+                          <div className="grid gap-2 md:grid-cols-2">
+                            <div className="rounded-md border border-border-subtle bg-surface-subtle px-2.5 py-2">
+                              <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary">Best next move</p>
+                              <p className="mt-1 text-xs leading-relaxed text-text-primary">{addBlockLibrary.bestNextMove}</p>
+                            </div>
+                            <div className="rounded-md border border-border-subtle bg-surface-subtle px-2.5 py-2">
+                              <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary">Decision rule</p>
+                              <p className="mt-1 text-xs leading-relaxed text-text-primary">{addBlockLibrary.decisionRule}</p>
+                            </div>
+                          </div>
+
+                          <div className="rounded-md border border-border-subtle bg-surface-subtle px-2.5 py-2">
+                            <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary">Watchout</p>
+                            <p className="mt-1 text-xs leading-relaxed text-text-primary">{addBlockLibrary.watchout}</p>
+                          </div>
+
+                          {addBlockLibrary.empty ? (
+                            <div className="rounded-md border border-dashed border-border-subtle bg-surface-subtle px-3 py-4 text-xs text-text-secondary">
+                              No blocks match this search yet. Broaden the search to compare the structural options again.
+                            </div>
+                          ) : (
+                            <div className="grid grid-cols-2 gap-2.5">
+                              {addBlockLibrary.entries.map((entry) => (
+                                <button
+                                  key={entry.type}
+                                  onClick={() => addBlockToSection(entry.type as BlockType)}
+                                  disabled={!entry.allowed}
+                                  title={entry.allowed ? `Add ${entry.label}` : entry.disabledReason}
+                                  className={`text-left text-xs border rounded-md px-2.5 py-2.5 transition-all ${entry.allowed ? 'hover:border-primary/40 hover:bg-primary/5 border-border' : 'opacity-60 cursor-not-allowed bg-surface-subtle border-dashed border-border'} ${entry.recommended ? 'ring-1 ring-primary/20 bg-primary/[0.03]' : 'bg-white'}`}
+                                >
+                                  <div className="flex items-start gap-2">
+                                    <span className="text-[12px] leading-none mt-[1px]">{BLOCK_META[entry.type as BlockType].icon}</span>
+                                    <span className="min-w-0">
+                                      <span className="flex items-center gap-1">
+                                        <span className="block text-[12px] font-medium text-text-primary">{entry.label}</span>
+                                        {entry.recommended && (
+                                          <span className="rounded-full border border-primary/20 bg-primary/10 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-[0.12em] text-primary">
+                                            Recommended
+                                          </span>
+                                        )}
+                                      </span>
+                                      <span className="block text-[10px] text-text-tertiary mt-0.5 leading-snug">{entry.description}</span>
+                                      {!entry.allowed && entry.disabledReason && (
+                                        <span className="mt-1 block text-[10px] text-amber-700">{entry.disabledReason}</span>
+                                      )}
+                                    </span>
+                                  </div>
+                                </button>
+                              ))}
+                            </div>
+                          )}
                         </div>
                       </div>
                     )}
 
                     <div className="space-y-2.5">
                       <p className="text-[11px] text-text-tertiary">Page content</p>
-                      <p className="text-[10px] text-text-tertiary">Section limits: content blocks are capped to keep pages clean and readable.</p>
+                      <p className="text-[10px] text-text-tertiary">
+                        Section limits: content blocks are capped to keep pages clean and readable. {selectedBlocks.length}/{selectedSectionLimit.total} used.
+                      </p>
 
                       <div className="border border-border-subtle rounded-md p-3 bg-white space-y-2.5 shadow-sm transition-all duration-200">
                         <p className="text-[11px] uppercase updates-wide text-text-tertiary font-medium">Header</p>
