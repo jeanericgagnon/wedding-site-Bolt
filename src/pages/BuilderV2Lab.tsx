@@ -3004,7 +3004,7 @@ export const BuilderV2Lab: React.FC = () => {
               <div>
                 <h3 className="font-semibold text-sm">Import Builder V2 layout</h3>
                 <p className="mt-1 text-xs text-text-secondary">
-                  Paste a JSON export or load a file. We will recover obvious drift, keep usable blocks, and tell you what got repaired.
+                  Paste a Builder V2 export, a legacy builder project, or a legacy layout config. We will recover obvious drift, keep usable structure, and tell you what got repaired or migrated.
                 </p>
               </div>
               <button onClick={() => setShowImportPanel(false)} className="text-sm text-text-tertiary hover:text-text-primary">✕</button>
@@ -3150,7 +3150,7 @@ export const BuilderV2Lab: React.FC = () => {
               )}
 
               <div className="rounded-sm border border-border-subtle bg-surface-subtle px-3 py-2 text-xs text-text-secondary">
-                We preserve usable sections, repair obvious ids/types/variants, and drop only sections or blocks that cannot be recovered safely.
+                We preserve usable sections, migrate legacy builder shapes onto the V2 document model, repair obvious ids/types/variants, and drop only sections or blocks that cannot be recovered safely.
               </div>
             </div>
 

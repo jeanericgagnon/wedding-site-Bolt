@@ -5,6 +5,7 @@ import { sanitizeImportedBlockType, sanitizeImportedSectionType } from './import
 type ImportObject = Record<string, unknown>;
 
 export type BuilderV2ImportReport = {
+  sourceKind: 'builder-v2' | 'layout-config-v1' | 'builder-project';
   pageCount: number;
   sectionCount: number;
   blockCount: number;
@@ -144,6 +145,7 @@ const coerceEnabled = (value: unknown): { enabled: boolean; coerced: boolean } =
 };
 
 const createEmptyReport = (): BuilderV2ImportReport => ({
+  sourceKind: 'builder-v2',
   pageCount: 0,
   sectionCount: 0,
   blockCount: 0,
@@ -323,6 +325,7 @@ export function prepareImportedBuilderV2Document(
   if (legacyInput) {
     const migrated = prepareImportedBuilderV2Document(legacyInput, options);
     if (migrated.ok) {
+      migrated.report.sourceKind = looksLikeLayoutConfigV1(input) ? 'layout-config-v1' : 'builder-project';
       migrated.report.normalizedVersion = true;
       migrated.report.notes.unshift(
         looksLikeLayoutConfigV1(input)

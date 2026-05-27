@@ -81,22 +81,39 @@ export const buildBuilderV2ImportGuidance = (
 
   const tone = getImportSummaryTone(report);
   const repairs = summarizeImportRepairCount(report);
+  const isLegacyMigration = report.sourceKind === 'layout-config-v1' || report.sourceKind === 'builder-project';
+  const legacyLabel = report.sourceKind === 'layout-config-v1'
+    ? 'legacy layout config'
+    : report.sourceKind === 'builder-project'
+      ? 'legacy builder project'
+      : null;
   const keyStats = [
     `${report.sectionCount} sections`,
     `${report.blockCount} blocks`,
     `${repairs} repairs`,
   ];
+  if (isLegacyMigration && legacyLabel) {
+    keyStats.unshift(legacyLabel);
+  }
 
   if (tone === 'clean') {
     return {
-      title: `Imported ${sourceLabel} cleanly`,
-      detail: 'The layout came through without needing structural repair, so you can move straight into content and variant review.',
+      title: isLegacyMigration ? `Migrated ${sourceLabel} cleanly into Builder V2` : `Imported ${sourceLabel} cleanly`,
+      detail: isLegacyMigration
+        ? 'The migration bridge mapped the older document shape into Builder V2 without needing cleanup, so you can move straight into content and variant review.'
+        : 'The layout came through without needing structural repair, so you can move straight into content and variant review.',
       tone,
-      bestNextMove: 'Open the strongest section first and verify that the imported structure still matches how you want the page to read.',
-      decisionRule: 'When import is clean, spend the next pass on content truth and section order instead of repair cleanup.',
-      watchout: 'A clean import can still carry mediocre copy or weak section sequencing, so do not mistake “clean” for “finished.”',
+      bestNextMove: isLegacyMigration
+        ? 'Review the most guest-visible page first so you confirm the migrated structure still feels like the site you meant to bring forward.'
+        : 'Open the strongest section first and verify that the imported structure still matches how you want the page to read.',
+      decisionRule: isLegacyMigration
+        ? 'When migration is clean, spend the next pass checking page flow and content truth instead of re-litigating the bridge itself.'
+        : 'When import is clean, spend the next pass on content truth and section order instead of repair cleanup.',
+      watchout: isLegacyMigration
+        ? 'A clean migration can still carry old wording or thin starter blocks, so do not mistake “mapped cleanly” for “already V2-quality.”'
+        : 'A clean import can still carry mediocre copy or weak section sequencing, so do not mistake “clean” for “finished.”',
       steps: [
-        { label: 'Current', detail: 'Import normalized without repair work.' },
+        { label: 'Current', detail: isLegacyMigration ? 'The older document shape mapped into Builder V2 without extra cleanup.' : 'Import normalized without repair work.' },
         { label: 'Next', detail: 'Review the first few sections for content quality and sequencing.' },
         { label: 'Then', detail: 'Trim or refine before adding new structure.' },
       ],
@@ -106,14 +123,22 @@ export const buildBuilderV2ImportGuidance = (
 
   if (tone === 'repaired') {
     return {
-      title: `Imported ${sourceLabel} with recoverable drift`,
-      detail: 'The recovery pipeline fixed ids, types, or other mild export problems and kept the layout usable.',
+      title: isLegacyMigration ? `Migrated ${sourceLabel} with recoverable drift` : `Imported ${sourceLabel} with recoverable drift`,
+      detail: isLegacyMigration
+        ? 'The migration bridge mapped the older document shape into Builder V2 and repaired the mild drift needed to keep it usable.'
+        : 'The recovery pipeline fixed ids, types, or other mild export problems and kept the layout usable.',
       tone,
-      bestNextMove: 'Check the sections with the most structural meaning first so you confirm the repaired layout still tells the right story.',
-      decisionRule: 'After a repaired import, verify the sections whose meaning depends most on block type or variant choice.',
-      watchout: 'Repair success can hide subtle meaning drift if you never confirm the normalized section and block types in preview.',
+      bestNextMove: isLegacyMigration
+        ? 'Check the pages with the most guest-facing meaning first so you confirm the migrated structure still tells the right story.'
+        : 'Check the sections with the most structural meaning first so you confirm the repaired layout still tells the right story.',
+      decisionRule: isLegacyMigration
+        ? 'After a repaired migration, verify the pages and sections whose meaning depends most on normalized block type or variant choice.'
+        : 'After a repaired import, verify the sections whose meaning depends most on block type or variant choice.',
+      watchout: isLegacyMigration
+        ? 'Migration success can hide subtle meaning drift if you never confirm the normalized pages, sections, and starter blocks in preview.'
+        : 'Repair success can hide subtle meaning drift if you never confirm the normalized section and block types in preview.',
       steps: [
-        { label: 'Current', detail: 'The layout is usable, but some parts were normalized on the way in.' },
+        { label: 'Current', detail: isLegacyMigration ? 'The older document shape is usable in Builder V2, but some parts were normalized on the way in.' : 'The layout is usable, but some parts were normalized on the way in.' },
         { label: 'Next', detail: 'Open the repaired sections and confirm their key block types still make sense.' },
         { label: 'Then', detail: 'Only expand the layout after the repaired core is trustworthy.' },
       ],
@@ -122,14 +147,22 @@ export const buildBuilderV2ImportGuidance = (
   }
 
   return {
-    title: `Imported ${sourceLabel} with dropped invalid content`,
-    detail: 'The lab salvaged what it could, but some unusable sections or blocks had to be dropped during cleanup.',
+    title: isLegacyMigration ? `Migrated ${sourceLabel} with dropped invalid content` : `Imported ${sourceLabel} with dropped invalid content`,
+    detail: isLegacyMigration
+      ? 'The migration bridge salvaged what it could from the older document shape, but some unusable sections or blocks had to be dropped during cleanup.'
+      : 'The lab salvaged what it could, but some unusable sections or blocks had to be dropped during cleanup.',
     tone,
-    bestNextMove: 'Read the dropped-content notes, then repair the highest-impact missing lane before polishing anything else.',
-    decisionRule: 'When import drops content, fix missing structure before touching copy or cosmetic settings.',
-    watchout: 'A salvaged import can look calm in preview while still missing an entire guest-facing job that was dropped during cleanup.',
+    bestNextMove: isLegacyMigration
+      ? 'Read the dropped-content notes, then rebuild the highest-impact missing page or lane before polishing anything else.'
+      : 'Read the dropped-content notes, then repair the highest-impact missing lane before polishing anything else.',
+    decisionRule: isLegacyMigration
+      ? 'When migration drops content, restore missing structure before you spend time refining copy or cosmetics.'
+      : 'When import drops content, fix missing structure before touching copy or cosmetic settings.',
+    watchout: isLegacyMigration
+      ? 'A salvaged migration can look calm in preview while still missing a whole guest-facing job that never made it through the bridge.'
+      : 'A salvaged import can look calm in preview while still missing an entire guest-facing job that was dropped during cleanup.',
     steps: [
-      { label: 'Current', detail: 'Some invalid structure was removed to keep the import usable.' },
+      { label: 'Current', detail: isLegacyMigration ? 'Some invalid legacy structure was removed to keep the migration usable.' : 'Some invalid structure was removed to keep the import usable.' },
       { label: 'Next', detail: 'Recover the most important missing section or block lane first.' },
       { label: 'Then', detail: 'Re-check the repaired page flow before you continue editing.' },
     ],

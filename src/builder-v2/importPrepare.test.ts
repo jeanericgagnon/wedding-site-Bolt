@@ -228,6 +228,7 @@ describe('prepareImportedBuilderV2Document', () => {
       },
     ]);
     expect(result.report.pageCount).toBe(2);
+    expect(result.report.sourceKind).toBe('layout-config-v1');
     expect(result.report.normalizedVersion).toBe(true);
     expect(result.report.notes[0]).toContain('legacy layout config');
   });
@@ -310,6 +311,7 @@ describe('prepareImportedBuilderV2Document', () => {
       },
     ]);
     expect(result.report.pageCount).toBe(2);
+    expect(result.report.sourceKind).toBe('builder-project');
     expect(result.report.notes[0]).toContain('legacy builder project');
   });
 });

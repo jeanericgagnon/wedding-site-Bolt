@@ -16,6 +16,7 @@ describe('builderV2WorkflowGuidance', () => {
 
   it('builds repaired import guidance from a partially normalized report', () => {
     const report = {
+      sourceKind: 'builder-v2' as const,
       pageCount: 1,
       sectionCount: 3,
       blockCount: 8,
@@ -54,6 +55,7 @@ describe('builderV2WorkflowGuidance', () => {
 
   it('builds caution import guidance when content was dropped', () => {
     const report = {
+      sourceKind: 'builder-v2' as const,
       pageCount: 1,
       sectionCount: 2,
       blockCount: 4,
@@ -85,6 +87,43 @@ describe('builderV2WorkflowGuidance', () => {
     const guidance = buildBuilderV2ImportGuidance(report, 'legacy.json');
     expect(guidance.tone).toBe('caution');
     expect(guidance.watchout).toContain('missing');
+  });
+
+  it('frames repaired legacy migrations differently from native v2 imports', () => {
+    const report = {
+      sourceKind: 'builder-project' as const,
+      pageCount: 2,
+      sectionCount: 4,
+      blockCount: 9,
+      normalizedVersion: true,
+      normalizedUpdatedAt: false,
+      generatedPageIds: 0,
+      dedupedPageIds: 0,
+      normalizedPageTitles: 0,
+      normalizedPageSlugs: 0,
+      normalizedPageVisibility: 0,
+      normalizedHomePage: false,
+      generatedSectionIds: 0,
+      generatedBlockIds: 0,
+      dedupedSectionIds: 0,
+      dedupedBlockIds: 0,
+      normalizedSectionTypes: 1,
+      normalizedBlockTypes: 0,
+      defaultedVariants: 0,
+      coercedEnabledFlags: 0,
+      normalizedTitles: 0,
+      normalizedSubtitles: 0,
+      resetInvalidBlockData: 0,
+      recoveredBlockDataFromLegacyContent: 0,
+      droppedInvalidSections: 0,
+      droppedInvalidBlocks: 0,
+      notes: ['Imported a legacy builder project and mapped it onto the Builder V2 document model.'],
+    };
+
+    const guidance = buildBuilderV2ImportGuidance(report, 'builder-project.json');
+    expect(guidance.title).toContain('Migrated');
+    expect(guidance.detail).toContain('older document shape');
+    expect(guidance.keyStats[0]).toBe('legacy builder project');
   });
 
   it('builds command palette guidance for empty, focused, and zero-result searches', () => {
