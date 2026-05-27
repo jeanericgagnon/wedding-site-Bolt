@@ -14,6 +14,7 @@ import {
   buildBuilderV2SectionEditingGuidance,
   getRecommendedBlockTypes,
 } from './builderV2SectionEditingModel';
+import { buildBuilderV2BlockReviewSummary } from './builderV2BlockReviewModel';
 import {
   buildBuilderV2CommandPaletteGuidance,
   buildBuilderV2ImportGuidance,
@@ -324,6 +325,8 @@ export const BuilderV2Lab: React.FC = () => {
   const [primedPreviewSectionId, setPrimedPreviewSectionId] = useState<string | null>(null);
   const [showAddBlockPicker, setShowAddBlockPicker] = useState(false);
   const [addBlockQuery, setAddBlockQuery] = useState('');
+  const [blockReviewQuery, setBlockReviewQuery] = useState('');
+  const [blockReviewFilter, setBlockReviewFilter] = useState<'all' | 'warnings' | 'healthy'>('all');
   const [sectionBlocks, setSectionBlocks] = useState<Record<string, AddedBlock[]>>({});
   const [collapsedBlocks, setCollapsedBlocks] = useState<Record<string, boolean>>({});
   const importFileInputRef = useRef<HTMLInputElement | null>(null);
@@ -728,6 +731,16 @@ export const BuilderV2Lab: React.FC = () => {
     }),
     [addBlockQuery, addableBlocksForSelected, selectedBlocks, recommendedBlockTypesForSelected, addBlockAvailability],
   );
+  const blockReviewSummary = useMemo(
+    () => buildBuilderV2BlockReviewSummary({
+      blocks: selectedBlocks,
+      query: blockReviewQuery,
+      statusFilter: blockReviewFilter,
+      blockLabels: BLOCK_LABELS,
+      getWarning: getBlockValidationWarning,
+    }),
+    [selectedBlocks, blockReviewQuery, blockReviewFilter],
+  );
 
 
   const allInstancesForExport: SectionInstance[] = useMemo(() => sections.map((s) => ({
@@ -895,6 +908,10 @@ export const BuilderV2Lab: React.FC = () => {
   useEffect(() => {
     setAddBlockQuery('');
   }, [selected.id, showAddBlockPicker]);
+  useEffect(() => {
+    setBlockReviewQuery('');
+    setBlockReviewFilter('all');
+  }, [selected.id]);
   useEffect(() => {
     setCommandIndex(0);
   }, [commandQuery, showCommand]);
@@ -1651,7 +1668,79 @@ export const BuilderV2Lab: React.FC = () => {
                         </div>
                       )}
 
-                      {(sectionBlocks[selected.id] ?? []).map((block) => {
+                      {selectedBlocks.length > 0 && (
+                        <div className="rounded-md border border-border-subtle bg-white p-3 space-y-2.5 shadow-sm transition-all duration-200">
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="min-w-0">
+                              <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary font-medium">Block review</p>
+                              <p className="mt-1 text-sm font-medium text-text-primary">{blockReviewSummary.headline}</p>
+                              <p className="mt-1 text-xs leading-relaxed text-text-secondary">{blockReviewSummary.detail}</p>
+                            </div>
+                            <div className="shrink-0 flex flex-wrap justify-end gap-1.5 text-[10px]">
+                              <span className="rounded-full border border-border-subtle bg-surface-subtle px-2 py-1 text-text-secondary">
+                                {blockReviewSummary.visibleCount} visible
+                              </span>
+                              {blockReviewSummary.warningVisibleCount > 0 && (
+                                <span className="rounded-full border border-amber-200 bg-amber-50 px-2 py-1 text-amber-700">
+                                  {blockReviewSummary.warningVisibleCount} warning{blockReviewSummary.warningVisibleCount === 1 ? '' : 's'}
+                                </span>
+                              )}
+                              {blockReviewSummary.hiddenByFilterCount > 0 && (
+                                <span className="rounded-full border border-border-subtle bg-surface-subtle px-2 py-1 text-text-secondary">
+                                  {blockReviewSummary.hiddenByFilterCount} hidden
+                                </span>
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="grid gap-2 md:grid-cols-[minmax(0,1fr)_auto]">
+                            <input
+                              value={blockReviewQuery}
+                              onChange={(e) => setBlockReviewQuery(e.target.value)}
+                              placeholder="Search blocks by type or warning..."
+                              className="w-full rounded-md border border-border-subtle px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+                            />
+                            <div className="grid grid-cols-3 gap-1 rounded-sm border border-border-subtle bg-surface-subtle p-1">
+                              {(['all', 'warnings', 'healthy'] as const).map((filter) => (
+                                <button
+                                  key={filter}
+                                  onClick={() => setBlockReviewFilter(filter)}
+                                  className={`px-2 py-1.5 text-[11px] rounded-sm transition-colors ${blockReviewFilter === filter ? 'bg-white border border-border shadow-sm text-text-primary' : 'text-text-secondary hover:text-text-primary'}`}
+                                >
+                                  {filter === 'all' ? 'All' : filter === 'warnings' ? 'Warnings' : 'Healthy'}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+
+                          <div className="grid gap-2 md:grid-cols-2">
+                            <div className="rounded-md border border-border-subtle bg-surface-subtle px-2.5 py-2">
+                              <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary">Best next move</p>
+                              <p className="mt-1 text-xs leading-relaxed text-text-primary">{blockReviewSummary.bestNextMove}</p>
+                            </div>
+                            <div className="rounded-md border border-border-subtle bg-surface-subtle px-2.5 py-2">
+                              <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary">Decision rule</p>
+                              <p className="mt-1 text-xs leading-relaxed text-text-primary">{blockReviewSummary.decisionRule}</p>
+                            </div>
+                          </div>
+
+                          <div className="rounded-md border border-border-subtle bg-surface-subtle px-2.5 py-2">
+                            <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary">Watchout</p>
+                            <p className="mt-1 text-xs leading-relaxed text-text-primary">{blockReviewSummary.watchout}</p>
+                          </div>
+
+                          <div className="grid gap-2 md:grid-cols-3">
+                            {blockReviewSummary.steps.map((step) => (
+                              <div key={step.label} className="rounded-md border border-border-subtle bg-surface-subtle px-2.5 py-2">
+                                <p className="text-[10px] uppercase tracking-[0.18em] text-text-tertiary">{step.label}</p>
+                                <p className="mt-1 text-xs leading-relaxed text-text-primary">{step.detail}</p>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {blockReviewSummary.visibleBlocks.map((block) => {
                         const d = normalizeBlockData(block);
                         return (
                         <div key={block.id} className="border border-border-subtle rounded-md p-3 bg-white space-y-2.5 shadow-sm transition-all duration-200">
