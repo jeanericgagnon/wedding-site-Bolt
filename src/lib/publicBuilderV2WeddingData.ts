@@ -35,6 +35,31 @@ const getFirstMeaningfulPhotoUrl = (sections: BuilderV2Section[]) => {
   return '';
 };
 
+const toWeddingDateIsoOrUndefined = (value: string): string | undefined => {
+  const trimmed = value.trim();
+  if (!trimmed) return undefined;
+
+  if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+    const date = new Date(`${trimmed}T12:00:00Z`);
+    return Number.isNaN(date.getTime()) ? undefined : trimmed;
+  }
+
+  const date = new Date(trimmed);
+  return Number.isNaN(date.getTime()) ? undefined : date.toISOString();
+};
+
+const deriveCoupleDisplayName = (sections: BuilderV2Section[]) => (
+  sections
+    .filter((section) => section.type === 'hero')
+    .flatMap((section) => [
+      hasMeaningfulString(section.title) ? section.title.trim() : '',
+      ...section.blocks
+        .filter((block) => block.type === 'title')
+        .map((block) => (hasMeaningfulString(block.data.text) ? block.data.text.trim() : '')),
+    ])
+    .find(hasMeaningfulString)
+);
+
 const deriveFaq = (sections: BuilderV2Section[]): WeddingDataV1['faq'] => (
   sections
     .filter((section) => section.type === 'faq')
@@ -52,6 +77,7 @@ const deriveSchedule = (sections: BuilderV2Section[]) => {
   const venues: WeddingDataV1['venues'] = [];
   const venueIds = new Map<string, string>();
   const schedule: WeddingDataV1['schedule'] = [];
+  let weddingDateISO: string | undefined;
 
   sections
     .filter((section) => section.type === 'schedule')
@@ -74,6 +100,13 @@ const deriveSchedule = (sections: BuilderV2Section[]) => {
           const label = hasMeaningfulString(block.data.title) ? block.data.title.trim() : getBlockText(block);
           if (!label) return;
 
+          const maybeWeddingDateISO = hasMeaningfulString(block.data.time)
+            ? toWeddingDateIsoOrUndefined(block.data.time)
+            : undefined;
+          if (!weddingDateISO && maybeWeddingDateISO) {
+            weddingDateISO = maybeWeddingDateISO;
+          }
+
           schedule.push({
             id: `${section.id}-event-${index}`,
             label,
@@ -84,7 +117,7 @@ const deriveSchedule = (sections: BuilderV2Section[]) => {
         });
     });
 
-  return { venues, schedule };
+  return { venues, schedule, weddingDateISO };
 };
 
 const deriveTravel = (sections: BuilderV2Section[]): WeddingDataV1['travel'] => {
@@ -190,18 +223,31 @@ const deriveGallery = (sections: BuilderV2Section[]): WeddingDataV1['media']['ga
 
 export const deriveWeddingDataFromBuilderV2Document = (document: BuilderV2Document): Partial<WeddingDataV1> => {
   const sections = getVisibleSections(document);
-  const { venues, schedule } = deriveSchedule(sections);
+  const { venues, schedule, weddingDateISO } = deriveSchedule(sections);
   const faq = deriveFaq(sections);
   const travel = deriveTravel(sections);
   const registry = deriveRegistry(sections);
   const story = deriveStory(sections);
   const gallery = deriveGallery(sections);
   const heroImageUrl = getFirstMeaningfulPhotoUrl(sections) || undefined;
+  const displayName = deriveCoupleDisplayName(sections);
+  const hasVisibleRsvp = sections.some((section) => section.type === 'rsvp');
 
   return {
-    couple: story ? { partner1Name: '', partner2Name: '', story } : undefined,
+    couple: displayName || story
+      ? {
+          partner1Name: '',
+          partner2Name: '',
+          displayName: displayName || undefined,
+          story,
+        }
+      : undefined,
+    event: weddingDateISO ? { weddingDateISO } : undefined,
     venues,
     schedule,
+    rsvp: {
+      enabled: hasVisibleRsvp,
+    },
     travel,
     registry,
     faq,
@@ -221,10 +267,20 @@ export const mergeWeddingDataWithBuilderV2Supplement = (
     ...seed,
     couple: {
       ...seed.couple,
+      displayName: seed.couple.displayName || supplement.couple?.displayName || undefined,
       story: seed.couple.story || supplement.couple?.story || undefined,
+    },
+    event: {
+      ...seed.event,
+      weddingDateISO: seed.event.weddingDateISO || supplement.event?.weddingDateISO || undefined,
     },
     venues: isEmptyArray(seed.venues) ? (supplement.venues ?? []) : seed.venues,
     schedule: isEmptyArray(seed.schedule) ? (supplement.schedule ?? []) : seed.schedule,
+    rsvp: {
+      ...seed.rsvp,
+      enabled: base ? seed.rsvp.enabled : (supplement.rsvp?.enabled ?? seed.rsvp.enabled),
+      deadlineISO: seed.rsvp.deadlineISO || supplement.rsvp?.deadlineISO || undefined,
+    },
     travel: {
       ...seed.travel,
       notes: seed.travel.notes || supplement.travel?.notes || undefined,

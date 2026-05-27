@@ -118,6 +118,7 @@ describe('publicBuilderV2WeddingData', () => {
     });
 
     expect(supplement.media?.heroImageUrl).toBe('https://example.com/hero.jpg');
+    expect(supplement.couple?.displayName).toBe('Alex & Jordan');
     expect(supplement.venues).toEqual([{ id: 'schedule-1-venue-0', name: 'Main Lawn' }]);
     expect(supplement.schedule).toEqual([
       {
@@ -128,6 +129,8 @@ describe('publicBuilderV2WeddingData', () => {
         startTimeISO: '4:00 PM',
       },
     ]);
+    expect(supplement.event).toBeUndefined();
+    expect(supplement.rsvp?.enabled).toBe(false);
     expect(supplement.faq).toEqual([{ id: 'faq-1-faq-0', q: 'Parking?', a: 'Yes, valet is available.' }]);
     expect(supplement.travel).toEqual({
       notes: 'Plan a little extra time on Friday.',
@@ -142,6 +145,62 @@ describe('publicBuilderV2WeddingData', () => {
       { id: 'gallery-0', url: 'https://example.com/hero.jpg', caption: undefined },
       { id: 'gallery-1', url: 'https://example.com/gallery-1.jpg', caption: 'Engagement session' },
     ]);
+  });
+
+  it('derives event-date and rsvp presence from visible builder v2 sections when the document carries them', () => {
+    const supplement = deriveWeddingDataFromBuilderV2Document({
+      version: 'v2',
+      updatedAtISO: '2026-05-28T00:00:00.000Z',
+      pages: [
+        {
+          id: 'home',
+          title: 'Home',
+          slug: 'home',
+          isHome: true,
+          hidden: false,
+          sections: [
+            {
+              id: 'hero-1',
+              type: 'hero',
+              variant: 'default',
+              enabled: true,
+              title: 'Morgan & Avery',
+              blocks: [],
+            },
+            {
+              id: 'schedule-1',
+              type: 'schedule',
+              variant: 'default',
+              enabled: true,
+              blocks: [
+                {
+                  id: 'e1',
+                  type: 'event',
+                  data: {
+                    title: 'Ceremony',
+                    time: '2027-09-14T16:00:00.000Z',
+                    location: 'Garden Terrace',
+                  },
+                },
+              ],
+            },
+            {
+              id: 'rsvp-1',
+              type: 'rsvp',
+              variant: 'card',
+              enabled: true,
+              blocks: [
+                { id: 'r1', type: 'rsvpNote', data: { note: 'Kindly reply once travel is booked.' } },
+              ],
+            },
+          ],
+        },
+      ],
+    });
+
+    expect(supplement.couple?.displayName).toBe('Morgan & Avery');
+    expect(supplement.event?.weddingDateISO).toBe('2027-09-14T16:00:00.000Z');
+    expect(supplement.rsvp?.enabled).toBe(true);
   });
 
   it('merges supplemental builder v2 wedding data only into thin public snapshots', () => {
@@ -164,5 +223,19 @@ describe('publicBuilderV2WeddingData', () => {
     expect(merged.registry.links).toEqual([{ id: 'reg-1', label: 'Fund', url: 'https://example.com/fund' }]);
     expect(merged.media.heroImageUrl).toBe('https://example.com/live-hero.jpg');
     expect(merged.media.gallery).toEqual([{ id: 'g1', url: 'https://example.com/gallery.jpg', caption: 'Weekend' }]);
+  });
+
+  it('uses builder v2 event anchors when the public runtime has no saved wedding data snapshot yet', () => {
+    const merged = mergeWeddingDataWithBuilderV2Supplement(null, {
+      couple: { partner1Name: '', partner2Name: '', displayName: 'Morgan & Avery' },
+      event: { weddingDateISO: '2027-09-14T16:00:00.000Z' },
+      rsvp: { enabled: false },
+      media: { heroImageUrl: 'https://example.com/hero.jpg', gallery: [] },
+    });
+
+    expect(merged.couple.displayName).toBe('Morgan & Avery');
+    expect(merged.event.weddingDateISO).toBe('2027-09-14T16:00:00.000Z');
+    expect(merged.rsvp.enabled).toBe(false);
+    expect(merged.media.heroImageUrl).toBe('https://example.com/hero.jpg');
   });
 });
