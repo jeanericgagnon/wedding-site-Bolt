@@ -30,6 +30,8 @@ import {
 import { formatSettingsDate } from './settingsDate';
 import { SETTINGS_SITE_SELECT } from './settingsSiteSelect';
 import { SettingsIdentityExportsPanel } from './SettingsIdentityExportsPanel';
+import { buildSiteAccessPlan } from './siteAccessPlan';
+import { getFlowStatusLabel } from '../../lib/flowLabels';
 
 
 interface RSVPQuestionSetting {
@@ -144,6 +146,12 @@ export const DashboardSettings: React.FC = () => {
       ? 'Password protected'
       : 'Public';
   const visibilityState = getSiteVisibilityState({ isPublished, privacyMode });
+  const siteAccessPlan = useMemo(() => buildSiteAccessPlan({
+    isPublished,
+    privacyMode,
+    siteSlug,
+    guestAccessToken,
+  }), [guestAccessToken, isPublished, privacyMode, siteSlug]);
 
   useEffect(() => {
     if (activeTab === 'billing' && user && !billingInfo) {
@@ -1489,6 +1497,26 @@ export const DashboardSettings: React.FC = () => {
                           <li>• <span className="font-medium text-text-primary">Protected live access</span> lets you limit who can open the guest-facing site once it is live.</li>
                           <li>• <span className="font-medium text-text-primary">Guest-facing launch</span> makes the site live at your DayOf URL.</li>
                         </ul>
+                      </div>
+
+                      <div className="rounded-xl border border-border-subtle bg-surface-subtle/40 p-4 space-y-3">
+                        <div>
+                          <p className="text-sm font-medium text-text-primary">Guest access handoff</p>
+                          <p className="mt-1 text-xs text-text-secondary">Keep launch state, access rules, and the actual guest-facing path aligned before you fan links and print packs out broadly.</p>
+                        </div>
+                        <div className="grid gap-3 lg:grid-cols-3">
+                          {siteAccessPlan.map((step) => (
+                            <div key={step.id} className="rounded-lg border border-border-subtle bg-white px-3 py-3">
+                              <div className="flex items-center justify-between gap-2">
+                                <p className="text-sm font-semibold text-text-primary">{step.title}</p>
+                                <span className="rounded-full border border-border-subtle bg-surface-subtle px-2 py-0.5 text-[11px] font-medium text-text-secondary">
+                                  {getFlowStatusLabel(step.status)}
+                                </span>
+                              </div>
+                              <p className="mt-2 text-xs leading-5 text-text-secondary">{step.detail}</p>
+                            </div>
+                          ))}
+                        </div>
                       </div>
 
                       <div className="space-y-3">
