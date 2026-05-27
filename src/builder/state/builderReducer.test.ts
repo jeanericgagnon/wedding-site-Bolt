@@ -57,6 +57,90 @@ describe('builderReducer — SET_MODE', () => {
   });
 });
 
+describe('builderReducer — page integrity', () => {
+  it('normalizes loaded pages so home stays visible and slugs stay unique', () => {
+    const project = createEmptyBuilderProject('w1', 'classic');
+    project.pages = [
+      {
+        ...project.pages[0],
+        id: 'home',
+        title: 'Home',
+        slug: 'travel',
+        orderIndex: 2,
+        meta: { isHome: true, isHidden: true },
+      },
+      {
+        ...project.pages[0],
+        id: 'travel',
+        title: 'Travel',
+        slug: 'travel',
+        orderIndex: 8,
+        meta: { isHome: false, isHidden: false },
+      },
+    ];
+
+    const next = builderReducer(makeState(), { type: 'LOAD_PROJECT', payload: project });
+
+    expect(next.project?.pages.map((page) => ({
+      id: page.id,
+      slug: page.slug,
+      orderIndex: page.orderIndex,
+      meta: page.meta,
+    }))).toEqual([
+      {
+        id: 'home',
+        slug: 'travel',
+        orderIndex: 0,
+        meta: { isHome: true, isHidden: false },
+      },
+      {
+        id: 'travel',
+        slug: 'travel-2',
+        orderIndex: 1,
+        meta: { isHome: false, isHidden: false },
+      },
+    ]);
+  });
+
+  it('does not let the home page be hidden through page updates', () => {
+    const s = makeState();
+    const pageId = s.project!.pages[0].id;
+
+    const next = builderReducer(s, {
+      type: 'UPDATE_PAGE',
+      payload: {
+        pageId,
+        patch: {
+          meta: { isHome: true, isHidden: true },
+        },
+      },
+    });
+
+    expect(next.project!.pages[0].meta).toEqual({ isHome: true, isHidden: false });
+  });
+
+  it('keeps edited page slugs unique when a conflicting slug is requested', () => {
+    const base = makeState();
+    const firstPageId = base.project!.pages[0].id;
+    const withSecondPage = builderReducer(base, {
+      type: 'ADD_PAGE',
+      payload: { title: 'Travel' },
+    });
+    const secondPageId = withSecondPage.activePageId!;
+
+    const next = builderReducer(withSecondPage, {
+      type: 'UPDATE_PAGE',
+      payload: {
+        pageId: secondPageId,
+        patch: { slug: 'home' },
+      },
+    });
+
+    expect(firstPageId).not.toBe(secondPageId);
+    expect(next.project!.pages.find((page) => page.id === secondPageId)?.slug).toBe('home-2');
+  });
+});
+
 describe('builderReducer — ADD_SECTION', () => {
   it('adds section to page', () => {
     const s = makeState();

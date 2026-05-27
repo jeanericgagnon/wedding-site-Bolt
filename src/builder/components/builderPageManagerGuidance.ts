@@ -1,4 +1,5 @@
 import { BuilderPage } from '../../types/builder/project';
+import { getBuilderPageIntegritySummary } from '../utils/pageMapIntegrity';
 
 export type BuilderPageManagerAction =
   | {
@@ -39,6 +40,7 @@ export function getBuilderPageManagerGuidance(
   const firstEmptyPage = projectPages.find((page) => page.sections.length === 0) ?? null;
   const firstHiddenPage = projectPages.find((page) => page.meta.isHidden) ?? null;
   const visiblePages = projectPages.filter((page) => !page.meta.isHidden);
+  const pageIntegrity = getBuilderPageIntegritySummary(projectPages);
 
   if (projectPages.length === 0) {
     return {
@@ -57,6 +59,59 @@ export function getBuilderPageManagerGuidance(
       secondaryAction: {
         kind: 'add-page',
         label: 'Start with home page',
+      },
+    };
+  }
+
+  if (pageIntegrity.hiddenHomePageId) {
+    const hiddenHomePage = projectPages.find((page) => page.id === pageIntegrity.hiddenHomePageId) ?? homePage ?? projectPages[0];
+
+    return {
+      focusTitle: `${hiddenHomePage.title} is acting like home but missing from navigation`,
+      focusDetail: 'When the home page disappears from nav, the site map loses its clearest guest-facing entry point.',
+      bestNextMove: `Open ${hiddenHomePage.title}, keep it visible, and make sure the first page guests hit still feels like the real front door.`,
+      decisionRule: 'Protect the home page path before you optimize secondary pages or nav order.',
+      watchout: 'A hidden home page makes the site feel coherent in the editor but confusing to guests.',
+      currentStep: `Treat ${hiddenHomePage.title} as the page-map truth source again.`,
+      nextStep: 'Restore its visible place in navigation and reread the opening sections.',
+      thenStep: 'Only after home is trustworthy should you keep reshaping supporting pages.',
+      primaryAction: {
+        kind: 'open-page',
+        label: `Fix ${hiddenHomePage.title}`,
+        pageId: hiddenHomePage.id,
+      },
+      secondaryAction: {
+        kind: 'open-page',
+        label: `Open ${activePage?.title ?? hiddenHomePage.title}`,
+        pageId: activePage?.id ?? hiddenHomePage.id,
+      },
+    };
+  }
+
+  if (pageIntegrity.duplicateSlugCount > 0) {
+    const pageWithCollision = projectPages.find((page) => {
+      const flags = pageIntegrity.flagsByPageId.get(page.id) ?? [];
+      return flags.some((flag) => flag.kind === 'duplicate-slug');
+    }) ?? activePage ?? homePage ?? projectPages[0];
+
+    return {
+      focusTitle: `Two pages are still fighting over /${pageWithCollision.slug}`,
+      focusDetail: 'A slug collision makes the page map look fuller than the guest-facing paths really are.',
+      bestNextMove: `Rename the conflicting slug for ${pageWithCollision.title} so every live page owns one honest path.`,
+      decisionRule: 'Fix path collisions before you add or duplicate more pages.',
+      watchout: 'Duplicate slugs are quiet editor bugs that become loud guest confusion later.',
+      currentStep: 'Review the pages sharing the same path.',
+      nextStep: `Give ${pageWithCollision.title} a distinct guest-facing URL and reread the nav.`,
+      thenStep: 'Once every page owns a unique path, continue the normal page-quality pass.',
+      primaryAction: {
+        kind: 'open-page',
+        label: `Resolve /${pageWithCollision.slug}`,
+        pageId: pageWithCollision.id,
+      },
+      secondaryAction: {
+        kind: 'open-page',
+        label: `Open ${activePage?.title ?? pageWithCollision.title}`,
+        pageId: activePage?.id ?? pageWithCollision.id,
       },
     };
   }

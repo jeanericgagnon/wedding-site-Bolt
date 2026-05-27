@@ -45,6 +45,77 @@ describe('getBuilderPageManagerGuidance', () => {
     });
   });
 
+  it('prioritizes restoring a hidden home page before broader map work', () => {
+    expect(
+      getBuilderPageManagerGuidance(
+        [
+          {
+            id: 'home',
+            title: 'Home',
+            slug: 'home',
+            orderIndex: 0,
+            sections: [{ id: 'hero' }] as never[],
+            meta: { isHome: true, isHidden: true },
+          },
+          {
+            id: 'travel',
+            title: 'Travel',
+            slug: 'travel',
+            orderIndex: 1,
+            sections: [{ id: 'trip' }] as never[],
+            meta: { isHome: false, isHidden: false },
+          },
+        ] as never[],
+        'travel',
+      ),
+    ).toMatchObject({
+      focusTitle: 'Home is acting like home but missing from navigation',
+      primaryAction: {
+        kind: 'open-page',
+        pageId: 'home',
+      },
+    });
+  });
+
+  it('surfaces duplicate guest-facing paths before normal page expansion', () => {
+    expect(
+      getBuilderPageManagerGuidance(
+        [
+          {
+            id: 'home',
+            title: 'Home',
+            slug: 'home',
+            orderIndex: 0,
+            sections: [{ id: 'hero' }] as never[],
+            meta: { isHome: true, isHidden: false },
+          },
+          {
+            id: 'story',
+            title: 'Story',
+            slug: 'travel',
+            orderIndex: 1,
+            sections: [{ id: 'story-hero' }] as never[],
+            meta: { isHome: false, isHidden: false },
+          },
+          {
+            id: 'travel',
+            title: 'Travel',
+            slug: 'travel',
+            orderIndex: 2,
+            sections: [{ id: 'trip' }] as never[],
+            meta: { isHome: false, isHidden: false },
+          },
+        ] as never[],
+        'travel',
+      ),
+    ).toMatchObject({
+      focusTitle: 'Two pages are still fighting over /travel',
+      primaryAction: {
+        kind: 'open-page',
+      },
+    });
+  });
+
   it('surfaces hidden pages before replacement work', () => {
     expect(
       getBuilderPageManagerGuidance(

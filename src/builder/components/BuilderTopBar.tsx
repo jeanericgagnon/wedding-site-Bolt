@@ -46,6 +46,11 @@ import {
   getPublishBlockerUiState,
   toValidTopBarTimestamp,
 } from './builderTopBarModel';
+import {
+  ensureUniquePageSlug,
+  getBuilderPageIntegritySummary,
+  sanitizePageSlug,
+} from '../utils/pageMapIntegrity';
 
 interface BuilderTopBarProps {
   onSave: () => void;
@@ -59,15 +64,6 @@ interface BuilderTopBarProps {
   publishIssueKind?: string | null;
   inspectorHidden?: boolean;
   onToggleInspector?: () => void;
-}
-
-function slugifyPage(input: string): string {
-  return input
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/(^-|-$)/g, '')
-    .slice(0, 64);
 }
 
 export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
@@ -155,6 +151,10 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
   const pageManagerSummary = React.useMemo(
     () => getPageManagerSummary(projectPages, state.activePageId),
     [projectPages, state.activePageId],
+  );
+  const pageIntegrity = React.useMemo(
+    () => getBuilderPageIntegritySummary(projectPages),
+    [projectPages],
   );
   const pageManagerGuidance = React.useMemo(
     () => getBuilderPageManagerGuidance(projectPages, state.activePageId),
@@ -994,7 +994,7 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
 
           <div className="mb-4 grid gap-3 xl:grid-cols-[minmax(0,1.35fr)_minmax(280px,0.95fr)]">
             <div className="space-y-3">
-              <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
+              <div className="grid grid-cols-2 gap-2 md:grid-cols-5">
                 <div className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2">
                   <p className="text-[10px] uppercase tracking-wide text-gray-500">Total pages</p>
                   <p className="mt-1 text-sm font-semibold text-gray-900">{pageManagerSummary.totalPages}</p>
@@ -1010,6 +1010,10 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
                 <div className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2">
                   <p className="text-[10px] uppercase tracking-wide text-gray-500">Empty pages</p>
                   <p className="mt-1 text-sm font-semibold text-gray-900">{pageManagerSummary.emptyPages}</p>
+                </div>
+                <div className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2">
+                  <p className="text-[10px] uppercase tracking-wide text-gray-500">Map watchouts</p>
+                  <p className="mt-1 text-sm font-semibold text-gray-900">{pageIntegrity.totalFlags}</p>
                 </div>
               </div>
 
@@ -1131,7 +1135,14 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
                               value={page.title}
                               onChange={(e) => {
                                 const title = e.target.value;
-                                dispatch(builderActions.updatePage(page.id, { title, slug: slugifyPage(title) || page.slug }));
+                                dispatch(builderActions.updatePage(page.id, {
+                                  title,
+                                  slug: ensureUniquePageSlug(
+                                    sanitizePageSlug(title, page.slug),
+                                    projectPages,
+                                    page.id,
+                                  ),
+                                }));
                               }}
                               className="min-w-0 flex-1 bg-transparent text-sm font-medium text-gray-800 outline-none"
                               placeholder="Page title"
@@ -1149,7 +1160,13 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
                               <span>/</span>
                               <input
                                 value={page.slug}
-                                onChange={(e) => dispatch(builderActions.updatePage(page.id, { slug: slugifyPage(e.target.value) || page.slug }))}
+                                onChange={(e) => dispatch(builderActions.updatePage(page.id, {
+                                  slug: ensureUniquePageSlug(
+                                    sanitizePageSlug(e.target.value, page.slug),
+                                    projectPages,
+                                    page.id,
+                                  ),
+                                }))}
                                 className="min-w-0 flex-1 bg-transparent outline-none"
                                 placeholder="page-slug"
                               />
@@ -1168,6 +1185,19 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
                                 Missing {label}
                               </span>
                             ))}
+                            {(pageIntegrity.flagsByPageId.get(page.id) ?? []).slice(0, 2).map((flag) => (
+                              <span
+                                key={`${page.id}-${flag.kind}`}
+                                className={`rounded-full px-2 py-1 font-medium ${
+                                  flag.kind === 'duplicate-slug'
+                                    ? 'border border-rose-200 bg-rose-50 text-rose-700'
+                                    : 'border border-amber-200 bg-amber-50 text-amber-700'
+                                }`}
+                                title={flag.detail}
+                              >
+                                {flag.label}
+                              </span>
+                            ))}
                           </div>
                           <p className="mt-3 text-xs font-medium text-gray-900">{pageGuide.focusTitle}</p>
                           <p className="mt-1 text-xs text-gray-600">{pageGuide.bestNextMove}</p>
@@ -1184,9 +1214,10 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
                           <button
                             type="button"
                             onClick={() => dispatch(builderActions.updatePage(page.id, { meta: { ...page.meta, isHidden: !page.meta.isHidden } }))}
-                            className="rounded border border-gray-200 px-2 py-1 text-[11px] text-gray-600 hover:bg-gray-50"
+                            disabled={page.meta.isHome}
+                            className="rounded border border-gray-200 px-2 py-1 text-[11px] text-gray-600 hover:bg-gray-50 disabled:opacity-30"
                           >
-                            {page.meta.isHidden ? 'Show in nav' : 'Hide from nav'}
+                            {page.meta.isHome ? 'Home stays in nav' : page.meta.isHidden ? 'Show in nav' : 'Hide from nav'}
                           </button>
                           {page.sections.length === 0 && (
                             <button

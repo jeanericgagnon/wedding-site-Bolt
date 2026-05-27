@@ -3,6 +3,12 @@ import { BuilderPage, BuilderProject, generateBuilderId } from '../../types/buil
 import { BuilderHistoryEntry, BuilderHistoryState } from '../../types/builder/history';
 import { getDefaultSectionInstance } from '../registry/sectionManifests';
 import { getThemePreset } from '../../lib/themePresets';
+import {
+  ensureUniquePageSlug,
+  normalizeBuilderPages,
+  sanitizePageSlug,
+  sanitizePageTitle,
+} from '../utils/pageMapIntegrity';
 
 function pushHistory(
   history: BuilderHistoryState,
@@ -49,16 +55,21 @@ function updatePageSections(
 export function builderReducer(state: BuilderState, action: BuilderAction): BuilderState {
   switch (action.type) {
     case 'LOAD_PROJECT': {
+      const normalizedPages = normalizeBuilderPages(action.payload.pages);
+      const normalizedProject = {
+        ...action.payload,
+        pages: normalizedPages,
+      };
       const baselineHistory = pushHistory(
         state.history,
-        action.payload,
+        normalizedProject,
         'Initial state',
         'ADD_SECTION'
       );
       return {
         ...state,
-        project: action.payload,
-        activePageId: action.payload.pages[0]?.id ?? null,
+        project: normalizedProject,
+        activePageId: normalizedPages[0]?.id ?? null,
         isDirty: false,
         error: null,
         history: baselineHistory,
@@ -75,8 +86,11 @@ export function builderReducer(state: BuilderState, action: BuilderAction): Buil
       if (!state.project) return state;
       const newHistory = pushHistory(state.history, state.project, 'Add page', 'ADD_SECTION');
       const nextIndex = state.project.pages.length;
-      const titleBase = action.payload.title?.trim() || `Page ${nextIndex + 1}`;
-      const slug = titleBase.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || `page-${nextIndex + 1}`;
+      const titleBase = sanitizePageTitle(action.payload.title ?? '', `Page ${nextIndex + 1}`);
+      const slug = ensureUniquePageSlug(
+        sanitizePageSlug(titleBase, `page-${nextIndex + 1}`),
+        state.project.pages,
+      );
       const now = new Date().toISOString();
       const newPage: BuilderPage = {
         id: generateBuilderId(),
@@ -102,8 +116,32 @@ export function builderReducer(state: BuilderState, action: BuilderAction): Buil
 
     case 'UPDATE_PAGE': {
       if (!state.project) return state;
+      const currentPage = state.project.pages.find((page) => page.id === action.payload.pageId);
+      if (!currentPage) return state;
       const newHistory = pushHistory(state.history, state.project, 'Update page', 'UPDATE_SECTION_SETTINGS');
       const now = new Date().toISOString();
+      const requestedTitle = typeof action.payload.patch.title === 'string'
+        ? action.payload.patch.title
+        : currentPage.title;
+      const nextTitle = sanitizePageTitle(requestedTitle, currentPage.title);
+      const requestedSlug = typeof action.payload.patch.slug === 'string'
+        ? action.payload.patch.slug
+        : currentPage.slug;
+      const nextSlug = ensureUniquePageSlug(
+        sanitizePageSlug(requestedSlug, nextTitle),
+        state.project.pages,
+        currentPage.id,
+      );
+      const nextMeta = action.payload.patch.meta
+        ? {
+            ...currentPage.meta,
+            ...action.payload.patch.meta,
+            isHome: currentPage.meta.isHome,
+            isHidden: currentPage.meta.isHome
+              ? false
+              : action.payload.patch.meta.isHidden ?? currentPage.meta.isHidden,
+          }
+        : currentPage.meta;
       return {
         ...state,
         isDirty: true,
@@ -111,7 +149,15 @@ export function builderReducer(state: BuilderState, action: BuilderAction): Buil
         project: {
           ...state.project,
           meta: { ...state.project.meta, updatedAtISO: now },
-          pages: state.project.pages.map((p) => p.id === action.payload.pageId ? { ...p, ...action.payload.patch } : p),
+          pages: state.project.pages.map((page) => page.id === action.payload.pageId
+            ? {
+                ...page,
+                ...action.payload.patch,
+                title: nextTitle,
+                slug: nextSlug,
+                meta: nextMeta,
+              }
+            : page),
         },
       };
     }
@@ -154,7 +200,7 @@ export function builderReducer(state: BuilderState, action: BuilderAction): Buil
         ...source,
         id: copyId,
         title: `${source.title} Copy`,
-        slug: `${source.slug}-copy`,
+        slug: ensureUniquePageSlug(`${source.slug}-copy`, state.project.pages),
         orderIndex: state.project.pages.length,
         sections: source.sections.map((s, i) => ({
           ...s,
