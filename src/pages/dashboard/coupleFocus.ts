@@ -3,7 +3,7 @@ export interface CoupleFocusStep {
   status: 'current' | 'next' | 'then';
   title: string;
   detail: string;
-  target: 'builder' | 'planning' | 'itinerary' | 'guests' | 'messages' | 'settings' | 'seating' | 'coordinator' | 'photos' | 'vault';
+  target: 'builder' | 'planning' | 'planning-tasks' | 'planning-vendors' | 'itinerary' | 'guests' | 'messages' | 'settings' | 'seating' | 'coordinator' | 'photos' | 'vault';
   ctaLabel: string;
 }
 
@@ -108,8 +108,8 @@ export function buildCoupleFocusModel(input: CoupleFocusInput): CoupleFocusModel
           detail: input.overdueTaskCount > 0
             ? `${input.overdueTaskCount} planning task${input.overdueTaskCount === 1 ? '' : 's'} already need attention.`
             : `${input.dueSoonVendorCount} vendor payment${input.dueSoonVendorCount === 1 ? '' : 's'} land within the next week.`,
-          target: 'planning',
-          ctaLabel: 'Open planning',
+          target: input.overdueTaskCount > 0 ? 'planning-tasks' : 'planning-vendors',
+          ctaLabel: input.overdueTaskCount > 0 ? 'Open tasks' : 'Review vendors',
         }),
         step('next', {
           id: 'guests',

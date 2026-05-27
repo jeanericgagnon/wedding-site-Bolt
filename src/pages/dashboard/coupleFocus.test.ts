@@ -34,7 +34,24 @@ describe('buildCoupleFocusModel', () => {
     });
 
     expect(model.headline).toMatch(/planning pressure/i);
-    expect(model.steps[0]).toMatchObject({ id: 'planning', target: 'planning' });
+    expect(model.steps[0]).toMatchObject({ id: 'planning', target: 'planning-tasks' });
+  });
+
+  it('routes vendor pressure to the vendor planning lane', () => {
+    const model = buildCoupleFocusModel({
+      daysUntilWedding: 80,
+      isPublished: true,
+      isArchiveLike: false,
+      publishBlockerCount: 0,
+      pendingGuestCount: 0,
+      contactGapCount: 0,
+      overdueTaskCount: 0,
+      dueSoonVendorCount: 2,
+      seatingUnassignedCount: 0,
+    });
+
+    expect(model.headline).toMatch(/planning pressure/i);
+    expect(model.steps[0]).toMatchObject({ id: 'planning', target: 'planning-vendors' });
   });
 
   it('shifts toward day-of readiness when the wedding is close and the list is calm', () => {

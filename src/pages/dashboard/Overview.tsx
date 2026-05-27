@@ -694,6 +694,8 @@ export const DashboardOverview: React.FC = () => {
     const routeByTarget: Record<CoupleFocusStep['target'], string> = {
       builder: '/dashboard/builder',
       planning: '/dashboard/planning',
+      'planning-tasks': '/dashboard/planning?tab=tasks',
+      'planning-vendors': '/dashboard/planning?tab=vendors',
       itinerary: '/dashboard/itinerary',
       guests: '/dashboard/guests',
       messages: '/dashboard/messages',
