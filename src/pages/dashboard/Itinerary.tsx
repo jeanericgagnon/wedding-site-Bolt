@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Plus, Calendar, Clock, MapPin, Users, Edit2, Trash2, UserPlus, ExternalLink, AlertTriangle, Check, X, HelpCircle, Camera } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { resolveActiveSiteForUser } from '../../lib/activeSite';
@@ -14,6 +14,8 @@ import { deleteEventRsvpByInvitationId, deleteEventRsvpsByInvitationIds, getEven
 import type { WeddingDataV1 } from '../../types/weddingData';
 import { combineDateAndTimeISO } from './itineraryDateTime';
 import { formatItineraryEventDate, toValidItineraryEventDateOrNull } from './itineraryEventDate';
+import { buildItineraryReadiness } from './itineraryReadiness';
+import { getFlowStatusLabel } from '../../lib/flowLabels';
 
 interface ItineraryEvent {
   id: string;
@@ -107,19 +109,28 @@ export const DashboardItinerary: React.FC = () => {
     notes: '',
     is_visible: true,
   });
-
-  useEffect(() => {
-    loadEvents();
-  }, [isDemoMode]);
+  const itineraryReadiness = buildItineraryReadiness(
+    events.map((event) => ({
+      id: event.id,
+      event_name: event.event_name,
+      event_date: event.event_date,
+      start_time: event.start_time,
+      location_name: event.location_name,
+      notes: event.notes,
+      is_visible: event.is_visible,
+    })),
+  );
 
   useEffect(() => {
     if (!isDemoMode) return;
     try {
       localStorage.setItem(DEMO_ITINERARY_STORAGE_KEY, JSON.stringify(events));
-    } catch {}
+    } catch {
+      // Demo itinerary persistence is a convenience layer; keep editing available if storage is blocked.
+    }
   }, [isDemoMode, events]);
 
-  async function syncWeddingDataSchedule(siteId: string, eventList: ItineraryEvent[]) {
+  const syncWeddingDataSchedule = useCallback(async (siteId: string, eventList: ItineraryEvent[]) => {
     try {
       const { data: siteData, error: readError } = await supabase
         .from('wedding_sites')
@@ -174,9 +185,9 @@ export const DashboardItinerary: React.FC = () => {
     } catch {
       // non-blocking mirror write; itinerary CRUD still succeeds
     }
-  }
+  }, []);
 
-  async function loadEvents() {
+  const loadEvents = useCallback(async () => {
     try {
       if (isDemoMode) {
         const seeded = demoEvents.map((event, idx) => ({
@@ -207,7 +218,9 @@ export const DashboardItinerary: React.FC = () => {
               return;
             }
           }
-        } catch {}
+        } catch {
+          // Ignore stale demo storage and fall back to seeded itinerary data.
+        }
 
         setEvents(seeded as EventWithInvites[]);
         return;
@@ -309,7 +322,11 @@ export const DashboardItinerary: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }
+  }, [isDemoMode, syncWeddingDataSchedule]);
+
+  useEffect(() => {
+    loadEvents();
+  }, [loadEvents]);
 
   function openEventForm(event?: ItineraryEvent) {
     if (event) {
@@ -596,6 +613,38 @@ export const DashboardItinerary: React.FC = () => {
 Add to itinerary
         </Button>
       </div>
+
+      <Card padding="md" className="border-primary/20 bg-primary/[0.04]">
+        <div className="space-y-4">
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+            <div className="min-w-0">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-text-secondary">Itinerary readiness</p>
+              <h2 className="mt-1 text-base font-semibold text-text-primary">{itineraryReadiness.title}</h2>
+              <p className="mt-1.5 text-sm leading-6 text-text-secondary">{itineraryReadiness.detail}</p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {itineraryReadiness.badges.map((badge) => (
+                <span key={badge} className="rounded-full border border-border-subtle bg-white px-2.5 py-1 text-[11px] font-medium text-text-secondary shadow-sm">
+                  {badge}
+                </span>
+              ))}
+            </div>
+          </div>
+          <div className="grid gap-3 md:grid-cols-3">
+            {itineraryReadiness.sequence.map((step) => (
+              <div key={step.id} className="rounded-2xl border border-border-subtle bg-white px-4 py-4 shadow-sm">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-sm font-semibold text-text-primary">{step.title}</p>
+                  <span className="rounded-full border border-border-subtle bg-surface-subtle px-2.5 py-1 text-[11px] font-medium text-text-secondary">
+                    {getFlowStatusLabel(step.status)}
+                  </span>
+                </div>
+                <p className="mt-2 text-xs leading-5 text-text-secondary">{step.detail}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </Card>
 
       {showEventForm && (
         <Card className="p-6">
