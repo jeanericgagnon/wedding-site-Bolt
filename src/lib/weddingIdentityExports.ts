@@ -40,6 +40,7 @@ export interface WeddingIdentityExportKit {
   confidenceDetail: string;
   focusTitle: string;
   focusDetail: string;
+  bestNextMove: string;
   decisionRule: string;
   deliveryNote: string;
   items: WeddingIdentityExportItem[];
@@ -245,6 +246,13 @@ export function buildWeddingIdentityExportKit(input: WeddingIdentityExportKitInp
         : !launchIsLive
           ? 'The packs already agree with each other; the last missing ingredient is a live destination behind every QR and short URL.'
           : 'This is the stage where consistency matters more than invention: the same URL, tone, and access story should show up everywhere.',
+    bestNextMove: !hasPublicUrl
+      ? 'Set the clean public URL first, then regenerate the guest-facing QR and print packs once every asset can point to the same trustworthy path.'
+      : restrictedAccess
+        ? `Pair every guest-facing pack with the ${privacyModeLabel} instructions first, then only share the exports that preserve that exact front-door clarity.`
+        : !launchIsLive
+          ? 'Publish the guest-facing site first, then use the share and print packs once the live path is truly ready for guests to follow.'
+          : 'Start with the share-now pack, then carry the exact same URL and identity forward into print and planner handoff without remixing the guest path.',
     decisionRule: !hasPublicUrl
       ? 'Do not print or share QR-led assets until the public URL is set and guest-safe.'
       : restrictedAccess

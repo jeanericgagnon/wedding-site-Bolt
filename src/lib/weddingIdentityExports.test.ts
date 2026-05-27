@@ -27,6 +27,7 @@ describe('weddingIdentityExports', () => {
     expect(kit.confidenceTitle).toBe('Ready for premium handoff');
     expect(kit.deliveryNote).toMatch(/guest-safe URL everywhere/i);
     expect(kit.focusTitle).toBe('Carry one wedding identity across every handoff');
+    expect(kit.bestNextMove).toMatch(/share-now pack|print and planner handoff/i);
     expect(kit.decisionRule).toMatch(/reuse the same identity everywhere/i);
     expect(kit.items.find((item) => item.id === 'public-qr-card')).toMatchObject({
       status: 'ready',
@@ -52,6 +53,7 @@ describe('weddingIdentityExports', () => {
     expect(kit.title).toBe('Your wedding identity export kit');
     expect(kit.confidenceTitle).toBe('Foundation first');
     expect(kit.focusTitle).toBe('Give the kit one trustworthy public URL');
+    expect(kit.bestNextMove).toMatch(/Set the clean public URL first|QR and print packs/i);
     expect(kit.decisionRule).toMatch(/Do not print or share QR-led assets/i);
     expect(kit.items.find((item) => item.id === 'details-insert')?.blockers).toEqual([
       'Set a public site URL.',
@@ -78,6 +80,7 @@ describe('weddingIdentityExports', () => {
     expect(kit.handoffSequence[0]?.title).toMatch(/live first/i);
     expect(kit.confidenceDetail).toMatch(/last trust step|live publish/i);
     expect(kit.focusTitle).toMatch(/Make the guest-facing site live/i);
+    expect(kit.bestNextMove).toMatch(/Publish the guest-facing site first|share and print packs/i);
     expect(kit.decisionRule).toMatch(/publish before you scale/i);
     expect(kit.handoffSequence[1]?.title).toMatch(/after the live publish/i);
     expect(kit.quickPacks.find((pack) => pack.id === 'share-now')?.readiness).toBe('ready');
@@ -97,6 +100,7 @@ describe('weddingIdentityExports', () => {
     expect(kit.warnings).toContain('The site is currently password-protected, so guest-facing packs should only be shared with the right access instructions.');
     expect(kit.deliveryNote).toMatch(/password-protected instructions/i);
     expect(kit.focusTitle).toMatch(/access instructions/i);
+    expect(kit.bestNextMove).toMatch(/password-protected instructions first|front-door clarity/i);
     expect(kit.decisionRule).toMatch(/clarity beats aesthetics/i);
     expect(kit.handoffSequence[0]?.title).toMatch(/access instructions/i);
     expect(kit.quickPacks.find((pack) => pack.id === 'share-now')?.detail).toMatch(/password/i);
