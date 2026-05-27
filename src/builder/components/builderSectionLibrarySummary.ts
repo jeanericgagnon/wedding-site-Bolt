@@ -12,6 +12,7 @@ export interface BuilderSectionLibrarySummaryInput {
 export interface BuilderSectionLibrarySummary {
   filteredManifests: BuilderSectionDefinitionWithMeta[];
   missingEssentialLabels: string[];
+  missingEssentialTypes: BuilderSectionType[];
   currentPageCount: number;
   filteredCount: number;
   title: string;
@@ -106,6 +107,7 @@ export function getBuilderSectionLibrarySummary({
   return {
     filteredManifests,
     missingEssentialLabels,
+    missingEssentialTypes: ESSENTIAL_SECTION_TYPES.filter((type) => !presentTypes.has(type)),
     currentPageCount: sections.length,
     filteredCount: filteredManifests.length,
     title,

@@ -22,6 +22,7 @@ import { buildLaunchConfidence } from '../utils/launchConfidence';
 import { getFlowStatusLabel } from '../../lib/flowLabels';
 import { templateCatalog } from '../constants/templateCatalog';
 import { getBuilderWorkbenchGuidance } from './builderWorkbenchGuidance';
+import { getBuilderPageEditingSummary } from './builderPageEditingSummary';
 import { getPublishGuidance } from './builderPublishGuidance';
 import { buildBuilderDraftContinuityModel } from './builderDraftContinuity';
 import { builderProjectService } from '../services/builderProjectService';
@@ -148,16 +149,34 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
     if (!state.project || !state.weddingData) return null;
     return buildLaunchConfidence(state.project, state.weddingData, { isDirty: state.isDirty });
   }, [state.isDirty, state.project, state.weddingData]);
+  const activePageEditingSummary = useMemo(
+    () => (activePage ? getBuilderPageEditingSummary(activePage.title, activePage.sections) : null),
+    [activePage],
+  );
   const workbenchGuidance = useMemo(
     () => getBuilderWorkbenchGuidance({
       activePageTitle: activePage?.title ?? null,
       sectionCount: activePage?.sections.length ?? 0,
       selectedSectionLabel: selectedSection ? `${selectedSection.type.charAt(0).toUpperCase()}${selectedSection.type.slice(1)}` : null,
+      pageRecoveryState: !selectedSection
+        ? (activePageEditingSummary?.missingEssentialLabels.length ?? 0) > 0
+          ? 'missing-essentials'
+          : (activePageEditingSummary?.hiddenCount ?? 0) > 0
+            ? 'hidden-recovery'
+            : (activePageEditingSummary?.totalCount ?? 0) === 0
+              ? 'empty'
+              : 'refine'
+        : 'refine',
+      pagePrimaryActionLabel: !selectedSection ? activePageEditingSummary?.primaryAction.label ?? null : null,
+      missingEssentialLabel: !selectedSection ? activePageEditingSummary?.missingEssentialLabels[0] ?? null : null,
+      hiddenSectionLabel: !selectedSection && activePageEditingSummary?.primaryAction.kind === 'select-section'
+        ? activePageEditingSummary.primaryAction.label.replace(/^Review hidden /, '')
+        : null,
       mode: state.mode,
       inspectorHidden,
       isDirty: state.isDirty,
     }),
-    [activePage?.sections.length, activePage?.title, inspectorHidden, selectedSection, state.isDirty, state.mode],
+    [activePage?.sections.length, activePage?.title, activePageEditingSummary, inspectorHidden, selectedSection, state.isDirty, state.mode],
   );
   const draftContinuity = useMemo(
     () => buildBuilderDraftContinuityModel({
@@ -351,9 +370,37 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
           const el = document.querySelector(`[data-section-id="${firstSection.id}"]`);
           if (el) (el as HTMLElement).scrollIntoView({ behavior: 'smooth', block: 'start' });
         });
+        return;
+      }
+      case 'apply-page-recovery': {
+        if (!activePage || !activePageEditingSummary) return;
+        const action = activePageEditingSummary.primaryAction;
+        switch (action.kind) {
+          case 'add-section':
+            dispatch(builderActions.addSectionByType(activePage.id, action.sectionType));
+            return;
+          case 'add-essential-kit':
+            action.sectionTypes.forEach((sectionType) => {
+              dispatch(builderActions.addSectionByType(activePage.id, sectionType));
+            });
+            return;
+          case 'select-section':
+            dispatch(builderActions.selectSection(action.sectionId));
+            setInspectorHidden(false);
+            requestAnimationFrame(() => {
+              const el = document.querySelector(`[data-section-id="${action.sectionId}"]`);
+              if (el) (el as HTMLElement).scrollIntoView({ behavior: 'smooth', block: 'start' });
+            });
+            return;
+          case 'open-template-gallery':
+            dispatch(builderActions.openTemplateGallery());
+            return;
+          default:
+            return;
+        }
       }
     }
-  }, [activePage?.sections, dispatch, handleSave, workbenchGuidance.primaryAction.kind]);
+  }, [activePage, activePageEditingSummary, dispatch, handleSave, workbenchGuidance.primaryAction.kind]);
 
   useEffect(() => {
     if (!shouldAutoPublishRef.current) return;

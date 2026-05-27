@@ -9,6 +9,11 @@ type BuilderPageEditingAction =
       sectionType: BuilderSectionType;
     }
   | {
+      kind: 'add-essential-kit';
+      label: string;
+      sectionTypes: BuilderSectionType[];
+    }
+  | {
       kind: 'select-section';
       label: string;
       sectionId: string;
@@ -81,8 +86,9 @@ export function getBuilderPageEditingSummary(
         sectionType: 'hero',
       },
       secondaryAction: {
-        kind: 'open-template-gallery',
-        label: 'Start from template',
+        kind: 'add-essential-kit',
+        label: 'Add essential page kit',
+        sectionTypes: librarySummary.missingEssentialTypes,
       },
     };
   }
@@ -104,13 +110,14 @@ export function getBuilderPageEditingSummary(
       nextStep: `Add ${firstMissingEssentialLabel} and make sure it answers the guest question cleanly.`,
       thenStep: 'After the essentials are in place, tighten the order and hide anything repetitive.',
       primaryAction: {
+        kind: 'add-essential-kit',
+        label: `Add missing essentials (${librarySummary.missingEssentialTypes.length})`,
+        sectionTypes: librarySummary.missingEssentialTypes,
+      },
+      secondaryAction: {
         kind: 'add-section',
         label: `Add ${firstMissingEssentialLabel}`,
         sectionType: firstMissingEssentialType,
-      },
-      secondaryAction: {
-        kind: 'open-template-gallery',
-        label: 'Compare templates',
       },
     };
   }

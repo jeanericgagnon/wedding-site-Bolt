@@ -1,4 +1,5 @@
 export type BuilderWorkbenchActionKind =
+  | 'apply-page-recovery'
   | 'select-first-section'
   | 'show-inspector'
   | 'save-draft'
@@ -9,6 +10,10 @@ export interface BuilderWorkbenchGuidanceInput {
   activePageTitle: string | null;
   sectionCount: number;
   selectedSectionLabel?: string | null;
+  pageRecoveryState?: 'empty' | 'missing-essentials' | 'hidden-recovery' | 'refine';
+  pagePrimaryActionLabel?: string | null;
+  missingEssentialLabel?: string | null;
+  hiddenSectionLabel?: string | null;
   mode: 'edit' | 'preview';
   inspectorHidden: boolean;
   isDirty: boolean;
@@ -34,6 +39,10 @@ export function getBuilderWorkbenchGuidance({
   activePageTitle,
   sectionCount,
   selectedSectionLabel,
+  pageRecoveryState = 'refine',
+  pagePrimaryActionLabel = null,
+  missingEssentialLabel = null,
+  hiddenSectionLabel = null,
   mode,
   inspectorHidden,
   isDirty,
@@ -109,6 +118,74 @@ export function getBuilderWorkbenchGuidance({
   }
 
   if (!selectedSectionLabel) {
+    if (pageRecoveryState === 'missing-essentials' && pagePrimaryActionLabel) {
+      return {
+        badge: 'Page recovery',
+        heading: `${pageLabel} still needs its guest-facing essentials`,
+        summary: `This page has ${sectionCount} section${sectionCount === 1 ? '' : 's'}, but the next value move is still closing the core gap around ${missingEssentialLabel ?? 'the missing essentials'}.`,
+        focusTitle: 'Repair the page in one deliberate move before you disappear into local tweaks.',
+        focusDetail: 'The Builder already knows this page is missing its key guest anchors. Fix that structure first so every later edit sits on steadier ground.',
+        bestNextMove: `Use ${pagePrimaryActionLabel.toLowerCase()} before opening a single section just because it is available.`,
+        decisionRule: 'When the page is missing its essentials, structural repair beats section-level polish.',
+        watchout: 'If you open the nearest section instead of repairing the missing essentials, the page can keep growing while the real gap stays put.',
+        currentStep: `Treat ${pageLabel} like a guest-facing page with a structural gap, not like a set of unrelated blocks.`,
+        nextStep: `Run ${pagePrimaryActionLabel.toLowerCase()} so the page earns its supporting edits.`,
+        thenStep: 'After the missing essentials land, open the lead section and judge the first read again.',
+        checklist: [
+          {
+            id: 'repair-structure',
+            title: 'Repair the page structure first',
+            detail: 'Close the biggest guest-facing gap before you open a local editing lane.',
+          },
+          {
+            id: 're-read-top',
+            title: 'Re-read the page from the top',
+            detail: 'Once the essentials are in, check whether the page still needs the same lead section emphasis.',
+          },
+          {
+            id: 'then-refine',
+            title: 'Refine only after the page earns it',
+            detail: 'Move into section-level polish once the page no longer feels structurally thin.',
+          },
+        ],
+        primaryAction: { kind: 'apply-page-recovery', label: pagePrimaryActionLabel },
+      };
+    }
+
+    if (pageRecoveryState === 'hidden-recovery' && pagePrimaryActionLabel) {
+      return {
+        badge: 'Hidden structure waiting',
+        heading: `${pageLabel} already has structure worth reviewing`,
+        summary: `The page has ${sectionCount} section${sectionCount === 1 ? '' : 's'}, and at least one hidden section is probably more useful than adding a duplicate.`,
+        focusTitle: 'Review the hidden structure before you add more surface area.',
+        focusDetail: `A hidden ${hiddenSectionLabel ?? 'section'} may already solve the page need better than starting over with a new block.`,
+        bestNextMove: `${pagePrimaryActionLabel} before you add a replacement section.`,
+        decisionRule: 'Reuse, reveal, or retire existing structure before duplicating it.',
+        watchout: 'If you ignore hidden structure, the page can quietly accumulate two half-solutions instead of one clean one.',
+        currentStep: `Audit what ${pageLabel} already contains.`,
+        nextStep: 'Open the hidden structure and decide whether it should come back or stay retired.',
+        thenStep: 'Only add something new if the hidden section truly cannot do the job.',
+        checklist: [
+          {
+            id: 'open-hidden',
+            title: 'Open the hidden section first',
+            detail: 'Use the existing structure as your first recovery path before adding more.',
+          },
+          {
+            id: 'decide-fit',
+            title: 'Decide whether it still belongs',
+            detail: 'Either restore it with purpose or leave it out cleanly.',
+          },
+          {
+            id: 'avoid-duplicates',
+            title: 'Avoid duplicate solutions',
+            detail: 'Only add a new section after you are sure the hidden one cannot carry the page need.',
+          },
+        ],
+        primaryAction: { kind: 'apply-page-recovery', label: pagePrimaryActionLabel },
+      };
+    }
+
     return {
       badge: 'Page-level pass',
       heading: `Use ${pageLabel} as a page right now, not just a pile of sections`,

@@ -38,6 +38,7 @@ describe('getBuilderWorkbenchGuidance', () => {
       activePageTitle: 'Story',
       sectionCount: 4,
       selectedSectionLabel: null,
+      pageRecoveryState: 'refine',
       mode: 'edit',
       inspectorHidden: false,
       isDirty: false,
@@ -47,6 +48,26 @@ describe('getBuilderWorkbenchGuidance', () => {
       kind: 'select-first-section',
       label: 'Open the first live section',
     });
+  });
+
+  it('turns missing-essential page states into direct recovery actions', () => {
+    const guidance = getBuilderWorkbenchGuidance({
+      activePageTitle: 'Weekend',
+      sectionCount: 2,
+      selectedSectionLabel: null,
+      pageRecoveryState: 'missing-essentials',
+      pagePrimaryActionLabel: 'Add missing essentials (5)',
+      missingEssentialLabel: 'Our Story',
+      mode: 'edit',
+      inspectorHidden: false,
+      isDirty: false,
+    });
+
+    expect(guidance.primaryAction).toEqual({
+      kind: 'apply-page-recovery',
+      label: 'Add missing essentials (5)',
+    });
+    expect(guidance.bestNextMove).toContain('Use add missing essentials (5)');
   });
 
   it('treats hidden inspector state as the next shell-level blocker', () => {

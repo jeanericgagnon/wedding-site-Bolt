@@ -13,8 +13,9 @@ describe('getBuilderPageEditingSummary', () => {
       sectionType: 'hero',
     });
     expect(summary.secondaryAction).toEqual({
-      kind: 'open-template-gallery',
-      label: 'Start from template',
+      kind: 'add-essential-kit',
+      label: 'Add essential page kit',
+      sectionTypes: ['hero', 'story', 'schedule', 'travel', 'rsvp', 'faq'],
     });
   });
 
@@ -29,6 +30,11 @@ describe('getBuilderPageEditingSummary', () => {
     expect(summary.missingEssentialLabels).toContain('Our Story');
     expect(summary.bestNextMove).toContain('Our Story');
     expect(summary.primaryAction).toEqual({
+      kind: 'add-essential-kit',
+      label: 'Add missing essentials (5)',
+      sectionTypes: ['story', 'schedule', 'travel', 'rsvp', 'faq'],
+    });
+    expect(summary.secondaryAction).toEqual({
       kind: 'add-section',
       label: 'Add Our Story',
       sectionType: 'story',
