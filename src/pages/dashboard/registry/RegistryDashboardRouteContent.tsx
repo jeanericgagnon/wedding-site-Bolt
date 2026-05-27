@@ -105,6 +105,12 @@ type RegistryThankYouPlan = {
   focusDetail?: string;
   nextMove?: string;
   decisionRule?: string;
+  watchout?: string;
+  sequence?: Array<{
+    status: 'current' | 'next' | 'then';
+    title: string;
+    detail: string;
+  }>;
   namedPurchaserCount: number;
   purchasedCount: number;
   missingPurchaserCount: number;
@@ -214,7 +220,8 @@ function RegistryThankYouGuidance({ plan }: { plan: RegistryThankYouPlan }) {
   if (!plan.focusTitle && !plan.focusDetail && !plan.nextMove && !plan.decisionRule) return null;
 
   return (
-    <div className="mt-4 grid gap-3 md:grid-cols-3">
+    <div className="mt-4 space-y-3">
+      <div className="grid gap-3 md:grid-cols-4">
       <div className="rounded-xl border border-border-subtle bg-surface-subtle/20 p-4">
         <p className="text-xs text-text-tertiary">Main focus</p>
         <p className="mt-1 text-sm font-semibold text-text-primary">{plan.focusTitle}</p>
@@ -228,6 +235,32 @@ function RegistryThankYouGuidance({ plan }: { plan: RegistryThankYouPlan }) {
         <p className="text-xs text-text-tertiary">Decision rule</p>
         <p className="mt-1 text-sm font-semibold text-text-primary">{plan.decisionRule}</p>
       </div>
+      <div className="rounded-xl border border-border-subtle bg-surface-subtle/20 p-4">
+        <p className="text-xs text-text-tertiary">Watchout</p>
+        <p className="mt-1 text-sm text-text-secondary">{plan.watchout}</p>
+      </div>
+      </div>
+      {plan.sequence?.length ? (
+        <div className="grid gap-3 md:grid-cols-3">
+          {plan.sequence.map((step) => (
+            <div key={`${step.status}-${step.title}`} className="rounded-xl border border-border-subtle bg-surface-subtle/20 p-4">
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-text-tertiary">{step.status}</p>
+                <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${
+                  step.status === 'current'
+                    ? 'border border-primary/20 bg-primary-light text-primary'
+                    : step.status === 'next'
+                      ? 'border border-warning/20 bg-warning-light text-warning'
+                      : 'border border-border-subtle bg-white text-text-secondary'
+                }`}>
+                  {step.title}
+                </span>
+              </div>
+              <p className="mt-2 text-xs leading-5 text-text-secondary">{step.detail}</p>
+            </div>
+          ))}
+        </div>
+      ) : null}
     </div>
   );
 }

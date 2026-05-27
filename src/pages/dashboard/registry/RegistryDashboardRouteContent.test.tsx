@@ -1072,6 +1072,8 @@ describe('RegistryDashboardRouteContent', () => {
     expect(derived.registryThankYouPlan.focusTitle).toBe('Recover purchaser names first');
     expect(derived.registryThankYouPlan.nextMove).toBe('Open the gifts still missing attribution first, then come back here to send notes in one pass.');
     expect(derived.registryThankYouPlan.decisionRule).toBe('Missing attribution beats writing speed: get the name first, then send the note.');
+    expect(derived.registryThankYouPlan.watchout).toMatch(/wrong or missing purchaser name|cleanup/i);
+    expect(derived.registryThankYouPlan.sequence?.map((step) => step.status)).toEqual(['current', 'next', 'then']);
   });
 
   it('derives a quiet thank-you plan when no purchased gifts need follow-up yet', () => {
@@ -1101,6 +1103,7 @@ describe('RegistryDashboardRouteContent', () => {
     expect(derived.registryThankYouPlan.headline).toBe('Thank-you follow-up is quiet right now');
     expect(derived.registryThankYouPlan.summary).toBe('No purchased gifts need thank-you follow-up right now.');
     expect(derived.registryThankYouPlan.focusTitle).toBe('Nothing needs a thank-you yet');
+    expect(derived.registryThankYouPlan.watchout).toMatch(/quiet lane|background homework/i);
   });
 
   it('derives guest-visible registry analytics from hidden purchased and blocked guest items', () => {

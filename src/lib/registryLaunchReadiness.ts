@@ -67,11 +67,29 @@ export interface RegistryThankYouPlan {
   focusDetail?: string;
   nextMove?: string;
   decisionRule?: string;
+  watchout?: string;
+  sequence?: Array<{
+    status: 'current' | 'next' | 'then';
+    title: string;
+    detail: string;
+  }>;
   purchasedCount: number;
   namedPurchaserCount: number;
   missingPurchaserCount: number;
   completedCount: number;
   items: RegistryThankYouPlanItem[];
+}
+
+function buildRegistryThankYouSequence(
+  current: string,
+  next: string,
+  then: string,
+) {
+  return [
+    { status: 'current' as const, title: 'Current', detail: current },
+    { status: 'next' as const, title: 'Next', detail: next },
+    { status: 'then' as const, title: 'Then', detail: then },
+  ];
 }
 
 function safeCount(value: number): number {
@@ -418,6 +436,36 @@ export function buildRegistryThankYouPlanWithLedger(items: RegistryItem[], ledge
       : pendingCount > 0
         ? 'When purchaser names are complete, sending the next thank-you beats any extra registry cleanup.'
         : 'If everything is sent, keep this lane closed and spend attention elsewhere.';
+  const watchout = purchasedItems.length === 0
+    ? 'Do not turn this quiet lane into anticipatory admin. The thank-you queue should wake up when gifts actually land, not when you feel like getting ahead.'
+    : missingPurchasers > 0
+      ? 'A fast thank-you with the wrong or missing purchaser name creates more cleanup than waiting one beat to recover the attribution correctly.'
+      : pendingCount > 0
+        ? 'The easy miss here is polishing the registry while the thank-you list keeps aging in the background. Once attribution is complete, follow-through is the trust work.'
+        : 'Once the queue is caught up, the main risk is reopening sent work unnecessarily instead of waiting for the next real purchase event.';
+  const sequence = purchasedItems.length === 0
+    ? buildRegistryThankYouSequence(
+        'Keep the thank-you lane quiet until the first real purchase actually creates follow-through work.',
+        'As gifts start landing, keep purchaser attribution clean so the queue wakes up in an organized state.',
+        'Then return here only when a purchase creates a real note to send instead of using this lane as background homework.',
+      )
+    : missingPurchasers > 0
+      ? buildRegistryThankYouSequence(
+          'Treat missing purchaser names as the real blocker before you try to write or send anything.',
+          'Recover the attribution first so every thank-you can go to the right person with confidence.',
+          'Then send the cleared notes in one calmer pass instead of mixing guesswork with gratitude.',
+        )
+      : pendingCount > 0
+        ? buildRegistryThankYouSequence(
+            'Use the ready-to-send gifts as the live work now that attribution is already complete.',
+            'Send the oldest or clearest note first so the queue starts shrinking immediately.',
+            'Then save the updated ledger and let the lane go quiet again until the next real purchase arrives.',
+          )
+        : buildRegistryThankYouSequence(
+            'Keep the completed thank-you ledger as proof that follow-through is already handled.',
+            'Only reopen the list when a new purchase lands or purchaser details genuinely change.',
+            'Then close the lane again once the new follow-through is recorded instead of re-reading solved work.',
+          );
 
   return {
     headline: purchasedItems.length > 0 ? 'Thank-you follow-up list' : 'Thank-you follow-up is quiet right now',
@@ -430,6 +478,8 @@ export function buildRegistryThankYouPlanWithLedger(items: RegistryItem[], ledge
     focusDetail,
     nextMove,
     decisionRule,
+    watchout,
+    sequence,
     purchasedCount: purchasedItems.length,
     namedPurchaserCount: namedPurchasers.length,
     missingPurchaserCount: missingPurchasers,
