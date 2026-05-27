@@ -18,6 +18,7 @@ export interface RegistryLaunchReadiness {
   summary: string;
   focusTitle: string;
   focusDetail: string;
+  bestNextMove: string;
   decisionRule: string;
   reviewCount: number;
   readyCount: number;
@@ -188,6 +189,11 @@ export function buildRegistryLaunchReadiness(items: RegistryItem[], ledger: Regi
     : status === 'needs-review'
       ? `${plural(reviewCount, 'share detail')} still need attention before this feels reliably guest-ready.`
       : 'The share basics are in place, so the goal now is preserving clarity instead of reopening setup churn.';
+  const bestNextMove = status === 'empty'
+    ? 'Add one gift or fund with a real share path first, then preview the registry before you expand the list.'
+    : status === 'needs-review'
+      ? 'Open the share blockers first, clear the missing gift or fund paths, and only then come back to polish or expansion.'
+      : 'Do one quick guest-eye preview of the current links, then leave the registry stable unless a new gift can match that same clarity.';
   const decisionRule = status === 'empty'
     ? 'Start with one reliable gift or fund path first; a small honest registry beats a bigger one that still sends guests into dead ends.'
     : status === 'needs-review'
@@ -208,6 +214,7 @@ export function buildRegistryLaunchReadiness(items: RegistryItem[], ledger: Regi
         : 'Gift links, fund links, and purchase-state basics look ready to share right now.',
     focusTitle,
     focusDetail,
+    bestNextMove,
     decisionRule,
     reviewCount,
     readyCount,

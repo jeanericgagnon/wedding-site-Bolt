@@ -972,6 +972,7 @@ describe('RegistryDashboardRouteContent', () => {
     expect(derived.registryLaunchReadiness.headline).toBe('Registry share setup looks ready to share.');
     expect(derived.registryLaunchReadiness.summary).toBe('Gift links, fund links, and purchase-state basics look ready to share right now.');
     expect(derived.registryLaunchReadiness.focusTitle).toBe('Keep the registry easy to trust at a glance');
+    expect(derived.registryLaunchReadiness.bestNextMove).toMatch(/guest-eye preview|leave the registry stable/i);
     expect(derived.registryLaunchReadiness.decisionRule).toMatch(/protect that trust/i);
     expect(derived.registryLaunchReadiness.items.find((item) => item.id === 'purchase-state')?.detail).toBe('No gifts are marked purchased yet.');
     expect(derived.registryLaunchReadiness.items.find((item) => item.id === 'hide-purchased')?.detail).toBe('No gifts hide after purchase right now.');
@@ -995,6 +996,7 @@ describe('RegistryDashboardRouteContent', () => {
     expect(derived.registryLaunchReadiness.headline).toBe('Registry share setup is still empty.');
     expect(derived.registryLaunchReadiness.summary).toBe('Add product gifts or funds when you want registry links ready to share.');
     expect(derived.registryLaunchReadiness.focusTitle).toMatch(/trustworthy share path/i);
+    expect(derived.registryLaunchReadiness.bestNextMove).toMatch(/one gift or fund with a real share path/i);
     expect(derived.registryLaunchReadiness.decisionRule).toMatch(/small honest registry/i);
     expect(derived.registryLaunchReadiness.items.find((item) => item.id === 'external-links')?.detail).toBe('No product gifts are listed yet, so there are no gift links to share right now.');
     expect(derived.registryLaunchReadiness.items.find((item) => item.id === 'cash-funds')?.detail).toBe('No cash funds are listed right now, which is fine for a gift-only registry.');
@@ -2683,6 +2685,7 @@ describe('RegistryDashboardRouteContent', () => {
           status: 'ready',
           focusTitle: 'Keep the registry easy to trust at a glance',
           focusDetail: 'The share basics are in place, so the goal now is preserving clarity instead of reopening setup churn.',
+          bestNextMove: 'Do one quick guest-eye preview of the current links, then leave the registry stable unless a new gift can match that same clarity.',
           decisionRule: 'If the links and share paths already hold, protect that trust and only broaden the registry when the additions stay equally clean.',
           reviewCount: 0,
           items: [
@@ -2716,7 +2719,9 @@ describe('RegistryDashboardRouteContent', () => {
     expect(screen.getByText('Registry share setup looks ready to share.')).toBeInTheDocument();
     expect(screen.getByText('No registry share blockers right now.')).toBeInTheDocument();
     expect(screen.getByText('Keep the registry easy to trust at a glance')).toBeInTheDocument();
+    expect(screen.getByText(/guest-eye preview of the current links/i)).toBeInTheDocument();
     expect(screen.getByText('Turn the most visible open gifts into confident choices')).toBeInTheDocument();
+    expect(screen.getByText(/tighten the open top gifts first/i)).toBeInTheDocument();
     expect(screen.getByText(/improve their clarity before you spend energy polishing lower-priority items/i)).toBeInTheDocument();
     expect(screen.getByText('0 to check')).toBeInTheDocument();
     expect(screen.getAllByText('Ready to share').length).toBeGreaterThan(0);
@@ -2774,6 +2779,7 @@ describe('RegistryDashboardRouteContent', () => {
           status: 'needs-review',
           focusTitle: 'Clear the share blockers before the registry starts teaching guests the wrong behavior',
           focusDetail: '2 share details still need attention before this feels reliably guest-ready.',
+          bestNextMove: 'Open the share blockers first, clear the missing gift or fund paths, and only then come back to polish or expansion.',
           decisionRule: 'When share blockers exist, clear those before you polish copy or expand the list.',
           reviewCount: 2,
           items: [
@@ -2806,6 +2812,7 @@ describe('RegistryDashboardRouteContent', () => {
     expect(screen.getByText('A few registry share details still need a look.')).toBeInTheDocument();
     expect(screen.getByText('2 registry share details still need a quick pass before sharing.')).toBeInTheDocument();
     expect(screen.getByText('Clear the share blockers before the registry starts teaching guests the wrong behavior')).toBeInTheDocument();
+    expect(screen.getByText(/Open the share blockers first/i)).toBeInTheDocument();
     expect(screen.getByText('When share blockers exist, clear those before you polish copy or expand the list.')).toBeInTheDocument();
     expect(screen.getByText('2 to check')).toBeInTheDocument();
     expect(screen.getAllByText('Needs a look').length).toBeGreaterThan(0);

@@ -86,6 +86,7 @@ type RegistryLaunchReadiness = {
   status: string;
   focusTitle?: string;
   focusDetail?: string;
+  bestNextMove?: string;
   decisionRule?: string;
   reviewCount: number;
   items: Array<{ id: string; label: string; detail: string; tone: string }>;
@@ -739,23 +740,27 @@ export function RegistryDashboardRouteContent(props: {
     ? {
         focusTitle: 'Pick the gifts that deserve top-billing first',
         focusDetail: 'The top section works best once it reflects the gifts or funds guests are most likely to notice and act on first.',
+        bestNextMove: 'Choose the first top-lane gifts now, then leave the slot count alone until those picks are genuinely guest-ready.',
         decisionRule: 'Do not fill the top lane just to make it look busy; use it for the items that make the registry feel easy to understand.',
       }
     : topRegistryProgressCounts.open > 0
       ? {
           focusTitle: 'Turn the most visible open gifts into confident choices',
           focusDetail: 'If the top lane still has fully open gifts, the next best move is making sure those gifts feel complete, compelling, and easy to claim.',
+          bestNextMove: 'Tighten the open top gifts first, then come back to lower-priority registry cleanup only after those visible choices feel complete.',
           decisionRule: 'When top gifts are still fully open, improve their clarity before you spend energy polishing lower-priority items.',
         }
       : topRegistryProgressCounts.partial > 0
         ? {
             focusTitle: 'Finish the gifts that are already moving',
             focusDetail: 'Partial claims are a good sign, but the highest-value cleanup now is helping those visible gifts cross the line into fully claimed.',
+            bestNextMove: 'Resolve the partially claimed top gifts first, then reopen any broader top-lane curation only once those gifts are fully clear.',
             decisionRule: 'When top gifts are partially claimed, completion beats expansion.',
           }
         : {
             focusTitle: 'Protect the calm in the top lane',
             focusDetail: 'The top gifts are already in a good place, so the job is preserving that clarity instead of rotating in new noise.',
+            bestNextMove: 'Leave the top lane steady for now, and only replace a featured gift if the newcomer is clearly stronger for guests.',
             decisionRule: 'When the top lane is already fully claimed, keep it stable unless a better guest-facing priority truly replaces it.',
           };
   const recentActivitySummary = props.recentActivity.length === 0
@@ -772,23 +777,27 @@ export function RegistryDashboardRouteContent(props: {
     ? {
         focusTitle: 'Use activity as confirmation, not entertainment',
         focusDetail: 'This lane is most useful once real claims, purchases, or refreshes start telling you how the registry is actually moving.',
+        bestNextMove: 'Leave this lane quiet until real registry motion starts, then use it to confirm what guests are actually doing.',
         decisionRule: 'Do not invent motion for its own sake; let the activity lane earn attention by reflecting meaningful guest or owner actions.',
       }
     : recentPartialCount > 0
       ? {
           focusTitle: 'Finish the gifts already in motion',
           focusDetail: 'Partial claims are the clearest signal that a guest already started a choice and now needs a clean path to finish it.',
+          bestNextMove: 'Review the partially claimed gifts first, then clean up any weaker recent edits only after those gifts can finish cleanly.',
           decisionRule: 'When the activity lane shows partial claims, completion beats adding new motion elsewhere.',
         }
       : recentPurchasedCount > 0
         ? {
             focusTitle: 'Turn completed purchases into calmer follow-through',
             focusDetail: 'Fresh purchases are a good sign, but their value compounds when purchaser names, thank-yous, and guest visibility stay tidy behind them.',
+            bestNextMove: 'Lock purchaser names and thank-you follow-through first, then return to presentation polish once the post-purchase path is tidy.',
             decisionRule: 'When real purchases are flowing, protect the follow-through before you reopen presentation polish.',
           }
         : {
             focusTitle: 'Treat fresh edits as trust work, not just noise',
             focusDetail: 'If activity is mostly availability or owner-side changes, use it to keep the registry accurate and easy to trust instead of merely busy.',
+            bestNextMove: 'Use the latest edits to confirm price, availability, and wording accuracy now, then let the registry stay steady once the trust pass is done.',
             decisionRule: 'When motion is mostly edits rather than purchases, clarity beats churn.',
           };
   const registryQuickCheckNextCount = props.registryInsights.filter((insight) => insight.priority === 'next').length;
@@ -1183,14 +1192,18 @@ export function RegistryDashboardRouteContent(props: {
               </div>
               <p className="mt-3 text-sm text-text-secondary">{props.registryLaunchReadiness.summary}</p>
               <p className="mt-2 text-xs text-text-tertiary">{registryShareReadinessSummary}</p>
-              {props.registryLaunchReadiness.focusTitle || props.registryLaunchReadiness.focusDetail || props.registryLaunchReadiness.decisionRule ? (
-                <div className="mt-4 grid gap-3 md:grid-cols-2">
+              {props.registryLaunchReadiness.focusTitle || props.registryLaunchReadiness.focusDetail || props.registryLaunchReadiness.bestNextMove || props.registryLaunchReadiness.decisionRule ? (
+                <div className="mt-4 grid gap-3 md:grid-cols-3">
                   <div className="rounded-xl border border-border-subtle bg-surface-subtle/20 p-4">
                     <p className="text-xs text-text-tertiary">Main focus</p>
                     <p className="mt-1 text-sm font-semibold text-text-primary">{props.registryLaunchReadiness.focusTitle}</p>
                     {props.registryLaunchReadiness.focusDetail ? (
                       <p className="mt-2 text-xs leading-5 text-text-secondary">{props.registryLaunchReadiness.focusDetail}</p>
                     ) : null}
+                  </div>
+                  <div className="rounded-xl border border-border-subtle bg-surface-subtle/20 p-4">
+                    <p className="text-xs text-text-tertiary">Best next move</p>
+                    <p className="mt-1 text-sm font-semibold text-text-primary">{props.registryLaunchReadiness.bestNextMove}</p>
                   </div>
                   <div className="rounded-xl border border-border-subtle bg-surface-subtle/20 p-4">
                     <p className="text-xs text-text-tertiary">Decision rule</p>
@@ -1335,11 +1348,15 @@ export function RegistryDashboardRouteContent(props: {
             <Card variant="bordered" padding="lg">
               <p className="text-sm font-semibold text-text-primary">Top registry progress</p>
               <p className="mt-1 text-sm text-text-secondary">{topRegistryProgressSummary}</p>
-              <div className="mt-3 grid gap-3 md:grid-cols-2">
+              <div className="mt-3 grid gap-3 md:grid-cols-3">
                 <div className="rounded-xl border border-border-subtle bg-surface-subtle/20 px-3 py-3">
                   <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-text-tertiary">Main focus</p>
                   <p className="mt-1 text-sm font-semibold text-text-primary">{topRegistryProgressGuide.focusTitle}</p>
                   <p className="mt-2 text-xs leading-5 text-text-secondary">{topRegistryProgressGuide.focusDetail}</p>
+                </div>
+                <div className="rounded-xl border border-border-subtle bg-surface-subtle/20 px-3 py-3">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-text-tertiary">Best next move</p>
+                  <p className="mt-1 text-sm font-semibold text-text-primary">{topRegistryProgressGuide.bestNextMove}</p>
                 </div>
                 <div className="rounded-xl border border-border-subtle bg-surface-subtle/20 px-3 py-3">
                   <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-text-tertiary">Decision rule</p>
@@ -1379,11 +1396,15 @@ export function RegistryDashboardRouteContent(props: {
             <Card variant="bordered" padding="lg">
               <p className="text-sm font-semibold text-text-primary">Recent registry activity</p>
               <p className="mt-1 text-sm text-text-secondary">{recentActivitySummary}</p>
-              <div className="mt-3 grid gap-3 md:grid-cols-2">
+              <div className="mt-3 grid gap-3 md:grid-cols-3">
                 <div className="rounded-xl border border-border-subtle bg-surface-subtle/20 px-3 py-3">
                   <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-text-tertiary">Main focus</p>
                   <p className="mt-1 text-sm font-semibold text-text-primary">{recentActivityGuide.focusTitle}</p>
                   <p className="mt-2 text-xs leading-5 text-text-secondary">{recentActivityGuide.focusDetail}</p>
+                </div>
+                <div className="rounded-xl border border-border-subtle bg-surface-subtle/20 px-3 py-3">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-text-tertiary">Best next move</p>
+                  <p className="mt-1 text-sm font-semibold text-text-primary">{recentActivityGuide.bestNextMove}</p>
                 </div>
                 <div className="rounded-xl border border-border-subtle bg-surface-subtle/20 px-3 py-3">
                   <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-text-tertiary">Decision rule</p>
