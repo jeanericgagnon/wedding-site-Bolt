@@ -18,6 +18,14 @@ const getBlockText = (block: BuilderV2Block) => (
   ].find(hasMeaningfulString)?.trim() ?? ''
 );
 
+const getMeaningfulBlocks = (
+  sections: BuilderV2Section[],
+  matcher: (section: BuilderV2Section, block: BuilderV2Block) => boolean,
+) => (
+  sections.flatMap((section) => section.blocks
+    .filter((block) => matcher(section, block)))
+);
+
 const getFirstMeaningfulPhotoUrl = (sections: BuilderV2Section[]) => {
   for (const section of sections) {
     for (const block of section.blocks) {
@@ -80,37 +88,105 @@ const deriveSchedule = (sections: BuilderV2Section[]) => {
 };
 
 const deriveTravel = (sections: BuilderV2Section[]): WeddingDataV1['travel'] => {
-  const travelLines = sections
+  const notes: string[] = [];
+  const hotelInfo: string[] = [];
+  const flightInfo: string[] = [];
+  const parkingInfo: string[] = [];
+
+  sections
     .filter((section) => section.type === 'travel' || section.type === 'accommodations')
-    .flatMap((section) => section.blocks
-      .filter((block) => block.type === 'travelTip' || block.type === 'hotelCard')
-      .map((block) => [block.data.title, getBlockText(block)].filter(hasMeaningfulString).join(': ').trim())
-      .filter(Boolean));
+    .forEach((section) => {
+      if (hasMeaningfulString(section.subtitle)) {
+        notes.push(section.subtitle.trim());
+      }
+
+      section.blocks
+        .filter((block) => block.type === 'travelTip' || block.type === 'hotelCard')
+        .forEach((block) => {
+          const headline = hasMeaningfulString(block.data.title) ? block.data.title.trim() : '';
+          const detail = getBlockText(block);
+          const line = [headline, detail].filter(hasMeaningfulString).join(': ').trim();
+          if (!line) return;
+
+          const haystack = `${section.type} ${headline} ${detail}`.toLowerCase();
+
+          if (section.type === 'accommodations' || block.type === 'hotelCard' || /(hotel|stay|room|lodging|book)/.test(haystack)) {
+            hotelInfo.push(line);
+            return;
+          }
+
+          if (/(parking|valet|garage|lot|shuttle)/.test(haystack)) {
+            parkingInfo.push(line);
+            return;
+          }
+
+          if (/(flight|airport|airline|fly|arrival|depart)/.test(haystack)) {
+            flightInfo.push(line);
+            return;
+          }
+
+          notes.push(line);
+        });
+    });
 
   return {
-    notes: travelLines.length > 0 ? travelLines.join('\n') : undefined,
+    notes: notes.length > 0 ? notes.join('\n') : undefined,
+    hotelInfo: hotelInfo.length > 0 ? hotelInfo.join('\n') : undefined,
+    flightInfo: flightInfo.length > 0 ? flightInfo.join('\n') : undefined,
+    parkingInfo: parkingInfo.length > 0 ? parkingInfo.join('\n') : undefined,
   };
 };
 
-const deriveRegistry = (sections: BuilderV2Section[]): WeddingDataV1['registry'] => ({
-  links: sections
-    .filter((section) => section.type === 'registry')
-    .flatMap((section) => section.blocks
-      .filter((block) => (block.type === 'registryItem' || block.type === 'fundHighlight') && hasMeaningfulString(block.data.url))
-      .map((block, index) => ({
-        id: `${section.id}-registry-${index}`,
-        label: hasMeaningfulString(block.data.title) ? block.data.title.trim() : undefined,
-        url: block.data.url!.trim(),
-      }))),
-});
+const deriveRegistry = (sections: BuilderV2Section[]): WeddingDataV1['registry'] => {
+  const registrySections = sections.filter((section) => section.type === 'registry');
+  const links = registrySections.flatMap((section) => section.blocks
+    .filter((block) => (block.type === 'registryItem' || block.type === 'fundHighlight') && hasMeaningfulString(block.data.url))
+    .map((block, index) => ({
+      id: `${section.id}-registry-${index}`,
+      label: hasMeaningfulString(block.data.title) ? block.data.title.trim() : undefined,
+      url: block.data.url!.trim(),
+    })));
+
+  const notes = registrySections
+    .flatMap((section) => [
+      hasMeaningfulString(section.subtitle) ? section.subtitle.trim() : '',
+      ...section.blocks
+        .filter((block) => block.type === 'text' || block.type === 'fundHighlight')
+        .map((block) => getBlockText(block)),
+    ])
+    .filter(hasMeaningfulString)
+    .join('\n');
+
+  return {
+    links,
+    notes: notes || undefined,
+  };
+};
 
 const deriveStory = (sections: BuilderV2Section[]) => {
-  const storySection = sections.find((section) => section.type === 'story');
-  if (!storySection) return undefined;
-  const storyBlock = storySection.blocks.find((block) => block.type === 'story' || block.type === 'text');
-  const story = storyBlock ? getBlockText(storyBlock) : '';
+  const story = sections
+    .filter((section) => section.type === 'story')
+    .flatMap((section) => section.blocks
+      .filter((block) => block.type === 'story' || block.type === 'text')
+      .map((block) => getBlockText(block)))
+    .filter(hasMeaningfulString)
+    .join('\n\n');
   return story || undefined;
 };
+
+const deriveGallery = (sections: BuilderV2Section[]): WeddingDataV1['media']['gallery'] => (
+  getMeaningfulBlocks(
+    sections,
+    (section, block) => (section.type === 'gallery' || section.type === 'hero') && block.type === 'photo' && hasMeaningfulString(block.data.imageUrl),
+  )
+    .map((block, index) => ({
+      id: `gallery-${index}`,
+      url: block.data.imageUrl!.trim(),
+      caption: hasMeaningfulString(block.data.caption)
+        ? block.data.caption.trim()
+        : (hasMeaningfulString(block.data.title) ? block.data.title.trim() : undefined),
+    }))
+);
 
 export const deriveWeddingDataFromBuilderV2Document = (document: BuilderV2Document): Partial<WeddingDataV1> => {
   const sections = getVisibleSections(document);
@@ -119,6 +195,7 @@ export const deriveWeddingDataFromBuilderV2Document = (document: BuilderV2Docume
   const travel = deriveTravel(sections);
   const registry = deriveRegistry(sections);
   const story = deriveStory(sections);
+  const gallery = deriveGallery(sections);
   const heroImageUrl = getFirstMeaningfulPhotoUrl(sections) || undefined;
 
   return {
@@ -128,7 +205,7 @@ export const deriveWeddingDataFromBuilderV2Document = (document: BuilderV2Docume
     travel,
     registry,
     faq,
-    media: heroImageUrl ? { heroImageUrl, gallery: [] } : { gallery: [] },
+    media: heroImageUrl ? { heroImageUrl, gallery } : { gallery },
   };
 };
 
@@ -164,7 +241,7 @@ export const mergeWeddingDataWithBuilderV2Supplement = (
     media: {
       ...seed.media,
       heroImageUrl: seed.media.heroImageUrl || supplement.media?.heroImageUrl || undefined,
-      gallery: seed.media.gallery,
+      gallery: isEmptyArray(seed.media.gallery) ? (supplement.media?.gallery ?? []) : seed.media.gallery,
     },
   };
 };
