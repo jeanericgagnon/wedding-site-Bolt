@@ -35,6 +35,7 @@ export interface MemoryCuratorModel {
   focusDetail: string;
   bestNextMove: string;
   decisionRule: string;
+  watchout: string;
   curationNote: string;
   badges: string[];
   qualitySignals: string[];
@@ -161,6 +162,7 @@ export const buildPhotoMemoryCuratorModel = (args: {
       focusDetail: 'Until the hero photo feels unmistakable, every other memory choice is still provisional.',
       bestNextMove: 'Upload one favorite couple portrait into Main photo of you two.',
       decisionRule: 'Do not widen guest-facing collection before the signature couple photo feels settled.',
+      watchout: 'If you open guest-facing memory lanes before the couple anchor feels unmistakable, every later upload asks guests to guess what story they are helping preserve.',
       curationNote: 'This is still collection mode. Do not widen the guest upload story until the couple anchor feels unmistakable.',
       badges: [
         `${signatureReadyCount}/2 signature buckets ready`,
@@ -202,6 +204,7 @@ export const buildPhotoMemoryCuratorModel = (args: {
       focusDetail: 'The private story is strong enough now that one clear upload moment will help more than adding lots of options.',
       bestNextMove: 'Create the first live bucket for the one moment you care about most.',
       decisionRule: 'Launch the clearest guest upload path first, then add more only when the first one proves useful.',
+      watchout: 'The easy mistake here is opening several buckets at once and teaching guests that every moment matters equally, which usually makes none of them feel memorable.',
       curationNote: 'The visual story is strong enough to open one clear upload lane without overwhelming guests.',
       badges: [
         `${signatureReadyCount}/2 signature buckets ready`,
@@ -243,6 +246,7 @@ export const buildPhotoMemoryCuratorModel = (args: {
       focusDetail: 'A single complete bucket creates more trust than several half-formed ones.',
       bestNextMove: 'Push one live bucket to at least three strong visible uploads.',
       decisionRule: 'Push one bucket to “worth revisiting” before you spread attention across every upload lane.',
+      watchout: 'If you spread early uploads across every bucket at once, the whole memory system can look busier without any lane becoming worth revisiting.',
       curationNote: 'You have signal now. The job is turning that signal into one complete, trustworthy memory lane first.',
       badges: [
         `${totalVisibleUploads} visible upload${totalVisibleUploads === 1 ? '' : 's'}`,
@@ -284,6 +288,7 @@ export const buildPhotoMemoryCuratorModel = (args: {
       focusDetail: 'The archive is strongest when it starts favoring memorable clusters over endless intake.',
       bestNextMove: 'Use the strongest bucket to shape a first slideshow or recap draft.',
       decisionRule: 'Once enough strong uploads exist, preserving the best moments beats collecting every remaining one.',
+      watchout: 'If archive mode keeps treating every new upload like equal priority, the strongest memories disappear into volume instead of becoming the keepsakes people revisit.',
       curationNote: 'The best next upgrade is permanence: recap, archive, and stop treating every new upload as equally important.',
       badges: [
         `${readyAlbums.length} slideshow-ready bucket${readyAlbums.length === 1 ? '' : 's'}`,
@@ -324,6 +329,7 @@ export const buildPhotoMemoryCuratorModel = (args: {
     focusDetail: 'The system is healthy enough that restraint will usually improve it more than expansion.',
     bestNextMove: 'Preview the slideshow while the best moments are still easy to spot.',
     decisionRule: 'When the memory flow feels balanced, choose continuity and taste over opening new lanes.',
+    watchout: 'Balanced memory systems usually get weaker through enthusiasm, not neglect. Too many new lanes can make a curated story feel accidental again.',
     curationNote: 'This is the sweet spot where fewer, better buckets will usually create a stronger memory system than opening more lanes.',
     badges: [
       `${readyAlbums.length} slideshow-ready bucket${readyAlbums.length === 1 ? '' : 's'}`,
@@ -381,6 +387,7 @@ export const buildVaultMemoryCuratorModel = (args: {
       focusDetail: 'The emotional value of the vault only works when the storage path is dependable.',
       bestNextMove: 'Reconnect Google Drive so future entries land cleanly.',
       decisionRule: 'When storage trust is broken, repair storage before adding or sharing more memories.',
+      watchout: 'If people add or share meaningful vault entries before storage trust is back, the archive starts training everyone not to rely on the place meant to preserve it.',
       curationNote: 'Trust comes before sentiment here. Reconnect storage before you ask anyone to rely on the vault long term.',
       badges: [
         `${enabledVaults.length} enabled vault${enabledVaults.length === 1 ? '' : 's'}`,
@@ -421,6 +428,7 @@ export const buildVaultMemoryCuratorModel = (args: {
       focusDetail: 'The first real note teaches the vault what kind of archive this will become.',
       bestNextMove: 'Add one short note for your first anniversary.',
       decisionRule: 'A real first note is more valuable than waiting for the perfect future memory artifact.',
+      watchout: 'If you wait for a grander future artifact, the archive quietly becomes a place for imagined memories instead of preserved real ones.',
       curationNote: 'One meaningful first entry will teach the system more than a batch of filler notes.',
       badges: [
         `${enabledVaults.length} enabled vault${enabledVaults.length === 1 ? '' : 's'}`,
@@ -462,6 +470,7 @@ export const buildVaultMemoryCuratorModel = (args: {
       focusDetail: 'Selective participation will deepen the archive without turning it into noise.',
       bestNextMove: 'Share a single vault with the people whose memories you most want back.',
       decisionRule: 'Invite the people whose memories change the story, not everyone who happens to be available.',
+      watchout: 'A vault that opens too broadly too early can turn emotionally specific memories into polite noise that nobody wants to revisit later.',
       curationNote: 'Selective participation usually produces a better archive than opening every lane to everyone.',
       badges: [
         `${entries.length} saved entr${entries.length === 1 ? 'y' : 'ies'}`,
@@ -503,6 +512,7 @@ export const buildVaultMemoryCuratorModel = (args: {
       focusDetail: 'This is the moment where one recap can give the collection shape before it becomes harder to hold in your head.',
       bestNextMove: 'Generate the first AI recap while the collection is still compact.',
       decisionRule: 'Once the vault has enough material, synthesis beats adding raw volume for a while.',
+      watchout: 'If you keep collecting without synthesizing, the archive may gain volume faster than it gains meaning, which makes revisiting it feel heavier instead of richer.',
       curationNote: 'This is the point where synthesis becomes more valuable than collecting even more raw material.',
       badges: [
         `${entries.length} saved entr${entries.length === 1 ? 'y' : 'ies'}`,
@@ -543,6 +553,7 @@ export const buildVaultMemoryCuratorModel = (args: {
     focusDetail: 'The system is healthy now, so future value comes from taste and rhythm instead of more volume.',
     bestNextMove: 'Refresh the recap after each meaningful new cluster of entries.',
     decisionRule: 'Use the vault to mature the best memories, not to store every possible artifact forever.',
+    watchout: 'Healthy archives usually weaken through accumulation. If everything stays forever without editorial judgment, the memories that matter most lose definition.',
     curationNote: 'The vault is ready for editorial taste now: keep what deepens the story, not just what adds more volume.',
     badges: [
       `${guestEntries.length} guest entr${guestEntries.length === 1 ? 'y' : 'ies'}`,
