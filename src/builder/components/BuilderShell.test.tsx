@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { getPublishGuidance } from './BuilderShell';
+import { getPublishGuidance } from './builderPublishGuidance';
 
 describe('getPublishGuidance', () => {
   it('guides unsaved publish blockers back to saving first', () => {

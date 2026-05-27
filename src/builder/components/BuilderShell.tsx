@@ -21,6 +21,8 @@ import { getPublishNowAction } from '../utils/publishNowFlow';
 import { buildLaunchConfidence } from '../utils/launchConfidence';
 import { getFlowStatusLabel } from '../../lib/flowLabels';
 import { templateCatalog } from '../constants/templateCatalog';
+import { getBuilderWorkbenchGuidance } from './builderWorkbenchGuidance';
+import { getPublishGuidance } from './builderPublishGuidance';
 
 interface BuilderShellProps {
   initialProject: BuilderProject;
@@ -30,61 +32,6 @@ interface BuilderShellProps {
   onSave?: (project: BuilderProject, weddingData?: WeddingDataV1 | null) => Promise<void>;
   onPublish?: (projectId: string) => Promise<{ version: number; publishedAt: string }>;
 }
-
-export const getPublishGuidance = (issue: ReturnType<typeof getPublishIssue>): { notice: string; error: string } | null => {
-  if (!issue) return null;
-
-  if (issue.kind === 'no-pages') {
-    return {
-      notice: 'Opened designs so you can add a starting point before going live.',
-      error: `${issue.message} Choose a starting design or add a page first.`,
-    };
-  }
-
-  if (issue.kind === 'no-enabled-sections') {
-    return {
-      notice: 'Selected the first section. Turn it on, then try again.',
-      error: `${issue.message} Select a section and turn it on in the inspector.`,
-    };
-  }
-
-  if (issue.kind === 'missing-couple-names') {
-    return {
-      notice: 'Open couple details in settings and add both names.',
-      error: issue.message,
-    };
-  }
-
-  if (issue.kind === 'missing-event-date') {
-    return {
-      notice: 'Add your wedding date in event settings.',
-      error: issue.message,
-    };
-  }
-
-  if (issue.kind === 'missing-venue') {
-    return {
-      notice: 'Add at least one venue before going live.',
-      error: issue.message,
-    };
-  }
-
-  if (issue.kind === 'rsvp-disabled') {
-    return {
-      notice: 'Turn RSVP on in settings or remove the RSVP button before going live.',
-      error: issue.message,
-    };
-  }
-
-  if (issue.kind === 'unsaved-changes') {
-    return {
-      notice: 'Save your latest draft changes, then try publish again.',
-      error: issue.message,
-    };
-  }
-
-  return null;
-};
 
 export const BuilderShell: React.FC<BuilderShellProps> = ({ 
   initialProject,
@@ -191,6 +138,17 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
     if (!state.project || !state.weddingData) return null;
     return buildLaunchConfidence(state.project, state.weddingData, { isDirty: state.isDirty });
   }, [state.isDirty, state.project, state.weddingData]);
+  const workbenchGuidance = useMemo(
+    () => getBuilderWorkbenchGuidance({
+      activePageTitle: activePage?.title ?? null,
+      sectionCount: activePage?.sections.length ?? 0,
+      selectedSectionLabel: selectedSection ? `${selectedSection.type.charAt(0).toUpperCase()}${selectedSection.type.slice(1)}` : null,
+      mode: state.mode,
+      inspectorHidden,
+      isDirty: state.isDirty,
+    }),
+    [activePage?.sections.length, activePage?.title, inspectorHidden, selectedSection, state.isDirty, state.mode],
+  );
 
   const handleSave = useCallback(async (): Promise<boolean> => {
     const currentState = stateRef.current;
@@ -299,6 +257,40 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
     void handlePublish();
   }, [handleFixPublishBlockers, handlePublish, launchConfidence]);
 
+  const handleWorkbenchAction = useCallback(async () => {
+    switch (workbenchGuidance.primaryAction.kind) {
+      case 'switch-to-edit':
+        dispatch(builderActions.setMode('edit'));
+        return;
+      case 'switch-to-preview':
+        dispatch(builderActions.setMode('preview'));
+        setPublishNotice('Preview mode is open so you can verify the guest-facing read before making more edits.');
+        return;
+      case 'show-inspector':
+        setInspectorHidden(false);
+        return;
+      case 'save-draft':
+        await handleSave();
+        return;
+      case 'select-first-section': {
+        const firstSection = activePage?.sections
+          .slice()
+          .sort((a, b) => a.orderIndex - b.orderIndex)
+          .find((section) => section.enabled) ?? activePage?.sections
+          .slice()
+          .sort((a, b) => a.orderIndex - b.orderIndex)[0];
+
+        if (!firstSection) return;
+        dispatch(builderActions.selectSection(firstSection.id));
+        setInspectorHidden(false);
+        requestAnimationFrame(() => {
+          const el = document.querySelector(`[data-section-id="${firstSection.id}"]`);
+          if (el) (el as HTMLElement).scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+      }
+    }
+  }, [activePage?.sections, dispatch, handleSave, workbenchGuidance.primaryAction.kind]);
+
   useEffect(() => {
     if (!shouldAutoPublishRef.current) return;
     if (!state.project) return;
@@ -319,7 +311,7 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
         handlePublish();
       }
     }, 0);
-  }, [state.project, handleFixPublishBlockers, handlePublish]);
+  }, [state.isDirty, state.project, state.weddingData, handleFixPublishBlockers, handlePublish]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -427,24 +419,53 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
                   <p className="text-sm font-semibold text-text-primary">{conciergePlan.heading}</p>
                   <p className="mt-1 text-sm text-text-secondary">{conciergePlan.summary}</p>
                 </div>
+                <div className="rounded-2xl border border-border-subtle bg-white px-4 py-3">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-text-tertiary">Workbench status</p>
+                    <span className="rounded-full border border-primary/20 bg-primary/5 px-2.5 py-1 text-[11px] font-medium text-primary">
+                      {workbenchGuidance.badge}
+                    </span>
+                  </div>
+                  <p className="mt-2 text-sm font-medium text-text-primary">{workbenchGuidance.heading}</p>
+                  <p className="mt-1 text-sm text-text-secondary">{workbenchGuidance.summary}</p>
+                </div>
                 <div className="grid gap-2 sm:grid-cols-2">
                   <div className="rounded-2xl border border-border-subtle bg-surface-subtle/30 px-3 py-3">
                     <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-text-tertiary">Main focus</p>
-                    <p className="mt-1 text-sm font-medium text-text-primary">{conciergePlan.guestPromise}</p>
+                    <p className="mt-1 text-sm font-medium text-text-primary">{workbenchGuidance.focusTitle}</p>
+                    <p className="mt-2 text-xs leading-5 text-text-secondary">{workbenchGuidance.focusDetail}</p>
                   </div>
                   <div className="rounded-2xl border border-border-subtle bg-surface-subtle/30 px-3 py-3">
                     <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-text-tertiary">Best next move</p>
-                    <p className="mt-1 text-sm font-medium text-text-primary">{conciergePlan.nextBestMove}</p>
+                    <p className="mt-1 text-sm font-medium text-text-primary">{workbenchGuidance.bestNextMove}</p>
                     <div className="mt-3 border-t border-border-subtle pt-3">
                       <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-text-tertiary">Decision rule</p>
-                      <p className="mt-1 text-sm leading-5 text-text-secondary">{conciergePlan.decisionRule}</p>
+                      <p className="mt-1 text-sm leading-5 text-text-secondary">{workbenchGuidance.decisionRule}</p>
+                      <p className="mt-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-text-tertiary">Watchout</p>
+                      <p className="mt-1 text-sm leading-5 text-text-secondary">{workbenchGuidance.watchout}</p>
                     </div>
                   </div>
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      void handleWorkbenchAction();
+                    }}
+                    className="rounded-lg bg-gray-900 px-3 py-2 text-sm font-medium text-white hover:bg-gray-800"
+                  >
+                    {workbenchGuidance.primaryAction.label}
+                  </button>
+                  <span className="text-xs text-text-tertiary">{conciergePlan.guestPromise}</span>
                 </div>
               </div>
               <div className="grid gap-3 text-sm lg:max-w-2xl">
                 <div className="grid gap-2 md:grid-cols-3">
-                  {conciergePlan.launchSequence.map((item) => (
+                  {[
+                    { id: 'current', title: 'Current', detail: workbenchGuidance.currentStep, status: 'current' as const },
+                    { id: 'next', title: 'Next', detail: workbenchGuidance.nextStep, status: 'next' as const },
+                    { id: 'then', title: 'Then', detail: workbenchGuidance.thenStep, status: 'then' as const },
+                  ].map((item) => (
                     <div key={item.id} className="rounded-xl border border-border-subtle bg-surface-subtle/40 px-3 py-3">
                       <div className="flex items-center justify-between gap-2">
                         <p className="text-xs font-semibold text-text-primary">{item.title}</p>
@@ -464,7 +485,7 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
                 </div>
                 {conciergePlan.watchouts.length > 0 && (
                   <div className="rounded-xl border border-amber-200 bg-amber-50/70 px-3 py-3">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-amber-700">Watchouts</p>
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-amber-700">Guest promise guardrails</p>
                     <div className="mt-2 space-y-1.5">
                       {conciergePlan.watchouts.map((watchout) => (
                         <p key={watchout} className="text-xs leading-5 text-amber-800">{watchout}</p>
@@ -580,28 +601,22 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
         {showCoachmarks && (
           <div className="fixed inset-0 z-[70] bg-black/45 backdrop-blur-[1px] flex items-center justify-center p-4">
             <div className="w-full max-w-xl rounded-2xl bg-white shadow-2xl border border-gray-200 p-5">
-              <h3 className="text-lg font-semibold text-gray-900">{conciergePlan?.heading ?? 'Quick builder walkthrough'}</h3>
+              <div className="flex flex-wrap items-center gap-2">
+                <h3 className="text-lg font-semibold text-gray-900">{workbenchGuidance.heading}</h3>
+                <span className="rounded-full border border-primary/20 bg-primary/5 px-2.5 py-1 text-[11px] font-medium text-primary">
+                  {workbenchGuidance.badge}
+                </span>
+              </div>
               <p className="mt-1 text-sm text-gray-600">
-                {conciergePlan?.summary ?? 'Three fast checks so the builder feels straightforward right away.'}
+                {workbenchGuidance.summary}
               </p>
+              <div className="mt-4 rounded-xl border border-sky-100 bg-sky-50 px-4 py-3">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-sky-900">Main focus</p>
+                <p className="mt-1 text-sm font-medium text-sky-950">{workbenchGuidance.focusTitle}</p>
+                <p className="mt-1 text-sm text-sky-800">{workbenchGuidance.focusDetail}</p>
+              </div>
               <div className="mt-4 space-y-3">
-                {(conciergePlan?.checklist ?? [
-                  {
-                    id: 'canvas',
-                    title: 'Canvas first',
-                    detail: 'Click any section to start editing without hunting for controls.',
-                  },
-                  {
-                    id: 'inspector',
-                    title: 'Right panel next',
-                    detail: 'Use the right panel for the next useful action first, then open more controls only if needed.',
-                  },
-                  {
-                    id: 'preview',
-                    title: 'Preview before publish',
-                    detail: 'Check desktop, tablet, and mobile before you go live.',
-                  },
-                ]).map((item, index) => (
+                {workbenchGuidance.checklist.map((item, index) => (
                   <div key={item.id} className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3">
                     <p className="text-sm font-medium text-gray-900">{index + 1}. {item.title}</p>
                     <p className="mt-1 text-sm text-gray-600">{item.detail}</p>
@@ -609,6 +624,16 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
                 ))}
               </div>
               <div className="mt-5 flex items-center justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    void handleWorkbenchAction();
+                    setShowCoachmarks(false);
+                  }}
+                  className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50"
+                >
+                  {workbenchGuidance.primaryAction.label}
+                </button>
                 <button
                   type="button"
                   onClick={() => {
