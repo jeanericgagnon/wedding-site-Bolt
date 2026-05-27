@@ -1570,8 +1570,19 @@ export const DashboardSettings: React.FC = () => {
                           <p className="text-sm font-medium text-text-primary">Guest access handoff</p>
                           <p className="mt-1 text-xs text-text-secondary">Keep launch state, access rules, and the actual guest-facing path aligned before you fan links and print packs out broadly.</p>
                         </div>
+                        <div className="grid gap-3 rounded-xl border border-border-subtle bg-white p-4 lg:grid-cols-2">
+                          <div>
+                            <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary">Main focus</p>
+                            <p className="mt-1 text-sm font-semibold text-text-primary">{siteAccessPlan.focusTitle}</p>
+                            <p className="mt-1 text-xs leading-5 text-text-secondary">{siteAccessPlan.focusDetail}</p>
+                          </div>
+                          <div>
+                            <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary">Decision rule</p>
+                            <p className="mt-1 text-sm font-semibold text-text-primary">{siteAccessPlan.decisionRule}</p>
+                          </div>
+                        </div>
                         <div className="grid gap-3 lg:grid-cols-3">
-                          {siteAccessPlan.map((step) => (
+                          {siteAccessPlan.steps.map((step) => (
                             <div key={step.id} className="rounded-lg border border-border-subtle bg-white px-3 py-3">
                               <div className="flex items-center justify-between gap-2">
                                 <p className="text-sm font-semibold text-text-primary">{step.title}</p>

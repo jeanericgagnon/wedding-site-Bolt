@@ -9,8 +9,10 @@ describe('buildSiteAccessPlan', () => {
       siteSlug: 'maya-leo',
     });
 
-    expect(plan[0]).toMatchObject({ status: 'current', id: 'publish' });
-    expect(plan[1]?.title).toMatch(/password/i);
+    expect(plan.focusTitle).toMatch(/launch the live guest path/i);
+    expect(plan.decisionRule).toMatch(/clear live path/i);
+    expect(plan.steps[0]).toMatchObject({ status: 'current', id: 'publish' });
+    expect(plan.steps[1]?.title).toMatch(/password/i);
   });
 
   it('pushes password handoff first for a protected live site', () => {
@@ -20,8 +22,9 @@ describe('buildSiteAccessPlan', () => {
       siteSlug: 'maya-leo',
     });
 
-    expect(plan[0]).toMatchObject({ status: 'current', id: 'access' });
-    expect(plan[0]?.detail).toMatch(/password/i);
+    expect(plan.focusTitle).toMatch(/password instructions/i);
+    expect(plan.steps[0]).toMatchObject({ status: 'current', id: 'access' });
+    expect(plan.steps[0]?.detail).toMatch(/password/i);
   });
 
   it('pushes the invite-only path first for an invite-only live site', () => {
@@ -32,8 +35,9 @@ describe('buildSiteAccessPlan', () => {
       guestAccessToken: 'guest-token',
     });
 
-    expect(plan[0]).toMatchObject({ status: 'current', id: 'access' });
-    expect(plan[0]?.title).toMatch(/invite-only path/i);
+    expect(plan.focusTitle).toMatch(/invite-only route|front door/i);
+    expect(plan.steps[0]).toMatchObject({ status: 'current', id: 'access' });
+    expect(plan.steps[0]?.title).toMatch(/invite-only path/i);
   });
 
   it('treats a public live site as a consistency and restraint problem, not an access problem', () => {
@@ -43,7 +47,8 @@ describe('buildSiteAccessPlan', () => {
       siteSlug: 'maya-leo',
     });
 
-    expect(plan[0]).toMatchObject({ status: 'current', id: 'share' });
-    expect(plan[1]?.title).toMatch(/republish/i);
+    expect(plan.focusTitle).toMatch(/reuse one public path/i);
+    expect(plan.steps[0]).toMatchObject({ status: 'current', id: 'share' });
+    expect(plan.steps[1]?.title).toMatch(/republish/i);
   });
 });
