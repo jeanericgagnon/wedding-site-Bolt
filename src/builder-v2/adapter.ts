@@ -165,6 +165,13 @@ const getSectionNarrativeText = (section: BuilderV2Section) => {
   return parts.join('\n\n');
 };
 
+const getSectionNarrativeParts = (section: BuilderV2Section) => (
+  getMeaningfulBlocks(section.blocks, ['story', 'text'])
+    .flatMap((block) => [block.data.text, block.data.note, block.data.subtitle])
+    .filter((value): value is string => typeof value === 'string' && value.trim().length > 0)
+    .map((value) => value.trim())
+);
+
 const getDressCodeSuggestionText = (section: BuilderV2Section) => (
   getMeaningfulBlocks(section.blocks, ['qna', 'faqItem'])
     .flatMap((block) => [block.data.answer, block.data.text, block.data.question, block.data.title])
@@ -283,6 +290,14 @@ const toLegacyBuilderSettings = (section: BuilderV2Section): Record<string, unkn
         ...common,
         storyText: getSectionNarrativeText(section) || common.storyText,
       };
+    case 'countdown': {
+      const narrativeParts = getSectionNarrativeParts(section);
+      return {
+        ...common,
+        eyebrow: getFirstMeaningfulString(section, [section.subtitle]),
+        message: narrativeParts[0] || '',
+      };
+    }
     case 'registry':
       return {
         ...common,
@@ -323,6 +338,17 @@ const toLegacyBuilderSettings = (section: BuilderV2Section): Record<string, unkn
         ...common,
         introText: getSectionNarrativeText(section) || common.introText,
       };
+    case 'footer-cta': {
+      const narrativeParts = getSectionNarrativeParts(section);
+      const subtext = getFirstMeaningfulString(section, [section.subtitle, narrativeParts[0]]);
+      const footerNote = narrativeParts.find((part) => part !== subtext) || '';
+      return {
+        ...common,
+        headline: getFirstMeaningfulString(section, [section.title, common.headline as string | undefined]),
+        subtext,
+        footerNote,
+      };
+    }
     default:
       return common;
   }

@@ -472,6 +472,77 @@ describe('legacy adapters', () => {
     });
   });
 
+  it('maps builder v2 countdown sections into legacy runtime settings with authored copy', () => {
+    const project = builderV2DocumentToBuilderProject({
+      version: 'v2',
+      updatedAtISO: '2026-05-27T21:00:00.000Z',
+      pages: [
+        {
+          id: 'home',
+          title: 'Home',
+          slug: 'home',
+          isHome: true,
+          hidden: false,
+          sections: [
+            {
+              id: 'countdown-1',
+              type: 'countdown',
+              variant: 'default',
+              enabled: true,
+              title: 'Counting down to Napa',
+              subtitle: 'Almost time',
+              blocks: [
+                { id: 'countdown-note', type: 'text', data: { text: 'Join us for a full wedding weekend in wine country.' } },
+              ],
+            },
+          ],
+        },
+      ],
+    });
+
+    expect(project.pages[0].sections[0].settings).toMatchObject({
+      title: 'Counting down to Napa',
+      eyebrow: 'Almost time',
+      message: 'Join us for a full wedding weekend in wine country.',
+    });
+  });
+
+  it('maps builder v2 footer cta sections into legacy runtime settings with ordered authored copy', () => {
+    const project = builderV2DocumentToBuilderProject({
+      version: 'v2',
+      updatedAtISO: '2026-05-27T21:00:00.000Z',
+      pages: [
+        {
+          id: 'home',
+          title: 'Home',
+          slug: 'home',
+          isHome: true,
+          hidden: false,
+          sections: [
+            {
+              id: 'footer-cta-1',
+              type: 'footer-cta',
+              variant: 'default',
+              enabled: true,
+              title: 'We hope to celebrate with you',
+              subtitle: 'Please send your RSVP when you can.',
+              blocks: [
+                { id: 'footer-note-1', type: 'text', data: { text: 'Weekend details will keep getting sharper as we get closer.' } },
+                { id: 'footer-note-2', type: 'story', data: { text: 'Thank you for being part of it.' } },
+              ],
+            },
+          ],
+        },
+      ],
+    });
+
+    expect(project.pages[0].sections[0].settings).toMatchObject({
+      headline: 'We hope to celebrate with you',
+      subtext: 'Please send your RSVP when you can.',
+      footerNote: 'Weekend details will keep getting sharper as we get closer.',
+    });
+  });
+
   it('detects legacy input shapes safely', () => {
     expect(looksLikeLayoutConfigV1({ version: '1', templateId: 'modern-luxe', pages: [] })).toBe(true);
     expect(looksLikeBuilderProject({ weddingId: 'w1', templateId: 'modern-luxe', themeId: 'romantic', pages: [] })).toBe(true);
