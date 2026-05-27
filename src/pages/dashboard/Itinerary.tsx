@@ -636,15 +636,15 @@ Add to itinerary
               <p className="mt-1 text-sm font-semibold text-text-primary">{itineraryReadiness.focusTitle}</p>
               <p className="mt-2 text-xs leading-5 text-text-secondary">{itineraryReadiness.focusDetail}</p>
             </div>
-            <div className="rounded-2xl border border-border-subtle bg-white px-4 py-4 shadow-sm">
+            <div className="rounded-2xl border border-border-subtle bg-white px-4 py-4 shadow-sm md:col-span-2">
               <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-text-secondary">Best next move</p>
               <p className="mt-1 text-sm font-semibold text-text-primary">{itineraryReadiness.bestNextMove}</p>
-              <p className="mt-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-text-secondary">Decision rule</p>
-              <p className="mt-1 text-sm font-semibold text-text-primary">{itineraryReadiness.decisionRule}</p>
-            </div>
-            <div className="rounded-2xl border border-border-subtle bg-white px-4 py-4 shadow-sm">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-text-secondary">Watchout</p>
-              <p className="mt-1 text-sm text-text-secondary">{itineraryReadiness.watchout}</p>
+              <div className="mt-3 border-t border-border-subtle pt-3">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-text-secondary">Decision rule</p>
+                <p className="mt-1 text-sm font-semibold text-text-primary">{itineraryReadiness.decisionRule}</p>
+                <p className="mt-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-text-secondary">Watchout</p>
+                <p className="mt-1 text-sm text-text-secondary">{itineraryReadiness.watchout}</p>
+              </div>
             </div>
           </div>
           <div className="grid gap-3 md:grid-cols-3">
