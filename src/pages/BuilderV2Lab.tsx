@@ -22,6 +22,7 @@ import {
   summarizeImportRepairCount,
 } from './builderV2WorkflowGuidance';
 import { buildBuilderV2StructureGuidance } from './builderV2StructureGuidance';
+import { buildBuilderV2SelectionGuidance } from './builderV2SelectionGuidance';
 import {
   DndContext,
   PointerSensor,
@@ -336,14 +337,18 @@ export const BuilderV2Lab: React.FC = () => {
   const sections = history[historyIndex];
   const selected = sections.find((s) => s.id === selectedId) ?? sections[0];
   const selectedIds = useMemo(() => Array.from(new Set([selectedId, ...multiSelectedIds])), [selectedId, multiSelectedIds]);
+  const selectedSections = useMemo(
+    () => sections.filter((section) => selectedIds.includes(section.id)),
+    [sections, selectedIds],
+  );
 
-  const scrollToPreviewSection = (id: string) => {
+  const scrollToPreviewSection = useCallback((id: string) => {
     document.getElementById(`preview-section-${id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  };
+  }, []);
 
-  const scrollRailToSectionType = (type: string) => {
+  const scrollRailToSectionType = useCallback((type: string) => {
     document.getElementById(`rail-section-${type}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  };
+  }, []);
 
   const selectSection = (id: string, additive = false, range = false, scroll = false, openEditor = false) => {
     const currentIndex = sections.findIndex((s) => s.id === id);
@@ -617,6 +622,42 @@ export const BuilderV2Lab: React.FC = () => {
     commit(sections.map((s) => (s.id === id ? { ...s, enabled: !s.enabled } : s)));
   };
 
+  const updateSelectedSections = useCallback((
+    updater: (section: LabSection) => LabSection,
+    notice: string,
+  ) => {
+    const selectedSet = new Set(selectedIds);
+    const touchedCount = sections.filter((section) => selectedSet.has(section.id)).length;
+    if (!touchedCount) return;
+    commit(sections.map((section) => (selectedSet.has(section.id) ? updater(section) : section)));
+    notify(notice);
+  }, [commit, notify, sections, selectedIds]);
+
+  const hideSelectedSections = useCallback(() => {
+    updateSelectedSections((section) => ({ ...section, enabled: false }), 'Selected sections hidden');
+  }, [updateSelectedSections]);
+
+  const showSelectedSections = useCallback(() => {
+    updateSelectedSections((section) => ({ ...section, enabled: true }), 'Selected sections shown');
+  }, [updateSelectedSections]);
+
+  const setSelectedDensity = useCallback((density: 'compact' | 'comfortable') => {
+    updateSelectedSections(
+      (section) => ({ ...section, density }),
+      density === 'compact' ? 'Selected sections set to compact' : 'Selected sections set to comfortable',
+    );
+  }, [updateSelectedSections]);
+
+  const reviewSelectionInPreview = useCallback(() => {
+    if (!selectedSections.length) return;
+    setShowStructure(false);
+    setShowProperties(false);
+    setFocusPreview(false);
+    setShowMinimap(true);
+    scrollToPreviewSection(selectedSections[0].id);
+    notify(`Reviewing ${selectedSections.length} selected section${selectedSections.length === 1 ? '' : 's'} in preview`);
+  }, [notify, scrollToPreviewSection, selectedSections]);
+
   const addSection = useCallback((typeLabel: string, variant?: string) => {
     const normalizedType = typeLabel.toLowerCase().replace(/\s+/g, '-');
     const id = `${normalizedType}-${Date.now()}`;
@@ -644,6 +685,10 @@ export const BuilderV2Lab: React.FC = () => {
 
   const orderedVisible = useMemo(() => sections.filter((s) => s.enabled), [sections]);
   const filteredAddables = useMemo(() => ADDABLE_SECTIONS.filter((name) => name.toLowerCase().includes(addQuery.trim().toLowerCase())), [addQuery]);
+  const selectionGuidance = useMemo(
+    () => buildBuilderV2SelectionGuidance({ selectedSections }),
+    [selectedSections],
+  );
   const structureGuidance = useMemo(
     () => buildBuilderV2StructureGuidance({
       sections,
@@ -881,6 +926,11 @@ export const BuilderV2Lab: React.FC = () => {
       { id: 'sel-clear', group: 'Selection', label: 'Clear multi selection', keywords: ['clear', 'multi', 'selection'], action: () => runCommand('Clear multi selection', clearSelection) },
       { id: 'sel-all', group: 'Selection', label: 'Select all sections', keywords: ['all', 'selection'], action: () => runCommand('Select all sections', selectAllSections) },
       { id: 'sel-invert', group: 'Selection', label: 'Invert selection', keywords: ['invert', 'selection'], action: () => runCommand('Invert selection', invertSelection) },
+      { id: 'sel-hide', group: 'Selection', label: 'Hide selected sections', keywords: ['hide', 'selection', 'batch', 'visibility'], action: () => runCommand('Hide selected sections', hideSelectedSections) },
+      { id: 'sel-show', group: 'Selection', label: 'Show selected sections', keywords: ['show', 'selection', 'batch', 'visibility'], action: () => runCommand('Show selected sections', showSelectedSections) },
+      { id: 'sel-compact', group: 'Selection', label: 'Set selected density: compact', keywords: ['compact', 'density', 'selection', 'batch'], action: () => runCommand('Set selected density: compact', () => setSelectedDensity('compact')) },
+      { id: 'sel-comfortable', group: 'Selection', label: 'Set selected density: comfortable', keywords: ['comfortable', 'density', 'selection', 'batch', 'open'], action: () => runCommand('Set selected density: comfortable', () => setSelectedDensity('comfortable')) },
+      { id: 'sel-review', group: 'Selection', label: 'Review selected sections in preview', keywords: ['preview', 'selection', 'review', 'batch'], action: () => runCommand('Review selected sections in preview', reviewSelectionInPreview) },
     ];
     const q = commandQuery.trim().toLowerCase();
     if (!q) return base;
@@ -898,7 +948,7 @@ export const BuilderV2Lab: React.FC = () => {
       .filter((x) => x.s > 0)
       .sort((a, b) => b.s - a.s)
       .map((x) => x.item);
-  }, [commandQuery, sections, addSection, clearSelection, invertSelection, selectAllSections, updateVariant]);
+  }, [commandQuery, sections, addSection, clearSelection, hideSelectedSections, invertSelection, reviewSelectionInPreview, selectAllSections, setSelectedDensity, showSelectedSections, updateVariant]);
   const importGuidance = useMemo(
     () => buildBuilderV2ImportGuidance(lastImportReport, lastImportSource),
     [lastImportReport, lastImportSource],
@@ -1154,6 +1204,51 @@ export const BuilderV2Lab: React.FC = () => {
                 </div>
               </div>
             </div>
+            {selectedSections.length > 1 && (
+              <div className="mb-3 rounded-md border border-amber-200 bg-amber-50/60 p-2.5 space-y-2">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="text-[11px] uppercase tracking-[0.18em] text-amber-800 font-medium">Batch selection</p>
+                    <p className="mt-1 text-sm font-semibold text-text-primary">{selectionGuidance.title}</p>
+                    <p className="mt-1 text-xs leading-relaxed text-text-secondary">{selectionGuidance.detail}</p>
+                  </div>
+                  <div className="shrink-0 flex flex-wrap justify-end gap-1 text-[10px]">
+                    {selectionGuidance.keyStats.map((stat) => (
+                      <span key={stat} className="rounded-full border border-amber-200 bg-white px-2 py-1 text-amber-900">{stat}</span>
+                    ))}
+                  </div>
+                </div>
+                <div className="rounded-md border border-amber-200 bg-white px-2.5 py-2">
+                  <p className="text-[11px] uppercase tracking-[0.18em] text-amber-800">Best next move</p>
+                  <p className="mt-1 text-xs leading-relaxed text-text-primary">{selectionGuidance.bestNextMove}</p>
+                </div>
+                <div className="grid gap-2">
+                  <div className="rounded-md border border-amber-200 bg-white px-2.5 py-2">
+                    <p className="text-[11px] uppercase tracking-[0.18em] text-amber-800">Decision rule</p>
+                    <p className="mt-1 text-xs leading-relaxed text-text-primary">{selectionGuidance.decisionRule}</p>
+                  </div>
+                  <div className="rounded-md border border-amber-200 bg-white px-2.5 py-2">
+                    <p className="text-[11px] uppercase tracking-[0.18em] text-amber-800">Watchout</p>
+                    <p className="mt-1 text-xs leading-relaxed text-text-primary">{selectionGuidance.watchout}</p>
+                  </div>
+                  <div className="grid gap-2">
+                    {selectionGuidance.steps.map((step) => (
+                      <div key={step.label} className="rounded-md border border-amber-200 bg-white px-2.5 py-2">
+                        <p className="text-[10px] uppercase tracking-[0.18em] text-amber-800">{step.label}</p>
+                        <p className="mt-1 text-xs leading-relaxed text-text-primary">{step.detail}</p>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button onClick={hideSelectedSections} className="rounded-md border border-border-subtle bg-white px-2.5 py-2 text-xs font-medium text-text-primary hover:border-primary/40">Hide selected</button>
+                    <button onClick={showSelectedSections} className="rounded-md border border-border-subtle bg-white px-2.5 py-2 text-xs font-medium text-text-primary hover:border-primary/40">Show selected</button>
+                    <button onClick={() => setSelectedDensity('compact')} className="rounded-md border border-border-subtle bg-white px-2.5 py-2 text-xs font-medium text-text-primary hover:border-primary/40">Make compact</button>
+                    <button onClick={() => setSelectedDensity('comfortable')} className="rounded-md border border-border-subtle bg-white px-2.5 py-2 text-xs font-medium text-text-primary hover:border-primary/40">Make open</button>
+                    <button onClick={reviewSelectionInPreview} className="col-span-2 rounded-md border border-primary/30 bg-primary/10 px-2.5 py-2 text-xs font-semibold text-primary hover:bg-primary/15">Review batch in preview</button>
+                  </div>
+                </div>
+              </div>
+            )}
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
               <SortableContext items={sections.map((s) => s.id)} strategy={verticalListSortingStrategy}>
                 <div className="space-y-2 overflow-auto pr-1 max-h-[38vh]">
