@@ -17,6 +17,7 @@ export interface CoupleFocusInput {
   daysUntilWedding: number | null;
   isPublished: boolean;
   isArchiveLike: boolean;
+  privacyMode?: 'public' | 'password_protected' | 'invite_only';
   publishBlockerCount: number;
   pendingGuestCount: number;
   contactGapCount: number;
@@ -38,6 +39,9 @@ function isWeddingSoon(daysUntilWedding: number | null): boolean {
 }
 
 export function buildCoupleFocusModel(input: CoupleFocusInput): CoupleFocusModel {
+  const restrictedAccess = input.privacyMode === 'password_protected' || input.privacyMode === 'invite_only';
+  const accessLabel = input.privacyMode === 'invite_only' ? 'invite-only' : 'password-protected';
+
   if (input.isArchiveLike) {
     return {
       headline: 'Shift from operations to keepsake mode',
@@ -205,6 +209,38 @@ export function buildCoupleFocusModel(input: CoupleFocusInput): CoupleFocusModel
           id: 'day-of',
           title: 'Then return to live readiness',
           detail: 'With the schedule in place, coordinator mode and updates become support tools instead of backup explanations.',
+          target: 'coordinator',
+          ctaLabel: 'Open coordinator mode',
+        }),
+      ],
+    };
+  }
+
+  if (input.isPublished && isWeddingSoon(input.daysUntilWedding) && restrictedAccess) {
+    return {
+      headline: 'Guest access is the couple focus now',
+      summary: `The site is live, but it is ${accessLabel}. The next trust move is making sure the right password or invite path travels with every guest-facing handoff.`,
+      steps: [
+        step('current', {
+          id: 'launch',
+          title: 'Preview the real guest access flow',
+          detail: input.privacyMode === 'invite_only'
+            ? 'Open the live flow the same way a guest will, then make sure the invite path is what your reminders and handoff assets actually point to.'
+            : 'Check the live flow with the password gate in mind so links, print packs, and reminders all carry the right instructions.',
+          target: 'builder',
+          ctaLabel: 'Open builder',
+        }),
+        step('next', {
+          id: 'guests',
+          title: 'Then align reminders and handoff language',
+          detail: 'Once the access path feels steady, make sure guest outreach and handoff surfaces are using the same instructions.',
+          target: 'messages',
+          ctaLabel: 'Open messages',
+        }),
+        step('then', {
+          id: 'day-of',
+          title: 'Then return to live readiness',
+          detail: 'With access truth aligned, coordinator and day-of surfaces can take the lead again.',
           target: 'coordinator',
           ctaLabel: 'Open coordinator mode',
         }),

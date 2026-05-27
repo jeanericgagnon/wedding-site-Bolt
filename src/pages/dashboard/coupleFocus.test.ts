@@ -72,4 +72,24 @@ describe('buildCoupleFocusModel', () => {
     expect(model.steps[0]?.id).toBe('planning');
     expect(model.steps[1]?.id).toBe('launch');
   });
+
+  it('surfaces restricted guest access as the couple focus when the site is live and the wedding is close', () => {
+    const model = buildCoupleFocusModel({
+      daysUntilWedding: 12,
+      isPublished: true,
+      isArchiveLike: false,
+      privacyMode: 'password_protected',
+      publishBlockerCount: 0,
+      pendingGuestCount: 0,
+      contactGapCount: 0,
+      overdueTaskCount: 0,
+      dueSoonVendorCount: 0,
+      seatingUnassignedCount: 0,
+      itineraryEventCount: 2,
+    });
+
+    expect(model.headline).toMatch(/guest access/i);
+    expect(model.steps[0]?.id).toBe('launch');
+    expect(model.steps[1]?.id).toBe('guests');
+  });
 });

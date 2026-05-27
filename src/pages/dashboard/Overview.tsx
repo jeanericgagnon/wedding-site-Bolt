@@ -628,6 +628,7 @@ export const DashboardOverview: React.FC = () => {
     daysUntilWedding: stats?.daysUntilWedding ?? null,
     isPublished: stats?.isPublished ?? false,
     isArchiveLike: archiveMode.isArchiveLike,
+    privacyMode: stats?.privacyMode ?? 'public',
     publishBlockerCount: publishBlockers.length,
     pendingGuestCount: stats?.pendingGuests ?? 0,
     contactGapCount: stats ? Math.max((stats.totalGuests ?? 0) - (stats.contactableGuestCount ?? 0), 0) : 0,
