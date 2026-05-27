@@ -5,9 +5,12 @@ export interface TemplateExperienceBrief {
   detail: string;
   confidenceLabel: string;
   confidenceDetail: string;
+  focusTitle: string;
+  focusDetail: string;
   bestNextStep: string;
   launchUse: string;
   bestFor: string;
+  decisionRule: string;
   watchouts: string[];
   callouts: string[];
   launchSequence: Array<{
@@ -36,9 +39,12 @@ export function buildTemplateExperienceBrief(args: {
       detail: 'This design is already the one your setup draft is shaping around, so the next best move is refining it rather than restarting from scratch.',
       confidenceLabel: 'Selected',
       confidenceDetail: 'Your setup draft, first-pass content, and launch guidance are already leaning on this design.',
+      focusTitle: 'Protect draft momentum before chasing a new mood',
+      focusDetail: 'You already have real setup energy attached to this design, so the smartest move is strengthening trust and clarity before you reopen design churn.',
       bestNextStep: 'Keep this direction and focus on making the guest-facing sections feel real before swapping designs.',
       launchUse: 'Best when you want to keep momentum and make the current draft feel more trustworthy instead of starting over.',
       bestFor: 'Couples who already like the direction and want calmer progress instead of another restart.',
+      decisionRule: 'Only restart the design if the guest story or section shape is fundamentally wrong; otherwise keep the momentum and improve the current draft.',
       watchouts: [],
       callouts: [
         `${sectionsIncluded} starter sections already mapped`,
@@ -75,6 +81,10 @@ export function buildTemplateExperienceBrief(args: {
       confidenceDetail: previewStatus === 'verified'
         ? 'Its structure, starter sections, and builder behavior already line up well enough to trust as a first draft.'
         : 'The fit is strong, but it still wants one honest preview pass before you treat it as the lowest-risk launch path.',
+      focusTitle: previewStatus === 'verified' ? 'Use the strongest fit to reduce cleanup later' : 'Treat the fit as strong, then confirm it once honestly',
+      focusDetail: previewStatus === 'verified'
+        ? 'This is the calmest path when you want to preserve setup momentum and spend your energy on content clarity instead of structural repair.'
+        : 'The recommendation is strong, but one structure-confidence pass will keep the decision honest before you lock it in.',
       bestNextStep: previewStatus === 'verified'
         ? 'Use this as your starting point and spend the next pass on content clarity, not design churn.'
         : 'This fit is strong, but preview it once before you fully commit so the structure feels right.',
@@ -84,6 +94,9 @@ export function buildTemplateExperienceBrief(args: {
       bestFor: previewStatus === 'verified'
         ? 'Couples who want the easiest path from setup answers to a guest-ready first publish.'
         : 'Couples who have a strong favorite but still want one structure-confidence pass before committing.',
+      decisionRule: previewStatus === 'verified'
+        ? 'Choose the option that minimizes structural cleanup, then spend the next pass on trust, tone, and guest clarity.'
+        : 'If the structure still feels right after one preview pass, commit and move forward instead of continuing to browse.',
       watchouts: supportManifest?.templateExistsInBuilder
         ? []
         : ['Builder support for this design still needs a closer look before you treat it as the easiest launch path.'],
@@ -125,6 +138,10 @@ export function buildTemplateExperienceBrief(args: {
     confidenceDetail: previewStatus === 'verified'
       ? 'The builder support is solid enough to test honestly, but you still want to confirm the guest story before you commit.'
       : 'Treat this as promising, not proven. The style may be right even if the first-draft structure still needs more cleanup.',
+    focusTitle: compareCount > 0 ? 'Compare the structure before you commit to the mood' : 'Treat the look as promising until the structure proves itself',
+    focusDetail: compareCount > 0
+      ? 'When two designs both look good, the calmer choice is the one that needs less section cleanup after setup.'
+      : 'A beautiful card is not enough by itself; the guest story still needs to read cleanly once the real wedding details land.',
     bestNextStep: compareCount > 0
       ? 'Use compare mode, then choose the option that needs the least structural cleanup after setup.'
       : 'Open the full detail view and make sure the section flow matches how you want guests to read the weekend.',
@@ -134,6 +151,9 @@ export function buildTemplateExperienceBrief(args: {
     bestFor: compareCount > 0
       ? 'Couples deciding between two strong moods who want the calmer operational path, not just the prettier card.'
       : 'Couples who already love the look and want one honest structure check before they commit.',
+    decisionRule: compareCount > 0
+      ? 'Choose the option that needs less structural repair after setup, even if another one wins slightly on first impression.'
+      : 'Do not commit on aesthetics alone; keep the option only if the guest-facing flow still feels easy to understand.',
     watchouts: supportManifest?.templateExistsInBuilder
       ? []
       : ['This design may still need extra builder cleanup compared with the stronger recommended options.'],

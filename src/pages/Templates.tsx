@@ -240,7 +240,18 @@ Start with this
                     </div>
                   ))}
                 </div>
-                <div className="mt-4 grid gap-2 md:grid-cols-2">
+                <div className="mt-4 grid gap-3 md:grid-cols-2">
+                  <div className="rounded-xl border border-neutral-200 bg-neutral-50 px-3 py-3">
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-neutral-500">Main focus</p>
+                    <p className="mt-1.5 text-sm font-medium text-neutral-800">{templateExperienceBrief.focusTitle}</p>
+                    <p className="mt-1.5 text-xs leading-5 text-neutral-600">{templateExperienceBrief.focusDetail}</p>
+                  </div>
+                  <div className="rounded-xl border border-neutral-200 bg-neutral-50 px-3 py-3">
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-neutral-500">Decision rule</p>
+                    <p className="mt-1.5 text-sm text-neutral-700">{templateExperienceBrief.decisionRule}</p>
+                  </div>
+                </div>
+                <div className="mt-3 grid gap-2 md:grid-cols-2">
                   <div className="rounded-xl border border-neutral-200 bg-neutral-50 px-3 py-3">
                     <p className="text-xs font-semibold uppercase tracking-[0.18em] text-neutral-500">Best next move</p>
                     <p className="mt-1.5 text-sm text-neutral-700">{templateExperienceBrief.bestNextStep}</p>
