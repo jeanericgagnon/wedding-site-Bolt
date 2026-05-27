@@ -14,6 +14,7 @@ export interface SeatingInsightCardModel {
   focusDetail: string;
   bestNextMove: string;
   decisionRule: string;
+  watchout: string;
   badges: string[];
   callouts: string[];
   sequence: Array<{
@@ -129,6 +130,7 @@ export function buildSeatingInsightCard(args: {
       focusDetail: 'When RSVP drift is still muddying the room, every layout decision after that becomes suspect. Fix the truth first, then move seats.',
       bestNextMove: 'Run the assignment check first, clear the invalid seats, and only then come back for rebalancing or fresh placements.',
       decisionRule: 'Do not rebalance tables until the attendance truth is clean again.',
+      watchout: 'If you rebalance while stale assignments are still in the room, every later seating choice will feel deliberate even though it was made on broken attendance truth.',
       badges: [
         `${pluralize(invalidCount, 'invalid seat')}`,
         `${pluralize(safeCounters.unassigned, 'guest')} unassigned`,
@@ -168,6 +170,7 @@ export function buildSeatingInsightCard(args: {
       focusDetail: 'A usable room outline does more good right now than hand-crafting tables one by one without seeing the full guest shape.',
       bestNextMove: 'Auto-create the first room layout now, then use manual edits only after the full guest shape is finally visible.',
       decisionRule: 'Create the room shape first, then use manual edits only for special cases.',
+      watchout: 'If you start hand-building tables before the room shape exists, you can spend real effort polishing guesses that the full guest picture immediately invalidates.',
       badges: [
         `${pluralize(safeCounters.attending, 'attending guest')}`,
         'No tables yet',
@@ -203,6 +206,7 @@ export function buildSeatingInsightCard(args: {
       focusDetail: 'You can only judge balance honestly once the full guest list is seated, so placement beats polish at this stage.',
       bestNextMove: 'Auto-seat the remaining guests now, then return for comfort or balance passes only after every attending guest has a real seat.',
       decisionRule: 'Get everyone into a seat before you spend energy on micro-optimizing the room.',
+      watchout: 'Unfinished placement makes almost every balance judgment feel smarter than it is. Until coverage exists, the room is still teaching you incomplete lessons.',
       badges: [
         `${pluralize(safeCounters.unassigned, 'open seat move')}`,
         `${pluralize(householdStats.splitHouseholdCount, 'split household')}`,
@@ -246,6 +250,7 @@ export function buildSeatingInsightCard(args: {
       focusDetail: 'With everyone placed, the job now is small quality moves that improve comfort without reopening the entire room.',
       bestNextMove: 'Use check-in or the assignment review to tighten the sparse or split pockets, then leave the rest of the room alone.',
       decisionRule: 'Tighten only the pockets that improve comfort; avoid reopening the whole room.',
+      watchout: 'The risk here is turning one awkward pocket into permission to re-litigate the whole room, which usually creates more churn than comfort.',
       badges: [
         `${pluralize(tableStats.sparseTableCount, 'sparse table')}`,
         `${pluralize(householdStats.splitHouseholdCount, 'split household')}`,
@@ -285,6 +290,7 @@ export function buildSeatingInsightCard(args: {
       focusDetail: 'At this point the room should help the door and the coordinator, not keep behaving like a design exercise.',
       bestNextMove: 'Open check-in first, then move into coordinator mode only for the live issues that actually need a room-aware decision.',
       decisionRule: 'Treat seating as live support now, not as a layout puzzle to keep solving.',
+      watchout: 'Late room churn is expensive: guests notice the confusion faster than they notice the layout improvement you were trying to chase.',
       badges: [
         `${pluralize(safeCounters.seated, 'guest')} seated`,
         liveIssueCount > 0 ? `${pluralize(liveIssueCount, 'live issue')}` : `${arrivedCount} arrived`,
@@ -323,6 +329,7 @@ export function buildSeatingInsightCard(args: {
     focusDetail: 'A steady room is something to protect. The best move is keeping the live flow easy, not reopening tables that are already working.',
     bestNextMove: 'Leave the room stable, use check-in as the live tool, and only reopen tables when guest truth or live conditions genuinely change.',
     decisionRule: 'Use the room to support the door and the coordinator, not to invent more seating work.',
+    watchout: 'Calm rooms often get noisier through unnecessary edits, not real problems. Reopening stable tables can make the day feel less certain than it actually is.',
     badges: [
       `${pluralize(safeCounters.seated, 'guest')} seated`,
       `${arrivedCount} arrived`,
