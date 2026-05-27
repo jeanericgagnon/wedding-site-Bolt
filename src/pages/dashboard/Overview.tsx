@@ -8,7 +8,7 @@ import {
   getFirstIncompleteChecklistItem,
   getIncompleteChecklistItems,
 } from './overviewUtils';
-import { buildAnalyticsBaseline } from './analyticsBaseline';
+import { buildAnalyticsBaseline, buildAnalyticsConfidenceCards, buildAnalyticsConfidenceSummary } from './analyticsBaseline';
 import { Link, useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { DashboardStateBlock } from '../../components/dashboard/DashboardStateBlock';
@@ -465,6 +465,28 @@ export const DashboardOverview: React.FC = () => {
       : null;
 
   const analyticsBaseline = buildAnalyticsBaseline({
+    totalGuests: stats?.totalGuests ?? 0,
+    confirmedGuests: stats?.confirmedGuests ?? 0,
+    declinedGuests: stats?.declinedGuests ?? 0,
+    pendingGuests: stats?.pendingGuests ?? 0,
+    contactableGuests: stats?.contactableGuestCount ?? 0,
+    registryItemCount: stats?.registryItemCount ?? 0,
+    photoAlbumCount: stats?.photoAlbumCount ?? 0,
+    activePhotoAlbumCount: stats?.activePhotoAlbumCount ?? 0,
+    interactiveSuggestionCount: interactiveSuggestions.length,
+  });
+  const analyticsConfidenceSummary = buildAnalyticsConfidenceSummary({
+    totalGuests: stats?.totalGuests ?? 0,
+    confirmedGuests: stats?.confirmedGuests ?? 0,
+    declinedGuests: stats?.declinedGuests ?? 0,
+    pendingGuests: stats?.pendingGuests ?? 0,
+    contactableGuests: stats?.contactableGuestCount ?? 0,
+    registryItemCount: stats?.registryItemCount ?? 0,
+    photoAlbumCount: stats?.photoAlbumCount ?? 0,
+    activePhotoAlbumCount: stats?.activePhotoAlbumCount ?? 0,
+    interactiveSuggestionCount: interactiveSuggestions.length,
+  });
+  const analyticsConfidenceCards = buildAnalyticsConfidenceCards({
     totalGuests: stats?.totalGuests ?? 0,
     confirmedGuests: stats?.confirmedGuests ?? 0,
     declinedGuests: stats?.declinedGuests ?? 0,
@@ -1288,8 +1310,28 @@ export const DashboardOverview: React.FC = () => {
                 <CardDescription>Only measured product signals shown here. No guessed conversion metrics.</CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
-                <div className="rounded-lg border border-border-subtle bg-surface-secondary/30 px-3 py-2.5 text-xs text-text-secondary">
-                  This is the clean baseline before fuller analytics lands: response counts, registry readiness, photo setup, and guest prompts.
+                <div className="rounded-lg border border-border-subtle bg-surface-secondary/30 px-3 py-3">
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-text-primary">{analyticsConfidenceSummary.title}</p>
+                      <p className="mt-1 text-xs text-text-secondary">{analyticsConfidenceSummary.detail}</p>
+                    </div>
+                    <Badge variant={analyticsConfidenceSummary.tone}>{analyticsConfidenceSummary.statusLabel}</Badge>
+                  </div>
+                </div>
+                <div className="grid gap-2 md:grid-cols-3">
+                  {analyticsConfidenceCards.map((card) => (
+                    <div key={card.label} className="rounded-lg border border-border-subtle bg-surface-secondary/20 px-3 py-2.5">
+                      <div className="flex items-center justify-between gap-3">
+                        <p className="text-sm font-medium text-text-primary">{card.label}</p>
+                        <Badge variant={card.tone}>{card.value}</Badge>
+                      </div>
+                      <p className="mt-1 text-xs text-text-secondary">{card.detail}</p>
+                    </div>
+                  ))}
+                </div>
+                <div className="rounded-lg border border-border-subtle bg-surface-secondary/20 px-3 py-2.5 text-xs text-text-secondary">
+                  This is still the measured baseline before fuller analytics lands: response counts, registry readiness, photo setup, and guest prompts. The difference now is that the board also tells you how much confidence to place in those signals.
                 </div>
                 <div className="space-y-2.5">
                   {analyticsBaseline.map((metric) => (
