@@ -8,15 +8,7 @@ import { mediaService } from '../services/mediaService';
 import { generateBuilderId } from '../../types/builder/project';
 import { getSectionManifest } from '../registry/sectionManifests';
 import { mergeMediaAssetsAfterUploadRefresh } from '../utils/mediaRefresh';
-
-type MediaLibraryFilterMode = 'all' | 'used' | 'unused';
-
-type MediaLibrarySummary = {
-  totalAssets: number;
-  usedAssets: number;
-  unusedAssets: number;
-  filteredAssets: BuilderMediaAsset[];
-};
+import { getMediaLibrarySummary, MediaLibraryFilterMode } from './mediaLibrarySummary';
 
 function resolveImageSettingKey(sectionType: string): string {
   try {
@@ -26,46 +18,6 @@ function resolveImageSettingKey(sectionType: string): string {
   } catch {
     return 'imageUrl';
   }
-}
-
-function assetMatchesSearch(asset: BuilderMediaAsset, searchTerm: string): boolean {
-  if (!searchTerm) return true;
-  const haystack = [
-    asset.filename,
-    asset.originalFilename,
-    asset.altText,
-    asset.caption,
-    ...asset.tags,
-  ]
-    .filter(Boolean)
-    .join(' ')
-    .toLowerCase();
-  return haystack.includes(searchTerm.toLowerCase());
-}
-
-export function getMediaLibrarySummary(
-  assets: BuilderMediaAsset[],
-  filterMode: MediaLibraryFilterMode,
-  searchTerm: string,
-): MediaLibrarySummary {
-  const sortedAssets = [...assets].sort((left, right) => {
-    const attachmentDelta = right.attachedSectionIds.length - left.attachedSectionIds.length;
-    if (attachmentDelta !== 0) return attachmentDelta;
-    return right.meta.updatedAtISO.localeCompare(left.meta.updatedAtISO);
-  });
-
-  const filteredAssets = sortedAssets.filter((asset) => {
-    if (filterMode === 'used' && asset.attachedSectionIds.length === 0) return false;
-    if (filterMode === 'unused' && asset.attachedSectionIds.length > 0) return false;
-    return assetMatchesSearch(asset, searchTerm);
-  });
-
-  return {
-    totalAssets: assets.length,
-    usedAssets: assets.filter((asset) => asset.attachedSectionIds.length > 0).length,
-    unusedAssets: assets.filter((asset) => asset.attachedSectionIds.length === 0).length,
-    filteredAssets,
-  };
 }
 
 export const MediaLibraryPanel: React.FC = () => {
@@ -82,7 +34,10 @@ export const MediaLibraryPanel: React.FC = () => {
         ?.sections.find((section) => section.id === state.mediaPickerTargetSectionId)
     : null;
   const pickerTargetLabel = pickerTargetSection ? getSectionManifest(pickerTargetSection.type).label : null;
-  const summary = getMediaLibrarySummary(state.mediaAssets, filterMode, searchTerm);
+  const summary = getMediaLibrarySummary(state.mediaAssets, filterMode, searchTerm, {
+    isPickerMode,
+    pickerTargetLabel,
+  });
 
   const handleSelectAsset = (asset: BuilderMediaAsset) => {
     if (!isPickerMode || !state.mediaPickerTargetSectionId || !state.activePageId) return;
@@ -180,7 +135,37 @@ export const MediaLibraryPanel: React.FC = () => {
                 </p>
               </div>
             )}
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid gap-3 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
+              <div className="space-y-3">
+                <div className="rounded-xl border border-sky-100 bg-sky-50 px-4 py-3">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-sky-900">Main focus</p>
+                  <p className="mt-1 text-sm font-medium text-sky-950">{summary.focusTitle}</p>
+                  <p className="mt-1 text-xs text-sky-800">{summary.focusDetail}</p>
+                </div>
+                <div className="rounded-xl border border-gray-200 bg-white px-4 py-3">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-gray-500">Best next move</p>
+                  <p className="mt-1 text-sm font-medium text-gray-900">{summary.bestNextMove}</p>
+                  <p className="mt-2 text-xs text-gray-600">
+                    <span className="font-semibold text-gray-900">Decision rule:</span> {summary.decisionRule}
+                  </p>
+                  <p className="mt-1 text-xs text-gray-600">
+                    <span className="font-semibold text-gray-900">Watchout:</span> {summary.watchout}
+                  </p>
+                </div>
+                <div className="grid grid-cols-3 gap-2">
+                  {[
+                    { label: 'Current', detail: summary.currentStep },
+                    { label: 'Next', detail: summary.nextStep },
+                    { label: 'Then', detail: summary.thenStep },
+                  ].map((step) => (
+                    <div key={step.label} className="rounded-xl border border-gray-200 bg-white px-3 py-3">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-gray-500">{step.label}</p>
+                      <p className="mt-1 text-xs text-gray-600">{step.detail}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className="grid grid-cols-3 gap-3">
               <SummaryCard
                 label="All assets"
                 value={summary.totalAssets}
@@ -196,6 +181,7 @@ export const MediaLibraryPanel: React.FC = () => {
                 value={summary.unusedAssets}
                 icon={Unlink}
               />
+              </div>
             </div>
             <div className="mt-3 flex flex-col gap-3 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 md:flex-row md:items-center">
               <label className="flex min-w-0 flex-1 items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2">

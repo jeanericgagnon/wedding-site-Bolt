@@ -61,6 +61,8 @@ describe('getBuilderSectionLibrarySummary', () => {
 
     expect(summary.missingEssentialLabels).toEqual(expect.arrayContaining(['Schedule', 'Travel', 'RSVP', 'FAQ']));
     expect(summary.title).toContain('core sections');
+    expect(summary.bestNextMove).toContain('Schedule');
+    expect(summary.primarySuggestedType).toBe('schedule');
   });
 
   it('filters manifests by search query', () => {
@@ -72,5 +74,6 @@ describe('getBuilderSectionLibrarySummary', () => {
 
     expect(summary.filteredManifests.map((manifest) => manifest.type)).toEqual(['gallery']);
     expect(summary.nextMove).toContain('search');
+    expect(summary.focusTitle).toContain('narrowing');
   });
 });

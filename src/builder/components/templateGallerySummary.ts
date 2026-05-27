@@ -19,6 +19,14 @@ export interface TemplateGallerySummary {
   filteredHeadline: string;
   filteredDetail: string;
   strongestFilteredTemplate: BuilderTemplateDefinition | null;
+  focusTitle: string;
+  focusDetail: string;
+  bestNextMove: string;
+  decisionRule: string;
+  watchout: string;
+  currentStep: string;
+  nextStep: string;
+  thenStep: string;
 }
 
 const SCORE_TAGS = ['modern', 'romantic', 'classic', 'editorial', 'photo', 'destination', 'floral', 'bold', 'minimal'];
@@ -73,5 +81,33 @@ export function getTemplateGallerySummary({
         ? `${strongestFilteredTemplate.displayName} is the strongest current fit if you want a fast starting point.`
         : 'Use compare only when two designs are genuinely close enough to debate.',
     strongestFilteredTemplate,
+    focusTitle: currentTemplate
+      ? `${currentTemplate.displayName} is your current draft direction`
+      : 'The draft still needs a strong visual direction',
+    focusDetail: currentTemplate
+      ? 'Template switching should be about correcting the overall feeling of the site, not chasing tiny layout differences.'
+      : 'A good template decision should get the emotional posture right first so later editing becomes easier instead of noisier.',
+    bestNextMove: filtered.length === 0
+      ? 'Reset one filter and get back to a real choice set before you judge the designs.'
+      : compareTemplates.length === 2
+        ? `Compare ${compareTemplates[0].displayName} and ${compareTemplates[1].displayName}, then commit to the one that needs less rewriting.`
+        : strongestFilteredTemplate
+          ? `Start with ${strongestFilteredTemplate.displayName} if you want the fastest strong default.`
+          : 'Narrow the gallery until one or two designs feel genuinely defensible.',
+    decisionRule: currentTemplate
+      ? 'Switch templates only when the mood or structure is materially wrong, not when you are just restless in the current draft.'
+      : 'Pick the design that makes the weekend feel right with the least amount of retranslation work.',
+    watchout: currentTemplate
+      ? 'Repeated template switching can create churn that feels productive while the actual page quality stays flat.'
+      : 'A broad gallery can make too many options feel meaningful even when only one or two are a real fit.',
+    currentStep: currentTemplate
+      ? 'Judge whether the current draft direction is fundamentally right or fundamentally wrong.'
+      : 'Choose a small comparison set that actually matches the weekend tone.',
+    nextStep: compareTemplates.length === 2
+      ? 'Resolve the comparison now instead of collecting more candidates.'
+      : strongestFilteredTemplate
+        ? `Use ${strongestFilteredTemplate.displayName} or compare it with one serious alternative.`
+        : 'Clear filters until a serious candidate appears.',
+    thenStep: 'Once the template direction feels right, move back into section and content refinement instead of reopening the whole gallery.',
   };
 }

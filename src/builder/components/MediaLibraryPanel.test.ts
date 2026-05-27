@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { getMediaLibrarySummary } from './MediaLibraryPanel';
+import { getMediaLibrarySummary } from './mediaLibrarySummary';
 import type { BuilderMediaAsset } from '../../types/builder/media';
 
 function makeAsset(overrides: Partial<BuilderMediaAsset>): BuilderMediaAsset {
@@ -49,6 +49,7 @@ describe('getMediaLibrarySummary', () => {
     expect(summary.usedAssets).toBe(1);
     expect(summary.unusedAssets).toBe(1);
     expect(summary.filteredAssets.map((asset) => asset.id)).toEqual(['used', 'unused']);
+    expect(summary.bestNextMove).toContain('strongest reusable asset');
   });
 
   it('filters by unused assets and matches search across caption and tags', () => {
@@ -66,8 +67,12 @@ describe('getMediaLibrarySummary', () => {
       }),
     ];
 
-    const summary = getMediaLibrarySummary(assets, 'unused', 'golden');
+    const summary = getMediaLibrarySummary(assets, 'unused', 'golden', {
+      isPickerMode: true,
+      pickerTargetLabel: 'Gallery',
+    });
 
     expect(summary.filteredAssets.map((asset) => asset.id)).toEqual(['unused']);
+    expect(summary.focusTitle).toContain('Gallery');
   });
 });

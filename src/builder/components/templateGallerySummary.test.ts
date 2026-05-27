@@ -39,6 +39,8 @@ describe('getTemplateGallerySummary', () => {
     expect(summary.currentTemplateName).toBe('Current One');
     expect(summary.compareReady).toBe(true);
     expect(summary.compareMessage).toContain('Ready to compare');
+    expect(summary.bestNextMove).toContain('Compare Current One and Other One');
+    expect(summary.watchout).toContain('Repeated template switching');
   });
 
   it('highlights the strongest filtered option when matches remain', () => {
@@ -59,5 +61,7 @@ describe('getTemplateGallerySummary', () => {
 
     expect(summary.strongestFilteredTemplate?.id).toBe('best');
     expect(summary.filteredDetail).toContain('Best Fit');
+    expect(summary.focusTitle).toContain('needs a strong visual direction');
+    expect(summary.nextStep).toContain('Best Fit');
   });
 });

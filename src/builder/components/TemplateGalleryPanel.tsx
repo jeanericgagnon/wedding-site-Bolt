@@ -828,20 +828,26 @@ export const TemplateGalleryPanel: React.FC<TemplateGalleryPanelProps> = ({ onSa
         <div className="flex-1 overflow-y-auto p-7">
           <div className="mb-5 grid gap-3 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
             <div className="rounded-2xl border border-neutral-200 bg-neutral-50 px-4 py-3">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-neutral-500">Current draft</p>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-neutral-500">Main focus</p>
               <p className="mt-2 text-sm font-semibold text-neutral-900">
-                {gallerySummary.currentTemplateName}
+                {gallerySummary.focusTitle}
               </p>
               <p className="mt-1 text-xs text-neutral-600">
-                {gallerySummary.currentDraftDetail}
+                {gallerySummary.focusDetail}
               </p>
               <p className="mt-2 text-xs text-neutral-600">
-                {gallerySummary.currentDraftRecommendation}
+                {gallerySummary.currentDraftDetail}
               </p>
             </div>
             <div className="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-3">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-sky-700">{gallerySummary.filteredHeadline}</p>
-              <p className="mt-2 text-xs leading-relaxed text-sky-900">{gallerySummary.filteredDetail}</p>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-sky-700">Best next move</p>
+              <p className="mt-2 text-sm font-semibold text-sky-950">{gallerySummary.bestNextMove}</p>
+              <p className="mt-2 text-xs leading-relaxed text-sky-900">
+                <span className="font-semibold text-sky-950">Decision rule:</span> {gallerySummary.decisionRule}
+              </p>
+              <p className="mt-1 text-xs leading-relaxed text-sky-900">
+                <span className="font-semibold text-sky-950">Watchout:</span> {gallerySummary.watchout}
+              </p>
               {gallerySummary.strongestFilteredTemplate && (
                 <button
                   type="button"
@@ -852,6 +858,25 @@ export const TemplateGalleryPanel: React.FC<TemplateGalleryPanelProps> = ({ onSa
                 </button>
               )}
             </div>
+          </div>
+
+          <div className="mb-5 grid gap-2 md:grid-cols-3">
+            {[
+              { label: 'Current', detail: gallerySummary.currentStep },
+              { label: 'Next', detail: gallerySummary.nextStep },
+              { label: 'Then', detail: gallerySummary.thenStep },
+            ].map((step) => (
+              <div key={step.label} className="rounded-xl border border-neutral-200 bg-white px-3 py-3">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-neutral-500">{step.label}</p>
+                <p className="mt-1 text-xs leading-relaxed text-neutral-600">{step.detail}</p>
+              </div>
+            ))}
+          </div>
+
+          <div className="mb-5 rounded-xl border border-neutral-200 bg-white px-4 py-3">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-neutral-500">{gallerySummary.filteredHeadline}</p>
+            <p className="mt-2 text-xs leading-relaxed text-neutral-700">{gallerySummary.filteredDetail}</p>
+            <p className="mt-2 text-xs leading-relaxed text-neutral-600">{gallerySummary.currentDraftRecommendation}</p>
           </div>
 
           <div className="mb-5">

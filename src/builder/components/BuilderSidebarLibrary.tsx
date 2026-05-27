@@ -467,14 +467,35 @@ export const BuilderSidebarLibrary: React.FC<BuilderSidebarLibraryProps> = ({ ac
               <div className="flex items-start justify-between gap-2">
                 <div>
                   <p className="text-[11px] font-semibold uppercase tracking-wide text-sky-700">Section plan</p>
-                  <p className="mt-1 text-xs font-semibold text-sky-950">{sectionLibrarySummary.title}</p>
-                  <p className="mt-1 text-[11px] leading-relaxed text-sky-900">{sectionLibrarySummary.detail}</p>
+                  <p className="mt-1 text-xs font-semibold text-sky-950">{sectionLibrarySummary.focusTitle}</p>
+                  <p className="mt-1 text-[11px] leading-relaxed text-sky-900">{sectionLibrarySummary.focusDetail}</p>
                 </div>
                 <div className="rounded-full border border-sky-200 bg-white px-2 py-1 text-[10px] font-semibold text-sky-800">
                   {sectionLibrarySummary.filteredCount} shown
                 </div>
               </div>
-              <p className="mt-2 text-[11px] leading-relaxed text-sky-800">{sectionLibrarySummary.nextMove}</p>
+              <div className="mt-3 rounded-lg border border-white/80 bg-white/80 px-3 py-2">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-sky-700">Best next move</p>
+                <p className="mt-1 text-[11px] font-semibold text-sky-950">{sectionLibrarySummary.bestNextMove}</p>
+                <p className="mt-1 text-[10px] leading-relaxed text-sky-800">
+                  <span className="font-semibold text-sky-950">Decision rule:</span> {sectionLibrarySummary.decisionRule}
+                </p>
+                <p className="mt-1 text-[10px] leading-relaxed text-sky-800">
+                  <span className="font-semibold text-sky-950">Watchout:</span> {sectionLibrarySummary.watchout}
+                </p>
+              </div>
+              <div className="mt-2 grid grid-cols-3 gap-1.5">
+                {[
+                  { label: 'Current', detail: sectionLibrarySummary.currentStep },
+                  { label: 'Next', detail: sectionLibrarySummary.nextStep },
+                  { label: 'Then', detail: sectionLibrarySummary.thenStep },
+                ].map((step) => (
+                  <div key={step.label} className="rounded-lg border border-white/80 bg-white/80 px-2 py-2">
+                    <p className="text-[9px] font-semibold uppercase tracking-[0.16em] text-sky-700">{step.label}</p>
+                    <p className="mt-1 text-[10px] leading-relaxed text-sky-900">{step.detail}</p>
+                  </div>
+                ))}
+              </div>
               {sectionLibrarySummary.missingEssentialLabels.length > 0 && (
                 <div className="mt-2 flex flex-wrap gap-1.5">
                   {sectionLibrarySummary.missingEssentialLabels.map((label) => (
@@ -483,6 +504,18 @@ export const BuilderSidebarLibrary: React.FC<BuilderSidebarLibraryProps> = ({ ac
                     </span>
                   ))}
                 </div>
+              )}
+              {sectionLibrarySummary.primarySuggestedType && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const manifest = getSectionManifest(sectionLibrarySummary.primarySuggestedType!);
+                    addSection(manifest.type, manifest.defaultVariant);
+                  }}
+                  className="mt-3 inline-flex items-center rounded-lg border border-sky-300 bg-white px-3 py-1.5 text-[11px] font-semibold text-sky-800 hover:bg-sky-100"
+                >
+                  Add suggested section
+                </button>
               )}
             </div>
             <div className="mb-3 rounded-lg border border-rose-100 bg-rose-50/60 p-2">
