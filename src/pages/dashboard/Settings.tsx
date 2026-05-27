@@ -1587,13 +1587,13 @@ export const DashboardSettings: React.FC = () => {
                           <div>
                             <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary">Best next move</p>
                             <p className="mt-1 text-sm font-semibold text-text-primary">{siteAccessPlan.bestNextMove}</p>
-                            <p className="mt-3 text-[11px] uppercase tracking-[0.18em] text-text-tertiary">Decision rule</p>
-                            <p className="mt-1 text-sm font-semibold text-text-primary">{siteAccessPlan.decisionRule}</p>
+                            <div className="mt-3 border-t border-border-subtle pt-3">
+                              <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary">Decision rule</p>
+                              <p className="mt-1 text-sm font-semibold text-text-primary">{siteAccessPlan.decisionRule}</p>
+                              <p className="mt-3 text-[11px] uppercase tracking-[0.18em] text-text-tertiary">Watchout</p>
+                              <p className="mt-1 text-sm text-text-secondary">{siteAccessPlan.watchout}</p>
+                            </div>
                           </div>
-                        </div>
-                        <div className="rounded-xl border border-border-subtle bg-white p-4">
-                          <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary">Watchout</p>
-                          <p className="mt-1 text-sm text-text-secondary">{siteAccessPlan.watchout}</p>
                         </div>
                         <div className="grid gap-3 lg:grid-cols-3">
                           {siteAccessPlan.sequence.map((step) => (
