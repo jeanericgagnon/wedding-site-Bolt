@@ -32,8 +32,12 @@ export const PlanningDecisionCard: React.FC<Props> = ({ model, onAction }) => {
               <p className="mt-1.5 text-xs leading-5 text-text-secondary">{model.focusDetail}</p>
             </div>
             <div className="rounded-2xl border border-border/60 bg-white/80 px-3 py-3">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-text-tertiary">Decision rule</p>
-              <p className="mt-1 text-sm leading-5 text-text-secondary">{model.decisionRule}</p>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-text-tertiary">Best next move</p>
+              <p className="mt-1 text-sm font-medium text-text-primary">{model.bestNextMove}</p>
+              <div className="mt-3 border-t border-border/60 pt-3">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-text-tertiary">Decision rule</p>
+                <p className="mt-1 text-sm leading-5 text-text-secondary">{model.decisionRule}</p>
+              </div>
             </div>
           </div>
           {model.badges.length > 0 && (
