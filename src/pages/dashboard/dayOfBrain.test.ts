@@ -32,6 +32,7 @@ describe('buildDayOfBrainBriefing', () => {
 
     expect(briefing.title).toContain('coordinator mode');
     expect(briefing.focusTitle).toMatch(/guest flow/i);
+    expect(briefing.bestNextMove).toMatch(/coordinator mode|live exceptions/i);
     expect(briefing.decisionRule).toMatch(/coordinator calm/i);
     expect(briefing.primaryAction).toMatchObject({ target: 'coordinator' });
   });
@@ -44,6 +45,7 @@ describe('buildDayOfBrainBriefing', () => {
 
     expect(briefing.title).toContain('seating drift');
     expect(briefing.focusTitle).toMatch(/room truth/i);
+    expect(briefing.bestNextMove).toMatch(/repair the invalid assignments|trust coordinator mode/i);
     expect(briefing.decisionRule).toMatch(/downstream coordination/i);
     expect(briefing.primaryAction).toMatchObject({ target: 'seating' });
   });
@@ -60,6 +62,7 @@ describe('buildDayOfBrainBriefing', () => {
 
     expect(briefing.title).toContain('guest list still needs a final nudge');
     expect(briefing.focusTitle).toMatch(/guest-response gap/i);
+    expect(briefing.bestNextMove).toMatch(/pending guests|contact nudge/i);
     expect(briefing.decisionRule).toMatch(/guest follow-through beats setup polish/i);
     expect(briefing.primaryAction).toMatchObject({ target: 'guests' });
     expect(briefing.secondaryAction).toMatchObject({ target: 'messages' });
@@ -76,6 +79,7 @@ describe('buildDayOfBrainBriefing', () => {
 
     expect(briefing.title).toContain('keep the live tools warm');
     expect(briefing.focusTitle).toMatch(/live layer warm/i);
+    expect(briefing.bestNextMove).toMatch(/readiness pass|stable systems/i);
     expect(briefing.decisionRule).toMatch(/live-day edges/i);
     expect(briefing.primaryAction).toMatchObject({ target: 'coordinator' });
     expect(briefing.secondaryAction).toMatchObject({ target: 'seating' });
@@ -92,6 +96,7 @@ describe('buildDayOfBrainBriefing', () => {
 
     expect(briefing.title).toContain('guest-facing schedule spine');
     expect(briefing.focusTitle).toMatch(/schedule everyone can trust/i);
+    expect(briefing.bestNextMove).toMatch(/ceremony, reception|timeline is real/i);
     expect(briefing.decisionRule).toMatch(/itinerary truth beats every softer layer/i);
     expect(briefing.primaryAction).toMatchObject({ target: 'itinerary' });
     expect(briefing.secondaryAction).toMatchObject({ target: 'messages' });

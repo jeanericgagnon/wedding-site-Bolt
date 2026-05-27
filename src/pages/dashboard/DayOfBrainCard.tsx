@@ -30,8 +30,12 @@ export const DayOfBrainCard: React.FC<DayOfBrainCardProps> = ({ briefing, onActi
             <p className="mt-2 text-sm text-text-secondary">{briefing.focusDetail}</p>
           </div>
           <div className="rounded-xl border border-border/50 bg-surface-subtle/35 px-3 py-3">
-            <p className="text-xs uppercase tracking-wide text-text-tertiary">Decision rule</p>
-            <p className="mt-2 text-sm text-text-secondary">{briefing.decisionRule}</p>
+            <p className="text-xs uppercase tracking-wide text-text-tertiary">Best next move</p>
+            <p className="mt-2 text-sm font-semibold text-text-primary">{briefing.bestNextMove}</p>
+            <div className="mt-3 border-t border-border/50 pt-3">
+              <p className="text-xs uppercase tracking-wide text-text-tertiary">Decision rule</p>
+              <p className="mt-2 text-sm text-text-secondary">{briefing.decisionRule}</p>
+            </div>
           </div>
         </div>
 

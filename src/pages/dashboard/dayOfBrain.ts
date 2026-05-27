@@ -19,6 +19,7 @@ export interface DayOfBrainBriefing {
   detail: string;
   focusTitle: string;
   focusDetail: string;
+  bestNextMove: string;
   decisionRule: string;
   badges: string[];
   signals: DayOfBrainSignal[];
@@ -126,6 +127,7 @@ export function buildDayOfBrainBriefing(input: DayOfBrainInput): DayOfBrainBrief
       detail: 'This is the moment to keep the site graceful, preserve memories, and avoid spinning the operations layer back up unless you truly need it.',
       focusTitle: 'Preserve what matters without restarting the machine',
       focusDetail: 'The best post-wedding move is keeping the archive and guest-facing story graceful while leaving the operations layer asleep.',
+      bestNextMove: 'Use photos or the vault to preserve the strongest memories now, and leave the live operations layer quiet unless a real post-wedding need appears.',
       decisionRule: 'After the live day, preserve memories and closure before you reopen active operations.',
       badges: [
         `${confirmedCoverage}% confirmed`,
@@ -144,6 +146,7 @@ export function buildDayOfBrainBriefing(input: DayOfBrainInput): DayOfBrainBrief
       detail: 'Today is about clearing the active friction first so guests feel a smooth room even if things are moving fast behind the scenes.',
       focusTitle: 'Protect guest flow before anything else',
       focusDetail: 'When live friction is active, the room needs fast exception handling more than fresh edits or cleanup elsewhere.',
+      bestNextMove: 'Stay in coordinator mode until the live exceptions settle, then only step out for the one room or message change that truly reduces friction.',
       decisionRule: 'If live exceptions are already stacked up, coordinator calm beats every other optimization.',
       badges: [
         `${pluralize(liveFriction, 'live issue')}`,
@@ -162,6 +165,7 @@ export function buildDayOfBrainBriefing(input: DayOfBrainInput): DayOfBrainBrief
       detail: 'The fastest way to lower event-day risk is reconciling the stale seats first. Everything else gets calmer once the room matches the real RSVP truth.',
       focusTitle: 'Repair room truth before you run the day from it',
       focusDetail: 'A room with stale assignments forces the live team to compensate everywhere else, so this is the most leverage-heavy correction.',
+      bestNextMove: 'Open seating, repair the invalid assignments first, and only then trust coordinator mode or guest flow decisions built on that room.',
       decisionRule: 'If seats no longer match RSVP reality, fix that truth before you trust downstream coordination.',
       badges: [
         `${pluralize(invalidSeatCount, 'invalid seat')}`,
@@ -180,6 +184,7 @@ export function buildDayOfBrainBriefing(input: DayOfBrainInput): DayOfBrainBrief
       detail: 'You do not need a perfect room yet. You do need every confirmed guest placed so the live check-in board is not compensating for a seating gap later.',
       focusTitle: 'Turn confirmed attendance into a usable room',
       focusDetail: 'The room does not need polish yet, but it does need every confirmed guest grounded in a real seat before the date gets tighter.',
+      bestNextMove: 'Finish placing the remaining confirmed guests now, then come back for comfort or balance passes only after every seat exists.',
       decisionRule: 'Near the wedding, complete placement beats perfect layout.',
       badges: [
         `${pluralize(unassignedSeatCount, 'open seat move')}`,
@@ -198,6 +203,7 @@ export function buildDayOfBrainBriefing(input: DayOfBrainInput): DayOfBrainBrief
       detail: 'Before the live layer can truly help, guests need a real timeline to trust. Add the anchor events first, then let messages and coordinator mode build on top of that truth.',
       focusTitle: 'Give the weekend one schedule everyone can trust',
       focusDetail: 'Messages, coordination, and guest flow all get easier once the public-facing timeline exists and stops living only in someone’s head.',
+      bestNextMove: 'Add the ceremony, reception, and other guest-critical anchor events first, then return to messages or coordinator work once the timeline is real.',
       decisionRule: 'If the wedding is close and the schedule is empty, itinerary truth beats every softer layer on top.',
       badges: [
         input.daysUntilWedding === 0 ? 'Wedding day' : `${input.daysUntilWedding} days left`,
@@ -216,6 +222,7 @@ export function buildDayOfBrainBriefing(input: DayOfBrainInput): DayOfBrainBrief
       detail: 'The right pressure move here is not more setup polish. It is getting the remaining replies and contact cleanup out of the way while there is still room to act.',
       focusTitle: 'Close the guest-response gap while there is still room to react',
       focusDetail: 'The safest next move is resolving missing replies and contact cleanup, because those gaps still change what the live day will ask of the team.',
+      bestNextMove: 'Review the pending guests, send the last RSVP or contact nudge, and only come back to day-of polish after the list stops moving.',
       decisionRule: 'When RSVP pressure is still real, guest follow-through beats setup polish.',
       badges: [
         `${pluralize(input.pendingGuests, 'pending RSVP')}`,
@@ -238,6 +245,9 @@ export function buildDayOfBrainBriefing(input: DayOfBrainInput): DayOfBrainBrief
       focusDetail: weddingToday
         ? 'The operations layer is doing its job when it helps the team move quickly through a calm room instead of creating fresh last-minute churn.'
         : 'The core setup is solid enough now that small readiness passes matter more than reopening whole systems.',
+      bestNextMove: weddingToday
+        ? 'Stay close to coordinator mode, check-in, and seating support, and resist broad new edits unless a live exception actually calls for them.'
+        : 'Walk one readiness pass through coordinator mode and seating now, then leave the stable systems alone while they stay calm.',
       decisionRule: weddingToday
         ? 'On the wedding day, support speed and handoff instead of making broad new edits.'
         : 'When the setup is steady, tighten only the live-day edges that would actually slow the team down later.',
@@ -257,6 +267,7 @@ export function buildDayOfBrainBriefing(input: DayOfBrainInput): DayOfBrainBrief
     detail: 'Nothing is demanding event-day intervention yet. Keep the plan moving, and only pull the operations layer forward when the wedding gets closer or the board starts to drift.',
     focusTitle: 'Let the operations layer stay quiet for now',
     focusDetail: 'The best outcome here is that the live-day tooling stays ready without stealing attention from planning that still matters more.',
+    bestNextMove: 'Keep planning moving in the foreground and only pull the day-of layer forward again when the wedding gets closer or the board starts to drift.',
     decisionRule: 'If event-day pressure is not real yet, keep the live layer ready but secondary.',
     badges: [
       `${confirmedCoverage}% confirmed`,
