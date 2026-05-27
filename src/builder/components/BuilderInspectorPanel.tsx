@@ -11,6 +11,7 @@ import { BuilderSettingsField } from '../../types/builder/section';
 import { CustomBlock } from '../../sections/variants/custom/skeletons';
 import { BuilderSectionType } from '../../types/builder/section';
 import { getBuilderPageEditingSummary } from './builderPageEditingSummary';
+import { getBuilderSectionEditingGuidance } from './builderSectionEditingGuidance';
 
 type InspectorTab = 'guide' | 'content' | 'style' | 'layout' | 'data';
 
@@ -224,13 +225,15 @@ export const BuilderInspectorPanel: React.FC = () => {
   const requiredGuideSteps = guideSteps.filter((s) => !s.optional);
   const guideProgress = Math.round((requiredGuideSteps.filter((s) => s.done).length / Math.max(requiredGuideSteps.length, 1)) * 100);
 
-  const nextAction = (() => {
-    if (!hasMeaningfulContent) return { key: 'content', cta: 'Open content', label: 'Add your content', tab: 'content' as InspectorTab, detail: 'Add the headline, text, or details guests should actually see.' };
-    if (!hasLayoutCustomization) return { key: 'layout', cta: 'Open layout', label: 'Pick layout and spacing', tab: 'layout' as InspectorTab, detail: 'Choose the version that fits best and tighten the spacing.' };
-    if (!hasStyleOverrides) return { key: 'style', cta: 'Open style', label: 'Match the visual style', tab: 'style' as InspectorTab, detail: 'Bring this section closer to the rest of your website.' };
-    if (!selectedSection.enabled) return { key: 'visibility', cta: 'Open layout', label: 'Turn this section on', tab: 'layout' as InspectorTab, detail: 'This section is currently hidden from your website.' };
-    return { key: 'preview-mobile', cta: 'Preview mobile', label: 'Preview on mobile', tab: 'layout' as InspectorTab, detail: 'Check the mobile view before going live.' };
-  })();
+  const sectionEditingGuidance = getBuilderSectionEditingGuidance({
+    sectionLabel: manifest.label,
+    hasMeaningfulContent,
+    hasStyleOverrides,
+    hasLayoutCustomization,
+    hasBindings,
+    dataConfigured,
+    enabled: selectedSection.enabled,
+  });
 
   const handleUpdateSetting = (key: string, value: string | boolean | number) => {
     const nextValue = typeof value === 'string' ? markFieldAsUserEdited(value) : value;
@@ -339,19 +342,37 @@ export const BuilderInspectorPanel: React.FC = () => {
           </button>
         </div>
         <div className="rounded-xl border border-sky-100 bg-sky-50 px-3 py-2.5">
-          <p className="text-[11px] font-semibold text-sky-900">Best next step</p>
-          <p className="mt-1 text-[11px] text-sky-800">{nextAction.detail}</p>
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-sky-900">Main focus</p>
+              <p className="mt-1 text-sm font-medium text-sky-950">{sectionEditingGuidance.focusTitle}</p>
+              <p className="mt-1 text-[11px] text-sky-800">{sectionEditingGuidance.focusDetail}</p>
+            </div>
+            <div className="rounded-full border border-sky-200 bg-white px-2 py-1 text-[11px] font-medium text-sky-900">
+              {sectionEditingGuidance.progressPercent}%
+            </div>
+          </div>
+          <div className="mt-3 rounded-lg border border-sky-200 bg-white px-3 py-2.5">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--color-text-tertiary)]">Best next move</p>
+            <p className="mt-1 text-sm font-medium text-[var(--color-text-primary)]">{sectionEditingGuidance.bestNextMove}</p>
+            <p className="mt-2 text-xs text-[var(--color-text-secondary)]">
+              <span className="font-semibold text-[var(--color-text-primary)]">Decision rule:</span> {sectionEditingGuidance.decisionRule}
+            </p>
+            <p className="mt-1 text-xs text-[var(--color-text-secondary)]">
+              <span className="font-semibold text-[var(--color-text-primary)]">Watchout:</span> {sectionEditingGuidance.watchout}
+            </p>
+          </div>
           <button
             onClick={() => {
-              if (nextAction.tab !== 'content' && nextAction.tab !== 'guide') {
+              if (sectionEditingGuidance.nextActionTab !== 'content' && sectionEditingGuidance.nextActionTab !== 'guide') {
                 setShowAdvanced(true);
                 setSimpleMode(false);
               }
-              setActiveTab(nextAction.tab);
+              setActiveTab(sectionEditingGuidance.nextActionTab);
             }}
             className="mt-2 inline-flex items-center rounded-lg border border-sky-200 bg-white px-3 py-1.5 text-xs font-medium text-sky-900 hover:bg-sky-100"
           >
-            {nextAction.cta}
+            {sectionEditingGuidance.nextActionLabel}
           </button>
         </div>
         <div className="grid gap-2 sm:grid-cols-2">
@@ -472,18 +493,18 @@ export const BuilderInspectorPanel: React.FC = () => {
 
             <div className="rounded-xl border border-[var(--color-border-subtle)] bg-white p-3">
               <p className="text-xs font-semibold text-[var(--color-text-primary)] mb-1">Best next step</p>
-              <p className="text-[11px] text-[var(--color-text-secondary)]">{nextAction.detail}</p>
+              <p className="text-[11px] text-[var(--color-text-secondary)]">{sectionEditingGuidance.nextActionDetail}</p>
               <button
                 onClick={() => {
-                  if (nextAction.tab !== 'content' && nextAction.tab !== 'guide') {
+                  if (sectionEditingGuidance.nextActionTab !== 'content' && sectionEditingGuidance.nextActionTab !== 'guide') {
                     setShowAdvanced(true);
                     setSimpleMode(false);
                   }
-                  setActiveTab(nextAction.tab);
+                  setActiveTab(sectionEditingGuidance.nextActionTab);
                 }}
                 className="mt-3 inline-flex items-center rounded-lg border border-[var(--color-border-subtle)] bg-[var(--color-surface-subtle)] px-3 py-2 text-xs font-medium text-[var(--color-text-primary)] hover:border-[var(--color-border)] hover:bg-white"
               >
-                {nextAction.cta}
+                {sectionEditingGuidance.nextActionLabel}
               </button>
             </div>
 
