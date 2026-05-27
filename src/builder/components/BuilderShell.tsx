@@ -479,6 +479,7 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
                         <p className="text-sm font-medium text-text-primary">{launchConfidence.summary}</p>
                         <p className="text-[11px] text-text-secondary">Current · {launchConfidence.current}</p>
                         <p className="text-[11px] text-text-secondary">Next · {launchConfidence.next}</p>
+                        <p className="text-[11px] text-text-secondary">Decision rule · {launchConfidence.decisionRule}</p>
                         <p className="text-[11px] text-amber-700">Watchout · {launchConfidence.watchout}</p>
                         <div className="grid gap-2 pt-1 md:grid-cols-3">
                           {launchConfidence.sequence.map((step) => (

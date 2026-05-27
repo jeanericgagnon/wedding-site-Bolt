@@ -82,6 +82,7 @@ describe('buildLaunchConfidence', () => {
     expect(confidence.tone).toBe('warning');
     expect(confidence.primaryAction).toMatchObject({ kind: 'fix', target: 'publish-blockers' });
     expect(confidence.summary).toContain('RSVP');
+    expect(confidence.decisionRule).toMatch(/fix the blocker|guest-facing basics/i);
     expect(confidence.watchout).toMatch(/design progress|blocker/i);
     expect(confidence.sequence.map((step) => step.status)).toEqual(['current', 'next', 'then']);
   });
@@ -91,6 +92,7 @@ describe('buildLaunchConfidence', () => {
 
     expect(confidence.label).toContain('Almost');
     expect(confidence.primaryAction).toMatchObject({ kind: 'publish' });
+    expect(confidence.decisionRule).toMatch(/save state|synchronize/i);
     expect(confidence.watchout).toMatch(/save state|stale/i);
   });
 
@@ -99,6 +101,7 @@ describe('buildLaunchConfidence', () => {
 
     expect(confidence.tone).toBe('ready');
     expect(confidence.primaryAction).toMatchObject({ kind: 'publish' });
+    expect(confidence.decisionRule).toMatch(/honest preview|polish lap/i);
     expect(confidence.sequence[1]?.detail).toMatch(/mobile|preview/i);
   });
 
@@ -111,6 +114,7 @@ describe('buildLaunchConfidence', () => {
     expect(confidence.tone).toBe('warning');
     expect(confidence.primaryAction).toMatchObject({ kind: 'fix', target: 'itinerary' });
     expect(confidence.summary).toMatch(/itinerary event|timeline/i);
+    expect(confidence.decisionRule).toMatch(/schedule anchor|premature/i);
     expect(confidence.watchout).toMatch(/schedule|weekend/i);
   });
 
@@ -124,6 +128,7 @@ describe('buildLaunchConfidence', () => {
 
     expect(confidence.label).toContain('Live');
     expect(confidence.primaryAction).toMatchObject({ kind: 'preview' });
+    expect(confidence.decisionRule).toMatch(/restraint beats motion|guest clarity|confidence/i);
     expect(confidence.watchout).toMatch(/constant-update|live/i);
   });
 });

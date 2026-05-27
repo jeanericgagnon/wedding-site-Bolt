@@ -20,6 +20,7 @@ export interface LaunchConfidenceModel {
   summary: string;
   current: string;
   next: string;
+  decisionRule: string;
   watchout: string;
   sequence: LaunchConfidenceSequenceItem[];
   primaryAction: LaunchConfidenceAction;
@@ -78,6 +79,9 @@ export function buildLaunchConfidence(
         ? 'The structure is close, but the latest edit still needs to be saved before launch truth is real.'
         : 'The guest-facing basics are not fully trustworthy yet, so publishing now would make the site feel thinner than it should.',
       next: getIssueNext(issue.kind),
+      decisionRule: issue.kind === 'unsaved-changes'
+        ? 'When save state is the only blocker, synchronize the draft before you make any new publish decision.'
+        : 'When guest-facing basics are still thin, fix the blocker before you spend energy on polish or momentum theater.',
       watchout: issue.kind === 'unsaved-changes'
         ? 'Do not keep polishing a draft whose launch truth is already stale. When save state is the blocker, more editing usually creates more uncertainty, not more readiness.'
         : 'The easiest mistake here is treating visible design progress like launch progress. If the guest-facing basics are still thin, publish pressure should stay pointed at the blocker itself.',
@@ -105,6 +109,7 @@ export function buildLaunchConfidence(
       summary: 'The site has the structural basics, but guests still need at least one real itinerary event before the launch feels trustworthy.',
       current: 'Names, date, venue, and RSVP can all be present while the weekend still feels vague to a guest who is trying to picture the day.',
       next: 'Add the first real schedule event so the public timeline has an anchor before you publish.',
+      decisionRule: 'If guests still cannot picture the weekend from one concrete schedule anchor, launch is still premature even when the basics look complete.',
       watchout: 'A site can look launchable from the editor while still feeling empty to a guest. If the schedule has no real anchor, the launch asks messaging and memory to compensate for a weekend that was never clearly introduced.',
       sequence: buildLaunchSequence(
         'Treat the missing itinerary anchor as the real launch blocker, not as optional polish.',
@@ -128,6 +133,7 @@ export function buildLaunchConfidence(
         : 'The guest-facing site is already live, so this is now about making the next update feel intentional.',
       current: 'Guests can already rely on the live site without waiting for another structural fix.',
       next: 'Preview your changes once, then publish only if this draft meaningfully improves clarity or polish.',
+      decisionRule: 'Once the site is already trustworthy for guests, restraint beats motion unless the change clearly improves guest clarity or confidence.',
       watchout: 'Do not turn a live, trustworthy site into a constant-update habit. Once the public path is steady, extra edits should earn their way in instead of shipping just because they exist.',
       sequence: buildLaunchSequence(
         'Start from the assumption that the live site is already doing its job for guests.',
@@ -147,6 +153,7 @@ export function buildLaunchConfidence(
     summary: 'The draft has the essentials in place, so the best remaining move is one preview pass and a calm publish.',
     current: 'The structure, names, date, venue, and RSVP path are all present enough to support guests well.',
     next: 'Preview the guest-facing flow once on mobile, then publish from this draft instead of over-polishing in edit mode.',
+    decisionRule: 'When the essentials are already trustworthy, one honest preview beats reopening the editor for another speculative polish lap.',
     watchout: 'The main risk now is nervous extra editing. Once the draft is structurally sound, another round of tinkering can create more churn than confidence.',
     sequence: buildLaunchSequence(
       'Hold the draft steady now that the essential guest-facing structure is already in place.',
