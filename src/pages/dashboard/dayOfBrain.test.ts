@@ -34,6 +34,7 @@ describe('buildDayOfBrainBriefing', () => {
     expect(briefing.focusTitle).toMatch(/guest flow/i);
     expect(briefing.bestNextMove).toMatch(/coordinator mode|live exceptions/i);
     expect(briefing.decisionRule).toMatch(/coordinator calm/i);
+    expect(briefing.watchout).toMatch(/cleanup projects|more handoff friction/i);
     expect(briefing.sequence.map((step) => step.status)).toEqual(['current', 'next', 'then']);
     expect(briefing.sequence[0]?.detail).toMatch(/active questions|watch items|escalations/i);
     expect(briefing.primaryAction).toMatchObject({ target: 'coordinator' });
@@ -49,6 +50,7 @@ describe('buildDayOfBrainBriefing', () => {
     expect(briefing.focusTitle).toMatch(/room truth/i);
     expect(briefing.bestNextMove).toMatch(/repair the invalid assignments|trust coordinator mode/i);
     expect(briefing.decisionRule).toMatch(/downstream coordination/i);
+    expect(briefing.watchout).toMatch(/room you already know is stale|seating truth is wrong/i);
     expect(briefing.primaryAction).toMatchObject({ target: 'seating' });
   });
 
@@ -66,6 +68,7 @@ describe('buildDayOfBrainBriefing', () => {
     expect(briefing.focusTitle).toMatch(/guest-response gap/i);
     expect(briefing.bestNextMove).toMatch(/pending guests|contact nudge/i);
     expect(briefing.decisionRule).toMatch(/guest follow-through beats setup polish/i);
+    expect(briefing.watchout).toMatch(/remaining runway|guest list is still moving/i);
     expect(briefing.primaryAction).toMatchObject({ target: 'guests' });
     expect(briefing.secondaryAction).toMatchObject({ target: 'messages' });
   });
@@ -83,6 +86,7 @@ describe('buildDayOfBrainBriefing', () => {
     expect(briefing.focusTitle).toMatch(/live layer warm/i);
     expect(briefing.bestNextMove).toMatch(/readiness pass|stable systems/i);
     expect(briefing.decisionRule).toMatch(/live-day edges/i);
+    expect(briefing.watchout).toMatch(/system-wide reopening|should stay warm/i);
     expect(briefing.primaryAction).toMatchObject({ target: 'coordinator' });
     expect(briefing.secondaryAction).toMatchObject({ target: 'seating' });
   });
@@ -100,6 +104,7 @@ describe('buildDayOfBrainBriefing', () => {
     expect(briefing.focusTitle).toMatch(/schedule everyone can trust/i);
     expect(briefing.bestNextMove).toMatch(/ceremony, reception|timeline is real/i);
     expect(briefing.decisionRule).toMatch(/itinerary truth beats every softer layer/i);
+    expect(briefing.watchout).toMatch(/no shared timeline|live update feels shakier/i);
     expect(briefing.sequence[1]?.title).toMatch(/real timeline|steady updates/i);
     expect(briefing.primaryAction).toMatchObject({ target: 'itinerary' });
     expect(briefing.secondaryAction).toMatchObject({ target: 'messages' });

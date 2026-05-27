@@ -21,6 +21,7 @@ export interface DayOfBrainBriefing {
   focusDetail: string;
   bestNextMove: string;
   decisionRule: string;
+  watchout: string;
   badges: string[];
   signals: DayOfBrainSignal[];
   sequence: Array<{
@@ -162,6 +163,7 @@ export function buildDayOfBrainBriefing(input: DayOfBrainInput): DayOfBrainBrief
       focusDetail: 'The best post-wedding move is keeping the archive and guest-facing story graceful while leaving the operations layer asleep.',
       bestNextMove: 'Use photos or the vault to preserve the strongest memories now, and leave the live operations layer quiet unless a real post-wedding need appears.',
       decisionRule: 'After the live day, preserve memories and closure before you reopen active operations.',
+      watchout: 'Do not wake the operations layer back up just because it is still available. Once the event is over, archive work should feel quieter than live command work did.',
       badges: [
         `${confirmedCoverage}% confirmed`,
         `${checkedInCount} checked in`,
@@ -195,6 +197,7 @@ export function buildDayOfBrainBriefing(input: DayOfBrainInput): DayOfBrainBrief
       focusDetail: 'When live friction is active, the room needs fast exception handling more than fresh edits or cleanup elsewhere.',
       bestNextMove: 'Stay in coordinator mode until the live exceptions settle, then only step out for the one room or message change that truly reduces friction.',
       decisionRule: 'If live exceptions are already stacked up, coordinator calm beats every other optimization.',
+      watchout: 'Do not mix fresh cleanup projects into an already active room. When live exceptions are stacked up, extra edits usually create more handoff friction than they remove.',
       badges: [
         `${pluralize(liveFriction, 'live issue')}`,
         `${checkedInCount} checked in`,
@@ -228,6 +231,7 @@ export function buildDayOfBrainBriefing(input: DayOfBrainInput): DayOfBrainBrief
       focusDetail: 'A room with stale assignments forces the live team to compensate everywhere else, so this is the most leverage-heavy correction.',
       bestNextMove: 'Open seating, repair the invalid assignments first, and only then trust coordinator mode or guest flow decisions built on that room.',
       decisionRule: 'If seats no longer match RSVP reality, fix that truth before you trust downstream coordination.',
+      watchout: 'Do not run live coordination from a room you already know is stale. Every other tool gets noisier when seating truth is wrong underneath it.',
       badges: [
         `${pluralize(invalidSeatCount, 'invalid seat')}`,
         weddingSoon && input.daysUntilWedding !== null ? `${input.daysUntilWedding} days left` : `${pluralize(input.pendingGuests, 'pending RSVP')}`,
@@ -261,6 +265,7 @@ export function buildDayOfBrainBriefing(input: DayOfBrainInput): DayOfBrainBrief
       focusDetail: 'The room does not need polish yet, but it does need every confirmed guest grounded in a real seat before the date gets tighter.',
       bestNextMove: 'Finish placing the remaining confirmed guests now, then come back for comfort or balance passes only after every seat exists.',
       decisionRule: 'Near the wedding, complete placement beats perfect layout.',
+      watchout: 'Do not spend energy on room aesthetics while confirmed guests are still floating. Coverage first keeps later live support from compensating for an unfinished room.',
       badges: [
         `${pluralize(unassignedSeatCount, 'open seat move')}`,
         input.daysUntilWedding === 0 ? 'Wedding day' : `${input.daysUntilWedding} days left`,
@@ -294,6 +299,7 @@ export function buildDayOfBrainBriefing(input: DayOfBrainInput): DayOfBrainBrief
       focusDetail: 'Messages, coordination, and guest flow all get easier once the public-facing timeline exists and stops living only in someone’s head.',
       bestNextMove: 'Add the ceremony, reception, and other guest-critical anchor events first, then return to messages or coordinator work once the timeline is real.',
       decisionRule: 'If the wedding is close and the schedule is empty, itinerary truth beats every softer layer on top.',
+      watchout: 'Do not ask messages or coordinator mode to carry a weekend that still has no shared timeline. If the spine is missing, every live update feels shakier than it should.',
       badges: [
         input.daysUntilWedding === 0 ? 'Wedding day' : `${input.daysUntilWedding} days left`,
         'No itinerary events yet',
@@ -327,6 +333,7 @@ export function buildDayOfBrainBriefing(input: DayOfBrainInput): DayOfBrainBrief
       focusDetail: 'The safest next move is resolving missing replies and contact cleanup, because those gaps still change what the live day will ask of the team.',
       bestNextMove: 'Review the pending guests, send the last RSVP or contact nudge, and only come back to day-of polish after the list stops moving.',
       decisionRule: 'When RSVP pressure is still real, guest follow-through beats setup polish.',
+      watchout: 'Do not spend the remaining runway on day-of polish while the guest list is still moving under you. Unclear attendance creates more live risk than an unpolished support layer does.',
       badges: [
         `${pluralize(input.pendingGuests, 'pending RSVP')}`,
         input.daysUntilWedding === null ? `${confirmedCoverage}% confirmed` : `${input.daysUntilWedding} days left`,
@@ -368,6 +375,9 @@ export function buildDayOfBrainBriefing(input: DayOfBrainInput): DayOfBrainBrief
       decisionRule: weddingToday
         ? 'On the wedding day, support speed and handoff instead of making broad new edits.'
         : 'When the setup is steady, tighten only the live-day edges that would actually slow the team down later.',
+      watchout: weddingToday
+        ? 'Do not confuse a calm room with permission for broad new edits. On the day itself, unnecessary motion is often the thing that creates fresh friction.'
+        : 'Do not turn a readiness pass into a system-wide reopening. If the setup is steady, the live layer should stay warm, not hyperactive.',
       badges: [
         input.daysUntilWedding === 0 ? 'Wedding day' : `${input.daysUntilWedding} days left`,
         `${confirmedCoverage}% confirmed`,
@@ -406,6 +416,7 @@ export function buildDayOfBrainBriefing(input: DayOfBrainInput): DayOfBrainBrief
     focusDetail: 'The best outcome here is that the live-day tooling stays ready without stealing attention from planning that still matters more.',
     bestNextMove: 'Keep planning moving in the foreground and only pull the day-of layer forward again when the wedding gets closer or the board starts to drift.',
     decisionRule: 'If event-day pressure is not real yet, keep the live layer ready but secondary.',
+    watchout: 'Do not promote the live layer just because it exists. Pull it forward when pressure is real, not while upstream planning still deserves the attention.',
     badges: [
       `${confirmedCoverage}% confirmed`,
       scheduledAlertCount > 0 ? `${pluralize(scheduledAlertCount, 'scheduled alert')}` : 'No live alerts queued',
