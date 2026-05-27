@@ -79,7 +79,7 @@ export const buildBuilderV2StarterBlocks = <TData>({
   sectionType: string;
   availableBlockTypes: string[];
   labels: Record<string, string>;
-  createDefaultData: (type: string) => TData;
+  createDefaultData: (sectionType: string, type: string) => TData;
 }): StarterBlock<TData>[] => {
   const starterBlockTypes = getBuilderV2StarterBlockTypes(sectionType, availableBlockTypes);
 
@@ -87,7 +87,7 @@ export const buildBuilderV2StarterBlocks = <TData>({
     id: `${sectionId}-${String(blockType)}-starter-${index + 1}`,
     type: blockType,
     content: labels[String(blockType)] ?? String(blockType),
-    data: createDefaultData(blockType),
+    data: createDefaultData(sectionType, blockType),
   }));
 };
 

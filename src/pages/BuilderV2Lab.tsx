@@ -145,7 +145,7 @@ const BLOCK_DEFAULTS: Record<BlockType, string> = {
   divider: '———',
 };
 
-const makeDefaultBlockContent = (type: BlockType): AddedBlockContent => {
+const makeGenericDefaultBlockContent = (type: BlockType): AddedBlockContent => {
   switch (type) {
     case 'qna':
       return { question: 'Your question?', answer: 'Your answer.' };
@@ -170,9 +170,104 @@ const makeDefaultBlockContent = (type: BlockType): AddedBlockContent => {
   }
 };
 
+const makeDefaultBlockContent = (sectionType: string, type: BlockType): AddedBlockContent => {
+  switch (sectionType) {
+    case 'contact':
+      if (type === 'travelTip') {
+        return {
+          title: 'Maya Chen',
+          role: 'Planner',
+          email: 'maya@example.com',
+          phone: '+1 (415) 555-0199',
+          note: 'Reach out for timeline or logistics questions.',
+        };
+      }
+      if (type === 'qna') {
+        return { question: 'Email subject', answer: 'Wedding Weekend Question' };
+      }
+      if (type === 'story') {
+        return { text: 'Choose the best person for each question so guests know where to go first.' };
+      }
+      break;
+    case 'quotes':
+      if (type === 'photo') {
+        return {
+          imageUrl: '',
+          caption: 'Favorite photo',
+          title: 'Maya',
+          role: 'Friend',
+          note: 'Their joy makes every room feel lighter.',
+        };
+      }
+      if (type === 'title') {
+        return { text: 'From the people we love' };
+      }
+      if (type === 'text') {
+        return { text: 'Add a short note, toast line, or message from someone close to you.' };
+      }
+      break;
+    case 'menu':
+      if (type === 'title') {
+        return { text: 'Dinner Menu', subtitle: 'course:course-1' };
+      }
+      if (type === 'travelTip') {
+        return {
+          title: 'Wild Mushroom Risotto',
+          note: 'Parmesan, herbs, and roasted shallots.',
+          role: 'Vegetarian',
+          subtitle: 'course:course-1',
+        };
+      }
+      if (type === 'story') {
+        return { text: 'Share dietary guidance, late-night snacks, or anything guests should know before dinner.' };
+      }
+      break;
+    case 'music':
+      if (type === 'title') {
+        return { text: 'Ceremony Playlist', subtitle: 'playlist:playlist-1' };
+      }
+      if (type === 'travelTip') {
+        return {
+          title: 'Bloom',
+          note: 'The Paper Kites',
+          role: 'Processional',
+          subtitle: 'playlist-track:playlist-1',
+        };
+      }
+      if (type === 'story') {
+        return { text: 'Tell guests what kind of songs you love, or invite requests with their RSVP.' };
+      }
+      break;
+    case 'video':
+      if (type === 'photo') {
+        return {
+          imageUrl: '',
+          caption: 'Video thumbnail',
+          title: 'Save the Date',
+          note: 'A quick preview of the weekend.',
+          role: 'youtube',
+          subtitle: 'video:video-1',
+        };
+      }
+      if (type === 'travelTip') {
+        return {
+          title: 'Watch the teaser',
+          url: 'https://youtu.be/abcdefghijk',
+          role: 'youtube',
+          subtitle: 'video:video-1',
+        };
+      }
+      break;
+    default:
+      break;
+  }
+
+  return makeGenericDefaultBlockContent(type);
+};
+
 const normalizeBlockData = (block: AddedBlock): AddedBlockContent => {
   if (block.data) return block.data;
-  return makeDefaultBlockContent(block.type);
+  return makeGenericDefaultBlockContent(block.type);
 };
 
 
@@ -630,7 +725,7 @@ export const BuilderV2Lab: React.FC = () => {
       id: `block-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
       type: blockType,
       content: BLOCK_DEFAULTS[blockType],
-      data: makeDefaultBlockContent(blockType),
+      data: makeDefaultBlockContent(selected.type, blockType),
     };
     setSectionBlocks((prev) => ({ ...prev, [selected.id]: [...(prev[selected.id] ?? []), block] }));
     setShowAddBlockPicker(false);
@@ -823,7 +918,7 @@ export const BuilderV2Lab: React.FC = () => {
       sectionType,
       availableBlockTypes,
       labels: BLOCK_DEFAULTS,
-      createDefaultData: (blockType) => makeDefaultBlockContent(blockType as BlockType),
+      createDefaultData: (starterSectionType, blockType) => makeDefaultBlockContent(starterSectionType, blockType as BlockType),
     }).map((block) => ({
       ...block,
       id: `${sectionId}-${block.type}-${Math.random().toString(36).slice(2, 6)}`,
@@ -1197,7 +1292,7 @@ export const BuilderV2Lab: React.FC = () => {
       availableBlockTypes: addableBlocksForSelected,
       labels: BLOCK_LABELS,
       availability: addBlockAvailability,
-      createDefaultData: (type) => makeDefaultBlockContent(type as BlockType),
+      createDefaultData: (packSectionType, type) => makeDefaultBlockContent(packSectionType, type as BlockType),
     }).map((block) => ({
       ...block,
       id: `${selected.id}-${block.type}-${Math.random().toString(36).slice(2, 6)}`,

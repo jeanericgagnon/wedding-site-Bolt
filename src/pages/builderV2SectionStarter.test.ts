@@ -62,7 +62,7 @@ describe('builderV2SectionStarter', () => {
         hotelCard: 'Hotel Card',
         text: 'Text Block',
       },
-      createDefaultData: (type) => ({ type, seeded: true }),
+      createDefaultData: (sectionType, type) => ({ sectionType, type, seeded: true }),
     });
 
     expect(blocks).toEqual([
@@ -70,14 +70,34 @@ describe('builderV2SectionStarter', () => {
         id: 'travel-1-travelTip-starter-1',
         type: 'travelTip',
         content: 'Travel Tip',
-        data: { type: 'travelTip', seeded: true },
+        data: { sectionType: 'travel', type: 'travelTip', seeded: true },
       },
       {
         id: 'travel-1-hotelCard-starter-2',
         type: 'hotelCard',
         content: 'Hotel Card',
-        data: { type: 'hotelCard', seeded: true },
+        data: { sectionType: 'travel', type: 'hotelCard', seeded: true },
       },
+    ]);
+  });
+
+  it('passes section type into starter block default creation for long-tail sections', () => {
+    const blocks = buildBuilderV2StarterBlocks({
+      sectionId: 'music-1',
+      sectionType: 'music',
+      availableBlockTypes: ['title', 'travelTip', 'story'],
+      labels: {
+        title: 'Title',
+        travelTip: 'Link or Track',
+        story: 'Request Note',
+      },
+      createDefaultData: (sectionType, type) => ({ sectionType, type }),
+    });
+
+    expect(blocks.map((block) => block.data)).toEqual([
+      { sectionType: 'music', type: 'title' },
+      { sectionType: 'music', type: 'travelTip' },
+      { sectionType: 'music', type: 'story' },
     ]);
   });
 
@@ -116,7 +136,7 @@ describe('builderV2SectionStarter', () => {
           faqItem: 'FAQ Item',
           qna: 'Q&A',
         },
-        createDefaultData: (type) => ({ type }),
+        createDefaultData: (_sectionType, type) => ({ type }),
       }),
     });
 

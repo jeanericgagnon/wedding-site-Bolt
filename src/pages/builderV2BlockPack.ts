@@ -37,7 +37,7 @@ type BuildBlocksParams<TData> = {
   availableBlockTypes: string[];
   labels: Record<string, string>;
   availability: Record<string, { ok: boolean; reason: string }>;
-  createDefaultData: (type: string) => TData;
+  createDefaultData: (sectionType: string, type: string) => TData;
 };
 
 const formatList = (values: string[]) => {
@@ -132,6 +132,6 @@ export const buildBuilderV2BlockPack = <TData>({
     id: `${sectionId}-${type}-pack-${index + 1}`,
     type,
     content: labels[type] ?? type,
-    data: createDefaultData(type),
+    data: createDefaultData(sectionType, type),
   }));
 };

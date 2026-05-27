@@ -68,7 +68,7 @@ describe('builderV2BlockPack', () => {
         hotelCard: { ok: false, reason: 'Cap reached' },
         text: { ok: true, reason: '' },
       },
-      createDefaultData: (type) => ({ type, seeded: true }),
+      createDefaultData: (sectionType, type) => ({ sectionType, type, seeded: true }),
     });
 
     expect(blocks).toEqual([
@@ -76,7 +76,42 @@ describe('builderV2BlockPack', () => {
         id: 'travel-1-travelTip-pack-1',
         type: 'travelTip',
         content: 'Travel Tip',
-        data: { type: 'travelTip', seeded: true },
+        data: { sectionType: 'travel', type: 'travelTip', seeded: true },
+      },
+    ]);
+  });
+
+  it('passes section type into pack default creation for long-tail sections', () => {
+    const blocks = buildBuilderV2BlockPack({
+      sectionId: 'menu-1',
+      sectionType: 'menu',
+      currentBlocks: [{ id: 'headline', type: 'title' }],
+      availableBlockTypes: ['title', 'travelTip', 'story'],
+      labels: {
+        title: 'Title',
+        travelTip: 'Menu Item',
+        story: 'Menu Note',
+      },
+      availability: {
+        title: { ok: true, reason: '' },
+        travelTip: { ok: true, reason: '' },
+        story: { ok: true, reason: '' },
+      },
+      createDefaultData: (sectionType, type) => ({ sectionType, type }),
+    });
+
+    expect(blocks).toEqual([
+      {
+        id: 'menu-1-travelTip-pack-1',
+        type: 'travelTip',
+        content: 'Menu Item',
+        data: { sectionType: 'menu', type: 'travelTip' },
+      },
+      {
+        id: 'menu-1-story-pack-2',
+        type: 'story',
+        content: 'Menu Note',
+        data: { sectionType: 'menu', type: 'story' },
       },
     ]);
   });
