@@ -39,6 +39,8 @@ describe('memoryCurator', () => {
     expect(model.focusTitle).toBe('Lock the couple anchor first');
     expect(model.bestNextMove).toContain('Main photo of you two');
     expect(model.decisionRule).toMatch(/guest-facing|signature couple photo/i);
+    expect(model.sequence.map((step) => step.status)).toEqual(['current', 'next', 'then']);
+    expect(model.sequence[0]?.title).toMatch(/hero photo|anchor/i);
     expect(model.qualitySignals[0]).toContain('Hero photo');
     expect(model.nextMoves[0]).toContain('Main photo of you two');
   });
@@ -60,6 +62,7 @@ describe('memoryCurator', () => {
     expect(model.focusTitle).toBe('Synthesize while the archive is still compact');
     expect(model.bestNextMove).toContain('Generate the first AI recap');
     expect(model.decisionRule).toMatch(/synthesis beats adding raw volume/i);
+    expect(model.sequence[1]?.detail).toMatch(/compact|revisit-worthy|story/i);
     expect(model.curationNote).toMatch(/synthesis|more valuable/i);
     expect(model.nextMoves[0]).toContain('Generate the first AI recap');
   });

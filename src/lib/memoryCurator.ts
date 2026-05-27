@@ -38,6 +38,12 @@ export interface MemoryCuratorModel {
   curationNote: string;
   badges: string[];
   qualitySignals: string[];
+  sequence: Array<{
+    id: 'anchor' | 'shape' | 'preserve';
+    status: 'current' | 'next' | 'then';
+    title: string;
+    detail: string;
+  }>;
   nextMoves: string[];
 }
 
@@ -54,6 +60,33 @@ const BUCKET_GOALS: Record<PhotoBucketKind, number> = {
   'friends-family': 3,
   extras: 2,
 };
+
+function buildMemorySequence(
+  current: { title: string; detail: string },
+  next: { title: string; detail: string },
+  then: { title: string; detail: string },
+) {
+  return [
+    {
+      id: 'anchor' as const,
+      status: 'current' as const,
+      title: current.title,
+      detail: current.detail,
+    },
+    {
+      id: 'shape' as const,
+      status: 'next' as const,
+      title: next.title,
+      detail: next.detail,
+    },
+    {
+      id: 'preserve' as const,
+      status: 'then' as const,
+      title: then.title,
+      detail: then.detail,
+    },
+  ];
+}
 
 const countVisiblePhotoUploads = (
   uploads: PhotoUploadSnapshot[],
@@ -137,6 +170,20 @@ export const buildPhotoMemoryCuratorModel = (args: {
         'Hero photo still missing',
         'Guest upload lanes can stay simple for now',
       ],
+      sequence: buildMemorySequence(
+        {
+          title: 'Settle the hero photo first',
+          detail: 'Give the memory system one unmistakable couple anchor before you ask any other lane to carry emotional weight.',
+        },
+        {
+          title: 'Deepen the couple story next',
+          detail: 'Once the hero is right, add just enough companion photos that the rest of the site feels intentional instead of provisional.',
+        },
+        {
+          title: 'Open guest-facing memory lanes after the anchor holds',
+          detail: 'Let guest uploads stay simple until the couple story is strong enough to guide the rest of the memory flow.',
+        },
+      ),
       nextMoves: [
         'Upload one favorite couple portrait into Main photo of you two.',
         'Add a few more couple photos so the story section has real depth.',
@@ -164,6 +211,20 @@ export const buildPhotoMemoryCuratorModel = (args: {
         'Couple anchors are in place',
         'No guest-facing upload lane is live yet',
       ],
+      sequence: buildMemorySequence(
+        {
+          title: 'Open one upload lane on purpose',
+          detail: 'Choose the clearest guest memory moment instead of launching several half-defined upload paths at once.',
+        },
+        {
+          title: 'Check whether that lane teaches the right behavior',
+          detail: 'Once the first bucket is live, use it to learn what guests actually contribute before adding more choices.',
+        },
+        {
+          title: 'Expand only after the first lane proves useful',
+          detail: 'Let future guest paths grow from a working upload habit instead of from optimism alone.',
+        },
+      ),
       nextMoves: [
         'Create the first live bucket for the one moment you care about most.',
         'Only add more guest buckets when the first one has a clear purpose.',
@@ -191,6 +252,20 @@ export const buildPhotoMemoryCuratorModel = (args: {
         'Guest uploads are arriving',
         'No bucket is slideshow-ready yet',
       ],
+      sequence: buildMemorySequence(
+        {
+          title: 'Finish one strong bucket first',
+          detail: 'Use the incoming uploads to push one memory lane over the line before you spread attention across all of them.',
+        },
+        {
+          title: 'Check the review queue while the bucket takes shape',
+          detail: 'Hide or review the rough uploads so the first complete lane feels trustworthy once it is ready to revisit.',
+        },
+        {
+          title: 'Preview the story after one lane feels real',
+          detail: 'Let a single complete bucket teach you what the slideshow or recap should become before you widen the system.',
+        },
+      ),
       nextMoves: [
         'Push one live bucket to at least three strong visible uploads.',
         'Hide or review the flagged uploads before you export anything.',
@@ -218,6 +293,20 @@ export const buildPhotoMemoryCuratorModel = (args: {
         'Enough uploads exist to curate a recap',
         'Archive-worthy moments are already visible',
       ],
+      sequence: buildMemorySequence(
+        {
+          title: 'Choose the strongest bucket as the anchor',
+          detail: 'Start from the lane that already carries the clearest emotional story instead of trying to preserve everything at once.',
+        },
+        {
+          title: 'Shape that bucket into a recap or slideshow',
+          detail: 'Use the compact, strongest cluster first so the archive begins with something worth revisiting.',
+        },
+        {
+          title: 'Move permanence ahead of endless intake',
+          detail: 'Once the strongest moments are preserved, let new collection happen only if it truly adds another angle to the story.',
+        },
+      ),
       nextMoves: [
         'Use the strongest bucket to shape a first slideshow or recap draft.',
         'Move the moments that matter most into the Archive Vaults.',
@@ -244,6 +333,20 @@ export const buildPhotoMemoryCuratorModel = (args: {
       'Couple anchors are steady',
       'Guest paths are open and useful',
     ],
+    sequence: buildMemorySequence(
+      {
+        title: 'Use the healthiest memory lanes as the anchor',
+        detail: 'The system is balanced enough now that restraint and taste matter more than opening new collection paths.',
+      },
+      {
+        title: 'Check the strongest moments while they are still easy to spot',
+        detail: 'Preview the slideshow or recap now, while the good clusters are still obvious and the archive is not overgrown.',
+      },
+      {
+        title: 'Preserve continuity instead of expanding volume',
+        detail: 'Once the story feels healthy, keep it editorial and avoid turning every new moment into another lane.',
+      },
+    ),
     nextMoves: [
       'Preview the slideshow while the best moments are still easy to spot.',
       'Keep one or two guest buckets active instead of opening everything at once.',
@@ -287,6 +390,20 @@ export const buildVaultMemoryCuratorModel = (args: {
         'Vault structure exists',
         'Storage health is currently blocking trust',
       ],
+      sequence: buildMemorySequence(
+        {
+          title: 'Reconnect the storage path first',
+          detail: 'Restore the dependable place where future notes, photos, and recaps are supposed to land before you deepen the archive.',
+        },
+        {
+          title: 'Check one important entry after storage is back',
+          detail: 'Once the storage trust is restored, verify the single memory artifact you care about most lands cleanly.',
+        },
+        {
+          title: 'Reopen sharing only after trust returns',
+          detail: 'Let the vault become a long-term memory home again before you ask anyone else to rely on it.',
+        },
+      ),
       nextMoves: [
         'Reconnect Google Drive so future entries land cleanly.',
         'Then add or refresh the vault entry you care about most.',
@@ -313,6 +430,20 @@ export const buildVaultMemoryCuratorModel = (args: {
         'Archive lane is enabled',
         'Meaningful content has not landed yet',
       ],
+      sequence: buildMemorySequence(
+        {
+          title: 'Write the first honest note',
+          detail: 'Use the freshness of the feeling as the real asset here instead of waiting for a more elaborate future memory artifact.',
+        },
+        {
+          title: 'Check what kind of archive that first note suggests',
+          detail: 'Once one real entry exists, decide what the next milestone should feel like before you add filler.',
+        },
+        {
+          title: 'Let the archive deepen slowly from real moments',
+          detail: 'Build the vault from meaningful anniversaries and voice, not from the pressure to populate every slot quickly.',
+        },
+      ),
       nextMoves: [
         'Add one short note for your first anniversary.',
         'Keep the first vault personal before you open anything to guests.',
@@ -340,6 +471,20 @@ export const buildVaultMemoryCuratorModel = (args: {
         'Private memory base exists',
         'Guest voices have not landed yet',
       ],
+      sequence: buildMemorySequence(
+        {
+          title: 'Invite the few voices that matter most',
+          detail: 'Use this pass to deepen the archive with meaningful outside memories instead of turning the vault into a public comment wall.',
+        },
+        {
+          title: 'Check how those entries change the story',
+          detail: 'Once guest memories begin landing, use them to decide whether the archive feels broader or just noisier.',
+        },
+        {
+          title: 'Preserve selectivity as the archive grows',
+          detail: 'Let future guest participation stay curated so the vault keeps emotional weight instead of becoming a dump.',
+        },
+      ),
       nextMoves: [
         'Share a single vault with the people whose memories you most want back.',
         'Keep the guest path selective instead of blasting every vault everywhere.',
@@ -367,6 +512,20 @@ export const buildVaultMemoryCuratorModel = (args: {
         'Enough material exists to tell a story',
         'Photo-backed entries can support a recap',
       ],
+      sequence: buildMemorySequence(
+        {
+          title: 'Capture the collection at recap scale',
+          detail: 'The vault has enough signal now that synthesis will teach you more than another round of raw intake.',
+        },
+        {
+          title: 'Check the first recap while the archive is still compact',
+          detail: 'Use the current cluster to shape one revisit-worthy summary before the story gets harder to hold in your head.',
+        },
+        {
+          title: 'Preserve rhythm over endless volume',
+          detail: 'Once the first recap exists, let future updates arrive in meaningful clusters instead of constant expansion.',
+        },
+      ),
       nextMoves: [
         'Generate the first AI recap while the collection is still compact.',
         'Use photo-first mode if the visual memories are stronger than the written ones.',
@@ -393,6 +552,20 @@ export const buildVaultMemoryCuratorModel = (args: {
       'Guest memories are present',
       'Recaps can keep pace with the archive',
     ],
+    sequence: buildMemorySequence(
+      {
+        title: 'Keep the healthiest memories as the anchor',
+        detail: 'Use the existing guest voices and recaps as the stable center of the archive instead of reopening everything equally.',
+      },
+      {
+        title: 'Check each new cluster for editorial value',
+        detail: 'When fresh notes or photos arrive, decide whether they deepen the story before you widen the archive again.',
+      },
+      {
+        title: 'Preserve taste and rhythm over more volume',
+        detail: 'Let the vault mature through careful recap refreshes and milestone choices rather than endless accumulation.',
+      },
+    ),
     nextMoves: [
       'Refresh the recap after each meaningful new cluster of entries.',
       'Keep only the vaults that match real anniversaries you want to celebrate.',

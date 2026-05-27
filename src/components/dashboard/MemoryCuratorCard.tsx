@@ -1,6 +1,8 @@
 import React from 'react';
 import { Sparkles } from 'lucide-react';
 import { Card } from '../ui/Card';
+import { Badge } from '../ui';
+import { getFlowStatusLabel } from '../../lib/flowLabels';
 import type { MemoryCuratorModel } from '../../lib/memoryCurator';
 
 interface Props {
@@ -38,6 +40,19 @@ export const MemoryCuratorCard: React.FC<Props> = ({ model }) => {
               <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-neutral-500">Decision rule</p>
               <p className="mt-1 text-sm font-medium text-neutral-800">{model.decisionRule}</p>
             </div>
+          </div>
+          <div className="mt-3 grid gap-2 sm:grid-cols-3">
+            {model.sequence.map((step) => (
+              <div key={step.id} className="rounded-2xl border border-white/70 bg-white/75 px-3 py-3">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-xs font-semibold text-neutral-900">{step.title}</p>
+                  <Badge variant={step.status === 'current' ? 'primary' : 'secondary'}>
+                    {getFlowStatusLabel(step.status)}
+                  </Badge>
+                </div>
+                <p className="mt-2 text-xs leading-5 text-neutral-700">{step.detail}</p>
+              </div>
+            ))}
           </div>
           <div className="mt-3 rounded-2xl border border-white/70 bg-white/75 px-3 py-3">
             <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-neutral-500">Curation note</p>
