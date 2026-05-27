@@ -31,6 +31,8 @@ export interface ControlTowerBriefing {
   eyebrow: string;
   title: string;
   detail: string;
+  focusTitle: string;
+  focusDetail: string;
   badges: string[];
   signals: ControlTowerSignal[];
   sequence: Array<{
@@ -138,6 +140,10 @@ export function buildControlTowerBriefing(input: ControlTowerIntelligenceInput):
       detail: input.activePhotoAlbumCount > 0
         ? 'Operations can quiet down here. The most useful next move is curating memories, anniversary notes, and the keepsake version of the site.'
         : 'The operational rush is behind you. This is the right moment to turn the site into a keepsake by activating memory surfaces and photo curation.',
+      focusTitle: 'Shift from operations into keepsake mode',
+      focusDetail: input.activePhotoAlbumCount > 0
+        ? 'The wedding no longer needs active command-center energy, so the best use of attention is curating what should last.'
+        : 'Before the archive can feel intentional, it still needs one real memory path that guests and the couple can recognize as the keepsake layer.',
       badges: [
         `${pluralize(input.activePhotoAlbumCount, 'active album')}`,
         `${pluralize(input.interactiveSuggestionCount, 'guest note')}`,
@@ -158,6 +164,8 @@ export function buildControlTowerBriefing(input: ControlTowerIntelligenceInput):
       eyebrow: 'Control tower briefing',
       title: 'Launch readiness is the main thing to steady this week',
       detail: `${pluralize(input.publishBlockerCount, 'publish blocker')} still stand between this site and a clean guest-facing launch. With the date getting closer, the best use of time is clearing those blockers before polishing extras.`,
+      focusTitle: 'Clear the blockers before you polish',
+      focusDetail: 'When the date is close and the site is still not fully live, quality polish comes second to getting the launch path truly ready.',
       badges: [
         `${pluralize(input.publishBlockerCount, 'blocker')}`,
         input.daysUntilWedding === 0 ? 'Wedding day' : `${input.daysUntilWedding} days left`,
@@ -178,6 +186,8 @@ export function buildControlTowerBriefing(input: ControlTowerIntelligenceInput):
       eyebrow: 'Control tower briefing',
       title: 'Guest access instructions are part of readiness now',
       detail: `The site is live, but it is ${accessLabel}. The most useful next move is making sure every reminder, print pack, and coordinator handoff carries the right access path so guests are not stranded.`,
+      focusTitle: 'Treat access instructions like part of the product',
+      focusDetail: 'A restricted live site only feels trustworthy if every handoff carries the right path with it, not just the pretty URL.',
       badges: [
         accessLabel,
         input.daysUntilWedding === 0 ? 'Wedding day' : `${input.daysUntilWedding} days left`,
@@ -207,6 +217,8 @@ export function buildControlTowerBriefing(input: ControlTowerIntelligenceInput):
       detail: input.daysUntilWedding === 0
         ? 'The site is already carrying guests well. The highest-value move now is staying close to coordinator mode, check-in, and the room itself.'
         : 'The guest-facing basics look healthy enough that the next meaningful polish lives in the live-day layer: run-of-show, seating confidence, and handoff readiness.',
+      focusTitle: 'Move your attention into live execution',
+      focusDetail: 'The public-facing basics are steady enough that the next wins now come from coordinator calm, room stability, and handoff sharpness.',
       badges: [
         input.daysUntilWedding === 0 ? 'Wedding day' : `${input.daysUntilWedding} days left`,
         `${responseRate}% replied`,
@@ -227,6 +239,8 @@ export function buildControlTowerBriefing(input: ControlTowerIntelligenceInput):
       eyebrow: 'Control tower briefing',
       title: 'Guest response follow-up is the pressure point right now',
       detail: `${pluralize(input.pendingGuests, 'guest')} still need an RSVP reply${input.recentRsvpCount === 0 ? ', and nothing new has landed recently' : ''}. The calmest next move is tightening outreach instead of waiting for the board to improve on its own.`,
+      focusTitle: 'Turn waiting into deliberate follow-up',
+      focusDetail: 'When replies are lagging, the job is not more dashboard watching; it is one clean outreach pass that moves the board forward.',
       badges: [
         `${pluralize(input.pendingGuests, 'pending RSVP')}`,
         `${responseRate}% replied`,
@@ -247,6 +261,8 @@ export function buildControlTowerBriefing(input: ControlTowerIntelligenceInput):
       eyebrow: 'Control tower briefing',
       title: 'Contact coverage is the next thing to tighten',
       detail: `${pluralize(contactGap, 'guest')} still do not have direct email or phone coverage. Cleaning that up now makes every later RSVP, reminder, and day-of action easier.`,
+      focusTitle: 'Fix reachability before you scale communication',
+      focusDetail: 'Every later reminder and day-of nudge gets easier once the guest list has real contact paths instead of hopeful placeholders.',
       badges: [
         `${pluralize(contactGap, 'missing contact')}`,
         `${pluralize(input.contactableGuestCount, 'contact-ready guest')}`,
@@ -267,6 +283,8 @@ export function buildControlTowerBriefing(input: ControlTowerIntelligenceInput):
       eyebrow: 'Control tower briefing',
       title: 'The site still needs a real guest-facing schedule before the live layer can carry it',
       detail: 'RSVP and contact progress help, but guests still need an itinerary spine to trust. Add the core weekend events before leaning on messaging or coordinator tools to cover the gap.',
+      focusTitle: 'Give guests a schedule spine first',
+      focusDetail: 'When the itinerary is still empty, messaging and ops can only paper over the gap. A real schedule anchor is the honest next move.',
       badges: [
         'No itinerary events yet',
         input.daysUntilWedding === 0 ? 'Wedding day' : `${input.daysUntilWedding} days left`,
@@ -287,6 +305,8 @@ export function buildControlTowerBriefing(input: ControlTowerIntelligenceInput):
       eyebrow: 'Control tower briefing',
       title: 'Guests can reach the site, but the gifting lane still feels empty',
       detail: 'Registry is one of the easiest trust-building surfaces for guests. Even a small live set is better than making visitors guess what is ready yet.',
+      focusTitle: 'Use the registry to make the site feel real',
+      focusDetail: 'Guests read an empty gifting lane as uncertainty, so even a small truthful registry does more good than waiting for perfection.',
       badges: [
         'Registry still empty',
         `${pluralize(input.activePhotoAlbumCount, 'active album')}`,
@@ -309,6 +329,8 @@ export function buildControlTowerBriefing(input: ControlTowerIntelligenceInput):
       detail: input.photoAlbumCount === 0
         ? 'No photo album is ready yet. Setting one up now gives guests an easy contribution path without making the site feel unfinished.'
         : 'Albums exist, but none are active yet. Turning one on is a quick way to make the guest experience feel more alive.',
+      focusTitle: 'Make memory contribution easy before the moment passes',
+      focusDetail: 'A guest-ready photo path is one of the fastest ways to make the site feel active instead of merely informational.',
       badges: [
         `${input.activePhotoAlbumCount}/${input.photoAlbumCount} active`,
         `${pluralize(input.interactiveSuggestionCount, 'guest prompt')}`,
@@ -329,6 +351,8 @@ export function buildControlTowerBriefing(input: ControlTowerIntelligenceInput):
       eyebrow: 'Control tower briefing',
       title: 'Guest input is arriving, so the next move is to shape it',
       detail: `${pluralize(input.interactiveSuggestionCount, 'guest suggestion')} already came in. This is a good moment to review what guests are telling you and make sure the site still feels cared for.`,
+      focusTitle: 'Use live guest input to refine the story',
+      focusDetail: 'When guests are already engaging, the best move is to shape the experience with that signal instead of leaving their feedback parked.',
       badges: [
         `${pluralize(input.interactiveSuggestionCount, 'suggestion')}`,
         `${pluralize(input.recentSiteActivityCount, 'recent site change')}`,
@@ -348,6 +372,8 @@ export function buildControlTowerBriefing(input: ControlTowerIntelligenceInput):
     eyebrow: 'Control tower briefing',
     title: 'The board looks calm enough to guide, not chase',
     detail: 'Nothing is obviously drifting right now. Use this moment to keep the guest experience polished and make small quality moves before they become deadline work.',
+    focusTitle: 'Use the calm to improve trust, not reopen chaos',
+    focusDetail: 'A steady board is the right moment for one clean quality pass, not a random re-opening of solved decisions.',
     badges: [
       `${responseRate}% replied`,
       input.recentSiteActivityCount > 0 ? `${pluralize(input.recentSiteActivityCount, 'recent site update')}` : 'No recent site churn',

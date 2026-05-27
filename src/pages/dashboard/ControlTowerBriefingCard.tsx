@@ -27,6 +27,17 @@ export const ControlTowerBriefingCard: React.FC<ControlTowerBriefingCardProps> =
       </div>
     </CardHeader>
     <CardContent className="space-y-4">
+      <div className="grid gap-3 md:grid-cols-2">
+        <div className="rounded-xl border border-border-subtle bg-surface-secondary/20 px-4 py-4">
+          <p className="text-xs uppercase tracking-wide text-text-tertiary">Main focus</p>
+          <p className="mt-2 text-sm font-semibold text-text-primary">{briefing.focusTitle}</p>
+          <p className="mt-2 text-sm text-text-secondary">{briefing.focusDetail}</p>
+        </div>
+        <div className="rounded-xl border border-border-subtle bg-surface-secondary/20 px-4 py-4">
+          <p className="text-xs uppercase tracking-wide text-text-tertiary">Why this now</p>
+          <p className="mt-2 text-sm text-text-secondary">{briefing.detail}</p>
+        </div>
+      </div>
       <div className="grid gap-3 md:grid-cols-3">
         {briefing.signals.map((signal) => (
           <div key={signal.label} className="rounded-xl border border-border-subtle bg-surface-secondary/20 px-4 py-4">

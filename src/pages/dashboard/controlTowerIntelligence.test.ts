@@ -44,6 +44,8 @@ describe('buildControlTowerBriefing', () => {
     }));
 
     expect(briefing.title).toContain('Launch readiness');
+    expect(briefing.focusTitle).toContain('Clear the blockers');
+    expect(briefing.focusDetail).toMatch(/date is close|launch path/i);
     expect(briefing.primaryAction).toMatchObject({ target: 'builder-launch' });
     expect(briefing.badges).toContain('3 blockers');
     expect(briefing.sequence[0]).toMatchObject({ status: 'current' });
@@ -58,6 +60,8 @@ describe('buildControlTowerBriefing', () => {
     }));
 
     expect(briefing.title).toContain('Guest response follow-up');
+    expect(briefing.focusTitle).toContain('Turn waiting into deliberate follow-up');
+    expect(briefing.focusDetail).toMatch(/dashboard watching|outreach pass/i);
     expect(briefing.primaryAction).toMatchObject({ target: 'guests' });
     expect(briefing.secondaryAction).toMatchObject({ target: 'messages' });
     expect(briefing.sequence.map((step) => step.status)).toEqual(['current', 'next', 'then']);

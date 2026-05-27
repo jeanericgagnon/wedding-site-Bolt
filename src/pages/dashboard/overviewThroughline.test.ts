@@ -30,6 +30,8 @@ describe('buildOverviewThroughline', () => {
         eyebrow: 'Control tower briefing',
         title: 'Guest response follow-up is the pressure point right now',
         detail: 'The calmest next move is tightening outreach instead of waiting for the board to improve on its own.',
+        focusTitle: 'Turn waiting into deliberate follow-up',
+        focusDetail: 'The job is one clean outreach pass, not more passive dashboard watching.',
         badges: ['12 pending RSVP'],
         signals: [],
         sequence: [
