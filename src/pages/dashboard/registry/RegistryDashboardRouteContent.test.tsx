@@ -127,7 +127,16 @@ function makeBaseProps(overrides: Partial<RegistryDashboardRouteContentProps> = 
     registryActionsOpen: false,
     registryActionsRef: { current: null },
     registryInsights: [],
-    registryLaunchReadiness: { headline: 'Ready', summary: 'Ready', status: 'ready', reviewCount: 0, items: [] },
+    registryLaunchReadiness: {
+      headline: 'Ready',
+      summary: 'Ready',
+      status: 'ready',
+      focusTitle: 'Keep the registry easy to trust at a glance',
+      focusDetail: 'The share basics are in place, so the goal now is preserving clarity instead of reopening setup churn.',
+      decisionRule: 'If the links and share paths already hold, protect that trust and only broaden the registry when the additions stay equally clean.',
+      reviewCount: 0,
+      items: [],
+    },
     revalidationPreviewItems: [],
     registryThankYouPlan: {
       headline: 'Thank-you follow-up list',
@@ -962,6 +971,8 @@ describe('RegistryDashboardRouteContent', () => {
 
     expect(derived.registryLaunchReadiness.headline).toBe('Registry share setup looks ready to share.');
     expect(derived.registryLaunchReadiness.summary).toBe('Gift links, fund links, and purchase-state basics look ready to share right now.');
+    expect(derived.registryLaunchReadiness.focusTitle).toBe('Keep the registry easy to trust at a glance');
+    expect(derived.registryLaunchReadiness.decisionRule).toMatch(/protect that trust/i);
     expect(derived.registryLaunchReadiness.items.find((item) => item.id === 'purchase-state')?.detail).toBe('No gifts are marked purchased yet.');
     expect(derived.registryLaunchReadiness.items.find((item) => item.id === 'hide-purchased')?.detail).toBe('No gifts hide after purchase right now.');
   });
@@ -983,6 +994,8 @@ describe('RegistryDashboardRouteContent', () => {
 
     expect(derived.registryLaunchReadiness.headline).toBe('Registry share setup is still empty.');
     expect(derived.registryLaunchReadiness.summary).toBe('Add product gifts or funds when you want registry links ready to share.');
+    expect(derived.registryLaunchReadiness.focusTitle).toMatch(/trustworthy share path/i);
+    expect(derived.registryLaunchReadiness.decisionRule).toMatch(/small honest registry/i);
     expect(derived.registryLaunchReadiness.items.find((item) => item.id === 'external-links')?.detail).toBe('No product gifts are listed yet, so there are no gift links to share right now.');
     expect(derived.registryLaunchReadiness.items.find((item) => item.id === 'cash-funds')?.detail).toBe('No cash funds are listed right now, which is fine for a gift-only registry.');
   });
@@ -2668,6 +2681,9 @@ describe('RegistryDashboardRouteContent', () => {
           headline: 'Registry share setup looks ready to share.',
           summary: 'Gift links, fund links, and purchase-state basics look ready to share right now.',
           status: 'ready',
+          focusTitle: 'Keep the registry easy to trust at a glance',
+          focusDetail: 'The share basics are in place, so the goal now is preserving clarity instead of reopening setup churn.',
+          decisionRule: 'If the links and share paths already hold, protect that trust and only broaden the registry when the additions stay equally clean.',
           reviewCount: 0,
           items: [
             { id: 'external-links', label: 'Gift links ready to share', detail: '1 product gift is ready to share (100% coverage).', tone: 'ready' },
@@ -2699,6 +2715,9 @@ describe('RegistryDashboardRouteContent', () => {
     expect(screen.getByText('Registry share readiness')).toBeInTheDocument();
     expect(screen.getByText('Registry share setup looks ready to share.')).toBeInTheDocument();
     expect(screen.getByText('No registry share blockers right now.')).toBeInTheDocument();
+    expect(screen.getByText('Main focus')).toBeInTheDocument();
+    expect(screen.getByText('Keep the registry easy to trust at a glance')).toBeInTheDocument();
+    expect(screen.getByText('Decision rule')).toBeInTheDocument();
     expect(screen.getByText('0 to check')).toBeInTheDocument();
     expect(screen.getAllByText('Ready to share').length).toBeGreaterThan(0);
   });
@@ -2753,6 +2772,9 @@ describe('RegistryDashboardRouteContent', () => {
           headline: 'A few registry share details still need a look.',
           summary: '2 registry share details still need a quick pass before sharing.',
           status: 'needs-review',
+          focusTitle: 'Clear the share blockers before the registry starts teaching guests the wrong behavior',
+          focusDetail: '2 share details still need attention before this feels reliably guest-ready.',
+          decisionRule: 'When share blockers exist, clear those before you polish copy or expand the list.',
           reviewCount: 2,
           items: [
             { id: 'external-links', label: 'Gift links ready to share', detail: '0 product gifts are ready to share (0% coverage). 1 product gift still need a share link.', tone: 'review' },
@@ -2783,6 +2805,8 @@ describe('RegistryDashboardRouteContent', () => {
 
     expect(screen.getByText('A few registry share details still need a look.')).toBeInTheDocument();
     expect(screen.getByText('2 registry share details still need a quick pass before sharing.')).toBeInTheDocument();
+    expect(screen.getByText('Clear the share blockers before the registry starts teaching guests the wrong behavior')).toBeInTheDocument();
+    expect(screen.getByText('When share blockers exist, clear those before you polish copy or expand the list.')).toBeInTheDocument();
     expect(screen.getByText('2 to check')).toBeInTheDocument();
     expect(screen.getAllByText('Needs a look').length).toBeGreaterThan(0);
     expect(screen.getByText('Fund links ready to share')).toBeInTheDocument();

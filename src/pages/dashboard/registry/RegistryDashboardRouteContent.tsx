@@ -84,6 +84,9 @@ type RegistryLaunchReadiness = {
   headline: string;
   summary: string;
   status: string;
+  focusTitle?: string;
+  focusDetail?: string;
+  decisionRule?: string;
   reviewCount: number;
   items: Array<{ id: string; label: string; detail: string; tone: string }>;
 };
@@ -1131,6 +1134,21 @@ export function RegistryDashboardRouteContent(props: {
               </div>
               <p className="mt-3 text-sm text-text-secondary">{props.registryLaunchReadiness.summary}</p>
               <p className="mt-2 text-xs text-text-tertiary">{registryShareReadinessSummary}</p>
+              {props.registryLaunchReadiness.focusTitle || props.registryLaunchReadiness.focusDetail || props.registryLaunchReadiness.decisionRule ? (
+                <div className="mt-4 grid gap-3 md:grid-cols-2">
+                  <div className="rounded-xl border border-border-subtle bg-surface-subtle/20 p-4">
+                    <p className="text-xs text-text-tertiary">Main focus</p>
+                    <p className="mt-1 text-sm font-semibold text-text-primary">{props.registryLaunchReadiness.focusTitle}</p>
+                    {props.registryLaunchReadiness.focusDetail ? (
+                      <p className="mt-2 text-xs leading-5 text-text-secondary">{props.registryLaunchReadiness.focusDetail}</p>
+                    ) : null}
+                  </div>
+                  <div className="rounded-xl border border-border-subtle bg-surface-subtle/20 p-4">
+                    <p className="text-xs text-text-tertiary">Decision rule</p>
+                    <p className="mt-1 text-sm font-semibold text-text-primary">{props.registryLaunchReadiness.decisionRule}</p>
+                  </div>
+                </div>
+              ) : null}
               <div className="mt-4 space-y-2.5">
                 {props.registryLaunchReadiness.items.length === 0 ? (
                   <p className="text-sm text-text-secondary">No share-readiness details are listed yet.</p>

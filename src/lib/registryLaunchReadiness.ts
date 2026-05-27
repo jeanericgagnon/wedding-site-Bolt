@@ -16,6 +16,9 @@ export interface RegistryLaunchReadiness {
   status: RegistryLaunchReadinessStatus;
   headline: string;
   summary: string;
+  focusTitle: string;
+  focusDetail: string;
+  decisionRule: string;
   reviewCount: number;
   readyCount: number;
   items: RegistryLaunchReadinessItem[];
@@ -175,6 +178,21 @@ export function buildRegistryLaunchReadiness(items: RegistryItem[], ledger: Regi
   const reviewCount = itemsOut.filter((item) => item.tone === 'review').reduce((sum, item) => sum + item.count, 0);
   const readyCount = itemsOut.filter((item) => item.tone === 'ready').length;
   const status: RegistryLaunchReadinessStatus = total === 0 ? 'empty' : reviewCount > 0 ? 'needs-review' : 'ready';
+  const focusTitle = status === 'empty'
+    ? 'Give the registry one trustworthy share path before you ask guests to use it'
+    : status === 'needs-review'
+      ? 'Clear the share blockers before the registry starts teaching guests the wrong behavior'
+      : 'Keep the registry easy to trust at a glance';
+  const focusDetail = status === 'empty'
+    ? 'You do not need a full registry yet, but you do need at least one honest gift or fund path before the registry becomes a guest-facing promise.'
+    : status === 'needs-review'
+      ? `${plural(reviewCount, 'share detail')} still need attention before this feels reliably guest-ready.`
+      : 'The share basics are in place, so the goal now is preserving clarity instead of reopening setup churn.';
+  const decisionRule = status === 'empty'
+    ? 'Start with one reliable gift or fund path first; a small honest registry beats a bigger one that still sends guests into dead ends.'
+    : status === 'needs-review'
+      ? 'When share blockers exist, clear those before you polish copy or expand the list.'
+      : 'If the links and share paths already hold, protect that trust and only broaden the registry when the additions stay equally clean.';
 
   return {
     status,
@@ -188,6 +206,9 @@ export function buildRegistryLaunchReadiness(items: RegistryItem[], ledger: Regi
       : reviewCount > 0
         ? `${plural(reviewCount, 'registry share detail')} still need a quick pass before sharing.`
         : 'Gift links, fund links, and purchase-state basics look ready to share right now.',
+    focusTitle,
+    focusDetail,
+    decisionRule,
     reviewCount,
     readyCount,
     items: itemsOut,
