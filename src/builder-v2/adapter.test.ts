@@ -184,6 +184,15 @@ describe('toBuilderV2Document', () => {
       settings: {
         title: 'Questions?',
         introText: 'Reach out if you need anything before the weekend.',
+        emailSubject: 'Wedding Question',
+        contacts: [
+          {
+            name: 'Maya',
+            role: 'Planner',
+            email: 'maya@example.com',
+            phone: '+1 (415) 555-0199',
+          },
+        ],
         closingNote: 'We are so glad you will be there.',
       },
     });
@@ -225,6 +234,16 @@ describe('toBuilderV2Document', () => {
     ]);
     expect(contactSection.blocks).toMatchObject([
       { type: 'text', data: { text: 'Reach out if you need anything before the weekend.' } },
+      {
+        type: 'travelTip',
+        data: {
+          title: 'Maya',
+          role: 'Planner',
+          email: 'maya@example.com',
+          phone: '+1 (415) 555-0199',
+        },
+      },
+      { type: 'qna', data: { question: 'Email subject', answer: 'Wedding Question' } },
       { type: 'story', data: { text: 'We are so glad you will be there.' } },
     ]);
   });
@@ -1098,6 +1117,61 @@ describe('legacy adapters', () => {
       buttonLabel: 'RSVP now',
       rsvpUrl: '#rsvp',
       footerNote: 'Weekend details will keep getting sharper as we get closer.',
+    });
+  });
+
+  it('maps builder v2 contact sections into legacy runtime settings with structured contacts', () => {
+    const project = builderV2DocumentToBuilderProject({
+      version: 'v2',
+      updatedAtISO: '2026-05-27T21:00:00.000Z',
+      pages: [
+        {
+          id: 'home',
+          title: 'Home',
+          slug: 'home',
+          isHome: true,
+          hidden: false,
+          sections: [
+            {
+              id: 'contact-1',
+              type: 'contact',
+              variant: 'default',
+              enabled: true,
+              title: 'Questions?',
+              subtitle: 'Need help?',
+              blocks: [
+                { id: 'contact-intro', type: 'text', data: { text: 'Reach out if you need anything before the weekend.' } },
+                {
+                  id: 'contact-person-1',
+                  type: 'travelTip',
+                  data: {
+                    title: 'Maya',
+                    role: 'Planner',
+                    email: 'maya@example.com',
+                    phone: '+1 (415) 555-0199',
+                  },
+                },
+                { id: 'contact-email-subject', type: 'qna', data: { question: 'Email subject', answer: 'Wedding Question' } },
+                { id: 'contact-close', type: 'story', data: { text: 'We are so glad you will be there.' } },
+              ],
+            },
+          ],
+        },
+      ],
+    });
+
+    expect(project.pages[0].sections[0].settings).toMatchObject({
+      introText: 'Reach out if you need anything before the weekend.',
+      emailSubject: 'Wedding Question',
+      contacts: [
+        {
+          name: 'Maya',
+          role: 'Planner',
+          email: 'maya@example.com',
+          phone: '+1 (415) 555-0199',
+        },
+      ],
+      closingNote: 'We are so glad you will be there.',
     });
   });
 

@@ -460,9 +460,34 @@ const makeDefaultBlocksForType = (
     }
     case 'contact': {
       const introText = getSettingString(settings, 'introText');
+      const emailSubject = getSettingString(settings, 'emailSubject');
       const closingNote = getSettingString(settings, 'closingNote');
+      const contacts = getSettingRecordList<{
+        name?: string;
+        role?: string;
+        email?: string;
+        phone?: string;
+      }>(settings, 'contacts');
       return [
         ...(introText ? [{ id: 'b-text', type: 'text', data: { text: introText } } satisfies BuilderV2Block] : []),
+        ...contacts
+          .filter((contact) => (
+            (typeof contact.name === 'string' && contact.name.trim())
+            || (typeof contact.role === 'string' && contact.role.trim())
+            || (typeof contact.email === 'string' && contact.email.trim())
+            || (typeof contact.phone === 'string' && contact.phone.trim())
+          ))
+          .map((contact, index) => ({
+            id: `b-contact-${index + 1}`,
+            type: 'travelTip' as const,
+            data: {
+              title: typeof contact.name === 'string' && contact.name.trim() ? contact.name.trim() : undefined,
+              role: typeof contact.role === 'string' && contact.role.trim() ? contact.role.trim() : undefined,
+              email: typeof contact.email === 'string' && contact.email.trim() ? contact.email.trim() : undefined,
+              phone: typeof contact.phone === 'string' && contact.phone.trim() ? contact.phone.trim() : undefined,
+            },
+          })),
+        ...(emailSubject ? [{ id: 'b-contact-email-subject', type: 'qna', data: { question: 'Email subject', answer: emailSubject } } satisfies BuilderV2Block] : []),
         ...(closingNote ? [{ id: 'b-story', type: 'story', data: { text: closingNote } } satisfies BuilderV2Block] : []),
       ];
     }
@@ -646,6 +671,7 @@ const getSectionNoteCards = (
   getMeaningfulBlocks(section.blocks, types).map((block, index) => ({
     id: `${section.id}-card-${index}`,
     title: typeof block.data.title === 'string' ? block.data.title.trim() : '',
+    role: typeof block.data.role === 'string' ? block.data.role.trim() : '',
     note: typeof block.data.note === 'string' && block.data.note.trim()
       ? block.data.note.trim()
       : typeof block.data.text === 'string' && block.data.text.trim()
@@ -655,11 +681,12 @@ const getSectionNoteCards = (
     location: typeof block.data.location === 'string' ? block.data.location.trim() : '',
     time: typeof block.data.time === 'string' ? block.data.time.trim() : '',
     phone: typeof block.data.phone === 'string' ? block.data.phone.trim() : '',
+    email: typeof block.data.email === 'string' ? block.data.email.trim() : '',
     bookingCode: typeof block.data.bookingCode === 'string' ? block.data.bookingCode.trim() : '',
     blockDeadline: typeof block.data.blockDeadline === 'string' ? block.data.blockDeadline.trim() : '',
     priceRange: typeof block.data.priceRange === 'string' ? block.data.priceRange.trim() : '',
     distance: typeof block.data.distance === 'string' ? block.data.distance.trim() : '',
-  })).filter((item) => item.title || item.note || item.url || item.location || item.time || item.phone || item.bookingCode || item.blockDeadline || item.priceRange || item.distance)
+  })).filter((item) => item.title || item.role || item.note || item.url || item.location || item.time || item.phone || item.email || item.bookingCode || item.blockDeadline || item.priceRange || item.distance)
 );
 
 const getTravelHintBucket = (
@@ -920,10 +947,28 @@ const toLegacyBuilderSettings = (section: BuilderV2Section): Record<string, unkn
       };
     }
     case 'contact':
+    {
+      const narrativeParts = getSectionNarrativeParts(section);
+      const introText = getFirstMeaningfulString(section, [
+        narrativeParts[0],
+        section.subtitle,
+        common.introText as string | undefined,
+      ]);
+      const closingNote = narrativeParts.find((part) => part !== introText) || '';
+      const contactCards = getSectionNoteCards(section, ['travelTip']);
       return {
         ...common,
-        introText: getSectionNarrativeText(section) || common.introText,
+        introText,
+        emailSubject: getNamedAnswerValue(section, 'Email subject') || undefined,
+        contacts: contactCards.map((item) => ({
+          name: item.title || '',
+          role: item.role || item.note || '',
+          email: item.email || undefined,
+          phone: item.phone || undefined,
+        })),
+        closingNote,
       };
+    }
     case 'directions': {
       const transport = getSectionNoteCards(section, ['travelTip'])
         .filter((item) => item.title.toLowerCase() !== 'map');

@@ -218,6 +218,8 @@ type AddedBlockContent = {
   note?: string;
   url?: string;
   phone?: string;
+  email?: string;
+  role?: string;
   bookingCode?: string;
   blockDeadline?: string;
   priceRange?: string;

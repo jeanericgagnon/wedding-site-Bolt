@@ -30,6 +30,8 @@ export type BuilderV2BlockData = {
   note?: string;
   url?: string;
   phone?: string;
+  email?: string;
+  role?: string;
   bookingCode?: string;
   blockDeadline?: string;
   priceRange?: string;
