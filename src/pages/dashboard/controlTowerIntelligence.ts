@@ -278,7 +278,7 @@ export function buildControlTowerBriefing(input: ControlTowerIntelligenceInput):
         { label: 'Return to live-day polish', status: 'then' },
       ],
       primaryAction: { label: 'Open itinerary', target: 'itinerary' },
-      secondaryAction: { label: 'Open builder', target: 'builder-polish' },
+      secondaryAction: { label: 'Open site polish', target: 'builder-polish' },
     };
   }
 
@@ -298,7 +298,7 @@ export function buildControlTowerBriefing(input: ControlTowerIntelligenceInput):
         { label: 'Return to broader polish', status: 'then' },
       ],
       primaryAction: { label: 'Open registry', target: 'registry' },
-      secondaryAction: { label: 'Open builder', target: 'builder-polish' },
+      secondaryAction: { label: 'Open site polish', target: 'builder-polish' },
     };
   }
 
@@ -320,7 +320,7 @@ export function buildControlTowerBriefing(input: ControlTowerIntelligenceInput):
         { label: 'Return to site polish', status: 'then' },
       ],
       primaryAction: { label: 'Review photos', target: 'photos' },
-      secondaryAction: { label: 'Open builder', target: 'builder-polish' },
+      secondaryAction: { label: 'Open site polish', target: 'builder-polish' },
     };
   }
 
@@ -358,7 +358,7 @@ export function buildControlTowerBriefing(input: ControlTowerIntelligenceInput):
       { label: 'Review guests if needed', status: 'next' },
       { label: 'Leave the board calm', status: 'then' },
     ],
-    primaryAction: { label: 'Open builder', target: 'builder-polish' },
+    primaryAction: { label: 'Open site polish', target: 'builder-polish' },
     secondaryAction: { label: 'Review guests', target: 'guests' },
   };
 }

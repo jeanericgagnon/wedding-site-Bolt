@@ -250,7 +250,7 @@ export function buildAnalyticsNextMove(input: AnalyticsBaselineInput): Analytics
     return {
       title: 'The measured baseline is healthy enough for a polish pass',
       detail: 'This is a good moment to improve the live guest-facing story instead of chasing missing basics.',
-      ctaLabel: 'Open builder',
+      ctaLabel: 'Open site polish',
       target: 'builder-polish',
     };
   }
