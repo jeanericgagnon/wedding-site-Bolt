@@ -649,6 +649,14 @@ export const DashboardOverview: React.FC = () => {
   });
 
   function handleControlTowerAction(action: ControlTowerAction) {
+    if (action.target === 'suggestions') {
+      const suggestionsCard = document.getElementById('interactive-suggestions');
+      if (suggestionsCard) {
+        suggestionsCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        return;
+      }
+    }
+
     const routeByTarget: Record<ControlTowerAction['target'], string> = {
       builder: '/dashboard/builder',
       coordinator: '/dashboard/coordinator',
@@ -659,6 +667,7 @@ export const DashboardOverview: React.FC = () => {
       planning: '/dashboard/planning',
       registry: '/dashboard/registry',
       settings: '/dashboard/settings?tab=site',
+      suggestions: '/dashboard/overview',
       seating: '/dashboard/seating',
       vault: '/dashboard/vault',
     };
@@ -1560,7 +1569,7 @@ export const DashboardOverview: React.FC = () => {
                 </CardContent>
               </Card>
 
-              <Card variant="bordered" padding="lg" className="shadow-sm">
+              <Card id="interactive-suggestions" variant="bordered" padding="lg" className="shadow-sm">
                 <CardHeader>
                   <CardTitle>Interactive suggestions</CardTitle>
                   <CardDescription>Latest guest prompt responses (moderation)</CardDescription>

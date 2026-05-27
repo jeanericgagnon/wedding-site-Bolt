@@ -124,6 +124,24 @@ describe('buildControlTowerBriefing', () => {
     expect(briefing.secondaryAction).toMatchObject({ target: 'messages' });
   });
 
+  it('points guest prompt review back to the overview suggestions lane', () => {
+    const briefing = buildControlTowerBriefing(makeInput({
+      confirmedGuests: 74,
+      declinedGuests: 12,
+      pendingGuests: 14,
+      contactableGuestCount: 100,
+      registryItemCount: 20,
+      activePhotoAlbumCount: 2,
+      photoAlbumCount: 2,
+      interactiveSuggestionCount: 4,
+      recentSiteActivityCount: 2,
+    }));
+
+    expect(briefing.title).toContain('Guest input is arriving');
+    expect(briefing.primaryAction).toMatchObject({ target: 'suggestions' });
+    expect(briefing.secondaryAction).toMatchObject({ target: 'photos' });
+  });
+
   it('falls back to a calm guidance mode when the board is steady', () => {
     const briefing = buildControlTowerBriefing(makeInput({
       confirmedGuests: 74,

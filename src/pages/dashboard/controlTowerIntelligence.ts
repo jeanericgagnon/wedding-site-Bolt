@@ -10,6 +10,7 @@ export type ControlTowerActionTarget =
   | 'planning'
   | 'registry'
   | 'settings'
+  | 'suggestions'
   | 'seating'
   | 'vault';
 
@@ -337,7 +338,7 @@ export function buildControlTowerBriefing(input: ControlTowerIntelligenceInput):
         { label: 'Adjust the site story', status: 'next' },
         { label: 'Re-check guest experience', status: 'then' },
       ],
-      primaryAction: { label: 'Review guest prompts', target: 'builder' },
+      primaryAction: { label: 'Review guest prompts', target: 'suggestions' },
       secondaryAction: { label: 'Open photos', target: 'photos' },
     };
   }
