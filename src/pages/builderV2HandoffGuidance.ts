@@ -1,14 +1,8 @@
+import { getBuilderV2FlattenedSections, type BuilderV2ReviewPageSnapshot } from './builderV2DocumentReviewState';
+
 type GuidanceStep = {
   label: 'Current' | 'Next' | 'Then';
   detail: string;
-};
-
-type SectionSnapshot = {
-  id: string;
-  title: string;
-  enabled: boolean;
-  blockCount: number;
-  warningCount: number;
 };
 
 export type BuilderV2HandoffAction =
@@ -38,21 +32,24 @@ export type BuilderV2HandoffGuidance = {
 };
 
 type Params = {
-  sections: SectionSnapshot[];
+  pages: BuilderV2ReviewPageSnapshot[];
   previewDevice: 'desktop' | 'mobile';
 };
 
 export const buildBuilderV2HandoffGuidance = ({
-  sections,
+  pages,
   previewDevice,
 }: Params): BuilderV2HandoffGuidance => {
+  const sections = getBuilderV2FlattenedSections(pages);
   const visibleSections = sections.filter((section) => section.enabled);
   const hiddenSections = sections.filter((section) => !section.enabled);
+  const hiddenPages = pages.filter((page) => page.hidden);
   const emptyVisibleSections = visibleSections.filter((section) => section.blockCount === 0);
   const warningSections = visibleSections.filter((section) => section.warningCount > 0);
   const denseSections = visibleSections.filter((section) => section.blockCount >= 8);
   const totalBlocks = sections.reduce((sum, section) => sum + section.blockCount, 0);
   const keyStats = [
+    `${pages.length} pages`,
     `${sections.length} sections`,
     `${visibleSections.length} visible`,
     `${totalBlocks} blocks`,
@@ -62,23 +59,23 @@ export const buildBuilderV2HandoffGuidance = ({
     return {
       tone: 'caution',
       title: 'Nothing visible is ready for handoff yet',
-      detail: 'The document still has structure, but guests would see an empty page because every section is hidden.',
+      detail: 'The document still has structure, but guests would see an empty site map because every page or section is hidden.',
       mainFocus: 'Bring one trustworthy lane back into preview before exporting anything.',
-      bestNextMove: `Review ${hiddenSections[0]?.title ?? 'the first hidden section'} and decide whether it should return to the live page flow now.`,
+      bestNextMove: `Review ${hiddenSections[0]?.title ?? hiddenPages[0]?.title ?? 'the first hidden lane'} and decide whether it should return to the live page flow now.`,
       decisionRule: 'A handoff is only useful once the preview has at least one visible lane that reflects the real document story.',
       watchout: 'A calm empty preview can look “clean” while actually hiding a broken handoff state.',
       steps: [
-        { label: 'Current', detail: 'All sections are hidden from the live reading flow.' },
-        { label: 'Next', detail: 'Restore one high-value section to preview.' },
-        { label: 'Then', detail: 'Export only after the visible page is legible again.' },
+        { label: 'Current', detail: 'All pages or sections are hidden from the live reading flow.' },
+        { label: 'Next', detail: 'Restore one high-value lane to preview.' },
+        { label: 'Then', detail: 'Export only after the visible page flow is legible again.' },
       ],
-      keyStats: [...keyStats, `${hiddenSections.length} hidden`],
+      keyStats: [...keyStats, `${hiddenSections.length} hidden lanes`],
       exportHeadline: 'Hold the export for now',
       exportDetail: 'An export from this state is more likely to preserve confusion than capture a usable document.',
       copyHeadline: 'Copy is useful after recovery',
       copyDetail: 'Once one good lane is visible again, copied JSON becomes a safer handoff artifact.',
       primaryAction: 'review-hidden',
-      primaryActionLabel: 'Review hidden section',
+      primaryActionLabel: hiddenPages.length > 0 ? 'Review hidden page' : 'Review hidden section',
       focusSectionId: hiddenSections[0]?.id ?? null,
     };
   }
@@ -162,7 +159,7 @@ export const buildBuilderV2HandoffGuidance = ({
   return {
     tone: 'ready',
     title: 'This Builder V2 document is in a healthy handoff state',
-    detail: 'Visible structure is present, the lanes have content, and there are no active warning signals competing with export.',
+    detail: 'Visible structure is present across the active pages, the lanes have content, and there are no active warning signals competing with export.',
     mainFocus: 'Use export to capture the draft you trust, not to postpone one last meaningful fix.',
     bestNextMove: 'Download or copy the layout now, then keep editing only if you have one clear structural improvement in mind.',
     decisionRule: 'Once the document is coherent, export the steady version before you start another experiment.',
@@ -172,7 +169,9 @@ export const buildBuilderV2HandoffGuidance = ({
       { label: 'Next', detail: 'Capture the current document as JSON for handoff or backup.' },
       { label: 'Then', detail: 'Only continue editing if the next change has a specific guest-facing payoff.' },
     ],
-    keyStats: hiddenSections.length > 0 ? [...keyStats, `${hiddenSections.length} hidden`] : keyStats,
+    keyStats: hiddenPages.length > 0 || hiddenSections.length > 0
+      ? [...keyStats, `${hiddenPages.length} hidden pages`, `${hiddenSections.length} hidden lanes`]
+      : keyStats,
     exportHeadline: 'Export is ready',
     exportDetail: 'This is a good moment to download a Builder V2 JSON snapshot of the document you trust.',
     copyHeadline: 'Copy is ready',

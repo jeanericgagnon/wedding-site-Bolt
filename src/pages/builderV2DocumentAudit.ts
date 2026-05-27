@@ -1,4 +1,8 @@
+import { getBuilderV2FlattenedSections, type BuilderV2ReviewPageSnapshot } from './builderV2DocumentReviewState';
+
 export type BuilderV2DocumentAuditIssue = {
+  pageId: string;
+  pageTitle: string;
   sectionId: string;
   sectionTitle: string;
   severity: 'critical' | 'warning' | 'watch';
@@ -7,16 +11,8 @@ export type BuilderV2DocumentAuditIssue = {
   actionLabel: string;
 };
 
-type SectionSnapshot = {
-  id: string;
-  title: string;
-  enabled: boolean;
-  blockCount: number;
-  warningCount: number;
-};
-
 type Params = {
-  sections: SectionSnapshot[];
+  pages: BuilderV2ReviewPageSnapshot[];
   previewDevice: 'desktop' | 'mobile';
 };
 
@@ -30,58 +26,86 @@ export type BuilderV2DocumentAudit = {
 };
 
 export const buildBuilderV2DocumentAudit = ({
-  sections,
+  pages,
   previewDevice,
 }: Params): BuilderV2DocumentAudit => {
   const issues: BuilderV2DocumentAuditIssue[] = [];
-  const visibleSections = sections.filter((section) => section.enabled);
+  const flattenedSections = getBuilderV2FlattenedSections(pages);
+  const visibleSections = flattenedSections.filter((section) => section.enabled);
 
-  for (const section of sections) {
-    if (!section.enabled) {
+  for (const page of pages) {
+    if (page.hidden) {
       issues.push({
-        sectionId: section.id,
-        sectionTitle: section.title,
+        pageId: page.id,
+        pageTitle: page.title,
+        sectionId: page.sections[0]?.id ?? page.id,
+        sectionTitle: page.sections[0]?.title ?? page.title,
         severity: 'watch',
-        title: `${section.title} is hidden from the live page`,
-        detail: 'Make sure this lane is intentionally parked and not just forgotten outside the preview.',
-        actionLabel: 'Review hidden lane',
+        title: `${page.title} is hidden from the live site map`,
+        detail: 'Make sure this page is intentionally parked and not just forgotten outside the current guest flow.',
+        actionLabel: 'Review hidden page',
       });
-      continue;
     }
 
-    if (section.blockCount === 0) {
-      issues.push({
-        sectionId: section.id,
-        sectionTitle: section.title,
-        severity: 'critical',
-        title: `${section.title} has no content blocks`,
-        detail: 'This section will hand off as an empty shell until it has a first content spine.',
-        actionLabel: 'Add first blocks',
-      });
-      continue;
-    }
+    for (const section of page.sections) {
+      const isVisible = !page.hidden && section.enabled;
 
-    if (section.warningCount > 0) {
-      issues.push({
-        sectionId: section.id,
-        sectionTitle: section.title,
-        severity: 'warning',
-        title: `${section.title} still carries ${section.warningCount} warning${section.warningCount === 1 ? '' : 's'}`,
-        detail: 'Resolve the incomplete block data so the exported document stays truthful outside the lab.',
-        actionLabel: 'Resolve warnings',
-      });
-      continue;
-    }
+      if (!isVisible) {
+        if (!page.hidden) {
+          issues.push({
+            pageId: page.id,
+            pageTitle: page.title,
+            sectionId: section.id,
+            sectionTitle: section.title,
+            severity: 'watch',
+            title: `${section.title} is hidden from ${page.title}`,
+            detail: 'Make sure this lane is intentionally parked and not just forgotten outside the preview.',
+            actionLabel: 'Review hidden lane',
+          });
+        }
+        continue;
+      }
 
-    if (previewDevice !== 'mobile' && section.blockCount >= 8) {
-      issues.push({
-        sectionId: section.id,
-        sectionTitle: section.title,
-        severity: 'watch',
-        title: `${section.title} is dense enough to deserve a mobile check`,
-        detail: 'Desktop preview may still be flattering this lane if the section is long or tightly packed.',
-        actionLabel: 'Review on mobile',
-      });
+      if (section.blockCount === 0) {
+        issues.push({
+          pageId: page.id,
+          pageTitle: page.title,
+          sectionId: section.id,
+          sectionTitle: section.title,
+          severity: 'critical',
+          title: `${section.title} has no content blocks`,
+          detail: `${page.title} will hand off with an empty visible shell until this lane gets its first content spine.`,
+          actionLabel: 'Add first blocks',
+        });
+        continue;
+      }
+
+      if (section.warningCount > 0) {
+        issues.push({
+          pageId: page.id,
+          pageTitle: page.title,
+          sectionId: section.id,
+          sectionTitle: section.title,
+          severity: 'warning',
+          title: `${section.title} still carries ${section.warningCount} warning${section.warningCount === 1 ? '' : 's'}`,
+          detail: `Resolve the incomplete block data so ${page.title} stays truthful when this document leaves the lab.`,
+          actionLabel: 'Resolve warnings',
+        });
+        continue;
+      }
+
+      if (previewDevice !== 'mobile' && section.blockCount >= 8) {
+        issues.push({
+          pageId: page.id,
+          pageTitle: page.title,
+          sectionId: section.id,
+          sectionTitle: section.title,
+          severity: 'watch',
+          title: `${section.title} is dense enough to deserve a mobile check`,
+          detail: `${page.title} may still feel flattering on desktop if this lane is long or tightly packed.`,
+          actionLabel: 'Review on mobile',
+        });
+      }
     }
   }
 
@@ -127,7 +151,7 @@ export const buildBuilderV2DocumentAudit = ({
     criticalCount,
     warningCount,
     watchCount,
-    headline: `${watchCount} section${watchCount === 1 ? '' : 's'} deserve a last confidence check`,
-    detail: 'Nothing is structurally broken, but a few lanes still want an intentional review before handoff.',
+    headline: `${watchCount} page or section review${watchCount === 1 ? '' : 's'} still deserve a confidence pass`,
+    detail: 'Nothing is structurally broken, but a few pages or lanes still want an intentional review before handoff.',
   };
 };

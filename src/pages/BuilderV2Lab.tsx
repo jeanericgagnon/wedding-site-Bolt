@@ -69,6 +69,7 @@ import {
   type LabPage,
   type LabSection,
 } from './builderV2PageState';
+import type { BuilderV2ReviewPageSnapshot } from './builderV2DocumentReviewState';
 
 type BlockType =
   | 'title'
@@ -968,15 +969,22 @@ export const BuilderV2Lab: React.FC = () => {
   const canRedo = historyIndex < history.length - 1;
 
   const orderedVisible = useMemo(() => sections.filter((s) => s.enabled), [sections]);
-  const documentSections = useMemo(
-    () => pages.flatMap((page) => page.sections.map((section) => ({
-      id: section.id,
-      title: `${page.title}: ${section.title}`,
-      type: section.type,
-      enabled: page.hidden ? false : section.enabled,
-      blockCount: (sectionBlocks[section.id] ?? []).length,
-      warningCount: (sectionBlocks[section.id] ?? []).filter((block) => getBlockValidationWarning(block)).length,
-    }))),
+  const documentPages = useMemo<BuilderV2ReviewPageSnapshot[]>(
+    () => pages.map((page) => ({
+      id: page.id,
+      title: page.title,
+      slug: page.slug,
+      hidden: page.hidden,
+      isHome: page.isHome,
+      sections: page.sections.map((section) => ({
+        id: section.id,
+        title: section.title,
+        type: section.type,
+        enabled: section.enabled,
+        blockCount: (sectionBlocks[section.id] ?? []).length,
+        warningCount: (sectionBlocks[section.id] ?? []).filter((block) => getBlockValidationWarning(block)).length,
+      })),
+    })),
     [getBlockValidationWarning, pages, sectionBlocks],
   );
   const filteredAddables = useMemo(() => ADDABLE_SECTIONS.filter((name) => name.toLowerCase().includes(addQuery.trim().toLowerCase())), [addQuery]);
@@ -1044,33 +1052,33 @@ export const BuilderV2Lab: React.FC = () => {
   );
   const handoffGuidance = useMemo(
     () => buildBuilderV2HandoffGuidance({
-      sections: documentSections,
+      pages: documentPages,
       previewDevice,
     }),
-    [documentSections, previewDevice],
+    [documentPages, previewDevice],
   );
   const documentAudit = useMemo(
     () => buildBuilderV2DocumentAudit({
-      sections: documentSections,
+      pages: documentPages,
       previewDevice,
     }),
-    [documentSections, previewDevice],
+    [documentPages, previewDevice],
   );
   const handoffPacket = useMemo(
     () => buildBuilderV2HandoffPacket({
-      sections: documentSections,
+      pages: documentPages,
     }),
-    [documentSections],
+    [documentPages],
   );
   const currentDocumentSnapshot = useMemo(
-    () => documentSections.map((section) => ({
-      id: section.id,
-      title: section.title,
-      type: section.type,
-      enabled: section.enabled,
-      blockCount: section.blockCount,
+    () => documentPages.map((page) => ({
+      ...page,
+      sections: page.sections.map((section) => ({
+        ...section,
+        warningCount: section.warningCount,
+      })),
     })),
-    [documentSections],
+    [documentPages],
   );
   const selectedSectionLimit = useMemo(() => getSectionLimitConfig(selected.type), [selected.type]);
   const recommendedBlockTypesForSelected = useMemo(
@@ -1261,7 +1269,7 @@ export const BuilderV2Lab: React.FC = () => {
 
     focusSectionById(issue.sectionId, true);
     setFocusPreview(false);
-    setShowStructure(issue.actionLabel === 'Review hidden lane');
+    setShowStructure(issue.actionLabel === 'Review hidden lane' || issue.actionLabel === 'Review hidden page');
     setShowProperties(true);
     setPropertyTab('content');
   }, [focusSectionById, scrollToPreviewSection]);
@@ -1401,20 +1409,28 @@ export const BuilderV2Lab: React.FC = () => {
         return { state: 'invalid' as const, error: prepared.error };
       }
 
-      const incomingSections = (prepared.doc.pages ?? []).flatMap((page) => page.sections.map((section) => ({
-        id: section.id,
-        title: `${page.title}: ${section.title || section.type}`,
-        type: section.type,
-        enabled: page.hidden ? false : section.enabled !== false,
-        blockCount: section.blocks.length,
-      })));
+      const incomingPages = (prepared.doc.pages ?? []).map((page, index) => ({
+        id: page.id || `page-${index + 1}`,
+        title: page.title || (page.isHome ? 'Home' : `Page ${index + 1}`),
+        slug: page.slug || (page.isHome ? 'home' : `page-${index + 1}`),
+        hidden: page.hidden === true,
+        isHome: page.isHome,
+        sections: page.sections.map((section) => ({
+          id: section.id,
+          title: section.title || section.type,
+          type: section.type,
+          enabled: section.enabled !== false,
+          blockCount: section.blocks.length,
+          warningCount: 0,
+        })),
+      }));
 
       return {
         state: 'ready' as const,
         prepared,
         comparison: buildBuilderV2ImportComparison({
-          currentSections: currentDocumentSnapshot,
-          incomingSections,
+          currentPages: currentDocumentSnapshot,
+          incomingPages,
         }),
       };
     } catch {
@@ -1640,6 +1656,12 @@ export const BuilderV2Lab: React.FC = () => {
                   <p className="mt-1 text-xs leading-relaxed text-text-secondary">{handoffPacket.detail}</p>
                 </div>
                 <div className="mt-3 grid gap-2 md:grid-cols-2">
+                  <div className="rounded-md border border-border-subtle bg-white px-2.5 py-2 md:col-span-2">
+                    <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary">Page map</p>
+                    <p className="mt-1 text-xs leading-relaxed text-text-primary">
+                      {handoffPacket.pageSummaries.length > 0 ? handoffPacket.pageSummaries.join(' | ') : 'No pages in document yet'}
+                    </p>
+                  </div>
                   <div className="rounded-md border border-border-subtle bg-white px-2.5 py-2">
                     <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary">Visible order</p>
                     <p className="mt-1 text-xs leading-relaxed text-text-primary">
@@ -1668,7 +1690,7 @@ export const BuilderV2Lab: React.FC = () => {
                         }`}>
                           {entry.status}
                         </span>
-                        <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary">{entry.sectionTitle}</p>
+                        <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary">{entry.pageTitle} / {entry.sectionTitle}</p>
                       </div>
                       <p className="mt-1 text-xs leading-relaxed text-text-primary">{entry.summary}</p>
                     </div>
@@ -1695,7 +1717,7 @@ export const BuilderV2Lab: React.FC = () => {
                               }`}>
                                 {issue.severity}
                               </span>
-                              <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary">{issue.sectionTitle}</p>
+                              <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary">{issue.pageTitle} / {issue.sectionTitle}</p>
                             </div>
                             <p className="mt-1 text-sm font-semibold text-text-primary">{issue.title}</p>
                             <p className="mt-1 text-xs leading-relaxed text-text-secondary">{issue.detail}</p>
@@ -3066,6 +3088,14 @@ export const BuilderV2Lab: React.FC = () => {
                     ))}
                   </div>
                   <div className="grid gap-2 md:grid-cols-2">
+                    <div className="rounded-md border border-border-subtle bg-white px-2.5 py-2 md:col-span-2">
+                      <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary">Incoming page map</p>
+                      <p className="mt-1 text-xs leading-relaxed text-text-primary">
+                        {preparedImportPreview.comparison.incomingPageSummaries.length > 0
+                          ? preparedImportPreview.comparison.incomingPageSummaries.join(' | ')
+                          : 'No incoming pages in layout'}
+                      </p>
+                    </div>
                     <div className="rounded-md border border-border-subtle bg-white px-2.5 py-2">
                       <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary">Incoming visible order</p>
                       <p className="mt-1 text-xs leading-relaxed text-text-primary">
@@ -3098,7 +3128,7 @@ export const BuilderV2Lab: React.FC = () => {
                           }`}>
                             {entry.status}
                           </span>
-                          <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary">{entry.sectionTitle}</p>
+                          <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary">{entry.pageTitle} / {entry.sectionTitle}</p>
                         </div>
                         <p className="mt-1 text-xs leading-relaxed text-text-primary">{entry.detail}</p>
                       </div>
@@ -3206,6 +3236,12 @@ export const BuilderV2Lab: React.FC = () => {
                   <p className="mt-1 text-xs leading-relaxed text-text-secondary">{handoffPacket.detail}</p>
                   <div className="mt-3 grid gap-2">
                     <div className="rounded-md border border-border-subtle bg-white px-2.5 py-2">
+                      <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary">Page map</p>
+                      <p className="mt-1 text-xs leading-relaxed text-text-primary">
+                        {handoffPacket.pageSummaries.length > 0 ? handoffPacket.pageSummaries.join(' | ') : 'No pages in document yet'}
+                      </p>
+                    </div>
+                    <div className="rounded-md border border-border-subtle bg-white px-2.5 py-2">
                       <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary">Visible order</p>
                       <p className="mt-1 text-xs leading-relaxed text-text-primary">
                         {handoffPacket.visibleTitles.length > 0 ? handoffPacket.visibleTitles.join(' -> ') : 'No visible lanes yet'}
@@ -3233,7 +3269,7 @@ export const BuilderV2Lab: React.FC = () => {
                           }`}>
                             {entry.status}
                           </span>
-                          <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary">{entry.sectionTitle}</p>
+                          <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary">{entry.pageTitle} / {entry.sectionTitle}</p>
                         </div>
                         <p className="mt-1 text-xs leading-relaxed text-text-primary">{entry.summary}</p>
                       </div>
@@ -3260,7 +3296,7 @@ export const BuilderV2Lab: React.FC = () => {
                                   }`}>
                                     {issue.severity}
                                   </span>
-                                  <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary">{issue.sectionTitle}</p>
+                                  <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary">{issue.pageTitle} / {issue.sectionTitle}</p>
                                 </div>
                                 <p className="mt-1 text-xs font-semibold text-text-primary">{issue.title}</p>
                                 <p className="mt-1 text-xs leading-relaxed text-text-secondary">{issue.detail}</p>
