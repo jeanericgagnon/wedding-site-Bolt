@@ -56,6 +56,7 @@ describe('Signup quick start handoff', () => {
   beforeEach(() => {
     navigateMock.mockReset();
     window.localStorage.clear();
+    useSearchParamsMock.mockReturnValue([new URLSearchParams()]);
     useLocationMock.mockReturnValue({ state: {
       quickStartDraft: {
         currentIndex: Number.MAX_SAFE_INTEGER + 1,
@@ -136,5 +137,23 @@ describe('Signup quick start handoff', () => {
         returnTo: '/onboarding',
       },
     });
+  });
+
+  it('shows collaborator role guidance when signup is entered from an invite', async () => {
+    useLocationMock.mockReturnValue({ state: { returnTo: '/onboarding' } });
+    useSearchParamsMock.mockReturnValue([
+      new URLSearchParams({
+        inviteToken: 'invite-123',
+        inviteEmail: 'planner@example.com',
+        inviteRole: 'planner',
+        inviteSite: 'Alex & Sam',
+      }),
+    ]);
+
+    render(<Signup />);
+
+    expect(await screen.findByText('Clear planning pressure without reopening owner-only polish')).toBeInTheDocument();
+    expect(screen.getByText(/Guests, Planning, or Messages/i)).toBeInTheDocument();
+    expect(screen.getByText(/brand, billing, or final ownership calls/i)).toBeInTheDocument();
   });
 });

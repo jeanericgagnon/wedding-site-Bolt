@@ -5,6 +5,7 @@ import { Button, Card, Input } from '../components/ui';
 import { supabase } from '../lib/supabase';
 import { useAuth, type AuthUser } from '../contexts/AuthContext';
 import { getCollaboratorRedirectPath, getInviteSiteLabel, isInviteEmailMatch, resolveInviteValidationState } from './acceptCollaboratorInviteUtils';
+import { buildCollaboratorRoleGuide } from './collaboratorRoleGuide';
 
 type InviteState = 'loading' | 'valid' | 'invalid' | 'expired' | 'accepted' | 'revoked' | 'missing';
 type AuthMode = 'signin' | 'signup';
@@ -58,6 +59,7 @@ export const AcceptCollaboratorInvite: React.FC = () => {
 
   const inviteeLabel = useMemo(() => inviteInfo?.invite_name || inviteInfo?.invite_email || 'your collaborator', [inviteInfo]);
   const siteLabel = useMemo(() => getInviteSiteLabel(inviteInfo), [inviteInfo]);
+  const collaboratorRoleGuide = useMemo(() => buildCollaboratorRoleGuide(inviteInfo?.role), [inviteInfo?.role]);
 
   useEffect(() => {
     if (authMode === 'signup' && !authLoading && !claiming) {
@@ -435,6 +437,22 @@ export const AcceptCollaboratorInvite: React.FC = () => {
                       <dd className="mt-2 text-sm font-medium text-text-primary">No payment required</dd>
                     </div>
                   </dl>
+
+                  <div className="grid gap-4 rounded-2xl border border-border-subtle bg-white/80 p-4 lg:grid-cols-3">
+                    <div>
+                      <p className="text-xs uppercase tracking-[0.18em] text-text-tertiary">Main focus</p>
+                      <p className="mt-2 text-sm font-semibold text-text-primary">{collaboratorRoleGuide.focusTitle}</p>
+                      <p className="mt-2 text-sm leading-6 text-text-secondary">{collaboratorRoleGuide.focusDetail}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs uppercase tracking-[0.18em] text-text-tertiary">Best next move</p>
+                      <p className="mt-2 text-sm font-semibold text-text-primary">{collaboratorRoleGuide.nextMove}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs uppercase tracking-[0.18em] text-text-tertiary">Decision rule</p>
+                      <p className="mt-2 text-sm font-semibold text-text-primary">{collaboratorRoleGuide.decisionRule}</p>
+                    </div>
+                  </div>
                 </div>
               )}
             </div>

@@ -9,6 +9,7 @@ import { consumeSignupReturnPath, writeSignupReturnPath } from '../lib/signupCon
 import { clearAuthEntryReturnPath } from '../lib/authEntryCleanup';
 import { resolveSignupReturnPath } from '../lib/signupReturnResolver';
 import { normalizeMeaningfulQuickStartDraftSnapshot, persistQuickStartDraftSnapshot } from '../lib/quickStartStateTransfer';
+import { buildCollaboratorRoleGuide } from './collaboratorRoleGuide';
 
 const makeBaseSlug = (email: string) => {
   const local = (email.split('@')[0] || 'ourwedding').toLowerCase();
@@ -93,6 +94,7 @@ export const Signup: React.FC = () => {
     if (!inviteToken) return '';
     return `?${createSearchParams({ token: inviteToken }).toString()}`;
   }, [inviteToken]);
+  const collaboratorRoleGuide = useMemo(() => buildCollaboratorRoleGuide(inviteRole), [inviteRole]);
 
   useEffect(() => {
     if (inviteEmail) {
@@ -213,6 +215,21 @@ export const Signup: React.FC = () => {
               <div className="mt-3 flex flex-wrap gap-2 text-xs text-text-secondary">
                 {inviteRole && <span className="rounded-full bg-white px-3 py-1">{inviteRole.replace(/_/g, ' ')}</span>}
                 {inviteEmail && <span className="rounded-full bg-white px-3 py-1">{inviteEmail}</span>}
+              </div>
+              <div className="mt-4 grid gap-3 rounded-2xl border border-border-subtle bg-white/80 p-4 sm:grid-cols-3">
+                <div>
+                  <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary">Main focus</p>
+                  <p className="mt-1 text-sm font-semibold text-text-primary">{collaboratorRoleGuide.focusTitle}</p>
+                  <p className="mt-1 text-xs leading-5 text-text-secondary">{collaboratorRoleGuide.focusDetail}</p>
+                </div>
+                <div>
+                  <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary">Best next move</p>
+                  <p className="mt-1 text-sm font-semibold text-text-primary">{collaboratorRoleGuide.nextMove}</p>
+                </div>
+                <div>
+                  <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary">Decision rule</p>
+                  <p className="mt-1 text-sm font-semibold text-text-primary">{collaboratorRoleGuide.decisionRule}</p>
+                </div>
               </div>
               <p className="mt-3 text-xs text-text-tertiary">This path skips owner checkout. We’ll send you back to the invite after account creation.</p>
             </div>
