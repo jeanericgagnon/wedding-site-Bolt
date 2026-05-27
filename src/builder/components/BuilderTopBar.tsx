@@ -6,7 +6,6 @@ import {
   Redo2,
   Save,
   Globe,
-  ChevronDown,
   Loader2,
   CheckCircle2,
   AlertCircle,
@@ -101,6 +100,82 @@ export function formatPublishedAt(iso: string): string {
   return `Live since ${d.toLocaleDateString([], { month: 'short', day: 'numeric' })} ${time}`;
 }
 
+export const getBuilderCommandCenterCopy = ({
+  projectName,
+  activePageTitle,
+  pageCount,
+  sectionCount,
+  isDirty,
+  hasHardPublishBlocker,
+  publishValidationError,
+  canAutoSaveBeforePublish,
+  isPublished,
+  publishedVersion,
+  publishAttemptedAt,
+}: {
+  projectName?: string;
+  activePageTitle?: string | null;
+  pageCount: number;
+  sectionCount: number;
+  isDirty: boolean;
+  hasHardPublishBlocker: boolean;
+  publishValidationError?: string | null;
+  canAutoSaveBeforePublish: boolean;
+  isPublished: boolean;
+  publishedVersion?: number | null;
+  publishAttemptedAt?: string | null;
+}) => {
+  const title = projectName?.trim() || 'Wedding site draft';
+  const pageLabel = `${pageCount} page${pageCount === 1 ? '' : 's'}`;
+  const sectionLabel = sectionCount === 0
+    ? 'no sections on this page yet'
+    : `${sectionCount} section${sectionCount === 1 ? '' : 's'} on this page`;
+
+  if (hasHardPublishBlocker) {
+    return {
+      title,
+      summary: `${pageLabel} · ${sectionLabel}`,
+      tone: 'warning' as const,
+      status: 'Go-live blocker',
+      detail: publishValidationError ?? 'A few launch details still need attention before this goes live.',
+    };
+  }
+
+  if (canAutoSaveBeforePublish || isDirty) {
+    return {
+      title,
+      summary: `${pageLabel} · ${sectionLabel}`,
+      tone: 'neutral' as const,
+      status: 'Finish this draft',
+      detail: canAutoSaveBeforePublish
+        ? 'Save the latest edits, then go live.'
+        : 'You have unsaved edits. Save first so publish stays predictable.',
+    };
+  }
+
+  if (isPublished) {
+    return {
+      title,
+      summary: `${pageLabel} · ${sectionLabel}`,
+      tone: 'success' as const,
+      status: typeof publishedVersion === 'number' ? `Live v${publishedVersion}` : 'Live',
+      detail: publishAttemptedAt
+        ? 'Your latest launch attempt completed. Keep editing here before the next update.'
+        : 'Guests can already see this site. New edits here will become the next live update.',
+    };
+  }
+
+  return {
+    title,
+    summary: `${pageLabel} · ${sectionLabel}`,
+    tone: 'success' as const,
+    status: 'Ready to go live',
+    detail: activePageTitle
+      ? `${activePageTitle} looks ready for a final pass, then publish.`
+      : 'This draft is in a good place for a final pass, then publish.',
+  };
+};
+
 export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
   onSave,
   onPublish,
@@ -134,7 +209,6 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
     canAutoSaveBeforePublish,
   } = getPublishBlockerUiState({ publishValidationError, publishIssueKind });
   const isPublishDisabled = state.isPublishing || state.isSaving || hasHardPublishBlocker;
-  const showPublishReady = !hasHardPublishBlocker && !state.isPublishing && !state.isSaving;
   const [showLeaveConfirm, setShowLeaveConfirm] = React.useState(false);
   const [showBlockedDetails, setShowBlockedDetails] = React.useState(false);
   const [showPageManager, setShowPageManager] = React.useState(false);
@@ -169,8 +243,21 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
     : publishState.tone === 'warning'
       ? 'border-amber-200 bg-amber-50 text-amber-800'
       : publishState.tone === 'danger'
-        ? 'border-rose-200 bg-rose-50 text-rose-700'
-        : 'border-gray-200 bg-gray-50 text-gray-700';
+      ? 'border-rose-200 bg-rose-50 text-rose-700'
+      : 'border-gray-200 bg-gray-50 text-gray-700';
+  const commandCenterCopy = getBuilderCommandCenterCopy({
+    projectName,
+    activePageTitle: activePage?.title ?? null,
+    pageCount: projectPages.length,
+    sectionCount: activePage?.sections?.length ?? 0,
+    isDirty,
+    hasHardPublishBlocker,
+    publishValidationError: effectivePublishValidationError,
+    canAutoSaveBeforePublish,
+    isPublished,
+    publishedVersion,
+    publishAttemptedAt,
+  });
 
   React.useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -219,11 +306,22 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
       <button
         type="button"
         onClick={() => setShowPageManager(true)}
-        className="hidden inline-flex items-center gap-1.5 rounded-md border border-gray-200 bg-gray-50 px-2.5 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-100"
+        className="inline-flex items-center gap-1.5 rounded-md border border-gray-200 bg-gray-50 px-2.5 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-100"
       >
         <Files size={13} />
         Pages · {projectPages.length}
       </button>
+
+      <div className={`hidden min-w-0 md:flex md:max-w-[360px] md:flex-1 md:items-center md:gap-3 md:rounded-lg md:border md:px-3 md:py-1.5 ${publishToneClass}`}>
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-[12px] font-semibold">{commandCenterCopy.title}</p>
+          <p className="truncate text-[11px] opacity-80">{commandCenterCopy.summary}</p>
+        </div>
+        <div className="min-w-0 flex-[1.2] border-l border-current/15 pl-3">
+          <p className="text-[11px] font-semibold">{commandCenterCopy.status}</p>
+          <p className="truncate text-[11px] opacity-80">{commandCenterCopy.detail}</p>
+        </div>
+      </div>
 
       <div className="relative group">
         <button
@@ -249,6 +347,35 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
       <div className="flex-1" />
 
       <div className="ml-auto flex w-full sm:w-auto items-center justify-end gap-2">
+        <div className="flex items-center gap-1.5">
+          {state.isSaving ? (
+            <span className="inline-flex items-center gap-1.5 rounded-md border border-gray-200 bg-gray-50 px-2 py-1 text-[11px] font-medium text-gray-700">
+              <Loader2 size={12} className="animate-spin" />
+              Saving
+            </span>
+          ) : saveError ? (
+            <span className="inline-flex items-center gap-1.5 rounded-md border border-rose-200 bg-rose-50 px-2 py-1 text-[11px] font-medium text-rose-700" title={saveError}>
+              <XCircle size={12} />
+              Save failed
+            </span>
+          ) : isDirty ? (
+            <span className="inline-flex items-center gap-1.5 rounded-md border border-amber-200 bg-amber-50 px-2 py-1 text-[11px] font-medium text-amber-700">
+              <AlertCircle size={12} />
+              Unsaved
+            </span>
+          ) : state.lastSavedAt ? (
+            <span className="inline-flex items-center gap-1.5 rounded-md border border-emerald-200 bg-emerald-50 px-2 py-1 text-[11px] font-medium text-emerald-700" title={`Last saved: ${toValidTopBarDate(state.lastSavedAt)?.toLocaleString() ?? 'Unknown time'}`}>
+              <CheckCircle2 size={12} />
+              {formatSavedAt(state.lastSavedAt)}
+            </span>
+          ) : null}
+          {!state.isPublishing && !publishError && isPublished && publishedAt ? (
+            <span className="hidden sm:inline-flex items-center gap-1.5 rounded-md border border-gray-200 bg-white px-2 py-1 text-[11px] font-medium text-gray-700" title={`Published: ${toValidTopBarDate(publishedAt)?.toLocaleString() ?? 'Unknown time'}`}>
+              <Clock size={12} />
+              {formatPublishedAt(publishedAt)}
+            </span>
+          ) : null}
+        </div>
         {onToggleInspector && (
           <button
             type="button"
@@ -278,8 +405,21 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
             <Globe size={14} />
           )}
           {state.isPublishing ? 'Going live…' : 'Go live'}
-        </button>
-      </div>
+          </button>
+        </div>
+
+        <div className={`w-full rounded-lg border px-3 py-2 text-[11px] md:hidden ${publishToneClass}`}>
+          <div className="flex items-start justify-between gap-2">
+            <div className="min-w-0">
+              <p className="truncate font-semibold">{commandCenterCopy.title}</p>
+              <p className="truncate opacity-80">{commandCenterCopy.summary}</p>
+            </div>
+            <span className="shrink-0 rounded-full bg-white/70 px-2 py-0.5 text-[10px] font-semibold">
+              {commandCenterCopy.status}
+            </span>
+          </div>
+          <p className="mt-1 opacity-90">{commandCenterCopy.detail}</p>
+        </div>
 
       <div className="hidden">
         <div className="ml-auto flex w-full sm:w-auto items-center justify-end gap-2">

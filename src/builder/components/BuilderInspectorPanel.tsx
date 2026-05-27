@@ -33,6 +33,8 @@ export const BuilderInspectorPanel: React.FC = () => {
   }, [simpleMode, activeTab]);
 
   const selectedIndex = activeSections.findIndex((s) => s.id === state.selectedSectionId);
+  const previousSection = selectedIndex > 0 ? activeSections[selectedIndex - 1] : null;
+  const nextSectionInRail = selectedIndex >= 0 && selectedIndex < activeSections.length - 1 ? activeSections[selectedIndex + 1] : null;
 
   const quickSectionRail = activePage ? (
     <BuilderSectionRail
@@ -40,7 +42,7 @@ export const BuilderInspectorPanel: React.FC = () => {
       activeSections={activeSections as Array<{ id: string; type: string }>}
       selectedSectionId={state.selectedSectionId}
       onSelectSection={(sectionId) => dispatch(builderActions.selectSection(sectionId))}
-      onAddSection={(type, variantId) => dispatch(builderActions.addSectionByType(activePage.id, type as any, undefined, variantId))}
+      onAddSection={(type, variantId) => dispatch(builderActions.addSectionByType(activePage.id, type as BuilderSectionType, undefined, variantId))}
       onReorderSections={(orderedIds) => dispatch(builderActions.reorderSections(activePage.id, orderedIds))}
       onSwitchTemplate={() => {
         dispatch(builderActions.selectSection(null));
@@ -123,6 +125,14 @@ export const BuilderInspectorPanel: React.FC = () => {
     dispatch(builderActions.toggleSectionVisibility(activePage.id, selectedSection.id));
   };
 
+  const handleJumpToSection = (sectionId: string) => {
+    dispatch(builderActions.selectSection(sectionId));
+    requestAnimationFrame(() => {
+      const el = document.querySelector(`[data-section-id="${sectionId}"]`);
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  };
+
   const tabs: { id: InspectorTab; icon: React.ComponentType<{ size?: string | number; className?: string }>; label: string; show: boolean }[] = [
     { id: 'guide' as InspectorTab, icon: Compass, label: 'Guide', show: true },
     { id: 'content' as InspectorTab, icon: Pencil, label: 'Content', show: manifest.settingsSchema.fields.length > 0 },
@@ -188,6 +198,22 @@ export const BuilderInspectorPanel: React.FC = () => {
           <h3 className="text-[18px] font-semibold text-[var(--color-text-primary)]">{manifest.label}</h3>
           <p className="mt-1 text-[14px] text-[var(--color-text-secondary)]">Edit the content, layout, and style for this section.</p>
         </div>
+        <div className="flex flex-wrap items-center gap-2 text-[11px] text-[var(--color-text-secondary)]">
+          <span className="rounded-full border border-[var(--color-border-subtle)] bg-white px-2 py-1 font-medium">
+            Section {selectedIndex + 1} of {activeSections.length}
+          </span>
+          <span className={`rounded-full border px-2 py-1 font-medium ${selectedSection.enabled ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-amber-200 bg-amber-50 text-amber-700'}`}>
+            {selectedSection.enabled ? 'Visible on site' : 'Hidden from site'}
+          </span>
+          <button
+            type="button"
+            onClick={handleToggleVisibility}
+            className="inline-flex items-center gap-1 rounded-full border border-[var(--color-border-subtle)] bg-white px-2 py-1 font-medium text-[var(--color-text-primary)] hover:border-[var(--color-border)] hover:bg-[var(--color-surface-subtle)]"
+          >
+            {selectedSection.enabled ? <EyeOff size={12} /> : <Eye size={12} />}
+            {selectedSection.enabled ? 'Hide section' : 'Show section'}
+          </button>
+        </div>
         <div className="rounded-xl border border-sky-100 bg-sky-50 px-3 py-2.5">
           <p className="text-[11px] font-semibold text-sky-900">Best next step</p>
           <p className="mt-1 text-[11px] text-sky-800">{nextAction.detail}</p>
@@ -202,6 +228,26 @@ export const BuilderInspectorPanel: React.FC = () => {
             className="mt-2 inline-flex items-center rounded-lg border border-sky-200 bg-white px-3 py-1.5 text-xs font-medium text-sky-900 hover:bg-sky-100"
           >
             {nextAction.cta}
+          </button>
+        </div>
+        <div className="grid gap-2 sm:grid-cols-2">
+          <button
+            type="button"
+            disabled={!previousSection}
+            onClick={() => previousSection && handleJumpToSection(previousSection.id)}
+            className="rounded-lg border border-[var(--color-border-subtle)] bg-white px-3 py-2 text-left text-[11px] text-[var(--color-text-secondary)] transition-colors hover:border-[var(--color-border)] hover:bg-[var(--color-surface-subtle)] disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            <p className="font-semibold text-[var(--color-text-primary)]">Previous section</p>
+            <p className="mt-0.5 truncate">{previousSection ? getSectionManifest(previousSection.type).label : 'This is the first section'}</p>
+          </button>
+          <button
+            type="button"
+            disabled={!nextSectionInRail}
+            onClick={() => nextSectionInRail && handleJumpToSection(nextSectionInRail.id)}
+            className="rounded-lg border border-[var(--color-border-subtle)] bg-white px-3 py-2 text-left text-[11px] text-[var(--color-text-secondary)] transition-colors hover:border-[var(--color-border)] hover:bg-[var(--color-surface-subtle)] disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            <p className="font-semibold text-[var(--color-text-primary)]">Next section</p>
+            <p className="mt-0.5 truncate">{nextSectionInRail ? getSectionManifest(nextSectionInRail.type).label : 'This is the last section'}</p>
           </button>
         </div>
       </div>

@@ -257,7 +257,7 @@ const TimelessClassicPreview = () => (
       </div>
     </div>
     <div className="h-9 border-t flex" style={{ background: '#F8F5EE', borderColor: '#D9D2C3' }}>
-      {['Our Story', 'Venue', 'Schedule', 'RSVP'].map((s, i) => (
+      {['Our Story', 'Venue', 'Schedule', 'RSVP'].map((s) => (
         <div key={s} className="flex-1 flex items-center justify-center border-r last:border-0" style={{ borderColor: '#D9D2C3' }}>
           <span className="text-[5.5px] uppercase tracking-wider" style={{ color: '#53647E' }}>{s}</span>
         </div>
@@ -452,11 +452,18 @@ function TemplatePreview({ templateId, fallbackSrc }: { templateId: string; fall
   const preview = getTemplatePreviewSource(templateId);
   const initial = preview.src;
   const fallback = fallbackSrc || preview.fallbackSrc;
+  const PreviewComponent = TEMPLATE_PREVIEWS[templateId];
   const [src, setSrc] = useState(initial);
+  const [showIllustratedFallback, setShowIllustratedFallback] = useState(false);
 
   React.useEffect(() => {
     setSrc(initial);
+    setShowIllustratedFallback(false);
   }, [initial, templateId]);
+
+  if (showIllustratedFallback && PreviewComponent) {
+    return <PreviewComponent />;
+  }
 
   return (
     <img
@@ -465,7 +472,11 @@ function TemplatePreview({ templateId, fallbackSrc }: { templateId: string; fall
       className="w-full h-full object-cover"
       loading="lazy"
       onError={() => {
-        if (src !== fallback) setSrc(fallback);
+        if (src !== fallback) {
+          setSrc(fallback);
+          return;
+        }
+        setShowIllustratedFallback(true);
       }}
     />
   );
@@ -555,6 +566,10 @@ export const TemplateGalleryPanel: React.FC<TemplateGalleryPanelProps> = ({ onSa
 
   const currentTemplateId = state.project?.templateId;
   const activePage = selectActivePage(state);
+  const currentTemplate = templates.find((t) => t.id === currentTemplateId) ?? null;
+  const pageCount = state.project?.pages.length ?? 0;
+  const sectionCount = state.project?.pages.reduce((total, page) => total + page.sections.length, 0) ?? 0;
+  const currentPageSectionCount = activePage?.sections.length ?? 0;
 
   const compareTemplates = compareTemplateIds
     .map((id) => templates.find((t) => t.id === id))
@@ -802,8 +817,34 @@ export const TemplateGalleryPanel: React.FC<TemplateGalleryPanelProps> = ({ onSa
         </div>
 
         <div className="flex-1 overflow-y-auto p-7">
+          <div className="mb-5 grid gap-3 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
+            <div className="rounded-2xl border border-neutral-200 bg-neutral-50 px-4 py-3">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-neutral-500">Current draft</p>
+              <p className="mt-2 text-sm font-semibold text-neutral-900">
+                {currentTemplate?.displayName ?? 'No design selected yet'}
+              </p>
+              <p className="mt-1 text-xs text-neutral-600">
+                {pageCount} page{pageCount === 1 ? '' : 's'} · {sectionCount} total section{sectionCount === 1 ? '' : 's'} · {currentPageSectionCount} on this page
+              </p>
+              <p className="mt-2 text-xs text-neutral-600">
+                Switching designs keeps your section content where possible, then updates the overall visual direction.
+              </p>
+            </div>
+            <div className="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-3">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-sky-700">Best way to choose</p>
+              <ul className="mt-2 space-y-1.5 text-xs text-sky-900">
+                <li>Start with the closest mood, not the perfect final version.</li>
+                <li>Use compare when two directions are genuinely close.</li>
+                <li>After switching, tighten layout and photos before editing copy again.</li>
+              </ul>
+            </div>
+          </div>
+
           <div className="mb-5">
-            <div className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-2">Recommended starting designs</div>
+            <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-gray-500">
+              <Sparkles size={12} className="text-sky-600" />
+              Recommended starting designs
+            </div>
             <div className="flex flex-wrap gap-2">
               {recommendedTemplates.map((template) => (
                 <button
@@ -1026,19 +1067,24 @@ const TemplateCard: React.FC<TemplateCardProps> = ({ template, isCurrent, isAppl
             {isCompared ? 'Compared' : 'Compare'}
           </button>
           <button
-            onClick={e => { e.stopPropagation(); onDetails(); }}
+            onClick={e => { e.stopPropagation(); onApply(); }}
             className={`w-full py-2 rounded-xl text-xs font-semibold transition-all ${
               isCurrent
                 ? 'bg-rose-50 text-rose-500 border border-rose-200/80'
                 : 'bg-gray-900 text-white hover:bg-gray-800 active:scale-[0.98]'
             }`}
           >
-          {isCurrent ? (
+          {isApplying ? (
+            <span className="flex items-center justify-center gap-1.5">
+              <Loader2 size={11} className="animate-spin" />
+              Applying
+            </span>
+          ) : isCurrent ? (
             <span className="flex items-center justify-center gap-1.5">
               <Check size={11} />
               Current design
             </span>
-          ) : 'Preview'}
+          ) : 'Use design'}
         </button>
       </div>
       </div>
