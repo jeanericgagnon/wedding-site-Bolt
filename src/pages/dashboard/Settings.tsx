@@ -33,6 +33,7 @@ import { SettingsIdentityExportsPanel } from './SettingsIdentityExportsPanel';
 import { buildSiteAccessPlan } from './siteAccessPlan';
 import { getFlowStatusLabel } from '../../lib/flowLabels';
 import { resolveSettingsTabFromSearch, type SettingsTab } from './settingsTab';
+import { buildCollaboratorRoleGuide } from '../collaboratorRoleGuide';
 
 
 interface RSVPQuestionSetting {
@@ -154,6 +155,7 @@ export const DashboardSettings: React.FC = () => {
     siteSlug,
     guestAccessToken,
   }), [guestAccessToken, isPublished, privacyMode, siteSlug]);
+  const collaboratorSetupGuide = useMemo(() => buildCollaboratorRoleGuide(plannerInviteRole), [plannerInviteRole]);
 
   useEffect(() => {
     if (activeTab === 'billing' && user && !billingInfo) {
@@ -1196,6 +1198,22 @@ export const DashboardSettings: React.FC = () => {
                       ))}
                     </div>
 
+                    <div className="grid gap-3 rounded-xl border border-border-subtle bg-surface-subtle/30 p-4 md:grid-cols-3">
+                      <div>
+                        <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary">Main focus</p>
+                        <p className="mt-1 text-sm font-semibold text-text-primary">{collaboratorSetupGuide.focusTitle}</p>
+                        <p className="mt-1 text-xs leading-5 text-text-secondary">{collaboratorSetupGuide.focusDetail}</p>
+                      </div>
+                      <div>
+                        <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary">Best next move</p>
+                        <p className="mt-1 text-sm font-semibold text-text-primary">{collaboratorSetupGuide.nextMove}</p>
+                      </div>
+                      <div>
+                        <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary">Decision rule</p>
+                        <p className="mt-1 text-sm font-semibold text-text-primary">{collaboratorSetupGuide.decisionRule}</p>
+                      </div>
+                    </div>
+
                     <div className="grid gap-3 md:grid-cols-2">
                       <div>
                         <label htmlFor="planner-invite-name" className="block text-sm font-medium text-text-primary mb-2">Planner name</label>
@@ -1244,6 +1262,27 @@ export const DashboardSettings: React.FC = () => {
                             <p className="mt-1 text-xs text-text-secondary">{plannerInvite.email} · {plannerRoleOptions.find((option) => option.value === plannerInvite.role)?.label} · {plannerInvite.status === 'active' ? 'Active' : 'Pending'}</p>
                           </div>
                           <Badge variant={plannerInvite.status === 'active' ? 'success' : 'secondary'}>{plannerInvite.status === 'active' ? 'Active' : 'Pending'}</Badge>
+                        </div>
+                        <div className="mt-4 grid gap-3 rounded-xl border border-border-subtle bg-surface-subtle/20 p-4 md:grid-cols-3">
+                          {(() => {
+                            const savedGuide = buildCollaboratorRoleGuide(plannerInvite.role);
+                            return (
+                              <>
+                                <div>
+                                  <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary">Main focus</p>
+                                  <p className="mt-1 text-sm font-semibold text-text-primary">{savedGuide.focusTitle}</p>
+                                </div>
+                                <div>
+                                  <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary">Best next move</p>
+                                  <p className="mt-1 text-sm font-semibold text-text-primary">{savedGuide.nextMove}</p>
+                                </div>
+                                <div>
+                                  <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary">Decision rule</p>
+                                  <p className="mt-1 text-sm font-semibold text-text-primary">{savedGuide.decisionRule}</p>
+                                </div>
+                              </>
+                            );
+                          })()}
                         </div>
                       </div>
                     )}
@@ -1325,6 +1364,27 @@ export const DashboardSettings: React.FC = () => {
                                     </Button>
                                   )}
                                 </div>
+                              </div>
+                              <div className="mt-4 grid gap-3 rounded-xl border border-border-subtle bg-surface-subtle/20 p-4 md:grid-cols-3">
+                                {(() => {
+                                  const inviteGuide = buildCollaboratorRoleGuide(invite.role);
+                                  return (
+                                    <>
+                                      <div>
+                                        <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary">Main focus</p>
+                                        <p className="mt-1 text-sm font-semibold text-text-primary">{inviteGuide.focusTitle}</p>
+                                      </div>
+                                      <div>
+                                        <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary">Best next move</p>
+                                        <p className="mt-1 text-sm font-semibold text-text-primary">{inviteGuide.nextMove}</p>
+                                      </div>
+                                      <div>
+                                        <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary">Decision rule</p>
+                                        <p className="mt-1 text-sm font-semibold text-text-primary">{inviteGuide.decisionRule}</p>
+                                      </div>
+                                    </>
+                                  );
+                                })()}
                               </div>
                             </div>
                           ))}
