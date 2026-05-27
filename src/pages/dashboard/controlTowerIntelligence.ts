@@ -43,6 +43,7 @@ export interface ControlTowerIntelligenceInput {
   declinedGuests: number;
   pendingGuests: number;
   contactableGuestCount: number;
+  itineraryEventCount: number;
   registryItemCount: number;
   photoAlbumCount: number;
   activePhotoAlbumCount: number;
@@ -68,12 +69,12 @@ function buildSignals(input: ControlTowerIntelligenceInput): ControlTowerSignal[
   const respondedGuests = input.confirmedGuests + input.declinedGuests;
   const responseRate = pct(respondedGuests, input.totalGuests);
   const contactCoverage = pct(input.contactableGuestCount, input.totalGuests);
-  const publishedExperienceReady = input.registryItemCount > 0 && input.activePhotoAlbumCount > 0;
+  const publishedExperienceReady = input.registryItemCount > 0 && input.activePhotoAlbumCount > 0 && input.itineraryEventCount > 0;
   const guestExperienceValue = input.isArchiveLike
     ? `${input.activePhotoAlbumCount}/${input.photoAlbumCount}`
     : publishedExperienceReady
       ? 'Ready'
-      : input.registryItemCount === 0 && input.activePhotoAlbumCount === 0
+      : input.registryItemCount === 0 && input.activePhotoAlbumCount === 0 && input.itineraryEventCount === 0
         ? 'Thin'
         : 'Growing';
 
@@ -101,12 +102,14 @@ function buildSignals(input: ControlTowerIntelligenceInput): ControlTowerSignal[
         ? input.activePhotoAlbumCount > 0
           ? `${pluralize(input.activePhotoAlbumCount, 'album')} already carrying memories.`
           : 'No active memory album is guiding guests yet.'
-        : input.registryItemCount === 0
+        : input.itineraryEventCount === 0
+          ? 'Guests still need a real public schedule to trust.'
+          : input.registryItemCount === 0
           ? 'Registry still needs live items for guests.'
           : input.activePhotoAlbumCount === 0
             ? 'Photo sharing is not really live yet.'
-            : 'Registry and photos are ready to support guests.',
-      variant: guestExperienceValue === 'Ready' || input.activePhotoAlbumCount > 0 ? 'success' : guestExperienceValue === 'Growing' ? 'warning' : 'error',
+            : 'Registry, schedule, and photos are ready to support guests.',
+      variant: guestExperienceValue === 'Ready' ? 'success' : guestExperienceValue === 'Growing' ? 'warning' : 'error',
     },
   ];
 }
@@ -163,6 +166,7 @@ export function buildControlTowerBriefing(input: ControlTowerIntelligenceInput):
     && input.isPublished
     && input.pendingGuests <= Math.max(5, Math.round(input.totalGuests * 0.1))
     && input.contactableGuestCount >= Math.max(input.totalGuests - 2, 0)
+    && input.itineraryEventCount > 0
     && input.activePhotoAlbumCount > 0
   ) {
     return {
@@ -223,6 +227,26 @@ export function buildControlTowerBriefing(input: ControlTowerIntelligenceInput):
       ],
       primaryAction: { label: 'Fix guest contacts', target: 'guests' },
       secondaryAction: { label: 'Open messages', target: 'messages' },
+    };
+  }
+
+  if (weddingSoon && input.itineraryEventCount === 0) {
+    return {
+      eyebrow: 'Control tower briefing',
+      title: 'The site still needs a real guest-facing schedule before the live layer can carry it',
+      detail: 'RSVP and contact progress help, but guests still need an itinerary spine to trust. Add the core weekend events before leaning on messaging or coordinator tools to cover the gap.',
+      badges: [
+        'No itinerary events yet',
+        input.daysUntilWedding === 0 ? 'Wedding day' : `${input.daysUntilWedding} days left`,
+      ],
+      signals: buildSignals(input),
+      sequence: [
+        { label: 'Add the anchor schedule', status: 'current' },
+        { label: 'Preview the guest-facing timeline', status: 'next' },
+        { label: 'Return to live-day polish', status: 'then' },
+      ],
+      primaryAction: { label: 'Open planning', target: 'planning' },
+      secondaryAction: { label: 'Open builder', target: 'builder' },
     };
   }
 

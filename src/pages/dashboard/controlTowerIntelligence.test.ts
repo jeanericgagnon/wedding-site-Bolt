@@ -8,6 +8,7 @@ function makeInput(overrides: Partial<Parameters<typeof buildControlTowerBriefin
     declinedGuests: 8,
     pendingGuests: 50,
     contactableGuestCount: 84,
+    itineraryEventCount: 2,
     registryItemCount: 12,
     photoAlbumCount: 2,
     activePhotoAlbumCount: 1,
@@ -80,6 +81,26 @@ describe('buildControlTowerBriefing', () => {
     expect(briefing.title).toContain('day-of readiness');
     expect(briefing.primaryAction).toMatchObject({ target: 'coordinator' });
     expect(briefing.secondaryAction).toMatchObject({ target: 'seating' });
+  });
+
+  it('pushes schedule work first when the wedding is close and no itinerary exists yet', () => {
+    const briefing = buildControlTowerBriefing(makeInput({
+      confirmedGuests: 78,
+      declinedGuests: 14,
+      pendingGuests: 8,
+      contactableGuestCount: 100,
+      itineraryEventCount: 0,
+      registryItemCount: 18,
+      activePhotoAlbumCount: 2,
+      photoAlbumCount: 2,
+      recentRsvpCount: 5,
+      daysUntilWedding: 6,
+      isPublished: true,
+    }));
+
+    expect(briefing.title).toContain('guest-facing schedule');
+    expect(briefing.primaryAction).toMatchObject({ target: 'planning' });
+    expect(briefing.secondaryAction).toMatchObject({ target: 'builder' });
   });
 
   it('falls back to a calm guidance mode when the board is steady', () => {

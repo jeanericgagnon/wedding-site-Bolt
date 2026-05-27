@@ -591,6 +591,7 @@ export const DashboardOverview: React.FC = () => {
     declinedGuests: stats?.declinedGuests ?? 0,
     pendingGuests: stats?.pendingGuests ?? 0,
     contactableGuestCount: stats?.contactableGuestCount ?? 0,
+    itineraryEventCount: stats?.itineraryEventCount ?? 0,
     registryItemCount: stats?.registryItemCount ?? 0,
     photoAlbumCount: stats?.photoAlbumCount ?? 0,
     activePhotoAlbumCount: stats?.activePhotoAlbumCount ?? 0,
