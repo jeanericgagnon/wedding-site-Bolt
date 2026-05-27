@@ -30,6 +30,8 @@ describe('weddingIdentityExports', () => {
     });
     expect(kit.items.find((item) => item.id === 'share-graphic')?.status).toBe('ready');
     expect(kit.warnings).toEqual([]);
+    expect(kit.handoffSequence.map((step) => step.status)).toEqual(['current', 'next', 'then']);
+    expect(kit.handoffSequence[0]?.title).toMatch(/share|guest-facing/i);
     expect(kit.quickPacks.find((pack) => pack.id === 'share-now')?.readiness).toBe('ready');
     expect(kit.quickPacks.find((pack) => pack.id === 'share-now')?.includes).toContain('Share graphic');
     expect(kit.quickPacks.find((pack) => pack.id === 'share-now')?.nextStep).toMatch(/share graphic first/i);
@@ -49,6 +51,8 @@ describe('weddingIdentityExports', () => {
       'Add a wedding date.',
       'Add a venue name.',
     ]);
+    expect(kit.handoffSequence[0]?.title).toMatch(/public site/i);
+    expect(kit.handoffSequence[1]?.detail).toMatch(/date|venue|public site/i);
     expect(kit.warnings).toContain('Set a public site URL before printing QR-based assets.');
     expect(kit.quickPacks.find((pack) => pack.id === 'print-table')?.readiness).toBe('needs-info');
     expect(kit.quickPacks.find((pack) => pack.id === 'planner-handoff')?.bestFor).toMatch(/someone else|repeat basics/i);

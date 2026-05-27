@@ -6,6 +6,7 @@ import { TEMPLATE_USE_CASE_PACKS } from '../builder/constants/templateUseCasePac
 import { readSetupDraft, selectSetupDraftTemplate } from '../lib/setupDraft';
 import { getRecommendedTemplates } from '../lib/setupDraftRecommendations';
 import { buildTemplateExperienceBrief } from '../pages/templateExperience';
+import { getFlowStatusLabel } from '../lib/flowLabels';
 
 type Facet = 'all' | string;
 
@@ -213,6 +214,43 @@ Start with this
               <button onClick={() => { setStyle('Classic'); setSeason('all'); }} className="rounded-full border border-neutral-300 bg-white px-3 py-1 text-xs text-neutral-700 hover:bg-neutral-100">Classic Formal</button>
             </div>
             <p className="mt-2 text-xs text-neutral-500">Destination, bilingual, and interfaith are the first three focused packs we are deepening here. Destination is currently the most behaviorally mature of the three.</p>
+            {templateExperienceBrief && (
+              <div className="mt-4 rounded-2xl border border-neutral-200 bg-white p-4 shadow-sm">
+                <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                  <div className="min-w-0">
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-neutral-500">Template confidence</p>
+                    <h2 className="mt-1 text-lg font-semibold text-neutral-900">{templateExperienceBrief.title}</h2>
+                    <p className="mt-1.5 max-w-3xl text-sm leading-6 text-neutral-600">{templateExperienceBrief.detail}</p>
+                  </div>
+                  <span className="rounded-full border border-rose-200 bg-rose-50 px-3 py-1 text-xs font-medium text-rose-700">
+                    {templateExperienceBrief.confidenceLabel}
+                  </span>
+                </div>
+                <div className="mt-4 grid gap-3 md:grid-cols-3">
+                  {templateExperienceBrief.launchSequence.map((step) => (
+                    <div key={step.id} className="rounded-xl border border-neutral-200 bg-neutral-50 px-3 py-3">
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="text-sm font-semibold text-neutral-900">{step.title}</p>
+                        <span className="rounded-full border border-neutral-200 bg-white px-2 py-0.5 text-[11px] font-medium text-neutral-700">
+                          {getFlowStatusLabel(step.status)}
+                        </span>
+                      </div>
+                      <p className="mt-2 text-xs leading-5 text-neutral-600">{step.detail}</p>
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-4 grid gap-2 md:grid-cols-2">
+                  <div className="rounded-xl border border-neutral-200 bg-neutral-50 px-3 py-3">
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-neutral-500">Best next move</p>
+                    <p className="mt-1.5 text-sm text-neutral-700">{templateExperienceBrief.bestNextStep}</p>
+                  </div>
+                  <div className="rounded-xl border border-neutral-200 bg-neutral-50 px-3 py-3">
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-neutral-500">Best launch use</p>
+                    <p className="mt-1.5 text-sm text-neutral-700">{templateExperienceBrief.launchUse}</p>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
           {selectedTemplateId && (
             <button

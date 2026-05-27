@@ -24,6 +24,8 @@ describe('buildTemplateExperienceBrief', () => {
     expect(brief.bestNextStep).toMatch(/starting point|content clarity|design churn/i);
     expect(brief.launchUse).toMatch(/lowest-friction|starting point|guest-ready/i);
     expect(brief.watchouts).toEqual([]);
+    expect(brief.launchSequence.map((step) => step.status)).toEqual(['current', 'next', 'then']);
+    expect(brief.launchSequence[0]?.title).toMatch(/strongest fit|start/i);
   });
 
   it('flags unmapped builder support as a watchout', () => {
@@ -46,5 +48,6 @@ describe('buildTemplateExperienceBrief', () => {
 
     expect(brief.watchouts[0]).toMatch(/builder/i);
     expect(brief.launchUse).toMatch(/visual directions|cleanup later|committing/i);
+    expect(brief.launchSequence[1]?.detail).toMatch(/page order|guests|event/i);
   });
 });

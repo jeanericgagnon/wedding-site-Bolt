@@ -37,6 +37,12 @@ export interface WeddingIdentityExportKit {
   items: WeddingIdentityExportItem[];
   manifest: Array<{ label: string; value: string }>;
   warnings: string[];
+  handoffSequence: Array<{
+    id: 'share-now' | 'print-table' | 'planner-handoff';
+    status: 'current' | 'next' | 'then';
+    title: string;
+    detail: string;
+  }>;
   quickPacks: Array<{
     id: 'share-now' | 'print-table' | 'planner-handoff';
     label: string;
@@ -205,6 +211,30 @@ export function buildWeddingIdentityExportKit(input: WeddingIdentityExportKitInp
       { label: 'Default language', value: defaultLanguage },
     ],
     warnings,
+    handoffSequence: [
+      {
+        id: 'share-now',
+        status: 'current',
+        title: hasPublicUrl ? 'Share one safe guest-facing pack' : 'Set the public site first',
+        detail: hasPublicUrl
+          ? 'Lead with the share graphic, RSVP card, and public QR so every guest-facing surface starts from the same URL.'
+          : 'The public site URL is the first ingredient for safe QR cards, story graphics, and RSVP handoff.',
+      },
+      {
+        id: 'print-table',
+        status: 'next',
+        title: hasPublicUrl && hasDate && hasVenue ? 'Carry the same identity into print' : 'Finish the print details next',
+        detail: hasPublicUrl && hasDate && hasVenue
+          ? 'Once the share pack is steady, use the table card, insert, and photo sign so print surfaces stay aligned.'
+          : 'Add the date, venue, and public site so welcome-table and signage assets stop feeling provisional.',
+      },
+      {
+        id: 'planner-handoff',
+        status: 'then',
+        title: 'Hand vendors one clean reference',
+        detail: 'Close the loop with the manifest and style kit so planners and stationers stop asking you for repeat basics.',
+      },
+    ],
     quickPacks: [
       {
         id: 'share-now',

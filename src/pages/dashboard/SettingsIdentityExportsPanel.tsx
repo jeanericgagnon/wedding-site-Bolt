@@ -1,5 +1,6 @@
 import { Copy, Image, Layout, Palette } from 'lucide-react';
 import { Badge, Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Input } from '../../components/ui';
+import { getFlowStatusLabel } from '../../lib/flowLabels';
 import type { WeddingIdentityExportKit, WeddingIdentityPrintAsset } from '../../lib/weddingIdentityExports';
 
 type SettingsIdentityExportsPanelProps = {
@@ -74,6 +75,19 @@ export function SettingsIdentityExportsPanel({
           </div>
 
           <div className="rounded-lg border border-border-subtle bg-surface-subtle/40 p-4">
+            <div className="mb-4 grid gap-3 lg:grid-cols-3">
+              {weddingIdentityExportKit.handoffSequence.map((step) => (
+                <div key={step.id} className="rounded-lg border border-border-subtle bg-white px-3 py-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-sm font-semibold text-text-primary">{step.title}</p>
+                    <span className="rounded-full border border-border-subtle bg-surface-subtle px-2 py-0.5 text-[11px] font-medium text-text-secondary">
+                      {getFlowStatusLabel(step.status)}
+                    </span>
+                  </div>
+                  <p className="mt-2 text-xs leading-5 text-text-secondary">{step.detail}</p>
+                </div>
+              ))}
+            </div>
             <div className="mb-4 grid gap-3 lg:grid-cols-3">
               {weddingIdentityExportKit.quickPacks.map((pack) => (
                 <div key={pack.id} className="rounded-lg border border-border-subtle bg-white px-3 py-3">

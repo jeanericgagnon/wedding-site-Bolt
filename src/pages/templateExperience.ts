@@ -8,6 +8,12 @@ export interface TemplateExperienceBrief {
   launchUse: string;
   watchouts: string[];
   callouts: string[];
+  launchSequence: Array<{
+    id: 'fit' | 'preview' | 'publish';
+    status: 'current' | 'next' | 'then';
+    title: string;
+    detail: string;
+  }>;
 }
 
 export function buildTemplateExperienceBrief(args: {
@@ -34,6 +40,26 @@ export function buildTemplateExperienceBrief(args: {
         `${sectionsIncluded} starter sections already mapped`,
         `${modulesIncluded} modules included in the first pass`,
       ],
+      launchSequence: [
+        {
+          id: 'fit',
+          status: 'current',
+          title: 'Keep the fit steady',
+          detail: 'This design is already the one your draft trusts, so protect that momentum first.',
+        },
+        {
+          id: 'preview',
+          status: 'next',
+          title: 'Preview the guest-facing story',
+          detail: 'Make sure travel, RSVP, and essentials read clearly before chasing extra polish.',
+        },
+        {
+          id: 'publish',
+          status: 'then',
+          title: 'Publish once the essentials feel real',
+          detail: 'Use launch confidence after the clarity pass so publishing feels calm instead of rushed.',
+        },
+      ],
     };
   }
 
@@ -54,6 +80,28 @@ export function buildTemplateExperienceBrief(args: {
       callouts: [
         previewStatus === 'verified' ? 'Builder preview support is already verified.' : 'Support is still growing, but the recommendation fit is strong.',
         `${sectionsIncluded} starter sections · ${modulesIncluded} modules`,
+      ],
+      launchSequence: [
+        {
+          id: 'fit',
+          status: 'current',
+          title: 'Start from the strongest fit',
+          detail: 'This recommendation should create the least structural cleanup after setup.',
+        },
+        {
+          id: 'preview',
+          status: 'next',
+          title: previewStatus === 'verified' ? 'Preview for confidence, not doubt' : 'Do one structure check',
+          detail: previewStatus === 'verified'
+            ? 'Use one preview pass to confirm the guest story, then keep moving.'
+            : 'Confirm that the section flow still feels right before you commit the draft.',
+        },
+        {
+          id: 'publish',
+          status: 'then',
+          title: 'Polish content before design churn',
+          detail: 'Once the fit is confirmed, spend the next pass on clarity, tone, and trust surfaces.',
+        },
       ],
     };
   }
@@ -76,6 +124,28 @@ export function buildTemplateExperienceBrief(args: {
     callouts: [
       `${sectionsIncluded} starter sections · ${modulesIncluded} modules`,
       supportManifest?.templateExistsInBuilder ? 'Builder pack is already mapped.' : 'Builder pack mapping still needs a closer look.',
+    ],
+    launchSequence: [
+      {
+        id: 'fit',
+        status: 'current',
+        title: compareCount > 0 ? 'Compare the structure honestly' : 'Treat the fit as provisional',
+        detail: compareCount > 0
+          ? 'Use compare mode to decide whether the guest story or section order needs less cleanup.'
+          : 'This direction can still work, but it needs one closer look before it becomes the default draft.',
+      },
+      {
+        id: 'preview',
+        status: 'next',
+        title: 'Preview the weekend flow',
+        detail: 'Check whether the page order matches how you want guests to understand the event.',
+      },
+      {
+        id: 'publish',
+        status: 'then',
+        title: 'Commit only after the structure settles',
+        detail: 'Choose the option that reduces rework later, not just the one with the strongest mood first.',
+      },
     ],
   };
 }
