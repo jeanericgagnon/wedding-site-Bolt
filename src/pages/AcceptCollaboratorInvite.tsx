@@ -6,6 +6,7 @@ import { supabase } from '../lib/supabase';
 import { useAuth, type AuthUser } from '../contexts/AuthContext';
 import { getCollaboratorRedirectPath, getInviteSiteLabel, isInviteEmailMatch, resolveInviteValidationState } from './acceptCollaboratorInviteUtils';
 import { buildCollaboratorRoleGuide } from './collaboratorRoleGuide';
+import { getFlowStatusLabel } from '../lib/flowLabels';
 
 type InviteState = 'loading' | 'valid' | 'invalid' | 'expired' | 'accepted' | 'revoked' | 'missing';
 type AuthMode = 'signin' | 'signup';
@@ -452,6 +453,19 @@ export const AcceptCollaboratorInvite: React.FC = () => {
                       <p className="text-xs uppercase tracking-[0.18em] text-text-tertiary">Decision rule</p>
                       <p className="mt-2 text-sm font-semibold text-text-primary">{collaboratorRoleGuide.decisionRule}</p>
                     </div>
+                  </div>
+                  <div className="mt-4 grid gap-3 lg:grid-cols-3">
+                    {collaboratorRoleGuide.sequence.map((step) => (
+                      <div key={step.id} className="rounded-2xl border border-border-subtle bg-white/80 p-4">
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="text-sm font-semibold text-text-primary">{step.title}</p>
+                          <span className="rounded-full border border-border-subtle bg-surface-subtle px-2 py-0.5 text-[11px] font-medium text-text-secondary">
+                            {getFlowStatusLabel(step.status)}
+                          </span>
+                        </div>
+                        <p className="mt-2 text-xs leading-5 text-text-secondary">{step.detail}</p>
+                      </div>
+                    ))}
                   </div>
                 </div>
               )}

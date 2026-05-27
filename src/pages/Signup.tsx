@@ -10,6 +10,7 @@ import { clearAuthEntryReturnPath } from '../lib/authEntryCleanup';
 import { resolveSignupReturnPath } from '../lib/signupReturnResolver';
 import { normalizeMeaningfulQuickStartDraftSnapshot, persistQuickStartDraftSnapshot } from '../lib/quickStartStateTransfer';
 import { buildCollaboratorRoleGuide } from './collaboratorRoleGuide';
+import { getFlowStatusLabel } from '../lib/flowLabels';
 
 const makeBaseSlug = (email: string) => {
   const local = (email.split('@')[0] || 'ourwedding').toLowerCase();
@@ -230,6 +231,19 @@ export const Signup: React.FC = () => {
                   <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary">Decision rule</p>
                   <p className="mt-1 text-sm font-semibold text-text-primary">{collaboratorRoleGuide.decisionRule}</p>
                 </div>
+              </div>
+              <div className="mt-3 grid gap-3 sm:grid-cols-3">
+                {collaboratorRoleGuide.sequence.map((step) => (
+                  <div key={step.id} className="rounded-2xl border border-border-subtle bg-white/80 p-4">
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-sm font-semibold text-text-primary">{step.title}</p>
+                      <span className="rounded-full bg-white px-2 py-0.5 text-[11px] font-medium text-text-secondary">
+                        {getFlowStatusLabel(step.status)}
+                      </span>
+                    </div>
+                    <p className="mt-2 text-xs leading-5 text-text-secondary">{step.detail}</p>
+                  </div>
+                ))}
               </div>
               <p className="mt-3 text-xs text-text-tertiary">This path skips owner checkout. We’ll send you back to the invite after account creation.</p>
             </div>

@@ -153,7 +153,8 @@ describe('Signup quick start handoff', () => {
     render(<Signup />);
 
     expect(await screen.findByText('Clear planning pressure without reopening owner-only polish')).toBeInTheDocument();
-    expect(screen.getByText(/Guests, Planning, or Messages/i)).toBeInTheDocument();
+    expect(screen.getByText(/Start in Overview, then move into Guests, Planning, or Messages/i)).toBeInTheDocument();
     expect(screen.getByText(/brand, billing, or final ownership calls/i)).toBeInTheDocument();
+    expect(screen.getByText(/Find the operational pressure first/i)).toBeInTheDocument();
   });
 });
