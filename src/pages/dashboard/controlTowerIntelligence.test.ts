@@ -46,6 +46,7 @@ describe('buildControlTowerBriefing', () => {
     expect(briefing.title).toContain('Launch readiness');
     expect(briefing.focusTitle).toContain('Clear the blockers');
     expect(briefing.focusDetail).toMatch(/date is close|launch path/i);
+    expect(briefing.bestNextMove).toMatch(/publish blockers|preview the live guest path/i);
     expect(briefing.decisionRule).toMatch(/launch truth beats visual polish/i);
     expect(briefing.primaryAction).toMatchObject({ target: 'builder-launch' });
     expect(briefing.badges).toContain('3 blockers');
@@ -63,6 +64,7 @@ describe('buildControlTowerBriefing', () => {
     expect(briefing.title).toContain('Guest response follow-up');
     expect(briefing.focusTitle).toContain('Turn waiting into deliberate follow-up');
     expect(briefing.focusDetail).toMatch(/dashboard watching|outreach pass/i);
+    expect(briefing.bestNextMove).toMatch(/pending guests|RSVP reminder/i);
     expect(briefing.decisionRule).toMatch(/follow-up beats passive monitoring/i);
     expect(briefing.primaryAction).toMatchObject({ target: 'guests' });
     expect(briefing.secondaryAction).toMatchObject({ target: 'messages' });
@@ -126,6 +128,7 @@ describe('buildControlTowerBriefing', () => {
     }));
 
     expect(briefing.title).toContain('Guest access instructions');
+    expect(briefing.bestNextMove).toMatch(/settings|reminders|QR packs/i);
     expect(briefing.decisionRule).toMatch(/access clarity beats launch aesthetics/i);
     expect(briefing.primaryAction).toMatchObject({ target: 'settings' });
     expect(briefing.secondaryAction).toMatchObject({ target: 'messages' });
@@ -163,6 +166,7 @@ describe('buildControlTowerBriefing', () => {
     }));
 
     expect(briefing.title).toContain('board looks calm');
+    expect(briefing.bestNextMove).toMatch(/contained quality pass|board stay calm/i);
     expect(briefing.decisionRule).toMatch(/restraint beats churn/i);
     expect(briefing.primaryAction).toMatchObject({ target: 'builder-polish' });
   });

@@ -34,8 +34,12 @@ export const ControlTowerBriefingCard: React.FC<ControlTowerBriefingCardProps> =
           <p className="mt-2 text-sm text-text-secondary">{briefing.focusDetail}</p>
         </div>
         <div className="rounded-xl border border-border-subtle bg-surface-secondary/20 px-4 py-4">
-          <p className="text-xs uppercase tracking-wide text-text-tertiary">Decision rule</p>
-          <p className="mt-2 text-sm text-text-secondary">{briefing.decisionRule}</p>
+          <p className="text-xs uppercase tracking-wide text-text-tertiary">Best next move</p>
+          <p className="mt-2 text-sm font-semibold text-text-primary">{briefing.bestNextMove}</p>
+          <div className="mt-3 border-t border-border-subtle pt-3">
+            <p className="text-xs uppercase tracking-wide text-text-tertiary">Decision rule</p>
+            <p className="mt-2 text-sm text-text-secondary">{briefing.decisionRule}</p>
+          </div>
         </div>
       </div>
       <div className="grid gap-3 md:grid-cols-3">
