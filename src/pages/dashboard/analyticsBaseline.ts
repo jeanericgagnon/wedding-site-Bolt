@@ -24,6 +24,7 @@ export interface AnalyticsConfidenceSummary {
   statusLabel: string;
   bestNextMove: string;
   decisionRule: string;
+  watchout: string;
   tone: 'success' | 'warning' | 'error';
   sequence: Array<{
     id: 'steady' | 'act' | 'hold';
@@ -135,6 +136,7 @@ export function buildAnalyticsConfidenceSummary(input: AnalyticsBaselineInput): 
       statusLabel: `${input.pendingGuests} still pending`,
       bestNextMove: 'Review the still-pending guests first, clear the biggest reply pockets, and only then let the calmer-looking metrics influence bigger decisions.',
       decisionRule: 'Do not let healthy vanity metrics outrank a still-noisy RSVP picture.',
+      watchout: 'If you treat a large pending RSVP pocket like solved background noise, every calmer metric on the board starts sounding more trustworthy than it really is.',
       tone: 'warning',
       sequence: buildAnalyticsSequence(
         'Treat pending replies as the real truth gap',
@@ -154,6 +156,7 @@ export function buildAnalyticsConfidenceSummary(input: AnalyticsBaselineInput): 
       statusLabel: `${contactCoverage}% contact coverage`,
       bestNextMove: 'Fix the missing contact paths now, then come back to reminders or day-of messaging once the list can actually hear from you cleanly.',
       decisionRule: 'Tighten the contact layer before assuming later outreach will behave cleanly.',
+      watchout: 'A board with weak reachability can look calm right up until the moment reminders or day-of updates fail to land where they need to.',
       tone: 'warning',
       sequence: buildAnalyticsSequence(
         'Treat contact gaps as the trust leak',
@@ -175,6 +178,7 @@ export function buildAnalyticsConfidenceSummary(input: AnalyticsBaselineInput): 
         ? 'Add one honest registry lane first, then return to the memory side once gifting no longer feels blank.'
         : 'Turn on one active photo contribution path next, then let the rest of the guest experience build from that living signal.',
       decisionRule: 'Treat guest-facing depth as part of trust, not as decorative polish.',
+      watchout: 'Guests will forgive a simple experience faster than a thin one that gestures at registry or memory plans without actually carrying them.',
       tone: 'warning',
       sequence: buildAnalyticsSequence(
         'Notice the thin guest-facing layer',
@@ -196,6 +200,7 @@ export function buildAnalyticsConfidenceSummary(input: AnalyticsBaselineInput): 
         ? 'Run one invite-path pass now, then make sure the real guest links are the ones getting reused everywhere.'
         : 'Check the password handoff once now, then reuse the same access instructions anywhere the site gets shared or printed.',
       decisionRule: 'A strong board still needs the right access instructions traveling with it.',
+      watchout: `The faster the board gets reused across reminders, QR packs, or planner handoffs, the easier it is for one sloppy ${accessLabel} instruction to undermine all the healthier signals.`,
       tone: 'warning',
       sequence: buildAnalyticsSequence(
         'Treat access clarity as part of trust',
@@ -215,6 +220,7 @@ export function buildAnalyticsConfidenceSummary(input: AnalyticsBaselineInput): 
       statusLabel: 'High confidence baseline',
       bestNextMove: 'Use this calm window for one guest-facing polish pass, then leave the solved basics alone unless real guest feedback says otherwise.',
       decisionRule: 'This is the moment to improve the guest-facing finish, not to reopen solved basics.',
+      watchout: 'The main risk now is unnecessary churn: reopening already-solved basics can make a trustworthy board feel less steady than it actually is.',
       tone: 'success',
       sequence: buildAnalyticsSequence(
         'Trust the measured baseline',
@@ -233,6 +239,7 @@ export function buildAnalyticsConfidenceSummary(input: AnalyticsBaselineInput): 
     statusLabel: 'Useful, still maturing',
     bestNextMove: 'Follow the highest-friction guest-facing signal next, then let the quieter metrics stay in support instead of chasing all of them at once.',
     decisionRule: 'Keep following the highest-friction signal instead of spreading effort evenly everywhere.',
+    watchout: 'When the baseline is merely decent, broad polishing passes can waste energy while the one signal that still matters keeps quietly distorting the board.',
     tone: 'warning',
     sequence: buildAnalyticsSequence(
       'Read the board as useful but still maturing',

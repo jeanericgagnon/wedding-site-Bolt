@@ -36,6 +36,7 @@ describe('analyticsBaseline', () => {
     expect(summary.statusLabel).toMatch(/high confidence/i);
     expect(summary.bestNextMove).toMatch(/calm window|guest-facing polish/i);
     expect(summary.decisionRule).toMatch(/refinement|reopen solved basics/i);
+    expect(summary.watchout).toMatch(/unnecessary churn|trustworthy board/i);
     expect(summary.sequence.map((step) => step.status)).toEqual(['current', 'next', 'then']);
     expect(summary.sequence[0]?.title).toMatch(/baseline|trust/i);
   });
@@ -51,6 +52,7 @@ describe('analyticsBaseline', () => {
     expect(summary.tone).toBe('warning');
     expect(summary.bestNextMove).toMatch(/still-pending guests|reply pockets/i);
     expect(summary.decisionRule).toMatch(/RSVP picture/i);
+    expect(summary.watchout).toMatch(/pending RSVP pocket|calmer metric/i);
     expect(summary.sequence[1]?.detail).toMatch(/pending group|reply pockets|guest picture/i);
   });
 
@@ -120,6 +122,7 @@ describe('analyticsBaseline', () => {
     expect(summary.title).toMatch(/access handoff/i);
     expect(summary.bestNextMove).toMatch(/password handoff|access instructions/i);
     expect(summary.decisionRule).toMatch(/access instructions/i);
+    expect(summary.watchout).toMatch(/QR packs|sloppy|undermine/i);
     expect(nextMove.ctaLabel).toMatch(/review guest access/i);
     expect(nextMove.priorityLabel).toBe('Access handoff');
     expect(nextMove.decisionRule).toMatch(/Access clarity beats broader sharing/i);

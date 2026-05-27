@@ -1521,7 +1521,7 @@ export const DashboardOverview: React.FC = () => {
                     </div>
                     <Badge variant={analyticsConfidenceSummary.tone}>{analyticsConfidenceSummary.statusLabel}</Badge>
                   </div>
-                  <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                  <div className="mt-3 grid gap-2 sm:grid-cols-3">
                     <div className="rounded-lg border border-border-subtle bg-white px-3 py-2.5">
                       <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-text-tertiary">Best next move</p>
                       <p className="mt-1 text-[11px] leading-5 text-text-tertiary">{analyticsConfidenceSummary.bestNextMove}</p>
@@ -1529,6 +1529,10 @@ export const DashboardOverview: React.FC = () => {
                     <div className="rounded-lg border border-border-subtle bg-white px-3 py-2.5">
                       <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-text-tertiary">Decision rule</p>
                       <p className="mt-1 text-[11px] leading-5 text-text-tertiary">{analyticsConfidenceSummary.decisionRule}</p>
+                    </div>
+                    <div className="rounded-lg border border-border-subtle bg-white px-3 py-2.5">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-text-tertiary">Watchout</p>
+                      <p className="mt-1 text-[11px] leading-5 text-text-tertiary">{analyticsConfidenceSummary.watchout}</p>
                     </div>
                   </div>
                   <div className="mt-3 grid gap-2 sm:grid-cols-3">
