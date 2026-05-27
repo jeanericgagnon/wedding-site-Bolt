@@ -124,7 +124,13 @@ describe('toBuilderV2Document', () => {
       variant: 'default',
       enabled: true,
       bindings: {},
-      settings: { title: 'See you soon', subtext: 'Please RSVP when you can.', footerNote: 'Travel details keep evolving.' },
+      settings: {
+        title: 'See you soon',
+        subtext: 'Please RSVP when you can.',
+        buttonLabel: 'RSVP now',
+        rsvpUrl: '#rsvp',
+        footerNote: 'Travel details keep evolving.',
+      },
     });
 
     const dressCodeSection = toBuilderV2Section({
@@ -135,8 +141,11 @@ describe('toBuilderV2Document', () => {
       bindings: {},
       settings: {
         title: 'Cocktail Attire',
+        dressCodeLabel: 'Cocktail Attire',
         description: 'Dressy, easy, and outdoor-friendly.',
+        presetCode: 'cocktail',
         suggestions: ['Block heels work well', 'Please skip denim'],
+        colorNote: 'Please avoid white and ivory.',
         additionalNote: 'Bring a layer for the evening.',
       },
     });
@@ -185,12 +194,16 @@ describe('toBuilderV2Document', () => {
     ]);
     expect(footerSection.blocks).toMatchObject([
       { type: 'text', data: { text: 'Please RSVP when you can.' } },
+      { type: 'travelTip', data: { title: 'RSVP now', url: '#rsvp', note: 'Primary action' } },
       { type: 'story', data: { text: 'Travel details keep evolving.' } },
     ]);
     expect(dressCodeSection.blocks).toMatchObject([
+      { type: 'title', data: { text: 'Cocktail Attire' } },
       { type: 'text', data: { text: 'Dressy, easy, and outdoor-friendly.' } },
       { type: 'qna', data: { answer: 'Block heels work well' } },
       { type: 'qna', data: { answer: 'Please skip denim' } },
+      { type: 'qna', data: { question: 'Color note', answer: 'Please avoid white and ivory.' } },
+      { type: 'qna', data: { question: 'Preset code', answer: 'cocktail' } },
       { type: 'story', data: { text: 'Bring a layer for the evening.' } },
     ]);
     expect(accommodationsSection.blocks).toMatchObject([
@@ -955,9 +968,13 @@ describe('legacy adapters', () => {
               title: 'Cocktail Attire',
               subtitle: 'Dressy, comfortable, and ready for an outdoor evening.',
               blocks: [
+                { id: 'dress-label', type: 'title', data: { text: 'Festive Cocktail' } },
                 { id: 'dress-note', type: 'text', data: { text: 'Think polished looks with layers for a cool night.' } },
                 { id: 'dress-tip-1', type: 'qna', data: { answer: 'Block heels and loafers work well on the lawn.' } },
                 { id: 'dress-tip-2', type: 'faqItem', data: { answer: 'Please skip denim and athletic wear.' } },
+                { id: 'dress-color', type: 'qna', data: { question: 'Color note', answer: 'Please avoid white and ivory.' } },
+                { id: 'dress-preset', type: 'qna', data: { question: 'Preset code', answer: 'cocktail' } },
+                { id: 'dress-extra', type: 'story', data: { text: 'Bring a layer for the evening breeze.' } },
               ],
             },
           ],
@@ -966,14 +983,16 @@ describe('legacy adapters', () => {
     });
 
     expect(project.pages[0].sections[0].settings).toMatchObject({
-      dressCodeLabel: 'Cocktail Attire',
+      dressCodeLabel: 'Festive Cocktail',
+      presetCode: 'cocktail',
       description: 'Think polished looks with layers for a cool night.',
+      colorNote: 'Please avoid white and ivory.',
       suggestions: [
         'Block heels and loafers work well on the lawn.',
         'Please skip denim and athletic wear.',
       ],
+      additionalNote: 'Bring a layer for the evening breeze.',
     });
-    expect(project.pages[0].sections[0].settings.additionalNote).toBe('');
   });
 
   it('keeps builder v2 dress-code sections sparse when the source is sparse', () => {
@@ -1064,6 +1083,7 @@ describe('legacy adapters', () => {
               subtitle: 'Please send your RSVP when you can.',
               blocks: [
                 { id: 'footer-note-1', type: 'text', data: { text: 'Weekend details will keep getting sharper as we get closer.' } },
+                { id: 'footer-cta', type: 'travelTip', data: { title: 'RSVP now', url: '#rsvp', note: 'Primary action' } },
                 { id: 'footer-note-2', type: 'story', data: { text: 'Thank you for being part of it.' } },
               ],
             },
@@ -1075,6 +1095,8 @@ describe('legacy adapters', () => {
     expect(project.pages[0].sections[0].settings).toMatchObject({
       headline: 'We hope to celebrate with you',
       subtext: 'Please send your RSVP when you can.',
+      buttonLabel: 'RSVP now',
+      rsvpUrl: '#rsvp',
       footerNote: 'Weekend details will keep getting sharper as we get closer.',
     });
   });

@@ -402,14 +402,20 @@ const makeDefaultBlocksForType = (
     case 'dress-code': {
       const description = getSettingString(settings, 'description');
       const additionalNote = getSettingString(settings, 'additionalNote');
+      const dressCodeLabel = getSettingString(settings, 'dressCodeLabel');
+      const presetCode = getSettingString(settings, 'presetCode');
+      const colorNote = getSettingString(settings, 'colorNote');
       const suggestions = getSettingStringList(settings, 'suggestions');
       return [
+        ...(dressCodeLabel ? [{ id: 'b-title', type: 'title', data: { text: dressCodeLabel } } satisfies BuilderV2Block] : []),
         ...(description ? [{ id: 'b-text', type: 'text', data: { text: description } } satisfies BuilderV2Block] : []),
         ...suggestions.map((suggestion, index) => ({
           id: `b-qna-${index + 1}`,
           type: 'qna' as const,
           data: { answer: suggestion },
         })),
+        ...(colorNote ? [{ id: 'b-qna-color', type: 'qna', data: { question: 'Color note', answer: colorNote } } satisfies BuilderV2Block] : []),
+        ...(presetCode ? [{ id: 'b-qna-preset', type: 'qna', data: { question: 'Preset code', answer: presetCode } } satisfies BuilderV2Block] : []),
         ...(additionalNote ? [{ id: 'b-story', type: 'story', data: { text: additionalNote } } satisfies BuilderV2Block] : []),
       ];
     }
@@ -498,9 +504,12 @@ const makeDefaultBlocksForType = (
     }
     case 'footer-cta': {
       const subtext = getSettingString(settings, 'subtext');
+      const buttonLabel = getSettingString(settings, 'buttonLabel');
+      const rsvpUrl = getSettingString(settings, 'rsvpUrl');
       const footerNote = getSettingString(settings, 'footerNote');
       return [
         ...(subtext ? [{ id: 'b-text', type: 'text', data: { text: subtext } } satisfies BuilderV2Block] : []),
+        ...((buttonLabel || rsvpUrl) ? [{ id: 'b-cta', type: 'travelTip', data: { title: buttonLabel || undefined, url: rsvpUrl || undefined, note: 'Primary action' } } satisfies BuilderV2Block] : []),
         ...(footerNote ? [{ id: 'b-story', type: 'story', data: { text: footerNote } } satisfies BuilderV2Block] : []),
       ];
     }
@@ -630,13 +639,6 @@ const getSectionNarrativeParts = (section: BuilderV2Section) => (
     .map((value) => value.trim())
 );
 
-const getDressCodeSuggestionText = (section: BuilderV2Section) => (
-  getMeaningfulBlocks(section.blocks, ['qna', 'faqItem'])
-    .flatMap((block) => [block.data.answer, block.data.text, block.data.question, block.data.title])
-    .filter((value): value is string => typeof value === 'string' && value.trim().length > 0)
-    .map((value) => value.trim())
-);
-
 const getSectionNoteCards = (
   section: BuilderV2Section,
   types: BuilderV2Block['type'][],
@@ -670,6 +672,23 @@ const getTravelHintBucket = (
   if (/(flight|airport|airline|fly|arrival|depart|get(?:ting)? here)/.test(haystack)) return 'flight';
   if (/(parking|valet|garage|lot|shuttle|transit|train|bart|bus|car|drive)/.test(haystack)) return 'parking';
   return 'general';
+};
+
+const getNamedAnswerValue = (
+  section: BuilderV2Section,
+  label: string,
+) => {
+  const normalizedLabel = label.trim().toLowerCase();
+  const match = getMeaningfulBlocks(section.blocks, ['qna', 'faqItem'])
+    .find((block) => {
+      const candidate = [block.data.question, block.data.title]
+        .find((value): value is string => typeof value === 'string' && value.trim().length > 0);
+      return candidate?.trim().toLowerCase() === normalizedLabel;
+    });
+
+  const answer = [match?.data.answer, match?.data.text]
+    .find((value): value is string => typeof value === 'string' && value.trim().length > 0);
+  return answer?.trim() || '';
 };
 
 const getDirectionsTextValue = (
@@ -867,18 +886,37 @@ const toLegacyBuilderSettings = (section: BuilderV2Section): Record<string, unkn
         ]),
       };
     case 'dress-code': {
+      const narrativeParts = getSectionNarrativeParts(section);
       const description = getFirstMeaningfulString(section, [
-        getSectionNarrativeText(section),
+        narrativeParts[0],
         section.subtitle,
       ]);
-      const suggestions = getDressCodeSuggestionText(section);
+      const additionalNote = narrativeParts.find((part) => part !== description) || '';
+      const suggestions = getMeaningfulBlocks(section.blocks, ['qna', 'faqItem'])
+        .filter((block) => {
+          const candidate = [block.data.question, block.data.title]
+            .find((value): value is string => typeof value === 'string' && value.trim().length > 0)
+            ?.trim()
+            .toLowerCase();
+          return candidate !== 'color note' && candidate !== 'preset code';
+        })
+        .flatMap((block) => [block.data.answer, block.data.text, block.data.question, block.data.title])
+        .filter((value): value is string => typeof value === 'string' && value.trim().length > 0)
+        .map((value) => value.trim());
 
       return {
         ...common,
-        dressCodeLabel: getFirstMeaningfulString(section, [section.title, common.title as string | undefined, 'Dress Code']),
+        dressCodeLabel: getFirstMeaningfulString(section, [
+          getFirstMeaningfulBlock(section.blocks, ['title'])?.data.text,
+          section.title,
+          common.title as string | undefined,
+          'Dress Code',
+        ]),
+        presetCode: getNamedAnswerValue(section, 'Preset code') || undefined,
         description,
+        colorNote: getNamedAnswerValue(section, 'Color note') || undefined,
         suggestions,
-        additionalNote: '',
+        additionalNote,
       };
     }
     case 'contact':
@@ -915,10 +953,14 @@ const toLegacyBuilderSettings = (section: BuilderV2Section): Record<string, unkn
       const narrativeParts = getSectionNarrativeParts(section);
       const subtext = getFirstMeaningfulString(section, [section.subtitle, narrativeParts[0]]);
       const footerNote = narrativeParts.find((part) => part !== subtext) || '';
+      const ctaCard = getSectionNoteCards(section, ['travelTip'])
+        .find((item) => item.url || item.title);
       return {
         ...common,
         headline: getFirstMeaningfulString(section, [section.title, common.headline as string | undefined]),
         subtext,
+        buttonLabel: ctaCard?.title || undefined,
+        rsvpUrl: ctaCard?.url || undefined,
         footerNote,
       };
     }
