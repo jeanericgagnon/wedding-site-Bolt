@@ -18,15 +18,24 @@ export const MemoryCuratorCard: React.FC<Props> = ({ model }) => {
           <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-rose-700/80">{model.eyebrow}</p>
           <h2 className="mt-1 text-lg font-semibold text-neutral-950">{model.title}</h2>
           <p className="mt-2 text-sm leading-6 text-neutral-700">{model.detail}</p>
-          <div className="mt-3 grid gap-2 sm:grid-cols-[auto_1fr]">
-            <div className="rounded-2xl border border-white/70 bg-white/75 px-3 py-2">
+          <div className="mt-3 grid gap-2 sm:grid-cols-3">
+            <div className="rounded-2xl border border-white/70 bg-white/75 px-3 py-3">
               <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-neutral-500">Readiness</p>
               <p className="mt-1 text-sm font-medium text-neutral-800">{model.readinessLabel}</p>
             </div>
-            <div className="rounded-2xl border border-white/70 bg-white/75 px-3 py-2">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-neutral-500">Curation note</p>
-              <p className="mt-1 text-sm text-neutral-700">{model.curationNote}</p>
+            <div className="rounded-2xl border border-white/70 bg-white/75 px-3 py-3">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-neutral-500">Main focus</p>
+              <p className="mt-1 text-sm font-medium text-neutral-800">{model.focusTitle}</p>
+              <p className="mt-2 text-xs leading-5 text-neutral-700">{model.focusDetail}</p>
             </div>
+            <div className="rounded-2xl border border-white/70 bg-white/75 px-3 py-3">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-neutral-500">Decision rule</p>
+              <p className="mt-1 text-sm font-medium text-neutral-800">{model.decisionRule}</p>
+            </div>
+          </div>
+          <div className="mt-3 rounded-2xl border border-white/70 bg-white/75 px-3 py-3">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-neutral-500">Curation note</p>
+            <p className="mt-1 text-sm text-neutral-700">{model.curationNote}</p>
           </div>
           {model.badges.length > 0 && (
             <div className="mt-3 flex flex-wrap gap-2 text-[11px] text-neutral-600">
