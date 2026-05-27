@@ -1,6 +1,13 @@
 import { describe, it, expect } from 'vitest';
 import type { SectionInstance } from '../types/layoutConfig';
-import { toBuilderV2Document, toBuilderV2Section } from './adapter';
+import {
+  builderProjectToBuilderV2Document,
+  layoutConfigToBuilderV2Document,
+  looksLikeBuilderProject,
+  looksLikeLayoutConfigV1,
+  toBuilderV2Document,
+  toBuilderV2Section,
+} from './adapter';
 
 describe('toBuilderV2Document', () => {
   it('maps section instances into a v2 document with defaults', () => {
@@ -69,5 +76,121 @@ describe('toBuilderV2Document', () => {
 
     expect(section.type).toBe('registry');
     expect(section.blocks[0]?.type).toBe('registryItem');
+  });
+});
+
+describe('legacy adapters', () => {
+  it('maps layout config pages into multi-page builder v2 documents', () => {
+    const doc = layoutConfigToBuilderV2Document({
+      version: '1',
+      templateId: 'modern-luxe',
+      pages: [
+        {
+          id: 'home',
+          title: 'Home',
+          sections: [
+            { id: 'hero', type: 'hero', variant: 'default', enabled: true, bindings: {}, settings: { title: 'Welcome', subtitle: 'Join us' } },
+          ],
+        },
+        {
+          id: 'travel',
+          title: 'Travel & Stay',
+          sections: [
+            { id: 'travel-section', type: 'travel', variant: 'default', enabled: true, bindings: {}, settings: { title: 'Travel', description: 'Hotels and flights' } },
+          ],
+        },
+      ],
+      meta: {
+        createdAtISO: '2026-05-27T18:00:00.000Z',
+        updatedAtISO: '2026-05-27T19:00:00.000Z',
+      },
+    });
+
+    expect(doc.updatedAtISO).toBe('2026-05-27T19:00:00.000Z');
+    expect(doc.pages).toMatchObject([
+      { id: 'home', slug: 'home', isHome: true, hidden: false },
+      { id: 'travel', slug: 'travel-stay', isHome: false, hidden: false },
+    ]);
+    expect(doc.pages?.[1]?.sections[0]).toMatchObject({
+      type: 'travel',
+      title: 'Travel',
+      subtitle: 'Hotels and flights',
+    });
+  });
+
+  it('maps builder project pages into multi-page builder v2 documents', () => {
+    const doc = builderProjectToBuilderV2Document({
+      id: 'project-1',
+      weddingId: 'w1',
+      templateId: 'modern-luxe',
+      themeId: 'romantic',
+      pages: [
+        {
+          id: 'home',
+          title: 'Home',
+          slug: 'home',
+          orderIndex: 0,
+          sections: [
+            {
+              id: 'hero',
+              displayName: 'Hero lead',
+              type: 'hero',
+              variant: 'default',
+              enabled: true,
+              locked: false,
+              orderIndex: 0,
+              settings: { headline: 'Welcome home', subheadline: 'See you in September' },
+              bindings: {},
+              styleOverrides: {},
+              meta: { createdAtISO: '2026-05-27T18:00:00.000Z', updatedAtISO: '2026-05-27T18:00:00.000Z' },
+            },
+          ],
+          meta: { isHome: true, isHidden: false },
+        },
+        {
+          id: 'weekend',
+          title: 'Weekend',
+          slug: 'weekend',
+          orderIndex: 1,
+          sections: [
+            {
+              id: 'travel',
+              type: 'travel',
+              variant: 'default',
+              enabled: true,
+              locked: false,
+              orderIndex: 0,
+              settings: { title: 'Travel', intro: 'Stay nearby' },
+              bindings: {},
+              styleOverrides: {},
+              meta: { createdAtISO: '2026-05-27T18:00:00.000Z', updatedAtISO: '2026-05-27T18:00:00.000Z' },
+            },
+          ],
+          meta: { isHome: false, isHidden: true },
+        },
+      ],
+      draftVersion: 2,
+      publishedVersion: 1,
+      publishStatus: 'draft',
+      lastPublishedAt: null,
+      meta: { createdAtISO: '2026-05-27T18:00:00.000Z', updatedAtISO: '2026-05-27T20:00:00.000Z' },
+    });
+
+    expect(doc.updatedAtISO).toBe('2026-05-27T20:00:00.000Z');
+    expect(doc.pages).toMatchObject([
+      { id: 'home', slug: 'home', isHome: true, hidden: false },
+      { id: 'weekend', slug: 'weekend', isHome: false, hidden: true },
+    ]);
+    expect(doc.pages?.[0]?.sections[0]).toMatchObject({
+      title: 'Hero lead',
+      subtitle: 'See you in September',
+    });
+  });
+
+  it('detects legacy input shapes safely', () => {
+    expect(looksLikeLayoutConfigV1({ version: '1', templateId: 'modern-luxe', pages: [] })).toBe(true);
+    expect(looksLikeBuilderProject({ weddingId: 'w1', templateId: 'modern-luxe', themeId: 'romantic', pages: [] })).toBe(true);
+    expect(looksLikeLayoutConfigV1({ version: 'v2', pages: [] })).toBe(false);
+    expect(looksLikeBuilderProject({ version: '1', pages: [] })).toBe(false);
   });
 });

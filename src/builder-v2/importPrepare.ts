@@ -1,4 +1,5 @@
 import type { BuilderV2Block, BuilderV2BlockData, BuilderV2Document, BuilderV2Page, BuilderV2Section } from './contracts';
+import { builderProjectToBuilderV2Document, layoutConfigToBuilderV2Document, looksLikeBuilderProject, looksLikeLayoutConfigV1 } from './adapter';
 import { sanitizeImportedBlockType, sanitizeImportedSectionType } from './importSanitize';
 
 type ImportObject = Record<string, unknown>;
@@ -311,6 +312,25 @@ export function prepareImportedBuilderV2Document(
 ): PreparedImport {
   if (!isObject(input)) {
     return { ok: false, error: 'Import must be a JSON object.' };
+  }
+
+  const legacyInput = looksLikeLayoutConfigV1(input)
+    ? layoutConfigToBuilderV2Document(input)
+    : looksLikeBuilderProject(input)
+      ? builderProjectToBuilderV2Document(input)
+      : null;
+
+  if (legacyInput) {
+    const migrated = prepareImportedBuilderV2Document(legacyInput, options);
+    if (migrated.ok) {
+      migrated.report.normalizedVersion = true;
+      migrated.report.notes.unshift(
+        looksLikeLayoutConfigV1(input)
+          ? 'Imported a legacy layout config and mapped it onto the Builder V2 document model.'
+          : 'Imported a legacy builder project and mapped it onto the Builder V2 document model.',
+      );
+    }
+    return migrated;
   }
 
   if (!Array.isArray(input.pages) && !Array.isArray(input.sections)) {

@@ -169,4 +169,147 @@ describe('prepareImportedBuilderV2Document', () => {
     if (result.ok) return;
     expect(result.error).toContain('usable sections');
   });
+
+  it('imports legacy layout config documents through the v2 cleanup pipeline', () => {
+    const result = prepareImportedBuilderV2Document({
+      version: '1',
+      templateId: 'modern-luxe',
+      pages: [
+        {
+          id: 'home',
+          title: 'Home',
+          sections: [
+            {
+              id: 'hero',
+              type: 'hero',
+              variant: 'default',
+              enabled: true,
+              bindings: {},
+              settings: { title: 'Welcome', subtitle: 'Join us in Napa' },
+            },
+          ],
+        },
+        {
+          id: 'travel',
+          title: 'Travel Plans',
+          sections: [
+            {
+              id: 'travel-section',
+              type: 'travel',
+              variant: 'default',
+              enabled: true,
+              bindings: {},
+              settings: { title: 'Travel', description: 'Stay nearby' },
+            },
+          ],
+        },
+      ],
+      meta: {
+        createdAtISO: '2026-05-27T18:00:00.000Z',
+        updatedAtISO: '2026-05-27T19:00:00.000Z',
+      },
+    }, { nowIso: '2026-05-27T20:00:00.000Z' });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+
+    expect(result.doc.pages).toMatchObject([
+      {
+        id: 'home',
+        slug: 'home',
+        isHome: true,
+        sections: [{ id: 'hero', title: 'Welcome', subtitle: 'Join us in Napa' }],
+      },
+      {
+        id: 'travel',
+        slug: 'travel-plans',
+        isHome: false,
+        sections: [{ id: 'travel-section', title: 'Travel', subtitle: 'Stay nearby' }],
+      },
+    ]);
+    expect(result.report.pageCount).toBe(2);
+    expect(result.report.normalizedVersion).toBe(true);
+    expect(result.report.notes[0]).toContain('legacy layout config');
+  });
+
+  it('imports legacy builder projects through the v2 cleanup pipeline', () => {
+    const result = prepareImportedBuilderV2Document({
+      id: 'project-1',
+      weddingId: 'w1',
+      templateId: 'modern-luxe',
+      themeId: 'romantic',
+      pages: [
+        {
+          id: 'home',
+          title: 'Home',
+          slug: 'home',
+          orderIndex: 0,
+          sections: [
+            {
+              id: 'hero',
+              displayName: 'Hero lead',
+              type: 'hero',
+              variant: 'default',
+              enabled: true,
+              locked: false,
+              orderIndex: 0,
+              settings: { headline: 'Welcome home', subheadline: 'See you in September' },
+              bindings: {},
+              styleOverrides: {},
+              meta: { createdAtISO: '2026-05-27T18:00:00.000Z', updatedAtISO: '2026-05-27T18:00:00.000Z' },
+            },
+          ],
+          meta: { isHome: true, isHidden: false },
+        },
+        {
+          id: 'weekend',
+          title: 'Weekend',
+          slug: 'weekend',
+          orderIndex: 1,
+          sections: [
+            {
+              id: 'travel',
+              type: 'travel',
+              variant: 'default',
+              enabled: true,
+              locked: false,
+              orderIndex: 0,
+              settings: { title: 'Travel', intro: 'Stay nearby' },
+              bindings: {},
+              styleOverrides: {},
+              meta: { createdAtISO: '2026-05-27T18:00:00.000Z', updatedAtISO: '2026-05-27T18:00:00.000Z' },
+            },
+          ],
+          meta: { isHome: false, isHidden: true },
+        },
+      ],
+      draftVersion: 2,
+      publishedVersion: 1,
+      publishStatus: 'draft',
+      lastPublishedAt: null,
+      meta: { createdAtISO: '2026-05-27T18:00:00.000Z', updatedAtISO: '2026-05-27T20:00:00.000Z' },
+    }, { nowIso: '2026-05-27T21:00:00.000Z' });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+
+    expect(result.doc.pages).toMatchObject([
+      {
+        id: 'home',
+        slug: 'home',
+        isHome: true,
+        hidden: false,
+        sections: [{ id: 'hero', title: 'Hero lead', subtitle: 'See you in September' }],
+      },
+      {
+        id: 'weekend',
+        slug: 'weekend',
+        isHome: false,
+        hidden: true,
+        sections: [{ id: 'travel', title: 'Travel', subtitle: 'Stay nearby' }],
+      },
+    ]);
+    expect(result.report.pageCount).toBe(2);
+    expect(result.report.notes[0]).toContain('legacy builder project');
+  });
 });
