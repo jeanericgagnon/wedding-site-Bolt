@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import {
   DndContext,
   DragEndEvent,
@@ -33,6 +33,8 @@ import {
   exportPlaceCardsCSV, downloadCSV, invalidateDriftedAssignments, setGuestCheckedIn,
 } from './seating/seatingService';
 import { buildSeatingInsightCard } from './seating/seatingIntelligence';
+import { buildDayOfRelayModel, type DayOfRelayStep } from './dayOfRelay';
+import { DayOfRelayCard } from './DayOfRelayCard';
 
 const UNASSIGNED_DROPPABLE = 'unassigned-pool';
 type TableShape = 'round' | 'rectangle' | 'bar' | 'dj_booth' | 'dance_floor';
@@ -1489,6 +1491,31 @@ export const DashboardSeating: React.FC = () => {
   const arrivedGuestIds = new Set(assignments.filter(a => !!a.checked_in_at).map(a => a.guest_id));
   const assignedGuestIdSet = new Set(assignments.map(a => a.guest_id));
   const arrivedCount = allGuests.filter(g => g.is_attending && arrivedGuestIds.has(g.id)).length;
+  const splitHouseholdCount = useMemo(() => {
+    const assignedGuestIds = new Set(assignments.filter((assignment) => assignment.is_valid).map((assignment) => assignment.guest_id));
+    const householdMap = new Map<string, { total: number; assigned: number }>();
+
+    allGuests
+      .filter((guest) => guest.is_attending)
+      .forEach((guest) => {
+        const key = guest.household_id || guest.group_name || guest.id;
+        const current = householdMap.get(key) ?? { total: 0, assigned: 0 };
+        current.total += 1;
+        if (assignedGuestIds.has(guest.id)) current.assigned += 1;
+        householdMap.set(key, current);
+      });
+
+    return Array.from(householdMap.values()).filter((household) => household.assigned > 0 && household.assigned < household.total).length;
+  }, [allGuests, assignments]);
+  const dayOfRelay = useMemo(() => buildDayOfRelayModel({
+    daysUntilWedding,
+    pendingGuestCount: counters?.pending ?? 0,
+    invalidSeatCount: invalidCount,
+    unassignedSeatCount: counters?.unassigned ?? 0,
+    splitHouseholdCount,
+    liveIssueCount: invalidCount + (checkInMode ? 1 : 0),
+    checkedInCount: arrivedCount,
+  }), [arrivedCount, checkInMode, counters?.pending, counters?.unassigned, daysUntilWedding, invalidCount, splitHouseholdCount]);
   const checkInCandidates = allGuests
     .filter(g => g.is_attending)
     .filter(g => matchesCheckInFilter(g, arrivedGuestIds, assignedGuestIdSet))
@@ -1630,40 +1657,64 @@ export const DashboardSeating: React.FC = () => {
             setCheckInMode(true);
           };
 
+          const runDayOfRelayAction = (step: DayOfRelayStep) => {
+            if (step.target === 'coordinator') {
+              window.location.assign('/dashboard/coordinator');
+              return;
+            }
+            if (step.target === 'guests') {
+              window.location.assign('/dashboard/guests');
+              return;
+            }
+            if (step.target === 'messages') {
+              window.location.assign('/dashboard/messages');
+              return;
+            }
+            if (step.target === 'check-in') {
+              setCheckInMode(true);
+              return;
+            }
+            runInsightAction(step.target === 'check-drift' ? 'check-drift' : 'auto-seat');
+          };
+
           return (
-            <Card variant="bordered" padding="lg" className="shadow-sm">
-              <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                <div className="space-y-3">
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-[0.22em] text-text-tertiary">{seatingInsight.eyebrow}</p>
-                    <h2 className="mt-1 text-lg font-semibold text-text-primary">{seatingInsight.title}</h2>
-                    <p className="mt-1 text-sm text-text-secondary">{seatingInsight.detail}</p>
+            <div className="space-y-4">
+              <DayOfRelayCard relay={dayOfRelay} onAction={runDayOfRelayAction} />
+
+              <Card variant="bordered" padding="lg" className="shadow-sm">
+                <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                  <div className="space-y-3">
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-[0.22em] text-text-tertiary">{seatingInsight.eyebrow}</p>
+                      <h2 className="mt-1 text-lg font-semibold text-text-primary">{seatingInsight.title}</h2>
+                      <p className="mt-1 text-sm text-text-secondary">{seatingInsight.detail}</p>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {seatingInsight.badges.map((badge) => (
+                        <Badge key={badge} variant="secondary">{badge}</Badge>
+                      ))}
+                    </div>
+                    <div className="space-y-1">
+                      {seatingInsight.callouts.map((callout) => (
+                        <p key={callout} className="text-sm text-text-secondary">{callout}</p>
+                      ))}
+                    </div>
                   </div>
-                  <div className="flex flex-wrap gap-2">
-                    {seatingInsight.badges.map((badge) => (
-                      <Badge key={badge} variant="secondary">{badge}</Badge>
-                    ))}
-                  </div>
-                  <div className="space-y-1">
-                    {seatingInsight.callouts.map((callout) => (
-                      <p key={callout} className="text-sm text-text-secondary">{callout}</p>
-                    ))}
+                  <div className="flex flex-wrap gap-2 lg:max-w-xs lg:justify-end">
+                    {seatingInsight.primaryAction && (
+                      <Button size="sm" variant="primary" onClick={() => runInsightAction(seatingInsight.primaryAction!.mode)}>
+                        {seatingInsight.primaryAction.label}
+                      </Button>
+                    )}
+                    {seatingInsight.secondaryAction && (
+                      <Button size="sm" variant="outline" onClick={() => runInsightAction(seatingInsight.secondaryAction!.mode)}>
+                        {seatingInsight.secondaryAction.label}
+                      </Button>
+                    )}
                   </div>
                 </div>
-                <div className="flex flex-wrap gap-2 lg:max-w-xs lg:justify-end">
-                  {seatingInsight.primaryAction && (
-                    <Button size="sm" variant="primary" onClick={() => runInsightAction(seatingInsight.primaryAction!.mode)}>
-                      {seatingInsight.primaryAction.label}
-                    </Button>
-                  )}
-                  {seatingInsight.secondaryAction && (
-                    <Button size="sm" variant="outline" onClick={() => runInsightAction(seatingInsight.secondaryAction!.mode)}>
-                      {seatingInsight.secondaryAction.label}
-                    </Button>
-                  )}
-                </div>
-              </div>
-            </Card>
+              </Card>
+            </div>
           );
         })()}
 

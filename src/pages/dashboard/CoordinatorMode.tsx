@@ -120,6 +120,8 @@ import { buildCoordinatorNavigationBoard } from '../../lib/coordinatorNavigation
 import { getCoordinatorDemoSiteId } from './coordinatorDemoContext';
 import { buildDayOfBrainBriefing, type DayOfBrainAction } from './dayOfBrain';
 import { DayOfBrainCard } from './DayOfBrainCard';
+import { buildDayOfRelayModel, type DayOfRelayStep } from './dayOfRelay';
+import { DayOfRelayCard } from './DayOfRelayCard';
 
 
 type AudienceOption = { value: string; label: string; count: number };
@@ -961,6 +963,15 @@ export const DashboardCoordinatorMode: React.FC = () => {
     qnaCounts.open,
     alertStats.scheduled,
   ]);
+  const dayOfRelay = useMemo(() => buildDayOfRelayModel({
+    daysUntilWedding: 0,
+    pendingGuestCount: stats.pending,
+    invalidSeatCount: 0,
+    unassignedSeatCount: 0,
+    splitHouseholdCount: 0,
+    liveIssueCount: liveIssues.length + correctionCues.length,
+    checkedInCount: stats.checkedIn,
+  }), [correctionCues.length, liveIssues.length, stats.checkedIn, stats.pending]);
   const activeTimelineEvent = useMemo(
     () => events.find((event) => event.id === activeTimelineEventId) ?? null,
     [events, activeTimelineEventId],
@@ -1125,6 +1136,42 @@ export const DashboardCoordinatorMode: React.FC = () => {
     if (action.target === 'planning') {
       window.location.assign('/dashboard/planning');
     }
+  };
+
+  const runDayOfRelayAction = (step: DayOfRelayStep) => {
+    if (step.target === 'coordinator') {
+      if (liveIssues.length > 0 || checkInWatchCount > 0 || nextArrivals.length > 0) {
+        focusCoordinatorCheckInLane();
+        setCheckInFilter('arrivals');
+        return;
+      }
+      if (qnaCounts.open > 0) {
+        focusCoordinatorQnaLane();
+        setQnaFilter('open');
+        setActiveQnaId(getFirstOpenCoordinatorQnaId(qnaItems));
+        return;
+      }
+      focusCoordinatorTimelineLane();
+      return;
+    }
+
+    if (step.target === 'check-in') {
+      focusCoordinatorCheckInLane();
+      setCheckInFilter('arrivals');
+      return;
+    }
+
+    if (step.target === 'messages') {
+      focusCoordinatorAlertLane();
+      return;
+    }
+
+    if (step.target === 'guests') {
+      window.location.assign('/dashboard/guests');
+      return;
+    }
+
+    window.location.assign('/dashboard/seating');
   };
 
   const jumpToOpsSnapshotLane = (key: 'check-in' | 'timeline' | 'qna' | 'alerting') => {
@@ -1708,6 +1755,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
           </div>
 
           <div className="space-y-4">
+            <DayOfRelayCard relay={dayOfRelay} onAction={runDayOfRelayAction} />
             <DayOfBrainCard briefing={dayOfBrainBriefing} onAction={runDayOfBrainAction} />
 
             <div className="rounded-2xl border border-border/35 bg-white shadow-[0_4px_14px_rgba(15,23,42,0.05)] p-4">
