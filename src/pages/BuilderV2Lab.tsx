@@ -15,6 +15,12 @@ import {
   getRecommendedBlockTypes,
 } from './builderV2SectionEditingModel';
 import {
+  buildBuilderV2CommandPaletteGuidance,
+  buildBuilderV2ImportGuidance,
+  getImportSummaryTone,
+  summarizeImportRepairCount,
+} from './builderV2WorkflowGuidance';
+import {
   DndContext,
   PointerSensor,
   closestCenter,
@@ -237,33 +243,6 @@ const SECTION_TYPE_MAP: Record<string, SectionType> = {
   'dress-code': 'dress-code',
   directions: 'directions',
 };
-
-const summarizeImportRepairCount = (report: BuilderV2ImportReport) => (
-  report.generatedSectionIds
-  + report.generatedBlockIds
-  + report.dedupedSectionIds
-  + report.dedupedBlockIds
-  + report.normalizedSectionTypes
-  + report.normalizedBlockTypes
-  + report.defaultedVariants
-  + report.coercedEnabledFlags
-  + report.normalizedTitles
-  + report.normalizedSubtitles
-  + report.resetInvalidBlockData
-  + report.recoveredBlockDataFromLegacyContent
-  + report.droppedInvalidSections
-  + report.droppedInvalidBlocks
-  + (report.normalizedVersion ? 1 : 0)
-  + (report.normalizedUpdatedAt ? 1 : 0)
-);
-
-const getImportSummaryTone = (report: BuilderV2ImportReport) => {
-  const repairs = summarizeImportRepairCount(report);
-  if (repairs === 0) return 'clean';
-  if (report.droppedInvalidSections > 0 || report.droppedInvalidBlocks > 0) return 'caution';
-  return 'repaired';
-};
-
 
 type StructureItemProps = {
   section: LabSection;
@@ -894,6 +873,14 @@ export const BuilderV2Lab: React.FC = () => {
       .sort((a, b) => b.s - a.s)
       .map((x) => x.item);
   }, [commandQuery, sections, addSection, clearSelection, invertSelection, selectAllSections, updateVariant]);
+  const importGuidance = useMemo(
+    () => buildBuilderV2ImportGuidance(lastImportReport, lastImportSource),
+    [lastImportReport, lastImportSource],
+  );
+  const commandPaletteGuidance = useMemo(
+    () => buildBuilderV2CommandPaletteGuidance(commandQuery, commandItems, recentCommands, pinnedCommands),
+    [commandItems, commandQuery, pinnedCommands, recentCommands],
+  );
 
 
 
@@ -1045,6 +1032,55 @@ export const BuilderV2Lab: React.FC = () => {
             </div>
           </div>
         )}
+
+        <div className="px-2 md:px-3 py-2 border-b border-border-subtle bg-white">
+          <div className={`rounded-md border px-3 py-3 ${
+            importGuidance.tone === 'clean'
+              ? 'border-emerald-200 bg-emerald-50/60'
+              : importGuidance.tone === 'repaired'
+                ? 'border-sky-200 bg-sky-50/60'
+                : importGuidance.tone === 'caution'
+                  ? 'border-amber-200 bg-amber-50/60'
+                  : 'border-border-subtle bg-surface-subtle'
+          }`}>
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-[11px] uppercase tracking-[0.2em] text-text-tertiary font-semibold">Import read</p>
+                <p className="mt-1 text-sm font-semibold text-text-primary">{importGuidance.title}</p>
+                <p className="mt-1 text-xs leading-relaxed text-text-secondary max-w-3xl">{importGuidance.detail}</p>
+              </div>
+              {importGuidance.keyStats.length > 0 && (
+                <div className="shrink-0 flex flex-wrap justify-end gap-1.5 text-[10px]">
+                  {importGuidance.keyStats.map((stat) => (
+                    <span key={stat} className="rounded-full border border-border-subtle bg-white px-2 py-1 text-text-secondary">{stat}</span>
+                  ))}
+                </div>
+              )}
+            </div>
+            <div className="mt-3 grid gap-2 md:grid-cols-2 xl:grid-cols-4">
+              <div className="rounded-md border border-border-subtle bg-white px-2.5 py-2">
+                <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary">Best next move</p>
+                <p className="mt-1 text-xs leading-relaxed text-text-primary">{importGuidance.bestNextMove}</p>
+              </div>
+              <div className="rounded-md border border-border-subtle bg-white px-2.5 py-2">
+                <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary">Decision rule</p>
+                <p className="mt-1 text-xs leading-relaxed text-text-primary">{importGuidance.decisionRule}</p>
+              </div>
+              <div className="rounded-md border border-border-subtle bg-white px-2.5 py-2">
+                <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary">Watchout</p>
+                <p className="mt-1 text-xs leading-relaxed text-text-primary">{importGuidance.watchout}</p>
+              </div>
+              <div className="grid gap-2 md:grid-cols-3 xl:grid-cols-1">
+                {importGuidance.steps.map((step) => (
+                  <div key={step.label} className="rounded-md border border-border-subtle bg-white px-2.5 py-2">
+                    <p className="text-[10px] uppercase tracking-[0.18em] text-text-tertiary">{step.label}</p>
+                    <p className="mt-1 text-xs leading-relaxed text-text-primary">{step.detail}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
 
         <div className={`grid grid-cols-1 ${focusPreview ? 'lg:grid-cols-1' : showStructure && showProperties ? 'lg:grid-cols-[180px_minmax(0,1fr)_620px]' : showProperties ? 'lg:grid-cols-[minmax(0,1fr)_620px]' : showStructure ? 'lg:grid-cols-[180px_minmax(0,1fr)]' : 'lg:grid-cols-1'} gap-0 flex-1 min-h-0`}>
           {!focusPreview && showStructure && (<aside className="border-r border-border bg-surface p-3 h-full min-h-0 overflow-hidden">
@@ -1799,6 +1835,27 @@ export const BuilderV2Lab: React.FC = () => {
             </div>
 
             <div className="space-y-3 p-4">
+              <div className="rounded-md border border-border-subtle bg-surface-subtle px-3 py-3">
+                <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-4">
+                  <div className="rounded-md border border-border-subtle bg-white px-2.5 py-2">
+                    <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary">Best next move</p>
+                    <p className="mt-1 text-xs leading-relaxed text-text-primary">{importGuidance.bestNextMove}</p>
+                  </div>
+                  <div className="rounded-md border border-border-subtle bg-white px-2.5 py-2">
+                    <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary">Decision rule</p>
+                    <p className="mt-1 text-xs leading-relaxed text-text-primary">{importGuidance.decisionRule}</p>
+                  </div>
+                  <div className="rounded-md border border-border-subtle bg-white px-2.5 py-2">
+                    <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary">Watchout</p>
+                    <p className="mt-1 text-xs leading-relaxed text-text-primary">{importGuidance.watchout}</p>
+                  </div>
+                  <div className="rounded-md border border-border-subtle bg-white px-2.5 py-2">
+                    <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary">Current</p>
+                    <p className="mt-1 text-xs leading-relaxed text-text-primary">{importGuidance.steps[0]?.detail}</p>
+                  </div>
+                </div>
+              </div>
+
               <div className="flex flex-wrap items-center gap-2">
                 <input
                   ref={importFileInputRef}
@@ -1879,6 +1936,45 @@ export const BuilderV2Lab: React.FC = () => {
                 placeholder="Type a command..."
                 className="w-full border rounded-md px-3 py-2 text-sm"
               />
+            </div>
+            <div className="px-3 py-3 border-b border-border-subtle bg-surface-subtle space-y-2.5">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary">Action read</p>
+                  <p className="mt-1 text-sm font-semibold text-text-primary">{commandPaletteGuidance.title}</p>
+                  <p className="mt-1 text-xs leading-relaxed text-text-secondary">{commandPaletteGuidance.detail}</p>
+                </div>
+                <span className="shrink-0 rounded-full border border-border-subtle bg-white px-2 py-1 text-[10px] text-text-secondary">
+                  {commandPaletteGuidance.visibleCount} visible
+                </span>
+              </div>
+              <div className="grid gap-2 md:grid-cols-3">
+                <div className="rounded-md border border-border-subtle bg-white px-2.5 py-2">
+                  <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary">Best next move</p>
+                  <p className="mt-1 text-xs leading-relaxed text-text-primary">{commandPaletteGuidance.bestNextMove}</p>
+                </div>
+                <div className="rounded-md border border-border-subtle bg-white px-2.5 py-2">
+                  <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary">Decision rule</p>
+                  <p className="mt-1 text-xs leading-relaxed text-text-primary">{commandPaletteGuidance.decisionRule}</p>
+                </div>
+                <div className="rounded-md border border-border-subtle bg-white px-2.5 py-2">
+                  <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary">Watchout</p>
+                  <p className="mt-1 text-xs leading-relaxed text-text-primary">{commandPaletteGuidance.watchout}</p>
+                </div>
+              </div>
+              {commandPaletteGuidance.suggestedQueries.length > 0 && (
+                <div className="flex flex-wrap gap-1.5">
+                  {commandPaletteGuidance.suggestedQueries.map((suggestion) => (
+                    <button
+                      key={suggestion}
+                      onClick={() => setCommandQuery(suggestion)}
+                      className="rounded-full border border-border-subtle bg-white px-2.5 py-1 text-[11px] hover:border-primary/30 hover:bg-primary/5"
+                    >
+                      {suggestion}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
             {pinnedCommands.length > 0 && (
               <div className="px-3 py-2 border-b border-border-subtle">
