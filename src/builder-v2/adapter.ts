@@ -232,6 +232,13 @@ const toBuilderV2SectionFromBuilder = (section: BuilderSectionInstance): Builder
     enabled: section.enabled,
     title,
     subtitle,
+    bindings: {
+      ...(Array.isArray(section.bindings.venueIds) && section.bindings.venueIds.length > 0 ? { venueIds: [...section.bindings.venueIds] } : {}),
+      ...(Array.isArray(section.bindings.scheduleItemIds) && section.bindings.scheduleItemIds.length > 0 ? { scheduleItemIds: [...section.bindings.scheduleItemIds] } : {}),
+      ...(Array.isArray(section.bindings.linkIds) && section.bindings.linkIds.length > 0 ? { linkIds: [...section.bindings.linkIds] } : {}),
+      ...(Array.isArray(section.bindings.faqIds) && section.bindings.faqIds.length > 0 ? { faqIds: [...section.bindings.faqIds] } : {}),
+      ...(Array.isArray(section.bindings.mediaAssetIds) && section.bindings.mediaAssetIds.length > 0 ? { mediaAssetIds: [...section.bindings.mediaAssetIds] } : {}),
+    },
     blocks: makeDefaultBlocksForType(normalizedType, section.settings, title, subtitle),
   };
 };
@@ -511,7 +518,13 @@ const toLegacyBuilderSection = (section: BuilderV2Section, orderIndex: number, u
   locked: false,
   orderIndex,
   settings: toLegacyBuilderSettings(section),
-  bindings: {},
+  bindings: {
+    ...(Array.isArray(section.bindings?.venueIds) && section.bindings?.venueIds.length > 0 ? { venueIds: [...section.bindings.venueIds] } : {}),
+    ...(Array.isArray(section.bindings?.scheduleItemIds) && section.bindings?.scheduleItemIds.length > 0 ? { scheduleItemIds: [...section.bindings.scheduleItemIds] } : {}),
+    ...(Array.isArray(section.bindings?.linkIds) && section.bindings?.linkIds.length > 0 ? { linkIds: [...section.bindings.linkIds] } : {}),
+    ...(Array.isArray(section.bindings?.faqIds) && section.bindings?.faqIds.length > 0 ? { faqIds: [...section.bindings.faqIds] } : {}),
+    ...(Array.isArray(section.bindings?.mediaAssetIds) && section.bindings?.mediaAssetIds.length > 0 ? { mediaAssetIds: [...section.bindings.mediaAssetIds] } : {}),
+  },
   styleOverrides: {},
   meta: {
     createdAtISO: updatedAtISO,

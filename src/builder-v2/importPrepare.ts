@@ -188,6 +188,12 @@ const sanitizePageSlug = (value: unknown, fallback: string) => {
   return slugToken(value) || fallback;
 };
 
+const sanitizeStringArray = (value: unknown) => (
+  Array.isArray(value)
+    ? value.filter((item): item is string => typeof item === 'string' && item.trim().length > 0).map((item) => item.trim())
+    : []
+);
+
 const parseImportedSection = (
   rawSection: unknown,
   sectionIndex: number,
@@ -247,6 +253,15 @@ const parseImportedSection = (
     report.coercedEnabledFlags += 1;
   }
 
+  const rawBindings = isObject(rawSection.bindings) ? rawSection.bindings : {};
+  const bindings = {
+    venueIds: sanitizeStringArray(rawBindings.venueIds),
+    scheduleItemIds: sanitizeStringArray(rawBindings.scheduleItemIds),
+    linkIds: sanitizeStringArray(rawBindings.linkIds),
+    faqIds: sanitizeStringArray(rawBindings.faqIds),
+    mediaAssetIds: sanitizeStringArray(rawBindings.mediaAssetIds),
+  };
+
   const rawBlocks = Array.isArray(rawSection.blocks) ? rawSection.blocks : [];
   if (!Array.isArray(rawSection.blocks)) {
     report.notes.push(`Section "${title}" had invalid blocks and was imported with an empty block list.`);
@@ -304,6 +319,7 @@ const parseImportedSection = (
     enabled: enabledState.enabled,
     title,
     subtitle,
+    bindings,
     blocks,
   } satisfies BuilderV2Section;
 };

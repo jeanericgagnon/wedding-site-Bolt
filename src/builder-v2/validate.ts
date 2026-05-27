@@ -13,6 +13,16 @@ function validateSection(section: unknown, prefix: string): string | null {
   if (!isString(section.type) || !section.type) return `${prefix}.type is required`;
   if (!isString(section.variant) || !section.variant) return `${prefix}.variant is required`;
   if (typeof section.enabled !== 'boolean') return `${prefix}.enabled must be boolean`;
+  if (section.bindings !== undefined) {
+    if (!isObject(section.bindings)) return `${prefix}.bindings must be an object`;
+    const bindingKeys = ['venueIds', 'scheduleItemIds', 'linkIds', 'faqIds', 'mediaAssetIds'] as const;
+    for (const key of bindingKeys) {
+      const value = section.bindings[key];
+      if (value !== undefined && (!Array.isArray(value) || value.some((item) => !isString(item)))) {
+        return `${prefix}.bindings.${key} must be an array of strings`;
+      }
+    }
+  }
   if (!Array.isArray(section.blocks)) return `${prefix}.blocks must be an array`;
 
   for (let j = 0; j < section.blocks.length; j += 1) {

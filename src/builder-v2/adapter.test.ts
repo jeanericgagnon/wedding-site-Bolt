@@ -388,6 +388,57 @@ describe('legacy adapters', () => {
     });
   });
 
+  it('preserves legacy builder section bindings when migrating into builder v2', () => {
+    const doc = builderProjectToBuilderV2Document({
+      id: 'project-1',
+      weddingId: 'w1',
+      templateId: 'modern-luxe',
+      themeId: 'romantic',
+      pages: [
+        {
+          id: 'travel',
+          title: 'Travel',
+          slug: 'travel',
+          orderIndex: 0,
+          sections: [
+            {
+              id: 'travel-section',
+              type: 'travel',
+              variant: 'default',
+              enabled: true,
+              locked: false,
+              orderIndex: 0,
+              settings: { title: 'Travel' },
+              bindings: {
+                venueIds: ['venue-1'],
+                scheduleItemIds: ['event-1'],
+                linkIds: ['link-1'],
+                faqIds: ['faq-1'],
+                mediaAssetIds: ['asset-1'],
+              },
+              styleOverrides: {},
+              meta: { createdAtISO: '2026-05-27T18:00:00.000Z', updatedAtISO: '2026-05-27T18:00:00.000Z' },
+            },
+          ],
+          meta: { isHome: true, isHidden: false },
+        },
+      ],
+      draftVersion: 2,
+      publishedVersion: 1,
+      publishStatus: 'draft',
+      lastPublishedAt: null,
+      meta: { createdAtISO: '2026-05-27T18:00:00.000Z', updatedAtISO: '2026-05-27T20:00:00.000Z' },
+    });
+
+    expect(doc.pages?.[0]?.sections[0]?.bindings).toEqual({
+      venueIds: ['venue-1'],
+      scheduleItemIds: ['event-1'],
+      linkIds: ['link-1'],
+      faqIds: ['faq-1'],
+      mediaAssetIds: ['asset-1'],
+    });
+  });
+
   it('maps builder v2 pages back into legacy builder projects for public runtime', () => {
     const project = builderV2DocumentToBuilderProject({
       version: 'v2',
@@ -477,6 +528,47 @@ describe('legacy adapters', () => {
     expect(project.pages[1].sections[0].settings.faqItems).toEqual([
       { id: 'faq-1-faq-0', q: 'Is there parking?', a: 'Yes, valet is available.' },
     ]);
+  });
+
+  it('preserves builder v2 section bindings when mapping back into legacy builder projects', () => {
+    const project = builderV2DocumentToBuilderProject({
+      version: 'v2',
+      updatedAtISO: '2026-05-27T21:00:00.000Z',
+      pages: [
+        {
+          id: 'travel',
+          title: 'Travel',
+          slug: 'travel',
+          isHome: true,
+          hidden: false,
+          sections: [
+            {
+              id: 'travel-section',
+              type: 'travel',
+              variant: 'default',
+              enabled: true,
+              title: 'Travel',
+              bindings: {
+                venueIds: ['venue-1'],
+                scheduleItemIds: ['event-1'],
+                linkIds: ['link-1'],
+                faqIds: ['faq-1'],
+                mediaAssetIds: ['asset-1'],
+              },
+              blocks: [],
+            },
+          ],
+        },
+      ],
+    });
+
+    expect(project.pages[0]?.sections[0]?.bindings).toEqual({
+      venueIds: ['venue-1'],
+      scheduleItemIds: ['event-1'],
+      linkIds: ['link-1'],
+      faqIds: ['faq-1'],
+      mediaAssetIds: ['asset-1'],
+    });
   });
 
   it('keeps story, gallery, and accommodations content legible in the legacy public runtime bridge', () => {

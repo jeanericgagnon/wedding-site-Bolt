@@ -158,6 +158,48 @@ describe('prepareImportedBuilderV2Document', () => {
     expect(result.report.normalizedHomePage).toBe(false);
   });
 
+  it('sanitizes imported section bindings without dropping valid scoped ids', () => {
+    const result = prepareImportedBuilderV2Document({
+      version: 'v2',
+      updatedAtISO: '2026-05-27T18:00:00.000Z',
+      pages: [
+        {
+          id: 'home',
+          title: 'Home',
+          slug: 'home',
+          isHome: true,
+          sections: [
+            {
+              id: 'travel',
+              type: 'travel',
+              variant: 'default',
+              enabled: true,
+              bindings: {
+                venueIds: [' venue-1 ', '', null],
+                scheduleItemIds: ['event-1', 42],
+                linkIds: ['link-1'],
+                faqIds: ['faq-1', {}],
+                mediaAssetIds: ['asset-1', '  '],
+              },
+              blocks: [],
+            },
+          ],
+        },
+      ],
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+
+    expect(result.doc.pages?.[0]?.sections[0]?.bindings).toEqual({
+      venueIds: ['venue-1'],
+      scheduleItemIds: ['event-1'],
+      linkIds: ['link-1'],
+      faqIds: ['faq-1'],
+      mediaAssetIds: ['asset-1'],
+    });
+  });
+
   it('fails when there are no usable sections left after import cleanup', () => {
     const result = prepareImportedBuilderV2Document({
       version: 'v2',

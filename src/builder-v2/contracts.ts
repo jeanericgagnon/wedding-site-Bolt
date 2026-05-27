@@ -44,6 +44,13 @@ export interface BuilderV2Section {
   enabled: boolean;
   title?: string;
   subtitle?: string;
+  bindings?: {
+    venueIds?: string[];
+    scheduleItemIds?: string[];
+    linkIds?: string[];
+    faqIds?: string[];
+    mediaAssetIds?: string[];
+  };
   blocks: BuilderV2Block[];
 }
 
