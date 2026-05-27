@@ -154,8 +154,13 @@ describe('toBuilderV2Document', () => {
           {
             name: 'The Archer',
             address: 'Main Street',
+            phone: '+1 (415) 555-0111',
             notes: 'Walkable to dinner.',
             url: 'https://example.com/archer',
+            blockCode: 'ARCHER-WED',
+            blockDeadline: '2026-08-01',
+            priceRange: '$289-$349',
+            distance: '0.3 miles from venue',
           },
         ],
       },
@@ -197,6 +202,11 @@ describe('toBuilderV2Document', () => {
           note: 'Walkable to dinner.',
           url: 'https://example.com/archer',
           location: 'Main Street',
+          phone: '+1 (415) 555-0111',
+          bookingCode: 'ARCHER-WED',
+          blockDeadline: '2026-08-01',
+          priceRange: '$289-$349',
+          distance: '0.3 miles from venue',
         },
       },
     ]);
@@ -320,8 +330,10 @@ describe('toBuilderV2Document', () => {
         venueName: 'The Grand Ballroom',
         address: '123 Celebration Lane',
         city: 'San Francisco, CA 94102',
+        phone: '(415) 555-0123',
         mapUrl: 'https://example.com/maps',
         parkingNote: 'Complimentary valet parking is available at the main entrance.',
+        rideshareNote: 'Uber and Lyft drop-off at the north entrance.',
         shuttleNote: 'Shuttles leave the hotel every 30 minutes starting at 4pm.',
         transport: [
           { label: 'By Car', description: 'Take I-80 West to Exit 3B.' },
@@ -332,8 +344,9 @@ describe('toBuilderV2Document', () => {
 
     expect(directionsSection.title).toBe('Directions & Parking');
     expect(directionsSection.blocks).toMatchObject([
-      { type: 'text', data: { text: 'Venue: The Grand Ballroom\nAddress: 123 Celebration Lane\nCity: San Francisco, CA 94102' } },
+      { type: 'text', data: { text: 'Venue: The Grand Ballroom\nAddress: 123 Celebration Lane\nCity: San Francisco, CA 94102\nPhone: (415) 555-0123' } },
       { type: 'text', data: { text: 'Parking: Complimentary valet parking is available at the main entrance.' } },
+      { type: 'text', data: { text: 'Rideshare: Uber and Lyft drop-off at the north entrance.' } },
       { type: 'text', data: { text: 'Shuttle: Shuttles leave the hotel every 30 minutes starting at 4pm.' } },
       { type: 'travelTip', data: { title: 'Map', note: 'Open directions', url: 'https://example.com/maps' } },
       { type: 'travelTip', data: { title: 'By Car', note: 'Take I-80 West to Exit 3B.' } },
@@ -360,8 +373,10 @@ describe('toBuilderV2Document', () => {
       venueName: 'The Grand Ballroom',
       address: '123 Celebration Lane',
       city: 'San Francisco, CA 94102',
+      phone: '(415) 555-0123',
       mapUrl: 'https://example.com/maps',
       parkingNote: 'Complimentary valet parking is available at the main entrance.',
+      rideshareNote: 'Uber and Lyft drop-off at the north entrance.',
       shuttleNote: 'Shuttles leave the hotel every 30 minutes starting at 4pm.',
       transport: [
         { id: 'directions-1-transport-0', label: 'By Car', description: 'Take I-80 West to Exit 3B.' },
@@ -779,7 +794,21 @@ describe('legacy adapters', () => {
               title: 'Where to stay',
               subtitle: 'A couple of easy options nearby',
               blocks: [
-                { id: 'hotel-1', type: 'hotelCard', data: { title: 'The Archer', note: 'Walkable to dinner.', url: 'https://example.com/archer', location: 'Main Street' } },
+                {
+                  id: 'hotel-1',
+                  type: 'hotelCard',
+                  data: {
+                    title: 'The Archer',
+                    note: 'Walkable to dinner.',
+                    url: 'https://example.com/archer',
+                    location: 'Main Street',
+                    phone: '+1 (415) 555-0111',
+                    bookingCode: 'ARCHER-WED',
+                    blockDeadline: '2026-08-01',
+                    priceRange: '$289-$349',
+                    distance: '0.3 miles from venue',
+                  },
+                },
                 { id: 'hotel-2', type: 'travelTip', data: { title: 'Book early', note: 'Rooms go fastest on Friday night.' } },
               ],
             },
@@ -818,6 +847,11 @@ describe('legacy adapters', () => {
           notes: 'Walkable to dinner.',
           url: 'https://example.com/archer',
           address: 'Main Street',
+          phone: '+1 (415) 555-0111',
+          blockCode: 'ARCHER-WED',
+          blockDeadline: '2026-08-01',
+          priceRange: '$289-$349',
+          distance: '0.3 miles from venue',
         },
       ],
       travelTips: [

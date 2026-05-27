@@ -188,6 +188,12 @@ const getLegacyTravelCards = (settings: Record<string, unknown> | undefined) => 
     url?: string;
     address?: string;
     location?: string;
+    phone?: string;
+    blockCode?: string;
+    bookingCode?: string;
+    blockDeadline?: string;
+    priceRange?: string;
+    distance?: string;
   }>(settings, 'hotels')
     .map((hotel) => ({
       type: 'hotelCard' as const,
@@ -207,8 +213,17 @@ const getLegacyTravelCards = (settings: Record<string, unknown> | undefined) => 
         : typeof hotel.location === 'string' && hotel.location.trim()
           ? hotel.location.trim()
           : '',
+      phone: typeof hotel.phone === 'string' && hotel.phone.trim() ? hotel.phone.trim() : '',
+      bookingCode: typeof hotel.blockCode === 'string' && hotel.blockCode.trim()
+        ? hotel.blockCode.trim()
+        : typeof hotel.bookingCode === 'string' && hotel.bookingCode.trim()
+          ? hotel.bookingCode.trim()
+          : '',
+      blockDeadline: typeof hotel.blockDeadline === 'string' && hotel.blockDeadline.trim() ? hotel.blockDeadline.trim() : '',
+      priceRange: typeof hotel.priceRange === 'string' && hotel.priceRange.trim() ? hotel.priceRange.trim() : '',
+      distance: typeof hotel.distance === 'string' && hotel.distance.trim() ? hotel.distance.trim() : '',
     }))
-    .filter((hotel) => hotel.title || hotel.note || hotel.url || hotel.location);
+    .filter((hotel) => hotel.title || hotel.note || hotel.url || hotel.location || hotel.phone || hotel.bookingCode || hotel.blockDeadline || hotel.priceRange || hotel.distance);
 
   const travelTips = getSettingRecordList<{
     title?: string;
@@ -405,6 +420,12 @@ const makeDefaultBlocksForType = (
         notes?: string;
         url?: string;
         address?: string;
+        phone?: string;
+        blockCode?: string;
+        bookingCode?: string;
+        blockDeadline?: string;
+        priceRange?: string;
+        distance?: string;
       }>(settings, 'hotels');
       return [
         ...(generalNote ? [{ id: 'b-text', type: 'text', data: { text: generalNote } } satisfies BuilderV2Block] : []),
@@ -418,6 +439,15 @@ const makeDefaultBlocksForType = (
               note: typeof hotel.notes === 'string' && hotel.notes.trim() ? hotel.notes.trim() : undefined,
               url: typeof hotel.url === 'string' && hotel.url.trim() ? hotel.url.trim() : undefined,
               location: typeof hotel.address === 'string' && hotel.address.trim() ? hotel.address.trim() : undefined,
+              phone: typeof hotel.phone === 'string' && hotel.phone.trim() ? hotel.phone.trim() : undefined,
+              bookingCode: typeof hotel.blockCode === 'string' && hotel.blockCode.trim()
+                ? hotel.blockCode.trim()
+                : typeof hotel.bookingCode === 'string' && hotel.bookingCode.trim()
+                  ? hotel.bookingCode.trim()
+                  : undefined,
+              blockDeadline: typeof hotel.blockDeadline === 'string' && hotel.blockDeadline.trim() ? hotel.blockDeadline.trim() : undefined,
+              priceRange: typeof hotel.priceRange === 'string' && hotel.priceRange.trim() ? hotel.priceRange.trim() : undefined,
+              distance: typeof hotel.distance === 'string' && hotel.distance.trim() ? hotel.distance.trim() : undefined,
             },
           })),
       ];
@@ -434,19 +464,23 @@ const makeDefaultBlocksForType = (
       const venueName = getSettingString(settings, 'venueName');
       const address = getSettingString(settings, 'address');
       const city = getSettingString(settings, 'city');
+      const phone = getSettingString(settings, 'phone');
       const mapUrl = getSettingString(settings, 'mapUrl');
       const parkingNote = getSettingString(settings, 'parkingNote');
+      const rideshareNote = getSettingString(settings, 'rideshareNote');
       const shuttleNote = getSettingString(settings, 'shuttleNote');
       const transport = getLegacyDirectionsTransport(settings);
       const venueLines = [
         venueName ? `Venue: ${venueName}` : '',
         address ? `Address: ${address}` : '',
         city ? `City: ${city}` : '',
+        phone ? `Phone: ${phone}` : '',
       ].filter(Boolean).join('\n');
 
       return [
         ...(venueLines ? [{ id: 'b-directions-venue', type: 'text', data: { text: venueLines } } satisfies BuilderV2Block] : []),
         ...(parkingNote ? [{ id: 'b-directions-parking', type: 'text', data: { text: `Parking: ${parkingNote}` } } satisfies BuilderV2Block] : []),
+        ...(rideshareNote ? [{ id: 'b-directions-rideshare', type: 'text', data: { text: `Rideshare: ${rideshareNote}` } } satisfies BuilderV2Block] : []),
         ...(shuttleNote ? [{ id: 'b-directions-shuttle', type: 'text', data: { text: `Shuttle: ${shuttleNote}` } } satisfies BuilderV2Block] : []),
         ...(mapUrl ? [{ id: 'b-directions-map', type: 'travelTip', data: { title: 'Map', note: 'Open directions', url: mapUrl } } satisfies BuilderV2Block] : []),
         ...transport.map((item, index) => ({
@@ -457,7 +491,7 @@ const makeDefaultBlocksForType = (
             note: item.note || undefined,
           },
         })),
-        ...(venueLines || parkingNote || shuttleNote || transport.length > 0 || mapUrl || !subtitleText
+        ...(venueLines || parkingNote || rideshareNote || shuttleNote || transport.length > 0 || mapUrl || !subtitleText
           ? []
           : [{ id: 'b-text', type: 'text', data: { text: subtitleText } } satisfies BuilderV2Block]),
       ];
@@ -618,7 +652,12 @@ const getSectionNoteCards = (
     url: typeof block.data.url === 'string' ? block.data.url.trim() : '',
     location: typeof block.data.location === 'string' ? block.data.location.trim() : '',
     time: typeof block.data.time === 'string' ? block.data.time.trim() : '',
-  })).filter((item) => item.title || item.note || item.url || item.location || item.time)
+    phone: typeof block.data.phone === 'string' ? block.data.phone.trim() : '',
+    bookingCode: typeof block.data.bookingCode === 'string' ? block.data.bookingCode.trim() : '',
+    blockDeadline: typeof block.data.blockDeadline === 'string' ? block.data.blockDeadline.trim() : '',
+    priceRange: typeof block.data.priceRange === 'string' ? block.data.priceRange.trim() : '',
+    distance: typeof block.data.distance === 'string' ? block.data.distance.trim() : '',
+  })).filter((item) => item.title || item.note || item.url || item.location || item.time || item.phone || item.bookingCode || item.blockDeadline || item.priceRange || item.distance)
 );
 
 const getTravelHintBucket = (
@@ -635,7 +674,7 @@ const getTravelHintBucket = (
 
 const getDirectionsTextValue = (
   section: BuilderV2Section,
-  label: 'Venue' | 'Address' | 'City' | 'Parking' | 'Shuttle',
+  label: 'Venue' | 'Address' | 'City' | 'Phone' | 'Parking' | 'Rideshare' | 'Shuttle',
 ) => {
   const prefix = `${label}:`;
   const textBlocks = getMeaningfulBlocks(section.blocks, ['text', 'story']);
@@ -764,6 +803,11 @@ const toLegacyBuilderSettings = (section: BuilderV2Section): Record<string, unkn
           notes: item.note || undefined,
           url: item.url || undefined,
           address: item.location || undefined,
+          phone: item.phone || undefined,
+          blockCode: item.bookingCode || undefined,
+          blockDeadline: item.blockDeadline || undefined,
+          priceRange: item.priceRange || undefined,
+          distance: item.distance || undefined,
         })),
         travelTips: travelTips.map((item) => ({
           id: item.id,
@@ -855,7 +899,9 @@ const toLegacyBuilderSettings = (section: BuilderV2Section): Record<string, unkn
         venueName: getDirectionsTextValue(section, 'Venue'),
         address: getDirectionsTextValue(section, 'Address'),
         city: getDirectionsTextValue(section, 'City'),
+        phone: getDirectionsTextValue(section, 'Phone'),
         parkingNote: getDirectionsTextValue(section, 'Parking'),
+        rideshareNote: getDirectionsTextValue(section, 'Rideshare'),
         shuttleNote: getDirectionsTextValue(section, 'Shuttle'),
         mapUrl: mapCard?.url || '',
         transport: transport.map((item, index) => ({

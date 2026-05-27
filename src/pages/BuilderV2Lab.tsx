@@ -217,6 +217,12 @@ type AddedBlockContent = {
   location?: string;
   note?: string;
   url?: string;
+  phone?: string;
+  bookingCode?: string;
+  blockDeadline?: string;
+  priceRange?: string;
+  distance?: string;
+  rideshareNote?: string;
 };
 
 type AddedBlock = {
