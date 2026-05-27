@@ -45,6 +45,7 @@ describe('buildControlTowerBriefing', () => {
     expect(briefing.title).toContain('Launch readiness');
     expect(briefing.primaryAction).toMatchObject({ target: 'builder' });
     expect(briefing.badges).toContain('3 blockers');
+    expect(briefing.sequence[0]).toMatchObject({ status: 'current' });
   });
 
   it('prioritizes RSVP follow-up when replies are lagging', () => {
@@ -58,6 +59,7 @@ describe('buildControlTowerBriefing', () => {
     expect(briefing.title).toContain('Guest response follow-up');
     expect(briefing.primaryAction).toMatchObject({ target: 'guests' });
     expect(briefing.secondaryAction).toMatchObject({ target: 'messages' });
+    expect(briefing.sequence.map((step) => step.status)).toEqual(['current', 'next', 'then']);
   });
 
   it('switches into coordinator-first guidance when launch basics are steady and the wedding is close', () => {

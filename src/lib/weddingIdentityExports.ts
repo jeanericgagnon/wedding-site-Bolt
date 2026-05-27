@@ -44,6 +44,7 @@ export interface WeddingIdentityExportKit {
     readiness: 'ready' | 'needs-info';
     bestFor: string;
     includes: string[];
+    nextStep: string;
   }>;
 }
 
@@ -214,6 +215,7 @@ export function buildWeddingIdentityExportKit(input: WeddingIdentityExportKitInp
         readiness: hasPublicUrl ? 'ready' : 'needs-info',
         bestFor: 'Best when you need one quick guest-facing kit for text, DM, or email right now.',
         includes: ['Share graphic', 'RSVP card', 'Public QR card'],
+        nextStep: hasPublicUrl ? 'Send the share graphic first, then reuse the same URL on RSVP and QR surfaces.' : 'Set the public site URL so the guest-facing share pack is safe to copy or print.',
       },
       {
         id: 'print-table',
@@ -224,6 +226,7 @@ export function buildWeddingIdentityExportKit(input: WeddingIdentityExportKitInp
         readiness: hasPublicUrl && hasDate && hasVenue ? 'ready' : 'needs-info',
         bestFor: 'Best for welcome tables, hotel bags, reception signage, and guest-visible print surfaces.',
         includes: ['Details insert', 'Table card', 'Photo upload sign'],
+        nextStep: hasPublicUrl && hasDate && hasVenue ? 'Print the details insert and table card together so signage and guest handouts never drift apart.' : 'Add the date, venue, and public site so the print surfaces feel complete instead of provisional.',
       },
       {
         id: 'planner-handoff',
@@ -232,6 +235,7 @@ export function buildWeddingIdentityExportKit(input: WeddingIdentityExportKitInp
         readiness: 'ready',
         bestFor: 'Best when someone else needs the wedding identity quickly without asking you to repeat basics.',
         includes: ['Identity summary', 'Style kit', 'Public site URL'],
+        nextStep: 'Copy the manifest and style kit together so vendors get the same URL, language, and visual direction in one pass.',
       },
     ],
   };

@@ -29,6 +29,10 @@ export interface ControlTowerBriefing {
   detail: string;
   badges: string[];
   signals: ControlTowerSignal[];
+  sequence: Array<{
+    label: string;
+    status: 'current' | 'next' | 'then';
+  }>;
   primaryAction?: ControlTowerAction;
   secondaryAction?: ControlTowerAction;
 }
@@ -124,6 +128,11 @@ export function buildControlTowerBriefing(input: ControlTowerIntelligenceInput):
         `${pluralize(input.interactiveSuggestionCount, 'guest note')}`,
       ],
       signals: buildSignals(input),
+      sequence: [
+        { label: 'Curate photos', status: 'current' },
+        { label: 'Open keepsake vaults', status: 'next' },
+        { label: 'Polish the archive story', status: 'then' },
+      ],
       primaryAction: { label: 'Open vault', target: 'vault' },
       secondaryAction: { label: 'Review photos', target: 'photos' },
     };
@@ -139,6 +148,11 @@ export function buildControlTowerBriefing(input: ControlTowerIntelligenceInput):
         input.daysUntilWedding === 0 ? 'Wedding day' : `${input.daysUntilWedding} days left`,
       ],
       signals: buildSignals(input),
+      sequence: [
+        { label: 'Clear launch blockers', status: 'current' },
+        { label: 'Preview guest-facing flow', status: 'next' },
+        { label: 'Publish the live site', status: 'then' },
+      ],
       primaryAction: { label: 'Open launch checklist', target: 'builder' },
       secondaryAction: { label: 'Check planning', target: 'planning' },
     };
@@ -162,6 +176,11 @@ export function buildControlTowerBriefing(input: ControlTowerIntelligenceInput):
         `${responseRate}% replied`,
       ],
       signals: buildSignals(input),
+      sequence: [
+        { label: 'Stay in coordinator mode', status: 'current' },
+        { label: 'Keep seating stable', status: 'next' },
+        { label: 'Only react to live exceptions', status: 'then' },
+      ],
       primaryAction: { label: 'Open coordinator mode', target: 'coordinator' },
       secondaryAction: { label: 'Check seating', target: 'seating' },
     };
@@ -177,6 +196,11 @@ export function buildControlTowerBriefing(input: ControlTowerIntelligenceInput):
         `${responseRate}% replied`,
       ],
       signals: buildSignals(input),
+      sequence: [
+        { label: 'Review pending guests', status: 'current' },
+        { label: 'Send the next reminder', status: 'next' },
+        { label: 'Re-check the board', status: 'then' },
+      ],
       primaryAction: { label: 'Review guests', target: 'guests' },
       secondaryAction: { label: 'Open messages', target: 'messages' },
     };
@@ -192,6 +216,11 @@ export function buildControlTowerBriefing(input: ControlTowerIntelligenceInput):
         `${pluralize(input.contactableGuestCount, 'contact-ready guest')}`,
       ],
       signals: buildSignals(input),
+      sequence: [
+        { label: 'Fix missing contacts', status: 'current' },
+        { label: 'Queue the next outreach wave', status: 'next' },
+        { label: 'Return to RSVP follow-through', status: 'then' },
+      ],
       primaryAction: { label: 'Fix guest contacts', target: 'guests' },
       secondaryAction: { label: 'Open messages', target: 'messages' },
     };
@@ -207,6 +236,11 @@ export function buildControlTowerBriefing(input: ControlTowerIntelligenceInput):
         `${pluralize(input.activePhotoAlbumCount, 'active album')}`,
       ],
       signals: buildSignals(input),
+      sequence: [
+        { label: 'Add live registry items', status: 'current' },
+        { label: 'Check the guest-facing page', status: 'next' },
+        { label: 'Return to broader polish', status: 'then' },
+      ],
       primaryAction: { label: 'Open registry', target: 'registry' },
       secondaryAction: { label: 'Open builder', target: 'builder' },
     };
@@ -224,6 +258,11 @@ export function buildControlTowerBriefing(input: ControlTowerIntelligenceInput):
         `${pluralize(input.interactiveSuggestionCount, 'guest prompt')}`,
       ],
       signals: buildSignals(input),
+      sequence: [
+        { label: 'Activate a photo path', status: 'current' },
+        { label: 'Check the guest upload flow', status: 'next' },
+        { label: 'Return to site polish', status: 'then' },
+      ],
       primaryAction: { label: 'Review photos', target: 'photos' },
       secondaryAction: { label: 'Open builder', target: 'builder' },
     };
@@ -239,6 +278,11 @@ export function buildControlTowerBriefing(input: ControlTowerIntelligenceInput):
         `${pluralize(input.recentSiteActivityCount, 'recent site change')}`,
       ],
       signals: buildSignals(input),
+      sequence: [
+        { label: 'Review guest input', status: 'current' },
+        { label: 'Adjust the site story', status: 'next' },
+        { label: 'Re-check guest experience', status: 'then' },
+      ],
       primaryAction: { label: 'Review guest prompts', target: 'builder' },
       secondaryAction: { label: 'Open photos', target: 'photos' },
     };
@@ -253,6 +297,11 @@ export function buildControlTowerBriefing(input: ControlTowerIntelligenceInput):
       input.recentSiteActivityCount > 0 ? `${pluralize(input.recentSiteActivityCount, 'recent site update')}` : 'No recent site churn',
     ],
     signals: buildSignals(input),
+    sequence: [
+      { label: 'Make one quality pass', status: 'current' },
+      { label: 'Review guests if needed', status: 'next' },
+      { label: 'Leave the board calm', status: 'then' },
+    ],
     primaryAction: { label: 'Open builder', target: 'builder' },
     secondaryAction: { label: 'Review guests', target: 'guests' },
   };

@@ -92,6 +92,7 @@ export function SettingsIdentityExportsPanel({
                       </span>
                     ))}
                   </div>
+                  <p className="mt-3 text-[11px] leading-5 text-text-secondary">{pack.nextStep}</p>
                 </div>
               ))}
             </div>

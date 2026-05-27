@@ -37,6 +37,18 @@ export const ControlTowerBriefingCard: React.FC<ControlTowerBriefingCardProps> =
           </div>
         ))}
       </div>
+      <div className="grid gap-2 md:grid-cols-3">
+        {briefing.sequence.map((step) => (
+          <div key={`${step.status}-${step.label}`} className="rounded-xl border border-border-subtle bg-white px-3 py-3">
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-xs font-semibold text-text-primary">{step.label}</p>
+              <Badge variant={step.status === 'current' ? 'accent' : 'secondary'}>
+                {step.status === 'current' ? 'Now' : step.status === 'next' ? 'Next' : 'Then'}
+              </Badge>
+            </div>
+          </div>
+        ))}
+      </div>
       {(briefing.primaryAction || briefing.secondaryAction) && (
         <div className="flex flex-col gap-3 sm:flex-row">
           {briefing.primaryAction && (
