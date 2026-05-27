@@ -90,8 +90,8 @@ export function buildCoupleFocusModel(input: CoupleFocusInput): CoupleFocusModel
           id: 'planning',
           title: 'Then return to planning pressure',
           detail: 'Only after the launch lane is stable should you spend more energy on the broader planning board.',
-          target: 'itinerary',
-          ctaLabel: 'Open itinerary',
+          target: 'planning',
+          ctaLabel: 'Open planning',
         }),
       ],
     };
