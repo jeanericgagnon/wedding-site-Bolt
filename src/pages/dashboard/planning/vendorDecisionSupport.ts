@@ -33,6 +33,10 @@ export interface VendorProfileGuideModel {
   label: string;
   title: string;
   detail: string;
+  focusTitle: string;
+  focusDetail: string;
+  nextMove: string;
+  decisionRule: string;
   trustSignals: string[];
   checks: string[];
 }
@@ -215,6 +219,12 @@ export function buildVendorProfileGuide(profile: VendorProfile): VendorProfileGu
       label: 'Decision-friendly',
       title: 'This profile gives couples enough signal to move',
       detail: 'There is enough proof, imagery, and contact clarity here for a couple to decide whether they want the first conversation.',
+      focusTitle: 'Use proof before outreach',
+      focusDetail: 'This profile is strongest when the couple checks style fit first, verifies freshness second, and only then opens the conversation.',
+      nextMove: hasDirectEmail
+        ? 'Review the gallery and public links first, then send one direct email when the fit feels real.'
+        : 'Review the gallery and public links first, then use the inquiry path once the fit feels real.',
+      decisionRule: 'Do not start with outreach when the visual fit is still uncertain; use the proof first so the first conversation is warmer and more specific.',
       trustSignals: [
         'Gallery depth is strong enough to judge style',
         'Public links can verify recent work',
@@ -236,6 +246,16 @@ export function buildVendorProfileGuide(profile: VendorProfile): VendorProfileGu
     detail: hasDirectEmail
       ? 'There is a direct contact path, but couples will still want to pressure-test the available proof before treating this like a shortlist lock.'
       : 'There is enough here to orient someone, but not enough to replace a quick manual check across links, visuals, and contact path.',
+    focusTitle: hasGalleryDepth ? 'Pressure-test the fit first' : 'Gather one more layer of proof',
+    focusDetail: hasGalleryDepth
+      ? 'The page is good enough to form a first impression, but it still wants a quick freshness check before a real yes.'
+      : 'This page can start the conversation, but it still needs either stronger visuals or stronger public proof before it feels shortlist-safe.',
+    nextMove: hasDirectEmail
+      ? 'Use the gallery and public links to decide whether this deserves a direct email right now.'
+      : 'Use the available proof to decide whether this deserves a first-touch inquiry right now.',
+    decisionRule: hasPublicLinks
+      ? 'When the page is lighter, verify recent public work before you let convenience turn into a premature yes.'
+      : 'When both proof and contact are thin, treat this as a maybe until one stronger signal appears.',
     trustSignals: [
       hasGalleryDepth ? 'Visual proof exists, but still wants a closer read.' : 'Gallery depth is still light.',
       hasPublicLinks ? 'Public proof is available for a freshness check.' : 'Public proof is still thin.',

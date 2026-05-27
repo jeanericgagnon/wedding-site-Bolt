@@ -71,5 +71,31 @@ describe('vendorDecisionSupport', () => {
     expect(guide.label).toBe('Decision-friendly');
     expect(guide.trustSignals[0]).toContain('Gallery depth');
     expect(guide.checks[0]).toContain('gallery');
+    expect(guide.focusTitle).toBe('Use proof before outreach');
+    expect(guide.nextMove).toMatch(/gallery|public links/i);
+    expect(guide.decisionRule).toMatch(/proof first|visual fit/i);
+  });
+
+  it('keeps lighter profiles in a cautious evaluation sequence', () => {
+    const profile: VendorProfile = {
+      id: 'profile-2',
+      slug: 'quiet-florals',
+      vendor_name: 'Quiet Florals',
+      descriptor: '',
+      about: 'A florist',
+      hero_image_url: 'https://example.com/hero.jpg',
+      image_urls: [],
+      instagram_url: '',
+      website_url: '',
+      contact_email: '',
+      source_payload: {},
+    };
+
+    const guide = buildVendorProfileGuide(profile);
+
+    expect(guide.label).toBe('Decision guide');
+    expect(guide.focusTitle).toMatch(/Gather one more layer of proof/i);
+    expect(guide.nextMove).toMatch(/first-touch inquiry/i);
+    expect(guide.decisionRule).toMatch(/maybe until one stronger signal appears/i);
   });
 });

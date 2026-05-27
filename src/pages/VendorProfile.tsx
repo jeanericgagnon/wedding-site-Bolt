@@ -177,6 +177,21 @@ export const VendorProfilePage: React.FC = () => {
                 <p className="text-xs uppercase tracking-[0.22em] text-[#8b6f53]">{profileGuide.label}</p>
                 <p className="text-sm font-medium text-[#2f261d]">{profileGuide.title}</p>
                 <p className="text-sm text-[#6f5843]">{profileGuide.detail}</p>
+                <div className="grid gap-2 md:grid-cols-3">
+                  <div className="rounded-2xl bg-white px-3 py-3 shadow-sm">
+                    <p className="text-[11px] uppercase tracking-[0.18em] text-[#8b6f53]">Main focus</p>
+                    <p className="mt-1 text-sm font-medium text-[#2f261d]">{profileGuide.focusTitle}</p>
+                    <p className="mt-2 text-xs leading-5 text-[#6f5843]">{profileGuide.focusDetail}</p>
+                  </div>
+                  <div className="rounded-2xl bg-white px-3 py-3 shadow-sm">
+                    <p className="text-[11px] uppercase tracking-[0.18em] text-[#8b6f53]">Best next move</p>
+                    <p className="mt-1 text-sm font-medium text-[#2f261d]">{profileGuide.nextMove}</p>
+                  </div>
+                  <div className="rounded-2xl bg-white px-3 py-3 shadow-sm">
+                    <p className="text-[11px] uppercase tracking-[0.18em] text-[#8b6f53]">Decision rule</p>
+                    <p className="mt-1 text-sm font-medium text-[#2f261d]">{profileGuide.decisionRule}</p>
+                  </div>
+                </div>
                 <div className="flex flex-wrap gap-2">
                   {profileGuide.trustSignals.map((signal) => (
                     <span key={signal} className="rounded-full bg-white px-2.5 py-1 text-[11px] text-[#6f5843] shadow-sm">
