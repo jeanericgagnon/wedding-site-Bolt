@@ -1198,7 +1198,7 @@ export const DashboardSettings: React.FC = () => {
                       ))}
                     </div>
 
-                    <div className="grid gap-3 rounded-xl border border-border-subtle bg-surface-subtle/30 p-4 md:grid-cols-3">
+                    <div className="grid gap-3 rounded-xl border border-border-subtle bg-surface-subtle/30 p-4 md:grid-cols-2">
                       <div>
                         <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary">Main focus</p>
                         <p className="mt-1 text-sm font-semibold text-text-primary">{collaboratorSetupGuide.focusTitle}</p>
@@ -1207,10 +1207,12 @@ export const DashboardSettings: React.FC = () => {
                       <div>
                         <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary">Best next move</p>
                         <p className="mt-1 text-sm font-semibold text-text-primary">{collaboratorSetupGuide.nextMove}</p>
-                      </div>
-                      <div>
-                        <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary">Decision rule</p>
-                        <p className="mt-1 text-sm font-semibold text-text-primary">{collaboratorSetupGuide.decisionRule}</p>
+                        <div className="mt-3 border-t border-border-subtle pt-3">
+                          <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary">Decision rule</p>
+                          <p className="mt-1 text-sm font-semibold text-text-primary">{collaboratorSetupGuide.decisionRule}</p>
+                          <p className="mt-3 text-[11px] uppercase tracking-[0.18em] text-text-tertiary">Watchout</p>
+                          <p className="mt-1 text-sm font-semibold text-text-primary">{collaboratorSetupGuide.watchout}</p>
+                        </div>
                       </div>
                     </div>
 
@@ -1263,7 +1265,7 @@ export const DashboardSettings: React.FC = () => {
                           </div>
                           <Badge variant={plannerInvite.status === 'active' ? 'success' : 'secondary'}>{plannerInvite.status === 'active' ? 'Active' : 'Pending'}</Badge>
                         </div>
-                        <div className="mt-4 grid gap-3 rounded-xl border border-border-subtle bg-surface-subtle/20 p-4 md:grid-cols-3">
+                        <div className="mt-4 grid gap-3 rounded-xl border border-border-subtle bg-surface-subtle/20 p-4 md:grid-cols-2">
                           {(() => {
                             const savedGuide = buildCollaboratorRoleGuide(plannerInvite.role);
                             return (
@@ -1271,14 +1273,17 @@ export const DashboardSettings: React.FC = () => {
                                 <div>
                                   <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary">Main focus</p>
                                   <p className="mt-1 text-sm font-semibold text-text-primary">{savedGuide.focusTitle}</p>
+                                  <p className="mt-1 text-xs leading-5 text-text-secondary">{savedGuide.focusDetail}</p>
                                 </div>
                                 <div>
                                   <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary">Best next move</p>
                                   <p className="mt-1 text-sm font-semibold text-text-primary">{savedGuide.nextMove}</p>
-                                </div>
-                                <div>
-                                  <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary">Decision rule</p>
-                                  <p className="mt-1 text-sm font-semibold text-text-primary">{savedGuide.decisionRule}</p>
+                                  <div className="mt-3 border-t border-border-subtle pt-3">
+                                    <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary">Decision rule</p>
+                                    <p className="mt-1 text-sm font-semibold text-text-primary">{savedGuide.decisionRule}</p>
+                                    <p className="mt-3 text-[11px] uppercase tracking-[0.18em] text-text-tertiary">Watchout</p>
+                                    <p className="mt-1 text-sm font-semibold text-text-primary">{savedGuide.watchout}</p>
+                                  </div>
                                 </div>
                               </>
                             );
@@ -1365,7 +1370,7 @@ export const DashboardSettings: React.FC = () => {
                                   )}
                                 </div>
                               </div>
-                              <div className="mt-4 grid gap-3 rounded-xl border border-border-subtle bg-surface-subtle/20 p-4 md:grid-cols-3">
+                              <div className="mt-4 grid gap-3 rounded-xl border border-border-subtle bg-surface-subtle/20 p-4 md:grid-cols-2">
                                 {(() => {
                                   const inviteGuide = buildCollaboratorRoleGuide(invite.role);
                                   return (
@@ -1373,14 +1378,17 @@ export const DashboardSettings: React.FC = () => {
                                       <div>
                                         <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary">Main focus</p>
                                         <p className="mt-1 text-sm font-semibold text-text-primary">{inviteGuide.focusTitle}</p>
+                                        <p className="mt-1 text-xs leading-5 text-text-secondary">{inviteGuide.focusDetail}</p>
                                       </div>
                                       <div>
                                         <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary">Best next move</p>
                                         <p className="mt-1 text-sm font-semibold text-text-primary">{inviteGuide.nextMove}</p>
-                                      </div>
-                                      <div>
-                                        <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary">Decision rule</p>
-                                        <p className="mt-1 text-sm font-semibold text-text-primary">{inviteGuide.decisionRule}</p>
+                                        <div className="mt-3 border-t border-border-subtle pt-3">
+                                          <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary">Decision rule</p>
+                                          <p className="mt-1 text-sm font-semibold text-text-primary">{inviteGuide.decisionRule}</p>
+                                          <p className="mt-3 text-[11px] uppercase tracking-[0.18em] text-text-tertiary">Watchout</p>
+                                          <p className="mt-1 text-sm font-semibold text-text-primary">{inviteGuide.watchout}</p>
+                                        </div>
                                       </div>
                                     </>
                                   );
