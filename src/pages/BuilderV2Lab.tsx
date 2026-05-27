@@ -1,6 +1,6 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Layers, SlidersHorizontal, ArrowRight, Eye, EyeOff, Plus, ArrowUp, ArrowDown, Undo2, Redo2, CheckCircle2, GripVertical, Keyboard, Command } from 'lucide-react';
+import { Layers, ArrowRight, Eye, EyeOff, ArrowUp, ArrowDown, Undo2, Redo2, CheckCircle2, GripVertical, Keyboard, Command } from 'lucide-react';
 import { getSectionRenderer } from '../builder/registry';
 import type { SectionType, SectionInstance } from '../types/layoutConfig';
 import type { WeddingDataV1 } from '../types/weddingData';
@@ -8,8 +8,7 @@ import { demoWeddingSite, demoEvents } from '../lib/demoData';
 import { getInitialBuilderV2LabPreviewFields } from './builderV2LabPreview';
 import { toBuilderV2Document } from '../builder-v2/adapter';
 import type { BuilderV2Document } from '../builder-v2/contracts';
-import { validateBuilderV2Document } from '../builder-v2/validate';
-import { sanitizeImportedBlockType } from '../builder-v2/importSanitize';
+import { prepareImportedBuilderV2Document, type BuilderV2ImportReport } from '../builder-v2/importPrepare';
 import {
   DndContext,
   PointerSensor,
@@ -234,6 +233,32 @@ const SECTION_TYPE_MAP: Record<string, SectionType> = {
   directions: 'directions',
 };
 
+const summarizeImportRepairCount = (report: BuilderV2ImportReport) => (
+  report.generatedSectionIds
+  + report.generatedBlockIds
+  + report.dedupedSectionIds
+  + report.dedupedBlockIds
+  + report.normalizedSectionTypes
+  + report.normalizedBlockTypes
+  + report.defaultedVariants
+  + report.coercedEnabledFlags
+  + report.normalizedTitles
+  + report.normalizedSubtitles
+  + report.resetInvalidBlockData
+  + report.recoveredBlockDataFromLegacyContent
+  + report.droppedInvalidSections
+  + report.droppedInvalidBlocks
+  + (report.normalizedVersion ? 1 : 0)
+  + (report.normalizedUpdatedAt ? 1 : 0)
+);
+
+const getImportSummaryTone = (report: BuilderV2ImportReport) => {
+  const repairs = summarizeImportRepairCount(report);
+  if (repairs === 0) return 'clean';
+  if (report.droppedInvalidSections > 0 || report.droppedInvalidBlocks > 0) return 'caution';
+  return 'repaired';
+};
+
 
 type StructureItemProps = {
   section: LabSection;
@@ -297,12 +322,16 @@ export const BuilderV2Lab: React.FC = () => {
   const [showCommand, setShowCommand] = useState(false);
   const [commandQuery, setCommandQuery] = useState('');
   const [commandIndex, setCommandIndex] = useState(0);
+  const [showImportPanel, setShowImportPanel] = useState(false);
+  const [importDraft, setImportDraft] = useState('');
+  const [importError, setImportError] = useState('');
+  const [lastImportReport, setLastImportReport] = useState<BuilderV2ImportReport | null>(null);
+  const [lastImportSource, setLastImportSource] = useState('Pasted JSON');
   const [propertyTab, setPropertyTab] = useState<'content' | 'layout' | 'data'>('content');
   const [recentCommands, setRecentCommands] = useState<string[]>([]);
   const [actionNotice, setActionNotice] = useState<string>('');
   const [pinnedCommands] = useState<string[]>(['Add section: Hero', 'Select section: Hero']);
   const [showQuickHelp, setShowQuickHelp] = useState(false);
-  const [showAdvancedActions, setShowAdvancedActions] = useState(false);
   const [previewDevice, setPreviewDevice] = useState<'desktop' | 'mobile'>('desktop');
   const [previewScale, setPreviewScale] = useState(100);
   const [focusPreview, setFocusPreview] = useState(false);
@@ -312,6 +341,7 @@ export const BuilderV2Lab: React.FC = () => {
   const [showAddBlockPicker, setShowAddBlockPicker] = useState(false);
   const [sectionBlocks, setSectionBlocks] = useState<Record<string, AddedBlock[]>>({});
   const [collapsedBlocks, setCollapsedBlocks] = useState<Record<string, boolean>>({});
+  const importFileInputRef = useRef<HTMLInputElement | null>(null);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
 
   const sections = history[historyIndex];
@@ -388,19 +418,32 @@ export const BuilderV2Lab: React.FC = () => {
   };
 
 
-  const selectAllSections = () => {
+  const markSaving = useCallback(() => {
+    setSaveState('saving');
+    window.setTimeout(() => {
+      setSaveState('saved');
+      setLastSavedAt(new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }));
+    }, 600);
+  }, []);
+
+  const notify = useCallback((text: string) => {
+    setActionNotice(text);
+    window.setTimeout(() => setActionNotice(''), 2200);
+  }, []);
+
+  const selectAllSections = useCallback(() => {
     if (!sections.length) return;
     setSelectedId(sections[0].id);
     setMultiSelectedIds(sections.slice(1).map((s) => s.id));
     notify('All sections selected');
-  };
+  }, [sections, notify]);
 
-  const clearSelection = () => {
+  const clearSelection = useCallback(() => {
     setMultiSelectedIds([]);
     notify('Multi selection cleared');
-  };
+  }, [notify]);
 
-  const invertSelection = () => {
+  const invertSelection = useCallback(() => {
     if (!sections.length) return;
     const selectedSet = new Set(selectedIds);
     const inverted = sections.map((s) => s.id).filter((id) => !selectedSet.has(id));
@@ -408,20 +451,7 @@ export const BuilderV2Lab: React.FC = () => {
     setSelectedId(inverted[0]);
     setMultiSelectedIds(inverted.slice(1));
     notify('Selection inverted');
-  };
-
-  const markSaving = () => {
-    setSaveState('saving');
-    window.setTimeout(() => {
-      setSaveState('saved');
-      setLastSavedAt(new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }));
-    }, 600);
-  };
-
-  const notify = (text: string) => {
-    setActionNotice(text);
-    window.setTimeout(() => setActionNotice(''), 2200);
-  };
+  }, [notify, sections, selectedIds]);
 
 
   const updatePreviewField = (
@@ -515,14 +545,6 @@ export const BuilderV2Lab: React.FC = () => {
     markSaving();
   };
 
-  const updateBlockContent = (sectionId: string, blockId: string, content: string) => {
-    setSectionBlocks((prev) => ({
-      ...prev,
-      [sectionId]: (prev[sectionId] ?? []).map((b) => (b.id === blockId ? { ...b, content } : b)),
-    }));
-    markSaving();
-  };
-
   const removeBlock = (sectionId: string, blockId: string) => {
     setSectionBlocks((prev) => ({
       ...prev,
@@ -576,81 +598,12 @@ export const BuilderV2Lab: React.FC = () => {
     markSaving();
   };
 
-  const scrollToRailSection = (id: string) => {
-    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  };
-
-
-  const commit = (next: LabSection[]) => {
+  const commit = useCallback((next: LabSection[]) => {
     const trimmed = history.slice(0, historyIndex + 1);
     setHistory([...trimmed, next]);
     setHistoryIndex(trimmed.length);
     markSaving();
-  };
-
-  const bulkToggleVisibility = () => {
-    if (selectedIds.length <= 1) return;
-    const selectedSet = new Set(selectedIds);
-    const shouldShow = sections.filter((s) => selectedSet.has(s.id)).some((s) => !s.enabled);
-    commit(sections.map((s) => (selectedSet.has(s.id) ? { ...s, enabled: shouldShow } : s)));
-    notify(`${selectedIds.length} sections ${shouldShow ? 'shown' : 'hidden'}`);
-  };
-
-  const bulkMoveBlock = (dir: -1 | 1) => {
-    if (selectedIds.length <= 1) return;
-    const selectedSet = new Set(selectedIds);
-    const selectedBlock = sections.filter((s) => selectedSet.has(s.id));
-    const remaining = sections.filter((s) => !selectedSet.has(s.id));
-    const currentMin = Math.min(...selectedBlock.map((s) => sections.findIndex((x) => x.id === s.id)));
-    const currentMax = Math.max(...selectedBlock.map((s) => sections.findIndex((x) => x.id === s.id)));
-    const targetIndex = dir === -1
-      ? Math.max(0, currentMin - 1)
-      : Math.min(sections.length - selectedBlock.length, currentMax + 1 - selectedBlock.length + 1);
-    const next = [...remaining];
-    next.splice(Math.min(targetIndex, next.length), 0, ...selectedBlock);
-    commit(next);
-    notify(`${selectedIds.length} sections moved ${dir === -1 ? 'up' : 'down'}`);
-  };
-
-  const bulkDuplicate = () => {
-    if (selectedIds.length <= 1) return;
-    if (!window.confirm(`Duplicate ${selectedIds.length} selected sections?`)) return;
-    const selectedSet = new Set(selectedIds);
-    const next: typeof sections = [];
-    for (const section of sections) {
-      next.push(section);
-      if (selectedSet.has(section.id)) {
-        next.push({
-          ...section,
-          id: `${section.type}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-          title: `${section.title} Copy`,
-        });
-      }
-    }
-    commit(next);
-    notify(`${selectedIds.length} sections duplicated`);
-  };
-
-
-  const applyVariantToSelection = (variant: string) => {
-    if (selectedIds.length <= 1) return;
-    const selectedSet = new Set(selectedIds);
-    let updated = 0;
-    let skipped = 0;
-    commit(
-      sections.map((s) => {
-        if (!selectedSet.has(s.id)) return s;
-        const allowed = VARIANTS_BY_TYPE[s.type] ?? ['default'];
-        if (allowed.includes(variant)) {
-          updated += 1;
-          return { ...s, variant };
-        }
-        skipped += 1;
-        return s;
-      })
-    );
-    notify(`${updated} updated${skipped ? `, ${skipped} skipped` : ''}`);
-  };
+  }, [history, historyIndex, markSaving]);
 
   const moveSection = (id: string, dir: -1 | 1) => {
     const idx = sections.findIndex((s) => s.id === id);
@@ -675,46 +628,21 @@ export const BuilderV2Lab: React.FC = () => {
     commit(sections.map((s) => (s.id === id ? { ...s, enabled: !s.enabled } : s)));
   };
 
-  const addSection = (typeLabel: string, variant?: string) => {
+  const addSection = useCallback((typeLabel: string, variant?: string) => {
     const normalizedType = typeLabel.toLowerCase().replace(/\s+/g, '-');
     const id = `${normalizedType}-${Date.now()}`;
     const next = [...sections, { id, type: normalizedType, title: typeLabel, subtitle: '', variant: variant ?? 'default', enabled: true, density: 'comfortable' as const }];
     setSelectedId(id);
     commit(next);
-  };
+  }, [commit, sections]);
 
   const renameSelected = (title: string) => {
     commit(sections.map((s) => (s.id === selected.id ? { ...s, title } : s)));
   };
 
-  const updateVariant = (variant: string) => {
+  const updateVariant = useCallback((variant: string) => {
     commit(sections.map((s) => (s.id === selected.id ? { ...s, variant } : s)));
-  };
-
-
-  const updateSubtitle = (subtitle: string) => {
-    commit(sections.map((s) => (s.id === selected.id ? { ...s, subtitle } : s)));
-  };
-
-  const updateDensity = (density: 'compact' | 'comfortable') => {
-    commit(sections.map((s) => (s.id === selected.id ? { ...s, density } : s)));
-  };
-
-
-  const applyLayoutPreset = (preset: 'airy' | 'balanced' | 'compact') => {
-    if (preset === 'airy') {
-      updateDensity('comfortable');
-      notify('Applied Airy preset');
-      return;
-    }
-    if (preset === 'compact') {
-      updateDensity('compact');
-      notify('Applied Compact preset');
-      return;
-    }
-    updateDensity('comfortable');
-    notify('Applied Balanced preset');
-  };
+  }, [commit, sections, selected.id]);
 
   const runCommand = (label: string, action: () => void) => {
     action();
@@ -807,43 +735,79 @@ export const BuilderV2Lab: React.FC = () => {
     notify('Exported V2 JSON');
   };
 
+  const openImportPanel = () => {
+    setImportError('');
+    setLastImportSource('Pasted JSON');
+    setShowImportPanel(true);
+  };
+
+  const applyImportedDocument = (doc: BuilderV2Document, report: BuilderV2ImportReport, sourceLabel: string) => {
+    const nextSections = doc.sections.map((sec) => ({
+      id: sec.id,
+      type: sec.type,
+      title: sec.title || sec.type,
+      subtitle: sec.subtitle || '',
+      variant: sec.variant || 'default',
+      enabled: sec.enabled !== false,
+      density: 'comfortable' as const,
+    }));
+    const nextBlocks = Object.fromEntries(
+      doc.sections.map((sec) => [
+        sec.id,
+        (sec.blocks || []).map((b) => ({
+          id: b.id,
+          type: b.type as BlockType,
+          data: b.data || {},
+          content: b.data?.text || b.data?.title || b.data?.note || b.data?.question || '',
+        })),
+      ]),
+    ) as Record<string, AddedBlock[]>;
+
+    setHistory([nextSections]);
+    setHistoryIndex(0);
+    setSelectedId(nextSections[0]?.id ?? '');
+    setLastSelectedId(nextSections[0]?.id ?? '');
+    setMultiSelectedIds([]);
+    setSectionBlocks(nextBlocks);
+    setCollapsedBlocks({});
+    setLastImportReport(report);
+    setLastImportSource(sourceLabel);
+    setShowImportPanel(false);
+    setImportError('');
+    setImportDraft('');
+    markSaving();
+
+    const repairs = summarizeImportRepairCount(report);
+    notify(repairs > 0 ? `Imported layout with ${repairs} repair${repairs === 1 ? '' : 's'}` : 'Imported clean V2 layout');
+  };
+
   const importV2Json = () => {
-    const raw = window.prompt('Paste Builder V2 JSON');
-    if (!raw) return;
+    if (!importDraft.trim()) {
+      setImportError('Paste Builder V2 JSON or upload a file first.');
+      return;
+    }
+
     try {
-      const parsed = JSON.parse(raw) as unknown;
-      const checked = validateBuilderV2Document(parsed);
-      if (!checked.ok) throw new Error(checked.error);
-      const doc = checked.doc;
-      const nextSections = doc.sections.map((sec) => ({
-        id: sec.id,
-        type: sec.type,
-        title: sec.title || sec.type,
-        subtitle: sec.subtitle || '',
-        variant: sec.variant || 'default',
-        enabled: sec.enabled !== false,
-        density: 'comfortable' as const,
-      }));
-      const nextBlocks = Object.fromEntries(
-        doc.sections.map((sec) => [
-          sec.id,
-          (sec.blocks || []).map((b) => ({
-            id: b.id,
-            type: sanitizeImportedBlockType(b.type) as BlockType,
-            data: b.data || {},
-            content: b.data?.text || b.data?.title || b.data?.note || '',
-          })),
-        ])
-      ) as Record<string, AddedBlock[]>;
-      setHistory([nextSections]);
-      setHistoryIndex(0);
-      setSelectedId(nextSections[0]?.id ?? '');
-      setMultiSelectedIds([]);
-      setSectionBlocks(nextBlocks);
-      notify('Imported V2 JSON');
-      markSaving();
+      const parsed = JSON.parse(importDraft) as unknown;
+      const prepared = prepareImportedBuilderV2Document(parsed);
+      if (!prepared.ok) {
+        setImportError(prepared.error);
+        return;
+      }
+      applyImportedDocument(prepared.doc, prepared.report, lastImportSource);
     } catch {
-      notify('We couldn’t import that file yet — please check the JSON format and try again.');
+      setImportError('We could not parse that JSON. Check the formatting and try again.');
+    }
+  };
+
+  const handleImportFile = async (file: File) => {
+    try {
+      const text = await file.text();
+      setImportDraft(text);
+      setImportError('');
+      setLastImportSource(file.name);
+    } catch {
+      setImportError('We could not read that file yet. Try another JSON export.');
     }
   };
 
@@ -854,7 +818,7 @@ export const BuilderV2Lab: React.FC = () => {
     enabled: s.enabled,
     bindings: {},
     settings: { showTitle: true, title: s.type === 'rsvp' ? previewFields.rsvpTitle : s.title, subtitle: s.subtitle },
-  })), [orderedVisible]);
+  })), [orderedVisible, previewFields.rsvpTitle]);
 
   const commandItems = useMemo(() => {
     const base = [
@@ -881,7 +845,7 @@ export const BuilderV2Lab: React.FC = () => {
       .filter((x) => x.s > 0)
       .sort((a, b) => b.s - a.s)
       .map((x) => x.item);
-  }, [commandQuery, sections, selected.id]);
+  }, [commandQuery, sections, addSection, clearSelection, invertSelection, selectAllSections, updateVariant]);
 
 
 
@@ -972,7 +936,7 @@ export const BuilderV2Lab: React.FC = () => {
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [canRedo, canUndo, sections, selected.id, showCommand, commandItems, commandIndex]);
+  }, [canRedo, canUndo, sections, selected.id, showCommand, commandItems, commandIndex, clearSelection, invertSelection, selectAllSections]);
 
   return (
     <div className="h-screen bg-[#f6f6f6] text-text-primary overflow-hidden">
@@ -999,10 +963,37 @@ export const BuilderV2Lab: React.FC = () => {
             <button onClick={() => setShowQuickHelp((v) => !v)} className="px-2 py-1.5 border rounded-sm hover:border-primary/40 inline-flex items-center gap-1"><Keyboard className="w-3.5 h-3.5" /> Shortcuts</button>
             <button onClick={() => setShowCommand(true)} className="px-2 py-1.5 border rounded-sm hover:border-primary/40 inline-flex items-center gap-1"><Command className="w-3.5 h-3.5" /> Actions</button>
             <button onClick={exportV2Json} className="px-2 py-1.5 border rounded-sm hover:border-primary/40">Export layout</button>
-            <button onClick={importV2Json} className="px-2 py-1.5 border rounded-sm hover:border-primary/40">Import layout</button>
+            <button onClick={openImportPanel} className="px-2 py-1.5 border rounded-sm hover:border-primary/40">Import layout</button>
             <button onClick={() => setShowStructure((v) => !v)} className="px-2 py-1.5 border rounded-sm hover:border-primary/40">{showStructure ? 'Hide' : 'Reorder or add'} sections</button>
           </div>
         </div>
+
+        {lastImportReport && (
+          <div className="px-2 md:px-3 py-2 border-b border-border-subtle bg-white">
+            <div className={`rounded-sm border px-3 py-2 text-xs ${
+              getImportSummaryTone(lastImportReport) === 'clean'
+                ? 'border-emerald-200 bg-emerald-50 text-emerald-800'
+                : getImportSummaryTone(lastImportReport) === 'repaired'
+                  ? 'border-sky-200 bg-sky-50 text-sky-800'
+                  : 'border-amber-200 bg-amber-50 text-amber-900'
+            }`}>
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                <span className="font-semibold">Last import</span>
+                <span>{lastImportSource}</span>
+                <span>{lastImportReport.sectionCount} sections</span>
+                <span>{lastImportReport.blockCount} blocks</span>
+                <span>{summarizeImportRepairCount(lastImportReport)} repairs</span>
+              </div>
+              {lastImportReport.notes.length > 0 && (
+                <ul className="mt-2 list-disc space-y-1 pl-4">
+                  {lastImportReport.notes.slice(0, 3).map((note) => (
+                    <li key={note}>{note}</li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </div>
+        )}
 
         <div className={`grid grid-cols-1 ${focusPreview ? 'lg:grid-cols-1' : showStructure && showProperties ? 'lg:grid-cols-[180px_minmax(0,1fr)_620px]' : showProperties ? 'lg:grid-cols-[minmax(0,1fr)_620px]' : showStructure ? 'lg:grid-cols-[180px_minmax(0,1fr)]' : 'lg:grid-cols-1'} gap-0 flex-1 min-h-0`}>
           {!focusPreview && showStructure && (<aside className="border-r border-border bg-surface p-3 h-full min-h-0 overflow-hidden">
@@ -1448,7 +1439,7 @@ export const BuilderV2Lab: React.FC = () => {
                         </div>
                       )}
 
-                      {(sectionBlocks[selected.id] ?? []).map((block, idx) => {
+                      {(sectionBlocks[selected.id] ?? []).map((block) => {
                         const d = normalizeBlockData(block);
                         return (
                         <div key={block.id} className="border border-border-subtle rounded-md p-3 bg-white space-y-2.5 shadow-sm transition-all duration-200">
@@ -1594,6 +1585,11 @@ export const BuilderV2Lab: React.FC = () => {
         </div>
       </div>
 
+      {actionNotice && (
+        <div className="fixed bottom-5 left-1/2 z-40 -translate-x-1/2 rounded-full border border-border-subtle bg-white px-4 py-2 text-xs font-medium text-text-primary shadow-lg">
+          {actionNotice}
+        </div>
+      )}
 
 
       {showQuickHelp && (
@@ -1609,6 +1605,89 @@ export const BuilderV2Lab: React.FC = () => {
               <li>Shift click — select a range</li>
               <li>Cmd/Ctrl click — additive selection</li>
             </ul>
+          </div>
+        </div>
+      )}
+
+      {showImportPanel && (
+        <div className="fixed inset-0 z-50 bg-black/30 flex items-start justify-center pt-16" onClick={() => setShowImportPanel(false)}>
+          <div className="w-full max-w-3xl bg-white rounded-xl border border-border shadow-xl" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between gap-3 border-b border-border-subtle px-4 py-3">
+              <div>
+                <h3 className="font-semibold text-sm">Import Builder V2 layout</h3>
+                <p className="mt-1 text-xs text-text-secondary">
+                  Paste a JSON export or load a file. We will recover obvious drift, keep usable blocks, and tell you what got repaired.
+                </p>
+              </div>
+              <button onClick={() => setShowImportPanel(false)} className="text-sm text-text-tertiary hover:text-text-primary">✕</button>
+            </div>
+
+            <div className="space-y-3 p-4">
+              <div className="flex flex-wrap items-center gap-2">
+                <input
+                  ref={importFileInputRef}
+                  type="file"
+                  accept="application/json,.json"
+                  className="hidden"
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    await handleImportFile(file);
+                    e.currentTarget.value = '';
+                  }}
+                />
+                <button
+                  onClick={() => importFileInputRef.current?.click()}
+                  className="rounded-sm border border-border-subtle px-3 py-1.5 text-xs font-medium hover:border-primary/40 hover:bg-primary/5"
+                >
+                  Upload JSON file
+                </button>
+                <button
+                  onClick={() => {
+                    setImportDraft('');
+                    setImportError('');
+                    setLastImportSource('Pasted JSON');
+                  }}
+                  className="rounded-sm border border-border-subtle px-3 py-1.5 text-xs font-medium hover:border-primary/40 hover:bg-primary/5"
+                >
+                  Clear
+                </button>
+                <span className="text-xs text-text-tertiary">{lastImportSource}</span>
+              </div>
+
+              <textarea
+                value={importDraft}
+                onChange={(e) => {
+                  setImportDraft(e.target.value);
+                  setImportError('');
+                  setLastImportSource('Pasted JSON');
+                }}
+                placeholder={`{\n  "version": "v2",\n  "sections": [\n    {\n      "type": "hero",\n      "variant": "default",\n      "enabled": true,\n      "blocks": []\n    }\n  ]\n}`}
+                className="min-h-[320px] w-full rounded-lg border border-border-subtle bg-surface px-3 py-3 font-mono text-xs text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+              />
+
+              {importError && (
+                <div className="rounded-sm border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+                  {importError}
+                </div>
+              )}
+
+              <div className="rounded-sm border border-border-subtle bg-surface-subtle px-3 py-2 text-xs text-text-secondary">
+                We preserve usable sections, repair obvious ids/types/variants, and drop only sections or blocks that cannot be recovered safely.
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between gap-3 border-t border-border-subtle px-4 py-3">
+              <p className="text-xs text-text-tertiary">Importing replaces the current Builder V2 Lab structure.</p>
+              <div className="flex items-center gap-2">
+                <button onClick={() => setShowImportPanel(false)} className="rounded-sm border border-border-subtle px-3 py-1.5 text-xs font-medium hover:border-primary/40 hover:bg-primary/5">
+                  Cancel
+                </button>
+                <button onClick={importV2Json} className="rounded-sm border border-primary/30 bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary hover:bg-primary/15">
+                  Import layout
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
