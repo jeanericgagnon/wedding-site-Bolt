@@ -810,20 +810,95 @@ describe('legacy adapters', () => {
         alt: 'Welcome drinks',
       },
     ]);
-    expect(project.pages[0].sections[2].settings.hotels).toEqual([
-      {
-        name: 'The Archer',
-        notes: 'Walkable to dinner.',
-        url: 'https://example.com/archer',
-        address: 'Main Street',
-      },
-      {
-        name: 'Book early',
-        notes: 'Rooms go fastest on Friday night.',
-        url: undefined,
-        address: undefined,
-      },
-    ]);
+    expect(project.pages[0].sections[2].settings).toMatchObject({
+      generalNote: 'A couple of easy options nearby',
+      hotels: [
+        {
+          name: 'The Archer',
+          notes: 'Walkable to dinner.',
+          url: 'https://example.com/archer',
+          address: 'Main Street',
+        },
+      ],
+      travelTips: [
+        {
+          id: 'stay-1-card-0',
+          title: 'Book early',
+          note: 'Rooms go fastest on Friday night.',
+          url: '',
+        },
+      ],
+      hotelInfo: 'Book early: Rooms go fastest on Friday night.',
+    });
+  });
+
+  it('keeps builder v2 travel cards separated when mapping back to legacy runtime settings', () => {
+    const project = builderV2DocumentToBuilderProject({
+      version: 'v2',
+      updatedAtISO: '2026-05-27T21:00:00.000Z',
+      pages: [
+        {
+          id: 'travel',
+          title: 'Travel',
+          slug: 'travel',
+          isHome: true,
+          hidden: false,
+          sections: [
+            {
+              id: 'travel-1',
+              type: 'travel',
+              variant: 'default',
+              enabled: true,
+              title: 'Travel',
+              subtitle: 'Plan ahead for the holiday weekend.',
+              blocks: [
+                { id: 'travel-note', type: 'text', data: { text: 'Use the shuttle if you do not want to drive after dinner.' } },
+                { id: 'travel-flight', type: 'travelTip', data: { title: 'Getting here', note: 'Fly into SFO for the easiest drive.' } },
+                { id: 'travel-parking', type: 'travelTip', data: { title: 'Parking', note: 'Valet is available at the venue.' } },
+                { id: 'travel-hotel-tip', type: 'travelTip', data: { title: 'Room block', note: 'Book River Inn before August 1.' } },
+                { id: 'travel-hotel-card', type: 'hotelCard', data: { title: 'River Inn', note: 'Use our room block.', url: 'https://example.com/river', location: '1 River Rd' } },
+              ],
+            },
+          ],
+        },
+      ],
+    });
+
+    expect(project.pages[0].sections[0].settings).toMatchObject({
+      generalNote: 'Plan ahead for the holiday weekend.',
+      description: 'Plan ahead for the holiday weekend.',
+      hotels: [
+        {
+          name: 'River Inn',
+          notes: 'Use our room block.',
+          url: 'https://example.com/river',
+          address: '1 River Rd',
+        },
+      ],
+      travelTips: [
+        {
+          id: 'travel-1-card-0',
+          title: 'Getting here',
+          note: 'Fly into SFO for the easiest drive.',
+          url: '',
+        },
+        {
+          id: 'travel-1-card-1',
+          title: 'Parking',
+          note: 'Valet is available at the venue.',
+          url: '',
+        },
+        {
+          id: 'travel-1-card-2',
+          title: 'Room block',
+          note: 'Book River Inn before August 1.',
+          url: '',
+        },
+      ],
+      flightInfo: 'Getting here: Fly into SFO for the easiest drive.',
+      parkingInfo: 'Parking: Valet is available at the venue.',
+      hotelInfo: 'Room block: Book River Inn before August 1.',
+    });
   });
 
   it('maps builder v2 dress-code sections into legacy public runtime settings without inventing extras', () => {

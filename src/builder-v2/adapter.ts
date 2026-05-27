@@ -621,6 +621,18 @@ const getSectionNoteCards = (
   })).filter((item) => item.title || item.note || item.url || item.location || item.time)
 );
 
+const getTravelHintBucket = (
+  title: string,
+  note: string,
+): 'hotel' | 'flight' | 'parking' | 'general' => {
+  const haystack = `${title} ${note}`.trim().toLowerCase();
+  if (!haystack) return 'general';
+  if (/(hotel|stay|room|lodging|book)/.test(haystack)) return 'hotel';
+  if (/(flight|airport|airline|fly|arrival|depart|get(?:ting)? here)/.test(haystack)) return 'flight';
+  if (/(parking|valet|garage|lot|shuttle|transit|train|bart|bus|car|drive)/.test(haystack)) return 'parking';
+  return 'general';
+};
+
 const getDirectionsTextValue = (
   section: BuilderV2Section,
   label: 'Venue' | 'Address' | 'City' | 'Parking' | 'Shuttle',
@@ -711,21 +723,65 @@ const toLegacyBuilderSettings = (section: BuilderV2Section): Record<string, unkn
       };
     case 'travel':
     case 'accommodations':
+    {
+      const narrativeParts = getSectionNarrativeParts(section);
+      const hotelCards = getSectionNoteCards(section, ['hotelCard']);
+      const travelTips = getSectionNoteCards(section, ['travelTip']);
+      const hotelHints: string[] = [];
+      const flightHints: string[] = [];
+      const parkingHints: string[] = [];
+      const generalHints: string[] = [];
+
+      travelTips.forEach((item) => {
+        const line = [item.title, item.note].filter(Boolean).join(': ').trim() || item.title || item.note;
+        if (!line) return;
+
+        switch (getTravelHintBucket(item.title, item.note)) {
+          case 'hotel':
+            hotelHints.push(line);
+            break;
+          case 'flight':
+            flightHints.push(line);
+            break;
+          case 'parking':
+            parkingHints.push(line);
+            break;
+          default:
+            generalHints.push(line);
+            break;
+        }
+      });
+
       return {
         ...common,
-        hotels: getSectionNoteCards(section, ['hotelCard', 'travelTip']).map((item) => ({
+        generalNote: getFirstMeaningfulString(section, [
+          section.subtitle,
+          narrativeParts[0],
+          common.generalNote as string | undefined,
+        ]),
+        hotels: hotelCards.map((item) => ({
           name: item.title || 'Stay nearby',
           notes: item.note || undefined,
           url: item.url || undefined,
           address: item.location || undefined,
         })),
-        travelTips: getSectionNoteCards(section, ['travelTip', 'hotelCard']).map((item) => ({
+        travelTips: travelTips.map((item) => ({
           id: item.id,
           title: item.title || '',
           note: item.note || '',
           url: item.url || '',
         })),
+        hotelInfo: hotelHints.length > 0 ? hotelHints.join('\n') : undefined,
+        flightInfo: flightHints.length > 0 ? flightHints.join('\n') : undefined,
+        parkingInfo: parkingHints.length > 0 ? parkingHints.join('\n') : undefined,
+        description: getFirstMeaningfulString(section, [
+          section.subtitle,
+          narrativeParts[0],
+          generalHints[0],
+          common.description as string | undefined,
+        ]),
       };
+    }
     case 'gallery':
       return {
         ...common,
