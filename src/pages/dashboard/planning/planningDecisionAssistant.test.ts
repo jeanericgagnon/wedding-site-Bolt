@@ -74,6 +74,7 @@ describe('planningDecisionAssistant', () => {
     expect(model.focusTitle).toMatch(/task board/i);
     expect(model.bestNextMove).toMatch(/overdue tasks|dates are honest/i);
     expect(model.decisionRule).toMatch(/fix that truth before you optimize/i);
+    expect(model.watchout).toMatch(/calmer-looking part|dates are already lying/i);
     expect(model.sequence.map((step) => step.status)).toEqual(['current', 'next', 'then']);
     expect(model.sequence[0]?.title).toMatch(/Resolve or reschedule|late work/i);
     expect(model.primaryAction?.target).toBe('tasks');
@@ -90,6 +91,7 @@ describe('planningDecisionAssistant', () => {
     expect(model.focusTitle).toMatch(/wrong story/i);
     expect(model.bestNextMove).toMatch(/over-budget categories|widen the review/i);
     expect(model.decisionRule).toMatch(/fix those first/i);
+    expect(model.watchout).toMatch(/narrow budget problem|every line item/i);
     expect(model.detail).toMatch(/Venue/i);
     expect(model.detail).toMatch(/Florals/i);
   });
@@ -108,6 +110,7 @@ describe('planningDecisionAssistant', () => {
     expect(model.focusTitle).toMatch(/schedule spine/i);
     expect(model.bestNextMove).toMatch(/ceremony, reception|preview the itinerary/i);
     expect(model.decisionRule).toMatch(/schedule anchors beat aesthetic polish/i);
+    expect(model.watchout).toMatch(/anchor events are missing|inherits that uncertainty/i);
     expect(model.sequence[1]?.detail).toMatch(/guest-facing timeline|weekend reads clearly/i);
     expect(model.primaryAction?.target).toBe('itinerary');
     expect(model.secondaryAction?.target).toBe('seating');
@@ -123,6 +126,7 @@ describe('planningDecisionAssistant', () => {
     expect(model.focusTitle).toMatch(/reliable contact path/i);
     expect(model.bestNextMove).toMatch(/reliable contact path|notes, comparisons/i);
     expect(model.decisionRule).toMatch(/contact truth is missing/i);
+    expect(model.watchout).toMatch(/stack notes|real follow-up/i);
     expect(model.sequence[2]?.title).toMatch(/deeper note cleanup|later/i);
     expect(model.badges[0]).toMatch(/2 missing direct contact/i);
   });
@@ -140,6 +144,7 @@ describe('planningDecisionAssistant', () => {
     expect(model.focusTitle).toMatch(/matter this week/i);
     expect(model.bestNextMove).toMatch(/owners and due dates/i);
     expect(model.decisionRule).toMatch(/tighten owners and dates/i);
+    expect(model.watchout).toMatch(/weekly focus|fuzzy owners or dates/i);
     expect(model.badges[0]).toMatch(/1 high-priority due soon/i);
   });
 });

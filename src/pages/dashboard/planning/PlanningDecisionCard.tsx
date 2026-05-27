@@ -39,6 +39,8 @@ export const PlanningDecisionCard: React.FC<Props> = ({ model, onAction }) => {
               <div className="mt-3 border-t border-border/60 pt-3">
                 <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-text-tertiary">Decision rule</p>
                 <p className="mt-1 text-sm leading-5 text-text-secondary">{model.decisionRule}</p>
+                <p className="mt-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-text-tertiary">Watchout</p>
+                <p className="mt-1 text-sm leading-5 text-text-secondary">{model.watchout}</p>
               </div>
             </div>
           </div>

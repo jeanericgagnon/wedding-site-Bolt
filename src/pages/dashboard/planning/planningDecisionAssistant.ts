@@ -15,6 +15,7 @@ export interface PlanningDecisionCardModel {
   focusDetail: string;
   bestNextMove: string;
   decisionRule: string;
+  watchout: string;
   badges: string[];
   sequence: Array<{
     id: 'stabilize' | 'check' | 'settle';
@@ -101,6 +102,7 @@ export function buildPlanningOverviewDecisionCard(args: {
       focusDetail: 'Once overdue work is resolved or honestly rescheduled, the rest of the planning board becomes much easier to trust again.',
       bestNextMove: 'Open the overdue tasks first, close or reschedule the ones already slipping, then come back to the rest of the board once the dates are honest again.',
       decisionRule: 'If work is already late, fix that truth before you optimize budget, wording, or polish.',
+      watchout: 'Do not hide overdue work under prettier categories or fresh polish. If the dates are already lying, every calmer-looking part of the board is less trustworthy until that is fixed.',
       badges: [
         `${overdueTasks.length} overdue`,
         `${tasks.filter((task) => task.priority === 'high' && task.status !== 'done').length} high priority still open`,
@@ -133,6 +135,7 @@ export function buildPlanningOverviewDecisionCard(args: {
       focusDetail: 'You do not need a broad vendor review yet. You need one clear pass on the invoices and due dates that are about to matter.',
       bestNextMove: 'Review the next due vendor payment now, decide exactly who gets paid next, and only then reopen any broader vendor questions.',
       decisionRule: 'When money is due soon, timing beats research: confirm the next payment move before you reopen broader vendor questions.',
+      watchout: 'Do not turn one imminent payment into a full vendor spiral. When money is due soon, broad comparison work usually just delays the only decision that already matters.',
       badges: [
         `${currency(dueSoonVendors.reduce((sum, vendor) => sum + (vendor.balance_due || 0), 0))} due soon`,
         `${vendors.filter((vendor) => (vendor.balance_due || 0) > 0).length} vendors still open`,
@@ -165,6 +168,7 @@ export function buildPlanningOverviewDecisionCard(args: {
       focusDetail: 'The goal is not staring at totals. It is deciding which overages are real, acceptable, or worth tightening before they mislead the rest of the plan.',
       bestNextMove: 'Open the budget categories that drifted, decide which overages are real versus avoidable, and steady those before you trust the broader plan again.',
       decisionRule: 'If spend is drifting, steady the categories first; do not let a soft budget story sit underneath hard planning decisions.',
+      watchout: 'Do not let a vague total hide the categories doing the real damage. If drift is real, category truth matters more than a reassuring top-line number.',
       badges: [
         `${currency(totalActual)} spent`,
         `${currency(Math.max(totalActual - totalEstimated, 0))} over plan`,
@@ -197,6 +201,7 @@ export function buildPlanningOverviewDecisionCard(args: {
       focusDetail: 'This is the moment to close the gap between RSVP truth and the actual seating plan so later decisions stop compensating for missing placements.',
       bestNextMove: 'Place the remaining confirmed guests first, then come back to tasks or polish only after the room matches the RSVP truth.',
       decisionRule: 'If confirmed guests are still floating, place them before you spend energy on softer planning polish.',
+      watchout: 'Do not treat floating confirmed guests like a minor detail. As long as the room does not match the RSVP truth, other planning surfaces are compensating for a missing reality.',
       badges: [
         `${seatingReadiness.seated}/${seatingReadiness.attending} seated`,
         `${tasks.filter((task) => task.status === 'in_progress').length} tasks in progress`,
@@ -229,6 +234,7 @@ export function buildPlanningOverviewDecisionCard(args: {
       focusDetail: 'Once the anchor events exist, guest messaging, seating, and live-day coordination can all work from the same trustworthy timeline.',
       bestNextMove: 'Add the ceremony, reception, and other anchor events now, then preview the itinerary before you return to seating or softer polish.',
       decisionRule: 'Near the wedding, schedule anchors beat aesthetic polish every time.',
+      watchout: 'Do not ask guests or coordinators to infer the weekend from scattered notes. If the anchor events are missing, every later layer inherits that uncertainty.',
       badges: [
         daysUntilWedding === 0 ? 'Wedding day' : `${daysUntilWedding} days left`,
         'No itinerary events yet',
@@ -260,6 +266,7 @@ export function buildPlanningOverviewDecisionCard(args: {
     focusDetail: 'A steady board is your chance to tighten the small things that usually turn into deadline noise later.',
     bestNextMove: 'Pick one small planning edge to tighten now, then leave the rest of the board alone while it is still calm.',
     decisionRule: 'When no pressure point is obvious, improve the edges that will keep the board trustworthy later.',
+    watchout: 'Do not mistake a calm board for permission to reopen everything. The risk in steady planning is creating churn that was not there a minute ago.',
     badges: [
       `${tasks.filter((task) => task.status !== 'done').length} tasks still open`,
       `${vendors.filter((vendor) => (vendor.balance_due || 0) === 0).length} vendors fully paid`,
@@ -297,6 +304,7 @@ export function buildTasksDecisionCard(tasks: PlanningTask[]): PlanningDecisionC
       focusDetail: 'The best task system is not the fullest one. It is the one where the dates and statuses still mean what they say.',
       bestNextMove: 'Resolve the overdue tasks before you add or reorder anything else, so the list earns the right to guide the week again.',
       decisionRule: 'If a task is already late, resolve or reset it before you add more planning noise to the board.',
+      watchout: 'Do not respond to overdue work by adding more structure around it. If the task dates already stopped meaning what they say, the only useful move is to make them honest again.',
       badges: [
         `${overdueTasks.length} overdue`,
         `${dueSoonHighPriority.length} high-priority due this week`,
@@ -327,6 +335,7 @@ export function buildTasksDecisionCard(tasks: PlanningTask[]): PlanningDecisionC
       focusDetail: 'A short pass on ownership and due dates now keeps these tasks from becoming next week’s overdue cleanup.',
       bestNextMove: 'Confirm the owners and due dates on this week’s high-priority tasks before you reorganize the calmer rest of the list.',
       decisionRule: 'When high-priority work is due soon, tighten owners and dates before you reorganize the rest of the board.',
+      watchout: 'Do not burn weekly focus on low-stakes reorganization while the near-term tasks still have fuzzy owners or dates. The board only feels calm if this week is grounded first.',
       badges: [
         `${dueSoonHighPriority.length} high-priority due soon`,
         `${inProgressCount} already in progress`,
@@ -356,6 +365,7 @@ export function buildTasksDecisionCard(tasks: PlanningTask[]): PlanningDecisionC
     focusDetail: 'The task list is doing its job when every open item has a believable owner and a next step that does not need translation.',
     bestNextMove: 'Use the calm to tighten one fuzzy task into a real owner-and-next-step pair, then leave the stable parts alone.',
     decisionRule: 'When the list is calm, use it to preserve ownership clarity instead of inventing busier task churn.',
+    watchout: 'Do not use a stable task list as an excuse to reorganize for sport. If ownership is already clear, more movement usually makes the next step fuzzier, not better.',
     badges: [
       `${tasks.filter((task) => task.status !== 'done').length} open`,
       `${inProgressCount} in progress`,
@@ -395,6 +405,7 @@ export function buildBudgetDecisionCard(items: PlanningBudgetItem[], totalBudget
       focusDetail: 'You need one honest pass on what is already committed, what still has wiggle room, and what no longer fits the plan.',
       bestNextMove: 'Review the categories pushing the budget over goal first, then decide what still deserves real money before you cut elsewhere.',
       decisionRule: 'When the goal is already breached, category truth matters more than reassuring totals.',
+      watchout: 'Do not smooth over a breached budget with a softer story. Once the goal is passed, false reassurance makes every later funding decision harder.',
       badges: [
         `${currency(totalActual)} spent`,
         `${currency(Math.max(totalActual - totalBudget, 0))} over goal`,
@@ -425,6 +436,7 @@ export function buildBudgetDecisionCard(items: PlanningBudgetItem[], totalBudget
       focusDetail: 'A calm budget comes from understanding the few places that drifted, not treating every line item like equal pressure.',
       bestNextMove: 'Open the over-budget categories first and decide which drift is acceptable before you widen the review to the whole budget.',
       decisionRule: 'If only a few categories drifted, fix those first instead of broadening the review.',
+      watchout: 'Do not widen a narrow budget problem into full-budget anxiety. If only a few categories drifted, dragging every line item into review usually hides the real lesson.',
       badges: [
         `${overBudgetCategories.length} categories over estimate`,
         `${currency(remaining)} remaining`,
@@ -454,6 +466,7 @@ export function buildBudgetDecisionCard(items: PlanningBudgetItem[], totalBudget
     focusDetail: 'A steady budget helps you decide what should still get real money and what can stay intentionally lighter.',
     bestNextMove: 'Use the calm to make the next funding decision clearly, then keep the budget light instead of turning it into receipt archaeology.',
     decisionRule: 'When the totals are steady, let the budget guide future choices instead of turning it into receipt archaeology.',
+    watchout: 'Do not turn a steady budget into receipt archaeology just because it is available. The point is clearer future decisions, not heavier bookkeeping theater.',
     badges: [
       `${currency(totalEstimated)} estimated`,
       `${currency(remaining)} remaining`,
@@ -490,6 +503,7 @@ export function buildVendorsDecisionCard(vendors: PlanningVendor[]): PlanningDec
       focusDetail: 'This is not a broad sourcing moment. It is a timing pass on the vendors whose money or reply windows are about to matter.',
       bestNextMove: 'Confirm the next due vendor payment now, then leave deeper sourcing or note cleanup for after the timing pressure passes.',
       decisionRule: 'When vendor timing is imminent, resolve the next due move before you widen the conversation.',
+      watchout: 'Do not hide a due-now vendor decision inside broader sourcing talk. Timing pressure only gets louder when the next concrete move stays blurry.',
       badges: [
         `${currency(dueSoonVendors.reduce((sum, vendor) => sum + (vendor.balance_due || 0), 0))} due soon`,
         `${openBalanceCount} vendors still open`,
@@ -520,6 +534,7 @@ export function buildVendorsDecisionCard(vendors: PlanningVendor[]): PlanningDec
       focusDetail: 'The board gets calmer once each vendor record can actually support a quick follow-up without hunting through old threads.',
       bestNextMove: 'Fill in one reliable contact path for the missing vendor records before you add more notes, comparisons, or research.',
       decisionRule: 'If contact truth is missing, fix that before you add more vendor notes or comparisons.',
+      watchout: 'Do not stack notes onto vendor records that still cannot support a real follow-up. If contact truth is missing, extra comparison detail mostly hides the real problem.',
       badges: [
         `${missingContactCount} missing direct contact`,
         `${openBalanceCount} still carrying balance`,
@@ -549,6 +564,7 @@ export function buildVendorsDecisionCard(vendors: PlanningVendor[]): PlanningDec
     focusDetail: 'A calm vendor list is valuable because it stays ready for the next real question, not because it collects every past detail.',
     bestNextMove: 'Use the calm to refresh the next vendor follow-up truth, then leave the rest of the board stable and ready.',
     decisionRule: 'When vendors are calm, preserve clean follow-up truth instead of expanding the record for its own sake.',
+    watchout: 'Do not use a calm vendor board as a reason to inflate the record. If the next follow-up truth is already clear, extra maintenance can create noise instead of confidence.',
     badges: [
       `${openBalanceCount} open balances`,
       `${vendors.length} total vendors`,
