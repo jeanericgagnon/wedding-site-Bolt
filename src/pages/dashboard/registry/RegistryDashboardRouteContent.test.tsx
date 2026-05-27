@@ -2829,6 +2829,29 @@ describe('RegistryDashboardRouteContent', () => {
     expect(screen.getByText(/keep it stable unless a better guest-facing priority truly replaces it/i)).toBeInTheDocument();
   });
 
+  it('frames partial recent activity as finish-the-claim work', () => {
+    render(
+      <RegistryDashboardRouteContent
+        {...makeBaseProps({
+          recentActivity: [
+            makeItem({
+              id: 'gift-1',
+              item_name: 'Dinner plates',
+              purchase_status: 'partial',
+              quantity_needed: 2,
+              quantity_purchased: 1,
+              purchaser_name: 'Alex',
+            }),
+          ],
+        })}
+      />,
+    );
+
+    expect(screen.getByText('0 purchased · 1 partially claimed · 0 still available')).toBeInTheDocument();
+    expect(screen.getByText('Finish the gifts already in motion')).toBeInTheDocument();
+    expect(screen.getByText(/completion beats adding new motion elsewhere/i)).toBeInTheDocument();
+  });
+
   it('summarizes mixed registry quick-check prompts before the cards', () => {
     render(
       <RegistryDashboardRouteContent

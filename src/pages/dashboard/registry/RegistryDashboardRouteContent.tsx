@@ -765,6 +765,32 @@ export function RegistryDashboardRouteContent(props: {
         `${props.recentActivity.filter((item) => item.purchase_status === 'partial').length} partially claimed`,
         `${props.recentActivity.filter((item) => item.purchase_status === 'available').length} still available`,
       ].join(' · ');
+  const recentPurchasedCount = props.recentActivity.filter((item) => item.purchase_status === 'purchased').length;
+  const recentPartialCount = props.recentActivity.filter((item) => item.purchase_status === 'partial').length;
+  const recentAvailableCount = props.recentActivity.filter((item) => item.purchase_status === 'available').length;
+  const recentActivityGuide = props.recentActivity.length === 0
+    ? {
+        focusTitle: 'Use activity as confirmation, not entertainment',
+        focusDetail: 'This lane is most useful once real claims, purchases, or refreshes start telling you how the registry is actually moving.',
+        decisionRule: 'Do not invent motion for its own sake; let the activity lane earn attention by reflecting meaningful guest or owner actions.',
+      }
+    : recentPartialCount > 0
+      ? {
+          focusTitle: 'Finish the gifts already in motion',
+          focusDetail: 'Partial claims are the clearest signal that a guest already started a choice and now needs a clean path to finish it.',
+          decisionRule: 'When the activity lane shows partial claims, completion beats adding new motion elsewhere.',
+        }
+      : recentPurchasedCount > 0
+        ? {
+            focusTitle: 'Turn completed purchases into calmer follow-through',
+            focusDetail: 'Fresh purchases are a good sign, but their value compounds when purchaser names, thank-yous, and guest visibility stay tidy behind them.',
+            decisionRule: 'When real purchases are flowing, protect the follow-through before you reopen presentation polish.',
+          }
+        : {
+            focusTitle: 'Treat fresh edits as trust work, not just noise',
+            focusDetail: 'If activity is mostly availability or owner-side changes, use it to keep the registry accurate and easy to trust instead of merely busy.',
+            decisionRule: 'When motion is mostly edits rather than purchases, clarity beats churn.',
+          };
   const registryQuickCheckNextCount = props.registryInsights.filter((insight) => insight.priority === 'next').length;
   const registryQuickCheckPolishCount = props.registryInsights.filter((insight) => insight.priority === 'polish').length;
   const registryQuickCheckSummary = props.registryInsights.length === 0
@@ -1353,6 +1379,17 @@ export function RegistryDashboardRouteContent(props: {
             <Card variant="bordered" padding="lg">
               <p className="text-sm font-semibold text-text-primary">Recent registry activity</p>
               <p className="mt-1 text-sm text-text-secondary">{recentActivitySummary}</p>
+              <div className="mt-3 grid gap-3 md:grid-cols-2">
+                <div className="rounded-xl border border-border-subtle bg-surface-subtle/20 px-3 py-3">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-text-tertiary">Main focus</p>
+                  <p className="mt-1 text-sm font-semibold text-text-primary">{recentActivityGuide.focusTitle}</p>
+                  <p className="mt-2 text-xs leading-5 text-text-secondary">{recentActivityGuide.focusDetail}</p>
+                </div>
+                <div className="rounded-xl border border-border-subtle bg-surface-subtle/20 px-3 py-3">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-text-tertiary">Decision rule</p>
+                  <p className="mt-1 text-sm font-semibold text-text-primary">{recentActivityGuide.decisionRule}</p>
+                </div>
+              </div>
               <div className="mt-3 space-y-2.5">
                 {props.recentActivity.length === 0 ? (
                   <p className="text-sm text-text-secondary">No recent registry changes yet.</p>
