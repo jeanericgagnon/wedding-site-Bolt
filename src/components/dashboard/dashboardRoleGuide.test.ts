@@ -11,6 +11,8 @@ describe('buildDashboardRoleGuide', () => {
     expect(guide.focusTitle).toMatch(/Move the plan forward/i);
     expect(guide.nextMove).toMatch(/Overview, then move into Guests, Planning, or Messages/i);
     expect(guide.decisionRule).toMatch(/brand, billing, or final ownership calls/i);
+    expect(guide.sequence.map((step) => step.status)).toEqual(['current', 'next', 'then']);
+    expect(guide.sequence[0]?.title).toMatch(/operational pressure/i);
   });
 
   it('keeps viewer copy explicit about the read-only experience', () => {
@@ -21,5 +23,6 @@ describe('buildDashboardRoleGuide', () => {
     expect(guide.focusTitle).toMatch(/Review for clarity/i);
     expect(guide.nextMove).toMatch(/Overview, then open the relevant page/i);
     expect(guide.decisionRule).toMatch(/not to become another editing lane/i);
+    expect(guide.sequence[2]?.detail).toMatch(/couple|owners/i);
   });
 });

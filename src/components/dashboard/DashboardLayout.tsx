@@ -29,6 +29,7 @@ import { resolvePublicSiteSlugFromRow } from '../../lib/publicSiteSlug';
 import { getSiteVisibilityState } from '../../lib/siteVisibilityState';
 import { resolveActiveSiteForUser, resolveActiveSiteRoleForUser } from '../../lib/activeSite';
 import { getStoredActiveSiteId, setStoredActiveSiteId } from '../../lib/activeSiteStorage';
+import { getFlowStatusLabel } from '../../lib/flowLabels';
 import { getDemoDashboardSiteContext } from './dashboardDemoContext';
 import { buildSiteMembershipLabel } from './siteMembershipLabel';
 import { buildDashboardRoleGuide } from './dashboardRoleGuide';
@@ -281,6 +282,19 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
                   <p className="text-[11px] uppercase tracking-wide text-text-tertiary">Decision rule</p>
                   <p className="mt-1 text-[11px] leading-5 text-text-tertiary">{roleGuide.decisionRule}</p>
                 </div>
+              </div>
+              <div className="mt-3 space-y-2">
+                {roleGuide.sequence.map((step) => (
+                  <div key={step.id} className="rounded-lg border border-border-subtle bg-white/80 px-3 py-2">
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-[11px] font-semibold text-text-primary">{step.title}</p>
+                      <span className="rounded-full border border-border-subtle bg-surface-subtle px-2 py-0.5 text-[10px] font-medium text-text-secondary">
+                        {getFlowStatusLabel(step.status)}
+                      </span>
+                    </div>
+                    <p className="mt-1 text-[11px] leading-5 text-text-tertiary">{step.detail}</p>
+                  </div>
+                ))}
               </div>
             </div>
 
