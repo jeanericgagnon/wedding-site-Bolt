@@ -37,27 +37,24 @@ const makeDefaultBlocksForType = (
   title?: string,
   subtitle?: string,
 ): BuilderV2Block[] => {
-  const titleText = title?.trim() || 'Welcome to our wedding';
-  const subtitleText = subtitle?.trim() || 'Edit this intro in the right rail.';
+  const titleText = title?.trim() || '';
+  const subtitleText = subtitle?.trim() || '';
 
   switch (normalizeBuilderV2SectionType(type)) {
     case 'hero':
       return [
-        { id: 'b-title', type: 'title', data: { text: titleText } },
-        { id: 'b-text', type: 'text', data: { text: subtitleText } },
+        ...(titleText ? [{ id: 'b-title', type: 'title', data: { text: titleText } } satisfies BuilderV2Block] : []),
+        ...(subtitleText ? [{ id: 'b-text', type: 'text', data: { text: subtitleText } } satisfies BuilderV2Block] : []),
       ];
     case 'story':
-      return [{ id: 'b-story', type: 'story', data: { text: subtitleText || 'Tell your story here.' } }];
+      return subtitleText ? [{ id: 'b-story', type: 'story', data: { text: subtitleText } }] : [];
     case 'schedule':
-      return [{ id: 'b-event', type: 'event', data: { title: titleText || 'Ceremony', time: '4:00 PM', location: 'Main Venue' } }];
     case 'travel':
-      return [{ id: 'b-tip', type: 'travelTip', data: { title: titleText || 'Travel tip', note: subtitleText || 'Book flights early.' } }];
     case 'registry':
-      return [{ id: 'b-reg', type: 'registryItem', data: { title: titleText || 'Registry item', note: subtitleText || 'Add item details here.' } }];
     case 'rsvp':
-      return [{ id: 'b-rsvp', type: 'rsvpNote', data: { note: subtitleText || 'Please RSVP by the deadline.' } }];
+      return subtitleText ? [{ id: 'b-text', type: 'text', data: { text: subtitleText } }] : [];
     default:
-      return [{ id: 'b-text', type: 'text', data: { text: subtitleText || 'Add content.' } }];
+      return subtitleText ? [{ id: 'b-text', type: 'text', data: { text: subtitleText } }] : [];
   }
 };
 

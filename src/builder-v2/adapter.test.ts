@@ -12,7 +12,7 @@ import {
 } from './adapter';
 
 describe('toBuilderV2Document', () => {
-  it('maps section instances into a v2 document with defaults', () => {
+  it('maps section instances into a v2 document without inventing guest content', () => {
     const instances: SectionInstance[] = [
       {
         id: 'hero-1',
@@ -47,12 +47,15 @@ describe('toBuilderV2Document', () => {
       title: 'Welcome',
       subtitle: 'Join us',
     });
-    expect(sections[0]?.blocks[0]?.type).toBe('title');
-    expect(sections[1]?.blocks[0]?.type).toBe('text');
+    expect(sections[0]?.blocks).toMatchObject([
+      { type: 'title', data: { text: 'Welcome' } },
+      { type: 'text', data: { text: 'Join us' } },
+    ]);
+    expect(sections[1]?.blocks).toEqual([]);
     expect(typeof out.updatedAtISO).toBe('string');
   });
 
-  it('normalizes drifted registry section types into registry blocks', () => {
+  it('normalizes drifted registry section types without fabricating registry items', () => {
     const section = toBuilderV2Section({
       id: 'registry-1',
       type: 'registry-section' as never,
@@ -63,10 +66,10 @@ describe('toBuilderV2Document', () => {
     });
 
     expect(section.type).toBe('registry');
-    expect(section.blocks[0]?.type).toBe('registryItem');
+    expect(section.blocks).toEqual([]);
   });
 
-  it('normalizes extended registrysection drift into registry blocks', () => {
+  it('normalizes extended registrysection drift without fabricating registry items', () => {
     const section = toBuilderV2Section({
       id: 'registry-2',
       type: 'registry-section-preview' as never,
@@ -77,7 +80,32 @@ describe('toBuilderV2Document', () => {
     });
 
     expect(section.type).toBe('registry');
-    expect(section.blocks[0]?.type).toBe('registryItem');
+    expect(section.blocks).toEqual([]);
+  });
+
+  it('keeps real legacy descriptive text while leaving structured sections otherwise empty', () => {
+    const travelSection = toBuilderV2Section({
+      id: 'travel-1',
+      type: 'travel',
+      variant: 'default',
+      enabled: true,
+      bindings: {},
+      settings: { title: 'Travel', description: 'Stay nearby and book your room early.' },
+    });
+
+    const scheduleSection = toBuilderV2Section({
+      id: 'schedule-1',
+      type: 'schedule',
+      variant: 'default',
+      enabled: true,
+      bindings: {},
+      settings: { title: 'Schedule' },
+    });
+
+    expect(travelSection.blocks).toMatchObject([
+      { type: 'text', data: { text: 'Stay nearby and book your room early.' } },
+    ]);
+    expect(scheduleSection.blocks).toEqual([]);
   });
 });
 
