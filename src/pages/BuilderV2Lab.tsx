@@ -25,6 +25,10 @@ import { buildBuilderV2StructureGuidance } from './builderV2StructureGuidance';
 import { buildBuilderV2SelectionGuidance } from './builderV2SelectionGuidance';
 import { cloneBuilderV2Sections } from './builderV2SectionClone';
 import {
+  buildBuilderV2SectionStarterSummary,
+  getBuilderV2StarterBlockTypes,
+} from './builderV2SectionStarter';
+import {
   DndContext,
   PointerSensor,
   closestCenter,
@@ -674,13 +678,26 @@ export const BuilderV2Lab: React.FC = () => {
     notify(`Duplicated ${result.duplicatedIds.length} section${result.duplicatedIds.length === 1 ? '' : 's'}`);
   }, [commit, notify, sectionBlocks, sections, selectedIds]);
 
+  const buildStarterBlocks = useCallback((sectionId: string, sectionType: string) => {
+    const availableBlockTypes = SECTION_BLOCK_CATALOG[sectionType] ?? ['title', 'text', 'photo'];
+    return getBuilderV2StarterBlockTypes(sectionType, availableBlockTypes).map((blockType) => ({
+      id: `${sectionId}-${blockType}-${Math.random().toString(36).slice(2, 6)}`,
+      type: blockType as BlockType,
+      content: BLOCK_DEFAULTS[blockType as BlockType],
+      data: makeDefaultBlockContent(blockType as BlockType),
+    }));
+  }, []);
+
   const addSection = useCallback((typeLabel: string, variant?: string) => {
     const normalizedType = typeLabel.toLowerCase().replace(/\s+/g, '-');
     const id = `${normalizedType}-${Date.now()}`;
     const next = [...sections, { id, type: normalizedType, title: typeLabel, subtitle: '', variant: variant ?? 'default', enabled: true, density: 'comfortable' as const }];
+    const starterBlocks = buildStarterBlocks(id, normalizedType);
     setSelectedId(id);
+    setSectionBlocks((prev) => ({ ...prev, [id]: starterBlocks }));
     commit(next);
-  }, [commit, sections]);
+    notify(starterBlocks.length > 0 ? `Added ${typeLabel} with ${starterBlocks.length} starter block${starterBlocks.length === 1 ? '' : 's'}` : `Added ${typeLabel}`);
+  }, [buildStarterBlocks, commit, notify, sections]);
 
   const renameSelected = (title: string) => {
     commit(sections.map((s) => (s.id === selected.id ? { ...s, title } : s)));
@@ -1321,6 +1338,12 @@ export const BuilderV2Lab: React.FC = () => {
                           const normalizedType = name.toLowerCase().replace(/\s+/g, '-');
                           const previewVariant = (VARIANTS_BY_TYPE[normalizedType] ?? ['default'])[0];
                           const mappedType = (SECTION_TYPE_MAP[normalizedType] ?? 'custom') as SectionType;
+                          const starterSummary = buildBuilderV2SectionStarterSummary(
+                            name,
+                            normalizedType,
+                            SECTION_BLOCK_CATALOG[normalizedType] ?? ['title', 'text', 'photo'],
+                            BLOCK_LABELS as Record<string, string>,
+                          );
                           let PreviewComp: React.FC<{ data: WeddingDataV1; instance: SectionInstance }> | null = null;
                           try {
                             PreviewComp = getSectionRenderer(mappedType as never, previewVariant) as React.FC<{ data: WeddingDataV1; instance: SectionInstance }>;
@@ -1352,6 +1375,7 @@ export const BuilderV2Lab: React.FC = () => {
                                 )}
                               </div>
                               <p className="text-xs font-medium text-text-primary">{name}</p>
+                              <p className="mt-1 text-[11px] leading-relaxed text-text-secondary">{starterSummary.headline}</p>
                             </button>
                           );
                         })}
@@ -1367,6 +1391,12 @@ export const BuilderV2Lab: React.FC = () => {
                         {(VARIANTS_BY_TYPE[addPickerType.toLowerCase().replace(/\s+/g, '-')] ?? ['default']).map((variant) => {
                           const normalizedType = addPickerType.toLowerCase().replace(/\s+/g, '-');
                           const mappedType = (SECTION_TYPE_MAP[normalizedType] ?? 'custom') as SectionType;
+                          const starterSummary = buildBuilderV2SectionStarterSummary(
+                            addPickerType,
+                            normalizedType,
+                            SECTION_BLOCK_CATALOG[normalizedType] ?? ['title', 'text', 'photo'],
+                            BLOCK_LABELS as Record<string, string>,
+                          );
                           let PreviewComp: React.FC<{ data: WeddingDataV1; instance: SectionInstance }> | null = null;
                           try {
                             PreviewComp = getSectionRenderer(mappedType as never, variant) as React.FC<{ data: WeddingDataV1; instance: SectionInstance }>;
@@ -1402,6 +1432,7 @@ export const BuilderV2Lab: React.FC = () => {
                                 )}
                               </div>
                               <p className="text-xs font-medium text-text-primary">{variant}</p>
+                              <p className="mt-1 text-[11px] leading-relaxed text-text-secondary">{starterSummary.detail}</p>
                             </button>
                           );
                         })}
