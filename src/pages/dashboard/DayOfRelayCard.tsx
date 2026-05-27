@@ -31,6 +31,18 @@ export const DayOfRelayCard: React.FC<DayOfRelayCardProps> = ({ relay, onAction 
         <CardDescription>{relay.summary}</CardDescription>
       </CardHeader>
 
+      <div className="grid gap-3 md:grid-cols-2">
+        <div className="rounded-xl border border-border/50 bg-surface-subtle/35 px-3 py-3">
+          <p className="text-xs uppercase tracking-wide text-text-tertiary">Main focus</p>
+          <p className="mt-2 text-sm font-semibold text-text-primary">{relay.focusTitle}</p>
+          <p className="mt-2 text-sm text-text-secondary">{relay.focusDetail}</p>
+        </div>
+        <div className="rounded-xl border border-border/50 bg-surface-subtle/35 px-3 py-3">
+          <p className="text-xs uppercase tracking-wide text-text-tertiary">Decision rule</p>
+          <p className="mt-2 text-sm text-text-secondary">{relay.decisionRule}</p>
+        </div>
+      </div>
+
       <div className="grid gap-3">
         {relay.steps.map((step) => (
           <div key={step.id} className={`rounded-xl border px-4 py-4 ${getStepTone(step.status)}`}>

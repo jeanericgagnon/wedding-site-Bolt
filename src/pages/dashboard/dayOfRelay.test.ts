@@ -22,6 +22,8 @@ describe('buildDayOfRelayModel', () => {
     }));
 
     expect(relay.headline).toContain('room needs truth');
+    expect(relay.focusTitle).toMatch(/room truth/i);
+    expect(relay.decisionRule).toMatch(/fix that truth/i);
     expect(relay.steps[0]).toMatchObject({ id: 'seating-drift', target: 'check-drift', status: 'current' });
   });
 
@@ -32,6 +34,8 @@ describe('buildDayOfRelayModel', () => {
     }));
 
     expect(relay.headline.toLowerCase()).toContain('guest truth');
+    expect(relay.focusTitle).toMatch(/RSVP truth gap/i);
+    expect(relay.decisionRule).toMatch(/guest follow-up beats room work/i);
     expect(relay.steps[0]).toMatchObject({ id: 'guest-follow-up', target: 'guests' });
     expect(relay.steps[1]).toMatchObject({ target: 'messages' });
   });
@@ -44,6 +48,8 @@ describe('buildDayOfRelayModel', () => {
     }));
 
     expect(relay.headline).toContain('support now');
+    expect(relay.focusTitle).toMatch(/support the live day/i);
+    expect(relay.decisionRule).toMatch(/coordination speed/i);
     expect(relay.steps[0]).toMatchObject({ id: 'check-in', target: 'check-in' });
     expect(relay.steps[1]).toMatchObject({ id: 'coordinator', target: 'coordinator' });
   });
