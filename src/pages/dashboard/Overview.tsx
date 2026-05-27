@@ -1516,12 +1516,20 @@ export const DashboardOverview: React.FC = () => {
                 </div>
                 <div className="rounded-lg border border-border-subtle bg-white px-3 py-3">
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                    <div>
+                    <div className="flex-1">
                       <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-text-tertiary">{analyticsNextMove.priorityLabel}</p>
                       <p className="text-sm font-medium text-text-primary">{analyticsNextMove.title}</p>
                       <p className="mt-1 text-xs text-text-secondary">{analyticsNextMove.detail}</p>
-                      <p className="mt-2 text-[11px] text-text-tertiary">{analyticsNextMove.whyNow}</p>
-                      <p className="mt-2 text-[11px] text-text-tertiary">{analyticsNextMove.decisionRule}</p>
+                      <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                        <div className="rounded-lg border border-border-subtle bg-surface-secondary/20 px-3 py-2.5">
+                          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-text-tertiary">Why now</p>
+                          <p className="mt-1 text-[11px] leading-5 text-text-tertiary">{analyticsNextMove.whyNow}</p>
+                        </div>
+                        <div className="rounded-lg border border-border-subtle bg-surface-secondary/20 px-3 py-2.5">
+                          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-text-tertiary">Decision rule</p>
+                          <p className="mt-1 text-[11px] leading-5 text-text-tertiary">{analyticsNextMove.decisionRule}</p>
+                        </div>
+                      </div>
                     </div>
                     <Button variant="outline" size="sm" onClick={handleAnalyticsNextMove}>
                       {analyticsNextMove.ctaLabel}
