@@ -1586,12 +1586,10 @@ export const DashboardOverview: React.FC = () => {
                       <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-text-tertiary">{analyticsNextMove.priorityLabel}</p>
                       <p className="text-sm font-medium text-text-primary">{analyticsNextMove.title}</p>
                       <p className="mt-1 text-xs text-text-secondary">{analyticsNextMove.detail}</p>
-                      <div className="mt-3 grid gap-2 sm:grid-cols-2">
-                        <div className="rounded-lg border border-border-subtle bg-surface-secondary/20 px-3 py-2.5">
-                          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-text-tertiary">Why now</p>
-                          <p className="mt-1 text-[11px] leading-5 text-text-tertiary">{analyticsNextMove.whyNow}</p>
-                        </div>
-                        <div className="rounded-lg border border-border-subtle bg-surface-secondary/20 px-3 py-2.5">
+                      <div className="mt-3 rounded-lg border border-border-subtle bg-surface-secondary/20 px-3 py-2.5">
+                        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-text-tertiary">Why now</p>
+                        <p className="mt-1 text-[11px] leading-5 text-text-tertiary">{analyticsNextMove.whyNow}</p>
+                        <div className="mt-3 border-t border-border-subtle pt-3">
                           <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-text-tertiary">Decision rule</p>
                           <p className="mt-1 text-[11px] leading-5 text-text-tertiary">{analyticsNextMove.decisionRule}</p>
                         </div>
