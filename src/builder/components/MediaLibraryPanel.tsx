@@ -9,6 +9,11 @@ import { generateBuilderId } from '../../types/builder/project';
 import { getSectionManifest } from '../registry/sectionManifests';
 import { mergeMediaAssetsAfterUploadRefresh } from '../utils/mediaRefresh';
 import { getMediaLibrarySummary, MediaLibraryFilterMode } from './mediaLibrarySummary';
+import {
+  getNextSectionMediaAssetIds,
+  getTargetAssetIdsForSection,
+  syncAssetSectionLinksLocally,
+} from './mediaSelectionState';
 
 function resolveImageSettingKey(sectionType: string): string {
   try {
@@ -47,10 +52,21 @@ export const MediaLibraryPanel: React.FC = () => {
     const section = activePage?.sections.find(s => s.id === sectionId);
     if (!section) return;
 
+    const previousTargetAssetIds = getTargetAssetIdsForSection(section, {
+      targetField: state.mediaPickerTargetField,
+      targetSettingKey: state.mediaPickerTargetSettingKey,
+      blockPath: state.mediaPickerTargetBlockPath,
+      imageIndex: state.mediaPickerTargetImageIndex,
+    }, state.mediaAssets);
+
     const nextBindings = asset.id
       ? {
           ...section.bindings,
-          mediaAssetIds: Array.from(new Set([...(section.bindings.mediaAssetIds ?? []), asset.id])),
+          mediaAssetIds: getNextSectionMediaAssetIds({
+            currentBindingIds: section.bindings.mediaAssetIds,
+            previousTargetAssetIds,
+            selectedAssetId: asset.id,
+          }),
         }
       : section.bindings;
 
@@ -86,6 +102,22 @@ export const MediaLibraryPanel: React.FC = () => {
     }
 
     if (asset.id) {
+      const localAssets = syncAssetSectionLinksLocally({
+        assets: state.mediaAssets,
+        sectionId,
+        selectedAssetId: asset.id,
+        detachedAssetIds: previousTargetAssetIds.filter((id) => id !== asset.id),
+      });
+      dispatch(builderActions.setMediaAssets(localAssets));
+
+      previousTargetAssetIds
+        .filter((id) => id !== asset.id)
+        .forEach((oldAssetId) => {
+          void mediaService.detachAssetFromSection(oldAssetId, sectionId).catch(() => {
+            dispatch(builderActions.setError('Image updated here, but we could not fully clean up the previous media link for this section.'));
+          });
+        });
+
       void mediaService.attachAssetToSection(asset.id, sectionId).catch(() => {
         dispatch(builderActions.setError('Image selected, but we could not link it back to this section in the media library.'));
       });
@@ -366,6 +398,10 @@ export const AssetGrid: React.FC<AssetGridProps> = ({ assets, uploadQueue, isPic
   const { dispatch } = useBuilderContext();
 
   const handleDelete = async (asset: BuilderMediaAsset) => {
+    if (asset.attachedSectionIds.length > 0) {
+      dispatch(builderActions.setError(`"${asset.caption?.trim() || asset.altText?.trim() || asset.originalFilename}" is still placed in ${asset.attachedSectionIds.length} section${asset.attachedSectionIds.length === 1 ? '' : 's'}. Remove it from those sections before deleting it here.`));
+      return;
+    }
     try {
       await mediaService.deleteAsset(asset.id);
       dispatch(builderActions.removeMediaAsset(asset.id));
@@ -510,8 +546,13 @@ const AssetTile: React.FC<AssetTileProps> = ({ asset, onDelete, isPickerMode, on
       <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-end justify-end p-2 opacity-0 group-hover:opacity-100">
         <button
           onClick={e => { e.stopPropagation(); onDelete(); }}
-          className="p-1.5 bg-white rounded-lg text-red-500 hover:text-red-700 shadow-sm transition-colors"
-          aria-label="Remove image"
+          className={`p-1.5 bg-white rounded-lg shadow-sm transition-colors ${
+            asset.attachedSectionIds.length > 0
+              ? 'cursor-not-allowed text-gray-300'
+              : 'text-red-500 hover:text-red-700'
+          }`}
+          aria-label={asset.attachedSectionIds.length > 0 ? 'Remove image after unplacing it' : 'Remove image'}
+          title={asset.attachedSectionIds.length > 0 ? 'Remove this image from its sections before deleting it.' : 'Remove image'}
         >
           <Trash2 size={12} />
         </button>

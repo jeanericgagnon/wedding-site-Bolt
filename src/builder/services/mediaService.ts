@@ -62,4 +62,8 @@ export const mediaService = {
   async attachAssetToSection(assetId: string, sectionId: string): Promise<void> {
     return mediaRepository.attachToSection(assetId, sectionId);
   },
+
+  async detachAssetFromSection(assetId: string, sectionId: string): Promise<void> {
+    return mediaRepository.detachFromSection(assetId, sectionId);
+  },
 };

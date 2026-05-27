@@ -1,11 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { upload, save, list, remove, attachToSection } = vi.hoisted(() => ({
+const { upload, save, list, remove, attachToSection, detachFromSection } = vi.hoisted(() => ({
   upload: vi.fn(),
   save: vi.fn(),
   list: vi.fn(),
   remove: vi.fn(),
   attachToSection: vi.fn(),
+  detachFromSection: vi.fn(),
 }));
 
 vi.mock('./mediaRepository', () => ({
@@ -15,6 +16,7 @@ vi.mock('./mediaRepository', () => ({
     list,
     delete: remove,
     attachToSection,
+    detachFromSection,
   },
 }));
 
@@ -258,6 +260,12 @@ describe('mediaService', () => {
       attachedSectionIds: ['section-details'],
       altText: 'Seating chart display',
     }));
+  });
+
+  it('forwards explicit media detach requests to the repository', async () => {
+    await mediaService.detachAssetFromSection('asset-14', 'section-hero');
+
+    expect(detachFromSection).toHaveBeenCalledWith('asset-14', 'section-hero');
   });
 
   it('keeps original filename truth alongside section attachment when both are provided', async () => {

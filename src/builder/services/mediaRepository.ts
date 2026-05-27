@@ -8,19 +8,6 @@ export interface MediaRepositoryUploadResult {
   path: string;
 }
 
-function extractBucketPathFromUrl(url: string, bucket: string): string | null {
-  if (!url) return null;
-  try {
-    const u = new URL(url);
-    const marker = `/storage/v1/object/public/${bucket}/`;
-    const idx = u.pathname.indexOf(marker);
-    if (idx === -1) return null;
-    return decodeURIComponent(u.pathname.slice(idx + marker.length));
-  } catch {
-    return null;
-  }
-}
-
 export const mediaRepository = {
   async upload(
     weddingId: string,
@@ -109,6 +96,26 @@ export const mediaRepository = {
     const { error: updateError } = await supabase
       .from('builder_media_assets')
       .update({ attached_section_ids: [...current, sectionId] })
+      .eq('id', assetId);
+
+    if (updateError) throw updateError;
+  },
+
+  async detachFromSection(assetId: string, sectionId: string): Promise<void> {
+    const { data, error } = await supabase
+      .from('builder_media_assets')
+      .select('attached_section_ids')
+      .eq('id', assetId)
+      .maybeSingle();
+
+    if (error) throw error;
+
+    const current: string[] = data?.attached_section_ids ?? [];
+    if (!current.includes(sectionId)) return;
+
+    const { error: updateError } = await supabase
+      .from('builder_media_assets')
+      .update({ attached_section_ids: current.filter((id) => id !== sectionId) })
       .eq('id', assetId);
 
     if (updateError) throw updateError;
