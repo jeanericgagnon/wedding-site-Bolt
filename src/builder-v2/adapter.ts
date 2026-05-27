@@ -246,6 +246,23 @@ const getLegacyTravelCards = (settings: Record<string, unknown> | undefined) => 
   return [...travelTips, ...hotels, ...narrativeTips];
 };
 
+const getLegacyDirectionsTransport = (settings: Record<string, unknown> | undefined) => (
+  getSettingRecordList<{
+    label?: string;
+    description?: string;
+    note?: string;
+  }>(settings, 'transport')
+    .map((item) => ({
+      title: typeof item.label === 'string' && item.label.trim() ? item.label.trim() : '',
+      note: typeof item.description === 'string' && item.description.trim()
+        ? item.description.trim()
+        : typeof item.note === 'string' && item.note.trim()
+          ? item.note.trim()
+          : '',
+    }))
+    .filter((item) => item.title || item.note)
+);
+
 const makeDefaultBlocksForType = (
   type: string,
   settings: Record<string, unknown> | undefined,
@@ -413,6 +430,38 @@ const makeDefaultBlocksForType = (
         ...(closingNote ? [{ id: 'b-story', type: 'story', data: { text: closingNote } } satisfies BuilderV2Block] : []),
       ];
     }
+    case 'directions': {
+      const venueName = getSettingString(settings, 'venueName');
+      const address = getSettingString(settings, 'address');
+      const city = getSettingString(settings, 'city');
+      const mapUrl = getSettingString(settings, 'mapUrl');
+      const parkingNote = getSettingString(settings, 'parkingNote');
+      const shuttleNote = getSettingString(settings, 'shuttleNote');
+      const transport = getLegacyDirectionsTransport(settings);
+      const venueLines = [
+        venueName ? `Venue: ${venueName}` : '',
+        address ? `Address: ${address}` : '',
+        city ? `City: ${city}` : '',
+      ].filter(Boolean).join('\n');
+
+      return [
+        ...(venueLines ? [{ id: 'b-directions-venue', type: 'text', data: { text: venueLines } } satisfies BuilderV2Block] : []),
+        ...(parkingNote ? [{ id: 'b-directions-parking', type: 'text', data: { text: `Parking: ${parkingNote}` } } satisfies BuilderV2Block] : []),
+        ...(shuttleNote ? [{ id: 'b-directions-shuttle', type: 'text', data: { text: `Shuttle: ${shuttleNote}` } } satisfies BuilderV2Block] : []),
+        ...(mapUrl ? [{ id: 'b-directions-map', type: 'travelTip', data: { title: 'Map', note: 'Open directions', url: mapUrl } } satisfies BuilderV2Block] : []),
+        ...transport.map((item, index) => ({
+          id: `b-directions-transport-${index + 1}`,
+          type: 'travelTip' as const,
+          data: {
+            title: item.title || undefined,
+            note: item.note || undefined,
+          },
+        })),
+        ...(venueLines || parkingNote || shuttleNote || transport.length > 0 || mapUrl || !subtitleText
+          ? []
+          : [{ id: 'b-text', type: 'text', data: { text: subtitleText } } satisfies BuilderV2Block]),
+      ];
+    }
     case 'footer-cta': {
       const subtext = getSettingString(settings, 'subtext');
       const footerNote = getSettingString(settings, 'footerNote');
@@ -572,6 +621,30 @@ const getSectionNoteCards = (
   })).filter((item) => item.title || item.note || item.url || item.location || item.time)
 );
 
+const getDirectionsTextValue = (
+  section: BuilderV2Section,
+  label: 'Venue' | 'Address' | 'City' | 'Parking' | 'Shuttle',
+) => {
+  const prefix = `${label}:`;
+  const textBlocks = getMeaningfulBlocks(section.blocks, ['text', 'story']);
+
+  for (const block of textBlocks) {
+    for (const candidate of [block.data.text, block.data.note, block.data.subtitle]) {
+      if (typeof candidate !== 'string') continue;
+      const lines = candidate
+        .split('\n')
+        .map((line) => line.trim())
+        .filter(Boolean);
+      const match = lines.find((line) => line.toLowerCase().startsWith(prefix.toLowerCase()));
+      if (match) {
+        return match.slice(prefix.length).trim();
+      }
+    }
+  }
+
+  return '';
+};
+
 const getCommonLegacySettings = (section: BuilderV2Section): Record<string, unknown> => {
   const title = getFirstMeaningfulString(section, [section.title]);
   const subtitle = getFirstMeaningfulString(section, [section.subtitle]);
@@ -713,6 +786,29 @@ const toLegacyBuilderSettings = (section: BuilderV2Section): Record<string, unkn
         ...common,
         introText: getSectionNarrativeText(section) || common.introText,
       };
+    case 'directions': {
+      const transport = getSectionNoteCards(section, ['travelTip'])
+        .filter((item) => item.title.toLowerCase() !== 'map');
+
+      const mapCard = getSectionNoteCards(section, ['travelTip'])
+        .find((item) => item.title.toLowerCase() === 'map' && item.url);
+
+      return {
+        ...common,
+        headline: getFirstMeaningfulString(section, [section.title, common.headline as string | undefined]),
+        venueName: getDirectionsTextValue(section, 'Venue'),
+        address: getDirectionsTextValue(section, 'Address'),
+        city: getDirectionsTextValue(section, 'City'),
+        parkingNote: getDirectionsTextValue(section, 'Parking'),
+        shuttleNote: getDirectionsTextValue(section, 'Shuttle'),
+        mapUrl: mapCard?.url || '',
+        transport: transport.map((item, index) => ({
+          id: `${section.id}-transport-${index}`,
+          label: item.title || '',
+          description: item.note || '',
+        })),
+      };
+    }
     case 'footer-cta': {
       const narrativeParts = getSectionNarrativeParts(section);
       const subtext = getFirstMeaningfulString(section, [section.subtitle, narrativeParts[0]]);

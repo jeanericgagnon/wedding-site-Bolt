@@ -76,6 +76,19 @@ describe('publicBuilderV2WeddingData', () => {
               ],
             },
             {
+              id: 'directions-1',
+              type: 'directions',
+              variant: 'pin',
+              enabled: true,
+              title: 'Directions & Parking',
+              blocks: [
+                { id: 'd1', type: 'text', data: { text: 'Venue: The Grand Ballroom\nAddress: 123 Celebration Lane\nCity: San Francisco, CA 94102' } },
+                { id: 'd2', type: 'text', data: { text: 'Parking: Complimentary valet is available.' } },
+                { id: 'd3', type: 'text', data: { text: 'Shuttle: Hotel shuttles run every 30 minutes.' } },
+                { id: 'd4', type: 'travelTip', data: { title: 'By Car', note: 'Take I-80 West to Exit 3B.' } },
+              ],
+            },
+            {
               id: 'registry-1',
               type: 'registry',
               variant: 'default',
@@ -134,6 +147,10 @@ describe('publicBuilderV2WeddingData', () => {
       id: 'schedule-1-venue-0',
       name: 'Main Lawn',
       notes: 'Ceremony on the lower terrace.\n\nShuttles return to downtown after dinner.',
+    }, {
+      id: 'directions-1-venue',
+      name: 'The Grand Ballroom',
+      notes: 'Venue: The Grand Ballroom\nAddress: 123 Celebration Lane\nCity: San Francisco, CA 94102\n\nParking: Complimentary valet is available.\n\nShuttle: Hotel shuttles run every 30 minutes.',
     }]);
     expect(supplement.schedule).toEqual([
       {
@@ -148,9 +165,9 @@ describe('publicBuilderV2WeddingData', () => {
     expect(supplement.rsvp?.enabled).toBe(false);
     expect(supplement.faq).toEqual([{ id: 'faq-1-faq-0', q: 'Parking?', a: 'Yes, valet is available.' }]);
     expect(supplement.travel).toEqual({
-      notes: 'Plan a little extra time on Friday.',
+      notes: 'Plan a little extra time on Friday.\nBy Car: Take I-80 West to Exit 3B.\nVenue: The Grand Ballroom\nAddress: 123 Celebration Lane\nCity: San Francisco, CA 94102',
       flightInfo: 'Airport: Fly into SFO.',
-      parkingInfo: 'Parking: Valet is available at the venue.',
+      parkingInfo: 'Parking: Valet is available at the venue.\nComplimentary valet is available.\nHotel shuttles run every 30 minutes.',
       hotelInfo: 'River Inn: Use our room block.',
     });
     expect(supplement.registry?.links).toEqual([{ id: 'registry-1-registry-0', label: 'Honeymoon Fund', url: 'https://example.com/fund' }]);

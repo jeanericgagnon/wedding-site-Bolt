@@ -184,7 +184,7 @@ const SECTION_BLOCK_CATALOG: Record<string, BlockType[]> = {
   gallery: ['photo', 'title', 'text', 'divider'],
   'wedding-party': ['photo', 'title', 'text', 'divider'],
   'dress-code': ['title', 'text', 'photo', 'divider'],
-  directions: ['title', 'text', 'photo', 'divider'],
+  directions: ['travelTip', 'title', 'text', 'photo', 'divider'],
   accommodations: ['hotelCard', 'travelTip', 'text', 'divider'],
 };
 

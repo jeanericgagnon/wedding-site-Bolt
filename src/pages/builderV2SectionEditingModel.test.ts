@@ -9,6 +9,7 @@ import {
 describe('builderV2SectionEditingModel', () => {
   it('recommends section-specific anchor blocks', () => {
     expect(getRecommendedBlockTypes('schedule', ['title', 'text', 'event', 'photo'])).toEqual(['event', 'title', 'text']);
+    expect(getRecommendedBlockTypes('directions', ['title', 'text', 'travelTip', 'photo'])).toEqual(['travelTip', 'text', 'title']);
     expect(getRecommendedBlockTypes('unknown', ['title', 'text', 'photo'])).toEqual(['title', 'text', 'photo']);
   });
 

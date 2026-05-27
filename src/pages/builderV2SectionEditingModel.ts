@@ -88,7 +88,7 @@ export const getRecommendedBlockTypes = (
     gallery: ['photo', 'title', 'text'],
     'wedding-party': ['photo', 'text', 'title'],
     'dress-code': ['photo', 'text', 'title'],
-    directions: ['text', 'photo', 'title'],
+    directions: ['travelTip', 'text', 'title'],
     accommodations: ['hotelCard', 'travelTip', 'text'],
   };
 

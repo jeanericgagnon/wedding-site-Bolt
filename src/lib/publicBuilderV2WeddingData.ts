@@ -76,21 +76,33 @@ const deriveFaq = (sections: BuilderV2Section[]): WeddingDataV1['faq'] => (
 
 const deriveVenueSectionEntries = (sections: BuilderV2Section[]): WeddingDataV1['venues'] => (
   sections
-    .filter((section) => section.type === 'venue')
+    .filter((section) => section.type === 'venue' || section.type === 'directions')
     .map((section): WeddingVenue | null => {
-      const name = [
-        hasMeaningfulString(section.title) ? section.title.trim() : '',
-        ...section.blocks
-          .filter((block) => block.type === 'title')
-          .map((block) => (hasMeaningfulString(block.data.text) ? block.data.text.trim() : '')),
-      ].find(hasMeaningfulString) ?? '';
+      const textBlocks = section.blocks
+        .filter((block) => block.type === 'text' || block.type === 'story')
+        .map((block) => getBlockText(block))
+        .filter(hasMeaningfulString);
+
+      const name = section.type === 'directions'
+        ? (
+          textBlocks
+            .flatMap((text) => text.split('\n'))
+            .map((line) => line.trim())
+            .find((line) => line.toLowerCase().startsWith('venue:'))
+            ?.slice('venue:'.length)
+            .trim()
+          ?? ''
+        )
+        : [
+            hasMeaningfulString(section.title) ? section.title.trim() : '',
+            ...section.blocks
+              .filter((block) => block.type === 'title')
+              .map((block) => (hasMeaningfulString(block.data.text) ? block.data.text.trim() : '')),
+          ].find(hasMeaningfulString) ?? '';
 
       const notes = [
-        hasMeaningfulString(section.subtitle) ? section.subtitle.trim() : '',
-        ...section.blocks
-          .filter((block) => block.type === 'text' || block.type === 'story')
-          .map((block) => getBlockText(block))
-          .filter(hasMeaningfulString),
+        ...(section.type === 'directions' ? [] : [hasMeaningfulString(section.subtitle) ? section.subtitle.trim() : '']),
+        ...textBlocks,
       ].join('\n\n').trim();
 
       if (!name && !notes) return null;
@@ -188,9 +200,9 @@ const deriveTravel = (sections: BuilderV2Section[]): WeddingDataV1['travel'] => 
   const parkingInfo: string[] = [];
 
   sections
-    .filter((section) => section.type === 'travel' || section.type === 'accommodations')
+    .filter((section) => section.type === 'travel' || section.type === 'accommodations' || section.type === 'directions')
     .forEach((section) => {
-      if (hasMeaningfulString(section.subtitle)) {
+      if (hasMeaningfulString(section.subtitle) && section.type !== 'directions') {
         notes.push(section.subtitle.trim());
       }
 
@@ -209,6 +221,11 @@ const deriveTravel = (sections: BuilderV2Section[]): WeddingDataV1['travel'] => 
             return;
           }
 
+          if (section.type === 'directions' && /(map|directions)/.test(haystack)) {
+            notes.push(line);
+            return;
+          }
+
           if (/(parking|valet|garage|lot|shuttle)/.test(haystack)) {
             parkingInfo.push(line);
             return;
@@ -221,6 +238,35 @@ const deriveTravel = (sections: BuilderV2Section[]): WeddingDataV1['travel'] => 
 
           notes.push(line);
         });
+
+      if (section.type === 'directions') {
+        section.blocks
+          .filter((block) => block.type === 'text' || block.type === 'story')
+          .map((block) => getBlockText(block))
+          .filter(hasMeaningfulString)
+          .forEach((text) => {
+            text
+              .split('\n')
+              .map((line) => line.trim())
+              .filter(Boolean)
+              .forEach((line) => {
+                const normalized = line.toLowerCase();
+                if (normalized.startsWith('parking:')) {
+                  parkingInfo.push(line.slice('parking:'.length).trim() || line);
+                  return;
+                }
+                if (normalized.startsWith('shuttle:')) {
+                  parkingInfo.push(line.slice('shuttle:'.length).trim() || line);
+                  return;
+                }
+                if (normalized.startsWith('address:') || normalized.startsWith('city:') || normalized.startsWith('venue:')) {
+                  notes.push(line);
+                  return;
+                }
+                notes.push(line);
+              });
+          });
+      }
     });
 
   return {

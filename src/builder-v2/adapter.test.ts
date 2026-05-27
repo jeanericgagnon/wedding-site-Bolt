@@ -308,6 +308,68 @@ describe('toBuilderV2Document', () => {
     ]);
   });
 
+  it('preserves directions structure when migrating into and back out of builder v2', () => {
+    const directionsSection = toBuilderV2Section({
+      id: 'directions-1',
+      type: 'directions',
+      variant: 'pin',
+      enabled: true,
+      bindings: {},
+      settings: {
+        headline: 'Directions & Parking',
+        venueName: 'The Grand Ballroom',
+        address: '123 Celebration Lane',
+        city: 'San Francisco, CA 94102',
+        mapUrl: 'https://example.com/maps',
+        parkingNote: 'Complimentary valet parking is available at the main entrance.',
+        shuttleNote: 'Shuttles leave the hotel every 30 minutes starting at 4pm.',
+        transport: [
+          { label: 'By Car', description: 'Take I-80 West to Exit 3B.' },
+          { label: 'By Transit', description: 'BART to Civic Center Station.' },
+        ],
+      },
+    });
+
+    expect(directionsSection.title).toBe('Directions & Parking');
+    expect(directionsSection.blocks).toMatchObject([
+      { type: 'text', data: { text: 'Venue: The Grand Ballroom\nAddress: 123 Celebration Lane\nCity: San Francisco, CA 94102' } },
+      { type: 'text', data: { text: 'Parking: Complimentary valet parking is available at the main entrance.' } },
+      { type: 'text', data: { text: 'Shuttle: Shuttles leave the hotel every 30 minutes starting at 4pm.' } },
+      { type: 'travelTip', data: { title: 'Map', note: 'Open directions', url: 'https://example.com/maps' } },
+      { type: 'travelTip', data: { title: 'By Car', note: 'Take I-80 West to Exit 3B.' } },
+      { type: 'travelTip', data: { title: 'By Transit', note: 'BART to Civic Center Station.' } },
+    ]);
+
+    const project = builderV2DocumentToBuilderProject({
+      version: 'v2',
+      updatedAtISO: '2026-05-27T21:00:00.000Z',
+      pages: [
+        {
+          id: 'directions',
+          title: 'Directions',
+          slug: 'directions',
+          isHome: true,
+          hidden: false,
+          sections: [directionsSection],
+        },
+      ],
+    });
+
+    expect(project.pages[0]?.sections[0]?.settings).toMatchObject({
+      headline: 'Directions & Parking',
+      venueName: 'The Grand Ballroom',
+      address: '123 Celebration Lane',
+      city: 'San Francisco, CA 94102',
+      mapUrl: 'https://example.com/maps',
+      parkingNote: 'Complimentary valet parking is available at the main entrance.',
+      shuttleNote: 'Shuttles leave the hotel every 30 minutes starting at 4pm.',
+      transport: [
+        { id: 'directions-1-transport-0', label: 'By Car', description: 'Take I-80 West to Exit 3B.' },
+        { id: 'directions-1-transport-1', label: 'By Transit', description: 'BART to Civic Center Station.' },
+      ],
+    });
+  });
+
   it('preserves legacy hero, story, gallery, and venue anchors when migrating into v2', () => {
     const heroSection = toBuilderV2Section({
       id: 'hero-1',
