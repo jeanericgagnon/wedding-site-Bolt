@@ -53,4 +53,23 @@ describe('buildCoupleFocusModel', () => {
     expect(model.steps[0]?.id).toBe('day-of');
     expect(model.headline).toMatch(/live readiness/i);
   });
+
+  it('prioritizes schedule clarity when the wedding is close and no itinerary exists yet', () => {
+    const model = buildCoupleFocusModel({
+      daysUntilWedding: 12,
+      isPublished: true,
+      isArchiveLike: false,
+      publishBlockerCount: 0,
+      pendingGuestCount: 0,
+      contactGapCount: 0,
+      overdueTaskCount: 0,
+      dueSoonVendorCount: 0,
+      seatingUnassignedCount: 0,
+      itineraryEventCount: 0,
+    });
+
+    expect(model.headline).toMatch(/weekend timeline/i);
+    expect(model.steps[0]?.id).toBe('planning');
+    expect(model.steps[1]?.id).toBe('launch');
+  });
 });

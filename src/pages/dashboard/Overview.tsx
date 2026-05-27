@@ -629,6 +629,7 @@ export const DashboardOverview: React.FC = () => {
     overdueTaskCount: 0,
     dueSoonVendorCount: 0,
     seatingUnassignedCount: 0,
+    itineraryEventCount: stats?.itineraryEventCount ?? null,
   });
   const overviewThroughline = buildOverviewThroughline({
     coupleFocus,

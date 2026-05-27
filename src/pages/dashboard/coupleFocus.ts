@@ -23,6 +23,7 @@ export interface CoupleFocusInput {
   overdueTaskCount: number;
   dueSoonVendorCount: number;
   seatingUnassignedCount: number;
+  itineraryEventCount?: number | null;
 }
 
 function step(
@@ -174,6 +175,36 @@ export function buildCoupleFocusModel(input: CoupleFocusInput): CoupleFocusModel
           id: 'day-of',
           title: 'Then check live readiness',
           detail: 'Once the room is settled, the next useful pass is coordinator mode and day-of timing.',
+          target: 'coordinator',
+          ctaLabel: 'Open coordinator mode',
+        }),
+      ],
+    };
+  }
+
+  if (isWeddingSoon(input.daysUntilWedding) && input.itineraryEventCount === 0) {
+    return {
+      headline: 'Guests still need a real weekend timeline to trust',
+      summary: 'The date is close enough now that schedule clarity matters more than another polish pass. Give guests a clean itinerary spine before asking the live layer to do extra work.',
+      steps: [
+        step('current', {
+          id: 'planning',
+          title: 'Add the anchor itinerary events',
+          detail: 'Start with the ceremony, reception, and any guest-facing welcome or farewell events so the weekend stops feeling implied.',
+          target: 'planning',
+          ctaLabel: 'Open planning',
+        }),
+        step('next', {
+          id: 'launch',
+          title: 'Preview the guest-facing schedule',
+          detail: 'Once the anchors are in, check the public timeline and make sure guests can understand the flow without asking you to decode it.',
+          target: 'builder',
+          ctaLabel: 'Open builder',
+        }),
+        step('then', {
+          id: 'day-of',
+          title: 'Then return to live readiness',
+          detail: 'With the schedule in place, coordinator mode and updates become support tools instead of backup explanations.',
           target: 'coordinator',
           ctaLabel: 'Open coordinator mode',
         }),

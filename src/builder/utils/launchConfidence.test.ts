@@ -55,6 +55,13 @@ const baseWeddingData: WeddingDataV1 = {
   rsvp: {
     enabled: true,
   },
+  schedule: [
+    {
+      id: 'event_1',
+      label: 'Ceremony',
+      startTimeISO: '2026-09-14T16:00:00.000Z',
+    },
+  ],
 } as WeddingDataV1;
 
 describe('buildLaunchConfidence', () => {
@@ -81,6 +88,17 @@ describe('buildLaunchConfidence', () => {
 
     expect(confidence.tone).toBe('ready');
     expect(confidence.primaryAction).toMatchObject({ kind: 'publish' });
+  });
+
+  it('keeps launch confidence in warning mode when the itinerary has no real anchor events yet', () => {
+    const confidence = buildLaunchConfidence(baseProject, {
+      ...baseWeddingData,
+      schedule: [],
+    } as WeddingDataV1, { isDirty: false });
+
+    expect(confidence.tone).toBe('warning');
+    expect(confidence.primaryAction).toMatchObject({ kind: 'fix' });
+    expect(confidence.summary).toMatch(/itinerary event|timeline/i);
   });
 
   it('switches to polish framing once the site is already live', () => {

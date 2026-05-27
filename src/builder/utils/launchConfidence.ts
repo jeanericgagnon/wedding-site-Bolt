@@ -20,6 +20,10 @@ function isProjectPublished(project: BuilderProject) {
   return project.publishStatus === 'published' || typeof project.publishedVersion === 'number' || Boolean(project.lastPublishedAt);
 }
 
+function getScheduleEventCount(weddingData?: WeddingDataV1 | null) {
+  return Array.isArray(weddingData?.schedule) ? weddingData.schedule.filter(Boolean).length : 0;
+}
+
 function getIssueNext(issue: PublishIssue['kind']) {
   switch (issue) {
     case 'no-pages':
@@ -46,6 +50,7 @@ export function buildLaunchConfidence(
   options?: { isDirty?: boolean },
 ): LaunchConfidenceModel {
   const issue = getPublishIssue(project, weddingData, options);
+  const scheduleEventCount = getScheduleEventCount(weddingData);
 
   if (issue) {
     return {
@@ -59,6 +64,20 @@ export function buildLaunchConfidence(
       primaryAction: {
         kind: issue.kind === 'unsaved-changes' ? 'publish' : 'fix',
         label: issue.kind === 'unsaved-changes' ? 'Save and publish' : 'Fix launch blockers',
+      },
+    };
+  }
+
+  if (!isProjectPublished(project) && scheduleEventCount === 0) {
+    return {
+      label: 'Launch needs one more pass',
+      tone: 'warning',
+      summary: 'The site has the structural basics, but guests still need at least one real itinerary event before the launch feels trustworthy.',
+      current: 'Names, date, venue, and RSVP can all be present while the weekend still feels vague to a guest who is trying to picture the day.',
+      next: 'Add the first real schedule event so the public timeline has an anchor before you publish.',
+      primaryAction: {
+        kind: 'fix',
+        label: 'Add itinerary anchors',
       },
     };
   }
