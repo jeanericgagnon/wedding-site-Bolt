@@ -8,6 +8,7 @@ export interface DashboardRoleGuideModel {
   focusDetail: string;
   nextMove: string;
   decisionRule: string;
+  watchout: string;
   sequence: Array<{
     id: 'orient' | 'enter' | 'handoff';
     status: 'current' | 'next' | 'then';
@@ -26,6 +27,7 @@ export function buildDashboardRoleGuide(role: DashboardRoleGuideRole): Dashboard
       focusDetail: 'This view is strongest when you use it to clear guest, planning, and logistics pressure without reopening owner-only polish decisions.',
       nextMove: 'Start in Overview, then move into Guests, Planning, or Messages depending on which operational pressure is actually loudest.',
       decisionRule: 'If a task changes wedding operations, handle it here. If it changes the couple’s brand, billing, or final ownership calls, leave it with the couple.',
+      watchout: 'Do not let operational help turn into slow owner-call churn. If the next decision changes billing, brand voice, or final ownership truth, narrow the escalation instead of broadening the whole lane.',
       sequence: [
         {
           id: 'orient',
@@ -58,6 +60,7 @@ export function buildDashboardRoleGuide(role: DashboardRoleGuideRole): Dashboard
       focusDetail: 'Use this view to stabilize the timeline, guest movement, and communications before you spend any energy on lower-stakes cleanup.',
       nextMove: 'Start in Overview, then open Coordinator Mode or Itinerary once the real live-day pressure is visible.',
       decisionRule: 'If it affects live guest flow or day-of calm, handle it now. If it can wait until after the pressure passes, let it wait.',
+      watchout: 'Do not absorb broader planning truth while the room is under pressure. If a choice will outlive the live window, capture it and return it after the floor is calm.',
       sequence: [
         {
           id: 'orient',
@@ -90,6 +93,7 @@ export function buildDashboardRoleGuide(role: DashboardRoleGuideRole): Dashboard
       focusDetail: 'This mode works best when someone needs shared visibility without the risk of accidental edits or fuzzy ownership.',
       nextMove: 'Start in Overview, then open the relevant page to confirm facts or collect questions without turning this into an editing lane.',
       decisionRule: 'Use this view to confirm details and surface questions, not to become another editing lane.',
+      watchout: 'Do not let read-only review become shadow ownership. If something feels wrong, route the question back clearly instead of quietly becoming the person who carries the fix.',
       sequence: [
         {
           id: 'orient',
@@ -121,6 +125,7 @@ export function buildDashboardRoleGuide(role: DashboardRoleGuideRole): Dashboard
     focusDetail: 'This view is where cross-surface decisions come together: launch, guest trust, collaboration, and the final version of the wedding story.',
     nextMove: 'Start in Overview, then open the exact surface where the next cross-cutting decision will actually be resolved.',
     decisionRule: 'If a decision changes multiple surfaces or changes who owns the work, resolve it here first.',
+    watchout: 'Do not scatter source-of-truth decisions across helper lanes. If a change affects launch, access, or final wedding truth, settle it here before delegating the follow-through.',
     sequence: [
       {
         id: 'orient',
