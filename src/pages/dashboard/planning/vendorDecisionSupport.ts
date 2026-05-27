@@ -17,12 +17,14 @@ export interface VendorDecisionDeckItem {
   title: string;
   vendorName: string;
   detail: string;
+  nextBestMove: string;
   badges: string[];
 }
 
 export interface VendorDecisionDeckModel {
   heading: string;
   summary: string;
+  decisionRule: string;
   badges: string[];
   items: VendorDecisionDeckItem[];
 }
@@ -31,6 +33,7 @@ export interface VendorProfileGuideModel {
   label: string;
   title: string;
   detail: string;
+  trustSignals: string[];
   checks: string[];
 }
 
@@ -167,6 +170,9 @@ export function buildVendorDecisionDeck(
     summary: urgentCount > 0
       ? 'These are the vendor decisions most likely to get noisy next. Handle the contact gaps and money timing first, then decide who is genuinely ready.'
       : 'Your vendor list is stable enough to compare calmly. Focus on who is decision-ready instead of reopening every vendor at once.',
+    decisionRule: urgentCount > 0
+      ? 'Clear missing contact paths and payment pressure before you spend energy comparing aesthetics.'
+      : 'Use this board to choose the next real yes, not to reopen every maybe.',
     badges: [
       `${urgentCount} urgent`,
       `${readyCount} ready to choose`,
@@ -178,6 +184,13 @@ export function buildVendorDecisionDeck(
       title: summary.label,
       vendorName: vendor.name,
       detail: summary.detail,
+      nextBestMove: summary.tone === 'urgent'
+        ? summary.label === 'Needs contact path'
+          ? 'Add one real contact path before this stays on the shortlist.'
+          : 'Decide whether this vendor gets a yes, a payment plan, or a pause.'
+        : summary.tone === 'ready'
+          ? 'Use the proof you already have and make the call instead of gathering more trivia.'
+          : 'Run one focused follow-up pass so this does not stay fuzzy.',
       badges: summary.badges,
     })),
   };
@@ -202,6 +215,11 @@ export function buildVendorProfileGuide(profile: VendorProfile): VendorProfileGu
       label: 'Decision-friendly',
       title: 'This profile gives couples enough signal to move',
       detail: 'There is enough proof, imagery, and contact clarity here for a couple to decide whether they want the first conversation.',
+      trustSignals: [
+        'Gallery depth is strong enough to judge style',
+        'Public links can verify recent work',
+        'Direct contact path is already visible',
+      ],
       checks: [
         'Look at the gallery first to see whether the visual style actually fits.',
         'Use the direct email when you already know you want to reach out.',
@@ -218,6 +236,11 @@ export function buildVendorProfileGuide(profile: VendorProfile): VendorProfileGu
     detail: hasDirectEmail
       ? 'There is a direct contact path, but couples will still want to pressure-test the available proof before treating this like a shortlist lock.'
       : 'There is enough here to orient someone, but not enough to replace a quick manual check across links, visuals, and contact path.',
+    trustSignals: [
+      hasGalleryDepth ? 'Visual proof exists, but still wants a closer read.' : 'Gallery depth is still light.',
+      hasPublicLinks ? 'Public proof is available for a freshness check.' : 'Public proof is still thin.',
+      hasDirectEmail ? 'Direct contact is available once the fit feels real.' : 'Contact path still wants a little caution.',
+    ],
     checks: [
       hasGalleryDepth ? 'The images give a decent style signal, so use those before reading every word.' : 'You may need to rely on the public links because the gallery is still light.',
       hasPublicLinks ? `${linkCount} public link${linkCount === 1 ? '' : 's'} can help verify freshness and fit.` : 'The profile is missing broader public proof, so outreach may need more caution.',

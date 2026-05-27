@@ -43,6 +43,8 @@ describe('buildSeatingInsightCard', () => {
     });
 
     expect(result.title).toContain('RSVP drift');
+    expect(result.readinessLabel).toBe('Needs drift cleanup');
+    expect(result.decisionRule).toMatch(/attendance truth/i);
     expect(result.primaryAction).toMatchObject({ mode: 'check-drift' });
   });
 
@@ -57,6 +59,7 @@ describe('buildSeatingInsightCard', () => {
     });
 
     expect(result.primaryAction).toMatchObject({ mode: 'auto-create' });
+    expect(result.readinessLabel).toBe('Room still unbuilt');
   });
 
   it('recommends auto-seating when guests are still unassigned', () => {
@@ -74,6 +77,7 @@ describe('buildSeatingInsightCard', () => {
     });
 
     expect(result.primaryAction).toMatchObject({ mode: 'auto-seat' });
+    expect(result.decisionRule).toMatch(/Get everyone into a seat/i);
     expect(result.badges[0]).toContain('open seat');
   });
 
@@ -90,6 +94,7 @@ describe('buildSeatingInsightCard', () => {
     });
 
     expect(result.title).toContain('room is set');
+    expect(result.readinessLabel).toBe('Live-day ready');
     expect(result.primaryAction).toMatchObject({ mode: 'check-in' });
     expect(result.secondaryAction).toMatchObject({ mode: 'open-coordinator' });
   });

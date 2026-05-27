@@ -35,6 +35,8 @@ describe('memoryCurator', () => {
     });
 
     expect(model.title).toContain('Start with the one photo guests should remember first');
+    expect(model.readinessLabel).toBe('Needs a signature anchor');
+    expect(model.qualitySignals[0]).toContain('Hero photo');
     expect(model.nextMoves[0]).toContain('Main photo of you two');
   });
 
@@ -51,6 +53,8 @@ describe('memoryCurator', () => {
     });
 
     expect(model.title).toContain('first recap');
+    expect(model.readinessLabel).toBe('Recap-ready');
+    expect(model.curationNote).toMatch(/synthesis|more valuable/i);
     expect(model.nextMoves[0]).toContain('Generate the first AI recap');
   });
 });

@@ -47,6 +47,8 @@ describe('vendorDecisionSupport', () => {
 
     expect(deck?.items[0].vendorName).toBe('Missing Contact');
     expect(deck?.badges).toContain('1 urgent');
+    expect(deck?.decisionRule).toMatch(/contact paths|payment pressure/i);
+    expect(deck?.items[0]?.nextBestMove).toMatch(/contact path/i);
   });
 
   it('builds a public vendor guide from available proof signals', () => {
@@ -67,6 +69,7 @@ describe('vendorDecisionSupport', () => {
     const guide = buildVendorProfileGuide(profile);
 
     expect(guide.label).toBe('Decision-friendly');
+    expect(guide.trustSignals[0]).toContain('Gallery depth');
     expect(guide.checks[0]).toContain('gallery');
   });
 });

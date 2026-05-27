@@ -7,8 +7,10 @@ export interface SeatingInsightAction {
 
 export interface SeatingInsightCardModel {
   eyebrow: string;
+  readinessLabel: string;
   title: string;
   detail: string;
+  decisionRule: string;
   badges: string[];
   callouts: string[];
   primaryAction?: SeatingInsightAction;
@@ -84,8 +86,10 @@ export function buildSeatingInsightCard(args: {
   if (invalidCount > 0) {
     return {
       eyebrow: 'Seating coach',
+      readinessLabel: 'Needs drift cleanup',
       title: 'RSVP drift changed the room',
       detail: `${pluralize(invalidCount, 'assignment')} no longer match current RSVP truth. Clear that drift first so you are not making layout decisions on stale attendance.`,
+      decisionRule: 'Do not rebalance tables until the attendance truth is clean again.',
       badges: [
         `${pluralize(invalidCount, 'invalid seat')}`,
         `${pluralize(safeCounters.unassigned, 'guest')} unassigned`,
@@ -102,8 +106,10 @@ export function buildSeatingInsightCard(args: {
   if (tables.length === 0 && safeCounters.attending > 0) {
     return {
       eyebrow: 'Seating coach',
+      readinessLabel: 'Room still unbuilt',
       title: 'Build the room before you place people',
       detail: `${pluralize(safeCounters.attending, 'attending guest')} are ready to seat, but there are no tables yet. Auto-create gives you a calmer first pass than building the room one object at a time.`,
+      decisionRule: 'Create the room shape first, then use manual edits only for special cases.',
       badges: [
         `${pluralize(safeCounters.attending, 'attending guest')}`,
         'No tables yet',
@@ -118,8 +124,10 @@ export function buildSeatingInsightCard(args: {
   if (safeCounters.unassigned > 0) {
     return {
       eyebrow: 'Seating coach',
+      readinessLabel: 'Placement first',
       title: 'Finish the open seats before polishing table details',
       detail: `${pluralize(safeCounters.unassigned, 'guest')} still need a seat. The quickest way to calm the board is getting everyone placed, then adjusting the room once the whole guest list is visible.`,
+      decisionRule: 'Get everyone into a seat before you spend energy on micro-optimizing the room.',
       badges: [
         `${pluralize(safeCounters.unassigned, 'open seat move')}`,
         `${pluralize(householdStats.splitHouseholdCount, 'split household')}`,
@@ -140,10 +148,12 @@ export function buildSeatingInsightCard(args: {
   if (tableStats.sparseTableCount > 0 || householdStats.splitHouseholdCount > 0) {
     return {
       eyebrow: 'Seating coach',
+      readinessLabel: 'Balance pass',
       title: 'The room is seated, so now it is about balance',
       detail: tableStats.sparseTableCount > 0
         ? `${pluralize(tableStats.sparseTableCount, 'table')} still look sparse enough to tighten. This is a good moment to reduce awkward empty pockets and keep groups together.`
         : 'Everyone has a seat, but a few households are still split in ways that may feel clumsy on the day.',
+      decisionRule: 'Tighten only the pockets that improve comfort; avoid reopening the whole room.',
       badges: [
         `${pluralize(tableStats.sparseTableCount, 'sparse table')}`,
         `${pluralize(householdStats.splitHouseholdCount, 'split household')}`,
@@ -160,10 +170,12 @@ export function buildSeatingInsightCard(args: {
   if (daysUntilWedding !== null && daysUntilWedding <= 7) {
     return {
       eyebrow: 'Seating coach',
+      readinessLabel: 'Live-day ready',
       title: 'The room is set, so live handoff matters more than more reshuffling',
       detail: daysUntilWedding === 0
         ? 'Guests already have seats, so the best move now is using the room to support check-in speed and live coordinator clarity instead of reopening settled tables.'
         : 'With the wedding this close, seat changes should stay intentional. Keep the room stable and use coordinator mode for the live day plan around it.',
+      decisionRule: 'Treat seating as live support now, not as a layout puzzle to keep solving.',
       badges: [
         `${pluralize(safeCounters.seated, 'guest')} seated`,
         liveIssueCount > 0 ? `${pluralize(liveIssueCount, 'live issue')}` : `${arrivedCount} arrived`,
@@ -181,8 +193,10 @@ export function buildSeatingInsightCard(args: {
 
   return {
     eyebrow: 'Seating coach',
+    readinessLabel: 'Calm room',
     title: 'The seating board is calm enough to run the day',
     detail: 'Everyone who is attending has a seat, the room is not obviously lopsided, and no RSVP drift is muddying the plan. This is the point where check-in speed matters more than layout surgery.',
+    decisionRule: 'Use the room to support the door and the coordinator, not to invent more seating work.',
     badges: [
       `${pluralize(safeCounters.seated, 'guest')} seated`,
       `${arrivedCount} arrived`,

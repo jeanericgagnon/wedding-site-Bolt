@@ -177,6 +177,13 @@ export const VendorProfilePage: React.FC = () => {
                 <p className="text-xs uppercase tracking-[0.22em] text-[#8b6f53]">{profileGuide.label}</p>
                 <p className="text-sm font-medium text-[#2f261d]">{profileGuide.title}</p>
                 <p className="text-sm text-[#6f5843]">{profileGuide.detail}</p>
+                <div className="flex flex-wrap gap-2">
+                  {profileGuide.trustSignals.map((signal) => (
+                    <span key={signal} className="rounded-full bg-white px-2.5 py-1 text-[11px] text-[#6f5843] shadow-sm">
+                      {signal}
+                    </span>
+                  ))}
+                </div>
                 <ul className="space-y-1.5 text-sm text-[#6f5843]">
                   {profileGuide.checks.map((check) => (
                     <li key={check} className="flex gap-2">

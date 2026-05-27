@@ -23,8 +23,10 @@ describe('buildTemplateExperienceBrief', () => {
     });
 
     expect(brief.confidenceLabel).toBe('High confidence');
+    expect(brief.confidenceDetail).toMatch(/structure|builder behavior|trust/i);
     expect(brief.bestNextStep).toMatch(/starting point|content clarity|design churn/i);
     expect(brief.launchUse).toMatch(/lowest-friction|starting point|guest-ready/i);
+    expect(brief.bestFor).toMatch(/easiest path|first publish|guest-ready/i);
     expect(brief.watchouts).toEqual([]);
     expect(brief.launchSequence.map((step) => step.status)).toEqual(['current', 'next', 'then']);
     expect(brief.launchSequence[0]?.title).toMatch(/strongest fit|start/i);
@@ -51,7 +53,9 @@ describe('buildTemplateExperienceBrief', () => {
     });
 
     expect(brief.watchouts[0]).toMatch(/builder/i);
+    expect(brief.confidenceDetail).toMatch(/promising|proven|cleanup/i);
     expect(brief.launchUse).toMatch(/visual directions|cleanup later|committing/i);
+    expect(brief.bestFor).toMatch(/strong moods|operational path|prettier card/i);
     expect(brief.launchSequence[1]?.detail).toMatch(/page order|guests|event/i);
   });
 });

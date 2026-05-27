@@ -24,6 +24,7 @@ export const VendorDecisionDeck: React.FC<Props> = ({ model, onSelectVendor }) =
         <div className="min-w-0 flex-1">
           <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-text-secondary">{model.heading}</p>
           <p className="mt-1 text-sm leading-6 text-text-secondary">{model.summary}</p>
+          <p className="mt-2 text-xs leading-5 text-text-tertiary">{model.decisionRule}</p>
           <div className="mt-3 flex flex-wrap gap-2 text-[11px] text-text-secondary">
             {model.badges.map((badge) => (
               <span key={badge} className="rounded-full bg-white px-2.5 py-1 shadow-sm">
@@ -47,6 +48,10 @@ export const VendorDecisionDeck: React.FC<Props> = ({ model, onSelectVendor }) =
                   {onSelectVendor ? <ArrowRight className="h-4 w-4 text-text-tertiary" /> : null}
                 </div>
                 <p className="mt-3 text-sm leading-6 text-text-secondary">{item.detail}</p>
+                <div className="mt-3 rounded-xl border border-white/70 bg-white/75 px-3 py-2">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-text-tertiary">Best next move</p>
+                  <p className="mt-1 text-sm text-text-secondary">{item.nextBestMove}</p>
+                </div>
                 <div className="mt-3 flex flex-wrap gap-2 text-[11px] text-text-secondary">
                   {item.badges.map((badge) => (
                     <span key={badge} className="rounded-full bg-white/80 px-2.5 py-1">

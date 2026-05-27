@@ -36,6 +36,9 @@ export interface WeddingIdentityExportItem {
 export interface WeddingIdentityExportKit {
   title: string;
   readyCount: number;
+  confidenceTitle: string;
+  confidenceDetail: string;
+  deliveryNote: string;
   items: WeddingIdentityExportItem[];
   manifest: Array<{ label: string; value: string }>;
   warnings: string[];
@@ -211,6 +214,25 @@ export function buildWeddingIdentityExportKit(input: WeddingIdentityExportKitInp
   return {
     title: `${coupleNames} identity export kit`,
     readyCount: items.filter((item) => item.status === 'ready').length,
+    confidenceTitle: !hasPublicUrl
+      ? 'Foundation first'
+      : restrictedAccess
+        ? 'Share carefully'
+        : !launchIsLive
+          ? 'Almost handoff-ready'
+          : 'Ready for premium handoff',
+    confidenceDetail: !hasPublicUrl
+      ? 'The design language is usable now, but the public site URL still has to exist before these packs feel real.'
+      : restrictedAccess
+        ? `The packs themselves are ready, but the guest experience still depends on clean ${privacyModeLabel} instructions traveling with them.`
+        : !launchIsLive
+          ? 'The URL, print assets, and story pack are lined up. One live publish is the last trust step before wide sharing.'
+          : 'The site, print assets, and share packs are aligned enough to hand off to guests, planners, and stationers without extra translation.',
+    deliveryNote: restrictedAccess
+      ? `Every guest-facing export should travel with the same ${privacyModeLabel} instructions so the handoff still feels deliberate.`
+      : !launchIsLive
+        ? 'Publish the guest-facing site before you print in volume so every QR and short URL points to something trustworthy.'
+        : 'Lead with one guest-safe URL everywhere so print, story, and planner packs all reinforce the same handoff.',
     items,
     manifest: [
       { label: 'Couple', value: coupleNames },

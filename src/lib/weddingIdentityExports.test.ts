@@ -24,6 +24,8 @@ describe('weddingIdentityExports', () => {
     });
 
     expect(kit.readyCount).toBe(7);
+    expect(kit.confidenceTitle).toBe('Ready for premium handoff');
+    expect(kit.deliveryNote).toMatch(/guest-safe URL everywhere/i);
     expect(kit.items.find((item) => item.id === 'public-qr-card')).toMatchObject({
       status: 'ready',
       blockers: [],
@@ -46,6 +48,7 @@ describe('weddingIdentityExports', () => {
     });
 
     expect(kit.title).toBe('Your wedding identity export kit');
+    expect(kit.confidenceTitle).toBe('Foundation first');
     expect(kit.items.find((item) => item.id === 'details-insert')?.blockers).toEqual([
       'Set a public site URL.',
       'Add a wedding date.',
@@ -69,6 +72,7 @@ describe('weddingIdentityExports', () => {
     });
 
     expect(kit.handoffSequence[0]?.title).toMatch(/live first/i);
+    expect(kit.confidenceDetail).toMatch(/last trust step|live publish/i);
     expect(kit.handoffSequence[1]?.title).toMatch(/after the live publish/i);
     expect(kit.quickPacks.find((pack) => pack.id === 'share-now')?.readiness).toBe('ready');
     expect(kit.quickPacks.find((pack) => pack.id === 'share-now')?.nextStep).toMatch(/Publish the live site once/i);
@@ -85,6 +89,7 @@ describe('weddingIdentityExports', () => {
     });
 
     expect(kit.warnings).toContain('The site is currently password-protected, so guest-facing packs should only be shared with the right access instructions.');
+    expect(kit.deliveryNote).toMatch(/password-protected instructions/i);
     expect(kit.handoffSequence[0]?.title).toMatch(/access instructions/i);
     expect(kit.quickPacks.find((pack) => pack.id === 'share-now')?.detail).toMatch(/password/i);
     expect(kit.quickPacks.find((pack) => pack.id === 'share-now')?.nextStep).toMatch(/password instructions/i);

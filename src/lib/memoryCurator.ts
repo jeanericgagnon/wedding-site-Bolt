@@ -28,9 +28,12 @@ export interface VaultEntrySnapshot {
 
 export interface MemoryCuratorModel {
   eyebrow: string;
+  readinessLabel: string;
   title: string;
   detail: string;
+  curationNote: string;
   badges: string[];
+  qualitySignals: string[];
   nextMoves: string[];
 }
 
@@ -114,11 +117,17 @@ export const buildPhotoMemoryCuratorModel = (args: {
   if ((photoBuckets['main-couple']?.length ?? 0) === 0) {
     return {
       eyebrow: 'Memory curator',
+      readinessLabel: 'Needs a signature anchor',
       title: 'Start with the one photo guests should remember first',
       detail: 'The system still needs a signature couple photo before it can make the hero feel intentional. Everything else gets easier once that anchor is in place.',
+      curationNote: 'This is still collection mode. Do not widen the guest upload story until the couple anchor feels unmistakable.',
       badges: [
         `${signatureReadyCount}/2 signature buckets ready`,
         `${activeAlbums.length} live upload bucket${activeAlbums.length === 1 ? '' : 's'}`,
+      ],
+      qualitySignals: [
+        'Hero photo still missing',
+        'Guest upload lanes can stay simple for now',
       ],
       nextMoves: [
         'Upload one favorite couple portrait into Main photo of you two.',
@@ -131,11 +140,17 @@ export const buildPhotoMemoryCuratorModel = (args: {
   if (activeAlbums.length === 0) {
     return {
       eyebrow: 'Memory curator',
+      readinessLabel: 'Private curation is ready',
       title: 'Your photos are ready for guests, but the upload path is not live yet',
       detail: 'The private bucket board has enough direction now. The next step is turning that into one or two clear guest upload moments instead of a long list of options.',
+      curationNote: 'The visual story is strong enough to open one clear upload lane without overwhelming guests.',
       badges: [
         `${signatureReadyCount}/2 signature buckets ready`,
         `${atmosphereReadyCount}/3 atmosphere buckets started`,
+      ],
+      qualitySignals: [
+        'Couple anchors are in place',
+        'No guest-facing upload lane is live yet',
       ],
       nextMoves: [
         'Create the first live bucket for the one moment you care about most.',
@@ -148,11 +163,17 @@ export const buildPhotoMemoryCuratorModel = (args: {
   if (totalVisibleUploads > 0 && readyAlbums.length === 0) {
     return {
       eyebrow: 'Memory curator',
+      readinessLabel: 'Story loop forming',
       title: 'You are a few uploads away from a real story loop',
       detail: 'Guests are sending photos, but no active bucket has enough visible uploads to feel slideshow-ready yet. A little curation now will give the memory flow some shape.',
+      curationNote: 'You have signal now. The job is turning that signal into one complete, trustworthy memory lane first.',
       badges: [
         `${totalVisibleUploads} visible upload${totalVisibleUploads === 1 ? '' : 's'}`,
         `${flaggedUploads} flagged for review`,
+      ],
+      qualitySignals: [
+        'Guest uploads are arriving',
+        'No bucket is slideshow-ready yet',
       ],
       nextMoves: [
         'Push one live bucket to at least three strong visible uploads.',
@@ -165,11 +186,17 @@ export const buildPhotoMemoryCuratorModel = (args: {
   if (isArchiveLike && totalVisibleUploads > 0) {
     return {
       eyebrow: 'Memory curator',
+      readinessLabel: 'Archive mode is ready',
       title: 'Collection is working. Now turn it into something worth keeping.',
       detail: 'The wedding is behind you and the upload flow has enough signal now. This is the moment to preserve the strongest moments in the vault instead of collecting forever.',
+      curationNote: 'The best next upgrade is permanence: recap, archive, and stop treating every new upload as equally important.',
       badges: [
         `${readyAlbums.length} slideshow-ready bucket${readyAlbums.length === 1 ? '' : 's'}`,
         `${totalVisibleUploads} visible upload${totalVisibleUploads === 1 ? '' : 's'}`,
+      ],
+      qualitySignals: [
+        'Enough uploads exist to curate a recap',
+        'Archive-worthy moments are already visible',
       ],
       nextMoves: [
         'Use the strongest bucket to shape a first slideshow or recap draft.',
@@ -181,11 +208,17 @@ export const buildPhotoMemoryCuratorModel = (args: {
 
   return {
     eyebrow: 'Memory curator',
+    readinessLabel: 'Curation-ready',
     title: 'The memory flow is balanced enough to start curating, not just collecting',
     detail: 'You have the couple anchors, live guest paths, and enough uploads to make this feel intentional. The next wins are about taste and continuity, not more buckets.',
+    curationNote: 'This is the sweet spot where fewer, better buckets will usually create a stronger memory system than opening more lanes.',
     badges: [
       `${readyAlbums.length} slideshow-ready bucket${readyAlbums.length === 1 ? '' : 's'}`,
       `${signatureReadyCount}/2 signature buckets ready`,
+    ],
+    qualitySignals: [
+      'Couple anchors are steady',
+      'Guest paths are open and useful',
     ],
     nextMoves: [
       'Preview the slideshow while the best moments are still easy to spot.',
@@ -214,11 +247,17 @@ export const buildVaultMemoryCuratorModel = (args: {
   if (!driveConnectedHealthy) {
     return {
       eyebrow: 'Memory curator',
+      readinessLabel: 'Storage attention needed',
       title: 'Reconnect Drive before this becomes your long-term memory home',
       detail: 'The vault only feels trustworthy when storage is healthy. Fix that first so every note, photo, and recap lands somewhere dependable.',
+      curationNote: 'Trust comes before sentiment here. Reconnect storage before you ask anyone to rely on the vault long term.',
       badges: [
         `${enabledVaults.length} enabled vault${enabledVaults.length === 1 ? '' : 's'}`,
         `${entries.length} saved entr${entries.length === 1 ? 'y' : 'ies'}`,
+      ],
+      qualitySignals: [
+        'Vault structure exists',
+        'Storage health is currently blocking trust',
       ],
       nextMoves: [
         'Reconnect Google Drive so future entries land cleanly.',
@@ -230,11 +269,17 @@ export const buildVaultMemoryCuratorModel = (args: {
   if (entries.length === 0) {
     return {
       eyebrow: 'Memory curator',
+      readinessLabel: 'Needs a first memory',
       title: 'Write the first note before the wedding starts to blur',
       detail: 'The best first vault entry is not a perfect one. It is the note you write while the feeling is still fresh enough to be honest.',
+      curationNote: 'One meaningful first entry will teach the system more than a batch of filler notes.',
       badges: [
         `${enabledVaults.length} enabled vault${enabledVaults.length === 1 ? '' : 's'}`,
         `${configs.length} vault milestone${configs.length === 1 ? '' : 's'}`,
+      ],
+      qualitySignals: [
+        'Archive lane is enabled',
+        'Meaningful content has not landed yet',
       ],
       nextMoves: [
         'Add one short note for your first anniversary.',
@@ -247,11 +292,17 @@ export const buildVaultMemoryCuratorModel = (args: {
   if (isArchiveLike && guestEntries.length === 0) {
     return {
       eyebrow: 'Memory curator',
+      readinessLabel: 'Invite trusted voices',
       title: 'The archive exists. Now invite a few meaningful voices into it.',
       detail: 'Right now the vault reads like a private notebook. That is good, but it gets more powerful once one or two people who matter most add their side of the story.',
+      curationNote: 'Selective participation usually produces a better archive than opening every lane to everyone.',
       badges: [
         `${entries.length} saved entr${entries.length === 1 ? 'y' : 'ies'}`,
         `${recapEntries.length} recap${recapEntries.length === 1 ? '' : 's'}`,
+      ],
+      qualitySignals: [
+        'Private memory base exists',
+        'Guest voices have not landed yet',
       ],
       nextMoves: [
         'Share a single vault with the people whose memories you most want back.',
@@ -264,11 +315,17 @@ export const buildVaultMemoryCuratorModel = (args: {
   if (entries.length >= 3 && recapEntries.length === 0) {
     return {
       eyebrow: 'Memory curator',
+      readinessLabel: 'Recap-ready',
       title: 'You have enough material for a first recap',
       detail: 'The vault is carrying a real story now. A recap will help you turn scattered notes and photos into something you can revisit later without digging through everything.',
+      curationNote: 'This is the point where synthesis becomes more valuable than collecting even more raw material.',
       badges: [
         `${entries.length} saved entr${entries.length === 1 ? 'y' : 'ies'}`,
         `${photoEntries.length} photo entr${photoEntries.length === 1 ? 'y' : 'ies'}`,
+      ],
+      qualitySignals: [
+        'Enough material exists to tell a story',
+        'Photo-backed entries can support a recap',
       ],
       nextMoves: [
         'Generate the first AI recap while the collection is still compact.',
@@ -280,11 +337,17 @@ export const buildVaultMemoryCuratorModel = (args: {
 
   return {
     eyebrow: 'Memory curator',
+    readinessLabel: 'Vault is healthy',
     title: 'The vault is preserving a real shared story now',
     detail: 'You have enough notes, media, and structure for this to feel like a living archive instead of a hidden feature. The next job is gentle maintenance, not reinvention.',
+    curationNote: 'The vault is ready for editorial taste now: keep what deepens the story, not just what adds more volume.',
     badges: [
       `${guestEntries.length} guest entr${guestEntries.length === 1 ? 'y' : 'ies'}`,
       `${recapEntries.length} recap${recapEntries.length === 1 ? '' : 's'} ready`,
+    ],
+    qualitySignals: [
+      'Guest memories are present',
+      'Recaps can keep pace with the archive',
     ],
     nextMoves: [
       'Refresh the recap after each meaningful new cluster of entries.',

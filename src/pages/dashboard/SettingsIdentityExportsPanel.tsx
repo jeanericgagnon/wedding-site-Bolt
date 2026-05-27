@@ -46,6 +46,18 @@ export function SettingsIdentityExportsPanel({
             helperText="These exports only use the public site path, never private invite links."
           />
 
+          <div className="grid gap-3 lg:grid-cols-[1.2fr_0.8fr]">
+            <div className="rounded-lg border border-border-subtle bg-surface-subtle/40 p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-text-tertiary">Export confidence</p>
+              <p className="mt-1 text-sm font-semibold text-text-primary">{weddingIdentityExportKit.confidenceTitle}</p>
+              <p className="mt-2 text-sm leading-6 text-text-secondary">{weddingIdentityExportKit.confidenceDetail}</p>
+            </div>
+            <div className="rounded-lg border border-border-subtle bg-white p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-text-tertiary">Delivery rule</p>
+              <p className="mt-2 text-sm leading-6 text-text-secondary">{weddingIdentityExportKit.deliveryNote}</p>
+            </div>
+          </div>
+
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {weddingIdentityExportKit.items.map((item) => (
               <div key={item.id} className="rounded-lg border border-border-subtle bg-white p-3">

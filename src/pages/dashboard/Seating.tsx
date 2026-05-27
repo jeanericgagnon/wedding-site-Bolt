@@ -1689,6 +1689,16 @@ export const DashboardSeating: React.FC = () => {
                       <h2 className="mt-1 text-lg font-semibold text-text-primary">{seatingInsight.title}</h2>
                       <p className="mt-1 text-sm text-text-secondary">{seatingInsight.detail}</p>
                     </div>
+                    <div className="grid gap-2 sm:grid-cols-[auto_1fr]">
+                      <div className="rounded-xl border border-border-subtle bg-surface-subtle px-3 py-2">
+                        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-text-tertiary">Readiness</p>
+                        <p className="mt-1 text-sm font-medium text-text-primary">{seatingInsight.readinessLabel}</p>
+                      </div>
+                      <div className="rounded-xl border border-border-subtle bg-surface-subtle px-3 py-2">
+                        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-text-tertiary">Decision rule</p>
+                        <p className="mt-1 text-sm text-text-secondary">{seatingInsight.decisionRule}</p>
+                      </div>
+                    </div>
                     <div className="flex flex-wrap gap-2">
                       {seatingInsight.badges.map((badge) => (
                         <Badge key={badge} variant="secondary">{badge}</Badge>

@@ -221,6 +221,7 @@ Start with this
                     <p className="text-xs font-semibold uppercase tracking-[0.18em] text-neutral-500">Template confidence</p>
                     <h2 className="mt-1 text-lg font-semibold text-neutral-900">{templateExperienceBrief.title}</h2>
                     <p className="mt-1.5 max-w-3xl text-sm leading-6 text-neutral-600">{templateExperienceBrief.detail}</p>
+                    <p className="mt-2 text-xs leading-5 text-neutral-500">{templateExperienceBrief.confidenceDetail}</p>
                   </div>
                   <span className="rounded-full border border-rose-200 bg-rose-50 px-3 py-1 text-xs font-medium text-rose-700">
                     {templateExperienceBrief.confidenceLabel}
@@ -249,6 +250,36 @@ Start with this
                     <p className="mt-1.5 text-sm text-neutral-700">{templateExperienceBrief.launchUse}</p>
                   </div>
                 </div>
+                <div className="mt-2 rounded-xl border border-neutral-200 bg-neutral-50 px-3 py-3">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-neutral-500">Best for</p>
+                  <p className="mt-1.5 text-sm text-neutral-700">{templateExperienceBrief.bestFor}</p>
+                </div>
+                {(templateExperienceBrief.callouts.length > 0 || templateExperienceBrief.watchouts.length > 0) && (
+                  <div className="mt-3 grid gap-2 md:grid-cols-2">
+                    {templateExperienceBrief.callouts.length > 0 && (
+                      <div className="rounded-xl border border-neutral-200 bg-white px-3 py-3">
+                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-neutral-500">Confidence signals</p>
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          {templateExperienceBrief.callouts.map((callout) => (
+                            <span key={callout} className="rounded-full border border-neutral-200 bg-neutral-50 px-2.5 py-1 text-[11px] text-neutral-700">
+                              {callout}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {templateExperienceBrief.watchouts.length > 0 && (
+                      <div className="rounded-xl border border-amber-200 bg-amber-50/70 px-3 py-3">
+                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-700">Watchouts</p>
+                        <ul className="mt-2 space-y-1.5 text-sm text-amber-900">
+                          {templateExperienceBrief.watchouts.map((watchout) => (
+                            <li key={watchout}>{watchout}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             )}
           </div>
