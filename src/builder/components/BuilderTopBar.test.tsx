@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { formatPublishedAt, formatSavedAt, getBuilderCommandCenterCopy, getPublishBlockerUiState } from './BuilderTopBar';
+import { formatPublishedAt, formatSavedAt, getBuilderCommandCenterCopy, getPageManagerSummary, getPublishBlockerUiState } from './BuilderTopBar';
 
 describe('getPublishBlockerUiState', () => {
   it('treats unsaved changes as auto-saveable instead of a hard go-live blocker', () => {
@@ -86,6 +86,49 @@ describe('getBuilderCommandCenterCopy', () => {
       tone: 'success',
       status: 'Live v7',
       detail: 'Guests can already see this site. New edits here will become the next live update.',
+    });
+  });
+});
+
+describe('getPageManagerSummary', () => {
+  it('summarizes visible, hidden, empty, and home page state', () => {
+    expect(
+      getPageManagerSummary(
+        [
+          {
+            id: 'home',
+            title: 'Home',
+            slug: 'home',
+            orderIndex: 0,
+            sections: [{ id: 's1' }] as never[],
+            meta: { isHome: true, isHidden: false },
+          },
+          {
+            id: 'travel',
+            title: 'Travel',
+            slug: 'travel',
+            orderIndex: 1,
+            sections: [],
+            meta: { isHome: false, isHidden: false },
+          },
+          {
+            id: 'faq',
+            title: 'FAQ',
+            slug: 'faq',
+            orderIndex: 2,
+            sections: [],
+            meta: { isHome: false, isHidden: true },
+          },
+        ] as never[],
+        'travel',
+      ),
+    ).toEqual({
+      totalPages: 3,
+      visiblePages: 2,
+      hiddenPages: 1,
+      emptyPages: 2,
+      homePageTitle: 'Home',
+      activePageTitle: 'Travel',
     });
   });
 });

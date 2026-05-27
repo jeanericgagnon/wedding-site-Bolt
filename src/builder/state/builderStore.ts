@@ -84,6 +84,7 @@ export type BuilderAction =
   | { type: 'SET_ACTIVE_PAGE'; payload: string }
   | { type: 'ADD_PAGE'; payload: { title?: string } }
   | { type: 'UPDATE_PAGE'; payload: { pageId: string; patch: Partial<BuilderPage> } }
+  | { type: 'SET_HOME_PAGE'; payload: { pageId: string } }
   | { type: 'DUPLICATE_PAGE'; payload: { pageId: string } }
   | { type: 'REMOVE_PAGE'; payload: { pageId: string } }
   | { type: 'REORDER_PAGES'; payload: { orderedIds: string[] } }

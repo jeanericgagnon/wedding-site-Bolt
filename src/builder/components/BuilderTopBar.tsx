@@ -32,6 +32,7 @@ import { getPublishBlockedHints, shouldOpenPhotoTipsFromSearch } from '../utils/
 import { selectUndoRedo, selectIsPreviewMode, selectPublishStatus, selectIsDirty } from '../state/builderSelectors';
 import { getPublishStateDescriptor } from '../../lib/publishState';
 import { SITE_VISIBILITY_COPY } from '../../lib/siteVisibilityState';
+import { BuilderPage } from '../../types/builder/project';
 
 interface BuilderTopBarProps {
   onSave: () => void;
@@ -176,6 +177,19 @@ export const getBuilderCommandCenterCopy = ({
   };
 };
 
+export function getPageManagerSummary(projectPages: BuilderPage[], activePageId: string | null) {
+  const homePage = projectPages.find((page) => page.meta.isHome) ?? projectPages[0] ?? null;
+  const activePage = projectPages.find((page) => page.id === activePageId) ?? homePage;
+  return {
+    totalPages: projectPages.length,
+    visiblePages: projectPages.filter((page) => !page.meta.isHidden).length,
+    hiddenPages: projectPages.filter((page) => page.meta.isHidden).length,
+    emptyPages: projectPages.filter((page) => page.sections.length === 0).length,
+    homePageTitle: homePage?.title ?? null,
+    activePageTitle: activePage?.title ?? null,
+  };
+}
+
 export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
   onSave,
   onPublish,
@@ -212,6 +226,7 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
   const [showLeaveConfirm, setShowLeaveConfirm] = React.useState(false);
   const [showBlockedDetails, setShowBlockedDetails] = React.useState(false);
   const [showPageManager, setShowPageManager] = React.useState(false);
+  const [pagePendingDelete, setPagePendingDelete] = React.useState<BuilderPage | null>(null);
   const [newPageTitle, setNewPageTitle] = React.useState('');
   const [showPhotoTips, setShowPhotoTips] = React.useState(() => shouldOpenPhotoTipsFromSearch(location.search));
   const blockedHints = React.useMemo(() => getPublishBlockedHints(effectivePublishValidationError), [effectivePublishValidationError]);
@@ -258,6 +273,10 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
     publishedVersion,
     publishAttemptedAt,
   });
+  const pageManagerSummary = React.useMemo(
+    () => getPageManagerSummary(projectPages, state.activePageId),
+    [projectPages, state.activePageId],
+  );
 
   React.useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -787,6 +806,25 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
             <button type="button" onClick={() => setShowPageManager(false)} className="rounded border border-gray-200 px-2 py-1 text-xs text-gray-600 hover:bg-gray-50">Close</button>
           </div>
 
+          <div className="mb-3 grid grid-cols-2 gap-2 md:grid-cols-4">
+            <div className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2">
+              <p className="text-[10px] uppercase tracking-wide text-gray-500">Total pages</p>
+              <p className="mt-1 text-sm font-semibold text-gray-900">{pageManagerSummary.totalPages}</p>
+            </div>
+            <div className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2">
+              <p className="text-[10px] uppercase tracking-wide text-gray-500">Visible in nav</p>
+              <p className="mt-1 text-sm font-semibold text-gray-900">{pageManagerSummary.visiblePages}</p>
+            </div>
+            <div className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2">
+              <p className="text-[10px] uppercase tracking-wide text-gray-500">Hidden</p>
+              <p className="mt-1 text-sm font-semibold text-gray-900">{pageManagerSummary.hiddenPages}</p>
+            </div>
+            <div className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2">
+              <p className="text-[10px] uppercase tracking-wide text-gray-500">Empty pages</p>
+              <p className="mt-1 text-sm font-semibold text-gray-900">{pageManagerSummary.emptyPages}</p>
+            </div>
+          </div>
+
           <div className="flex items-center gap-2 mb-3">
             <input
               value={newPageTitle}
@@ -839,8 +877,19 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
                     />
                     {page.meta.isHome ? <span>• Home</span> : null}
                     {page.meta.isHidden ? <span>• Hidden from navigation</span> : null}
+                    {!page.meta.isHidden && !page.meta.isHome ? <span>• In navigation</span> : null}
+                    {page.sections.length === 0 ? <span>• Empty page</span> : <span>• {page.sections.length} section{page.sections.length === 1 ? '' : 's'}</span>}
                   </div>
                 </div>
+
+                <button
+                  type="button"
+                  onClick={() => dispatch(builderActions.setHomePage(page.id))}
+                  disabled={page.meta.isHome}
+                  className="rounded border border-gray-200 px-2 py-1 text-[11px] text-gray-600 hover:bg-gray-50 disabled:opacity-30"
+                >
+                  {page.meta.isHome ? 'Home' : 'Make home'}
+                </button>
 
                 <button
                   type="button"
@@ -849,6 +898,20 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
                 >
                   {page.meta.isHidden ? 'Show in nav' : 'Hide from nav'}
                 </button>
+
+                {page.sections.length === 0 && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      dispatch(builderActions.setActivePage(page.id));
+                      dispatch(builderActions.addSectionByType(page.id, 'hero'));
+                      setShowPageManager(false);
+                    }}
+                    className="rounded border border-sky-200 bg-sky-50 px-2 py-1 text-[11px] font-medium text-sky-700 hover:bg-sky-100"
+                  >
+                    Add hero
+                  </button>
+                )}
 
                 <button
                   type="button"
@@ -886,7 +949,7 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
                 </button>
                 <button
                   type="button"
-                  onClick={() => dispatch(builderActions.removePage(page.id))}
+                  onClick={() => setPagePendingDelete(page)}
                   disabled={page.meta.isHome || projectPages.length <= 1}
                   className="rounded border border-gray-200 p-1 text-gray-600 hover:bg-gray-50 disabled:opacity-30"
                 >
@@ -894,6 +957,38 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
                 </button>
               </div>
             ))}
+          </div>
+        </div>
+      </div>
+    )}
+    {pagePendingDelete && (
+      <div className="fixed inset-0 z-[75] bg-black/40 flex items-center justify-center p-4">
+        <div className="w-full max-w-sm rounded-xl bg-white shadow-xl border border-gray-200 p-4">
+          <h3 className="text-sm font-semibold text-gray-900">Remove page?</h3>
+          <p className="mt-1 text-sm text-gray-600">
+            <span className="font-medium text-gray-800">{pagePendingDelete.title}</span> will be removed from this site map.
+            {pagePendingDelete.sections.length > 0
+              ? ` It currently has ${pagePendingDelete.sections.length} section${pagePendingDelete.sections.length === 1 ? '' : 's'}.`
+              : ' It is currently empty.'}
+          </p>
+          <div className="mt-4 flex items-center justify-end gap-2">
+            <button
+              type="button"
+              onClick={() => setPagePendingDelete(null)}
+              className="rounded border border-gray-300 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                dispatch(builderActions.removePage(pagePendingDelete.id));
+                setPagePendingDelete(null);
+              }}
+              className="rounded bg-rose-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-rose-700"
+            >
+              Remove page
+            </button>
           </div>
         </div>
       </div>

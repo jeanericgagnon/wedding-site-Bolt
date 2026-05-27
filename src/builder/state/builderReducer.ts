@@ -116,6 +116,33 @@ export function builderReducer(state: BuilderState, action: BuilderAction): Buil
       };
     }
 
+    case 'SET_HOME_PAGE': {
+      if (!state.project) return state;
+      const target = state.project.pages.find((page) => page.id === action.payload.pageId);
+      if (!target || target.meta.isHome) return state;
+      const newHistory = pushHistory(state.history, state.project, 'Set home page', 'UPDATE_SECTION_SETTINGS');
+      const now = new Date().toISOString();
+      return {
+        ...state,
+        isDirty: true,
+        history: newHistory,
+        activePageId: target.id,
+        selectedSectionId: null,
+        project: {
+          ...state.project,
+          meta: { ...state.project.meta, updatedAtISO: now },
+          pages: state.project.pages.map((page) => ({
+            ...page,
+            meta: {
+              ...page.meta,
+              isHome: page.id === target.id,
+              isHidden: page.id === target.id ? false : page.meta.isHidden,
+            },
+          })),
+        },
+      };
+    }
+
     case 'DUPLICATE_PAGE': {
       if (!state.project) return state;
       const source = state.project.pages.find((p) => p.id === action.payload.pageId);

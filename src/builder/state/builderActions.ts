@@ -11,6 +11,7 @@ export const builderActions = {
   setActivePage: (pageId: string): BuilderAction => ({ type: 'SET_ACTIVE_PAGE', payload: pageId }),
   addPage: (title?: string): BuilderAction => ({ type: 'ADD_PAGE', payload: { title } }),
   updatePage: (pageId: string, patch: Partial<BuilderProject['pages'][number]>): BuilderAction => ({ type: 'UPDATE_PAGE', payload: { pageId, patch } }),
+  setHomePage: (pageId: string): BuilderAction => ({ type: 'SET_HOME_PAGE', payload: { pageId } }),
   duplicatePage: (pageId: string): BuilderAction => ({ type: 'DUPLICATE_PAGE', payload: { pageId } }),
   removePage: (pageId: string): BuilderAction => ({ type: 'REMOVE_PAGE', payload: { pageId } }),
   reorderPages: (orderedIds: string[]): BuilderAction => ({ type: 'REORDER_PAGES', payload: { orderedIds } }),

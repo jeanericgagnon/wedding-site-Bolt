@@ -28,6 +28,20 @@ import { injectThemeStyle, removeThemeStyle } from '../../lib/themeInjector';
 const THEME_STYLE_ID = 'builder-canvas-theme';
 const CANVAS_SCOPE = '.builder-themed-canvas';
 
+export function getBuilderCanvasEmptyState(pageTitle: string, isPreview: boolean) {
+  if (isPreview) {
+    return {
+      title: `${pageTitle} has no sections yet`,
+      detail: 'Exit preview and add a first section before sharing this page.',
+    };
+  }
+
+  return {
+    title: `${pageTitle} is ready for its first section`,
+    detail: 'Start with a hero or schedule block so this page has something real to shape.',
+  };
+}
+
 export const BuilderCanvas: React.FC = () => {
   const { state, dispatch } = useBuilderContext();
   const activePage = selectActivePage(state);
@@ -94,6 +108,8 @@ export const BuilderCanvas: React.FC = () => {
     );
   }
 
+  const emptyState = getBuilderCanvasEmptyState(activePage.title, isPreview);
+
   return (
     <div
       className={`flex-1 min-h-0 overflow-y-auto overscroll-contain ${isPreview ? 'bg-white' : 'bg-transparent px-1 pt-0 pb-0'} ${isPreview && previewViewport === 'mobile' ? 'px-2 py-2 md:px-3 md:py-4' : ''}`}
@@ -115,16 +131,41 @@ export const BuilderCanvas: React.FC = () => {
                 : undefined
             : undefined}
         >
-
-
-          <BuilderDropZone
-            pageId={activePage.id}
-            sections={sections}
-            selectedSectionId={state.selectedSectionId}
-            hoveredSectionId={state.hoveredSectionId}
-            renderSection={renderSection}
-            isPreview={isPreview}
-          />
+          {sections.length === 0 ? (
+            <div className="flex min-h-[420px] items-center justify-center px-6 py-10">
+              <div className="w-full max-w-xl rounded-2xl border border-dashed border-[var(--color-border)] bg-[var(--color-surface-subtle)] px-6 py-8 text-center">
+                <p className="text-sm font-semibold text-[var(--color-text-primary)]">{emptyState.title}</p>
+                <p className="mt-2 text-sm text-[var(--color-text-secondary)]">{emptyState.detail}</p>
+                {!isPreview && (
+                  <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => dispatch(builderActions.addSectionByType(activePage.id, 'hero'))}
+                      className="rounded-lg bg-[var(--color-accent)] px-3 py-2 text-sm font-medium text-[var(--color-text-inverse)] hover:bg-[var(--color-accent-hover)]"
+                    >
+                      Add hero section
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => dispatch(builderActions.addSectionByType(activePage.id, 'schedule'))}
+                      className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-sm font-medium text-[var(--color-text-primary)] hover:bg-[var(--color-surface-subtle)]"
+                    >
+                      Add schedule
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          ) : (
+            <BuilderDropZone
+              pageId={activePage.id}
+              sections={sections}
+              selectedSectionId={state.selectedSectionId}
+              hoveredSectionId={state.hoveredSectionId}
+              renderSection={renderSection}
+              isPreview={isPreview}
+            />
+          )}
         </div>
 
         <DragOverlay>
