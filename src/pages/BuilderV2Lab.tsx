@@ -16,6 +16,10 @@ import {
 } from './builderV2SectionEditingModel';
 import { buildBuilderV2BlockReviewSummary } from './builderV2BlockReviewModel';
 import {
+  buildBuilderV2BlockPack,
+  buildBuilderV2BlockPackSummary,
+} from './builderV2BlockPack';
+import {
   buildBuilderV2CommandPaletteGuidance,
   buildBuilderV2ImportGuidance,
   getImportSummaryTone,
@@ -896,6 +900,47 @@ export const BuilderV2Lab: React.FC = () => {
     }),
     [selectedBlocks, blockReviewQuery, blockReviewFilter],
   );
+  const blockPackSummary = useMemo(
+    () => buildBuilderV2BlockPackSummary({
+      sectionTitle: selected.title,
+      sectionType: selected.type,
+      currentBlocks: selectedBlocks,
+      availableBlockTypes: addableBlocksForSelected,
+      labels: BLOCK_LABELS,
+      availability: addBlockAvailability,
+    }),
+    [addBlockAvailability, addableBlocksForSelected, selected.title, selected.type, selectedBlocks],
+  );
+  const addRecommendedBlockPack = useCallback(() => {
+    const packBlocks = buildBuilderV2BlockPack({
+      sectionId: selected.id,
+      sectionType: selected.type,
+      currentBlocks: selectedBlocks,
+      availableBlockTypes: addableBlocksForSelected,
+      labels: BLOCK_LABELS,
+      availability: addBlockAvailability,
+      createDefaultData: (type) => makeDefaultBlockContent(type as BlockType),
+    }).map((block) => ({
+      ...block,
+      id: `${selected.id}-${block.type}-${Math.random().toString(36).slice(2, 6)}`,
+      type: block.type as BlockType,
+      content: BLOCK_LABELS[block.type as BlockType] ?? block.content,
+      data: block.data as AddedBlockContent,
+    }));
+
+    if (!packBlocks.length) {
+      notify('No recommended pack is available for this section right now');
+      return;
+    }
+
+    setSectionBlocks((prev) => ({
+      ...prev,
+      [selected.id]: [...(prev[selected.id] ?? []), ...packBlocks],
+    }));
+    setShowAddBlockPicker(false);
+    markSaving();
+    notify(`Added ${packBlocks.length} recommended block${packBlocks.length === 1 ? '' : 's'}`);
+  }, [addBlockAvailability, addableBlocksForSelected, markSaving, notify, selected.id, selected.type, selectedBlocks]);
 
 
   const allInstancesForExport: SectionInstance[] = useMemo(() => sections.map((s) => ({
@@ -1031,6 +1076,7 @@ export const BuilderV2Lab: React.FC = () => {
       { id: 'sel-compact', group: 'Selection', label: 'Set selected density: compact', keywords: ['compact', 'density', 'selection', 'batch'], action: () => runCommand('Set selected density: compact', () => setSelectedDensity('compact')) },
       { id: 'sel-comfortable', group: 'Selection', label: 'Set selected density: comfortable', keywords: ['comfortable', 'density', 'selection', 'batch', 'open'], action: () => runCommand('Set selected density: comfortable', () => setSelectedDensity('comfortable')) },
       { id: 'sel-review', group: 'Selection', label: 'Review selected sections in preview', keywords: ['preview', 'selection', 'review', 'batch'], action: () => runCommand('Review selected sections in preview', reviewSelectionInPreview) },
+      { id: 'block-pack', group: 'Blocks', label: 'Add recommended block pack', keywords: ['block', 'pack', 'recommended', 'signature', 'section'], action: () => runCommand('Add recommended block pack', addRecommendedBlockPack) },
     ];
     const q = commandQuery.trim().toLowerCase();
     if (!q) return base;
@@ -1048,7 +1094,7 @@ export const BuilderV2Lab: React.FC = () => {
       .filter((x) => x.s > 0)
       .sort((a, b) => b.s - a.s)
       .map((x) => x.item);
-  }, [commandQuery, sections, addSection, clearSelection, duplicateSelectedSections, hideSelectedSections, invertSelection, removeSelectedSections, restoreSelectedSectionsToStarterBlocks, reviewSelectionInPreview, selectAllSections, setSelectedDensity, showSelectedSections, updateVariant]);
+  }, [commandQuery, sections, addRecommendedBlockPack, addSection, clearSelection, duplicateSelectedSections, hideSelectedSections, invertSelection, removeSelectedSections, restoreSelectedSectionsToStarterBlocks, reviewSelectionInPreview, selectAllSections, setSelectedDensity, showSelectedSections, updateVariant]);
   const importGuidance = useMemo(
     () => buildBuilderV2ImportGuidance(lastImportReport, lastImportSource),
     [lastImportReport, lastImportSource],
@@ -1793,6 +1839,27 @@ export const BuilderV2Lab: React.FC = () => {
                             ))}
                           </div>
                         )}
+                        {blockPackSummary.buildableTypes.length > 0 && (
+                          <div className="rounded-md border border-primary/20 bg-primary/[0.05] px-2.5 py-2.5">
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="min-w-0">
+                                <p className="text-[11px] uppercase tracking-[0.18em] text-primary font-semibold">Recommended pack</p>
+                                <p className="mt-1 text-sm text-text-primary">{blockPackSummary.headline}</p>
+                                <p className="mt-1 text-xs leading-relaxed text-text-secondary">{blockPackSummary.detail}</p>
+                              </div>
+                              <button
+                                onClick={addRecommendedBlockPack}
+                                className="shrink-0 rounded-md border border-primary/30 bg-white px-2.5 py-2 text-[11px] font-semibold text-primary hover:bg-primary/10"
+                              >
+                                Add pack
+                              </button>
+                            </div>
+                            <div className="mt-2 rounded-md border border-border-subtle bg-white px-2.5 py-2">
+                              <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary">Best next move</p>
+                              <p className="mt-1 text-xs leading-relaxed text-text-primary">{blockPackSummary.bestNextMove}</p>
+                            </div>
+                          </div>
+                        )}
                         <div className="rounded-md border border-amber-200 bg-amber-50 px-2.5 py-2">
                           <div className="flex items-start justify-between gap-3">
                             <div className="min-w-0">
@@ -1862,6 +1929,23 @@ export const BuilderV2Lab: React.FC = () => {
                             <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary">Watchout</p>
                             <p className="mt-1 text-xs leading-relaxed text-text-primary">{addBlockLibrary.watchout}</p>
                           </div>
+
+                          {blockPackSummary.buildableTypes.length > 0 && (
+                            <div className="rounded-md border border-primary/20 bg-primary/[0.05] px-2.5 py-2">
+                              <div className="flex items-start justify-between gap-3">
+                                <div className="min-w-0">
+                                  <p className="text-[11px] uppercase tracking-[0.18em] text-primary">Recommended pack</p>
+                                  <p className="mt-1 text-xs leading-relaxed text-text-primary">{blockPackSummary.headline}</p>
+                                </div>
+                                <button
+                                  onClick={addRecommendedBlockPack}
+                                  className="shrink-0 rounded-md border border-primary/30 bg-white px-2.5 py-1.5 text-[11px] font-semibold text-primary hover:bg-primary/10"
+                                >
+                                  Add pack
+                                </button>
+                              </div>
+                            </div>
+                          )}
 
                           {addBlockLibrary.empty ? (
                             <div className="rounded-md border border-dashed border-border-subtle bg-surface-subtle px-3 py-4 text-xs text-text-secondary">
