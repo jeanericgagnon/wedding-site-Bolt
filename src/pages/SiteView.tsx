@@ -23,7 +23,8 @@ import { demoWeddingSite } from '../lib/demoData';
 import { rewriteSignedMediaUrlsToPublicDeep } from '../lib/mediaUrl';
 import { getSiteVisibilityState } from '../lib/siteVisibilityState';
 import { buildCoupleDisplayName } from '../lib/coupleDisplayName';
-import { getIsPublishedFromSiteRow, getPublicBuilderProject, getPublicWeddingData } from '../lib/publicSiteProject';
+import { getPublicBuilderPagesFromV2Document } from '../lib/publicBuilderV2Runtime';
+import { getIsPublishedFromSiteRow, getPublicBuilderProject, getPublicBuilderV2Document, getPublicWeddingData } from '../lib/publicSiteProject';
 import { getPublicBuilderActivePage, getVisiblePublicBuilderPages } from '../lib/publicPageSelection';
 
 interface PublicItineraryRow {
@@ -525,11 +526,15 @@ export const SiteView: React.FC = () => {
 
         setPrivacyGate('open');
 
+        const rawBuilderV2Document = getPublicBuilderV2Document(row);
         const rawSiteJson = getPublicBuilderProject(row);
-        const siteJson = rawSiteJson
+        const siteJsonPages = rawBuilderV2Document
+          ? getPublicBuilderPagesFromV2Document(rawBuilderV2Document)
+          : rawSiteJson?.pages ?? [];
+        const siteJson = siteJsonPages.length > 0 || rawSiteJson
           ? rewriteSignedMediaUrlsToPublicDeep({
-              ...rawSiteJson,
-              pages: (rawSiteJson.pages ?? []).map((page) => ({
+              ...(rawSiteJson ?? {}),
+              pages: siteJsonPages.map((page) => ({
                 ...page,
                 sections: (page.sections ?? []).map((section) =>
                   section.type === 'hero' && section.variant === 'video'

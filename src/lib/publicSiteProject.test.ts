@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { getIsPublishedFromSiteRow, getPublicBuilderProject, getPublicWeddingData } from './publicSiteProject';
+import { getIsPublishedFromSiteRow, getPublicBuilderProject, getPublicBuilderV2Document, getPublicWeddingData } from './publicSiteProject';
 
 const draftProject = {
   id: 'draft',
@@ -102,6 +102,28 @@ describe('publicSiteProject', () => {
     expect(project?.pages[0].sections[0].settings.subheadline).toBe('September 14, 2027');
   });
 
+  it('returns a public builder v2 document when the stored site_json is already v2', () => {
+    const row = {
+      is_published: false,
+      site_json: {
+        version: 'v2',
+        updatedAtISO: '2026-05-27T22:00:00.000Z',
+        pages: [
+          {
+            id: 'home',
+            title: 'Home',
+            slug: 'home',
+            isHome: true,
+            hidden: false,
+            sections: [],
+          },
+        ],
+      },
+    };
+
+    expect(getPublicBuilderV2Document(row)?.pages?.[0]?.slug).toBe('home');
+  });
+
   it('recognizes published state from published_json metadata even without is_published', () => {
     const row = {
       site_json: draftProject,
@@ -149,6 +171,29 @@ describe('publicSiteProject', () => {
     expect(project?.pages[0].sections[0].settings.subheadline).toBe('Published V2 subheadline');
     expect(project?.templateId).toBe('modern-luxe');
     expect(project?.themeId).toBe('romantic');
+  });
+
+  it('prefers published builder v2 snapshots for direct public v2 runtime loading', () => {
+    const row = {
+      is_published: true,
+      site_json: draftProject,
+      published_json: {
+        version: 'v2',
+        updatedAtISO: '2026-05-27T22:30:00.000Z',
+        pages: [
+          {
+            id: 'weekend',
+            title: 'Weekend',
+            slug: 'weekend',
+            isHome: false,
+            hidden: false,
+            sections: [],
+          },
+        ],
+      },
+    };
+
+    expect(getPublicBuilderV2Document(row)?.pages?.[0]?.slug).toBe('weekend');
   });
 
   it('prefers published wedding data snapshot for guest-facing content', () => {

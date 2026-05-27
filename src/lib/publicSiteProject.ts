@@ -1,6 +1,7 @@
 import type { BuilderProject } from '../types/builder/project';
 import type { BuilderSectionInstance } from '../types/builder/section';
 import type { WeddingDataV1 } from '../types/weddingData';
+import type { BuilderV2Document } from '../builder-v2/contracts';
 import { builderV2DocumentToBuilderProject, looksLikeBuilderProject, looksLikeBuilderV2Document } from '../builder-v2/adapter';
 import { buildCoupleDisplayName } from './coupleDisplayName';
 import { safeJsonParse } from './jsonUtils';
@@ -62,6 +63,11 @@ const toPublicBuilderProject = (
   if (looksLikeBuilderProject(parsed)) return parsed;
   if (looksLikeBuilderV2Document(parsed)) return builderV2DocumentToBuilderProject(parsed, fallbackProject);
   return null;
+};
+
+const toPublicBuilderV2Document = (source: unknown): BuilderV2Document | null => {
+  const parsed = safeJsonParse<unknown>(source, null);
+  return parsed && looksLikeBuilderV2Document(parsed) ? parsed : null;
 };
 
 const mergePublishedSection = (
@@ -175,6 +181,20 @@ export const getPublicBuilderProject = (row: Record<string, unknown>): BuilderPr
   }
 
   return preferredProject ? rewriteSignedMediaUrlsToPublicDeep(preferredProject) : null;
+};
+
+export const getPublicBuilderV2Document = (row: Record<string, unknown>): BuilderV2Document | null => {
+  const isPublished = getIsPublishedFromSiteRow(row);
+  const preferredSource = isPublished ? (row.published_json ?? row.site_json) : row.site_json;
+  const preferredDoc = toPublicBuilderV2Document(preferredSource);
+
+  if (preferredDoc) return rewriteSignedMediaUrlsToPublicDeep(preferredDoc);
+  if (preferredSource !== row.site_json) {
+    const fallbackDoc = toPublicBuilderV2Document(row.site_json);
+    if (fallbackDoc) return rewriteSignedMediaUrlsToPublicDeep(fallbackDoc);
+  }
+
+  return null;
 };
 
 export const getPublicWeddingData = (row: Record<string, unknown>): WeddingDataV1 | null => {

@@ -232,7 +232,7 @@ const toLegacyBuilderSection = (section: BuilderV2Section, orderIndex: number, u
   },
 });
 
-const toLegacyBuilderPage = (
+export const builderV2PageToBuilderPage = (
   page: BuilderV2Page,
   orderIndex: number,
   updatedAtISO: string,
@@ -274,15 +274,23 @@ export const builderProjectToBuilderV2Document = (project: BuilderProject): Buil
   updatedAtISO: project.meta.updatedAtISO,
 });
 
+export const builderV2DocumentToBuilderPages = (
+  document: BuilderV2Document,
+  updatedAtISO = document.updatedAtISO || new Date().toISOString(),
+): LegacyBuilderPage[] => {
+  const pages = document.pages?.length
+    ? document.pages
+    : [{ id: 'home', title: 'Home', slug: 'home', isHome: true, hidden: false, sections: document.sections ?? [] }];
+
+  return pages.map((page, index) => builderV2PageToBuilderPage(page, index, updatedAtISO));
+};
+
 export const builderV2DocumentToBuilderProject = (
   document: BuilderV2Document,
   fallback?: Partial<BuilderProject> | null,
 ): BuilderProject => {
   const updatedAtISO = document.updatedAtISO || fallback?.meta?.updatedAtISO || new Date().toISOString();
   const createdAtISO = fallback?.meta?.createdAtISO || updatedAtISO;
-  const pages = document.pages?.length
-    ? document.pages
-    : [{ id: 'home', title: 'Home', slug: 'home', isHome: true, hidden: false, sections: document.sections ?? [] }];
 
   return {
     id: fallback?.id || 'builder-v2-public-runtime',
@@ -291,7 +299,7 @@ export const builderV2DocumentToBuilderProject = (
     themeId: fallback?.themeId || 'romantic',
     themeTokens: fallback?.themeTokens,
     globalAnimationPreset: fallback?.globalAnimationPreset,
-    pages: pages.map((page, index) => toLegacyBuilderPage(page, index, updatedAtISO)),
+    pages: builderV2DocumentToBuilderPages(document, updatedAtISO),
     draftVersion: fallback?.draftVersion ?? 1,
     publishedVersion: fallback?.publishedVersion ?? null,
     publishStatus: fallback?.publishStatus ?? 'draft',

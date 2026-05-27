@@ -59,6 +59,7 @@ vi.mock('../lib/siteVisibilityState', () => ({
 vi.mock('../lib/publicSiteProject', () => ({
   getIsPublishedFromSiteRow: vi.fn(() => false),
   getPublicBuilderProject: vi.fn(() => null),
+  getPublicBuilderV2Document: vi.fn(() => null),
   getPublicWeddingData: vi.fn(() => null),
 }));
 
