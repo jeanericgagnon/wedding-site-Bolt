@@ -1,5 +1,5 @@
 import React, { useState, useRef, useCallback } from 'react';
-import { X, Upload, Image, Trash2, Loader2, FolderOpen, Check } from 'lucide-react';
+import { X, Upload, Image, Trash2, Loader2, FolderOpen, Check, Search, Images, Link2, Unlink, LucideIcon } from 'lucide-react';
 import { useBuilderContext } from '../state/builderStore';
 import { builderActions } from '../state/builderActions';
 import { BuilderMediaAsset } from '../../types/builder/media';
@@ -7,8 +7,16 @@ import { BUILDER_SUPPORTED_IMAGE_TYPES, BUILDER_MAX_FILE_SIZE_MB } from '../cons
 import { mediaService } from '../services/mediaService';
 import { generateBuilderId } from '../../types/builder/project';
 import { getSectionManifest } from '../registry/sectionManifests';
-import { markFieldAsUserEdited } from '../../lib/weddingProfile';
 import { mergeMediaAssetsAfterUploadRefresh } from '../utils/mediaRefresh';
+
+type MediaLibraryFilterMode = 'all' | 'used' | 'unused';
+
+type MediaLibrarySummary = {
+  totalAssets: number;
+  usedAssets: number;
+  unusedAssets: number;
+  filteredAssets: BuilderMediaAsset[];
+};
 
 function resolveImageSettingKey(sectionType: string): string {
   try {
@@ -20,11 +28,61 @@ function resolveImageSettingKey(sectionType: string): string {
   }
 }
 
+function assetMatchesSearch(asset: BuilderMediaAsset, searchTerm: string): boolean {
+  if (!searchTerm) return true;
+  const haystack = [
+    asset.filename,
+    asset.originalFilename,
+    asset.altText,
+    asset.caption,
+    ...asset.tags,
+  ]
+    .filter(Boolean)
+    .join(' ')
+    .toLowerCase();
+  return haystack.includes(searchTerm.toLowerCase());
+}
+
+export function getMediaLibrarySummary(
+  assets: BuilderMediaAsset[],
+  filterMode: MediaLibraryFilterMode,
+  searchTerm: string,
+): MediaLibrarySummary {
+  const sortedAssets = [...assets].sort((left, right) => {
+    const attachmentDelta = right.attachedSectionIds.length - left.attachedSectionIds.length;
+    if (attachmentDelta !== 0) return attachmentDelta;
+    return right.meta.updatedAtISO.localeCompare(left.meta.updatedAtISO);
+  });
+
+  const filteredAssets = sortedAssets.filter((asset) => {
+    if (filterMode === 'used' && asset.attachedSectionIds.length === 0) return false;
+    if (filterMode === 'unused' && asset.attachedSectionIds.length > 0) return false;
+    return assetMatchesSearch(asset, searchTerm);
+  });
+
+  return {
+    totalAssets: assets.length,
+    usedAssets: assets.filter((asset) => asset.attachedSectionIds.length > 0).length,
+    unusedAssets: assets.filter((asset) => asset.attachedSectionIds.length === 0).length,
+    filteredAssets,
+  };
+}
+
 export const MediaLibraryPanel: React.FC = () => {
   const { state, dispatch } = useBuilderContext();
   const isPickerMode = !!state.mediaPickerTargetSectionId;
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterMode, setFilterMode] = useState<MediaLibraryFilterMode>('all');
 
   if (!state.mediaLibraryOpen) return null;
+
+  const pickerTargetSection = state.mediaPickerTargetSectionId && state.activePageId
+    ? state.project?.pages
+        .find((page) => page.id === state.activePageId)
+        ?.sections.find((section) => section.id === state.mediaPickerTargetSectionId)
+    : null;
+  const pickerTargetLabel = pickerTargetSection ? getSectionManifest(pickerTargetSection.type).label : null;
+  const summary = getMediaLibrarySummary(state.mediaAssets, filterMode, searchTerm);
 
   const handleSelectAsset = (asset: BuilderMediaAsset) => {
     if (!isPickerMode || !state.mediaPickerTargetSectionId || !state.activePageId) return;
@@ -60,10 +118,9 @@ export const MediaLibraryPanel: React.FC = () => {
       } else {
         images.push({ id: String(Date.now()), url: asset.url, alt: '', caption: '' });
       }
-      const { images: _removed, ...restSettings } = section.settings as Record<string, unknown>;
       dispatch(builderActions.updateSection(pageId, sectionId, {
         bindings: nextBindings,
-        settings: { ...restSettings, images },
+        settings: { ...section.settings, images },
       }));
     } else {
       const imageKey = state.mediaPickerTargetSettingKey || resolveImageSettingKey(section.type);
@@ -111,11 +168,73 @@ export const MediaLibraryPanel: React.FC = () => {
 
         <div className="flex-1 overflow-y-auto flex flex-col">
           <UploadDropArea weddingId={state.project?.weddingId ?? ''} />
+          <div className="px-6 pt-2">
+            {isPickerMode && pickerTargetLabel && (
+              <div className="mb-3 rounded-xl border border-rose-100 bg-rose-50 px-4 py-3">
+                <p className="text-xs font-semibold uppercase tracking-wide text-rose-700">Image target</p>
+                <p className="mt-1 text-sm font-medium text-rose-900">
+                  Add this image to {pickerTargetLabel}
+                </p>
+                <p className="mt-1 text-xs text-rose-800">
+                  Choose an image that supports the section first. You can still replace or crop it later.
+                </p>
+              </div>
+            )}
+            <div className="grid grid-cols-3 gap-3">
+              <SummaryCard
+                label="All assets"
+                value={summary.totalAssets}
+                icon={Images}
+              />
+              <SummaryCard
+                label="In use"
+                value={summary.usedAssets}
+                icon={Link2}
+              />
+              <SummaryCard
+                label="Ready to place"
+                value={summary.unusedAssets}
+                icon={Unlink}
+              />
+            </div>
+            <div className="mt-3 flex flex-col gap-3 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 md:flex-row md:items-center">
+              <label className="flex min-w-0 flex-1 items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2">
+                <Search size={14} className="text-gray-400" />
+                <input
+                  value={searchTerm}
+                  onChange={(event) => setSearchTerm(event.target.value)}
+                  className="min-w-0 flex-1 bg-transparent text-sm text-gray-700 outline-none placeholder:text-gray-400"
+                  placeholder="Search by filename, caption, alt text, or tag"
+                />
+              </label>
+              <div className="flex items-center gap-1 rounded-lg border border-gray-200 bg-white p-1">
+                {([
+                  { id: 'all', label: 'All' },
+                  { id: 'used', label: 'In use' },
+                  { id: 'unused', label: 'Unused' },
+                ] as const).map((option) => (
+                  <button
+                    key={option.id}
+                    type="button"
+                    onClick={() => setFilterMode(option.id)}
+                    className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
+                      filterMode === option.id
+                        ? 'bg-rose-600 text-white'
+                        : 'text-gray-600 hover:bg-gray-100'
+                    }`}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
           <AssetGrid
-            assets={state.mediaAssets}
+            assets={summary.filteredAssets}
             uploadQueue={state.uploadQueue}
             isPickerMode={isPickerMode}
             onSelectAsset={isPickerMode ? handleSelectAsset : undefined}
+            hasActiveFilters={filterMode !== 'all' || searchTerm.trim().length > 0}
           />
         </div>
       </div>
@@ -254,9 +373,10 @@ interface AssetGridProps {
   uploadQueue: Array<{ assetId: string; filename: string; progress: number; status: string; error?: string }>;
   isPickerMode?: boolean;
   onSelectAsset?: (asset: BuilderMediaAsset) => void;
+  hasActiveFilters?: boolean;
 }
 
-export const AssetGrid: React.FC<AssetGridProps> = ({ assets, uploadQueue, isPickerMode, onSelectAsset }) => {
+export const AssetGrid: React.FC<AssetGridProps> = ({ assets, uploadQueue, isPickerMode, onSelectAsset, hasActiveFilters }) => {
   const { dispatch } = useBuilderContext();
 
   const handleDelete = async (asset: BuilderMediaAsset) => {
@@ -301,15 +421,21 @@ export const AssetGrid: React.FC<AssetGridProps> = ({ assets, uploadQueue, isPic
       {assets.length === 0 && uploadQueue.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 text-center">
           <FolderOpen size={32} className="text-gray-300 mb-3" />
-          <p className="text-sm font-medium text-gray-500">No photos yet</p>
-          <p className="text-xs text-gray-400 mt-1">Add your first photos to start using them across the site.</p>
+          <p className="text-sm font-medium text-gray-500">
+            {hasActiveFilters ? 'No matching images' : 'No photos yet'}
+          </p>
+          <p className="text-xs text-gray-400 mt-1">
+            {hasActiveFilters
+              ? 'Try a different search or switch back to all assets.'
+              : 'Add your first photos to start using them across the site.'}
+          </p>
         </div>
       ) : (
         <>
           {isPickerMode && (
             <p className="text-xs text-gray-500 mb-3">Click an image to use it here.</p>
           )}
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
             {assets.map(asset => (
               <AssetTile
                 key={asset.id}
@@ -377,6 +503,17 @@ const AssetTile: React.FC<AssetTileProps> = ({ asset, onDelete, isPickerMode, on
       </div>
     )}
 
+    <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/65 via-black/20 to-transparent px-2 pb-2 pt-8">
+      <p className="truncate text-[11px] font-medium text-white">
+        {asset.caption?.trim() || asset.altText?.trim() || asset.originalFilename}
+      </p>
+      <p className="mt-0.5 text-[10px] text-white/80">
+        {asset.attachedSectionIds.length > 0
+          ? `${asset.attachedSectionIds.length} section${asset.attachedSectionIds.length === 1 ? '' : 's'} using this`
+          : 'Not placed yet'}
+      </p>
+    </div>
+
     {isPickerMode ? (
       <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
         <div className="bg-rose-500 text-white rounded-full p-1.5">
@@ -403,3 +540,17 @@ const AssetTile: React.FC<AssetTileProps> = ({ asset, onDelete, isPickerMode, on
   </div>
   );
 };
+
+const SummaryCard: React.FC<{
+  label: string;
+  value: number;
+  icon: LucideIcon;
+}> = ({ label, value, icon: Icon }) => (
+  <div className="rounded-xl border border-gray-200 bg-white px-4 py-3">
+    <div className="flex items-center gap-2 text-gray-500">
+      <Icon size={14} className="text-rose-500" />
+      <p className="text-xs font-semibold uppercase tracking-wide">{label}</p>
+    </div>
+    <p className="mt-2 text-lg font-semibold text-gray-900">{value}</p>
+  </div>
+);

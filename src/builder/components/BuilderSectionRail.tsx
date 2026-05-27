@@ -6,6 +6,29 @@ import { getVariantPreviewSource } from '../registry/variantPreviewSource';
 interface RailSection {
   id: string;
   type: string;
+  enabled?: boolean;
+  locked?: boolean;
+}
+
+type RailSummary = {
+  total: number;
+  visible: number;
+  hidden: number;
+  locked: number;
+  missingEssentials: string[];
+};
+
+const ESSENTIAL_SECTION_TYPES = ['hero', 'venue', 'schedule', 'travel', 'rsvp', 'faq', 'registry'] as const;
+
+export function summarizeBuilderSectionRail(activeSections: RailSection[]): RailSummary {
+  const presentTypes = new Set(activeSections.map((section) => section.type));
+  return {
+    total: activeSections.length,
+    visible: activeSections.filter((section) => section.enabled !== false).length,
+    hidden: activeSections.filter((section) => section.enabled === false).length,
+    locked: activeSections.filter((section) => section.locked).length,
+    missingEssentials: ESSENTIAL_SECTION_TYPES.filter((type) => !presentTypes.has(type)).map((type) => getSectionManifest(type).label),
+  };
 }
 
 interface BuilderSectionRailProps {
@@ -31,8 +54,9 @@ export const BuilderSectionRail: React.FC<BuilderSectionRailProps> = ({
   const [addSectionType, setAddSectionType] = React.useState<string | null>(null);
   const sectionManifests = React.useMemo(() => getAllSectionManifests(), []);
   const addTypeManifest = addSectionType ? sectionManifests.find((m) => m.type === addSectionType) ?? null : null;
-  const essentialSectionTypes = ['hero', 'venue', 'schedule', 'travel', 'rsvp', 'faq', 'registry'];
-  const essentialManifests = sectionManifests.filter((m) => essentialSectionTypes.includes(m.type));
+  const essentialManifests = sectionManifests.filter((m) => ESSENTIAL_SECTION_TYPES.includes(m.type as typeof ESSENTIAL_SECTION_TYPES[number]));
+  const railSummary = summarizeBuilderSectionRail(activeSections);
+  const quickAddManifests = essentialManifests.filter((manifest) => railSummary.missingEssentials.includes(manifest.label)).slice(0, 4);
 
   const moveSection = (fromIndex: number, toIndex: number) => {
     if (toIndex < 0 || toIndex >= activeSections.length || fromIndex === toIndex) return;
@@ -46,6 +70,37 @@ export const BuilderSectionRail: React.FC<BuilderSectionRailProps> = ({
     <div className="border-b border-[var(--color-border-subtle)] bg-[var(--color-surface)] h-full flex flex-col">
       <div className="px-4 py-3 border-b border-[var(--color-border-subtle)]">
         <h3 className="text-[20px] font-semibold text-[var(--color-text-primary)]">Website sections</h3>
+        <div className="mt-3 grid grid-cols-3 gap-2">
+          <div className="rounded-lg border border-[var(--color-border-subtle)] bg-[var(--color-surface-subtle)] px-3 py-2">
+            <p className="text-[11px] uppercase tracking-wide text-[var(--color-text-tertiary)]">Visible</p>
+            <p className="mt-1 text-sm font-semibold text-[var(--color-text-primary)]">{railSummary.visible}</p>
+          </div>
+          <div className="rounded-lg border border-[var(--color-border-subtle)] bg-[var(--color-surface-subtle)] px-3 py-2">
+            <p className="text-[11px] uppercase tracking-wide text-[var(--color-text-tertiary)]">Hidden</p>
+            <p className="mt-1 text-sm font-semibold text-[var(--color-text-primary)]">{railSummary.hidden}</p>
+          </div>
+          <div className="rounded-lg border border-[var(--color-border-subtle)] bg-[var(--color-surface-subtle)] px-3 py-2">
+            <p className="text-[11px] uppercase tracking-wide text-[var(--color-text-tertiary)]">Locked</p>
+            <p className="mt-1 text-sm font-semibold text-[var(--color-text-primary)]">{railSummary.locked}</p>
+          </div>
+        </div>
+        {quickAddManifests.length > 0 && (
+          <div className="mt-3 rounded-lg border border-sky-100 bg-sky-50 px-3 py-2">
+            <p className="text-[11px] font-semibold uppercase tracking-wide text-sky-800">Still missing</p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {quickAddManifests.map((manifest) => (
+                <button
+                  key={manifest.type}
+                  type="button"
+                  onClick={() => onAddSection(manifest.type, manifest.defaultVariant)}
+                  className="rounded-full border border-sky-200 bg-white px-3 py-1.5 text-[11px] font-medium text-sky-900 hover:bg-sky-100"
+                >
+                  Add {manifest.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="flex-1 min-h-0 overflow-y-auto px-3 py-2 space-y-1.5">
@@ -69,6 +124,8 @@ export const BuilderSectionRail: React.FC<BuilderSectionRailProps> = ({
         )}
         {activeSections.map((section, idx) => {
           const isActive = selectedSectionId === section.id;
+          const sectionManifest = getSectionManifest(section.type as Parameters<typeof getSectionManifest>[0]);
+          const isHidden = section.enabled === false;
           return (
             <button
               key={section.id}
@@ -90,11 +147,27 @@ export const BuilderSectionRail: React.FC<BuilderSectionRailProps> = ({
                 <span className="inline-flex items-center justify-center text-[var(--color-text-tertiary)]" title="Reorder section">
                   <GripVertical size={14} />
                 </span>
-                <span className="text-[13px] font-medium">{getSectionManifest(section.type as any).label}</span>
+                <div className="min-w-0">
+                  <span className="block truncate text-[13px] font-medium">{sectionManifest.label}</span>
+                  <div className="mt-0.5 flex items-center gap-1.5 text-[10px] text-[var(--color-text-tertiary)]">
+                    <span>#{idx + 1}</span>
+                    {isHidden && (
+                      <span className="rounded-full bg-[var(--color-surface-subtle)] px-1.5 py-0.5 font-medium text-[var(--color-text-secondary)]">
+                        Hidden
+                      </span>
+                    )}
+                    {section.locked && (
+                      <span className="rounded-full bg-[var(--color-surface-subtle)] px-1.5 py-0.5 font-medium text-[var(--color-text-secondary)]">
+                        Locked
+                      </span>
+                    )}
+                  </div>
+                </div>
                 <div className="ml-auto flex items-center gap-1">
                   <button
                     type="button"
                     onClick={(e) => { e.stopPropagation(); moveSection(idx, idx - 1); }}
+                    disabled={idx === 0}
                     className="inline-flex items-center justify-center rounded-md p-1 text-[var(--color-text-tertiary)] hover:bg-[var(--color-surface-subtle)] hover:text-[var(--color-text-primary)]"
                     title="Move up"
                   >
@@ -103,6 +176,7 @@ export const BuilderSectionRail: React.FC<BuilderSectionRailProps> = ({
                   <button
                     type="button"
                     onClick={(e) => { e.stopPropagation(); moveSection(idx, idx + 1); }}
+                    disabled={idx === activeSections.length - 1}
                     className="inline-flex items-center justify-center rounded-md p-1 text-[var(--color-text-tertiary)] hover:bg-[var(--color-surface-subtle)] hover:text-[var(--color-text-primary)]"
                     title="Move down"
                   >
@@ -147,9 +221,15 @@ export const BuilderSectionRail: React.FC<BuilderSectionRailProps> = ({
                   {!addTypeManifest ? 'Add section' : `${addTypeManifest.label} layouts`}
                 </h3>
                 <p className="text-xs text-[var(--color-text-secondary)] mt-0.5">
-                  {!addTypeManifest ? 'Pick the kind of section you want, then choose the layout that fits best.' : `Choose the ${addTypeManifest.label.toLowerCase()} layout you want to add.`}
-                  {!addTypeManifest && <p className="mt-2 text-[11px] text-[var(--color-text-tertiary)]">Start with the essentials guests need most: welcome, venue, schedule, RSVP, and travel.</p>}
+                  {!addTypeManifest
+                    ? 'Pick the kind of section you want, then choose the layout that fits best.'
+                    : `Choose the ${addTypeManifest.label.toLowerCase()} layout you want to add.`}
                 </p>
+                {!addTypeManifest && (
+                  <p className="mt-2 text-[11px] text-[var(--color-text-tertiary)]">
+                    Start with the essentials guests need most: welcome, venue, schedule, RSVP, and travel.
+                  </p>
+                )}
               </div>
               <div className="flex items-center gap-2">
                 {addTypeManifest && (

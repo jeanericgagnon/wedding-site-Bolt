@@ -9,6 +9,7 @@ import { getVariantPreviewSource } from '../registry/variantPreviewSource';
 import { BuilderSectionRail } from './BuilderSectionRail';
 import { BuilderSettingsField } from '../../types/builder/section';
 import { CustomBlock } from '../../sections/variants/custom/skeletons';
+import { BuilderSectionType } from '../../types/builder/section';
 
 type InspectorTab = 'guide' | 'content' | 'style' | 'layout' | 'data';
 
@@ -39,7 +40,12 @@ export const BuilderInspectorPanel: React.FC = () => {
   const quickSectionRail = activePage ? (
     <BuilderSectionRail
       activePageId={activePage.id}
-      activeSections={activeSections as Array<{ id: string; type: string }>}
+      activeSections={activeSections.map((section) => ({
+        id: section.id,
+        type: section.type,
+        enabled: section.enabled,
+        locked: section.locked,
+      }))}
       selectedSectionId={state.selectedSectionId}
       onSelectSection={(sectionId) => dispatch(builderActions.selectSection(sectionId))}
       onAddSection={(type, variantId) => dispatch(builderActions.addSectionByType(activePage.id, type as BuilderSectionType, undefined, variantId))}

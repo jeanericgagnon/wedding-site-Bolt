@@ -92,7 +92,7 @@ const PREVIEW_FIXTURES_BY_VARIANT: Record<string, Record<string, unknown>> = {
 };
 
 function hasLivePreviewSupport(sectionType: BuilderSectionType, variantId: string): boolean {
-  if (Boolean(getDefinition(sectionType, variantId))) return true;
+  if (getDefinition(sectionType, variantId)) return true;
   if (LEGACY_PLACEHOLDER_TYPES.has(sectionType)) return false;
   return Boolean(LEGACY_SECTION_REGISTRY[sectionType]);
 }
@@ -2193,7 +2193,7 @@ const VariantPreviewSwatch: React.FC<{ variantId: string; sectionType?: string; 
     /* ── SCHEDULE new variants ── */
     schedule_bands: (
       <div className={`w-full h-20 flex flex-col justify-center transition-colors`}>
-        {[{bg:h?'bg-rose-50':'bg-white',w:'w-16'},{bg:h?'bg-rose-100/50':'bg-gray-50',w:'w-20'},{bg:h?'bg-rose-50':'bg-white',w:'w-14'}].map(({bg,w},i) => (
+        {[{bg:h?'bg-rose-50':'bg-white',w:'w-16'},{bg:h?'bg-rose-100/50':'bg-gray-50',w:'w-20'},{bg:h?'bg-rose-50':'bg-white',w:'w-14'}].map(({bg},i) => (
           <div key={i} className={`flex-1 flex items-center px-3 gap-2 ${bg}`}>
             <div className={`text-[7px] font-mono ${h ? 'text-rose-400' : 'text-gray-400'} w-7 flex-shrink-0`}>{['4pm','5pm','7pm'][i]}</div>
             <div className={`h-1.5 rounded-sm flex-1 ${cd}`} />
@@ -2726,7 +2726,7 @@ const VariantPreviewSwatch: React.FC<{ variantId: string; sectionType?: string; 
       <div className={`w-full h-20 flex flex-col justify-center gap-1 px-3 transition-colors ${h ? 'bg-rose-50' : 'bg-white'}`}>
         <div className={`h-1.5 rounded-sm w-20 ${cd}`} />
         <div className={`h-1 rounded-sm w-full ${c}`} />
-        {['Parking?','Shuttle?','Deadline?'].map((q,i) => (
+        {['Parking?','Shuttle?','Deadline?'].map((q) => (
           <div key={q} className={`flex items-center justify-between px-1.5 py-0.5 rounded border ${h ? 'border-rose-100 bg-white' : 'border-gray-100 bg-gray-50'}`}>
             <div className={`text-[6px] ${h ? 'text-rose-600' : 'text-gray-600'}`}>{q}</div>
             <div className={`text-[8px] ${h ? 'text-rose-300' : 'text-gray-400'}`}>+</div>
@@ -2751,7 +2751,7 @@ const VariantPreviewSwatch: React.FC<{ variantId: string; sectionType?: string; 
     contact_form: (
       <div className={`w-full h-20 flex flex-col justify-center gap-1 px-3 transition-colors bg-white`}>
         <div className={`h-1.5 rounded-sm w-16 ${cd}`} />
-        {['Name','Email','Message'].map((f,i) => (
+        {['Name','Email','Message'].map((f) => (
           <div key={f} className={`h-3 rounded border ${h ? 'border-rose-200' : 'border-gray-200'} flex items-center px-1`}>
             <div className={`text-[6px] ${h ? 'text-rose-300' : 'text-gray-400'}`}>{f}</div>
           </div>
@@ -2911,7 +2911,7 @@ const VariantPreviewSwatch: React.FC<{ variantId: string; sectionType?: string; 
     menu_illustrated: (
       <div className={`w-full h-20 flex flex-col justify-center gap-1.5 px-3 transition-colors ${h ? 'bg-rose-50' : 'bg-stone-50'}`}>
         <div className="flex gap-2">
-          {['🥗','🍗','🎂'].map((icon,i) => (
+          {['🥗','🍗','🎂'].map((icon) => (
             <div key={icon} className={`flex-1 flex flex-col items-center rounded-lg p-1 ${h ? 'bg-white border border-rose-100' : 'bg-white border border-stone-100'}`}>
               <div className="text-[11px]">{icon}</div>
               <div className={`h-0.5 rounded-sm w-full mt-0.5 ${cd}`} />
@@ -2959,7 +2959,7 @@ const VariantPreviewSwatch: React.FC<{ variantId: string; sectionType?: string; 
         <div className={`h-1 rounded-full w-full ${h ? 'bg-rose-100' : 'bg-gray-200'} relative overflow-hidden mb-1`}>
           <div className={`h-full rounded-full ${h ? 'bg-rose-400' : 'bg-gray-500'}`} style={{ width: '100%' }} />
         </div>
-        {['🎻 Ceremony','🥂 Cocktail','🎶 Reception'].map((phase,i) => (
+        {['🎻 Ceremony','🥂 Cocktail','🎶 Reception'].map((phase) => (
           <div key={phase} className="flex items-center gap-1.5 py-0.5">
             <div className={`text-[8px] w-3`}>{phase.split(' ')[0]}</div>
             <div className={`text-[6px] ${h ? 'text-rose-500' : 'text-gray-500'}`}>{phase.split(' ').slice(1).join(' ')}</div>
@@ -3269,6 +3269,12 @@ const SortableLayerItem: React.FC<SortableLayerItemProps> = ({ section, index, p
             if (pageId) {
               dispatch(builderActions.removeSection(pageId, section.id));
               dispatch(builderActions.selectSection(null));
+            }
+            setShowDeleteModal(false);
+          }}
+          onHideInstead={() => {
+            if (pageId && section.enabled) {
+              dispatch(builderActions.toggleSectionVisibility(pageId, section.id));
             }
             setShowDeleteModal(false);
           }}

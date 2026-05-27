@@ -5,12 +5,14 @@ interface DeleteSectionModalProps {
   sectionLabel: string;
   onConfirm: () => void;
   onCancel: () => void;
+  onHideInstead?: () => void;
 }
 
 export const DeleteSectionModal: React.FC<DeleteSectionModalProps> = ({
   sectionLabel,
   onConfirm,
   onCancel,
+  onHideInstead,
 }) => {
   const confirmButtonRef = useRef<HTMLButtonElement>(null);
 
@@ -49,14 +51,26 @@ export const DeleteSectionModal: React.FC<DeleteSectionModalProps> = ({
           </div>
 
           <h2 className="text-base font-semibold text-gray-900 mb-1.5">
-Remove this section?
+            Remove this section?
           </h2>
           <p className="text-sm text-gray-500 leading-relaxed">
-This will remove the section and its content from this page. If you are unsure, cancel and hide it instead.
+            <span className="font-medium text-gray-700">{sectionLabel}</span> will be removed from this page with its current content and layout.
+            {onHideInstead
+              ? ' If you might want it later, hide it instead and keep the work in place.'
+              : ' This cannot be undone from this dialog, so cancel if you are unsure.'}
           </p>
         </div>
 
-        <div className="flex gap-2.5 px-6 pb-5">
+        <div className={`px-6 pb-5 ${onHideInstead ? 'space-y-2.5' : ''}`}>
+          {onHideInstead && (
+            <button
+              onClick={onHideInstead}
+              className="w-full px-4 py-2.5 rounded-xl border border-amber-200 bg-amber-50 text-sm font-medium text-amber-800 hover:bg-amber-100 transition-colors"
+            >
+              Hide instead
+            </button>
+          )}
+          <div className="flex gap-2.5">
           <button
             onClick={onCancel}
             className="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
@@ -68,8 +82,9 @@ This will remove the section and its content from this page. If you are unsure, 
             onClick={onConfirm}
             className="flex-1 px-4 py-2.5 rounded-xl bg-red-500 text-white text-sm font-medium hover:bg-red-600 transition-colors focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-2"
           >
-Remove it
+            Remove it
           </button>
+          </div>
         </div>
       </div>
     </div>
