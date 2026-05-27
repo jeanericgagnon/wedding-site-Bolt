@@ -200,12 +200,11 @@ export const VendorProfilePage: React.FC = () => {
                   {profileGuide.sequence.map((step) => (
                     <div key={`${step.status}-${step.title}`} className="rounded-2xl bg-white px-3 py-3 shadow-sm">
                       <div className="flex items-center justify-between gap-2">
-                        <p className="text-[11px] uppercase tracking-[0.18em] text-[#8b6f53]">{step.status}</p>
+                        <p className="text-sm font-medium text-[#2f261d]">{step.title}</p>
                         <span className="rounded-full bg-[#f8f3ec] px-2 py-0.5 text-[10px] text-[#6f5843]">
                           {step.status === 'current' ? 'Current' : step.status === 'next' ? 'Next' : 'Then'}
                         </span>
                       </div>
-                      <p className="mt-2 text-sm font-medium text-[#2f261d]">{step.title}</p>
                       <p className="mt-2 text-xs leading-5 text-[#6f5843]">{step.detail}</p>
                     </div>
                   ))}
