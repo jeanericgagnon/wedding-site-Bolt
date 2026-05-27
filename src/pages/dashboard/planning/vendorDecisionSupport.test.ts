@@ -51,6 +51,7 @@ describe('vendorDecisionSupport', () => {
     expect(deck?.focusDetail).toMatch(/contact paths|payment pressure|style debates/i);
     expect(deck?.bestNextMove).toMatch(/missing contact paths|payment pressure|compare only the vendors/i);
     expect(deck?.decisionRule).toMatch(/contact paths|payment pressure/i);
+    expect(deck?.watchout).toMatch(/style decision|contact and timing truth|emotionally busy/i);
     expect(deck?.sequence.map((step) => step.status)).toEqual(['current', 'next', 'then']);
     expect(deck?.sequence[0]?.title).toMatch(/contact and timing noise|Clear/i);
     expect(deck?.items[0]?.nextBestMove).toMatch(/contact path/i);

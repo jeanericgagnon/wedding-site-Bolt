@@ -28,6 +28,7 @@ export interface VendorDecisionDeckModel {
   focusDetail: string;
   bestNextMove: string;
   decisionRule: string;
+  watchout: string;
   badges: string[];
   sequence: Array<{
     id: 'stabilize' | 'compare' | 'decide';
@@ -222,6 +223,9 @@ export function buildVendorDecisionDeck(
     decisionRule: urgentCount > 0
       ? 'Clear missing contact paths and payment pressure before you spend energy comparing aesthetics.'
       : 'Use this board to choose the next real yes, not to reopen every maybe.',
+    watchout: urgentCount > 0
+      ? 'If you treat every noisy vendor like a style decision instead of clearing contact and timing truth first, the board will stay emotionally busy without becoming easier to decide from.'
+      : 'Calm vendor boards usually get worse through curiosity, not neglect. Reopening every maybe can make the shortlist feel less trustworthy than it actually is.',
     badges: [
       `${urgentCount} urgent`,
       `${readyCount} ready to choose`,

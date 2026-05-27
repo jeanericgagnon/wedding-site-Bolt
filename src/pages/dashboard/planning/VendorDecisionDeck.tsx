@@ -38,6 +38,8 @@ export const VendorDecisionDeck: React.FC<Props> = ({ model, onSelectVendor }) =
               <div className="mt-3 h-px bg-black/5" />
               <p className="mt-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-text-tertiary">Decision rule</p>
               <p className="mt-1 text-sm text-text-secondary">{model.decisionRule}</p>
+              <p className="mt-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-text-tertiary">Watchout</p>
+              <p className="mt-1 text-sm text-text-secondary">{model.watchout}</p>
             </div>
           </div>
           <div className="mt-3 flex flex-wrap gap-2 text-[11px] text-text-secondary">
