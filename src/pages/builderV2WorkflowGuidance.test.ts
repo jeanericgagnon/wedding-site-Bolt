@@ -16,10 +16,17 @@ describe('builderV2WorkflowGuidance', () => {
 
   it('builds repaired import guidance from a partially normalized report', () => {
     const report = {
+      pageCount: 1,
       sectionCount: 3,
       blockCount: 8,
       normalizedVersion: true,
       normalizedUpdatedAt: false,
+      generatedPageIds: 0,
+      dedupedPageIds: 0,
+      normalizedPageTitles: 0,
+      normalizedPageSlugs: 0,
+      normalizedPageVisibility: 0,
+      normalizedHomePage: false,
       generatedSectionIds: 1,
       generatedBlockIds: 0,
       dedupedSectionIds: 0,
@@ -47,10 +54,17 @@ describe('builderV2WorkflowGuidance', () => {
 
   it('builds caution import guidance when content was dropped', () => {
     const report = {
+      pageCount: 1,
       sectionCount: 2,
       blockCount: 4,
       normalizedVersion: false,
       normalizedUpdatedAt: false,
+      generatedPageIds: 0,
+      dedupedPageIds: 0,
+      normalizedPageTitles: 0,
+      normalizedPageSlugs: 0,
+      normalizedPageVisibility: 0,
+      normalizedHomePage: false,
       generatedSectionIds: 0,
       generatedBlockIds: 0,
       dedupedSectionIds: 0,

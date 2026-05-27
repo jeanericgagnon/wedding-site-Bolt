@@ -47,8 +47,36 @@ export interface BuilderV2Section {
   blocks: BuilderV2Block[];
 }
 
+export interface BuilderV2Page {
+  id: string;
+  title: string;
+  slug: string;
+  isHome: boolean;
+  hidden?: boolean;
+  sections: BuilderV2Section[];
+}
+
 export interface BuilderV2Document {
   version: 'v2';
-  sections: BuilderV2Section[];
+  pages?: BuilderV2Page[];
+  sections?: BuilderV2Section[];
   updatedAtISO: string;
 }
+
+export const getBuilderV2Pages = (document: BuilderV2Document): BuilderV2Page[] => {
+  if (Array.isArray(document.pages) && document.pages.length > 0) {
+    return document.pages;
+  }
+
+  const sections = Array.isArray(document.sections) ? document.sections : [];
+  return [
+    {
+      id: 'home',
+      title: 'Home',
+      slug: 'home',
+      isHome: true,
+      hidden: false,
+      sections,
+    },
+  ];
+};

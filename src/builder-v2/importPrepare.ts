@@ -1,13 +1,20 @@
-import type { BuilderV2Block, BuilderV2BlockData, BuilderV2Document, BuilderV2Section } from './contracts';
+import type { BuilderV2Block, BuilderV2BlockData, BuilderV2Document, BuilderV2Page, BuilderV2Section } from './contracts';
 import { sanitizeImportedBlockType, sanitizeImportedSectionType } from './importSanitize';
 
 type ImportObject = Record<string, unknown>;
 
 export type BuilderV2ImportReport = {
+  pageCount: number;
   sectionCount: number;
   blockCount: number;
   normalizedVersion: boolean;
   normalizedUpdatedAt: boolean;
+  generatedPageIds: number;
+  dedupedPageIds: number;
+  normalizedPageTitles: number;
+  normalizedPageSlugs: number;
+  normalizedPageVisibility: number;
+  normalizedHomePage: boolean;
   generatedSectionIds: number;
   generatedBlockIds: number;
   dedupedSectionIds: number;
@@ -136,10 +143,17 @@ const coerceEnabled = (value: unknown): { enabled: boolean; coerced: boolean } =
 };
 
 const createEmptyReport = (): BuilderV2ImportReport => ({
+  pageCount: 0,
   sectionCount: 0,
   blockCount: 0,
   normalizedVersion: false,
   normalizedUpdatedAt: false,
+  generatedPageIds: 0,
+  dedupedPageIds: 0,
+  normalizedPageTitles: 0,
+  normalizedPageSlugs: 0,
+  normalizedPageVisibility: 0,
+  normalizedHomePage: false,
   generatedSectionIds: 0,
   generatedBlockIds: 0,
   dedupedSectionIds: 0,
@@ -157,6 +171,140 @@ const createEmptyReport = (): BuilderV2ImportReport => ({
   notes: [],
 });
 
+const sanitizePageTitle = (value: unknown, fallback: string) => {
+  if (typeof value !== 'string') return fallback;
+  const trimmed = value.trim();
+  return trimmed || fallback;
+};
+
+const sanitizePageSlug = (value: unknown, fallback: string) => {
+  if (typeof value !== 'string' || !value.trim()) {
+    return fallback;
+  }
+
+  return slugToken(value) || fallback;
+};
+
+const parseImportedSection = (
+  rawSection: unknown,
+  sectionIndex: number,
+  report: BuilderV2ImportReport,
+  sectionIds: Set<string>,
+): BuilderV2Section | null => {
+  if (!isObject(rawSection)) {
+    report.droppedInvalidSections += 1;
+    report.notes.push(`Dropped section ${sectionIndex + 1} because it was not an object.`);
+    return null;
+  }
+
+  const rawType = typeof rawSection.type === 'string' ? rawSection.type : '';
+  const sanitizedType = sanitizeImportedSectionType(rawType);
+  if (!rawType.trim()) {
+    report.droppedInvalidSections += 1;
+    report.notes.push(`Dropped section ${sectionIndex + 1} because it had no type.`);
+    return null;
+  }
+  if (sanitizedType !== rawType.trim()) {
+    report.normalizedSectionTypes += 1;
+  }
+
+  const rawId = typeof rawSection.id === 'string' ? slugToken(rawSection.id) : '';
+  const generatedSectionId = rawId || `import-section-${sectionIndex + 1}`;
+  if (!rawId) {
+    report.generatedSectionIds += 1;
+  }
+  const uniqueSectionId = uniqueId(generatedSectionId, sectionIds);
+  if (uniqueSectionId.deduped) {
+    report.dedupedSectionIds += 1;
+  }
+
+  const variant = typeof rawSection.variant === 'string' && rawSection.variant.trim()
+    ? rawSection.variant.trim()
+    : 'default';
+  if (variant === 'default' && (!(typeof rawSection.variant === 'string') || !rawSection.variant.trim())) {
+    report.defaultedVariants += 1;
+  }
+
+  const title = typeof rawSection.title === 'string' && rawSection.title.trim()
+    ? rawSection.title.trim()
+    : fallbackSectionTitle(sanitizedType);
+  if (!(typeof rawSection.title === 'string') || !rawSection.title.trim()) {
+    report.normalizedTitles += 1;
+  }
+
+  const subtitle = typeof rawSection.subtitle === 'string'
+    ? rawSection.subtitle.trim()
+    : '';
+  if (rawSection.subtitle !== undefined && typeof rawSection.subtitle !== 'string') {
+    report.normalizedSubtitles += 1;
+  }
+
+  const enabledState = coerceEnabled(rawSection.enabled);
+  if (enabledState.coerced) {
+    report.coercedEnabledFlags += 1;
+  }
+
+  const rawBlocks = Array.isArray(rawSection.blocks) ? rawSection.blocks : [];
+  if (!Array.isArray(rawSection.blocks)) {
+    report.notes.push(`Section "${title}" had invalid blocks and was imported with an empty block list.`);
+  }
+
+  const blockIds = new Set<string>();
+  const blocks: BuilderV2Block[] = [];
+  rawBlocks.forEach((rawBlock, blockIndex) => {
+    if (!isObject(rawBlock)) {
+      report.droppedInvalidBlocks += 1;
+      return;
+    }
+
+    const sanitizedBlockType = sanitizeImportedBlockType(rawBlock.type);
+    if (rawBlock.type !== sanitizedBlockType) {
+      report.normalizedBlockTypes += 1;
+    }
+
+    const rawBlockId = typeof rawBlock.id === 'string' ? slugToken(rawBlock.id) : '';
+    const generatedBlockId = rawBlockId || `${uniqueSectionId.id}-block-${blockIndex + 1}`;
+    if (!rawBlockId) {
+      report.generatedBlockIds += 1;
+    }
+    const uniqueBlockId = uniqueId(generatedBlockId, blockIds);
+    if (uniqueBlockId.deduped) {
+      report.dedupedBlockIds += 1;
+    }
+
+    let blockData: BuilderV2BlockData = {};
+    if (rawBlock.data === undefined) {
+      blockData = {};
+    } else if (isObject(rawBlock.data)) {
+      blockData = { ...rawBlock.data } as BuilderV2BlockData;
+    } else {
+      report.resetInvalidBlockData += 1;
+    }
+
+    const legacyContent = typeof rawBlock.content === 'string' ? rawBlock.content : '';
+    const mergedBlockData = mergeBlockDataFromLegacyContent(sanitizedBlockType, blockData, legacyContent);
+    if (mergedBlockData.recovered) {
+      report.recoveredBlockDataFromLegacyContent += 1;
+    }
+
+    blocks.push({
+      id: uniqueBlockId.id,
+      type: sanitizedBlockType,
+      data: mergedBlockData.data,
+    });
+  });
+
+  return {
+    id: uniqueSectionId.id,
+    type: sanitizedType,
+    variant,
+    enabled: enabledState.enabled,
+    title,
+    subtitle,
+    blocks,
+  } satisfies BuilderV2Section;
+};
+
 export function prepareImportedBuilderV2Document(
   input: unknown,
   options?: { nowIso?: string },
@@ -165,8 +313,8 @@ export function prepareImportedBuilderV2Document(
     return { ok: false, error: 'Import must be a JSON object.' };
   }
 
-  if (!Array.isArray(input.sections)) {
-    return { ok: false, error: 'Import must include a sections array.' };
+  if (!Array.isArray(input.pages) && !Array.isArray(input.sections)) {
+    return { ok: false, error: 'Import must include a pages array or legacy sections array.' };
   }
 
   const report = createEmptyReport();
@@ -180,130 +328,119 @@ export function prepareImportedBuilderV2Document(
   }
 
   const sectionIds = new Set<string>();
-  const sections: BuilderV2Section[] = [];
+  const pageIds = new Set<string>();
+  const pageSlugs = new Set<string>();
+  const pages: BuilderV2Page[] = [];
+  const sourcePages = Array.isArray(input.pages)
+    ? input.pages
+    : [{
+      id: 'home',
+      title: 'Home',
+      slug: 'home',
+      isHome: true,
+      hidden: false,
+      sections: input.sections,
+    }];
 
-  input.sections.forEach((rawSection, sectionIndex) => {
-    if (!isObject(rawSection)) {
-      report.droppedInvalidSections += 1;
-      report.notes.push(`Dropped section ${sectionIndex + 1} because it was not an object.`);
+  sourcePages.forEach((rawPage, pageIndex) => {
+    if (!isObject(rawPage)) {
+      report.notes.push(`Dropped page ${pageIndex + 1} because it was not an object.`);
       return;
     }
 
-    const rawType = typeof rawSection.type === 'string' ? rawSection.type : '';
-    const sanitizedType = sanitizeImportedSectionType(rawType);
-    if (!rawType.trim()) {
-      report.droppedInvalidSections += 1;
-      report.notes.push(`Dropped section ${sectionIndex + 1} because it had no type.`);
+    const rawPageId = typeof rawPage.id === 'string' ? slugToken(rawPage.id) : '';
+    const generatedPageId = rawPageId || `page-${pageIndex + 1}`;
+    if (!rawPageId) {
+      report.generatedPageIds += 1;
+    }
+    const uniquePageId = uniqueId(generatedPageId, pageIds);
+    if (uniquePageId.deduped) {
+      report.dedupedPageIds += 1;
+    }
+
+    const fallbackTitle = pageIndex === 0 ? 'Home' : `Page ${pageIndex + 1}`;
+    const title = sanitizePageTitle(rawPage.title, fallbackTitle);
+    if (title !== rawPage.title) {
+      report.normalizedPageTitles += 1;
+    }
+
+    const requestedSlug = sanitizePageSlug(rawPage.slug, sanitizePageSlug(title, generatedPageId));
+    let slug = requestedSlug;
+    if (pageSlugs.has(slug)) {
+      let suffix = 2;
+      let candidate = `${slug}-${suffix}`;
+      while (pageSlugs.has(candidate)) {
+        suffix += 1;
+        candidate = `${slug}-${suffix}`;
+      }
+      slug = candidate;
+      report.normalizedPageSlugs += 1;
+    } else if (requestedSlug !== rawPage.slug) {
+      report.normalizedPageSlugs += 1;
+    }
+    pageSlugs.add(slug);
+
+    const pageSections = Array.isArray(rawPage.sections) ? rawPage.sections : [];
+    if (!Array.isArray(rawPage.sections)) {
+      report.notes.push(`Page "${title}" had invalid sections and was imported with an empty section list.`);
+    }
+
+    const sections = pageSections.reduce<BuilderV2Section[]>((acc, rawSection, sectionIndex) => {
+      const section = parseImportedSection(rawSection, sectionIndex, report, sectionIds);
+      if (section) acc.push(section);
+      return acc;
+    }, []);
+
+    const hidden = rawPage.hidden === true;
+    if (rawPage.hidden !== undefined && typeof rawPage.hidden !== 'boolean') {
+      report.normalizedPageVisibility += 1;
+    }
+
+    if (!sections.length) {
+      report.notes.push(`Dropped page "${title}" because it did not contain any usable sections.`);
       return;
     }
-    if (sanitizedType !== rawType.trim()) {
-      report.normalizedSectionTypes += 1;
-    }
 
-    const rawId = typeof rawSection.id === 'string' ? slugToken(rawSection.id) : '';
-    const generatedSectionId = rawId || `import-section-${sectionIndex + 1}`;
-    if (!rawId) {
-      report.generatedSectionIds += 1;
-    }
-    const uniqueSectionId = uniqueId(generatedSectionId, sectionIds);
-    if (uniqueSectionId.deduped) {
-      report.dedupedSectionIds += 1;
-    }
-
-    const variant = typeof rawSection.variant === 'string' && rawSection.variant.trim()
-      ? rawSection.variant.trim()
-      : 'default';
-    if (variant === 'default' && (!(typeof rawSection.variant === 'string') || !rawSection.variant.trim())) {
-      report.defaultedVariants += 1;
-    }
-
-    const title = typeof rawSection.title === 'string' && rawSection.title.trim()
-      ? rawSection.title.trim()
-      : fallbackSectionTitle(sanitizedType);
-    if (!(typeof rawSection.title === 'string') || !rawSection.title.trim()) {
-      report.normalizedTitles += 1;
-    }
-
-    const subtitle = typeof rawSection.subtitle === 'string'
-      ? rawSection.subtitle.trim()
-      : '';
-    if (rawSection.subtitle !== undefined && typeof rawSection.subtitle !== 'string') {
-      report.normalizedSubtitles += 1;
-    }
-
-    const enabledState = coerceEnabled(rawSection.enabled);
-    if (enabledState.coerced) {
-      report.coercedEnabledFlags += 1;
-    }
-
-    const rawBlocks = Array.isArray(rawSection.blocks) ? rawSection.blocks : [];
-    if (!Array.isArray(rawSection.blocks)) {
-      report.notes.push(`Section "${title}" had invalid blocks and was imported with an empty block list.`);
-    }
-
-    const blockIds = new Set<string>();
-    const blocks: BuilderV2Block[] = [];
-    rawBlocks.forEach((rawBlock, blockIndex) => {
-      if (!isObject(rawBlock)) {
-        report.droppedInvalidBlocks += 1;
-        return;
-      }
-
-      const sanitizedBlockType = sanitizeImportedBlockType(rawBlock.type);
-      if (rawBlock.type !== sanitizedBlockType) {
-        report.normalizedBlockTypes += 1;
-      }
-
-      const rawBlockId = typeof rawBlock.id === 'string' ? slugToken(rawBlock.id) : '';
-      const generatedBlockId = rawBlockId || `${uniqueSectionId.id}-block-${blockIndex + 1}`;
-      if (!rawBlockId) {
-        report.generatedBlockIds += 1;
-      }
-      const uniqueBlockId = uniqueId(generatedBlockId, blockIds);
-      if (uniqueBlockId.deduped) {
-        report.dedupedBlockIds += 1;
-      }
-
-      let blockData: BuilderV2BlockData = {};
-      if (rawBlock.data === undefined) {
-        blockData = {};
-      } else if (isObject(rawBlock.data)) {
-        blockData = { ...rawBlock.data } as BuilderV2BlockData;
-      } else {
-        report.resetInvalidBlockData += 1;
-      }
-
-      const legacyContent = typeof rawBlock.content === 'string' ? rawBlock.content : '';
-      const mergedBlockData = mergeBlockDataFromLegacyContent(sanitizedBlockType, blockData, legacyContent);
-      if (mergedBlockData.recovered) {
-        report.recoveredBlockDataFromLegacyContent += 1;
-      }
-
-      blocks.push({
-        id: uniqueBlockId.id,
-        type: sanitizedBlockType,
-        data: mergedBlockData.data,
-      });
-    });
-
-    sections.push({
-      id: uniqueSectionId.id,
-      type: sanitizedType,
-      variant,
-      enabled: enabledState.enabled,
+    pages.push({
+      id: uniquePageId.id,
       title,
-      subtitle,
-      blocks,
+      slug,
+      isHome: rawPage.isHome === true,
+      hidden,
+      sections,
     });
   });
 
-  if (!sections.length) {
+  if (!pages.length) {
     return { ok: false, error: 'Import did not contain any usable sections.' };
   }
 
-  report.sectionCount = sections.length;
-  report.blockCount = sections.reduce((count, section) => count + section.blocks.length, 0);
+  const homeIndex = pages.findIndex((page) => page.isHome);
+  pages.forEach((page, index) => {
+    const shouldBeHome = homeIndex >= 0 ? index === homeIndex : index === 0;
+    if (page.isHome !== shouldBeHome) {
+      report.normalizedHomePage = true;
+    }
+    page.isHome = shouldBeHome;
+    if (page.isHome && page.hidden) {
+      page.hidden = false;
+      report.normalizedPageVisibility += 1;
+    }
+  });
 
+  report.pageCount = pages.length;
+  report.sectionCount = pages.reduce((count, page) => count + page.sections.length, 0);
+  report.blockCount = pages.reduce(
+    (count, page) => count + page.sections.reduce((pageCount, section) => pageCount + section.blocks.length, 0),
+    0,
+  );
+
+  if (report.generatedPageIds > 0) {
+    report.notes.push(`Generated ${report.generatedPageIds} missing page id${report.generatedPageIds === 1 ? '' : 's'}.`);
+  }
+  if (report.normalizedPageSlugs > 0) {
+    report.notes.push(`Normalized ${report.normalizedPageSlugs} page slug${report.normalizedPageSlugs === 1 ? '' : 's'} for safe reuse.`);
+  }
   if (report.generatedSectionIds > 0) {
     report.notes.push(`Generated ${report.generatedSectionIds} missing section id${report.generatedSectionIds === 1 ? '' : 's'}.`);
   }
@@ -325,7 +462,7 @@ export function prepareImportedBuilderV2Document(
     doc: {
       version: 'v2',
       updatedAtISO,
-      sections,
+      pages,
     },
     report,
   };

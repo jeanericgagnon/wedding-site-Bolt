@@ -6,7 +6,6 @@ import type { SectionType, SectionInstance } from '../types/layoutConfig';
 import type { WeddingDataV1 } from '../types/weddingData';
 import { demoWeddingSite, demoEvents } from '../lib/demoData';
 import { getInitialBuilderV2LabPreviewFields } from './builderV2LabPreview';
-import { toBuilderV2Document } from '../builder-v2/adapter';
 import type { BuilderV2Document } from '../builder-v2/contracts';
 import { prepareImportedBuilderV2Document, type BuilderV2ImportReport } from '../builder-v2/importPrepare';
 import {
@@ -56,6 +55,16 @@ import {
   arrayMove,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import {
+  buildBuilderV2DocumentPages,
+  createInitialBuilderV2Pages,
+  ensureUniqueBuilderV2PageSlug,
+  getLabPagesFromBuilderV2Document,
+  normalizeBuilderV2Pages,
+  sanitizeBuilderV2PageTitle,
+  type LabPage,
+  type LabSection,
+} from './builderV2PageState';
 
 type BlockType =
   | 'title'
@@ -209,16 +218,6 @@ type AddedBlock = {
   data?: AddedBlockContent;
 };
 
-type LabSection = {
-  id: string;
-  type: string;
-  title: string;
-  variant: string;
-  enabled: boolean;
-  subtitle?: string;
-  density?: 'compact' | 'comfortable';
-};
-
 const INITIAL_SECTIONS: LabSection[] = [
   { id: 'hero', type: 'hero', title: 'Hero', subtitle: 'Alex & Jordan · June 21, 2026', variant: 'countdown', enabled: true, density: 'comfortable' },
   { id: 'story', type: 'story', title: 'Story', subtitle: 'How we met', variant: 'timeline', enabled: true, density: 'comfortable' },
@@ -311,8 +310,9 @@ const StructureItem: React.FC<StructureItemProps> = ({ section, selected, multiS
 };
 
 export const BuilderV2Lab: React.FC = () => {
-  const [history, setHistory] = useState<LabSection[][]>([INITIAL_SECTIONS]);
+  const [history, setHistory] = useState<LabPage[][]>([createInitialBuilderV2Pages(INITIAL_SECTIONS)]);
   const [historyIndex, setHistoryIndex] = useState(0);
+  const [selectedPageId, setSelectedPageId] = useState('home');
   const [selectedId, setSelectedId] = useState(INITIAL_SECTIONS[0].id);
   const [multiSelectedIds, setMultiSelectedIds] = useState<string[]>([]);
   const [lastSelectedId, setLastSelectedId] = useState<string>(INITIAL_SECTIONS[0].id);
@@ -353,12 +353,19 @@ export const BuilderV2Lab: React.FC = () => {
   const importFileInputRef = useRef<HTMLInputElement | null>(null);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
 
-  const sections = history[historyIndex];
+  const pages = history[historyIndex];
+  const activePage = pages.find((page) => page.id === selectedPageId) ?? pages[0];
+  const sections = useMemo(() => activePage?.sections ?? [], [activePage]);
   const selected = sections.find((s) => s.id === selectedId) ?? sections[0];
   const selectedIds = useMemo(() => Array.from(new Set([selectedId, ...multiSelectedIds])), [selectedId, multiSelectedIds]);
   const selectedSections = useMemo(
     () => sections.filter((section) => selectedIds.includes(section.id)),
     [sections, selectedIds],
+  );
+  const allSections = useMemo(() => pages.flatMap((page) => page.sections), [pages]);
+  const sectionPageById = useMemo(
+    () => new Map(allSections.map((section) => [section.id, pages.find((page) => page.sections.some((pageSection) => pageSection.id === section.id)) ?? activePage])),
+    [activePage, allSections, pages],
   );
 
   const scrollToPreviewSection = useCallback((id: string) => {
@@ -443,6 +450,32 @@ export const BuilderV2Lab: React.FC = () => {
     setActionNotice(text);
     window.setTimeout(() => setActionNotice(''), 2200);
   }, []);
+
+  const selectPage = useCallback((pageId: string, preserveSelection = false) => {
+    const nextPage = pages.find((page) => page.id === pageId);
+    if (!nextPage) return;
+    setSelectedPageId(pageId);
+    if (preserveSelection && nextPage.sections.some((section) => section.id === selectedId)) {
+      return;
+    }
+    const nextSectionId = nextPage.sections[0]?.id ?? '';
+    setSelectedId(nextSectionId);
+    setLastSelectedId(nextSectionId);
+    setMultiSelectedIds([]);
+  }, [pages, selectedId]);
+
+  const focusSectionById = useCallback((sectionId: string, openEditor = true) => {
+    const page = sectionPageById.get(sectionId);
+    if (!page) return;
+    selectPage(page.id, true);
+    setSelectedId(sectionId);
+    setLastSelectedId(sectionId);
+    setMultiSelectedIds([]);
+    if (openEditor) {
+      setShowStructure(false);
+      setShowProperties(true);
+    }
+  }, [sectionPageById, selectPage]);
 
   const selectAllSections = useCallback(() => {
     if (!sections.length) return;
@@ -611,12 +644,21 @@ export const BuilderV2Lab: React.FC = () => {
     markSaving();
   };
 
-  const commit = useCallback((next: LabSection[]) => {
+  const commit = useCallback((next: LabPage[]) => {
     const trimmed = history.slice(0, historyIndex + 1);
-    setHistory([...trimmed, next]);
+    setHistory([...trimmed, normalizeBuilderV2Pages(next)]);
     setHistoryIndex(trimmed.length);
     markSaving();
   }, [history, historyIndex, markSaving]);
+
+  const commitActivePageSections = useCallback((nextSections: LabSection[]) => {
+    if (!activePage) return;
+    commit(pages.map((page) => (
+      page.id === activePage.id
+        ? { ...page, sections: nextSections }
+        : page
+    )));
+  }, [activePage, commit, pages]);
 
   const moveSection = (id: string, dir: -1 | 1) => {
     const idx = sections.findIndex((s) => s.id === id);
@@ -625,7 +667,7 @@ export const BuilderV2Lab: React.FC = () => {
     const next = [...sections];
     const [item] = next.splice(idx, 1);
     next.splice(nextIdx, 0, item);
-    commit(next);
+    commitActivePageSections(next);
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
@@ -634,11 +676,11 @@ export const BuilderV2Lab: React.FC = () => {
     const oldIndex = sections.findIndex((s) => s.id === String(active.id));
     const newIndex = sections.findIndex((s) => s.id === String(over.id));
     if (oldIndex < 0 || newIndex < 0) return;
-    commit(arrayMove(sections, oldIndex, newIndex));
+    commitActivePageSections(arrayMove(sections, oldIndex, newIndex));
   };
 
   const toggleVisibility = (id: string) => {
-    commit(sections.map((s) => (s.id === id ? { ...s, enabled: !s.enabled } : s)));
+    commitActivePageSections(sections.map((s) => (s.id === id ? { ...s, enabled: !s.enabled } : s)));
   };
 
   const updateSelectedSections = useCallback((
@@ -648,9 +690,9 @@ export const BuilderV2Lab: React.FC = () => {
     const selectedSet = new Set(selectedIds);
     const touchedCount = sections.filter((section) => selectedSet.has(section.id)).length;
     if (!touchedCount) return;
-    commit(sections.map((section) => (selectedSet.has(section.id) ? updater(section) : section)));
+    commitActivePageSections(sections.map((section) => (selectedSet.has(section.id) ? updater(section) : section)));
     notify(notice);
-  }, [commit, notify, sections, selectedIds]);
+  }, [commitActivePageSections, notify, sections, selectedIds]);
 
   const hideSelectedSections = useCallback(() => {
     updateSelectedSections((section) => ({ ...section, enabled: false }), 'Selected sections hidden');
@@ -688,9 +730,9 @@ export const BuilderV2Lab: React.FC = () => {
     setSelectedId(result.duplicatedIds[0]);
     setLastSelectedId(result.duplicatedIds[0]);
     setMultiSelectedIds(result.duplicatedIds.slice(1));
-    commit(result.sections);
+    commitActivePageSections(result.sections);
     notify(`Duplicated ${result.duplicatedIds.length} section${result.duplicatedIds.length === 1 ? '' : 's'}`);
-  }, [commit, notify, sectionBlocks, sections, selectedIds]);
+  }, [commitActivePageSections, notify, sectionBlocks, sections, selectedIds]);
 
   const removeSelectedSections = useCallback(() => {
     const result = removeBuilderV2Sections({
@@ -709,13 +751,13 @@ export const BuilderV2Lab: React.FC = () => {
     setSelectedId(result.nextSelectedId ?? '');
     setLastSelectedId(result.nextSelectedId ?? '');
     setMultiSelectedIds([]);
-    commit(result.sections);
+    commitActivePageSections(result.sections);
     notify(
       result.removedIds.length === 1
         ? 'Removed section from the page structure'
         : `Removed ${result.removedIds.length} sections from the page structure`,
     );
-  }, [commit, notify, sectionBlocks, sections, selectedId, selectedIds]);
+  }, [commitActivePageSections, notify, sectionBlocks, sections, selectedId, selectedIds]);
 
   const buildStarterBlocks = useCallback((sectionId: string, sectionType: string) => {
     const availableBlockTypes = SECTION_BLOCK_CATALOG[sectionType] ?? ['title', 'text', 'photo'];
@@ -741,9 +783,91 @@ export const BuilderV2Lab: React.FC = () => {
     const starterBlocks = buildStarterBlocks(id, normalizedType);
     setSelectedId(id);
     setSectionBlocks((prev) => ({ ...prev, [id]: starterBlocks }));
-    commit(next);
+    commitActivePageSections(next);
     notify(starterBlocks.length > 0 ? `Added ${typeLabel} with ${starterBlocks.length} starter block${starterBlocks.length === 1 ? '' : 's'}` : `Added ${typeLabel}`);
-  }, [buildStarterBlocks, commit, notify, sections]);
+  }, [buildStarterBlocks, commitActivePageSections, notify, sections]);
+
+  const addPage = useCallback(() => {
+    const pageIndex = pages.length + 1;
+    const baseTitle = pageIndex === 1 ? 'Home' : `Page ${pageIndex}`;
+    const title = sanitizeBuilderV2PageTitle(baseTitle, `Page ${pageIndex}`);
+    const slug = ensureUniqueBuilderV2PageSlug(title, pages);
+    const pageId = `page-${Date.now()}`;
+    const sectionId = `${slug}-hero`;
+    const nextPage: LabPage = {
+      id: pageId,
+      title,
+      slug,
+      isHome: false,
+      hidden: false,
+      sections: [{
+        id: sectionId,
+        type: 'hero',
+        title: 'Hero',
+        subtitle: '',
+        variant: 'default',
+        enabled: true,
+        density: 'comfortable',
+      }],
+    };
+    setSectionBlocks((prev) => ({ ...prev, [sectionId]: buildStarterBlocks(sectionId, 'hero') }));
+    commit([...pages, nextPage]);
+    setSelectedPageId(pageId);
+    setSelectedId(sectionId);
+    setLastSelectedId(sectionId);
+    setMultiSelectedIds([]);
+    notify(`Added ${title}`);
+  }, [buildStarterBlocks, commit, notify, pages]);
+
+  const renamePage = useCallback((pageId: string, title: string) => {
+    const nextTitle = sanitizeBuilderV2PageTitle(title, 'Page');
+    const page = pages.find((entry) => entry.id === pageId);
+    if (!page) return;
+    const nextSlug = ensureUniqueBuilderV2PageSlug(nextTitle, pages, pageId);
+    commit(pages.map((entry) => (
+      entry.id === pageId
+        ? { ...entry, title: nextTitle, slug: nextSlug }
+        : entry
+    )));
+  }, [commit, pages]);
+
+  const updatePageSlug = useCallback((pageId: string, slug: string) => {
+    commit(pages.map((entry) => (
+      entry.id === pageId
+        ? { ...entry, slug: ensureUniqueBuilderV2PageSlug(slug || entry.title, pages, pageId) }
+        : entry
+    )));
+  }, [commit, pages]);
+
+  const togglePageVisibility = useCallback((pageId: string) => {
+    commit(pages.map((entry) => (
+      entry.id === pageId
+        ? { ...entry, hidden: entry.isHome ? false : !entry.hidden }
+        : entry
+    )));
+  }, [commit, pages]);
+
+  const setHomePage = useCallback((pageId: string) => {
+    commit(pages.map((entry) => ({
+      ...entry,
+      isHome: entry.id === pageId,
+      hidden: entry.id === pageId ? false : entry.hidden,
+    })));
+    notify('Home page updated');
+  }, [commit, notify, pages]);
+
+  const removePage = useCallback((pageId: string) => {
+    if (pages.length <= 1) {
+      notify('Keep at least one page in the document');
+      return;
+    }
+    const nextPages = pages.filter((page) => page.id !== pageId);
+    commit(nextPages);
+    if (selectedPageId === pageId) {
+      selectPage(nextPages[0]?.id ?? '');
+    }
+    notify('Page removed');
+  }, [commit, notify, pages, selectPage, selectedPageId]);
 
   const restoreSelectedSectionsToStarterBlocks = useCallback(() => {
     const result = restoreBuilderV2SectionStarterBlocks({
@@ -769,23 +893,43 @@ export const BuilderV2Lab: React.FC = () => {
   }, [buildStarterBlocks, markSaving, notify, sectionBlocks, sections, selectedIds]);
 
   const renameSelected = (title: string) => {
-    commit(sections.map((s) => (s.id === selected.id ? { ...s, title } : s)));
+    commitActivePageSections(sections.map((s) => (s.id === selected.id ? { ...s, title } : s)));
   };
 
   const updateVariant = useCallback((variant: string) => {
-    commit(sections.map((s) => (s.id === selected.id ? { ...s, variant } : s)));
-  }, [commit, sections, selected.id]);
+    commitActivePageSections(sections.map((s) => (s.id === selected.id ? { ...s, variant } : s)));
+  }, [commitActivePageSections, sections, selected.id]);
 
   const runCommand = (label: string, action: () => void) => {
     action();
     setRecentCommands((prev) => [label, ...prev.filter((x) => x !== label)].slice(0, 6));
   };
 
+  const getBlockValidationWarning = useCallback((block: AddedBlock) => {
+    const d = normalizeBlockData(block);
+    if (block.type === 'qna' && (!(d.question || '').trim() || !(d.answer || '').trim())) return 'Question and answer are required';
+    if (block.type === 'photo' && !(d.imageUrl || '').trim()) return 'Image URL is recommended';
+    if (block.type === 'event' && (!(d.title || '').trim() || !(d.time || '').trim())) return 'Event title and time are required';
+    if ((block.type === 'registryItem' || block.type === 'fundHighlight') && !(d.title || '').trim()) return 'Item title is required';
+    return '';
+  }, []);
+
 
   const canUndo = historyIndex > 0;
   const canRedo = historyIndex < history.length - 1;
 
   const orderedVisible = useMemo(() => sections.filter((s) => s.enabled), [sections]);
+  const documentSections = useMemo(
+    () => pages.flatMap((page) => page.sections.map((section) => ({
+      id: section.id,
+      title: `${page.title}: ${section.title}`,
+      type: section.type,
+      enabled: page.hidden ? false : section.enabled,
+      blockCount: (sectionBlocks[section.id] ?? []).length,
+      warningCount: (sectionBlocks[section.id] ?? []).filter((block) => getBlockValidationWarning(block)).length,
+    }))),
+    [getBlockValidationWarning, pages, sectionBlocks],
+  );
   const filteredAddables = useMemo(() => ADDABLE_SECTIONS.filter((name) => name.toLowerCase().includes(addQuery.trim().toLowerCase())), [addQuery]);
   const selectionGuidance = useMemo(
     () => buildBuilderV2SelectionGuidance({ selectedSections }),
@@ -797,7 +941,7 @@ export const BuilderV2Lab: React.FC = () => {
   );
   const structureGuidance = useMemo(
     () => buildBuilderV2StructureGuidance({
-      sections,
+      sections: activePage.sections,
       selectedSectionId: selected.id,
       addQuery,
       filteredAddableCount: filteredAddables.length,
@@ -805,7 +949,7 @@ export const BuilderV2Lab: React.FC = () => {
       previewScale,
       showMinimap,
     }),
-    [sections, selected.id, addQuery, filteredAddables.length, previewDevice, previewScale, showMinimap],
+    [activePage.sections, selected.id, addQuery, filteredAddables.length, previewDevice, previewScale, showMinimap],
   );
 
   const previewData: WeddingDataV1 = useMemo(() => ({
@@ -845,67 +989,39 @@ export const BuilderV2Lab: React.FC = () => {
   const addableBlocksForSelected = useMemo(() => SECTION_BLOCK_CATALOG[selected.type] ?? ['title', 'text', 'photo', 'qna'], [selected.type]);
   const selectedBlocks = useMemo(() => sectionBlocks[selected.id] ?? [], [sectionBlocks, selected.id]);
 
-
-  const getBlockValidationWarning = (block: AddedBlock) => {
-    const d = normalizeBlockData(block);
-    if (block.type === 'qna' && (!(d.question || '').trim() || !(d.answer || '').trim())) return 'Question and answer are required';
-    if (block.type === 'photo' && !(d.imageUrl || '').trim()) return 'Image URL is recommended';
-    if (block.type === 'event' && (!(d.title || '').trim() || !(d.time || '').trim())) return 'Event title and time are required';
-    if ((block.type === 'registryItem' || block.type === 'fundHighlight') && !(d.title || '').trim()) return 'Item title is required';
-    return '';
-  };
-
   const selectedBlockWarnings = useMemo(
     () => selectedBlocks.filter((block) => getBlockValidationWarning(block)).length,
-    [selectedBlocks],
+    [getBlockValidationWarning, selectedBlocks],
   );
   const handoffGuidance = useMemo(
     () => buildBuilderV2HandoffGuidance({
-      sections: sections.map((section) => ({
-        id: section.id,
-        title: section.title,
-        enabled: section.enabled,
-        blockCount: (sectionBlocks[section.id] ?? []).length,
-        warningCount: (sectionBlocks[section.id] ?? []).filter((block) => getBlockValidationWarning(block)).length,
-      })),
+      sections: documentSections,
       previewDevice,
     }),
-    [previewDevice, sectionBlocks, sections],
+    [documentSections, previewDevice],
   );
   const documentAudit = useMemo(
     () => buildBuilderV2DocumentAudit({
-      sections: sections.map((section) => ({
-        id: section.id,
-        title: section.title,
-        enabled: section.enabled,
-        blockCount: (sectionBlocks[section.id] ?? []).length,
-        warningCount: (sectionBlocks[section.id] ?? []).filter((block) => getBlockValidationWarning(block)).length,
-      })),
+      sections: documentSections,
       previewDevice,
     }),
-    [previewDevice, sectionBlocks, sections],
+    [documentSections, previewDevice],
   );
   const handoffPacket = useMemo(
     () => buildBuilderV2HandoffPacket({
-      sections: sections.map((section) => ({
-        id: section.id,
-        title: section.title,
-        enabled: section.enabled,
-        blockCount: (sectionBlocks[section.id] ?? []).length,
-        warningCount: (sectionBlocks[section.id] ?? []).filter((block) => getBlockValidationWarning(block)).length,
-      })),
+      sections: documentSections,
     }),
-    [sectionBlocks, sections],
+    [documentSections],
   );
   const currentDocumentSnapshot = useMemo(
-    () => sections.map((section) => ({
+    () => documentSections.map((section) => ({
       id: section.id,
       title: section.title,
       type: section.type,
       enabled: section.enabled,
-      blockCount: (sectionBlocks[section.id] ?? []).length,
+      blockCount: section.blockCount,
     })),
-    [sectionBlocks, sections],
+    [documentSections],
   );
   const selectedSectionLimit = useMemo(() => getSectionLimitConfig(selected.type), [selected.type]);
   const recommendedBlockTypesForSelected = useMemo(
@@ -951,7 +1067,7 @@ export const BuilderV2Lab: React.FC = () => {
       blockLabels: BLOCK_LABELS,
       getWarning: getBlockValidationWarning,
     }),
-    [selectedBlocks, blockReviewQuery, blockReviewFilter],
+    [selectedBlocks, blockReviewQuery, blockReviewFilter, getBlockValidationWarning],
   );
   const blockPackSummary = useMemo(
     () => buildBuilderV2BlockPackSummary({
@@ -996,29 +1112,25 @@ export const BuilderV2Lab: React.FC = () => {
   }, [addBlockAvailability, addableBlocksForSelected, markSaving, notify, selected.id, selected.type, selectedBlocks]);
 
 
-  const allInstancesForExport: SectionInstance[] = useMemo(() => sections.map((s) => ({
-    id: s.id,
-    type: (SECTION_TYPE_MAP[s.type] ?? 'custom') as SectionType,
-    variant: s.variant,
-    enabled: s.enabled,
-    bindings: {},
-    settings: { showTitle: true, title: s.title, subtitle: s.subtitle },
-  })), [sections]);
-
   const buildExportDocument = useCallback(() => {
-    const doc = toBuilderV2Document(allInstancesForExport);
     return {
-      ...doc,
-      sections: doc.sections.map((sec) => ({
-        ...sec,
-        blocks: (sectionBlocks[sec.id] ?? sec.blocks).map((b) => ({
-          id: b.id,
-          type: b.type,
-          data: b.data ?? { text: b.content },
+      version: 'v2',
+      updatedAtISO: new Date().toISOString(),
+      pages: buildBuilderV2DocumentPages(pages, (page) => page.sections.map((section) => ({
+        id: section.id,
+        type: section.type,
+        variant: section.variant,
+        enabled: section.enabled,
+        title: section.title,
+        subtitle: section.subtitle,
+        blocks: (sectionBlocks[section.id] ?? []).map((block) => ({
+          id: block.id,
+          type: block.type,
+          data: block.data ?? { text: block.content },
         })),
-      })),
+      }))),
     } as BuilderV2Document;
-  }, [allInstancesForExport, sectionBlocks]);
+  }, [pages, sectionBlocks]);
 
   const downloadV2Json = useCallback(() => {
     const withBlocks = buildExportDocument();
@@ -1067,7 +1179,7 @@ export const BuilderV2Lab: React.FC = () => {
       case 'review-empty':
       case 'review-warning':
         if (handoffGuidance.focusSectionId) {
-          selectSection(handoffGuidance.focusSectionId, false, false, true, true);
+          focusSectionById(handoffGuidance.focusSectionId, true);
           setShowStructure(handoffGuidance.primaryAction === 'review-hidden');
           setShowProperties(true);
           setPropertyTab('content');
@@ -1077,42 +1189,39 @@ export const BuilderV2Lab: React.FC = () => {
         setPreviewDevice('mobile');
         setFocusPreview(true);
         setShowMinimap(true);
-        if (handoffGuidance.focusSectionId) scrollToPreviewSection(handoffGuidance.focusSectionId);
+        if (handoffGuidance.focusSectionId) {
+          focusSectionById(handoffGuidance.focusSectionId, false);
+          scrollToPreviewSection(handoffGuidance.focusSectionId);
+        }
         break;
       case 'ready-to-export':
         setShowExportPanel(true);
         break;
     }
-  }, [handoffGuidance, scrollToPreviewSection, selectSection]);
+  }, [focusSectionById, handoffGuidance, scrollToPreviewSection]);
 
   const reviewDocumentAuditIssue = useCallback((issue: BuilderV2DocumentAuditIssue) => {
     if (issue.actionLabel === 'Review on mobile') {
       setPreviewDevice('mobile');
       setFocusPreview(true);
       setShowMinimap(true);
+      focusSectionById(issue.sectionId, false);
       scrollToPreviewSection(issue.sectionId);
       return;
     }
 
-    selectSection(issue.sectionId, false, false, true, true);
+    focusSectionById(issue.sectionId, true);
     setFocusPreview(false);
     setShowStructure(issue.actionLabel === 'Review hidden lane');
     setShowProperties(true);
     setPropertyTab('content');
-  }, [scrollToPreviewSection, selectSection]);
+  }, [focusSectionById, scrollToPreviewSection]);
 
   const applyImportedDocument = (doc: BuilderV2Document, report: BuilderV2ImportReport, sourceLabel: string) => {
-    const nextSections = doc.sections.map((sec) => ({
-      id: sec.id,
-      type: sec.type,
-      title: sec.title || sec.type,
-      subtitle: sec.subtitle || '',
-      variant: sec.variant || 'default',
-      enabled: sec.enabled !== false,
-      density: 'comfortable' as const,
-    }));
+    const nextPages = getLabPagesFromBuilderV2Document(doc);
+    const sourceSections = (doc.pages ?? []).flatMap((page) => page.sections);
     const nextBlocks = Object.fromEntries(
-      doc.sections.map((sec) => [
+      sourceSections.map((sec) => [
         sec.id,
         (sec.blocks || []).map((b) => ({
           id: b.id,
@@ -1123,10 +1232,11 @@ export const BuilderV2Lab: React.FC = () => {
       ]),
     ) as Record<string, AddedBlock[]>;
 
-    setHistory([nextSections]);
+    setHistory([nextPages]);
     setHistoryIndex(0);
-    setSelectedId(nextSections[0]?.id ?? '');
-    setLastSelectedId(nextSections[0]?.id ?? '');
+    setSelectedPageId(nextPages[0]?.id ?? '');
+    setSelectedId(nextPages[0]?.sections[0]?.id ?? '');
+    setLastSelectedId(nextPages[0]?.sections[0]?.id ?? '');
     setMultiSelectedIds([]);
     setSectionBlocks(nextBlocks);
     setCollapsedBlocks({});
@@ -1181,6 +1291,8 @@ export const BuilderV2Lab: React.FC = () => {
 
   const commandItems = useMemo(() => {
     const base = [
+      { id: 'page-add', group: 'Pages', label: 'Add page', keywords: ['page', 'new', 'navigation'], action: () => runCommand('Add page', addPage) },
+      ...pages.map((page) => ({ id: `page-${page.id}`, group: 'Pages', label: `Open page: ${page.title}`, keywords: ['page', 'open', page.title.toLowerCase(), page.slug.toLowerCase()], action: () => runCommand(`Open page: ${page.title}`, () => selectPage(page.id)) })),
       ...ADDABLE_SECTIONS.map((name) => ({ id: `add-${name}`, group: 'Add', label: `Add section: ${name}`, keywords: ['insert', 'new', name.toLowerCase()], action: () => runCommand(`Add section: ${name}`, () => addSection(name)) })),
       ...sections.map((s) => ({ id: `select-${s.id}`, group: 'Select', label: `Select section: ${s.title}`, keywords: ['focus', 'go to', s.title.toLowerCase()], action: () => runCommand(`Select section: ${s.title}`, () => setSelectedId(s.id)) })),
       ...['default', 'countdown', 'timeline', 'dayTabs', 'localGuide', 'iconGrid', 'cards', 'grid', 'fundHighlight', 'featured', 'minimal', 'honeymoon', 'tabs', 'illustrated', 'classic', 'luxury', 'experiences', 'modern', 'playful'].map((v) => ({ id: `variant-${v}`, group: 'Variant', label: `Set variant: ${v}`, keywords: ['layout', 'style', v.toLowerCase()], action: () => runCommand(`Set variant: ${v}`, () => updateVariant(v)) })),
@@ -1219,7 +1331,7 @@ export const BuilderV2Lab: React.FC = () => {
       .filter((x) => x.s > 0)
       .sort((a, b) => b.s - a.s)
       .map((x) => x.item);
-  }, [commandQuery, sections, addRecommendedBlockPack, addSection, clearSelection, copyHandoffPacket, copyV2Json, downloadV2Json, duplicateSelectedSections, handoffGuidance.primaryActionLabel, hideSelectedSections, invertSelection, openExportPanel, openImportPanel, removeSelectedSections, restoreSelectedSectionsToStarterBlocks, reviewSelectionInPreview, runHandoffAction, selectAllSections, setSelectedDensity, showSelectedSections, updateVariant]);
+  }, [commandQuery, sections, pages, addPage, addRecommendedBlockPack, addSection, clearSelection, copyHandoffPacket, copyV2Json, downloadV2Json, duplicateSelectedSections, handoffGuidance.primaryActionLabel, hideSelectedSections, invertSelection, openExportPanel, openImportPanel, removeSelectedSections, restoreSelectedSectionsToStarterBlocks, reviewSelectionInPreview, runHandoffAction, selectAllSections, selectPage, setSelectedDensity, showSelectedSections, updateVariant]);
   const importGuidance = useMemo(
     () => buildBuilderV2ImportGuidance(lastImportReport, lastImportSource),
     [lastImportReport, lastImportSource],
@@ -1236,13 +1348,13 @@ export const BuilderV2Lab: React.FC = () => {
         return { state: 'invalid' as const, error: prepared.error };
       }
 
-      const incomingSections = prepared.doc.sections.map((section) => ({
+      const incomingSections = (prepared.doc.pages ?? []).flatMap((page) => page.sections.map((section) => ({
         id: section.id,
-        title: section.title || section.type,
+        title: `${page.title}: ${section.title || section.type}`,
         type: section.type,
-        enabled: section.enabled !== false,
+        enabled: page.hidden ? false : section.enabled !== false,
         blockCount: section.blocks.length,
-      }));
+      })));
 
       return {
         state: 'ready' as const,
@@ -1266,9 +1378,17 @@ export const BuilderV2Lab: React.FC = () => {
 
 
   useEffect(() => {
+    if (!pages.length) return;
+    if (!pages.some((page) => page.id === selectedPageId)) {
+      setSelectedPageId(pages[0].id);
+    }
+  }, [pages, selectedPageId]);
+  useEffect(() => {
     if (!sections.length) return;
     if (!sections.some((x) => x.id === selectedId)) {
       setSelectedId(sections[0].id);
+      setLastSelectedId(sections[0].id);
+      setMultiSelectedIds([]);
     }
   }, [sections, selectedId]);
   useEffect(() => {
@@ -1625,7 +1745,7 @@ export const BuilderV2Lab: React.FC = () => {
           {!focusPreview && showStructure && (<aside className="border-r border-border bg-surface p-3 h-full min-h-0 overflow-hidden">
             <div className="flex items-center gap-2 mb-3">
               <Layers className="w-4 h-4 text-primary" />
-              <h2 className="text-sm font-semibold">Pages</h2>
+              <h2 className="text-sm font-semibold">Page map</h2>
             </div>
             <div className="mb-3 rounded-md border border-border-subtle bg-white p-2.5 space-y-2">
               <div className="flex items-start justify-between gap-2">
@@ -1661,6 +1781,95 @@ export const BuilderV2Lab: React.FC = () => {
                     </div>
                   ))}
                 </div>
+              </div>
+            </div>
+            <div className="mb-3 rounded-md border border-border-subtle bg-white p-2.5 space-y-2">
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary font-medium">Pages</p>
+                  <p className="mt-1 text-sm font-semibold text-text-primary">{activePage.title}</p>
+                  <p className="mt-1 text-xs leading-relaxed text-text-secondary">
+                    {pages.length} page{pages.length === 1 ? '' : 's'} in this document. Keep navigation deliberate before you widen the section stack.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={addPage}
+                  className="shrink-0 rounded-md border border-primary/30 bg-primary/10 px-2.5 py-2 text-[11px] font-semibold text-primary hover:bg-primary/15"
+                >
+                  Add page
+                </button>
+              </div>
+              <div className="space-y-2 max-h-44 overflow-auto pr-0.5">
+                {pages.map((page) => (
+                  <div
+                    key={page.id}
+                    className={`rounded-md border px-2.5 py-2 ${page.id === activePage.id ? 'border-primary/40 bg-primary/5' : 'border-border-subtle bg-surface-subtle'}`}
+                  >
+                    <button
+                      type="button"
+                      onClick={() => selectPage(page.id)}
+                      className="w-full text-left"
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="min-w-0">
+                          <p className="truncate text-xs font-semibold text-text-primary">{page.title}</p>
+                          <p className="mt-0.5 truncate text-[11px] text-text-secondary">/{page.slug}</p>
+                        </div>
+                        <div className="shrink-0 flex flex-wrap justify-end gap-1 text-[9px] uppercase tracking-[0.14em]">
+                          {page.isHome && <span className="rounded-full border border-emerald-200 bg-emerald-50 px-1.5 py-0.5 text-emerald-800">Home</span>}
+                          {page.hidden && <span className="rounded-full border border-slate-200 bg-slate-50 px-1.5 py-0.5 text-slate-700">Hidden</span>}
+                        </div>
+                      </div>
+                      <p className="mt-1 text-[11px] text-text-tertiary">
+                        {page.sections.length} section{page.sections.length === 1 ? '' : 's'}
+                      </p>
+                    </button>
+                    <div className="mt-2 grid gap-2">
+                      <label className="grid gap-1">
+                        <span className="text-[10px] uppercase tracking-[0.18em] text-text-tertiary">Page title</span>
+                        <input
+                          value={page.title}
+                          onChange={(event) => renamePage(page.id, event.target.value)}
+                          className="w-full rounded-md border border-border-subtle bg-white px-2 py-1.5 text-xs"
+                        />
+                      </label>
+                      <label className="grid gap-1">
+                        <span className="text-[10px] uppercase tracking-[0.18em] text-text-tertiary">Slug</span>
+                        <input
+                          value={page.slug}
+                          onChange={(event) => updatePageSlug(page.id, event.target.value)}
+                          className="w-full rounded-md border border-border-subtle bg-white px-2 py-1.5 text-xs"
+                        />
+                      </label>
+                      <div className="grid grid-cols-2 gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setHomePage(page.id)}
+                          className={`rounded-md border px-2 py-1.5 text-[11px] font-medium ${page.isHome ? 'border-emerald-200 bg-emerald-50 text-emerald-900' : 'border-border-subtle bg-white text-text-primary hover:border-primary/40'}`}
+                        >
+                          {page.isHome ? 'Home page' : 'Make home'}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => togglePageVisibility(page.id)}
+                          disabled={page.isHome}
+                          className={`rounded-md border px-2 py-1.5 text-[11px] font-medium ${page.isHome ? 'cursor-not-allowed border-border-subtle bg-surface-subtle text-text-tertiary' : 'border-border-subtle bg-white text-text-primary hover:border-primary/40'}`}
+                        >
+                          {page.hidden ? 'Show page' : 'Hide page'}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => removePage(page.id)}
+                          disabled={pages.length <= 1}
+                          className={`col-span-2 rounded-md border px-2 py-1.5 text-[11px] font-medium ${pages.length <= 1 ? 'cursor-not-allowed border-border-subtle bg-surface-subtle text-text-tertiary' : 'border-rose-200 bg-rose-50 text-rose-900 hover:bg-rose-100'}`}
+                        >
+                          Remove page
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
             {selectedSections.length > 1 && (
@@ -1908,7 +2117,7 @@ export const BuilderV2Lab: React.FC = () => {
           <main className="relative flex min-h-0 flex-col border-r border-border bg-surface p-3 h-full overflow-hidden">
             <div className="sticky top-0 z-20 h-12 bg-white/95 backdrop-blur border-b border-border-subtle -mx-3 px-3 mb-2 flex items-center justify-between">
               <div className="min-w-0">
-                <h2 className="text-sm font-semibold">Preview</h2>
+                <h2 className="text-sm font-semibold">Preview · {activePage.title}</h2>
                 <p className="text-[11px] leading-relaxed text-text-tertiary">{structureGuidance.previewHeadline}</p>
               </div>
               <div className="flex items-center gap-2">
@@ -1940,6 +2149,22 @@ export const BuilderV2Lab: React.FC = () => {
             </div>
             <div className="flex-1 min-h-0 border border-border-subtle bg-[#f3f3f3] p-1.5 overflow-auto scroll-smooth [scrollbar-gutter:stable]">
               <div className={`mx-auto bg-white border border-border-subtle overflow-hidden ${previewDevice === 'desktop' ? 'w-full max-w-[1240px]' : 'w-[430px] max-w-full'}`} style={{ transform: `scale(${previewScale / 100})`, transformOrigin: 'top center' }}>
+                {activePage.hidden && (
+                  <div className="border-b border-border-subtle bg-amber-50 px-5 py-4">
+                    <p className="text-sm font-semibold text-amber-900">This page is hidden from the live navigation.</p>
+                    <p className="mt-1 text-xs leading-relaxed text-amber-900/80">
+                      Keep shaping the structure here, then show the page again when you are ready for it to join the guest path.
+                    </p>
+                  </div>
+                )}
+                {orderedVisible.length === 0 && (
+                  <div className="border-b border-border-subtle bg-white px-5 py-6">
+                    <p className="text-sm font-semibold text-text-primary">No visible sections on this page yet.</p>
+                    <p className="mt-1 text-xs leading-relaxed text-text-secondary">
+                      Add a first section or show a hidden lane so this page has a live reading order again.
+                    </p>
+                  </div>
+                )}
                 {previewInstances.map((instance) => {
                   const sectionState = orderedVisible.find((x) => x.id === instance.id);
                   if (!sectionState) return null;

@@ -43,6 +43,15 @@ export const toBuilderV2Section = (instance: SectionInstance): BuilderV2Section 
 
 export const toBuilderV2Document = (instances: SectionInstance[]): BuilderV2Document => ({
   version: 'v2',
-  sections: instances.map(toBuilderV2Section),
+  pages: [
+    {
+      id: 'home',
+      title: 'Home',
+      slug: 'home',
+      isHome: true,
+      hidden: false,
+      sections: instances.map(toBuilderV2Section),
+    },
+  ],
   updatedAtISO: new Date().toISOString(),
 });

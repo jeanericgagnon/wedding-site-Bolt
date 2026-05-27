@@ -24,10 +24,13 @@ describe('toBuilderV2Document', () => {
     ];
 
     const out = toBuilderV2Document(instances);
+    const homePage = out.pages?.[0];
+    const sections = homePage?.sections ?? [];
 
     expect(out.version).toBe('v2');
-    expect(out.sections).toHaveLength(2);
-    expect(out.sections[0]).toMatchObject({
+    expect(sections).toHaveLength(2);
+    expect(homePage).toMatchObject({ id: 'home', title: 'Home', slug: 'home', isHome: true });
+    expect(sections[0]).toMatchObject({
       id: 'hero-1',
       type: 'hero',
       variant: 'default',
@@ -35,8 +38,8 @@ describe('toBuilderV2Document', () => {
       title: 'Welcome',
       subtitle: 'Join us',
     });
-    expect(out.sections[0].blocks[0]?.type).toBe('title');
-    expect(out.sections[1].blocks[0]?.type).toBe('text');
+    expect(sections[0]?.blocks[0]?.type).toBe('title');
+    expect(sections[1]?.blocks[0]?.type).toBe('text');
     expect(typeof out.updatedAtISO).toBe('string');
   });
 

@@ -7,26 +7,58 @@ export function isBuilderV2BlockType(v: unknown): v is BuilderV2BlockType {
   return isString(v) && (BUILDER_V2_BLOCK_TYPES as readonly string[]).includes(v);
 }
 
+function validateSection(section: unknown, prefix: string): string | null {
+  if (!isObject(section)) return `${prefix} must be an object`;
+  if (!isString(section.id) || !section.id) return `${prefix}.id is required`;
+  if (!isString(section.type) || !section.type) return `${prefix}.type is required`;
+  if (!isString(section.variant) || !section.variant) return `${prefix}.variant is required`;
+  if (typeof section.enabled !== 'boolean') return `${prefix}.enabled must be boolean`;
+  if (!Array.isArray(section.blocks)) return `${prefix}.blocks must be an array`;
+
+  for (let j = 0; j < section.blocks.length; j += 1) {
+    const block = section.blocks[j];
+    if (!isObject(block)) return `${prefix}.blocks[${j}] must be an object`;
+    if (!isString(block.id) || !block.id) return `${prefix}.blocks[${j}].id is required`;
+    if (!isBuilderV2BlockType(block.type)) return `${prefix}.blocks[${j}].type is invalid`;
+    if (block.data !== undefined && !isObject(block.data)) return `${prefix}.blocks[${j}].data must be an object`;
+  }
+
+  return null;
+}
+
 export function validateBuilderV2Document(input: unknown): { ok: true; doc: BuilderV2Document } | { ok: false; error: string } {
   if (!isObject(input)) return { ok: false, error: 'Document must be an object' };
   if (input.version !== 'v2') return { ok: false, error: 'Unsupported version (expected v2)' };
-  if (!Array.isArray(input.sections)) return { ok: false, error: 'sections must be an array' };
+  const pages = input.pages;
+  const sections = input.sections;
+  const hasPages = Array.isArray(pages);
+  const hasSections = Array.isArray(sections);
+  if (!hasPages && !hasSections) {
+    return { ok: false, error: 'pages or sections must be an array' };
+  }
 
-  for (let i = 0; i < input.sections.length; i += 1) {
-    const sec = input.sections[i];
-    if (!isObject(sec)) return { ok: false, error: `sections[${i}] must be an object` };
-    if (!isString(sec.id) || !sec.id) return { ok: false, error: `sections[${i}].id is required` };
-    if (!isString(sec.type) || !sec.type) return { ok: false, error: `sections[${i}].type is required` };
-    if (!isString(sec.variant) || !sec.variant) return { ok: false, error: `sections[${i}].variant is required` };
-    if (typeof sec.enabled !== 'boolean') return { ok: false, error: `sections[${i}].enabled must be boolean` };
-    if (!Array.isArray(sec.blocks)) return { ok: false, error: `sections[${i}].blocks must be an array` };
+  if (hasPages) {
+    for (let pageIndex = 0; pageIndex < pages.length; pageIndex += 1) {
+      const page = pages[pageIndex];
+      if (!isObject(page)) return { ok: false, error: `pages[${pageIndex}] must be an object` };
+      if (!isString(page.id) || !page.id) return { ok: false, error: `pages[${pageIndex}].id is required` };
+      if (!isString(page.title) || !page.title) return { ok: false, error: `pages[${pageIndex}].title is required` };
+      if (!isString(page.slug) || !page.slug) return { ok: false, error: `pages[${pageIndex}].slug is required` };
+      if (typeof page.isHome !== 'boolean') return { ok: false, error: `pages[${pageIndex}].isHome must be boolean` };
+      if (page.hidden !== undefined && typeof page.hidden !== 'boolean') return { ok: false, error: `pages[${pageIndex}].hidden must be boolean` };
+      if (!Array.isArray(page.sections)) return { ok: false, error: `pages[${pageIndex}].sections must be an array` };
 
-    for (let j = 0; j < sec.blocks.length; j += 1) {
-      const b = sec.blocks[j];
-      if (!isObject(b)) return { ok: false, error: `sections[${i}].blocks[${j}] must be an object` };
-      if (!isString(b.id) || !b.id) return { ok: false, error: `sections[${i}].blocks[${j}].id is required` };
-      if (!isBuilderV2BlockType(b.type)) return { ok: false, error: `sections[${i}].blocks[${j}].type is invalid` };
-      if (b.data !== undefined && !isObject(b.data)) return { ok: false, error: `sections[${i}].blocks[${j}].data must be an object` };
+      for (let sectionIndex = 0; sectionIndex < page.sections.length; sectionIndex += 1) {
+        const sectionError = validateSection(page.sections[sectionIndex], `pages[${pageIndex}].sections[${sectionIndex}]`);
+        if (sectionError) return { ok: false, error: sectionError };
+      }
+    }
+  }
+
+  if (hasSections) {
+    for (let sectionIndex = 0; sectionIndex < sections.length; sectionIndex += 1) {
+      const sectionError = validateSection(sections[sectionIndex], `sections[${sectionIndex}]`);
+      if (sectionError) return { ok: false, error: sectionError };
     }
   }
 

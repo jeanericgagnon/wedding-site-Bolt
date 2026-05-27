@@ -1,6 +1,6 @@
 import type { CanonicalPageDocument, CanonicalSectionInstance } from './canonicalPageContract';
 import type { LayoutConfigV1 } from '../types/layoutConfig';
-import type { BuilderV2Document } from '../builder-v2/contracts';
+import { getBuilderV2Pages, type BuilderV2Document, type BuilderV2Section } from '../builder-v2/contracts';
 
 const layoutSectionToCanonical = (section: LayoutConfigV1['pages'][number]['sections'][number]): CanonicalSectionInstance => ({
   id: section.id,
@@ -28,7 +28,7 @@ export const layoutConfigToCanonicalPageDocument = (layout: LayoutConfigV1): Can
   },
 });
 
-const builderV2SectionToCanonical = (section: BuilderV2Document['sections'][number]): CanonicalSectionInstance => ({
+const builderV2SectionToCanonical = (section: BuilderV2Section): CanonicalSectionInstance => ({
   id: section.id,
   type: section.type,
   variant: section.variant,
@@ -43,13 +43,11 @@ const builderV2SectionToCanonical = (section: BuilderV2Document['sections'][numb
 
 export const builderV2ToCanonicalPageDocument = (document: BuilderV2Document): CanonicalPageDocument => ({
   version: 'canonical-page-v1',
-  pages: [
-    {
-      id: 'home',
-      title: 'Home',
-      sections: document.sections.map(builderV2SectionToCanonical),
-    },
-  ],
+  pages: getBuilderV2Pages(document).map((page) => ({
+    id: page.id,
+    title: page.title,
+    sections: page.sections.map(builderV2SectionToCanonical),
+  })),
   meta: {
     updatedAtISO: document.updatedAtISO,
     source: 'builderV2',
