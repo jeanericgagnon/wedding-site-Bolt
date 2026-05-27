@@ -1239,6 +1239,8 @@ export const NameChangePlannerTab: React.FC<Props> = ({
                 <p className="mt-1 text-sm font-semibold text-sky-950">{resumeCard.bestNextMove}</p>
                 <p className="mt-3 text-xs uppercase tracking-wide text-sky-700">Decision rule</p>
                 <p className="mt-1 text-sm text-sky-900">{resumeCard.decisionRule}</p>
+                <p className="mt-3 text-xs uppercase tracking-wide text-sky-700">Watchout</p>
+                <p className="mt-1 text-sm text-sky-900">{resumeCard.watchout}</p>
               </div>
             </div>
             <div className="mt-3 grid gap-3 md:grid-cols-3">

@@ -7,6 +7,7 @@ export interface NameChangeOverviewCardModel {
   focusDetail: string;
   bestNextMove: string;
   decisionRule: string;
+  watchout: string;
   sequence: Array<{
     status: 'current' | 'next' | 'then';
     title: string;
@@ -40,6 +41,7 @@ export function buildNameChangeOverviewCardModel(input: {
       focusDetail: 'You do not need to do the whole chain today. The helpful move is opening the assistant once so the roadmap and saved case details are there when you want them.',
       bestNextMove: 'Open case setup once, save the basics, and let the roadmap hold the rest until the paperwork pressure becomes real.',
       decisionRule: 'Early setup beats future reconstruction: save the lane before you need the paperwork pressure to be real.',
+      watchout: 'Do not wait until a real deadline is in front of you and then try to reconstruct names, addresses, and document assumptions from scratch. The lane is easiest when the first save happens early.',
       sequence: [
         {
           status: 'current',
@@ -79,6 +81,7 @@ export function buildNameChangeOverviewCardModel(input: {
       focusDetail: 'The hard part is already organized. The value now is reopening the proof trail only when a late account, payroll system, or document check needs it.',
       bestNextMove: 'Open the status vault when you need proof, confirm the one late account or document question, then leave the rest of the chain at rest.',
       decisionRule: 'Once the chain is complete, only reopen for proof or cleanup that truly needs a documented answer.',
+      watchout: 'Do not turn one late payroll, banking, or document question into a full restart. Reopen just long enough to answer the proof question, then let the lane go quiet again.',
       sequence: [
         {
           status: 'current',
@@ -118,6 +121,7 @@ export function buildNameChangeOverviewCardModel(input: {
       focusDetail: 'The best next move is reopening the status vault where the chain already knows what changed, what is waiting, and what still needs proof.',
       bestNextMove: 'Resume in the status vault first, then only jump back to case setup if saved details actually changed.',
       decisionRule: 'If execution already started, pick back up from the saved proof trail instead of restarting the roadmap from scratch.',
+      watchout: 'Do not reopen case setup just because the lane feels complicated. If the saved names, addresses, and assumptions are still true, the vault is the better starting point.',
       sequence: [
         {
           status: 'current',
@@ -156,6 +160,7 @@ export function buildNameChangeOverviewCardModel(input: {
     focusDetail: 'This is the low-pressure state: the sequence is saved, the lane is real, and you can enter through the roadmap or case details whenever you are ready.',
     bestNextMove: 'Skim the roadmap first to reorient yourself, then open case setup only when you actually want to tighten the saved details.',
     decisionRule: 'When no execution has started yet, sequence clarity beats urgency.',
+    watchout: 'Do not confuse a saved roadmap with urgent work. The risk here is turning a calm lane into background guilt instead of using it when the paperwork window is real.',
     sequence: [
       {
         status: 'current',

@@ -18,6 +18,7 @@ describe('buildNameChangeOverviewCardModel', () => {
     expect(model.focusTitle).toMatch(/Save the lane now/i);
     expect(model.bestNextMove).toMatch(/save the basics|roadmap hold the rest/i);
     expect(model.decisionRule).toMatch(/Early setup beats future reconstruction/i);
+    expect(model.watchout).toMatch(/reconstruct names, addresses|first save happens early/i);
     expect(model.sequence).toHaveLength(3);
     expect(model.sequence[0]).toMatchObject({ status: 'current' });
     expect(model.sequence[1]).toMatchObject({ status: 'next' });
@@ -40,6 +41,7 @@ describe('buildNameChangeOverviewCardModel', () => {
     expect(model.focusTitle).toMatch(/proof, not from memory/i);
     expect(model.bestNextMove).toMatch(/status vault first|saved details actually changed/i);
     expect(model.decisionRule).toMatch(/pick back up from the saved proof trail/i);
+    expect(model.watchout).toMatch(/reopen case setup|vault is the better starting point/i);
     expect(model.sequence[0].title).toMatch(/status vault/i);
     expect(model.primaryHref).toBe('/dashboard/planning?tab=nameChange#target-status-tracking');
     expect(model.secondaryHref).toBe('/dashboard/planning?tab=nameChange#name-change-roadmap');
@@ -63,6 +65,7 @@ describe('buildNameChangeOverviewCardModel', () => {
     expect(model.focusTitle).toMatch(/proof storage/i);
     expect(model.bestNextMove).toMatch(/late account|document question/i);
     expect(model.decisionRule).toMatch(/only reopen for proof/i);
+    expect(model.watchout).toMatch(/full restart|go quiet again/i);
     expect(model.sequence[2].detail).toMatch(/turning completion back into a project/i);
     expect(model.optionalNextStep).toContain('Nothing pushy here');
     expect(model.secondaryHref).toBe('/dashboard/planning?tab=nameChange#name-change-roadmap');
@@ -85,6 +88,7 @@ describe('buildNameChangeOverviewCardModel', () => {
     expect(model.focusTitle).toMatch(/Use the roadmap to orient/i);
     expect(model.bestNextMove).toMatch(/Skim the roadmap first|tighten the saved details/i);
     expect(model.decisionRule).toMatch(/sequence clarity beats urgency/i);
+    expect(model.watchout).toMatch(/saved roadmap with urgent work|background guilt/i);
     expect(model.sequence[0].title).toMatch(/roadmap/i);
     expect(model.primaryLabel).toBe('See roadmap first');
     expect(model.primaryHref).toBe('/dashboard/planning?tab=nameChange#name-change-roadmap');

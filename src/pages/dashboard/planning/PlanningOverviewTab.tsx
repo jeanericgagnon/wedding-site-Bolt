@@ -353,6 +353,8 @@ export const PlanningOverviewTab: React.FC<Props> = ({ tasks, budgetItems, vendo
                       <p className="mt-1 text-sm font-medium text-text-primary">{nameChangeCard.bestNextMove}</p>
                       <p className="mt-3 text-[11px] uppercase tracking-wide text-text-secondary">Decision rule</p>
                       <p className="mt-1 text-xs leading-5 text-text-secondary">{nameChangeCard.decisionRule}</p>
+                      <p className="mt-3 text-[11px] uppercase tracking-wide text-text-secondary">Watchout</p>
+                      <p className="mt-1 text-xs leading-5 text-text-secondary">{nameChangeCard.watchout}</p>
                     </div>
                   </div>
                   <div className="mt-3 grid gap-2 sm:grid-cols-3">
