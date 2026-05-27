@@ -1800,6 +1800,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
                   <p className="mt-1 text-xs text-text-secondary">{item.detail}</p>
                   <p className="mt-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-text-tertiary">Main focus</p>
                   <p className="mt-1 text-[11px] text-text-secondary">{item.focusTitle}</p>
+                  <p className="mt-1 text-[11px] text-text-secondary/90">{item.focusDetail}</p>
                   <p className="mt-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-text-tertiary">Decision rule</p>
                   <p className="mt-1 text-[11px] text-text-secondary">{item.decisionRule}</p>
                   <p className="mt-1 text-[10px] text-text-tertiary/80">{getCoordinatorActionHint('escalation')}</p>
