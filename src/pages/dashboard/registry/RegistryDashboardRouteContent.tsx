@@ -1413,7 +1413,7 @@ export function RegistryDashboardRouteContent(props: {
             <Card variant="bordered" padding="lg">
               <p className="text-sm font-semibold text-text-primary">Top registry progress</p>
               <p className="mt-1 text-sm text-text-secondary">{topRegistryProgressSummary}</p>
-              <div className="mt-3 grid gap-3 md:grid-cols-3">
+              <div className="mt-3 grid gap-3 md:grid-cols-2">
                 <div className="rounded-xl border border-border-subtle bg-surface-subtle/20 px-3 py-3">
                   <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-text-tertiary">Main focus</p>
                   <p className="mt-1 text-sm font-semibold text-text-primary">{topRegistryProgressGuide.focusTitle}</p>
@@ -1422,10 +1422,10 @@ export function RegistryDashboardRouteContent(props: {
                 <div className="rounded-xl border border-border-subtle bg-surface-subtle/20 px-3 py-3">
                   <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-text-tertiary">Best next move</p>
                   <p className="mt-1 text-sm font-semibold text-text-primary">{topRegistryProgressGuide.bestNextMove}</p>
-                </div>
-                <div className="rounded-xl border border-border-subtle bg-surface-subtle/20 px-3 py-3">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-text-tertiary">Decision rule</p>
-                  <p className="mt-1 text-sm font-semibold text-text-primary">{topRegistryProgressGuide.decisionRule}</p>
+                  <div className="mt-3 border-t border-border-subtle pt-3">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-text-tertiary">Decision rule</p>
+                    <p className="mt-1 text-sm font-semibold text-text-primary">{topRegistryProgressGuide.decisionRule}</p>
+                  </div>
                 </div>
               </div>
               <div className="mt-3 space-y-2.5">
@@ -1461,7 +1461,7 @@ export function RegistryDashboardRouteContent(props: {
             <Card variant="bordered" padding="lg">
               <p className="text-sm font-semibold text-text-primary">Recent registry activity</p>
               <p className="mt-1 text-sm text-text-secondary">{recentActivitySummary}</p>
-              <div className="mt-3 grid gap-3 md:grid-cols-3">
+              <div className="mt-3 grid gap-3 md:grid-cols-2">
                 <div className="rounded-xl border border-border-subtle bg-surface-subtle/20 px-3 py-3">
                   <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-text-tertiary">Main focus</p>
                   <p className="mt-1 text-sm font-semibold text-text-primary">{recentActivityGuide.focusTitle}</p>
@@ -1470,10 +1470,10 @@ export function RegistryDashboardRouteContent(props: {
                 <div className="rounded-xl border border-border-subtle bg-surface-subtle/20 px-3 py-3">
                   <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-text-tertiary">Best next move</p>
                   <p className="mt-1 text-sm font-semibold text-text-primary">{recentActivityGuide.bestNextMove}</p>
-                </div>
-                <div className="rounded-xl border border-border-subtle bg-surface-subtle/20 px-3 py-3">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-text-tertiary">Decision rule</p>
-                  <p className="mt-1 text-sm font-semibold text-text-primary">{recentActivityGuide.decisionRule}</p>
+                  <div className="mt-3 border-t border-border-subtle pt-3">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-text-tertiary">Decision rule</p>
+                    <p className="mt-1 text-sm font-semibold text-text-primary">{recentActivityGuide.decisionRule}</p>
+                  </div>
                 </div>
               </div>
               <div className="mt-3 space-y-2.5">
