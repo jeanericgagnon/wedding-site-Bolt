@@ -399,6 +399,67 @@ const makeDefaultBlocksForType = (
         ...(message ? [{ id: 'b-story', type: 'story', data: { text: message } } satisfies BuilderV2Block] : []),
       ];
     }
+    case 'wedding-party': {
+      const eyebrow = getSettingString(settings, 'eyebrow');
+      const bridalTitle = getSettingString(settings, 'bridalTitle');
+      const groomTitle = getSettingString(settings, 'groomTitle');
+      const bridalParty = getSettingRecordList<{
+        name?: string;
+        role?: string;
+        photo?: string;
+        note?: string;
+      }>(settings, 'bridalParty');
+      const groomParty = getSettingRecordList<{
+        name?: string;
+        role?: string;
+        photo?: string;
+        note?: string;
+      }>(settings, 'groomParty');
+      return [
+        ...(eyebrow ? [{ id: 'b-party-eyebrow', type: 'qna', data: { question: 'Eyebrow', answer: eyebrow } } satisfies BuilderV2Block] : []),
+        ...(bridalTitle ? [{ id: 'b-party-bridal-title', type: 'title', data: { text: bridalTitle, subtitle: 'bridal-title' } } satisfies BuilderV2Block] : []),
+        ...bridalParty
+          .filter((member) => (
+            (typeof member.name === 'string' && member.name.trim())
+            || (typeof member.role === 'string' && member.role.trim())
+            || (typeof member.photo === 'string' && member.photo.trim())
+            || (typeof member.note === 'string' && member.note.trim())
+          ))
+          .map((member, index) => ({
+            id: `b-party-bridal-${index + 1}`,
+            type: 'photo' as const,
+            data: {
+              title: typeof member.name === 'string' && member.name.trim() ? member.name.trim() : undefined,
+              role: typeof member.role === 'string' && member.role.trim() ? member.role.trim() : undefined,
+              imageUrl: typeof member.photo === 'string' && member.photo.trim() ? member.photo.trim() : undefined,
+              note: typeof member.note === 'string' && member.note.trim() ? member.note.trim() : undefined,
+              subtitle: 'bridal-party',
+            },
+          })),
+        ...(groomTitle ? [{ id: 'b-party-groom-title', type: 'title', data: { text: groomTitle, subtitle: 'groom-title' } } satisfies BuilderV2Block] : []),
+        ...groomParty
+          .filter((member) => (
+            (typeof member.name === 'string' && member.name.trim())
+            || (typeof member.role === 'string' && member.role.trim())
+            || (typeof member.photo === 'string' && member.photo.trim())
+            || (typeof member.note === 'string' && member.note.trim())
+          ))
+          .map((member, index) => ({
+            id: `b-party-groom-${index + 1}`,
+            type: 'photo' as const,
+            data: {
+              title: typeof member.name === 'string' && member.name.trim() ? member.name.trim() : undefined,
+              role: typeof member.role === 'string' && member.role.trim() ? member.role.trim() : undefined,
+              imageUrl: typeof member.photo === 'string' && member.photo.trim() ? member.photo.trim() : undefined,
+              note: typeof member.note === 'string' && member.note.trim() ? member.note.trim() : undefined,
+              subtitle: 'groom-party',
+            },
+          })),
+        ...(bridalTitle || groomTitle || bridalParty.length > 0 || groomParty.length > 0 || !subtitleText
+          ? []
+          : [{ id: 'b-text', type: 'text', data: { text: subtitleText } } satisfies BuilderV2Block]),
+      ];
+    }
     case 'dress-code': {
       const description = getSettingString(settings, 'description');
       const additionalNote = getSettingString(settings, 'additionalNote');
@@ -890,6 +951,35 @@ const toLegacyBuilderSettings = (section: BuilderV2Section): Record<string, unkn
         ...common,
         eyebrow: getFirstMeaningfulString(section, [section.subtitle]),
         message: narrativeParts[0] || '',
+      };
+    }
+    case 'wedding-party': {
+      const titleBlocks = getMeaningfulBlocks(section.blocks, ['title']);
+      const partyBlocks = getMeaningfulBlocks(section.blocks, ['photo']);
+      const bridalParty = partyBlocks
+        .filter((block) => (typeof block.data.subtitle === 'string' ? block.data.subtitle.trim() : '') === 'bridal-party')
+        .map((block) => ({
+          name: block.data.title || '',
+          role: block.data.role || block.data.caption || '',
+          photo: block.data.imageUrl || undefined,
+          note: block.data.note || undefined,
+        }));
+      const groomParty = partyBlocks
+        .filter((block) => (typeof block.data.subtitle === 'string' ? block.data.subtitle.trim() : '') === 'groom-party')
+        .map((block) => ({
+          name: block.data.title || '',
+          role: block.data.role || block.data.caption || '',
+          photo: block.data.imageUrl || undefined,
+          note: block.data.note || undefined,
+        }));
+
+      return {
+        ...common,
+        eyebrow: getNamedAnswerValue(section, 'Eyebrow') || undefined,
+        bridalTitle: titleBlocks.find((block) => block.data.subtitle === 'bridal-title')?.data.text || undefined,
+        groomTitle: titleBlocks.find((block) => block.data.subtitle === 'groom-title')?.data.text || undefined,
+        bridalParty,
+        groomParty,
       };
     }
     case 'registry':

@@ -248,6 +248,65 @@ describe('toBuilderV2Document', () => {
     ]);
   });
 
+  it('preserves wedding party side labels and members when migrating legacy sections into v2', () => {
+    const partySection = toBuilderV2Section({
+      id: 'party-1',
+      type: 'wedding-party',
+      variant: 'grid',
+      enabled: true,
+      bindings: {},
+      settings: {
+        title: 'Wedding Party',
+        subtitle: 'The people standing with us',
+        eyebrow: 'Meet the crew',
+        bridalTitle: 'Alex crew',
+        groomTitle: 'Jordan crew',
+        bridalParty: [
+          {
+            name: 'Taylor',
+            role: 'Maid of Honor',
+            photo: 'https://example.com/taylor.jpg',
+            note: 'College roommate',
+          },
+        ],
+        groomParty: [
+          {
+            name: 'Chris',
+            role: 'Best Man',
+            photo: 'https://example.com/chris.jpg',
+            note: 'Brother',
+          },
+        ],
+      },
+    });
+
+    expect(partySection.blocks).toMatchObject([
+      { type: 'qna', data: { question: 'Eyebrow', answer: 'Meet the crew' } },
+      { type: 'title', data: { text: 'Alex crew', subtitle: 'bridal-title' } },
+      {
+        type: 'photo',
+        data: {
+          title: 'Taylor',
+          role: 'Maid of Honor',
+          imageUrl: 'https://example.com/taylor.jpg',
+          note: 'College roommate',
+          subtitle: 'bridal-party',
+        },
+      },
+      { type: 'title', data: { text: 'Jordan crew', subtitle: 'groom-title' } },
+      {
+        type: 'photo',
+        data: {
+          title: 'Chris',
+          role: 'Best Man',
+          imageUrl: 'https://example.com/chris.jpg',
+          note: 'Brother',
+          subtitle: 'groom-party',
+        },
+      },
+    ]);
+  });
+
   it('preserves structured faq, schedule, travel, registry, and rsvp content when migrating legacy sections into v2', () => {
     const faqSection = toBuilderV2Section({
       id: 'faq-1',
@@ -1172,6 +1231,81 @@ describe('legacy adapters', () => {
         },
       ],
       closingNote: 'We are so glad you will be there.',
+    });
+  });
+
+  it('maps builder v2 wedding-party sections into legacy runtime settings with grouped members', () => {
+    const project = builderV2DocumentToBuilderProject({
+      version: 'v2',
+      updatedAtISO: '2026-05-27T21:00:00.000Z',
+      pages: [
+        {
+          id: 'home',
+          title: 'Home',
+          slug: 'home',
+          isHome: true,
+          hidden: false,
+          sections: [
+            {
+              id: 'party-1',
+              type: 'wedding-party',
+              variant: 'grid',
+              enabled: true,
+              title: 'Wedding Party',
+              subtitle: 'The people standing with us',
+              blocks: [
+                { id: 'party-eyebrow', type: 'qna', data: { question: 'Eyebrow', answer: 'Meet the crew' } },
+                { id: 'party-bridal-title', type: 'title', data: { text: 'Alex crew', subtitle: 'bridal-title' } },
+                {
+                  id: 'party-bridal-1',
+                  type: 'photo',
+                  data: {
+                    title: 'Taylor',
+                    role: 'Maid of Honor',
+                    imageUrl: 'https://example.com/taylor.jpg',
+                    note: 'College roommate',
+                    subtitle: 'bridal-party',
+                  },
+                },
+                { id: 'party-groom-title', type: 'title', data: { text: 'Jordan crew', subtitle: 'groom-title' } },
+                {
+                  id: 'party-groom-1',
+                  type: 'photo',
+                  data: {
+                    title: 'Chris',
+                    role: 'Best Man',
+                    imageUrl: 'https://example.com/chris.jpg',
+                    note: 'Brother',
+                    subtitle: 'groom-party',
+                  },
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    });
+
+    expect(project.pages[0].sections[0].settings).toMatchObject({
+      eyebrow: 'Meet the crew',
+      bridalTitle: 'Alex crew',
+      groomTitle: 'Jordan crew',
+      bridalParty: [
+        {
+          name: 'Taylor',
+          role: 'Maid of Honor',
+          photo: 'https://example.com/taylor.jpg',
+          note: 'College roommate',
+        },
+      ],
+      groomParty: [
+        {
+          name: 'Chris',
+          role: 'Best Man',
+          photo: 'https://example.com/chris.jpg',
+          note: 'Brother',
+        },
+      ],
     });
   });
 
