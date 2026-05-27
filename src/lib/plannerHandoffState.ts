@@ -9,6 +9,12 @@ export interface PlannerHandoffModel {
   focusDetail: string;
   nextMove: string;
   decisionRule: string;
+  sequence: Array<{
+    id: 'orient' | 'enter' | 'handoff';
+    status: 'current' | 'next' | 'then';
+    title: string;
+    detail: string;
+  }>;
 }
 
 function getSurfaceDetail(surface: PlannerHandoffSurface) {
@@ -36,6 +42,26 @@ export function getPlannerHandoffCopy(role: PlannerAccessRole, surface: PlannerH
       focusDetail: `Use collaborator help to move ${surfaceDetail} forward without blurring who makes the final call.`,
       nextMove: 'Start in Overview, then open the exact working surface where the final couple decision will actually get resolved.',
       decisionRule: 'If the choice changes ownership, brand, billing, or final guest-facing truth, the couple resolves it here.',
+      sequence: [
+        {
+          id: 'orient',
+          status: 'current',
+          title: 'Read the broader board first',
+          detail: `Use Overview to see how ${surfaceDetail} is interacting with the rest of the wedding before you make the owner call.`,
+        },
+        {
+          id: 'enter',
+          status: 'next',
+          title: 'Resolve the exact owner decision',
+          detail: 'Move into the working surface where the final launch, trust, or ownership call will actually be settled.',
+        },
+        {
+          id: 'handoff',
+          status: 'then',
+          title: 'Let the helpers inherit the answer',
+          detail: 'Once the couple-level truth is clear, hand execution back without reopening the decision everywhere else.',
+        },
+      ],
     };
   }
   if (role === 'planner') {
@@ -46,6 +72,26 @@ export function getPlannerHandoffCopy(role: PlannerAccessRole, surface: PlannerH
       focusDetail: `This surface is strongest when the planner keeps ${surfaceDetail} moving while leaving final brand and ownership calls with the couple.`,
       nextMove: `Start with the loudest pressure inside ${surfaceDetail}, then escalate only the calls that truly need couple-level direction.`,
       decisionRule: 'Advance execution here; escalate only the choices that truly need couple-level direction.',
+      sequence: [
+        {
+          id: 'orient',
+          status: 'current',
+          title: 'Find the loudest operational pressure',
+          detail: `Scan ${surfaceDetail} for the concrete backlog that is actually slowing the wedding down right now.`,
+        },
+        {
+          id: 'enter',
+          status: 'next',
+          title: 'Clear the working lane directly',
+          detail: 'Handle the execution work here first instead of drifting into brand or ownership-level decisions.',
+        },
+        {
+          id: 'handoff',
+          status: 'then',
+          title: 'Escalate only the true owner calls',
+          detail: 'When the next blocker changes final truth instead of execution, hand that piece back cleanly.',
+        },
+      ],
     };
   }
   if (role === 'coordinator') {
@@ -56,6 +102,26 @@ export function getPlannerHandoffCopy(role: PlannerAccessRole, surface: PlannerH
       focusDetail: `Use this lane to stabilize ${surfaceDetail} in real time without reopening wider planning or ownership decisions.`,
       nextMove: 'Start with the live pressure that guests can already feel, then hand broader planning truth back once the moment is calm.',
       decisionRule: 'If it affects live guest flow, handle it now. If it changes broader ownership or planning truth, hand it back.',
+      sequence: [
+        {
+          id: 'orient',
+          status: 'current',
+          title: 'Find the live pressure guests can feel',
+          detail: `Start with the piece of ${surfaceDetail} that is already shaping the live guest experience.`,
+        },
+        {
+          id: 'enter',
+          status: 'next',
+          title: 'Stabilize the live lane',
+          detail: 'Use this surface to calm the real-time pressure before you reopen any broader planning questions.',
+        },
+        {
+          id: 'handoff',
+          status: 'then',
+          title: 'Return broader truth once calm is back',
+          detail: 'After the live lane is steady, hand planning or ownership-level changes back instead of absorbing them here.',
+        },
+      ],
     };
   }
   return {
@@ -65,5 +131,25 @@ export function getPlannerHandoffCopy(role: PlannerAccessRole, surface: PlannerH
     focusDetail: `Keep ${surfaceDetail} visible for review and context while leaving real edits and decisions with the working owner.`,
     nextMove: 'Use this surface to confirm facts and collect questions, then hand decisions back to the working owner.',
     decisionRule: 'Review, confirm, and raise questions here; do not turn viewer access into another editing lane.',
+    sequence: [
+      {
+        id: 'orient',
+        status: 'current',
+        title: 'Read the surface for context',
+        detail: `Use ${surfaceDetail} to understand the current state before you react to one isolated detail.`,
+      },
+      {
+        id: 'enter',
+        status: 'next',
+        title: 'Confirm the facts you need',
+        detail: 'Review the details, note what is clear, and collect open questions without turning this into editing work.',
+      },
+      {
+        id: 'handoff',
+        status: 'then',
+        title: 'Return decisions to the working owner',
+        detail: 'Send questions or uncertainty back to the person carrying the lane instead of improvising changes here.',
+      },
+    ],
   };
 }

@@ -18,6 +18,7 @@ import { deriveInviteEvents } from '../../lib/rsvpEventFallback';
 import { deleteEventRsvpByInvitationId, deleteEventRsvpsByInvitationIds, getEventRsvpSnapshotsByInvitationIds, restoreEventRsvpSnapshots, type EventRsvpSnapshot } from '../../lib/eventRsvpCleanup';
 import { findCsvHeaderIndex, normalizeCsvHeader } from '../../lib/csvHeaderMatcher';
 import { DashboardStateBlock } from '../../components/dashboard/DashboardStateBlock';
+import { PlannerHandoffCard } from '../../components/dashboard/PlannerHandoffCard';
 import { Card, Button, Badge, Input, Select, Textarea } from '../../components/ui';
 import { Download, UserPlus, CheckCircle2, XCircle, Clock, X, Upload, Users, Mail, AlertCircle, Merge, Scissors, Home, CalendarDays, ChevronRight, Loader2, Copy, ChevronDown, PlusCircle, Pencil, Trash2 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
@@ -3567,21 +3568,10 @@ Proceed with send?`)) return;
         )}
 
         {guestsRole !== 'owner' && (
-          <div className={`rounded-xl border px-3 py-3 ${
-            guestsRole === 'planner'
-              ? 'border-primary/20 bg-primary/5 text-primary'
-              : guestsRole === 'coordinator'
-                ? 'border-amber-200 bg-amber-50 text-amber-800'
-                : 'border-border/40 bg-surface-subtle text-text-tertiary'
-          }`}>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.16em]">Main focus</p>
-            <p className="mt-1 text-sm font-semibold">{plannerHandoff.focusTitle}</p>
-            <p className="mt-1 text-xs leading-5 opacity-90">{plannerHandoff.focusDetail}</p>
-            <p className="mt-3 text-[11px] font-semibold uppercase tracking-[0.16em]">Best next move</p>
-            <p className="mt-1 text-xs leading-5 opacity-90">{plannerHandoff.nextMove}</p>
-            <p className="mt-3 text-[11px] font-semibold uppercase tracking-[0.16em]">Decision rule</p>
-            <p className="mt-1 text-xs leading-5 opacity-90">{plannerHandoff.decisionRule}</p>
-          </div>
+          <PlannerHandoffCard
+            tone={guestsRole === 'planner' ? 'planner' : guestsRole === 'coordinator' ? 'coordinator' : 'viewer'}
+            handoff={plannerHandoff}
+          />
         )}
 
 

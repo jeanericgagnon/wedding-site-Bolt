@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Input, Textarea } from '../../components/ui';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
+import { PlannerHandoffCard } from '../../components/dashboard/PlannerHandoffCard';
 import { useAuth } from '../../hooks/useAuth';
 import { supabase } from '../../lib/supabase';
 import { PLANNER_ROLE_OPTIONS, readPlannerAccessRole, writePlannerAccessRole, type PlannerAccessRole } from '../../lib/plannerAccess';
@@ -2178,21 +2179,10 @@ export const DashboardCoordinatorMode: React.FC = () => {
         </div>
 
         {coordinatorRole !== 'owner' && (
-          <div className={`rounded-xl border px-3 py-3 ${
-            coordinatorRole === 'planner'
-              ? 'border-primary/20 bg-primary/5 text-primary'
-              : coordinatorRole === 'coordinator'
-                ? 'border-amber-200 bg-amber-50 text-amber-800'
-                : 'border-border/40 bg-surface-subtle text-text-tertiary'
-          }`}>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.16em]">Main focus</p>
-            <p className="mt-1 text-sm font-semibold">{plannerHandoff.focusTitle}</p>
-            <p className="mt-1 text-xs leading-5 opacity-90">{plannerHandoff.focusDetail}</p>
-            <p className="mt-3 text-[11px] font-semibold uppercase tracking-[0.16em]">Best next move</p>
-            <p className="mt-1 text-xs leading-5 opacity-90">{plannerHandoff.nextMove}</p>
-            <p className="mt-3 text-[11px] font-semibold uppercase tracking-[0.16em]">Decision rule</p>
-            <p className="mt-1 text-xs leading-5 opacity-90">{plannerHandoff.decisionRule}</p>
-          </div>
+          <PlannerHandoffCard
+            tone={coordinatorRole === 'planner' ? 'planner' : coordinatorRole === 'coordinator' ? 'coordinator' : 'viewer'}
+            handoff={plannerHandoff}
+          />
         )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">

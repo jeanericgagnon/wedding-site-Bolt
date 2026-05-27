@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { DashboardStateBlock } from '../../components/dashboard/DashboardStateBlock';
+import { PlannerHandoffCard } from '../../components/dashboard/PlannerHandoffCard';
 import { Card, Button, Input, Textarea } from '../../components/ui';
 import { Send, Mail, Users, Clock, CheckCircle, Calendar, Save, AtSign, AlertCircle, Eye, ChevronDown, ChevronUp, RefreshCw, X, ArrowLeft, Loader2, Link2, Copy } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
@@ -2922,21 +2923,10 @@ export const DashboardMessages: React.FC = () => {
         </div>
 
         {messagesRole !== 'owner' && (
-          <div className={`rounded-xl border px-3 py-3 ${
-            messagesRole === 'planner'
-              ? 'border-primary/20 bg-primary/5 text-primary'
-              : messagesRole === 'coordinator'
-                ? 'border-amber-200 bg-amber-50 text-amber-800'
-                : 'border-border/40 bg-surface-subtle text-text-tertiary'
-          }`}>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.16em]">Main focus</p>
-            <p className="mt-1 text-sm font-semibold">{plannerHandoff.focusTitle}</p>
-            <p className="mt-1 text-xs leading-5 opacity-90">{plannerHandoff.focusDetail}</p>
-            <p className="mt-3 text-[11px] font-semibold uppercase tracking-[0.16em]">Best next move</p>
-            <p className="mt-1 text-xs leading-5 opacity-90">{plannerHandoff.nextMove}</p>
-            <p className="mt-3 text-[11px] font-semibold uppercase tracking-[0.16em]">Decision rule</p>
-            <p className="mt-1 text-xs leading-5 opacity-90">{plannerHandoff.decisionRule}</p>
-          </div>
+          <PlannerHandoffCard
+            tone={messagesRole === 'planner' ? 'planner' : messagesRole === 'coordinator' ? 'coordinator' : 'viewer'}
+            handoff={plannerHandoff}
+          />
         )}
 
         <div className="rounded-[28px] border border-border-subtle bg-white p-5 shadow-sm">

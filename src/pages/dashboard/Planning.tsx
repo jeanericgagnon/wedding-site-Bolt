@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { ClipboardList } from 'lucide-react';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
+import { PlannerHandoffCard } from '../../components/dashboard/PlannerHandoffCard';
 import { useToast } from '../../components/ui/Toast';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../hooks/useAuth';
@@ -686,21 +687,10 @@ export const DashboardPlanning: React.FC = () => {
         </div>
 
         {planningRole !== 'owner' && (
-          <div className={`rounded-xl border px-3 py-3 ${
-            planningRole === 'planner'
-              ? 'border-primary/20 bg-primary/5 text-primary'
-              : planningRole === 'coordinator'
-                ? 'border-amber-200 bg-amber-50 text-amber-800'
-                : 'border-border/40 bg-surface-subtle text-text-tertiary'
-          }`}>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.16em]">Main focus</p>
-            <p className="mt-1 text-sm font-semibold">{plannerHandoff.focusTitle}</p>
-            <p className="mt-1 text-xs leading-5 opacity-90">{plannerHandoff.focusDetail}</p>
-            <p className="mt-3 text-[11px] font-semibold uppercase tracking-[0.16em]">Best next move</p>
-            <p className="mt-1 text-xs leading-5 opacity-90">{plannerHandoff.nextMove}</p>
-            <p className="mt-3 text-[11px] font-semibold uppercase tracking-[0.16em]">Decision rule</p>
-            <p className="mt-1 text-xs leading-5 opacity-90">{plannerHandoff.decisionRule}</p>
-          </div>
+          <PlannerHandoffCard
+            tone={planningRole === 'planner' ? 'planner' : planningRole === 'coordinator' ? 'coordinator' : 'viewer'}
+            handoff={plannerHandoff}
+          />
         )}
 
         {loading ? (
