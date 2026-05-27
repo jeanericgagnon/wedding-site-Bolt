@@ -65,6 +65,7 @@ interface OverviewStats {
   confirmedGuests: number;
   declinedGuests: number;
   pendingGuests: number;
+  itineraryEventCount: number;
   daysUntilWedding: number | null;
   weddingDate: string | null;
   siteSlug: string | null;
@@ -249,7 +250,8 @@ export const DashboardOverview: React.FC = () => {
           confirmedGuests: confirmed.length,
           declinedGuests: declined.length,
           pendingGuests: pending.length,
-              daysUntilWedding: calcOverviewDaysUntil(weddingDate),
+          itineraryEventCount: demoEvents.length,
+          daysUntilWedding: calcOverviewDaysUntil(weddingDate),
           weddingDate,
           siteSlug: resolvePublicSiteSlugFromRow(demoWeddingSite as unknown as Record<string, unknown>),
           isPublished: true,
@@ -354,6 +356,11 @@ export const DashboardOverview: React.FC = () => {
         .select('id', { count: 'exact', head: true })
         .eq('wedding_site_id', site?.id ?? '');
 
+      const { count: itineraryEventCount } = await supabase
+        .from('itinerary_events')
+        .select('id', { count: 'exact', head: true })
+        .eq('wedding_site_id', site?.id ?? '');
+
       const { count: photoAlbumCount } = await supabase
         .from('photo_albums')
         .select('id', { count: 'exact', head: true })
@@ -422,6 +429,7 @@ export const DashboardOverview: React.FC = () => {
         confirmedGuests: confirmed.length,
         declinedGuests: declined.length,
         pendingGuests: pending.length,
+        itineraryEventCount: itineraryEventCount ?? 0,
         daysUntilWedding: calcOverviewDaysUntil(weddingDate),
         weddingDate,
         siteSlug: resolvePublicSiteSlugFromRow((site as unknown as Record<string, unknown> | null) ?? null),
@@ -599,6 +607,7 @@ export const DashboardOverview: React.FC = () => {
     totalGuests: stats?.totalGuests ?? 0,
     confirmedGuests: stats?.confirmedGuests ?? 0,
     pendingGuests: stats?.pendingGuests ?? 0,
+    itineraryEventCount: stats?.itineraryEventCount ?? 0,
     checkedInCount: 0,
     liveIssueCount: 0,
     watchCount: 0,

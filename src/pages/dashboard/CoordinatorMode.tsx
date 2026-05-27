@@ -943,6 +943,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
     totalGuests: stats.total,
     confirmedGuests: stats.confirmed,
     pendingGuests: stats.pending,
+    itineraryEventCount: events.length,
     checkedInCount: stats.checkedIn,
     liveIssueCount: liveIssues.length + correctionCues.length,
     watchCount: checkInWatchCount,
