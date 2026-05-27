@@ -25,6 +25,7 @@ import {
   getImportSummaryTone,
   summarizeImportRepairCount,
 } from './builderV2WorkflowGuidance';
+import { buildBuilderV2HandoffGuidance } from './builderV2HandoffGuidance';
 import { buildBuilderV2StructureGuidance } from './builderV2StructureGuidance';
 import { buildBuilderV2SelectionGuidance } from './builderV2SelectionGuidance';
 import { cloneBuilderV2Sections } from './builderV2SectionClone';
@@ -323,6 +324,7 @@ export const BuilderV2Lab: React.FC = () => {
   const [showCommand, setShowCommand] = useState(false);
   const [commandQuery, setCommandQuery] = useState('');
   const [commandIndex, setCommandIndex] = useState(0);
+  const [showExportPanel, setShowExportPanel] = useState(false);
   const [showImportPanel, setShowImportPanel] = useState(false);
   const [importDraft, setImportDraft] = useState('');
   const [importError, setImportError] = useState('');
@@ -364,7 +366,7 @@ export const BuilderV2Lab: React.FC = () => {
     document.getElementById(`rail-section-${type}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }, []);
 
-  const selectSection = (id: string, additive = false, range = false, scroll = false, openEditor = false) => {
+  const selectSection = useCallback((id: string, additive = false, range = false, scroll = false, openEditor = false) => {
     const currentIndex = sections.findIndex((s) => s.id === id);
     const lastIndex = sections.findIndex((s) => s.id === lastSelectedId);
 
@@ -390,7 +392,7 @@ export const BuilderV2Lab: React.FC = () => {
     setMultiSelectedIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
     if (openEditor) { setShowStructure(false); setShowProperties(true); }
     if (scroll) scrollToPreviewSection(id);
-  };
+  }, [lastSelectedId, scrollToPreviewSection, sections]);
 
   const handlePreviewSectionClick = (id: string, type: string, e: React.MouseEvent<HTMLDivElement>) => {
     if (e.shiftKey) {
@@ -854,6 +856,19 @@ export const BuilderV2Lab: React.FC = () => {
     () => selectedBlocks.filter((block) => getBlockValidationWarning(block)).length,
     [selectedBlocks],
   );
+  const handoffGuidance = useMemo(
+    () => buildBuilderV2HandoffGuidance({
+      sections: sections.map((section) => ({
+        id: section.id,
+        title: section.title,
+        enabled: section.enabled,
+        blockCount: (sectionBlocks[section.id] ?? []).length,
+        warningCount: (sectionBlocks[section.id] ?? []).filter((block) => getBlockValidationWarning(block)).length,
+      })),
+      previewDevice,
+    }),
+    [previewDevice, sectionBlocks, sections],
+  );
   const selectedSectionLimit = useMemo(() => getSectionLimitConfig(selected.type), [selected.type]);
   const recommendedBlockTypesForSelected = useMemo(
     () => getRecommendedBlockTypes(selected.type, addableBlocksForSelected),
@@ -952,9 +967,9 @@ export const BuilderV2Lab: React.FC = () => {
     settings: { showTitle: true, title: s.title, subtitle: s.subtitle },
   })), [sections]);
 
-  const exportV2Json = () => {
+  const buildExportDocument = useCallback(() => {
     const doc = toBuilderV2Document(allInstancesForExport);
-    const withBlocks = {
+    return {
       ...doc,
       sections: doc.sections.map((sec) => ({
         ...sec,
@@ -965,6 +980,10 @@ export const BuilderV2Lab: React.FC = () => {
         })),
       })),
     } as BuilderV2Document;
+  }, [allInstancesForExport, sectionBlocks]);
+
+  const downloadV2Json = useCallback(() => {
+    const withBlocks = buildExportDocument();
     const blob = new Blob([JSON.stringify(withBlocks, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -973,13 +992,51 @@ export const BuilderV2Lab: React.FC = () => {
     a.click();
     URL.revokeObjectURL(url);
     notify('Exported V2 JSON');
-  };
+  }, [buildExportDocument, notify]);
 
-  const openImportPanel = () => {
+  const copyV2Json = useCallback(async () => {
+    const payload = JSON.stringify(buildExportDocument(), null, 2);
+    if (!navigator.clipboard?.writeText) {
+      notify('Clipboard is unavailable in this browser context');
+      return;
+    }
+    await navigator.clipboard.writeText(payload);
+    notify('Copied V2 JSON');
+  }, [buildExportDocument, notify]);
+
+  const openImportPanel = useCallback(() => {
     setImportError('');
     setLastImportSource('Pasted JSON');
     setShowImportPanel(true);
-  };
+  }, []);
+
+  const openExportPanel = useCallback(() => {
+    setShowExportPanel(true);
+  }, []);
+
+  const runHandoffAction = useCallback(() => {
+    switch (handoffGuidance.primaryAction) {
+      case 'review-hidden':
+      case 'review-empty':
+      case 'review-warning':
+        if (handoffGuidance.focusSectionId) {
+          selectSection(handoffGuidance.focusSectionId, false, false, true, true);
+          setShowStructure(handoffGuidance.primaryAction === 'review-hidden');
+          setShowProperties(true);
+          setPropertyTab('content');
+        }
+        break;
+      case 'review-mobile':
+        setPreviewDevice('mobile');
+        setFocusPreview(true);
+        setShowMinimap(true);
+        if (handoffGuidance.focusSectionId) scrollToPreviewSection(handoffGuidance.focusSectionId);
+        break;
+      case 'ready-to-export':
+        setShowExportPanel(true);
+        break;
+    }
+  }, [handoffGuidance, scrollToPreviewSection, selectSection]);
 
   const applyImportedDocument = (doc: BuilderV2Document, report: BuilderV2ImportReport, sourceLabel: string) => {
     const nextSections = doc.sections.map((sec) => ({
@@ -1077,6 +1134,11 @@ export const BuilderV2Lab: React.FC = () => {
       { id: 'sel-comfortable', group: 'Selection', label: 'Set selected density: comfortable', keywords: ['comfortable', 'density', 'selection', 'batch', 'open'], action: () => runCommand('Set selected density: comfortable', () => setSelectedDensity('comfortable')) },
       { id: 'sel-review', group: 'Selection', label: 'Review selected sections in preview', keywords: ['preview', 'selection', 'review', 'batch'], action: () => runCommand('Review selected sections in preview', reviewSelectionInPreview) },
       { id: 'block-pack', group: 'Blocks', label: 'Add recommended block pack', keywords: ['block', 'pack', 'recommended', 'signature', 'section'], action: () => runCommand('Add recommended block pack', addRecommendedBlockPack) },
+      { id: 'export-open', group: 'Handoff', label: 'Open export handoff', keywords: ['export', 'handoff', 'json', 'share'], action: () => runCommand('Open export handoff', openExportPanel) },
+      { id: 'export-download', group: 'Handoff', label: 'Download layout JSON', keywords: ['export', 'download', 'json', 'handoff'], action: () => runCommand('Download layout JSON', downloadV2Json) },
+      { id: 'export-copy', group: 'Handoff', label: 'Copy layout JSON', keywords: ['copy', 'json', 'handoff', 'clipboard'], action: () => runCommand('Copy layout JSON', () => { void copyV2Json(); }) },
+      { id: 'import-open', group: 'Handoff', label: 'Open import layout', keywords: ['import', 'json', 'recover', 'handoff'], action: () => runCommand('Open import layout', openImportPanel) },
+      { id: 'handoff-fix', group: 'Handoff', label: handoffGuidance.primaryActionLabel, keywords: ['fix', 'next', 'handoff', 'review', 'document'], action: () => runCommand(handoffGuidance.primaryActionLabel, runHandoffAction) },
     ];
     const q = commandQuery.trim().toLowerCase();
     if (!q) return base;
@@ -1094,7 +1156,7 @@ export const BuilderV2Lab: React.FC = () => {
       .filter((x) => x.s > 0)
       .sort((a, b) => b.s - a.s)
       .map((x) => x.item);
-  }, [commandQuery, sections, addRecommendedBlockPack, addSection, clearSelection, duplicateSelectedSections, hideSelectedSections, invertSelection, removeSelectedSections, restoreSelectedSectionsToStarterBlocks, reviewSelectionInPreview, selectAllSections, setSelectedDensity, showSelectedSections, updateVariant]);
+  }, [commandQuery, sections, addRecommendedBlockPack, addSection, clearSelection, copyV2Json, downloadV2Json, duplicateSelectedSections, handoffGuidance.primaryActionLabel, hideSelectedSections, invertSelection, openExportPanel, openImportPanel, removeSelectedSections, restoreSelectedSectionsToStarterBlocks, reviewSelectionInPreview, runHandoffAction, selectAllSections, setSelectedDensity, showSelectedSections, updateVariant]);
   const importGuidance = useMemo(
     () => buildBuilderV2ImportGuidance(lastImportReport, lastImportSource),
     [lastImportReport, lastImportSource],
@@ -1226,7 +1288,7 @@ export const BuilderV2Lab: React.FC = () => {
           <div className="flex items-center gap-2">
             <button onClick={() => setShowQuickHelp((v) => !v)} className="px-2 py-1.5 border rounded-sm hover:border-primary/40 inline-flex items-center gap-1"><Keyboard className="w-3.5 h-3.5" /> Shortcuts</button>
             <button onClick={() => setShowCommand(true)} className="px-2 py-1.5 border rounded-sm hover:border-primary/40 inline-flex items-center gap-1"><Command className="w-3.5 h-3.5" /> Actions</button>
-            <button onClick={exportV2Json} className="px-2 py-1.5 border rounded-sm hover:border-primary/40">Export layout</button>
+            <button onClick={openExportPanel} className="px-2 py-1.5 border rounded-sm hover:border-primary/40">Export layout</button>
             <button onClick={openImportPanel} className="px-2 py-1.5 border rounded-sm hover:border-primary/40">Import layout</button>
             <button onClick={() => setShowStructure((v) => !v)} className="px-2 py-1.5 border rounded-sm hover:border-primary/40">{showStructure ? 'Hide' : 'Reorder or add'} sections</button>
           </div>
@@ -1258,6 +1320,82 @@ export const BuilderV2Lab: React.FC = () => {
             </div>
           </div>
         )}
+
+        <div className="px-2 md:px-3 py-2 border-b border-border-subtle bg-white">
+          <div className={`rounded-md border px-3 py-3 ${
+            handoffGuidance.tone === 'ready'
+              ? 'border-emerald-200 bg-emerald-50/60'
+              : handoffGuidance.tone === 'repair'
+                ? 'border-amber-200 bg-amber-50/60'
+                : 'border-rose-200 bg-rose-50/60'
+          }`}>
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-[11px] uppercase tracking-[0.2em] text-text-tertiary font-semibold">Document handoff</p>
+                <p className="mt-1 text-sm font-semibold text-text-primary">{handoffGuidance.title}</p>
+                <p className="mt-1 text-xs leading-relaxed text-text-secondary max-w-3xl">{handoffGuidance.detail}</p>
+              </div>
+              <div className="shrink-0 flex flex-wrap justify-end gap-1.5 text-[10px]">
+                {handoffGuidance.keyStats.map((stat) => (
+                  <span key={stat} className="rounded-full border border-border-subtle bg-white px-2 py-1 text-text-secondary">{stat}</span>
+                ))}
+              </div>
+            </div>
+            <div className="mt-3 grid gap-2 xl:grid-cols-2">
+              <div className="rounded-md border border-border-subtle bg-white px-3 py-3">
+                <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary">Main focus</p>
+                <p className="mt-1 text-sm font-semibold text-text-primary">{handoffGuidance.mainFocus}</p>
+                <p className="mt-2 text-xs leading-relaxed text-text-secondary">{handoffGuidance.bestNextMove}</p>
+                <div className="mt-3 grid gap-2 md:grid-cols-2">
+                  <div className="rounded-md border border-border-subtle bg-surface-subtle px-2.5 py-2">
+                    <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary">Decision rule</p>
+                    <p className="mt-1 text-xs leading-relaxed text-text-primary">{handoffGuidance.decisionRule}</p>
+                  </div>
+                  <div className="rounded-md border border-border-subtle bg-surface-subtle px-2.5 py-2">
+                    <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary">Watchout</p>
+                    <p className="mt-1 text-xs leading-relaxed text-text-primary">{handoffGuidance.watchout}</p>
+                  </div>
+                </div>
+                <div className="mt-3 grid gap-2 md:grid-cols-3">
+                  {handoffGuidance.steps.map((step) => (
+                    <div key={step.label} className="rounded-md border border-border-subtle bg-surface-subtle px-2.5 py-2">
+                      <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary">{step.label}</p>
+                      <p className="mt-1 text-xs leading-relaxed text-text-primary">{step.detail}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className="rounded-md border border-border-subtle bg-white px-3 py-3">
+                <div className="grid gap-2 md:grid-cols-2">
+                  <div className="rounded-md border border-border-subtle bg-surface-subtle px-2.5 py-2">
+                    <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary">Export read</p>
+                    <p className="mt-1 text-sm font-semibold text-text-primary">{handoffGuidance.exportHeadline}</p>
+                    <p className="mt-1 text-xs leading-relaxed text-text-secondary">{handoffGuidance.exportDetail}</p>
+                  </div>
+                  <div className="rounded-md border border-border-subtle bg-surface-subtle px-2.5 py-2">
+                    <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary">Copy read</p>
+                    <p className="mt-1 text-sm font-semibold text-text-primary">{handoffGuidance.copyHeadline}</p>
+                    <p className="mt-1 text-xs leading-relaxed text-text-secondary">{handoffGuidance.copyDetail}</p>
+                  </div>
+                </div>
+                <div className="mt-3 grid gap-2 md:grid-cols-2">
+                  <button onClick={runHandoffAction} className="rounded-md border border-primary/30 bg-primary/10 px-3 py-2 text-left text-sm font-semibold text-primary hover:bg-primary/15">
+                    {handoffGuidance.primaryActionLabel}
+                  </button>
+                  <button onClick={openExportPanel} className="rounded-md border border-border-subtle bg-white px-3 py-2 text-left text-sm font-semibold text-text-primary hover:border-primary/40 hover:bg-primary/5">
+                    Open export panel
+                  </button>
+                  <button onClick={downloadV2Json} className="rounded-md border border-border-subtle bg-white px-3 py-2 text-left text-sm font-semibold text-text-primary hover:border-primary/40 hover:bg-primary/5">
+                    Download layout JSON
+                  </button>
+                  <button onClick={() => { void copyV2Json(); }} className="rounded-md border border-border-subtle bg-white px-3 py-2 text-left text-sm font-semibold text-text-primary hover:border-primary/40 hover:bg-primary/5">
+                    Copy layout JSON
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
 
         <div className="px-2 md:px-3 py-2 border-b border-border-subtle bg-white">
           <div className={`rounded-md border px-3 py-3 ${
@@ -2465,6 +2603,99 @@ export const BuilderV2Lab: React.FC = () => {
                 </button>
                 <button onClick={importV2Json} className="rounded-sm border border-primary/30 bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary hover:bg-primary/15">
                   Import layout
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showExportPanel && (
+        <div className="fixed inset-0 z-50 bg-black/30 flex items-start justify-center pt-16" onClick={() => setShowExportPanel(false)}>
+          <div className="w-full max-w-3xl bg-white rounded-xl border border-border shadow-xl" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between gap-3 border-b border-border-subtle px-4 py-3">
+              <div>
+                <h3 className="font-semibold text-sm">Export Builder V2 layout</h3>
+                <p className="mt-1 text-xs text-text-secondary">
+                  Capture the current document as a reusable JSON handoff, but keep the document guidance honest about what still wants review first.
+                </p>
+              </div>
+              <button onClick={() => setShowExportPanel(false)} className="text-sm text-text-tertiary hover:text-text-primary">✕</button>
+            </div>
+            <div className="space-y-3 p-4">
+              <div className={`rounded-md border px-3 py-3 ${
+                handoffGuidance.tone === 'ready'
+                  ? 'border-emerald-200 bg-emerald-50/60'
+                  : handoffGuidance.tone === 'repair'
+                    ? 'border-amber-200 bg-amber-50/60'
+                    : 'border-rose-200 bg-rose-50/60'
+              }`}>
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary">Handoff read</p>
+                    <p className="mt-1 text-sm font-semibold text-text-primary">{handoffGuidance.title}</p>
+                    <p className="mt-1 text-xs leading-relaxed text-text-secondary">{handoffGuidance.detail}</p>
+                  </div>
+                  <div className="shrink-0 flex flex-wrap gap-1.5 text-[10px]">
+                    {handoffGuidance.keyStats.map((stat) => (
+                      <span key={stat} className="rounded-full border border-border-subtle bg-white px-2 py-1 text-text-secondary">{stat}</span>
+                    ))}
+                  </div>
+                </div>
+                <div className="mt-3 grid gap-2 md:grid-cols-2 xl:grid-cols-4">
+                  <div className="rounded-md border border-border-subtle bg-white px-2.5 py-2">
+                    <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary">Main focus</p>
+                    <p className="mt-1 text-xs leading-relaxed text-text-primary">{handoffGuidance.mainFocus}</p>
+                  </div>
+                  <div className="rounded-md border border-border-subtle bg-white px-2.5 py-2">
+                    <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary">Best next move</p>
+                    <p className="mt-1 text-xs leading-relaxed text-text-primary">{handoffGuidance.bestNextMove}</p>
+                  </div>
+                  <div className="rounded-md border border-border-subtle bg-white px-2.5 py-2">
+                    <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary">Decision rule</p>
+                    <p className="mt-1 text-xs leading-relaxed text-text-primary">{handoffGuidance.decisionRule}</p>
+                  </div>
+                  <div className="rounded-md border border-border-subtle bg-white px-2.5 py-2">
+                    <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary">Watchout</p>
+                    <p className="mt-1 text-xs leading-relaxed text-text-primary">{handoffGuidance.watchout}</p>
+                  </div>
+                </div>
+                <div className="mt-3 grid gap-2 md:grid-cols-3">
+                  {handoffGuidance.steps.map((step) => (
+                    <div key={step.label} className="rounded-md border border-border-subtle bg-white px-2.5 py-2">
+                      <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary">{step.label}</p>
+                      <p className="mt-1 text-xs leading-relaxed text-text-primary">{step.detail}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="grid gap-3 md:grid-cols-2">
+                <div className="rounded-md border border-border-subtle bg-surface-subtle px-3 py-3">
+                  <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary">Export read</p>
+                  <p className="mt-1 text-sm font-semibold text-text-primary">{handoffGuidance.exportHeadline}</p>
+                  <p className="mt-1 text-xs leading-relaxed text-text-secondary">{handoffGuidance.exportDetail}</p>
+                </div>
+                <div className="rounded-md border border-border-subtle bg-surface-subtle px-3 py-3">
+                  <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary">Copy read</p>
+                  <p className="mt-1 text-sm font-semibold text-text-primary">{handoffGuidance.copyHeadline}</p>
+                  <p className="mt-1 text-xs leading-relaxed text-text-secondary">{handoffGuidance.copyDetail}</p>
+                </div>
+              </div>
+            </div>
+            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border-subtle px-4 py-3">
+              <button onClick={runHandoffAction} className="rounded-sm border border-primary/30 bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary hover:bg-primary/15">
+                {handoffGuidance.primaryActionLabel}
+              </button>
+              <div className="flex items-center gap-2">
+                <button onClick={() => setShowExportPanel(false)} className="rounded-sm border border-border-subtle px-3 py-1.5 text-xs font-medium hover:border-primary/40 hover:bg-primary/5">
+                  Close
+                </button>
+                <button onClick={() => { void copyV2Json(); }} className="rounded-sm border border-border-subtle px-3 py-1.5 text-xs font-medium hover:border-primary/40 hover:bg-primary/5">
+                  Copy JSON
+                </button>
+                <button onClick={downloadV2Json} className="rounded-sm border border-primary/30 bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary hover:bg-primary/15">
+                  Download JSON
                 </button>
               </div>
             </div>
