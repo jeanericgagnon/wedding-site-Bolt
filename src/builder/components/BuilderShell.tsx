@@ -465,7 +465,7 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
                 {launchConfidence && (
                   <div id="launch-confidence" className="rounded-2xl border border-border-subtle bg-white px-4 py-3">
                     <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-                      <div className="space-y-1">
+                      <div className="space-y-3">
                         <div className="flex items-center gap-2">
                           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-text-tertiary">Launch confidence</p>
                           <span className={`rounded-full px-2.5 py-1 text-[11px] font-medium ${
@@ -477,15 +477,27 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
                           </span>
                         </div>
                         <p className="text-sm font-medium text-text-primary">{launchConfidence.summary}</p>
-                        <p className="text-[11px] text-text-secondary">Current · {launchConfidence.current}</p>
-                        <p className="text-[11px] text-text-secondary">Next · {launchConfidence.next}</p>
-                        <p className="text-[11px] text-text-secondary">Decision rule · {launchConfidence.decisionRule}</p>
-                        <p className="text-[11px] text-amber-700">Watchout · {launchConfidence.watchout}</p>
-                        <div className="grid gap-2 pt-1 md:grid-cols-3">
+                        <div className="grid gap-2 sm:grid-cols-2">
+                          <div className="rounded-2xl border border-border-subtle bg-surface-subtle/30 px-3 py-3">
+                            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-text-tertiary">Main focus</p>
+                            <p className="mt-1 text-sm font-medium text-text-primary">{launchConfidence.current}</p>
+                          </div>
+                          <div className="rounded-2xl border border-border-subtle bg-surface-subtle/30 px-3 py-3">
+                            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-text-tertiary">Best next move</p>
+                            <p className="mt-1 text-sm font-medium text-text-primary">{launchConfidence.next}</p>
+                            <div className="mt-3 border-t border-border-subtle pt-3">
+                              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-text-tertiary">Decision rule</p>
+                              <p className="mt-1 text-sm leading-5 text-text-secondary">{launchConfidence.decisionRule}</p>
+                              <p className="mt-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-text-tertiary">Watchout</p>
+                              <p className="mt-1 text-sm leading-5 text-text-secondary">{launchConfidence.watchout}</p>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="grid gap-2 md:grid-cols-3">
                           {launchConfidence.sequence.map((step) => (
                             <div key={`${step.status}-${step.label}`} className="rounded-xl border border-border-subtle bg-surface-subtle/40 px-3 py-3">
                               <div className="flex items-center justify-between gap-2">
-                                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-text-tertiary">{step.status}</p>
+                                <p className="text-xs font-semibold text-text-primary">{step.label}</p>
                                 <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${
                                   step.status === 'current'
                                     ? 'border border-primary/20 bg-primary-light text-primary'
@@ -493,7 +505,7 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
                                       ? 'border border-warning/20 bg-warning-light text-warning'
                                       : 'border border-border-subtle bg-white text-text-secondary'
                                 }`}>
-                                  {step.label}
+                                  {getFlowStatusLabel(step.status)}
                                 </span>
                               </div>
                               <p className="mt-2 text-xs leading-5 text-text-secondary">{step.detail}</p>
