@@ -115,7 +115,7 @@ describe('toBuilderV2Document', () => {
       variant: 'default',
       enabled: true,
       bindings: {},
-      settings: { title: 'Counting down', subtitle: 'Almost time', message: 'Join us for the full weekend.' },
+      settings: { title: 'Counting down', subtitle: 'Almost time', eyebrow: 'Save the date', showTitle: false, message: 'Join us for the full weekend.' },
     });
 
     const footerSection = toBuilderV2Section({
@@ -141,6 +141,8 @@ describe('toBuilderV2Document', () => {
       bindings: {},
       settings: {
         title: 'Cocktail Attire',
+        eyebrow: 'What to wear',
+        showTitle: false,
         dressCodeLabel: 'Cocktail Attire',
         description: 'Dressy, easy, and outdoor-friendly.',
         presetCode: 'cocktail',
@@ -158,6 +160,8 @@ describe('toBuilderV2Document', () => {
       bindings: {},
       settings: {
         title: 'Where to stay',
+        eyebrow: 'Stay nearby',
+        showTitle: false,
         generalNote: 'We reserved a small room block.',
         hotels: [
           {
@@ -183,6 +187,8 @@ describe('toBuilderV2Document', () => {
       bindings: {},
       settings: {
         title: 'Questions?',
+        eyebrow: 'Need help?',
+        showTitle: false,
         introText: 'Reach out if you need anything before the weekend.',
         emailSubject: 'Wedding Question',
         contacts: [
@@ -198,6 +204,8 @@ describe('toBuilderV2Document', () => {
     });
 
     expect(countdownSection.blocks).toMatchObject([
+      { type: 'qna', data: { question: 'Eyebrow', answer: 'Save the date' } },
+      { type: 'qna', data: { question: 'Show title', answer: 'false' } },
       { type: 'text', data: { text: 'Almost time' } },
       { type: 'story', data: { text: 'Join us for the full weekend.' } },
     ]);
@@ -207,6 +215,8 @@ describe('toBuilderV2Document', () => {
       { type: 'story', data: { text: 'Travel details keep evolving.' } },
     ]);
     expect(dressCodeSection.blocks).toMatchObject([
+      { type: 'qna', data: { question: 'Eyebrow', answer: 'What to wear' } },
+      { type: 'qna', data: { question: 'Show title', answer: 'false' } },
       { type: 'title', data: { text: 'Cocktail Attire' } },
       { type: 'text', data: { text: 'Dressy, easy, and outdoor-friendly.' } },
       { type: 'qna', data: { answer: 'Block heels work well' } },
@@ -216,6 +226,8 @@ describe('toBuilderV2Document', () => {
       { type: 'story', data: { text: 'Bring a layer for the evening.' } },
     ]);
     expect(accommodationsSection.blocks).toMatchObject([
+      { type: 'qna', data: { question: 'Eyebrow', answer: 'Stay nearby' } },
+      { type: 'qna', data: { question: 'Show title', answer: 'false' } },
       { type: 'text', data: { text: 'We reserved a small room block.' } },
       {
         type: 'hotelCard',
@@ -233,6 +245,8 @@ describe('toBuilderV2Document', () => {
       },
     ]);
     expect(contactSection.blocks).toMatchObject([
+      { type: 'qna', data: { question: 'Eyebrow', answer: 'Need help?' } },
+      { type: 'qna', data: { question: 'Show title', answer: 'false' } },
       { type: 'text', data: { text: 'Reach out if you need anything before the weekend.' } },
       {
         type: 'travelTip',
@@ -259,6 +273,7 @@ describe('toBuilderV2Document', () => {
         title: 'Wedding Party',
         subtitle: 'The people standing with us',
         eyebrow: 'Meet the crew',
+        showTitle: false,
         bridalTitle: 'Alex crew',
         groomTitle: 'Jordan crew',
         bridalParty: [
@@ -282,6 +297,7 @@ describe('toBuilderV2Document', () => {
 
     expect(partySection.blocks).toMatchObject([
       { type: 'qna', data: { question: 'Eyebrow', answer: 'Meet the crew' } },
+      { type: 'qna', data: { question: 'Show title', answer: 'false' } },
       { type: 'title', data: { text: 'Alex crew', subtitle: 'bridal-title' } },
       {
         type: 'photo',
@@ -417,6 +433,7 @@ describe('toBuilderV2Document', () => {
       enabled: true,
       bindings: {},
       settings: {
+        eyebrow: 'Travel details',
         headline: 'Directions & Parking',
         venueName: 'The Grand Ballroom',
         address: '123 Celebration Lane',
@@ -435,6 +452,7 @@ describe('toBuilderV2Document', () => {
 
     expect(directionsSection.title).toBe('Directions & Parking');
     expect(directionsSection.blocks).toMatchObject([
+      { type: 'qna', data: { question: 'Eyebrow', answer: 'Travel details' } },
       { type: 'text', data: { text: 'Venue: The Grand Ballroom\nAddress: 123 Celebration Lane\nCity: San Francisco, CA 94102\nPhone: (415) 555-0123' } },
       { type: 'text', data: { text: 'Parking: Complimentary valet parking is available at the main entrance.' } },
       { type: 'text', data: { text: 'Rideshare: Uber and Lyft drop-off at the north entrance.' } },
@@ -460,6 +478,7 @@ describe('toBuilderV2Document', () => {
     });
 
     expect(project.pages[0]?.sections[0]?.settings).toMatchObject({
+      eyebrow: 'Travel details',
       headline: 'Directions & Parking',
       venueName: 'The Grand Ballroom',
       address: '123 Celebration Lane',
@@ -885,6 +904,8 @@ describe('legacy adapters', () => {
               title: 'Where to stay',
               subtitle: 'A couple of easy options nearby',
               blocks: [
+                { id: 'stay-eyebrow', type: 'qna', data: { question: 'Eyebrow', answer: 'Stay nearby' } },
+                { id: 'stay-show-title', type: 'qna', data: { question: 'Show title', answer: 'false' } },
                 {
                   id: 'hotel-1',
                   type: 'hotelCard',
@@ -931,6 +952,8 @@ describe('legacy adapters', () => {
       },
     ]);
     expect(project.pages[0].sections[2].settings).toMatchObject({
+      showTitle: false,
+      eyebrow: 'Stay nearby',
       generalNote: 'A couple of easy options nearby',
       hotels: [
         {
@@ -1046,6 +1069,8 @@ describe('legacy adapters', () => {
               title: 'Cocktail Attire',
               subtitle: 'Dressy, comfortable, and ready for an outdoor evening.',
               blocks: [
+                { id: 'dress-eyebrow', type: 'qna', data: { question: 'Eyebrow', answer: 'What to wear' } },
+                { id: 'dress-show-title', type: 'qna', data: { question: 'Show title', answer: 'false' } },
                 { id: 'dress-label', type: 'title', data: { text: 'Festive Cocktail' } },
                 { id: 'dress-note', type: 'text', data: { text: 'Think polished looks with layers for a cool night.' } },
                 { id: 'dress-tip-1', type: 'qna', data: { answer: 'Block heels and loafers work well on the lawn.' } },
@@ -1061,6 +1086,8 @@ describe('legacy adapters', () => {
     });
 
     expect(project.pages[0].sections[0].settings).toMatchObject({
+      showTitle: false,
+      eyebrow: 'What to wear',
       dressCodeLabel: 'Festive Cocktail',
       presetCode: 'cocktail',
       description: 'Think polished looks with layers for a cool night.',
@@ -1125,6 +1152,8 @@ describe('legacy adapters', () => {
               title: 'Counting down to Napa',
               subtitle: 'Almost time',
               blocks: [
+                { id: 'countdown-eyebrow', type: 'qna', data: { question: 'Eyebrow', answer: 'Save the date' } },
+                { id: 'countdown-show-title', type: 'qna', data: { question: 'Show title', answer: 'false' } },
                 { id: 'countdown-note', type: 'text', data: { text: 'Join us for a full wedding weekend in wine country.' } },
               ],
             },
@@ -1135,7 +1164,8 @@ describe('legacy adapters', () => {
 
     expect(project.pages[0].sections[0].settings).toMatchObject({
       title: 'Counting down to Napa',
-      eyebrow: 'Almost time',
+      showTitle: false,
+      eyebrow: 'Save the date',
       message: 'Join us for a full wedding weekend in wine country.',
     });
   });
@@ -1199,6 +1229,8 @@ describe('legacy adapters', () => {
               title: 'Questions?',
               subtitle: 'Need help?',
               blocks: [
+                { id: 'contact-eyebrow', type: 'qna', data: { question: 'Eyebrow', answer: 'Need help?' } },
+                { id: 'contact-show-title', type: 'qna', data: { question: 'Show title', answer: 'false' } },
                 { id: 'contact-intro', type: 'text', data: { text: 'Reach out if you need anything before the weekend.' } },
                 {
                   id: 'contact-person-1',
@@ -1220,6 +1252,8 @@ describe('legacy adapters', () => {
     });
 
     expect(project.pages[0].sections[0].settings).toMatchObject({
+      showTitle: false,
+      eyebrow: 'Need help?',
       introText: 'Reach out if you need anything before the weekend.',
       emailSubject: 'Wedding Question',
       contacts: [
@@ -1255,6 +1289,7 @@ describe('legacy adapters', () => {
               subtitle: 'The people standing with us',
               blocks: [
                 { id: 'party-eyebrow', type: 'qna', data: { question: 'Eyebrow', answer: 'Meet the crew' } },
+                { id: 'party-show-title', type: 'qna', data: { question: 'Show title', answer: 'false' } },
                 { id: 'party-bridal-title', type: 'title', data: { text: 'Alex crew', subtitle: 'bridal-title' } },
                 {
                   id: 'party-bridal-1',
@@ -1287,6 +1322,7 @@ describe('legacy adapters', () => {
     });
 
     expect(project.pages[0].sections[0].settings).toMatchObject({
+      showTitle: false,
       eyebrow: 'Meet the crew',
       bridalTitle: 'Alex crew',
       groomTitle: 'Jordan crew',

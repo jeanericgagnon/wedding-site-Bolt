@@ -393,14 +393,19 @@ const makeDefaultBlocksForType = (
       ];
     }
     case 'countdown': {
+      const eyebrow = getSettingString(settings, 'eyebrow');
       const message = getSettingString(settings, 'message');
+      const showTitle = settings?.showTitle === false ? false : undefined;
       return [
+        ...(eyebrow ? [{ id: 'b-countdown-eyebrow', type: 'qna', data: { question: 'Eyebrow', answer: eyebrow } } satisfies BuilderV2Block] : []),
+        ...(showTitle === false ? [{ id: 'b-countdown-show-title', type: 'qna', data: { question: 'Show title', answer: 'false' } } satisfies BuilderV2Block] : []),
         ...(subtitleText ? [{ id: 'b-text', type: 'text', data: { text: subtitleText } } satisfies BuilderV2Block] : []),
         ...(message ? [{ id: 'b-story', type: 'story', data: { text: message } } satisfies BuilderV2Block] : []),
       ];
     }
     case 'wedding-party': {
       const eyebrow = getSettingString(settings, 'eyebrow');
+      const showTitle = settings?.showTitle === false ? false : undefined;
       const bridalTitle = getSettingString(settings, 'bridalTitle');
       const groomTitle = getSettingString(settings, 'groomTitle');
       const bridalParty = getSettingRecordList<{
@@ -417,6 +422,7 @@ const makeDefaultBlocksForType = (
       }>(settings, 'groomParty');
       return [
         ...(eyebrow ? [{ id: 'b-party-eyebrow', type: 'qna', data: { question: 'Eyebrow', answer: eyebrow } } satisfies BuilderV2Block] : []),
+        ...(showTitle === false ? [{ id: 'b-party-show-title', type: 'qna', data: { question: 'Show title', answer: 'false' } } satisfies BuilderV2Block] : []),
         ...(bridalTitle ? [{ id: 'b-party-bridal-title', type: 'title', data: { text: bridalTitle, subtitle: 'bridal-title' } } satisfies BuilderV2Block] : []),
         ...bridalParty
           .filter((member) => (
@@ -461,6 +467,8 @@ const makeDefaultBlocksForType = (
       ];
     }
     case 'dress-code': {
+      const eyebrow = getSettingString(settings, 'eyebrow');
+      const showTitle = settings?.showTitle === false ? false : undefined;
       const description = getSettingString(settings, 'description');
       const additionalNote = getSettingString(settings, 'additionalNote');
       const dressCodeLabel = getSettingString(settings, 'dressCodeLabel');
@@ -468,6 +476,8 @@ const makeDefaultBlocksForType = (
       const colorNote = getSettingString(settings, 'colorNote');
       const suggestions = getSettingStringList(settings, 'suggestions');
       return [
+        ...(eyebrow ? [{ id: 'b-dress-eyebrow', type: 'qna', data: { question: 'Eyebrow', answer: eyebrow } } satisfies BuilderV2Block] : []),
+        ...(showTitle === false ? [{ id: 'b-dress-show-title', type: 'qna', data: { question: 'Show title', answer: 'false' } } satisfies BuilderV2Block] : []),
         ...(dressCodeLabel ? [{ id: 'b-title', type: 'title', data: { text: dressCodeLabel } } satisfies BuilderV2Block] : []),
         ...(description ? [{ id: 'b-text', type: 'text', data: { text: description } } satisfies BuilderV2Block] : []),
         ...suggestions.map((suggestion, index) => ({
@@ -481,6 +491,8 @@ const makeDefaultBlocksForType = (
       ];
     }
     case 'accommodations': {
+      const eyebrow = getSettingString(settings, 'eyebrow');
+      const showTitle = settings?.showTitle === false ? false : undefined;
       const generalNote = getSettingString(settings, 'generalNote');
       const hotels = getSettingRecordList<{
         name?: string;
@@ -495,6 +507,8 @@ const makeDefaultBlocksForType = (
         distance?: string;
       }>(settings, 'hotels');
       return [
+        ...(eyebrow ? [{ id: 'b-accommodations-eyebrow', type: 'qna', data: { question: 'Eyebrow', answer: eyebrow } } satisfies BuilderV2Block] : []),
+        ...(showTitle === false ? [{ id: 'b-accommodations-show-title', type: 'qna', data: { question: 'Show title', answer: 'false' } } satisfies BuilderV2Block] : []),
         ...(generalNote ? [{ id: 'b-text', type: 'text', data: { text: generalNote } } satisfies BuilderV2Block] : []),
         ...hotels
           .filter((hotel) => typeof hotel.name === 'string' && hotel.name.trim())
@@ -520,6 +534,8 @@ const makeDefaultBlocksForType = (
       ];
     }
     case 'contact': {
+      const eyebrow = getSettingString(settings, 'eyebrow');
+      const showTitle = settings?.showTitle === false ? false : undefined;
       const introText = getSettingString(settings, 'introText');
       const emailSubject = getSettingString(settings, 'emailSubject');
       const closingNote = getSettingString(settings, 'closingNote');
@@ -530,6 +546,8 @@ const makeDefaultBlocksForType = (
         phone?: string;
       }>(settings, 'contacts');
       return [
+        ...(eyebrow ? [{ id: 'b-contact-eyebrow', type: 'qna', data: { question: 'Eyebrow', answer: eyebrow } } satisfies BuilderV2Block] : []),
+        ...(showTitle === false ? [{ id: 'b-contact-show-title', type: 'qna', data: { question: 'Show title', answer: 'false' } } satisfies BuilderV2Block] : []),
         ...(introText ? [{ id: 'b-text', type: 'text', data: { text: introText } } satisfies BuilderV2Block] : []),
         ...contacts
           .filter((contact) => (
@@ -553,6 +571,7 @@ const makeDefaultBlocksForType = (
       ];
     }
     case 'directions': {
+      const eyebrow = getSettingString(settings, 'eyebrow');
       const venueName = getSettingString(settings, 'venueName');
       const address = getSettingString(settings, 'address');
       const city = getSettingString(settings, 'city');
@@ -570,6 +589,7 @@ const makeDefaultBlocksForType = (
       ].filter(Boolean).join('\n');
 
       return [
+        ...(eyebrow ? [{ id: 'b-directions-eyebrow', type: 'qna', data: { question: 'Eyebrow', answer: eyebrow } } satisfies BuilderV2Block] : []),
         ...(venueLines ? [{ id: 'b-directions-venue', type: 'text', data: { text: venueLines } } satisfies BuilderV2Block] : []),
         ...(parkingNote ? [{ id: 'b-directions-parking', type: 'text', data: { text: `Parking: ${parkingNote}` } } satisfies BuilderV2Block] : []),
         ...(rideshareNote ? [{ id: 'b-directions-rideshare', type: 'text', data: { text: `Rideshare: ${rideshareNote}` } } satisfies BuilderV2Block] : []),
@@ -779,6 +799,17 @@ const getNamedAnswerValue = (
   return answer?.trim() || '';
 };
 
+const getNamedBooleanValue = (
+  section: BuilderV2Section,
+  label: string,
+): boolean | undefined => {
+  const value = getNamedAnswerValue(section, label).toLowerCase();
+  if (!value) return undefined;
+  if (['true', 'yes', '1', 'on'].includes(value)) return true;
+  if (['false', 'no', '0', 'off'].includes(value)) return false;
+  return undefined;
+};
+
 const getDirectionsTextValue = (
   section: BuilderV2Section,
   label: 'Venue' | 'Address' | 'City' | 'Phone' | 'Parking' | 'Rideshare' | 'Shuttle',
@@ -900,6 +931,8 @@ const toLegacyBuilderSettings = (section: BuilderV2Section): Record<string, unkn
 
       return {
         ...common,
+        showTitle: getNamedBooleanValue(section, 'Show title') ?? true,
+        eyebrow: getNamedAnswerValue(section, 'Eyebrow') || undefined,
         generalNote: getFirstMeaningfulString(section, [
           section.subtitle,
           narrativeParts[0],
@@ -949,7 +982,8 @@ const toLegacyBuilderSettings = (section: BuilderV2Section): Record<string, unkn
       const narrativeParts = getSectionNarrativeParts(section);
       return {
         ...common,
-        eyebrow: getFirstMeaningfulString(section, [section.subtitle]),
+        showTitle: getNamedBooleanValue(section, 'Show title') ?? true,
+        eyebrow: getNamedAnswerValue(section, 'Eyebrow') || getFirstMeaningfulString(section, [section.subtitle]),
         message: narrativeParts[0] || '',
       };
     }
@@ -975,6 +1009,7 @@ const toLegacyBuilderSettings = (section: BuilderV2Section): Record<string, unkn
 
       return {
         ...common,
+        showTitle: getNamedBooleanValue(section, 'Show title') ?? true,
         eyebrow: getNamedAnswerValue(section, 'Eyebrow') || undefined,
         bridalTitle: titleBlocks.find((block) => block.data.subtitle === 'bridal-title')?.data.text || undefined,
         groomTitle: titleBlocks.find((block) => block.data.subtitle === 'groom-title')?.data.text || undefined,
@@ -1015,7 +1050,10 @@ const toLegacyBuilderSettings = (section: BuilderV2Section): Record<string, unkn
             .find((value): value is string => typeof value === 'string' && value.trim().length > 0)
             ?.trim()
             .toLowerCase();
-          return candidate !== 'color note' && candidate !== 'preset code';
+          return candidate !== 'color note'
+            && candidate !== 'preset code'
+            && candidate !== 'eyebrow'
+            && candidate !== 'show title';
         })
         .flatMap((block) => [block.data.answer, block.data.text, block.data.question, block.data.title])
         .filter((value): value is string => typeof value === 'string' && value.trim().length > 0)
@@ -1023,6 +1061,8 @@ const toLegacyBuilderSettings = (section: BuilderV2Section): Record<string, unkn
 
       return {
         ...common,
+        showTitle: getNamedBooleanValue(section, 'Show title') ?? true,
+        eyebrow: getNamedAnswerValue(section, 'Eyebrow') || undefined,
         dressCodeLabel: getFirstMeaningfulString(section, [
           getFirstMeaningfulBlock(section.blocks, ['title'])?.data.text,
           section.title,
@@ -1048,6 +1088,8 @@ const toLegacyBuilderSettings = (section: BuilderV2Section): Record<string, unkn
       const contactCards = getSectionNoteCards(section, ['travelTip']);
       return {
         ...common,
+        showTitle: getNamedBooleanValue(section, 'Show title') ?? true,
+        eyebrow: getNamedAnswerValue(section, 'Eyebrow') || undefined,
         introText,
         emailSubject: getNamedAnswerValue(section, 'Email subject') || undefined,
         contacts: contactCards.map((item) => ({
@@ -1068,6 +1110,7 @@ const toLegacyBuilderSettings = (section: BuilderV2Section): Record<string, unkn
 
       return {
         ...common,
+        eyebrow: getNamedAnswerValue(section, 'Eyebrow') || undefined,
         headline: getFirstMeaningfulString(section, [section.title, common.headline as string | undefined]),
         venueName: getDirectionsTextValue(section, 'Venue'),
         address: getDirectionsTextValue(section, 'Address'),
