@@ -21,6 +21,9 @@ export interface GuestJourneyCopy {
   statusLabel: string;
   nextStepLabel: string;
   helperBadges: string[];
+  focusTitle: string;
+  focusDetail: string;
+  decisionRule: string;
 }
 
 export interface GuestJourneyStep {
@@ -80,6 +83,9 @@ export function getGuestJourneyCopy(surface: GuestJourneySurface): GuestJourneyC
         statusLabel: 'Reply path ready',
         nextStepLabel: 'Next useful moves: travel details, photo sharing, or a quick contact update.',
         helperBadges: ['Reply here', 'Travel nearby', 'Photos nearby'],
+        focusTitle: 'Answer first, then use the nearby lanes that support the trip',
+        focusDetail: 'Once the reply is in, the best next move is whichever surface helps the guest actually arrive prepared: travel details, photos, or a small update.',
+        decisionRule: 'Do not make guests re-enter the wedding story from scratch just to finish one more task.',
       };
     case 'photos':
       return {
@@ -88,6 +94,9 @@ export function getGuestJourneyCopy(surface: GuestJourneySurface): GuestJourneyC
         statusLabel: 'Photo path ready',
         nextStepLabel: 'Next useful moves: RSVP if you have not replied yet, then travel or guest updates.',
         helperBadges: ['Photo upload', 'RSVP nearby', 'Travel nearby'],
+        focusTitle: 'Capture the moment without losing the practical path',
+        focusDetail: 'Photos can be joyful and spontaneous, but the surrounding guest tasks should still stay one tap away so the weekend never fragments.',
+        decisionRule: 'Let delight live on top of continuity, not instead of it.',
       };
     case 'contact':
       return {
@@ -96,6 +105,9 @@ export function getGuestJourneyCopy(surface: GuestJourneySurface): GuestJourneyC
         statusLabel: 'Update path ready',
         nextStepLabel: 'Next useful moves: RSVP first if needed, then photos or travel details.',
         helperBadges: ['Contact update', 'RSVP nearby', 'Photos nearby'],
+        focusTitle: 'Fix the guest record, then return them to momentum',
+        focusDetail: 'A contact edit should feel quick and surgical. Once it is done, the guest should be back on the wedding path instead of stranded in admin mode.',
+        decisionRule: 'Correcting details should tighten the path, not turn into a separate workflow.',
       };
     case 'vault':
       return {
@@ -104,6 +116,9 @@ export function getGuestJourneyCopy(surface: GuestJourneySurface): GuestJourneyC
         statusLabel: 'Keepsake path ready',
         nextStepLabel: 'The wedding path is still easy to reopen from here if you need it.',
         helperBadges: ['Keepsake mode', 'Hub nearby', 'Photos nearby'],
+        focusTitle: 'Honor the long story without hiding the live one',
+        focusDetail: 'Keepsake mode can feel softer and more reflective, but reopening the wedding path should still be obvious whenever the guest needs it.',
+        decisionRule: 'Memory should extend the wedding experience, not obscure the practical path back into it.',
       };
     case 'travel':
       return {
@@ -112,6 +127,9 @@ export function getGuestJourneyCopy(surface: GuestJourneySurface): GuestJourneyC
         statusLabel: 'Travel path ready',
         nextStepLabel: 'Next useful moves: RSVP if needed, then photos or a quick contact update.',
         helperBadges: ['Travel details', 'RSVP nearby', 'Updates nearby'],
+        focusTitle: 'Turn logistics into confidence, not friction',
+        focusDetail: 'Travel details should make the trip feel easier, then hand the guest back to RSVP, updates, or photos without a context reset.',
+        decisionRule: 'Treat travel as part of the wedding path, not a detached planning appendix.',
       };
     default:
       return {
@@ -120,6 +138,9 @@ export function getGuestJourneyCopy(surface: GuestJourneySurface): GuestJourneyC
         statusLabel: 'Guest path ready',
         nextStepLabel: 'Use the next useful surface without re-entering a different flow.',
         helperBadges: ['One guest path', 'Travel nearby', 'Photos nearby'],
+        focusTitle: 'Keep every guest move inside one recognizable story',
+        focusDetail: 'The path works best when each follow-up surface still feels like the same wedding, not a stack of separate tools.',
+        decisionRule: 'Continuity beats cleverness when guests are moving quickly.',
       };
   }
 }
