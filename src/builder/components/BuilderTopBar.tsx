@@ -28,12 +28,13 @@ import { getSectionManifest } from '../registry/sectionManifests';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useBuilderContext } from '../state/builderStore';
 import { builderActions } from '../state/builderActions';
-import { getPublishBlockedHints, shouldOpenPhotoTipsFromSearch } from '../utils/publishUiHints';
+import { shouldOpenPhotoTipsFromSearch } from '../utils/publishUiHints';
 import { selectUndoRedo, selectIsPreviewMode, selectPublishStatus, selectIsDirty } from '../state/builderSelectors';
 import { getPublishStateDescriptor } from '../../lib/publishState';
 import { SITE_VISIBILITY_COPY } from '../../lib/siteVisibilityState';
 import { getFlowStatusLabel } from '../../lib/flowLabels';
 import { BuilderPage } from '../../types/builder/project';
+import { getBuilderLaunchPrepSummary } from './builderLaunchPrepSummary';
 import { getBuilderPageEditingSummary } from './builderPageEditingSummary';
 import { BuilderPageManagerAction, getBuilderPageManagerGuidance } from './builderPageManagerGuidance';
 import { getBuilderPreviewReviewSummary } from './builderPreviewReviewSummary';
@@ -108,23 +109,22 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
   const [pagePendingDelete, setPagePendingDelete] = React.useState<BuilderPage | null>(null);
   const [newPageTitle, setNewPageTitle] = React.useState('');
   const [showPhotoTips, setShowPhotoTips] = React.useState(() => shouldOpenPhotoTipsFromSearch(location.search));
-  const blockedHints = React.useMemo(() => getPublishBlockedHints(effectivePublishValidationError), [effectivePublishValidationError]);
   const [showPublishChecklist, setShowPublishChecklist] = React.useState(false);
-
-  const checklistItems = React.useMemo(() => {
-    const items: Array<{ label: string; done: boolean; detail?: string }> = [];
-    items.push({ label: 'At least one page exists', done: projectPages.length > 0, detail: projectPages.length > 0 ? `${projectPages.length} page${projectPages.length === 1 ? '' : 's'}` : 'Add a page from Pages.' });
-    items.push({
-      label: 'Current page has at least one section',
-      done: (activePage?.sections?.length ?? 0) > 0,
-      detail: (activePage?.sections?.length ?? 0) > 0
-        ? `${activePage?.sections?.length ?? 0} section(s) on ${activePage?.title ?? 'current page'}`
-        : `No sections on ${activePage?.title ?? 'current page'} — add one from the right panel.`,
-    });
-    items.push({ label: 'No active go-live blockers', done: !hasHardPublishBlocker, detail: effectivePublishValidationError ?? 'Ready to go live.' });
-    items.push({ label: 'Latest edits are saved', done: !isDirty, detail: isDirty ? 'Save your latest changes before going live.' : 'All changes saved.' });
-    return items;
-  }, [projectPages.length, activePage?.sections?.length, activePage?.title, hasHardPublishBlocker, effectivePublishValidationError, isDirty]);
+  const launchPrep = React.useMemo(
+    () => (
+      state.project
+        ? getBuilderLaunchPrepSummary({
+            project: state.project,
+            weddingData: state.weddingData,
+            isDirty,
+            activePageId: state.activePageId,
+            isPublished,
+          })
+        : null
+    ),
+    [isDirty, isPublished, state.activePageId, state.project, state.weddingData],
+  );
+  const checklistItems = launchPrep?.checklistItems ?? [];
   const checklistDoneCount = checklistItems.filter((i) => i.done).length;
   const publishState = getPublishStateDescriptor({
     isPublished,
@@ -251,6 +251,40 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
         return;
     }
   }, [dispatch, onFixPublishBlockers, onPublish, onSave, previewReview]);
+
+  const handleLaunchPrepAction = React.useCallback((actionKind: 'add-page' | 'add-section' | 'save-draft' | 'fix-blockers' | 'publish') => {
+    switch (actionKind) {
+      case 'add-page':
+        dispatch(builderActions.addPage('Home'));
+        setShowPublishChecklist(false);
+        return;
+      case 'add-section': {
+        const pageId = state.activePageId;
+        if (!pageId) {
+          setShowPageManager(true);
+          setShowPublishChecklist(false);
+          return;
+        }
+        dispatch(builderActions.addSectionByType(pageId, 'hero'));
+        setShowPublishChecklist(false);
+        return;
+      }
+      case 'save-draft':
+        onSave();
+        setShowPublishChecklist(false);
+        return;
+      case 'fix-blockers':
+        onFixPublishBlockers?.();
+        setShowPublishChecklist(false);
+        return;
+      case 'publish':
+        onPublish();
+        setShowPublishChecklist(false);
+        return;
+      default:
+        return;
+    }
+  }, [dispatch, onFixPublishBlockers, onPublish, onSave, state.activePageId]);
 
   return (
     <>
@@ -517,7 +551,7 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
               <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
                 <p className="font-medium">{effectivePublishValidationError}</p>
                 <ul className="mt-2 list-disc space-y-1 pl-5 text-xs">
-                  {blockedHints.map((hint) => (
+                  {(launchPrep?.blockerHints ?? []).map((hint) => (
                     <li key={hint}>{hint}</li>
                   ))}
                 </ul>
@@ -539,6 +573,25 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
                     Hide checklist
                   </button>
                 </div>
+                {launchPrep && (
+                  <div className="mt-3 grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)]">
+                    <div className="rounded-xl border border-sky-100 bg-sky-50 px-4 py-3">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-sky-900">Main focus</p>
+                      <p className="mt-1 text-sm font-medium text-sky-950">{launchPrep.focusTitle}</p>
+                      <p className="mt-2 text-xs leading-5 text-sky-800">{launchPrep.focusDetail}</p>
+                    </div>
+                    <div className="rounded-xl border border-gray-200 bg-white px-4 py-3">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-gray-500">Best next move</p>
+                      <p className="mt-1 text-sm font-medium text-gray-900">{launchPrep.bestNextMove}</p>
+                      <p className="mt-3 text-xs leading-5 text-gray-600">
+                        <span className="font-semibold text-gray-900">Decision rule:</span> {launchPrep.decisionRule}
+                      </p>
+                      <p className="mt-2 text-xs leading-5 text-gray-600">
+                        <span className="font-semibold text-gray-900">Watchout:</span> {launchPrep.watchout}
+                      </p>
+                    </div>
+                  </div>
+                )}
                 <ul className="mt-3 space-y-2">
                   {checklistItems.map((item) => (
                     <li key={item.label} className="flex flex-col gap-2 rounded-lg border border-gray-200 bg-white px-3 py-3 sm:flex-row sm:items-start sm:justify-between">
@@ -550,38 +603,18 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
                         </div>
                       </div>
                       <div className="flex flex-wrap gap-2">
-                        {!item.done && item.label === 'Latest edits are saved' && (
-                          <button onClick={() => { onSave(); setShowPublishChecklist(false); }} className="rounded border border-gray-200 bg-gray-50 px-2 py-1 text-[11px] font-medium text-gray-700 transition-colors hover:bg-gray-100">Save now</button>
-                        )}
-                        {!item.done && item.label === 'No active go-live blockers' && onFixPublishBlockers && (
-                          <button onClick={() => { onFixPublishBlockers(); setShowPublishChecklist(false); }} className="rounded border border-amber-300 bg-amber-50 px-2 py-1 text-[11px] font-medium text-amber-800 transition-colors hover:bg-amber-100">Fix next</button>
-                        )}
-                        {!item.done && item.label === 'At least one page exists' && (
+                        {!item.done && item.action && (
                           <button
-                            onClick={() => {
-                              dispatch(builderActions.addPage('Home'));
-                              setShowPublishChecklist(false);
-                            }}
-                            className="rounded border border-gray-200 bg-gray-50 px-2 py-1 text-[11px] font-medium text-gray-700 transition-colors hover:bg-gray-100"
+                            onClick={() => handleLaunchPrepAction(item.action!.kind)}
+                            className={`rounded px-2 py-1 text-[11px] font-medium transition-colors ${
+                              item.action.kind === 'fix-blockers'
+                                ? 'border border-amber-300 bg-amber-50 text-amber-800 hover:bg-amber-100'
+                                : item.action.kind === 'publish'
+                                  ? 'bg-gray-900 text-white hover:bg-gray-800'
+                                  : 'border border-gray-200 bg-gray-50 text-gray-700 hover:bg-gray-100'
+                            }`}
                           >
-                            Add first page
-                          </button>
-                        )}
-                        {!item.done && item.label === 'Current page has at least one section' && (
-                          <button
-                            onClick={() => {
-                              const pageId = state.activePageId;
-                              if (!pageId) {
-                                setShowPageManager(true);
-                                setShowPublishChecklist(false);
-                                return;
-                              }
-                              dispatch(builderActions.addSectionByType(pageId, 'hero'));
-                              setShowPublishChecklist(false);
-                            }}
-                            className="rounded border border-gray-200 bg-gray-50 px-2 py-1 text-[11px] font-medium text-gray-700 transition-colors hover:bg-gray-100"
-                          >
-                            Add first section
+                            {item.action.label}
                           </button>
                         )}
                       </div>
@@ -741,7 +774,7 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
           <div className="w-full rounded border border-amber-200 bg-amber-50 px-2 py-2 text-xs text-amber-900">
             <p className="font-medium">{effectivePublishValidationError}</p>
             <ul className="list-disc ml-4 mt-1 space-y-0.5">
-              {blockedHints.map((hint) => (
+              {(launchPrep?.blockerHints ?? []).map((hint) => (
                 <li key={hint}>{hint}</li>
               ))}
             </ul>
