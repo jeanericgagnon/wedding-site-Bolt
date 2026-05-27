@@ -350,6 +350,11 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
 
       <div className="ml-auto flex w-full sm:w-auto items-center justify-end gap-2">
         <div className="flex items-center gap-1.5">
+          {typeof state.project?.draftVersion === 'number' && (
+            <span className="inline-flex items-center gap-1.5 rounded-md border border-sky-200 bg-sky-50 px-2 py-1 text-[11px] font-medium text-sky-700">
+              Draft v{state.project.draftVersion}
+            </span>
+          )}
           {state.isSaving ? (
             <span className="inline-flex items-center gap-1.5 rounded-md border border-gray-200 bg-gray-50 px-2 py-1 text-[11px] font-medium text-gray-700">
               <Loader2 size={12} className="animate-spin" />

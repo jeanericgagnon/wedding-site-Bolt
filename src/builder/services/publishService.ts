@@ -32,7 +32,7 @@ export const publishService = {
     }
   },
 
-  async saveDraft(project: BuilderProject, weddingData?: WeddingDataV1): Promise<void> {
+  async saveDraft(project: BuilderProject, weddingData?: WeddingDataV1): Promise<BuilderProject> {
     return builderProjectService.saveDraft(project, weddingData);
   },
 };

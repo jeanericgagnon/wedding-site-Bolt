@@ -303,10 +303,27 @@ describe('builderReducer — MARK_SAVED', () => {
   it('clears dirty flag and sets lastSavedAt', () => {
     const s = makeState({ isDirty: true });
     const ts = '2026-01-01T00:00:00Z';
-    const next = builderReducer(s, { type: 'MARK_SAVED', payload: ts });
+    const next = builderReducer(s, { type: 'MARK_SAVED', payload: { timestamp: ts } });
     expect(next.isDirty).toBe(false);
     expect(next.isSaving).toBe(false);
     expect(next.lastSavedAt).toBe(ts);
+  });
+
+  it('syncs saved project metadata when a persisted snapshot comes back', () => {
+    const s = makeState({ isDirty: true });
+    const ts = '2026-01-01T00:00:00Z';
+    const savedProject = {
+      ...s.project!,
+      draftVersion: 4,
+      meta: {
+        ...s.project!.meta,
+        updatedAtISO: ts,
+      },
+    };
+
+    const next = builderReducer(s, { type: 'MARK_SAVED', payload: { timestamp: ts, project: savedProject } });
+    expect(next.project?.draftVersion).toBe(4);
+    expect(next.project?.meta.updatedAtISO).toBe(ts);
   });
 });
 

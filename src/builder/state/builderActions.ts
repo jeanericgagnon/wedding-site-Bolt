@@ -126,7 +126,10 @@ export const builderActions = {
     payload: assetId,
   }),
 
-  markSaved: (timestamp: string): BuilderAction => ({ type: 'MARK_SAVED', payload: timestamp }),
+  markSaved: (timestamp: string, project?: BuilderProject): BuilderAction => ({
+    type: 'MARK_SAVED',
+    payload: { timestamp, ...(project ? { project } : {}) },
+  }),
 
   markPublished: (version: number, publishedAt: string): BuilderAction => ({
     type: 'MARK_PUBLISHED',

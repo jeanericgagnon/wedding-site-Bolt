@@ -26,9 +26,16 @@ export interface BuilderDraftContinuityModel {
 }
 
 function getRevisionTitle(revision: BuilderRevision): string {
-  if (revision.action === 'publish') return 'Published checkpoint';
-  if (revision.action === 'rollback') return 'Restored checkpoint';
-  return 'Saved checkpoint';
+  const draftVersion = revision.project.draftVersion;
+  if (revision.action === 'publish') {
+    return typeof revision.project.publishedVersion === 'number'
+      ? `Published checkpoint v${revision.project.publishedVersion}`
+      : 'Published checkpoint';
+  }
+  if (revision.action === 'rollback') {
+    return draftVersion ? `Restored draft v${draftVersion}` : 'Restored checkpoint';
+  }
+  return draftVersion ? `Saved draft v${draftVersion}` : 'Saved checkpoint';
 }
 
 function getRevisionBadge(revision: BuilderRevision): string {
@@ -40,19 +47,20 @@ function getRevisionBadge(revision: BuilderRevision): string {
 function getRevisionDetail(revision: BuilderRevision): string {
   const pageCount = revision.project.pages.length;
   const pageLabel = `${pageCount} page${pageCount === 1 ? '' : 's'}`;
+  const draftVersion = revision.project.draftVersion;
   const version = revision.project.publishedVersion;
 
   if (revision.action === 'publish') {
     return version
-      ? `${pageLabel} · live version ${version}`
+      ? `${pageLabel} · live version ${version}${draftVersion ? ` from draft v${draftVersion}` : ''}`
       : `${pageLabel} · sent to the live site`;
   }
 
   if (revision.action === 'rollback') {
-    return `${pageLabel} · restored from a prior local checkpoint`;
+    return `${pageLabel} · restored from a prior local checkpoint${draftVersion ? ` to draft v${draftVersion}` : ''}`;
   }
 
-  return `${pageLabel} · local draft snapshot`;
+  return `${pageLabel} · ${draftVersion ? `local draft v${draftVersion}` : 'local draft snapshot'}`;
 }
 
 export function buildBuilderDraftContinuityModel({

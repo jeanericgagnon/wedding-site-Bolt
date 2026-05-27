@@ -118,7 +118,7 @@ export const BuilderPage: React.FC = () => {
         }
 
         if (nextProject) {
-          await publishService.saveDraft(nextProject, nextWeddingData);
+          nextProject = await publishService.saveDraft(nextProject, nextWeddingData);
         }
       }
 
@@ -140,14 +140,16 @@ export const BuilderPage: React.FC = () => {
     loadBuilderProject(user.id);
   }, [loadBuilderProject, user]);
 
-  const handleSave = async (updatedProject: BuilderProject, updatedWeddingData?: WeddingDataV1 | null) => {
+  const handleSave = async (updatedProject: BuilderProject, updatedWeddingData?: WeddingDataV1 | null): Promise<BuilderProject> => {
     if (isDemoMode) {
       setProject(updatedProject);
       if (updatedWeddingData) setWeddingData(updatedWeddingData);
-      return;
+      return updatedProject;
     }
-    await publishService.saveDraft(updatedProject, updatedWeddingData ?? undefined);
+    const savedProject = await publishService.saveDraft(updatedProject, updatedWeddingData ?? undefined);
+    setProject(savedProject);
     if (updatedWeddingData) setWeddingData(updatedWeddingData);
+    return savedProject;
   };
 
   const handlePublish = async (projectId: string): Promise<{ version: number; publishedAt: string }> => {

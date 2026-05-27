@@ -9,6 +9,47 @@ import { BuilderRevision, getBuilderRevision, listBuilderRevisions, recordBuilde
 import { rewriteSignedMediaUrlsToPublicDeep } from '../../lib/mediaUrl';
 import { buildCoupleDisplayName } from '../../lib/coupleDisplayName';
 
+const toNonEmptyIsoStringOrNull = (value: unknown): string | null => {
+  if (typeof value !== 'string' || !value.trim()) return null;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date.toISOString();
+};
+
+const toPositiveNumberOrNull = (value: unknown): number | null => {
+  return typeof value === 'number' && Number.isFinite(value) && value > 0 ? value : null;
+};
+
+function normalizePersistenceMetadata(project: BuilderProject, row?: Record<string, unknown>): BuilderProject {
+  const siteJson = (row?.site_json && typeof row.site_json === 'object')
+    ? (row.site_json as Record<string, unknown>)
+    : null;
+
+  const publishedVersion = toPositiveNumberOrNull(project.publishedVersion)
+    ?? toPositiveNumberOrNull(siteJson?.publishedVersion)
+    ?? null;
+  const lastPublishedAt = toNonEmptyIsoStringOrNull(project.lastPublishedAt)
+    ?? toNonEmptyIsoStringOrNull(siteJson?.lastPublishedAt)
+    ?? toNonEmptyIsoStringOrNull(row?.published_at)
+    ?? null;
+  const draftVersion = toPositiveNumberOrNull(project.draftVersion)
+    ?? toPositiveNumberOrNull(siteJson?.draftVersion)
+    ?? 1;
+  const publishStatus = project.publishStatus === 'published'
+    || siteJson?.publishStatus === 'published'
+    || publishedVersion !== null
+    || lastPublishedAt !== null
+      ? 'published'
+      : 'draft';
+
+  return {
+    ...project,
+    draftVersion,
+    publishedVersion,
+    publishStatus,
+    lastPublishedAt,
+  };
+}
+
 const toIsoDateOrUndefined = (value: unknown): string | undefined => {
   if (typeof value !== 'string' || !value.trim()) return undefined;
   const date = new Date(value);
@@ -32,18 +73,18 @@ export const builderProjectService = {
       const parsed = safeJsonParse<BuilderProject>(data.site_json, null as unknown as BuilderProject);
       if (parsed && parsed.pages && Array.isArray(parsed.pages)) {
         const durableParsed = rewriteSignedMediaUrlsToPublicDeep(parsed);
-        return { ...durableParsed, weddingId: weddingSiteId };
+        return normalizePersistenceMetadata({ ...durableParsed, weddingId: weddingSiteId }, data as Record<string, unknown>);
       }
     }
 
     if (data.layout_config) {
       const layout = safeJsonParse<LayoutConfigV1>(data.layout_config, null as unknown as LayoutConfigV1);
       if (layout && layout.version === '1' && Array.isArray(layout.pages)) {
-        return fromExistingLayoutToBuilderProject(weddingSiteId, layout);
+        return normalizePersistenceMetadata(fromExistingLayoutToBuilderProject(weddingSiteId, layout), data as Record<string, unknown>);
       }
     }
 
-    return createEmptyBuilderProject(weddingSiteId, templateId);
+    return normalizePersistenceMetadata(createEmptyBuilderProject(weddingSiteId, templateId), data as Record<string, unknown>);
   },
 
   async loadWeddingData(weddingSiteId: string): Promise<WeddingDataV1> {
@@ -90,19 +131,29 @@ export const builderProjectService = {
     };
   },
 
-  async saveDraft(project: BuilderProject, weddingData?: WeddingDataV1): Promise<void> {
+  async saveDraft(project: BuilderProject, weddingData?: WeddingDataV1): Promise<BuilderProject> {
     const normalizedProject = serializeBuilderProject(project);
+    const now = new Date().toISOString();
+    const nextDraftVersion = Math.max(toPositiveNumberOrNull(normalizedProject.draftVersion) ?? 1, 1) + 1;
     const normalizedProjectWithDurableMedia = rewriteSignedMediaUrlsToPublicDeep(normalizedProject);
-    const layoutConfig = fromBuilderProjectToExistingLayout(normalizedProjectWithDurableMedia);
-    const projectJson = normalizedProjectWithDurableMedia;
+    const persistedProject = normalizePersistenceMetadata({
+      ...normalizedProjectWithDurableMedia,
+      draftVersion: nextDraftVersion,
+      meta: {
+        ...normalizedProjectWithDurableMedia.meta,
+        updatedAtISO: now,
+      },
+    });
+    const layoutConfig = fromBuilderProjectToExistingLayout(persistedProject);
+    const projectJson = persistedProject;
     const layoutJson = layoutConfig;
 
     const updatePayload: Record<string, unknown> = {
       layout_config: layoutJson,
       site_json: projectJson,
-      active_template_id: normalizedProject.templateId,
-      template_id: normalizedProject.templateId,
-      updated_at: new Date().toISOString(),
+      active_template_id: persistedProject.templateId,
+      template_id: persistedProject.templateId,
+      updated_at: now,
     };
 
     if (weddingData) {
@@ -156,13 +207,16 @@ export const builderProjectService = {
 
     if (error) throw error;
 
+    const durableWeddingData = weddingData ? rewriteSignedMediaUrlsToPublicDeep(weddingData) : undefined;
+
     recordBuilderRevision({
       weddingId: project.weddingId,
-      project: normalizedProject,
-      weddingData,
+      project: persistedProject,
+      weddingData: durableWeddingData,
       action: 'save',
       actor: 'builder',
     });
+    return persistedProject;
   },
 
   async publishProject(_projectId: string, weddingSiteId: string): Promise<{ publishedAt: string; version: number }> {

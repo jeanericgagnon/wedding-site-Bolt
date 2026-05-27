@@ -31,7 +31,7 @@ interface BuilderShellProps {
   initialWeddingData?: WeddingDataV1;
   projectName?: string;
   isDemoMode?: boolean;
-  onSave?: (project: BuilderProject, weddingData?: WeddingDataV1 | null) => Promise<void>;
+  onSave?: (project: BuilderProject, weddingData?: WeddingDataV1 | null) => Promise<BuilderProject>;
   onPublish?: (projectId: string) => Promise<{ version: number; publishedAt: string }>;
   onRestoreRevision?: (revisionId: string) => Promise<{ project: BuilderProject; weddingData?: WeddingDataV1 | null } | null>;
 }
@@ -176,8 +176,8 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
     setSaveError(null);
     dispatch({ type: 'SET_SAVING', payload: true });
     try {
-      await onSave(currentState.project, currentState.weddingData);
-      dispatch(builderActions.markSaved(new Date().toISOString()));
+      const savedProject = await onSave(currentState.project, currentState.weddingData);
+      dispatch(builderActions.markSaved(savedProject.meta.updatedAtISO ?? new Date().toISOString(), savedProject));
       refreshRevisionHistory();
       return true;
     } catch (err) {
@@ -279,7 +279,7 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
       }
       dispatch(builderActions.setMode('edit'));
       dispatch(builderActions.selectSection(null));
-      dispatch(builderActions.markSaved(new Date().toISOString()));
+      dispatch(builderActions.markSaved(restored.project.meta.updatedAtISO ?? new Date().toISOString(), restored.project));
       refreshRevisionHistory();
       setPublishNotice('Restored a local Builder checkpoint. Review the draft, then keep going from this steadier base.');
     } catch (err) {

@@ -103,7 +103,7 @@ export type BuilderAction =
   | { type: 'SET_GLOBAL_ANIMATION_PRESET'; payload: 'none' | 'fade-in' | 'fade-up' | 'slide-up' | 'zoom-in' | 'stagger' | null }
   | { type: 'SET_SAVING'; payload: boolean }
   | { type: 'SET_PUBLISHING'; payload: boolean }
-  | { type: 'MARK_SAVED'; payload: string }
+  | { type: 'MARK_SAVED'; payload: { timestamp: string; project?: BuilderProject } }
   | { type: 'MARK_PUBLISHED'; payload: { version: number; publishedAt: string } }
   | { type: 'SET_MEDIA_ASSETS'; payload: BuilderMediaAsset[] }
   | { type: 'ADD_MEDIA_ASSET'; payload: BuilderMediaAsset }

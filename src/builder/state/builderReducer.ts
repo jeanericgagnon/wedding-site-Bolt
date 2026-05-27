@@ -442,7 +442,13 @@ export function builderReducer(state: BuilderState, action: BuilderAction): Buil
       return { ...state, isPublishing: action.payload };
 
     case 'MARK_SAVED':
-      return { ...state, isSaving: false, isDirty: false, lastSavedAt: action.payload };
+      return {
+        ...state,
+        isSaving: false,
+        isDirty: false,
+        lastSavedAt: action.payload.timestamp,
+        project: action.payload.project ?? state.project,
+      };
 
     case 'MARK_PUBLISHED':
       if (!state.project) return state;
