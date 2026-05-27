@@ -630,6 +630,17 @@ Add to itinerary
               ))}
             </div>
           </div>
+          <div className="grid gap-3 md:grid-cols-2">
+            <div className="rounded-2xl border border-border-subtle bg-white px-4 py-4 shadow-sm">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-text-secondary">Main focus</p>
+              <p className="mt-1 text-sm font-semibold text-text-primary">{itineraryReadiness.focusTitle}</p>
+              <p className="mt-2 text-xs leading-5 text-text-secondary">{itineraryReadiness.focusDetail}</p>
+            </div>
+            <div className="rounded-2xl border border-border-subtle bg-white px-4 py-4 shadow-sm">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-text-secondary">Decision rule</p>
+              <p className="mt-1 text-sm font-semibold text-text-primary">{itineraryReadiness.decisionRule}</p>
+            </div>
+          </div>
           <div className="grid gap-3 md:grid-cols-3">
             {itineraryReadiness.sequence.map((step) => (
               <div key={step.id} className="rounded-2xl border border-border-subtle bg-white px-4 py-4 shadow-sm">
