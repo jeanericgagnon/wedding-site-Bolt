@@ -280,6 +280,97 @@ describe('legacy adapters', () => {
     ]);
   });
 
+  it('keeps story, gallery, and accommodations content legible in the legacy public runtime bridge', () => {
+    const project = builderV2DocumentToBuilderProject({
+      version: 'v2',
+      updatedAtISO: '2026-05-27T22:00:00.000Z',
+      pages: [
+        {
+          id: 'home',
+          title: 'Home',
+          slug: 'home',
+          isHome: true,
+          hidden: false,
+          sections: [
+            {
+              id: 'story-1',
+              type: 'story',
+              variant: 'default',
+              enabled: true,
+              title: 'Our Story',
+              subtitle: 'How it began',
+              blocks: [
+                { id: 'story-text-1', type: 'story', data: { text: 'We met on a rainy Tuesday.' } },
+                { id: 'story-text-2', type: 'text', data: { text: 'Then we kept finding reasons to stay out longer.' } },
+                { id: 'story-photo', type: 'photo', data: { imageUrl: 'https://example.com/story.jpg', caption: 'Downtown, where it started' } },
+              ],
+            },
+            {
+              id: 'gallery-1',
+              type: 'gallery',
+              variant: 'default',
+              enabled: true,
+              title: 'Weekend memories',
+              blocks: [
+                { id: 'gallery-photo-1', type: 'photo', data: { imageUrl: 'https://example.com/gallery-1.jpg', caption: 'Sunset dinner' } },
+                { id: 'gallery-photo-2', type: 'photo', data: { imageUrl: 'https://example.com/gallery-2.jpg', title: 'Welcome drinks' } },
+              ],
+            },
+            {
+              id: 'stay-1',
+              type: 'accommodations',
+              variant: 'default',
+              enabled: true,
+              title: 'Where to stay',
+              subtitle: 'A couple of easy options nearby',
+              blocks: [
+                { id: 'hotel-1', type: 'hotelCard', data: { title: 'The Archer', note: 'Walkable to dinner.', url: 'https://example.com/archer', location: 'Main Street' } },
+                { id: 'hotel-2', type: 'travelTip', data: { title: 'Book early', note: 'Rooms go fastest on Friday night.' } },
+              ],
+            },
+          ],
+        },
+      ],
+    }, null);
+
+    expect(project.pages[0].sections[0].settings.storyText).toBe(
+      'We met on a rainy Tuesday.\n\nThen we kept finding reasons to stay out longer.',
+    );
+    expect(project.pages[0].sections[0].settings.heroImage).toBe('https://example.com/story.jpg');
+    expect(project.pages[0].sections[1].settings.images).toEqual([
+      {
+        id: 'gallery-1-photo-0',
+        url: 'https://example.com/gallery-1.jpg',
+        image: 'https://example.com/gallery-1.jpg',
+        caption: 'Sunset dinner',
+        title: 'Sunset dinner',
+        alt: 'Sunset dinner',
+      },
+      {
+        id: 'gallery-1-photo-1',
+        url: 'https://example.com/gallery-2.jpg',
+        image: 'https://example.com/gallery-2.jpg',
+        caption: 'Welcome drinks',
+        title: 'Welcome drinks',
+        alt: 'Welcome drinks',
+      },
+    ]);
+    expect(project.pages[0].sections[2].settings.hotels).toEqual([
+      {
+        name: 'The Archer',
+        notes: 'Walkable to dinner.',
+        url: 'https://example.com/archer',
+        address: 'Main Street',
+      },
+      {
+        name: 'Book early',
+        notes: 'Rooms go fastest on Friday night.',
+        url: undefined,
+        address: undefined,
+      },
+    ]);
+  });
+
   it('detects legacy input shapes safely', () => {
     expect(looksLikeLayoutConfigV1({ version: '1', templateId: 'modern-luxe', pages: [] })).toBe(true);
     expect(looksLikeBuilderProject({ weddingId: 'w1', templateId: 'modern-luxe', themeId: 'romantic', pages: [] })).toBe(true);

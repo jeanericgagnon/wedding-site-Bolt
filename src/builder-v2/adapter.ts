@@ -98,6 +98,13 @@ const getFirstMeaningfulBlock = (
   types.includes(block.type) && Object.values(block.data ?? {}).some((value) => typeof value === 'string' && value.trim())
 ));
 
+const getMeaningfulBlocks = (
+  blocks: BuilderV2Block[],
+  types: BuilderV2Block['type'][],
+) => blocks.filter((block) => (
+  types.includes(block.type) && Object.values(block.data ?? {}).some((value) => typeof value === 'string' && value.trim())
+));
+
 const getFirstMeaningfulString = (
   section: BuilderV2Section,
   candidates: Array<string | undefined>,
@@ -121,6 +128,64 @@ const getSectionPhotoUrl = (section: BuilderV2Section) => {
     : '';
 };
 
+const getSectionPhotoEntries = (section: BuilderV2Section) => (
+  getMeaningfulBlocks(section.blocks, ['photo'])
+    .map((block, index) => {
+      const url = typeof block.data.imageUrl === 'string' ? block.data.imageUrl.trim() : '';
+      if (!url) return null;
+
+      const caption = typeof block.data.caption === 'string' && block.data.caption.trim()
+        ? block.data.caption.trim()
+        : typeof block.data.title === 'string' && block.data.title.trim()
+          ? block.data.title.trim()
+          : '';
+
+      return {
+        id: `${section.id}-photo-${index}`,
+        url,
+        image: url,
+        caption,
+        title: caption,
+        alt: caption,
+      };
+    })
+    .filter((entry): entry is {
+      id: string;
+      url: string;
+      image: string;
+      caption: string;
+      title: string;
+      alt: string;
+    } => Boolean(entry))
+);
+
+const getSectionNarrativeText = (section: BuilderV2Section) => {
+  const parts = getMeaningfulBlocks(section.blocks, ['story', 'text'])
+    .flatMap((block) => [block.data.text, block.data.note, block.data.subtitle])
+    .filter((value): value is string => typeof value === 'string' && value.trim().length > 0)
+    .map((value) => value.trim());
+
+  return parts.join('\n\n');
+};
+
+const getSectionNoteCards = (
+  section: BuilderV2Section,
+  types: BuilderV2Block['type'][],
+) => (
+  getMeaningfulBlocks(section.blocks, types).map((block, index) => ({
+    id: `${section.id}-card-${index}`,
+    title: typeof block.data.title === 'string' ? block.data.title.trim() : '',
+    note: typeof block.data.note === 'string' && block.data.note.trim()
+      ? block.data.note.trim()
+      : typeof block.data.text === 'string' && block.data.text.trim()
+        ? block.data.text.trim()
+        : '',
+    url: typeof block.data.url === 'string' ? block.data.url.trim() : '',
+    location: typeof block.data.location === 'string' ? block.data.location.trim() : '',
+    time: typeof block.data.time === 'string' ? block.data.time.trim() : '',
+  })).filter((item) => item.title || item.note || item.url || item.location || item.time)
+);
+
 const getCommonLegacySettings = (section: BuilderV2Section): Record<string, unknown> => {
   const title = getFirstMeaningfulString(section, [section.title]);
   const subtitle = getFirstMeaningfulString(section, [section.subtitle]);
@@ -131,6 +196,8 @@ const getCommonLegacySettings = (section: BuilderV2Section): Record<string, unkn
     getFirstMeaningfulBlock(section.blocks, ['rsvpNote'])?.data.note,
   ]);
   const photoUrl = getSectionPhotoUrl(section);
+  const narrativeText = getSectionNarrativeText(section);
+  const photoEntries = getSectionPhotoEntries(section);
 
   return {
     showTitle: true,
@@ -142,6 +209,12 @@ const getCommonLegacySettings = (section: BuilderV2Section): Record<string, unkn
     intro: leadText,
     heroImage: photoUrl || undefined,
     heroImageUrl: photoUrl || undefined,
+    storyText: narrativeText || undefined,
+    introText: narrativeText || undefined,
+    generalNote: leadText || narrativeText || undefined,
+    images: photoEntries,
+    galleryImages: photoEntries,
+    photos: photoEntries,
     builderV2Title: section.title,
     builderV2Subtitle: section.subtitle,
     builderV2Blocks: section.blocks.map((block) => ({ ...block, data: { ...(block.data ?? {}) } })),
@@ -181,14 +254,30 @@ const toLegacyBuilderSettings = (section: BuilderV2Section): Record<string, unkn
     case 'accommodations':
       return {
         ...common,
-        travelTips: section.blocks
-          .filter((block) => block.type === 'travelTip' || block.type === 'hotelCard')
-          .map((block, index) => ({
-            id: `${section.id}-travel-${index}`,
-            title: block.data.title || '',
-            note: block.data.note || block.data.text || '',
-            url: block.data.url || '',
-          })),
+        hotels: getSectionNoteCards(section, ['hotelCard', 'travelTip']).map((item) => ({
+          name: item.title || 'Stay nearby',
+          notes: item.note || undefined,
+          url: item.url || undefined,
+          address: item.location || undefined,
+        })),
+        travelTips: getSectionNoteCards(section, ['travelTip', 'hotelCard']).map((item) => ({
+          id: item.id,
+          title: item.title || '',
+          note: item.note || '',
+          url: item.url || '',
+        })),
+      };
+    case 'gallery':
+      return {
+        ...common,
+        images: getSectionPhotoEntries(section),
+        galleryImages: getSectionPhotoEntries(section),
+        photos: getSectionPhotoEntries(section),
+      };
+    case 'story':
+      return {
+        ...common,
+        storyText: getSectionNarrativeText(section) || common.storyText,
       };
     case 'registry':
       return {
@@ -209,6 +298,11 @@ const toLegacyBuilderSettings = (section: BuilderV2Section): Record<string, unkn
           getFirstMeaningfulBlock(section.blocks, ['rsvpNote'])?.data.note,
           section.subtitle,
         ]),
+      };
+    case 'contact':
+      return {
+        ...common,
+        introText: getSectionNarrativeText(section) || common.introText,
       };
     default:
       return common;
