@@ -36,6 +36,8 @@ describe('analyticsBaseline', () => {
     expect(summary.statusLabel).toMatch(/high confidence/i);
     expect(summary.bestNextMove).toMatch(/calm window|guest-facing polish/i);
     expect(summary.decisionRule).toMatch(/refinement|reopen solved basics/i);
+    expect(summary.sequence.map((step) => step.status)).toEqual(['current', 'next', 'then']);
+    expect(summary.sequence[0]?.title).toMatch(/baseline|trust/i);
   });
 
   it('calls out pending RSVP pressure before other polish', () => {
@@ -49,6 +51,7 @@ describe('analyticsBaseline', () => {
     expect(summary.tone).toBe('warning');
     expect(summary.bestNextMove).toMatch(/still-pending guests|reply pockets/i);
     expect(summary.decisionRule).toMatch(/RSVP picture/i);
+    expect(summary.sequence[1]?.detail).toMatch(/pending group|reply pockets|guest picture/i);
   });
 
   it('builds compact confidence cards from the measured baseline', () => {

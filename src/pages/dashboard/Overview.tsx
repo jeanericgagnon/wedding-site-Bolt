@@ -1519,6 +1519,19 @@ export const DashboardOverview: React.FC = () => {
                       <p className="mt-1 text-[11px] leading-5 text-text-tertiary">{analyticsConfidenceSummary.decisionRule}</p>
                     </div>
                   </div>
+                  <div className="mt-3 grid gap-2 sm:grid-cols-3">
+                    {analyticsConfidenceSummary.sequence.map((step) => (
+                      <div key={step.id} className="rounded-lg border border-border-subtle bg-white px-3 py-2.5">
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="text-[11px] font-semibold text-text-primary">{step.title}</p>
+                          <span className="rounded-full border border-border-subtle bg-surface-secondary/20 px-2 py-0.5 text-[10px] font-medium text-text-secondary">
+                            {getFlowStatusLabel(step.status)}
+                          </span>
+                        </div>
+                        <p className="mt-1 text-[11px] leading-5 text-text-tertiary">{step.detail}</p>
+                      </div>
+                    ))}
+                  </div>
                 </div>
                 <div className="grid gap-2 md:grid-cols-3">
                   {analyticsConfidenceCards.map((card) => (

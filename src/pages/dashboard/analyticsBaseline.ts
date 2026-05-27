@@ -25,6 +25,27 @@ export interface AnalyticsConfidenceSummary {
   bestNextMove: string;
   decisionRule: string;
   tone: 'success' | 'warning' | 'error';
+  sequence: Array<{
+    id: 'steady' | 'act' | 'hold';
+    status: 'current' | 'next' | 'then';
+    title: string;
+    detail: string;
+  }>;
+}
+
+function buildAnalyticsSequence(
+  currentTitle: string,
+  currentDetail: string,
+  nextTitle: string,
+  nextDetail: string,
+  thenTitle: string,
+  thenDetail: string,
+): AnalyticsConfidenceSummary['sequence'] {
+  return [
+    { id: 'steady', status: 'current', title: currentTitle, detail: currentDetail },
+    { id: 'act', status: 'next', title: nextTitle, detail: nextDetail },
+    { id: 'hold', status: 'then', title: thenTitle, detail: thenDetail },
+  ];
 }
 
 export interface AnalyticsConfidenceCard {
@@ -115,6 +136,14 @@ export function buildAnalyticsConfidenceSummary(input: AnalyticsBaselineInput): 
       bestNextMove: 'Review the still-pending guests first, clear the biggest reply pockets, and only then let the calmer-looking metrics influence bigger decisions.',
       decisionRule: 'Do not let healthy vanity metrics outrank a still-noisy RSVP picture.',
       tone: 'warning',
+      sequence: buildAnalyticsSequence(
+        'Treat pending replies as the real truth gap',
+        'The board is useful, but a large pending RSVP pocket can still reshape what every calmer metric means.',
+        'Clear the biggest reply pockets next',
+        'Shrink the pending group first so the guest picture becomes sturdy enough to guide stronger downstream decisions.',
+        'Let the calmer metrics support the next move',
+        'Once the RSVP board is quieter, use reachability and guest-facing depth as support instead of letting them compete with reply truth.',
+      ),
     };
   }
 
@@ -126,6 +155,14 @@ export function buildAnalyticsConfidenceSummary(input: AnalyticsBaselineInput): 
       bestNextMove: 'Fix the missing contact paths now, then come back to reminders or day-of messaging once the list can actually hear from you cleanly.',
       decisionRule: 'Tighten the contact layer before assuming later outreach will behave cleanly.',
       tone: 'warning',
+      sequence: buildAnalyticsSequence(
+        'Treat contact gaps as the trust leak',
+        'Soft reachability means the board looks healthier than the guest experience will actually feel when it is time to send something.',
+        'Repair the direct contact layer next',
+        'Fill in the missing email or phone paths before you spend more energy on cadence, nudges, or day-of messages.',
+        'Return to messaging once the list can hear it',
+        'After the contact layer is solid, let reminders and guest updates do the quieter work they were supposed to do.',
+      ),
     };
   }
 
@@ -139,6 +176,14 @@ export function buildAnalyticsConfidenceSummary(input: AnalyticsBaselineInput): 
         : 'Turn on one active photo contribution path next, then let the rest of the guest experience build from that living signal.',
       decisionRule: 'Treat guest-facing depth as part of trust, not as decorative polish.',
       tone: 'warning',
+      sequence: buildAnalyticsSequence(
+        'Notice the thin guest-facing layer',
+        'The board is stable enough to be useful, but guests still need a little more visible depth to trust the experience fully.',
+        'Strengthen the missing public-facing lane next',
+        'Add the first honest registry path or one active photo contribution lane before you spend time on softer polish.',
+        'Let that living signal carry the rest',
+        'Once one more guest-facing lane is real, let the experience grow from there instead of widening the project all at once.',
+      ),
     };
   }
 
@@ -152,6 +197,14 @@ export function buildAnalyticsConfidenceSummary(input: AnalyticsBaselineInput): 
         : 'Check the password handoff once now, then reuse the same access instructions anywhere the site gets shared or printed.',
       decisionRule: 'A strong board still needs the right access instructions traveling with it.',
       tone: 'warning',
+      sequence: buildAnalyticsSequence(
+        'Treat access clarity as part of trust',
+        `The metrics are healthy, but a ${accessLabel} site still depends on front-door clarity to feel reliable to guests.`,
+        'Check the live access handoff next',
+        'Run one clean pass on the password or invite path so every share, QR pack, and reminder tells the same access story.',
+        'Reuse the exact same instructions after that',
+        'Once the access path is steady, keep reusing that one truthful handoff instead of improvising by channel.',
+      ),
     };
   }
 
@@ -163,6 +216,14 @@ export function buildAnalyticsConfidenceSummary(input: AnalyticsBaselineInput): 
       bestNextMove: 'Use this calm window for one guest-facing polish pass, then leave the solved basics alone unless real guest feedback says otherwise.',
       decisionRule: 'This is the moment to improve the guest-facing finish, not to reopen solved basics.',
       tone: 'success',
+      sequence: buildAnalyticsSequence(
+        'Trust the measured baseline',
+        'Replies, reachability, and the public-facing extras are aligned enough that the board feels like product truth now.',
+        'Use the calm for one visible polish pass next',
+        'Tighten one guest-facing finish pass while the basics are quiet instead of reopening solved operational work.',
+        'Leave the stable layers alone after that',
+        'If no real guest feedback changes the picture, let the healthy baseline stay healthy instead of stirring it back up.',
+      ),
     };
   }
 
@@ -173,6 +234,14 @@ export function buildAnalyticsConfidenceSummary(input: AnalyticsBaselineInput): 
     bestNextMove: 'Follow the highest-friction guest-facing signal next, then let the quieter metrics stay in support instead of chasing all of them at once.',
     decisionRule: 'Keep following the highest-friction signal instead of spreading effort evenly everywhere.',
     tone: 'warning',
+    sequence: buildAnalyticsSequence(
+      'Read the board as useful but still maturing',
+      'Nothing is broken, but one or two guest-facing signals still deserve a little more work before the baseline feels fully settled.',
+      'Follow the highest-friction signal next',
+      'Choose the loudest guest-facing gap instead of spreading effort evenly across every metric on the board.',
+      'Let the quieter metrics stay in support',
+      'After the main friction point moves, come back and see what actually changed before you start another broad pass.',
+    ),
   };
 }
 
