@@ -3,7 +3,7 @@ export interface CoupleFocusStep {
   status: 'current' | 'next' | 'then';
   title: string;
   detail: string;
-  target: 'builder' | 'planning' | 'planning-tasks' | 'planning-vendors' | 'itinerary' | 'guests' | 'messages' | 'settings' | 'seating' | 'coordinator' | 'photos' | 'vault';
+  target: 'builder-launch' | 'builder-polish' | 'planning' | 'planning-tasks' | 'planning-vendors' | 'itinerary' | 'guests' | 'messages' | 'settings' | 'seating' | 'coordinator' | 'photos' | 'vault';
   ctaLabel: string;
 }
 
@@ -74,7 +74,7 @@ export function buildCoupleFocusModel(input: CoupleFocusInput): CoupleFocusModel
           id: 'launch',
           title: 'Clear the launch blockers',
           detail: `${input.publishBlockerCount} guest-facing blocker${input.publishBlockerCount === 1 ? '' : 's'} still stand between this draft and a confident launch.`,
-          target: 'builder',
+          target: 'builder-launch',
           ctaLabel: 'Open launch checklist',
         }),
         step('next', {
@@ -124,7 +124,7 @@ export function buildCoupleFocusModel(input: CoupleFocusInput): CoupleFocusModel
           id: 'polish',
           title: 'Then use polish as a reward, not a detour',
           detail: 'That is the moment for copy and visual polish, not while real deadlines are still pulling focus.',
-          target: 'builder',
+          target: 'builder-polish',
           ctaLabel: 'Return to builder',
         }),
       ],
@@ -202,7 +202,7 @@ export function buildCoupleFocusModel(input: CoupleFocusInput): CoupleFocusModel
           id: 'launch',
           title: 'Preview the guest-facing schedule',
           detail: 'Once the anchors are in, check the public timeline and make sure guests can understand the flow without asking you to decode it.',
-          target: 'builder',
+          target: 'builder-polish',
           ctaLabel: 'Open builder',
         }),
         step('then', {
@@ -264,7 +264,7 @@ export function buildCoupleFocusModel(input: CoupleFocusInput): CoupleFocusModel
           id: 'polish',
           title: 'Then use polish very selectively',
           detail: 'Only make changes that clearly reduce guest confusion or day-of friction.',
-          target: 'builder',
+          target: 'builder-polish',
           ctaLabel: 'Open builder',
         }),
       ],
@@ -279,7 +279,7 @@ export function buildCoupleFocusModel(input: CoupleFocusInput): CoupleFocusModel
         id: 'polish',
         title: 'Strengthen the guest-facing quality',
         detail: 'Use this calm window to make the site feel clearer, warmer, and easier to trust.',
-        target: 'builder',
+        target: 'builder-polish',
         ctaLabel: 'Open builder',
       }),
       step('next', {

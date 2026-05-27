@@ -183,7 +183,8 @@ export const PlanningOverviewTab: React.FC<Props> = ({ tasks, budgetItems, vendo
     }
     if (typeof window !== 'undefined') {
       const routeByTarget: Record<Exclude<CoupleFocusStep['target'], 'planning' | 'planning-tasks' | 'planning-vendors' | 'itinerary' | 'seating' | 'coordinator'>, string> = {
-        builder: '/dashboard/builder',
+        'builder-launch': '/dashboard/builder#launch-confidence',
+        'builder-polish': '/dashboard/builder#builder-concierge',
         guests: '/dashboard/guests',
         messages: '/dashboard/messages',
         settings: '/dashboard/settings?tab=site#guest-access-handoff',

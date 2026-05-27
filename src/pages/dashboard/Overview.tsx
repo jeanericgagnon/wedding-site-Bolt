@@ -658,7 +658,8 @@ export const DashboardOverview: React.FC = () => {
     }
 
     const routeByTarget: Record<ControlTowerAction['target'], string> = {
-      builder: '/dashboard/builder',
+      'builder-launch': '/dashboard/builder#launch-confidence',
+      'builder-polish': '/dashboard/builder#builder-concierge',
       coordinator: '/dashboard/coordinator',
       guests: '/dashboard/guests',
       itinerary: '/dashboard/itinerary#itinerary-readiness',
@@ -684,7 +685,7 @@ export const DashboardOverview: React.FC = () => {
       messages: '/dashboard/messages',
       registry: '/dashboard/registry',
       photos: '/dashboard/photos',
-      builder: '/dashboard/builder',
+      'builder-polish': '/dashboard/builder#builder-concierge',
       settings: '/dashboard/settings?tab=site#guest-access-handoff',
     };
     navigate(routeByTarget[analyticsNextMove.target]);
@@ -692,7 +693,8 @@ export const DashboardOverview: React.FC = () => {
 
   function handleCoupleFocusAction(step: CoupleFocusStep) {
     const routeByTarget: Record<CoupleFocusStep['target'], string> = {
-      builder: '/dashboard/builder',
+      'builder-launch': '/dashboard/builder#launch-confidence',
+      'builder-polish': '/dashboard/builder#builder-concierge',
       planning: '/dashboard/planning',
       'planning-tasks': '/dashboard/planning?tab=tasks',
       'planning-vendors': '/dashboard/planning?tab=vendors',

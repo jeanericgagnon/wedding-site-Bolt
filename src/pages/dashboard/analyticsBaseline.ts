@@ -36,7 +36,7 @@ export interface AnalyticsNextMove {
   title: string;
   detail: string;
   ctaLabel: string;
-  target: 'guests' | 'messages' | 'registry' | 'photos' | 'builder' | 'settings';
+  target: 'guests' | 'messages' | 'registry' | 'photos' | 'builder-polish' | 'settings';
 }
 
 function pct(numerator: number, denominator: number): number {
@@ -251,7 +251,7 @@ export function buildAnalyticsNextMove(input: AnalyticsBaselineInput): Analytics
       title: 'The measured baseline is healthy enough for a polish pass',
       detail: 'This is a good moment to improve the live guest-facing story instead of chasing missing basics.',
       ctaLabel: 'Open builder',
-      target: 'builder',
+      target: 'builder-polish',
     };
   }
 

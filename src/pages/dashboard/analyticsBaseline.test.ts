@@ -81,7 +81,7 @@ describe('analyticsBaseline', () => {
       activePhotoAlbumCount: 2,
     }));
 
-    expect(nextMove.target).toBe('builder');
+    expect(nextMove.target).toBe('builder-polish');
   });
 
   it('calls out access handoff when the site is restricted even if the measured baseline is otherwise strong', () => {

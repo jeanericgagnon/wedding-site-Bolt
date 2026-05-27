@@ -414,7 +414,7 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
         </div>
 
         {conciergePlan && (
-          <div className="border-t border-border/30 bg-white/90 px-4 py-3 shadow-[0_-6px_18px_rgba(15,23,42,0.04)]">
+          <div id="builder-concierge" className="border-t border-border/30 bg-white/90 px-4 py-3 shadow-[0_-6px_18px_rgba(15,23,42,0.04)]">
             <div className="mx-auto flex max-w-7xl flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
               <div className="space-y-2">
                 <div className="flex flex-wrap items-center gap-2">
@@ -455,7 +455,7 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
                   <p key={watchout} className="text-xs text-amber-700">{watchout}</p>
                 ))}
                 {launchConfidence && (
-                  <div className="rounded-2xl border border-border-subtle bg-white px-4 py-3">
+                  <div id="launch-confidence" className="rounded-2xl border border-border-subtle bg-white px-4 py-3">
                     <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                       <div className="space-y-1">
                         <div className="flex items-center gap-2">

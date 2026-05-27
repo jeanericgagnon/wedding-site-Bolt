@@ -1,7 +1,8 @@
 import type { BadgeProps } from '../../components/ui';
 
 export type ControlTowerActionTarget =
-  | 'builder'
+  | 'builder-launch'
+  | 'builder-polish'
   | 'coordinator'
   | 'guests'
   | 'itinerary'
@@ -167,7 +168,7 @@ export function buildControlTowerBriefing(input: ControlTowerIntelligenceInput):
         { label: 'Preview guest-facing flow', status: 'next' },
         { label: 'Publish the live site', status: 'then' },
       ],
-      primaryAction: { label: 'Open launch checklist', target: 'builder' },
+      primaryAction: { label: 'Open launch checklist', target: 'builder-launch' },
       secondaryAction: { label: 'Check planning', target: 'planning' },
     };
   }
@@ -277,7 +278,7 @@ export function buildControlTowerBriefing(input: ControlTowerIntelligenceInput):
         { label: 'Return to live-day polish', status: 'then' },
       ],
       primaryAction: { label: 'Open itinerary', target: 'itinerary' },
-      secondaryAction: { label: 'Open builder', target: 'builder' },
+      secondaryAction: { label: 'Open builder', target: 'builder-polish' },
     };
   }
 
@@ -297,7 +298,7 @@ export function buildControlTowerBriefing(input: ControlTowerIntelligenceInput):
         { label: 'Return to broader polish', status: 'then' },
       ],
       primaryAction: { label: 'Open registry', target: 'registry' },
-      secondaryAction: { label: 'Open builder', target: 'builder' },
+      secondaryAction: { label: 'Open builder', target: 'builder-polish' },
     };
   }
 
@@ -319,7 +320,7 @@ export function buildControlTowerBriefing(input: ControlTowerIntelligenceInput):
         { label: 'Return to site polish', status: 'then' },
       ],
       primaryAction: { label: 'Review photos', target: 'photos' },
-      secondaryAction: { label: 'Open builder', target: 'builder' },
+      secondaryAction: { label: 'Open builder', target: 'builder-polish' },
     };
   }
 
@@ -357,7 +358,7 @@ export function buildControlTowerBriefing(input: ControlTowerIntelligenceInput):
       { label: 'Review guests if needed', status: 'next' },
       { label: 'Leave the board calm', status: 'then' },
     ],
-    primaryAction: { label: 'Open builder', target: 'builder' },
+    primaryAction: { label: 'Open builder', target: 'builder-polish' },
     secondaryAction: { label: 'Review guests', target: 'guests' },
   };
 }

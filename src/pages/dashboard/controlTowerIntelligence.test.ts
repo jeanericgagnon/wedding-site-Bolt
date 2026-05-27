@@ -44,7 +44,7 @@ describe('buildControlTowerBriefing', () => {
     }));
 
     expect(briefing.title).toContain('Launch readiness');
-    expect(briefing.primaryAction).toMatchObject({ target: 'builder' });
+    expect(briefing.primaryAction).toMatchObject({ target: 'builder-launch' });
     expect(briefing.badges).toContain('3 blockers');
     expect(briefing.sequence[0]).toMatchObject({ status: 'current' });
   });
@@ -100,7 +100,7 @@ describe('buildControlTowerBriefing', () => {
 
     expect(briefing.title).toContain('guest-facing schedule');
     expect(briefing.primaryAction).toMatchObject({ target: 'itinerary' });
-    expect(briefing.secondaryAction).toMatchObject({ target: 'builder' });
+    expect(briefing.secondaryAction).toMatchObject({ target: 'builder-polish' });
   });
 
   it('surfaces guest access handoff when a live site is restricted close to the wedding', () => {
@@ -156,6 +156,6 @@ describe('buildControlTowerBriefing', () => {
     }));
 
     expect(briefing.title).toContain('board looks calm');
-    expect(briefing.primaryAction).toMatchObject({ target: 'builder' });
+    expect(briefing.primaryAction).toMatchObject({ target: 'builder-polish' });
   });
 });
