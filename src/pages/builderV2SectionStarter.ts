@@ -6,6 +6,33 @@ export type BuilderV2SectionStarterSummary = {
   detail: string;
 };
 
+type StarterBlock<TData = unknown> = {
+  id: string;
+  type: string;
+  content: string;
+  data: TData;
+};
+
+type RestoreSectionLike = {
+  id: string;
+  type: string;
+  title: string;
+};
+
+type RestoreStarterBlocksParams<TSection extends RestoreSectionLike, TBlock> = {
+  sections: TSection[];
+  sectionBlocks: Record<string, TBlock[]>;
+  selectedIds: string[];
+  availableBlockTypesBySection: Record<string, string[]>;
+  buildStarterBlocks: (sectionId: string, sectionType: string) => TBlock[];
+};
+
+export type RestoreBuilderV2SectionStarterResult<TBlock> = {
+  sectionBlocks: Record<string, TBlock[]>;
+  restoredSectionIds: string[];
+  restoredBlockCount: number;
+};
+
 const normalize = (value: string) => value.trim().toLowerCase();
 
 const preferredStarterCounts: Record<string, number> = {
@@ -33,6 +60,60 @@ export const getBuilderV2StarterBlockTypes = (
   }
 
   return availableBlockTypes.slice(0, Math.min(2, availableBlockTypes.length));
+};
+
+export const buildBuilderV2StarterBlocks = <TData>({
+  sectionId,
+  sectionType,
+  availableBlockTypes,
+  labels,
+  createDefaultData,
+}: {
+  sectionId: string;
+  sectionType: string;
+  availableBlockTypes: string[];
+  labels: Record<string, string>;
+  createDefaultData: (type: string) => TData;
+}): StarterBlock<TData>[] => {
+  const starterBlockTypes = getBuilderV2StarterBlockTypes(sectionType, availableBlockTypes);
+
+  return starterBlockTypes.map((blockType, index) => ({
+    id: `${sectionId}-${String(blockType)}-starter-${index + 1}`,
+    type: blockType,
+    content: labels[String(blockType)] ?? String(blockType),
+    data: createDefaultData(blockType),
+  }));
+};
+
+export const restoreBuilderV2SectionStarterBlocks = <TSection extends RestoreSectionLike, TBlock>({
+  sections,
+  sectionBlocks,
+  selectedIds,
+  availableBlockTypesBySection,
+  buildStarterBlocks,
+}: RestoreStarterBlocksParams<TSection, TBlock>): RestoreBuilderV2SectionStarterResult<TBlock> => {
+  const selectedSet = new Set(selectedIds);
+  const nextSectionBlocks = { ...sectionBlocks };
+  const restoredSectionIds: string[] = [];
+  let restoredBlockCount = 0;
+
+  sections.forEach((section) => {
+    if (!selectedSet.has(section.id)) return;
+
+    const availableBlockTypes = availableBlockTypesBySection[section.type] ?? [];
+    if (!availableBlockTypes.length) return;
+
+    const starterBlocks = buildStarterBlocks(section.id, section.type);
+    nextSectionBlocks[section.id] = starterBlocks;
+    restoredSectionIds.push(section.id);
+    restoredBlockCount += starterBlocks.length;
+  });
+
+  return {
+    sectionBlocks: nextSectionBlocks,
+    restoredSectionIds,
+    restoredBlockCount,
+  };
 };
 
 export const buildBuilderV2SectionStarterSummary = (

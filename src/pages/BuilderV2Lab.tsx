@@ -25,8 +25,9 @@ import { buildBuilderV2StructureGuidance } from './builderV2StructureGuidance';
 import { buildBuilderV2SelectionGuidance } from './builderV2SelectionGuidance';
 import { cloneBuilderV2Sections } from './builderV2SectionClone';
 import {
+  buildBuilderV2StarterBlocks,
   buildBuilderV2SectionStarterSummary,
-  getBuilderV2StarterBlockTypes,
+  restoreBuilderV2SectionStarterBlocks,
 } from './builderV2SectionStarter';
 import {
   DndContext,
@@ -680,11 +681,18 @@ export const BuilderV2Lab: React.FC = () => {
 
   const buildStarterBlocks = useCallback((sectionId: string, sectionType: string) => {
     const availableBlockTypes = SECTION_BLOCK_CATALOG[sectionType] ?? ['title', 'text', 'photo'];
-    return getBuilderV2StarterBlockTypes(sectionType, availableBlockTypes).map((blockType) => ({
-      id: `${sectionId}-${blockType}-${Math.random().toString(36).slice(2, 6)}`,
-      type: blockType as BlockType,
-      content: BLOCK_DEFAULTS[blockType as BlockType],
-      data: makeDefaultBlockContent(blockType as BlockType),
+    return buildBuilderV2StarterBlocks({
+      sectionId,
+      sectionType,
+      availableBlockTypes,
+      labels: BLOCK_DEFAULTS,
+      createDefaultData: (blockType) => makeDefaultBlockContent(blockType as BlockType),
+    }).map((block) => ({
+      ...block,
+      id: `${sectionId}-${block.type}-${Math.random().toString(36).slice(2, 6)}`,
+      type: block.type as BlockType,
+      content: BLOCK_DEFAULTS[block.type as BlockType],
+      data: block.data as AddedBlockContent,
     }));
   }, []);
 
@@ -698,6 +706,29 @@ export const BuilderV2Lab: React.FC = () => {
     commit(next);
     notify(starterBlocks.length > 0 ? `Added ${typeLabel} with ${starterBlocks.length} starter block${starterBlocks.length === 1 ? '' : 's'}` : `Added ${typeLabel}`);
   }, [buildStarterBlocks, commit, notify, sections]);
+
+  const restoreSelectedSectionsToStarterBlocks = useCallback(() => {
+    const result = restoreBuilderV2SectionStarterBlocks({
+      sections,
+      sectionBlocks,
+      selectedIds,
+      availableBlockTypesBySection: SECTION_BLOCK_CATALOG,
+      buildStarterBlocks,
+    });
+
+    if (!result.restoredSectionIds.length) {
+      notify('No starter reset is available for this selection yet');
+      return;
+    }
+
+    setSectionBlocks(result.sectionBlocks);
+    markSaving();
+    notify(
+      result.restoredSectionIds.length === 1
+        ? `Restored ${result.restoredBlockCount} starter block${result.restoredBlockCount === 1 ? '' : 's'}`
+        : `Restored starter blocks across ${result.restoredSectionIds.length} sections`,
+    );
+  }, [buildStarterBlocks, markSaving, notify, sectionBlocks, sections, selectedIds]);
 
   const renameSelected = (title: string) => {
     commit(sections.map((s) => (s.id === selected.id ? { ...s, title } : s)));
@@ -962,6 +993,7 @@ export const BuilderV2Lab: React.FC = () => {
       { id: 'sel-hide', group: 'Selection', label: 'Hide selected sections', keywords: ['hide', 'selection', 'batch', 'visibility'], action: () => runCommand('Hide selected sections', hideSelectedSections) },
       { id: 'sel-show', group: 'Selection', label: 'Show selected sections', keywords: ['show', 'selection', 'batch', 'visibility'], action: () => runCommand('Show selected sections', showSelectedSections) },
       { id: 'sel-duplicate', group: 'Selection', label: 'Duplicate selected sections', keywords: ['duplicate', 'copy', 'selection', 'batch', 'reuse'], action: () => runCommand('Duplicate selected sections', duplicateSelectedSections) },
+      { id: 'sel-restore-starters', group: 'Selection', label: 'Restore starter blocks for selected sections', keywords: ['restore', 'starter', 'reset', 'selection', 'batch', 'repair'], action: () => runCommand('Restore starter blocks for selected sections', restoreSelectedSectionsToStarterBlocks) },
       { id: 'sel-compact', group: 'Selection', label: 'Set selected density: compact', keywords: ['compact', 'density', 'selection', 'batch'], action: () => runCommand('Set selected density: compact', () => setSelectedDensity('compact')) },
       { id: 'sel-comfortable', group: 'Selection', label: 'Set selected density: comfortable', keywords: ['comfortable', 'density', 'selection', 'batch', 'open'], action: () => runCommand('Set selected density: comfortable', () => setSelectedDensity('comfortable')) },
       { id: 'sel-review', group: 'Selection', label: 'Review selected sections in preview', keywords: ['preview', 'selection', 'review', 'batch'], action: () => runCommand('Review selected sections in preview', reviewSelectionInPreview) },
@@ -982,7 +1014,7 @@ export const BuilderV2Lab: React.FC = () => {
       .filter((x) => x.s > 0)
       .sort((a, b) => b.s - a.s)
       .map((x) => x.item);
-  }, [commandQuery, sections, addSection, clearSelection, duplicateSelectedSections, hideSelectedSections, invertSelection, reviewSelectionInPreview, selectAllSections, setSelectedDensity, showSelectedSections, updateVariant]);
+  }, [commandQuery, sections, addSection, clearSelection, duplicateSelectedSections, hideSelectedSections, invertSelection, restoreSelectedSectionsToStarterBlocks, reviewSelectionInPreview, selectAllSections, setSelectedDensity, showSelectedSections, updateVariant]);
   const importGuidance = useMemo(
     () => buildBuilderV2ImportGuidance(lastImportReport, lastImportSource),
     [lastImportReport, lastImportSource],
@@ -1277,6 +1309,7 @@ export const BuilderV2Lab: React.FC = () => {
                     <button onClick={hideSelectedSections} className="rounded-md border border-border-subtle bg-white px-2.5 py-2 text-xs font-medium text-text-primary hover:border-primary/40">Hide selected</button>
                     <button onClick={showSelectedSections} className="rounded-md border border-border-subtle bg-white px-2.5 py-2 text-xs font-medium text-text-primary hover:border-primary/40">Show selected</button>
                     <button onClick={duplicateSelectedSections} className="col-span-2 rounded-md border border-border-subtle bg-white px-2.5 py-2 text-xs font-medium text-text-primary hover:border-primary/40">Duplicate batch</button>
+                    <button onClick={restoreSelectedSectionsToStarterBlocks} className="col-span-2 rounded-md border border-amber-200 bg-amber-50 px-2.5 py-2 text-xs font-semibold text-amber-900 hover:bg-amber-100">Restore starter blocks</button>
                     <button onClick={() => setSelectedDensity('compact')} className="rounded-md border border-border-subtle bg-white px-2.5 py-2 text-xs font-medium text-text-primary hover:border-primary/40">Make compact</button>
                     <button onClick={() => setSelectedDensity('comfortable')} className="rounded-md border border-border-subtle bg-white px-2.5 py-2 text-xs font-medium text-text-primary hover:border-primary/40">Make open</button>
                     <button onClick={reviewSelectionInPreview} className="col-span-2 rounded-md border border-primary/30 bg-primary/10 px-2.5 py-2 text-xs font-semibold text-primary hover:bg-primary/15">Review batch in preview</button>
@@ -1691,6 +1724,22 @@ export const BuilderV2Lab: React.FC = () => {
                             ))}
                           </div>
                         )}
+                        <div className="rounded-md border border-amber-200 bg-amber-50 px-2.5 py-2">
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="min-w-0">
+                              <p className="text-[11px] uppercase tracking-[0.18em] text-amber-800">Starter recovery</p>
+                              <p className="mt-1 text-xs leading-relaxed text-text-primary">
+                                Replace this section&apos;s current blocks with a fresh starter spine when the lane has drifted too far to clean up block by block.
+                              </p>
+                            </div>
+                            <button
+                              onClick={restoreSelectedSectionsToStarterBlocks}
+                              className="shrink-0 rounded-md border border-amber-200 bg-white px-2.5 py-2 text-[11px] font-semibold text-amber-900 hover:bg-amber-100"
+                            >
+                              Restore starter blocks
+                            </button>
+                          </div>
+                        </div>
                       </div>
                     </div>
 
