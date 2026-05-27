@@ -1191,7 +1191,9 @@ export const DashboardOverview: React.FC = () => {
                         <p className="mt-1 text-xs leading-5 text-sky-900">{nameChangeCard.focusDetail}</p>
                       </div>
                       <div className="rounded-xl border border-sky-300 bg-white px-4 py-3">
-                        <p className="text-xs uppercase tracking-wide text-sky-700">Decision rule</p>
+                        <p className="text-xs uppercase tracking-wide text-sky-700">Best next move</p>
+                        <p className="mt-1 text-sm font-semibold text-sky-950">{nameChangeCard.bestNextMove}</p>
+                        <p className="mt-3 text-xs uppercase tracking-wide text-sky-700">Decision rule</p>
                         <p className="mt-1 text-xs leading-5 text-sky-900">{nameChangeCard.decisionRule}</p>
                       </div>
                       <div className="rounded-xl border border-sky-300 bg-sky-100/80 px-4 py-3">
