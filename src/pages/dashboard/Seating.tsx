@@ -1702,6 +1702,12 @@ export const DashboardSeating: React.FC = () => {
                     </div>
                     <div className="grid gap-2 sm:grid-cols-1">
                       <div className="rounded-xl border border-border-subtle bg-surface-subtle px-3 py-2">
+                        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-text-tertiary">Best next move</p>
+                        <p className="mt-1 text-sm text-text-secondary">{seatingInsight.bestNextMove}</p>
+                      </div>
+                    </div>
+                    <div className="grid gap-2 sm:grid-cols-1">
+                      <div className="rounded-xl border border-border-subtle bg-surface-subtle px-3 py-2">
                         <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-text-tertiary">Decision rule</p>
                         <p className="mt-1 text-sm text-text-secondary">{seatingInsight.decisionRule}</p>
                       </div>
