@@ -205,6 +205,79 @@ describe('toBuilderV2Document', () => {
       { type: 'story', data: { text: 'We are so glad you will be there.' } },
     ]);
   });
+
+  it('preserves legacy hero, story, gallery, and venue anchors when migrating into v2', () => {
+    const heroSection = toBuilderV2Section({
+      id: 'hero-1',
+      type: 'hero',
+      variant: 'default',
+      enabled: true,
+      bindings: {},
+      settings: {
+        title: 'Celebrate with us',
+        subtitle: 'September 21, 2026',
+        heroImageUrl: 'https://example.com/hero.jpg',
+      },
+    });
+
+    const storySection = toBuilderV2Section({
+      id: 'story-1',
+      type: 'story',
+      variant: 'default',
+      enabled: true,
+      bindings: {},
+      settings: {
+        title: 'Our Story',
+        storyText: 'We met by chance and stayed out talking for hours.',
+        photo: 'https://example.com/story.jpg',
+      },
+    });
+
+    const gallerySection = toBuilderV2Section({
+      id: 'gallery-1',
+      type: 'gallery',
+      variant: 'default',
+      enabled: true,
+      bindings: {},
+      settings: {
+        images: [
+          { url: 'https://example.com/gallery-1.jpg', caption: 'Welcome drinks' },
+          { image: 'https://example.com/gallery-2.jpg', title: 'Sunset dinner' },
+        ],
+      },
+    });
+
+    const venueSection = toBuilderV2Section({
+      id: 'venue-1',
+      type: 'venue',
+      variant: 'default',
+      enabled: true,
+      bindings: {},
+      settings: {
+        title: 'Venue Details',
+        subtitle: 'Ceremony on the bluff, dinner under the trees.',
+        photo: { value: 'https://example.com/venue.jpg' },
+      },
+    });
+
+    expect(heroSection.blocks).toMatchObject([
+      { type: 'title', data: { text: 'Celebrate with us' } },
+      { type: 'text', data: { text: 'September 21, 2026' } },
+      { type: 'photo', data: { imageUrl: 'https://example.com/hero.jpg' } },
+    ]);
+    expect(storySection.blocks).toMatchObject([
+      { type: 'story', data: { text: 'We met by chance and stayed out talking for hours.' } },
+      { type: 'photo', data: { imageUrl: 'https://example.com/story.jpg' } },
+    ]);
+    expect(gallerySection.blocks).toMatchObject([
+      { type: 'photo', data: { imageUrl: 'https://example.com/gallery-1.jpg', caption: 'Welcome drinks', title: 'Welcome drinks' } },
+      { type: 'photo', data: { imageUrl: 'https://example.com/gallery-2.jpg', caption: 'Sunset dinner', title: 'Sunset dinner' } },
+    ]);
+    expect(venueSection.blocks).toMatchObject([
+      { type: 'text', data: { text: 'Ceremony on the bluff, dinner under the trees.' } },
+      { type: 'photo', data: { imageUrl: 'https://example.com/venue.jpg' } },
+    ]);
+  });
 });
 
 describe('legacy adapters', () => {

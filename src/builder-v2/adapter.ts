@@ -46,6 +46,49 @@ const getSettingRecordList = <T extends Record<string, unknown>>(settings: Recor
     : [];
 };
 
+const getSettingImage = (settings: Record<string, unknown> | undefined, ...keys: string[]) => {
+  for (const key of keys) {
+    const value = settings?.[key];
+    if (typeof value === 'string' && value.trim()) return value.trim();
+    if (value && typeof value === 'object' && 'value' in value) {
+      const maybeValue = (value as { value?: unknown }).value;
+      if (typeof maybeValue === 'string' && maybeValue.trim()) return maybeValue.trim();
+    }
+  }
+  return '';
+};
+
+const getSettingGalleryImages = (settings: Record<string, unknown> | undefined) => {
+  const rawImages = ['images', 'galleryImages', 'photos']
+    .flatMap((key) => {
+      const value = settings?.[key];
+      return Array.isArray(value) ? value : [];
+    });
+
+  return rawImages
+    .map((item) => {
+      if (typeof item === 'string') {
+        return item.trim() ? { url: item.trim(), caption: '', title: '' } : null;
+      }
+
+      if (!item || typeof item !== 'object') return null;
+      const record = item as Record<string, unknown>;
+      const url = typeof record.url === 'string'
+        ? record.url.trim()
+        : typeof record.image === 'string'
+          ? record.image.trim()
+          : '';
+      if (!url) return null;
+
+      return {
+        url,
+        caption: typeof record.caption === 'string' && record.caption.trim() ? record.caption.trim() : '',
+        title: typeof record.title === 'string' && record.title.trim() ? record.title.trim() : '',
+      };
+    })
+    .filter((item): item is { url: string; caption: string; title: string } => Boolean(item));
+};
+
 const makeDefaultBlocksForType = (
   type: string,
   settings: Record<string, unknown> | undefined,
@@ -57,18 +100,46 @@ const makeDefaultBlocksForType = (
   const normalizedType = normalizeBuilderV2SectionType(type);
 
   switch (normalizedType) {
-    case 'hero':
+    case 'hero': {
+      const heroImage = getSettingImage(settings, 'backgroundImage', 'heroImage', 'heroImageUrl', 'image', 'coverImage', 'photo');
       return [
         ...(titleText ? [{ id: 'b-title', type: 'title', data: { text: titleText } } satisfies BuilderV2Block] : []),
         ...(subtitleText ? [{ id: 'b-text', type: 'text', data: { text: subtitleText } } satisfies BuilderV2Block] : []),
+        ...(heroImage ? [{ id: 'b-photo', type: 'photo', data: { imageUrl: heroImage } } satisfies BuilderV2Block] : []),
       ];
-    case 'story':
-      return subtitleText ? [{ id: 'b-story', type: 'story', data: { text: subtitleText } }] : [];
+    }
+    case 'story': {
+      const storyText = getSettingString(settings, 'storyText');
+      const storyImage = getSettingImage(settings, 'backgroundImage', 'heroImage', 'heroImageUrl', 'image', 'coverImage', 'photo');
+      return [
+        ...(storyText ? [{ id: 'b-story', type: 'story', data: { text: storyText } } satisfies BuilderV2Block] : subtitleText ? [{ id: 'b-story', type: 'story', data: { text: subtitleText } } satisfies BuilderV2Block] : []),
+        ...(storyImage ? [{ id: 'b-photo', type: 'photo', data: { imageUrl: storyImage } } satisfies BuilderV2Block] : []),
+      ];
+    }
     case 'schedule':
     case 'travel':
     case 'registry':
     case 'rsvp':
       return subtitleText ? [{ id: 'b-text', type: 'text', data: { text: subtitleText } }] : [];
+    case 'gallery': {
+      const galleryImages = getSettingGalleryImages(settings);
+      return galleryImages.map((image, index) => ({
+        id: `b-photo-${index + 1}`,
+        type: 'photo' as const,
+        data: {
+          imageUrl: image.url,
+          caption: image.caption || image.title || undefined,
+          title: image.title || image.caption || undefined,
+        },
+      }));
+    }
+    case 'venue': {
+      const venueImage = getSettingImage(settings, 'backgroundImage', 'heroImage', 'heroImageUrl', 'image', 'coverImage', 'photo');
+      return [
+        ...(subtitleText ? [{ id: 'b-text', type: 'text', data: { text: subtitleText } } satisfies BuilderV2Block] : []),
+        ...(venueImage ? [{ id: 'b-photo', type: 'photo', data: { imageUrl: venueImage } } satisfies BuilderV2Block] : []),
+      ];
+    }
     case 'countdown': {
       const message = getSettingString(settings, 'message');
       return [
