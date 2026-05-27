@@ -274,6 +274,10 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
                   <p className="mt-1 text-[11px] leading-5 text-text-tertiary">{roleGuide.focusDetail}</p>
                 </div>
                 <div className="rounded-lg border border-border-subtle bg-white/80 px-3 py-2">
+                  <p className="text-[11px] uppercase tracking-wide text-text-tertiary">Best next move</p>
+                  <p className="mt-1 text-[11px] leading-5 text-text-tertiary">{roleGuide.nextMove}</p>
+                </div>
+                <div className="rounded-lg border border-border-subtle bg-white/80 px-3 py-2">
                   <p className="text-[11px] uppercase tracking-wide text-text-tertiary">Decision rule</p>
                   <p className="mt-1 text-[11px] leading-5 text-text-tertiary">{roleGuide.decisionRule}</p>
                 </div>

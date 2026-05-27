@@ -9,6 +9,7 @@ describe('buildDashboardRoleGuide', () => {
     expect(guide.title).toMatch(/planning workspace/i);
     expect(guide.detail).toMatch(/Guests, planning, messages, seating, and live-day tools/i);
     expect(guide.focusTitle).toMatch(/Move the plan forward/i);
+    expect(guide.nextMove).toMatch(/Overview, then move into Guests, Planning, or Messages/i);
     expect(guide.decisionRule).toMatch(/brand, billing, or final ownership calls/i);
   });
 
@@ -18,6 +19,7 @@ describe('buildDashboardRoleGuide', () => {
     expect(guide.label).toBe('Read-only handoff');
     expect(guide.detail).toMatch(/without exposing editing controls/i);
     expect(guide.focusTitle).toMatch(/Review for clarity/i);
+    expect(guide.nextMove).toMatch(/Overview, then open the relevant page/i);
     expect(guide.decisionRule).toMatch(/not to become another editing lane/i);
   });
 });
