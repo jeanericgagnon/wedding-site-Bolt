@@ -81,6 +81,7 @@ import {
   buildBuilderV2BlockFieldDescriptors,
   buildBuilderV2BlockPreviewSummary,
 } from './builderV2BlockPresentation';
+import { getBuilderV2BlockValidationWarning } from './builderV2BlockValidation';
 import {
   buildBuilderV2SectionSettingFields,
   updateBuilderV2SectionSetting,
@@ -1130,14 +1131,21 @@ export const BuilderV2Lab: React.FC = () => {
     setRecentCommands((prev) => [label, ...prev.filter((x) => x !== label)].slice(0, 6));
   };
 
-  const getBlockValidationWarning = useCallback((block: AddedBlock) => {
-    const d = normalizeBlockData(block);
-    if (block.type === 'qna' && (!(d.question || '').trim() || !(d.answer || '').trim())) return 'Question and answer are required';
-    if (block.type === 'photo' && !(d.imageUrl || '').trim()) return 'Image URL is recommended';
-    if (block.type === 'event' && (!(d.title || '').trim() || !(d.time || '').trim())) return 'Event title and time are required';
-    if ((block.type === 'registryItem' || block.type === 'fundHighlight') && !(d.title || '').trim()) return 'Item title is required';
-    return '';
-  }, []);
+  const getBlockValidationWarning = useCallback((
+    sectionType: string,
+    block: AddedBlock,
+    blocks: AddedBlock[],
+  ) => getBuilderV2BlockValidationWarning({
+    sectionType,
+    block: {
+      ...block,
+      data: normalizeBlockData(block),
+    },
+    blocks: blocks.map((candidate) => ({
+      ...candidate,
+      data: normalizeBlockData(candidate),
+    })),
+  }), []);
 
 
   const canUndo = historyIndex > 0;
@@ -1157,7 +1165,7 @@ export const BuilderV2Lab: React.FC = () => {
         type: section.type,
         enabled: section.enabled,
         blockCount: (sectionBlocks[section.id] ?? []).length,
-        warningCount: (sectionBlocks[section.id] ?? []).filter((block) => getBlockValidationWarning(block)).length,
+        warningCount: (sectionBlocks[section.id] ?? []).filter((block) => getBlockValidationWarning(section.type, block, sectionBlocks[section.id] ?? [])).length,
       })),
     })),
     [getBlockValidationWarning, pages, sectionBlocks],
@@ -1220,10 +1228,14 @@ export const BuilderV2Lab: React.FC = () => {
 
   const addableBlocksForSelected = useMemo(() => SECTION_BLOCK_CATALOG[selected.type] ?? ['title', 'text', 'photo', 'qna'], [selected.type]);
   const selectedBlocks = useMemo(() => sectionBlocks[selected.id] ?? [], [sectionBlocks, selected.id]);
+  const selectedBlockWarningFor = useCallback(
+    (block: AddedBlock) => getBlockValidationWarning(selected.type, block, selectedBlocks),
+    [getBlockValidationWarning, selected.type, selectedBlocks],
+  );
 
   const selectedBlockWarnings = useMemo(
-    () => selectedBlocks.filter((block) => getBlockValidationWarning(block)).length,
-    [getBlockValidationWarning, selectedBlocks],
+    () => selectedBlocks.filter((block) => selectedBlockWarningFor(block)).length,
+    [selectedBlockWarningFor, selectedBlocks],
   );
   const handoffGuidance = useMemo(
     () => buildBuilderV2HandoffGuidance({
@@ -1301,9 +1313,9 @@ export const BuilderV2Lab: React.FC = () => {
       query: blockReviewQuery,
       statusFilter: blockReviewFilter,
       blockLabels: BLOCK_LABELS,
-      getWarning: getBlockValidationWarning,
+      getWarning: selectedBlockWarningFor,
     }),
-    [selectedBlocks, blockReviewQuery, blockReviewFilter, getBlockValidationWarning],
+    [selectedBlocks, blockReviewQuery, blockReviewFilter, selectedBlockWarningFor],
   );
   const blockPackSummary = useMemo(
     () => buildBuilderV2BlockPackSummary({
@@ -3167,9 +3179,9 @@ export const BuilderV2Lab: React.FC = () => {
                             </div>
                           </div>
 
-                          {!collapsedBlocks[block.id] && getBlockValidationWarning(block) && (
+                          {!collapsedBlocks[block.id] && selectedBlockWarningFor(block) && (
                             <div className="text-[11px] text-amber-700 bg-amber-50 border border-amber-200 rounded px-2 py-1">
-                              {getBlockValidationWarning(block)}
+                              {selectedBlockWarningFor(block)}
                             </div>
                           )}
 
