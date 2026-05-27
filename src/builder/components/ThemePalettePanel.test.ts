@@ -12,9 +12,10 @@ describe('getThemePanelSummary', () => {
       customApplied: false,
     });
 
-    expect(summary.title).toContain('Romantic Blush');
-    expect(summary.actionLabel).toBe('Best next move');
-    expect(summary.actionDetail).toContain('emotional temperature');
+    expect(summary.focusTitle).toContain('Romantic Blush');
+    expect(summary.bestNextMove).toContain('emotional temperature');
+    expect(summary.decisionRule).toContain('broad mood');
+    expect(summary.currentStep.title).toContain('Choose');
   });
 
   it('warns when a preset filter yields no options', () => {
@@ -26,8 +27,9 @@ describe('getThemePanelSummary', () => {
       customApplied: false,
     });
 
-    expect(summary.actionLabel).toBe('Watchout');
-    expect(summary.actionDetail).toContain('no presets');
+    expect(summary.bestNextMove).toContain('all packs');
+    expect(summary.decisionRule).toContain('widen the search');
+    expect(summary.watchout).toContain('no presets');
   });
 
   it('reframes custom mode around careful adjustments', () => {
@@ -39,8 +41,9 @@ describe('getThemePanelSummary', () => {
       customApplied: true,
     });
 
-    expect(summary.title).toContain('Custom palette');
-    expect(summary.actionLabel).toBe('Best next move');
-    expect(summary.actionDetail).toContain('core brand colors');
+    expect(summary.focusTitle).toContain('Custom palette');
+    expect(summary.bestNextMove).toContain('core brand colors');
+    expect(summary.watchout).toContain('preset foundation');
+    expect(summary.thenStep.title).toContain('Leave');
   });
 });

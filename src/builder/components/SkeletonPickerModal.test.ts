@@ -12,7 +12,9 @@ describe('getSkeletonPickerSummary', () => {
     expect(summary.selectedCategoryLabel).toBe('Stats');
     expect(summary.filteredCount).toBeGreaterThan(1);
     expect(summary.selectedSkeleton.id).toBe('stat-trio');
-    expect(summary.actionText).toContain('section');
+    expect(summary.bestNextMove).toContain('section');
+    expect(summary.decisionRule).toContain('pacing');
+    expect(summary.currentStep.title).toContain('structural fit');
   });
 
   it('matches search against description and block content', () => {
@@ -34,6 +36,20 @@ describe('getSkeletonPickerSummary', () => {
 
     expect(summary.filtered.map((skeleton) => skeleton.id)).toEqual(['blank']);
     expect(summary.selectedSkeleton.id).toBe('blank');
-    expect(summary.actionText).toContain('Blank');
+    expect(summary.bestNextMove).toContain('Blank');
+    expect(summary.watchout).toContain('editorial work');
+  });
+
+  it('guides recovery when the search removes every option', () => {
+    const summary = getSkeletonPickerSummary({
+      activeCategory: 'details',
+      search: 'impossible phrase',
+      selectedId: 'contact-block',
+    });
+
+    expect(summary.filteredCount).toBe(0);
+    expect(summary.focusTitle).toContain('No');
+    expect(summary.bestNextMove).toContain('Loosen the search');
+    expect(summary.currentStep.title).toContain('Broaden');
   });
 });
