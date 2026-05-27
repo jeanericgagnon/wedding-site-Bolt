@@ -25,6 +25,7 @@ import { getRegistryTruthSweepTargetLabel } from './registryTruthSweep';
 import { buildRegistryTruthSweepReportText } from './registryTruthSweepReport';
 import { getOwnerRegistryDisplayTitle, type RegistryFilter, type RegistryItem } from './registryTypes';
 import { formatRegistryItemDate } from '../registryItemTime';
+import { getFlowStatusLabel } from '../../../lib/flowLabels';
 
 const FILTER_TABS: { key: RegistryFilter; label: string }[] = [
   { key: 'all', label: 'All' },
@@ -245,7 +246,7 @@ function RegistryThankYouGuidance({ plan }: { plan: RegistryThankYouPlan }) {
           {plan.sequence.map((step) => (
             <div key={`${step.status}-${step.title}`} className="rounded-xl border border-border-subtle bg-surface-subtle/20 p-4">
               <div className="flex items-center justify-between gap-2">
-                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-text-tertiary">{step.status}</p>
+                <p className="text-sm font-semibold text-text-primary">{step.title}</p>
                 <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${
                   step.status === 'current'
                     ? 'border border-primary/20 bg-primary-light text-primary'
@@ -253,7 +254,7 @@ function RegistryThankYouGuidance({ plan }: { plan: RegistryThankYouPlan }) {
                       ? 'border border-warning/20 bg-warning-light text-warning'
                       : 'border border-border-subtle bg-white text-text-secondary'
                 }`}>
-                  {step.title}
+                  {getFlowStatusLabel(step.status)}
                 </span>
               </div>
               <p className="mt-2 text-xs leading-5 text-text-secondary">{step.detail}</p>
@@ -1259,7 +1260,7 @@ export function RegistryDashboardRouteContent(props: {
                   {props.registryLaunchReadiness.sequence.map((step) => (
                     <div key={`${step.status}-${step.title}`} className="rounded-xl border border-border-subtle bg-surface-subtle/20 p-4">
                       <div className="flex items-center justify-between gap-2">
-                        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-text-tertiary">{step.status}</p>
+                        <p className="text-sm font-semibold text-text-primary">{step.title}</p>
                         <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${
                           step.status === 'current'
                             ? 'border border-primary/20 bg-primary-light text-primary'
@@ -1267,7 +1268,7 @@ export function RegistryDashboardRouteContent(props: {
                               ? 'border border-warning/20 bg-warning-light text-warning'
                               : 'border border-border-subtle bg-white text-text-secondary'
                         }`}>
-                          {step.title}
+                          {getFlowStatusLabel(step.status)}
                         </span>
                       </div>
                       <p className="mt-2 text-xs leading-5 text-text-secondary">{step.detail}</p>
