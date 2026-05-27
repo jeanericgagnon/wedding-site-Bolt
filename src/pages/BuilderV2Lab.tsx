@@ -81,6 +81,10 @@ import {
   buildBuilderV2BlockFieldDescriptors,
   buildBuilderV2BlockPreviewSummary,
 } from './builderV2BlockPresentation';
+import {
+  buildBuilderV2SectionSettingFields,
+  updateBuilderV2SectionSetting,
+} from './builderV2SectionSettings';
 
 type BlockType =
   | 'title'
@@ -756,6 +760,17 @@ export const BuilderV2Lab: React.FC = () => {
     updateBlockData(sectionId, blockId, { [key]: value } as Partial<AddedBlockContent>);
   };
 
+  const updateSelectedSectionSetting = (
+    label: string,
+    value: string | boolean,
+  ) => {
+    setSectionBlocks((prev) => ({
+      ...prev,
+      [selected.id]: updateBuilderV2SectionSetting(prev[selected.id] ?? [], label, value) as AddedBlock[],
+    }));
+    markSaving();
+  };
+
   const removeBlock = (sectionId: string, blockId: string) => {
     setSectionBlocks((prev) => ({
       ...prev,
@@ -1241,6 +1256,10 @@ export const BuilderV2Lab: React.FC = () => {
     [documentPages],
   );
   const selectedSectionLimit = useMemo(() => getSectionLimitConfig(selected.type), [selected.type]);
+  const selectedSectionSettingFields = useMemo(
+    () => buildBuilderV2SectionSettingFields(selected.type, selectedBlocks),
+    [selected.type, selectedBlocks],
+  );
   const recommendedBlockTypesForSelected = useMemo(
     () => getRecommendedBlockTypes(selected.type, addableBlocksForSelected),
     [selected.type, addableBlocksForSelected],
@@ -2946,6 +2965,34 @@ export const BuilderV2Lab: React.FC = () => {
                           <input value={selected.title} onChange={(e) => renameSelected(e.target.value)} className="mt-1 w-full border rounded-md px-3 py-2.5 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" />
                         </label>
                       </div>
+
+                      {selectedSectionSettingFields.length > 0 && (
+                        <div className="border border-border-subtle rounded-md p-3 bg-white space-y-2.5 shadow-sm transition-all duration-200">
+                          <p className="text-[11px] uppercase updates-wide text-text-tertiary font-medium">Section settings</p>
+                          {selectedSectionSettingFields.map((field) => (
+                            field.kind === 'boolean' ? (
+                              <label key={field.key} className="flex items-center justify-between gap-3 rounded-md border border-border-subtle px-3 py-2.5">
+                                <span className="text-sm text-text-primary">{field.label}</span>
+                                <input
+                                  type="checkbox"
+                                  checked={Boolean(field.value)}
+                                  onChange={(e) => updateSelectedSectionSetting(field.label, e.target.checked)}
+                                  className="h-4 w-4 rounded border-border-subtle text-primary focus:ring-primary/20"
+                                />
+                              </label>
+                            ) : (
+                              <label key={field.key} className="block">
+                                <span className="text-[11px] text-text-tertiary">{field.label}</span>
+                                <input
+                                  value={String(field.value ?? '')}
+                                  onChange={(e) => updateSelectedSectionSetting(field.label, e.target.value)}
+                                  className="mt-1 w-full border rounded-md px-3 py-2.5 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+                                />
+                              </label>
+                            )
+                          ))}
+                        </div>
+                      )}
 
                       {selected.type === 'hero' && (
                         <>
