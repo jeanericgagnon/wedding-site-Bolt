@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { formatPublishedAt, formatSavedAt, getBuilderCommandCenterCopy, getPageManagerSummary, getPublishBlockerUiState } from './BuilderTopBar';
+import { formatPublishedAt, formatSavedAt, getBuilderCommandCenterCopy, getPageManagerSummary, getPublishBlockerUiState } from './builderTopBarModel';
 
 describe('getPublishBlockerUiState', () => {
   it('treats unsaved changes as auto-saveable instead of a hard go-live blocker', () => {

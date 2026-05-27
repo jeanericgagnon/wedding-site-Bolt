@@ -33,6 +33,16 @@ import { selectUndoRedo, selectIsPreviewMode, selectPublishStatus, selectIsDirty
 import { getPublishStateDescriptor } from '../../lib/publishState';
 import { SITE_VISIBILITY_COPY } from '../../lib/siteVisibilityState';
 import { BuilderPage } from '../../types/builder/project';
+import { getBuilderPageEditingSummary } from './builderPageEditingSummary';
+import { BuilderPageManagerAction, getBuilderPageManagerGuidance } from './builderPageManagerGuidance';
+import {
+  formatPublishedAt,
+  formatSavedAt,
+  getBuilderCommandCenterCopy,
+  getPageManagerSummary,
+  getPublishBlockerUiState,
+  toValidTopBarTimestamp,
+} from './builderTopBarModel';
 
 interface BuilderTopBarProps {
   onSave: () => void;
@@ -48,22 +58,6 @@ interface BuilderTopBarProps {
   onToggleInspector?: () => void;
 }
 
-export const getPublishBlockerUiState = ({
-  publishValidationError,
-  publishIssueKind,
-}: {
-  publishValidationError?: string | null;
-  publishIssueKind?: string | null;
-}) => {
-  const hasHardPublishBlocker = Boolean(publishValidationError) && publishIssueKind !== 'unsaved-changes';
-
-  return {
-    hasHardPublishBlocker,
-    effectivePublishValidationError: hasHardPublishBlocker ? publishValidationError ?? null : null,
-    canAutoSaveBeforePublish: Boolean(publishValidationError) && publishIssueKind === 'unsaved-changes',
-  };
-};
-
 function slugifyPage(input: string): string {
   return input
     .toLowerCase()
@@ -71,123 +65,6 @@ function slugifyPage(input: string): string {
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/(^-|-$)/g, '')
     .slice(0, 64);
-}
-
-function toValidTopBarDate(iso: string): Date | null {
-  const date = new Date(iso);
-  return Number.isNaN(date.getTime()) ? null : date;
-}
-
-export function formatSavedAt(iso: string): string {
-  const d = toValidTopBarDate(iso);
-  if (!d) return 'Saved time unknown';
-  const now = new Date();
-  const diffMs = now.getTime() - d.getTime();
-  const diffMin = Math.floor(diffMs / 60000);
-  if (diffMin < 0) return 'Saved just now';
-  if (diffMin < 1) return 'Saved just now';
-  if (diffMin === 1) return 'Saved 1 min ago';
-  if (diffMin < 60) return `Saved ${diffMin} min ago`;
-  return `Saved at ${d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
-}
-
-export function formatPublishedAt(iso: string): string {
-  const d = toValidTopBarDate(iso);
-  if (!d) return 'Live since unknown time';
-  const now = new Date();
-  const sameDay = d.toDateString() === now.toDateString();
-  const time = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  if (sameDay) return `Live since ${time}`;
-  return `Live since ${d.toLocaleDateString([], { month: 'short', day: 'numeric' })} ${time}`;
-}
-
-export const getBuilderCommandCenterCopy = ({
-  projectName,
-  activePageTitle,
-  pageCount,
-  sectionCount,
-  isDirty,
-  hasHardPublishBlocker,
-  publishValidationError,
-  canAutoSaveBeforePublish,
-  isPublished,
-  publishedVersion,
-  publishAttemptedAt,
-}: {
-  projectName?: string;
-  activePageTitle?: string | null;
-  pageCount: number;
-  sectionCount: number;
-  isDirty: boolean;
-  hasHardPublishBlocker: boolean;
-  publishValidationError?: string | null;
-  canAutoSaveBeforePublish: boolean;
-  isPublished: boolean;
-  publishedVersion?: number | null;
-  publishAttemptedAt?: string | null;
-}) => {
-  const title = projectName?.trim() || 'Wedding site draft';
-  const pageLabel = `${pageCount} page${pageCount === 1 ? '' : 's'}`;
-  const sectionLabel = sectionCount === 0
-    ? 'no sections on this page yet'
-    : `${sectionCount} section${sectionCount === 1 ? '' : 's'} on this page`;
-
-  if (hasHardPublishBlocker) {
-    return {
-      title,
-      summary: `${pageLabel} · ${sectionLabel}`,
-      tone: 'warning' as const,
-      status: 'Go-live blocker',
-      detail: publishValidationError ?? 'A few launch details still need attention before this goes live.',
-    };
-  }
-
-  if (canAutoSaveBeforePublish || isDirty) {
-    return {
-      title,
-      summary: `${pageLabel} · ${sectionLabel}`,
-      tone: 'neutral' as const,
-      status: 'Finish this draft',
-      detail: canAutoSaveBeforePublish
-        ? 'Save the latest edits, then go live.'
-        : 'You have unsaved edits. Save first so publish stays predictable.',
-    };
-  }
-
-  if (isPublished) {
-    return {
-      title,
-      summary: `${pageLabel} · ${sectionLabel}`,
-      tone: 'success' as const,
-      status: typeof publishedVersion === 'number' ? `Live v${publishedVersion}` : 'Live',
-      detail: publishAttemptedAt
-        ? 'Your latest launch attempt completed. Keep editing here before the next update.'
-        : 'Guests can already see this site. New edits here will become the next live update.',
-    };
-  }
-
-  return {
-    title,
-    summary: `${pageLabel} · ${sectionLabel}`,
-    tone: 'success' as const,
-    status: 'Ready to go live',
-    detail: activePageTitle
-      ? `${activePageTitle} looks ready for a final pass, then publish.`
-      : 'This draft is in a good place for a final pass, then publish.',
-  };
-};
-
-export function getPageManagerSummary(projectPages: BuilderPage[], activePageId: string | null) {
-  const homePage = projectPages.find((page) => page.meta.isHome) ?? projectPages[0] ?? null;
-  const activePage = projectPages.find((page) => page.id === activePageId) ?? homePage;
-  return {
-    totalPages: projectPages.length,
-    visiblePages: projectPages.filter((page) => !page.meta.isHidden).length,
-    hiddenPages: projectPages.filter((page) => page.meta.isHidden).length,
-    emptyPages: projectPages.filter((page) => page.sections.length === 0).length,
-    homePageTitle: homePage?.title ?? null,
-    activePageTitle: activePage?.title ?? null,
-  };
 }
 
 export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
@@ -215,7 +92,7 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
   const publishedAt = state.project?.lastPublishedAt ?? null;
   const publishedVersion = state.project?.publishedVersion ?? null;
   const isPublished = publishStatus === 'published';
-  const projectPages = state.project?.pages ?? [];
+  const projectPages = React.useMemo(() => state.project?.pages ?? [], [state.project?.pages]);
   const activePage = projectPages.find((p) => p.id === state.activePageId) ?? null;
   const {
     hasHardPublishBlocker,
@@ -277,6 +154,14 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
     () => getPageManagerSummary(projectPages, state.activePageId),
     [projectPages, state.activePageId],
   );
+  const pageManagerGuidance = React.useMemo(
+    () => getBuilderPageManagerGuidance(projectPages, state.activePageId),
+    [projectPages, state.activePageId],
+  );
+  const activePageEditingSummary = React.useMemo(
+    () => (activePage ? getBuilderPageEditingSummary(activePage.title, activePage.sections) : null),
+    [activePage],
+  );
 
   React.useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -302,6 +187,25 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
       return () => window.clearTimeout(t);
     }
   }, [showPublishChecklist, checklistDoneCount, checklistItems.length]);
+
+  const handlePageManagerAction = React.useCallback((action: BuilderPageManagerAction) => {
+    switch (action.kind) {
+      case 'add-page':
+        dispatch(builderActions.addPage(projectPages.length === 0 ? 'Home' : undefined));
+        return;
+      case 'open-page':
+        dispatch(builderActions.setActivePage(action.pageId));
+        setShowPageManager(false);
+        return;
+      case 'fill-empty-page':
+        dispatch(builderActions.setActivePage(action.pageId));
+        dispatch(builderActions.addSectionByType(action.pageId, 'hero'));
+        setShowPageManager(false);
+        return;
+      default:
+        return;
+    }
+  }, [dispatch, projectPages.length]);
 
   return (
     <>
@@ -383,13 +287,13 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
               Unsaved
             </span>
           ) : state.lastSavedAt ? (
-            <span className="inline-flex items-center gap-1.5 rounded-md border border-emerald-200 bg-emerald-50 px-2 py-1 text-[11px] font-medium text-emerald-700" title={`Last saved: ${toValidTopBarDate(state.lastSavedAt)?.toLocaleString() ?? 'Unknown time'}`}>
+            <span className="inline-flex items-center gap-1.5 rounded-md border border-emerald-200 bg-emerald-50 px-2 py-1 text-[11px] font-medium text-emerald-700" title={`Last saved: ${toValidTopBarTimestamp(state.lastSavedAt)?.toLocaleString() ?? 'Unknown time'}`}>
               <CheckCircle2 size={12} />
               {formatSavedAt(state.lastSavedAt)}
             </span>
           ) : null}
           {!state.isPublishing && !publishError && isPublished && publishedAt ? (
-            <span className="hidden sm:inline-flex items-center gap-1.5 rounded-md border border-gray-200 bg-white px-2 py-1 text-[11px] font-medium text-gray-700" title={`Published: ${toValidTopBarDate(publishedAt)?.toLocaleString() ?? 'Unknown time'}`}>
+            <span className="hidden sm:inline-flex items-center gap-1.5 rounded-md border border-gray-200 bg-white px-2 py-1 text-[11px] font-medium text-gray-700" title={`Published: ${toValidTopBarTimestamp(publishedAt)?.toLocaleString() ?? 'Unknown time'}`}>
               <Clock size={12} />
               {formatPublishedAt(publishedAt)}
             </span>
@@ -508,7 +412,7 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
           </span>
         )}
         {!state.isSaving && !saveError && state.lastSavedAt && !isDirty && (
-          <span className="hidden sm:flex text-xs text-green-700 items-center gap-1.5 bg-green-50 border border-green-200 px-2 py-1 rounded-md" title={`Last saved: ${toValidTopBarDate(state.lastSavedAt)?.toLocaleString() ?? 'Unknown time'}`}>
+          <span className="hidden sm:flex text-xs text-green-700 items-center gap-1.5 bg-green-50 border border-green-200 px-2 py-1 rounded-md" title={`Last saved: ${toValidTopBarTimestamp(state.lastSavedAt)?.toLocaleString() ?? 'Unknown time'}`}>
             <CheckCircle2 size={12} className="text-green-500" />
             {formatSavedAt(state.lastSavedAt)}
           </span>
@@ -521,7 +425,7 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
         )}
 
         {isPublished && publishedAt && !state.isPublishing && !publishError && (
-          <span className="text-xs text-gray-500 flex items-center gap-1.5 border-l border-gray-200 pl-2" title={`Published: ${toValidTopBarDate(publishedAt)?.toLocaleString() ?? 'Unknown time'}`}>
+          <span className="text-xs text-gray-500 flex items-center gap-1.5 border-l border-gray-200 pl-2" title={`Published: ${toValidTopBarTimestamp(publishedAt)?.toLocaleString() ?? 'Unknown time'}`}>
             <Clock size={11} />
             {formatPublishedAt(publishedAt)}
             {typeof publishedVersion === 'number' && (
@@ -797,166 +701,276 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
     </header>
     {showPageManager && (
       <div className="fixed inset-0 z-[70] bg-black/40 flex items-center justify-center p-4">
-        <div className="w-full max-w-2xl rounded-xl bg-white shadow-xl border border-gray-200 p-4">
+        <div className="w-full max-w-5xl rounded-xl bg-white shadow-xl border border-gray-200 p-4">
           <div className="flex items-center justify-between mb-3">
             <div>
               <h3 className="text-sm font-semibold text-gray-900">Pages</h3>
-              <p className="text-[11px] text-gray-500 mt-1">Add pages, rename them, and choose what appears in navigation.</p>
+              <p className="text-[11px] text-gray-500 mt-1">Shape the site map, recover weak pages, and keep navigation honest before guests see it.</p>
             </div>
             <button type="button" onClick={() => setShowPageManager(false)} className="rounded border border-gray-200 px-2 py-1 text-xs text-gray-600 hover:bg-gray-50">Close</button>
           </div>
 
-          <div className="mb-3 grid grid-cols-2 gap-2 md:grid-cols-4">
-            <div className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2">
-              <p className="text-[10px] uppercase tracking-wide text-gray-500">Total pages</p>
-              <p className="mt-1 text-sm font-semibold text-gray-900">{pageManagerSummary.totalPages}</p>
+          <div className="mb-4 grid gap-3 xl:grid-cols-[minmax(0,1.35fr)_minmax(280px,0.95fr)]">
+            <div className="space-y-3">
+              <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
+                <div className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2">
+                  <p className="text-[10px] uppercase tracking-wide text-gray-500">Total pages</p>
+                  <p className="mt-1 text-sm font-semibold text-gray-900">{pageManagerSummary.totalPages}</p>
+                </div>
+                <div className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2">
+                  <p className="text-[10px] uppercase tracking-wide text-gray-500">Visible in nav</p>
+                  <p className="mt-1 text-sm font-semibold text-gray-900">{pageManagerSummary.visiblePages}</p>
+                </div>
+                <div className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2">
+                  <p className="text-[10px] uppercase tracking-wide text-gray-500">Hidden</p>
+                  <p className="mt-1 text-sm font-semibold text-gray-900">{pageManagerSummary.hiddenPages}</p>
+                </div>
+                <div className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2">
+                  <p className="text-[10px] uppercase tracking-wide text-gray-500">Empty pages</p>
+                  <p className="mt-1 text-sm font-semibold text-gray-900">{pageManagerSummary.emptyPages}</p>
+                </div>
+              </div>
+
+              <div className="grid gap-3 md:grid-cols-2">
+                <div className="rounded-xl border border-sky-100 bg-sky-50 px-4 py-3">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-sky-900">Main focus</p>
+                  <p className="mt-1 text-sm font-medium text-sky-950">{pageManagerGuidance.focusTitle}</p>
+                  <p className="mt-1 text-xs text-sky-800">{pageManagerGuidance.focusDetail}</p>
+                </div>
+                <div className="rounded-xl border border-gray-200 bg-white px-4 py-3">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-gray-500">Best next move</p>
+                  <p className="mt-1 text-sm font-medium text-gray-900">{pageManagerGuidance.bestNextMove}</p>
+                  <p className="mt-2 text-xs text-gray-600">
+                    <span className="font-semibold text-gray-900">Decision rule:</span> {pageManagerGuidance.decisionRule}
+                  </p>
+                  <p className="mt-1 text-xs text-gray-600">
+                    <span className="font-semibold text-gray-900">Watchout:</span> {pageManagerGuidance.watchout}
+                  </p>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={() => handlePageManagerAction(pageManagerGuidance.primaryAction)}
+                      className="rounded-lg bg-gray-900 px-3 py-2 text-sm font-medium text-white hover:bg-gray-800"
+                    >
+                      {pageManagerGuidance.primaryAction.label}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handlePageManagerAction(pageManagerGuidance.secondaryAction)}
+                      className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100"
+                    >
+                      {pageManagerGuidance.secondaryAction.label}
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid gap-2 md:grid-cols-3">
+                {[
+                  { label: 'Current', detail: pageManagerGuidance.currentStep },
+                  { label: 'Next', detail: pageManagerGuidance.nextStep },
+                  { label: 'Then', detail: pageManagerGuidance.thenStep },
+                ].map((step) => (
+                  <div key={step.label} className="rounded-xl border border-gray-200 bg-white px-3 py-3">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-gray-500">{step.label}</p>
+                    <p className="mt-1 text-xs text-gray-600">{step.detail}</p>
+                  </div>
+                ))}
+              </div>
             </div>
-            <div className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2">
-              <p className="text-[10px] uppercase tracking-wide text-gray-500">Visible in nav</p>
-              <p className="mt-1 text-sm font-semibold text-gray-900">{pageManagerSummary.visiblePages}</p>
-            </div>
-            <div className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2">
-              <p className="text-[10px] uppercase tracking-wide text-gray-500">Hidden</p>
-              <p className="mt-1 text-sm font-semibold text-gray-900">{pageManagerSummary.hiddenPages}</p>
-            </div>
-            <div className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2">
-              <p className="text-[10px] uppercase tracking-wide text-gray-500">Empty pages</p>
-              <p className="mt-1 text-sm font-semibold text-gray-900">{pageManagerSummary.emptyPages}</p>
+
+            <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-gray-500">Current page brief</p>
+              {activePage && activePageEditingSummary ? (
+                <>
+                  <p className="mt-1 text-sm font-medium text-gray-900">{activePageEditingSummary.focusTitle}</p>
+                  <p className="mt-1 text-xs text-gray-600">{activePageEditingSummary.focusDetail}</p>
+                  <div className="mt-3 flex flex-wrap gap-2 text-[11px] text-gray-600">
+                    <span className="rounded-full border border-gray-200 bg-white px-2 py-1 font-medium">{activePageEditingSummary.totalCount} sections</span>
+                    <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-1 font-medium text-emerald-700">{activePageEditingSummary.visibleCount} visible</span>
+                    {activePageEditingSummary.hiddenCount > 0 && (
+                      <span className="rounded-full border border-amber-200 bg-amber-50 px-2 py-1 font-medium text-amber-700">{activePageEditingSummary.hiddenCount} hidden</span>
+                    )}
+                    {activePageEditingSummary.missingEssentialLabels.slice(0, 2).map((label) => (
+                      <span key={label} className="rounded-full border border-sky-200 bg-sky-50 px-2 py-1 font-medium text-sky-800">Missing {label}</span>
+                    ))}
+                  </div>
+                  <p className="mt-3 text-xs text-gray-600">
+                    <span className="font-semibold text-gray-900">Best next move:</span> {activePageEditingSummary.bestNextMove}
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p className="mt-1 text-sm font-medium text-gray-900">Choose a page to start shaping the site map.</p>
+                  <p className="mt-1 text-xs text-gray-600">As soon as a page is active, this brief will call out its strongest next editing move.</p>
+                </>
+              )}
             </div>
           </div>
 
-          <div className="flex items-center gap-2 mb-3">
-            <input
-              value={newPageTitle}
-              onChange={(e) => setNewPageTitle(e.target.value)}
-              placeholder="Page name"
-              className="flex-1 rounded border border-gray-200 px-3 py-2 text-sm"
-            />
-            <button
-              type="button"
-              onClick={() => {
-                dispatch(builderActions.addPage(newPageTitle || undefined));
-                setNewPageTitle('');
-              }}
-              className="inline-flex items-center gap-1 rounded bg-gray-900 px-3 py-2 text-xs font-semibold text-white hover:bg-gray-800"
-            >
-              <FilePlus2 size={12} />
-              Add page
-            </button>
+          <div className="mb-3 grid gap-3 lg:grid-cols-[minmax(0,1fr)_300px]">
+            <div className="flex items-center gap-2">
+              <input
+                value={newPageTitle}
+                onChange={(e) => setNewPageTitle(e.target.value)}
+                placeholder="Page name"
+                className="flex-1 rounded border border-gray-200 px-3 py-2 text-sm"
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  dispatch(builderActions.addPage(newPageTitle || undefined));
+                  setNewPageTitle('');
+                }}
+                className="inline-flex items-center gap-1 rounded bg-gray-900 px-3 py-2 text-xs font-semibold text-white hover:bg-gray-800"
+              >
+                <FilePlus2 size={12} />
+                Add page
+              </button>
+            </div>
+            <div className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2">
+              <p className="text-[11px] font-semibold text-gray-900">Page-map rule of thumb</p>
+              <p className="mt-1 text-[11px] text-gray-600">Add pages when they answer a new guest question, not just when the nav still looks short.</p>
+            </div>
           </div>
 
           <div className="max-h-[50vh] overflow-y-auto border border-gray-200 rounded-lg divide-y divide-gray-100">
-            {projectPages.map((page, idx) => (
-              <div key={page.id} className="px-3 py-2.5 flex items-center gap-2">
-                <div className={`flex-1 min-w-0 rounded border px-2 py-1.5 ${state.activePageId === page.id ? 'border-rose-200 bg-rose-50' : 'border-gray-200 bg-white'}`}>
-                  <div className="ml-auto flex w-full sm:w-auto items-center justify-end gap-2">
-                    <input
-                      value={page.title}
-                      onChange={(e) => {
-                        const title = e.target.value;
-                        dispatch(builderActions.updatePage(page.id, { title, slug: slugifyPage(title) || page.slug }));
-                      }}
-                      className="flex-1 min-w-0 bg-transparent text-sm font-medium text-gray-800 outline-none"
-                      placeholder="Page title"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => dispatch(builderActions.setActivePage(page.id))}
-                      className={`rounded px-2 py-1 text-[11px] font-medium ${state.activePageId === page.id ? 'bg-rose-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
-                    >
-                      {state.activePageId === page.id ? 'Current' : 'Edit'}
-                    </button>
-                  </div>
-                  <div className="mt-1 flex items-center gap-1 text-[11px] text-gray-500">
-                    <span>/</span>
-                    <input
-                      value={page.slug}
-                      onChange={(e) => dispatch(builderActions.updatePage(page.id, { slug: slugifyPage(e.target.value) || page.slug }))}
-                      className="bg-transparent outline-none flex-1 min-w-0"
-                      placeholder="page-slug"
-                    />
-                    {page.meta.isHome ? <span>• Home</span> : null}
-                    {page.meta.isHidden ? <span>• Hidden from navigation</span> : null}
-                    {!page.meta.isHidden && !page.meta.isHome ? <span>• In navigation</span> : null}
-                    {page.sections.length === 0 ? <span>• Empty page</span> : <span>• {page.sections.length} section{page.sections.length === 1 ? '' : 's'}</span>}
+            {projectPages.map((page, idx) => {
+              const pageGuide = getBuilderPageEditingSummary(page.title, page.sections);
+
+              return (
+                <div key={page.id} className="px-3 py-3">
+                  <div className="flex items-start gap-3">
+                    <div className={`flex-1 min-w-0 rounded-xl border px-3 py-3 ${state.activePageId === page.id ? 'border-rose-200 bg-rose-50/70' : 'border-gray-200 bg-white'}`}>
+                      <div className="flex flex-col gap-2 lg:flex-row lg:items-start lg:justify-between">
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2">
+                            <input
+                              value={page.title}
+                              onChange={(e) => {
+                                const title = e.target.value;
+                                dispatch(builderActions.updatePage(page.id, { title, slug: slugifyPage(title) || page.slug }));
+                              }}
+                              className="min-w-0 flex-1 bg-transparent text-sm font-medium text-gray-800 outline-none"
+                              placeholder="Page title"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => dispatch(builderActions.setActivePage(page.id))}
+                              className={`rounded px-2 py-1 text-[11px] font-medium ${state.activePageId === page.id ? 'bg-rose-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+                            >
+                              {state.activePageId === page.id ? 'Current' : 'Edit'}
+                            </button>
+                          </div>
+                          <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-gray-600">
+                            <label className="inline-flex min-w-[150px] items-center gap-1 rounded-full border border-gray-200 bg-white px-2 py-1 font-medium">
+                              <span>/</span>
+                              <input
+                                value={page.slug}
+                                onChange={(e) => dispatch(builderActions.updatePage(page.id, { slug: slugifyPage(e.target.value) || page.slug }))}
+                                className="min-w-0 flex-1 bg-transparent outline-none"
+                                placeholder="page-slug"
+                              />
+                            </label>
+                            {page.meta.isHome ? <span className="rounded-full border border-rose-200 bg-rose-50 px-2 py-1 font-medium text-rose-700">Home</span> : null}
+                            {page.meta.isHidden ? (
+                              <span className="rounded-full border border-amber-200 bg-amber-50 px-2 py-1 font-medium text-amber-700">Hidden from nav</span>
+                            ) : (
+                              <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-1 font-medium text-emerald-700">In navigation</span>
+                            )}
+                            <span className="rounded-full border border-gray-200 bg-white px-2 py-1 font-medium">
+                              {page.sections.length === 0 ? 'Empty page' : `${page.sections.length} section${page.sections.length === 1 ? '' : 's'}`}
+                            </span>
+                            {pageGuide.missingEssentialLabels.slice(0, 2).map((label) => (
+                              <span key={`${page.id}-${label}`} className="rounded-full border border-sky-200 bg-sky-50 px-2 py-1 font-medium text-sky-800">
+                                Missing {label}
+                              </span>
+                            ))}
+                          </div>
+                          <p className="mt-3 text-xs font-medium text-gray-900">{pageGuide.focusTitle}</p>
+                          <p className="mt-1 text-xs text-gray-600">{pageGuide.bestNextMove}</p>
+                        </div>
+                        <div className="flex flex-wrap gap-2 lg:w-[220px] lg:justify-end">
+                          <button
+                            type="button"
+                            onClick={() => dispatch(builderActions.setHomePage(page.id))}
+                            disabled={page.meta.isHome}
+                            className="rounded border border-gray-200 px-2 py-1 text-[11px] text-gray-600 hover:bg-gray-50 disabled:opacity-30"
+                          >
+                            {page.meta.isHome ? 'Home' : 'Make home'}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => dispatch(builderActions.updatePage(page.id, { meta: { ...page.meta, isHidden: !page.meta.isHidden } }))}
+                            className="rounded border border-gray-200 px-2 py-1 text-[11px] text-gray-600 hover:bg-gray-50"
+                          >
+                            {page.meta.isHidden ? 'Show in nav' : 'Hide from nav'}
+                          </button>
+                          {page.sections.length === 0 && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                dispatch(builderActions.setActivePage(page.id));
+                                dispatch(builderActions.addSectionByType(page.id, 'hero'));
+                                setShowPageManager(false);
+                              }}
+                              className="rounded border border-sky-200 bg-sky-50 px-2 py-1 text-[11px] font-medium text-sky-700 hover:bg-sky-100"
+                            >
+                              Add hero
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex shrink-0 flex-col gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const updated = [...projectPages];
+                          if (idx === 0) return;
+                          [updated[idx - 1], updated[idx]] = [updated[idx], updated[idx - 1]];
+                          dispatch(builderActions.reorderPages(updated.map((p) => p.id)));
+                        }}
+                        disabled={idx === 0}
+                        className="rounded border border-gray-200 p-1 text-gray-600 hover:bg-gray-50 disabled:opacity-30"
+                      >
+                        <ArrowUp size={12} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const updated = [...projectPages];
+                          if (idx === updated.length - 1) return;
+                          [updated[idx + 1], updated[idx]] = [updated[idx], updated[idx + 1]];
+                          dispatch(builderActions.reorderPages(updated.map((p) => p.id)));
+                        }}
+                        disabled={idx === projectPages.length - 1}
+                        className="rounded border border-gray-200 p-1 text-gray-600 hover:bg-gray-50 disabled:opacity-30"
+                      >
+                        <ArrowDown size={12} />
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => dispatch(builderActions.duplicatePage(page.id))}
+                        className="rounded border border-gray-200 p-1 text-gray-600 hover:bg-gray-50"
+                      >
+                        <Copy size={12} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setPagePendingDelete(page)}
+                        disabled={page.meta.isHome || projectPages.length <= 1}
+                        className="rounded border border-gray-200 p-1 text-gray-600 hover:bg-gray-50 disabled:opacity-30"
+                      >
+                        <Trash2 size={12} />
+                      </button>
+                    </div>
                   </div>
                 </div>
-
-                <button
-                  type="button"
-                  onClick={() => dispatch(builderActions.setHomePage(page.id))}
-                  disabled={page.meta.isHome}
-                  className="rounded border border-gray-200 px-2 py-1 text-[11px] text-gray-600 hover:bg-gray-50 disabled:opacity-30"
-                >
-                  {page.meta.isHome ? 'Home' : 'Make home'}
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => dispatch(builderActions.updatePage(page.id, { meta: { ...page.meta, isHidden: !page.meta.isHidden } }))}
-                  className="rounded border border-gray-200 px-2 py-1 text-[11px] text-gray-600 hover:bg-gray-50"
-                >
-                  {page.meta.isHidden ? 'Show in nav' : 'Hide from nav'}
-                </button>
-
-                {page.sections.length === 0 && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      dispatch(builderActions.setActivePage(page.id));
-                      dispatch(builderActions.addSectionByType(page.id, 'hero'));
-                      setShowPageManager(false);
-                    }}
-                    className="rounded border border-sky-200 bg-sky-50 px-2 py-1 text-[11px] font-medium text-sky-700 hover:bg-sky-100"
-                  >
-                    Add hero
-                  </button>
-                )}
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    const updated = [...projectPages];
-                    if (idx === 0) return;
-                    [updated[idx - 1], updated[idx]] = [updated[idx], updated[idx - 1]];
-                    dispatch(builderActions.reorderPages(updated.map((p) => p.id)));
-                  }}
-                  disabled={idx === 0}
-                  className="rounded border border-gray-200 p-1 text-gray-600 hover:bg-gray-50 disabled:opacity-30"
-                >
-                  <ArrowUp size={12} />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    const updated = [...projectPages];
-                    if (idx === updated.length - 1) return;
-                    [updated[idx + 1], updated[idx]] = [updated[idx], updated[idx + 1]];
-                    dispatch(builderActions.reorderPages(updated.map((p) => p.id)));
-                  }}
-                  disabled={idx === projectPages.length - 1}
-                  className="rounded border border-gray-200 p-1 text-gray-600 hover:bg-gray-50 disabled:opacity-30"
-                >
-                  <ArrowDown size={12} />
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => dispatch(builderActions.duplicatePage(page.id))}
-                  className="rounded border border-gray-200 p-1 text-gray-600 hover:bg-gray-50"
-                >
-                  <Copy size={12} />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setPagePendingDelete(page)}
-                  disabled={page.meta.isHome || projectPages.length <= 1}
-                  className="rounded border border-gray-200 p-1 text-gray-600 hover:bg-gray-50 disabled:opacity-30"
-                >
-                  <Trash2 size={12} />
-                </button>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </div>

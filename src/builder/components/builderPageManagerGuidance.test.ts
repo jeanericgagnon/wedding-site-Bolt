@@ -1,0 +1,114 @@
+import { describe, expect, it } from 'vitest';
+
+import { getBuilderPageManagerGuidance } from './builderPageManagerGuidance';
+
+describe('getBuilderPageManagerGuidance', () => {
+  it('guides empty site maps toward a first page', () => {
+    expect(getBuilderPageManagerGuidance([], null)).toMatchObject({
+      focusTitle: 'The site map still needs a first page',
+      primaryAction: {
+        kind: 'add-page',
+        label: 'Create first page',
+      },
+    });
+  });
+
+  it('prioritizes empty pages before more map churn', () => {
+    expect(
+      getBuilderPageManagerGuidance(
+        [
+          {
+            id: 'home',
+            title: 'Home',
+            slug: 'home',
+            orderIndex: 0,
+            sections: [{ id: 'hero' }] as never[],
+            meta: { isHome: true, isHidden: false },
+          },
+          {
+            id: 'travel',
+            title: 'Travel',
+            slug: 'travel',
+            orderIndex: 1,
+            sections: [],
+            meta: { isHome: false, isHidden: false },
+          },
+        ] as never[],
+        'travel',
+      ),
+    ).toMatchObject({
+      focusTitle: 'Travel needs an anchor before the map grows',
+      primaryAction: {
+        kind: 'fill-empty-page',
+        pageId: 'travel',
+      },
+    });
+  });
+
+  it('surfaces hidden pages before replacement work', () => {
+    expect(
+      getBuilderPageManagerGuidance(
+        [
+          {
+            id: 'home',
+            title: 'Home',
+            slug: 'home',
+            orderIndex: 0,
+            sections: [{ id: 'hero' }] as never[],
+            meta: { isHome: true, isHidden: false },
+          },
+          {
+            id: 'faq',
+            title: 'FAQ',
+            slug: 'faq',
+            orderIndex: 1,
+            sections: [{ id: 'qa' }] as never[],
+            meta: { isHome: false, isHidden: true },
+          },
+        ] as never[],
+        'home',
+      ),
+    ).toMatchObject({
+      focusTitle: 'FAQ is already built but still offstage',
+      primaryAction: {
+        kind: 'open-page',
+        pageId: 'faq',
+      },
+    });
+  });
+
+  it('keeps healthy maps focused on page quality instead of expansion', () => {
+    expect(
+      getBuilderPageManagerGuidance(
+        [
+          {
+            id: 'home',
+            title: 'Home',
+            slug: 'home',
+            orderIndex: 0,
+            sections: [{ id: 'hero' }, { id: 'story' }] as never[],
+            meta: { isHome: true, isHidden: false },
+          },
+          {
+            id: 'travel',
+            title: 'Travel',
+            slug: 'travel',
+            orderIndex: 1,
+            sections: [{ id: 'travel-hero' }] as never[],
+            meta: { isHome: false, isHidden: false },
+          },
+        ] as never[],
+        'travel',
+      ),
+    ).toMatchObject({
+      focusTitle: 'Travel can lead the next page-quality pass',
+      primaryAction: {
+        kind: 'open-page',
+        pageId: 'travel',
+      },
+      secondaryAction: {
+        kind: 'add-page',
+      },
+    });
+  });
+});
