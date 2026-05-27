@@ -25,6 +25,10 @@ import { buildBuilderV2StructureGuidance } from './builderV2StructureGuidance';
 import { buildBuilderV2SelectionGuidance } from './builderV2SelectionGuidance';
 import { cloneBuilderV2Sections } from './builderV2SectionClone';
 import {
+  buildBuilderV2SectionLifecycleSummary,
+  removeBuilderV2Sections,
+} from './builderV2SectionLifecycle';
+import {
   buildBuilderV2StarterBlocks,
   buildBuilderV2SectionStarterSummary,
   restoreBuilderV2SectionStarterBlocks,
@@ -679,6 +683,31 @@ export const BuilderV2Lab: React.FC = () => {
     notify(`Duplicated ${result.duplicatedIds.length} section${result.duplicatedIds.length === 1 ? '' : 's'}`);
   }, [commit, notify, sectionBlocks, sections, selectedIds]);
 
+  const removeSelectedSections = useCallback(() => {
+    const result = removeBuilderV2Sections({
+      sections,
+      sectionBlocks,
+      selectedIds,
+      selectedId,
+    });
+
+    if (!result.removedIds.length) {
+      notify('Keep at least one section live in the page structure before removing more');
+      return;
+    }
+
+    setSectionBlocks(result.sectionBlocks);
+    setSelectedId(result.nextSelectedId ?? '');
+    setLastSelectedId(result.nextSelectedId ?? '');
+    setMultiSelectedIds([]);
+    commit(result.sections);
+    notify(
+      result.removedIds.length === 1
+        ? 'Removed section from the page structure'
+        : `Removed ${result.removedIds.length} sections from the page structure`,
+    );
+  }, [commit, notify, sectionBlocks, sections, selectedId, selectedIds]);
+
   const buildStarterBlocks = useCallback((sectionId: string, sectionType: string) => {
     const availableBlockTypes = SECTION_BLOCK_CATALOG[sectionType] ?? ['title', 'text', 'photo'];
     return buildBuilderV2StarterBlocks({
@@ -752,6 +781,10 @@ export const BuilderV2Lab: React.FC = () => {
   const selectionGuidance = useMemo(
     () => buildBuilderV2SelectionGuidance({ selectedSections }),
     [selectedSections],
+  );
+  const sectionLifecycleSummary = useMemo(
+    () => buildBuilderV2SectionLifecycleSummary({ sections, selectedSections }),
+    [sections, selectedSections],
   );
   const structureGuidance = useMemo(
     () => buildBuilderV2StructureGuidance({
@@ -993,6 +1026,7 @@ export const BuilderV2Lab: React.FC = () => {
       { id: 'sel-hide', group: 'Selection', label: 'Hide selected sections', keywords: ['hide', 'selection', 'batch', 'visibility'], action: () => runCommand('Hide selected sections', hideSelectedSections) },
       { id: 'sel-show', group: 'Selection', label: 'Show selected sections', keywords: ['show', 'selection', 'batch', 'visibility'], action: () => runCommand('Show selected sections', showSelectedSections) },
       { id: 'sel-duplicate', group: 'Selection', label: 'Duplicate selected sections', keywords: ['duplicate', 'copy', 'selection', 'batch', 'reuse'], action: () => runCommand('Duplicate selected sections', duplicateSelectedSections) },
+      { id: 'sel-remove', group: 'Selection', label: 'Remove selected sections', keywords: ['remove', 'delete', 'selection', 'batch', 'retire'], action: () => runCommand('Remove selected sections', removeSelectedSections) },
       { id: 'sel-restore-starters', group: 'Selection', label: 'Restore starter blocks for selected sections', keywords: ['restore', 'starter', 'reset', 'selection', 'batch', 'repair'], action: () => runCommand('Restore starter blocks for selected sections', restoreSelectedSectionsToStarterBlocks) },
       { id: 'sel-compact', group: 'Selection', label: 'Set selected density: compact', keywords: ['compact', 'density', 'selection', 'batch'], action: () => runCommand('Set selected density: compact', () => setSelectedDensity('compact')) },
       { id: 'sel-comfortable', group: 'Selection', label: 'Set selected density: comfortable', keywords: ['comfortable', 'density', 'selection', 'batch', 'open'], action: () => runCommand('Set selected density: comfortable', () => setSelectedDensity('comfortable')) },
@@ -1014,7 +1048,7 @@ export const BuilderV2Lab: React.FC = () => {
       .filter((x) => x.s > 0)
       .sort((a, b) => b.s - a.s)
       .map((x) => x.item);
-  }, [commandQuery, sections, addSection, clearSelection, duplicateSelectedSections, hideSelectedSections, invertSelection, restoreSelectedSectionsToStarterBlocks, reviewSelectionInPreview, selectAllSections, setSelectedDensity, showSelectedSections, updateVariant]);
+  }, [commandQuery, sections, addSection, clearSelection, duplicateSelectedSections, hideSelectedSections, invertSelection, removeSelectedSections, restoreSelectedSectionsToStarterBlocks, reviewSelectionInPreview, selectAllSections, setSelectedDensity, showSelectedSections, updateVariant]);
   const importGuidance = useMemo(
     () => buildBuilderV2ImportGuidance(lastImportReport, lastImportSource),
     [lastImportReport, lastImportSource],
@@ -1288,6 +1322,34 @@ export const BuilderV2Lab: React.FC = () => {
                   <p className="text-[11px] uppercase tracking-[0.18em] text-amber-800">Best next move</p>
                   <p className="mt-1 text-xs leading-relaxed text-text-primary">{selectionGuidance.bestNextMove}</p>
                 </div>
+                <div className="rounded-md border border-rose-200 bg-rose-50/50 px-2.5 py-2.5 space-y-2">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <p className="text-[11px] uppercase tracking-[0.18em] text-rose-800 font-medium">Retirement read</p>
+                      <p className="mt-1 text-sm font-semibold text-text-primary">{sectionLifecycleSummary.title}</p>
+                      <p className="mt-1 text-xs leading-relaxed text-text-secondary">{sectionLifecycleSummary.detail}</p>
+                    </div>
+                    <div className="shrink-0 flex flex-wrap justify-end gap-1 text-[10px]">
+                      {sectionLifecycleSummary.keyStats.map((stat) => (
+                        <span key={stat} className="rounded-full border border-rose-200 bg-white px-2 py-1 text-rose-900">{stat}</span>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="grid gap-2 md:grid-cols-2">
+                    <div className="rounded-md border border-rose-200 bg-white px-2.5 py-2">
+                      <p className="text-[11px] uppercase tracking-[0.18em] text-rose-800">Best next move</p>
+                      <p className="mt-1 text-xs leading-relaxed text-text-primary">{sectionLifecycleSummary.bestNextMove}</p>
+                    </div>
+                    <div className="rounded-md border border-rose-200 bg-white px-2.5 py-2">
+                      <p className="text-[11px] uppercase tracking-[0.18em] text-rose-800">Decision rule</p>
+                      <p className="mt-1 text-xs leading-relaxed text-text-primary">{sectionLifecycleSummary.decisionRule}</p>
+                    </div>
+                  </div>
+                  <div className="rounded-md border border-rose-200 bg-white px-2.5 py-2">
+                    <p className="text-[11px] uppercase tracking-[0.18em] text-rose-800">Watchout</p>
+                    <p className="mt-1 text-xs leading-relaxed text-text-primary">{sectionLifecycleSummary.watchout}</p>
+                  </div>
+                </div>
                 <div className="grid gap-2">
                   <div className="rounded-md border border-amber-200 bg-white px-2.5 py-2">
                     <p className="text-[11px] uppercase tracking-[0.18em] text-amber-800">Decision rule</p>
@@ -1312,6 +1374,13 @@ export const BuilderV2Lab: React.FC = () => {
                     <button onClick={restoreSelectedSectionsToStarterBlocks} className="col-span-2 rounded-md border border-amber-200 bg-amber-50 px-2.5 py-2 text-xs font-semibold text-amber-900 hover:bg-amber-100">Restore starter blocks</button>
                     <button onClick={() => setSelectedDensity('compact')} className="rounded-md border border-border-subtle bg-white px-2.5 py-2 text-xs font-medium text-text-primary hover:border-primary/40">Make compact</button>
                     <button onClick={() => setSelectedDensity('comfortable')} className="rounded-md border border-border-subtle bg-white px-2.5 py-2 text-xs font-medium text-text-primary hover:border-primary/40">Make open</button>
+                    <button
+                      onClick={removeSelectedSections}
+                      disabled={!sectionLifecycleSummary.allowRemoval}
+                      className={`col-span-2 rounded-md border px-2.5 py-2 text-xs font-semibold transition-colors ${sectionLifecycleSummary.allowRemoval ? 'border-rose-200 bg-rose-50 text-rose-900 hover:bg-rose-100' : 'cursor-not-allowed border-border-subtle bg-surface-subtle text-text-tertiary'}`}
+                    >
+                      Remove batch from structure
+                    </button>
                     <button onClick={reviewSelectionInPreview} className="col-span-2 rounded-md border border-primary/30 bg-primary/10 px-2.5 py-2 text-xs font-semibold text-primary hover:bg-primary/15">Review batch in preview</button>
                   </div>
                 </div>
@@ -2138,8 +2207,51 @@ export const BuilderV2Lab: React.FC = () => {
                       </select>
                     </label>
                     <button id="privacy-section" onClick={() => toggleVisibility(selected.id)} className="w-full border rounded-md px-3 py-2 text-left text-sm hover:border-primary/40">
-                      {selected.enabled ? 'Hide page' : 'Show page'}
+                      {selected.enabled ? 'Archive section from preview' : 'Show section in preview'}
                     </button>
+                    <div className="rounded-md border border-rose-200 bg-rose-50/50 p-3 space-y-2.5">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="text-[11px] uppercase tracking-[0.18em] text-rose-800 font-medium">Section lifecycle</p>
+                          <p className="mt-1 text-sm font-semibold text-text-primary">{sectionLifecycleSummary.title}</p>
+                          <p className="mt-1 text-xs leading-relaxed text-text-secondary">{sectionLifecycleSummary.detail}</p>
+                        </div>
+                        <div className="shrink-0 flex flex-wrap justify-end gap-1 text-[10px]">
+                          {sectionLifecycleSummary.keyStats.map((stat) => (
+                            <span key={stat} className="rounded-full border border-rose-200 bg-white px-2 py-1 text-rose-900">{stat}</span>
+                          ))}
+                        </div>
+                      </div>
+                      <div className="grid gap-2 md:grid-cols-2">
+                        <div className="rounded-md border border-rose-200 bg-white px-2.5 py-2">
+                          <p className="text-[11px] uppercase tracking-[0.18em] text-rose-800">Best next move</p>
+                          <p className="mt-1 text-xs leading-relaxed text-text-primary">{sectionLifecycleSummary.bestNextMove}</p>
+                        </div>
+                        <div className="rounded-md border border-rose-200 bg-white px-2.5 py-2">
+                          <p className="text-[11px] uppercase tracking-[0.18em] text-rose-800">Decision rule</p>
+                          <p className="mt-1 text-xs leading-relaxed text-text-primary">{sectionLifecycleSummary.decisionRule}</p>
+                        </div>
+                      </div>
+                      <div className="rounded-md border border-rose-200 bg-white px-2.5 py-2">
+                        <p className="text-[11px] uppercase tracking-[0.18em] text-rose-800">Watchout</p>
+                        <p className="mt-1 text-xs leading-relaxed text-text-primary">{sectionLifecycleSummary.watchout}</p>
+                      </div>
+                      <div className="grid gap-2 md:grid-cols-3">
+                        {sectionLifecycleSummary.steps.map((step) => (
+                          <div key={step.label} className="rounded-md border border-rose-200 bg-white px-2.5 py-2">
+                            <p className="text-[10px] uppercase tracking-[0.18em] text-rose-800">{step.label}</p>
+                            <p className="mt-1 text-xs leading-relaxed text-text-primary">{step.detail}</p>
+                          </div>
+                        ))}
+                      </div>
+                      <button
+                        onClick={removeSelectedSections}
+                        disabled={!sectionLifecycleSummary.allowRemoval}
+                        className={`w-full rounded-md border px-3 py-2 text-left text-sm font-semibold transition-colors ${sectionLifecycleSummary.allowRemoval ? 'border-rose-200 bg-white text-rose-900 hover:bg-rose-100' : 'cursor-not-allowed border-border-subtle bg-surface-subtle text-text-tertiary'}`}
+                      >
+                        Remove section from structure
+                      </button>
+                    </div>
                   </>
                 )}
               </div>
