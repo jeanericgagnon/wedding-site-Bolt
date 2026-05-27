@@ -14,7 +14,7 @@ import { GUEST_COMMUNICATION_FLOW } from '../../lib/guestCommunicationFlow';
 import { buildRsvpReminderDraft } from '../../lib/reminderDraftHelper';
 import { buildDayOfUpdateDraft } from '../../lib/dayOfUpdateHelper';
 import { buildEventReminderDraft } from '../../lib/eventReminderHelper';
-import { buildGuestOpsCoach, buildMessageOpsCoach } from '../../lib/guestOpsCoach';
+import { buildGuestOpsCoach, buildGuestOutreachSequence, buildMessageOpsCoach } from '../../lib/guestOpsCoach';
 import { formatMessageEventOptionLabel } from './messageEventDate';
 import { formatMessageHistoryDate, formatMessageHistoryDateTime, getMessageHistoryTimestamp } from './messageHistoryTime';
 import { formatScheduledMessageDateTime, parseScheduleInputToIso, toScheduleInputValue } from './messageScheduleTime';
@@ -2297,6 +2297,61 @@ export const DashboardMessages: React.FC = () => {
     }
   }
 
+  function runGuestOutreachStep(step: ReturnType<typeof buildGuestOutreachSequence>['steps'][number]) {
+    if (step.area === 'guests') {
+      navigate('/dashboard/guests');
+      return;
+    }
+
+    if (!step.playAction || step.playAction === 'none') return;
+
+    const matchingPlay = messageOpsCoach.plays.find((play) => play.action === step.playAction);
+    if (matchingPlay) {
+      runMessageOpsCoachPlay(matchingPlay);
+      return;
+    }
+
+    if (step.playAction === 'compose-rsvp-reminder') {
+      runMessageOpsCoachPlay({
+        id: 'send-rsvp-reminder',
+        status: 'ready',
+        title: step.title,
+        detail: step.detail,
+        actionLabel: step.ctaLabel,
+        action: 'compose-rsvp-reminder',
+      });
+      return;
+    }
+
+    if (step.playAction === 'compose-day-of-update') {
+      runMessageOpsCoachPlay({
+        id: 'stage-day-of-update',
+        status: 'ready',
+        title: step.title,
+        detail: step.detail,
+        actionLabel: step.ctaLabel,
+        action: 'compose-day-of-update',
+      });
+      return;
+    }
+
+    if (step.playAction === 'run-due-scheduled') {
+      void handleRunDueScheduledMessages();
+      return;
+    }
+
+    if (step.playAction === 'open-partial') {
+      setHistoryStatusFilter('partial');
+      setHistoryChannelFilter('all');
+      return;
+    }
+
+    if (step.playAction === 'open-failed') {
+      setHistoryStatusFilter('failed');
+      setHistoryChannelFilter('all');
+    }
+  }
+
   function applySavedTemplate(template: SavedComposerTemplate) {
     setEditingMessageId(null);
     const savedScheduleIsUsable = isSavedTemplateScheduleUsable(template);
@@ -2664,6 +2719,21 @@ export const DashboardMessages: React.FC = () => {
     failedCount: historyStatusCounts.failed,
     unreachedRecipientCount: messages.reduce((sum, message) => sum + getUnreachedCount(message, deliveries), 0),
   }), [deliveryHealth.overdueScheduled, deliveries, guests, historyStatusCounts.failed, historyStatusCounts.partial, historyStatusCounts.scheduled, messages]);
+  const guestOutreachSequence = useMemo(() => buildGuestOutreachSequence({
+    totalGuests: guests.length,
+    attendingGuests: guests.filter((guest) => isAttendingStatus(guest.rsvp_status)).length,
+    pendingResponses: guests.filter((guest) => isPendingStatus(guest.rsvp_status)).length,
+    pendingWithoutEmail: guests.filter((guest) => isPendingStatus(guest.rsvp_status) && !hasReachableEmail(guest.email)).length,
+    noContact: guests.filter((guest) => !hasReachableEmail(guest.email) && !hasReachablePhone(guest.phone)).length,
+    missingMealChoices: 0,
+    missingPlusOneNames: 0,
+  }, {
+    scheduledCount: historyStatusCounts.scheduled,
+    overdueScheduledCount: deliveryHealth.overdueScheduled,
+    partialCount: historyStatusCounts.partial,
+    failedCount: historyStatusCounts.failed,
+    unreachedRecipientCount: messages.reduce((sum, message) => sum + getUnreachedCount(message, deliveries), 0),
+  }), [deliveryHealth.overdueScheduled, deliveries, guests, historyStatusCounts.failed, historyStatusCounts.partial, historyStatusCounts.scheduled, messages]);
 
   const campaignThreads = useMemo(() => {
     const map = new Map<string, {
@@ -2901,6 +2971,52 @@ export const DashboardMessages: React.FC = () => {
                     onClick={() => runMessageOpsCoachPlay(play)}
                   >
                     {play.actionLabel}
+                  </Button>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="rounded-[28px] border border-border-subtle bg-white p-5 shadow-sm">
+          <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+            <div className="max-w-3xl">
+              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-text-tertiary">Shared outreach order</p>
+              <h2 className="mt-2 text-2xl font-semibold text-text-primary">{guestOutreachSequence.headline}</h2>
+              <p className="mt-2 text-sm text-text-secondary">{guestOutreachSequence.summary}</p>
+            </div>
+            <div className="rounded-2xl border border-border-subtle bg-surface-subtle/30 px-4 py-3 md:min-w-[220px]">
+              <p className="text-[11px] uppercase tracking-[0.22em] text-text-tertiary">What changes</p>
+              <p className="mt-1 text-xs text-text-secondary">Messages now follows the real list state, so we do cleanup, nudges, and live updates in the right order.</p>
+            </div>
+          </div>
+          <div className="mt-4 grid gap-3 md:grid-cols-3">
+            {guestOutreachSequence.steps.map((step) => (
+              <div key={step.id} className="rounded-2xl border border-border-subtle bg-surface-subtle/20 px-4 py-4">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-sm font-semibold text-text-primary">{step.title}</p>
+                  <span className={`rounded-full px-2.5 py-1 text-[11px] font-medium ${
+                    step.status === 'current'
+                      ? 'border border-primary/20 bg-primary-light text-primary'
+                      : step.status === 'next'
+                        ? 'border border-warning/20 bg-warning-light text-warning'
+                        : step.status === 'then'
+                          ? 'border border-border-subtle bg-surface-subtle text-text-secondary'
+                          : 'border border-success/20 bg-success-light text-success'
+                  }`}>
+                    {step.status === 'current' ? 'Current' : step.status === 'next' ? 'Next' : step.status === 'then' ? 'Then' : 'Steady'}
+                  </span>
+                </div>
+                <p className="mt-2 text-xs leading-5 text-text-secondary">{step.detail}</p>
+                {step.id !== 'steady' && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="mt-3"
+                    disabled={step.area === 'messages' && !canCompose && step.playAction !== 'open-partial' && step.playAction !== 'open-failed' && step.playAction !== 'run-due-scheduled'}
+                    onClick={() => runGuestOutreachStep(step)}
+                  >
+                    {step.ctaLabel}
                   </Button>
                 )}
               </div>
