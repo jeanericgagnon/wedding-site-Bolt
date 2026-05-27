@@ -206,6 +206,108 @@ describe('toBuilderV2Document', () => {
     ]);
   });
 
+  it('preserves structured faq, schedule, travel, registry, and rsvp content when migrating legacy sections into v2', () => {
+    const faqSection = toBuilderV2Section({
+      id: 'faq-1',
+      type: 'faq',
+      variant: 'default',
+      enabled: true,
+      bindings: {},
+      settings: {
+        title: 'FAQ',
+        faqItems: [
+          { q: 'Is there parking?', a: 'Yes, valet is available.' },
+          { question: 'Can I bring kids?', answer: 'Please follow your invitation.' },
+        ],
+      },
+    });
+
+    const scheduleSection = toBuilderV2Section({
+      id: 'schedule-1',
+      type: 'schedule',
+      variant: 'default',
+      enabled: true,
+      bindings: {},
+      settings: {
+        title: 'Weekend schedule',
+        timelineItems: [
+          { title: 'Welcome drinks', time: 'Friday 6:00 PM', location: 'River House', note: 'Casual attire.' },
+          { label: 'Ceremony', time: 'Saturday 4:00 PM', location: 'Sunset Gardens', text: 'Guests seated by 3:45 PM.' },
+        ],
+      },
+    });
+
+    const travelSection = toBuilderV2Section({
+      id: 'travel-1',
+      type: 'travel',
+      variant: 'default',
+      enabled: true,
+      bindings: {},
+      settings: {
+        title: 'Travel',
+        description: 'Plan ahead for the holiday weekend.',
+        travelTips: [
+          { title: 'Shuttle', note: 'Shuttle departs from the hotel lobby every 30 minutes.', url: 'https://example.com/shuttle' },
+        ],
+        hotels: [
+          { name: 'River Inn', notes: 'Use our room block.', url: 'https://example.com/river-inn', address: '1 River Rd' },
+        ],
+        flightInfo: 'Fly into SFO for the easiest drive.',
+      },
+    });
+
+    const registrySection = toBuilderV2Section({
+      id: 'registry-1',
+      type: 'registry',
+      variant: 'default',
+      enabled: true,
+      bindings: {},
+      settings: {
+        title: 'Registry',
+        registryItems: [
+          { title: 'Stand mixer', note: 'Kitchen wish list item', url: 'https://example.com/mixer' },
+        ],
+        links: [
+          { label: 'Crate & Barrel', url: 'https://example.com/crate' },
+        ],
+      },
+    });
+
+    const rsvpSection = toBuilderV2Section({
+      id: 'rsvp-1',
+      type: 'rsvp',
+      variant: 'default',
+      enabled: true,
+      bindings: {},
+      settings: {
+        title: 'RSVP',
+        rsvpNote: 'Please reply by August 1 so we can finalize seating.',
+      },
+    });
+
+    expect(faqSection.blocks).toMatchObject([
+      { type: 'faqItem', data: { question: 'Is there parking?', answer: 'Yes, valet is available.' } },
+      { type: 'faqItem', data: { question: 'Can I bring kids?', answer: 'Please follow your invitation.' } },
+    ]);
+    expect(scheduleSection.blocks).toMatchObject([
+      { type: 'event', data: { title: 'Welcome drinks', time: 'Friday 6:00 PM', location: 'River House', note: 'Casual attire.' } },
+      { type: 'event', data: { title: 'Ceremony', time: 'Saturday 4:00 PM', location: 'Sunset Gardens', note: 'Guests seated by 3:45 PM.' } },
+    ]);
+    expect(travelSection.blocks).toMatchObject([
+      { type: 'text', data: { text: 'Plan ahead for the holiday weekend.' } },
+      { type: 'travelTip', data: { title: 'Shuttle', note: 'Shuttle departs from the hotel lobby every 30 minutes.', url: 'https://example.com/shuttle' } },
+      { type: 'hotelCard', data: { title: 'River Inn', note: 'Use our room block.', url: 'https://example.com/river-inn', location: '1 River Rd' } },
+      { type: 'travelTip', data: { title: 'Getting here', note: 'Fly into SFO for the easiest drive.' } },
+    ]);
+    expect(registrySection.blocks).toMatchObject([
+      { type: 'registryItem', data: { title: 'Stand mixer', note: 'Kitchen wish list item', url: 'https://example.com/mixer' } },
+      { type: 'registryItem', data: { title: 'Crate & Barrel', url: 'https://example.com/crate' } },
+    ]);
+    expect(rsvpSection.blocks).toMatchObject([
+      { type: 'rsvpNote', data: { note: 'Please reply by August 1 so we can finalize seating.' } },
+    ]);
+  });
+
   it('preserves legacy hero, story, gallery, and venue anchors when migrating into v2', () => {
     const heroSection = toBuilderV2Section({
       id: 'hero-1',

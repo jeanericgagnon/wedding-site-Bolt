@@ -89,6 +89,163 @@ const getSettingGalleryImages = (settings: Record<string, unknown> | undefined) 
     .filter((item): item is { url: string; caption: string; title: string } => Boolean(item));
 };
 
+const getLegacyFaqItems = (settings: Record<string, unknown> | undefined) => (
+  getSettingRecordList<{
+    q?: string;
+    a?: string;
+    question?: string;
+    answer?: string;
+  }>(settings, 'faqItems')
+    .map((item) => ({
+      question: typeof item.q === 'string' && item.q.trim()
+        ? item.q.trim()
+        : typeof item.question === 'string' && item.question.trim()
+          ? item.question.trim()
+          : '',
+      answer: typeof item.a === 'string' && item.a.trim()
+        ? item.a.trim()
+        : typeof item.answer === 'string' && item.answer.trim()
+          ? item.answer.trim()
+          : '',
+    }))
+    .filter((item) => item.question || item.answer)
+);
+
+const getLegacyTimelineItems = (settings: Record<string, unknown> | undefined) => (
+  getSettingRecordList<{
+    title?: string;
+    label?: string;
+    time?: string;
+    location?: string;
+    note?: string;
+    text?: string;
+  }>(settings, 'timelineItems')
+    .map((item) => ({
+      title: typeof item.title === 'string' && item.title.trim()
+        ? item.title.trim()
+        : typeof item.label === 'string' && item.label.trim()
+          ? item.label.trim()
+          : '',
+      time: typeof item.time === 'string' && item.time.trim() ? item.time.trim() : '',
+      location: typeof item.location === 'string' && item.location.trim() ? item.location.trim() : '',
+      note: typeof item.note === 'string' && item.note.trim()
+        ? item.note.trim()
+        : typeof item.text === 'string' && item.text.trim()
+          ? item.text.trim()
+          : '',
+    }))
+    .filter((item) => item.title || item.time || item.location || item.note)
+);
+
+const getLegacyRegistryItems = (settings: Record<string, unknown> | undefined) => {
+  const registryItems = getSettingRecordList<{
+    title?: string;
+    label?: string;
+    note?: string;
+    text?: string;
+    url?: string;
+  }>(settings, 'registryItems')
+    .map((item) => ({
+      title: typeof item.title === 'string' && item.title.trim()
+        ? item.title.trim()
+        : typeof item.label === 'string' && item.label.trim()
+          ? item.label.trim()
+          : '',
+      note: typeof item.note === 'string' && item.note.trim()
+        ? item.note.trim()
+        : typeof item.text === 'string' && item.text.trim()
+          ? item.text.trim()
+          : '',
+      url: typeof item.url === 'string' && item.url.trim() ? item.url.trim() : '',
+    }))
+    .filter((item) => item.title || item.note || item.url);
+
+  const registryLinks = getSettingRecordList<{
+    label?: string;
+    title?: string;
+    url?: string;
+  }>(settings, 'links')
+    .map((item) => ({
+      title: typeof item.title === 'string' && item.title.trim()
+        ? item.title.trim()
+        : typeof item.label === 'string' && item.label.trim()
+          ? item.label.trim()
+          : '',
+      note: '',
+      url: typeof item.url === 'string' && item.url.trim() ? item.url.trim() : '',
+    }))
+    .filter((item) => item.title || item.url);
+
+  return [...registryItems, ...registryLinks];
+};
+
+const getLegacyTravelCards = (settings: Record<string, unknown> | undefined) => {
+  const hotels = getSettingRecordList<{
+    name?: string;
+    title?: string;
+    notes?: string;
+    note?: string;
+    url?: string;
+    address?: string;
+    location?: string;
+  }>(settings, 'hotels')
+    .map((hotel) => ({
+      type: 'hotelCard' as const,
+      title: typeof hotel.name === 'string' && hotel.name.trim()
+        ? hotel.name.trim()
+        : typeof hotel.title === 'string' && hotel.title.trim()
+          ? hotel.title.trim()
+          : '',
+      note: typeof hotel.notes === 'string' && hotel.notes.trim()
+        ? hotel.notes.trim()
+        : typeof hotel.note === 'string' && hotel.note.trim()
+          ? hotel.note.trim()
+          : '',
+      url: typeof hotel.url === 'string' && hotel.url.trim() ? hotel.url.trim() : '',
+      location: typeof hotel.address === 'string' && hotel.address.trim()
+        ? hotel.address.trim()
+        : typeof hotel.location === 'string' && hotel.location.trim()
+          ? hotel.location.trim()
+          : '',
+    }))
+    .filter((hotel) => hotel.title || hotel.note || hotel.url || hotel.location);
+
+  const travelTips = getSettingRecordList<{
+    title?: string;
+    note?: string;
+    text?: string;
+    url?: string;
+  }>(settings, 'travelTips')
+    .map((tip) => ({
+      type: 'travelTip' as const,
+      title: typeof tip.title === 'string' && tip.title.trim() ? tip.title.trim() : '',
+      note: typeof tip.note === 'string' && tip.note.trim()
+        ? tip.note.trim()
+        : typeof tip.text === 'string' && tip.text.trim()
+          ? tip.text.trim()
+          : '',
+      url: typeof tip.url === 'string' && tip.url.trim() ? tip.url.trim() : '',
+      location: '',
+    }))
+    .filter((tip) => tip.title || tip.note || tip.url);
+
+  const narrativeTips = [
+    ['Getting here', getSettingString(settings, 'flightInfo')],
+    ['Where to stay', getSettingString(settings, 'hotelInfo')],
+    ['Parking', getSettingString(settings, 'parkingInfo')],
+  ]
+    .filter(([, note]) => Boolean(note))
+    .map(([title, note]) => ({
+      type: 'travelTip' as const,
+      title,
+      note,
+      url: '',
+      location: '',
+    }));
+
+  return [...travelTips, ...hotels, ...narrativeTips];
+};
+
 const makeDefaultBlocksForType = (
   type: string,
   settings: Record<string, unknown> | undefined,
@@ -116,11 +273,74 @@ const makeDefaultBlocksForType = (
         ...(storyImage ? [{ id: 'b-photo', type: 'photo', data: { imageUrl: storyImage } } satisfies BuilderV2Block] : []),
       ];
     }
-    case 'schedule':
-    case 'travel':
-    case 'registry':
-    case 'rsvp':
-      return subtitleText ? [{ id: 'b-text', type: 'text', data: { text: subtitleText } }] : [];
+    case 'schedule': {
+      const timelineItems = getLegacyTimelineItems(settings);
+      return [
+        ...timelineItems.map((item, index) => ({
+          id: `b-event-${index + 1}`,
+          type: 'event' as const,
+          data: {
+            title: item.title,
+            time: item.time || undefined,
+            location: item.location || undefined,
+            note: item.note || undefined,
+          },
+        })),
+        ...(timelineItems.length === 0 && subtitleText ? [{ id: 'b-text', type: 'text', data: { text: subtitleText } } satisfies BuilderV2Block] : []),
+      ];
+    }
+    case 'travel': {
+      const travelCards = getLegacyTravelCards(settings);
+      return [
+        ...(subtitleText ? [{ id: 'b-text', type: 'text', data: { text: subtitleText } } satisfies BuilderV2Block] : []),
+        ...travelCards.map((card, index) => ({
+          id: `b-${card.type}-${index + 1}`,
+          type: card.type,
+          data: {
+            title: card.title || undefined,
+            note: card.note || undefined,
+            url: card.url || undefined,
+            location: card.location || undefined,
+          },
+        })),
+      ];
+    }
+    case 'registry': {
+      const registryItems = getLegacyRegistryItems(settings);
+      return [
+        ...registryItems.map((item, index) => ({
+          id: `b-registry-${index + 1}`,
+          type: 'registryItem' as const,
+          data: {
+            title: item.title || undefined,
+            note: item.note || undefined,
+            url: item.url || undefined,
+          },
+        })),
+        ...(registryItems.length === 0 && subtitleText ? [{ id: 'b-text', type: 'text', data: { text: subtitleText } } satisfies BuilderV2Block] : []),
+      ];
+    }
+    case 'rsvp': {
+      const rsvpNote = getSettingString(settings, 'rsvpNote');
+      return [
+        ...(rsvpNote ? [{ id: 'b-rsvp-note', type: 'rsvpNote', data: { note: rsvpNote } } satisfies BuilderV2Block] : []),
+        ...(subtitleText && !rsvpNote ? [{ id: 'b-text', type: 'text', data: { text: subtitleText } } satisfies BuilderV2Block] : []),
+      ];
+    }
+    case 'faq': {
+      const faqItems = getLegacyFaqItems(settings);
+      return [
+        ...faqItems.map((item, index) => ({
+          id: `b-faq-${index + 1}`,
+          type: 'faqItem' as const,
+          data: {
+            question: item.question || undefined,
+            answer: item.answer || undefined,
+          },
+        })),
+        ...(faqItems.length === 0 && subtitleText ? [{ id: 'b-text', type: 'text', data: { text: subtitleText } } satisfies BuilderV2Block] : []),
+      ];
+    }
     case 'gallery': {
       const galleryImages = getSettingGalleryImages(settings);
       return galleryImages.map((image, index) => ({
