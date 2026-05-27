@@ -38,6 +38,9 @@ export interface WeddingIdentityExportKit {
   readyCount: number;
   confidenceTitle: string;
   confidenceDetail: string;
+  focusTitle: string;
+  focusDetail: string;
+  decisionRule: string;
   deliveryNote: string;
   items: WeddingIdentityExportItem[];
   manifest: Array<{ label: string; value: string }>;
@@ -225,9 +228,30 @@ export function buildWeddingIdentityExportKit(input: WeddingIdentityExportKitInp
       ? 'The design language is usable now, but the public site URL still has to exist before these packs feel real.'
       : restrictedAccess
         ? `The packs themselves are ready, but the guest experience still depends on clean ${privacyModeLabel} instructions traveling with them.`
+      : !launchIsLive
+        ? 'The URL, print assets, and story pack are lined up. One live publish is the last trust step before wide sharing.'
+        : 'The site, print assets, and share packs are aligned enough to hand off to guests, planners, and stationers without extra translation.',
+    focusTitle: !hasPublicUrl
+      ? 'Give the kit one trustworthy public URL'
+      : restrictedAccess
+        ? 'Keep access instructions traveling with every pack'
         : !launchIsLive
-          ? 'The URL, print assets, and story pack are lined up. One live publish is the last trust step before wide sharing.'
-          : 'The site, print assets, and share packs are aligned enough to hand off to guests, planners, and stationers without extra translation.',
+          ? 'Make the guest-facing site live before volume sharing'
+          : 'Carry one wedding identity across every handoff',
+    focusDetail: !hasPublicUrl
+      ? 'The design system is ready, but the exports will still feel provisional until one guest-safe URL anchors every QR and printed cue.'
+      : restrictedAccess
+        ? `These assets are ready, but the guest experience still depends on making the ${privacyModeLabel} instructions impossible to miss.`
+        : !launchIsLive
+          ? 'The packs already agree with each other; the last missing ingredient is a live destination behind every QR and short URL.'
+          : 'This is the stage where consistency matters more than invention: the same URL, tone, and access story should show up everywhere.',
+    decisionRule: !hasPublicUrl
+      ? 'Do not print or share QR-led assets until the public URL is set and guest-safe.'
+      : restrictedAccess
+        ? `When access is ${privacyModeLabel}, clarity beats aesthetics: the right password or invite path has to travel with every export.`
+        : !launchIsLive
+          ? 'If the packs are ready but the site is not live, publish before you scale the handoff.'
+          : 'Once the public path is trustworthy, reuse the same identity everywhere instead of improvising by channel.',
     deliveryNote: restrictedAccess
       ? `Every guest-facing export should travel with the same ${privacyModeLabel} instructions so the handoff still feels deliberate.`
       : !launchIsLive

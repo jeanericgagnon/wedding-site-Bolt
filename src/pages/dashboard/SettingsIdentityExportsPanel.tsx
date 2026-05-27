@@ -58,6 +58,18 @@ export function SettingsIdentityExportsPanel({
             </div>
           </div>
 
+          <div className="grid gap-3 lg:grid-cols-3">
+            <div className="rounded-lg border border-border-subtle bg-white p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-text-tertiary">Main focus</p>
+              <p className="mt-1 text-sm font-semibold text-text-primary">{weddingIdentityExportKit.focusTitle}</p>
+              <p className="mt-2 text-sm leading-6 text-text-secondary">{weddingIdentityExportKit.focusDetail}</p>
+            </div>
+            <div className="rounded-lg border border-border-subtle bg-white p-4 lg:col-span-2">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-text-tertiary">Decision rule</p>
+              <p className="mt-2 text-sm leading-6 text-text-secondary">{weddingIdentityExportKit.decisionRule}</p>
+            </div>
+          </div>
+
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {weddingIdentityExportKit.items.map((item) => (
               <div key={item.id} className="rounded-lg border border-border-subtle bg-white p-3">
