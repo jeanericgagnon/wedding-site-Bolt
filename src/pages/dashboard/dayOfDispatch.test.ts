@@ -15,6 +15,7 @@ describe('buildDayOfDispatchModel', () => {
 
     expect(model.title).toMatch(/background/i);
     expect(model.focusTitle).toMatch(/protect clarity/i);
+    expect(model.bestNextMove).toMatch(/Leave day-of messaging alone|RSVP and itinerary truth/i);
     expect(model.decisionRule).toMatch(/day-of messaging/i);
     expect(model.primaryAction.action).toBe('none');
     expect(model.sequence.map((step) => step.status)).toEqual(['current', 'next', 'then']);
@@ -33,6 +34,7 @@ describe('buildDayOfDispatchModel', () => {
 
     expect(model.title).toMatch(/already due/i);
     expect(model.focusTitle).toMatch(/already owed|live note/i);
+    expect(model.bestNextMove).toMatch(/overdue day-of send first|review itinerary and audience/i);
     expect(model.decisionRule).toMatch(/delivery order beats copy perfection/i);
     expect(model.primaryAction.action).toBe('run-due-scheduled');
     expect(model.sequence[0]?.title).toMatch(/queued day-of note|send/i);
@@ -51,6 +53,7 @@ describe('buildDayOfDispatchModel', () => {
 
     expect(model.title).toMatch(/stage/i);
     expect(model.focusTitle).toMatch(/one calm note|tighten the audience/i);
+    expect(model.bestNextMove).toMatch(/short operational update now|Tighten itinerary anchors/i);
     expect(model.decisionRule).toMatch(/operational message|audience precision/i);
     expect(model.primaryAction.action).toBe('compose-day-of-update');
     expect(model.badges[1]).toMatch(/itinerary audience/i);
