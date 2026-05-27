@@ -107,6 +107,104 @@ describe('toBuilderV2Document', () => {
     ]);
     expect(scheduleSection.blocks).toEqual([]);
   });
+
+  it('preserves authored countdown, footer cta, dress code, accommodations, and contact copy when migrating legacy sections into v2', () => {
+    const countdownSection = toBuilderV2Section({
+      id: 'countdown-1',
+      type: 'countdown',
+      variant: 'default',
+      enabled: true,
+      bindings: {},
+      settings: { title: 'Counting down', subtitle: 'Almost time', message: 'Join us for the full weekend.' },
+    });
+
+    const footerSection = toBuilderV2Section({
+      id: 'footer-cta-1',
+      type: 'footer-cta',
+      variant: 'default',
+      enabled: true,
+      bindings: {},
+      settings: { title: 'See you soon', subtext: 'Please RSVP when you can.', footerNote: 'Travel details keep evolving.' },
+    });
+
+    const dressCodeSection = toBuilderV2Section({
+      id: 'dress-code-1',
+      type: 'dress-code',
+      variant: 'default',
+      enabled: true,
+      bindings: {},
+      settings: {
+        title: 'Cocktail Attire',
+        description: 'Dressy, easy, and outdoor-friendly.',
+        suggestions: ['Block heels work well', 'Please skip denim'],
+        additionalNote: 'Bring a layer for the evening.',
+      },
+    });
+
+    const accommodationsSection = toBuilderV2Section({
+      id: 'stay-1',
+      type: 'accommodations',
+      variant: 'default',
+      enabled: true,
+      bindings: {},
+      settings: {
+        title: 'Where to stay',
+        generalNote: 'We reserved a small room block.',
+        hotels: [
+          {
+            name: 'The Archer',
+            address: 'Main Street',
+            notes: 'Walkable to dinner.',
+            url: 'https://example.com/archer',
+          },
+        ],
+      },
+    });
+
+    const contactSection = toBuilderV2Section({
+      id: 'contact-1',
+      type: 'contact',
+      variant: 'default',
+      enabled: true,
+      bindings: {},
+      settings: {
+        title: 'Questions?',
+        introText: 'Reach out if you need anything before the weekend.',
+        closingNote: 'We are so glad you will be there.',
+      },
+    });
+
+    expect(countdownSection.blocks).toMatchObject([
+      { type: 'text', data: { text: 'Almost time' } },
+      { type: 'story', data: { text: 'Join us for the full weekend.' } },
+    ]);
+    expect(footerSection.blocks).toMatchObject([
+      { type: 'text', data: { text: 'Please RSVP when you can.' } },
+      { type: 'story', data: { text: 'Travel details keep evolving.' } },
+    ]);
+    expect(dressCodeSection.blocks).toMatchObject([
+      { type: 'text', data: { text: 'Dressy, easy, and outdoor-friendly.' } },
+      { type: 'qna', data: { answer: 'Block heels work well' } },
+      { type: 'qna', data: { answer: 'Please skip denim' } },
+      { type: 'story', data: { text: 'Bring a layer for the evening.' } },
+    ]);
+    expect(accommodationsSection.blocks).toMatchObject([
+      { type: 'text', data: { text: 'We reserved a small room block.' } },
+      {
+        type: 'hotelCard',
+        data: {
+          title: 'The Archer',
+          note: 'Walkable to dinner.',
+          url: 'https://example.com/archer',
+          location: 'Main Street',
+        },
+      },
+    ]);
+    expect(contactSection.blocks).toMatchObject([
+      { type: 'text', data: { text: 'Reach out if you need anything before the weekend.' } },
+      { type: 'story', data: { text: 'We are so glad you will be there.' } },
+    ]);
+  });
 });
 
 describe('legacy adapters', () => {

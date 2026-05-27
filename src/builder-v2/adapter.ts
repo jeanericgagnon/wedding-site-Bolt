@@ -32,15 +32,31 @@ const getSectionSubtitle = (settings: Record<string, unknown> | undefined) => (
   || ''
 );
 
+const getSettingStringList = (settings: Record<string, unknown> | undefined, key: string) => {
+  const value = settings?.[key];
+  return Array.isArray(value)
+    ? value.filter((item): item is string => typeof item === 'string' && item.trim().length > 0).map((item) => item.trim())
+    : [];
+};
+
+const getSettingRecordList = <T extends Record<string, unknown>>(settings: Record<string, unknown> | undefined, key: string): T[] => {
+  const value = settings?.[key];
+  return Array.isArray(value)
+    ? value.filter((item): item is T => typeof item === 'object' && item !== null)
+    : [];
+};
+
 const makeDefaultBlocksForType = (
   type: string,
+  settings: Record<string, unknown> | undefined,
   title?: string,
   subtitle?: string,
 ): BuilderV2Block[] => {
   const titleText = title?.trim() || '';
   const subtitleText = subtitle?.trim() || '';
+  const normalizedType = normalizeBuilderV2SectionType(type);
 
-  switch (normalizeBuilderV2SectionType(type)) {
+  switch (normalizedType) {
     case 'hero':
       return [
         ...(titleText ? [{ id: 'b-title', type: 'title', data: { text: titleText } } satisfies BuilderV2Block] : []),
@@ -53,6 +69,67 @@ const makeDefaultBlocksForType = (
     case 'registry':
     case 'rsvp':
       return subtitleText ? [{ id: 'b-text', type: 'text', data: { text: subtitleText } }] : [];
+    case 'countdown': {
+      const message = getSettingString(settings, 'message');
+      return [
+        ...(subtitleText ? [{ id: 'b-text', type: 'text', data: { text: subtitleText } } satisfies BuilderV2Block] : []),
+        ...(message ? [{ id: 'b-story', type: 'story', data: { text: message } } satisfies BuilderV2Block] : []),
+      ];
+    }
+    case 'dress-code': {
+      const description = getSettingString(settings, 'description');
+      const additionalNote = getSettingString(settings, 'additionalNote');
+      const suggestions = getSettingStringList(settings, 'suggestions');
+      return [
+        ...(description ? [{ id: 'b-text', type: 'text', data: { text: description } } satisfies BuilderV2Block] : []),
+        ...suggestions.map((suggestion, index) => ({
+          id: `b-qna-${index + 1}`,
+          type: 'qna' as const,
+          data: { answer: suggestion },
+        })),
+        ...(additionalNote ? [{ id: 'b-story', type: 'story', data: { text: additionalNote } } satisfies BuilderV2Block] : []),
+      ];
+    }
+    case 'accommodations': {
+      const generalNote = getSettingString(settings, 'generalNote');
+      const hotels = getSettingRecordList<{
+        name?: string;
+        notes?: string;
+        url?: string;
+        address?: string;
+      }>(settings, 'hotels');
+      return [
+        ...(generalNote ? [{ id: 'b-text', type: 'text', data: { text: generalNote } } satisfies BuilderV2Block] : []),
+        ...hotels
+          .filter((hotel) => typeof hotel.name === 'string' && hotel.name.trim())
+          .map((hotel, index) => ({
+            id: `b-hotel-${index + 1}`,
+            type: 'hotelCard' as const,
+            data: {
+              title: hotel.name?.trim(),
+              note: typeof hotel.notes === 'string' && hotel.notes.trim() ? hotel.notes.trim() : undefined,
+              url: typeof hotel.url === 'string' && hotel.url.trim() ? hotel.url.trim() : undefined,
+              location: typeof hotel.address === 'string' && hotel.address.trim() ? hotel.address.trim() : undefined,
+            },
+          })),
+      ];
+    }
+    case 'contact': {
+      const introText = getSettingString(settings, 'introText');
+      const closingNote = getSettingString(settings, 'closingNote');
+      return [
+        ...(introText ? [{ id: 'b-text', type: 'text', data: { text: introText } } satisfies BuilderV2Block] : []),
+        ...(closingNote ? [{ id: 'b-story', type: 'story', data: { text: closingNote } } satisfies BuilderV2Block] : []),
+      ];
+    }
+    case 'footer-cta': {
+      const subtext = getSettingString(settings, 'subtext');
+      const footerNote = getSettingString(settings, 'footerNote');
+      return [
+        ...(subtext ? [{ id: 'b-text', type: 'text', data: { text: subtext } } satisfies BuilderV2Block] : []),
+        ...(footerNote ? [{ id: 'b-story', type: 'story', data: { text: footerNote } } satisfies BuilderV2Block] : []),
+      ];
+    }
     default:
       return subtitleText ? [{ id: 'b-text', type: 'text', data: { text: subtitleText } }] : [];
   }
@@ -69,7 +146,7 @@ export const toBuilderV2Section = (instance: SectionInstance): BuilderV2Section 
     enabled: instance.enabled,
     title,
     subtitle,
-    blocks: makeDefaultBlocksForType(normalizedType, title, subtitle),
+    blocks: makeDefaultBlocksForType(normalizedType, instance.settings, title, subtitle),
   };
 };
 
@@ -84,7 +161,7 @@ const toBuilderV2SectionFromBuilder = (section: BuilderSectionInstance): Builder
     enabled: section.enabled,
     title,
     subtitle,
-    blocks: makeDefaultBlocksForType(normalizedType, title, subtitle),
+    blocks: makeDefaultBlocksForType(normalizedType, section.settings, title, subtitle),
   };
 };
 
