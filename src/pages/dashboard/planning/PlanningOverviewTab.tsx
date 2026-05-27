@@ -17,6 +17,7 @@ import { deriveNameChangeLifecycleStatus } from '../nameChangeLifecycleStatus';
 import { PlanningDecisionCard } from './PlanningDecisionCard';
 import { buildPlanningOverviewDecisionCard } from './planningDecisionAssistant';
 import { buildCoupleFocusModel, type CoupleFocusStep } from '../coupleFocus';
+import { getFlowStatusLabel } from '../../../lib/flowLabels';
 
 interface SeatingReadiness {
   attending: number;
@@ -199,7 +200,7 @@ export const PlanningOverviewTab: React.FC<Props> = ({ tasks, budgetItems, vendo
                         ? 'border border-warning/20 bg-warning-light text-warning'
                         : 'border border-border-subtle bg-surface-subtle text-text-secondary'
                   }`}>
-                    {step.status === 'current' ? 'Current' : step.status === 'next' ? 'Next' : 'Then'}
+                    {getFlowStatusLabel(step.status)}
                   </span>
                 </div>
                 <p className="mt-2 text-xs leading-5 text-text-secondary">{step.detail}</p>

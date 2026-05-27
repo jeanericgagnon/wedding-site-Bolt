@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { buildGuestJourneyLinks, buildGuestJourneySteps, getGuestJourneyCopy, type GuestJourneyContext } from '../../lib/guestJourney';
+import { getJourneyStatusLabel } from '../../lib/flowLabels';
 
 type GuestJourneyCompanionProps = GuestJourneyContext & {
   className?: string;
@@ -30,20 +31,6 @@ export const GuestJourneyCompanion: React.FC<GuestJourneyCompanionProps> = ({
     }
   };
 
-  const getStepLabel = (status: (typeof steps)[number]['status']) => {
-    switch (status) {
-      case 'done':
-        return 'Done';
-      case 'current':
-        return 'Here';
-      case 'next':
-        return 'Next';
-      case 'available':
-      default:
-        return 'Open';
-    }
-  };
-
   return (
     <section
       aria-label="Guest journey"
@@ -70,7 +57,7 @@ export const GuestJourneyCompanion: React.FC<GuestJourneyCompanionProps> = ({
           <div key={step.key} className={`rounded-xl border px-3 py-2.5 ${getStepTone(step.status)}`}>
             <div className="flex items-center justify-between gap-2">
               <p className="text-xs font-semibold text-current">{step.label}</p>
-              <span className="text-[10px] font-medium uppercase tracking-[0.14em] text-current/80">{getStepLabel(step.status)}</span>
+              <span className="text-[10px] font-medium uppercase tracking-[0.14em] text-current/80">{getJourneyStatusLabel(step.status)}</span>
             </div>
           </div>
         ))}

@@ -19,6 +19,7 @@ import { getPublishIssue, getPublishValidationError } from '../utils/publishRead
 import { shouldAutoPublishFromSearch } from '../utils/publishUiHints';
 import { getPublishNowAction } from '../utils/publishNowFlow';
 import { buildLaunchConfidence } from '../utils/launchConfidence';
+import { getFlowStatusLabel } from '../../lib/flowLabels';
 import { templateCatalog } from '../constants/templateCatalog';
 
 interface BuilderShellProps {
@@ -438,7 +439,7 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
                               ? 'border border-warning/20 bg-warning-light text-warning'
                               : 'border border-border-subtle bg-white text-text-secondary'
                         }`}>
-                          {item.status === 'current' ? 'Now' : item.status === 'next' ? 'Next' : 'Then'}
+                          {getFlowStatusLabel(item.status)}
                         </span>
                       </div>
                       <p className="mt-2 text-xs font-medium text-text-primary">{item.title}</p>

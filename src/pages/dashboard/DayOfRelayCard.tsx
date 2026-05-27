@@ -1,5 +1,6 @@
 import React from 'react';
 import { Badge, Button, Card, CardDescription, CardHeader, CardTitle } from '../../components/ui';
+import { getFlowStatusLabel } from '../../lib/flowLabels';
 import type { DayOfRelayModel, DayOfRelayStep } from './dayOfRelay';
 
 interface DayOfRelayCardProps {
@@ -37,7 +38,7 @@ export const DayOfRelayCard: React.FC<DayOfRelayCardProps> = ({ relay, onAction 
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
                   <Badge variant={step.status === 'current' ? 'accent' : step.status === 'steady' ? 'success' : 'secondary'}>
-                    {step.status === 'current' ? 'Current' : step.status === 'next' ? 'Next' : step.status === 'then' ? 'Then' : 'Steady'}
+                    {step.status === 'steady' ? 'Steady' : getFlowStatusLabel(step.status)}
                   </Badge>
                   <p className="text-sm font-semibold text-text-primary">{step.title}</p>
                 </div>

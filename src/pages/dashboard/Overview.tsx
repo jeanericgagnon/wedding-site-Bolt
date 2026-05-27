@@ -43,6 +43,7 @@ import { buildDayOfBrainBriefing, type DayOfBrainAction } from './dayOfBrain';
 import { DayOfBrainCard } from './DayOfBrainCard';
 import { buildCoupleFocusModel, type CoupleFocusStep } from './coupleFocus';
 import { buildOverviewThroughline } from './overviewThroughline';
+import { getFlowStatusLabel } from '../../lib/flowLabels';
 
 const DEFAULT_NAME_CHANGE_INSIGHTS: NameChangeOverviewInsights = {
   coreChainLabel: 'Certificate, SSA, and DMV stay together so the legal identity chain does not drift.',
@@ -796,7 +797,7 @@ export const DashboardOverview: React.FC = () => {
                             ? 'border border-warning/20 bg-warning-light text-warning'
                             : 'border border-border-subtle bg-surface-subtle text-text-secondary'
                       }`}>
-                        {step.status === 'current' ? 'Current' : step.status === 'next' ? 'Next' : 'Then'}
+                        {getFlowStatusLabel(step.status)}
                       </span>
                     </div>
                     <p className="mt-2 text-xs leading-5 text-text-secondary">{step.detail}</p>
@@ -836,7 +837,7 @@ export const DashboardOverview: React.FC = () => {
                             ? 'border border-warning/20 bg-warning-light text-warning'
                             : 'border border-border-subtle bg-surface-subtle text-text-secondary'
                       }`}>
-                        {step.status === 'current' ? 'Current' : step.status === 'next' ? 'Next' : 'Then'}
+                        {getFlowStatusLabel(step.status)}
                       </span>
                     </div>
                     <p className="mt-2 text-xs leading-5 text-text-secondary">{step.detail}</p>

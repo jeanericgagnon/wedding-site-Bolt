@@ -1,5 +1,6 @@
 import React from 'react';
 import { Badge, Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui';
+import { getFlowStatusLabel } from '../../lib/flowLabels';
 import type { ControlTowerAction, ControlTowerBriefing } from './controlTowerIntelligence';
 
 interface ControlTowerBriefingCardProps {
@@ -43,7 +44,7 @@ export const ControlTowerBriefingCard: React.FC<ControlTowerBriefingCardProps> =
             <div className="flex items-center justify-between gap-2">
               <p className="text-xs font-semibold text-text-primary">{step.label}</p>
               <Badge variant={step.status === 'current' ? 'accent' : 'secondary'}>
-                {step.status === 'current' ? 'Now' : step.status === 'next' ? 'Next' : 'Then'}
+                {getFlowStatusLabel(step.status)}
               </Badge>
             </div>
           </div>
