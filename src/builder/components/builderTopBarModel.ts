@@ -81,7 +81,7 @@ export const getBuilderCommandCenterCopy = ({
       summary: `${pageLabel} · ${sectionLabel}`,
       tone: 'warning' as const,
       status: 'Launch blocker',
-      detail: publishValidationError ?? 'A few launch details still need attention before this goes live.',
+      detail: publishValidationError ?? 'A few launch details still need attention before this is shared with guests.',
     };
   }
 

@@ -297,7 +297,7 @@ export const BuilderCutover: React.FC = () => {
               Carry the current draft into the V2 editor so you can review page flow, section structure, import repairs, and handoff quality without rebuilding from scratch.
             </p>
             <p className="mt-3 text-xs leading-5 text-neutral-600">
-              Nothing goes live from this step. Review the imported structure before treating the V2 copy as the new source of truth.
+              Nothing gets shared with guests from this step. Review the imported structure before treating the V2 copy as the new source of truth.
             </p>
             <button
               type="button"
@@ -314,7 +314,7 @@ export const BuilderCutover: React.FC = () => {
             <div className="inline-flex rounded-full bg-white px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-neutral-600">
               Current editor
             </div>
-            <h2 className="mt-3 text-lg font-semibold text-neutral-950">Continue in the live legacy editor</h2>
+            <h2 className="mt-3 text-lg font-semibold text-neutral-950">Continue in the current legacy editor</h2>
             <p className="mt-2 text-sm leading-6 text-neutral-700">
               Use the current editor when you need the existing quick-edit, photo-tip, or polish workflows that still live there today.
             </p>

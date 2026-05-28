@@ -19,6 +19,10 @@ describe('builderWorkspaceErrorCopy', () => {
       .toBe(BUILDER_MEDIA_REFRESH_RETRY_ERROR);
   });
 
+  it('keeps publish retry copy framed around the guest-facing site', () => {
+    expect(BUILDER_PUBLISH_RETRY_ERROR).toBe('Could not update the guest-facing site right now. Please try again.');
+  });
+
   it('returns asset-specific upload retry copy', () => {
     expect(getBuilderMediaUploadRetryError('image')).toBe('Photo upload failed. Please try again.');
     expect(getBuilderMediaUploadRetryError('video')).toBe('Video upload failed. Please try again.');

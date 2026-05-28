@@ -49,6 +49,8 @@ describe('buildBuilderDraftContinuityModel', () => {
       revisionId: 'rev-old',
     });
     expect(model.events[1]?.canRestore).toBe(true);
+    expect(model.events[1]?.restoreLabel).toBe('Restore this share-ready checkpoint');
+    expect(model.heading).toContain('share-ready checkpoint');
   });
 
   it('keeps publishing sessions in a wait state', () => {
@@ -62,5 +64,18 @@ describe('buildBuilderDraftContinuityModel', () => {
 
     expect(model.badge).toBe('Publishing now');
     expect(model.primaryAction).toEqual({ kind: 'none', label: 'Publishing…' });
+  });
+
+  it('keeps published baseline guidance framed around the next shared update', () => {
+    const model = buildBuilderDraftContinuityModel({
+      revisions: [createRevision()],
+      isDirty: false,
+      isSaving: false,
+      isPublishing: false,
+      publishedVersion: 3,
+    });
+
+    expect(model.bestNextMove).toContain('shared version guests can already see');
+    expect(model.primaryAction).toEqual({ kind: 'publish', label: 'Keep improving the next shared update' });
   });
 });

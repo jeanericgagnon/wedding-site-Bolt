@@ -84,7 +84,7 @@ export function buildBuilderDraftContinuityModel({
     title: getRevisionTitle(revision),
     detail: getRevisionDetail(revision),
     badge: getRevisionBadge(revision),
-    restoreLabel: index === 0 ? 'Current checkpoint' : revision.action === 'publish' ? 'Restore this live-ready checkpoint' : 'Restore this draft checkpoint',
+    restoreLabel: index === 0 ? 'Current checkpoint' : revision.action === 'publish' ? 'Restore this share-ready checkpoint' : 'Restore this draft checkpoint',
     canRestore: index > 0,
   }));
 
@@ -127,7 +127,7 @@ export function buildBuilderDraftContinuityModel({
   if (isDirty) {
     return {
       badge: 'Unsaved draft',
-      heading: 'You have live edits that are ahead of the last local checkpoint.',
+      heading: 'You have draft edits that are ahead of the last local checkpoint.',
       summary: 'The Builder is holding newer work than your saved history right now.',
       focusTitle: 'Decide whether this new work is worth preserving before it blurs the recovery path.',
       focusDetail: 'Unsaved changes are fine while you are actively shaping a page, but they are a weak handoff state.',
@@ -146,7 +146,7 @@ export function buildBuilderDraftContinuityModel({
     return {
       badge: latestPublishedRevision ? 'Recovery ready' : 'Local history ready',
       heading: latestPublishedRevision
-        ? 'You have both a stable draft baseline and a live-ready checkpoint in reach.'
+        ? 'You have both a stable draft baseline and a share-ready checkpoint in reach.'
         : 'You have stable local checkpoints you can safely return to.',
       summary: latestPublishedRevision
         ? 'The Builder can move forward from a clean base or roll back to a known-good version without guesswork.'
@@ -156,14 +156,14 @@ export function buildBuilderDraftContinuityModel({
         ? 'When a new idea goes soft, you now have a visible path back to something already strong.'
         : 'Deliberate restore options make it easier to edit boldly without losing the thread.',
       bestNextMove: latestPublishedRevision
-        ? 'Keep editing from the current draft unless the share-ready checkpoint is clearly the better truth to return to.'
+        ? 'Keep editing from the current draft unless the share-ready checkpoint is clearly the better version to return to.'
         : 'Keep working from this steady draft, knowing the previous checkpoint is there if you need to rewind.',
       decisionRule: 'Restore only when a prior checkpoint is genuinely cleaner than the current direction, not just because doubt showed up.',
       watchout: 'Checkpoint history should reduce thrash, not tempt you into bouncing between versions without a reason.',
       currentStep: 'Treat the latest checkpoint as your working baseline.',
       nextStep: 'Restore only if a prior version is clearly stronger.',
       thenStep: publishedVersion
-        ? 'Once the draft is better than live, publish the next clean update.'
+        ? 'Once the draft is better than the shared version, publish the next clean update.'
         : 'Once the draft is clearly stronger, move toward publish with confidence.',
       primaryAction: { kind: 'restore', label: 'Review restore options', revisionId: firstRestoreCandidate.id },
       events,
@@ -176,13 +176,13 @@ export function buildBuilderDraftContinuityModel({
     summary: 'You are starting from a stable state, even if deeper local checkpoint history has not built up yet.',
     focusTitle: 'Create the next meaningful checkpoint once the current move is real.',
     focusDetail: 'One clean save is better than a cloud of tiny uncertain changes.',
-    bestNextMove: publishedVersion ? 'Keep editing until the next update clearly improves the shared site.' : 'Shape one real improvement, then save it as the next checkpoint.',
+    bestNextMove: publishedVersion ? 'Keep editing until the next update clearly improves the shared version guests can already see.' : 'Shape one real improvement, then save it as the next checkpoint.',
     decisionRule: 'Checkpoint history gets valuable once each save represents a deliberate step forward.',
     watchout: 'Do not save every tiny wobble just to feel active.',
     currentStep: 'Work from this clean baseline.',
     nextStep: 'Save the next meaningful improvement.',
     thenStep: 'Use restore only after the history has something worth returning to.',
-    primaryAction: publishedVersion ? { kind: 'publish', label: 'Keep improving the next live update' } : { kind: 'none', label: 'No restore needed yet' },
+    primaryAction: publishedVersion ? { kind: 'publish', label: 'Keep improving the next shared update' } : { kind: 'none', label: 'No restore needed yet' },
     events,
   };
 }

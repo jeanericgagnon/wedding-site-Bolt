@@ -59,6 +59,25 @@ describe('getBuilderCommandCenterCopy', () => {
     });
 
     expect(copy.status).toBe('Launch blocker');
+    expect(copy.detail).toBe('Add both names exactly how you want them shown.');
+  });
+
+  it('keeps fallback launch-blocker detail framed around guest sharing', () => {
+    const copy = getBuilderCommandCenterCopy({
+      projectName: 'Alex & Jordan',
+      activePageTitle: 'Home',
+      pageCount: 1,
+      sectionCount: 0,
+      isDirty: false,
+      hasHardPublishBlocker: true,
+      publishValidationError: null,
+      canAutoSaveBeforePublish: false,
+      isPublished: false,
+      publishedVersion: null,
+      publishAttemptedAt: null,
+    });
+
+    expect(copy.detail).toBe('A few launch details still need attention before this is shared with guests.');
   });
 
   it('keeps published command-center status framed around a shared update', () => {
