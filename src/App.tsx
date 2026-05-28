@@ -4,6 +4,7 @@ import { AuthProvider } from './contexts/AuthContext';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import { ToastProvider } from './components/ui/Toast';
 import { BUILDER_WORKSPACE_ROUTES } from './lib/builderWorkspaceRoutes';
+import { BUILDER_V2_ENABLED } from './config/env';
 
 const Home = lazy(() => import('./pages/Home').then(m => ({ default: m.Home })));
 const Product = lazy(() => import('./pages/Product').then(m => ({ default: m.Product })));
@@ -67,6 +68,7 @@ const PageLoader = () => (
 );
 
 const AppContent = () => {
+  const BuilderPrimaryEntry = BUILDER_V2_ENABLED ? BuilderV2Lab : BuilderCutover;
   const isWeddingSubdomainHost = (() => {
     if (typeof window === 'undefined') return false;
     const host = window.location.hostname.toLowerCase();
@@ -98,7 +100,7 @@ const AppContent = () => {
           path={BUILDER_WORKSPACE_ROUTES.defaultEditor}
           element={
             <ProtectedRoute>
-              <BuilderV2Lab />
+              <BuilderPrimaryEntry />
             </ProtectedRoute>
           }
         />
@@ -354,7 +356,7 @@ const AppContent = () => {
           path={BUILDER_WORKSPACE_ROUTES.publicDefaultEditor}
           element={
             <ProtectedRoute>
-              <BuilderV2Lab />
+              <BuilderPrimaryEntry />
             </ProtectedRoute>
           }
         />

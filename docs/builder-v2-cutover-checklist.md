@@ -46,7 +46,10 @@ Status: draft (post-lab hardening)
 
 ## 4) Rollout Strategy
 
-- [ ] add internal feature flag (`builderV2Enabled`) in builder entry path
+- [x] add internal feature flag (`builderV2Enabled`) in builder entry path
+  - Env switch: `VITE_BUILDER_V2_ENABLED`
+  - Default: `true` to preserve the promoted `/dashboard/builder` and `/builder` V2 behavior
+  - Rollback/canary behavior: set `VITE_BUILDER_V2_ENABLED=false` to send the default builder entry routes back to the explicit guide path without rewriting links
 - [ ] keep `/builder-v2-lab` as fallback for one release cycle
 - [ ] canary rollout (internal/demo accounts first)
 - [ ] capture telemetry: add/duplicate/remove/import/export failure rates
