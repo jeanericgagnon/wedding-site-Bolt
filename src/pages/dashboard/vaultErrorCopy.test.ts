@@ -1,17 +1,25 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  VAULT_ADD_RETRY_ERROR,
   mapVaultConfigSaveError,
   mapVaultDashboardError,
   mapVaultEntryInsertError,
   mapVaultOauthQueryError,
   VAULT_ANNIVERSARY_SEND_RETRY_ERROR,
   VAULT_CONFIG_SAVE_RETRY_ERROR,
+  VAULT_DELETE_RETRY_ERROR,
   VAULT_DUPLICATE_YEAR_ERROR,
   VAULT_DRIVE_CALLBACK_RETRY_ERROR,
   VAULT_DRIVE_CONNECT_RETRY_ERROR,
+  VAULT_DRIVE_PROVIDER_SYNC_RETRY_ERROR,
+  VAULT_ENTRY_DELETE_BATCH_RETRY_ERROR,
+  VAULT_ENTRY_DELETE_RETRY_ERROR,
   VAULT_ENTRY_SAVE_RETRY_ERROR,
+  VAULT_LOAD_RETRY_ERROR,
   VAULT_SITE_REQUIRED_ERROR,
+  VAULT_STARTER_LOAD_RETRY_ERROR,
+  VAULT_UPDATE_RETRY_ERROR,
 } from './vaultErrorCopy';
 
 describe('vaultErrorCopy', () => {
@@ -40,6 +48,9 @@ describe('vaultErrorCopy', () => {
     expect(VAULT_DRIVE_CONNECT_RETRY_ERROR).toBe(
       'Could not start Google Drive connection right now.',
     );
+    expect(VAULT_DRIVE_PROVIDER_SYNC_RETRY_ERROR).toBe(
+      'Google Drive connected, but we could not save the vault provider.',
+    );
   });
 
   it('keeps vault save and entry insert failures behind calm dashboard-safe copy', () => {
@@ -55,5 +66,15 @@ describe('vaultErrorCopy', () => {
     expect(mapVaultEntryInsertError(new Error('row-level security policy denied vault_entries insert'))).toBe(
       VAULT_ENTRY_SAVE_RETRY_ERROR,
     );
+  });
+
+  it('keeps vault load and removal fallbacks calm and owner-safe', () => {
+    expect(VAULT_LOAD_RETRY_ERROR).toBe('Could not load vault data right now. Please try again.');
+    expect(VAULT_STARTER_LOAD_RETRY_ERROR).toBe('Could not load starter vaults right now. Please try again.');
+    expect(VAULT_ADD_RETRY_ERROR).toBe('Could not add that vault right now. Please try again.');
+    expect(VAULT_UPDATE_RETRY_ERROR).toBe('Could not update this vault right now. Please try again.');
+    expect(VAULT_ENTRY_DELETE_RETRY_ERROR).toBe('Could not remove that entry right now. Please try again.');
+    expect(VAULT_ENTRY_DELETE_BATCH_RETRY_ERROR).toBe('Could not remove entries from this vault right now. Please try again.');
+    expect(VAULT_DELETE_RETRY_ERROR).toBe('Could not remove this vault right now. Please try again.');
   });
 });

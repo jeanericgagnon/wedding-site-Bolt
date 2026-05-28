@@ -17,18 +17,25 @@ import { MemoryCuratorCard } from '../../components/dashboard/MemoryCuratorCard'
 import { formatVaultUnlockDate, getVaultUnlockDate, toValidDateOrNull } from './vaultDate';
 import { formatVaultEntryDate } from './vaultEntryTime';
 import {
+  VAULT_ADD_RETRY_ERROR,
   mapVaultConfigSaveError,
   mapVaultDashboardError,
   mapVaultEntryInsertError,
   mapVaultOauthQueryError,
   VAULT_ANNIVERSARY_SEND_RETRY_ERROR,
   VAULT_ATTACHMENT_OPEN_RETRY_ERROR,
+  VAULT_DELETE_RETRY_ERROR,
   VAULT_DRIVE_CALLBACK_RETRY_ERROR,
   VAULT_DRIVE_CONNECT_RETRY_ERROR,
   VAULT_DRIVE_HEALTH_RETRY_ERROR,
   VAULT_DRIVE_PROVIDER_SYNC_RETRY_ERROR,
+  VAULT_ENTRY_DELETE_BATCH_RETRY_ERROR,
+  VAULT_ENTRY_DELETE_RETRY_ERROR,
   VAULT_ENTRY_SAVE_RETRY_ERROR,
+  VAULT_LOAD_RETRY_ERROR,
+  VAULT_STARTER_LOAD_RETRY_ERROR,
   VAULT_SETTINGS_SAVE_RETRY_ERROR,
+  VAULT_UPDATE_RETRY_ERROR,
 } from './vaultErrorCopy';
 
 const MAX_VAULTS = 5;
@@ -877,7 +884,7 @@ export const DashboardVault: React.FC = () => {
           setVaultStorageProvider('google_drive');
           setGoogleDriveConnected(!!(demoSite as { vault_google_drive_connected?: boolean }).vault_google_drive_connected);
           void forceGoogleDriveProvider(demoSite.id).catch(() => {
-            toast('Couldn’t sync Google Drive as the active vault provider right now.', 'error');
+            toast(mapVaultDashboardError(null, VAULT_DRIVE_PROVIDER_SYNC_RETRY_ERROR), 'error');
           });
 if (demoSite.wedding_date) setWeddingDate(toValidDateOrNull(demoSite.wedding_date));
           else setWeddingDate(toValidDateOrNull(DEMO_WEDDING_DATE));
@@ -944,7 +951,7 @@ setWeddingSiteId('demo-site-id');
       setVaultStorageProvider('google_drive');
       setGoogleDriveConnected(!!(site as { vault_google_drive_connected?: boolean }).vault_google_drive_connected);
       void forceGoogleDriveProvider(site.id).catch(() => {
-        toast('Couldn’t sync Google Drive as the active vault provider right now.', 'error');
+        toast(mapVaultDashboardError(null, VAULT_DRIVE_PROVIDER_SYNC_RETRY_ERROR), 'error');
       });
       if (site.wedding_date) setWeddingDate(toValidDateOrNull(site.wedding_date));
       if (site.site_slug) setSiteSlug(site.site_slug as string);
@@ -973,13 +980,13 @@ setWeddingSiteId('demo-site-id');
         if (error) throw error;
         setEntries((entryData ?? []) as VaultEntry[]);
       }
-    } catch {
+    } catch (error) {
       setWeddingSiteId(null);
       setVaultConfigs([]);
       setEntries([]);
       setGoogleDriveConnected(false);
       setDriveNeedsReconnect(false);
-      toast('Couldn’t load vault data right now. Please try again.', 'error');
+      toast(mapVaultDashboardError(error, VAULT_LOAD_RETRY_ERROR), 'error');
     } finally {
       setLoading(false);
     }
@@ -1154,8 +1161,8 @@ setWeddingSiteId('demo-site-id');
       if (error) throw error;
       setVaultConfigs(prev => [...prev, data as VaultConfig].sort((a, b) => a.duration_years - b.duration_years));
       toast('Vault added');
-    } catch {
-      toast('Couldn’t add that vault right now. Please try again.', 'error');
+    } catch (error) {
+      toast(mapVaultDashboardError(error, VAULT_ADD_RETRY_ERROR), 'error');
     } finally {
       setAddingVault(false);
     }
@@ -1189,8 +1196,8 @@ setWeddingSiteId('demo-site-id');
       setVaultConfigs((data ?? []) as VaultConfig[]);
       toast('Starter vault set loaded (1/5/10)');
       await loadData();
-    } catch {
-      toast('Couldn’t load starter vaults right now. Please try again.', 'error');
+    } catch (error) {
+      toast(mapVaultDashboardError(error, VAULT_STARTER_LOAD_RETRY_ERROR), 'error');
     } finally {
       setAddingVault(false);
     }
@@ -1218,7 +1225,7 @@ setWeddingSiteId('demo-site-id');
       .update({ is_enabled: enabled, updated_at: new Date().toISOString() })
       .eq('id', configId);
 
-    if (error) { toast('Couldn’t update this vault. Please try again.', 'error'); return; }
+    if (error) { toast(mapVaultDashboardError(error, VAULT_UPDATE_RETRY_ERROR), 'error'); return; }
     setVaultConfigs(prev => prev.map(c => c.id === configId ? { ...c, is_enabled: enabled } : c));
     toast(enabled ? 'Vault enabled' : 'Vault disabled');
   }
@@ -1310,7 +1317,7 @@ setWeddingSiteId('demo-site-id');
       return;
     }
     const { error } = await supabase.from('vault_entries').delete().eq('id', id);
-    if (error) { toast('Couldn’t remove that entry. Please try again.', 'error'); return; }
+    if (error) { toast(mapVaultDashboardError(error, VAULT_ENTRY_DELETE_RETRY_ERROR), 'error'); return; }
     setEntries(prev => prev.filter(e => e.id !== id));
     toast('Entry removed');
   }
@@ -1330,7 +1337,7 @@ setWeddingSiteId('demo-site-id');
       .from('vault_entries')
       .delete()
       .eq('vault_config_id', configId);
-    if (entryDeleteError) { toast('Couldn’t remove entries from this vault. Please try again.', 'error'); return; }
+    if (entryDeleteError) { toast(mapVaultDashboardError(entryDeleteError, VAULT_ENTRY_DELETE_BATCH_RETRY_ERROR), 'error'); return; }
 
     const { error } = await supabase.from('vault_configs').delete().eq('id', configId);
     if (error) {
@@ -1343,7 +1350,7 @@ setWeddingSiteId('demo-site-id');
           })),
         );
       }
-      toast('Couldn’t remove this vault. Please try again.', 'error');
+      toast(mapVaultDashboardError(error, VAULT_DELETE_RETRY_ERROR), 'error');
       return;
     }
     setVaultConfigs(prev => {
