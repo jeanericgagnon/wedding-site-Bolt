@@ -22,6 +22,12 @@ const steps = [
     required: true,
   },
   {
+    id: 'builder-document-io-tests',
+    label: 'Builder import/export contract tests',
+    command: 'npm test -- src/pages/builderV2DocumentIo.test.ts',
+    required: true,
+  },
+  {
     id: 'builder-entry-rollback-tests',
     label: 'Builder entry rollback and tooling fallback tests',
     command: 'npm test -- src/App.builderEntry.test.tsx src/lib/internalToolingRouteAccess.test.ts',
@@ -112,6 +118,7 @@ const output = {
     'Builder workspace route contract truth',
     'Auth entry intent recognition for builder editor and guide routes',
     'First-session builder handoff route continuity',
+    'Builder import/export contract validity and non-destructive preview failure behavior',
     'Builder hard-switch rollback and internal tooling fallback route behavior',
     'Builder cutover guide route helpers and legacy fallbacks',
     'Dashboard overview builder-route decisions',

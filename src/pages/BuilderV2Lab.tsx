@@ -75,7 +75,6 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import {
-  buildBuilderV2DocumentPages,
   createInitialBuilderV2Pages,
   ensureUniqueBuilderV2PageSlug,
   getLabPagesFromBuilderV2Document,
@@ -90,6 +89,10 @@ import { buildBuilderV2TemplateSeed } from './builderV2TemplateSeed';
 import { buildBuilderV2PreviewInstances } from './builderV2PreviewProjection';
 import { buildBuilderV2SectionReviewSignature } from './builderV2PreviewReviewSignature';
 import { consumeBuilderV2SetupBridge, readBuilderV2SetupBridge } from './builderV2SetupBridge';
+import {
+  buildBuilderV2ExportDocument,
+  resolveBuilderV2ImportDraftPreview,
+} from './builderV2DocumentIo';
 import {
   createBuilderV2InvertedSelectionState,
   createBuilderV2PrimarySelectionState,
@@ -1733,23 +1736,7 @@ export const BuilderV2Lab: React.FC = () => {
 
 
   const buildExportDocument = useCallback(() => {
-    return {
-      version: 'v2',
-      updatedAtISO: new Date().toISOString(),
-      pages: buildBuilderV2DocumentPages(pages, (page) => page.sections.map((section) => ({
-        id: section.id,
-        type: section.type,
-        variant: section.variant,
-        enabled: section.enabled,
-        title: section.title,
-        subtitle: section.subtitle,
-        blocks: (sectionBlocks[section.id] ?? []).map((block) => ({
-          id: block.id,
-          type: block.type,
-          data: block.data ?? { text: block.content },
-        })),
-      }))),
-    } as BuilderV2Document;
+    return buildBuilderV2ExportDocument(pages, sectionBlocks);
   }, [pages, sectionBlocks]);
 
   const downloadV2Json = useCallback(() => {
@@ -2164,44 +2151,35 @@ export const BuilderV2Lab: React.FC = () => {
     [lastImportReport, lastImportSource],
   );
   const preparedImportPreview = useMemo(() => {
-    if (!importDraft.trim()) {
-      return { state: 'idle' as const };
+    const preview = resolveBuilderV2ImportDraftPreview(importDraft);
+    if (preview.state !== 'ready') {
+      return preview;
     }
 
-    try {
-      const parsed = JSON.parse(importDraft) as unknown;
-      const prepared = prepareImportedBuilderV2Document(parsed);
-      if (!prepared.ok) {
-        return { state: 'invalid' as const, error: prepared.error };
-      }
+    const incomingPages = (preview.prepared.doc.pages ?? []).map((page, index) => ({
+      id: page.id || `page-${index + 1}`,
+      title: page.title || (page.isHome ? 'Home' : `Page ${index + 1}`),
+      slug: page.slug || (page.isHome ? 'home' : `page-${index + 1}`),
+      hidden: page.hidden === true,
+      isHome: page.isHome,
+      sections: page.sections.map((section) => ({
+        id: section.id,
+        title: section.title || section.type,
+        type: section.type,
+        enabled: section.enabled !== false,
+        blockCount: section.blocks.length,
+        warningCount: 0,
+      })),
+    }));
 
-      const incomingPages = (prepared.doc.pages ?? []).map((page, index) => ({
-        id: page.id || `page-${index + 1}`,
-        title: page.title || (page.isHome ? 'Home' : `Page ${index + 1}`),
-        slug: page.slug || (page.isHome ? 'home' : `page-${index + 1}`),
-        hidden: page.hidden === true,
-        isHome: page.isHome,
-        sections: page.sections.map((section) => ({
-          id: section.id,
-          title: section.title || section.type,
-          type: section.type,
-          enabled: section.enabled !== false,
-          blockCount: section.blocks.length,
-          warningCount: 0,
-        })),
-      }));
-
-      return {
-        state: 'ready' as const,
-        prepared,
-        comparison: buildBuilderV2ImportComparison({
-          currentPages: currentDocumentSnapshot,
-          incomingPages,
-        }),
-      };
-    } catch {
-      return { state: 'invalid' as const, error: 'We could not parse that JSON. Check the formatting and try again.' };
-    }
+    return {
+      state: 'ready' as const,
+      prepared: preview.prepared,
+      comparison: buildBuilderV2ImportComparison({
+        currentPages: currentDocumentSnapshot,
+        incomingPages,
+      }),
+    };
   }, [currentDocumentSnapshot, importDraft]);
   const commandPaletteGuidance = useMemo(
     () => buildBuilderV2CommandPaletteGuidance(commandQuery, commandItems, recentCommands, pinnedCommands),

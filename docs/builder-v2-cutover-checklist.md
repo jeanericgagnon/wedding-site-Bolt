@@ -28,8 +28,12 @@ Status: draft (post-lab hardening)
 
 ### Command/toolbar-level
 - [ ] command palette actions are idempotent
-- [ ] import failures are non-destructive
-- [ ] export output is valid JSON and re-importable
+- [x] import failures are non-destructive
+  - Import preview/validation now resolves through `src/pages/builderV2DocumentIo.ts` before any document apply step runs
+  - Invalid JSON and unusable drafts fail in preview state without producing a prepared import document
+- [x] export output is valid JSON and re-importable
+  - Export and import preview now share the same helper contract in `src/pages/builderV2DocumentIo.ts`
+  - Round-trip coverage proves exported Builder V2 JSON re-enters the import pipeline cleanly
 
 ## 3) Regression Guardrails
 
