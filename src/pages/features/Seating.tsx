@@ -72,7 +72,7 @@ export const SeatingFeature: React.FC = () => {
               <ul className="space-y-2 text-sm text-ink/70">
                 <li>• Drag-and-drop table placement</li>
                 <li>• Custom table shapes and sizes</li>
-                <li>• Save multiple layouts</li>
+                <li>• Keep the room plan editable as details change</li>
               </ul>
             </div>
 
@@ -131,7 +131,7 @@ export const SeatingFeature: React.FC = () => {
               </p>
               <ul className="space-y-2 text-sm text-ink/70">
                 <li>• Highlights invalidated seats</li>
-                <li>• Reassign in one click</li>
+                <li>• Reassign from the same seating workspace</li>
                 <li>• Clearer visibility on late changes</li>
               </ul>
             </div>
