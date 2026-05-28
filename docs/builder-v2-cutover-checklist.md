@@ -1,6 +1,20 @@
 # Builder V2 Cutover Checklist
 
-Status: draft (post-lab hardening)
+Status: draft (post-lab hardening, tracker-aligned 2026-05-28 PT)
+
+## Tracker Alignment
+
+- 2026-05-28 11:41 PDT: reconciled the active Builder V2 tracker rows in `outputs/full-v2-tracker/dayof-full-v2-milestone-tracker.xlsx` against this checklist and the current verified commit history.
+- Aligned rows:
+  - `V2-03.06` -> `In progress`
+  - `V2-25.05` -> `In progress`
+  - `V2-25.06` -> `In progress`
+  - `V2-G03` -> `In progress`
+  - `V2-G14` -> `In progress`
+- Remaining honest blockers did not change:
+  - signed browser smoke for `/dashboard/builder` and `/dashboard/builder-guide` is still unlogged because Chromium launch is environment-blocked on this machine
+  - legacy photo/polish escapes still live in `/dashboard/builder-v1`
+  - broader exit-bar gates (`G02`, `G04` through `G08`, canary-window evidence, explicit sign-off) remain open
 
 ## 1) Data Contract
 
