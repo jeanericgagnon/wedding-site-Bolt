@@ -76,7 +76,7 @@ import {
 } from './builderV2PageState';
 import type { BuilderV2ReviewPageSnapshot } from './builderV2DocumentReviewState';
 import { buildBuilderV2SetupSeed } from './builderV2SetupSeed';
-import { buildBuilderV2TemplateApplyPlan } from './builderV2TemplateApply';
+import { applyBuilderV2TemplateSeed, buildBuilderV2TemplateApplyPlan } from './builderV2TemplateApply';
 import { buildBuilderV2TemplateSeed } from './builderV2TemplateSeed';
 import { buildBuilderV2PreviewInstances } from './builderV2PreviewProjection';
 import {
@@ -575,6 +575,7 @@ export const BuilderV2Lab: React.FC = () => {
   } | null>(null);
   const [setupSeedState, setSetupSeedState] = useState(initialSetupSeed);
   const [selectedTemplateSeedId, setSelectedTemplateSeedId] = useState(initialTemplateSeed.templateId);
+  const [preserveTemplateSharedContent, setPreserveTemplateSharedContent] = useState(true);
   const [propertyTab, setPropertyTab] = useState<'content' | 'layout' | 'data'>('content');
   const [recentCommands, setRecentCommands] = useState<string[]>([]);
   const [actionNotice, setActionNotice] = useState<string>('');
@@ -969,24 +970,35 @@ export const BuilderV2Lab: React.FC = () => {
   }, [activePage?.title, history, historyIndex, markSaving, notify, pages, sectionBlocks]);
 
   const applySelectedTemplateSeed = useCallback(() => {
-    const plan = buildBuilderV2TemplateApplyPlan(selectedTemplateSeedId, pages);
+    const applied = applyBuilderV2TemplateSeed({
+      templateId: selectedTemplateSeedId,
+      currentPages: pages,
+      currentSectionBlocks: sectionBlocks,
+      preserveSharedBlocks: preserveTemplateSharedContent,
+      preserveSharedMetadata: preserveTemplateSharedContent,
+    });
+    const plan = buildBuilderV2TemplateApplyPlan(selectedTemplateSeedId, pages, sectionBlocks);
     selectSetupDraftTemplate(plan.templateId);
     setSetupSeedState(null);
     setUpgradeIntakeState(null);
-    setSelectedPageId(plan.seed.selectedPageId);
-    setSelectedId(plan.seed.selectedSectionId);
-    setLastSelectedId(plan.seed.selectedSectionId);
+    setSelectedPageId(applied.seed.selectedPageId);
+    setSelectedId(applied.seed.selectedSectionId);
+    setLastSelectedId(applied.seed.selectedSectionId);
     setMultiSelectedIds([]);
     setShowStructure(false);
     setShowProperties(false);
     setPropertyTab('content');
     commitWithCheckpoint(
       `Before applying ${plan.templateName} starter`,
-      plan.seed.pages,
-      {},
+      applied.pages,
+      applied.sectionBlocks as Record<string, AddedBlock[]>,
     );
-    notify(`${plan.templateName} starter applied`);
-  }, [commitWithCheckpoint, notify, pages, selectedTemplateSeedId]);
+    notify(
+      preserveTemplateSharedContent && applied.carryoverBlockCount > 0
+        ? `${plan.templateName} starter applied with ${applied.carryoverBlockCount} carried block${applied.carryoverBlockCount === 1 ? '' : 's'}`
+        : `${plan.templateName} starter applied`,
+    );
+  }, [commitWithCheckpoint, notify, pages, preserveTemplateSharedContent, sectionBlocks, selectedTemplateSeedId]);
 
   const restoreCheckpoint = useCallback((checkpointId: string) => {
     const checkpointIndex = history.findIndex((snapshot) => snapshot.id === checkpointId && snapshot.isCheckpoint);
@@ -2390,10 +2402,16 @@ export const BuilderV2Lab: React.FC = () => {
                 </p>
                 <p className="mt-1 text-xs leading-relaxed text-text-primary">
                   <span className="font-semibold">Authored blocks at risk:</span>{' '}
-                  {templateApplyPlan.authoredBlockCount > 0
-                    ? `${templateApplyPlan.authoredBlockCount} across ${templateApplyPlan.authoredSectionCount} section${templateApplyPlan.authoredSectionCount === 1 ? '' : 's'}`
+                  {templateApplyPlan.droppedBlockCount > 0
+                    ? `${templateApplyPlan.droppedBlockCount} after carryover across ${templateApplyPlan.authoredSectionCount} authored section${templateApplyPlan.authoredSectionCount === 1 ? '' : 's'}`
                     : 'No authored blocks yet'}
                 </p>
+                {templateApplyPlan.carryoverBlockCount > 0 && (
+                  <p className="mt-1 text-xs leading-relaxed text-text-primary">
+                    <span className="font-semibold">Shared-lane carryover:</span>{' '}
+                    {templateApplyPlan.carryoverBlockCount} block{templateApplyPlan.carryoverBlockCount === 1 ? '' : 's'} across {templateApplyPlan.carryoverSectionCount} matching lane{templateApplyPlan.carryoverSectionCount === 1 ? '' : 's'}
+                  </p>
+                )}
                 <p className="mt-3 text-xs leading-relaxed text-text-primary">
                   <span className="font-semibold">Decision rule:</span> {templateApplyPlan.decisionRule}
                 </p>
@@ -2420,6 +2438,22 @@ export const BuilderV2Lab: React.FC = () => {
                 </div>
               </div>
             </div>
+            {templateApplyPlan.carryoverBlockCount > 0 && (
+              <div className="mt-3 rounded-md border border-rose-200 bg-white/80 px-3 py-3">
+                <label className="flex items-start gap-2 text-xs text-text-primary">
+                  <input
+                    type="checkbox"
+                    checked={preserveTemplateSharedContent}
+                    onChange={(event) => setPreserveTemplateSharedContent(event.target.checked)}
+                    className="mt-0.5"
+                  />
+                  <span>
+                    <span className="font-semibold">Preserve authored blocks on matching lanes.</span>{' '}
+                    Carry over shared-lane content and section labels when the new starter still has a real place for it.
+                  </span>
+                </label>
+              </div>
+            )}
             <div className="mt-3 flex flex-wrap items-center gap-2">
               <button
                 onClick={applySelectedTemplateSeed}
@@ -2428,7 +2462,7 @@ export const BuilderV2Lab: React.FC = () => {
                 {templateApplyPlan.applyLabel}
               </button>
               <p className="text-[11px] leading-relaxed text-rose-900/80">
-                Saves a recovery checkpoint first, then replaces the current V2 document with this starter spine.
+                Saves a recovery checkpoint first, then replaces the current V2 document with this starter spine{templateApplyPlan.carryoverBlockCount > 0 && preserveTemplateSharedContent ? ' while carrying shared-lane content forward where it still fits' : ''}.
               </p>
             </div>
           </div>
