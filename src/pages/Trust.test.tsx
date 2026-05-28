@@ -1,5 +1,6 @@
 import React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
+import type { LinkProps } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const navigateMock = vi.fn();
@@ -11,7 +12,7 @@ vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual<typeof import('react-router-dom')>('react-router-dom');
   return {
     ...actual,
-    Link: ({ children, to, ...props }: any) => <a href={to} {...props}>{children}</a>,
+    Link: ({ children, to, ...props }: LinkProps) => <a href={to.toString()} {...props}>{children}</a>,
     useNavigate: () => navigateMock,
   };
 });
@@ -68,5 +69,15 @@ describe('Trust page draft-first CTA', () => {
     expect(navigateMock).toHaveBeenCalledWith('/dashboard/rsvp-board');
     fireEvent.click(screen.getByRole('button', { name: 'Open your dashboard' }));
     expect(navigateMock).toHaveBeenCalledWith('/dashboard/overview');
+  });
+
+  it('keeps the trust matrix aligned with narrow product claims instead of broader launch theater', () => {
+    render(<Trust />);
+
+    expect(screen.getByText('dayof is not just a brochure page. The product is meant to carry the wedding website, RSVPs, guest management, review-before-send messaging, seating, travel details, and day-of coordination together, with limitations explained plainly instead of glossed over.')).toBeInTheDocument();
+    expect(screen.getByText('Draft help stays reviewable')).toBeInTheDocument();
+    expect(screen.getByText(/We should not imply external custom domains, advanced analytics, enterprise approval controls, or magical one-click automation unless those things are actually proven live\./)).toBeInTheDocument();
+    expect(screen.getByText('Texts stay locked until sender setup, consent, and delivery readiness are complete.')).toBeInTheDocument();
+    expect(screen.queryByText('Texts stay locked until sender setup is complete.')).not.toBeInTheDocument();
   });
 });

@@ -85,7 +85,7 @@ const V1_SLICE_STATUS = [
     status: 'Review before send',
     tone: 'risk',
     done: 'Draft/schedule/history surface exists with tighter access truth.',
-    missing: 'Texts stay locked until sender setup is complete.',
+    missing: 'Texts stay locked until sender setup, consent, and delivery readiness are complete.',
   },
   {
     name: 'Seating',
