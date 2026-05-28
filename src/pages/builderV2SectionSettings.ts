@@ -30,6 +30,23 @@ const getNamedSettingBlock = (
   });
 };
 
+const getSubtitleSettingBlock = (
+  blocks: BuilderV2SectionSettingsBlock[],
+  subtitle: string,
+) => blocks.find((block) => (
+  block.type === 'title'
+  && typeof block.data?.subtitle === 'string'
+  && normalize(block.data.subtitle) === normalize(subtitle)
+));
+
+const getSubtitleSettingValue = (
+  blocks: BuilderV2SectionSettingsBlock[],
+  subtitle: string,
+) => {
+  const block = getSubtitleSettingBlock(blocks, subtitle);
+  return typeof block?.data?.text === 'string' ? block.data.text.trim() : '';
+};
+
 export const getBuilderV2NamedSettingValue = (
   blocks: BuilderV2SectionSettingsBlock[],
   label: string,
@@ -88,6 +105,8 @@ const sectionSettingDefinitions: Record<string, Array<{ key: string; label: stri
   'wedding-party': [
     { key: 'showTitle', label: 'Show title', kind: 'boolean' },
     { key: 'eyebrow', label: 'Eyebrow', kind: 'text' },
+    { key: 'bridalTitle', label: 'Partner one heading', kind: 'text' },
+    { key: 'groomTitle', label: 'Partner two heading', kind: 'text' },
   ],
 };
 
@@ -102,15 +121,75 @@ export const buildBuilderV2SectionSettingFields = (
     kind: definition.kind,
     value: definition.kind === 'boolean'
       ? (getBuilderV2NamedSettingBoolean(blocks, definition.label) ?? true)
-      : getBuilderV2NamedSettingValue(blocks, definition.label),
+      : definition.key === 'bridalTitle'
+        ? getSubtitleSettingValue(blocks, 'bridal-title')
+        : definition.key === 'groomTitle'
+          ? getSubtitleSettingValue(blocks, 'groom-title')
+          : getBuilderV2NamedSettingValue(blocks, definition.label),
   }));
 };
 
-export const updateBuilderV2SectionSetting = (
+const updateBuilderV2SubtitleSetting = (
   blocks: BuilderV2SectionSettingsBlock[],
-  label: string,
+  subtitle: string,
+  value: string,
+) => {
+  const existing = getSubtitleSettingBlock(blocks, subtitle);
+  const serialized = value.trim();
+
+  if (!serialized) {
+    return existing
+      ? blocks.filter((block) => block.id !== existing.id)
+      : blocks;
+  }
+
+  if (existing) {
+    return blocks.map((block) => (
+      block.id === existing.id
+        ? {
+          ...block,
+          type: 'title',
+          data: {
+            ...(block.data ?? {}),
+            text: serialized,
+            subtitle,
+          },
+        }
+        : block
+    ));
+  }
+
+  return [
+    ...blocks,
+    {
+      id: `setting-${normalize(subtitle).replace(/[^a-z0-9]+/g, '-')}`,
+      type: 'title',
+      content: serialized,
+      data: {
+        text: serialized,
+        subtitle,
+      },
+    },
+  ];
+};
+
+export const updateBuilderV2SectionSetting = (
+  sectionType: string,
+  blocks: BuilderV2SectionSettingsBlock[],
+  key: string,
   value: string | boolean,
 ) => {
+  if (sectionType === 'wedding-party' && key === 'bridalTitle') {
+    return updateBuilderV2SubtitleSetting(blocks, 'bridal-title', typeof value === 'string' ? value : '');
+  }
+
+  if (sectionType === 'wedding-party' && key === 'groomTitle') {
+    return updateBuilderV2SubtitleSetting(blocks, 'groom-title', typeof value === 'string' ? value : '');
+  }
+
+  const definitions = sectionSettingDefinitions[sectionType] ?? [];
+  const definition = definitions.find((candidate) => candidate.key === key);
+  const label = definition?.label ?? key;
   const existing = getNamedSettingBlock(blocks, label);
   const serialized = typeof value === 'boolean' ? String(value) : value.trim();
 

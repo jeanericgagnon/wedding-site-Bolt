@@ -816,12 +816,12 @@ export const BuilderV2Lab: React.FC = () => {
   };
 
   const updateSelectedSectionSetting = (
-    label: string,
+    key: string,
     value: string | boolean,
   ) => {
     setSectionBlocks((prev) => ({
       ...prev,
-      [selected.id]: updateBuilderV2SectionSetting(prev[selected.id] ?? [], label, value) as AddedBlock[],
+      [selected.id]: updateBuilderV2SectionSetting(selected.type, prev[selected.id] ?? [], key, value) as AddedBlock[],
     }));
     markSaving();
   };
@@ -3085,7 +3085,7 @@ export const BuilderV2Lab: React.FC = () => {
                                 <input
                                   type="checkbox"
                                   checked={Boolean(field.value)}
-                                  onChange={(e) => updateSelectedSectionSetting(field.label, e.target.checked)}
+                                  onChange={(e) => updateSelectedSectionSetting(field.key, e.target.checked)}
                                   className="h-4 w-4 rounded border-border-subtle text-primary focus:ring-primary/20"
                                 />
                               </label>
@@ -3094,7 +3094,7 @@ export const BuilderV2Lab: React.FC = () => {
                                 <span className="text-[11px] text-text-tertiary">{field.label}</span>
                                 <input
                                   value={String(field.value ?? '')}
-                                  onChange={(e) => updateSelectedSectionSetting(field.label, e.target.value)}
+                                  onChange={(e) => updateSelectedSectionSetting(field.key, e.target.value)}
                                   className="mt-1 w-full border rounded-md px-3 py-2.5 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
                                 />
                               </label>
