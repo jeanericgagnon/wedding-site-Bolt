@@ -132,6 +132,23 @@ describe('Signup quick start handoff', () => {
     });
   });
 
+  it('keeps start-draft signup copy aligned with the builder handoff path', async () => {
+    useLocationMock.mockReturnValue({ state: { returnTo: '/dashboard/builder' } });
+
+    render(<Signup />);
+
+    expect(await screen.findByText('Create your account, then review your starter draft right away. You can keep refining setup details from there.')).toBeInTheDocument();
+    expect(screen.queryByText('Create your account, then go straight into setup.')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Sign in' }));
+
+    expect(navigateMock).toHaveBeenCalledWith('/login', {
+      state: {
+        returnTo: '/dashboard/builder',
+      },
+    });
+  });
+
 
   it('omits empty onboarding drafts when switching from signup to login', async () => {
     useLocationMock.mockReturnValue({ state: { returnTo: '/onboarding' } });

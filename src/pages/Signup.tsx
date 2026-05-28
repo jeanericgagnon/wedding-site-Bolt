@@ -12,6 +12,7 @@ import { normalizeMeaningfulQuickStartDraftSnapshot, persistQuickStartDraftSnaps
 import { buildCollaboratorInviteAuthSearch, readCollaboratorInviteAuthParams } from '../lib/collaboratorInviteAuthParams';
 import { buildCollaboratorRoleGuide } from './collaboratorRoleGuide';
 import { getFlowStatusLabel } from '../lib/flowLabels';
+import { FIRST_SESSION_WORKSPACE_ROUTES } from '../lib/firstSessionWorkspaceRoutes';
 
 const makeBaseSlug = (email: string) => {
   const local = (email.split('@')[0] || 'ourwedding').toLowerCase();
@@ -98,6 +99,14 @@ export const Signup: React.FC = () => {
     [inviteEmail, inviteRole, inviteSite, inviteToken],
   );
   const collaboratorRoleGuide = useMemo(() => buildCollaboratorRoleGuide(inviteRole), [inviteRole]);
+  const isDraftStartEntry = explicitReturnPath === FIRST_SESSION_WORKSPACE_ROUTES.builder;
+  const signupIntroCopy = hasInviteContext
+    ? 'Create a collaborator account, then jump straight back into this invite.'
+    : isDraftStartEntry
+      ? 'Create your account, then review your starter draft right away. You can keep refining setup details from there.'
+      : paymentGateEnabled
+        ? 'Create your account, then move straight into setup after payment.'
+        : 'Create your account, then go straight into setup.';
 
   useEffect(() => {
     if (inviteEmail) {
@@ -205,9 +214,7 @@ export const Signup: React.FC = () => {
             <span className="text-2xl font-semibold text-text-primary">WeddingSite</span>
           </Link>
           <h1 className="text-3xl font-bold text-text-primary mb-2">Start your wedding</h1>
-          <p className="text-text-secondary">
-            {hasInviteContext ? 'Create a collaborator account, then jump straight back into this invite.' : (paymentGateEnabled ? 'Create your account, then move straight into setup after payment.' : 'Create your account, then go straight into setup.')}
-          </p>
+          <p className="text-text-secondary">{signupIntroCopy}</p>
         </div>
 
         <Card variant="default" padding="lg" className="shadow-lg">
