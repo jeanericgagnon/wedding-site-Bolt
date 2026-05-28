@@ -10,6 +10,7 @@ import { buildCollaboratorRoleGuide } from './collaboratorRoleGuide';
 import { getFlowStatusLabel } from '../lib/flowLabels';
 import {
   COLLAB_INVITE_EXPIRED_ERROR,
+  COLLAB_INVITE_CLAIM_RETRY_ERROR,
   COLLAB_INVITE_INCOMPLETE_ERROR,
   COLLAB_INVITE_INVALID_ERROR,
   COLLAB_INVITE_REVOKED_ERROR,
@@ -160,7 +161,7 @@ export const AcceptCollaboratorInvite: React.FC = () => {
     });
 
     if (claimError) {
-      throw new Error(`Could not claim invite: ${claimError.message}`);
+      throw new Error(COLLAB_INVITE_CLAIM_RETRY_ERROR);
     }
   };
 

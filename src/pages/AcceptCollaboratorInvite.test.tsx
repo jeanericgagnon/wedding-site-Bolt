@@ -5,7 +5,12 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const inviteRowsQueue: Array<{ data: unknown; error: unknown }> = [];
 const siteRowsQueue: Array<{ data: unknown; error?: unknown }> = [];
-const navigateMock = vi.fn();
+const { navigateMock, signInWithPasswordMock, signUpMock, rpcMock } = vi.hoisted(() => ({
+  navigateMock: vi.fn(),
+  signInWithPasswordMock: vi.fn(),
+  signUpMock: vi.fn(),
+  rpcMock: vi.fn(),
+}));
 
 vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual<typeof import('react-router-dom')>('react-router-dom');
@@ -34,10 +39,10 @@ vi.mock('../lib/supabase', () => ({
     }),
     auth: {
       getSession: vi.fn().mockResolvedValue({ data: { session: null } }),
-      signInWithPassword: vi.fn(),
-      signUp: vi.fn(),
+      signInWithPassword: signInWithPasswordMock,
+      signUp: signUpMock,
     },
-    rpc: vi.fn(),
+    rpc: rpcMock,
   },
 }));
 
@@ -70,6 +75,9 @@ describe('AcceptCollaboratorInvite guest-safe boundary', () => {
     inviteRowsQueue.length = 0;
     siteRowsQueue.length = 0;
     navigateMock.mockReset();
+    signInWithPasswordMock.mockReset();
+    signUpMock.mockReset();
+    rpcMock.mockReset();
   });
 
   it('shows a generic invalid-invite message without debug details when no invite row matches', async () => {
@@ -168,5 +176,58 @@ describe('AcceptCollaboratorInvite guest-safe boundary', () => {
     fireEvent.click(button);
 
     expect(navigateMock).toHaveBeenCalledWith('/dashboard/overview');
+  });
+
+  it('keeps noisy invite-claim RPC failures behind calm collaborator-safe copy', async () => {
+    inviteRowsQueue.push({
+      data: [{
+        id: 'invite-1',
+        wedding_site_id: 'site-1',
+        invite_email: 'planner@example.com',
+        invite_name: 'Alex Planner',
+        role: 'planner',
+        status: 'pending',
+        expires_at: '2099-05-01T00:00:00.000Z',
+      }],
+      error: null,
+    });
+    siteRowsQueue.push({
+      data: {
+        site_slug: 'alex-and-sam',
+        couple_name_1: 'Alex',
+        couple_name_2: 'Sam',
+      },
+    });
+    signInWithPasswordMock.mockResolvedValue({
+      data: {
+        user: {
+          id: 'user-1',
+          email: 'planner@example.com',
+          user_metadata: { name: 'Alex Planner' },
+        },
+      },
+      error: null,
+    });
+    rpcMock.mockResolvedValue({
+      error: {
+        message: 'relation "wedding_site_collaborator_invites" does not exist; provider timeout token=abc',
+      },
+    });
+
+    render(
+      <MemoryRouter initialEntries={['/accept-collaborator-invite?token=good-token']}>
+        <AcceptCollaboratorInvite />
+      </MemoryRouter>,
+    );
+
+    await screen.findByText('Invited for Planner access.');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Sign in' }));
+    fireEvent.change(screen.getByPlaceholderText('Enter your password'), { target: { value: 'password-123' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Sign in and join team' }));
+
+    expect(await screen.findByText('Could not join this wedding team right now. Please try again.')).toBeInTheDocument();
+    expect(screen.queryByText(/relation|provider|token=abc/i)).not.toBeInTheDocument();
+    expect(navigateMock).not.toHaveBeenCalled();
   });
 });
