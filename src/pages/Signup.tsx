@@ -91,7 +91,7 @@ export const Signup: React.FC = () => {
 
   const inviteReturnSearch = useMemo(() => {
     if (!inviteToken) return '';
-    return `?${createSearchParams({ token: inviteToken }).toString()}`;
+    return `?${createSearchParams({ invite_token: inviteToken }).toString()}`;
   }, [inviteToken]);
   const inviteAuthSearch = useMemo(
     () => buildCollaboratorInviteAuthSearch({ inviteToken, inviteEmail, inviteRole, inviteSite }),

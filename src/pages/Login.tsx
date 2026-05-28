@@ -43,7 +43,7 @@ export const Login: React.FC = () => {
 
   const inviteReturnSearch = useMemo(() => {
     if (!inviteToken || !inviteEmail) return '';
-    return `?${createSearchParams({ token: inviteToken }).toString()}`;
+    return `?${createSearchParams({ invite_token: inviteToken }).toString()}`;
   }, [inviteToken, inviteEmail]);
 
   const inviteAuthSearch = useMemo(

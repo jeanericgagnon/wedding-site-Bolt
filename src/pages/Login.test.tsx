@@ -7,6 +7,8 @@ const navigateMock = vi.fn();
 const useLocationMock = vi.fn();
 const useSearchParamsMock = vi.fn(() => [new URLSearchParams()]);
 const signInWithOAuthMock = vi.fn(() => Promise.resolve({ error: null }));
+const signInWithPasswordMock = vi.fn(() => Promise.resolve({ data: { user: { email: 'planner@example.com' } }, error: null }));
+const signInMock = vi.fn(() => Promise.resolve({ error: null }));
 
 vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual<typeof import('react-router-dom')>('react-router-dom');
@@ -37,7 +39,7 @@ vi.mock('react-router-dom', async () => {
 });
 
 vi.mock('../hooks/useAuth', () => ({
-  useAuth: () => ({ signIn: vi.fn() }),
+  useAuth: () => ({ signIn: (...args: Parameters<typeof signInMock>) => signInMock(...args) }),
 }));
 
 vi.mock('../lib/signupContinuation', async () => {
@@ -51,6 +53,7 @@ vi.mock('../lib/signupContinuation', async () => {
 vi.mock('../lib/supabase', () => ({
   supabase: {
     auth: {
+      signInWithPassword: (...args: Parameters<typeof signInWithPasswordMock>) => signInWithPasswordMock(...args),
       getSession: () => Promise.resolve({ data: { session: null } }),
       signInWithOAuth: (...args: Parameters<typeof signInWithOAuthMock>) => signInWithOAuthMock(...args),
       onAuthStateChange: () => ({
@@ -66,6 +69,8 @@ describe('Login quick start handoff', () => {
   beforeEach(() => {
     navigateMock.mockReset();
     signInWithOAuthMock.mockClear();
+    signInWithPasswordMock.mockClear();
+    signInMock.mockClear();
     window.localStorage.clear();
     useLocationMock.mockReturnValue({ state: {
       quickStartDraft: {
@@ -171,5 +176,54 @@ describe('Login quick start handoff', () => {
       'href',
       '/signup?invite_token=invite-123&invite_email=planner%40example.com&invite_role=planner&invite_site=Alex+%26+Sam',
     );
+  });
+
+  it('returns collaborator login directly to the invite accept route with invite_token params', async () => {
+    useSearchParamsMock.mockReturnValue([
+      new URLSearchParams({
+        invite_token: 'invite-123',
+        invite_email: 'planner@example.com',
+        invite_role: 'planner',
+        invite_site: 'Alex & Sam',
+      }),
+    ]);
+
+    render(<Login />);
+
+    fireEvent.change(screen.getByLabelText(/^email/i), { target: { value: 'planner@example.com' } });
+    fireEvent.change(screen.getByLabelText(/^password/i), { target: { value: 'StrongPassword123!' } });
+    fireEvent.submit(screen.getByRole('button', { name: /sign in and continue invite/i }).closest('form')!);
+
+    await waitFor(() => {
+      expect(signInWithPasswordMock).toHaveBeenCalledWith({
+        email: 'planner@example.com',
+        password: 'StrongPassword123!',
+      });
+      expect(navigateMock).toHaveBeenCalledWith('/accept-collaborator-invite?invite_token=invite-123', { replace: true });
+    });
+  });
+
+  it('uses invite_token collaborator redirects for Google login handoff', async () => {
+    useSearchParamsMock.mockReturnValue([
+      new URLSearchParams({
+        invite_token: 'invite-123',
+        invite_email: 'planner@example.com',
+        invite_role: 'planner',
+        invite_site: 'Alex & Sam',
+      }),
+    ]);
+
+    render(<Login />);
+
+    fireEvent.click(screen.getByRole('button', { name: /continue with google/i }));
+
+    await waitFor(() => {
+      expect(signInWithOAuthMock).toHaveBeenCalledWith(expect.objectContaining({
+        provider: 'google',
+        options: expect.objectContaining({
+          redirectTo: 'http://localhost:3000/accept-collaborator-invite?invite_token=invite-123&oauth=google',
+        }),
+      }));
+    });
   });
 });
