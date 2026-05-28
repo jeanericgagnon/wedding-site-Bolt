@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   GUESTS_ADD_RETRY_ERROR,
   GUESTS_IMPORT_RETRY_ERROR,
+  GUESTS_PARSE_FILE_RETRY_ERROR,
   GUESTS_RSVP_CONFIG_RETRY_ERROR,
   mapGuestDashboardError,
 } from './guestErrorCopy';
@@ -24,5 +25,11 @@ describe('guestErrorCopy', () => {
     expect(mapGuestDashboardError(new Error('Supabase duplicate key violates row-level security policy'), GUESTS_ADD_RETRY_ERROR)).toBe(
       GUESTS_ADD_RETRY_ERROR,
     );
+  });
+
+  it('keeps guest-dashboard fallback copy calm and owner-safe', () => {
+    expect(GUESTS_RSVP_CONFIG_RETRY_ERROR).toBe('Could not save RSVP settings right now.');
+    expect(GUESTS_PARSE_FILE_RETRY_ERROR).toBe('Could not read that guest file right now.');
+    expect(GUESTS_IMPORT_RETRY_ERROR).toBe('Could not import that guest list right now. Please try again with a clean guest file.');
   });
 });

@@ -5,11 +5,11 @@ const GUESTS_ALLOW_LIST = [
   /meal choices need at least 2 options when enabled\./i,
 ];
 
-export const GUESTS_RSVP_CONFIG_RETRY_ERROR = 'Failed to save RSVP config.';
-export const GUESTS_ADD_RETRY_ERROR = 'Failed to add guest. Please try again.';
-export const GUESTS_PARSE_FILE_RETRY_ERROR = 'Failed to parse guest file.';
-export const GUESTS_IMPORT_RETRY_ERROR = 'Import failed. Please try again with a clean guest file.';
-export const GUESTS_DELETE_ALL_RETRY_ERROR = 'Failed to delete all guests. Please try again.';
+export const GUESTS_RSVP_CONFIG_RETRY_ERROR = 'Could not save RSVP settings right now.';
+export const GUESTS_ADD_RETRY_ERROR = 'Could not add that guest right now. Please try again.';
+export const GUESTS_PARSE_FILE_RETRY_ERROR = 'Could not read that guest file right now.';
+export const GUESTS_IMPORT_RETRY_ERROR = 'Could not import that guest list right now. Please try again with a clean guest file.';
+export const GUESTS_DELETE_ALL_RETRY_ERROR = 'Could not delete all guests right now. Please try again.';
 
 export function mapGuestDashboardError(error: unknown, fallback: string): string {
   return customerSafeErrorMessage(error, fallback, { allow: GUESTS_ALLOW_LIST });

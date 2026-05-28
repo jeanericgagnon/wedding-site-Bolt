@@ -26,4 +26,10 @@ describe('supportSurfaceErrorCopy', () => {
       GUEST_PHOTO_SHARING_LOAD_RETRY_ERROR,
     );
   });
+
+  it('keeps support-surface recovery copy calm and customer-safe', () => {
+    expect(OVERVIEW_BRIEF_REFRESH_RETRY_ERROR).toBe('Could not refresh your draft from the saved brief right now.');
+    expect(GUEST_PHOTO_SHARING_LOAD_RETRY_ERROR).toBe('Could not load photo sharing right now.');
+    expect(GUEST_PHOTO_CREATE_BUCKET_RETRY_ERROR).toBe('Could not create that photo bucket right now.');
+  });
 });

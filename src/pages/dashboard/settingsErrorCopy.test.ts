@@ -2,7 +2,9 @@ import { describe, expect, it } from 'vitest';
 
 import {
   SETTINGS_COLLAB_COPY_RETRY_ERROR,
+  SETTINGS_PASSWORD_SAVE_RETRY_ERROR,
   SETTINGS_SUBSCRIBE_RETRY_ERROR,
+  SETTINGS_TEMPLATE_RETRY_ERROR,
   mapSettingsError,
 } from './settingsErrorCopy';
 
@@ -19,5 +21,11 @@ describe('mapSettingsError', () => {
     expect(mapSettingsError(new Error('Supabase bucket policy denied collaborator token reveal'), SETTINGS_COLLAB_COPY_RETRY_ERROR)).toBe(
       SETTINGS_COLLAB_COPY_RETRY_ERROR,
     );
+  });
+
+  it('keeps settings fallback copy calm and actionable', () => {
+    expect(SETTINGS_PASSWORD_SAVE_RETRY_ERROR).toBe('Could not update your password right now.');
+    expect(SETTINGS_COLLAB_COPY_RETRY_ERROR).toBe('Could not copy that collaborator invite right now.');
+    expect(SETTINGS_TEMPLATE_RETRY_ERROR).toBe('Could not change templates right now.');
   });
 });
