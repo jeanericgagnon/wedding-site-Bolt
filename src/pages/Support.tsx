@@ -34,11 +34,14 @@ export const Support: React.FC = () => {
           </section>
 
           <section className="rounded-lg border border-border-subtle bg-white/72 p-6 shadow-sm">
-            <h2 className="text-2xl font-semibold text-text-primary">Privacy or data requests</h2>
+            <h2 className="text-2xl font-semibold text-text-primary">Privacy, data, and policy links</h2>
             <p className="mt-3 text-text-secondary">
-              For privacy, account deletion, or wedding data requests, email support from the account owner email when possible.
+              For privacy, account deletion, or wedding data requests, email support from the account owner email when possible. If you need the policy details directly, the privacy policy and terms should be easy to reach here too.
             </p>
-            <Link className="mt-4 inline-flex text-primary underline" to="/privacy">Privacy policy</Link>
+            <div className="mt-4 flex flex-wrap gap-4">
+              <Link className="inline-flex text-primary underline" to="/privacy">Privacy policy</Link>
+              <Link className="inline-flex text-primary underline" to="/terms">Terms of service</Link>
+            </div>
           </section>
         </div>
       </main>
