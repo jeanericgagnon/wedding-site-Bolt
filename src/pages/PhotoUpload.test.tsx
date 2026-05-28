@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 import PhotoUpload from './PhotoUpload';
@@ -62,5 +62,67 @@ describe('PhotoUpload guest-safe copy', () => {
     expect(mapPhotoUploadRuntimeError(new Error('Supabase storage bucket policy denied upload'))).toBe(
       PHOTO_UPLOAD_RETRY_ERROR,
     );
+  });
+
+  it('keeps failed files selected after a partial upload so guests can retry them', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        uploaded: [{ name: 'party.jpg' }],
+        failed: [{ name: 'dance.mp4' }],
+      }),
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    window.history.replaceState({}, '', '/photos/upload?invite_token=invite-123&site=maya-leo');
+
+    render(<PhotoUpload />);
+
+    const fileInput = screen.getByLabelText('Files') as HTMLInputElement;
+    const files = [
+      new File(['one'], 'party.jpg', { type: 'image/jpeg' }),
+      new File(['two'], 'dance.mp4', { type: 'video/mp4' }),
+    ];
+    fireEvent.change(fileInput, { target: { files } });
+    fireEvent.click(screen.getByRole('button', { name: 'Upload files' }));
+
+    await screen.findByText('Uploaded 1 file(s), 1 failed. Failed files stayed selected so you can retry them.');
+    expect(screen.getByText('Failed files are still selected so you can retry right away.')).toBeInTheDocument();
+    expect(screen.getByText('1 file(s) selected')).toBeInTheDocument();
+    expect(screen.getByText('dance.mp4')).toBeInTheDocument();
+
+    vi.unstubAllGlobals();
+  });
+
+  it('lets guests clear success state and start another upload with Upload more', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        uploaded: [{ name: 'party.jpg' }],
+        failed: [],
+      }),
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    window.history.replaceState({}, '', '/photos/upload?invite_token=invite-123&site=maya-leo');
+
+    render(<PhotoUpload />);
+
+    const fileInput = screen.getByLabelText('Files') as HTMLInputElement;
+    fireEvent.change(fileInput, {
+      target: { files: [new File(['one'], 'party.jpg', { type: 'image/jpeg' })] },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Upload files' }));
+
+    await screen.findByText('Uploaded 1 file(s). Thank you!');
+    fireEvent.click(screen.getByRole('button', { name: 'Upload more' }));
+
+    await waitFor(() => {
+      expect(screen.queryByText('Uploaded 1 file(s). Thank you!')).not.toBeInTheDocument();
+    });
+    expect(screen.queryByText('party.jpg')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Upload more' })).not.toBeInTheDocument();
+
+    vi.unstubAllGlobals();
   });
 });

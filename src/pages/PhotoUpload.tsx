@@ -27,18 +27,28 @@ export const PhotoUpload: React.FC = () => {
   const [guestEmail, setGuestEmail] = useState('');
   const [note, setNote] = useState('');
   const [files, setFiles] = useState<File[]>([]);
+  const [fileInputKey, setFileInputKey] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [uploadedNames, setUploadedNames] = useState<string[]>([]);
   const [failedNames, setFailedNames] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
 
-  const onSubmit = async (event: React.FormEvent) => {
-    event.preventDefault();
+  const resetUploadFeedback = (options?: { clearFiles?: boolean }) => {
     setMessage(null);
     setUploadedNames([]);
     setFailedNames([]);
     setError(null);
+
+    if (options?.clearFiles) {
+      setFiles([]);
+      setFileInputKey((current) => current + 1);
+    }
+  };
+
+  const onSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    resetUploadFeedback();
 
     if (!supabaseUrl || !supabaseAnonKey) {
       setError(PHOTO_UPLOAD_UNAVAILABLE_ERROR);
@@ -82,14 +92,26 @@ export const PhotoUpload: React.FC = () => {
 
       const uploaded = Array.isArray(data.uploaded) ? data.uploaded : [];
       const failed = Array.isArray(data.failed) ? data.failed : [];
-      setUploadedNames(uploaded.map((u: { name?: string }) => u?.name).filter((v: unknown): v is string => typeof v === 'string'));
-      setFailedNames(failed.map((u: { name?: string }) => u?.name).filter((v: unknown): v is string => typeof v === 'string'));
+      const nextUploadedNames = uploaded
+        .map((u: { name?: string }) => u?.name)
+        .filter((v: unknown): v is string => typeof v === 'string');
+      const nextFailedNames = failed
+        .map((u: { name?: string }) => u?.name)
+        .filter((v: unknown): v is string => typeof v === 'string');
+      setUploadedNames(nextUploadedNames);
+      setFailedNames(nextFailedNames);
       setMessage(
         failed.length > 0
-          ? `Uploaded ${uploaded.length} file(s), ${failed.length} failed. You can retry failed files.`
+          ? `Uploaded ${uploaded.length} file(s), ${failed.length} failed. Failed files stayed selected so you can retry them.`
           : `Uploaded ${uploaded.length || files.length} file(s). Thank you!`
       );
-      setFiles([]);
+      if (nextFailedNames.length > 0) {
+        const failedNameSet = new Set(nextFailedNames);
+        setFiles(files.filter((file) => failedNameSet.has(file.name)));
+      } else {
+        setFiles([]);
+        setFileInputKey((current) => current + 1);
+      }
       setNote('');
       setGuestEmail('');
     } catch (err) {
@@ -168,8 +190,10 @@ export const PhotoUpload: React.FC = () => {
           </div>
 
           <div className="rounded-2xl border border-rose-100 bg-rose-50/50 p-4">
-            <label className="mb-2 block text-base font-medium text-gray-800">Files</label>
+            <label htmlFor="photo-upload-files" className="mb-2 block text-base font-medium text-gray-800">Files</label>
             <input
+              id="photo-upload-files"
+              key={fileInputKey}
               type="file"
               multiple
               accept="image/*,video/*"
@@ -177,6 +201,11 @@ export const PhotoUpload: React.FC = () => {
               className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-base"
             />
             {files.length > 0 && <p className="mt-2 text-sm text-gray-700 font-medium">{files.length} file(s) selected</p>}
+            {failedNames.length > 0 && (
+              <p className="mt-2 text-sm text-amber-700">
+                Failed files are still selected so you can retry right away.
+              </p>
+            )}
             <p className="mt-2 text-sm text-gray-600">Up to 10 files per upload, 30MB per file, 120MB total.</p>
           </div>
 
@@ -193,6 +222,15 @@ export const PhotoUpload: React.FC = () => {
               {failedNames.slice(0, 8).map((name) => <li key={name}>{name}</li>)}
               {failedNames.length > 8 && <li>+{failedNames.length - 8} more</li>}
             </ul>
+          )}
+          {(message || uploadedNames.length > 0 || failedNames.length > 0) && (
+            <button
+              type="button"
+              onClick={() => resetUploadFeedback({ clearFiles: true })}
+              className="w-full min-h-[48px] rounded-xl border border-rose-200 bg-white px-4 py-3 text-base font-medium text-rose-700 hover:border-rose-300 hover:bg-rose-50"
+            >
+              Upload more
+            </button>
           )}
 
           <button
