@@ -125,6 +125,36 @@ describe('publicSiteProject', () => {
     expect(getPublicBuilderV2Document(row)?.pages?.[0]?.slug).toBe('home');
   });
 
+  it('rejects malformed public builder v2 documents instead of treating them as guest-safe', () => {
+    const row = {
+      is_published: false,
+      site_json: {
+        version: 'v2',
+        updatedAtISO: '2026-05-27T22:00:00.000Z',
+        pages: [
+          {
+            id: 'home',
+            title: 'Home',
+            slug: 'home',
+            isHome: true,
+            hidden: false,
+            sections: [],
+          },
+          {
+            id: 'story',
+            title: 'Story',
+            slug: 'home',
+            isHome: false,
+            hidden: false,
+            sections: [],
+          },
+        ],
+      },
+    };
+
+    expect(getPublicBuilderV2Document(row)).toBeNull();
+  });
+
   it('strips internal boundary fields from public builder projects', () => {
     const row = {
       is_published: true,
@@ -274,6 +304,14 @@ describe('publicSiteProject', () => {
         updatedAtISO: '2026-05-27T22:30:00.000Z',
         pages: [
           {
+            id: 'home',
+            title: 'Home',
+            slug: 'home',
+            isHome: true,
+            hidden: false,
+            sections: [],
+          },
+          {
             id: 'weekend',
             title: 'Weekend',
             slug: 'weekend',
@@ -285,7 +323,32 @@ describe('publicSiteProject', () => {
       },
     };
 
-    expect(getPublicBuilderV2Document(row)?.pages?.[0]?.slug).toBe('weekend');
+    expect(getPublicBuilderV2Document(row)?.pages?.[1]?.slug).toBe('weekend');
+  });
+
+  it('falls back to the draft builder project when the published v2 snapshot is malformed', () => {
+    const row = {
+      is_published: true,
+      site_json: draftProject,
+      published_json: {
+        version: 'v2',
+        updatedAtISO: '2026-05-27T22:30:00.000Z',
+        pages: [
+          {
+            id: 'home',
+            title: 'Home',
+            slug: 'home',
+            isHome: true,
+            hidden: true,
+            sections: [],
+          },
+        ],
+      },
+    };
+
+    const project = getPublicBuilderProject(row);
+    expect(project?.pages[0].sections[0].settings.headline).toBe('Draft headline');
+    expect(getPublicBuilderV2Document(row)).toBeNull();
   });
 
   it('prefers published wedding data snapshot for guest-facing content', () => {

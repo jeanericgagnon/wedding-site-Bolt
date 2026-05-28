@@ -3,6 +3,7 @@ import type { BuilderSectionInstance } from '../types/builder/section';
 import type { WeddingDataV1 } from '../types/weddingData';
 import type { BuilderV2Document } from '../builder-v2/contracts';
 import { builderV2DocumentToBuilderProject, looksLikeBuilderProject, looksLikeBuilderV2Document } from '../builder-v2/adapter';
+import { validateBuilderV2Document } from '../builder-v2/validate';
 import { buildCoupleDisplayName } from './coupleDisplayName';
 import { safeJsonParse } from './jsonUtils';
 import { rewriteSignedMediaUrlsToPublicDeep } from './mediaUrl';
@@ -62,13 +63,18 @@ const toPublicBuilderProject = (
   const parsed = safeJsonParse<unknown>(source, null);
   if (!parsed) return null;
   if (looksLikeBuilderProject(parsed)) return parsed;
-  if (looksLikeBuilderV2Document(parsed)) return builderV2DocumentToBuilderProject(parsed, fallbackProject);
+  if (looksLikeBuilderV2Document(parsed)) {
+    const validated = validateBuilderV2Document(parsed);
+    return validated.ok ? builderV2DocumentToBuilderProject(validated.doc, fallbackProject) : null;
+  }
   return null;
 };
 
 const toPublicBuilderV2Document = (source: unknown): BuilderV2Document | null => {
   const parsed = safeJsonParse<unknown>(source, null);
-  return parsed && looksLikeBuilderV2Document(parsed) ? parsed : null;
+  if (!parsed || !looksLikeBuilderV2Document(parsed)) return null;
+  const validated = validateBuilderV2Document(parsed);
+  return validated.ok ? validated.doc : null;
 };
 
 const mergePublishedSection = (

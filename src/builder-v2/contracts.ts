@@ -1,3 +1,5 @@
+export const BUILDER_V2_DOCUMENT_VERSION = 'v2' as const;
+
 export const BUILDER_V2_BLOCK_TYPES = [
   'title',
   'text',
@@ -72,7 +74,7 @@ export interface BuilderV2Page {
 }
 
 export interface BuilderV2Document {
-  version: 'v2';
+  version: typeof BUILDER_V2_DOCUMENT_VERSION;
   pages?: BuilderV2Page[];
   sections?: BuilderV2Section[];
   updatedAtISO: string;
