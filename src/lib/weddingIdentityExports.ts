@@ -179,7 +179,7 @@ export function buildWeddingIdentityExportKit(input: WeddingIdentityExportKitInp
     },
     {
       id: 'photo-upload-sign',
-      label: 'Photo upload sign',
+      label: 'Photo sharing sign',
       description: 'QR sign for cocktail hour, reception tables, and after-party memories.',
       format: '8.5x11 print target',
       status: hasBroadShareUrl ? 'ready' : 'needs-info',
@@ -340,9 +340,9 @@ export function buildWeddingIdentityExportKit(input: WeddingIdentityExportKitInp
           : input.privacyMode === 'invite_only'
             ? 'Keep printed identity materials focused on context and brand consistency, while the actual invite-only route stays in direct guest handoff.'
           : !launchIsLive
-            ? 'Once the live publish is up, use the share pack, table card, insert, and photo sign from the same guest-safe URL.'
+            ? 'Once the live publish is up, use the share pack, table card, insert, and photo sharing sign from the same guest-safe URL.'
             : hasDate && hasVenue
-              ? 'Once the share pack is steady, use the table card, insert, and photo sign so print surfaces stay aligned.'
+              ? 'Once the share pack is steady, use the table card, insert, and photo sharing sign so print surfaces stay aligned.'
               : 'Add the date, venue, and public site so welcome-table and signage assets stop feeling provisional.',
       },
       {
@@ -386,11 +386,11 @@ export function buildWeddingIdentityExportKit(input: WeddingIdentityExportKitInp
         detail: input.privacyMode === 'invite_only'
           ? 'For invite-only sites, keep print focused on planner or brand context instead of broad-scannable guest entry points.'
           : hasPublicUrl && hasDate && hasVenue
-          ? 'Use the details insert, table card, and photo sign for welcome tables, bags, and event signage.'
+          ? 'Use the details insert, table card, and photo sharing sign for welcome tables, bags, and event signage.'
           : 'Add the public site, date, and venue so the print-table pack feels complete instead of partial.',
         readiness: input.privacyMode === 'invite_only' ? 'needs-info' : hasPublicUrl && hasDate && hasVenue ? 'ready' : 'needs-info',
         bestFor: 'Best for welcome tables, hotel bags, reception signage, and guest-visible print surfaces.',
-        includes: ['Details insert', 'Table card', 'Photo upload sign'],
+        includes: ['Details insert', 'Table card', 'Photo sharing sign'],
         nextStep: input.privacyMode === 'invite_only'
           ? 'Use direct guest messaging for the private route, and keep print exports for planner or context support rather than reusable guest entry.'
           : hasPublicUrl && hasDate && hasVenue ? 'Print the details insert and table card together so signage and guest handouts never drift apart.' : 'Add the date, venue, and public site so the print surfaces feel complete instead of provisional.',
@@ -595,7 +595,7 @@ export function buildWeddingIdentityPrintAssets(input: WeddingIdentityExportKitI
     },
     {
       id: 'photo-upload-sign',
-      label: 'Photo upload sign',
+      label: 'Photo sharing sign',
       sizeLabel: '8.5 x 11 in',
       title: 'Share your photos',
       subtitle: coupleNames,

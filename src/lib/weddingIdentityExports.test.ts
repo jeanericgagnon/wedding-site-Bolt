@@ -187,6 +187,7 @@ describe('weddingIdentityExports', () => {
     ]);
     expect(assets.find((asset) => asset.id === 'rsvp-card')?.url).toBe('https://maya-leo.dayof.love/rsvp');
     expect(assets.find((asset) => asset.id === 'photo-upload-sign')).toMatchObject({
+      label: 'Photo sharing sign',
       url: 'https://maya-leo.dayof.love',
       instruction: 'Scan for the wedding hub, then open photo sharing from the live guest path.',
     });
