@@ -129,6 +129,7 @@ Deno.serve(async (req: Request) => {
 
     const form = await req.formData();
     const token = String(form.get("token") ?? "").trim();
+    const siteSlug = String(form.get("siteSlug") ?? "").trim().toLowerCase();
     const guestName = String(form.get("guestName") ?? "").trim() || null;
     const guestEmailRaw = String(form.get("guestEmail") ?? "").trim();
     const guestEmail = guestEmailRaw ? guestEmailRaw.toLowerCase() : null;
@@ -136,7 +137,7 @@ Deno.serve(async (req: Request) => {
     const honeypot = String(form.get(HONEYPOT_FIELD) ?? '').trim();
     const files = form.getAll("files").filter((v): v is File => v instanceof File);
 
-    if (!token) return fail("TOKEN_REQUIRED", "token is required", 400);
+    if (!token && !siteSlug) return fail("TOKEN_REQUIRED", "token is required", 400);
     if (honeypot) return fail("BOT_DETECTED", "Request rejected", 400);
     if (guestEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(guestEmail)) {
       return fail("INVALID_EMAIL", "Invalid email address.", 400);
@@ -160,13 +161,56 @@ Deno.serve(async (req: Request) => {
       }
     }
 
-    const tokenHash = await sha256Hex(token);
+    const tokenHash = await sha256Hex(token || `site:${siteSlug}`);
 
-    const { data: album } = await admin
-      .from("photo_albums")
-      .select("id,wedding_site_id,name,drive_folder_id,is_active,opens_at,closes_at")
-      .eq("upload_token_hash", tokenHash)
-      .maybeSingle();
+    let album: {
+      id: string;
+      wedding_site_id: string;
+      name: string;
+      drive_folder_id: string;
+      is_active: boolean;
+      opens_at: string | null;
+      closes_at: string | null;
+    } | null = null;
+
+    if (token) {
+      const { data: albumFromToken } = await admin
+        .from("photo_albums")
+        .select("id,wedding_site_id,name,drive_folder_id,is_active,opens_at,closes_at")
+        .eq("upload_token_hash", tokenHash)
+        .maybeSingle();
+
+      album = albumFromToken;
+    } else if (siteSlug) {
+      const { data: siteForSlug } = await admin
+        .from("wedding_sites")
+        .select("id,is_published")
+        .eq("site_slug", siteSlug)
+        .maybeSingle();
+
+      if (!siteForSlug || !siteForSlug.is_published) {
+        return fail("SITE_UNAVAILABLE", "Site not available for uploads.", 403);
+      }
+
+      const { data: candidateAlbums } = await admin
+        .from("photo_albums")
+        .select("id,wedding_site_id,name,drive_folder_id,is_active,opens_at,closes_at,created_at")
+        .eq("wedding_site_id", siteForSlug.id as string)
+        .eq("is_active", true)
+        .order("created_at", { ascending: false })
+        .limit(10);
+
+      const now = Date.now();
+      const openAlbum = (candidateAlbums ?? []).find((candidate) => {
+        const opensAt = candidate.opens_at ? new Date(candidate.opens_at as string).getTime() : null;
+        const closesAt = candidate.closes_at ? new Date(candidate.closes_at as string).getTime() : null;
+        const opensOkay = opensAt === null || opensAt <= now;
+        const closesOkay = closesAt === null || closesAt >= now;
+        return opensOkay && closesOkay;
+      });
+
+      album = openAlbum ?? (candidateAlbums?.[0] ?? null);
+    }
 
     if (!album) return fail("INVALID_TOKEN", "Invalid upload link.", 404);
     if (!album.is_active) return fail("ALBUM_INACTIVE", "Uploads are disabled for this album.", 403);

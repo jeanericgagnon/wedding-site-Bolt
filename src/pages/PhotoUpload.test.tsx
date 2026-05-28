@@ -28,13 +28,13 @@ describe('PhotoUpload guest-safe copy', () => {
     expect(screen.queryByText(/upload token/i)).not.toBeInTheDocument();
   });
 
-  it('still asks for the access code when a site slug is present without invite access', () => {
+  it('treats a site-slug guest link as a direct upload path without asking for an access code', () => {
     window.history.replaceState({}, '', '/photos/upload?site=maya-leo');
 
     render(<PhotoUpload />);
 
     expect(screen.getByText('Uploading to maya-leo.dayof.love')).toBeInTheDocument();
-    expect(screen.getByLabelText(PHOTO_UPLOAD_ACCESS_LABEL)).toBeInTheDocument();
+    expect(screen.queryByLabelText(PHOTO_UPLOAD_ACCESS_LABEL)).not.toBeInTheDocument();
     expect(screen.queryByText(/upload token/i)).not.toBeInTheDocument();
   });
 
@@ -53,15 +53,15 @@ describe('PhotoUpload guest-safe copy', () => {
 
     expect(screen.getByText('Uploading to the Welcome Dinner album')).toBeInTheDocument();
     expect(screen.getByText('Hosted at maya-leo.dayof.love')).toBeInTheDocument();
-    expect(screen.getByLabelText(PHOTO_UPLOAD_ACCESS_LABEL)).toBeInTheDocument();
+    expect(screen.queryByLabelText(PHOTO_UPLOAD_ACCESS_LABEL)).not.toBeInTheDocument();
   });
 
-  it('still asks for the access code when only guest invite context is present', () => {
+  it('treats invite-based site upload links as direct guest upload paths too', () => {
     window.history.replaceState({}, '', '/photos/upload?site=maya-leo&invite_token=invite-123');
 
     render(<PhotoUpload />);
 
-    expect(screen.getByLabelText(PHOTO_UPLOAD_ACCESS_LABEL)).toBeInTheDocument();
+    expect(screen.queryByLabelText(PHOTO_UPLOAD_ACCESS_LABEL)).not.toBeInTheDocument();
   });
 
   it('hides the access-code field when the upload link already carries a real upload access code', () => {
@@ -79,6 +79,34 @@ describe('PhotoUpload guest-safe copy', () => {
   it('keeps unavailable uploads guest-safe instead of naming internal config', () => {
     expect(PHOTO_UPLOAD_UNAVAILABLE_ERROR).toBe('Photo uploads are unavailable right now. Please try again soon.');
     expect(PHOTO_UPLOAD_UNAVAILABLE_ERROR).not.toMatch(/supabase/i);
+  });
+
+  it('submits slug-based guest upload links without requiring a pasted access code', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        uploaded: [{ name: 'party.jpg' }],
+        failed: [],
+      }),
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    window.history.replaceState({}, '', '/photos/upload?site=maya-leo');
+
+    render(<PhotoUpload />);
+
+    fireEvent.change(screen.getByLabelText('Files'), {
+      target: { files: [new File(['one'], 'party.jpg', { type: 'image/jpeg' })] },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Upload files' }));
+
+    await screen.findByText('Uploaded 1 file(s). Thank you!');
+
+    const [, request] = fetchMock.mock.calls[0] as [string, { body: FormData }];
+    expect(request.body.get('token')).toBeNull();
+    expect(request.body.get('siteSlug')).toBe('maya-leo');
+
+    vi.unstubAllGlobals();
   });
 
   it('maps invalid upload links to guest-safe guidance', () => {

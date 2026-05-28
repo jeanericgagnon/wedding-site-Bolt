@@ -94,6 +94,17 @@ describe('createAlexJordanDemoWeddingData', () => {
     expect(data.event.weddingDateISO).toBeUndefined();
     expect(toIsoDateOrUndefined('2027-02-30')).toBeUndefined();
   });
+
+  it('builds a guest-ready canonical demo dataset instead of leaving public proof sections empty', () => {
+    const data = createAlexJordanDemoWeddingData();
+
+    expect(data.couple.displayName).toBe('Alex Thompson & Jordan Rivera');
+    expect(data.couple.story).toMatch(/mutual friends/i);
+    expect(data.venues[0]?.name).toBe('Sunset Gardens Estate');
+    expect(data.schedule.map((item) => item.label)).toContain('Ceremony');
+    expect(data.travel.hotelInfo).toMatch(/room blocks/i);
+    expect(data.registry.links.length).toBeGreaterThan(0);
+  });
 });
 
 describe('combineDateAndTime', () => {

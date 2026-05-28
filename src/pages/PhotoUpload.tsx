@@ -36,7 +36,7 @@ export const PhotoUpload: React.FC = () => {
   const albumLabel = readPhotoUploadAlbumLabel(params);
   const previewGuest = params.get('previewGuest')?.trim() ?? '';
   const inviteToken = readPhotoUploadInviteToken(params);
-  const hasUploadAccess = initialToken.trim().length > 0;
+  const hasUploadAccess = initialToken.trim().length > 0 || siteSlug.length > 0;
   const isHubEntry = params.get('hub') === '1';
 
   const [token, setToken] = useState(initialToken);
@@ -72,7 +72,7 @@ export const PhotoUpload: React.FC = () => {
       return;
     }
 
-    if (!token.trim()) {
+    if (!token.trim() && !siteSlug) {
       setError(PHOTO_UPLOAD_MISSING_ACCESS_ERROR);
       return;
     }
@@ -145,14 +145,14 @@ export const PhotoUpload: React.FC = () => {
         <h1 className="text-3xl font-semibold text-gray-900">Share your photos</h1>
         <p className="mt-2 text-base text-gray-700">Upload photos and videos directly to the couple&apos;s shared album.</p>
 
-        {(albumLabel || (siteSlug && !hasUploadAccess)) && (
+        {(albumLabel || siteSlug) && (
           <div className="mt-4 rounded-2xl border border-rose-100 bg-rose-50/60 px-4 py-3">
             {albumLabel && (
               <p className="text-base font-medium text-gray-900">
                 Uploading to the {albumLabel} album
               </p>
             )}
-            {siteSlug && !hasUploadAccess && (
+            {siteSlug && (
               <p className={`text-sm text-gray-700 ${albumLabel ? 'mt-1' : ''}`}>
                 {albumLabel ? `Hosted at ${siteSlug}.dayof.love` : `Uploading to ${siteSlug}.dayof.love`}
               </p>

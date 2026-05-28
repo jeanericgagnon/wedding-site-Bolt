@@ -315,11 +315,97 @@ export function createAlexJordanDemoWeddingData(overrides: Partial<typeof demoWe
   data.couple.partner1Name = site.couple_name_1;
   data.couple.partner2Name = site.couple_name_2;
   data.couple.displayName = buildCoupleDisplayName(site.couple_name_1, site.couple_name_2, 'The couple');
+  data.couple.story = 'We met through mutual friends, kept choosing the long conversation, and built a life that still feels best when everyone we love is in the same place.';
   data.event.weddingDateISO = toIsoDateOrUndefined(site.wedding_date);
-  data.venues = [{ id: 'demo-venue-1', name: site.venue_name, address: site.venue_location }];
+  data.venues = [
+    { id: 'demo-venue-1', name: site.venue_name, address: site.venue_location },
+    { id: 'demo-venue-2', name: 'Rose Garden Lawn', address: site.venue_location },
+    { id: 'demo-venue-3', name: 'Garden Terrace Café', address: site.venue_location },
+  ];
+  data.schedule = [
+    {
+      id: 'demo-schedule-1',
+      label: 'Welcome Dinner',
+      startTimeISO: '2026-06-14T18:00:00.000Z',
+      endTimeISO: '2026-06-14T20:30:00.000Z',
+      venueId: 'demo-venue-1',
+      notes: 'Kick off the weekend with dinner and drinks.',
+    },
+    {
+      id: 'demo-schedule-2',
+      label: 'Ceremony',
+      startTimeISO: '2026-06-15T16:00:00.000Z',
+      endTimeISO: '2026-06-15T16:45:00.000Z',
+      venueId: 'demo-venue-2',
+      notes: 'Join us in the garden for the ceremony.',
+    },
+    {
+      id: 'demo-schedule-3',
+      label: 'Reception',
+      startTimeISO: '2026-06-15T18:00:00.000Z',
+      endTimeISO: '2026-06-15T23:00:00.000Z',
+      venueId: 'demo-venue-1',
+      notes: 'Dinner, toasts, and a full dance floor.',
+    },
+  ];
+  data.travel.notes = 'Most guests are staying near downtown Napa so the whole weekend stays within a short drive of the venue.';
+  data.travel.hotelInfo = 'Room blocks are available at Riverfront House and Oak Lane Inn through May 20.';
+  data.travel.parkingInfo = 'Complimentary parking is available on-site, and ride-share drop-off will be marked near the front gate.';
+  data.registry.links = [
+    {
+      id: 'demo-registry-1',
+      label: 'Registry',
+      url: 'https://example.com/registry/alex-jordan',
+      type: 'registry',
+    },
+    {
+      id: 'demo-registry-2',
+      label: 'Experiences Fund',
+      url: 'https://example.com/fund/alex-jordan',
+      type: 'cash',
+    },
+  ];
+  data.registry.notes = 'Your presence is the best gift. If you would like to celebrate with something extra, these are the places we will keep updated.';
   data.media.heroImageUrl = site.hero_image_url;
+  data.media.gallery = [
+    {
+      id: 'demo-gallery-1',
+      url: site.hero_image_url,
+      alt: 'Alex and Jordan walking together in the garden.',
+      caption: 'A quiet moment before the weekend begins.',
+    },
+  ];
   data.theme.preset = 'elegant';
   return data;
+}
+
+function shouldUseCanonicalAlexJordanDemoData(data: WeddingDataV1 | null): boolean {
+  if (!data) return true;
+
+  const displayName = data.couple.displayName?.trim().toLowerCase() ?? '';
+  const hasStory = Boolean(data.couple.story?.trim());
+  const hasWeddingDate = Boolean(data.event.weddingDateISO?.trim());
+  const hasVenue = data.venues.some((venue) => Boolean(venue.name?.trim()));
+  const hasSchedule = data.schedule.some((item) => Boolean(item.label?.trim()));
+  const hasTravel = Boolean(
+    data.travel.notes?.trim()
+      || data.travel.hotelInfo?.trim()
+      || data.travel.parkingInfo?.trim()
+      || data.travel.flightInfo?.trim(),
+  );
+  const hasRegistry = Boolean(
+    data.registry.notes?.trim()
+      || data.registry.links.some((link) => Boolean(link.label?.trim() || link.url?.trim())),
+  );
+
+  return displayName.length === 0
+    || displayName === 'the couple'
+    || !hasStory
+    || !hasWeddingDate
+    || !hasVenue
+    || !hasSchedule
+    || !hasTravel
+    || !hasRegistry;
 }
 
 const FALLBACK_IMAGE_DATA_URI = `data:image/svg+xml;utf8,${encodeURIComponent(
@@ -690,7 +776,10 @@ export const SiteView: React.FC = () => {
           const rawWData = normalizeWeddingData(
             rewriteSignedMediaUrlsToPublicDeep(supplementedWData)
           );
-          const wData = await hydrateWeddingDataFromItinerary(data.id as string, resolvedSlug, rawWData);
+          const hydratedWeddingData = await hydrateWeddingDataFromItinerary(data.id as string, resolvedSlug, rawWData);
+          const wData = resolvedSlug === 'alex-jordan-demo' && shouldUseCanonicalAlexJordanDemoData(hydratedWeddingData)
+            ? createAlexJordanDemoWeddingData()
+            : hydratedWeddingData;
           setUseNewRenderer(true);
           setBuilderSections(null);
           setLayoutConfig(null);
@@ -751,7 +840,10 @@ export const SiteView: React.FC = () => {
           const rawWData = normalizeWeddingData(
             rewriteSignedMediaUrlsToPublicDeep(supplementedWData)
           );
-          const wData = await hydrateWeddingDataFromItinerary(data.id as string, resolvedSlug, rawWData);
+          const hydratedWeddingData = await hydrateWeddingDataFromItinerary(data.id as string, resolvedSlug, rawWData);
+          const wData = resolvedSlug === 'alex-jordan-demo' && shouldUseCanonicalAlexJordanDemoData(hydratedWeddingData)
+            ? createAlexJordanDemoWeddingData()
+            : hydratedWeddingData;
 
           if (siteJson.themeTokens) {
             applyThemeTokens(siteJson.themeTokens);
@@ -782,7 +874,10 @@ export const SiteView: React.FC = () => {
             return;
           }
 
-          const wData = await hydrateWeddingDataFromItinerary(data.id as string, resolvedSlug, rawWData);
+          const hydratedWeddingData = await hydrateWeddingDataFromItinerary(data.id as string, resolvedSlug, rawWData);
+          const wData = resolvedSlug === 'alex-jordan-demo' && shouldUseCanonicalAlexJordanDemoData(hydratedWeddingData)
+            ? createAlexJordanDemoWeddingData()
+            : hydratedWeddingData;
 
           if (wData.theme?.preset) {
             applyThemePreset(wData.theme.preset);

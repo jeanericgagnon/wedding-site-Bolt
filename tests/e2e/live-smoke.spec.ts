@@ -10,7 +10,7 @@ test.describe('public v1 trust smoke', () => {
 
     await expect(page).toHaveTitle(/WeddingSite|Dayof|DayOf/i);
     await expect(page.getByRole('heading', { name: /A calmer wedding operating system\./i })).toBeVisible();
-    await expect(page.getByText(/Build the wedding site, manage the guest list, run RSVP and messages, collect photos/i)).toBeVisible();
+    await expect(page.getByText(/Build the wedding site, manage the guest list, run RSVP and guest updates, open photo sharing/i)).toBeVisible();
     await expect(page.getByRole('heading', { name: /Most wedding websites stop at publish\. dayof stays useful through the rest\./i })).toBeVisible();
     await expect(page.getByRole('heading', { name: /Site, guests, and day-of work in the same rhythm\./i })).toBeVisible();
     await expect(page.getByRole('heading', { name: /One place for the details, people, and memories that matter\./i })).toBeVisible();
