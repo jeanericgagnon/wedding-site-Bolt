@@ -31,7 +31,7 @@ import { resolvePublicSiteSlugFromRow } from '../../lib/publicSiteSlug';
 import { buildGuestOpsCoach, buildGuestOutreachSequence } from '../../lib/guestOpsCoach';
 import { getPlannerHandoffCopy } from '../../lib/plannerHandoffState';
 import { buildGuestContactUpdateUrl, buildRsvpInviteUrl } from '../../lib/publicGuestLinks';
-import { buildGuestContactLinkListPayload } from './guestContactLinkList';
+import { buildGuestContactLinkListPayload, buildNoContactChecklistPayload } from './guestContactLinkList';
 import * as XLSX from 'xlsx';
 
 interface Guest {
@@ -1428,7 +1428,27 @@ export const DashboardGuests: React.FC = () => {
       toast('No no-contact guests in this segment.', 'error');
       return;
     }
-    const payload = noContactGuests.map((guest) => `- ${guest.first_name && guest.last_name ? `${guest.first_name} ${guest.last_name}` : guest.name}: get phone or email, then resend invite`).join('\n');
+
+    const { data: siteData } = weddingSiteId
+      ? await supabase
+          .from('wedding_sites')
+          .select('id, site_slug, site_url')
+          .eq('id', weddingSiteId)
+          .maybeSingle()
+      : { data: null, error: null };
+
+    const publicSlug = resolvePublicSiteSlugFromRow((siteData as Record<string, unknown> | null) ?? null);
+    const payload = publicSlug
+      ? buildNoContactChecklistPayload(
+          `https://${publicSlug}.dayof.love`,
+          publicSlug,
+          noContactGuests.map((guest) => ({
+            name: guest.first_name && guest.last_name ? `${guest.first_name} ${guest.last_name}` : guest.name,
+            inviteToken: guest.invite_token,
+          })),
+        )
+      : noContactGuests.map((guest) => `- ${guest.first_name && guest.last_name ? `${guest.first_name} ${guest.last_name}` : guest.name}: get phone or email, then resend invite`).join('\n');
+
     try {
       await navigator.clipboard.writeText(payload);
       toast(`Copied no-contact checklist for ${noContactGuests.length} guest${noContactGuests.length === 1 ? '' : 's'}`, 'success');

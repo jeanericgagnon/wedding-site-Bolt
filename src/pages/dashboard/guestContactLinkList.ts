@@ -5,6 +5,11 @@ export type GuestContactLinkRecipient = {
   inviteToken: string;
 };
 
+export type NoContactChecklistRecipient = {
+  name: string;
+  inviteToken?: string | null;
+};
+
 export function buildGuestContactLinkListPayload(
   origin: string,
   siteSlug: string,
@@ -19,4 +24,20 @@ export function buildGuestContactLinkListPayload(
     '',
     ...lines,
   ].join('\n');
+}
+
+export function buildNoContactChecklistPayload(
+  origin: string,
+  siteSlug: string,
+  recipients: NoContactChecklistRecipient[],
+): string {
+  const lines = recipients.map((recipient) => {
+    if (recipient.inviteToken) {
+      return `- ${recipient.name}: send guest update link ${buildGuestContactUpdateUrl(origin, siteSlug, recipient.inviteToken)}`;
+    }
+
+    return `- ${recipient.name}: get phone or email, then resend invite`;
+  });
+
+  return lines.join('\n');
 }
