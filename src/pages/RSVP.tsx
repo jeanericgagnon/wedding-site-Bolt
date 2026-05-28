@@ -12,7 +12,11 @@ import { CheckCircle, Search, AlertCircle, User } from 'lucide-react';
 import { demoGuests, demoRSVPs } from '../lib/demoData';
 import { DEMO_MODE } from '../config/env';
 import { formatRsvpDeadline, isRsvpDeadlinePassed } from './rsvpDeadline';
-import { RSVP_MISSING_INVITATION_DETAIL_ERROR } from './rsvpGuestCopy';
+import {
+  mapRsvpLookupError,
+  mapRsvpSubmitError,
+  RSVP_MISSING_INVITATION_DETAIL_ERROR,
+} from './guestRsvpCopy';
 
 const RSVP_FN_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/validate-rsvp-token`;
 const ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
@@ -682,7 +686,7 @@ export default function RSVP() {
             return;
           }
           tokenLinkedSessionRef.current = false;
-          setError(err ?? 'Invitation not recognized. Please search by name below.');
+          setError(err ? mapRsvpLookupError(err) : 'Invitation not recognized. Please search by name below.');
           setTokenAutoLoading(false);
           return;
         }
@@ -826,7 +830,7 @@ export default function RSVP() {
       const err = lookupResp.error;
       if (err) {
         if (activeLookupRequestRef.current !== requestId) return;
-        setError(err);
+        setError(mapRsvpLookupError(err));
         return;
       }
       if (!data) {
@@ -1055,7 +1059,7 @@ export default function RSVP() {
 
       if (err || !submitSucceeded) {
         if (activeSubmitRequestRef.current !== requestId) return;
-        setError(err || 'Failed to submit RSVP. Please try again.');
+        setError(mapRsvpSubmitError(err ?? 'submit-failed'));
         return;
       }
 

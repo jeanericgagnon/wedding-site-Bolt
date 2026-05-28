@@ -144,6 +144,25 @@ describe('RSVP stale submit protection', () => {
     expect(screen.queryByText('An error occurred. Please try again.')).not.toBeInTheDocument();
   });
 
+  it('keeps manual RSVP lookup failures guest-safe instead of leaking internal error detail', async () => {
+    fetchMock.mockResolvedValueOnce({
+      ok: false,
+      json: async () => ({ error: 'Missing Supabase URL' }),
+    });
+
+    render(
+      <MemoryRouter initialEntries={['/rsvp']}>
+        <RSVP />
+      </MemoryRouter>
+    );
+
+    fireEvent.change(screen.getByPlaceholderText('rsvp.search_placeholder'), { target: { value: 'Taylor Rivera' } });
+    fireEvent.click(screen.getByText('Find My Invitation'));
+
+    expect(await screen.findByText('Couldn’t complete that invitation search. Please try again.')).toBeInTheDocument();
+    expect(screen.queryByText(/supabase/i)).not.toBeInTheDocument();
+  });
+
   it('refreshes token-linked RSVP truth when continuity updates arrive without local edits', async () => {
     fetchMock
       .mockResolvedValueOnce({
@@ -2539,7 +2558,7 @@ describe('RSVP stale submit protection', () => {
     fireEvent.click(screen.getByText('Continue to review'));
     fireEvent.click(screen.getByText('Submit RSVP'));
 
-    expect(await screen.findByText('Failed to submit RSVP. Please try again.')).toBeInTheDocument();
+    expect(await screen.findByText('Could not save your RSVP right now. Please try again.')).toBeInTheDocument();
 
     fireEvent.click(screen.getByText('Back'));
     fireEvent.click(screen.getByText('Back'));
@@ -2548,7 +2567,7 @@ describe('RSVP stale submit protection', () => {
     expect(await screen.findByPlaceholderText('rsvp.search_placeholder')).toBeInTheDocument();
     expect(screen.getByDisplayValue('')).toBeInTheDocument();
     expect(window.location.search).toBe('');
-    expect(screen.queryByText('Failed to submit RSVP. Please try again.')).not.toBeInTheDocument();
+    expect(screen.queryByText('Could not save your RSVP right now. Please try again.')).not.toBeInTheDocument();
   });
 
   it('clears stale token-loaded RSVP details when the guest cancels back to search', async () => {
@@ -3083,7 +3102,7 @@ describe('RSVP stale submit protection', () => {
     fireEvent.click(screen.getByText('Continue to review'));
     fireEvent.click(screen.getByText('Submit RSVP'));
 
-    expect(await screen.findByText('Failed to submit RSVP. Please try again.')).toBeInTheDocument();
+    expect(await screen.findByText('Could not save your RSVP right now. Please try again.')).toBeInTheDocument();
     expect(screen.queryByText("You're confirmed!")).not.toBeInTheDocument();
   });
 
@@ -3235,14 +3254,14 @@ describe('RSVP stale submit protection', () => {
     fireEvent.click(screen.getByText('Continue to review'));
     fireEvent.click(screen.getByText('Submit RSVP'));
 
-    expect(await screen.findByText('Failed to submit RSVP. Please try again.')).toBeInTheDocument();
+    expect(await screen.findByText('Could not save your RSVP right now. Please try again.')).toBeInTheDocument();
 
     fireEvent.click(screen.getByText('Back'));
     fireEvent.change(screen.getByRole('combobox'), {
       target: { value: 'Beef' },
     });
 
-    expect(screen.queryByText('Failed to submit RSVP. Please try again.')).not.toBeInTheDocument();
+    expect(screen.queryByText('Could not save your RSVP right now. Please try again.')).not.toBeInTheDocument();
   });
 
   it('clears stale submit errors when the guest backs out of review before retrying', async () => {
@@ -3293,12 +3312,12 @@ describe('RSVP stale submit protection', () => {
     fireEvent.click(screen.getByText('Continue to review'));
     fireEvent.click(screen.getByText('Submit RSVP'));
 
-    expect(await screen.findByText('Failed to submit RSVP. Please try again.')).toBeInTheDocument();
+    expect(await screen.findByText('Could not save your RSVP right now. Please try again.')).toBeInTheDocument();
 
     fireEvent.click(screen.getByText('Back'));
 
     await screen.findByText('Continue to review');
-    expect(screen.queryByText('Failed to submit RSVP. Please try again.')).not.toBeInTheDocument();
+    expect(screen.queryByText('Could not save your RSVP right now. Please try again.')).not.toBeInTheDocument();
   });
 
   it('clears stale meal-selection errors when the guest changes their RSVP details before retrying', async () => {

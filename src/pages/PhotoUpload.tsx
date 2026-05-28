@@ -5,6 +5,7 @@ import {
   PHOTO_UPLOAD_ACCESS_LABEL,
   PHOTO_UPLOAD_ACCESS_PLACEHOLDER,
   PHOTO_UPLOAD_MISSING_ACCESS_ERROR,
+  PHOTO_UPLOAD_UNAVAILABLE_ERROR,
 } from './photoUploadCopy';
 
 const supabaseUrl = (import.meta.env.VITE_SUPABASE_URL as string | undefined)?.trim();
@@ -37,7 +38,7 @@ export const PhotoUpload: React.FC = () => {
     setError(null);
 
     if (!supabaseUrl || !supabaseAnonKey) {
-      setError('Supabase is not configured.');
+      setError(PHOTO_UPLOAD_UNAVAILABLE_ERROR);
       return;
     }
 

@@ -1,6 +1,7 @@
 export const PHOTO_UPLOAD_ACCESS_LABEL = 'Upload access code';
 export const PHOTO_UPLOAD_ACCESS_PLACEHOLDER = 'Paste your access code';
 export const PHOTO_UPLOAD_MISSING_ACCESS_ERROR = 'An upload access code is required.';
+export const PHOTO_UPLOAD_UNAVAILABLE_ERROR = 'Photo uploads are unavailable right now. Please try again soon.';
 
 export const mapPhotoUploadError = (code?: string, fallback?: string): string => {
   switch (code) {

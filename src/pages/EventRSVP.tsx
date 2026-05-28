@@ -8,6 +8,12 @@ import { Input } from '../components/ui/Input';
 import { Textarea } from '../components/ui/Textarea';
 import { Header, Footer } from '../components/layout';
 import { formatEventRsvpDate } from './eventRsvpDate';
+import {
+  mapEventRsvpLoadError,
+  mapEventRsvpSubmitError,
+  RSVP_LINK_NOT_RECOGNIZED_ERROR,
+  RSVP_LINK_REQUIRED_ERROR,
+} from './guestRsvpCopy';
 
 const RSVP_FN_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/validate-rsvp-token`;
 const ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
@@ -185,7 +191,7 @@ export default function EventRSVP() {
       setSubmitError('');
       setSubmitSuccess(false);
       setHasEventRsvpSupport(null);
-      setError('No invitation link found. Please use the link from your invitation email.');
+      setError(RSVP_LINK_REQUIRED_ERROR);
       setLoading(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -262,7 +268,7 @@ export default function EventRSVP() {
           setSelectedEvent(null);
           setRsvpForm(buildDefaultEventRsvpFormState());
           setHasEventRsvpSupport(null);
-          setError("This invitation link isn't valid. Please use the link from your invitation email, or ask the couple for a new one.");
+          setError(RSVP_LINK_NOT_RECOGNIZED_ERROR);
           setLoading(false);
           return;
         }
@@ -364,7 +370,7 @@ export default function EventRSVP() {
         setSelectedEvent(null);
         setRsvpForm(buildDefaultEventRsvpFormState());
         setHasEventRsvpSupport(null);
-        setError(lookupError || "This invitation link isn't valid. Please use the link from your invitation email, or ask the couple for a new one.");
+        setError(lookupError ? mapEventRsvpLoadError(lookupError) : RSVP_LINK_NOT_RECOGNIZED_ERROR);
         setLoading(false);
         return;
       }
@@ -403,25 +409,26 @@ export default function EventRSVP() {
       if (activeLoadRequestRef.current !== requestId) return;
       tokenLinkedSessionRef.current = shouldPreserveVisibleState;
       if (!shouldPreserveVisibleState) {
-        setError('Failed to load your event invitations. Please try again or contact the couple.');
+      setError(mapEventRsvpLoadError('load-failed'));
       }
     } finally {
-      if (activeLoadRequestRef.current !== requestId) return;
       loadInFlightRef.current = false;
-      setLoading(false);
-      if (
-        pendingContinuityRefreshRef.current
-        && token
-        && tokenLinkedSessionRef.current
-        && !selectedEvent
-        && !submitting
-        && !submitInFlightRef.current
-      ) {
-        pendingContinuityRefreshRef.current = false;
-        void loadGuestAndEvents({ preserveVisibleState: true });
+      if (activeLoadRequestRef.current === requestId) {
+        setLoading(false);
+        if (
+          pendingContinuityRefreshRef.current
+          && token
+          && tokenLinkedSessionRef.current
+          && !selectedEvent
+          && !submitting
+          && !submitInFlightRef.current
+        ) {
+          pendingContinuityRefreshRef.current = false;
+          void loadGuestAndEvents({ preserveVisibleState: true });
+        }
       }
     }
-  }, [guest, selectedEvent, token]);
+  }, [guest, selectedEvent, submitting, token]);
 
   const refreshGuestAndEventsForContinuity = useCallback(() => {
     if (!token || !tokenLinkedSessionRef.current) return;
@@ -599,7 +606,7 @@ export default function EventRSVP() {
 
       if (!guest?.id) {
         if (activeSubmitRequestRef.current === requestId) {
-          setSubmitError("This invitation link isn't valid. Please use the link from your invitation email, or ask the couple for a new one.");
+          setSubmitError(RSVP_LINK_NOT_RECOGNIZED_ERROR);
         }
         return;
       }
@@ -661,7 +668,7 @@ export default function EventRSVP() {
         }
       } else if (error) {
         if (activeSubmitRequestRef.current === requestId) {
-          setSubmitError(error);
+          setSubmitError(mapEventRsvpSubmitError(error));
         }
         return;
       }
@@ -684,13 +691,12 @@ export default function EventRSVP() {
       }, 2000);
     } catch {
       if (activeSubmitRequestRef.current !== requestId) return;
-      setSubmitError('Failed to save your RSVP. Please try again.');
+      setSubmitError(mapEventRsvpSubmitError('submit-failed'));
     } finally {
-      if (activeSubmitRequestRef.current !== requestId) return;
-      if (!submittedSuccessfully) {
+      setSubmitting(false);
+      if (activeSubmitRequestRef.current === requestId && !submittedSuccessfully) {
         submitInFlightRef.current = false;
       }
-      setSubmitting(false);
     }
   }
 

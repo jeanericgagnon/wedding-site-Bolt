@@ -4,6 +4,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 let currentToken = 'old-token';
 
+type MaybeSingleResult = { data: unknown; error: unknown };
+type SelectResult = { data: unknown; error: unknown };
+type MutationResult = { error: unknown };
+
 vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual<typeof import('react-router-dom')>('react-router-dom');
   return {
@@ -12,24 +16,24 @@ vi.mock('react-router-dom', async () => {
   };
 });
 
-const maybeSingleQueue: Array<{ data: any; error: any } | Promise<{ data: any; error: any }>> = [];
-const selectQueue: Array<{ data: any; error: any }> = [];
-const insertQueue: Array<{ error: any } | Promise<{ error: any }>> = [];
-const updateQueue: Array<{ error: any } | Promise<{ error: any }>> = [];
-const insertedPayloads: any[] = [];
-const updatedPayloads: any[] = [];
+const maybeSingleQueue: Array<MaybeSingleResult | Promise<MaybeSingleResult>> = [];
+const selectQueue: SelectResult[] = [];
+const insertQueue: Array<MutationResult | Promise<MutationResult>> = [];
+const updateQueue: Array<MutationResult | Promise<MutationResult>> = [];
+const insertedPayloads: unknown[] = [];
+const updatedPayloads: unknown[] = [];
 
 function createDeferredMaybeSingle() {
-  let resolve!: (value: { data: any; error: any }) => void;
-  const promise = new Promise<{ data: any; error: any }>((res) => {
+  let resolve!: (value: MaybeSingleResult) => void;
+  const promise = new Promise<MaybeSingleResult>((res) => {
     resolve = res;
   });
   return { promise, resolve };
 }
 
 function createDeferredMutation() {
-  let resolve!: (value: { error: any }) => void;
-  const promise = new Promise<{ error: any }>((res) => {
+  let resolve!: (value: MutationResult) => void;
+  const promise = new Promise<MutationResult>((res) => {
     resolve = res;
   });
   return { promise, resolve };
@@ -63,7 +67,7 @@ vi.mock('../lib/supabase', () => ({
 
         throw new Error(`Unexpected table ${table}`);
       },
-      insert: (payload: any) => {
+      insert: (payload: unknown) => {
         if (table === 'event_rsvps') {
           insertedPayloads.push(payload);
           return Promise.resolve(insertQueue.shift() ?? { error: null });
@@ -71,7 +75,7 @@ vi.mock('../lib/supabase', () => ({
 
         throw new Error(`Unexpected insert table ${table}`);
       },
-      update: (payload: any) => ({
+      update: (payload: unknown) => ({
         eq: () => {
           if (table === 'event_rsvps') {
             updatedPayloads.push(payload);
@@ -220,6 +224,20 @@ describe('EventRSVP token trust continuity', () => {
 
     expect(maybeSingleQueue).toHaveLength(1);
     expect(screen.getByText("This invitation link isn't valid. Please use the link from your invitation email, or ask the couple for a new one.")).toBeInTheDocument();
+  });
+
+  it('keeps event RSVP load failures guest-safe instead of leaking internal details', async () => {
+    currentToken = 'guest-token';
+
+    maybeSingleQueue.push({
+      data: null,
+      error: { message: 'Missing Supabase URL' },
+    });
+
+    render(<EventRSVP />);
+
+    expect(await screen.findByText('Couldn’t load your event invitations right now. Please try again.')).toBeInTheDocument();
+    expect(screen.queryByText(/supabase/i)).not.toBeInTheDocument();
   });
 
   it('keeps the saved event RSVP visible locally after submit without depending on a refetch', async () => {
@@ -781,7 +799,7 @@ describe('EventRSVP token trust continuity', () => {
     render(<EventRSVP />);
 
     expect(await screen.findByText('Link Not Recognized')).toBeInTheDocument();
-    expect(screen.getByText('Failed to load your event invitations. Please try again or contact the couple.')).toBeInTheDocument();
+    expect(screen.getByText('Couldn’t load your event invitations right now. Please try again.')).toBeInTheDocument();
     expect(screen.queryByText('Hello, Jordan!')).not.toBeInTheDocument();
   });
 
@@ -818,7 +836,7 @@ describe('EventRSVP token trust continuity', () => {
     render(<EventRSVP />);
 
     expect(await screen.findByText('Link Not Recognized')).toBeInTheDocument();
-    expect(screen.getByText('Failed to load your event invitations. Please try again or contact the couple.')).toBeInTheDocument();
+    expect(screen.getByText('Couldn’t load your event invitations right now. Please try again.')).toBeInTheDocument();
     expect(screen.queryByText('Event-specific RSVP is temporarily unavailable for this site.')).not.toBeInTheDocument();
   });
 
@@ -877,10 +895,10 @@ describe('EventRSVP token trust continuity', () => {
       },
     );
 
-    let resolveOldInsert!: (value: { error: any }) => void;
+    let resolveOldInsert!: (value: MutationResult) => void;
     insertQueue.push(new Promise((resolve) => {
       resolveOldInsert = resolve;
-    }) as unknown as { error: any });
+    }) as unknown as MutationResult);
     insertQueue.push({ error: null });
 
     const view = render(<EventRSVP />);
@@ -945,7 +963,7 @@ describe('EventRSVP token trust continuity', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Submit RSVP' }));
 
     await waitFor(() => {
-      expect(screen.getByText('Failed to save your RSVP. Please try again.')).toBeInTheDocument();
+      expect(screen.getByText('Could not save your event RSVP right now. Please try again.')).toBeInTheDocument();
     });
 
     fireEvent.click(screen.getByRole('button', { name: 'Submit RSVP' }));
@@ -997,7 +1015,7 @@ describe('EventRSVP token trust continuity', () => {
     await waitFor(() => {
       expect(screen.getByText('Event-specific RSVP is temporarily unavailable for this site.')).toBeInTheDocument();
     });
-    expect(screen.queryByText('Failed to save your RSVP. Please try again.')).not.toBeInTheDocument();
+    expect(screen.queryByText('Could not save your event RSVP right now. Please try again.')).not.toBeInTheDocument();
   });
 
   it('does not leak a prior support error after reopening a different event', async () => {
@@ -1179,10 +1197,10 @@ describe('EventRSVP token trust continuity', () => {
       error: null,
     });
 
-    let resolveFirstInsert!: (value: { error: any }) => void;
+    let resolveFirstInsert!: (value: MutationResult) => void;
     insertQueue.push(new Promise((resolve) => {
       resolveFirstInsert = resolve;
-    }) as unknown as { error: any });
+    }) as unknown as MutationResult);
 
     render(<EventRSVP />);
 
@@ -1309,12 +1327,12 @@ describe('EventRSVP token trust continuity', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Submit RSVP' }));
 
     await waitFor(() => {
-      expect(screen.getByText('Failed to save your RSVP. Please try again.')).toBeInTheDocument();
+      expect(screen.getByText('Could not save your event RSVP right now. Please try again.')).toBeInTheDocument();
     });
 
     fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
 
-    expect(screen.queryByText('Failed to save your RSVP. Please try again.')).not.toBeInTheDocument();
+    expect(screen.queryByText('Could not save your event RSVP right now. Please try again.')).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Cancel' })).not.toBeInTheDocument();
   });
 
@@ -1356,12 +1374,12 @@ describe('EventRSVP token trust continuity', () => {
     insertQueue.push({ error: { message: 'write failed' } });
     fireEvent.click(screen.getByRole('button', { name: 'Submit RSVP' }));
 
-    expect(await screen.findByText('Failed to save your RSVP. Please try again.')).toBeInTheDocument();
+    expect(await screen.findByText('Could not save your event RSVP right now. Please try again.')).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
     fireEvent.click(screen.getByRole('button', { name: 'RSVP for this event' }));
 
-    expect(screen.queryByText('Failed to save your RSVP. Please try again.')).not.toBeInTheDocument();
+    expect(screen.queryByText('Could not save your event RSVP right now. Please try again.')).not.toBeInTheDocument();
     expect(screen.queryByText('Loading your invitation')).not.toBeInTheDocument();
   });
 
@@ -1493,10 +1511,10 @@ describe('EventRSVP token trust continuity', () => {
       error: null,
     });
 
-    let resolveInsert!: (value: { error: any }) => void;
+    let resolveInsert!: (value: MutationResult) => void;
     insertQueue.push(new Promise((resolve) => {
       resolveInsert = resolve;
-    }) as unknown as { error: any });
+    }) as unknown as MutationResult);
 
     const view = render(<EventRSVP />);
 
@@ -2411,13 +2429,13 @@ describe('EventRSVP token trust continuity', () => {
     fireEvent.click(screen.getByRole('button', { name: 'RSVP for this event' }));
     fireEvent.click(screen.getByRole('button', { name: 'Submit RSVP' }));
 
-    expect(await screen.findByText('Failed to save your RSVP. Please try again.')).toBeInTheDocument();
+    expect(await screen.findByText('Could not save your event RSVP right now. Please try again.')).toBeInTheDocument();
 
     fireEvent.change(screen.getByPlaceholderText('Any special requests or messages for the couple'), {
       target: { value: 'See you soon' },
     });
 
-    expect(screen.queryByText('Failed to save your RSVP. Please try again.')).not.toBeInTheDocument();
+    expect(screen.queryByText('Could not save your event RSVP right now. Please try again.')).not.toBeInTheDocument();
   });
 
   it('does not show stale submit success after the guest edits before an old submit resolves', async () => {
