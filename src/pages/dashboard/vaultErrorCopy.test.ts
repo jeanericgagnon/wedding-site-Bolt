@@ -9,6 +9,7 @@ import {
   VAULT_CONFIG_SAVE_RETRY_ERROR,
   VAULT_DUPLICATE_YEAR_ERROR,
   VAULT_DRIVE_CALLBACK_RETRY_ERROR,
+  VAULT_DRIVE_CONNECT_RETRY_ERROR,
   VAULT_ENTRY_SAVE_RETRY_ERROR,
   VAULT_SITE_REQUIRED_ERROR,
 } from './vaultErrorCopy';
@@ -32,6 +33,12 @@ describe('vaultErrorCopy', () => {
     );
     expect(mapVaultOauthQueryError('redirect_uri_mismatch')).toBe(
       'Google Drive connection was cancelled or could not be completed.',
+    );
+  });
+
+  it('keeps drive connect fallback framed as a calm retry instead of a raw failure banner', () => {
+    expect(VAULT_DRIVE_CONNECT_RETRY_ERROR).toBe(
+      'Could not start Google Drive connection right now.',
     );
   });
 

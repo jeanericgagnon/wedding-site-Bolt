@@ -14,6 +14,7 @@ import {
   mapVaultAttachmentUploadError,
   mapVaultContributionSaveError,
   VAULT_ATTACHMENT_PAUSED_ERROR,
+  VAULT_ATTACHMENT_PREPARE_RETRY_ERROR,
   VAULT_COMPRESSION_FALLBACK_COPY,
   VAULT_UPLOAD_READY_COPY,
 } from './vaultContributeCopy';
@@ -520,7 +521,7 @@ export const VaultContribute: React.FC = () => {
               const idx = result.indexOf(',');
               resolve(idx >= 0 ? result.slice(idx + 1) : result);
             };
-            reader.onerror = () => reject(new Error('Failed to read file for upload.'));
+            reader.onerror = () => reject(new Error(VAULT_ATTACHMENT_PREPARE_RETRY_ERROR));
             reader.readAsDataURL(file);
           });
 

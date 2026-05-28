@@ -8,6 +8,7 @@ import {
   mapVaultAttachmentUploadError,
   mapVaultContributionSaveError,
   VAULT_ATTACHMENT_PAUSED_ERROR,
+  VAULT_ATTACHMENT_PREPARE_RETRY_ERROR,
   VAULT_ATTACHMENT_READY_COPY,
   VAULT_COMPRESSION_FALLBACK_COPY,
   VAULT_UPLOAD_READY_COPY,
@@ -56,6 +57,9 @@ describe('vault guest-safe copy', () => {
   it('keeps attachment upload failures guest-safe instead of leaking provider or bucket details', () => {
     expect(mapVaultAttachmentUploadError('missing vault-attachments bucket or policy')).toBe(
       VAULT_ATTACHMENT_PAUSED_ERROR,
+    );
+    expect(mapVaultAttachmentUploadError(new Error(VAULT_ATTACHMENT_PREPARE_RETRY_ERROR))).toBe(
+      VAULT_ATTACHMENT_PREPARE_RETRY_ERROR,
     );
     expect(mapVaultAttachmentUploadError(new Error('Google Drive upload failed: provider timeout token=abc'))).toBe(
       'We could not upload that attachment right now. Please try again.',
