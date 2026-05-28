@@ -60,6 +60,13 @@ describe('builderV2BlockPresentation', () => {
       { value: 'playlist-track:pl-1', label: 'Ceremony' },
       { value: 'playlist-track:pl-2', label: 'Reception' },
     ]);
+    expect(buildBuilderV2BlockFieldOptions('music', 'travelTip', { subtitle: 'playlist-link:pl-1' }, [
+      { type: 'title', data: { text: 'Ceremony', subtitle: 'playlist:pl-1' } },
+    ]).role).toEqual([
+      { value: 'spotify', label: 'Spotify' },
+      { value: 'appleMusic', label: 'Apple Music' },
+      { value: 'custom', label: 'Custom service' },
+    ]);
 
     expect(buildBuilderV2BlockFieldOptions('video', 'travelTip', { subtitle: 'video:v1' }, [
       { type: 'photo', data: { title: 'Save the Date', subtitle: 'video:v1' } },
@@ -67,6 +74,13 @@ describe('builderV2BlockPresentation', () => {
     ]).subtitle).toEqual([
       { value: 'video:v1', label: 'Save the Date' },
       { value: 'video:v2', label: 'Weekend Preview' },
+    ]);
+    expect(buildBuilderV2BlockFieldOptions('video', 'travelTip', { subtitle: 'video:v1' }, [
+      { type: 'photo', data: { title: 'Save the Date', subtitle: 'video:v1' } },
+    ]).role).toEqual([
+      { value: 'youtube', label: 'YouTube' },
+      { value: 'vimeo', label: 'Vimeo' },
+      { value: 'custom', label: 'Custom host' },
     ]);
   });
 

@@ -63,6 +63,18 @@ const WEDDING_PARTY_MEMBER_OPTIONS = [
   { value: 'groom-party', label: 'Partner two side' },
 ] satisfies Array<{ value: string; label: string }>;
 
+const MUSIC_SERVICE_OPTIONS = [
+  { value: 'spotify', label: 'Spotify' },
+  { value: 'appleMusic', label: 'Apple Music' },
+  { value: 'custom', label: 'Custom service' },
+] satisfies Array<{ value: string; label: string }>;
+
+const VIDEO_PLATFORM_OPTIONS = [
+  { value: 'youtube', label: 'YouTube' },
+  { value: 'vimeo', label: 'Vimeo' },
+  { value: 'custom', label: 'Custom host' },
+] satisfies Array<{ value: string; label: string }>;
+
 const buildOptions = (values: Array<{ value: string; label: string }>) =>
   values.filter((option, index, all) => (
     option.value
@@ -127,6 +139,7 @@ export const buildBuilderV2BlockFieldOptions = (
             value: `playlist-link:${playlistId}`,
             label,
           })),
+          role: MUSIC_SERVICE_OPTIONS,
         };
       }
 
@@ -152,7 +165,10 @@ export const buildBuilderV2BlockFieldOptions = (
       })));
 
     if (videoOptions.length > 0 && (blockType === 'photo' || blockType === 'travelTip')) {
-      return { subtitle: videoOptions };
+      return {
+        subtitle: videoOptions,
+        role: VIDEO_PLATFORM_OPTIONS,
+      };
     }
   }
 
