@@ -161,6 +161,15 @@ describe('Onboarding starter draft wording truth', () => {
     expect(screen.queryByText(/ready to publish/i)).not.toBeInTheDocument();
   });
 
+  it('keeps draft-progress copy framed as shaping, not already-live launch state', async () => {
+    render(<Onboarding />);
+
+    fireEvent.click(screen.getByRole('button', { name: /start guided setup/i }));
+
+    expect(await screen.findByText('We’re shaping your first draft right now')).toBeInTheDocument();
+    expect(screen.queryByText(/first draft live/i)).not.toBeInTheDocument();
+  });
+
   it('restores follow-up review copy as draft help instead of smart AI build language', async () => {
     writeDraft({
       step: 'quick-3',

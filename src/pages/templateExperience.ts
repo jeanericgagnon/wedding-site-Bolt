@@ -46,7 +46,7 @@ export function buildTemplateExperienceBrief(args: {
       bestFor: 'Couples who already like the direction and want calmer progress instead of another restart.',
       decisionRule: 'Only restart the design if the guest story or section shape is fundamentally wrong; otherwise keep the momentum and improve the current draft.',
       watchouts: [
-        'Do not let restless browsing turn a viable live draft back into a template search. If the guest story basically works, a restart usually costs more momentum than it returns.',
+        'Do not let restless browsing turn a viable draft back into a template search. If the guest story basically works, a restart usually costs more momentum than it returns.',
       ],
       callouts: [
         `${sectionsIncluded} starter sections already mapped`,
@@ -68,8 +68,8 @@ export function buildTemplateExperienceBrief(args: {
         {
           id: 'publish',
           status: 'then',
-          title: 'Publish once the essentials feel real',
-          detail: 'Use launch confidence after the clarity pass so publishing feels calm instead of rushed.',
+          title: 'Share once the essentials feel real',
+          detail: 'Use launch confidence after the clarity pass so sharing feels calm instead of rushed.',
         },
       ],
     };
@@ -82,7 +82,7 @@ export function buildTemplateExperienceBrief(args: {
       confidenceLabel: previewStatus === 'verified' ? 'High confidence' : 'Good fit',
       confidenceDetail: previewStatus === 'verified'
         ? 'Its structure, starter sections, and builder behavior already line up well enough to trust as a first draft.'
-        : 'The fit is strong, but it still wants one honest preview pass before you treat it as the lowest-risk launch path.',
+        : 'The fit is strong, but it still wants one honest preview pass before you treat it as the lowest-risk share path.',
       focusTitle: previewStatus === 'verified' ? 'Use the strongest fit to reduce cleanup later' : 'Treat the fit as strong, then confirm it once honestly',
       focusDetail: previewStatus === 'verified'
         ? 'This is the calmest path when you want to preserve setup momentum and spend your energy on content clarity instead of structural repair.'
@@ -91,10 +91,10 @@ export function buildTemplateExperienceBrief(args: {
         ? 'Use this as your starting point and spend the next pass on content clarity, not design churn.'
         : 'This fit is strong, but preview it once before you fully commit so the structure feels right.',
       launchUse: previewStatus === 'verified'
-        ? 'Best when you want the lowest-friction path from setup to a guest-ready first draft.'
+        ? 'Best when you want the lowest-friction path from setup to a guest-facing first draft.'
         : 'Best when the fit looks strong but you still want one structure check before committing.',
       bestFor: previewStatus === 'verified'
-        ? 'Couples who want the easiest path from setup answers to a guest-ready first publish.'
+        ? 'Couples who want the easiest path from setup answers to a first shared draft.'
         : 'Couples who have a strong favorite but still want one structure-confidence pass before committing.',
       decisionRule: previewStatus === 'verified'
         ? 'Choose the option that minimizes structural cleanup, then spend the next pass on trust, tone, and guest clarity.'

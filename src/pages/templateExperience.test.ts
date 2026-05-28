@@ -31,12 +31,14 @@ describe('buildTemplateExperienceBrief', () => {
     expect(brief.focusTitle).toMatch(/strongest fit|reduce cleanup/i);
     expect(brief.focusDetail).toMatch(/setup momentum|content clarity/i);
     expect(brief.bestNextStep).toMatch(/starting point|content clarity|design churn/i);
-    expect(brief.launchUse).toMatch(/lowest-friction|starting point|guest-ready/i);
-    expect(brief.bestFor).toMatch(/easiest path|first publish|guest-ready/i);
+    expect(brief.launchUse).toMatch(/lowest-friction|starting point|guest-facing/i);
+    expect(brief.bestFor).toMatch(/easiest path|first shared draft|guest-facing/i);
     expect(brief.decisionRule).toMatch(/minimizes structural cleanup|trust|tone|guest clarity/i);
     expect(brief.watchouts[0]).toMatch(/extra browsing|guest clarity|stop browsing/i);
     expect(brief.launchSequence.map((step) => step.status)).toEqual(['current', 'next', 'then']);
     expect(brief.launchSequence[0]?.title).toMatch(/strongest fit|start/i);
+    expect(brief.launchUse).not.toMatch(/guest-ready/i);
+    expect(brief.bestFor).not.toMatch(/first publish/i);
   });
 
   it('flags unmapped builder support as a watchout', () => {
@@ -98,7 +100,7 @@ describe('buildTemplateExperienceBrief', () => {
       compareCount: 0,
     });
 
-    expect(brief.watchouts[0]).toMatch(/restless browsing|momentum/i);
+    expect(brief.watchouts[0]).toMatch(/restless browsing|viable draft|momentum/i);
     expect(brief.decisionRule).toMatch(/fundamentally wrong|keep the momentum/i);
   });
 });

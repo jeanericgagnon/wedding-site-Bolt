@@ -41,9 +41,9 @@ export const TemplateDetail: React.FC = () => {
         <img src={tpl.previewImage} alt={tpl.name} className="h-56 md:h-72 w-full object-cover" />
         <div className="p-6">
           <div className="mb-4 flex flex-wrap gap-2 text-xs">
-            <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-emerald-700">Website + RSVP + Registry + Day-of ready</span>
+            <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-emerald-700">Website + RSVP + Registry + Day-of sections</span>
             <span className="rounded-full border border-sky-200 bg-sky-50 px-2.5 py-1 text-sky-700">No coding required</span>
-            <span className="rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-amber-700">Publish when you’re ready</span>
+            <span className="rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-amber-700">Share when you’re ready</span>
           </div>
           <p className="text-xs uppercase updates-wide text-neutral-500">Design family: {tpl.designFamily}</p>
           <h1 className="mt-1 text-3xl font-bold text-neutral-900">{tpl.name}</h1>
@@ -72,7 +72,7 @@ export const TemplateDetail: React.FC = () => {
               </div>
               <div className="rounded border border-neutral-200 bg-white overflow-hidden">
                 <iframe
-                  title={`${tpl.name} live preview`}
+                  title={`${tpl.name} website preview`}
                   src={`/template-scroll-capture?templateId=${tpl.id}`}
                   className="h-[360px] w-full"
                 />
@@ -106,7 +106,7 @@ export const TemplateDetail: React.FC = () => {
               <ol className="space-y-1 text-xs text-neutral-700 list-decimal list-inside">
                 <li>Use this template</li>
                 <li>Add your names + date</li>
-                <li>Publish when ready</li>
+                <li>Share when ready</li>
               </ol>
             </div>
 

@@ -866,7 +866,7 @@ export const Onboarding: React.FC = () => {
       <div className="flex items-center justify-between gap-3 mb-4">
         <div>
           <p className="text-xs uppercase tracking-[0.18em] text-text-tertiary">Draft progress</p>
-          <h3 className="text-lg font-semibold text-text-primary">We’re shaping your first draft live</h3>
+          <h3 className="text-lg font-semibold text-text-primary">We’re shaping your first draft right now</h3>
         </div>
         <span className="text-sm font-medium text-primary">{conversationProgress}%</span>
       </div>
@@ -1170,7 +1170,7 @@ export const Onboarding: React.FC = () => {
 
         <Card variant="bordered" padding="lg" className="mb-8">
           <div className="text-center">
-            <p className="text-sm text-text-secondary mb-2">When you publish, your site can live at:</p>
+            <p className="text-sm text-text-secondary mb-2">When you are ready to share it, your site can be available at:</p>
             <p className="text-xl font-semibold text-primary break-all">{subdomain}</p>
           </div>
         </Card>
