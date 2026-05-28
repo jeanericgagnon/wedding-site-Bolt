@@ -25,7 +25,7 @@ const TRUST_PILLARS = [
 ];
 
 const SAFETY_NOTES = [
-  `${SITE_TRUST_COPY.customWeddingUrlExplainer} External custom-domain mapping stays separate unless it is actually live.`,
+  `${SITE_TRUST_COPY.customWeddingUrlExplainer} External custom-domain mapping stays separate unless it is actually available.`,
   SITE_TRUST_COPY.reviewBeforeSendMessaging,
   'Registry repair and cleanup include guided review, not a guaranteed one-click fix for every merchant.',
   'Planner collaboration is intentionally couple-led, with clearer boundaries than enterprise approval software.',
@@ -48,7 +48,7 @@ const V1_TRUST_LINE = [
     title: 'Future or limited today',
     badge: 'Future',
     tone: 'cut',
-    body: 'We should not imply external custom domains, advanced analytics, enterprise approval controls, or magical one-click automation unless those things are actually proven live.',
+    body: 'We should not imply external custom domains, advanced analytics, enterprise approval controls, or magical one-click automation unless those things are actually proven and available.',
   },
 ] as const;
 
@@ -76,7 +76,7 @@ const V1_SLICE_STATUS = [
   },
   {
     name: 'Coordinator / day-of',
-    status: 'Day-of ready',
+    status: 'Day-of support',
     tone: 'proof',
     done: 'A calmer view for event-day questions, check-in, schedule focus, and quick updates.',
     missing: 'Confirm day-of ownership before the event week.',
@@ -97,7 +97,7 @@ const V1_SLICE_STATUS = [
   },
   {
     name: 'Registry',
-    status: 'Gift links live',
+    status: 'Gift links editable',
     tone: 'risk',
     done: 'Add/import/edit/repair flows are real enough to use already.',
     missing: 'Keep gift details editable when a merchant page is sparse.',
@@ -275,7 +275,7 @@ export const Trust: React.FC = () => {
               <p className="text-xs font-semibold text-text-tertiary">Need the legal docs?</p>
               <h2 className="mt-3 text-3xl font-semibold text-text-primary">Cool. Those should be easy to find too.</h2>
             <p className="mt-3 text-sm leading-6 text-text-secondary">
-              Privacy and terms are live and reachable now. If you need product or support help, email{' '}
+              Privacy and terms are published and reachable now. If you need product or support help, email{' '}
               <a className="text-primary underline" href="mailto:support@dayof.love">support@dayof.love</a>.
             </p>
             <div className="mt-6 flex flex-wrap gap-3">

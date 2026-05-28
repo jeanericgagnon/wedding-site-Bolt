@@ -69,14 +69,14 @@ export const VendorProfileCreatePage: React.FC = () => {
     }
   };
 
-  const handleCopyLiveUrl = async () => {
+  const handleCopyVendorUrl = async () => {
     if (!createdProfile) return;
     const url = `${window.location.origin}/vendor/${createdProfile.slug}`;
     try {
       await navigator.clipboard.writeText(url);
-      toast('Live vendor URL copied.', 'success');
+      toast('Vendor page URL copied.', 'success');
     } catch {
-      window.prompt('Copy live vendor URL:', url);
+      window.prompt('Copy vendor page URL:', url);
     }
   };
 
@@ -111,7 +111,7 @@ export const VendorProfileCreatePage: React.FC = () => {
             <div>
               <p className="text-xs uppercase tracking-[0.28em] text-[#8b6f53]">Draft</p>
               <h2 className="mt-2 text-2xl font-semibold">Canonical vendor page fields</h2>
-              <p className="mt-2 text-sm text-[#6f5843]">Everything below maps directly into the one live page template: hero, images, about, links, and contact.</p>
+              <p className="mt-2 text-sm text-[#6f5843]">Everything below maps directly into the public vendor page template: hero, images, about, links, and contact.</p>
               {typeof draft.source_payload?.sourceLabel === 'string' && (
                 <p className="mt-3 text-xs uppercase tracking-[0.22em] text-[#8b6f53]">Generated from {draft.source_payload.sourceLabel}</p>
               )}
@@ -174,7 +174,7 @@ export const VendorProfileCreatePage: React.FC = () => {
             <p className="text-xs text-[#8b6f53]">When website metadata is weak, the generator now uses recovered Instagram, Pinterest, and other social links as fallback image/source signals.</p>
             <div className="flex flex-wrap gap-3">
               <button type="button" onClick={handlePublish} disabled={saving} className="rounded-2xl bg-[#2f261d] px-5 py-3 text-sm font-semibold text-white disabled:opacity-60">
-                {saving ? 'Publishing…' : 'Publish vendor page'}
+                {saving ? 'Creating page…' : 'Create vendor page'}
               </button>
               <div className="text-sm text-[#8b6f53] self-center">Preferred path: /vendor/{draft.slug}</div>
             </div>
@@ -184,7 +184,7 @@ export const VendorProfileCreatePage: React.FC = () => {
           <div className="rounded-[28px] bg-white p-6 sm:p-8 shadow-[0_18px_40px_rgba(53,37,22,0.08)] space-y-5">
             <div>
               <p className="text-xs uppercase tracking-[0.28em] text-[#8b6f53]">Template preview</p>
-              <h3 className="mt-2 text-xl font-semibold">How this draft will pour into the live shell</h3>
+              <h3 className="mt-2 text-xl font-semibold">How this draft will pour into the public page shell</h3>
             </div>
             <div className="overflow-hidden rounded-[24px] border border-[#eadfce] bg-[#f8f3ec]">
               <div className="aspect-[16/10] bg-[#e9dfd2] flex items-center justify-center overflow-hidden">
@@ -240,15 +240,15 @@ export const VendorProfileCreatePage: React.FC = () => {
         {createdProfile && (
           <div className="rounded-[28px] bg-[#2f261d] p-6 sm:p-8 text-white shadow-[0_24px_80px_rgba(31,21,12,0.24)] space-y-4">
             <div>
-              <p className="text-xs uppercase tracking-[0.28em] text-[#d8c4ad]">Published</p>
+              <p className="text-xs uppercase tracking-[0.28em] text-[#d8c4ad]">Vendor page ready</p>
               <h2 className="mt-2 text-2xl font-semibold">/{`vendor/${createdProfile.slug}`}</h2>
             </div>
             <div className="flex flex-wrap gap-3">
               <Link to={`/vendor/${createdProfile.slug}`} className="rounded-2xl bg-[#f5e9db] px-5 py-3 text-sm font-semibold text-[#2f261d]">
-                Open live page
+                Open vendor page
               </Link>
-              <button type="button" onClick={handleCopyLiveUrl} className="rounded-2xl border border-white/20 px-5 py-3 text-sm font-semibold text-white">
-                Copy live URL
+              <button type="button" onClick={handleCopyVendorUrl} className="rounded-2xl border border-white/20 px-5 py-3 text-sm font-semibold text-white">
+                Copy page URL
               </button>
               <button type="button" onClick={() => navigate(0)} className="rounded-2xl border border-white/20 px-5 py-3 text-sm font-semibold text-white/80">
                 Start another vendor
