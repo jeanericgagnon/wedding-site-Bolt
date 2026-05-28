@@ -12,7 +12,7 @@ import { normalizeMeaningfulQuickStartDraftSnapshot, persistQuickStartDraftSnaps
 import { buildCollaboratorInviteAuthSearch, readCollaboratorInviteAuthParams } from '../lib/collaboratorInviteAuthParams';
 import { buildCollaboratorRoleGuide } from './collaboratorRoleGuide';
 import { getFlowStatusLabel } from '../lib/flowLabels';
-import { FIRST_SESSION_WORKSPACE_ROUTES } from '../lib/firstSessionWorkspaceRoutes';
+import { getAuthEntryIntent } from '../lib/authEntryIntent';
 
 const makeBaseSlug = (email: string) => {
   const local = (email.split('@')[0] || 'ourwedding').toLowerCase();
@@ -99,11 +99,18 @@ export const Signup: React.FC = () => {
     [inviteEmail, inviteRole, inviteSite, inviteToken],
   );
   const collaboratorRoleGuide = useMemo(() => buildCollaboratorRoleGuide(inviteRole), [inviteRole]);
-  const isDraftStartEntry = explicitReturnPath === FIRST_SESSION_WORKSPACE_ROUTES.builder;
+  const authEntryIntent = getAuthEntryIntent({
+    explicitReturnPath,
+    hasMeaningfulQuickStartDraft: Boolean(normalizedQuickStartDraft),
+  });
   const signupIntroCopy = hasInviteContext
     ? 'Create a collaborator account, then jump straight back into this invite.'
-    : isDraftStartEntry
+    : authEntryIntent === 'draft-start'
       ? 'Create your account, then review your starter draft right away. You can keep refining setup details from there.'
+      : authEntryIntent === 'quick-start'
+        ? 'Create your account, then jump right back into your setup draft and keep going.'
+        : authEntryIntent === 'onboarding'
+          ? 'Create your account, then keep going with setup.'
       : paymentGateEnabled
         ? 'Create your account, then move straight into setup after payment.'
         : 'Create your account, then go straight into setup.';

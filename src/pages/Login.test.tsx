@@ -136,7 +136,7 @@ describe('Login quick start handoff', () => {
   it('passes normalized onboarding drafts when switching from login to signup', async () => {
     render(<Login />);
 
-    const link = screen.getByRole('link', { name: 'Get started — $49' });
+    const link = screen.getByRole('link', { name: 'Create account to keep going' });
     const state = JSON.parse(link.getAttribute('data-nav-state') || '{}');
 
     expect(state.quickStartDraft).toEqual(expect.objectContaining({
@@ -155,7 +155,7 @@ describe('Login quick start handoff', () => {
     expect(await screen.findByText('Sign in to get back to your starter draft and keep shaping it.')).toBeInTheDocument();
     expect(screen.queryByText('Sign in to manage your wedding website')).not.toBeInTheDocument();
 
-    const link = screen.getByRole('link', { name: 'Get started — $49' });
+    const link = screen.getByRole('link', { name: 'Create account to keep going' });
     const state = JSON.parse(link.getAttribute('data-nav-state') || '{}');
 
     expect(state).toEqual({ returnTo: '/dashboard/builder' });
@@ -202,10 +202,46 @@ describe('Login quick start handoff', () => {
 
     render(<Login />);
 
-    const link = screen.getByRole('link', { name: 'Get started — $49' });
+    expect(await screen.findByText('Sign in to keep going with setup.')).toBeInTheDocument();
+    expect(screen.queryByText('Sign in to manage your wedding website')).not.toBeInTheDocument();
+
+    const link = screen.getByRole('link', { name: 'Create account to keep going' });
     const state = JSON.parse(link.getAttribute('data-nav-state') || '{}');
 
     expect(state).toEqual({ returnTo: '/onboarding' });
+  });
+
+  it('keeps quick-start resume login copy and signup CTA aligned with the carried setup draft', async () => {
+    useLocationMock.mockReturnValue({
+      state: {
+        returnTo: '/onboarding/quick-start?bypassPayment=1',
+        quickStartDraft: {
+          currentIndex: 2,
+          initialSetupAnswers: { names: 'Alex & Jordan' },
+          followUpAnswers: {},
+          showFollowUps: false,
+          viewState: 'question',
+          clarifyingState: null,
+        },
+      },
+    });
+
+    render(<Login />);
+
+    expect(await screen.findByText('Sign in to jump back into your setup draft and keep going.')).toBeInTheDocument();
+    expect(screen.queryByText('Sign in to manage your wedding website')).not.toBeInTheDocument();
+
+    const link = screen.getByRole('link', { name: 'Create account to keep going' });
+    const state = JSON.parse(link.getAttribute('data-nav-state') || '{}');
+
+    expect(state).toEqual({
+      returnTo: '/onboarding/quick-start?bypassPayment=1',
+      quickStartDraft: expect.objectContaining({
+        currentIndex: 2,
+        showFollowUps: false,
+        viewState: 'question',
+      }),
+    });
   });
 
   it('passes collaborator invite auth context to signup with snake_case params', async () => {

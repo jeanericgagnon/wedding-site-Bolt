@@ -11,6 +11,7 @@ import { resolveLoginReturnPath } from '../lib/loginReturnResolver';
 import { normalizeMeaningfulQuickStartDraftSnapshot, persistQuickStartDraftSnapshot } from '../lib/quickStartStateTransfer';
 import { buildCollaboratorInviteAuthSearch, readCollaboratorInviteAuthParams } from '../lib/collaboratorInviteAuthParams';
 import { FIRST_SESSION_WORKSPACE_ROUTES } from '../lib/firstSessionWorkspaceRoutes';
+import { getAuthEntryIntent } from '../lib/authEntryIntent';
 
 type AuthView = 'login' | 'forgot-password' | 'forgot-sent';
 
@@ -41,7 +42,10 @@ export const Login: React.FC = () => {
 
   const { inviteToken, inviteEmail, inviteRole, inviteSite } = readCollaboratorInviteAuthParams(searchParams);
   const hasInviteContext = Boolean(inviteToken && inviteEmail);
-  const isDraftStartEntry = explicitReturnPath === FIRST_SESSION_WORKSPACE_ROUTES.builder;
+  const authEntryIntent = getAuthEntryIntent({
+    explicitReturnPath,
+    hasMeaningfulQuickStartDraft: Boolean(normalizedQuickStartDraft),
+  });
 
   const inviteReturnSearch = useMemo(() => {
     if (!inviteToken || !inviteEmail) return '';
@@ -285,11 +289,15 @@ export const Login: React.FC = () => {
             <span className="text-2xl font-semibold text-text-primary">WeddingSite</span>
           </Link>
           <h1 className="text-3xl font-bold text-text-primary mb-2">Welcome back</h1>
-          <p className="text-text-secondary">
+            <p className="text-text-secondary">
             {hasInviteContext
               ? 'Sign in with the invited email to finish joining this wedding team.'
-              : isDraftStartEntry
+              : authEntryIntent === 'draft-start'
                 ? 'Sign in to get back to your starter draft and keep shaping it.'
+                : authEntryIntent === 'quick-start'
+                  ? 'Sign in to jump back into your setup draft and keep going.'
+                  : authEntryIntent === 'onboarding'
+                    ? 'Sign in to keep going with setup.'
                 : 'Sign in to manage your wedding website'}
           </p>
         </div>
@@ -420,7 +428,11 @@ export const Login: React.FC = () => {
                 } : undefined}
                 className="text-primary hover:text-primary-hover font-medium transition-colors"
               >
-                {hasInviteContext ? 'Create collaborator account' : 'Get started — $49'}
+                {hasInviteContext
+                  ? 'Create collaborator account'
+                  : authEntryIntent === 'default'
+                    ? 'Get started — $49'
+                    : 'Create account to keep going'}
               </Link>
             </p>
           </div>

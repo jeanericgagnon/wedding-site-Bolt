@@ -191,11 +191,48 @@ describe('Signup quick start handoff', () => {
 
     render(<Signup />);
 
+    expect(await screen.findByText('Create your account, then keep going with setup.')).toBeInTheDocument();
+    expect(screen.queryByText('Create your account, then go straight into setup.')).not.toBeInTheDocument();
+
     fireEvent.click(screen.getByRole('button', { name: 'Sign in' }));
 
     expect(navigateMock).toHaveBeenCalledWith('/login', {
       state: {
         returnTo: '/onboarding',
+      },
+    });
+  });
+
+  it('keeps quick-start resume signup copy aligned with the carried setup draft', async () => {
+    useLocationMock.mockReturnValue({
+      state: {
+        returnTo: '/onboarding/quick-start?bypassPayment=1',
+        quickStartDraft: {
+          currentIndex: 2,
+          initialSetupAnswers: { names: 'Alex & Jordan' },
+          followUpAnswers: {},
+          showFollowUps: false,
+          viewState: 'question',
+          clarifyingState: null,
+        },
+      },
+    });
+
+    render(<Signup />);
+
+    expect(await screen.findByText('Create your account, then jump right back into your setup draft and keep going.')).toBeInTheDocument();
+    expect(screen.queryByText('Create your account, then go straight into setup.')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Sign in' }));
+
+    expect(navigateMock).toHaveBeenCalledWith('/login', {
+      state: {
+        returnTo: '/onboarding/quick-start?bypassPayment=1',
+        quickStartDraft: expect.objectContaining({
+          currentIndex: 2,
+          showFollowUps: false,
+          viewState: 'question',
+        }),
       },
     });
   });
