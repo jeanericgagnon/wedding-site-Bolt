@@ -4,6 +4,7 @@ import { SITE_VISIBILITY_COPY } from '../../lib/siteVisibilityCopy';
 import {
   buildPublishReadinessItems,
   buildSetupChecklist,
+  getArchivePhotoMemoryCopy,
   getChecklistProgress,
   getFirstIncompleteChecklistItem,
   getIncompleteChecklistItems,
@@ -579,6 +580,7 @@ export const DashboardOverview: React.FC = () => {
       : 'Guests still need the invite-only path, so broad-share links and handoff assets should match the real access route.'
     : null;
   const archiveMode = getArchiveModeDescriptor({ weddingDate: stats?.weddingDate ?? null });
+  const archivePhotoMemoryCopy = getArchivePhotoMemoryCopy();
   const publishState = getPublishStateDescriptor({
     isPublished: stats?.isPublished,
     hasUnsavedChanges: stats?.isPublished && stats?.siteUpdatedAt && stats?.lastPublishedAt
@@ -1163,7 +1165,7 @@ export const DashboardOverview: React.FC = () => {
                       </div>
                       <div className="rounded-xl border border-stone-200 bg-stone-50 px-4 py-3">
                         <p className="text-xs uppercase tracking-wide text-stone-500">Photo memory</p>
-                        <p className="mt-1 text-sm text-stone-800">Review guest uploads and turn the best moments into a slideshow keepsake.</p>
+                        <p className="mt-1 text-sm text-stone-800">{archivePhotoMemoryCopy.cardDetail}</p>
                       </div>
                       <div className="rounded-xl border border-stone-200 bg-stone-50 px-4 py-3">
                         <p className="text-xs uppercase tracking-wide text-stone-500">Keepsake site</p>
@@ -1172,7 +1174,7 @@ export const DashboardOverview: React.FC = () => {
                     </div>
                     <div className="flex flex-wrap gap-2">
                       <Button variant="accent" size="sm" onClick={() => navigate('/dashboard/vault')}>Go to archive vaults</Button>
-                      <Button variant="outline" size="sm" onClick={() => navigate('/dashboard/photos')}>Open photo memories</Button>
+                      <Button variant="outline" size="sm" onClick={() => navigate('/dashboard/photos')}>{archivePhotoMemoryCopy.actionLabel}</Button>
                       <Button variant="outline" size="sm" onClick={() => stats?.siteSlug && window.open(`/site/${stats.siteSlug}`, '_blank')}>Open keepsake site</Button>
                     </div>
                   </div>

@@ -4,6 +4,7 @@ import {
   buildSetupChecklist,
   getChecklistProgress,
   getFirstIncompleteChecklistItem,
+  getArchivePhotoMemoryCopy,
   getIncompleteChecklistItems,
   getPublishBuilderRoute,
   type OverviewChecklistStats,
@@ -94,5 +95,12 @@ describe('overviewUtils', () => {
     const livePublishedItem = buildPublishReadinessItems({ ...base, isPublished: true }).find((i) => i.id === 'published');
     expect(livePublishedItem?.actionLabel).toBe('Open site editor');
     expect(livePublishedItem?.route).toBe('/dashboard/builder');
+  });
+
+  it('keeps archive photo memory copy aligned with photo sharing truth', () => {
+    expect(getArchivePhotoMemoryCopy()).toEqual({
+      cardDetail: 'Review shared guest photos and turn the best moments into a slideshow keepsake.',
+      actionLabel: 'Open photo sharing',
+    });
   });
 });

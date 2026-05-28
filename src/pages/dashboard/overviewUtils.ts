@@ -124,3 +124,8 @@ export const getChecklistProgress = (items: ChecklistItemDef[]): { done: number;
 
 export const getIncompleteChecklistItems = (items: ChecklistItemDef[]): ChecklistItemDef[] =>
   items.filter((item) => !item.done);
+
+export const getArchivePhotoMemoryCopy = () => ({
+  cardDetail: 'Review shared guest photos and turn the best moments into a slideshow keepsake.',
+  actionLabel: 'Open photo sharing',
+});
