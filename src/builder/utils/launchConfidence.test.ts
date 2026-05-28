@@ -106,6 +106,17 @@ describe('buildLaunchConfidence', () => {
     expect(confidence.sequence[1]?.detail).toMatch(/mobile|preview/i);
   });
 
+  it('keeps the launch-confidence lane free of go-live phrasing', () => {
+    const confidence = buildLaunchConfidence(baseProject, {
+      ...baseWeddingData,
+      rsvp: { enabled: false },
+    } as WeddingDataV1);
+
+    expect(confidence.summary.toLowerCase()).not.toContain('go live');
+    expect(confidence.next.toLowerCase()).not.toContain('go live');
+    expect(confidence.current.toLowerCase()).not.toContain('go live');
+  });
+
   it('keeps launch confidence in warning mode when the itinerary has no real anchor events yet', () => {
     const confidence = buildLaunchConfidence(baseProject, {
       ...baseWeddingData,

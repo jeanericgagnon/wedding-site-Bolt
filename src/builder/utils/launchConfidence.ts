@@ -58,7 +58,7 @@ function getIssueNext(issue: PublishIssue['kind']) {
     case 'unsaved-changes':
       return 'Save the latest changes so launch confidence matches the current draft.';
     default:
-      return 'Tighten the guest-facing essentials before trying to go live.';
+      return 'Tighten the guest-facing essentials before sharing with guests.';
   }
 }
 

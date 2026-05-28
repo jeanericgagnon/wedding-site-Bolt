@@ -223,7 +223,7 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
 
     if (issue.kind === 'no-pages') {
       dispatch(builderActions.openTemplateGallery());
-      setPublishNotice('Opened designs so you can add a starting point before going live.');
+      setPublishNotice('Opened designs so you can add a starting point before sharing with guests.');
       setPublishError(`${issue.message} Choose a starting design or add a page first.`);
       return;
     }
@@ -264,7 +264,7 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
     if (currentState.isDirty) {
       const saved = await handleSave();
       if (!saved) {
-        setPublishError('Please resolve save errors before going live.');
+        setPublishError('Please resolve save errors before sharing with guests.');
         return;
       }
     }
@@ -278,7 +278,7 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
         )
       );
       refreshRevisionHistory();
-      setPublishNotice(`Live site updated successfully (v${publishMeta.version})`);
+      setPublishNotice(`Guest-facing site updated successfully (v${publishMeta.version})`);
     } catch (err) {
       setPublishError(mapBuilderWorkspaceError(err, BUILDER_PUBLISH_RETRY_ERROR));
       dispatch({ type: 'SET_PUBLISHING', payload: false });
