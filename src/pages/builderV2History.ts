@@ -14,6 +14,7 @@ export type BuilderV2HistorySnapshot<TBlock extends HistoryBlock = HistoryBlock>
   id: string;
   label?: string;
   isCheckpoint?: boolean;
+  createdAtISO: string;
   pages: LabPage[];
   sectionBlocks: Record<string, TBlock[]>;
 };
@@ -22,6 +23,7 @@ type BuilderV2HistorySnapshotInput<TBlock extends HistoryBlock = HistoryBlock> =
   id?: string;
   label?: string;
   isCheckpoint?: boolean;
+  createdAtISO?: string;
   pages: LabPage[];
   sectionBlocks: Record<string, TBlock[]>;
 };
@@ -30,9 +32,14 @@ export type BuilderV2CheckpointSummary = {
   id: string;
   label: string;
   historyIndex: number;
+  createdAtISO: string;
+  pageCount: number;
+  sectionCount: number;
+  status: 'current' | 'past' | 'ahead';
 };
 
 const makeSnapshotId = () => `snapshot-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+const makeSnapshotTimestamp = () => new Date().toISOString();
 
 const cloneSectionBlocks = <TBlock extends HistoryBlock>(
   sectionBlocks: Record<string, TBlock[]>,
@@ -50,12 +57,14 @@ export const createBuilderV2HistorySnapshot = <TBlock extends HistoryBlock>({
   id,
   label,
   isCheckpoint,
+  createdAtISO,
   pages,
   sectionBlocks,
 }: BuilderV2HistorySnapshotInput<TBlock>): BuilderV2HistorySnapshot<TBlock> => ({
   id: id || makeSnapshotId(),
   label,
   isCheckpoint: isCheckpoint === true,
+  createdAtISO: createdAtISO || makeSnapshotTimestamp(),
   pages: normalizeBuilderV2Pages(pages),
   sectionBlocks: cloneSectionBlocks(sectionBlocks),
 });
@@ -172,6 +181,7 @@ export const pushBuilderV2ChangeWithCheckpoint = <TBlock extends HistoryBlock>({
 
 export const listBuilderV2CheckpointSummaries = <TBlock extends HistoryBlock>(
   history: BuilderV2HistorySnapshot<TBlock>[],
+  currentHistoryIndex?: number,
 ): BuilderV2CheckpointSummary[] => history
   .map((snapshot, historyIndex) => (
     snapshot.isCheckpoint
@@ -179,6 +189,16 @@ export const listBuilderV2CheckpointSummaries = <TBlock extends HistoryBlock>(
           id: snapshot.id,
           label: snapshot.label?.trim() || `Checkpoint ${historyIndex + 1}`,
           historyIndex,
+          createdAtISO: snapshot.createdAtISO,
+          pageCount: snapshot.pages.length,
+          sectionCount: snapshot.pages.reduce((count, page) => count + page.sections.length, 0),
+          status: currentHistoryIndex === undefined
+            ? 'past'
+            : historyIndex === currentHistoryIndex
+              ? 'current'
+              : historyIndex < currentHistoryIndex
+                ? 'past'
+                : 'ahead',
         }
       : null
   ))

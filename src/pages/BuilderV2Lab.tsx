@@ -924,8 +924,12 @@ export const BuilderV2Lab: React.FC = () => {
   }, [history, historyIndex, markSaving, pages, sectionBlocks]);
 
   const checkpointSummaries = useMemo(
-    () => listBuilderV2CheckpointSummaries(history),
-    [history],
+    () => listBuilderV2CheckpointSummaries(history, historyIndex),
+    [history, historyIndex],
+  );
+  const recentCheckpointSummaries = useMemo(
+    () => checkpointSummaries.slice(0, 3),
+    [checkpointSummaries],
   );
 
   const saveCheckpoint = useCallback(() => {
@@ -964,6 +968,13 @@ export const BuilderV2Lab: React.FC = () => {
     }
     notify(`Restored checkpoint: ${checkpoint?.label ?? 'Checkpoint'}`);
   }, [history, notify]);
+
+  const formatCheckpointTime = useCallback((value: string) => {
+    if (!value) return '';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return '';
+    return date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+  }, []);
 
   const commitActivePageSections = useCallback((nextSections: LabSection[]) => {
     if (!activePage) return;
@@ -2820,6 +2831,53 @@ export const BuilderV2Lab: React.FC = () => {
                 </button>
               </div>
             </div>
+            {recentCheckpointSummaries.length > 0 && (
+              <div className="mb-2 rounded-md border border-border-subtle bg-white px-3 py-2.5">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary">Recovery timeline</p>
+                    <p className="mt-1 text-xs leading-relaxed text-text-secondary">
+                      Recent restore points stay visible here so risky cleanup moves never feel irreversible.
+                    </p>
+                  </div>
+                  <p className="text-[11px] text-text-tertiary">{checkpointSummaries.length} checkpoint{checkpointSummaries.length === 1 ? '' : 's'}</p>
+                </div>
+                <div className="mt-2 grid gap-2 md:grid-cols-3">
+                  {recentCheckpointSummaries.map((checkpoint) => {
+                    const tone = checkpoint.status === 'current'
+                      ? 'border-primary/30 bg-primary/10 text-primary'
+                      : checkpoint.status === 'ahead'
+                        ? 'border-slate-200 bg-slate-50 text-slate-700'
+                        : 'border-border-subtle bg-white text-text-primary';
+                    const statusLabel = checkpoint.status === 'current'
+                      ? 'Current'
+                      : checkpoint.status === 'ahead'
+                        ? 'Ahead'
+                        : 'Restore';
+
+                    return (
+                      <button
+                        key={checkpoint.id}
+                        onClick={() => restoreCheckpoint(checkpoint.id)}
+                        disabled={checkpoint.status === 'current'}
+                        className={`rounded-md border px-2.5 py-2 text-left transition-colors disabled:cursor-default ${tone}`}
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="text-xs font-semibold">{checkpoint.label}</p>
+                          <span className="rounded-full border border-current/20 px-1.5 py-0.5 text-[10px] uppercase tracking-[0.18em]">
+                            {statusLabel}
+                          </span>
+                        </div>
+                        <p className="mt-1 text-[11px] leading-relaxed opacity-80">
+                          {checkpoint.pageCount} page{checkpoint.pageCount === 1 ? '' : 's'} · {checkpoint.sectionCount} section{checkpoint.sectionCount === 1 ? '' : 's'}
+                        </p>
+                        <p className="mt-1 text-[11px] opacity-70">{formatCheckpointTime(checkpoint.createdAtISO)}</p>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
             <div className="mb-2 rounded-md border border-border-subtle bg-white px-3 py-2.5">
               <div className="grid gap-2 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
                 <div>

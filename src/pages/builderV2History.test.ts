@@ -118,10 +118,13 @@ describe('builderV2History', () => {
       isCheckpoint: true,
     });
 
-    expect(listBuilderV2CheckpointSummaries(result.history)).toEqual([
+    expect(listBuilderV2CheckpointSummaries(result.history, 1)).toEqual([
       expect.objectContaining({
         label: 'Before cleanup',
         historyIndex: 1,
+        status: 'current',
+        pageCount: 1,
+        sectionCount: 0,
       }),
     ]);
   });
