@@ -44,6 +44,11 @@ import {
   removeBuilderV2Block,
 } from './builderV2BlockOperations';
 import {
+  getBuilderV2BlockAddAllowance,
+  getBuilderV2SectionLimitConfig,
+  toggleBuilderV2CollapsedBlockState,
+} from './builderV2BlockEditorState';
+import {
   createBuilderV2Page,
   duplicateBuilderV2Page,
   moveBuilderV2SectionsToPage,
@@ -403,29 +408,6 @@ const SECTION_BLOCK_CATALOG: Record<string, BlockType[]> = {
   video: ['photo', 'travelTip', 'title', 'text', 'qna', 'divider'],
   custom: ['title', 'text', 'photo', 'qna', 'story', 'divider'],
 };
-
-const SECTION_BLOCK_LIMITS: Record<string, { total: number; perType?: Partial<Record<BlockType, number>> }> = {
-  hero: { total: 6, perType: { fundHighlight: 0 } },
-  story: { total: 10 },
-  schedule: { total: 10, perType: { event: 6 } },
-  travel: { total: 10, perType: { hotelCard: 4, travelTip: 6 } },
-  registry: { total: 10, perType: { fundHighlight: 1 } },
-  rsvp: { total: 8, perType: { rsvpNote: 2 } },
-  faq: { total: 12, perType: { faqItem: 10, qna: 10 } },
-  venue: { total: 8 },
-  gallery: { total: 14, perType: { photo: 10 } },
-  'wedding-party': { total: 12 },
-  'dress-code': { total: 8 },
-  directions: { total: 8 },
-  accommodations: { total: 10, perType: { hotelCard: 5 } },
-  contact: { total: 10, perType: { travelTip: 5, qna: 3 } },
-  quotes: { total: 12, perType: { photo: 8 } },
-  menu: { total: 14, perType: { travelTip: 10, title: 5 } },
-  music: { total: 16, perType: { travelTip: 12, title: 4 } },
-  video: { total: 12, perType: { photo: 6, travelTip: 6 } },
-  custom: { total: 12 },
-};
-
 
 type AddedBlockContent = {
   text?: string;
@@ -840,20 +822,13 @@ export const BuilderV2Lab: React.FC = () => {
     updatePreviewField('eventDateISO', `${localDateTime}:00`);
   };
 
-
-  const getSectionLimitConfig = (sectionType: string) =>
-    SECTION_BLOCK_LIMITS[sectionType] ?? { total: 10, perType: {} };
-
   const canAddBlockToSection = useCallback((sectionId: string, sectionType: string, blockType: BlockType) => {
-    const cfg = getSectionLimitConfig(sectionType);
-    const blocks = sectionBlocks[sectionId] ?? [];
-    if (blocks.length >= cfg.total) return { ok: false, reason: `Max ${cfg.total} blocks for this section` };
-    const perType = cfg.perType?.[blockType];
-    if (typeof perType === 'number') {
-      const count = blocks.filter((b) => b.type === blockType).length;
-      if (count >= perType) return { ok: false, reason: `Max ${perType} ${BLOCK_LABELS[blockType]} block(s)` };
-    }
-    return { ok: true as const, reason: '' };
+    return getBuilderV2BlockAddAllowance({
+      sectionType,
+      blockType,
+      blocks: sectionBlocks[sectionId] ?? [],
+      labels: BLOCK_LABELS,
+    });
   }, [sectionBlocks]);
 
   const addBlockToSection = (blockType: BlockType) => {
@@ -946,7 +921,7 @@ export const BuilderV2Lab: React.FC = () => {
   };
 
   const toggleBlockCollapsed = (blockId: string) => {
-    setCollapsedBlocks((prev) => ({ ...prev, [blockId]: !prev[blockId] }));
+    setCollapsedBlocks((prev) => toggleBuilderV2CollapsedBlockState(prev, blockId));
   };
 
   const moveBlock = (sectionId: string, blockId: string, dir: -1 | 1) => {
@@ -1636,7 +1611,7 @@ export const BuilderV2Lab: React.FC = () => {
     })),
     [documentPages],
   );
-  const selectedSectionLimit = useMemo(() => getSectionLimitConfig(selected.type), [selected.type]);
+  const selectedSectionLimit = useMemo(() => getBuilderV2SectionLimitConfig(selected.type), [selected.type]);
   const selectedSectionSettingFields = useMemo(
     () => buildBuilderV2SectionSettingFields(selected.type, selectedBlocks),
     [selected.type, selectedBlocks],

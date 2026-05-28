@@ -23,10 +23,12 @@ Status: draft (post-lab hardening)
   - `src/pages/builderV2SectionLifecycle.test.ts` proves section removal preserves the nearest valid next selection instead of dropping the editor into an orphaned state
 
 ### Block-level
-- [ ] add block respects section catalog constraints
+- [x] add block respects section catalog constraints
+  - `src/pages/builderV2BlockEditorState.test.ts` proves both total-block and per-type section caps block unsafe adds before they mutate the document
 - [x] duplicate block respects global/per-type limits
   - `src/pages/builderV2BlockOperations.test.ts` covers the blocked duplicate path when per-type section limits say no
-- [ ] collapse/expand state is isolated by block id
+- [x] collapse/expand state is isolated by block id
+  - `src/pages/builderV2BlockEditorState.test.ts` proves collapse toggles only flip the targeted block id while preserving every other block's editor state
 - [x] move up/down updates preview and preserves data
   - `src/pages/builderV2BlockOperations.test.ts` now proves reordered blocks keep their authored payloads intact while the sequence changes
 - [ ] remove block updates preview and validations immediately
