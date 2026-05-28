@@ -127,10 +127,10 @@ export const GuestsFeature: React.FC = () => {
               </div>
               <h3 className="text-xl font-serif font-bold text-ink mb-3">CSV Import</h3>
               <p className="text-ink/70 mb-4">
-                Import your guest list from Excel or Google Sheets. Intelligent column mapping handles any format.
+                Import your guest list from Excel or Google Sheets. Guided column mapping helps with common guest-list formats without pretending every spreadsheet lands perfectly on the first try.
               </p>
               <ul className="space-y-2 text-sm text-ink/70">
-                <li>• Auto-detect column mappings</li>
+                <li>• Suggested mapping for common guest fields</li>
                 <li>• Preview before import</li>
                 <li>• Clear checks and helpful prompts</li>
               </ul>
@@ -227,7 +227,7 @@ export const GuestsFeature: React.FC = () => {
                 'Plus-one management',
                 'Event access',
                 'Duplicate prevention',
-                'CSV import + export',
+                'CSV import + guided mapping',
                 'Advanced search',
                 'Custom tags',
                 'Private notes',
