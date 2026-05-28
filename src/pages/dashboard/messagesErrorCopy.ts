@@ -21,6 +21,14 @@ export function mapMessagesError(error: unknown, fallback: string): string {
   return customerSafeErrorMessage(error, fallback, { allow: MESSAGES_ALLOW_LIST });
 }
 
+export function mapMessageSendRuntimeError(error: unknown): string {
+  return mapMessagesError(error, MESSAGES_SEND_RETRY_ERROR);
+}
+
+export function mapScheduledDispatchRuntimeError(error: unknown): string {
+  return mapMessagesError(error, MESSAGES_PROCESS_SCHEDULED_RETRY_ERROR);
+}
+
 export function getDeliveryFailureReason(message?: string | null): string {
   return sanitizeDeliveryReason(message, DELIVERY_FAILED_FALLBACK);
 }

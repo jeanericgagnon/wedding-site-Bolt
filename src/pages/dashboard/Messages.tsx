@@ -29,7 +29,9 @@ import { resolvePublicSiteSlugFromRow } from '../../lib/publicSiteSlug';
 import {
   getDeliveryFailureReason,
   getDeliverySkipReason,
+  mapMessageSendRuntimeError,
   mapMessagesError,
+  mapScheduledDispatchRuntimeError,
   MESSAGES_CHECKOUT_RETRY_ERROR,
   MESSAGES_PROCESS_RETRY_ERROR,
   MESSAGES_PROCESS_SCHEDULED_RETRY_ERROR,
@@ -143,7 +145,7 @@ async function triggerBulkSend(messageId: string): Promise<{ delivered: number; 
   });
   if (!res.ok) {
     const body = await res.json().catch(() => ({ error: `HTTP ${res.status}` }));
-    throw new Error(body?.error ?? `Send failed (${res.status})`);
+    throw new Error(mapMessageSendRuntimeError(body?.error ?? `Send failed (${res.status})`));
   }
   return res.json();
 }
@@ -161,7 +163,7 @@ async function triggerScheduledDispatch(limit = 10): Promise<{ processed: number
   });
   if (!res.ok) {
     const body = await res.json().catch(() => ({ error: `HTTP ${res.status}` }));
-    throw new Error(body?.error ?? `Scheduled send run failed (${res.status})`);
+    throw new Error(mapScheduledDispatchRuntimeError(body?.error ?? `Scheduled send run failed (${res.status})`));
   }
   return res.json();
 }

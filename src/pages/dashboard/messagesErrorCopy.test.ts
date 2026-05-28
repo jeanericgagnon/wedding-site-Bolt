@@ -3,8 +3,11 @@ import { describe, expect, it } from 'vitest';
 import {
   getDeliveryFailureReason,
   getDeliverySkipReason,
+  mapMessageSendRuntimeError,
   mapMessagesError,
+  mapScheduledDispatchRuntimeError,
   MESSAGES_CHECKOUT_RETRY_ERROR,
+  MESSAGES_PROCESS_SCHEDULED_RETRY_ERROR,
   MESSAGES_SEND_RETRY_ERROR,
 } from './messagesErrorCopy';
 
@@ -22,6 +25,15 @@ describe('messagesErrorCopy', () => {
     expect(mapMessagesError(new Error('Stripe checkout failed because Supabase policy denied access'), MESSAGES_CHECKOUT_RETRY_ERROR)).toBe(
       MESSAGES_CHECKOUT_RETRY_ERROR,
     );
+  });
+
+  it('keeps bulk-send and scheduled-dispatch helper failures behind shared safe copy', () => {
+    expect(mapMessageSendRuntimeError('provider timeout token=abc')).toBe(
+      MESSAGES_SEND_RETRY_ERROR,
+    );
+    expect(
+      mapScheduledDispatchRuntimeError('functions/v1/send-bulk-message failed with relation "message_deliveries" missing'),
+    ).toBe(MESSAGES_PROCESS_SCHEDULED_RETRY_ERROR);
   });
 
   it('sanitizes delivery history reasons before showing them in the workspace', () => {
