@@ -31,15 +31,24 @@ import {
   getDeliverySkipReason,
   mapMessageSendRuntimeError,
   mapMessagesError,
+  MESSAGES_DELIVERY_HISTORY_LOAD_RETRY_ERROR,
+  MESSAGES_HISTORY_LOAD_RETRY_ERROR,
+  MESSAGES_ITINERARY_SEGMENTS_LOAD_RETRY_ERROR,
   mapScheduledDispatchRuntimeError,
   MESSAGES_CHECKOUT_RETRY_ERROR,
   MESSAGES_PROCESS_RETRY_ERROR,
   MESSAGES_PROCESS_SCHEDULED_RETRY_ERROR,
+  MESSAGES_RECIPIENTS_LOAD_RETRY_ERROR,
   MESSAGES_RESCHEDULE_RETRY_ERROR,
+  MESSAGES_RETRY_SEND_RETRY_ERROR,
   MESSAGES_SAVE_THE_DATE_RETRY_ERROR,
   MESSAGES_SCHEDULED_SEND_RETRY_ERROR,
   MESSAGES_SEND_RETRY_ERROR,
+  MESSAGES_SMS_ACTIVITY_LOAD_RETRY_ERROR,
+  MESSAGES_TEMPLATE_DELETE_RETRY_ERROR,
+  MESSAGES_TEMPLATE_SAVE_RETRY_ERROR,
   MESSAGES_UNSCHEDULE_RETRY_ERROR,
+  MESSAGES_WORKSPACE_LOAD_RETRY_ERROR,
 } from './messagesErrorCopy';
 
 const BULK_SEND_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-bulk-message`;
@@ -1117,7 +1126,7 @@ export const DashboardMessages: React.FC = () => {
       .eq('id', activeSite?.id ?? '')
       .maybeSingle();
     if (error) {
-      toast('Couldn’t load your messaging workspace right now. Please try again.', 'error');
+      toast(mapMessagesError(error, MESSAGES_WORKSPACE_LOAD_RETRY_ERROR), 'error');
       setWeddingSite(null);
       setMessages([]);
       setDeliveries([]);
@@ -1157,10 +1166,10 @@ export const DashboardMessages: React.FC = () => {
         .order('created_at', { ascending: false });
       if (error) throw error;
       setMessages(data || []);
-    } catch {
+    } catch (error) {
       setMessages([]);
       setDeliveries([]);
-      toast('Couldn’t load message history right now. Please try again.', 'error');
+      toast(mapMessagesError(error, MESSAGES_HISTORY_LOAD_RETRY_ERROR), 'error');
     } finally {
       setLoading(false);
     }
@@ -1186,13 +1195,13 @@ export const DashboardMessages: React.FC = () => {
         .select('id, email, phone, rsvp_status, first_name, last_name, name')
         .eq('wedding_site_id', weddingSite.id);
       if (error) {
-        toast('Couldn’t load guest recipients right now. Please try again.', 'error');
+        toast(mapMessagesError(error, MESSAGES_RECIPIENTS_LOAD_RETRY_ERROR), 'error');
         setGuests([]);
         return;
       }
       setGuests(data || []);
-    } catch {
-      toast('Couldn’t load guest recipients right now. Please try again.', 'error');
+    } catch (error) {
+      toast(mapMessagesError(error, MESSAGES_RECIPIENTS_LOAD_RETRY_ERROR), 'error');
       setGuests([]);
     }
   }, [weddingSite, isDemoMode]);
@@ -1232,7 +1241,7 @@ export const DashboardMessages: React.FC = () => {
         if (msg.includes('message_deliveries') || msg.includes('does not exist') || msg.includes('404')) {
           hasMessageDeliveriesTable = false;
         } else {
-          toast('Couldn’t load delivery history right now. Please try again.', 'error');
+          toast(mapMessagesError(error, MESSAGES_DELIVERY_HISTORY_LOAD_RETRY_ERROR), 'error');
         }
         setDeliveries([]);
         return;
@@ -1240,8 +1249,8 @@ export const DashboardMessages: React.FC = () => {
 
       hasMessageDeliveriesTable = true;
       setDeliveries((data as DeliveryRow[]) || []);
-    } catch {
-      toast('Couldn’t load delivery history right now. Please try again.', 'error');
+    } catch (error) {
+      toast(mapMessagesError(error, MESSAGES_DELIVERY_HISTORY_LOAD_RETRY_ERROR), 'error');
       setDeliveries([]);
     }
   }, [weddingSite, isDemoMode, messages]);
@@ -1309,8 +1318,8 @@ export const DashboardMessages: React.FC = () => {
       count: map[e.id]?.size ?? 0,
     }));
     setItineraryAudienceOptions(options);
-    } catch {
-      toast('Couldn’t load itinerary audience segments right now. Please try again.', 'error');
+    } catch (error) {
+      toast(mapMessagesError(error, MESSAGES_ITINERARY_SEGMENTS_LOAD_RETRY_ERROR), 'error');
       setItineraryAudienceOptions([]);
       setEventGuestIds({});
     }
@@ -1369,7 +1378,7 @@ export const DashboardMessages: React.FC = () => {
       ]);
 
       if (expiringResult.error || txResult.error) {
-        toast('Couldn’t load SMS credit activity right now. Please try again.', 'error');
+        toast(mapMessagesError(expiringResult.error || txResult.error, MESSAGES_SMS_ACTIVITY_LOAD_RETRY_ERROR), 'error');
         setSmsExpiringSoon(0);
         setSmsTransactions([]);
         return;
@@ -1378,8 +1387,8 @@ export const DashboardMessages: React.FC = () => {
       const soon = (expiringResult.data ?? []).reduce((sum, row: any) => sum + Number(row.remaining_credits ?? 0), 0);
       setSmsExpiringSoon(soon);
       setSmsTransactions((txResult.data ?? []) as SmsCreditTransaction[]);
-    } catch {
-      toast('Couldn’t load SMS credit activity right now. Please try again.', 'error');
+    } catch (error) {
+      toast(mapMessagesError(error, MESSAGES_SMS_ACTIVITY_LOAD_RETRY_ERROR), 'error');
       setSmsExpiringSoon(0);
       setSmsTransactions([]);
     }
@@ -1956,8 +1965,8 @@ export const DashboardMessages: React.FC = () => {
         toast(mapMessagesError(sendErr, MESSAGES_SEND_RETRY_ERROR), 'error');
       }
       await fetchMessages();
-    } catch {
-      toast('Couldn’t retry that message right now. Please try again.', 'error');
+    } catch (error) {
+      toast(mapMessagesError(error, MESSAGES_RETRY_SEND_RETRY_ERROR), 'error');
     } finally {
       setRetryingMessageId(null);
     }
@@ -2455,7 +2464,7 @@ export const DashboardMessages: React.FC = () => {
     const updated = [next, ...savedTemplates.filter((item) => normalizeSavedTemplateName(item.name) !== normalizedName)].slice(0, 12);
     const persisted = writeSavedComposerTemplates(updated);
     if (!persisted) {
-      toast('Couldn’t save that reusable template on this device right now.', 'error');
+      toast(MESSAGES_TEMPLATE_SAVE_RETRY_ERROR, 'error');
       return;
     }
     setSavedTemplates(updated);
@@ -2466,7 +2475,7 @@ export const DashboardMessages: React.FC = () => {
     const updated = savedTemplates.filter((item) => item.id !== templateId);
     const persisted = writeSavedComposerTemplates(updated);
     if (!persisted) {
-      toast('Couldn’t remove that saved template from this device right now.', 'error');
+      toast(MESSAGES_TEMPLATE_DELETE_RETRY_ERROR, 'error');
       return;
     }
     setSavedTemplates(updated);
