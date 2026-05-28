@@ -40,7 +40,8 @@ Status: draft (post-lab hardening)
   - `src/pages/builderV2BlockValidation.test.ts` proves the live warning layer clears as soon as missing qna/contact data is restored
 
 ### Command/toolbar-level
-- [ ] command palette actions are idempotent
+- [x] command palette actions are idempotent
+  - `src/pages/builderV2CommandPaletteExecution.test.ts` proves repeated triggers of the same command are ignored within one open palette session, while new sessions still allow the action again
 - [x] import failures are non-destructive
   - Import preview/validation now resolves through `src/pages/builderV2DocumentIo.ts` before any document apply step runs
   - Invalid JSON and unusable drafts fail in preview state without producing a prepared import document

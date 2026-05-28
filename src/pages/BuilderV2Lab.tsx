@@ -109,6 +109,7 @@ import {
   buildBuilderV2RailSelectionIntent,
   resolveBuilderV2PreviewSelectionIntent,
 } from './builderV2SelectionInteraction';
+import { createBuilderV2CommandPaletteExecutionGuard } from './builderV2CommandPaletteExecution';
 import {
   createBuilderV2HistorySnapshot,
   listBuilderV2CheckpointSummaries,
@@ -626,6 +627,7 @@ export const BuilderV2Lab: React.FC = () => {
   const [collapsedBlocks, setCollapsedBlocks] = useState<Record<string, boolean>>({});
   const importFileInputRef = useRef<HTMLInputElement | null>(null);
   const launchGateRef = useRef<HTMLDivElement | null>(null);
+  const commandPaletteExecutionGuardRef = useRef(createBuilderV2CommandPaletteExecutionGuard());
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
 
   const activeSnapshot = history[historyIndex] ?? history[0];
@@ -1433,6 +1435,16 @@ export const BuilderV2Lab: React.FC = () => {
     setRecentCommands((prev) => [label, ...prev.filter((x) => x !== label)].slice(0, 6));
   };
 
+  const executeCommandPaletteItem = useCallback((item: { id: string; action: () => void }) => {
+    if (!commandPaletteExecutionGuardRef.current.canExecute(item.id)) {
+      return;
+    }
+
+    item.action();
+    setShowCommand(false);
+    setCommandQuery('');
+  }, []);
+
   const getBlockValidationWarning = useCallback((
     sectionType: string,
     block: AddedBlock,
@@ -2230,6 +2242,10 @@ export const BuilderV2Lab: React.FC = () => {
   }, [commandQuery, showCommand]);
 
   useEffect(() => {
+    commandPaletteExecutionGuardRef.current.reset();
+  }, [showCommand]);
+
+  useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       const isMeta = e.metaKey || e.ctrlKey;
       if (isMeta && e.key.toLowerCase() === 'z' && !e.shiftKey) {
@@ -2284,9 +2300,7 @@ export const BuilderV2Lab: React.FC = () => {
           e.preventDefault();
           const item = commandItems[commandIndex];
           if (item) {
-            item.action();
-            setShowCommand(false);
-            setCommandQuery('');
+            executeCommandPaletteItem(item);
           }
           return;
         }
@@ -2304,7 +2318,7 @@ export const BuilderV2Lab: React.FC = () => {
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [canRedo, canUndo, sections, selected.id, showCommand, commandItems, commandIndex, clearSelection, invertSelection, selectAllSections, selectSection]);
+  }, [canRedo, canUndo, sections, selected.id, showCommand, commandItems, commandIndex, clearSelection, executeCommandPaletteItem, invertSelection, selectAllSections, selectSection]);
 
   return (
     <div className="h-screen bg-[#f6f6f6] text-text-primary overflow-hidden">
@@ -4705,7 +4719,7 @@ export const BuilderV2Lab: React.FC = () => {
                     <p className="px-3 pt-2 pb-1 text-[11px] uppercase updates-wide text-text-tertiary">{item.group}</p>
                   )}
                   <button
-                    onClick={() => { item.action(); setShowCommand(false); setCommandQuery(''); }}
+                    onClick={() => executeCommandPaletteItem(item)}
                     className={`w-full text-left px-3 py-2 rounded-md text-sm ${idx === commandIndex ? 'bg-primary/10 border border-primary/30' : 'hover:bg-surface-subtle'}`}
                   >
                     {item.label}
