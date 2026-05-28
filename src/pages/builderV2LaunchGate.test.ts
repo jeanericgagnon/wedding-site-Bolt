@@ -119,4 +119,40 @@ describe('buildBuilderV2LaunchGate', () => {
     });
     expect(summary.checklistItems.every((item) => item.done)).toBe(true);
   });
+
+  it('keeps launch review in caution mode when watch-level audit debt remains', () => {
+    const pages: BuilderV2ReviewPageSnapshot[] = [
+      {
+        id: 'home',
+        title: 'Home',
+        slug: 'home',
+        hidden: false,
+        isHome: true,
+        sections: [
+          {
+            id: 'story',
+            title: 'Story',
+            type: 'story',
+            enabled: true,
+            blockCount: 8,
+            warningCount: 0,
+          },
+        ],
+      },
+    ];
+    const audit = buildBuilderV2DocumentAudit({ pages, previewDevice: 'desktop' });
+
+    const summary = buildBuilderV2LaunchGate({
+      pages,
+      audit,
+      previewDevice: 'mobile',
+      previewReviewed: { desktop: true, mobile: true },
+    });
+
+    expect(summary.status).toBe('review');
+    expect(summary.primaryAction).toMatchObject({
+      kind: 'review-audit-issue',
+      label: 'Review on mobile',
+    });
+  });
 });

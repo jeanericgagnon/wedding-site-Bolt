@@ -84,7 +84,10 @@ import {
   pushBuilderV2HistorySnapshot,
   type BuilderV2HistorySnapshot,
 } from './builderV2History';
-import { buildBuilderV2LaunchGate } from './builderV2LaunchGate';
+import {
+  buildBuilderV2LaunchGate,
+  type BuilderV2LaunchGateAction,
+} from './builderV2LaunchGate';
 import {
   buildBuilderV2BlockFieldDescriptors,
   buildBuilderV2BlockFieldOptions,
@@ -1713,6 +1716,29 @@ export const BuilderV2Lab: React.FC = () => {
         break;
     }
   }, [launchGate.primaryAction, markPreviewReviewed, reviewDocumentAuditIssue]);
+  const launchGateExportTone = launchGate.status === 'ready'
+    ? 'border-emerald-200 bg-emerald-50/60'
+    : launchGate.status === 'review'
+      ? 'border-sky-200 bg-sky-50/60'
+      : 'border-amber-200 bg-amber-50/60';
+  const runLaunchGateChecklistAction = useCallback((action: BuilderV2LaunchGateAction) => {
+    switch (action.kind) {
+      case 'review-audit-issue':
+        reviewDocumentAuditIssue(action.issue);
+        break;
+      case 'switch-preview-device':
+        setPreviewDevice(action.device);
+        setFocusPreview(true);
+        setShowMinimap(action.device === 'mobile');
+        break;
+      case 'mark-preview-reviewed':
+        markPreviewReviewed(action.device);
+        break;
+      case 'open-export':
+        setShowExportPanel(true);
+        break;
+    }
+  }, [markPreviewReviewed, reviewDocumentAuditIssue]);
 
   const applyImportedDocument = useCallback((
     doc: BuilderV2Document,
@@ -2983,23 +3009,7 @@ export const BuilderV2Lab: React.FC = () => {
                               </div>
                               {action && (
                                 <button
-                                  onClick={() => {
-                                    if (action.kind === 'review-audit-issue') {
-                                      reviewDocumentAuditIssue(action.issue);
-                                      return;
-                                    }
-                                    if (action.kind === 'switch-preview-device') {
-                                      setPreviewDevice(action.device);
-                                      setFocusPreview(true);
-                                      setShowMinimap(action.device === 'mobile');
-                                      return;
-                                    }
-                                    if (action.kind === 'mark-preview-reviewed') {
-                                      markPreviewReviewed(action.device);
-                                      return;
-                                    }
-                                    setShowExportPanel(true);
-                                  }}
+                                  onClick={() => runLaunchGateChecklistAction(action)}
                                   className="shrink-0 rounded-md border border-border-subtle bg-white px-2 py-1.5 text-[11px] font-semibold text-text-primary hover:border-primary/40 hover:bg-primary/5"
                                 >
                                   {action.label}
@@ -4012,6 +4022,47 @@ export const BuilderV2Lab: React.FC = () => {
               <button onClick={() => setShowExportPanel(false)} className="text-sm text-text-tertiary hover:text-text-primary">✕</button>
             </div>
             <div className="space-y-3 p-4">
+              <div className={`rounded-md border px-3 py-3 ${launchGateExportTone}`}>
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary">Launch read</p>
+                    <p className="mt-1 text-sm font-semibold text-text-primary">{launchGate.headline}</p>
+                    <p className="mt-1 text-xs leading-relaxed text-text-secondary">{launchGate.detail}</p>
+                  </div>
+                  <div className="shrink-0 flex flex-wrap gap-1.5 text-[10px]">
+                    {launchGate.keyStats.map((stat) => (
+                      <span key={`export-launch-${stat}`} className="rounded-full border border-border-subtle bg-white px-2 py-1 text-text-secondary">{stat}</span>
+                    ))}
+                  </div>
+                </div>
+                <div className="mt-3 grid gap-2 md:grid-cols-2 xl:grid-cols-4">
+                  <div className="rounded-md border border-border-subtle bg-white px-2.5 py-2">
+                    <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary">Best next move</p>
+                    <p className="mt-1 text-xs leading-relaxed text-text-primary">{launchGate.bestNextMove}</p>
+                  </div>
+                  <div className="rounded-md border border-border-subtle bg-white px-2.5 py-2">
+                    <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary">Decision rule</p>
+                    <p className="mt-1 text-xs leading-relaxed text-text-primary">{launchGate.decisionRule}</p>
+                  </div>
+                  <div className="rounded-md border border-border-subtle bg-white px-2.5 py-2">
+                    <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary">Watchout</p>
+                    <p className="mt-1 text-xs leading-relaxed text-text-primary">{launchGate.watchout}</p>
+                  </div>
+                  <div className="rounded-md border border-border-subtle bg-white px-2.5 py-2">
+                    <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary">Primary action</p>
+                    <button
+                      onClick={() => {
+                        setShowExportPanel(false);
+                        runLaunchGateAction();
+                      }}
+                      className="mt-1 w-full rounded-md border border-primary/30 bg-primary/10 px-2.5 py-2 text-left text-xs font-semibold text-primary hover:bg-primary/15"
+                    >
+                      {launchGate.primaryAction.label}
+                    </button>
+                  </div>
+                </div>
+              </div>
+
               <div className={`rounded-md border px-3 py-3 ${
                 handoffGuidance.tone === 'ready'
                   ? 'border-emerald-200 bg-emerald-50/60'
@@ -4159,7 +4210,7 @@ export const BuilderV2Lab: React.FC = () => {
               </div>
             </div>
             <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border-subtle px-4 py-3">
-              <button onClick={runHandoffAction} className="rounded-sm border border-primary/30 bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary hover:bg-primary/15">
+              <button onClick={runHandoffAction} className="rounded-sm border border-border-subtle px-3 py-1.5 text-xs font-semibold text-text-primary hover:border-primary/40 hover:bg-primary/5">
                 {handoffGuidance.primaryActionLabel}
               </button>
               <div className="flex items-center gap-2">
@@ -4169,11 +4220,14 @@ export const BuilderV2Lab: React.FC = () => {
                 <button onClick={() => { void copyHandoffPacket(); }} className="rounded-sm border border-border-subtle px-3 py-1.5 text-xs font-medium hover:border-primary/40 hover:bg-primary/5">
                   Copy handoff packet
                 </button>
-                <button onClick={() => { void copyV2Json(); }} className="rounded-sm border border-border-subtle px-3 py-1.5 text-xs font-medium hover:border-primary/40 hover:bg-primary/5">
+                <button onClick={() => { void copyV2Json(); }} disabled={launchGate.status === 'blocked'} className="rounded-sm border border-border-subtle px-3 py-1.5 text-xs font-medium hover:border-primary/40 hover:bg-primary/5 disabled:cursor-not-allowed disabled:opacity-50">
                   Copy JSON
                 </button>
-                <button onClick={downloadV2Json} className="rounded-sm border border-primary/30 bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary hover:bg-primary/15">
-                  Download JSON
+                <button
+                  onClick={launchGate.status === 'ready' ? downloadV2Json : runLaunchGateAction}
+                  className="rounded-sm border border-primary/30 bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary hover:bg-primary/15"
+                >
+                  {launchGate.status === 'ready' ? 'Download JSON' : launchGate.primaryAction.label}
                 </button>
               </div>
             </div>
