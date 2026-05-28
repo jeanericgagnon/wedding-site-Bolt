@@ -57,6 +57,10 @@ export const getBuilderV2StarterBlockTypes = (
   availableBlockTypes: string[],
 ) => {
   const normalizedSectionType = normalize(sectionType);
+  if (normalizedSectionType === 'wedding-party') {
+    return ['title', 'photo', 'title', 'photo'].filter((type) => availableBlockTypes.includes(type));
+  }
+
   const recommended = getRecommendedBlockTypes(normalizedSectionType, availableBlockTypes);
   const preferredCount = preferredStarterCounts[normalizedSectionType] ?? 2;
   const starter = recommended.slice(0, preferredCount);
@@ -79,7 +83,7 @@ export const buildBuilderV2StarterBlocks = <TData>({
   sectionType: string;
   availableBlockTypes: string[];
   labels: Record<string, string>;
-  createDefaultData: (sectionType: string, type: string) => TData;
+  createDefaultData: (sectionType: string, type: string, index: number) => TData;
 }): StarterBlock<TData>[] => {
   const starterBlockTypes = getBuilderV2StarterBlockTypes(sectionType, availableBlockTypes);
 
@@ -87,7 +91,7 @@ export const buildBuilderV2StarterBlocks = <TData>({
     id: `${sectionId}-${String(blockType)}-starter-${index + 1}`,
     type: blockType,
     content: labels[String(blockType)] ?? String(blockType),
-    data: createDefaultData(sectionType, blockType),
+    data: createDefaultData(sectionType, blockType, index),
   }));
 };
 
@@ -129,7 +133,9 @@ export const buildBuilderV2SectionStarterSummary = (
   labels: Record<string, string>,
 ): BuilderV2SectionStarterSummary => {
   const starterBlockTypes = getBuilderV2StarterBlockTypes(sectionType, availableBlockTypes);
-  const labelList = starterBlockTypes.map((type) => labels[type] ?? type);
+  const labelList = normalize(sectionType) === 'wedding-party'
+    ? ['Side Heading', 'Party Member', 'Side Heading', 'Party Member']
+    : starterBlockTypes.map((type) => labels[type] ?? type);
 
   if (!starterBlockTypes.length) {
     return {

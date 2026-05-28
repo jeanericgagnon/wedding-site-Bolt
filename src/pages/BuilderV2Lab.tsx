@@ -185,6 +185,21 @@ const makeGenericDefaultBlockContent = (type: BlockType): AddedBlockContent => {
 
 const makeDefaultBlockContent = (sectionType: string, type: BlockType): AddedBlockContent => {
   switch (sectionType) {
+    case 'wedding-party':
+      if (type === 'title') {
+        return { text: 'Partner One Crew', subtitle: 'bridal-title' };
+      }
+      if (type === 'photo') {
+        return {
+          imageUrl: '',
+          caption: 'Wedding party portrait',
+          title: 'Avery',
+          role: 'Maid of Honor',
+          note: 'Keeps the dance floor and group texts alive.',
+          subtitle: 'bridal-party',
+        };
+      }
+      break;
     case 'contact':
       if (type === 'travelTip') {
         return {
@@ -276,6 +291,41 @@ const makeDefaultBlockContent = (sectionType: string, type: BlockType): AddedBlo
   }
 
   return makeGenericDefaultBlockContent(type);
+};
+
+const makeIndexedDefaultBlockContent = (
+  sectionType: string,
+  type: BlockType,
+  starterIndex?: number,
+): AddedBlockContent => {
+  if (sectionType === 'wedding-party') {
+    if (type === 'title') {
+      return starterIndex === 2
+        ? { text: 'Partner Two Crew', subtitle: 'groom-title' }
+        : { text: 'Partner One Crew', subtitle: 'bridal-title' };
+    }
+    if (type === 'photo') {
+      return starterIndex === 3
+        ? {
+          imageUrl: '',
+          caption: 'Wedding party portrait',
+          title: 'Jordan',
+          role: 'Best Man',
+          note: 'Handles the toast cue and keeps the energy steady.',
+          subtitle: 'groom-party',
+        }
+        : {
+          imageUrl: '',
+          caption: 'Wedding party portrait',
+          title: 'Avery',
+          role: 'Maid of Honor',
+          note: 'Keeps the dance floor and group texts alive.',
+          subtitle: 'bridal-party',
+        };
+    }
+  }
+
+  return makeDefaultBlockContent(sectionType, type);
 };
 
 const normalizeBlockData = (block: AddedBlock): AddedBlockContent => {
@@ -951,7 +1001,8 @@ export const BuilderV2Lab: React.FC = () => {
       sectionType,
       availableBlockTypes,
       labels: BLOCK_DEFAULTS,
-      createDefaultData: (starterSectionType, blockType) => makeDefaultBlockContent(starterSectionType, blockType as BlockType),
+      createDefaultData: (starterSectionType, blockType, starterIndex) =>
+        makeIndexedDefaultBlockContent(starterSectionType, blockType as BlockType, starterIndex),
     }).map((block) => ({
       ...block,
       id: `${sectionId}-${block.type}-${Math.random().toString(36).slice(2, 6)}`,

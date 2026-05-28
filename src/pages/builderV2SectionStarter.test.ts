@@ -12,6 +12,7 @@ describe('builderV2SectionStarter', () => {
     expect(getBuilderV2StarterBlockTypes('schedule', ['event', 'title', 'text', 'photo'])).toEqual(['event', 'title']);
     expect(getBuilderV2StarterBlockTypes('gallery', ['photo', 'title', 'text'])).toEqual(['photo', 'title']);
     expect(getBuilderV2StarterBlockTypes('menu', ['title', 'travelTip', 'story', 'text'])).toEqual(['title', 'travelTip', 'story']);
+    expect(getBuilderV2StarterBlockTypes('wedding-party', ['photo', 'title', 'text'])).toEqual(['title', 'photo', 'title', 'photo']);
   });
 
   it('falls back to the first available block types when recommendations are unavailable', () => {
@@ -52,6 +53,22 @@ describe('builderV2SectionStarter', () => {
     expect(summary.headline).toContain('Title + Link or Track + Request Note');
   });
 
+  it('builds a side-aware wedding-party starter summary', () => {
+    const summary = buildBuilderV2SectionStarterSummary(
+      'Wedding Party',
+      'wedding-party',
+      ['photo', 'title', 'text'],
+      {
+        title: 'Title',
+        photo: 'Photo',
+        text: 'Text',
+      },
+    );
+
+    expect(summary.blockTypes).toEqual(['title', 'photo', 'title', 'photo']);
+    expect(summary.headline).toContain('Side Heading + Party Member + Side Heading + Party Member');
+  });
+
   it('builds starter blocks with deterministic starter ids and default data', () => {
     const blocks = buildBuilderV2StarterBlocks({
       sectionId: 'travel-1',
@@ -62,7 +79,7 @@ describe('builderV2SectionStarter', () => {
         hotelCard: 'Hotel Card',
         text: 'Text Block',
       },
-      createDefaultData: (sectionType, type) => ({ sectionType, type, seeded: true }),
+      createDefaultData: (sectionType, type, index) => ({ sectionType, type, index, seeded: true }),
     });
 
     expect(blocks).toEqual([
@@ -70,13 +87,13 @@ describe('builderV2SectionStarter', () => {
         id: 'travel-1-travelTip-starter-1',
         type: 'travelTip',
         content: 'Travel Tip',
-        data: { sectionType: 'travel', type: 'travelTip', seeded: true },
+        data: { sectionType: 'travel', type: 'travelTip', index: 0, seeded: true },
       },
       {
         id: 'travel-1-hotelCard-starter-2',
         type: 'hotelCard',
         content: 'Hotel Card',
-        data: { sectionType: 'travel', type: 'hotelCard', seeded: true },
+        data: { sectionType: 'travel', type: 'hotelCard', index: 1, seeded: true },
       },
     ]);
   });
@@ -98,6 +115,28 @@ describe('builderV2SectionStarter', () => {
       { sectionType: 'music', type: 'title' },
       { sectionType: 'music', type: 'travelTip' },
       { sectionType: 'music', type: 'story' },
+    ]);
+  });
+
+  it('supports a repeated wedding-party starter spine', () => {
+    const blocks = buildBuilderV2StarterBlocks({
+      sectionId: 'party-1',
+      sectionType: 'wedding-party',
+      availableBlockTypes: ['photo', 'title', 'text'],
+      labels: {
+        title: 'Title',
+        photo: 'Photo',
+        text: 'Text',
+      },
+      createDefaultData: (sectionType, type, index) => ({ sectionType, type, index }),
+    });
+
+    expect(blocks.map((block) => block.type)).toEqual(['title', 'photo', 'title', 'photo']);
+    expect(blocks.map((block) => block.data)).toEqual([
+      { sectionType: 'wedding-party', type: 'title', index: 0 },
+      { sectionType: 'wedding-party', type: 'photo', index: 1 },
+      { sectionType: 'wedding-party', type: 'title', index: 2 },
+      { sectionType: 'wedding-party', type: 'photo', index: 3 },
     ]);
   });
 
