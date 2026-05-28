@@ -30,6 +30,7 @@ import {
 } from './photoBucketLinksStorage';
 import { getGuestPhotoShareReadyBuckets } from './guestPhotoShareReadyBuckets';
 import { buildGuestPhotoBucketMessagingPath, buildGuestPhotoShareMessage } from './guestPhotoMessagingLink';
+import { getGuestPhotoBucketShareLink } from './guestPhotoBucketShareState';
 
 type ItineraryEvent = {
   id: string;
@@ -1280,8 +1281,10 @@ export const GuestPhotoSharing: React.FC = () => {
                 const recents = recentByBucket.get(bucket.id) ?? [];
                 const draft = windowDrafts[bucket.id] ?? { opensAt: '', closesAt: '' };
                 const knownUploadLink = bucketUploadLinks[bucket.id] || '';
+                const shareReadyLink = getGuestPhotoBucketShareLink({ isActive: bucket.is_active, uploadLink: knownUploadLink });
                 const hasWindow = Boolean(bucket.opens_at || bucket.closes_at);
-                const hasLink = Boolean(knownUploadLink);
+                const hasStoredLink = Boolean(knownUploadLink);
+                const hasShareReadyLink = Boolean(shareReadyLink);
 
                 return (
                   <div key={bucket.id} className="overflow-hidden rounded-[24px] border border-neutral-200 bg-white shadow-sm">
@@ -1296,12 +1299,13 @@ export const GuestPhotoSharing: React.FC = () => {
                               {bucket.is_active ? 'Active' : 'Paused'}
                             </span>
                             <span>{uploadCount} uploads</span>
-                            {!hasLink && <span className="text-rose-700">no saved link yet</span>}
+                            {!hasStoredLink && <span className="text-rose-700">no saved link yet</span>}
+                            {hasStoredLink && !hasShareReadyLink && <span className="text-amber-700">link saved, sharing paused</span>}
                             {!hasWindow && <span className="text-amber-700">no upload window yet</span>}
                             {flaggedCount > 0 && <span className="text-amber-700">{flaggedCount} flagged</span>}
                             {hiddenCount > 0 && <span className="text-neutral-600">{hiddenCount} hidden</span>}
                             <span>slug: {bucket.slug}</span>
-                          {hasLink && <span className="text-emerald-700">upload dashboard ready</span>}
+                          {hasShareReadyLink && <span className="text-emerald-700">upload dashboard ready</span>}
                           </div>
                         </div>
 
@@ -1323,8 +1327,8 @@ export const GuestPhotoSharing: React.FC = () => {
                         <Button
                           size="sm"
                           variant="outline"
-                          disabled={!knownUploadLink}
-                          onClick={() => void copyText(knownUploadLink, `uplink-${bucket.id}`)}
+                          disabled={!hasShareReadyLink}
+                          onClick={() => void copyText(shareReadyLink, `uplink-${bucket.id}`)}
                         >
                           <Copy className="w-3 h-3 mr-1" />
                           {copied === `uplink-${bucket.id}` ? 'Copy ready' : 'Copy link'}
@@ -1332,8 +1336,8 @@ export const GuestPhotoSharing: React.FC = () => {
                         <Button
                           size="sm"
                           variant="outline"
-                          disabled={!knownUploadLink}
-                          onClick={() => window.open(getBucketQrUrl(knownUploadLink), '_blank')}
+                          disabled={!hasShareReadyLink}
+                          onClick={() => window.open(getBucketQrUrl(shareReadyLink), '_blank')}
                         >
                           QR code
                         </Button>
@@ -1356,19 +1360,19 @@ export const GuestPhotoSharing: React.FC = () => {
                         <Button
                           size="sm"
                           variant="outline"
-                          disabled={!knownUploadLink}
-                          onClick={() => void copyText(buildGuestPhotoShareMessage(bucket.name, knownUploadLink), `share-msg-${bucket.id}`)}
+                          disabled={!hasShareReadyLink}
+                          onClick={() => void copyText(buildGuestPhotoShareMessage(bucket.name, shareReadyLink), `share-msg-${bucket.id}`)}
                         >
                           {copied === `share-msg-${bucket.id}` ? 'Copied share prompt' : 'Copy share prompt'}
                         </Button>
                         <Button
                           size="sm"
                           variant="outline"
-                          disabled={!knownUploadLink || !bucket.is_active}
+                          disabled={!hasShareReadyLink}
                           onClick={() => {
                             const messagingPath = buildGuestPhotoBucketMessagingPath({
                               bucketName: bucket.name,
-                              uploadLink: knownUploadLink,
+                              uploadLink: shareReadyLink,
                             });
                             if (!messagingPath) return;
                             window.location.href = messagingPath;
@@ -1381,11 +1385,11 @@ export const GuestPhotoSharing: React.FC = () => {
                     </div>
                     <div className="px-5 py-4 space-y-4">
 
-                    {hasLink && (
+                    {hasShareReadyLink && (
                       <div className="rounded-2xl border border-emerald-200 bg-emerald-50/70 p-3">
                         <p className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-700">Upload dashboard ready</p>
                         <p className="mt-1 text-sm text-emerald-900">Share one clean upload destination for this bucket.</p>
-                        <p className="mt-2 truncate text-xs text-emerald-800">{knownUploadLink}</p>
+                        <p className="mt-2 truncate text-xs text-emerald-800">{shareReadyLink}</p>
                       </div>
                     )}
 
