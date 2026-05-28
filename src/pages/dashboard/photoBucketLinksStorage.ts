@@ -1,5 +1,6 @@
 export const PHOTO_BUCKET_LINKS_STORAGE_KEY = 'dayof.photoBucketLinks';
 export const LEGACY_PHOTO_BUCKET_LINKS_STORAGE_KEY = 'dayof.photoAlbumLinks';
+export const LATEST_PHOTO_BUCKET_LINK_STORAGE_KEY = 'dayof.latestPhotoBucketLink';
 
 const parseStoredPhotoBucketLinks = (raw: string | null): Record<string, string> => {
   if (!raw) return {};
@@ -32,6 +33,22 @@ export const writeStoredPhotoBucketLinks = (value: Record<string, string>) => {
 
   try {
     localStorage.setItem(LEGACY_PHOTO_BUCKET_LINKS_STORAGE_KEY, serialized);
+  } catch {
+    // ignore
+  }
+};
+
+export const readLatestStoredPhotoBucketLink = (): string => {
+  try {
+    return localStorage.getItem(LATEST_PHOTO_BUCKET_LINK_STORAGE_KEY)?.trim() ?? '';
+  } catch {
+    return '';
+  }
+};
+
+export const writeLatestStoredPhotoBucketLink = (value: string) => {
+  try {
+    localStorage.setItem(LATEST_PHOTO_BUCKET_LINK_STORAGE_KEY, value.trim());
   } catch {
     // ignore
   }

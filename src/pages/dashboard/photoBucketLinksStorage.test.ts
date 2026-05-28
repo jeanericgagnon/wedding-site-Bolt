@@ -2,9 +2,12 @@ import { afterEach, describe, expect, it } from 'vitest';
 
 import {
   LEGACY_PHOTO_BUCKET_LINKS_STORAGE_KEY,
+  LATEST_PHOTO_BUCKET_LINK_STORAGE_KEY,
   PHOTO_BUCKET_LINKS_STORAGE_KEY,
+  readLatestStoredPhotoBucketLink,
   readStoredPhotoBucketLinkList,
   readStoredPhotoBucketLinks,
+  writeLatestStoredPhotoBucketLink,
   writeStoredPhotoBucketLinks,
 } from './photoBucketLinksStorage';
 
@@ -32,5 +35,12 @@ describe('photoBucketLinksStorage', () => {
 
     expect(localStorage.getItem(PHOTO_BUCKET_LINKS_STORAGE_KEY)).toBe(JSON.stringify({ a: 'https://new.example/a' }));
     expect(localStorage.getItem(LEGACY_PHOTO_BUCKET_LINKS_STORAGE_KEY)).toBe(JSON.stringify({ a: 'https://new.example/a' }));
+  });
+
+  it('reads and writes the latest prepared photo bucket link separately', () => {
+    writeLatestStoredPhotoBucketLink('https://new.example/latest');
+
+    expect(readLatestStoredPhotoBucketLink()).toBe('https://new.example/latest');
+    expect(localStorage.getItem(LATEST_PHOTO_BUCKET_LINK_STORAGE_KEY)).toBe('https://new.example/latest');
   });
 });

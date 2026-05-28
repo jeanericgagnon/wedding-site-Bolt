@@ -21,7 +21,12 @@ import { parseDatetimeLocalToIso, toDatetimeLocalOrEmpty } from './guestPhotoDat
 import { formatGuestPhotoDate, formatGuestPhotoDateTime, getGuestPhotoSortTime, toGuestPhotoCsvTimestamp } from './guestPhotoUploadTime';
 import { formatGuestPhotoEventDate, getSuggestedGuestPhotoWindowStart } from './guestPhotoEventDate';
 import { getBulkGuestPhotoModerationTargets, getVisibleGuestPhotoUploads } from './guestPhotoModerationTargets';
-import { readStoredPhotoBucketLinks, writeStoredPhotoBucketLinks } from './photoBucketLinksStorage';
+import {
+  readLatestStoredPhotoBucketLink,
+  readStoredPhotoBucketLinks,
+  writeLatestStoredPhotoBucketLink,
+  writeStoredPhotoBucketLinks,
+} from './photoBucketLinksStorage';
 
 type ItineraryEvent = {
   id: string;
@@ -87,7 +92,7 @@ export const GuestPhotoSharing: React.FC = () => {
   const [bucketSearch, setBucketSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'paused'>('all');
 
-  const [latestUploadUrl, setLatestUploadUrl] = useState<string>('');
+  const [latestUploadUrl, setLatestUploadUrl] = useState<string>(() => readLatestStoredPhotoBucketLink());
   const [bucketUploadLinks, setBucketUploadLinks] = useState<Record<string, string>>(() => readStoredPhotoBucketLinks());
   const [copied, setCopied] = useState<string>('');
   const [workingBucketId, setWorkingBucketId] = useState<string>('');
@@ -123,6 +128,10 @@ export const GuestPhotoSharing: React.FC = () => {
   useEffect(() => {
     writeStoredPhotoBucketLinks(bucketUploadLinks);
   }, [bucketUploadLinks]);
+
+  useEffect(() => {
+    writeLatestStoredPhotoBucketLink(latestUploadUrl);
+  }, [latestUploadUrl]);
 
   const invokeOrThrow = async (fnName: string, body: Record<string, unknown>) => {
     try {
