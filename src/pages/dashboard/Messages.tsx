@@ -26,6 +26,19 @@ import { getMessageTemplateCoupleLabel } from './messageTemplateVariables';
 import { readStoredPhotoBucketLinks } from './photoBucketLinksStorage';
 import { buildPhotoRequestTemplateBody, getMessagePhotoLinkState } from './messagePhotoLinkState';
 import { resolvePublicSiteSlugFromRow } from '../../lib/publicSiteSlug';
+import {
+  getDeliveryFailureReason,
+  getDeliverySkipReason,
+  mapMessagesError,
+  MESSAGES_CHECKOUT_RETRY_ERROR,
+  MESSAGES_PROCESS_RETRY_ERROR,
+  MESSAGES_PROCESS_SCHEDULED_RETRY_ERROR,
+  MESSAGES_RESCHEDULE_RETRY_ERROR,
+  MESSAGES_SAVE_THE_DATE_RETRY_ERROR,
+  MESSAGES_SCHEDULED_SEND_RETRY_ERROR,
+  MESSAGES_SEND_RETRY_ERROR,
+  MESSAGES_UNSCHEDULE_RETRY_ERROR,
+} from './messagesErrorCopy';
 
 const BULK_SEND_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-bulk-message`;
 const DEMO_MESSAGES_STORAGE_KEY = 'dayof.demo.messages.history';
@@ -625,14 +638,14 @@ const MessageDetailModal: React.FC<MessageDetailModalProps> = ({ message, delive
   const skippedDeliveries = messageDeliveries.filter((delivery) => delivery.status === 'skipped');
   const topFailureReasons = Array.from(
     failedDeliveries.reduce((map, delivery) => {
-      const key = (delivery.error_message || 'Unknown provider error').trim();
+      const key = getDeliveryFailureReason(delivery.error_message);
       map.set(key, (map.get(key) ?? 0) + 1);
       return map;
     }, new Map<string, number>()).entries(),
   ).sort((a, b) => b[1] - a[1]).slice(0, 3);
   const topSkipReasons = Array.from(
     skippedDeliveries.reduce((map, delivery) => {
-      const key = (delivery.error_message || 'Skipped before send').trim();
+      const key = getDeliverySkipReason(delivery.error_message);
       map.set(key, (map.get(key) ?? 0) + 1);
       return map;
     }, new Map<string, number>()).entries(),
@@ -800,7 +813,7 @@ const MessageDetailModal: React.FC<MessageDetailModalProps> = ({ message, delive
                         <div>
                           <p className="font-medium text-rose-900">{delivery.recipient_name || delivery.recipient_email || 'Unknown recipient'}</p>
                           {delivery.recipient_name && <p className="text-rose-700">{delivery.recipient_email || 'No contact recorded'}</p>}
-                          <p className="mt-0.5 text-rose-700">{delivery.error_message || 'Delivery failed before the provider returned a clear reason.'}</p>
+                          <p className="mt-0.5 text-rose-700">{getDeliveryFailureReason(delivery.error_message)}</p>
                         </div>
                         <span className="shrink-0 text-[11px] text-rose-600">{delivery.attempted_at ? formatMessageHistoryDateTime(delivery.attempted_at, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }, 'Attempted') : 'Attempted'}</span>
                       </div>
@@ -844,7 +857,7 @@ const MessageDetailModal: React.FC<MessageDetailModalProps> = ({ message, delive
                         <div>
                           <p className="font-medium text-amber-900">{delivery.recipient_name || delivery.recipient_email || 'Unknown recipient'}</p>
                           {delivery.recipient_name && <p className="text-amber-700">{delivery.recipient_email || 'No contact recorded'}</p>}
-                          <p className="mt-0.5 text-amber-700">{delivery.error_message || 'Skipped before the provider was called.'}</p>
+                          <p className="mt-0.5 text-amber-700">{getDeliverySkipReason(delivery.error_message)}</p>
                         </div>
                         <span className="shrink-0 text-[11px] text-amber-600">{delivery.attempted_at ? formatMessageHistoryDateTime(delivery.attempted_at, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }, 'Skipped') : 'Skipped'}</span>
                       </div>
@@ -1061,7 +1074,7 @@ export const DashboardMessages: React.FC = () => {
       const url = await createSmsCreditsSession(weddingSite.id, success, cancel, pack);
       window.location.href = url;
     } catch (err) {
-      toast(err instanceof Error ? err.message : 'Couldn’t open checkout right now. Please try again.', 'error');
+      toast(mapMessagesError(err, MESSAGES_CHECKOUT_RETRY_ERROR), 'error');
     } finally {
       setBuyingPack(null);
     }
@@ -1699,12 +1712,12 @@ export const DashboardMessages: React.FC = () => {
             toast(`Sent ${result.delivered}${result.failed > 0 ? ` • failed ${result.failed}` : ''}${skipped > 0 ? ` • skipped ${skipped}` : ''}. Check message history.`, 'info');
           }
         } catch (sendErr) {
-          toast(sendErr instanceof Error ? sendErr.message : 'Delivery failed. Check message history.', 'error');
+          toast(mapMessagesError(sendErr, MESSAGES_SEND_RETRY_ERROR), 'error');
         }
         await fetchMessages();
       }
     } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Failed to process message. Please try again.';
+      const msg = mapMessagesError(err, MESSAGES_PROCESS_RETRY_ERROR);
       toast(msg, 'error');
     } finally {
       setSending(false);
@@ -1938,7 +1951,7 @@ export const DashboardMessages: React.FC = () => {
             delivered_count: message.delivered_count,
           })
           .eq('id', message.id);
-        toast(sendErr instanceof Error ? sendErr.message : 'Delivery failed. Try again later.', 'error');
+        toast(mapMessagesError(sendErr, MESSAGES_SEND_RETRY_ERROR), 'error');
       }
       await fetchMessages();
     } catch {
@@ -2015,7 +2028,7 @@ export const DashboardMessages: React.FC = () => {
           .update({ scheduled_for: message.scheduled_for })
           .eq('id', message.id);
       }
-      toast(err instanceof Error ? err.message : 'Couldn’t send that scheduled message right now.', 'error');
+      toast(mapMessagesError(err, MESSAGES_SCHEDULED_SEND_RETRY_ERROR), 'error');
     }
   }
 
@@ -2082,7 +2095,7 @@ export const DashboardMessages: React.FC = () => {
       toast(`Rescheduled for ${formatScheduledMessageDateTime(scheduledFor)}.`, 'success');
       await fetchMessages();
     } catch (err) {
-      toast(err instanceof Error ? err.message : 'Couldn’t reschedule that campaign right now.', 'error');
+      toast(mapMessagesError(err, MESSAGES_RESCHEDULE_RETRY_ERROR), 'error');
     }
   }
 
@@ -2143,7 +2156,7 @@ export const DashboardMessages: React.FC = () => {
       toast('Scheduled campaign moved back to draft.', 'info');
       await fetchMessages();
     } catch (err) {
-      toast(err instanceof Error ? err.message : 'Couldn’t unschedule that campaign right now.', 'error');
+      toast(mapMessagesError(err, MESSAGES_UNSCHEDULE_RETRY_ERROR), 'error');
     }
   }
 
@@ -2227,7 +2240,7 @@ export const DashboardMessages: React.FC = () => {
       }
       await fetchMessages();
     } catch (err) {
-      toast(err instanceof Error ? err.message : 'Couldn’t process scheduled messages right now.', 'error');
+      toast(mapMessagesError(err, MESSAGES_PROCESS_SCHEDULED_RETRY_ERROR), 'error');
     } finally {
       setProcessingScheduled(false);
     }
@@ -2539,7 +2552,7 @@ export const DashboardMessages: React.FC = () => {
 
       toast('Save-the-date campaign scheduled for tomorrow at 10:00.', 'success');
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Could not create save-the-date campaign.';
+      const message = mapMessagesError(err, MESSAGES_SAVE_THE_DATE_RETRY_ERROR);
       toast(
         created
           ? `Campaign was created, but the message list could not refresh: ${message}`
@@ -2869,7 +2882,7 @@ export const DashboardMessages: React.FC = () => {
       completedDeliveryRows
         .filter((d) => d.status === 'failed' && d.error_message)
         .reduce((map, d) => {
-          const key = (d.error_message || 'Unknown').slice(0, 60);
+          const key = getDeliveryFailureReason(d.error_message).slice(0, 60);
           map.set(key, (map.get(key) ?? 0) + 1);
           return map;
         }, new Map<string, number>())
@@ -3809,13 +3822,13 @@ export const DashboardMessages: React.FC = () => {
           </div>
 
           <div className="rounded-2xl border border-border-subtle bg-surface-subtle/30 px-4 py-3 text-[11px] text-text-secondary mb-4">
-            Delivery health is based on message and delivery logs available in this workspace. Use it to spot what needs attention quickly, not as a full provider-grade reporting screen.
+            Delivery health is based on message and delivery logs available in this workspace. Use it to spot what needs attention quickly, not as a full system-of-record reporting screen.
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-4">
             {[
               {
-                label: 'Provider attempts',
+                label: 'Delivery attempts',
                 value: providerTelemetry.attempted,
                 detail: `${providerTelemetry.sentRate}% sent rate across attempted deliveries`,
               },
@@ -3825,14 +3838,14 @@ export const DashboardMessages: React.FC = () => {
                 detail: 'Missing or invalid contact info',
               },
               {
-                label: 'Provider IDs',
+                label: 'Delivery IDs',
                 value: providerTelemetry.withProviderId,
-                detail: 'Rows tied to provider message ids',
+                detail: 'Rows tied to delivery log ids',
               },
               {
-                label: 'Top provider errors',
+                label: 'Top delivery issues',
                 value: providerTelemetry.errorTop.length,
-                detail: providerTelemetry.errorTop[0]?.[0] ?? 'No provider failures logged',
+                detail: providerTelemetry.errorTop[0]?.[0] ?? 'No delivery issues logged',
               },
             ].map((item) => (
               <div key={item.label} className="rounded-lg border border-border/35 bg-white shadow-[0_4px_14px_rgba(15,23,42,0.04)] px-3 py-2.5">
