@@ -29,6 +29,16 @@ export type BuilderV2BlockFieldDescriptor = {
   options?: Array<{ value: string; label: string }>;
 };
 
+export type BuilderV2BlockFieldOptions = Partial<Record<
+  BuilderV2BlockFieldKey,
+  Array<{ value: string; label: string }>
+>>;
+
+type BuilderV2BlockFieldOptionBlock = {
+  type: string;
+  data?: BuilderV2BlockContentLike;
+};
+
 export type BuilderV2BlockPreviewSummary = {
   imageUrl?: string;
   imageAlt?: string;
@@ -52,6 +62,102 @@ const WEDDING_PARTY_MEMBER_OPTIONS = [
   { value: 'bridal-party', label: 'Partner one side' },
   { value: 'groom-party', label: 'Partner two side' },
 ] satisfies Array<{ value: string; label: string }>;
+
+const buildOptions = (values: Array<{ value: string; label: string }>) =>
+  values.filter((option, index, all) => (
+    option.value
+    && all.findIndex((candidate) => candidate.value === option.value) === index
+  ));
+
+export const buildBuilderV2BlockFieldOptions = (
+  sectionType: string,
+  blockType: string,
+  data: BuilderV2BlockContentLike,
+  blocks: BuilderV2BlockFieldOptionBlock[],
+): BuilderV2BlockFieldOptions => {
+  if (sectionType === 'wedding-party' && blockType === 'title' && data.subtitle) {
+    return { subtitle: WEDDING_PARTY_SIDE_OPTIONS };
+  }
+
+  if (sectionType === 'wedding-party' && blockType === 'photo' && data.subtitle) {
+    return { subtitle: WEDDING_PARTY_MEMBER_OPTIONS };
+  }
+
+  if (sectionType === 'menu') {
+    const courseOptions = buildOptions(blocks
+      .filter((block) => block.type === 'title')
+      .map((block, index) => ({
+        value: typeof block.data?.subtitle === 'string' ? block.data.subtitle : '',
+        label: typeof block.data?.text === 'string' && block.data.text.trim()
+          ? block.data.text.trim()
+          : `Course ${index + 1}`,
+      })));
+
+    if (courseOptions.length > 0 && (blockType === 'title' || blockType === 'travelTip')) {
+      return { subtitle: courseOptions };
+    }
+  }
+
+  if (sectionType === 'music') {
+    const playlistOptions = blocks
+      .filter((block) => block.type === 'title')
+      .map((block, index) => {
+        const rawSubtitle = typeof block.data?.subtitle === 'string' ? block.data.subtitle : '';
+        const playlistId = rawSubtitle.startsWith('playlist:') ? rawSubtitle.slice('playlist:'.length) : '';
+        return {
+          value: rawSubtitle,
+          label: typeof block.data?.text === 'string' && block.data.text.trim()
+            ? block.data.text.trim()
+            : `Playlist ${index + 1}`,
+          playlistId,
+        };
+      })
+      .filter((option) => option.value && option.playlistId);
+
+    if (blockType === 'title' && playlistOptions.length > 0) {
+      return {
+        subtitle: playlistOptions.map(({ value, label }) => ({ value, label })),
+      };
+    }
+
+    if (blockType === 'travelTip' && playlistOptions.length > 0) {
+      if (data.subtitle?.startsWith('playlist-link:')) {
+        return {
+          subtitle: playlistOptions.map(({ playlistId, label }) => ({
+            value: `playlist-link:${playlistId}`,
+            label,
+          })),
+        };
+      }
+
+      if (data.subtitle?.startsWith('playlist-track:')) {
+        return {
+          subtitle: playlistOptions.map(({ playlistId, label }) => ({
+            value: `playlist-track:${playlistId}`,
+            label,
+          })),
+        };
+      }
+    }
+  }
+
+  if (sectionType === 'video') {
+    const videoOptions = buildOptions(blocks
+      .filter((block) => block.type === 'photo')
+      .map((block, index) => ({
+        value: typeof block.data?.subtitle === 'string' ? block.data.subtitle : '',
+        label: typeof block.data?.title === 'string' && block.data.title.trim()
+          ? block.data.title.trim()
+          : `Video ${index + 1}`,
+      })));
+
+    if (videoOptions.length > 0 && (blockType === 'photo' || blockType === 'travelTip')) {
+      return { subtitle: videoOptions };
+    }
+  }
+
+  return {};
+};
 
 export const buildBuilderV2BlockFieldDescriptors = (
   sectionType: string,
@@ -95,9 +201,6 @@ export const buildBuilderV2BlockFieldDescriptors = (
         ...(data.subtitle ? [{
           key: 'subtitle',
           label: sectionType === 'wedding-party' ? 'Side key' : 'Group key',
-          ...(sectionType === 'wedding-party'
-            ? { options: WEDDING_PARTY_MEMBER_OPTIONS }
-            : {}),
         } satisfies BuilderV2BlockFieldDescriptor] : []),
         { key: 'imageUrl', label: 'Image URL', inputType: 'url' },
         { key: 'caption', label: 'Caption' },
@@ -128,7 +231,7 @@ export const buildBuilderV2BlockFieldDescriptors = (
     if (sectionType === 'wedding-party') {
       return [
         { key: 'text', label: 'Side heading' },
-        { key: 'subtitle', label: 'Side key', options: WEDDING_PARTY_SIDE_OPTIONS },
+        { key: 'subtitle', label: 'Side key' },
       ];
     }
 

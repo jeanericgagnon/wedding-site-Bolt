@@ -79,6 +79,7 @@ import { buildBuilderV2SetupSeed } from './builderV2SetupSeed';
 import { buildBuilderV2PreviewInstances } from './builderV2PreviewProjection';
 import {
   buildBuilderV2BlockFieldDescriptors,
+  buildBuilderV2BlockFieldOptions,
   buildBuilderV2BlockPreviewSummary,
 } from './builderV2BlockPresentation';
 import { getBuilderV2BlockValidationWarning } from './builderV2BlockValidation';
@@ -3284,6 +3285,8 @@ export const BuilderV2Lab: React.FC = () => {
 
                           {!collapsedBlocks[block.id] && buildBuilderV2BlockFieldDescriptors(selected.type, block.type, d).map((field) => {
                             const value = (d[field.key] ?? (field.key === 'text' ? block.content : '')) as string;
+                            const optionMap = buildBuilderV2BlockFieldOptions(selected.type, block.type, d, selectedBlocks);
+                            const options = field.options ?? optionMap[field.key];
                             const baseClassName = 'mt-1 w-full border rounded-md px-3 py-2.5 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary/20';
 
                             return (
@@ -3295,13 +3298,13 @@ export const BuilderV2Lab: React.FC = () => {
                                     onChange={(e) => updateBlockField(selected.id, block.id, field.key, e.target.value)}
                                     className={`${baseClassName} ${field.key === 'text' || field.key === 'answer' || field.key === 'note' ? 'min-h-20' : 'min-h-16'}`}
                                   />
-                                ) : field.options ? (
+                                ) : options ? (
                                   <select
                                     value={value}
                                     onChange={(e) => updateBlockField(selected.id, block.id, field.key, e.target.value)}
                                     className={baseClassName}
                                   >
-                                    {field.options.map((option) => (
+                                    {options.map((option: { value: string; label: string }) => (
                                       <option key={option.value} value={option.value}>{option.label}</option>
                                     ))}
                                   </select>

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   buildBuilderV2BlockFieldDescriptors,
+  buildBuilderV2BlockFieldOptions,
   buildBuilderV2BlockPreviewSummary,
 } from './builderV2BlockPresentation';
 
@@ -33,13 +34,39 @@ describe('builderV2BlockPresentation', () => {
 
     expect(titleFields.map((field) => field.label)).toEqual(['Side heading', 'Side key']);
     expect(photoFields.map((field) => field.label)).toContain('Side key');
-    expect(titleFields.find((field) => field.key === 'subtitle')?.options).toEqual([
+    expect(buildBuilderV2BlockFieldOptions('wedding-party', 'title', { subtitle: 'bridal-title' }, []).subtitle).toEqual([
       { value: 'bridal-title', label: 'Partner one heading' },
       { value: 'groom-title', label: 'Partner two heading' },
     ]);
-    expect(photoFields.find((field) => field.key === 'subtitle')?.options).toEqual([
+    expect(buildBuilderV2BlockFieldOptions('wedding-party', 'photo', { subtitle: 'bridal-party' }, []).subtitle).toEqual([
       { value: 'bridal-party', label: 'Partner one side' },
       { value: 'groom-party', label: 'Partner two side' },
+    ]);
+  });
+
+  it('builds menu, music, and video subtitle options from current section structure', () => {
+    expect(buildBuilderV2BlockFieldOptions('menu', 'travelTip', { subtitle: 'course:course-1' }, [
+      { type: 'title', data: { text: 'Dinner', subtitle: 'course:course-1' } },
+      { type: 'title', data: { text: 'Dessert', subtitle: 'course:course-2' } },
+    ]).subtitle).toEqual([
+      { value: 'course:course-1', label: 'Dinner' },
+      { value: 'course:course-2', label: 'Dessert' },
+    ]);
+
+    expect(buildBuilderV2BlockFieldOptions('music', 'travelTip', { subtitle: 'playlist-track:pl-1' }, [
+      { type: 'title', data: { text: 'Ceremony', subtitle: 'playlist:pl-1' } },
+      { type: 'title', data: { text: 'Reception', subtitle: 'playlist:pl-2' } },
+    ]).subtitle).toEqual([
+      { value: 'playlist-track:pl-1', label: 'Ceremony' },
+      { value: 'playlist-track:pl-2', label: 'Reception' },
+    ]);
+
+    expect(buildBuilderV2BlockFieldOptions('video', 'travelTip', { subtitle: 'video:v1' }, [
+      { type: 'photo', data: { title: 'Save the Date', subtitle: 'video:v1' } },
+      { type: 'photo', data: { title: 'Weekend Preview', subtitle: 'video:v2' } },
+    ]).subtitle).toEqual([
+      { value: 'video:v1', label: 'Save the Date' },
+      { value: 'video:v2', label: 'Weekend Preview' },
     ]);
   });
 
