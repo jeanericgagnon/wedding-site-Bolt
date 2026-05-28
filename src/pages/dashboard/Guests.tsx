@@ -33,6 +33,14 @@ import { getPlannerHandoffCopy } from '../../lib/plannerHandoffState';
 import { buildGuestContactUpdateUrl, buildRsvpInviteUrl } from '../../lib/publicGuestLinks';
 import { buildGuestContactLinkListPayload, buildNoContactChecklistPayload } from './guestContactLinkList';
 import { getSmsRsvpLinkCandidates } from './guestReminderCandidates';
+import {
+  GUESTS_ADD_RETRY_ERROR,
+  GUESTS_DELETE_ALL_RETRY_ERROR,
+  GUESTS_IMPORT_RETRY_ERROR,
+  GUESTS_PARSE_FILE_RETRY_ERROR,
+  GUESTS_RSVP_CONFIG_RETRY_ERROR,
+  mapGuestDashboardError,
+} from './guestErrorCopy';
 import * as XLSX from 'xlsx';
 
 interface Guest {
@@ -871,7 +879,7 @@ export const DashboardGuests: React.FC = () => {
       setRsvpConfigDirty(false);
     } catch (err) {
       setRsvpAutoSaveState('error');
-      toast(err instanceof Error ? err.message : 'Failed to save RSVP config.', 'error');
+      toast(mapGuestDashboardError(err, GUESTS_RSVP_CONFIG_RETRY_ERROR), 'error');
     } finally {
       setRsvpConfigSaving(false);
     }
@@ -992,7 +1000,7 @@ export const DashboardGuests: React.FC = () => {
       if (createdGuestId) {
         await supabase.from('guests').delete().eq('id', createdGuestId);
       }
-      const msg = err instanceof Error ? err.message : 'Failed to add guest. Please try again.';
+      const msg = mapGuestDashboardError(err, GUESTS_ADD_RETRY_ERROR);
       toast(msg, 'error');
     }
   };
@@ -2368,10 +2376,7 @@ Proceed with send?`)) return;
       setNuclearConfirmInput('');
       toast(`Deleted ${required} guests.`, 'success');
     } catch (err) {
-      const errObj = err as { message?: string; details?: string; code?: string } | null;
-      const msg = errObj?.message || errObj?.details || 'Failed to delete all guests. Please try again.';
-      const code = errObj?.code ? ` (${errObj.code})` : '';
-      toast(`${msg}${code}`, 'error');
+      toast(mapGuestDashboardError(err, GUESTS_DELETE_ALL_RETRY_ERROR), 'error');
     } finally {
       setNuclearDeleting(false);
     }
@@ -2663,7 +2668,7 @@ Proceed with send?`)) return;
     } catch (err) {
       setCsvUnknownEvents([]);
       setCsvDuplicateNames([]);
-      const msg = err instanceof Error ? err.message : 'Failed to parse guest file';
+      const msg = mapGuestDashboardError(err, GUESTS_PARSE_FILE_RETRY_ERROR);
       toast(msg, 'error');
     } finally {
       e.target.value = '';
@@ -2836,10 +2841,7 @@ Proceed with send?`)) return;
       setCsvSelectedFilename(null);
       setCsvMappingSummary({ core: [], rsvp: [], household: [], eventCols: [], weak: [] });
     } catch (err) {
-      const errObj = err as { message?: string; details?: string; hint?: string; code?: string } | null;
-      const msg = errObj?.message || errObj?.details || errObj?.hint || (err instanceof Error ? err.message : 'Unknown error');
-      const code = errObj?.code ? ` (${errObj.code})` : '';
-      toast(`Import failed: ${msg}${code}`, 'error');
+      toast(mapGuestDashboardError(err, GUESTS_IMPORT_RETRY_ERROR), 'error');
     } finally {
       setCsvImporting(false);
     }
