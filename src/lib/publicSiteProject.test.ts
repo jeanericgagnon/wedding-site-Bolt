@@ -769,6 +769,40 @@ describe('publicSiteProject', () => {
     expect(getPublicWeddingData(row)?.couple.displayName).toBe('Published Names');
   });
 
+  it('falls back to site_json wedding snapshot when published_json snapshot is an empty object', () => {
+    const row = {
+      is_published: true,
+      site_json: {
+        ...draftProject,
+        weddingDataSnapshot: publishedWeddingData,
+      },
+      published_json: {
+        ...publishedProject,
+        weddingDataSnapshot: {},
+      },
+      wedding_data: liveWeddingData,
+    };
+
+    expect(getPublicWeddingData(row)?.couple.displayName).toBe('Published Names');
+  });
+
+  it('falls back to live wedding_data when earlier published candidates are thin placeholders', () => {
+    const row = {
+      is_published: true,
+      site_json: {
+        ...draftProject,
+        weddingDataSnapshot: {},
+      },
+      published_json: {
+        ...publishedProject,
+        weddingDataSnapshot: { version: '1', couple: {}, media: { gallery: [] } },
+      },
+      wedding_data: liveWeddingData,
+    };
+
+    expect(getPublicWeddingData(row)?.couple.displayName).toBe('Draft Names');
+  });
+
   it('falls back to live wedding_data when published snapshots are invalid', () => {
     const row = {
       is_published: true,

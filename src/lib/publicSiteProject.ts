@@ -35,6 +35,85 @@ const withTruthfulCoupleDisplayName = (data: WeddingDataV1): WeddingDataV1 => {
   };
 };
 
+const hasMeaningfulString = (value: unknown): value is string => (
+  typeof value === 'string' && value.trim().length > 0
+);
+
+const hasMeaningfulWeddingData = (value: unknown): value is WeddingDataV1 => {
+  if (!value || typeof value !== 'object') return false;
+
+  const data = value as Partial<WeddingDataV1>;
+  const couple = data.couple;
+  if (
+    couple
+    && (
+      hasMeaningfulString(couple.displayName)
+      || hasMeaningfulString(couple.partner1Name)
+      || hasMeaningfulString(couple.partner2Name)
+      || hasMeaningfulString(couple.story)
+    )
+  ) {
+    return true;
+  }
+
+  if (hasMeaningfulString(data.event?.weddingDateISO) || hasMeaningfulString(data.event?.timezone)) {
+    return true;
+  }
+
+  if (Array.isArray(data.venues) && data.venues.some((venue) => (
+    hasMeaningfulString(venue?.name)
+    || hasMeaningfulString(venue?.address)
+    || hasMeaningfulString(venue?.notes)
+  ))) {
+    return true;
+  }
+
+  if (Array.isArray(data.schedule) && data.schedule.some((item) => (
+    hasMeaningfulString(item?.label)
+    || hasMeaningfulString(item?.startTimeISO)
+    || hasMeaningfulString(item?.endTimeISO)
+    || hasMeaningfulString(item?.notes)
+  ))) {
+    return true;
+  }
+
+  if (
+    hasMeaningfulString(data.travel?.notes)
+    || hasMeaningfulString(data.travel?.hotelInfo)
+    || hasMeaningfulString(data.travel?.flightInfo)
+    || hasMeaningfulString(data.travel?.parkingInfo)
+  ) {
+    return true;
+  }
+
+  if (
+    Array.isArray(data.registry?.links) && data.registry.links.some((link) => (
+      hasMeaningfulString(link?.url) || hasMeaningfulString(link?.label)
+    ))
+  ) {
+    return true;
+  }
+
+  if (hasMeaningfulString(data.registry?.notes)) {
+    return true;
+  }
+
+  if (Array.isArray(data.faq) && data.faq.some((item) => (
+    hasMeaningfulString(item?.q) || hasMeaningfulString(item?.a)
+  ))) {
+    return true;
+  }
+
+  if (
+    hasMeaningfulString(data.media?.heroImageUrl)
+    || (Array.isArray(data.media?.gallery) && data.media.gallery.some((item) => hasMeaningfulString(item?.url)))
+  ) {
+    return true;
+  }
+
+  return false;
+};
+
 export const getIsPublishedFromSiteRow = (row: Record<string, unknown>): boolean => {
   const siteJsonMeta = asRecord(row.site_json);
   const publishedJsonMeta = asRecord(row.published_json);
@@ -218,12 +297,22 @@ export const getPublicWeddingData = (row: Record<string, unknown>): WeddingDataV
     row.wedding_data,
   ];
 
+  let fallbackParsed: WeddingDataV1 | null = null;
+
   for (const candidate of candidates) {
     const parsed = safeJsonParse<WeddingDataV1 | null>(candidate, null);
-    if (parsed) {
-      return stripPublicInternalFieldsDeep(rewriteSignedMediaUrlsToPublicDeep(withTruthfulCoupleDisplayName(parsed)));
+    if (!parsed) continue;
+
+    const normalized = stripPublicInternalFieldsDeep(
+      rewriteSignedMediaUrlsToPublicDeep(withTruthfulCoupleDisplayName(parsed))
+    );
+
+    if (hasMeaningfulWeddingData(normalized)) {
+      return normalized;
     }
+
+    fallbackParsed = fallbackParsed ?? normalized;
   }
 
-  return null;
+  return fallbackParsed;
 };
