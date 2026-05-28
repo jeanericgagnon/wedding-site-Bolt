@@ -84,7 +84,7 @@ export function buildCoupleFocusModel(input: CoupleFocusInput): CoupleFocusModel
           id: 'guests',
           title: 'Then tighten the guest path',
           detail: input.pendingGuestCount > 0 || input.contactGapCount > 0
-            ? 'Use the next pass to make RSVP reachability and guest guidance feel calm before you go live.'
+            ? 'Use the next pass to make RSVP reachability and guest guidance feel calm before you share the site with guests.'
             : 'Once the blockers are gone, make sure the guest path feels trustworthy on a phone.',
           target: 'guests',
           ctaLabel: 'Review guest path',

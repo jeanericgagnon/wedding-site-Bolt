@@ -33,6 +33,7 @@ import { useToast } from '../../components/ui/Toast';
 import { buildGuestOpsCoach } from '../../lib/guestOpsCoach';
 import { calcOverviewDaysUntil, formatOverviewRelativeTime, formatOverviewWeddingDate, getOverviewTimestamp } from './overviewDate';
 import { getOverviewFallbackCoupleValue } from './overviewDraftBrief';
+import { getOverviewWebsiteEditorLabel } from './overviewWebsiteActions';
 import { buildNameChangeOverviewCardModel } from './nameChangeOverviewCard';
 import { buildNameChangeOverviewInsights, type NameChangeOverviewInsights } from './nameChangeOverviewInsights';
 import { NAME_CHANGE_LIFECYCLE_LABELS } from './nameChangeLifecycleLabels';
@@ -1495,7 +1496,7 @@ export const DashboardOverview: React.FC = () => {
                     )}
                     <Button variant="outline" size="md" fullWidth onClick={() => navigate(getBuilderPhotoTipsRoute())}>
                       <Edit className="w-5 h-5 mr-2" aria-hidden="true" />
-                      {stats?.isPublished ? 'Edit live website' : 'Edit draft before you go live'}
+                      {getOverviewWebsiteEditorLabel(Boolean(stats?.isPublished))}
                     </Button>
                   </div>
                 </CardContent>
