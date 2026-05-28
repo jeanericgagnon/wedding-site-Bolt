@@ -67,12 +67,12 @@ export const TravelFeature: React.FC = () => {
               </div>
               <h3 className="text-xl font-serif font-bold text-ink mb-3">Hotel Room Blocks</h3>
               <p className="text-ink/70 mb-4">
-                List hotel room blocks with booking codes, cutoff dates, and direct links. Keep guests informed about discounted rates.
+                List hotel stays, room block notes, and booking links in one place. Share the details you have without pretending the page is a booking engine.
               </p>
               <ul className="space-y-2 text-sm text-ink/70">
                 <li>• Multiple hotel options</li>
-                <li>• Booking codes and links</li>
-                <li>• Cutoff date reminders</li>
+                <li>• Booking notes and links</li>
+                <li>• Cutoff dates when you have them</li>
               </ul>
             </div>
 
@@ -97,11 +97,11 @@ export const TravelFeature: React.FC = () => {
               </div>
               <h3 className="text-xl font-serif font-bold text-ink mb-3">Venue Addresses</h3>
               <p className="text-ink/70 mb-4">
-                Full venue addresses with embedded maps. One tap to open in Apple Maps, Google Maps, or Waze.
+                Full venue addresses with clear map handoff links and arrival notes. Guests get the basics they need to open directions in the map app they already use.
               </p>
               <ul className="space-y-2 text-sm text-ink/70">
-                <li>• Embedded map previews</li>
-                <li>• One-tap navigation</li>
+                <li>• Address and map links</li>
+                <li>• Open in your map app</li>
                 <li>• Parking and entrance notes</li>
               </ul>
             </div>
@@ -112,11 +112,11 @@ export const TravelFeature: React.FC = () => {
               </div>
               <h3 className="text-xl font-serif font-bold text-ink mb-3">Add to Calendar</h3>
               <p className="text-ink/70 mb-4">
-                Create calendar invites for each event. Works with Apple Calendar, Google Calendar, and Outlook.
+                Offer calendar downloads for key events with the time, address, and notes guests need. Compatibility can vary by device and calendar app, so we keep the promise on the file itself.
               </p>
               <ul className="space-y-2 text-sm text-ink/70">
-                <li>• ICS file generation</li>
-                <li>• All major calendar apps</li>
+                <li>• Calendar file downloads</li>
+                <li>• Standard calendar import format</li>
                 <li>• Includes address and notes</li>
               </ul>
             </div>
@@ -127,12 +127,12 @@ export const TravelFeature: React.FC = () => {
               </div>
               <h3 className="text-xl font-serif font-bold text-ink mb-3">Timezone Support</h3>
               <p className="text-ink/70 mb-4">
-                Times displayed correctly for every guest based on their location. DST-safe handling prevents confusion.
+                Show clear timezone labels so destination and cross-country guests can double-check timing without guesswork. We do not pretend every guest view auto-converts itself perfectly.
               </p>
               <ul className="space-y-2 text-sm text-ink/70">
-                <li>• Auto-detect guest timezone</li>
-                <li>• DST-aware calculations</li>
                 <li>• Clear timezone labels</li>
+                <li>• Published event times stay visible</li>
+                <li>• Destination-weekend clarity</li>
               </ul>
             </div>
 
@@ -142,7 +142,7 @@ export const TravelFeature: React.FC = () => {
               </div>
               <h3 className="text-xl font-serif font-bold text-ink mb-3">Travel FAQs</h3>
               <p className="text-ink/70 mb-4">
-                Answer common questions about airports, transportation, dress code, weather, and local recommendations.
+                Answer common questions about airports, transportation, dress code, weather, and other local guidance guests may need before they travel.
               </p>
               <ul className="space-y-2 text-sm text-ink/70">
                 <li>• Custom FAQ sections</li>
@@ -200,7 +200,7 @@ export const TravelFeature: React.FC = () => {
                   <div>
                     <h3 className="text-xl font-semibold text-ink mb-3">Local Recommendations</h3>
                     <p className="text-ink/70 leading-relaxed">
-                      Share your favorite restaurants, activities, and things to do in the area. Help guests make the most of their trip.
+                      Share favorite restaurants, neighborhood notes, or a short list of things to do in the area when that helps guests plan the weekend.
                     </p>
                   </div>
                 </div>
@@ -225,15 +225,13 @@ export const TravelFeature: React.FC = () => {
                 'Hotel room blocks',
                 'Multi-day itinerary',
                 'Venue addresses',
-                'Embedded maps',
-                'One-tap navigation',
-                'Add-to-calendar',
-                'Timezone support',
-                'DST-safe times',
+                'Map handoff links',
+                'Calendar downloads',
+                'Clear timezone labels',
                 'Airport info',
                 'Transportation details',
                 'Travel FAQs',
-                'Local recommendations',
+                'Local guidance',
               ].map((feature, idx) => (
                 <div key={idx} className="flex items-start gap-3">
                   <CheckCircle2 className="w-5 h-5 text-success mt-0.5 flex-shrink-0" />
