@@ -35,10 +35,18 @@ import { buildGuestContactLinkListPayload, buildNoContactChecklistPayload } from
 import { getSmsRsvpLinkCandidates } from './guestReminderCandidates';
 import {
   GUESTS_ADD_RETRY_ERROR,
+  GUESTS_ASSISTED_RSVP_RETRY_ERROR,
+  GUESTS_AUTO_REMINDER_SAVE_RETRY_ERROR,
+  GUESTS_CHECKIN_CLEAR_RETRY_ERROR,
+  GUESTS_CHECKIN_STATUS_RETRY_ERROR,
   GUESTS_DELETE_ALL_RETRY_ERROR,
+  GUESTS_EVENT_INVITE_RETRY_ERROR,
   GUESTS_IMPORT_RETRY_ERROR,
   GUESTS_PARSE_FILE_RETRY_ERROR,
   GUESTS_RSVP_CONFIG_RETRY_ERROR,
+  GUESTS_THANK_YOU_BULK_RETRY_ERROR,
+  GUESTS_THANK_YOU_STATUS_RETRY_ERROR,
+  GUESTS_UPDATE_RETRY_ERROR,
   mapGuestDashboardError,
 } from './guestErrorCopy';
 import * as XLSX from 'xlsx';
@@ -1118,7 +1126,7 @@ export const DashboardGuests: React.FC = () => {
           await supabase.from('guests').update(previousGuestValues).eq('id', editingGuest.id);
         }
       }
-      toast('Failed to update guest. Please try again.', 'error');
+      toast(GUESTS_UPDATE_RETRY_ERROR, 'error');
     }
   };
 
@@ -1222,7 +1230,7 @@ export const DashboardGuests: React.FC = () => {
       await fetchGuests();
       toast(nextValue ? 'Marked thank-you sent' : 'Cleared thank-you status', 'success');
     } catch {
-      toast('Failed to update thank-you status', 'error');
+      toast(GUESTS_THANK_YOU_STATUS_RETRY_ERROR, 'error');
     }
   };
 
@@ -1248,7 +1256,7 @@ export const DashboardGuests: React.FC = () => {
       await fetchGuests();
       toast(`Marked ${ids.length} thank-you sent`, 'success');
     } catch {
-      toast('Failed to mark thank-you statuses', 'error');
+      toast(GUESTS_THANK_YOU_BULK_RETRY_ERROR, 'error');
     }
   };
 
@@ -1275,7 +1283,7 @@ export const DashboardGuests: React.FC = () => {
       setLastCheckIn(null);
       toast('Cleared all check-ins', 'success');
     } catch {
-      toast('Failed to clear check-ins', 'error');
+      toast(GUESTS_CHECKIN_CLEAR_RETRY_ERROR, 'error');
     }
   };
 
@@ -1325,7 +1333,7 @@ export const DashboardGuests: React.FC = () => {
           // fall through to canonical error toast
         }
       }
-      toast('Failed to update check-in status', 'error');
+      toast(GUESTS_CHECKIN_STATUS_RETRY_ERROR, 'error');
     }
   };
 
@@ -1958,7 +1966,7 @@ Proceed with send?`)) return;
         setGuestEventIds(prev => new Set([...prev, eventId]));
       }
     } catch {
-      toast('Failed to update event invitation', 'error');
+      toast(GUESTS_EVENT_INVITE_RETRY_ERROR, 'error');
     } finally {
       setTogglingEventId(null);
     }
@@ -2104,7 +2112,7 @@ Proceed with send?`)) return;
           .eq('id', assistedRsvpGuest.id);
       }
       console.error(error);
-      toast('Failed to save assisted RSVP', 'error');
+      toast(GUESTS_ASSISTED_RSVP_RETRY_ERROR, 'error');
     } finally {
       setAssistedRsvpSaving(false);
     }
@@ -4190,7 +4198,7 @@ Proceed with send?`)) return;
                       <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded disabled:opacity-50" disabled={reminderCandidates.length === 0} onClick={() => { handleCopyFilteredEmails(); setShowOpsMenu(false); }}>Copy filtered emails</button>
                       <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded disabled:opacity-50" disabled={bulkSending || reminderCandidates.length === 0} onClick={() => { handleSendBulkInvitations(); setShowOpsMenu(false); }} title={reminderCandidates.length === 0 ? 'No eligible recipients in this segment' : undefined}>{bulkSending ? 'Sending…' : `Remind filtered (${reminderCandidates.length})`}</button>
                       <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded disabled:opacity-50" disabled={bulkSending || dueReminderCandidatesGlobal.length === 0} onClick={() => { handleSendDueRemindersNow(); setShowOpsMenu(false); }} title={dueReminderCandidatesGlobal.length === 0 ? 'No guests due for reminders' : undefined}>{bulkSending ? 'Sending…' : `Send due reminders (${dueReminderCandidatesGlobal.length})`}</button>
-                      <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={async () => { const previous = autoRemindersEnabled; const next = !previous; try { setAutoRemindersEnabled(next); await persistReminderSettings({ auto_reminders_enabled: next }); toast(next ? 'Auto reminders enabled' : 'Auto reminders paused', 'success'); } catch { setAutoRemindersEnabled(previous); toast('Failed to save auto reminder setting', 'error'); } setShowOpsMenu(false); }}>{autoRemindersEnabled ? '✓ ' : ''}{autoRemindersEnabled ? 'Auto reminders: On' : 'Auto reminders: Off'}</button>
+                      <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={async () => { const previous = autoRemindersEnabled; const next = !previous; try { setAutoRemindersEnabled(next); await persistReminderSettings({ auto_reminders_enabled: next }); toast(next ? 'Auto reminders enabled' : 'Auto reminders paused', 'success'); } catch { setAutoRemindersEnabled(previous); toast(GUESTS_AUTO_REMINDER_SAVE_RETRY_ERROR, 'error'); } setShowOpsMenu(false); }}>{autoRemindersEnabled ? '✓ ' : ''}{autoRemindersEnabled ? 'Auto reminders: On' : 'Auto reminders: Off'}</button>
                       <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={async () => { await handleMarkAllDueThankYous(); setShowOpsMenu(false); }}>Mark all thank-you due as sent</button>
                       <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={async () => { await handleClearAllCheckIns(); setShowOpsMenu(false); }}>Clear all check-ins</button>
                       <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={() => { generateChecklistTasks(); setShowOpsMenu(false); }}>Create checklist</button>
