@@ -9,6 +9,7 @@ import { consumeSignupReturnPath, writeSignupReturnPath } from '../lib/signupCon
 import { clearAuthEntryReturnPath } from '../lib/authEntryCleanup';
 import { resolveSignupReturnPath } from '../lib/signupReturnResolver';
 import { normalizeMeaningfulQuickStartDraftSnapshot, persistQuickStartDraftSnapshot } from '../lib/quickStartStateTransfer';
+import { buildCollaboratorInviteAuthSearch, readCollaboratorInviteAuthParams } from '../lib/collaboratorInviteAuthParams';
 import { buildCollaboratorRoleGuide } from './collaboratorRoleGuide';
 import { getFlowStatusLabel } from '../lib/flowLabels';
 
@@ -66,10 +67,7 @@ export const Signup: React.FC = () => {
   });
 
   const paymentGateEnabled = isPaymentGateEnabled();
-  const inviteToken = searchParams.get('inviteToken');
-  const inviteEmail = searchParams.get('inviteEmail');
-  const inviteRole = searchParams.get('inviteRole');
-  const inviteSite = searchParams.get('inviteSite');
+  const { inviteToken, inviteEmail, inviteRole, inviteSite } = readCollaboratorInviteAuthParams(searchParams);
   const hasInviteContext = Boolean(inviteToken && inviteEmail);
 
 
@@ -95,6 +93,10 @@ export const Signup: React.FC = () => {
     if (!inviteToken) return '';
     return `?${createSearchParams({ token: inviteToken }).toString()}`;
   }, [inviteToken]);
+  const inviteAuthSearch = useMemo(
+    () => buildCollaboratorInviteAuthSearch({ inviteToken, inviteEmail, inviteRole, inviteSite }),
+    [inviteEmail, inviteRole, inviteSite, inviteToken],
+  );
   const collaboratorRoleGuide = useMemo(() => buildCollaboratorRoleGuide(inviteRole), [inviteRole]);
 
   useEffect(() => {
@@ -331,7 +333,7 @@ export const Signup: React.FC = () => {
               <button
                 onClick={() => navigate(
                   hasInviteContext
-                    ? `/login?${createSearchParams({ inviteToken: inviteToken || '', inviteEmail: inviteEmail || '', inviteRole: inviteRole || '', inviteSite: inviteSite || '' }).toString()}`
+                    ? `/login${inviteAuthSearch}`
                     : '/login',
                   explicitReturnPath || normalizedQuickStartDraft ? {
                     state: {

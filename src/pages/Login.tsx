@@ -9,6 +9,7 @@ import { consumeSignupReturnPath, writeSignupReturnPath } from '../lib/signupCon
 import { clearAuthEntryReturnPath } from '../lib/authEntryCleanup';
 import { resolveLoginReturnPath } from '../lib/loginReturnResolver';
 import { normalizeMeaningfulQuickStartDraftSnapshot, persistQuickStartDraftSnapshot } from '../lib/quickStartStateTransfer';
+import { buildCollaboratorInviteAuthSearch, readCollaboratorInviteAuthParams } from '../lib/collaboratorInviteAuthParams';
 
 type AuthView = 'login' | 'forgot-password' | 'forgot-sent';
 
@@ -37,21 +38,18 @@ export const Login: React.FC = () => {
     [quickStartDraft],
   );
 
-  const inviteToken = searchParams.get('inviteToken');
-  const inviteEmail = searchParams.get('inviteEmail');
-  const inviteRole = searchParams.get('inviteRole');
-  const inviteSite = searchParams.get('inviteSite');
+  const { inviteToken, inviteEmail, inviteRole, inviteSite } = readCollaboratorInviteAuthParams(searchParams);
   const hasInviteContext = Boolean(inviteToken && inviteEmail);
 
   const inviteReturnSearch = useMemo(() => {
     if (!inviteToken || !inviteEmail) return '';
-
-    const params = createSearchParams({
-      token: inviteToken,
-    });
-
-    return `?${params.toString()}`;
+    return `?${createSearchParams({ token: inviteToken }).toString()}`;
   }, [inviteToken, inviteEmail]);
+
+  const inviteAuthSearch = useMemo(
+    () => buildCollaboratorInviteAuthSearch({ inviteToken, inviteEmail, inviteRole, inviteSite }),
+    [inviteEmail, inviteRole, inviteSite, inviteToken],
+  );
 
   useEffect(() => {
     if (!explicitReturnPath && !normalizedQuickStartDraft && !hasInviteContext) {
@@ -408,7 +406,7 @@ export const Login: React.FC = () => {
                 to={hasInviteContext
                   ? {
                       pathname: '/signup',
-                      search: `?${createSearchParams({ inviteToken: inviteToken || '', inviteEmail: inviteEmail || '', inviteRole: inviteRole || '', inviteSite: inviteSite || '' }).toString()}`,
+                      search: inviteAuthSearch,
                     }
                   : { pathname: '/signup' }}
                 state={explicitReturnPath || normalizedQuickStartDraft ? {

@@ -158,4 +158,26 @@ describe('Signup quick start handoff', () => {
     expect(screen.getByText(/owner-call carry|final wedding truth/i)).toBeInTheDocument();
     expect(screen.getByText(/Find the operational pressure first/i)).toBeInTheDocument();
   });
+
+  it('keeps collaborator invite auth context when switching back to login with snake_case params', async () => {
+    useLocationMock.mockReturnValue({ state: { returnTo: '/onboarding' } });
+    useSearchParamsMock.mockReturnValue([
+      new URLSearchParams({
+        invite_token: 'invite-123',
+        invite_email: 'planner@example.com',
+        invite_role: 'planner',
+        invite_site: 'Alex & Sam',
+      }),
+    ]);
+
+    render(<Signup />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Sign in' }));
+
+    expect(navigateMock).toHaveBeenCalledWith('/login?invite_token=invite-123&invite_email=planner%40example.com&invite_role=planner&invite_site=Alex+%26+Sam', {
+      state: {
+        returnTo: '/onboarding',
+      },
+    });
+  });
 });

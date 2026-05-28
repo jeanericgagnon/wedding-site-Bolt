@@ -12,7 +12,24 @@ vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual<typeof import('react-router-dom')>('react-router-dom');
   return {
     ...actual,
-    Link: ({ children, to, state, ...props }: any) => <a href={typeof to === 'string' ? to : `${to.pathname || ''}${to.search || ''}`} data-nav-state={state ? JSON.stringify(state) : ''} {...props}>{children}</a>,
+    Link: ({
+      children,
+      to,
+      state,
+      ...props
+    }: {
+      children: React.ReactNode;
+      to: string | { pathname?: string; search?: string };
+      state?: unknown;
+    } & React.AnchorHTMLAttributes<HTMLAnchorElement>) => (
+      <a
+        href={typeof to === 'string' ? to : `${to.pathname || ''}${to.search || ''}`}
+        data-nav-state={state ? JSON.stringify(state) : ''}
+        {...props}
+      >
+        {children}
+      </a>
+    ),
     useNavigate: () => navigateMock,
     useLocation: () => useLocationMock(),
     useSearchParams: () => useSearchParamsMock(),
@@ -135,5 +152,24 @@ describe('Login quick start handoff', () => {
     const state = JSON.parse(link.getAttribute('data-nav-state') || '{}');
 
     expect(state).toEqual({ returnTo: '/onboarding' });
+  });
+
+  it('passes collaborator invite auth context to signup with snake_case params', async () => {
+    useSearchParamsMock.mockReturnValue([
+      new URLSearchParams({
+        invite_token: 'invite-123',
+        invite_email: 'planner@example.com',
+        invite_role: 'planner',
+        invite_site: 'Alex & Sam',
+      }),
+    ]);
+
+    render(<Login />);
+
+    const link = screen.getByRole('link', { name: 'Create collaborator account' });
+    expect(link).toHaveAttribute(
+      'href',
+      '/signup?invite_token=invite-123&invite_email=planner%40example.com&invite_role=planner&invite_site=Alex+%26+Sam',
+    );
   });
 });
