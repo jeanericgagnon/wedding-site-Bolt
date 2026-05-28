@@ -28,6 +28,12 @@ const steps = [
     required: true,
   },
   {
+    id: 'builder-sample-document-roundtrip-tests',
+    label: 'Builder import/export stability across sample documents',
+    command: 'npm test -- src/pages/builderV2SampleDocuments.test.ts',
+    required: true,
+  },
+  {
     id: 'builder-entry-rollback-tests',
     label: 'Builder entry rollback and tooling fallback tests',
     command: 'npm test -- src/App.builderEntry.test.tsx src/lib/internalToolingRouteAccess.test.ts',
@@ -119,6 +125,7 @@ const output = {
     'Auth entry intent recognition for builder editor and guide routes',
     'First-session builder handoff route continuity',
     'Builder import/export contract validity and non-destructive preview failure behavior',
+    'Builder import/export stability across native v2, legacy layout-config, and legacy builder-project sample documents',
     'Builder hard-switch rollback and internal tooling fallback route behavior',
     'Builder cutover guide route helpers and legacy fallbacks',
     'Dashboard overview builder-route decisions',

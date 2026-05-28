@@ -90,6 +90,8 @@ Cutover to main `/dashboard/builder` and `/builder` only when all are true:
 
 - [ ] typecheck/build green
 - [ ] QA checklist fully green
-- [ ] import/export stable across 3 sample documents
+- [x] import/export stable across 3 sample documents
+  - `src/pages/builderV2SampleDocuments.test.ts` proves native Builder V2, legacy layout-config, and legacy builder-project samples all stay usable after import, export, and re-import
+  - `npm run proof:v1:builder-v2-cutover` now includes that three-sample round-trip lane
 - [ ] no P1 issues after canary window
 - [ ] explicit sign-off
