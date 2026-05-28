@@ -46,6 +46,31 @@ describe('memoryCurator', () => {
     expect(model.nextMoves[0]).toContain('Main photo of you two');
   });
 
+  it('frames unopened guest albums as a photo sharing path instead of an upload path', () => {
+    const buckets = createEmptyPhotoBuckets();
+    buckets['main-couple'] = [
+      { id: 'hero', url: '/hero.jpg', bucket: 'main-couple', label: 'Hero' },
+    ];
+    buckets['couple-gallery'] = [
+      { id: 'cg-1', url: '/1.jpg', bucket: 'couple-gallery' },
+      { id: 'cg-2', url: '/2.jpg', bucket: 'couple-gallery' },
+      { id: 'cg-3', url: '/3.jpg', bucket: 'couple-gallery' },
+      { id: 'cg-4', url: '/4.jpg', bucket: 'couple-gallery' },
+    ];
+
+    const model = buildPhotoMemoryCuratorModel({
+      photoBuckets: buckets,
+      albums: [{ id: 'album-1', title: 'Cocktail Hour', is_active: false }],
+      uploads: [],
+      isArchiveLike: false,
+    });
+
+    expect(model.title).toContain('photo sharing path is not live yet');
+    expect(model.decisionRule).toMatch(/photo sharing path/i);
+    expect(model.sequence[0]?.title).toMatch(/photo sharing lane/i);
+    expect(model.nextMoves[2]).toContain('photo sharing path');
+  });
+
   it('nudges the vault toward recap generation once enough entries exist', () => {
     const model = buildVaultMemoryCuratorModel({
       configs: [{ id: 'vault-1', duration_years: 1, is_enabled: true }],

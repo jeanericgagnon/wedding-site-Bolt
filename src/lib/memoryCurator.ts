@@ -198,26 +198,26 @@ export const buildPhotoMemoryCuratorModel = (args: {
     return {
       eyebrow: 'Memory curator',
       readinessLabel: 'Private curation is ready',
-      title: 'Your photos are ready for guests, but the upload path is not live yet',
-      detail: 'The private bucket board has enough direction now. The next step is turning that into one or two clear guest upload moments instead of a long list of options.',
+      title: 'Your photos are ready for guests, but the photo sharing path is not live yet',
+      detail: 'The private bucket board has enough direction now. The next step is turning that into one or two clear guest photo sharing moments instead of a long list of options.',
       focusTitle: 'Open one guest lane on purpose',
-      focusDetail: 'The private story is strong enough now that one clear upload moment will help more than adding lots of options.',
+      focusDetail: 'The private story is strong enough now that one clear photo sharing moment will help more than adding lots of options.',
       bestNextMove: 'Create the first live bucket for the one moment you care about most.',
-      decisionRule: 'Launch the clearest guest upload path first, then add more only when the first one proves useful.',
+      decisionRule: 'Launch the clearest guest photo sharing path first, then add more only when the first one proves useful.',
       watchout: 'The easy mistake here is opening several buckets at once and teaching guests that every moment matters equally, which usually makes none of them feel memorable.',
-      curationNote: 'The visual story is strong enough to open one clear upload lane without overwhelming guests.',
+      curationNote: 'The visual story is strong enough to open one clear photo sharing lane without overwhelming guests.',
       badges: [
         `${signatureReadyCount}/2 signature buckets ready`,
         `${atmosphereReadyCount}/3 atmosphere buckets started`,
       ],
       qualitySignals: [
         'Couple anchors are in place',
-        'No guest-facing upload lane is live yet',
+        'No guest-facing photo sharing lane is live yet',
       ],
       sequence: buildMemorySequence(
         {
-          title: 'Open one upload lane on purpose',
-          detail: 'Choose the clearest guest memory moment instead of launching several half-defined upload paths at once.',
+          title: 'Open one photo sharing lane on purpose',
+          detail: 'Choose the clearest guest memory moment instead of launching several half-defined photo sharing paths at once.',
         },
         {
           title: 'Check whether that lane teaches the right behavior',
@@ -225,13 +225,13 @@ export const buildPhotoMemoryCuratorModel = (args: {
         },
         {
           title: 'Expand only after the first lane proves useful',
-          detail: 'Let future guest paths grow from a working upload habit instead of from optimism alone.',
+          detail: 'Let future guest paths grow from a working photo sharing habit instead of from optimism alone.',
         },
       ),
       nextMoves: [
         'Create the first live bucket for the one moment you care about most.',
         'Only add more guest buckets when the first one has a clear purpose.',
-        'Keep the upload path obvious: one link, one QR, one expectation.',
+        'Keep the photo sharing path obvious: one link, one QR, one expectation.',
       ],
     };
   }
@@ -283,7 +283,7 @@ export const buildPhotoMemoryCuratorModel = (args: {
       eyebrow: 'Memory curator',
       readinessLabel: 'Archive mode is ready',
       title: 'Collection is working. Now turn it into something worth keeping.',
-      detail: 'The wedding is behind you and the upload flow has enough signal now. This is the moment to preserve the strongest moments in the vault instead of collecting forever.',
+      detail: 'The wedding is behind you and the photo sharing path has enough signal now. This is the moment to preserve the strongest moments in the vault instead of collecting forever.',
       focusTitle: 'Shift from collection to preservation',
       focusDetail: 'The archive is strongest when it starts favoring memorable clusters over endless intake.',
       bestNextMove: 'Use the strongest bucket to shape a first slideshow or recap draft.',
