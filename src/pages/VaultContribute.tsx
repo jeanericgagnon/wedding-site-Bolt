@@ -8,6 +8,8 @@ import { DEMO_MODE } from '../config/env';
 import { buildCoupleDisplayName } from '../lib/coupleDisplayName';
 import { readInviteTokenFromParams } from '../lib/inviteTokenParams';
 import {
+  areVaultAttachmentsAvailable,
+  getVaultAllowedContributionMediaTypes,
   getVaultAttachmentStatusCopy,
   mapVaultAttachmentUploadError,
   mapVaultContributionSaveError,
@@ -448,9 +450,10 @@ export const VaultContribute: React.FC = () => {
 
   function validate(): boolean {
     const newErrors: typeof errors = {};
+    const selectedMediaType = areVaultAttachmentsAvailable(site) ? form.media_type : 'text';
     if (!form.content.trim()) newErrors.content = 'Please write a message.';
     if (!form.author_name.trim()) newErrors.author_name = 'Please enter your name.';
-    if (form.media_type !== 'text' && selectedFiles.length === 0) newErrors.attachment_url = 'Please upload at least one file.';
+    if (selectedMediaType !== 'text' && selectedFiles.length === 0) newErrors.attachment_url = 'Please upload at least one file.';
     setErrors(newErrors);
     setSubmitError(null);
     return Object.keys(newErrors).length === 0;
@@ -472,14 +475,15 @@ export const VaultContribute: React.FC = () => {
 
     const storageProvider = site.vault_storage_provider ?? 'supabase';
     const useGoogleDrive = storageProvider === 'google_drive';
+    const selectedMediaType = areVaultAttachmentsAvailable(site) ? form.media_type : 'text';
 
-    if (selectedFiles.length > 0 && form.media_type !== 'text') {
+    if (selectedFiles.length > 0 && selectedMediaType !== 'text') {
       setUploadProgress(3);
 
       for (let i = 0; i < selectedFiles.length; i += 1) {
         let file = selectedFiles[i];
 
-        if (form.media_type === 'video' && compressVideo) {
+        if (selectedMediaType === 'video' && compressVideo) {
           setCompressionStatus(`Compressing video ${i + 1}/${selectedFiles.length} to 720p…`);
           try {
             file = await compressVideoTo720p(file);
@@ -492,7 +496,7 @@ export const VaultContribute: React.FC = () => {
         }
 
         const ext = file.name.split('.').pop() || 'bin';
-        const safeType = form.media_type === 'voice' ? 'audio' : form.media_type;
+        const safeType = selectedMediaType === 'voice' ? 'audio' : selectedMediaType;
         const path = `public/${site.id}/${vaultConfig.id}/${Date.now()}-${i}-${Math.random().toString(36).slice(2, 7)}.${ext}`;
 
         if (DEMO_MODE && site.id === 'demo-site-id') {
@@ -574,8 +578,8 @@ export const VaultContribute: React.FC = () => {
         content: form.content.trim(),
         author_name: form.author_name.trim(),
         attachment_url: item.url,
-        attachment_name: item.name || form.attachment_name.trim() || (form.media_type !== 'text' ? `${form.media_type} attachment ${uploadedItems.length > 1 ? `#${idx + 1}` : ''}`.trim() : null),
-        media_type: form.media_type,
+        attachment_name: item.name || form.attachment_name.trim() || (selectedMediaType !== 'text' ? `${selectedMediaType} attachment ${uploadedItems.length > 1 ? `#${idx + 1}` : ''}`.trim() : null),
+        media_type: selectedMediaType,
         mime_type: item.mime,
         size_bytes: item.size,
       }));
@@ -596,8 +600,8 @@ export const VaultContribute: React.FC = () => {
       content: form.content.trim(),
       author_name: form.author_name.trim(),
       attachment_url: item.url,
-      attachment_name: item.name || form.attachment_name.trim() || (form.media_type !== 'text' ? `${form.media_type} attachment ${uploadedItems.length > 1 ? `#${idx + 1}` : ''}`.trim() : null),
-      media_type: form.media_type,
+      attachment_name: item.name || form.attachment_name.trim() || (selectedMediaType !== 'text' ? `${selectedMediaType} attachment ${uploadedItems.length > 1 ? `#${idx + 1}` : ''}`.trim() : null),
+      media_type: selectedMediaType,
       mime_type: item.mime,
       size_bytes: item.size,
       storage_provider: item.storageProvider ?? storageProvider,
@@ -631,8 +635,10 @@ export const VaultContribute: React.FC = () => {
   const coupleName = getVaultCoupleName(site);
 
   const unlockYear = getVaultUnlockYear(site?.wedding_date, vaultConfig?.duration_years);
-  const storageProvider = site?.vault_storage_provider ?? 'supabase';
-  const usingGoogleDrive = storageProvider === 'google_drive';
+  const attachmentsAvailable = areVaultAttachmentsAvailable(site);
+  const allowedMediaTypes = getVaultAllowedContributionMediaTypes(site);
+  const selectedMediaType = allowedMediaTypes.includes(form.media_type) ? form.media_type : 'text';
+  const showsAttachmentInputs = selectedMediaType !== 'text';
 
   const ordinal = vaultConfig ? ordinalLabel(vaultConfig.duration_years) : '';
   const vaultLabel = vaultConfig?.label || (vaultConfig ? `${vaultConfig.duration_years}-Year Anniversary Vault` : 'Anniversary Vault');
@@ -853,27 +859,31 @@ export const VaultContribute: React.FC = () => {
                 <div>
                   <label className="block text-sm font-medium text-stone-700 mb-1.5 updates-[0.01em]">Message type</label>
                   <select
-                    value={form.media_type}
+                    value={selectedMediaType}
                     onChange={e => { setForm({ ...form, media_type: e.target.value as 'text' | 'photo' | 'video' | 'voice' }); setSelectedFiles([]); setSubmitError(null); if (isRecordingVoice) stopVoiceRecording(); }}
                     className="w-full px-4 py-3 border border-stone-300 rounded-xl text-stone-800 text-sm focus:outline-none focus:ring-2 focus:ring-primary/25 bg-white transition"
                   >
-                    <option value="text">Note only</option>
-                    <option value="photo">Photo</option>
-                    <option value="video">Video</option>
-                    <option value="voice">Voice note</option>
+                    {allowedMediaTypes.map((mediaType) => (
+                      <option key={mediaType} value={mediaType}>
+                        {mediaType === 'text' ? 'Note only' : mediaType === 'photo' ? 'Photo' : mediaType === 'video' ? 'Video' : 'Voice note'}
+                      </option>
+                    ))}
                   </select>
+                  {!attachmentsAvailable && (
+                    <p className="mt-1 text-xs text-stone-500">Written notes are open right now. Photo, video, and voice can be added later when attachments reopen.</p>
+                  )}
                 </div>
               </div>
 
-              {form.media_type !== 'text' && (
+              {showsAttachmentInputs && (
                 <div>
                   <label className="block text-sm font-medium text-stone-700 mb-1.5">
                     Add files <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="file"
-                    multiple={form.media_type === 'photo' || form.media_type === 'video'}
-                    accept={form.media_type === 'photo' ? 'image/*' : form.media_type === 'video' ? 'video/*' : 'audio/*'}
+                    multiple={selectedMediaType === 'photo' || selectedMediaType === 'video'}
+                    accept={selectedMediaType === 'photo' ? 'image/*' : selectedMediaType === 'video' ? 'video/*' : 'audio/*'}
                     onChange={e => {
                       const files = Array.from(e.target.files ?? []);
                       if (files.length === 0) {
@@ -881,13 +891,13 @@ export const VaultContribute: React.FC = () => {
                         return;
                       }
 
-                      if ((form.media_type === 'photo' || form.media_type === 'video') && files.length > 3) {
+                      if ((selectedMediaType === 'photo' || selectedMediaType === 'video') && files.length > 3) {
                         setSubmitError('You can upload up to 3 photos or videos per submission.');
                         setSelectedFiles([]);
                         return;
                       }
 
-                      const mediaType = form.media_type;
+                      const mediaType = selectedMediaType;
                       const maxMb = MAX_UPLOAD_MB_BY_TYPE[mediaType as 'photo' | 'video' | 'voice'];
 
                       for (const file of files) {
@@ -924,14 +934,14 @@ export const VaultContribute: React.FC = () => {
                     className="w-full text-sm file:mr-3 file:rounded-lg file:border-0 file:bg-amber-100 file:text-primary file:px-3 file:py-1.5 hover:file:bg-primary/15"
                   />
                   {selectedFiles.length > 0 && <p className="text-xs text-stone-500 mt-1">Selected: {selectedFiles.length} file{selectedFiles.length === 1 ? '' : 's'}</p>}
-                  {form.media_type === 'video' && (
+                  {selectedMediaType === 'video' && (
                     <label className="mt-1 inline-flex items-center gap-2 text-xs text-stone-600">
                       <input type="checkbox" checked={compressVideo} onChange={e => setCompressVideo(e.target.checked)} />
                       Compress to 720p before upload (recommended)
                     </label>
                   )}
 
-                  {form.media_type === 'voice' && (
+                  {selectedMediaType === 'voice' && (
                     <div className="mt-2 border border-stone-200 rounded-lg p-3 bg-stone-50">
                       <p className="text-xs text-stone-600 mb-2">Or record one here:</p>
                       {!isRecordingVoice ? (
@@ -948,12 +958,13 @@ export const VaultContribute: React.FC = () => {
                       )}
                     </div>
                   )}
-                  <p className="text-[11px] text-stone-400 mt-1">{form.media_type === 'photo' ? 'Up to 3 photos, 8MB each. If larger, compress first.' : form.media_type === 'video' ? (compressVideo ? 'Up to 3 videos, 200MB source each (auto-compressed to 720p).' : 'Up to 3 videos, 35MB each. If larger, compress/trim first.') : 'Single voice file, 12MB max. If larger, trim/compress first.'}</p>
+                  <p className="text-[11px] text-stone-400 mt-1">{selectedMediaType === 'photo' ? 'Up to 3 photos, 8MB each. If larger, compress first.' : selectedMediaType === 'video' ? (compressVideo ? 'Up to 3 videos, 200MB source each (auto-compressed to 720p).' : 'Up to 3 videos, 35MB each. If larger, compress/trim first.') : 'Single voice file, 12MB max. If larger, trim/compress first.'}</p>
                   {errors.attachment_url && <p className="text-red-500 text-xs mt-1">{errors.attachment_url}</p>}
                 </div>
               )}
 
 
+              {showsAttachmentInputs && (
               <div>
                 <label className="block text-sm font-medium text-stone-700 mb-1.5">
                   Media label <span className="text-stone-400 font-normal">(optional)</span>
@@ -966,6 +977,7 @@ export const VaultContribute: React.FC = () => {
                   className="w-full px-4 py-3 border border-stone-300 rounded-xl text-text-primary placeholder:text-text-tertiary text-sm focus:outline-none focus:ring-2 focus:ring-primary/25 bg-white transition shadow-[inset_0_1px_0_rgba(255,255,255,0.4)]"
                 />
               </div>
+              )}
 
 
               {submitError && (
@@ -987,7 +999,7 @@ export const VaultContribute: React.FC = () => {
                 </div>
               )}
 
-              {!submitting && form.media_type !== 'text' && selectedFiles.length > 0 && (
+              {!submitting && showsAttachmentInputs && selectedFiles.length > 0 && (
                 <p className="text-xs text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-xl px-3 py-2 font-medium">
                   {VAULT_UPLOAD_READY_COPY(selectedFiles.length)}
                 </p>
@@ -995,7 +1007,7 @@ export const VaultContribute: React.FC = () => {
 
               <button
                 type="submit"
-                disabled={submitting || !contributionWindow.canSubmit || (usingGoogleDrive && !site?.vault_google_drive_connected)}
+                disabled={submitting || !contributionWindow.canSubmit}
                 className="w-full flex items-center justify-center gap-2 py-3.5 px-6 bg-gradient-to-r from-primary to-primary-hover hover:from-primary-hover hover:to-primary text-white font-semibold rounded-xl text-sm transition-all duration-300 shadow-md hover:shadow-lg hover:-translate-y-[1px] disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 {submitting ? (
@@ -1004,9 +1016,6 @@ export const VaultContribute: React.FC = () => {
                   <><Send className="w-4 h-4" />Save in vault</>
                 )}
               </button>
-              {usingGoogleDrive && !site?.vault_google_drive_connected && (
-                <p className="text-xs text-red-600 mt-2">{VAULT_ATTACHMENT_PAUSED_ERROR}</p>
-              )}
             </form>
           </div>
 

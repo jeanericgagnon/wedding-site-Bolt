@@ -5,6 +5,8 @@ type VaultAttachmentSiteState = {
   vault_google_drive_connected?: boolean;
 } | null;
 
+export type VaultContributionMediaType = 'text' | 'photo' | 'video' | 'voice';
+
 export const VAULT_ATTACHMENT_PAUSED_ERROR =
   'Photo, video, and voice uploads are temporarily unavailable for this vault. You can still leave a written message.';
 export const VAULT_ATTACHMENT_READY_COPY = 'Photo, video, and voice attachments are ready for this vault.';
@@ -31,4 +33,14 @@ export function getVaultAttachmentStatusCopy(site: VaultAttachmentSiteState): st
     return VAULT_ATTACHMENT_PAUSED_ERROR;
   }
   return VAULT_ATTACHMENT_READY_COPY;
+}
+
+export function areVaultAttachmentsAvailable(site: VaultAttachmentSiteState): boolean {
+  return site?.vault_storage_provider !== 'google_drive' || Boolean(site.vault_google_drive_connected);
+}
+
+export function getVaultAllowedContributionMediaTypes(site: VaultAttachmentSiteState): VaultContributionMediaType[] {
+  return areVaultAttachmentsAvailable(site)
+    ? ['text', 'photo', 'video', 'voice']
+    : ['text'];
 }

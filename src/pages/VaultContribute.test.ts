@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 
 import { getContributionWindow, getVaultCoupleName, getVaultUnlockAtIso, getVaultUnlockYear } from './VaultContribute';
 import {
+  areVaultAttachmentsAvailable,
+  getVaultAllowedContributionMediaTypes,
   getVaultAttachmentStatusCopy,
   mapVaultAttachmentUploadError,
   mapVaultContributionSaveError,
@@ -76,6 +78,25 @@ describe('vault guest-safe copy', () => {
       vault_storage_provider: 'supabase',
       vault_google_drive_connected: false,
     })).toBe(VAULT_ATTACHMENT_READY_COPY);
+  });
+
+  it('keeps written notes available even when attachment uploads are paused', () => {
+    const attachmentPausedSite = {
+      vault_storage_provider: 'google_drive' as const,
+      vault_google_drive_connected: false,
+    };
+
+    expect(areVaultAttachmentsAvailable(attachmentPausedSite)).toBe(false);
+    expect(getVaultAllowedContributionMediaTypes(attachmentPausedSite)).toEqual(['text']);
+
+    expect(areVaultAttachmentsAvailable({
+      vault_storage_provider: 'supabase',
+      vault_google_drive_connected: false,
+    })).toBe(true);
+    expect(getVaultAllowedContributionMediaTypes({
+      vault_storage_provider: 'supabase',
+      vault_google_drive_connected: false,
+    })).toEqual(['text', 'photo', 'video', 'voice']);
   });
 
   it('keeps upload progress and fallback copy free of storage-provider language', () => {
