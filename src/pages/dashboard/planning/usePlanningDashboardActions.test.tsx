@@ -4,12 +4,14 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { usePlanningDashboardActions } from './usePlanningDashboardActions';
 import type { PlanningBudgetItem, PlanningTask, PlanningVendor } from './planningService';
 import type { VendorMetaMap } from './vendorMetaStorage';
+import { PLANNING_TASK_ADD_RETRY_ERROR, PLANNING_VENDOR_META_SAVE_RETRY_ERROR } from './planningErrorCopy';
 
+const createTask = vi.fn();
 const createBudgetItem = vi.fn();
 const updatePlanningVendorMeta = vi.fn();
 
 vi.mock('./planningService', () => ({
-  createTask: vi.fn(),
+  createTask: (...args: unknown[]) => createTask(...args),
   updateTask: vi.fn(),
   deleteTask: vi.fn(),
   createBudgetItem: (...args: unknown[]) => createBudgetItem(...args),
@@ -96,6 +98,7 @@ function renderActions(options: {
 
 describe('usePlanningDashboardActions', () => {
   beforeEach(() => {
+    createTask.mockReset();
     createBudgetItem.mockReset();
     updatePlanningVendorMeta.mockReset();
   });
@@ -137,6 +140,18 @@ describe('usePlanningDashboardActions', () => {
 
     expect(updatePlanningVendorMeta).toHaveBeenCalledWith('site-1', nextMeta);
     expect(harness.vendorMeta).toEqual(previousMeta);
-    expect(harness.toast).toHaveBeenCalledWith('Couldn’t save vendor reminder details. Please try again.', 'error');
+    expect(harness.toast).toHaveBeenCalledWith(PLANNING_VENDOR_META_SAVE_RETRY_ERROR, 'error');
+  });
+
+  it('uses shared planning-safe copy when adding a task fails', async () => {
+    createTask.mockRejectedValueOnce(new Error('openai provider timeout token=abc'));
+    const harness = renderActions();
+
+    await act(async () => {
+      await harness.actions.handleAddTask({ title: 'Confirm florist' });
+    });
+
+    expect(createTask).toHaveBeenCalledWith('site-1', { title: 'Confirm florist' });
+    expect(harness.toast).toHaveBeenCalledWith(PLANNING_TASK_ADD_RETRY_ERROR, 'error');
   });
 });

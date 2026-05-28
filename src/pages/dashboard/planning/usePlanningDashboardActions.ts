@@ -18,6 +18,22 @@ import {
   updatePlanningVendorMeta,
 } from './planningService';
 import type { VendorMetaMap } from './vendorMetaStorage';
+import {
+  PLANNING_BUDGET_ADD_RETRY_ERROR,
+  PLANNING_BUDGET_DELETE_RETRY_ERROR,
+  PLANNING_BUDGET_UPDATE_RETRY_ERROR,
+  PLANNING_MILESTONE_GENERATE_RETRY_ERROR,
+  PLANNING_TASK_ADD_RETRY_ERROR,
+  PLANNING_TASK_DELETE_RETRY_ERROR,
+  PLANNING_TASK_UPDATE_RETRY_ERROR,
+  PLANNING_TOTAL_BUDGET_UPDATE_RETRY_ERROR,
+  PLANNING_VENDOR_ADD_RETRY_ERROR,
+  PLANNING_VENDOR_BUDGET_ADD_RETRY_ERROR,
+  PLANNING_VENDOR_DELETE_RETRY_ERROR,
+  PLANNING_VENDOR_META_SAVE_RETRY_ERROR,
+  PLANNING_VENDOR_UPDATE_RETRY_ERROR,
+  mapPlanningDashboardError,
+} from './planningErrorCopy';
 
 type ToastFn = (message: string, variant?: 'success' | 'error' | 'info') => void;
 
@@ -93,9 +109,9 @@ export function usePlanningDashboardActions({
       if (!isCurrentAction()) return;
       setTasks((prev) => [...prev, created]);
       toast('Task added', 'success');
-    } catch {
+    } catch (error) {
       if (!isCurrentAction()) return;
-      toast('Couldn’t add that task. Please try again.', 'error');
+      toast(mapPlanningDashboardError(error, PLANNING_TASK_ADD_RETRY_ERROR), 'error');
     }
   }, [canUseTasks, isDemoMode, setTasks, siteId, toast]);
 
@@ -110,9 +126,9 @@ export function usePlanningDashboardActions({
       if (!isDemoMode) await updateTask(id, updates);
       if (!isCurrentAction()) return;
       setTasks((prev) => prev.map((task) => task.id === id ? { ...task, ...updates } : task));
-    } catch {
+    } catch (error) {
       if (!isCurrentAction()) return;
-      toast('Couldn’t update that task. Please try again.', 'error');
+      toast(mapPlanningDashboardError(error, PLANNING_TASK_UPDATE_RETRY_ERROR), 'error');
     }
   }, [canUseTasks, isDemoMode, setTasks, toast]);
 
@@ -128,9 +144,9 @@ export function usePlanningDashboardActions({
       if (!isCurrentAction()) return;
       setTasks((prev) => prev.filter((task) => task.id !== id));
       toast('Task deleted', 'success');
-    } catch {
+    } catch (error) {
       if (!isCurrentAction()) return;
-      toast('Couldn’t remove that task. Please try again.', 'error');
+      toast(mapPlanningDashboardError(error, PLANNING_TASK_DELETE_RETRY_ERROR), 'error');
     }
   }, [canUseTasks, isDemoMode, setTasks, toast]);
 
@@ -159,9 +175,9 @@ export function usePlanningDashboardActions({
       if (!isCurrentAction()) return;
       setTasks((prev) => [...prev, ...created]);
       toast(`Added ${created.length} milestone tasks`, 'success');
-    } catch {
+    } catch (error) {
       if (!isCurrentAction()) return;
-      toast('Couldn’t generate milestones right now. Please try again.', 'error');
+      toast(mapPlanningDashboardError(error, PLANNING_MILESTONE_GENERATE_RETRY_ERROR), 'error');
     }
   }, [canUseTasks, isDemoMode, setTasks, siteId, toast, weddingDate]);
 
@@ -193,9 +209,9 @@ export function usePlanningDashboardActions({
       if (!isCurrentAction()) return;
       setBudgetItems((prev) => [...prev, created]);
       toast('Budget item added', 'success');
-    } catch {
+    } catch (error) {
       if (!isCurrentAction()) return;
-      toast('Couldn’t add that budget item. Please try again.', 'error');
+      toast(mapPlanningDashboardError(error, PLANNING_BUDGET_ADD_RETRY_ERROR), 'error');
     }
   }, [canUseBudget, isDemoMode, setBudgetItems, siteId, toast]);
 
@@ -210,9 +226,9 @@ export function usePlanningDashboardActions({
       if (!isDemoMode) await updateBudgetItem(id, updates);
       if (!isCurrentAction()) return;
       setBudgetItems((prev) => prev.map((item) => item.id === id ? { ...item, ...updates } : item));
-    } catch {
+    } catch (error) {
       if (!isCurrentAction()) return;
-      toast('Couldn’t update that budget item. Please try again.', 'error');
+      toast(mapPlanningDashboardError(error, PLANNING_BUDGET_UPDATE_RETRY_ERROR), 'error');
     }
   }, [canUseBudget, isDemoMode, setBudgetItems, toast]);
 
@@ -228,9 +244,9 @@ export function usePlanningDashboardActions({
       if (!isCurrentAction()) return;
       setBudgetItems((prev) => prev.filter((item) => item.id !== id));
       toast('Budget item deleted', 'success');
-    } catch {
+    } catch (error) {
       if (!isCurrentAction()) return;
-      toast('Couldn’t remove that budget item. Please try again.', 'error');
+      toast(mapPlanningDashboardError(error, PLANNING_BUDGET_DELETE_RETRY_ERROR), 'error');
     }
   }, [canUseBudget, isDemoMode, setBudgetItems, toast]);
 
@@ -277,9 +293,9 @@ export function usePlanningDashboardActions({
       if (!isCurrentAction()) return;
       setBudgetItems((prev) => [...prev, createdItem]);
       toast('Vendor also added to budget', 'success');
-    } catch {
+    } catch (error) {
       if (!isCurrentAction()) return;
-      toast('Couldn’t add this vendor to budget right now. Please try again.', 'error');
+      toast(mapPlanningDashboardError(error, PLANNING_VENDOR_BUDGET_ADD_RETRY_ERROR), 'error');
     }
   }, [canUseBudget, isDemoMode, setBudgetItems, siteId, toast]);
 
@@ -317,9 +333,9 @@ export function usePlanningDashboardActions({
       setVendors((prev) => [...prev, created]);
       setPendingVendorForBudget(created);
       toast('Vendor added', 'success');
-    } catch {
+    } catch (error) {
       if (!isCurrentAction()) return;
-      toast('Couldn’t add that vendor. Please try again.', 'error');
+      toast(mapPlanningDashboardError(error, PLANNING_VENDOR_ADD_RETRY_ERROR), 'error');
     }
   }, [canUseVendors, isDemoMode, setVendors, siteId, toast]);
 
@@ -342,9 +358,9 @@ export function usePlanningDashboardActions({
       if (!isCurrentAction()) return;
       setTotalBudget(value);
       toast('Total budget updated', 'success');
-    } catch {
+    } catch (error) {
       if (!isCurrentAction()) return;
-      toast('Couldn’t update total budget. Please try again.', 'error');
+      toast(mapPlanningDashboardError(error, PLANNING_TOTAL_BUDGET_UPDATE_RETRY_ERROR), 'error');
     }
   }, [canUseBudget, isDemoMode, setTotalBudget, siteId, toast]);
 
@@ -359,9 +375,9 @@ export function usePlanningDashboardActions({
       if (!isDemoMode) await updateVendor(id, updates);
       if (!isCurrentAction()) return;
       setVendors((prev) => prev.map((vendor) => vendor.id === id ? { ...vendor, ...updates } : vendor));
-    } catch {
+    } catch (error) {
       if (!isCurrentAction()) return;
-      toast('Couldn’t update that vendor. Please try again.', 'error');
+      toast(mapPlanningDashboardError(error, PLANNING_VENDOR_UPDATE_RETRY_ERROR), 'error');
     }
   }, [canUseVendors, isDemoMode, setVendors, toast]);
 
@@ -380,10 +396,10 @@ export function usePlanningDashboardActions({
     });
     try {
       if (!isDemoMode) await updatePlanningVendorMeta(siteId, meta);
-    } catch {
+    } catch (error) {
       if (!isCurrentAction()) return;
       if (previousMeta) setVendorMeta(previousMeta);
-      toast('Couldn’t save vendor reminder details. Please try again.', 'error');
+      toast(mapPlanningDashboardError(error, PLANNING_VENDOR_META_SAVE_RETRY_ERROR), 'error');
     }
   }, [canUseVendors, isDemoMode, setVendorMeta, siteId, toast]);
 
@@ -399,9 +415,9 @@ export function usePlanningDashboardActions({
       if (!isCurrentAction()) return;
       setVendors((prev) => prev.filter((vendor) => vendor.id !== id));
       toast('Vendor deleted', 'success');
-    } catch {
+    } catch (error) {
       if (!isCurrentAction()) return;
-      toast('Couldn’t remove that vendor. Please try again.', 'error');
+      toast(mapPlanningDashboardError(error, PLANNING_VENDOR_DELETE_RETRY_ERROR), 'error');
     }
   }, [canUseVendors, isDemoMode, setVendors, toast]);
 
