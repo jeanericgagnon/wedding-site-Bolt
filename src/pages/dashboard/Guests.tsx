@@ -30,7 +30,7 @@ import { sendWeddingInvitation } from '../../lib/emailService';
 import { resolvePublicSiteSlugFromRow } from '../../lib/publicSiteSlug';
 import { buildGuestOpsCoach, buildGuestOutreachSequence } from '../../lib/guestOpsCoach';
 import { getPlannerHandoffCopy } from '../../lib/plannerHandoffState';
-import { buildRsvpInviteUrl } from '../../lib/publicGuestLinks';
+import { buildGuestContactUpdateUrl, buildRsvpInviteUrl } from '../../lib/publicGuestLinks';
 import * as XLSX from 'xlsx';
 
 interface Guest {
@@ -1778,7 +1778,7 @@ Proceed with send?`)) return;
     if (error) throw error;
   };
 
-  async function copyContactRequestLink() {
+  async function copyContactRequestLink(targetGuest?: Pick<GuestWithRSVP, 'invite_token'>) {
     if (!weddingSiteId) {
       toast('Missing wedding site context', 'error');
       return;
@@ -1796,7 +1796,12 @@ Proceed with send?`)) return;
       return;
     }
 
-    const url = `https://${publicSlug}.dayof.love/guest-contact/${publicSlug}`;
+    if (!targetGuest?.invite_token) {
+      toast('Open a guest with an invitation link before copying a guest update link.', 'error');
+      return;
+    }
+
+    const url = buildGuestContactUpdateUrl(`https://${publicSlug}.dayof.love`, publicSlug, targetGuest.invite_token);
     try {
       await navigator.clipboard.writeText(url);
       toast('Guest update link copied', 'success');
@@ -4776,7 +4781,7 @@ Proceed with send?`)) return;
                 <p className="text-xs text-text-secondary mt-0.5">Guest updates and itinerary invitations</p>
                 <div className="mt-2 flex flex-wrap gap-2">
                   <button
-                    onClick={() => copyContactRequestLink()}
+                    onClick={() => copyContactRequestLink(itineraryDrawerGuest)}
                     className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs rounded-lg border border-border hover:border-primary hover:text-primary transition-colors"
                   >
                     <Copy className="w-3.5 h-3.5" />
