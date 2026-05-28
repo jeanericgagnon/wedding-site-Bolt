@@ -36,6 +36,31 @@ import { resolveSettingsTabFromSearch, type SettingsTab } from './settingsTab';
 import { buildCollaboratorRoleGuide } from '../collaboratorRoleGuide';
 import { buildCollaboratorInviteUrl, buildMaskedCollaboratorInvitePath } from '../../lib/collaboratorInviteLink';
 import { buildInviteOnlySiteAccessUrl } from '../../lib/publicGuestLinks';
+import {
+  mapSettingsError,
+  SETTINGS_ACCOUNT_LOAD_RETRY_ERROR,
+  SETTINGS_ACCOUNT_SAVE_RETRY_ERROR,
+  SETTINGS_BILLING_RETRY_ERROR,
+  SETTINGS_COLLAB_CLEAR_RETRY_ERROR,
+  SETTINGS_COLLAB_COPY_RETRY_ERROR,
+  SETTINGS_COLLAB_CREATE_RETRY_ERROR,
+  SETTINGS_COLLAB_REMOVE_RETRY_ERROR,
+  SETTINGS_COLLAB_REVEAL_RETRY_ERROR,
+  SETTINGS_COLLAB_REVOKE_RETRY_ERROR,
+  SETTINGS_LANGUAGE_SAVE_RETRY_ERROR,
+  SETTINGS_NOTIF_SAVE_RETRY_ERROR,
+  SETTINGS_PASSWORD_SAVE_RETRY_ERROR,
+  SETTINGS_PLANNER_SAVE_RETRY_ERROR,
+  SETTINGS_PLAYLIST_SAVE_RETRY_ERROR,
+  SETTINGS_PRINT_PACK_RETRY_ERROR,
+  SETTINGS_PRIVACY_SAVE_RETRY_ERROR,
+  SETTINGS_RSVP_SAVE_RETRY_ERROR,
+  SETTINGS_SLUG_SAVE_RETRY_ERROR,
+  SETTINGS_STORY_GRAPHIC_RETRY_ERROR,
+  SETTINGS_SUBSCRIBE_RETRY_ERROR,
+  SETTINGS_TEMPLATE_RETRY_ERROR,
+  SETTINGS_TOKEN_RETRY_ERROR,
+} from './settingsErrorCopy';
 
 
 interface RSVPQuestionSetting {
@@ -164,7 +189,7 @@ export const DashboardSettings: React.FC = () => {
       setBillingLoading(true);
       fetchBillingInfo(user.id)
         .then(info => setBillingInfo(info))
-        .catch(err => setBillingError(err.message))
+        .catch(err => setBillingError(mapSettingsError(err, SETTINGS_BILLING_RETRY_ERROR)))
         .finally(() => setBillingLoading(false));
     }
   }, [activeTab, billingInfo, user]);
@@ -301,7 +326,7 @@ export const DashboardSettings: React.FC = () => {
         setCollaboratorInvites([]);
       }
     } catch (err) {
-      setAccountError(err instanceof Error ? err.message : 'Could not load settings right now.');
+      setAccountError(mapSettingsError(err, SETTINGS_ACCOUNT_LOAD_RETRY_ERROR));
     }
   }, [isDemoMode, loadCollaboratorInvites, user]);
 
@@ -326,7 +351,7 @@ export const DashboardSettings: React.FC = () => {
       if (error) throw error;
       setAccountSuccess('Account information saved.');
     } catch (err) {
-      setAccountError(err instanceof Error ? err.message : 'Failed to save changes.');
+      setAccountError(mapSettingsError(err, SETTINGS_ACCOUNT_SAVE_RETRY_ERROR));
     } finally {
       setAccountSaving(false);
     }
@@ -359,7 +384,7 @@ export const DashboardSettings: React.FC = () => {
       setNewPassword('');
       setConfirmPassword('');
     } catch (err) {
-      setPasswordError(err instanceof Error ? err.message : 'Failed to update password.');
+      setPasswordError(mapSettingsError(err, SETTINGS_PASSWORD_SAVE_RETRY_ERROR));
     } finally {
       setPasswordSaving(false);
     }
@@ -403,7 +428,7 @@ export const DashboardSettings: React.FC = () => {
       setPlannerInvite(invite);
       setPlannerInviteSuccess(plannerInvite ? 'Planner access updated.' : 'Planner invite saved.');
     } catch (err) {
-      setPlannerInviteError(err instanceof Error ? err.message : 'Failed to save planner invite.');
+      setPlannerInviteError(mapSettingsError(err, SETTINGS_PLANNER_SAVE_RETRY_ERROR));
     }
   };
 
@@ -450,7 +475,7 @@ export const DashboardSettings: React.FC = () => {
       await loadCollaboratorInvites(weddingSiteId);
       setPlannerInviteSuccess('Collaborator invite created in the database.');
     } catch (err) {
-      setPlannerInviteError(err instanceof Error ? err.message : 'Failed to create collaborator invite.');
+      setPlannerInviteError(mapSettingsError(err, SETTINGS_COLLAB_CREATE_RETRY_ERROR));
     } finally {
       setCreatingCollaboratorInvite(false);
     }
@@ -473,7 +498,7 @@ export const DashboardSettings: React.FC = () => {
       }
       setPlannerInviteSuccess('Collaborator invite revoked.');
     } catch (err) {
-      setPlannerInviteError(err instanceof Error ? err.message : 'Failed to revoke collaborator invite.');
+      setPlannerInviteError(mapSettingsError(err, SETTINGS_COLLAB_REVOKE_RETRY_ERROR));
     } finally {
       setRevokingCollaboratorInviteId(null);
     }
@@ -491,7 +516,7 @@ export const DashboardSettings: React.FC = () => {
       setPlannerInviteSuccess('Invite link copied.');
       setPlannerInviteError(null);
     } catch (err) {
-      setPlannerInviteError(err instanceof Error ? err.message : 'Failed to copy collaborator invite.');
+      setPlannerInviteError(mapSettingsError(err, SETTINGS_COLLAB_COPY_RETRY_ERROR));
     }
   };
 
@@ -510,7 +535,7 @@ export const DashboardSettings: React.FC = () => {
       const inviteUrl = buildCollaboratorInviteUrl(window.location.origin, String(inviteToken));
       setRevealedInviteLinks((current) => ({ ...current, [inviteId]: inviteUrl }));
     } catch (err) {
-      setPlannerInviteError(err instanceof Error ? err.message : 'Failed to reveal collaborator invite.');
+      setPlannerInviteError(mapSettingsError(err, SETTINGS_COLLAB_REVEAL_RETRY_ERROR));
     }
   };
 
@@ -531,7 +556,7 @@ export const DashboardSettings: React.FC = () => {
           : 'No test invites found to clear.',
       );
     } catch (err) {
-      setPlannerInviteError(err instanceof Error ? err.message : 'Failed to clear test invites.');
+      setPlannerInviteError(mapSettingsError(err, SETTINGS_COLLAB_CLEAR_RETRY_ERROR));
     }
   };
 
@@ -545,7 +570,7 @@ export const DashboardSettings: React.FC = () => {
       setPlannerInviteError(null);
       setPlannerInviteSuccess('Planner invite removed.');
     } catch (err) {
-      setPlannerInviteError(err instanceof Error ? err.message : 'Failed to remove planner invite.');
+      setPlannerInviteError(mapSettingsError(err, SETTINGS_COLLAB_REMOVE_RETRY_ERROR));
     }
   };
 
@@ -596,7 +621,7 @@ export const DashboardSettings: React.FC = () => {
       setSiteSlug(cleaned);
       setSlugSuccess(`Site URL updated to /${cleaned}`);
     } catch (err) {
-      setSlugError(err instanceof Error ? err.message : 'Failed to update URL.');
+      setSlugError(mapSettingsError(err, SETTINGS_SLUG_SAVE_RETRY_ERROR));
     } finally {
       setSlugSaving(false);
     }
@@ -640,7 +665,7 @@ export const DashboardSettings: React.FC = () => {
       setSitePassword('');
       setVisibilitySuccess('Privacy settings saved.');
     } catch (err) {
-      setVisibilityError(err instanceof Error ? err.message : 'Failed to save privacy settings.');
+      setVisibilityError(mapSettingsError(err, SETTINGS_PRIVACY_SAVE_RETRY_ERROR));
     } finally {
       setVisibilitySaving(false);
     }
@@ -659,7 +684,7 @@ export const DashboardSettings: React.FC = () => {
       setGuestAccessToken(data as string);
       toast('Guest access token regenerated.', 'success');
     } catch (err) {
-      toast(err instanceof Error ? err.message : 'Could not regenerate guest access token.', 'error');
+      toast(mapSettingsError(err, SETTINGS_TOKEN_RETRY_ERROR), 'error');
     }
   };
 
@@ -770,7 +795,7 @@ export const DashboardSettings: React.FC = () => {
       downloadBlob('dayof-wedding-identity-print-pack.pdf', await rasterizeSvgToPdfBlob(printSheet.svg));
       toast('Wedding identity print pack saved as HTML, SVG, PNG, and PDF.', 'success');
     } catch (err) {
-      toast(err instanceof Error ? err.message : "Couldn't save the identity print pack.", 'error');
+      toast(mapSettingsError(err, SETTINGS_PRINT_PACK_RETRY_ERROR), 'error');
     }
   };
 
@@ -792,7 +817,7 @@ export const DashboardSettings: React.FC = () => {
       );
       toast('Wedding story graphic saved as SVG and PNG.', 'success');
     } catch (err) {
-      toast(err instanceof Error ? err.message : "Couldn't save the story graphic.", 'error');
+      toast(mapSettingsError(err, SETTINGS_STORY_GRAPHIC_RETRY_ERROR), 'error');
     }
   };
 
@@ -811,7 +836,7 @@ export const DashboardSettings: React.FC = () => {
       setVisibilitySuccess(`Default language set to ${next === 'es' ? 'Español' : 'English'}.`);
     } catch (err) {
       setDefaultLanguage(previous);
-      setVisibilityError(err instanceof Error ? err.message : 'Failed to save default language.');
+      setVisibilityError(mapSettingsError(err, SETTINGS_LANGUAGE_SAVE_RETRY_ERROR));
     }
   };
 
@@ -828,7 +853,7 @@ export const DashboardSettings: React.FC = () => {
       if (error) throw error;
       setVisibilitySuccess('Song request playlist link saved.');
     } catch (err) {
-      setVisibilityError(err instanceof Error ? err.message : 'Failed to save playlist link.');
+      setVisibilityError(mapSettingsError(err, SETTINGS_PLAYLIST_SAVE_RETRY_ERROR));
     }
   };
 
@@ -884,7 +909,7 @@ export const DashboardSettings: React.FC = () => {
       setRsvpQuestions(cleaned);
       setRsvpQuestionsSuccess('RSVP settings saved.');
     } catch (err) {
-      setRsvpQuestionsError(err instanceof Error ? err.message : 'Failed to save RSVP custom questions.');
+      setRsvpQuestionsError(mapSettingsError(err, SETTINGS_RSVP_SAVE_RETRY_ERROR));
     } finally {
       setRsvpQuestionsSaving(false);
     }
@@ -904,7 +929,7 @@ export const DashboardSettings: React.FC = () => {
       if (error) throw error;
       setNotifSuccess('Preferences saved.');
     } catch (err) {
-      setNotifError(err instanceof Error ? err.message : 'Failed to save preferences.');
+      setNotifError(mapSettingsError(err, SETTINGS_NOTIF_SAVE_RETRY_ERROR));
     } finally {
       setNotifSaving(false);
     }
@@ -923,7 +948,7 @@ export const DashboardSettings: React.FC = () => {
       );
       window.location.href = url;
     } catch (err) {
-      setSubscribeError(err instanceof Error ? err.message : 'Could not start checkout right now.');
+      setSubscribeError(mapSettingsError(err, SETTINGS_SUBSCRIBE_RETRY_ERROR));
       setSubscribeLoading(false);
     }
   };
@@ -963,7 +988,7 @@ export const DashboardSettings: React.FC = () => {
       setCurrentTemplate(newTemplateId);
       setTemplateSuccess('Template changed successfully. Your content has been preserved.');
     } catch (err: unknown) {
-      setTemplateError((err as Error).message || 'Failed to change template');
+      setTemplateError(mapSettingsError(err, SETTINGS_TEMPLATE_RETRY_ERROR));
     } finally {
       setChangingTemplate(false);
     }
