@@ -19,15 +19,19 @@ Status: draft (post-lab hardening)
 - [ ] selecting section from preview focuses rail
 - [ ] selecting from rail scrolls preview to section
 - [ ] toggling enabled/hidden preserves block stack
-- [ ] deleting selected section reselects nearest valid section
+- [x] deleting selected section reselects nearest valid section
+  - `src/pages/builderV2SectionLifecycle.test.ts` proves section removal preserves the nearest valid next selection instead of dropping the editor into an orphaned state
 
 ### Block-level
 - [ ] add block respects section catalog constraints
-- [ ] duplicate block respects global/per-type limits
+- [x] duplicate block respects global/per-type limits
+  - `src/pages/builderV2BlockOperations.test.ts` covers the blocked duplicate path when per-type section limits say no
 - [ ] collapse/expand state is isolated by block id
-- [ ] move up/down updates preview and preserves data
+- [x] move up/down updates preview and preserves data
+  - `src/pages/builderV2BlockOperations.test.ts` now proves reordered blocks keep their authored payloads intact while the sequence changes
 - [ ] remove block updates preview and validations immediately
-- [ ] required-field warnings clear when fixed
+- [x] required-field warnings clear when fixed
+  - `src/pages/builderV2BlockValidation.test.ts` proves the live warning layer clears as soon as missing qna/contact data is restored
 
 ### Command/toolbar-level
 - [ ] command palette actions are idempotent

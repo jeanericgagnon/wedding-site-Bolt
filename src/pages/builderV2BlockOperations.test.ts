@@ -88,6 +88,18 @@ describe('builderV2BlockOperations', () => {
 
     expect(movedDown.map((block) => block.id)).toEqual(['photo', 'intro', 'details']);
     expect(movedUp.map((block) => block.id)).toEqual(['intro', 'details', 'photo']);
+    expect(movedDown[0]).toMatchObject({
+      id: 'photo',
+      data: { imageUrl: 'https://example.com/photo.jpg', caption: 'Weekend' },
+    });
+    expect(movedDown[1]).toMatchObject({
+      id: 'intro',
+      data: { text: 'Hello there' },
+    });
+    expect(movedUp[1]).toMatchObject({
+      id: 'details',
+      data: { text: 'More details' },
+    });
   });
 
   it('returns the original blocks when a move would go out of bounds', () => {

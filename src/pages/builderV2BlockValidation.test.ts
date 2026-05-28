@@ -62,4 +62,20 @@ describe('builderV2BlockValidation', () => {
       ],
     })).toBe('');
   });
+
+  it('clears qna warnings as soon as the missing field is restored', () => {
+    expect(getBuilderV2BlockValidationWarning({
+      sectionType: 'faq',
+      block: { id: 'q1', type: 'qna', data: { question: 'Parking?', answer: 'Use the west lot.' } },
+      blocks: [],
+    })).toBe('');
+  });
+
+  it('clears contact warnings as soon as a real guest contact path is added', () => {
+    expect(getBuilderV2BlockValidationWarning({
+      sectionType: 'contact',
+      block: { id: 'c1', type: 'travelTip', data: { title: 'Maya Chen', email: 'maya@example.com' } },
+      blocks: [],
+    })).toBe('');
+  });
 });
