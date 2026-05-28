@@ -49,6 +49,7 @@ describe('getBuilderSectionEditingGuidance', () => {
     expect(guidance.focusTitle).toContain('connected data');
     expect(guidance.nextActionTab).toBe('data');
     expect(guidance.watchout).toContain('false confidence');
+    expect(guidance.currentStep).toContain('real data');
   });
 
   it('reframes hidden sections around a show-or-remove decision', () => {
@@ -66,5 +67,6 @@ describe('getBuilderSectionEditingGuidance', () => {
     expect(guidance.bestNextMove).toContain('return');
     expect(guidance.nextActionTab).toBe('layout');
     expect(guidance.thenStep).toContain('remove');
+    expect(guidance.focusDetail).toContain('visible page');
   });
 });

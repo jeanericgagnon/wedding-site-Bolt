@@ -46,7 +46,7 @@ describe('getBuilderWorkbenchGuidance', () => {
 
     expect(guidance.primaryAction).toEqual({
       kind: 'select-first-section',
-      label: 'Open the first live section',
+      label: 'Open the first visible section',
     });
   });
 

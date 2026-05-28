@@ -18,6 +18,7 @@ describe('getBuilderInspectorTabGuidance', () => {
     expect(guidance.find((item) => item.id === 'layout')?.status).toBe('recommended');
     expect(guidance.find((item) => item.id === 'content')?.status).toBe('blocked');
     expect(guidance.find((item) => item.id === 'style')?.status).toBe('blocked');
+    expect(guidance.find((item) => item.id === 'style')?.summary).toContain('visible page again');
   });
 
   it('pushes content before style when the section still lacks real copy', () => {
@@ -51,6 +52,7 @@ describe('getBuilderInspectorTabGuidance', () => {
 
     expect(guidance.find((item) => item.id === 'data')?.status).toBe('recommended');
     expect(guidance.find((item) => item.id === 'style')?.status).toBe('pending');
+    expect(guidance.find((item) => item.id === 'data')?.summary).toContain('real schedule');
   });
 
   it('treats style as optional when the section is already structurally healthy', () => {

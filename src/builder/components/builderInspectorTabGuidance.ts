@@ -104,7 +104,7 @@ export function getBuilderInspectorTabGuidance({
       status: styleStatus,
       badge: styleStatus === 'done' ? 'Set' : styleStatus === 'recommended' ? 'Review' : styleStatus === 'optional' ? 'Usually skip' : styleStatus === 'blocked' ? 'Hidden' : 'Later',
       summary: !enabled
-        ? 'Section-level styling can wait until the section is part of the live page again.'
+        ? 'Section-level styling can wait until the section is part of the visible page again.'
         : hasStyleOverrides
           ? 'This section already has custom visual treatment.'
           : 'The default site styling may already be enough here.',
@@ -126,7 +126,7 @@ export function getBuilderInspectorTabGuidance({
           ? 'Connected data matters only if this section returns to the page.'
           : dataConfigured
             ? 'The section is already pulling the structured data it depends on.'
-            : 'This section still needs its live schedule, venue, FAQ, registry, or media source.',
+            : 'This section still needs its real schedule, venue, FAQ, registry, or media source.',
       detail: !hasBindings
         ? 'You can ignore this lane for sections that stand on their own content.'
         : !enabled

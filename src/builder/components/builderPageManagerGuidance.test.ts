@@ -78,8 +78,7 @@ describe('getBuilderPageManagerGuidance', () => {
   });
 
   it('surfaces duplicate guest-facing paths before normal page expansion', () => {
-    expect(
-      getBuilderPageManagerGuidance(
+    const guidance = getBuilderPageManagerGuidance(
         [
           {
             id: 'home',
@@ -107,18 +106,19 @@ describe('getBuilderPageManagerGuidance', () => {
           },
         ] as never[],
         'travel',
-      ),
-    ).toMatchObject({
+      );
+
+    expect(guidance).toMatchObject({
       focusTitle: 'Two pages are still fighting over /travel',
       primaryAction: {
         kind: 'open-page',
       },
     });
+    expect(guidance.bestNextMove).toContain('visible page');
   });
 
   it('surfaces hidden pages before replacement work', () => {
-    expect(
-      getBuilderPageManagerGuidance(
+    const guidance = getBuilderPageManagerGuidance(
         [
           {
             id: 'home',
@@ -138,14 +138,16 @@ describe('getBuilderPageManagerGuidance', () => {
           },
         ] as never[],
         'home',
-      ),
-    ).toMatchObject({
+      );
+
+    expect(guidance).toMatchObject({
       focusTitle: 'FAQ is already built but still offstage',
       primaryAction: {
         kind: 'open-page',
         pageId: 'faq',
       },
     });
+    expect(guidance.watchout).toContain('visible pages');
   });
 
   it('keeps healthy maps focused on page quality instead of expansion', () => {

@@ -97,7 +97,7 @@ export function getBuilderPageManagerGuidance(
     return {
       focusTitle: `Two pages are still fighting over /${pageWithCollision.slug}`,
       focusDetail: 'A slug collision makes the page map look fuller than the guest-facing paths really are.',
-      bestNextMove: `Rename the conflicting slug for ${pageWithCollision.title} so every live page owns one honest path.`,
+      bestNextMove: `Rename the conflicting slug for ${pageWithCollision.title} so every visible page owns one honest path.`,
       decisionRule: 'Fix path collisions before you add or duplicate more pages.',
       watchout: 'Duplicate slugs are quiet editor bugs that become loud guest confusion later.',
       currentStep: 'Review the pages sharing the same path.',
@@ -149,7 +149,7 @@ export function getBuilderPageManagerGuidance(
       focusDetail: 'Hidden pages are useful when they are intentional. Review them before adding replacements or duplicating structure elsewhere.',
       bestNextMove: `Open ${firstHiddenPage.title} and decide whether it belongs back in navigation or should stay hidden on purpose.`,
       decisionRule: 'Reuse and refine hidden structure before inventing a second version of the same page.',
-      watchout: 'If hidden pages drift out of review, the site map quietly splits into live pages and forgotten drafts.',
+      watchout: 'If hidden pages drift out of review, the site map quietly splits into visible pages and forgotten drafts.',
       currentStep: 'Audit the strongest hidden page first.',
       nextStep: `Choose whether ${firstHiddenPage.title} should come back, stay hidden, or be simplified.`,
       thenStep: 'Once hidden pages are intentional, the navigation will feel much calmer and easier to trust.',

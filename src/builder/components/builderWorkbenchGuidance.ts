@@ -215,7 +215,7 @@ export function getBuilderWorkbenchGuidance({
           detail: 'Do not disappear into side sections before the main one is trustworthy.',
         },
       ],
-      primaryAction: { kind: 'select-first-section', label: 'Open the first live section' },
+      primaryAction: { kind: 'select-first-section', label: 'Open the first visible section' },
     };
   }
 
