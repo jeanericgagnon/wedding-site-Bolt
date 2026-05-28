@@ -9,6 +9,7 @@ import { BuilderProject } from '../types/builder/project';
 import { WeddingDataV1 } from '../types/weddingData';
 import { createDefaultSectionInstance } from '../types/builder/section';
 import { supabase } from '../lib/supabase';
+import { FIRST_SESSION_WORKSPACE_ROUTES } from '../lib/firstSessionWorkspaceRoutes';
 import { getTemplatePack } from './constants/builderTemplatePacks';
 import { readSetupDraft } from '../lib/setupDraft';
 import { applySetupDraftToWeddingData, hasMeaningfulSetupDraft } from './utils/setupDraftHydration';
@@ -253,7 +254,7 @@ export const BuilderPage: React.FC = () => {
             {noSiteExperience.primaryActionLabel}
           </button>
           <button
-            onClick={() => navigate('/dashboard')}
+            onClick={() => navigate(FIRST_SESSION_WORKSPACE_ROUTES.overview)}
             className="mt-3 flex items-center gap-1.5 mx-auto text-sm text-gray-400 hover:text-gray-600 transition-colors"
           >
             <ArrowLeft size={14} />
@@ -305,7 +306,7 @@ export const BuilderPage: React.FC = () => {
               {errorExperience.primaryActionLabel}
             </button>
             <button
-              onClick={() => navigate('/dashboard')}
+              onClick={() => navigate(FIRST_SESSION_WORKSPACE_ROUTES.overview)}
               className="inline-flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-600 transition-colors"
             >
               <ArrowLeft size={14} />

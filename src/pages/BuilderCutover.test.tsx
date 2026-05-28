@@ -12,19 +12,21 @@ const {
   loadWeddingDataMock,
   saveUpgradeBridgeMock,
   maybeSingleMock,
+  authState,
 } = vi.hoisted(() => ({
   navigateMock: vi.fn(),
   loadProjectMock: vi.fn(),
   loadWeddingDataMock: vi.fn(),
   saveUpgradeBridgeMock: vi.fn(),
   maybeSingleMock: vi.fn(),
+  authState: {
+    user: { id: 'user-1' },
+    isDemoMode: false,
+  },
 }));
 
 vi.mock('../hooks/useAuth', () => ({
-  useAuth: () => ({
-    user: { id: 'user-1' },
-    isDemoMode: false,
-  }),
+  useAuth: () => authState,
 }));
 
 vi.mock('../lib/supabase', () => ({
@@ -128,5 +130,20 @@ describe('BuilderCutover', () => {
       weddingData,
     });
     expect(navigateMock).toHaveBeenCalledWith('/builder-v2-lab');
+  });
+
+  it('sends builder recovery back to the overview workspace instead of the generic dashboard route', async () => {
+    maybeSingleMock.mockRejectedValue(new Error('Failed to fetch project data'));
+
+    render(
+      <MemoryRouter initialEntries={['/dashboard/builder']}>
+        <BuilderCutover />
+      </MemoryRouter>,
+    );
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Back to dashboard' }));
+
+    expect(navigateMock).toHaveBeenCalledWith('/dashboard/overview');
+    expect(navigateMock).not.toHaveBeenCalledWith('/dashboard');
   });
 });

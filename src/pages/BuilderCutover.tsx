@@ -3,6 +3,7 @@ import { ArrowRight, Loader2, RefreshCw, Sparkles, Wand2 } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { supabase } from '../lib/supabase';
+import { FIRST_SESSION_WORKSPACE_ROUTES } from '../lib/firstSessionWorkspaceRoutes';
 import { readSetupDraft } from '../lib/setupDraft';
 import { builderProjectService } from '../builder/services/builderProjectService';
 import { getBuilderEntryExperience } from '../builder/builderEntryExperience';
@@ -165,7 +166,7 @@ export const BuilderCutover: React.FC = () => {
             </button>
             <button
               type="button"
-              onClick={() => navigate('/dashboard')}
+              onClick={() => navigate(FIRST_SESSION_WORKSPACE_ROUTES.overview)}
               className="rounded-xl border border-neutral-300 bg-white px-4 py-2.5 text-sm font-semibold text-neutral-700 hover:border-neutral-400"
             >
               {errorExperience.secondaryActionLabel}
