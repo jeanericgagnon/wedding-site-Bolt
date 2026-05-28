@@ -40,7 +40,6 @@ import { deriveNameChangeLifecycleStatus } from './nameChangeLifecycleStatus';
 import { hydrateNameChangeWorkspace, loadNameChangeWorkspace } from './planning/nameChangeService';
 import {
   getBuilderLaunchChecklistRoute,
-  getBuilderLaunchConfidenceRoute,
   getBuilderPhotoTipsRoute,
   getBuilderPolishRoute,
 } from '../builderCutoverRoute';
@@ -49,6 +48,7 @@ import { ControlTowerBriefingCard } from './ControlTowerBriefingCard';
 import { buildDayOfBrainBriefing, type DayOfBrainAction } from './dayOfBrain';
 import { DayOfBrainCard } from './DayOfBrainCard';
 import { buildCoupleFocusModel, type CoupleFocusStep } from './coupleFocus';
+import { resolveBuilderWorkflowRoute } from './builderWorkflowRoutes';
 import { buildOverviewThroughline } from './overviewThroughline';
 import { getFlowStatusLabel } from '../../lib/flowLabels';
 
@@ -667,8 +667,8 @@ export const DashboardOverview: React.FC = () => {
     }
 
     const routeByTarget: Record<ControlTowerAction['target'], string> = {
-      'builder-launch': getBuilderLaunchConfidenceRoute(),
-      'builder-polish': getBuilderPolishRoute(),
+      'builder-launch': resolveBuilderWorkflowRoute('builder-launch'),
+      'builder-polish': resolveBuilderWorkflowRoute('builder-polish'),
       coordinator: '/dashboard/coordinator',
       guests: '/dashboard/guests',
       itinerary: '/dashboard/itinerary#itinerary-readiness',
@@ -702,8 +702,8 @@ export const DashboardOverview: React.FC = () => {
 
   function handleCoupleFocusAction(step: CoupleFocusStep) {
     const routeByTarget: Record<CoupleFocusStep['target'], string> = {
-      'builder-launch': getBuilderLaunchConfidenceRoute(),
-      'builder-polish': getBuilderPolishRoute(),
+      'builder-launch': resolveBuilderWorkflowRoute('builder-launch'),
+      'builder-polish': resolveBuilderWorkflowRoute('builder-polish'),
       planning: '/dashboard/planning',
       'planning-tasks': '/dashboard/planning?tab=tasks',
       'planning-vendors': '/dashboard/planning?tab=vendors',
