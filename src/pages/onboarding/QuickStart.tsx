@@ -29,6 +29,7 @@ import { clampQuickStartQuestionIndex } from '../../lib/quickStartQuestionBounds
 import { canResumeQuickStartFollowUps } from '../../lib/quickStartFollowUpGate';
 import { normalizeQuickStartClarifyingState } from '../../lib/quickStartClarifyingNormalize';
 import { normalizeQuickStartClarifyingMode } from '../../lib/quickStartClarifyingMode';
+import { mapQuickStartAiError, mapQuickStartSaveError } from './quickStartCopy';
 
 type QuestionDef = {
   key: ConciergeQuestion;
@@ -143,7 +144,6 @@ export const QuickStart: React.FC = () => {
   const [inputValue, setInputValue] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [aiDebug, setAiDebug] = useState('');
   const [showFollowUps, setShowFollowUps] = useState(false);
   const [viewState, setViewState] = useState<'question' | 'thinking' | 'followups'>('question');
   const [processingStep, setProcessingStep] = useState(0);
@@ -445,8 +445,7 @@ export const QuickStart: React.FC = () => {
       });
     } catch (err) {
       console.error('QUICK_START_FINISH_FAILED', err);
-      setError(err instanceof Error ? err.message : 'Failed to save. Please try again.');
-      setAiDebug(`finish_failed=${err instanceof Error ? err.message : String(err)}`);
+      setError(mapQuickStartSaveError(err));
       setLoading(false);
     }
   };
@@ -469,7 +468,6 @@ export const QuickStart: React.FC = () => {
 
     applyAnswer(answeredQuestion.key, value);
     setError('');
-    setAiDebug('');
 
     const nextAnswers = applyQuickStartAnswer(initialSetupAnswers, answeredQuestion.key, value);
 
@@ -486,7 +484,6 @@ export const QuickStart: React.FC = () => {
 
       await runProcessingInterstitial();
       const clarifyingDecision = await createClarifyingDecisionFromInitialSetup(nextAnswers);
-      setAiDebug(`mode=${clarifyingDecision.mode}; questions=${clarifyingDecision.questions.length}`);
       const persistence = createClarifyingPersistenceFromDecision(clarifyingDecision);
       clarifyingStateRef.current = persistence;
       setClarifyingState(persistence);
@@ -502,8 +499,7 @@ export const QuickStart: React.FC = () => {
       return;
     } catch (err) {
       console.error('QUICK_START_AI_STEP_FAILED', err);
-      setError(err instanceof Error ? err.message : 'AI step failed.');
-      setAiDebug(`step=${answeredQuestion.key}; value=${value.trim().slice(0, 80)}`);
+      setError(mapQuickStartAiError(err));
       setLoading(false);
     }
   };
@@ -655,7 +651,6 @@ export const QuickStart: React.FC = () => {
                 </button>
               </div>
               {error && <p className="mt-4 text-sm text-red-600">{error}</p>}
-              {aiDebug && <p className="mt-2 text-xs" style={{ color: MUTED }}>AI debug: {aiDebug}</p>}
             </motion.div>
           )}
         </AnimatePresence>
