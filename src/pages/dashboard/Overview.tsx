@@ -38,6 +38,12 @@ import { buildNameChangeOverviewInsights, type NameChangeOverviewInsights } from
 import { NAME_CHANGE_LIFECYCLE_LABELS } from './nameChangeLifecycleLabels';
 import { deriveNameChangeLifecycleStatus } from './nameChangeLifecycleStatus';
 import { hydrateNameChangeWorkspace, loadNameChangeWorkspace } from './planning/nameChangeService';
+import {
+  getBuilderLaunchChecklistRoute,
+  getBuilderLaunchConfidenceRoute,
+  getBuilderPhotoTipsRoute,
+  getBuilderPolishRoute,
+} from '../builderCutoverRoute';
 import { buildControlTowerBriefing, type ControlTowerAction } from './controlTowerIntelligence';
 import { ControlTowerBriefingCard } from './ControlTowerBriefingCard';
 import { buildDayOfBrainBriefing, type DayOfBrainAction } from './dayOfBrain';
@@ -661,8 +667,8 @@ export const DashboardOverview: React.FC = () => {
     }
 
     const routeByTarget: Record<ControlTowerAction['target'], string> = {
-      'builder-launch': '/dashboard/builder-v1#launch-confidence',
-      'builder-polish': '/dashboard/builder-v1#builder-concierge',
+      'builder-launch': getBuilderLaunchConfidenceRoute(),
+      'builder-polish': getBuilderPolishRoute(),
       coordinator: '/dashboard/coordinator',
       guests: '/dashboard/guests',
       itinerary: '/dashboard/itinerary#itinerary-readiness',
@@ -688,7 +694,7 @@ export const DashboardOverview: React.FC = () => {
       messages: '/dashboard/messages',
       registry: '/dashboard/registry',
       photos: '/dashboard/photos',
-      'builder-polish': '/dashboard/builder-v1#builder-concierge',
+      'builder-polish': getBuilderPolishRoute(),
       settings: '/dashboard/settings?tab=site#guest-access-handoff',
     };
     navigate(routeByTarget[analyticsNextMove.target]);
@@ -696,8 +702,8 @@ export const DashboardOverview: React.FC = () => {
 
   function handleCoupleFocusAction(step: CoupleFocusStep) {
     const routeByTarget: Record<CoupleFocusStep['target'], string> = {
-      'builder-launch': '/dashboard/builder-v1#launch-confidence',
-      'builder-polish': '/dashboard/builder-v1#builder-concierge',
+      'builder-launch': getBuilderLaunchConfidenceRoute(),
+      'builder-polish': getBuilderPolishRoute(),
       planning: '/dashboard/planning',
       'planning-tasks': '/dashboard/planning?tab=tasks',
       'planning-vendors': '/dashboard/planning?tab=vendors',
@@ -778,7 +784,7 @@ export const DashboardOverview: React.FC = () => {
                   variant="accent"
                   size="sm"
                   className="w-full sm:w-auto"
-                  onClick={() => navigate('/dashboard/builder-v1?publishNow=1')}
+                  onClick={() => navigate(getBuilderLaunchChecklistRoute())}
                   title="Open your site editor and go straight to the go-live checklist"
                 >
                   Open launch checklist
@@ -787,7 +793,7 @@ export const DashboardOverview: React.FC = () => {
                   variant="outline"
                   size="sm"
                   className="w-full sm:w-auto"
-                  onClick={() => navigate('/dashboard/builder-v1?photoTips=1')}
+                  onClick={() => navigate(getBuilderPhotoTipsRoute())}
                   title="Open your site editor with photo tips"
                 >
                   Add photos better
@@ -1487,7 +1493,7 @@ export const DashboardOverview: React.FC = () => {
                         {stats.isPublished ? 'Open live website' : 'Preview draft website'}
                       </Button>
                     )}
-                    <Button variant="outline" size="md" fullWidth onClick={() => navigate('/dashboard/builder-v1?photoTips=1')}>
+                    <Button variant="outline" size="md" fullWidth onClick={() => navigate(getBuilderPhotoTipsRoute())}>
                       <Edit className="w-5 h-5 mr-2" aria-hidden="true" />
                       {stats?.isPublished ? 'Edit live website' : 'Edit draft before you go live'}
                     </Button>

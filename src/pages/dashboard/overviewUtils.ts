@@ -1,3 +1,5 @@
+import { getBuilderLaunchChecklistRoute } from '../builderCutoverRoute';
+
 export interface OverviewChecklistStats {
   coupleName1: string;
   coupleName2: string;
@@ -21,7 +23,7 @@ export interface ChecklistItemDef {
 }
 
 export const getPublishBuilderRoute = (isPublished: boolean): string =>
-  isPublished ? '/dashboard/builder' : '/dashboard/builder-v1?publishNow=1';
+  isPublished ? '/dashboard/builder' : getBuilderLaunchChecklistRoute();
 
 export const buildSetupChecklist = (stats: OverviewChecklistStats): ChecklistItemDef[] => [
   {

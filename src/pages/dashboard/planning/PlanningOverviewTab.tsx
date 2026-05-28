@@ -18,6 +18,7 @@ import { PlanningDecisionCard } from './PlanningDecisionCard';
 import { buildPlanningOverviewDecisionCard } from './planningDecisionAssistant';
 import { buildCoupleFocusModel, type CoupleFocusStep } from '../coupleFocus';
 import { getFlowStatusLabel } from '../../../lib/flowLabels';
+import { getBuilderLaunchConfidenceRoute, getBuilderPolishRoute } from '../../builderCutoverRoute';
 
 interface SeatingReadiness {
   attending: number;
@@ -183,8 +184,8 @@ export const PlanningOverviewTab: React.FC<Props> = ({ tasks, budgetItems, vendo
     }
     if (typeof window !== 'undefined') {
       const routeByTarget: Record<Exclude<CoupleFocusStep['target'], 'planning' | 'planning-tasks' | 'planning-vendors' | 'itinerary' | 'seating' | 'coordinator'>, string> = {
-        'builder-launch': '/dashboard/builder-v1#launch-confidence',
-        'builder-polish': '/dashboard/builder-v1#builder-concierge',
+        'builder-launch': getBuilderLaunchConfidenceRoute(),
+        'builder-polish': getBuilderPolishRoute(),
         guests: '/dashboard/guests',
         messages: '/dashboard/messages',
         settings: '/dashboard/settings?tab=site#guest-access-handoff',

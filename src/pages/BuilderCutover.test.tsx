@@ -61,7 +61,14 @@ vi.mock('react-router-dom', async () => {
 });
 
 import BuilderCutover from './BuilderCutover';
-import { getLegacyBuilderRoute, hasLegacyBuilderIntent } from './builderCutoverRoute';
+import {
+  getBuilderLaunchChecklistRoute,
+  getBuilderLaunchConfidenceRoute,
+  getBuilderPhotoTipsRoute,
+  getBuilderPolishRoute,
+  getLegacyBuilderRoute,
+  hasLegacyBuilderIntent,
+} from './builderCutoverRoute';
 
 describe('BuilderCutover', () => {
   beforeEach(() => {
@@ -79,6 +86,10 @@ describe('BuilderCutover', () => {
     expect(hasLegacyBuilderIntent('?photoTips=1', '')).toBe(true);
     expect(hasLegacyBuilderIntent('', '#launch-confidence')).toBe(true);
     expect(hasLegacyBuilderIntent('', '')).toBe(false);
+    expect(getBuilderLaunchChecklistRoute()).toBe('/dashboard/builder-v1?publishNow=1');
+    expect(getBuilderPhotoTipsRoute()).toBe('/dashboard/builder-v1?photoTips=1');
+    expect(getBuilderLaunchConfidenceRoute()).toBe('/dashboard/builder-v1#launch-confidence');
+    expect(getBuilderPolishRoute()).toBe('/dashboard/builder-v1#builder-concierge');
     expect(getLegacyBuilderRoute('?publishNow=1', '#launch-confidence')).toBe('/dashboard/builder-v1?publishNow=1#launch-confidence');
   });
 
