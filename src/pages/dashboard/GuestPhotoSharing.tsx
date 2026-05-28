@@ -29,6 +29,7 @@ import {
   writeStoredPhotoBucketLinks,
 } from './photoBucketLinksStorage';
 import { getGuestPhotoShareReadyBuckets } from './guestPhotoShareReadyBuckets';
+import { buildGuestPhotoBucketMessagingPath, buildGuestPhotoShareMessage } from './guestPhotoMessagingLink';
 
 type ItineraryEvent = {
   id: string;
@@ -505,9 +506,6 @@ export const GuestPhotoSharing: React.FC = () => {
     return events.filter((e) => !linked.has(e.id));
   }, [events, buckets]);
 
-  const makeShareMessage = (bucketName: string, link: string) =>
-    `Please upload your ${bucketName} photos here: ${link}`;
-
   const bucketCardTone = (bucketName: string) => {
     const name = bucketName.toLowerCase();
     if (/ceremony|vows|aisle/.test(name)) return 'Save the quiet, meaningful moments.';
@@ -519,7 +517,7 @@ export const GuestPhotoSharing: React.FC = () => {
 
   const sendAllActiveBucketRequests = () => {
     const lines = getGuestPhotoShareReadyBuckets(buckets, bucketUploadLinks).map((bucket) => (
-      `${bucket.name}: ${makeShareMessage(bucket.name, bucket.uploadLink)}`
+      `${bucket.name}: ${buildGuestPhotoShareMessage(bucket.name, bucket.uploadLink)}`
     ));
 
     if (lines.length === 0) {
@@ -534,7 +532,7 @@ export const GuestPhotoSharing: React.FC = () => {
 
   const copyAllShareMessages = async () => {
     const lines = getGuestPhotoShareReadyBuckets(buckets, bucketUploadLinks).map((bucket) => (
-      `${bucket.name}: ${makeShareMessage(bucket.name, bucket.uploadLink)}`
+      `${bucket.name}: ${buildGuestPhotoShareMessage(bucket.name, bucket.uploadLink)}`
     ));
 
     if (lines.length === 0) {
@@ -596,7 +594,7 @@ export const GuestPhotoSharing: React.FC = () => {
           name: a.name,
           status: a.is_active ? 'active' : 'paused',
           upload_link: link,
-          suggested_message: link ? makeShareMessage(a.name, link) : '',
+          suggested_message: link ? buildGuestPhotoShareMessage(a.name, link) : '',
         };
       })
       .filter((r) => r.upload_link);
@@ -1359,18 +1357,21 @@ export const GuestPhotoSharing: React.FC = () => {
                           size="sm"
                           variant="outline"
                           disabled={!knownUploadLink}
-                          onClick={() => void copyText(makeShareMessage(bucket.name, knownUploadLink), `share-msg-${bucket.id}`)}
+                          onClick={() => void copyText(buildGuestPhotoShareMessage(bucket.name, knownUploadLink), `share-msg-${bucket.id}`)}
                         >
                           {copied === `share-msg-${bucket.id}` ? 'Copied share prompt' : 'Copy share prompt'}
                         </Button>
                         <Button
                           size="sm"
                           variant="outline"
+                          disabled={!knownUploadLink || !bucket.is_active}
                           onClick={() => {
-                            const shareUrl = knownUploadLink || latestUploadUrl || `${window.location.origin}/photos/upload`;
-                            const subject = encodeURIComponent(`${bucket.name} photos upload`);
-                            const body = encodeURIComponent(makeShareMessage(bucket.name, shareUrl));
-                            window.location.href = `/dashboard/messages?prefillSubject=${subject}&prefillBody=${body}`;
+                            const messagingPath = buildGuestPhotoBucketMessagingPath({
+                              bucketName: bucket.name,
+                              uploadLink: knownUploadLink,
+                            });
+                            if (!messagingPath) return;
+                            window.location.href = messagingPath;
                           }}
                         >
                           <Mail className="w-3 h-3 mr-1" /> Send to messaging

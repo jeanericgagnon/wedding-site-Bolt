@@ -11,12 +11,11 @@ export type GuestPhotoShareReadyBucket = GuestPhotoShareBucket & {
 export const getGuestPhotoShareReadyBuckets = <T extends GuestPhotoShareBucket>(
   buckets: T[],
   bucketUploadLinks: Record<string, string>,
-): GuestPhotoShareReadyBucket[] =>
-  buckets
-    .filter((bucket) => bucket.is_active)
-    .map((bucket) => {
-      const uploadLink = bucketUploadLinks[bucket.id]?.trim() ?? '';
-      if (!uploadLink) return null;
-      return { ...bucket, uploadLink };
-    })
-    .filter((bucket): bucket is GuestPhotoShareReadyBucket => Boolean(bucket));
+): Array<T & { uploadLink: string }> =>
+  buckets.reduce<Array<T & { uploadLink: string }>>((readyBuckets, bucket) => {
+    if (!bucket.is_active) return readyBuckets;
+    const uploadLink = bucketUploadLinks[bucket.id]?.trim() ?? '';
+    if (!uploadLink) return readyBuckets;
+    readyBuckets.push({ ...bucket, uploadLink });
+    return readyBuckets;
+  }, []);
