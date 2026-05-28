@@ -95,7 +95,7 @@ describe('Celebration', () => {
     expect(navigateMock).toHaveBeenCalledWith('/onboarding?bypassPayment=1');
 
     fireEvent.click(screen.getByRole('button', { name: 'Open editor guide' }));
-    expect(navigateMock).toHaveBeenCalledWith('/dashboard/builder?bypassPayment=1');
+    expect(navigateMock).toHaveBeenCalledWith('/dashboard/builder-guide?bypassPayment=1');
   });
 
   it('keeps the manual celebration path framed around the builder instead of a generic dashboard', () => {

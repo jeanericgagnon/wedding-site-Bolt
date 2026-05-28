@@ -31,7 +31,7 @@ describe('publishService', () => {
       success: false,
       publishedAt: '',
       version: 0,
-      error: 'Could not update the live site right now. Please try again.',
+      error: 'Could not update the guest-facing site right now. Please try again.',
     });
   });
 });

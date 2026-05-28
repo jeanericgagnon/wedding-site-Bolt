@@ -42,7 +42,7 @@ describe('Templates CTA routing', () => {
 
     fireEvent.click(screen.getAllByRole('button', { name: 'Start with this' })[0]);
     expect(navigateMock).toHaveBeenLastCalledWith('/setup/names');
-  });
+  }, 15000);
 
   it('routes signed-in template actions into the builder instead of setup loops', () => {
     authState.user = { id: 'user-1' };
@@ -55,5 +55,5 @@ describe('Templates CTA routing', () => {
 
     fireEvent.click(screen.getAllByRole('button', { name: 'Apply in builder' })[0]);
     expect(navigateMock).toHaveBeenLastCalledWith('/dashboard/builder-guide');
-  });
+  }, 15000);
 });

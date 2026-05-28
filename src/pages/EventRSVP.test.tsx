@@ -3,6 +3,7 @@ import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-libra
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 let currentToken = 'old-token';
+const navigateMock = vi.fn();
 
 type MaybeSingleResult = { data: unknown; error: unknown };
 type SelectResult = { data: unknown; error: unknown };
@@ -12,6 +13,7 @@ vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual<typeof import('react-router-dom')>('react-router-dom');
   return {
     ...actual,
+    useNavigate: () => navigateMock,
     useSearchParams: () => [new URLSearchParams(currentToken ? `token=${currentToken}` : '')],
   };
 });
@@ -99,6 +101,7 @@ import EventRSVP from './EventRSVP';
 describe('EventRSVP token trust continuity', () => {
   beforeEach(() => {
     currentToken = 'old-token';
+    navigateMock.mockReset();
     maybeSingleQueue.length = 0;
     selectQueue.length = 0;
     insertQueue.length = 0;
