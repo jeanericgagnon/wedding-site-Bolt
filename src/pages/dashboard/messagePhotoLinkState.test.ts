@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { getMessagePhotoLinkState } from './messagePhotoLinkState';
+import { buildPhotoRequestTemplateBody, getMessagePhotoLinkState } from './messagePhotoLinkState';
 
 describe('getMessagePhotoLinkState', () => {
   it('prefers active bucket links when bucket state is known', () => {
@@ -45,5 +45,15 @@ describe('getMessagePhotoLinkState', () => {
       knownPhotoLinksCount: 2,
       preferredPhotoLink: 'https://dayof.love/photos/upload?bucket=first',
     });
+  });
+
+  it('keeps the photo request draft honest when no guest link is ready yet', () => {
+    expect(buildPhotoRequestTemplateBody('')).toBe(
+      'We are getting photo sharing ready for this event and will send the guest link soon.',
+    );
+
+    expect(buildPhotoRequestTemplateBody('https://dayof.love/site/maya-leo')).toBe(
+      'We made a place where everyone can share their favorite moments from the event. Open photo sharing here: https://dayof.love/site/maya-leo',
+    );
   });
 });

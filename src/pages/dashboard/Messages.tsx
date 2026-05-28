@@ -24,7 +24,7 @@ import { formatMessageHistoryDate, formatMessageHistoryDateTime, getMessageHisto
 import { formatScheduledMessageDateTime, parseScheduleInputToIso, toScheduleInputValue } from './messageScheduleTime';
 import { getMessageTemplateCoupleLabel } from './messageTemplateVariables';
 import { readStoredPhotoBucketLinks } from './photoBucketLinksStorage';
-import { getMessagePhotoLinkState } from './messagePhotoLinkState';
+import { buildPhotoRequestTemplateBody, getMessagePhotoLinkState } from './messagePhotoLinkState';
 import { resolvePublicSiteSlugFromRow } from '../../lib/publicSiteSlug';
 
 const BULK_SEND_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-bulk-message`;
@@ -273,6 +273,7 @@ interface ComposerTemplate {
     venue: string | null;
     weddingDate: string | null;
     applyTemplateVariables: (text: string) => string;
+    photoLink: string;
   }) => { subject: string; body: string };
 }
 
@@ -427,9 +428,9 @@ const COMPOSER_TEMPLATES: ComposerTemplate[] = [
     detail: 'Ask guests to upload photos after the event.',
     campaignType: 'photo-request',
     defaultChannel: 'email',
-    build: ({ applyTemplateVariables }) => ({
+    build: ({ applyTemplateVariables, photoLink }) => ({
       subject: applyTemplateVariables('Share your photos with us 📸'),
-      body: applyTemplateVariables('We made a place where everyone can share their favorite moments from the event. Open photo sharing here: [PHOTO LINK]'),
+      body: buildPhotoRequestTemplateBody(photoLink),
     }),
   },
   {
@@ -1502,7 +1503,7 @@ export const DashboardMessages: React.FC = () => {
   const photoLinkState = useMemo(() => getMessagePhotoLinkState({
     buckets: photoBuckets,
     storedLinks: readStoredPhotoBucketLinks(),
-    fallbackLink: publicSiteSlug ? `${window.location.origin}/site/${publicSiteSlug}` : window.location.origin,
+    fallbackLink: publicSiteSlug ? `${window.location.origin}/site/${publicSiteSlug}` : '',
   }), [photoBuckets, publicSiteSlug]);
 
   const applyTemplateVariables = (text: string) => {
@@ -2252,6 +2253,7 @@ export const DashboardMessages: React.FC = () => {
       venue: weddingSite?.venue_name ?? null,
       weddingDate: weddingSite?.wedding_date ?? null,
       applyTemplateVariables,
+      photoLink: photoLinkState.preferredPhotoLink,
     });
 
     setFormData((prev) => ({

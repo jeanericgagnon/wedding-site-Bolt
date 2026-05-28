@@ -35,3 +35,12 @@ export const getMessagePhotoLinkState = ({
     preferredPhotoLink: activeStoredLinks[0] ?? trimmedFallbackLink,
   };
 };
+
+export function buildPhotoRequestTemplateBody(photoLink: string): string {
+  const trimmedPhotoLink = photoLink.trim();
+  if (!trimmedPhotoLink) {
+    return 'We are getting photo sharing ready for this event and will send the guest link soon.';
+  }
+
+  return `We made a place where everyone can share their favorite moments from the event. Open photo sharing here: ${trimmedPhotoLink}`;
+}
