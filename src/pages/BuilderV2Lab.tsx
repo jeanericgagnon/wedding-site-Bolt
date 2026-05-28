@@ -89,6 +89,11 @@ import { buildBuilderV2TemplateSeed } from './builderV2TemplateSeed';
 import { buildBuilderV2PreviewInstances } from './builderV2PreviewProjection';
 import { consumeBuilderV2SetupBridge, readBuilderV2SetupBridge } from './builderV2SetupBridge';
 import {
+  createBuilderV2InvertedSelectionState,
+  createBuilderV2PrimarySelectionState,
+  createBuilderV2SelectAllState,
+} from './builderV2SelectionState';
+import {
   createBuilderV2HistorySnapshot,
   listBuilderV2CheckpointSummaries,
   pushBuilderV2ChangeWithCheckpoint,
@@ -747,9 +752,11 @@ export const BuilderV2Lab: React.FC = () => {
   }, [sectionPageById, selectPage]);
 
   const selectAllSections = useCallback(() => {
-    if (!sections.length) return;
-    setSelectedId(sections[0].id);
-    setMultiSelectedIds(sections.slice(1).map((s) => s.id));
+    const nextSelection = createBuilderV2SelectAllState(sections.map((section) => section.id));
+    if (!nextSelection) return;
+    setSelectedId(nextSelection.selectedId);
+    setLastSelectedId(nextSelection.lastSelectedId);
+    setMultiSelectedIds(nextSelection.multiSelectedIds);
     notify('All sections selected');
   }, [sections, notify]);
 
@@ -759,12 +766,14 @@ export const BuilderV2Lab: React.FC = () => {
   }, [notify]);
 
   const invertSelection = useCallback(() => {
-    if (!sections.length) return;
-    const selectedSet = new Set(selectedIds);
-    const inverted = sections.map((s) => s.id).filter((id) => !selectedSet.has(id));
-    if (!inverted.length) return;
-    setSelectedId(inverted[0]);
-    setMultiSelectedIds(inverted.slice(1));
+    const nextSelection = createBuilderV2InvertedSelectionState({
+      sectionIds: sections.map((section) => section.id),
+      selectedIds,
+    });
+    if (!nextSelection) return;
+    setSelectedId(nextSelection.selectedId);
+    setLastSelectedId(nextSelection.lastSelectedId);
+    setMultiSelectedIds(nextSelection.multiSelectedIds);
     notify('Selection inverted');
   }, [notify, sections, selectedIds]);
 
@@ -1206,7 +1215,10 @@ export const BuilderV2Lab: React.FC = () => {
     const id = `${normalizedType}-${Date.now()}`;
     const next = [...sections, { id, type: normalizedType, title: typeLabel, subtitle: '', variant: variant ?? 'default', enabled: true, density: 'comfortable' as const }];
     const starterBlocks = buildStarterBlocks(id, normalizedType);
-    setSelectedId(id);
+    const nextSelection = createBuilderV2PrimarySelectionState(id);
+    setSelectedId(nextSelection.selectedId);
+    setLastSelectedId(nextSelection.lastSelectedId);
+    setMultiSelectedIds(nextSelection.multiSelectedIds);
     commit(activePage ? pages.map((page) => (
       page.id === activePage.id
         ? { ...page, sections: next }
@@ -2011,7 +2023,7 @@ export const BuilderV2Lab: React.FC = () => {
         .filter((page) => page.id !== activePage.id)
         .map((page) => ({ id: `page-move-selection-${page.id}`, group: 'Pages', label: `Move selection to page: ${page.title}`, keywords: ['page', 'move', 'selection', page.title.toLowerCase()], action: () => runCommand(`Move selection to page: ${page.title}`, () => moveSelectedSectionsToPage(page.id)) })),
       ...ADDABLE_SECTIONS.map((name) => ({ id: `add-${name}`, group: 'Add', label: `Add section: ${name}`, keywords: ['insert', 'new', name.toLowerCase()], action: () => runCommand(`Add section: ${name}`, () => addSection(name)) })),
-      ...sections.map((s) => ({ id: `select-${s.id}`, group: 'Select', label: `Select section: ${s.title}`, keywords: ['focus', 'go to', s.title.toLowerCase()], action: () => runCommand(`Select section: ${s.title}`, () => setSelectedId(s.id)) })),
+      ...sections.map((s) => ({ id: `select-${s.id}`, group: 'Select', label: `Select section: ${s.title}`, keywords: ['focus', 'go to', s.title.toLowerCase()], action: () => runCommand(`Select section: ${s.title}`, () => selectSection(s.id)) })),
       ...['default', 'countdown', 'timeline', 'dayTabs', 'localGuide', 'iconGrid', 'cards', 'grid', 'fundHighlight', 'featured', 'minimal', 'honeymoon', 'tabs', 'illustrated', 'classic', 'luxury', 'experiences', 'modern', 'playful'].map((v) => ({ id: `variant-${v}`, group: 'Variant', label: `Set variant: ${v}`, keywords: ['layout', 'style', v.toLowerCase()], action: () => runCommand(`Set variant: ${v}`, () => updateVariant(v)) })),
       { id: 'sel-clear', group: 'Selection', label: 'Clear multi selection', keywords: ['clear', 'multi', 'selection'], action: () => runCommand('Clear multi selection', clearSelection) },
       { id: 'sel-all', group: 'Selection', label: 'Select all sections', keywords: ['all', 'selection'], action: () => runCommand('Select all sections', selectAllSections) },
@@ -2059,7 +2071,7 @@ export const BuilderV2Lab: React.FC = () => {
       .filter((x) => x.s > 0)
       .sort((a, b) => b.s - a.s)
       .map((x) => x.item);
-  }, [addPage, addRecommendedBlockPack, addSection, activePage.id, applySelectedTemplateSeed, checkpointSummaries, clearSelection, commandQuery, copyExportGate.ctaLabel, copyHandoffPacket, downloadExportGate.ctaLabel, duplicatePage, duplicateSelectedSections, handoffGuidance.primaryActionLabel, hideSelectedSections, invertSelection, launchGate.primaryAction.label, moveSelectedSectionsToPage, openExportPanel, openImportPanel, pages, removeSelectedSections, repairSelectedSectionStructure, restoreCheckpoint, restoreSelectedSectionsToStarterBlocks, reviewSelectionInPreview, runCopyV2Json, runDownloadV2Json, runHandoffAction, runLaunchGateAction, saveCheckpoint, sections, selectAllSections, selectPage, selectedSectionCanRepairStructure, setSelectedDensity, showSelectedSections, templateApplyPlan.applyLabel, updateVariant]);
+  }, [addPage, addRecommendedBlockPack, addSection, activePage.id, applySelectedTemplateSeed, checkpointSummaries, clearSelection, commandQuery, copyExportGate.ctaLabel, copyHandoffPacket, downloadExportGate.ctaLabel, duplicatePage, duplicateSelectedSections, handoffGuidance.primaryActionLabel, hideSelectedSections, invertSelection, launchGate.primaryAction.label, moveSelectedSectionsToPage, openExportPanel, openImportPanel, pages, removeSelectedSections, repairSelectedSectionStructure, restoreCheckpoint, restoreSelectedSectionsToStarterBlocks, reviewSelectionInPreview, runCopyV2Json, runDownloadV2Json, runHandoffAction, runLaunchGateAction, saveCheckpoint, sections, selectAllSections, selectPage, selectSection, selectedSectionCanRepairStructure, setSelectedDensity, showSelectedSections, templateApplyPlan.applyLabel, updateVariant]);
   const importGuidance = useMemo(
     () => buildBuilderV2ImportGuidance(lastImportReport, lastImportSource),
     [lastImportReport, lastImportSource],
@@ -2207,17 +2219,17 @@ export const BuilderV2Lab: React.FC = () => {
       if (e.key === 'ArrowDown' && isMeta) {
         e.preventDefault();
         const idx = sections.findIndex((s) => s.id === selected.id);
-        if (idx < sections.length - 1) setSelectedId(sections[idx + 1].id);
+        if (idx < sections.length - 1) selectSection(sections[idx + 1].id);
       }
       if (e.key === 'ArrowUp' && isMeta) {
         e.preventDefault();
         const idx = sections.findIndex((s) => s.id === selected.id);
-        if (idx > 0) setSelectedId(sections[idx - 1].id);
+        if (idx > 0) selectSection(sections[idx - 1].id);
       }
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [canRedo, canUndo, sections, selected.id, showCommand, commandItems, commandIndex, clearSelection, invertSelection, selectAllSections]);
+  }, [canRedo, canUndo, sections, selected.id, showCommand, commandItems, commandIndex, clearSelection, invertSelection, selectAllSections, selectSection]);
 
   return (
     <div className="h-screen bg-[#f6f6f6] text-text-primary overflow-hidden">
