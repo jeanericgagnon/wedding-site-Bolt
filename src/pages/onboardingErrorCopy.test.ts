@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   mapOnboardingError,
   ONBOARDING_CREATE_SITE_RETRY_ERROR,
+  ONBOARDING_FINISH_RETRY_ERROR,
   ONBOARDING_UPDATE_RETRY_ERROR,
 } from './onboardingErrorCopy';
 
@@ -12,6 +13,8 @@ describe('onboardingErrorCopy', () => {
       .toBe(ONBOARDING_UPDATE_RETRY_ERROR);
     expect(mapOnboardingError(new Error('functions/v1/create-site jwt expired'), ONBOARDING_CREATE_SITE_RETRY_ERROR))
       .toBe(ONBOARDING_CREATE_SITE_RETRY_ERROR);
+    expect(mapOnboardingError(new Error('provider timeout token=abc while finishing onboarding'), ONBOARDING_FINISH_RETRY_ERROR))
+      .toBe(ONBOARDING_FINISH_RETRY_ERROR);
   });
 
   it('falls back cleanly when the error is empty', () => {

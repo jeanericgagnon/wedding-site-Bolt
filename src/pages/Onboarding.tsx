@@ -27,6 +27,7 @@ import { FIRST_SESSION_WORKSPACE_ROUTES } from '../lib/firstSessionWorkspaceRout
 import {
   mapOnboardingError,
   ONBOARDING_CREATE_SITE_RETRY_ERROR,
+  ONBOARDING_FINISH_RETRY_ERROR,
   ONBOARDING_UPDATE_RETRY_ERROR,
 } from './onboardingErrorCopy';
 
@@ -685,7 +686,7 @@ export const Onboarding: React.FC = () => {
       }
     } catch (error) {
       console.error('ONBOARDING_NEXT_STEP_FAILED', error);
-      alert('Something went wrong while finishing setup. Please try again.');
+      alert(mapOnboardingError(error, ONBOARDING_FINISH_RETRY_ERROR));
     } finally {
       setLoading(false);
     }
