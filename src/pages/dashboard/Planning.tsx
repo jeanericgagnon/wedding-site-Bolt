@@ -26,6 +26,23 @@ import { TasksTab } from './planning/TasksTab';
 import { BudgetTab } from './planning/BudgetTab';
 import { VendorsTab } from './planning/VendorsTab';
 import { NameChangePlannerTab } from './planning/NameChangePlannerTab';
+import {
+  mapPlanningDashboardError,
+  PLANNING_BUDGET_ADD_RETRY_ERROR,
+  PLANNING_BUDGET_DELETE_RETRY_ERROR,
+  PLANNING_BUDGET_UPDATE_RETRY_ERROR,
+  PLANNING_DATA_LOAD_RETRY_ERROR,
+  PLANNING_MILESTONE_GENERATE_RETRY_ERROR,
+  PLANNING_NAME_CHANGE_SAVE_RETRY_ERROR,
+  PLANNING_TASK_ADD_RETRY_ERROR,
+  PLANNING_TASK_DELETE_RETRY_ERROR,
+  PLANNING_TASK_UPDATE_RETRY_ERROR,
+  PLANNING_TOTAL_BUDGET_UPDATE_RETRY_ERROR,
+  PLANNING_VENDOR_ADD_RETRY_ERROR,
+  PLANNING_VENDOR_BUDGET_ADD_RETRY_ERROR,
+  PLANNING_VENDOR_DELETE_RETRY_ERROR,
+  PLANNING_VENDOR_UPDATE_RETRY_ERROR,
+} from './planning/planningErrorCopy';
 
 type Tab = 'overview' | 'tasks' | 'budget' | 'vendors' | 'nameChange';
 
@@ -202,7 +219,7 @@ export const DashboardPlanning: React.FC = () => {
       }
     } catch (err) {
       console.error(err);
-      toast('Couldn’t load planning data right now. Please try again.', 'error');
+      toast(mapPlanningDashboardError(err, PLANNING_DATA_LOAD_RETRY_ERROR), 'error');
     } finally {
       setLoading(false);
     }
@@ -276,8 +293,8 @@ export const DashboardPlanning: React.FC = () => {
       const created = await createTask(siteId, task);
       setTasks(prev => [...prev, created]);
       toast('Task added', 'success');
-    } catch {
-      toast('Couldn’t add that task. Please try again.', 'error');
+    } catch (error) {
+      toast(mapPlanningDashboardError(error, PLANNING_TASK_ADD_RETRY_ERROR), 'error');
     }
   }, [siteId, toast, isDemoMode, planningRole]);
 
@@ -289,8 +306,8 @@ export const DashboardPlanning: React.FC = () => {
     try {
       if (!isDemoMode) await updateTask(id, updates);
       setTasks(prev => prev.map(t => t.id === id ? { ...t, ...updates } : t));
-    } catch {
-      toast('Couldn’t update that task. Please try again.', 'error');
+    } catch (error) {
+      toast(mapPlanningDashboardError(error, PLANNING_TASK_UPDATE_RETRY_ERROR), 'error');
     }
   }, [toast, isDemoMode, planningRole]);
 
@@ -303,8 +320,8 @@ export const DashboardPlanning: React.FC = () => {
       if (!isDemoMode) await deleteTask(id);
       setTasks(prev => prev.filter(t => t.id !== id));
       toast('Task deleted', 'success');
-    } catch {
-      toast('Couldn’t remove that task. Please try again.', 'error');
+    } catch (error) {
+      toast(mapPlanningDashboardError(error, PLANNING_TASK_DELETE_RETRY_ERROR), 'error');
     }
   }, [toast, isDemoMode, planningRole]);
 
@@ -330,8 +347,8 @@ export const DashboardPlanning: React.FC = () => {
       const created = await Promise.all(milestones.map(m => createTask(siteId, m)));
       setTasks(prev => [...prev, ...created]);
       toast(`Added ${created.length} milestone tasks`, 'success');
-    } catch {
-      toast('Couldn’t generate milestones right now. Please try again.', 'error');
+    } catch (error) {
+      toast(mapPlanningDashboardError(error, PLANNING_MILESTONE_GENERATE_RETRY_ERROR), 'error');
     }
   }, [siteId, weddingDate, toast, isDemoMode, planningRole]);
 
@@ -345,8 +362,8 @@ export const DashboardPlanning: React.FC = () => {
       const created = isDemoMode ? ({ id: `demo-budget-${Date.now()}`, wedding_site_id: siteId, category: item.category ?? 'General', item_name: item.item_name ?? 'New item', estimated_amount: item.estimated_amount ?? 0, actual_amount: item.actual_amount ?? 0, paid_amount: item.paid_amount ?? 0, due_date: item.due_date ?? null, vendor_id: null, notes: item.notes ?? '', created_at: new Date().toISOString(), updated_at: new Date().toISOString() } as PlanningBudgetItem) : await createBudgetItem(siteId, item);
       setBudgetItems(prev => [...prev, created]);
       toast('Budget item added', 'success');
-    } catch {
-      toast('Couldn’t add that budget item. Please try again.', 'error');
+    } catch (error) {
+      toast(mapPlanningDashboardError(error, PLANNING_BUDGET_ADD_RETRY_ERROR), 'error');
     }
   }, [siteId, toast, isDemoMode, planningRole]);
 
@@ -358,8 +375,8 @@ export const DashboardPlanning: React.FC = () => {
     try {
       if (!isDemoMode) await updateBudgetItem(id, updates);
       setBudgetItems(prev => prev.map(i => i.id === id ? { ...i, ...updates } : i));
-    } catch {
-      toast('Couldn’t update that budget item. Please try again.', 'error');
+    } catch (error) {
+      toast(mapPlanningDashboardError(error, PLANNING_BUDGET_UPDATE_RETRY_ERROR), 'error');
     }
   }, [toast, isDemoMode, planningRole]);
 
@@ -372,8 +389,8 @@ export const DashboardPlanning: React.FC = () => {
       if (!isDemoMode) await deleteBudgetItem(id);
       setBudgetItems(prev => prev.filter(i => i.id !== id));
       toast('Budget item deleted', 'success');
-    } catch {
-      toast('Couldn’t remove that budget item. Please try again.', 'error');
+    } catch (error) {
+      toast(mapPlanningDashboardError(error, PLANNING_BUDGET_DELETE_RETRY_ERROR), 'error');
     }
   }, [toast, isDemoMode, planningRole]);
 
@@ -384,8 +401,9 @@ export const DashboardPlanning: React.FC = () => {
     const paid = Number(vendor.amount_paid) || 0;
     const category = vendor.vendor_type || 'Vendor';
 
-    const createdItem = isDemoMode
-      ? ({
+    try {
+      const createdItem = isDemoMode
+        ? ({
           id: `demo-budget-${Date.now()}`,
           wedding_site_id: siteId,
           category,
@@ -399,7 +417,7 @@ export const DashboardPlanning: React.FC = () => {
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         } as PlanningBudgetItem)
-      : await createBudgetItem(siteId, {
+        : await createBudgetItem(siteId, {
           category,
           item_name: vendor.name,
           estimated_amount: estimated,
@@ -410,8 +428,12 @@ export const DashboardPlanning: React.FC = () => {
           notes: vendor.notes || '',
         });
 
-    setBudgetItems(prev => [...prev, createdItem]);
-    toast('Vendor also added to budget', 'success');
+      setBudgetItems(prev => [...prev, createdItem]);
+      toast('Vendor also added to budget', 'success');
+    } catch (error) {
+      toast(mapPlanningDashboardError(error, PLANNING_VENDOR_BUDGET_ADD_RETRY_ERROR), 'error');
+      throw error;
+    }
   }, [siteId, toast, isDemoMode]);
 
   const handleAddVendor = useCallback(async (vendor: Partial<PlanningVendor>) => {
@@ -425,8 +447,8 @@ export const DashboardPlanning: React.FC = () => {
       setVendors(prev => [...prev, created]);
       setPendingVendorForBudget(created);
       toast('Vendor added', 'success');
-    } catch {
-      toast('Couldn’t add that vendor. Please try again.', 'error');
+    } catch (error) {
+      toast(mapPlanningDashboardError(error, PLANNING_VENDOR_ADD_RETRY_ERROR), 'error');
     }
   }, [siteId, toast, isDemoMode, planningRole]);
 
@@ -475,8 +497,8 @@ export const DashboardPlanning: React.FC = () => {
       if (error) throw error;
       setTotalBudget(value);
       toast('Total budget updated', 'success');
-    } catch {
-      toast('Couldn’t update total budget. Please try again.', 'error');
+    } catch (error) {
+      toast(mapPlanningDashboardError(error, PLANNING_TOTAL_BUDGET_UPDATE_RETRY_ERROR), 'error');
     }
   }, [siteId, toast, isDemoMode, planningRole]);
 
@@ -488,8 +510,8 @@ export const DashboardPlanning: React.FC = () => {
     try {
       if (!isDemoMode) await updateVendor(id, updates);
       setVendors(prev => prev.map(v => v.id === id ? { ...v, ...updates } : v));
-    } catch {
-      toast('Couldn’t update that vendor. Please try again.', 'error');
+    } catch (error) {
+      toast(mapPlanningDashboardError(error, PLANNING_VENDOR_UPDATE_RETRY_ERROR), 'error');
     }
   }, [toast, isDemoMode, planningRole]);
 
@@ -502,8 +524,8 @@ export const DashboardPlanning: React.FC = () => {
       if (!isDemoMode) await deleteVendor(id);
       setVendors(prev => prev.filter(v => v.id !== id));
       toast('Vendor deleted', 'success');
-    } catch {
-      toast('Couldn’t remove that vendor. Please try again.', 'error');
+    } catch (error) {
+      toast(mapPlanningDashboardError(error, PLANNING_VENDOR_DELETE_RETRY_ERROR), 'error');
     }
   }, [toast, isDemoMode, planningRole]);
 
@@ -631,8 +653,8 @@ export const DashboardPlanning: React.FC = () => {
       setNameChangePlan(result.plan);
       setNameChangeReminders(result.reminders);
       toast('Name change planner saved.', 'success');
-    } catch {
-      toast('Couldn’t save the name change planner right now.', 'error');
+    } catch (error) {
+      toast(mapPlanningDashboardError(error, PLANNING_NAME_CHANGE_SAVE_RETRY_ERROR), 'error');
     } finally {
       setNameChangeSaving(false);
     }
@@ -789,8 +811,6 @@ export const DashboardPlanning: React.FC = () => {
                   onClick={async () => {
                     try {
                       await addVendorToBudget(pendingVendorForBudget);
-                    } catch {
-                      toast('Couldn’t add this vendor to budget right now. Please try again.', 'error');
                     } finally {
                       setPendingVendorForBudget(null);
                     }
