@@ -149,13 +149,13 @@ export function buildControlTowerBriefing(input: ControlTowerIntelligenceInput):
         ? 'The wedding no longer needs active command-center energy, so the best use of attention is curating what should last.'
         : 'Before the archive can feel intentional, it still needs one real memory path that guests and the couple can recognize as the keepsake layer.',
       bestNextMove: input.activePhotoAlbumCount > 0
-        ? 'Use the strongest live photo cluster to shape the first keepsake pass before you widen the archive story any further.'
+        ? 'Use the strongest active photo cluster to shape the first keepsake pass before you widen the archive story any further.'
         : 'Open one real photo or keepsake lane first so the archive has a living path before you polish its framing.',
       decisionRule: input.activePhotoAlbumCount > 0
-        ? 'Preservation beats live intervention once the event itself is over.'
+        ? 'Preservation beats fresh intervention once the event itself is over.'
         : 'Open one real keepsake lane before you try to polish the archive story around it.',
       watchout: input.activePhotoAlbumCount > 0
-        ? 'Do not turn archive polish into a fresh operations board. Once the memory lane is working, preserve what matters without reactivating solved live pressure.'
+        ? 'Do not turn archive polish into a fresh operations board. Once the memory lane is working, preserve what matters without reactivating solved day-of pressure.'
         : 'Do not spend time polishing archive framing before one real keepsake lane exists. Guests need a living memory path before they need a nicer archive wrapper.',
       badges: [
         `${pluralize(input.activePhotoAlbumCount, 'active album')}`,
@@ -178,7 +178,7 @@ export function buildControlTowerBriefing(input: ControlTowerIntelligenceInput):
       title: 'Launch readiness is the main thing to steady this week',
       detail: `${pluralize(input.publishBlockerCount, 'publish blocker')} still stand between this site and a clean guest-facing launch. With the date getting closer, the best use of time is clearing those blockers before polishing extras.`,
       focusTitle: 'Clear the blockers before you polish',
-      focusDetail: 'When the date is close and the site is still not fully live, quality polish comes second to getting the launch path truly ready.',
+      focusDetail: 'When the date is close and the site is still not fully shared with guests, quality polish comes second to getting the launch path truly ready.',
       bestNextMove: 'Clear the remaining publish blockers, then preview the real guest-facing path before you spend any more attention on secondary polish.',
       decisionRule: 'Launch truth beats visual polish when guests still do not have a clean guest-facing path.',
       watchout: 'Do not let a near-launch site drift into endless design cleanup while the guest path is still blocked. If guests cannot move through the guest-facing path cleanly, polish is not the work yet.',

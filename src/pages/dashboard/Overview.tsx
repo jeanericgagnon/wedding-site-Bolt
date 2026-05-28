@@ -787,7 +787,7 @@ export const DashboardOverview: React.FC = () => {
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto sm:flex-wrap sm:justify-end">
             {!loading && stats?.isPublished && stats?.siteSlug && (
               <Button variant="outline" size="sm" onClick={() => window.open(`/site/${stats.siteSlug}`, '_blank')}>
-                Open live website
+                {getOverviewOpenWebsiteLabel(true)}
               </Button>
             )}
             {!loading && stats && !stats.isPublished && (

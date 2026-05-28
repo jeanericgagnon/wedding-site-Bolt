@@ -35,6 +35,18 @@ describe('buildControlTowerBriefing', () => {
     expect(briefing.primaryAction).toMatchObject({ target: 'vault' });
   });
 
+  it('keeps archive memory guidance framed around active albums and day-of pressure, not live-site language', () => {
+    const briefing = buildControlTowerBriefing(makeInput({
+      isArchiveLike: true,
+      daysUntilWedding: -4,
+      activePhotoAlbumCount: 2,
+    }));
+
+    expect(briefing.bestNextMove).toContain('active photo cluster');
+    expect(briefing.decisionRule).toContain('fresh intervention');
+    expect(briefing.watchout).toContain('day-of pressure');
+  });
+
   it('prioritizes launch blockers when the wedding is close', () => {
     const briefing = buildControlTowerBriefing(makeInput({
       isPublished: false,
@@ -45,7 +57,7 @@ describe('buildControlTowerBriefing', () => {
 
     expect(briefing.title).toContain('Launch readiness');
     expect(briefing.focusTitle).toContain('Clear the blockers');
-    expect(briefing.focusDetail).toMatch(/date is close|launch path/i);
+    expect(briefing.focusDetail).toContain('not fully shared with guests');
     expect(briefing.bestNextMove).toMatch(/publish blockers|preview the real guest-facing path/i);
     expect(briefing.decisionRule).toMatch(/launch truth beats visual polish/i);
     expect(briefing.watchout).toMatch(/design cleanup|guest path is still blocked/i);

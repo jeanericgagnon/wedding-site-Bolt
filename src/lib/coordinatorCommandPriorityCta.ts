@@ -5,7 +5,7 @@ export const getCoordinatorCommandPriorityCta = (priority: CoordinatorCommandSum
     case 'Check-in':
       return 'Open door review';
     case 'Timeline':
-      return 'Open live timeline';
+      return 'Open active timeline';
     case 'Q&A':
       return 'Open guest question';
     case 'Alerting':
