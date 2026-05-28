@@ -2,6 +2,8 @@ const LEGACY_INTENT_KEYS = new Set(['publishNow', 'photoTips']);
 
 export const getBuilderGuideRoute = (): string => '/dashboard/builder';
 
+export const getBuilderV2Route = (): string => '/dashboard/builder-v2';
+
 export const getBuilderLaunchChecklistRoute = (): string => '/dashboard/builder-v1?publishNow=1';
 
 export const getBuilderPhotoTipsRoute = (): string => '/dashboard/builder-v1?photoTips=1';

@@ -85,6 +85,14 @@ const AppContent = () => {
         <Route path="/templates" element={<Templates />} />
         <Route path="/templates/:templateId" element={<TemplateDetail />} />
         <Route path="/builder-v2-lab" element={<BuilderV2Lab />} />
+        <Route
+          path="/dashboard/builder-v2"
+          element={
+            <ProtectedRoute>
+              <BuilderV2Lab />
+            </ProtectedRoute>
+          }
+        />
         <Route path="/variant-preview-capture" element={<VariantPreviewCapture />} />
         <Route path="/template-scroll-capture" element={<TemplateScrollCapture />} />
         <Route path="/site/:slug" element={<SiteView />} />

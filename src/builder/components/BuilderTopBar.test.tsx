@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createEmptyBuilderProject } from '../../types/builder/project';
 import { createEmptyWeddingData } from '../../types/weddingData';
 import { createEmptyHistoryState } from '../../types/builder/history';
+import { getBuilderV2Route } from '../../pages/builderCutoverRoute';
 import type { BuilderState } from '../state/builderStore';
 
 const {
@@ -96,5 +97,15 @@ describe('BuilderTopBar exit routes', () => {
 
     expect(navigateMock).toHaveBeenCalledWith('/dashboard/overview');
     expect(navigateMock).not.toHaveBeenCalledWith('/dashboard');
+  });
+
+  it('opens the dashboard Builder V2 route from the upgrade review handoff', () => {
+    render(<BuilderTopBar onSave={() => undefined} onPublish={() => undefined} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'V2 upgrade' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Open working V2 copy' }));
+
+    expect(navigateMock).toHaveBeenCalledWith(getBuilderV2Route());
+    expect(navigateMock).not.toHaveBeenCalledWith('/builder-v2-lab');
   });
 });

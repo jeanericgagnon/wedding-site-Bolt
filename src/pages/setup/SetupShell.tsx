@@ -8,7 +8,7 @@ import { clearSetupDraft, clearSetupDraftOnly, readSetupDraft, setupDraftProgres
 import { deriveSetupMode, getRecommendedTemplates, SETUP_STYLE_OPTIONS } from '../../lib/setupDraftRecommendations';
 import { buildSetupReviewModel, buildSetupTemplateReason } from '../../lib/setupConcierge';
 import { mapSetupShellSaveError } from '../../lib/setupFlowCopy';
-import { getBuilderV2LabRoute } from '../builderCutoverRoute';
+import { getBuilderV2Route } from '../builderCutoverRoute';
 import { saveBuilderV2SetupBridge } from '../builderV2SetupBridge';
 
 const steps = [
@@ -159,7 +159,7 @@ export const SetupShell: React.FC<{ step?: string }> = ({ step }) => {
       if (bridged) {
         clearSetupDraftOnly();
       }
-      navigate(getBuilderV2LabRoute());
+      navigate(getBuilderV2Route());
     } catch (err) {
       setError(mapSetupShellSaveError(err));
     } finally {

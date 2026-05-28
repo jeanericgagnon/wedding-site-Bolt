@@ -63,6 +63,7 @@ vi.mock('react-router-dom', async () => {
 import BuilderCutover from './BuilderCutover';
 import {
   getBuilderGuideRoute,
+  getBuilderV2Route,
   getBuilderLaunchChecklistRoute,
   getBuilderLaunchConfidenceRoute,
   getBuilderPhotoTipsRoute,
@@ -89,6 +90,7 @@ describe('BuilderCutover', () => {
     expect(hasLegacyBuilderIntent('', '#launch-confidence')).toBe(true);
     expect(hasLegacyBuilderIntent('', '')).toBe(false);
     expect(getBuilderGuideRoute()).toBe('/dashboard/builder');
+    expect(getBuilderV2Route()).toBe('/dashboard/builder-v2');
     expect(getBuilderLaunchChecklistRoute()).toBe('/dashboard/builder-v1?publishNow=1');
     expect(getBuilderPhotoTipsRoute()).toBe('/dashboard/builder-v1?photoTips=1');
     expect(getBuilderLaunchConfidenceRoute()).toBe('/dashboard/builder-v1#launch-confidence');
@@ -144,7 +146,7 @@ describe('BuilderCutover', () => {
       project,
       weddingData,
     });
-    expect(navigateMock).toHaveBeenCalledWith(getBuilderV2LabRoute());
+    expect(navigateMock).toHaveBeenCalledWith(getBuilderV2Route());
   });
 
   it('sends builder recovery back to the overview workspace instead of the generic dashboard route', async () => {

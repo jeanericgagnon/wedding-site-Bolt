@@ -9,7 +9,7 @@ import { builderProjectService } from '../builder/services/builderProjectService
 import { getBuilderEntryExperience } from '../builder/builderEntryExperience';
 import { buildBuilderV2UpgradeGuidance } from '../builder/components/builderV2UpgradeGuidance';
 import { saveBuilderV2UpgradeBridge } from '../builder-v2/upgradeBridge';
-import { getBuilderV2LabRoute, getLegacyBuilderRoute, hasLegacyBuilderIntent } from './builderCutoverRoute';
+import { getBuilderV2Route, getLegacyBuilderRoute, hasLegacyBuilderIntent } from './builderCutoverRoute';
 import type { BuilderProject } from '../types/builder/project';
 import type { WeddingDataV1 } from '../types/weddingData';
 
@@ -133,7 +133,7 @@ export const BuilderCutover: React.FC = () => {
       }
     }
 
-    navigate(getBuilderV2LabRoute());
+    navigate(getBuilderV2Route());
   };
 
   if (loadState.kind === 'loading') {
