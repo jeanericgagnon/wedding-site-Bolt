@@ -1,4 +1,47 @@
 export const BUILDER_V2_DOCUMENT_VERSION = 'v2' as const;
+export const BUILDER_V2_DOCUMENT_VERSION_ALIAS = '2' as const;
+export const BUILDER_V2_LEGACY_DOCUMENT_VERSION = '1' as const;
+
+export type BuilderV2ImportVersionPolicy =
+  | { kind: 'current'; normalized: false }
+  | { kind: 'alias'; normalized: true }
+  | { kind: 'legacy-v1'; normalized: false }
+  | { kind: 'missing'; normalized: true }
+  | { kind: 'future'; normalized: false; raw: string }
+  | { kind: 'unsupported'; normalized: false; raw: string };
+
+export function classifyBuilderV2ImportVersion(version: unknown): BuilderV2ImportVersionPolicy {
+  if (version === undefined || version === null) {
+    return { kind: 'missing', normalized: true };
+  }
+
+  if (version === BUILDER_V2_DOCUMENT_VERSION) {
+    return { kind: 'current', normalized: false };
+  }
+
+  if (version === BUILDER_V2_DOCUMENT_VERSION_ALIAS) {
+    return { kind: 'alias', normalized: true };
+  }
+
+  if (version === BUILDER_V2_LEGACY_DOCUMENT_VERSION) {
+    return { kind: 'legacy-v1', normalized: false };
+  }
+
+  if (typeof version !== 'string') {
+    return { kind: 'unsupported', normalized: false, raw: String(version) };
+  }
+
+  const normalized = version.trim().toLowerCase();
+  const numericToken = normalized.match(/^v?(\d+)$/)?.[1];
+  if (numericToken) {
+    const numericVersion = Number.parseInt(numericToken, 10);
+    if (numericVersion > 2) {
+      return { kind: 'future', normalized: false, raw: version };
+    }
+  }
+
+  return { kind: 'unsupported', normalized: false, raw: version };
+}
 
 export const BUILDER_V2_BLOCK_TYPES = [
   'title',

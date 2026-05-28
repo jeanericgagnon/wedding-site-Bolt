@@ -1,4 +1,11 @@
-import type { BuilderV2Block, BuilderV2BlockData, BuilderV2Document, BuilderV2Page, BuilderV2Section } from './contracts';
+import {
+  classifyBuilderV2ImportVersion,
+  type BuilderV2Block,
+  type BuilderV2BlockData,
+  type BuilderV2Document,
+  type BuilderV2Page,
+  type BuilderV2Section,
+} from './contracts';
 import { builderProjectToBuilderV2Document, layoutConfigToBuilderV2Document, looksLikeBuilderProject, looksLikeLayoutConfigV1 } from './adapter';
 import { sanitizeImportedBlockType, sanitizeImportedSectionType } from './importSanitize';
 
@@ -356,13 +363,27 @@ export function prepareImportedBuilderV2Document(
     return { ok: false, error: 'Import must include a pages array or legacy sections array.' };
   }
 
+  const versionPolicy = classifyBuilderV2ImportVersion(input.version);
+  if (versionPolicy.kind === 'future') {
+    return {
+      ok: false,
+      error: `Import version "${versionPolicy.raw}" is newer than this Builder V2 editor supports. Export again from the current editor before retrying.`,
+    };
+  }
+  if (versionPolicy.kind === 'unsupported' || versionPolicy.kind === 'legacy-v1') {
+    return {
+      ok: false,
+      error: `Import version "${String(input.version)}" is not supported here. Use a Builder V2 export or a legacy v1 layout/builder export instead.`,
+    };
+  }
+
   const report = createEmptyReport();
   const nowIso = options?.nowIso ?? new Date().toISOString();
   const updatedAtISO = toIsoStringOrNull(input.updatedAtISO) ?? nowIso;
   if (updatedAtISO !== input.updatedAtISO) {
     report.normalizedUpdatedAt = true;
   }
-  if (input.version !== 'v2') {
+  if (versionPolicy.normalized) {
     report.normalizedVersion = true;
   }
 

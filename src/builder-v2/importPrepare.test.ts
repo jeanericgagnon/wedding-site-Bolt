@@ -356,4 +356,44 @@ describe('prepareImportedBuilderV2Document', () => {
     expect(result.report.sourceKind).toBe('builder-project');
     expect(result.report.notes[0]).toContain('legacy builder project');
   });
+
+  it('rejects future Builder V2 document versions instead of guessing at a migration', () => {
+    const result = prepareImportedBuilderV2Document({
+      version: 'v3',
+      updatedAtISO: '2026-05-27T18:00:00.000Z',
+      sections: [
+        {
+          id: 'hero',
+          type: 'hero',
+          variant: 'default',
+          enabled: true,
+          blocks: [],
+        },
+      ],
+    });
+
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.error).toContain('newer than this Builder V2 editor supports');
+  });
+
+  it('rejects unsupported Builder V2 version tokens instead of silently coercing them', () => {
+    const result = prepareImportedBuilderV2Document({
+      version: 'preview',
+      updatedAtISO: '2026-05-27T18:00:00.000Z',
+      sections: [
+        {
+          id: 'hero',
+          type: 'hero',
+          variant: 'default',
+          enabled: true,
+          blocks: [],
+        },
+      ],
+    });
+
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.error).toContain('not supported here');
+  });
 });

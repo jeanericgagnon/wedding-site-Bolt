@@ -8,7 +8,10 @@ Status: draft (post-lab hardening)
 - [x] Add adapter skeleton from `SectionInstance[]` (`src/builder-v2/adapter.ts`)
 - [x] Add lab import/export JSON round-trip
 - [x] Add strict runtime validator (shape + supported block types)
-- [ ] Add version migration policy (`v2` -> future)
+- [x] Add version migration policy (`v2` -> future)
+  - Builder V2 now accepts only the current `v2` document version plus the known `"2"` alias drift
+  - Legacy `v1` inputs still migrate only through the explicit layout-config/builder-project adapters
+  - Future or unknown Builder V2 version tokens fail honestly instead of being silently coerced
 
 ## 2) Editor Behavior QA
 
