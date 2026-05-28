@@ -16,7 +16,7 @@ Deno.serve(async (req: Request) => {
     const query = String(body.query ?? "").trim();
     const inviteToken = String(body.invite_token ?? body.inviteToken ?? "").trim();
 
-    if (!siteRef) {
+    if (!siteRef || !inviteToken) {
       return new Response(JSON.stringify({ matches: [] }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
@@ -32,33 +32,16 @@ Deno.serve(async (req: Request) => {
       return new Response(JSON.stringify({ matches: [] }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    let guests:
+    const { data: tokenGuest } = await admin
+      .from("guests")
+      .select("id, name, first_name, last_name, household_id")
+      .eq("wedding_site_id", site.id)
+      .eq("invite_token", inviteToken)
+      .maybeSingle();
+
+    const guests:
       | Array<{ id: string; name?: string | null; first_name?: string | null; last_name?: string | null; household_id?: string | null }>
-      | null = null;
-
-    if (inviteToken) {
-      const { data: tokenGuest } = await admin
-        .from("guests")
-        .select("id, name, first_name, last_name, household_id")
-        .eq("wedding_site_id", site.id)
-        .eq("invite_token", inviteToken)
-        .maybeSingle();
-
-      guests = tokenGuest ? [tokenGuest] : [];
-    } else {
-      if (query.length < 2) {
-        return new Response(JSON.stringify({ matches: [] }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-      }
-
-      const { data: searchedGuests } = await admin
-        .from("guests")
-        .select("id, name, first_name, last_name, household_id")
-        .eq("wedding_site_id", site.id)
-        .or(`name.ilike.%${query}%,first_name.ilike.%${query}%,last_name.ilike.%${query}%`)
-        .limit(10);
-
-      guests = searchedGuests as typeof guests;
-    }
+      | null = tokenGuest ? [tokenGuest] : [];
 
     const householdIds = Array.from(
       new Set(((guests ?? []) as Array<{ household_id?: string | null }>).map((guest) => guest.household_id).filter(Boolean)),

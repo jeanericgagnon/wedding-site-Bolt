@@ -53,4 +53,19 @@ describe('GuestContactUpdate', () => {
     expect(await screen.findByDisplayValue('Maya Lopez')).toBeInTheDocument();
     expect(screen.getByText('Apply these updates to my whole party (2 guests)')).toBeInTheDocument();
   });
+
+  it('asks for the invitation link before live contact updates when invite context is missing', async () => {
+    vi.stubEnv('VITE_SUPABASE_URL', 'https://example.supabase.co');
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+    window.history.replaceState({}, '', '/guest-contact/maya-leo');
+
+    const { GuestContactUpdate } = await import('./GuestContactUpdate');
+    render(<GuestContactUpdate />);
+
+    expect(screen.getByText('Please use the contact update link from your invitation email.')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Find' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Save update' })).toBeDisabled();
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
 });

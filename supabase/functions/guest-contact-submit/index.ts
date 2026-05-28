@@ -14,6 +14,7 @@ Deno.serve(async (req: Request) => {
     const body = await req.json().catch(() => ({}));
     const siteRef = String(body.site_ref ?? "").trim();
     const guestId = String(body.guest_id ?? "").trim();
+    const inviteToken = String(body.invite_token ?? body.inviteToken ?? "").trim();
     const applyHousehold = Boolean(body.apply_household ?? false);
     const email = String(body.email ?? "").trim() || null;
     const phone = String(body.phone ?? "").trim() || null;
@@ -25,7 +26,7 @@ Deno.serve(async (req: Request) => {
     const mailingPostalCode = String(body.mailing_postal_code ?? '').trim() || null;
     const mailingCountry = String(body.mailing_country ?? '').trim() || null;
 
-    if (!siteRef || !guestId) {
+    if (!siteRef || !guestId || !inviteToken) {
       return new Response(JSON.stringify({ error: "Missing site/guest" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
@@ -48,7 +49,26 @@ Deno.serve(async (req: Request) => {
       .eq("wedding_site_id", site.id)
       .maybeSingle();
 
-    if (!guest?.id) {
+    const { data: invitedGuest } = await admin
+      .from("guests")
+      .select("id, household_id")
+      .eq("wedding_site_id", site.id)
+      .eq("invite_token", inviteToken)
+      .maybeSingle();
+
+    if (!guest?.id || !invitedGuest?.id) {
+      return new Response(JSON.stringify({ error: "Guest not found" }), { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
+    const canTouchGuest = guest.id === invitedGuest.id
+      || (
+        applyHousehold
+        && guest.household_id
+        && invitedGuest.household_id
+        && guest.household_id === invitedGuest.household_id
+      );
+
+    if (!canTouchGuest) {
       return new Response(JSON.stringify({ error: "Guest not found" }), { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 

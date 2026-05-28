@@ -3,7 +3,11 @@ import { useParams } from 'react-router-dom';
 import { GuestJourneyCompanion } from '../components/guest/GuestJourneyCompanion';
 import { demoGuests, demoWeddingSite } from '../lib/demoData';
 import { readInviteTokenFromParams } from '../lib/inviteTokenParams';
-import { mapGuestContactLookupError, mapGuestContactSubmitError } from './guestContactUpdateCopy';
+import {
+  GUEST_CONTACT_INVITE_REQUIRED_ERROR,
+  mapGuestContactLookupError,
+  mapGuestContactSubmitError,
+} from './guestContactUpdateCopy';
 
 type Match = {
   id: string;
@@ -45,6 +49,7 @@ export const GuestContactUpdate: React.FC = () => {
   const isDemoSiteRef = siteRef === demoWeddingSite.id || siteRef.toLowerCase() === 'demo';
   const previewGuest = params.get('previewGuest')?.trim() ?? '';
   const inviteToken = readInviteTokenFromParams(params);
+  const requiresInviteLink = !isDemoSiteRef && !inviteToken;
 
   const [query, setQuery] = useState('');
   const [matches, setMatches] = useState<Match[]>([]);
@@ -143,6 +148,10 @@ export const GuestContactUpdate: React.FC = () => {
   }, [applyLookupMatches, inviteToken, isDemoSiteRef, siteRef]);
 
   async function handleSearch() {
+    if (requiresInviteLink) {
+      setResult({ ok: false, message: GUEST_CONTACT_INVITE_REQUIRED_ERROR });
+      return;
+    }
     if (query.trim().length < 2) return;
     setSearching(true);
     setResult(null);
@@ -193,6 +202,7 @@ export const GuestContactUpdate: React.FC = () => {
         await callPublicFn('guest-contact-submit', {
           site_ref: siteRef,
           guest_id: selectedGuestId,
+          invite_token: inviteToken,
           apply_household: applyHousehold,
           email: email.trim() || null,
           phone: phone.trim() || null,
@@ -220,6 +230,12 @@ export const GuestContactUpdate: React.FC = () => {
         <h1 className="text-xl font-semibold text-text-primary">Update contact & RSVP</h1>
         <p className="text-sm text-text-secondary">Search your name, choose your record, then update details for yourself or your party.</p>
 
+        {requiresInviteLink && (
+          <p className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+            {GUEST_CONTACT_INVITE_REQUIRED_ERROR}
+          </p>
+        )}
+
         <GuestJourneyCompanion
           currentSurface="contact"
           siteSlug={siteRef || undefined}
@@ -235,8 +251,9 @@ export const GuestContactUpdate: React.FC = () => {
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search your full name"
             className="flex-1 px-3 py-2 border border-border rounded-lg bg-surface-subtle"
+            disabled={requiresInviteLink || searching}
           />
-          <button onClick={handleSearch} disabled={searching || query.trim().length < 2} className="px-4 py-2 rounded-lg bg-primary text-white disabled:opacity-50">
+          <button onClick={handleSearch} disabled={requiresInviteLink || searching || query.trim().length < 2} className="px-4 py-2 rounded-lg bg-primary text-white disabled:opacity-50">
             {searching ? 'Searching…' : 'Find'}
           </button>
         </div>
@@ -311,7 +328,7 @@ export const GuestContactUpdate: React.FC = () => {
             I agree to receive wedding updates by SMS (if phone provided).
           </label>
 
-          <button type="submit" disabled={!canSubmit || loading} className="w-full px-4 py-2 rounded-lg bg-primary text-white disabled:opacity-50">
+          <button type="submit" disabled={requiresInviteLink || !canSubmit || loading} className="w-full px-4 py-2 rounded-lg bg-primary text-white disabled:opacity-50">
             {loading ? 'Saving…' : 'Save update'}
           </button>
         </form>
