@@ -4,8 +4,9 @@ import { AuthProvider } from './contexts/AuthContext';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import { ToastProvider } from './components/ui/Toast';
 import { BUILDER_WORKSPACE_ROUTES } from './lib/builderWorkspaceRoutes';
-import { BUILDER_V2_AUDIENCE, BUILDER_V2_ENABLED } from './config/env';
+import { BUILDER_V2_AUDIENCE, BUILDER_V2_ENABLED, ENABLE_INTERNAL_TOOLING_ROUTES } from './config/env';
 import { useAuth } from './hooks/useAuth';
+import { shouldAllowInternalToolingRoutes } from './lib/internalToolingRouteAccess';
 
 const Home = lazy(() => import('./pages/Home').then(m => ({ default: m.Home })));
 const Product = lazy(() => import('./pages/Product').then(m => ({ default: m.Product })));
@@ -83,6 +84,11 @@ const AppContent = () => {
     const sub = parts[0];
     return Boolean(sub) && sub !== 'www';
   })();
+  const internalToolingHostname = typeof window === 'undefined' ? '' : window.location.hostname;
+  const allowInternalToolingRoutes = shouldAllowInternalToolingRoutes({
+    enabledFlag: ENABLE_INTERNAL_TOOLING_ROUTES,
+    hostname: internalToolingHostname,
+  });
 
   return (
     <div className="min-h-screen">
@@ -92,7 +98,10 @@ const AppContent = () => {
         <Route path="/product" element={<Product />} />
         <Route path="/templates" element={<Templates />} />
         <Route path="/templates/:templateId" element={<TemplateDetail />} />
-        <Route path={BUILDER_WORKSPACE_ROUTES.lab} element={<BuilderV2Lab />} />
+        <Route
+          path={BUILDER_WORKSPACE_ROUTES.lab}
+          element={allowInternalToolingRoutes ? <BuilderV2Lab /> : <Navigate to={BUILDER_WORKSPACE_ROUTES.publicGuide} replace />}
+        />
         <Route
           path={BUILDER_WORKSPACE_ROUTES.v2}
           element={
@@ -109,8 +118,14 @@ const AppContent = () => {
             </ProtectedRoute>
           }
         />
-        <Route path="/variant-preview-capture" element={<VariantPreviewCapture />} />
-        <Route path="/template-scroll-capture" element={<TemplateScrollCapture />} />
+        <Route
+          path="/variant-preview-capture"
+          element={allowInternalToolingRoutes ? <VariantPreviewCapture /> : <Navigate to="/templates" replace />}
+        />
+        <Route
+          path="/template-scroll-capture"
+          element={allowInternalToolingRoutes ? <TemplateScrollCapture /> : <Navigate to="/templates" replace />}
+        />
         <Route path="/site/:slug" element={<SiteView />} />
         <Route path="/vendor/:slug" element={<VendorProfilePage />} />
         <Route path="/vault/:siteSlug" element={<VaultContribute />} />

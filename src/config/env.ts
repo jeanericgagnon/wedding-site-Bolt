@@ -5,6 +5,8 @@ const builderV2EnabledRaw = String(import.meta.env.VITE_BUILDER_V2_ENABLED ?? 't
 export const BUILDER_V2_ENABLED = !['false', '0', 'no'].includes(builderV2EnabledRaw);
 const builderV2AudienceRaw = String(import.meta.env.VITE_BUILDER_V2_AUDIENCE ?? 'all').trim().toLowerCase();
 export const BUILDER_V2_AUDIENCE = builderV2AudienceRaw === 'internal' ? 'internal' : 'all';
+const internalToolingRoutesRaw = String(import.meta.env.VITE_ENABLE_INTERNAL_TOOLING_ROUTES ?? 'false').trim().toLowerCase();
+export const ENABLE_INTERNAL_TOOLING_ROUTES = ['true', '1', 'yes'].includes(internalToolingRoutesRaw);
 
 const supabaseUrl = (import.meta.env.VITE_SUPABASE_URL as string | undefined)?.trim();
 const supabaseAnon = (import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined)?.trim();

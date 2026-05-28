@@ -22,6 +22,12 @@ const steps = [
     required: true,
   },
   {
+    id: 'builder-entry-rollback-tests',
+    label: 'Builder entry rollback and tooling fallback tests',
+    command: 'npm test -- src/App.builderEntry.test.tsx src/lib/internalToolingRouteAccess.test.ts',
+    required: true,
+  },
+  {
     id: 'builder-cutover-route-tests',
     label: 'Builder cutover route tests',
     command: 'npm test -- src/pages/BuilderCutover.test.tsx',
@@ -106,6 +112,7 @@ const output = {
     'Builder workspace route contract truth',
     'Auth entry intent recognition for builder editor and guide routes',
     'First-session builder handoff route continuity',
+    'Builder hard-switch rollback and internal tooling fallback route behavior',
     'Builder cutover guide route helpers and legacy fallbacks',
     'Dashboard overview builder-route decisions',
     'Build integrity after builder-primary-path promotion',

@@ -50,7 +50,9 @@ Status: draft (post-lab hardening)
   - Env switch: `VITE_BUILDER_V2_ENABLED`
   - Default: `true` to preserve the promoted `/dashboard/builder` and `/builder` V2 behavior
   - Rollback/canary behavior: set `VITE_BUILDER_V2_ENABLED=false` to send the default builder entry routes back to the explicit guide path without rewriting links
-- [ ] keep `/builder-v2-lab` as fallback for one release cycle
+- [x] keep `/builder-v2-lab` as fallback for one release cycle
+  - The lab route stays available behind local-dev or `VITE_ENABLE_INTERNAL_TOOLING_ROUTES=true`
+  - When tooling routes are off, `/builder-v2-lab` falls back to the explicit `/builder-guide` handoff instead of exposing the internal route by accident
 - [x] canary rollout (internal/demo accounts first)
   - Audience switch: `VITE_BUILDER_V2_AUDIENCE=internal`
   - Internal audience currently means DayOf accounts (`@dayof.love`) plus demo-mode sessions
@@ -58,7 +60,11 @@ Status: draft (post-lab hardening)
 - [x] capture telemetry: add/duplicate/remove/import/export failure rates
   - Session-local internal rollout signal now lives in `src/pages/builderV2RolloutTelemetry.ts`
   - Builder V2 export review surfaces show the current browser-session failure-rate summary without claiming external analytics coverage
-- [ ] document rollback procedure (`/builder` route hard switch)
+- [x] document rollback procedure (`/builder` route hard switch)
+  - Set `VITE_BUILDER_V2_ENABLED=false` to move `/dashboard/builder` and `/builder` back to the explicit guide flow without rewriting links
+  - If the issue only affects general audience traffic, set `VITE_BUILDER_V2_AUDIENCE=internal` first so DayOf and demo accounts can keep using V2 while everyone else sees the guide
+  - Keep `VITE_ENABLE_INTERNAL_TOOLING_ROUTES=true` only for the limited fallback window where `/builder-v2-lab` still needs to stay reachable for internal recovery work
+  - Rerun `npm run proof:v1:builder-v2-ci-gate` after the switch so the route contract, rollback behavior, and build stay verified
 
 ## 5) Exit Criteria
 

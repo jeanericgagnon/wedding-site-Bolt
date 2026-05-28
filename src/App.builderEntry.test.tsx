@@ -4,6 +4,9 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 const BUILDER_V2_LABEL = 'Builder V2 route mock';
 const BUILDER_GUIDE_LABEL = 'Builder guide route mock';
+const TEMPLATES_LABEL = 'Templates route mock';
+const VARIANT_CAPTURE_LABEL = 'Variant preview capture route mock';
+const TEMPLATE_SCROLL_CAPTURE_LABEL = 'Template scroll capture route mock';
 
 type RenderAuthState = {
   user: null | { id: string; email?: string };
@@ -15,6 +18,8 @@ async function renderAppAt(
   options: {
     builderV2Enabled: boolean;
     builderV2Audience?: 'all' | 'internal';
+    internalToolingRoutesEnabled?: boolean;
+    allowInternalToolingRoutes?: boolean;
     authState?: RenderAuthState;
   },
 ) {
@@ -24,6 +29,11 @@ async function renderAppAt(
   vi.doMock('./config/env', () => ({
     BUILDER_V2_ENABLED: options.builderV2Enabled,
     BUILDER_V2_AUDIENCE: options.builderV2Audience ?? 'all',
+    ENABLE_INTERNAL_TOOLING_ROUTES: options.internalToolingRoutesEnabled ?? false,
+  }));
+
+  vi.doMock('./lib/internalToolingRouteAccess', () => ({
+    shouldAllowInternalToolingRoutes: () => options.allowInternalToolingRoutes ?? Boolean(options.internalToolingRoutesEnabled),
   }));
 
   vi.doMock('./contexts/AuthContext', () => ({
@@ -52,6 +62,18 @@ async function renderAppAt(
 
   vi.doMock('./pages/Home', () => ({
     Home: () => <div>Home route mock</div>,
+  }));
+
+  vi.doMock('./pages/Templates', () => ({
+    Templates: () => <div>{TEMPLATES_LABEL}</div>,
+  }));
+
+  vi.doMock('./pages/VariantPreviewCapture', () => ({
+    default: () => <div>{VARIANT_CAPTURE_LABEL}</div>,
+  }));
+
+  vi.doMock('./pages/TemplateScrollCapture', () => ({
+    default: () => <div>{TEMPLATE_SCROLL_CAPTURE_LABEL}</div>,
   }));
 
   const { default: App } = await import('./App');
@@ -118,5 +140,48 @@ describe('App builder entry flag', () => {
 
     expect(await screen.findByText(BUILDER_V2_LABEL)).toBeInTheDocument();
     expect(screen.queryByText(BUILDER_GUIDE_LABEL)).not.toBeInTheDocument();
+  });
+
+  it('keeps the lab fallback route available when internal tooling routes are explicitly enabled', async () => {
+    await renderAppAt('/builder-v2-lab', {
+      builderV2Enabled: true,
+      internalToolingRoutesEnabled: true,
+      allowInternalToolingRoutes: true,
+    });
+
+    expect(await screen.findByText(BUILDER_V2_LABEL)).toBeInTheDocument();
+  });
+
+  it('sends the lab fallback route back to the public builder guide when internal tooling routes are off', async () => {
+    await renderAppAt('/builder-v2-lab', {
+      builderV2Enabled: true,
+      internalToolingRoutesEnabled: false,
+      allowInternalToolingRoutes: false,
+    });
+
+    expect(await screen.findByText(BUILDER_GUIDE_LABEL)).toBeInTheDocument();
+    expect(screen.queryByText(BUILDER_V2_LABEL)).not.toBeInTheDocument();
+  });
+
+  it('keeps variant preview capture internal when tooling routes are off', async () => {
+    await renderAppAt('/variant-preview-capture', {
+      builderV2Enabled: true,
+      internalToolingRoutesEnabled: false,
+      allowInternalToolingRoutes: false,
+    });
+
+    expect(await screen.findByText(TEMPLATES_LABEL)).toBeInTheDocument();
+    expect(screen.queryByText(VARIANT_CAPTURE_LABEL)).not.toBeInTheDocument();
+  });
+
+  it('keeps template scroll capture internal when tooling routes are off', async () => {
+    await renderAppAt('/template-scroll-capture', {
+      builderV2Enabled: true,
+      internalToolingRoutesEnabled: false,
+      allowInternalToolingRoutes: false,
+    });
+
+    expect(await screen.findByText(TEMPLATES_LABEL)).toBeInTheDocument();
+    expect(screen.queryByText(TEMPLATE_SCROLL_CAPTURE_LABEL)).not.toBeInTheDocument();
   });
 });
