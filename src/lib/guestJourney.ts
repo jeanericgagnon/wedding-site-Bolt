@@ -300,6 +300,7 @@ export function buildGuestJourneyLinks(context: GuestJourneyContext): GuestJourn
   if (inviteToken) {
     rsvpParams.set('invite_token', inviteToken);
   }
+  appendPreviewParams(rsvpParams, previewGuest, 'rsvp');
   links.push({
     key: 'rsvp',
     label: 'RSVP',

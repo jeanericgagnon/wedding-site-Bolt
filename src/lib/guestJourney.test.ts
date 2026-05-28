@@ -13,10 +13,18 @@ describe('guestJourney', () => {
     });
 
     expect(links.map((link) => link.key)).toEqual(['hub', 'travel', 'rsvp', 'contact']);
-    expect(links.find((link) => link.key === 'hub')?.href).toBe('/site/ericandkaras?previewGuest=guest-42&previewSurface=public&token=invite-123');
-    expect(links.find((link) => link.key === 'travel')?.href).toBe('/site/ericandkaras?previewGuest=guest-42&previewSurface=travel&token=invite-123#travel');
-    expect(links.find((link) => link.key === 'rsvp')?.href).toBe('/rsvp?site=ericandkaras&token=invite-123');
-    expect(links.find((link) => link.key === 'contact')?.href).toBe('/guest-contact/ericandkaras?previewGuest=guest-42&previewSurface=contact');
+    expect(links.find((link) => link.key === 'hub')?.href).toBe(
+      '/site/ericandkaras?previewGuest=guest-42&previewSurface=public&invite_token=invite-123',
+    );
+    expect(links.find((link) => link.key === 'travel')?.href).toBe(
+      '/site/ericandkaras?previewGuest=guest-42&previewSurface=travel&invite_token=invite-123#travel',
+    );
+    expect(links.find((link) => link.key === 'rsvp')?.href).toBe(
+      '/rsvp?site=ericandkaras&invite_token=invite-123&previewGuest=guest-42&previewSurface=rsvp',
+    );
+    expect(links.find((link) => link.key === 'contact')?.href).toBe(
+      '/guest-contact/ericandkaras?previewGuest=guest-42&previewSurface=contact&invite_token=invite-123',
+    );
   });
 
   it('drops links when the route does not have a site slug to carry forward', () => {
