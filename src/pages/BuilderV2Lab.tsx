@@ -78,6 +78,8 @@ import { buildBuilderV2SetupSeed } from './builderV2SetupSeed';
 import { buildBuilderV2PreviewInstances } from './builderV2PreviewProjection';
 import {
   createBuilderV2HistorySnapshot,
+  listBuilderV2CheckpointSummaries,
+  pushBuilderV2CheckpointSnapshot,
   pushBuilderV2HistorySnapshot,
   type BuilderV2HistorySnapshot,
 } from './builderV2History';
@@ -526,11 +528,13 @@ export const BuilderV2Lab: React.FC = () => {
   const initialSelectedSectionId = initialSetupSeed?.selectedSectionId ?? INITIAL_SECTIONS[0].id;
   const [history, setHistory] = useState<BuilderV2HistorySnapshot<AddedBlock>[]>([
     createBuilderV2HistorySnapshot({
+      id: '',
       pages: initialPages,
       sectionBlocks: {},
     }),
   ]);
   const [historyIndex, setHistoryIndex] = useState(0);
+  const [selectedCheckpointId, setSelectedCheckpointId] = useState('');
   const [selectedPageId, setSelectedPageId] = useState(initialSelectedPageId);
   const [selectedId, setSelectedId] = useState(initialSelectedSectionId);
   const [multiSelectedIds, setMultiSelectedIds] = useState<string[]>([]);
@@ -895,6 +899,48 @@ export const BuilderV2Lab: React.FC = () => {
     setHistoryIndex(nextState.historyIndex);
     markSaving();
   }, [history, historyIndex, markSaving, sectionBlocks]);
+
+  const checkpointSummaries = useMemo(
+    () => listBuilderV2CheckpointSummaries(history),
+    [history],
+  );
+
+  const saveCheckpoint = useCallback(() => {
+    const nextState = pushBuilderV2CheckpointSnapshot({
+      history,
+      historyIndex,
+      pages,
+      sectionBlocks,
+      label: `${activePage?.title ?? 'Document'} checkpoint`,
+    });
+    const checkpoint = nextState.history[nextState.historyIndex];
+    setHistory(nextState.history);
+    setHistoryIndex(nextState.historyIndex);
+    setSelectedCheckpointId(checkpoint?.id ?? '');
+    markSaving();
+    notify(`Saved checkpoint: ${checkpoint?.label ?? 'Checkpoint'}`);
+  }, [activePage?.title, history, historyIndex, markSaving, notify, pages, sectionBlocks]);
+
+  const restoreCheckpoint = useCallback((checkpointId: string) => {
+    const checkpointIndex = history.findIndex((snapshot) => snapshot.id === checkpointId && snapshot.isCheckpoint);
+    if (checkpointIndex < 0) {
+      notify('That checkpoint is no longer available');
+      return;
+    }
+
+    const checkpoint = history[checkpointIndex];
+    setHistoryIndex(checkpointIndex);
+    setSelectedCheckpointId(checkpointId);
+    const checkpointPageId = checkpoint?.pages[0]?.id ?? '';
+    const checkpointSectionId = checkpoint?.pages[0]?.sections[0]?.id ?? '';
+    if (checkpointPageId) setSelectedPageId(checkpointPageId);
+    if (checkpointSectionId) {
+      setSelectedId(checkpointSectionId);
+      setLastSelectedId(checkpointSectionId);
+      setMultiSelectedIds([]);
+    }
+    notify(`Restored checkpoint: ${checkpoint?.label ?? 'Checkpoint'}`);
+  }, [history, notify]);
 
   const commitActivePageSections = useCallback((nextSections: LabSection[]) => {
     if (!activePage) return;
@@ -1585,6 +1631,7 @@ export const BuilderV2Lab: React.FC = () => {
     setSelectedId(nextPages[0]?.sections[0]?.id ?? '');
     setLastSelectedId(nextPages[0]?.sections[0]?.id ?? '');
     setMultiSelectedIds([]);
+    setSelectedCheckpointId('');
     setCollapsedBlocks({});
     setLastImportReport(report);
     setLastImportSource(sourceLabel);
@@ -1693,6 +1740,7 @@ export const BuilderV2Lab: React.FC = () => {
   ), [activePage.id, pages, previewFields.rsvpTitle, sectionBlocks]);
 
   const commandItems = useMemo(() => {
+    const latestCheckpoint = checkpointSummaries[0];
     const base = [
       { id: 'page-add', group: 'Pages', label: 'Add page', keywords: ['page', 'new', 'navigation'], action: () => runCommand('Add page', addPage) },
       ...pages.map((page) => ({ id: `page-${page.id}`, group: 'Pages', label: `Open page: ${page.title}`, keywords: ['page', 'open', page.title.toLowerCase(), page.slug.toLowerCase()], action: () => runCommand(`Open page: ${page.title}`, () => selectPage(page.id)) })),
@@ -1716,6 +1764,14 @@ export const BuilderV2Lab: React.FC = () => {
       { id: 'sel-comfortable', group: 'Selection', label: 'Set selected density: comfortable', keywords: ['comfortable', 'density', 'selection', 'batch', 'open'], action: () => runCommand('Set selected density: comfortable', () => setSelectedDensity('comfortable')) },
       { id: 'sel-review', group: 'Selection', label: 'Review selected sections in preview', keywords: ['preview', 'selection', 'review', 'batch'], action: () => runCommand('Review selected sections in preview', reviewSelectionInPreview) },
       { id: 'block-pack', group: 'Blocks', label: 'Add recommended block pack', keywords: ['block', 'pack', 'recommended', 'signature', 'section'], action: () => runCommand('Add recommended block pack', addRecommendedBlockPack) },
+      { id: 'history-save-checkpoint', group: 'History', label: 'Save restore checkpoint', keywords: ['history', 'checkpoint', 'restore point', 'save'], action: () => runCommand('Save restore checkpoint', saveCheckpoint) },
+      ...(latestCheckpoint ? [{
+        id: 'history-restore-latest',
+        group: 'History',
+        label: `Restore checkpoint: ${latestCheckpoint.label}`,
+        keywords: ['history', 'checkpoint', 'restore', 'latest'],
+        action: () => runCommand(`Restore checkpoint: ${latestCheckpoint.label}`, () => restoreCheckpoint(latestCheckpoint.id)),
+      }] : []),
       { id: 'export-open', group: 'Handoff', label: 'Open export handoff', keywords: ['export', 'handoff', 'json', 'share'], action: () => runCommand('Open export handoff', openExportPanel) },
       { id: 'export-download', group: 'Handoff', label: 'Download layout JSON', keywords: ['export', 'download', 'json', 'handoff'], action: () => runCommand('Download layout JSON', downloadV2Json) },
       { id: 'export-copy', group: 'Handoff', label: 'Copy layout JSON', keywords: ['copy', 'json', 'handoff', 'clipboard'], action: () => runCommand('Copy layout JSON', () => { void copyV2Json(); }) },
@@ -1739,7 +1795,7 @@ export const BuilderV2Lab: React.FC = () => {
       .filter((x) => x.s > 0)
       .sort((a, b) => b.s - a.s)
       .map((x) => x.item);
-  }, [commandQuery, sections, pages, activePage.id, addPage, addRecommendedBlockPack, addSection, clearSelection, copyHandoffPacket, copyV2Json, downloadV2Json, duplicatePage, duplicateSelectedSections, handoffGuidance.primaryActionLabel, hideSelectedSections, invertSelection, moveSelectedSectionsToPage, openExportPanel, openImportPanel, removeSelectedSections, repairSelectedSectionStructure, restoreSelectedSectionsToStarterBlocks, reviewSelectionInPreview, runHandoffAction, selectAllSections, selectPage, selectedSectionCanRepairStructure, setSelectedDensity, showSelectedSections, updateVariant]);
+  }, [commandQuery, sections, pages, activePage.id, addPage, addRecommendedBlockPack, addSection, checkpointSummaries, clearSelection, copyHandoffPacket, copyV2Json, downloadV2Json, duplicatePage, duplicateSelectedSections, handoffGuidance.primaryActionLabel, hideSelectedSections, invertSelection, moveSelectedSectionsToPage, openExportPanel, openImportPanel, removeSelectedSections, repairSelectedSectionStructure, restoreCheckpoint, restoreSelectedSectionsToStarterBlocks, reviewSelectionInPreview, runHandoffAction, saveCheckpoint, selectAllSections, selectPage, selectedSectionCanRepairStructure, setSelectedDensity, showSelectedSections, updateVariant]);
   const importGuidance = useMemo(
     () => buildBuilderV2ImportGuidance(lastImportReport, lastImportSource),
     [lastImportReport, lastImportSource],
@@ -2690,6 +2746,24 @@ export const BuilderV2Lab: React.FC = () => {
 
                 <button onClick={() => canUndo && setHistoryIndex((i) => i - 1)} disabled={!canUndo} className="text-xs border rounded px-2 py-1 disabled:opacity-40 inline-flex items-center gap-1"><Undo2 className="w-3.5 h-3.5" />Undo</button>
                 <button onClick={() => canRedo && setHistoryIndex((i) => i + 1)} disabled={!canRedo} className="text-xs border rounded px-2 py-1 disabled:opacity-40 inline-flex items-center gap-1"><Redo2 className="w-3.5 h-3.5" />Redo</button>
+                <button onClick={saveCheckpoint} className="text-xs border rounded px-2 py-1 bg-white hover:border-primary/40 hover:bg-primary/5">Save checkpoint</button>
+                <select
+                  value={selectedCheckpointId}
+                  onChange={(e) => setSelectedCheckpointId(e.target.value)}
+                  className="text-[11px] border rounded px-2 py-1 bg-white max-w-[220px]"
+                >
+                  <option value="">Restore checkpoint…</option>
+                  {checkpointSummaries.map((checkpoint) => (
+                    <option key={checkpoint.id} value={checkpoint.id}>{checkpoint.label}</option>
+                  ))}
+                </select>
+                <button
+                  onClick={() => selectedCheckpointId && restoreCheckpoint(selectedCheckpointId)}
+                  disabled={!selectedCheckpointId}
+                  className="text-xs border rounded px-2 py-1 disabled:opacity-40 bg-white hover:border-primary/40 hover:bg-primary/5"
+                >
+                  Restore
+                </button>
               </div>
             </div>
             <div className="mb-2 rounded-md border border-border-subtle bg-white px-3 py-2.5">
@@ -3442,6 +3516,7 @@ export const BuilderV2Lab: React.FC = () => {
             <ul className="text-xs text-text-secondary space-y-1.5">
               <li>⌘/Ctrl + K — open command palette</li>
               <li>⌘/Ctrl + Z / ⇧⌘/Ctrl + Z — undo / redo</li>
+              <li>Save checkpoints before big cleanup or replacement moves</li>
               <li>⌘/Ctrl + A — select all sections</li>
               <li>⇧⌘/Ctrl + I — invert selection</li>
               <li>Esc — clear multi-selection</li>

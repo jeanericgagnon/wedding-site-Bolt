@@ -1,8 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  createBuilderV2CheckpointSnapshot,
   createBuilderV2HistorySnapshot,
+  listBuilderV2CheckpointSummaries,
   pushBuilderV2HistorySnapshot,
+  pushBuilderV2CheckpointSnapshot,
 } from './builderV2History';
 
 describe('builderV2History', () => {
@@ -85,5 +88,67 @@ describe('builderV2History', () => {
     expect(result.history).toHaveLength(2);
     expect(result.history[1]?.pages[0]?.title).toBe('Travel');
     expect(result.history[1]?.sectionBlocks.travel?.[0]?.data?.text).toBe('Bring a jacket');
+  });
+
+  it('creates named checkpoint snapshots and lists them newest first', () => {
+    const base = createBuilderV2HistorySnapshot({
+      id: '',
+      pages: [{
+        id: 'page-1',
+        title: 'Home',
+        slug: 'home',
+        isHome: true,
+        hidden: false,
+        sections: [],
+      }],
+      sectionBlocks: {},
+    });
+
+    const result = pushBuilderV2CheckpointSnapshot({
+      history: [base],
+      historyIndex: 0,
+      pages: base.pages,
+      sectionBlocks: base.sectionBlocks,
+      label: 'Before cleanup',
+    });
+
+    expect(result.history[1]).toMatchObject({
+      label: 'Before cleanup',
+      isCheckpoint: true,
+    });
+
+    expect(listBuilderV2CheckpointSummaries(result.history)).toEqual([
+      expect.objectContaining({
+        label: 'Before cleanup',
+        historyIndex: 1,
+      }),
+    ]);
+  });
+
+  it('clones checkpoint snapshots without leaking later mutations', () => {
+    const pages = [{
+      id: 'page-1',
+      title: 'Home',
+      slug: 'home',
+      isHome: true,
+      hidden: false,
+      sections: [],
+    }];
+    const sectionBlocks = {
+      hero: [{ id: 'hero-1', type: 'text', content: 'Hero', data: { text: 'Original' } }],
+    };
+
+    const snapshot = createBuilderV2CheckpointSnapshot({
+      pages,
+      sectionBlocks,
+      label: 'Before restore',
+    });
+
+    pages[0]!.title = 'Changed';
+    sectionBlocks.hero[0]!.data!.text = 'Mutated';
+
+    expect(snapshot.label).toBe('Before restore');
+    expect(snapshot.pages[0]?.title).toBe('Home');
+    expect(snapshot.sectionBlocks.hero?.[0]?.data?.text).toBe('Original');
   });
 });

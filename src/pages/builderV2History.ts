@@ -11,9 +11,28 @@ type HistoryBlock = {
 };
 
 export type BuilderV2HistorySnapshot<TBlock extends HistoryBlock = HistoryBlock> = {
+  id: string;
+  label?: string;
+  isCheckpoint?: boolean;
   pages: LabPage[];
   sectionBlocks: Record<string, TBlock[]>;
 };
+
+type BuilderV2HistorySnapshotInput<TBlock extends HistoryBlock = HistoryBlock> = {
+  id?: string;
+  label?: string;
+  isCheckpoint?: boolean;
+  pages: LabPage[];
+  sectionBlocks: Record<string, TBlock[]>;
+};
+
+export type BuilderV2CheckpointSummary = {
+  id: string;
+  label: string;
+  historyIndex: number;
+};
+
+const makeSnapshotId = () => `snapshot-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
 const cloneSectionBlocks = <TBlock extends HistoryBlock>(
   sectionBlocks: Record<string, TBlock[]>,
@@ -28,9 +47,15 @@ const cloneSectionBlocks = <TBlock extends HistoryBlock>(
 );
 
 export const createBuilderV2HistorySnapshot = <TBlock extends HistoryBlock>({
+  id,
+  label,
+  isCheckpoint,
   pages,
   sectionBlocks,
-}: BuilderV2HistorySnapshot<TBlock>): BuilderV2HistorySnapshot<TBlock> => ({
+}: BuilderV2HistorySnapshotInput<TBlock>): BuilderV2HistorySnapshot<TBlock> => ({
+  id: id || makeSnapshotId(),
+  label,
+  isCheckpoint: isCheckpoint === true,
   pages: normalizeBuilderV2Pages(pages),
   sectionBlocks: cloneSectionBlocks(sectionBlocks),
 });
@@ -50,6 +75,7 @@ export const pushBuilderV2HistorySnapshot = <TBlock extends HistoryBlock>({
   const nextHistory = [
     ...trimmed,
     createBuilderV2HistorySnapshot({
+      id: '',
       pages: nextPages,
       sectionBlocks: nextSectionBlocks,
     }),
@@ -60,3 +86,63 @@ export const pushBuilderV2HistorySnapshot = <TBlock extends HistoryBlock>({
     historyIndex: nextHistory.length - 1,
   };
 };
+
+export const createBuilderV2CheckpointSnapshot = <TBlock extends HistoryBlock>({
+  pages,
+  sectionBlocks,
+  label,
+}: {
+  pages: LabPage[];
+  sectionBlocks: Record<string, TBlock[]>;
+  label: string;
+}) => createBuilderV2HistorySnapshot({
+  id: '',
+  label,
+  isCheckpoint: true,
+  pages,
+  sectionBlocks,
+});
+
+export const pushBuilderV2CheckpointSnapshot = <TBlock extends HistoryBlock>({
+  history,
+  historyIndex,
+  pages,
+  sectionBlocks,
+  label,
+}: {
+  history: BuilderV2HistorySnapshot<TBlock>[];
+  historyIndex: number;
+  pages: LabPage[];
+  sectionBlocks: Record<string, TBlock[]>;
+  label: string;
+}) => {
+  const trimmed = history.slice(0, historyIndex + 1);
+  const nextHistory = [
+    ...trimmed,
+    createBuilderV2CheckpointSnapshot({
+      pages,
+      sectionBlocks,
+      label,
+    }),
+  ];
+
+  return {
+    history: nextHistory,
+    historyIndex: nextHistory.length - 1,
+  };
+};
+
+export const listBuilderV2CheckpointSummaries = <TBlock extends HistoryBlock>(
+  history: BuilderV2HistorySnapshot<TBlock>[],
+): BuilderV2CheckpointSummary[] => history
+  .map((snapshot, historyIndex) => (
+    snapshot.isCheckpoint
+      ? {
+          id: snapshot.id,
+          label: snapshot.label?.trim() || `Checkpoint ${historyIndex + 1}`,
+          historyIndex,
+        }
+      : null
+  ))
+  .filter((summary): summary is BuilderV2CheckpointSummary => Boolean(summary))
+  .reverse();
