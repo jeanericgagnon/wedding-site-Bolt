@@ -19,6 +19,7 @@ export const PhotoUpload: React.FC = () => {
   const siteSlug = params.get('site')?.trim().toLowerCase() ?? '';
   const previewGuest = params.get('previewGuest')?.trim() ?? '';
   const inviteToken = initialToken;
+  const hasInviteAccess = initialToken.trim().length > 0;
   const isHubEntry = params.get('hub') === '1';
 
   const [token, setToken] = useState(initialToken);
@@ -44,7 +45,7 @@ export const PhotoUpload: React.FC = () => {
       return;
     }
 
-    if (!token.trim() && !siteSlug) {
+    if (!token.trim()) {
       setError(PHOTO_UPLOAD_MISSING_ACCESS_ERROR);
       return;
     }
@@ -104,7 +105,7 @@ export const PhotoUpload: React.FC = () => {
         <h1 className="text-3xl font-semibold text-gray-900">Share your photos</h1>
         <p className="mt-2 text-base text-gray-700">Upload photos and videos directly to the couple&apos;s shared album.</p>
 
-        {siteSlug && !token && (
+        {siteSlug && !hasInviteAccess && (
           <p className="mt-4 rounded-xl border border-rose-100 bg-rose-50/60 px-4 py-3 text-sm text-gray-700">
             Uploading to {siteSlug}.dayof.love
           </p>
@@ -120,7 +121,7 @@ export const PhotoUpload: React.FC = () => {
         />
 
         <form onSubmit={onSubmit} className="mt-6 space-y-4">
-          {!siteSlug && (
+          {!hasInviteAccess && (
             <div>
               <label htmlFor="photo-upload-token" className="mb-2 block text-base font-medium text-gray-800">{PHOTO_UPLOAD_ACCESS_LABEL}</label>
               <input

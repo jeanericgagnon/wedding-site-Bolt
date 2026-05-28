@@ -27,6 +27,24 @@ describe('PhotoUpload guest-safe copy', () => {
     expect(screen.queryByText(/upload token/i)).not.toBeInTheDocument();
   });
 
+  it('still asks for the access code when a site slug is present without invite access', () => {
+    window.history.replaceState({}, '', '/photos/upload?site=maya-leo');
+
+    render(<PhotoUpload />);
+
+    expect(screen.getByText('Uploading to maya-leo.dayof.love')).toBeInTheDocument();
+    expect(screen.getByLabelText(PHOTO_UPLOAD_ACCESS_LABEL)).toBeInTheDocument();
+    expect(screen.queryByText(/upload token/i)).not.toBeInTheDocument();
+  });
+
+  it('hides the access-code field when the invitation link already carries upload access', () => {
+    window.history.replaceState({}, '', '/photos/upload?site=maya-leo&invite_token=invite-123');
+
+    render(<PhotoUpload />);
+
+    expect(screen.queryByLabelText(PHOTO_UPLOAD_ACCESS_LABEL)).not.toBeInTheDocument();
+  });
+
   it('keeps the missing access-code error guest-facing and calm', () => {
     expect(PHOTO_UPLOAD_MISSING_ACCESS_ERROR).toBe('An upload access code is required.');
   });
