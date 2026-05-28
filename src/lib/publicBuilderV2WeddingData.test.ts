@@ -158,7 +158,7 @@ describe('publicBuilderV2WeddingData', () => {
         label: 'Ceremony',
         venueId: 'schedule-1-venue-0',
         notes: 'Be seated by 3:45.',
-        startTimeISO: '4:00 PM',
+        startTimeISO: undefined,
       },
     ]);
     expect(supplement.event).toBeUndefined();
@@ -233,6 +233,52 @@ describe('publicBuilderV2WeddingData', () => {
     expect(supplement.couple?.displayName).toBe('Morgan & Avery');
     expect(supplement.event?.weddingDateISO).toBe('2027-09-14T16:00:00.000Z');
     expect(supplement.rsvp?.enabled).toBe(true);
+  });
+
+  it('keeps plain display times out of builder v2 supplemental iso fields', () => {
+    const supplement = deriveWeddingDataFromBuilderV2Document({
+      version: 'v2',
+      updatedAtISO: '2026-05-28T00:00:00.000Z',
+      pages: [
+        {
+          id: 'home',
+          title: 'Home',
+          slug: 'home',
+          isHome: true,
+          hidden: false,
+          sections: [
+            {
+              id: 'schedule-1',
+              type: 'schedule',
+              variant: 'default',
+              enabled: true,
+              blocks: [
+                {
+                  id: 'e1',
+                  type: 'event',
+                  data: {
+                    title: 'Welcome Drinks',
+                    time: 'Friday at 6:30 PM',
+                    note: 'Lobby bar',
+                  },
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    });
+
+    expect(supplement.event).toBeUndefined();
+    expect(supplement.schedule).toEqual([
+      {
+        id: 'schedule-1-event-0',
+        label: 'Welcome Drinks',
+        venueId: undefined,
+        notes: 'Lobby bar',
+        startTimeISO: undefined,
+      },
+    ]);
   });
 
   it('derives visible venue sections into guest-facing venue entries when schedule locations are absent', () => {

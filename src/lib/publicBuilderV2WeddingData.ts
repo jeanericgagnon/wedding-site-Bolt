@@ -185,7 +185,7 @@ const deriveSchedule = (sections: BuilderV2Section[]) => {
             label,
             venueId,
             notes: getBlockText(block) || undefined,
-            startTimeISO: hasMeaningfulString(block.data.time) ? block.data.time.trim() : undefined,
+            startTimeISO: maybeWeddingDateISO,
           });
         });
     });
