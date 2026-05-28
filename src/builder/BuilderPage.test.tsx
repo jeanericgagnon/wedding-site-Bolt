@@ -91,7 +91,7 @@ describe('BuilderPage recovery routes', () => {
     });
     expect(await screen.findByText('No website yet')).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Back to dashboard' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Back to dashboard overview' }));
 
     expect(navigateMock).toHaveBeenCalledWith('/dashboard/overview');
     expect(navigateMock).not.toHaveBeenCalledWith('/dashboard');
@@ -120,7 +120,7 @@ describe('BuilderPage recovery routes', () => {
     });
     expect(await screen.findByText('Builder connection interrupted')).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Back to dashboard' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Back to dashboard overview' }));
 
     expect(navigateMock).toHaveBeenCalledWith('/dashboard/overview');
     expect(navigateMock).not.toHaveBeenCalledWith('/dashboard');

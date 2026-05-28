@@ -49,7 +49,17 @@ describe('getBuilderEntryExperience', () => {
     });
 
     expect(experience.title).toBe('Builder access needs to be refreshed');
-    expect(experience.primaryActionLabel).toBe('Back to dashboard');
+    expect(experience.primaryActionLabel).toBe('Back to dashboard overview');
     expect(experience.secondaryActionLabel).toBe('Try again');
+  });
+
+  it('keeps generic recovery labels anchored to the overview workspace wording', () => {
+    const experience = getBuilderEntryExperience({
+      mode: 'error',
+      errorMessage: 'Something unexpected happened',
+    });
+
+    expect(experience.secondaryActionLabel).toBe('Back to dashboard overview');
+    expect(experience.secondaryActionLabel).not.toBe('Back to dashboard');
   });
 });

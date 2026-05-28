@@ -75,7 +75,7 @@ export function getBuilderEntryExperience({
         nextStep: 'Open one page and one section so the editing pattern becomes obvious.',
         thenStep: 'Carry that same pattern back into your real wedding draft.',
         primaryActionLabel: 'Keep opening demo',
-        secondaryActionLabel: 'Back to dashboard',
+        secondaryActionLabel: 'Back to dashboard overview',
       };
     }
 
@@ -108,7 +108,7 @@ export function getBuilderEntryExperience({
       nextStep: 'Confirm the page and section you actually need to work on.',
       thenStep: 'Make the smallest edit that improves the guest path.',
       primaryActionLabel: 'Keep opening builder',
-      secondaryActionLabel: 'Back to dashboard',
+      secondaryActionLabel: 'Back to dashboard overview',
     };
   }
 
@@ -126,7 +126,7 @@ export function getBuilderEntryExperience({
         nextStep: 'Finish setup and let Dayof create the first site draft.',
         thenStep: 'Return here once the site exists and refine from the generated starting point.',
         primaryActionLabel: 'Resume setup',
-        secondaryActionLabel: 'Back to dashboard',
+        secondaryActionLabel: 'Back to dashboard overview',
       };
     }
 
@@ -142,7 +142,7 @@ export function getBuilderEntryExperience({
       nextStep: 'Complete setup so the first site version can be generated.',
       thenStep: 'Open the Builder once that starting version exists.',
       primaryActionLabel: 'Start setup',
-      secondaryActionLabel: 'Back to dashboard',
+      secondaryActionLabel: 'Back to dashboard overview',
     };
   }
 
@@ -159,7 +159,7 @@ export function getBuilderEntryExperience({
       nextStep: 'Retry the connection and wait for a full load.',
       thenStep: 'Once the draft opens cleanly, continue editing where you left off.',
       primaryActionLabel: 'Try again',
-      secondaryActionLabel: 'Back to dashboard',
+      secondaryActionLabel: 'Back to dashboard overview',
     };
   }
 
@@ -175,7 +175,7 @@ export function getBuilderEntryExperience({
       currentStep: 'The editor could not confirm access.',
       nextStep: 'Return to the dashboard and reopen from a clean account state.',
       thenStep: 'If access is still blocked, resolve the account issue before editing again.',
-      primaryActionLabel: 'Back to dashboard',
+      primaryActionLabel: 'Back to dashboard overview',
       secondaryActionLabel: 'Try again',
     };
   }
@@ -192,6 +192,6 @@ export function getBuilderEntryExperience({
     nextStep: 'Retry from this screen once.',
     thenStep: 'If it still fails, reopen from the dashboard and continue from the cleanest route.',
     primaryActionLabel: 'Try again',
-    secondaryActionLabel: 'Back to dashboard',
+    secondaryActionLabel: 'Back to dashboard overview',
   };
 }

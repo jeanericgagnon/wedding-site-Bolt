@@ -141,7 +141,7 @@ describe('BuilderCutover', () => {
       </MemoryRouter>,
     );
 
-    fireEvent.click(await screen.findByRole('button', { name: 'Back to dashboard' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Back to dashboard overview' }));
 
     expect(navigateMock).toHaveBeenCalledWith('/dashboard/overview');
     expect(navigateMock).not.toHaveBeenCalledWith('/dashboard');
