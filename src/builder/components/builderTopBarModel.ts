@@ -80,7 +80,7 @@ export const getBuilderCommandCenterCopy = ({
       title,
       summary: `${pageLabel} · ${sectionLabel}`,
       tone: 'warning' as const,
-      status: 'Go-live blocker',
+      status: 'Launch blocker',
       detail: publishValidationError ?? 'A few launch details still need attention before this goes live.',
     };
   }
@@ -92,7 +92,7 @@ export const getBuilderCommandCenterCopy = ({
       tone: 'neutral' as const,
       status: 'Finish this draft',
       detail: canAutoSaveBeforePublish
-        ? 'Save the latest edits, then go live.'
+        ? 'Save the latest edits, then review before sharing.'
         : 'You have unsaved edits. Save first so publish stays predictable.',
     };
   }
@@ -113,10 +113,10 @@ export const getBuilderCommandCenterCopy = ({
     title,
     summary: `${pageLabel} · ${sectionLabel}`,
     tone: 'success' as const,
-    status: 'Ready to go live',
+    status: 'Ready for final share review',
     detail: activePageTitle
-      ? `${activePageTitle} looks ready for a final pass, then publish.`
-      : 'This draft is in a good place for a final pass, then publish.',
+      ? `${activePageTitle} looks ready for one last guest-facing pass before sharing.`
+      : 'This draft is in a good place for one last guest-facing pass before sharing.',
   };
 };
 

@@ -14,7 +14,7 @@ const NON_BLOCKING_PUBLISH_COPY = new Set([
   'latest edits are saved',
   'everything is saved',
   'all changes saved',
-  'ready to go live',
+  'ready for final share review',
   'no checks yet',
   'draft only',
   'live site unchanged',
@@ -78,7 +78,7 @@ export const getPublishBlockedHints = (publishValidationError?: string | null): 
   ) {
     return [
       'Select a section on the canvas.',
-      'Turn it on in the right panel, then save and go live again.',
+      'Turn it on in the right panel, then save and review the guest-facing draft again.',
     ];
   }
   if (
@@ -117,7 +117,7 @@ export const getPublishBlockedHints = (publishValidationError?: string | null): 
   ) {
     return [
       'Open event details.',
-      'Add your wedding date before going live.',
+      'Add your wedding date before sharing with guests.',
     ];
   }
   if (
@@ -149,7 +149,7 @@ export const getPublishBlockedHints = (publishValidationError?: string | null): 
     || normalizedErrorLower.includes('turn rsvp on')
   ) {
     return [
-      'Turn RSVP back on before going live.',
+      'Turn RSVP back on before sharing with guests.',
       'If you are not collecting replies yet, remove RSVP calls to action first.',
     ];
   }
@@ -174,7 +174,7 @@ export const getPublishProgressLabel = (done: number, total: number): string => 
   const normalizedDone = Number.isFinite(done)
     ? Math.min(normalizedTotal, Math.max(0, Math.floor(done)))
     : 0;
-  if (normalizedDone >= normalizedTotal) return 'Ready to go live';
+  if (normalizedDone >= normalizedTotal) return 'Ready for final share review';
 
   const remaining = normalizedTotal - normalizedDone;
   return `${remaining} thing${remaining === 1 ? '' : 's'} left before guest-facing launch`;

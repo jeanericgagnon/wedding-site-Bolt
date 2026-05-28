@@ -185,35 +185,42 @@ describe('publishUiHints', () => {
   it('still routes real date blockers after tightening generic date matching', () => {
     expect(getPublishBlockedHints('Add your wedding date before going live.')).toEqual([
       'Open event details.',
-      'Add your wedding date before going live.',
+      'Add your wedding date before sharing with guests.',
     ]);
     expect(getPublishBlockedHints('Add your event date before going live.')).toEqual([
       'Open event details.',
-      'Add your wedding date before going live.',
+      'Add your wedding date before sharing with guests.',
     ]);
     expect(getPublishBlockedHints('Add your date before going live.')).toEqual([
       'Open event details.',
-      'Add your wedding date before going live.',
+      'Add your wedding date before sharing with guests.',
     ]);
     expect(getPublishBlockedHints('Set your wedding date before going live.')).toEqual([
       'Open event details.',
-      'Add your wedding date before going live.',
+      'Add your wedding date before sharing with guests.',
     ]);
     expect(getPublishBlockedHints('Set your date before going live.')).toEqual([
       'Open event details.',
-      'Add your wedding date before going live.',
+      'Add your wedding date before sharing with guests.',
     ]);
     expect(getPublishBlockedHints('Choose your wedding date before going live.')).toEqual([
       'Open event details.',
-      'Add your wedding date before going live.',
+      'Add your wedding date before sharing with guests.',
     ]);
     expect(getPublishBlockedHints('Choose your date before going live.')).toEqual([
       'Open event details.',
-      'Add your wedding date before going live.',
+      'Add your wedding date before sharing with guests.',
     ]);
     expect(getPublishBlockedHints('Choose your wedding date\n before going live.')).toEqual([
       'Open event details.',
-      'Add your wedding date before going live.',
+      'Add your wedding date before sharing with guests.',
+    ]);
+  });
+
+  it('keeps RSVP follow-up framed as share-readiness instead of go-live urgency', () => {
+    expect(getPublishBlockedHints('Turn RSVP on before going live.')).toEqual([
+      'Turn RSVP back on before sharing with guests.',
+      'If you are not collecting replies yet, remove RSVP calls to action first.',
     ]);
   });
 
@@ -405,8 +412,8 @@ describe('publishUiHints', () => {
     ]);
   });
 
-  it('does not mistake ready-to-go-live progress copy for a blocker', () => {
-    expect(getPublishBlockedHints('Ready to go live')).toEqual([
+  it('does not mistake final-share-review progress copy for a blocker', () => {
+    expect(getPublishBlockedHints('Ready for final share review')).toEqual([
       'Use Fix next to move through the last blockers before the guest-facing launch.',
     ]);
   });
@@ -566,7 +573,7 @@ describe('publishUiHints', () => {
   it('still returns section guidance when current-page blocker copy says to turn on content for the current page', () => {
     expect(getPublishBlockedHints('Turn on content for the current page.')).toEqual([
       'Select a section on the canvas.',
-      'Turn it on in the right panel, then save and go live again.',
+      'Turn it on in the right panel, then save and review the guest-facing draft again.',
     ]);
   });
 
@@ -781,17 +788,17 @@ describe('publishUiHints', () => {
     expect(getPublishProgressLabel(0, 0)).toBe('No checks yet');
     expect(getPublishProgressLabel(3, 5)).toBe('2 things left before guest-facing launch');
     expect(getPublishProgressLabel(4, 5)).toBe('1 thing left before guest-facing launch');
-    expect(getPublishProgressLabel(5, 5)).toBe('Ready to go live');
+    expect(getPublishProgressLabel(5, 5)).toBe('Ready for final share review');
     expect(getPublishProgressLabel(0, 2)).toBe('2 things left before guest-facing launch');
     expect(getPublishProgressLabel(1, 2)).toBe('1 thing left before guest-facing launch');
-    expect(getPublishProgressLabel(2, 2)).toBe('Ready to go live');
-    expect(getPublishProgressLabel(6, 6)).toBe('Ready to go live');
-    expect(getPublishProgressLabel(7, 6)).toBe('Ready to go live');
+    expect(getPublishProgressLabel(2, 2)).toBe('Ready for final share review');
+    expect(getPublishProgressLabel(6, 6)).toBe('Ready for final share review');
+    expect(getPublishProgressLabel(7, 6)).toBe('Ready for final share review');
     expect(getPublishProgressLabel(-1, 2)).toBe('2 things left before guest-facing launch');
   });
 
-  it('treats over-complete progress as ready to go live', () => {
-    expect(getPublishProgressLabel(9, 5)).toBe('Ready to go live');
+  it('treats over-complete progress as ready for final share review', () => {
+    expect(getPublishProgressLabel(9, 5)).toBe('Ready for final share review');
   });
 
   it('keeps the fallback blocker copy when the error is blank', () => {
