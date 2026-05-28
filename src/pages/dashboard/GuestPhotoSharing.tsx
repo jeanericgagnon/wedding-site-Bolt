@@ -29,7 +29,11 @@ import {
   writeStoredPhotoBucketLinks,
 } from './photoBucketLinksStorage';
 import { getGuestPhotoShareReadyBuckets, resolvePreferredGuestPhotoShareReadyLink } from './guestPhotoShareReadyBuckets';
-import { buildGuestPhotoBucketMessagingPath, buildGuestPhotoShareMessage } from './guestPhotoMessagingLink';
+import {
+  buildGuestPhotoBucketMessagingPath,
+  buildGuestPhotoShareBulkMessagingPath,
+  buildGuestPhotoShareMessage,
+} from './guestPhotoMessagingLink';
 import { getGuestPhotoBucketShareLink } from './guestPhotoBucketShareState';
 
 type ItineraryEvent = {
@@ -535,9 +539,13 @@ export const GuestPhotoSharing: React.FC = () => {
       return;
     }
 
-    const subject = encodeURIComponent('Photo upload links');
-    const body = encodeURIComponent(lines.join('\n\n'));
-    window.location.href = `/dashboard/messages?prefillSubject=${subject}&prefillBody=${body}`;
+    const messagingPath = buildGuestPhotoShareBulkMessagingPath(lines);
+    if (!messagingPath) {
+      setError('No active buckets with links available to send.');
+      return;
+    }
+
+    window.location.href = messagingPath;
   };
 
   const copyAllShareMessages = async () => {
