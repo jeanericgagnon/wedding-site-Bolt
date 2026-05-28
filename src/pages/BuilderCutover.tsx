@@ -9,7 +9,13 @@ import { builderProjectService } from '../builder/services/builderProjectService
 import { getBuilderEntryExperience } from '../builder/builderEntryExperience';
 import { buildBuilderV2UpgradeGuidance } from '../builder/components/builderV2UpgradeGuidance';
 import { saveBuilderV2UpgradeBridge } from '../builder-v2/upgradeBridge';
-import { getBuilderV2Route, getLegacyBuilderRoute, hasLegacyBuilderIntent } from './builderCutoverRoute';
+import {
+  getBuilderV2IntentRoute,
+  getBuilderV2Route,
+  getLegacyBuilderRoute,
+  hasBuilderV2Intent,
+  hasLegacyBuilderIntent,
+} from './builderCutoverRoute';
 import type { BuilderProject } from '../types/builder/project';
 import type { WeddingDataV1 } from '../types/weddingData';
 
@@ -28,6 +34,10 @@ export const BuilderCutover: React.FC = () => {
   const [upgradeError, setUpgradeError] = useState('');
 
   useEffect(() => {
+    if (hasBuilderV2Intent(location.search, location.hash)) {
+      navigate(getBuilderV2IntentRoute(location.search, location.hash), { replace: true });
+      return;
+    }
     if (hasLegacyBuilderIntent(location.search, location.hash)) {
       navigate(getLegacyBuilderRoute(location.search, location.hash), { replace: true });
     }
@@ -35,7 +45,7 @@ export const BuilderCutover: React.FC = () => {
 
   useEffect(() => {
     if (!user) return;
-    if (hasLegacyBuilderIntent(location.search, location.hash)) return;
+    if (hasBuilderV2Intent(location.search, location.hash) || hasLegacyBuilderIntent(location.search, location.hash)) return;
 
     let cancelled = false;
 

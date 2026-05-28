@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Layers, ArrowRight, Eye, EyeOff, ArrowUp, ArrowDown, Undo2, Redo2, CheckCircle2, GripVertical, Keyboard, Command } from 'lucide-react';
 import { templateCatalog } from '../builder/constants/templateCatalog';
 import { getSectionRenderer } from '../builder/registry';
@@ -93,6 +93,7 @@ import {
   buildBuilderV2ExportDocument,
   resolveBuilderV2ImportDraftPreview,
 } from './builderV2DocumentIo';
+import { resolveBuilderV2RouteIntent } from './builderV2RouteIntent';
 import {
   createBuilderV2InvertedSelectionState,
   createBuilderV2PrimarySelectionState,
@@ -562,6 +563,8 @@ const StructureItem: React.FC<StructureItemProps> = ({ section, selected, multiS
 };
 
 export const BuilderV2Lab: React.FC = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
   const initialDraft = useMemo(() => readSetupDraft(), []);
   const initialSetupBridgeDraft = useMemo(() => readBuilderV2SetupBridge(), []);
   const initialSetupSeed = useMemo(
@@ -635,6 +638,7 @@ export const BuilderV2Lab: React.FC = () => {
   const [blockReviewFilter, setBlockReviewFilter] = useState<'all' | 'warnings' | 'healthy'>('all');
   const [collapsedBlocks, setCollapsedBlocks] = useState<Record<string, boolean>>({});
   const importFileInputRef = useRef<HTMLInputElement | null>(null);
+  const launchGateRef = useRef<HTMLDivElement | null>(null);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
 
   const activeSnapshot = history[historyIndex] ?? history[0];
@@ -2181,6 +2185,21 @@ export const BuilderV2Lab: React.FC = () => {
       }),
     };
   }, [currentDocumentSnapshot, importDraft]);
+
+  useEffect(() => {
+    const routeIntent = resolveBuilderV2RouteIntent(location.search, location.hash);
+    if (!routeIntent.shouldOpenExportHandoff) return;
+
+    setShowExportPanel(true);
+    navigate(`${location.pathname}${routeIntent.normalizedSearch}${routeIntent.normalizedHash}`, { replace: true });
+  }, [location.hash, location.pathname, location.search, navigate]);
+
+  useEffect(() => {
+    const routeIntent = resolveBuilderV2RouteIntent(location.search, location.hash);
+    if (!routeIntent.shouldFocusLaunchGate) return;
+    launchGateRef.current?.scrollIntoView?.({ block: 'start' });
+  }, [location.hash, location.search]);
+
   const commandPaletteGuidance = useMemo(
     () => buildBuilderV2CommandPaletteGuidance(commandQuery, commandItems, recentCommands, pinnedCommands),
     [commandItems, commandQuery, pinnedCommands, recentCommands],
@@ -3285,13 +3304,17 @@ export const BuilderV2Lab: React.FC = () => {
                 </div>
               </div>
             )}
-            <div className={`mb-2 rounded-md border px-3 py-2.5 ${
+            <div
+              id="launch-confidence"
+              ref={launchGateRef}
+              className={`mb-2 rounded-md border px-3 py-2.5 ${
               launchGate.status === 'ready'
                 ? 'border-emerald-200 bg-emerald-50/60'
                 : launchGate.status === 'review'
                   ? 'border-sky-200 bg-sky-50/60'
                   : 'border-amber-200 bg-amber-50/60'
-            }`}>
+            }`}
+            >
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="min-w-0">
                   <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary">Launch gate</p>

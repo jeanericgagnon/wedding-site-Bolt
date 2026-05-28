@@ -64,12 +64,14 @@ import BuilderCutover from './BuilderCutover';
 import {
   getBuilderGuideRoute,
   getBuilderV2Route,
+  getBuilderV2IntentRoute,
   getBuilderLaunchChecklistRoute,
   getBuilderLaunchConfidenceRoute,
   getBuilderPhotoTipsRoute,
   getBuilderPolishRoute,
   getBuilderV2LabRoute,
   getLegacyBuilderRoute,
+  hasBuilderV2Intent,
   hasLegacyBuilderIntent,
 } from './builderCutoverRoute';
 
@@ -84,22 +86,26 @@ describe('BuilderCutover', () => {
     window.sessionStorage.clear();
   });
 
-  it('detects legacy builder intents that should stay in the current editor', () => {
-    expect(hasLegacyBuilderIntent('?publishNow=1', '')).toBe(true);
+  it('splits V2 launch intents from legacy-only fallback intents', () => {
+    expect(hasBuilderV2Intent('?publishNow=1', '')).toBe(true);
+    expect(hasBuilderV2Intent('', '#launch-confidence')).toBe(true);
+    expect(hasLegacyBuilderIntent('?publishNow=1', '')).toBe(false);
     expect(hasLegacyBuilderIntent('?photoTips=1', '')).toBe(true);
-    expect(hasLegacyBuilderIntent('', '#launch-confidence')).toBe(true);
+    expect(hasLegacyBuilderIntent('', '#launch-confidence')).toBe(false);
+    expect(hasLegacyBuilderIntent('', '#builder-concierge')).toBe(true);
     expect(hasLegacyBuilderIntent('', '')).toBe(false);
     expect(getBuilderGuideRoute()).toBe('/dashboard/builder-guide');
     expect(getBuilderV2Route()).toBe('/dashboard/builder');
-    expect(getBuilderLaunchChecklistRoute()).toBe('/dashboard/builder-v1?publishNow=1');
+    expect(getBuilderV2IntentRoute('?publishNow=1', '#launch-confidence')).toBe('/dashboard/builder?publishNow=1#launch-confidence');
+    expect(getBuilderLaunchChecklistRoute()).toBe('/dashboard/builder?publishNow=1');
     expect(getBuilderPhotoTipsRoute()).toBe('/dashboard/builder-v1?photoTips=1');
-    expect(getBuilderLaunchConfidenceRoute()).toBe('/dashboard/builder-v1#launch-confidence');
+    expect(getBuilderLaunchConfidenceRoute()).toBe('/dashboard/builder#launch-confidence');
     expect(getBuilderPolishRoute()).toBe('/dashboard/builder-v1#builder-concierge');
     expect(getBuilderV2LabRoute()).toBe('/builder-v2-lab');
     expect(getLegacyBuilderRoute('?publishNow=1', '#launch-confidence')).toBe('/dashboard/builder-v1?publishNow=1#launch-confidence');
   });
 
-  it('forwards legacy-only launch intents straight to the current editor route', async () => {
+  it('forwards publish intents from the guide straight onto the Builder V2 primary route', async () => {
     render(
       <MemoryRouter initialEntries={['/dashboard/builder-guide?publishNow=1']}>
         <BuilderCutover />
@@ -107,7 +113,20 @@ describe('BuilderCutover', () => {
     );
 
     await waitFor(() => {
-      expect(navigateMock).toHaveBeenCalledWith('/dashboard/builder-v1?publishNow=1', { replace: true });
+      expect(navigateMock).toHaveBeenCalledWith('/dashboard/builder?publishNow=1', { replace: true });
+    });
+    expect(loadProjectMock).not.toHaveBeenCalled();
+  });
+
+  it('still forwards legacy-only helper intents to the current editor route', async () => {
+    render(
+      <MemoryRouter initialEntries={['/dashboard/builder-guide?photoTips=1']}>
+        <BuilderCutover />
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      expect(navigateMock).toHaveBeenCalledWith('/dashboard/builder-v1?photoTips=1', { replace: true });
     });
     expect(loadProjectMock).not.toHaveBeenCalled();
   });
