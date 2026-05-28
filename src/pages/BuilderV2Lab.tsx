@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Layers, ArrowRight, Eye, EyeOff, ArrowUp, ArrowDown, Undo2, Redo2, CheckCircle2, GripVertical, Keyboard, Command } from 'lucide-react';
+import { templateCatalog } from '../builder/constants/templateCatalog';
 import { getSectionRenderer } from '../builder/registry';
 import type { SectionType, SectionInstance } from '../types/layoutConfig';
 import type { WeddingDataV1 } from '../types/weddingData';
@@ -9,7 +10,7 @@ import { buildBuilderV2LabPreviewFieldsFromWeddingData, getInitialBuilderV2LabPr
 import type { BuilderV2Document } from '../builder-v2/contracts';
 import { prepareImportedBuilderV2Document, type BuilderV2ImportReport } from '../builder-v2/importPrepare';
 import { consumeBuilderV2UpgradeBridge } from '../builder-v2/upgradeBridge';
-import { readSetupDraft } from '../lib/setupDraft';
+import { readSetupDraft, selectSetupDraftTemplate } from '../lib/setupDraft';
 import {
   buildBuilderV2AddBlockLibrary,
   buildBuilderV2SectionEditingGuidance,
@@ -75,6 +76,7 @@ import {
 } from './builderV2PageState';
 import type { BuilderV2ReviewPageSnapshot } from './builderV2DocumentReviewState';
 import { buildBuilderV2SetupSeed } from './builderV2SetupSeed';
+import { buildBuilderV2TemplateApplyPlan } from './builderV2TemplateApply';
 import { buildBuilderV2TemplateSeed } from './builderV2TemplateSeed';
 import { buildBuilderV2PreviewInstances } from './builderV2PreviewProjection';
 import {
@@ -572,6 +574,7 @@ export const BuilderV2Lab: React.FC = () => {
     hydratedWeddingData: boolean;
   } | null>(null);
   const [setupSeedState, setSetupSeedState] = useState(initialSetupSeed);
+  const [selectedTemplateSeedId, setSelectedTemplateSeedId] = useState(initialTemplateSeed.templateId);
   const [propertyTab, setPropertyTab] = useState<'content' | 'layout' | 'data'>('content');
   const [recentCommands, setRecentCommands] = useState<string[]>([]);
   const [actionNotice, setActionNotice] = useState<string>('');
@@ -964,6 +967,26 @@ export const BuilderV2Lab: React.FC = () => {
     markSaving();
     notify(`Saved checkpoint: ${checkpoint?.label ?? 'Checkpoint'}`);
   }, [activePage?.title, history, historyIndex, markSaving, notify, pages, sectionBlocks]);
+
+  const applySelectedTemplateSeed = useCallback(() => {
+    const plan = buildBuilderV2TemplateApplyPlan(selectedTemplateSeedId, pages);
+    selectSetupDraftTemplate(plan.templateId);
+    setSetupSeedState(null);
+    setUpgradeIntakeState(null);
+    setSelectedPageId(plan.seed.selectedPageId);
+    setSelectedId(plan.seed.selectedSectionId);
+    setLastSelectedId(plan.seed.selectedSectionId);
+    setMultiSelectedIds([]);
+    setShowStructure(false);
+    setShowProperties(false);
+    setPropertyTab('content');
+    commitWithCheckpoint(
+      `Before applying ${plan.templateName} starter`,
+      plan.seed.pages,
+      {},
+    );
+    notify(`${plan.templateName} starter applied`);
+  }, [commitWithCheckpoint, notify, pages, selectedTemplateSeedId]);
 
   const restoreCheckpoint = useCallback((checkpointId: string) => {
     const checkpointIndex = history.findIndex((snapshot) => snapshot.id === checkpointId && snapshot.isCheckpoint);
@@ -1418,6 +1441,10 @@ export const BuilderV2Lab: React.FC = () => {
   }), [previewFields]);
 
   const addableBlocksForSelected = useMemo(() => SECTION_BLOCK_CATALOG[selected.type] ?? ['title', 'text', 'photo', 'qna'], [selected.type]);
+  const templateApplyPlan = useMemo(
+    () => buildBuilderV2TemplateApplyPlan(selectedTemplateSeedId, pages),
+    [pages, selectedTemplateSeedId],
+  );
   const selectedBlocks = useMemo(() => sectionBlocks[selected.id] ?? [], [sectionBlocks, selected.id]);
   const repairSelectedSectionStructure = useCallback(() => {
     if (!canRepairBuilderV2SectionStructure(selected.type)) {
@@ -1979,6 +2006,7 @@ export const BuilderV2Lab: React.FC = () => {
         keywords: ['history', 'checkpoint', 'restore', 'latest'],
         action: () => runCommand(`Restore checkpoint: ${latestCheckpoint.label}`, () => restoreCheckpoint(latestCheckpoint.id)),
       }] : []),
+      { id: 'template-apply', group: 'Structure', label: templateApplyPlan.applyLabel, keywords: ['template', 'starter', 'reset', 'replace', 'structure'], action: () => runCommand(templateApplyPlan.applyLabel, applySelectedTemplateSeed) },
       { id: 'export-open', group: 'Handoff', label: 'Open export handoff', keywords: ['export', 'handoff', 'json', 'share'], action: () => runCommand('Open export handoff', openExportPanel) },
       { id: 'launch-review', group: 'Launch', label: launchGate.primaryAction.label, keywords: ['launch', 'preview', 'review', 'gate', 'publish'], action: () => runCommand(launchGate.primaryAction.label, runLaunchGateAction) },
       { id: 'export-download', group: 'Handoff', label: downloadExportGate.ctaLabel, keywords: ['export', 'download', 'json', 'handoff', 'launch'], action: () => runCommand(downloadExportGate.ctaLabel, runDownloadV2Json) },
@@ -2003,7 +2031,7 @@ export const BuilderV2Lab: React.FC = () => {
       .filter((x) => x.s > 0)
       .sort((a, b) => b.s - a.s)
       .map((x) => x.item);
-  }, [commandQuery, sections, pages, activePage.id, addPage, addRecommendedBlockPack, addSection, checkpointSummaries, clearSelection, copyExportGate.ctaLabel, copyHandoffPacket, downloadExportGate.ctaLabel, duplicatePage, duplicateSelectedSections, handoffGuidance.primaryActionLabel, hideSelectedSections, invertSelection, launchGate.primaryAction.label, moveSelectedSectionsToPage, openExportPanel, openImportPanel, removeSelectedSections, repairSelectedSectionStructure, restoreCheckpoint, restoreSelectedSectionsToStarterBlocks, reviewSelectionInPreview, runCopyV2Json, runDownloadV2Json, runHandoffAction, runLaunchGateAction, saveCheckpoint, selectAllSections, selectPage, selectedSectionCanRepairStructure, setSelectedDensity, showSelectedSections, updateVariant]);
+  }, [addPage, addRecommendedBlockPack, addSection, activePage.id, applySelectedTemplateSeed, checkpointSummaries, clearSelection, commandQuery, copyExportGate.ctaLabel, copyHandoffPacket, downloadExportGate.ctaLabel, duplicatePage, duplicateSelectedSections, handoffGuidance.primaryActionLabel, hideSelectedSections, invertSelection, launchGate.primaryAction.label, moveSelectedSectionsToPage, openExportPanel, openImportPanel, pages, removeSelectedSections, repairSelectedSectionStructure, restoreCheckpoint, restoreSelectedSectionsToStarterBlocks, reviewSelectionInPreview, runCopyV2Json, runDownloadV2Json, runHandoffAction, runLaunchGateAction, saveCheckpoint, sections, selectAllSections, selectPage, selectedSectionCanRepairStructure, setSelectedDensity, showSelectedSections, templateApplyPlan.applyLabel, updateVariant]);
   const importGuidance = useMemo(
     () => buildBuilderV2ImportGuidance(lastImportReport, lastImportSource),
     [lastImportReport, lastImportSource],
@@ -2295,6 +2323,92 @@ export const BuilderV2Lab: React.FC = () => {
             </div>
           </div>
         )}
+
+        <div className="px-2 md:px-3 py-2 border-b border-border-subtle bg-white">
+          <div className="rounded-sm border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-950">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div className="min-w-0">
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                  <span className="font-semibold">Template starter</span>
+                  <span>{templateApplyPlan.templateName}</span>
+                </div>
+                <p className="mt-1 text-sm font-semibold">{templateApplyPlan.title}</p>
+                <p className="mt-1 max-w-3xl leading-relaxed">{templateApplyPlan.detail}</p>
+                {templateApplyPlan.templateDescription && (
+                  <p className="mt-2 text-[11px] leading-relaxed text-rose-900/80">
+                    {templateApplyPlan.templateDescription}
+                  </p>
+                )}
+              </div>
+              <div className="flex flex-wrap gap-1.5 text-[10px]">
+                {templateApplyPlan.keyStats.map((stat) => (
+                  <span key={stat} className="rounded-full border border-rose-200 bg-white/80 px-2 py-1">
+                    {stat}
+                  </span>
+                ))}
+              </div>
+            </div>
+            <div className="mt-3 grid gap-2 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)]">
+              <div className="rounded-md border border-rose-200 bg-white/80 px-3 py-3">
+                <label className="text-[11px] uppercase tracking-[0.18em] text-rose-900" htmlFor="builder-v2-template-seed">
+                  Template choice
+                </label>
+                <select
+                  id="builder-v2-template-seed"
+                  value={selectedTemplateSeedId}
+                  onChange={(event) => setSelectedTemplateSeedId(event.target.value)}
+                  className="mt-2 w-full rounded-md border border-rose-200 bg-white px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                >
+                  {templateCatalog.map((template) => (
+                    <option key={template.id} value={template.id}>
+                      {template.name}
+                    </option>
+                  ))}
+                </select>
+                <p className="mt-3 text-[11px] uppercase tracking-[0.18em] text-rose-900">Best next move</p>
+                <p className="mt-1 text-xs leading-relaxed text-text-primary">{templateApplyPlan.bestNextMove}</p>
+              </div>
+              <div className="rounded-md border border-rose-200 bg-white/80 px-3 py-3">
+                <p className="text-[11px] uppercase tracking-[0.18em] text-rose-900">Template change read</p>
+                <p className="mt-1 text-xs leading-relaxed text-text-primary">
+                  <span className="font-semibold">Shared lanes:</span>{' '}
+                  {templateApplyPlan.sharedSectionTypes.length > 0
+                    ? templateApplyPlan.sharedSectionTypes.join(' · ')
+                    : 'No shared lanes yet'}
+                </p>
+                <p className="mt-1 text-xs leading-relaxed text-text-primary">
+                  <span className="font-semibold">New lanes:</span>{' '}
+                  {templateApplyPlan.addedSectionTypes.length > 0
+                    ? templateApplyPlan.addedSectionTypes.join(' · ')
+                    : 'No new lanes'}
+                </p>
+                <p className="mt-1 text-xs leading-relaxed text-text-primary">
+                  <span className="font-semibold">Removed lanes:</span>{' '}
+                  {templateApplyPlan.removedSectionTypes.length > 0
+                    ? templateApplyPlan.removedSectionTypes.join(' · ')
+                    : 'Nothing drops'}
+                </p>
+                <p className="mt-3 text-xs leading-relaxed text-text-primary">
+                  <span className="font-semibold">Decision rule:</span> {templateApplyPlan.decisionRule}
+                </p>
+                <p className="mt-1 text-xs leading-relaxed text-text-primary">
+                  <span className="font-semibold">Watchout:</span> {templateApplyPlan.watchout}
+                </p>
+              </div>
+            </div>
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              <button
+                onClick={applySelectedTemplateSeed}
+                className="rounded-sm bg-rose-600 px-3 py-2 text-xs font-semibold text-white hover:bg-rose-700"
+              >
+                {templateApplyPlan.applyLabel}
+              </button>
+              <p className="text-[11px] leading-relaxed text-rose-900/80">
+                Saves a recovery checkpoint first, then replaces the current V2 document with this starter spine.
+              </p>
+            </div>
+          </div>
+        </div>
 
         {lastImportReport && lastImportSummary && (
           <div className="px-2 md:px-3 py-2 border-b border-border-subtle bg-white">
