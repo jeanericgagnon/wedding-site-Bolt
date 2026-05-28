@@ -741,7 +741,7 @@ export default function RSVP() {
           return;
         }
         tokenLinkedSessionRef.current = false;
-        setError('Failed to load invitation. Please search by name below.');
+        setError('Couldn’t load your invitation right now. Please search by name below.');
       })
       .finally(() => {
         if (activeLookupRequestRef.current !== requestId) return;

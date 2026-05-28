@@ -163,6 +163,20 @@ describe('RSVP stale submit protection', () => {
     expect(screen.queryByText(/supabase/i)).not.toBeInTheDocument();
   });
 
+  it('keeps token RSVP load failures calm instead of using legacy failed-to-load copy', async () => {
+    fetchMock.mockRejectedValueOnce(new Error('provider timeout token=abc'));
+
+    render(
+      <MemoryRouter initialEntries={['/rsvp?invite_token=token-1']}>
+        <RSVP />
+      </MemoryRouter>
+    );
+
+    expect(await screen.findByText('Couldn’t load your invitation right now. Please search by name below.')).toBeInTheDocument();
+    expect(screen.queryByText('Failed to load invitation. Please search by name below.')).not.toBeInTheDocument();
+    expect(screen.queryByText(/provider timeout/i)).not.toBeInTheDocument();
+  });
+
   it('refreshes token-linked RSVP truth when continuity updates arrive without local edits', async () => {
     fetchMock
       .mockResolvedValueOnce({
