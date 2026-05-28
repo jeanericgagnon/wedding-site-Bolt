@@ -87,6 +87,7 @@ import { buildBuilderV2SetupSeed } from './builderV2SetupSeed';
 import { applyBuilderV2TemplateSeed, buildBuilderV2TemplateApplyPlan } from './builderV2TemplateApply';
 import { buildBuilderV2TemplateSeed } from './builderV2TemplateSeed';
 import { buildBuilderV2PreviewInstances } from './builderV2PreviewProjection';
+import { buildBuilderV2SectionReviewSignature } from './builderV2PreviewReviewSignature';
 import { consumeBuilderV2SetupBridge, readBuilderV2SetupBridge } from './builderV2SetupBridge';
 import {
   createBuilderV2InvertedSelectionState,
@@ -1422,6 +1423,14 @@ export const BuilderV2Lab: React.FC = () => {
         enabled: section.enabled,
         blockCount: (sectionBlocks[section.id] ?? []).length,
         warningCount: (sectionBlocks[section.id] ?? []).filter((block) => getBlockValidationWarning(section.type, block, sectionBlocks[section.id] ?? [])).length,
+        reviewSignature: buildBuilderV2SectionReviewSignature({
+          section,
+          blocks: (sectionBlocks[section.id] ?? []).map((block) => ({
+            type: block.type,
+            content: block.content,
+            data: normalizeBlockData(block),
+          })),
+        }),
       })),
     })),
     [getBlockValidationWarning, pages, sectionBlocks],

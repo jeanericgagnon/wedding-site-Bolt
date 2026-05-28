@@ -22,6 +22,13 @@ export const buildBuilderV2PreviewReviewKey = (page: BuilderV2ReviewPageSnapshot
     enabled: section.enabled,
     blockCount: section.blockCount,
     warningCount: section.warningCount,
+    reviewSignature: section.reviewSignature ?? JSON.stringify({
+      title: section.title,
+      type: section.type,
+      enabled: section.enabled,
+      blockCount: section.blockCount,
+      warningCount: section.warningCount,
+    }),
   })),
 });
 

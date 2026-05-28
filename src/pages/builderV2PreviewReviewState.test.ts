@@ -21,6 +21,7 @@ const createPages = (): BuilderV2ReviewPageSnapshot[] => [
         enabled: true,
         blockCount: 2,
         warningCount: 0,
+        reviewSignature: 'hero-v1',
       },
     ],
   },
@@ -38,6 +39,7 @@ const createPages = (): BuilderV2ReviewPageSnapshot[] => [
         enabled: true,
         blockCount: 3,
         warningCount: 0,
+        reviewSignature: 'travel-v1',
       },
     ],
   },
@@ -53,6 +55,7 @@ describe('builderV2PreviewReviewState', () => {
         sections: beforePages[1]!.sections.map((section) => ({
           ...section,
           blockCount: section.blockCount + 1,
+          reviewSignature: 'travel-v2',
         })),
       },
     ];
@@ -73,6 +76,35 @@ describe('builderV2PreviewReviewState', () => {
     expect(coverage.nextPageId).toBe('travel');
   });
 
+  it('drops review credit when page content changes without changing block counts', () => {
+    const beforePages = createPages();
+    const afterPages = [
+      {
+        ...beforePages[0],
+        sections: beforePages[0]!.sections.map((section) => ({
+          ...section,
+          reviewSignature: 'hero-v2',
+        })),
+      },
+      beforePages[1],
+    ];
+
+    const reviewedPages = {
+      home: buildBuilderV2PreviewReviewKey(beforePages[0]!),
+      travel: buildBuilderV2PreviewReviewKey(beforePages[1]!),
+    };
+
+    const coverage = buildBuilderV2PreviewCoverage({
+      pages: afterPages,
+      reviewedPages,
+      activePageId: 'home',
+    });
+
+    expect(coverage.reviewedPageCount).toBe(1);
+    expect(coverage.currentPageReviewed).toBe(false);
+    expect(coverage.nextPageId).toBe('home');
+  });
+
   it('drops hidden and section-empty pages from review coverage', () => {
     const pages: BuilderV2ReviewPageSnapshot[] = [
       {
@@ -89,6 +121,7 @@ describe('builderV2PreviewReviewState', () => {
             enabled: false,
             blockCount: 2,
             warningCount: 0,
+            reviewSignature: 'hero-hidden',
           },
         ],
       },
@@ -106,6 +139,7 @@ describe('builderV2PreviewReviewState', () => {
             enabled: true,
             blockCount: 3,
             warningCount: 0,
+            reviewSignature: 'travel-hidden',
           },
         ],
       },

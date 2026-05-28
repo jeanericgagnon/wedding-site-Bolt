@@ -5,6 +5,7 @@ export type BuilderV2ReviewSectionSnapshot = {
   enabled: boolean;
   blockCount: number;
   warningCount: number;
+  reviewSignature?: string;
 };
 
 export type BuilderV2ReviewPageSnapshot = {
