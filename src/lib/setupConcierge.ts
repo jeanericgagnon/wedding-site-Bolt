@@ -289,7 +289,7 @@ export const buildBuilderConciergeModel = (
       },
       {
         id: 'publish',
-        title: 'Check go-live readiness calmly',
+        title: 'Check share readiness calmly',
         detail: 'At this point the work is less about adding features and more about making sure the current draft is complete and trustworthy.',
       },
     );

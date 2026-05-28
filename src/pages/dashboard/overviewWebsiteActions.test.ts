@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { getOverviewWebsiteEditorLabel } from './overviewWebsiteActions';
+import { getOverviewDraftVisibilityNote, getOverviewWebsiteEditorLabel } from './overviewWebsiteActions';
 
 describe('getOverviewWebsiteEditorLabel', () => {
   it('keeps unpublished overview copy framed as a draft sharing step', () => {
@@ -9,5 +9,11 @@ describe('getOverviewWebsiteEditorLabel', () => {
 
   it('keeps published overview copy framed as live-site editing', () => {
     expect(getOverviewWebsiteEditorLabel(true)).toBe('Edit live website');
+  });
+
+  it('keeps unpublished overview visibility copy framed as sharing, not go-live urgency', () => {
+    expect(getOverviewDraftVisibilityNote()).toBe(
+      'Sharing the live site makes it available to guests at your guest-facing DayOf URL. Until then, keep it in draft or intentional private-preview mode only.',
+    );
   });
 });

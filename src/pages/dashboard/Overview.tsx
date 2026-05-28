@@ -33,7 +33,7 @@ import { useToast } from '../../components/ui/Toast';
 import { buildGuestOpsCoach } from '../../lib/guestOpsCoach';
 import { calcOverviewDaysUntil, formatOverviewRelativeTime, formatOverviewWeddingDate, getOverviewTimestamp } from './overviewDate';
 import { getOverviewFallbackCoupleValue } from './overviewDraftBrief';
-import { getOverviewWebsiteEditorLabel } from './overviewWebsiteActions';
+import { getOverviewDraftVisibilityNote, getOverviewWebsiteEditorLabel } from './overviewWebsiteActions';
 import { buildNameChangeOverviewCardModel } from './nameChangeOverviewCard';
 import { buildNameChangeOverviewInsights, type NameChangeOverviewInsights } from './nameChangeOverviewInsights';
 import { NAME_CHANGE_LIFECYCLE_LABELS } from './nameChangeLifecycleLabels';
@@ -1477,7 +1477,7 @@ export const DashboardOverview: React.FC = () => {
 
                       {!stats?.isPublished && (
                         <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-xs text-amber-800">
-                          Going live makes this site visible to guests at your guest-facing DayOf URL. Until then, it should stay in draft or intentional private-preview mode only.
+                          {getOverviewDraftVisibilityNote()}
                         </div>
                       )}
 

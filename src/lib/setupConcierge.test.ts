@@ -62,4 +62,20 @@ describe('setupConcierge', () => {
     expect(plan.watchouts.some((watchout) => /travel|FAQ|RSVP/i.test(watchout))).toBe(true);
     expect(plan.launchSequence[0]?.title).toMatch(/trustworthy|site/i);
   });
+
+  it('keeps the final publish-ready concierge step framed as share readiness', () => {
+    const data = createEmptyWeddingData();
+    data.couple.story = 'We met at a concert.';
+    data.venues = [{ id: 'venue-1', name: 'Sunset Estate', address: '123 Main' }];
+    data.faq = [{ id: 'faq-1', q: 'What should I wear?', a: 'Garden party attire.' }];
+    data.rsvp.deadlineISO = '2026-08-01';
+
+    const plan = buildBuilderConciergeModel(data, { templateName: 'Modern Luxe' });
+
+    expect(plan.checklist.map((item) => item.id)).toEqual(['mobile', 'publish']);
+    expect(plan.checklist[1]).toEqual(expect.objectContaining({
+      id: 'publish',
+      title: 'Check share readiness calmly',
+    }));
+  });
 });
