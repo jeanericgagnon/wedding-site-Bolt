@@ -23,11 +23,12 @@ describe('MessagingFeature', () => {
 
     expect(screen.getByText('Email works well for most updates. Text can support urgent changes once sender setup is ready. Either way, the right guests get the right message.')).toBeInTheDocument();
     expect(screen.getByText('Texting, when enabled')).toBeInTheDocument();
-    expect(screen.getByText('For urgent updates like venue changes or weather alerts, DayOf can support text once sender setup and delivery readiness are in place. Until then, keep texting plans reviewable instead of pretending the lane is fully live.')).toBeInTheDocument();
+    expect(screen.getByText('For urgent updates like venue changes or weather alerts, DayOf can support text once sender setup and delivery readiness are in place. Until then, keep texting plans reviewable instead of pretending the lane is fully ready.')).toBeInTheDocument();
     expect(screen.getByText('Write messages now and queue a send time when the plan is clear. The scheduler helps with timing, but we do not market it as a perfect timezone engine.')).toBeInTheDocument();
-    expect(screen.getByText('Respect guest preferences with unsubscribe and contact-preference basics. Broader texting compliance still depends on the sender-ready lane being truly live.')).toBeInTheDocument();
+    expect(screen.getByText('Respect guest preferences with unsubscribe and contact-preference basics. Broader texting compliance still depends on the sender-ready lane being truly available.')).toBeInTheDocument();
     expect(screen.getByText('Message visibility')).toBeInTheDocument();
     expect(screen.getByText('SMS path stays gated until sender setup is ready')).toBeInTheDocument();
+    expect(screen.getByText(/Use the lane only when sender and delivery readiness are confirmed/)).toBeInTheDocument();
     expect(screen.getByText('Delivery-oriented updates')).toBeInTheDocument();
     expect(screen.getByText('Message history')).toBeInTheDocument();
     expect(screen.getByText(/Review the planned send time/)).toBeInTheDocument();

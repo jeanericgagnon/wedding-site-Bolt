@@ -100,12 +100,12 @@ export const MessagingFeature: React.FC = () => {
               </div>
               <h3 className="text-xl font-serif font-bold text-ink mb-3">Texting, when enabled</h3>
               <p className="text-ink/70 mb-4">
-                For urgent updates like venue changes or weather alerts, DayOf can support text once sender setup and delivery readiness are in place. Until then, keep texting plans reviewable instead of pretending the lane is fully live.
+                For urgent updates like venue changes or weather alerts, DayOf can support text once sender setup and delivery readiness are in place. Until then, keep texting plans reviewable instead of pretending the lane is fully ready.
               </p>
               <ul className="space-y-2 text-sm text-ink/70">
                 <li>• SMS credits handled separately from email</li>
                 <li>• Sender setup comes first</li>
-                <li>• Use the lane only when live readiness is confirmed</li>
+                <li>• Use the lane only when sender and delivery readiness are confirmed</li>
               </ul>
             </div>
 
@@ -160,7 +160,7 @@ export const MessagingFeature: React.FC = () => {
               </div>
               <h3 className="text-xl font-serif font-bold text-ink mb-3">Consent Management</h3>
               <p className="text-ink/70 mb-4">
-                Respect guest preferences with unsubscribe and contact-preference basics. Broader texting compliance still depends on the sender-ready lane being truly live.
+                Respect guest preferences with unsubscribe and contact-preference basics. Broader texting compliance still depends on the sender-ready lane being truly available.
               </p>
               <ul className="space-y-2 text-sm text-ink/70">
                 <li>• One-click email unsubscribe</li>

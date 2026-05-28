@@ -107,7 +107,7 @@ const V1_SLICE_STATUS = [
   },
   {
     name: 'Coordinator / day-of',
-    status: 'Day-of ready',
+    status: 'Day-of support',
     tone: 'proof',
     done: 'A calmer view for event-day questions, check-in, schedule focus, and quick updates.',
     missing: 'Confirm day-of ownership before the event week.',
@@ -128,7 +128,7 @@ const V1_SLICE_STATUS = [
   },
   {
     name: 'Registry',
-    status: 'Gift links live',
+    status: 'Gift links editable',
     tone: 'risk',
     done: 'Real add/import/edit work already exists.',
     missing: 'Keep gift details editable when a merchant page is sparse.',

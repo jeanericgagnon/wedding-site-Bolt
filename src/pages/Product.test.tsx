@@ -97,10 +97,14 @@ describe('Product starter draft truth', () => {
     expect(screen.getByText('Handle core wedding messaging with review-before-send control instead of bouncing between spreadsheets and email tools')).toBeInTheDocument();
     expect(screen.getByText('Drafts, scheduled sends, and message history are there with review-before-send control.')).toBeInTheDocument();
     expect(screen.getByText('Texts stay locked until sender setup, consent, and delivery readiness are complete.')).toBeInTheDocument();
+    expect(screen.getByText('Day-of support')).toBeInTheDocument();
+    expect(screen.getByText('Gift links editable')).toBeInTheDocument();
     expect(screen.queryByText('Guest messaging')).not.toBeInTheDocument();
     expect(screen.queryByText('Handle core wedding messaging without bouncing between spreadsheets and email tools')).not.toBeInTheDocument();
     expect(screen.queryByText('Draft/schedule/history surface is there.')).not.toBeInTheDocument();
     expect(screen.queryByText('Texts stay locked until sender setup is complete.')).not.toBeInTheDocument();
+    expect(screen.queryByText('Day-of ready')).not.toBeInTheDocument();
+    expect(screen.queryByText('Gift links live')).not.toBeInTheDocument();
   });
 
   it('keeps the launch story framed around a starter draft instead of a fully launched site', () => {
