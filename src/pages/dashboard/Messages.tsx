@@ -23,7 +23,8 @@ import { formatMessageEventOptionLabel } from './messageEventDate';
 import { formatMessageHistoryDate, formatMessageHistoryDateTime, getMessageHistoryTimestamp } from './messageHistoryTime';
 import { formatScheduledMessageDateTime, parseScheduleInputToIso, toScheduleInputValue } from './messageScheduleTime';
 import { getMessageTemplateCoupleLabel } from './messageTemplateVariables';
-import { readStoredPhotoBucketLinkList } from './photoBucketLinksStorage';
+import { readStoredPhotoBucketLinks } from './photoBucketLinksStorage';
+import { getMessagePhotoLinkState } from './messagePhotoLinkState';
 
 const BULK_SEND_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-bulk-message`;
 const DEMO_MESSAGES_STORAGE_KEY = 'dayof.demo.messages.history';
@@ -184,6 +185,11 @@ interface WeddingSite {
   venue_name?: string | null;
   wedding_date?: string | null;
   sms_credits_balance?: number;
+}
+
+interface PhotoBucketSummary {
+  id: string;
+  is_active: boolean;
 }
 
 interface SmsCreditTransaction {
@@ -978,6 +984,7 @@ export const DashboardMessages: React.FC = () => {
   const [smsTransactions, setSmsTransactions] = useState<SmsCreditTransaction[]>([]);
   const [itineraryAudienceOptions, setItineraryAudienceOptions] = useState<AudienceOption[]>([]);
   const [eventGuestIds, setEventGuestIds] = useState<Record<string, Set<string>>>({});
+  const [photoBuckets, setPhotoBuckets] = useState<PhotoBucketSummary[] | null>(null);
   const [messagesRole, setMessagesRole] = useState<PlannerAccessRole>('owner');
   const plannerHandoff = getPlannerHandoffCopy(messagesRole, 'messages');
   const [activeSiteRole, setActiveSiteRole] = useState<PlannerAccessRole>('owner');
@@ -1292,6 +1299,30 @@ export const DashboardMessages: React.FC = () => {
     }
   }, [weddingSite, isDemoMode]);
 
+  const fetchPhotoBuckets = useCallback(async () => {
+    if (!weddingSite) return;
+
+    if (isDemoMode) {
+      setPhotoBuckets(null);
+      return;
+    }
+
+    const { data, error } = await supabase
+      .from('photo_buckets')
+      .select('id,is_active')
+      .eq('wedding_site_id', weddingSite.id);
+
+    if (error) {
+      setPhotoBuckets([]);
+      return;
+    }
+
+    setPhotoBuckets((data ?? []).map((bucket) => ({
+      id: bucket.id,
+      is_active: bucket.is_active,
+    })));
+  }, [weddingSite, isDemoMode]);
+
   const fetchSmsExpiryPreview = useCallback(async () => {
     if (!weddingSite) return;
     if (isDemoMode) {
@@ -1379,8 +1410,14 @@ export const DashboardMessages: React.FC = () => {
 
   useEffect(() => { fetchWeddingSite(); }, [fetchWeddingSite]);
   useEffect(() => {
-    if (weddingSite) { fetchMessages(); fetchGuests(); fetchSmsExpiryPreview(); fetchItinerarySegments(); }
-  }, [weddingSite, fetchMessages, fetchGuests, fetchSmsExpiryPreview, fetchItinerarySegments]);
+    if (weddingSite) {
+      fetchMessages();
+      fetchGuests();
+      fetchSmsExpiryPreview();
+      fetchItinerarySegments();
+      fetchPhotoBuckets();
+    }
+  }, [weddingSite, fetchMessages, fetchGuests, fetchSmsExpiryPreview, fetchItinerarySegments, fetchPhotoBuckets]);
 
   useEffect(() => {
     if (!weddingSite || isDemoMode) return;
@@ -1456,22 +1493,20 @@ export const DashboardMessages: React.FC = () => {
     };
   };
 
-  const knownPhotoLinksCount = useMemo(() => {
-    return readStoredPhotoBucketLinkList().length;
-  }, []);
+  const photoLinkState = useMemo(() => getMessagePhotoLinkState({
+    buckets: photoBuckets,
+    storedLinks: readStoredPhotoBucketLinks(),
+    fallbackLink: `${window.location.origin}/photos/upload`,
+  }), [photoBuckets]);
 
   const applyTemplateVariables = (text: string) => {
     const couple = getMessageTemplateCoupleLabel(weddingSite?.couple_first_name, weddingSite?.couple_second_name);
     const rsvpLink = `${window.location.origin}/rsvp`;
 
-    let photoLink = `${window.location.origin}/photos/upload`;
-    const links = readStoredPhotoBucketLinkList();
-    if (links.length > 0) photoLink = links[0];
-
     return text
       .replace(/\[COUPLE\]/g, couple)
       .replace(/\[RSVP LINK\]/g, rsvpLink)
-      .replace(/\[PHOTO LINK\]/g, photoLink)
+      .replace(/\[PHOTO LINK\]/g, photoLinkState.preferredPhotoLink)
       .replace(/\[DATE\]/g, 'our wedding date')
       .replace(/\[VENUE\]/g, 'our venue')
       .replace(/\[ADD DETAILS\]/g, 'timeline, parking, dress code, and arrival instructions');
@@ -3601,8 +3636,8 @@ export const DashboardMessages: React.FC = () => {
                     <Link2 className="w-5 h-5 text-rose-600" />
                   </div>
                   <div>
-                    <p className="text-2xl font-bold text-text-primary">{knownPhotoLinksCount}</p>
-                    <p className="text-sm text-text-secondary">Known Photo Links</p>
+                    <p className="text-2xl font-bold text-text-primary">{photoLinkState.knownPhotoLinksCount}</p>
+                    <p className="text-sm text-text-secondary">Active Photo Links</p>
                   </div>
                 </div>
 
