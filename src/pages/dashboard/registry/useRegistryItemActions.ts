@@ -1,4 +1,10 @@
 import { createRegistryItem, deleteRegistryItem, fetchUrlPreview, ownerMarkPurchased, updateRegistryItem } from './registryService';
+import {
+  REGISTRY_ITEM_DELETE_RETRY_ERROR,
+  REGISTRY_ITEM_PURCHASE_RESET_RETRY_ERROR,
+  REGISTRY_ITEM_PURCHASE_RETRY_ERROR,
+  safeRegistryDashboardError,
+} from './registryDashboardErrorCopy';
 import type { RegistryItem, RegistryItemDraft } from './registryTypes';
 import { sanitizeRegistryQuantityState } from './registryTypes';
 
@@ -216,8 +222,8 @@ export function useRegistryItemActions(args: UseRegistryItemActionsArgs) {
         quantityNeeded: item?.quantity_needed ?? null,
       }, id, item?.item_name || 'Registry item');
       toast('Item removed');
-    } catch {
-      toast('Couldn’t remove that item. Please try again.', 'error');
+    } catch (error) {
+      toast(safeRegistryDashboardError(error, REGISTRY_ITEM_DELETE_RETRY_ERROR), 'error');
     }
   }
 
@@ -248,8 +254,8 @@ export function useRegistryItemActions(args: UseRegistryItemActionsArgs) {
           ? `"${item.item_name}" marked as fully purchased`
           : `"${item.item_name}" updated — ${updated.quantity_purchased}/${updated.quantity_needed} purchased`,
       );
-    } catch {
-      toast('Couldn’t update purchase status. Please try again.', 'error');
+    } catch (error) {
+      toast(safeRegistryDashboardError(error, REGISTRY_ITEM_PURCHASE_RETRY_ERROR), 'error');
     }
   }
 
@@ -273,8 +279,8 @@ export function useRegistryItemActions(args: UseRegistryItemActionsArgs) {
         purchaseStatus: 'available',
       }, updated.id, updated.item_name);
       toast(`Cleared purchase state for "${item.item_name}"`);
-    } catch {
-      toast('Couldn’t clear purchase state. Please try again.', 'error');
+    } catch (error) {
+      toast(safeRegistryDashboardError(error, REGISTRY_ITEM_PURCHASE_RESET_RETRY_ERROR), 'error');
     }
   }
 

@@ -1,14 +1,17 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Gift } from 'lucide-react';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { Button } from '../../components/ui';
 import { useAuth } from '../../hooks/useAuth';
 import { logAppAction } from '../../lib/actionAudit';
-import { customerSafeErrorMessage } from '../../lib/customerSafeError';
 import { syncRegistryThankYouLedger, toggleRegistryThankYouLedgerStatus } from '../../lib/registryLaunchReadiness';
 import { ageExceedsMs } from './registryItemTime';
 import { getWeddingRefreshWindowDate, toValidDateOrNull } from './registryRefreshWindow';
 import { RegistryDashboardRouteContent } from './registry/RegistryDashboardRouteContent';
+import {
+  REGISTRY_THANK_YOU_SAVE_RETRY_ERROR,
+  REGISTRY_THANK_YOU_UPDATE_RETRY_ERROR,
+  safeRegistryDashboardError,
+} from './registry/registryDashboardErrorCopy';
 import { RegistryItemForm } from './registry/RegistryItemForm';
 import { buildRegistryDashboardDerivedState } from './registry/buildRegistryDashboardDerivedState';
 import type { RegistryRepairActionKind, RegistryRepairQueueItem } from './registry/repairState';
@@ -29,10 +32,6 @@ interface Toast {
   id: number;
   message: string;
   type: 'success' | 'error';
-}
-
-function safeRegistryDashboardError(err: unknown, fallback: string): string {
-  return customerSafeErrorMessage(err, fallback);
 }
 
 const ToastList: React.FC<{ toasts: Toast[] }> = ({ toasts }) => (
@@ -391,8 +390,8 @@ export const DashboardRegistry: React.FC = () => {
       }
       setRegistryThankYouLedger(nextLedger);
       toast(Object.keys(nextLedger).length > 0 ? 'Thank-you follow-up saved' : 'Thank-you follow-up is quiet');
-    } catch {
-      toast('Couldn’t save thank-you follow-up right now. Please try again.', 'error');
+    } catch (error) {
+      toast(safeRegistryDashboardError(error, REGISTRY_THANK_YOU_SAVE_RETRY_ERROR), 'error');
     } finally {
       setRegistryThankYouSyncing(false);
     }
@@ -413,8 +412,8 @@ export const DashboardRegistry: React.FC = () => {
       }
       setRegistryThankYouLedger(nextLedger);
       toast(nextLedger[itemId]?.status === 'done' ? 'Thank-you marked sent' : 'Thank-you follow-up reopened');
-    } catch {
-      toast('Couldn’t update thank-you follow-up right now. Please try again.', 'error');
+    } catch (error) {
+      toast(safeRegistryDashboardError(error, REGISTRY_THANK_YOU_UPDATE_RETRY_ERROR), 'error');
     } finally {
       setRegistryThankYouBusyItemId(null);
     }

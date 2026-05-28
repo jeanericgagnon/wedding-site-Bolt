@@ -8,6 +8,12 @@ import { toDateInputValueOrEmpty } from '../registryRefreshWindow';
 import { fetchLatestRegistryImportBatch, fetchRecentRegistryImportBatches, fetchRegistryItems, loadRegistryDashboardSite, type RegistryImportBatchRecord } from './registryService';
 import type { RegistryItem } from './registryTypes';
 import { demoWeddingSite } from '../../../lib/demoData';
+import {
+  REGISTRY_DASHBOARD_ITEMS_LOAD_RETRY_ERROR,
+  REGISTRY_DASHBOARD_LOAD_ERROR,
+  REGISTRY_DASHBOARD_SETUP_RETRY_ERROR,
+  safeRegistryDashboardError,
+} from './registryDashboardErrorCopy';
 
 const REGISTRY_DASHBOARD_LOAD_TIMEOUT_MS = 12000;
 
@@ -128,9 +134,9 @@ export function useRegistryDashboardData(args: UseRegistryDashboardDataArgs) {
       const data = await fetchRegistryItems(siteId);
       if (shouldCancel?.()) return;
       setItems(data.map(normalizeOwnerDashboardRegistryItem));
-    } catch {
+    } catch (error) {
       if (shouldCancel?.()) return;
-      toast('Couldn’t load registry items right now. Please try again.', 'error');
+      toast(safeRegistryDashboardError(error, REGISTRY_DASHBOARD_ITEMS_LOAD_RETRY_ERROR), 'error');
       throw new Error('Registry items failed to load.');
     }
   }, [toast]);
@@ -201,7 +207,7 @@ export function useRegistryDashboardData(args: UseRegistryDashboardDataArgs) {
         setRefreshCapDraft(loadedCap);
         setRefreshPreset(loadedCap <= 60 ? 'lean' : loadedCap <= 160 ? 'balanced' : 'aggressive');
         setMonthlyRefreshCount(budgetState.count);
-        const [_, ledger, importBatch, importBatches] = await runRegistryDashboardTimed(
+        const [, ledger, importBatch, importBatches] = await runRegistryDashboardTimed(
           Promise.all([
             loadItems(site.id, () => !isCurrentInit()),
             loadRegistryThankYouLedger(site.id),
@@ -214,11 +220,11 @@ export function useRegistryDashboardData(args: UseRegistryDashboardDataArgs) {
         setRegistryThankYouLedger(ledger);
         setLatestImportBatch(importBatch);
         setRecentImportBatches(importBatches);
-      } catch {
+      } catch (error) {
         if (requestId !== initRequestIdRef.current) return;
         resetRegistryDashboardState();
-        setLoadError('Couldn’t load registry right now. Try again in a moment.');
-        toast('Couldn’t finish setup right now. Please try again.', 'error');
+        setLoadError(safeRegistryDashboardError(error, REGISTRY_DASHBOARD_LOAD_ERROR));
+        toast(safeRegistryDashboardError(error, REGISTRY_DASHBOARD_SETUP_RETRY_ERROR), 'error');
       } finally {
         if (requestId === initRequestIdRef.current) setLoading(false);
       }
