@@ -127,7 +127,7 @@ Built to keep things clear
               </div>
               <h3 className="text-xl font-serif font-bold text-ink mb-3">Deadline Handling</h3>
               <p className="text-ink/70 mb-4">
-                Set clear RSVP deadlines with guest-facing cutoffs. Reminder and override automation are in staged rollout.
+                Set clear RSVP deadlines with guest-facing cutoffs. Reminder support and late override controls are being tightened in phases, so the page does not pretend every admin path is fully hands-off yet.
               </p>
               <ul className="space-y-2 text-sm text-ink/70">
                 <li>• Per-event deadlines</li>
@@ -172,7 +172,7 @@ Built to keep things clear
                   <div>
                     <h3 className="text-xl font-semibold text-ink mb-3">Reminder scheduling</h3>
                     <p className="text-ink/70 leading-relaxed">
-                      Automated RSVP reminder campaigns are in rollout. Core RSVP flow is live today; reminder scheduling is being enabled in phases.
+                      Reminder drafts and scheduling support are the current strength. More automated RSVP reminder behavior is being enabled in phases, so we do not pretend every reminder path is fully hands-off yet.
                     </p>
                   </div>
                 </div>
@@ -242,7 +242,7 @@ Built to keep things clear
                 'Dietary updates',
                 'Custom questions',
                 'Deadline enforcement',
-                'Reminder scheduling in rollout',
+                'Reminder support, with fuller automation phased in',
                 'Plus-one acceptance',
                 'Response editing',
                 'Current RSVP visibility',
