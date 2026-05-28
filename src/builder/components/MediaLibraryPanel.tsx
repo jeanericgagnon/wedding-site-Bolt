@@ -8,6 +8,11 @@ import { mediaService } from '../services/mediaService';
 import { generateBuilderId } from '../../types/builder/project';
 import { getSectionManifest } from '../registry/sectionManifests';
 import { mergeMediaAssetsAfterUploadRefresh } from '../utils/mediaRefresh';
+import {
+  BUILDER_MEDIA_REFRESH_RETRY_ERROR,
+  getBuilderMediaUploadRetryError,
+  mapBuilderWorkspaceError,
+} from './builderWorkspaceErrorCopy';
 import { getMediaLibrarySummary, MediaLibraryFilterMode } from './mediaLibrarySummary';
 import {
   getNextSectionMediaAssetIds,
@@ -319,10 +324,12 @@ export const UploadDropArea: React.FC<UploadDropAreaProps> = ({ weddingId }) => 
         dispatch({ type: 'REMOVE_FROM_UPLOAD_QUEUE', payload: tempId });
         uploadedCount += 1;
       } catch (err) {
-        const message =
-          err instanceof Error ? err.message
-          : typeof (err as { message?: string })?.message === 'string' ? (err as { message: string }).message
-          : 'Upload failed. Please try again.';
+        const assetType = file.type.startsWith('video/')
+          ? 'video'
+          : file.type.startsWith('image/')
+            ? 'image'
+            : 'document';
+        const message = mapBuilderWorkspaceError(err, getBuilderMediaUploadRetryError(assetType));
         dispatch({
           type: 'UPDATE_UPLOAD_QUEUE',
           payload: { assetId: tempId, filename: file.name, progress: 0, status: 'error', error: message },
@@ -339,8 +346,7 @@ export const UploadDropArea: React.FC<UploadDropAreaProps> = ({ weddingId }) => 
       }
     } catch (err) {
       if (uploadedCount > 0) {
-        const message = err instanceof Error ? err.message : 'Unknown refresh error';
-        dispatch(builderActions.setError(`Your photo upload likely succeeded, but the media library failed to refresh: ${message}`));
+        dispatch(builderActions.setError(mapBuilderWorkspaceError(err, BUILDER_MEDIA_REFRESH_RETRY_ERROR)));
       }
       // Keep optimistic local assets if refresh fails.
     }

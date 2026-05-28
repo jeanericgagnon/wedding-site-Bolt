@@ -24,6 +24,12 @@ import { templateCatalog } from '../constants/templateCatalog';
 import { getBuilderWorkbenchGuidance } from './builderWorkbenchGuidance';
 import { getBuilderPageEditingSummary } from './builderPageEditingSummary';
 import { getPublishGuidance } from './builderPublishGuidance';
+import {
+  BUILDER_PUBLISH_RETRY_ERROR,
+  BUILDER_RESTORE_RETRY_ERROR,
+  BUILDER_SAVE_RETRY_ERROR,
+  mapBuilderWorkspaceError,
+} from './builderWorkspaceErrorCopy';
 import { buildBuilderDraftContinuityModel } from './builderDraftContinuity';
 import { runBuilderPageEditingAction } from './builderPageEditingActions';
 import { builderProjectService } from '../services/builderProjectService';
@@ -201,8 +207,7 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
       refreshRevisionHistory();
       return true;
     } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Failed to save';
-      setSaveError(msg);
+      setSaveError(mapBuilderWorkspaceError(err, BUILDER_SAVE_RETRY_ERROR));
       dispatch({ type: 'SET_SAVING', payload: false });
       return false;
     }
@@ -275,8 +280,7 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
       refreshRevisionHistory();
       setPublishNotice(`Live site updated successfully (v${publishMeta.version})`);
     } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Failed to make the site live';
-      setPublishError(msg);
+      setPublishError(mapBuilderWorkspaceError(err, BUILDER_PUBLISH_RETRY_ERROR));
       dispatch({ type: 'SET_PUBLISHING', payload: false });
     }
   }, [onPublish, handleSave, refreshRevisionHistory]);
@@ -303,7 +307,7 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
       refreshRevisionHistory();
       setPublishNotice('Restored a local Builder checkpoint. Review the draft, then keep going from this steadier base.');
     } catch (err) {
-      setPublishError(err instanceof Error ? err.message : 'Could not restore that local checkpoint.');
+      setPublishError(mapBuilderWorkspaceError(err, BUILDER_RESTORE_RETRY_ERROR));
     } finally {
       setRestoringRevisionId(null);
     }
