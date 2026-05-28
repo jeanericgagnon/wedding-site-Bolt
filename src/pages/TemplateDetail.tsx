@@ -3,11 +3,15 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { templateCatalog } from '../builder/constants/templateCatalog';
 import { getTemplateSupportManifest } from '../builder/constants/templateSupportManifest';
 import { TEMPLATE_USE_CASE_PACKS } from '../builder/constants/templateUseCasePacks';
+import { useAuth } from '../hooks/useAuth';
 import { selectSetupDraftTemplate } from '../lib/setupDraft';
+import { getTemplateDetailApplyCta } from './templatePageCtas';
 
 export const TemplateDetail: React.FC = () => {
   const { templateId } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const isSignedIn = Boolean(user);
 
   const tpl = templateCatalog.find((t) => t.id === templateId);
 
@@ -32,7 +36,7 @@ export const TemplateDetail: React.FC = () => {
 
   const applyTemplate = (id = tpl.id) => {
     selectSetupDraftTemplate(id);
-    navigate('/setup/names');
+    navigate(getTemplateDetailApplyCta(isSignedIn).to);
   };
 
   return (
@@ -164,7 +168,7 @@ export const TemplateDetail: React.FC = () => {
           </div>
 
           <div className="mt-6 flex items-center gap-2">
-            <button onClick={() => applyTemplate()} className="rounded bg-rose-600 px-4 py-2 text-sm font-medium text-white hover:bg-rose-700">Use this template</button>
+            <button onClick={() => applyTemplate()} className="rounded bg-rose-600 px-4 py-2 text-sm font-medium text-white hover:bg-rose-700">{getTemplateDetailApplyCta(isSignedIn).label}</button>
             <Link to="/templates" className="rounded border border-neutral-300 px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-100">Back to gallery</Link>
           </div>
 
@@ -188,7 +192,7 @@ export const TemplateDetail: React.FC = () => {
                         onClick={() => applyTemplate(rel.id)}
                         className="mt-1.5 w-full rounded border border-rose-200 bg-rose-50 px-2 py-1 text-xs font-medium text-rose-700 hover:bg-rose-100"
                       >
-                        Use this
+                        {isSignedIn ? 'Apply in builder' : 'Use this'}
                       </button>
                     </div>
                   );
@@ -199,7 +203,7 @@ export const TemplateDetail: React.FC = () => {
         </div>
       </div>
       <div className="fixed bottom-3 left-3 right-3 md:hidden z-20">
-        <button onClick={() => applyTemplate()} className="w-full rounded-xl bg-rose-600 px-4 py-3 text-sm font-semibold text-white shadow-lg hover:bg-rose-700">Use this template</button>
+        <button onClick={() => applyTemplate()} className="w-full rounded-xl bg-rose-600 px-4 py-3 text-sm font-semibold text-white shadow-lg hover:bg-rose-700">{getTemplateDetailApplyCta(isSignedIn).label}</button>
       </div>
     </div>
   );

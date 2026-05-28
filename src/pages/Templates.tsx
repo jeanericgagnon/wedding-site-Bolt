@@ -7,16 +7,20 @@ import { readSetupDraft, selectSetupDraftTemplate } from '../lib/setupDraft';
 import { getRecommendedTemplates } from '../lib/setupDraftRecommendations';
 import { buildTemplateExperienceBrief } from '../pages/templateExperience';
 import { getFlowStatusLabel } from '../lib/flowLabels';
+import { useAuth } from '../hooks/useAuth';
 import {
   buildTemplateCompareBrief,
   buildTemplateFilterSummary,
   filterAndSortTemplates,
 } from './templateDecisionModel';
+import { getTemplateGalleryApplyCta, getTemplateGalleryContinueCta } from './templatePageCtas';
 
 type Facet = 'all' | string;
 
 export const Templates: React.FC = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const isSignedIn = Boolean(user);
 
   const [style, setStyle] = useState<Facet>('all');
   const [season, setSeason] = useState<Facet>('all');
@@ -107,7 +111,7 @@ export const Templates: React.FC = () => {
 
   const startWithTemplate = (templateId: string) => {
     selectSetupDraftTemplate(templateId);
-    navigate('/setup/names');
+    navigate(getTemplateGalleryApplyCta(isSignedIn).to);
   };
 
   const renderTemplateCard = (tpl: typeof templateCatalog[number]) => {
@@ -190,7 +194,7 @@ See details
             onClick={() => startWithTemplate(tpl.id)}
             className="rounded bg-rose-600 px-3 py-2 text-sm font-medium text-white hover:bg-rose-700"
           >
-Start with this
+            {getTemplateGalleryApplyCta(isSignedIn).label}
           </button>
         </div>
       </div>
@@ -311,10 +315,10 @@ Start with this
           </div>
           {selectedTemplateId && (
             <button
-              onClick={() => navigate('/setup/names')}
+              onClick={() => navigate(getTemplateGalleryContinueCta(isSignedIn).to)}
               className="rounded bg-rose-600 px-3 py-2 text-xs font-medium text-white hover:bg-rose-700"
             >
-              Continue setup
+              {getTemplateGalleryContinueCta(isSignedIn).label}
             </button>
           )}
         </div>
