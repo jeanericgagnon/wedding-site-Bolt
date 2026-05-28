@@ -33,7 +33,11 @@ import { useToast } from '../../components/ui/Toast';
 import { buildGuestOpsCoach } from '../../lib/guestOpsCoach';
 import { calcOverviewDaysUntil, formatOverviewRelativeTime, formatOverviewWeddingDate, getOverviewTimestamp } from './overviewDate';
 import { getOverviewFallbackCoupleValue } from './overviewDraftBrief';
-import { getOverviewDraftVisibilityNote, getOverviewWebsiteEditorLabel } from './overviewWebsiteActions';
+import {
+  getOverviewDraftVisibilityNote,
+  getOverviewRegistryReadinessNote,
+  getOverviewWebsiteEditorLabel,
+} from './overviewWebsiteActions';
 import { buildNameChangeOverviewCardModel } from './nameChangeOverviewCard';
 import { buildNameChangeOverviewInsights, type NameChangeOverviewInsights } from './nameChangeOverviewInsights';
 import { NAME_CHANGE_LIFECYCLE_LABELS } from './nameChangeLifecycleLabels';
@@ -1006,7 +1010,7 @@ export const DashboardOverview: React.FC = () => {
                   <div className="rounded-xl border border-border-subtle bg-surface-secondary/20 px-4 py-4">
                     <p className="text-xs uppercase tracking-wide text-text-tertiary">Registry readiness</p>
                     <p className="mt-1 text-2xl font-bold text-text-primary">{stats?.registryItemCount ?? 0}</p>
-                    <p className="mt-1 text-xs text-text-secondary">Live registry items ready for guests</p>
+                    <p className="mt-1 text-xs text-text-secondary">{getOverviewRegistryReadinessNote()}</p>
                   </div>
                 </div>
 

@@ -47,7 +47,7 @@ export const buildCoordinatorPrimaryAction = ({
     return {
       key: 'start-up-next',
       title: 'Prepare the next event transition',
-      detail: event ? `${event.event_name} is the next unfinished event in the run-of-show.` : 'The next event is ready to go live.',
+      detail: event ? `${event.event_name} is the next unfinished event in the run-of-show.` : 'The next event is ready to begin.',
     };
   }
 

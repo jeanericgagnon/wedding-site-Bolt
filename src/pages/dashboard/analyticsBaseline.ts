@@ -103,7 +103,7 @@ export function buildAnalyticsBaseline(input: AnalyticsBaselineInput): Analytics
     {
       label: 'Registry readiness',
       value: `${input.registryItemCount}`,
-      detail: input.registryItemCount === 0 ? 'No registry items are live yet.' : `${input.registryItemCount} registry item${input.registryItemCount === 1 ? '' : 's'} ready for guests.`,
+      detail: input.registryItemCount === 0 ? 'No registry items have been added yet.' : `${input.registryItemCount} registry item${input.registryItemCount === 1 ? '' : 's'} added so far.`,
       source: 'measured',
     },
     {

@@ -65,7 +65,8 @@ describe('memoryCurator', () => {
       isArchiveLike: false,
     });
 
-    expect(model.title).toContain('photo sharing path is not live yet');
+    expect(model.title).toContain('guest photo sharing is not open yet');
+    expect(model.qualitySignals[1]).toContain('open yet');
     expect(model.decisionRule).toMatch(/photo sharing path/i);
     expect(model.sequence[0]?.title).toMatch(/photo sharing lane/i);
     expect(model.nextMoves[2]).toContain('photo sharing path');

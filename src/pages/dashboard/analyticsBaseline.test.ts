@@ -69,6 +69,24 @@ describe('analyticsBaseline', () => {
     expect(cards[2].value).toBe('0/3');
   });
 
+  it('keeps registry baseline copy tied to items added, not guest-ready visibility', () => {
+    const metrics = buildAnalyticsBaseline(makeInput({
+      registryItemCount: 0,
+    }));
+
+    expect(metrics.find((metric) => metric.label === 'Registry readiness')?.detail).toBe(
+      'No registry items have been added yet.',
+    );
+
+    const populatedMetrics = buildAnalyticsBaseline(makeInput({
+      registryItemCount: 3,
+    }));
+
+    expect(populatedMetrics.find((metric) => metric.label === 'Registry readiness')?.detail).toBe(
+      '3 registry items added so far.',
+    );
+  });
+
   it('recommends guest follow-up first when RSVP pressure is still high', () => {
     const nextMove = buildAnalyticsNextMove(makeInput({
       pendingGuests: 24,

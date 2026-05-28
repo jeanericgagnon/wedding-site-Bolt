@@ -5,3 +5,7 @@ export function getOverviewWebsiteEditorLabel(isPublished: boolean): string {
 export function getOverviewDraftVisibilityNote(): string {
   return 'Sharing the live site makes it available to guests at your guest-facing DayOf URL. Until then, keep it in draft or intentional private-preview mode only.';
 }
+
+export function getOverviewRegistryReadinessNote(): string {
+  return 'Registry items added so far';
+}

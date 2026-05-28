@@ -198,7 +198,7 @@ export const buildPhotoMemoryCuratorModel = (args: {
     return {
       eyebrow: 'Memory curator',
       readinessLabel: 'Private curation is ready',
-      title: 'Your photos are ready for guests, but the photo sharing path is not live yet',
+      title: 'Your photos are ready for guests, but guest photo sharing is not open yet',
       detail: 'The private bucket board has enough direction now. The next step is turning that into one or two clear guest photo sharing moments instead of a long list of options.',
       focusTitle: 'Open one guest lane on purpose',
       focusDetail: 'The private story is strong enough now that one clear photo sharing moment will help more than adding lots of options.',
@@ -212,7 +212,7 @@ export const buildPhotoMemoryCuratorModel = (args: {
       ],
       qualitySignals: [
         'Couple anchors are in place',
-        'No guest-facing photo sharing lane is live yet',
+        'No guest-facing photo sharing lane is open yet',
       ],
       sequence: buildMemorySequence(
         {

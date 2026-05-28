@@ -33,7 +33,7 @@ describe('coordinatorTimelineBoard', () => {
       liveLabel: 'No event is live yet',
       upNextLabel: 'Cocktail Hour',
       progressLabel: '1/3 complete',
-      stateLabel: 'Room is waiting on the next event to go live',
+      stateLabel: 'Room is waiting on the next event to begin',
       tone: 'warning',
     });
   });

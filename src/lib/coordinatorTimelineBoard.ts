@@ -44,7 +44,7 @@ export const buildCoordinatorTimelineBoard = ({
       : isComplete
         ? 'Run-of-show is complete'
       : upNextEvent
-        ? 'Room is waiting on the next event to go live'
+        ? 'Room is waiting on the next event to begin'
         : 'Timeline needs setup',
     tone: liveEvent ? 'ready' : isComplete ? 'ready' : upNextEvent ? 'warning' : 'neutral',
   };

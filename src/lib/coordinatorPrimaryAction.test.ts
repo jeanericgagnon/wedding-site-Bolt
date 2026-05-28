@@ -47,5 +47,6 @@ describe('coordinatorPrimaryAction', () => {
     });
 
     expect(action.key).toBe('start-up-next');
+    expect(action.detail).toBe('Ceremony is the next unfinished event in the run-of-show.');
   });
 });
