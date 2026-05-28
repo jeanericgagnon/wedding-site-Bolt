@@ -3,7 +3,7 @@ import { FIRST_SESSION_WORKSPACE_ROUTES, getFirstSessionSignupState } from './fi
 
 describe('FIRST_SESSION_WORKSPACE_ROUTES', () => {
   it('keeps the signed-in couple start paths on the live dashboard routes', () => {
-    expect(FIRST_SESSION_WORKSPACE_ROUTES.builder).toBe('/dashboard/builder');
+    expect(FIRST_SESSION_WORKSPACE_ROUTES.builder).toBe('/dashboard/builder-guide');
     expect(FIRST_SESSION_WORKSPACE_ROUTES.overview).toBe('/dashboard/overview');
     expect(FIRST_SESSION_WORKSPACE_ROUTES.planning).toBe('/dashboard/planning');
     expect(FIRST_SESSION_WORKSPACE_ROUTES.settings).toBe('/dashboard/settings');
@@ -15,7 +15,7 @@ describe('FIRST_SESSION_WORKSPACE_ROUTES', () => {
 
   it('keeps signed-out start-draft handoff aimed at the live builder path', () => {
     expect(getFirstSessionSignupState()).toEqual({
-      returnTo: '/dashboard/builder',
+      returnTo: '/dashboard/builder-guide',
     });
   });
 });

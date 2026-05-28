@@ -133,7 +133,7 @@ describe('Signup quick start handoff', () => {
   });
 
   it('keeps start-draft signup copy aligned with the builder handoff path', async () => {
-    useLocationMock.mockReturnValue({ state: { returnTo: '/dashboard/builder' } });
+    useLocationMock.mockReturnValue({ state: { returnTo: '/dashboard/builder-guide' } });
 
     render(<Signup />);
 
@@ -144,13 +144,13 @@ describe('Signup quick start handoff', () => {
 
     expect(navigateMock).toHaveBeenCalledWith('/login', {
       state: {
-        returnTo: '/dashboard/builder',
+        returnTo: '/dashboard/builder-guide',
       },
     });
   });
 
   it('returns account creation to the builder when signup started from start draft', async () => {
-    useLocationMock.mockReturnValue({ state: { returnTo: '/dashboard/builder' } });
+    useLocationMock.mockReturnValue({ state: { returnTo: '/dashboard/builder-guide' } });
 
     render(<Signup />);
 
@@ -164,12 +164,12 @@ describe('Signup quick start handoff', () => {
         email: 'alex@example.com',
         password: 'StrongPassword123!',
       });
-      expect(navigateMock).toHaveBeenCalledWith('/dashboard/builder');
+      expect(navigateMock).toHaveBeenCalledWith('/dashboard/builder-guide');
     });
   });
 
   it('uses the builder callback path for Google signup when signup started from start draft', async () => {
-    useLocationMock.mockReturnValue({ state: { returnTo: '/dashboard/builder' } });
+    useLocationMock.mockReturnValue({ state: { returnTo: '/dashboard/builder-guide' } });
 
     render(<Signup />);
 
@@ -179,7 +179,7 @@ describe('Signup quick start handoff', () => {
       expect(signInWithOAuthMock).toHaveBeenCalledWith(expect.objectContaining({
         provider: 'google',
         options: expect.objectContaining({
-          redirectTo: 'http://localhost:3000/dashboard/builder',
+          redirectTo: 'http://localhost:3000/dashboard/builder-guide',
         }),
       }));
     });

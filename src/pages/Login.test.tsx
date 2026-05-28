@@ -148,7 +148,7 @@ describe('Login quick start handoff', () => {
   });
 
   it('keeps start-draft login copy aligned with the builder return path', async () => {
-    useLocationMock.mockReturnValue({ state: { returnTo: '/dashboard/builder' } });
+    useLocationMock.mockReturnValue({ state: { returnTo: '/dashboard/builder-guide' } });
 
     render(<Login />);
 
@@ -158,11 +158,11 @@ describe('Login quick start handoff', () => {
     const link = screen.getByRole('link', { name: 'Create account to keep going' });
     const state = JSON.parse(link.getAttribute('data-nav-state') || '{}');
 
-    expect(state).toEqual({ returnTo: '/dashboard/builder' });
+    expect(state).toEqual({ returnTo: '/dashboard/builder-guide' });
   });
 
   it('returns password login to the builder when the user came from start draft', async () => {
-    useLocationMock.mockReturnValue({ state: { returnTo: '/dashboard/builder' } });
+    useLocationMock.mockReturnValue({ state: { returnTo: '/dashboard/builder-guide' } });
 
     render(<Login />);
 
@@ -175,12 +175,12 @@ describe('Login quick start handoff', () => {
         email: 'alex@example.com',
         password: 'StrongPassword123!',
       });
-      expect(navigateMock).toHaveBeenCalledWith('/dashboard/builder');
+      expect(navigateMock).toHaveBeenCalledWith('/dashboard/builder-guide');
     });
   });
 
   it('uses the builder callback path for Google login when the user came from start draft', async () => {
-    useLocationMock.mockReturnValue({ state: { returnTo: '/dashboard/builder' } });
+    useLocationMock.mockReturnValue({ state: { returnTo: '/dashboard/builder-guide' } });
 
     render(<Login />);
 
@@ -190,7 +190,7 @@ describe('Login quick start handoff', () => {
       expect(signInWithOAuthMock).toHaveBeenCalledWith(expect.objectContaining({
         provider: 'google',
         options: expect.objectContaining({
-          redirectTo: 'http://localhost:3000/dashboard/builder',
+          redirectTo: 'http://localhost:3000/dashboard/builder-guide',
         }),
       }));
     });

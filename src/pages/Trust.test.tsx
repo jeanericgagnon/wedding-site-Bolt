@@ -40,12 +40,12 @@ describe('Trust page draft-first CTA', () => {
     fireEvent.click(screen.getAllByRole('button', { name: 'Start your draft' })[0]);
 
     expect(navigateMock).toHaveBeenCalledWith('/signup', {
-      state: { returnTo: '/dashboard/builder' },
+      state: { returnTo: '/dashboard/builder-guide' },
     });
     expect(screen.getByRole('link', { name: 'See product tour' })).toHaveAttribute('href', '/product');
     fireEvent.click(screen.getAllByRole('button', { name: 'Start your draft' })[1]);
     expect(navigateMock).toHaveBeenCalledWith('/signup', {
-      state: { returnTo: '/dashboard/builder' },
+      state: { returnTo: '/dashboard/builder-guide' },
     });
   });
 
@@ -55,10 +55,10 @@ describe('Trust page draft-first CTA', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Review your draft' }));
 
-    expect(navigateMock).toHaveBeenCalledWith('/dashboard/builder');
+    expect(navigateMock).toHaveBeenCalledWith('/dashboard/builder-guide');
     expect(screen.getByRole('link', { name: 'Open planner workspace' })).toHaveAttribute('href', '/dashboard/planning');
     fireEvent.click(screen.getByRole('button', { name: 'Open website editor guide' }));
-    expect(navigateMock).toHaveBeenCalledWith('/dashboard/builder');
+    expect(navigateMock).toHaveBeenCalledWith('/dashboard/builder-guide');
     expect(screen.getByRole('button', { name: 'Open website editor guide' })).toHaveTextContent('Review editor options');
     fireEvent.click(screen.getByRole('button', { name: 'Open planner workspace' }));
     expect(navigateMock).toHaveBeenCalledWith('/dashboard/planning');

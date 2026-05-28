@@ -4,7 +4,7 @@ const LEGACY_INTENT_KEYS = new Set(['publishNow', 'photoTips']);
 
 export const getBuilderGuideRoute = (): string => BUILDER_WORKSPACE_ROUTES.guide;
 
-export const getBuilderV2Route = (): string => BUILDER_WORKSPACE_ROUTES.v2;
+export const getBuilderV2Route = (): string => BUILDER_WORKSPACE_ROUTES.defaultEditor;
 
 export const getBuilderLaunchChecklistRoute = (): string => `${BUILDER_WORKSPACE_ROUTES.legacy}?publishNow=1`;
 

@@ -16,7 +16,10 @@ export const getAuthEntryIntent = ({
   const normalizedPath = explicitReturnPath?.trim() || null;
 
   if (
-    normalizedPath === BUILDER_WORKSPACE_ROUTES.guide
+    normalizedPath === BUILDER_WORKSPACE_ROUTES.defaultEditor
+    || normalizedPath === BUILDER_WORKSPACE_ROUTES.publicDefaultEditor
+    || normalizedPath === BUILDER_WORKSPACE_ROUTES.v2
+    || normalizedPath === BUILDER_WORKSPACE_ROUTES.guide
     || normalizedPath === BUILDER_WORKSPACE_ROUTES.publicGuide
     || normalizedPath === FIRST_SESSION_WORKSPACE_ROUTES.builder
   ) {

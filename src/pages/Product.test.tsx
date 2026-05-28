@@ -123,7 +123,7 @@ describe('Product starter draft truth', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Review draft privacy + share settings' }));
 
     expect(navigateMock).toHaveBeenCalledWith('/signup', {
-      state: { returnTo: '/dashboard/builder' },
+      state: { returnTo: '/dashboard/builder-guide' },
     });
   });
 
@@ -133,7 +133,7 @@ describe('Product starter draft truth', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Review draft privacy + share settings' }));
 
-    expect(navigateMock).toHaveBeenCalledWith('/dashboard/builder');
+    expect(navigateMock).toHaveBeenCalledWith('/dashboard/builder-guide');
   });
 
   it('personalizes product draft-start CTAs for signed-in users', () => {
@@ -150,10 +150,10 @@ describe('Product starter draft truth', () => {
     expect(screen.queryByRole('button', { name: 'Open your dashboard' })).not.toBeInTheDocument();
 
     fireEvent.click(screen.getAllByRole('button', { name: 'Review your draft' })[0]);
-    expect(navigateMock).toHaveBeenCalledWith('/dashboard/builder');
+    expect(navigateMock).toHaveBeenCalledWith('/dashboard/builder-guide');
 
     fireEvent.click(screen.getAllByRole('button', { name: 'Open website editor guide' })[0]);
-    expect(navigateMock).toHaveBeenCalledWith('/dashboard/builder');
+    expect(navigateMock).toHaveBeenCalledWith('/dashboard/builder-guide');
     expect(screen.getAllByRole('button', { name: 'Open website editor guide' })[0]).toHaveTextContent('Review editor options');
     fireEvent.click(screen.getByRole('button', { name: 'Open guest list' }));
     expect(navigateMock).toHaveBeenCalledWith('/dashboard/guests');

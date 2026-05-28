@@ -89,8 +89,8 @@ describe('BuilderCutover', () => {
     expect(hasLegacyBuilderIntent('?photoTips=1', '')).toBe(true);
     expect(hasLegacyBuilderIntent('', '#launch-confidence')).toBe(true);
     expect(hasLegacyBuilderIntent('', '')).toBe(false);
-    expect(getBuilderGuideRoute()).toBe('/dashboard/builder');
-    expect(getBuilderV2Route()).toBe('/dashboard/builder-v2');
+    expect(getBuilderGuideRoute()).toBe('/dashboard/builder-guide');
+    expect(getBuilderV2Route()).toBe('/dashboard/builder');
     expect(getBuilderLaunchChecklistRoute()).toBe('/dashboard/builder-v1?publishNow=1');
     expect(getBuilderPhotoTipsRoute()).toBe('/dashboard/builder-v1?photoTips=1');
     expect(getBuilderLaunchConfidenceRoute()).toBe('/dashboard/builder-v1#launch-confidence');
@@ -101,7 +101,7 @@ describe('BuilderCutover', () => {
 
   it('forwards legacy-only launch intents straight to the current editor route', async () => {
     render(
-      <MemoryRouter initialEntries={['/dashboard/builder?publishNow=1']}>
+      <MemoryRouter initialEntries={['/dashboard/builder-guide?publishNow=1']}>
         <BuilderCutover />
       </MemoryRouter>,
     );
@@ -132,7 +132,7 @@ describe('BuilderCutover', () => {
     saveUpgradeBridgeMock.mockReturnValue(true);
 
     render(
-      <MemoryRouter initialEntries={['/dashboard/builder']}>
+      <MemoryRouter initialEntries={['/dashboard/builder-guide']}>
         <BuilderCutover />
       </MemoryRouter>,
     );
@@ -153,7 +153,7 @@ describe('BuilderCutover', () => {
     maybeSingleMock.mockRejectedValue(new Error('Failed to fetch project data'));
 
     render(
-      <MemoryRouter initialEntries={['/dashboard/builder']}>
+      <MemoryRouter initialEntries={['/dashboard/builder-guide']}>
         <BuilderCutover />
       </MemoryRouter>,
     );

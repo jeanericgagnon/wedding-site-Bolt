@@ -94,6 +94,14 @@ const AppContent = () => {
             </ProtectedRoute>
           }
         />
+        <Route
+          path={BUILDER_WORKSPACE_ROUTES.defaultEditor}
+          element={
+            <ProtectedRoute>
+              <BuilderV2Lab />
+            </ProtectedRoute>
+          }
+        />
         <Route path="/variant-preview-capture" element={<VariantPreviewCapture />} />
         <Route path="/template-scroll-capture" element={<TemplateScrollCapture />} />
         <Route path="/site/:slug" element={<SiteView />} />
@@ -339,6 +347,14 @@ const AppContent = () => {
           element={
             <ProtectedRoute>
               <DashboardErrorLogs />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={BUILDER_WORKSPACE_ROUTES.publicDefaultEditor}
+          element={
+            <ProtectedRoute>
+              <BuilderV2Lab />
             </ProtectedRoute>
           }
         />

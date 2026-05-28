@@ -59,7 +59,7 @@ describe('Home draft-first CTAs', () => {
     fireEvent.click(screen.getAllByRole('button', { name: 'Start your wedding site draft' })[0]);
 
     expect(navigateMock).toHaveBeenCalledWith('/signup', {
-      state: { returnTo: '/dashboard/builder' },
+      state: { returnTo: '/dashboard/builder-guide' },
     });
     expect(screen.getAllByRole('button', { name: 'Start your wedding site draft' }).length).toBeGreaterThan(0);
     const anonymousFeatureLinks = screen.getAllByRole('link', { name: 'Explore this feature' });
@@ -81,7 +81,7 @@ describe('Home draft-first CTAs', () => {
 
     fireEvent.click(screen.getAllByRole('button', { name: 'Review your wedding site draft' })[0]);
 
-    expect(navigateMock).toHaveBeenCalledWith('/dashboard/builder');
+    expect(navigateMock).toHaveBeenCalledWith('/dashboard/builder-guide');
     expect(screen.getAllByRole('button', { name: 'Review your wedding site draft' }).length).toBeGreaterThan(0);
     expect(screen.getAllByRole('link', { name: 'Open website editor guide' }).length).toBeGreaterThan(0);
     expect(screen.getByRole('link', { name: 'Open planner workspace' })).toHaveAttribute('href', '/dashboard/planning');
@@ -92,9 +92,9 @@ describe('Home draft-first CTAs', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Open message drafts' }));
     expect(navigateMock).toHaveBeenCalledWith('/dashboard/messages');
     fireEvent.click(screen.getAllByRole('link', { name: 'Open website editor guide' })[0]);
-    expect(navigateMock).toHaveBeenCalledWith('/dashboard/builder');
+    expect(navigateMock).toHaveBeenCalledWith('/dashboard/builder-guide');
     expect(screen.getByRole('link', { name: 'Open website editor guide' })).toHaveTextContent('Review editor options');
-    expect(screen.getAllByRole('link', { name: 'Open website editor guide' })[0]).toHaveAttribute('href', '/dashboard/builder');
+    expect(screen.getAllByRole('link', { name: 'Open website editor guide' })[0]).toHaveAttribute('href', '/dashboard/builder-guide');
     const signedInFeatureLinks = screen.getAllByRole('link', { name: 'Explore this feature' });
     expect(signedInFeatureLinks.find((link) => link.getAttribute('href') === '/dashboard/guests')).toBeTruthy();
     expect(signedInFeatureLinks.find((link) => link.getAttribute('href') === '/dashboard/rsvp-board')).toBeTruthy();

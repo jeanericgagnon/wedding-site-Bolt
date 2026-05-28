@@ -245,7 +245,7 @@ describe('Onboarding starter draft wording truth', () => {
 
     await waitFor(() => {
       expect(insert).toHaveBeenCalled();
-      expect(navigateMock).toHaveBeenCalledWith('/dashboard/builder');
+      expect(navigateMock).toHaveBeenCalledWith('/dashboard/builder-guide');
     });
   });
 
