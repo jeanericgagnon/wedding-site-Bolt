@@ -1,6 +1,32 @@
-import { describe, expect, it } from 'vitest';
+import React from 'react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { AssetGrid } from './MediaLibraryPanel';
 import { getMediaLibrarySummary } from './mediaLibrarySummary';
 import type { BuilderMediaAsset } from '../../types/builder/media';
+
+const dispatchMock = vi.fn();
+const deleteAssetMock = vi.fn();
+
+vi.mock('../state/builderStore', () => ({
+  useBuilderContext: () => ({
+    dispatch: dispatchMock,
+    state: {},
+  }),
+}));
+
+vi.mock('../services/mediaService', () => ({
+  mediaService: {
+    deleteAsset: (...args: unknown[]) => deleteAssetMock(...args),
+  },
+}));
+
+vi.mock('../state/builderActions', () => ({
+  builderActions: {
+    setError: (message: string) => ({ type: 'builder/setError', payload: message }),
+    removeMediaAsset: (assetId: string) => ({ type: 'builder/removeMediaAsset', payload: assetId }),
+  },
+}));
 
 function makeAsset(overrides: Partial<BuilderMediaAsset>): BuilderMediaAsset {
   return {
@@ -74,5 +100,33 @@ describe('getMediaLibrarySummary', () => {
 
     expect(summary.filteredAssets.map((asset) => asset.id)).toEqual(['unused']);
     expect(summary.focusTitle).toContain('Gallery');
+  });
+});
+
+describe('AssetGrid', () => {
+  beforeEach(() => {
+    dispatchMock.mockReset();
+    deleteAssetMock.mockReset();
+  });
+
+  it('keeps media deletion failures behind builder-safe copy', async () => {
+    deleteAssetMock.mockRejectedValueOnce(new Error('storage bucket token expired while deleting media'));
+
+    render(
+      <AssetGrid
+        assets={[makeAsset({ id: 'asset-delete', originalFilename: 'hero-photo.jpg' })]}
+        uploadQueue={[]}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Remove image' }));
+
+    await waitFor(() => {
+      expect(deleteAssetMock).toHaveBeenCalledWith('asset-delete');
+      expect(dispatchMock).toHaveBeenCalledWith({
+        type: 'builder/setError',
+        payload: 'Could not remove that photo right now. Please try again.',
+      });
+    });
   });
 });

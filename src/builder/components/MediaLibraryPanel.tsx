@@ -9,6 +9,7 @@ import { generateBuilderId } from '../../types/builder/project';
 import { getSectionManifest } from '../registry/sectionManifests';
 import { mergeMediaAssetsAfterUploadRefresh } from '../utils/mediaRefresh';
 import {
+  BUILDER_MEDIA_DELETE_RETRY_ERROR,
   BUILDER_MEDIA_REFRESH_RETRY_ERROR,
   getBuilderMediaUploadRetryError,
   mapBuilderWorkspaceError,
@@ -411,8 +412,8 @@ export const AssetGrid: React.FC<AssetGridProps> = ({ assets, uploadQueue, isPic
     try {
       await mediaService.deleteAsset(asset.id);
       dispatch(builderActions.removeMediaAsset(asset.id));
-    } catch {
-      dispatch(builderActions.setError('Failed to delete image. Please try again.'));
+    } catch (error) {
+      dispatch(builderActions.setError(mapBuilderWorkspaceError(error, BUILDER_MEDIA_DELETE_RETRY_ERROR)));
     }
   };
 

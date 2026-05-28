@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  BUILDER_MEDIA_DELETE_RETRY_ERROR,
   BUILDER_MEDIA_REFRESH_RETRY_ERROR,
   BUILDER_PUBLISH_RETRY_ERROR,
   BUILDER_SAVE_RETRY_ERROR,
@@ -15,6 +16,8 @@ describe('builderWorkspaceErrorCopy', () => {
       .toBe(BUILDER_SAVE_RETRY_ERROR);
     expect(mapBuilderWorkspaceError(new Error('functions/v1/publish-site token expired'), BUILDER_PUBLISH_RETRY_ERROR))
       .toBe(BUILDER_PUBLISH_RETRY_ERROR);
+    expect(mapBuilderWorkspaceError(new Error('storage bucket token expired while deleting media'), BUILDER_MEDIA_DELETE_RETRY_ERROR))
+      .toBe(BUILDER_MEDIA_DELETE_RETRY_ERROR);
     expect(mapBuilderWorkspaceError(new Error('Storage bucket policy denied access'), BUILDER_MEDIA_REFRESH_RETRY_ERROR))
       .toBe(BUILDER_MEDIA_REFRESH_RETRY_ERROR);
   });

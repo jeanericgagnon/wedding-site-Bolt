@@ -4,6 +4,7 @@ import type { BuilderMediaAsset } from '../../types/builder/media';
 export const BUILDER_SAVE_RETRY_ERROR = 'Could not save your latest edits. Please try again.';
 export const BUILDER_PUBLISH_RETRY_ERROR = 'Could not update the guest-facing site right now. Please try again.';
 export const BUILDER_RESTORE_RETRY_ERROR = 'Could not restore that local checkpoint.';
+export const BUILDER_MEDIA_DELETE_RETRY_ERROR = 'Could not remove that photo right now. Please try again.';
 export const BUILDER_MEDIA_REFRESH_RETRY_ERROR =
   'Your upload likely finished, but the media library could not refresh yet. Please reopen the library in a moment.';
 
