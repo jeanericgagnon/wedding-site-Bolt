@@ -3,9 +3,9 @@ import { Link } from 'react-router-dom';
 
 const SUPPORT_LINKS = [
   { href: '/support', label: 'Support' },
-  { href: '/privacy', label: 'Privacy' },
-  { href: '/terms', label: 'Terms' },
-  { href: '/refund', label: 'Refund' },
+  { href: '/privacy', label: 'Privacy policy' },
+  { href: '/terms', label: 'Terms of service' },
+  { href: '/refund', label: 'Refund policy' },
 ] as const;
 
 export const AuthSupportLinks: React.FC = () => (

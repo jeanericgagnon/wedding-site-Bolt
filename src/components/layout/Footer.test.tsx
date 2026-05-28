@@ -14,15 +14,15 @@ vi.mock('react-router-dom', async () => {
   };
 });
 
-import { AuthSupportLinks } from './AuthSupportLinks';
+import { Footer } from './Footer';
 
-describe('AuthSupportLinks', () => {
-  it('renders the support, legal, and refund links used on auth-adjacent pages', () => {
-    render(<AuthSupportLinks />);
+describe('Footer support and legal links', () => {
+  it('keeps support, privacy, terms, and refund routes easy to reach from the global footer', () => {
+    render(<Footer />);
 
     expect(screen.getByRole('link', { name: 'Support' })).toHaveAttribute('href', '/support');
-    expect(screen.getByRole('link', { name: 'Privacy policy' })).toHaveAttribute('href', '/privacy');
-    expect(screen.getByRole('link', { name: 'Terms of service' })).toHaveAttribute('href', '/terms');
-    expect(screen.getByRole('link', { name: 'Refund policy' })).toHaveAttribute('href', '/refund');
+    expect(screen.getByRole('link', { name: 'Privacy Policy' })).toHaveAttribute('href', '/privacy');
+    expect(screen.getByRole('link', { name: 'Terms of Service' })).toHaveAttribute('href', '/terms');
+    expect(screen.getByRole('link', { name: 'Refund Policy' })).toHaveAttribute('href', '/refund');
   });
 });

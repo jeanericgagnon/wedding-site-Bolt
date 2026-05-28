@@ -63,6 +63,11 @@ export const Footer: React.FC = () => {
             <h4 className="text-[0.875rem] font-semibold text-ink mb-4 leading-normal">Legal</h4>
             <ul className="space-y-3">
               <li>
+                <Link to="/support" className="text-[0.875rem] text-ink/70 hover:text-ink transition-colors leading-normal">
+                  Support
+                </Link>
+              </li>
+              <li>
                 <Link to="/privacy" className="text-[0.875rem] text-ink/70 hover:text-ink transition-colors leading-normal">
                   Privacy Policy
                 </Link>
@@ -70,6 +75,11 @@ export const Footer: React.FC = () => {
               <li>
                 <Link to="/terms" className="text-[0.875rem] text-ink/70 hover:text-ink transition-colors leading-normal">
                   Terms of Service
+                </Link>
+              </li>
+              <li>
+                <Link to="/refund" className="text-[0.875rem] text-ink/70 hover:text-ink transition-colors leading-normal">
+                  Refund Policy
                 </Link>
               </li>
             </ul>
