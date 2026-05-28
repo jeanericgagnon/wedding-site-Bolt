@@ -17,7 +17,9 @@ import { MemoryCuratorCard } from '../../components/dashboard/MemoryCuratorCard'
 import { formatVaultUnlockDate, getVaultUnlockDate, toValidDateOrNull } from './vaultDate';
 import { formatVaultEntryDate } from './vaultEntryTime';
 import {
+  mapVaultConfigSaveError,
   mapVaultDashboardError,
+  mapVaultEntryInsertError,
   mapVaultOauthQueryError,
   VAULT_ANNIVERSARY_SEND_RETRY_ERROR,
   VAULT_ATTACHMENT_OPEN_RETRY_ERROR,
@@ -1254,7 +1256,7 @@ setWeddingSiteId('demo-site-id');
       if (error.message?.toLowerCase().includes('duplicate') || error.message?.toLowerCase().includes('unique')) {
         toast(`You already have a ${durationYears}-year vault.`, 'error');
       }
-      throw new Error(error.message);
+      throw new Error(mapVaultConfigSaveError(error));
     }
 
     setVaultConfigs(prev => prev
@@ -1264,7 +1266,7 @@ setWeddingSiteId('demo-site-id');
   }
 
   async function handleSaveEntry(entry: { vault_config_id: string; vault_year: number; title: string; content: string; author_name: string; attachment_url: string | null; attachment_name: string | null }) {
-    if (!weddingSiteId) throw new Error('No wedding site found');
+    if (!weddingSiteId) throw new Error(mapVaultEntryInsertError('No wedding site found'));
 
     if (isDemoMode && weddingSiteId === 'demo-site-id') {
       const demoEntry: VaultEntry = {
@@ -1293,7 +1295,7 @@ setWeddingSiteId('demo-site-id');
       .select()
       .single();
 
-    if (error) throw new Error(error.message);
+    if (error) throw new Error(mapVaultEntryInsertError(error));
     setEntries(prev => [...prev, data as VaultEntry]);
     setActiveFormConfigId(null);
     toast('Entry added to vault');
