@@ -51,7 +51,10 @@ Status: draft (post-lab hardening)
   - Default: `true` to preserve the promoted `/dashboard/builder` and `/builder` V2 behavior
   - Rollback/canary behavior: set `VITE_BUILDER_V2_ENABLED=false` to send the default builder entry routes back to the explicit guide path without rewriting links
 - [ ] keep `/builder-v2-lab` as fallback for one release cycle
-- [ ] canary rollout (internal/demo accounts first)
+- [x] canary rollout (internal/demo accounts first)
+  - Audience switch: `VITE_BUILDER_V2_AUDIENCE=internal`
+  - Internal audience currently means DayOf accounts (`@dayof.love`) plus demo-mode sessions
+  - Default remains `all` so current promoted behavior does not change unless we intentionally narrow it
 - [ ] capture telemetry: add/duplicate/remove/import/export failure rates
 - [ ] document rollback procedure (`/builder` route hard switch)
 

@@ -4,7 +4,8 @@ import { AuthProvider } from './contexts/AuthContext';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import { ToastProvider } from './components/ui/Toast';
 import { BUILDER_WORKSPACE_ROUTES } from './lib/builderWorkspaceRoutes';
-import { BUILDER_V2_ENABLED } from './config/env';
+import { BUILDER_V2_AUDIENCE, BUILDER_V2_ENABLED } from './config/env';
+import { useAuth } from './hooks/useAuth';
 
 const Home = lazy(() => import('./pages/Home').then(m => ({ default: m.Home })));
 const Product = lazy(() => import('./pages/Product').then(m => ({ default: m.Product })));
@@ -68,7 +69,11 @@ const PageLoader = () => (
 );
 
 const AppContent = () => {
-  const BuilderPrimaryEntry = BUILDER_V2_ENABLED ? BuilderV2Lab : BuilderCutover;
+  const { user, isDemoMode } = useAuth();
+  const allowBuilderV2ForAudience = BUILDER_V2_AUDIENCE === 'all'
+    || isDemoMode
+    || user?.email?.toLowerCase().endsWith('@dayof.love');
+  const BuilderPrimaryEntry = BUILDER_V2_ENABLED && allowBuilderV2ForAudience ? BuilderV2Lab : BuilderCutover;
   const isWeddingSubdomainHost = (() => {
     if (typeof window === 'undefined') return false;
     const host = window.location.hostname.toLowerCase();
