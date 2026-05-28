@@ -41,6 +41,7 @@ export const Login: React.FC = () => {
 
   const { inviteToken, inviteEmail, inviteRole, inviteSite } = readCollaboratorInviteAuthParams(searchParams);
   const hasInviteContext = Boolean(inviteToken && inviteEmail);
+  const isDraftStartEntry = explicitReturnPath === FIRST_SESSION_WORKSPACE_ROUTES.builder;
 
   const inviteReturnSearch = useMemo(() => {
     if (!inviteToken || !inviteEmail) return '';
@@ -286,7 +287,11 @@ export const Login: React.FC = () => {
           </Link>
           <h1 className="text-3xl font-bold text-text-primary mb-2">Welcome back</h1>
           <p className="text-text-secondary">
-            {hasInviteContext ? 'Sign in with the invited email to finish joining this wedding team.' : 'Sign in to manage your wedding website'}
+            {hasInviteContext
+              ? 'Sign in with the invited email to finish joining this wedding team.'
+              : isDraftStartEntry
+                ? 'Sign in to get back to your starter draft and keep shaping it.'
+                : 'Sign in to manage your wedding website'}
           </p>
         </div>
 

@@ -147,6 +147,20 @@ describe('Login quick start handoff', () => {
     }));
   });
 
+  it('keeps start-draft login copy aligned with the builder return path', async () => {
+    useLocationMock.mockReturnValue({ state: { returnTo: '/dashboard/builder' } });
+
+    render(<Login />);
+
+    expect(await screen.findByText('Sign in to get back to your starter draft and keep shaping it.')).toBeInTheDocument();
+    expect(screen.queryByText('Sign in to manage your wedding website')).not.toBeInTheDocument();
+
+    const link = screen.getByRole('link', { name: 'Get started — $49' });
+    const state = JSON.parse(link.getAttribute('data-nav-state') || '{}');
+
+    expect(state).toEqual({ returnTo: '/dashboard/builder' });
+  });
+
 
   it('omits empty onboarding drafts when switching from login to signup', async () => {
     useLocationMock.mockReturnValue({ state: { returnTo: '/onboarding' } });
