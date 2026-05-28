@@ -81,7 +81,10 @@ export const buildBuilderV2BlockFieldDescriptors = (
         { key: 'title', label: sectionType === 'wedding-party' ? 'Name' : 'Title' },
         { key: 'role', label: 'Role' },
         { key: 'note', label: 'Note', multiline: true },
-        ...(data.subtitle ? [{ key: 'subtitle', label: 'Group key' } satisfies BuilderV2BlockFieldDescriptor] : []),
+        ...(data.subtitle ? [{
+          key: 'subtitle',
+          label: sectionType === 'wedding-party' ? 'Side key' : 'Group key',
+        } satisfies BuilderV2BlockFieldDescriptor] : []),
         { key: 'imageUrl', label: 'Image URL', inputType: 'url' },
         { key: 'caption', label: 'Caption' },
       ];
@@ -105,6 +108,13 @@ export const buildBuilderV2BlockFieldDescriptors = (
       return [
         { key: 'text', label: 'Playlist heading' },
         { key: 'subtitle', label: 'Playlist key' },
+      ];
+    }
+
+    if (sectionType === 'wedding-party') {
+      return [
+        { key: 'text', label: 'Side heading' },
+        { key: 'subtitle', label: 'Side key' },
       ];
     }
 
@@ -282,7 +292,9 @@ export const buildBuilderV2BlockPreviewSummary = (
       imageUrl: data.imageUrl,
       imageAlt: data.caption || data.title || 'Photo',
       primary: data.title || data.caption || 'Photo',
-      secondary: data.role,
+      secondary: sectionType === 'wedding-party'
+        ? joinParts([data.role, data.subtitle])
+        : data.role,
       detail: data.note,
     };
   }

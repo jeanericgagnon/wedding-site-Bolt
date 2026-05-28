@@ -1645,7 +1645,7 @@ export const BuilderV2Lab: React.FC = () => {
       { id: 'sel-duplicate', group: 'Selection', label: 'Duplicate selected sections', keywords: ['duplicate', 'copy', 'selection', 'batch', 'reuse'], action: () => runCommand('Duplicate selected sections', duplicateSelectedSections) },
       { id: 'sel-remove', group: 'Selection', label: 'Remove selected sections', keywords: ['remove', 'delete', 'selection', 'batch', 'retire'], action: () => runCommand('Remove selected sections', removeSelectedSections) },
       { id: 'sel-restore-starters', group: 'Selection', label: 'Restore starter blocks for selected sections', keywords: ['restore', 'starter', 'reset', 'selection', 'batch', 'repair'], action: () => runCommand('Restore starter blocks for selected sections', restoreSelectedSectionsToStarterBlocks) },
-      ...(selectedSectionCanRepairStructure ? [{ id: 'sel-repair-structure', group: 'Selection', label: 'Repair selected section structure', keywords: ['repair', 'structure', 'metadata', 'menu', 'music', 'video'], action: () => runCommand('Repair selected section structure', repairSelectedSectionStructure) }] : []),
+      ...(selectedSectionCanRepairStructure ? [{ id: 'sel-repair-structure', group: 'Selection', label: 'Repair selected section structure', keywords: ['repair', 'structure', 'metadata', 'menu', 'music', 'video', 'wedding party'], action: () => runCommand('Repair selected section structure', repairSelectedSectionStructure) }] : []),
       { id: 'sel-compact', group: 'Selection', label: 'Set selected density: compact', keywords: ['compact', 'density', 'selection', 'batch'], action: () => runCommand('Set selected density: compact', () => setSelectedDensity('compact')) },
       { id: 'sel-comfortable', group: 'Selection', label: 'Set selected density: comfortable', keywords: ['comfortable', 'density', 'selection', 'batch', 'open'], action: () => runCommand('Set selected density: comfortable', () => setSelectedDensity('comfortable')) },
       { id: 'sel-review', group: 'Selection', label: 'Review selected sections in preview', keywords: ['preview', 'selection', 'review', 'batch'], action: () => runCommand('Review selected sections in preview', reviewSelectionInPreview) },
@@ -2888,7 +2888,7 @@ export const BuilderV2Lab: React.FC = () => {
                               <div className="min-w-0">
                                 <p className="text-[11px] uppercase tracking-[0.18em] text-sky-900">Structure repair</p>
                                 <p className="mt-1 text-xs leading-relaxed text-text-primary">
-                                  Re-key course, playlist, or video-group metadata when the section structure has drifted but the real content is still worth keeping.
+                                  Re-key course, playlist, video-group, or wedding-party side metadata when the section structure has drifted but the real content is still worth keeping.
                                 </p>
                               </div>
                               <button

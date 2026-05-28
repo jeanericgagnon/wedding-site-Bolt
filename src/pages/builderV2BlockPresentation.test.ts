@@ -27,6 +27,14 @@ describe('builderV2BlockPresentation', () => {
     ]);
   });
 
+  it('builds wedding party editor fields with side metadata', () => {
+    const titleFields = buildBuilderV2BlockFieldDescriptors('wedding-party', 'title', { subtitle: 'bridal-title' });
+    const photoFields = buildBuilderV2BlockFieldDescriptors('wedding-party', 'photo', { subtitle: 'bridal-party' });
+
+    expect(titleFields.map((field) => field.label)).toEqual(['Side heading', 'Side key']);
+    expect(photoFields.map((field) => field.label)).toContain('Side key');
+  });
+
   it('builds music playlist link editor fields', () => {
     const fields = buildBuilderV2BlockFieldDescriptors('music', 'travelTip', { subtitle: 'playlist-link:pl-1' });
     expect(fields.map((field) => field.label)).toEqual([
@@ -73,5 +81,16 @@ describe('builderV2BlockPresentation', () => {
     expect(preview.secondary).toContain('youtube');
     expect(preview.secondary).toContain('video:v1');
     expect(preview.detail).toContain('preview of the weekend');
+  });
+
+  it('includes side metadata in wedding party preview summaries', () => {
+    const preview = buildBuilderV2BlockPreviewSummary('wedding-party', 'photo', {
+      title: 'Ava',
+      role: 'Maid of Honor',
+      subtitle: 'bridal-party',
+    });
+
+    expect(preview.secondary).toContain('Maid of Honor');
+    expect(preview.secondary).toContain('bridal-party');
   });
 });

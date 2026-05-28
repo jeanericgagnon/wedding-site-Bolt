@@ -1,4 +1,5 @@
 type BlockDataLike = {
+  text?: string;
   question?: string;
   answer?: string;
   imageUrl?: string;
@@ -37,6 +38,19 @@ export const getBuilderV2BlockValidationWarning = <TBlock extends BlockLike>({
 
   if (block.type === 'qna' && (!trimmed(data.question) || !trimmed(data.answer))) {
     return 'Question and answer are required';
+  }
+
+  if (sectionType === 'wedding-party') {
+    if (block.type === 'title' && trimmed(data.text) && !['bridal-title', 'groom-title'].includes(trimmed(data.subtitle))) {
+      return 'Side headings need a bridal-title or groom-title key';
+    }
+
+    if (block.type === 'photo') {
+      if (!trimmed(data.title)) return 'Party member name is recommended';
+      if (!['bridal-party', 'groom-party'].includes(trimmed(data.subtitle))) {
+        return 'Party members need a bridal-party or groom-party side key';
+      }
+    }
   }
 
   if (block.type === 'photo' && !trimmed(data.imageUrl)) {

@@ -19,6 +19,14 @@ describe('builderV2BlockValidation', () => {
     })).toBe('Add an email or phone so guests have a real contact path');
   });
 
+  it('requires wedding party members to keep a side key', () => {
+    expect(getBuilderV2BlockValidationWarning({
+      sectionType: 'wedding-party',
+      block: { id: 'party-1', type: 'photo', data: { title: 'Ava' } },
+      blocks: [],
+    })).toBe('Party members need a bridal-party or groom-party side key');
+  });
+
   it('requires menu items to point at a matching course heading', () => {
     expect(getBuilderV2BlockValidationWarning({
       sectionType: 'menu',

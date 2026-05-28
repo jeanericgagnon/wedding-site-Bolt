@@ -173,8 +173,70 @@ const repairVideoStructure = <TBlock extends BlockLike>(blocks: TBlock[]): Build
   };
 };
 
+const repairWeddingPartyStructure = <TBlock extends BlockLike>(blocks: TBlock[]): BuilderV2StructureRepairResult<TBlock> => {
+  const partyTitles = blocks.filter((block) => block.type === 'title');
+  const partyMembers = blocks.filter((block) => block.type === 'photo');
+  if (!partyTitles.length && !partyMembers.length) {
+    return { blocks, changedCount: 0, summary: 'Wedding party structure needs side headings or member cards before it can be repaired.' };
+  }
+
+  const titleAssignments = new Map<string, string>();
+  const photoAssignments = new Map<string, string>();
+  const orderedTitles = partyTitles.slice(0, 2);
+  orderedTitles.forEach((block, index) => {
+    titleAssignments.set(block.id, index === 0 ? 'bridal-title' : 'groom-title');
+  });
+
+  let currentPartyKey = '';
+  let seenAssignedMember = false;
+  let changedCount = 0;
+  const normalizedBlocks = blocks.map((block) => {
+    if (block.type === 'title') {
+      const assignedTitle = titleAssignments.get(block.id);
+      if (assignedTitle === 'bridal-title') currentPartyKey = 'bridal-party';
+      if (assignedTitle === 'groom-title') currentPartyKey = 'groom-party';
+      if (!assignedTitle || blockSubtitle(block) === assignedTitle) return block;
+      changedCount += 1;
+      return withSubtitle(block, assignedTitle);
+    }
+
+    if (block.type === 'photo') {
+      const existingKey = blockSubtitle(block);
+      if (existingKey === 'bridal-party' || existingKey === 'groom-party') {
+        currentPartyKey = existingKey;
+        seenAssignedMember = true;
+        return block;
+      }
+      const targetKey = currentPartyKey || (seenAssignedMember ? 'groom-party' : 'bridal-party');
+      seenAssignedMember = true;
+      currentPartyKey = targetKey;
+      photoAssignments.set(block.id, targetKey);
+      if (existingKey !== targetKey) changedCount += 1;
+      return block;
+    }
+
+    return block;
+  });
+  const nextBlocks = normalizedBlocks.map((block) => {
+    if (block.type === 'photo') {
+      const targetKey = photoAssignments.get(block.id);
+      if (!targetKey || blockSubtitle(block) === targetKey) return block;
+      return withSubtitle(block, targetKey);
+    }
+    return block;
+  });
+
+  return {
+    blocks: nextBlocks,
+    changedCount,
+    summary: changedCount > 0
+      ? `Re-keyed ${changedCount} wedding party block${changedCount === 1 ? '' : 's'} to consistent side groups.`
+      : 'Wedding party structure already has consistent side keys.',
+  };
+};
+
 export const canRepairBuilderV2SectionStructure = (sectionType: string) =>
-  sectionType === 'menu' || sectionType === 'music' || sectionType === 'video';
+  sectionType === 'menu' || sectionType === 'music' || sectionType === 'video' || sectionType === 'wedding-party';
 
 export const repairBuilderV2SectionStructure = <TBlock extends BlockLike>(
   sectionType: string,
@@ -183,5 +245,6 @@ export const repairBuilderV2SectionStructure = <TBlock extends BlockLike>(
   if (sectionType === 'menu') return repairMenuStructure(blocks);
   if (sectionType === 'music') return repairMusicStructure(blocks);
   if (sectionType === 'video') return repairVideoStructure(blocks);
+  if (sectionType === 'wedding-party') return repairWeddingPartyStructure(blocks);
   return { blocks, changedCount: 0, summary: 'This section type has no safe automatic structure repair yet.' };
 };

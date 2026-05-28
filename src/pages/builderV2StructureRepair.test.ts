@@ -10,6 +10,7 @@ describe('builderV2StructureRepair', () => {
     expect(canRepairBuilderV2SectionStructure('menu')).toBe(true);
     expect(canRepairBuilderV2SectionStructure('music')).toBe(true);
     expect(canRepairBuilderV2SectionStructure('video')).toBe(true);
+    expect(canRepairBuilderV2SectionStructure('wedding-party')).toBe(true);
     expect(canRepairBuilderV2SectionStructure('contact')).toBe(false);
   });
 
@@ -53,6 +54,23 @@ describe('builderV2StructureRepair', () => {
     expect(result.blocks.map((block) => (block.data as { subtitle?: string } | undefined)?.subtitle)).toEqual([
       'video:video-1',
       'video:video-1',
+    ]);
+  });
+
+  it('re-keys wedding party side headings and members into consistent groups', () => {
+    const result = repairBuilderV2SectionStructure('wedding-party', [
+      { id: 'side-a', type: 'title', content: '', data: { text: 'Bridal Side' } },
+      { id: 'member-a', type: 'photo', content: '', data: { title: 'Ava' } },
+      { id: 'side-b', type: 'title', content: '', data: { text: 'Groom Side', subtitle: 'old-title' } },
+      { id: 'member-b', type: 'photo', content: '', data: { title: 'Leo', subtitle: 'old-party' } },
+    ]);
+
+    expect(result.changedCount).toBe(4);
+    expect(result.blocks.map((block) => (block.data as { subtitle?: string } | undefined)?.subtitle)).toEqual([
+      'bridal-title',
+      'bridal-party',
+      'groom-title',
+      'groom-party',
     ]);
   });
 
