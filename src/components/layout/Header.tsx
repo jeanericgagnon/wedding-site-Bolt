@@ -5,6 +5,7 @@ import { Button } from '../ui';
 import { useAuth } from '../../hooks/useAuth';
 import { FIRST_SESSION_WORKSPACE_ROUTES } from '../../lib/firstSessionWorkspaceRoutes';
 import { useToast } from '../ui/Toast';
+import { mapHeaderDemoError } from './headerErrorCopy';
 
 interface HeaderProps {
   variant?: 'marketing' | 'dashboard';
@@ -37,8 +38,7 @@ export const Header: React.FC<HeaderProps> = ({ variant = 'marketing' }) => {
       await signIn();
       navigate(FIRST_SESSION_WORKSPACE_ROUTES.overview);
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Demo login failed. Please try again.';
-      toast(message, 'error');
+      toast(mapHeaderDemoError(err), 'error');
       setDemoLoading(false);
     }
   };

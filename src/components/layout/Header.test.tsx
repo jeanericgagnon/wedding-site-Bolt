@@ -76,14 +76,14 @@ describe('Header demo handoff', () => {
   });
 
   it('keeps demo login failures guest-safe and stays put', async () => {
-    signInMock.mockRejectedValue(new Error('Provider timeout'));
+    signInMock.mockRejectedValue(new Error('Supabase provider timeout with access token expired'));
 
     render(<Header />);
 
     fireEvent.click(screen.getByRole('button', { name: 'View demo' }));
 
     await waitFor(() => {
-      expect(toastMock).toHaveBeenCalledWith('Provider timeout', 'error');
+      expect(toastMock).toHaveBeenCalledWith('Couldn’t open demo mode right now. Please try again.', 'error');
     });
     expect(navigateMock).not.toHaveBeenCalled();
   });
