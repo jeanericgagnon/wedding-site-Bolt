@@ -27,6 +27,22 @@ describe('guestJourney', () => {
     );
   });
 
+  it('routes photo continuity back through the wedding site instead of implying upload access', () => {
+    const links = buildGuestJourneyLinks({
+      currentSurface: 'contact',
+      siteSlug: 'ericandkaras',
+      inviteToken: 'invite-123',
+      previewGuest: 'guest-42',
+      isHubEntry: true,
+    });
+
+    expect(links.find((link) => link.key === 'photos')).toEqual({
+      key: 'photos',
+      label: 'Photo sharing',
+      href: '/site/ericandkaras?previewGuest=guest-42&previewSurface=photos&invite_token=invite-123',
+    });
+  });
+
   it('drops links when the route does not have a site slug to carry forward', () => {
     expect(buildGuestJourneyLinks({ currentSurface: 'rsvp' })).toEqual([]);
   });

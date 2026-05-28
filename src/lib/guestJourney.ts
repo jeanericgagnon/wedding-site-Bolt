@@ -267,7 +267,7 @@ export function getGuestJourneyCopy(surface: GuestJourneySurface): GuestJourneyC
 }
 
 export function buildGuestJourneyLinks(context: GuestJourneyContext): GuestJourneyLink[] {
-  const { currentSurface, siteSlug, inviteToken, previewGuest, isHubEntry } = context;
+  const { currentSurface, siteSlug, inviteToken, previewGuest } = context;
   const normalizedSlug = siteSlug?.trim().toLowerCase() || '';
   if (!normalizedSlug) return [];
 
@@ -308,18 +308,14 @@ export function buildGuestJourneyLinks(context: GuestJourneyContext): GuestJourn
   });
 
   const photoParams = new URLSearchParams();
-  photoParams.set('site', normalizedSlug);
+  appendPreviewParams(photoParams, previewGuest, 'photos');
   if (inviteToken) {
     photoParams.set('invite_token', inviteToken);
   }
-  if (isHubEntry) {
-    photoParams.set('hub', '1');
-  }
-  appendPreviewParams(photoParams, previewGuest, 'photos');
   links.push({
     key: 'photos',
-    label: 'Upload photos',
-    href: `/photos/upload${toSearchString(photoParams)}`,
+    label: 'Photo sharing',
+    href: `/site/${normalizedSlug}${toSearchString(photoParams)}`,
   });
 
   const contactParams = new URLSearchParams();
