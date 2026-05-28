@@ -38,7 +38,7 @@ const FEATURE_AUDIT_GROUPS = [
   },
   {
     title: 'Planning tools',
-    items: ['Guest messaging', 'Planner access', 'Day-of view', 'Wedding home', 'Planning space', 'Settings + preferences'],
+    items: ['Review-before-send guest messaging', 'Planner access', 'Day-of view', 'Wedding home', 'Planning space', 'Settings + preferences'],
   },
   {
     title: 'Helpful extras',
@@ -54,7 +54,7 @@ const V1_STATUS_GROUPS = [
     items: [
       'Build a polished wedding site draft with honest privacy + access controls before sharing it with guests',
       'Run guest list, households, RSVP, meals, and event invites in one place',
-      'Handle core wedding messaging without bouncing between spreadsheets and email tools',
+      'Handle core wedding messaging with review-before-send control instead of bouncing between spreadsheets and email tools',
       'Use seating, itinerary, and coordination views to run the event week calmly',
       'Invite a planner or coordinator into a role-aware planning space',
     ],
@@ -115,8 +115,8 @@ const V1_SLICE_STATUS = [
     name: 'Comms center',
     status: 'Review before send',
     tone: 'risk',
-    done: 'Draft/schedule/history surface is there.',
-    missing: 'Texts stay locked until sender setup is complete.',
+    done: 'Drafts, scheduled sends, and message history are there with review-before-send control.',
+    missing: 'Texts stay locked until sender setup, consent, and delivery readiness are complete.',
   },
   {
     name: 'Seating',
