@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Footer, Header } from '../components/layout';
 import { useAuth } from '../hooks/useAuth';
 import { SITE_TRUST_COPY } from '../lib/siteTrustCopy';
+import { FIRST_SESSION_WORKSPACE_ROUTES } from '../lib/firstSessionWorkspaceRoutes';
 
 const TRUST_PILLARS = [
   {
@@ -116,7 +117,7 @@ export const Trust: React.FC = () => {
 
   const handleStartDraft = () => {
     if (user) {
-      navigate('/dashboard/builder');
+      navigate(FIRST_SESSION_WORKSPACE_ROUTES.builder);
       return;
     }
 
@@ -227,7 +228,7 @@ export const Trust: React.FC = () => {
                 {user ? 'Continue your site' : 'Start your draft'}
               </button>
               <Link
-                to={user ? '/dashboard/planning' : '/product'}
+                to={user ? FIRST_SESSION_WORKSPACE_ROUTES.planning : '/product'}
                 aria-label={user ? 'Open planner workspace' : 'See product tour'}
                 className="rounded-xl border border-border bg-surface px-4 py-2.5 text-sm font-medium text-text-primary transition hover:border-primary/30 hover:text-primary"
               >
@@ -282,7 +283,7 @@ export const Trust: React.FC = () => {
                 <>
                   <button
                     type="button"
-                    onClick={() => navigate('/dashboard/settings')}
+                    onClick={() => navigate(FIRST_SESSION_WORKSPACE_ROUTES.settings)}
                     aria-label="Open account settings"
                     className="rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-primary/90"
                   >
@@ -290,7 +291,7 @@ export const Trust: React.FC = () => {
                   </button>
                   <button
                     type="button"
-                    onClick={() => navigate('/dashboard/builder')}
+                    onClick={() => navigate(FIRST_SESSION_WORKSPACE_ROUTES.builder)}
                     aria-label="Open your builder"
                     className="rounded-xl border border-border bg-surface px-4 py-2.5 text-sm font-medium text-text-primary transition hover:border-primary/30 hover:text-primary"
                   >
@@ -298,7 +299,7 @@ export const Trust: React.FC = () => {
                   </button>
                   <button
                     type="button"
-                    onClick={() => navigate('/dashboard/planning')}
+                    onClick={() => navigate(FIRST_SESSION_WORKSPACE_ROUTES.planning)}
                     aria-label="Open planner workspace"
                     className="rounded-xl border border-border bg-surface px-4 py-2.5 text-sm font-medium text-text-primary transition hover:border-primary/30 hover:text-primary"
                   >
@@ -306,7 +307,7 @@ export const Trust: React.FC = () => {
                   </button>
                   <button
                     type="button"
-                    onClick={() => navigate('/dashboard/coordinator')}
+                    onClick={() => navigate(FIRST_SESSION_WORKSPACE_ROUTES.coordinator)}
                     aria-label="Open coordinator workspace"
                     className="rounded-xl border border-border bg-surface px-4 py-2.5 text-sm font-medium text-text-primary transition hover:border-primary/30 hover:text-primary"
                   >
@@ -314,7 +315,7 @@ export const Trust: React.FC = () => {
                   </button>
                   <button
                     type="button"
-                    onClick={() => navigate('/dashboard/guests')}
+                    onClick={() => navigate(FIRST_SESSION_WORKSPACE_ROUTES.guests)}
                     aria-label="Open guest list"
                     className="rounded-xl border border-border bg-surface px-4 py-2.5 text-sm font-medium text-text-primary transition hover:border-primary/30 hover:text-primary"
                   >
@@ -322,7 +323,7 @@ export const Trust: React.FC = () => {
                   </button>
                   <button
                     type="button"
-                    onClick={() => navigate('/dashboard/messages')}
+                    onClick={() => navigate(FIRST_SESSION_WORKSPACE_ROUTES.messages)}
                     aria-label="Open message drafts"
                     className="rounded-xl border border-border bg-surface px-4 py-2.5 text-sm font-medium text-text-primary transition hover:border-primary/30 hover:text-primary"
                   >
@@ -330,7 +331,7 @@ export const Trust: React.FC = () => {
                   </button>
                   <button
                     type="button"
-                    onClick={() => navigate('/dashboard/rsvp-board')}
+                    onClick={() => navigate(FIRST_SESSION_WORKSPACE_ROUTES.rsvpBoard)}
                     aria-label="Open RSVP board"
                     className="rounded-xl border border-border bg-surface px-4 py-2.5 text-sm font-medium text-text-primary transition hover:border-primary/30 hover:text-primary"
                   >
@@ -338,7 +339,7 @@ export const Trust: React.FC = () => {
                   </button>
                   <button
                     type="button"
-                    onClick={() => navigate('/dashboard/overview')}
+                    onClick={() => navigate(FIRST_SESSION_WORKSPACE_ROUTES.overview)}
                     aria-label="Open your dashboard"
                     className="rounded-xl border border-border bg-surface px-4 py-2.5 text-sm font-medium text-text-primary transition hover:border-primary/30 hover:text-primary"
                   >

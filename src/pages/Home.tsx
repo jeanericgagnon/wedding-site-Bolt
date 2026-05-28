@@ -16,6 +16,7 @@ import { HeroReveal, Reveal } from '../components/marketing/Reveal';
 import { useToast } from '../components/ui/Toast';
 import { useAuth } from '../hooks/useAuth';
 import { SITE_TRUST_COPY } from '../lib/siteTrustCopy';
+import { FIRST_SESSION_WORKSPACE_ROUTES } from '../lib/firstSessionWorkspaceRoutes';
 import { DEMO_MODE } from '../config/env';
 
 const asset = (path: string) => `${import.meta.env.BASE_URL}${path}`;
@@ -35,21 +36,21 @@ const operatingSystemRows = [
     body: 'Guests get a beautiful place for the details, not a dead page that stops helping after publish.',
     image: asset('template-previews/modern-luxe.webp'),
     imageAlt: 'Modern wedding website template preview',
-    hrefs: { signedOut: '/templates', signedIn: '/dashboard/builder' },
+    hrefs: { signedOut: '/templates', signedIn: FIRST_SESSION_WORKSPACE_ROUTES.builder },
   },
   {
     title: 'The guest list becomes the source of truth',
     body: 'RSVPs, households, meal notes, reminders, and seating all stay attached to the same people.',
     image: asset('template-previews/full-featured-modern.webp'),
     imageAlt: 'dayof product dashboard preview',
-    hrefs: { signedOut: '/features/guests', signedIn: '/dashboard/guests' },
+    hrefs: { signedOut: '/features/guests', signedIn: FIRST_SESSION_WORKSPACE_ROUTES.guests },
   },
   {
     title: 'The day-of handoff is part of the product',
     body: 'Coordinator context, photo collection, updates, and after-wedding tasks do not fall into a separate pile.',
     image: asset('template-previews/immersive-experience.webp'),
     imageAlt: 'Wedding memory and planning detail',
-    hrefs: { signedOut: '/product', signedIn: '/dashboard/planning' },
+    hrefs: { signedOut: '/product', signedIn: FIRST_SESSION_WORKSPACE_ROUTES.planning },
   },
 ] as const;
 
@@ -58,49 +59,49 @@ const featureLinks = [
     title: 'Guests + households',
     icon: Users,
     bullets: ['Imports', 'Households', 'Plus-one rules', 'Planner-safe exports'],
-    hrefs: { signedOut: '/features/guests', signedIn: '/dashboard/guests' },
+    hrefs: { signedOut: '/features/guests', signedIn: FIRST_SESSION_WORKSPACE_ROUTES.guests },
   },
   {
     title: 'RSVP engine',
     icon: CheckCircle2,
     bullets: ['Private links', 'Event-level replies', 'Meal choices', 'Deadline clarity'],
-    hrefs: { signedOut: '/features/rsvp', signedIn: '/dashboard/rsvp-board' },
+    hrefs: { signedOut: '/features/rsvp', signedIn: FIRST_SESSION_WORKSPACE_ROUTES.rsvpBoard },
   },
   {
     title: 'Messaging',
     icon: Mail,
     bullets: ['Guest segments', 'Drafts', 'Scheduled updates', SITE_TRUST_COPY.reviewBeforeSendMessaging],
-    hrefs: { signedOut: '/features/messaging', signedIn: '/dashboard/messages' },
+    hrefs: { signedOut: '/features/messaging', signedIn: FIRST_SESSION_WORKSPACE_ROUTES.messages },
   },
   {
     title: 'Travel + itinerary',
     icon: Calendar,
     bullets: ['Weekend schedule', 'Travel notes', 'Venue details', 'Guest-safe directions'],
-    hrefs: { signedOut: '/features/travel', signedIn: '/dashboard/itinerary' },
+    hrefs: { signedOut: '/features/travel', signedIn: FIRST_SESSION_WORKSPACE_ROUTES.itinerary },
   },
   {
     title: 'Registry',
     icon: Heart,
     bullets: ['Gift links', 'Funds', 'Thank-you notes', 'Clean public view'],
-    hrefs: { signedOut: '/features/registry', signedIn: '/dashboard/registry' },
+    hrefs: { signedOut: '/features/registry', signedIn: FIRST_SESSION_WORKSPACE_ROUTES.registry },
   },
   {
     title: 'Seating',
     icon: Users,
     bullets: ['Per-event layouts', 'Seat lookup', 'Catering exports', 'Check-in context'],
-    hrefs: { signedOut: '/features/seating', signedIn: '/dashboard/seating' },
+    hrefs: { signedOut: '/features/seating', signedIn: FIRST_SESSION_WORKSPACE_ROUTES.seating },
   },
   {
     title: 'Photo flow',
     icon: Camera,
     bullets: ['No-app uploads', 'Guestbook', 'Recap path', 'Album organization'],
-    hrefs: { signedOut: '/product', signedIn: '/dashboard/photos' },
+    hrefs: { signedOut: '/product', signedIn: FIRST_SESSION_WORKSPACE_ROUTES.photos },
   },
   {
     title: 'Day-of view',
     icon: Radio,
     bullets: ['Coordinator mode', 'Guest lookup', 'Timeline focus', 'Issue follow-up'],
-    hrefs: { signedOut: '/product', signedIn: '/dashboard/coordinator' },
+    hrefs: { signedOut: '/product', signedIn: FIRST_SESSION_WORKSPACE_ROUTES.coordinator },
   },
 ] as const;
 
@@ -134,7 +135,7 @@ export const Home: React.FC = () => {
 
   const handleSignUp = () => {
     if (user) {
-      navigate('/dashboard/builder');
+      navigate(FIRST_SESSION_WORKSPACE_ROUTES.builder);
       return;
     }
     navigate('/signup');
@@ -143,14 +144,14 @@ export const Home: React.FC = () => {
   const handleDemoLogin = async () => {
     if (demoLoading) return;
     if (user) {
-      navigate('/dashboard/overview');
+      navigate(FIRST_SESSION_WORKSPACE_ROUTES.overview);
       return;
     }
 
     setDemoLoading(true);
     try {
       await signIn();
-      navigate('/dashboard/overview');
+      navigate(FIRST_SESSION_WORKSPACE_ROUTES.overview);
     } catch {
       toast('Couldn’t open the demo right now. Please try again.', 'error');
       setDemoLoading(false);
@@ -499,29 +500,29 @@ export const Home: React.FC = () => {
                   <p className="text-sm font-medium text-brand">Already started?</p>
                   <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
                     <Link
-                      to="/dashboard/builder"
-                      onClick={() => navigate('/dashboard/builder')}
+                      to={FIRST_SESSION_WORKSPACE_ROUTES.builder}
+                      onClick={() => navigate(FIRST_SESSION_WORKSPACE_ROUTES.builder)}
                       aria-label="Open your builder"
                       className="inline-flex min-h-[48px] items-center justify-center rounded-xl border border-border px-5 py-3 text-sm font-semibold text-ink"
                     >
                       Edit your site
                     </Link>
                     <Link
-                      to="/dashboard/planning"
+                      to={FIRST_SESSION_WORKSPACE_ROUTES.planning}
                       aria-label="Open planner workspace"
                       className="inline-flex min-h-[48px] items-center justify-center rounded-xl border border-border px-5 py-3 text-sm font-semibold text-ink"
                     >
                       Continue planning
                     </Link>
                     <button
-                      onClick={() => navigate('/dashboard/guests')}
+                      onClick={() => navigate(FIRST_SESSION_WORKSPACE_ROUTES.guests)}
                       aria-label="Open your guest list"
                       className="inline-flex min-h-[48px] items-center justify-center rounded-xl border border-border px-5 py-3 text-sm font-semibold text-ink"
                     >
                       Manage guests
                     </button>
                     <button
-                      onClick={() => navigate('/dashboard/messages')}
+                      onClick={() => navigate(FIRST_SESSION_WORKSPACE_ROUTES.messages)}
                       aria-label="Open message drafts"
                       className="inline-flex min-h-[48px] items-center justify-center rounded-xl border border-border px-5 py-3 text-sm font-semibold text-ink"
                     >

@@ -10,13 +10,14 @@ import { clearAuthEntryReturnPath } from '../lib/authEntryCleanup';
 import { resolveLoginReturnPath } from '../lib/loginReturnResolver';
 import { normalizeMeaningfulQuickStartDraftSnapshot, persistQuickStartDraftSnapshot } from '../lib/quickStartStateTransfer';
 import { buildCollaboratorInviteAuthSearch, readCollaboratorInviteAuthParams } from '../lib/collaboratorInviteAuthParams';
+import { FIRST_SESSION_WORKSPACE_ROUTES } from '../lib/firstSessionWorkspaceRoutes';
 
 type AuthView = 'login' | 'forgot-password' | 'forgot-sent';
 
 const ADMIN_ERROR_LOG_EMAIL = 'admin@dayof.love';
 
 const getPostLoginRoute = (email: string | null | undefined): string =>
-  (email || '').toLowerCase() === ADMIN_ERROR_LOG_EMAIL ? '/admin/errors' : '/dashboard/overview';
+  (email || '').toLowerCase() === ADMIN_ERROR_LOG_EMAIL ? '/admin/errors' : FIRST_SESSION_WORKSPACE_ROUTES.overview;
 
 export const Login: React.FC = () => {
   const navigate = useNavigate();

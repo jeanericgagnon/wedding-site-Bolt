@@ -1,0 +1,14 @@
+export const FIRST_SESSION_WORKSPACE_ROUTES = {
+  builder: '/dashboard/builder',
+  coordinator: '/dashboard/coordinator',
+  guests: '/dashboard/guests',
+  itinerary: '/dashboard/itinerary',
+  messages: '/dashboard/messages',
+  overview: '/dashboard/overview',
+  photos: '/dashboard/photos',
+  planning: '/dashboard/planning',
+  registry: '/dashboard/registry',
+  rsvpBoard: '/dashboard/rsvp-board',
+  seating: '/dashboard/seating',
+  settings: '/dashboard/settings',
+} as const;

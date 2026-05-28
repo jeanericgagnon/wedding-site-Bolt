@@ -4,6 +4,7 @@ import { Header, Footer } from '../components/layout';
 import { useAuth } from '../hooks/useAuth';
 import { useToast } from '../components/ui/Toast';
 import { SITE_TRUST_COPY } from '../lib/siteTrustCopy';
+import { FIRST_SESSION_WORKSPACE_ROUTES } from '../lib/firstSessionWorkspaceRoutes';
 import { DEMO_MODE } from '../config/env';
 import { ArrowRight, Calendar, CheckCircle2, Mail, Shield, Users, Wallet } from 'lucide-react';
 import { SlideReveal } from '../components/marketing/Reveal';
@@ -155,7 +156,7 @@ export const Product: React.FC = () => {
 
   const handleSignUp = () => {
     if (user) {
-      navigate('/dashboard/builder');
+      navigate(FIRST_SESSION_WORKSPACE_ROUTES.builder);
       return;
     }
 
@@ -164,7 +165,7 @@ export const Product: React.FC = () => {
 
   const handleLaunchStepReview = () => {
     if (user) {
-      navigate('/dashboard/builder');
+      navigate(FIRST_SESSION_WORKSPACE_ROUTES.builder);
       return;
     }
 
@@ -177,7 +178,7 @@ export const Product: React.FC = () => {
     try {
       await signIn();
       await new Promise((resolve) => setTimeout(resolve, 0));
-      navigate('/dashboard/overview', { replace: true });
+      navigate(FIRST_SESSION_WORKSPACE_ROUTES.overview, { replace: true });
     } catch {
       toast('Couldn’t open the demo right now. Please try again.', 'error');
       setDemoLoading(false);
@@ -241,7 +242,7 @@ export const Product: React.FC = () => {
         <p className="text-sm text-ink/70">Keep guests synced with review-before-send drafts instead of duct tape.</p>
         <div className="flex flex-wrap gap-2">
           <button
-            onClick={user ? () => navigate('/dashboard/planning') : handleSignUp}
+            onClick={user ? () => navigate(FIRST_SESSION_WORKSPACE_ROUTES.planning) : handleSignUp}
             aria-label={user ? 'Open planner workspace' : 'Start your draft'}
             className="px-4 py-2 rounded-xl border border-brand/40 hover:bg-brand/5"
           >
@@ -249,7 +250,7 @@ export const Product: React.FC = () => {
           </button>
           {user && (
             <button
-              onClick={() => navigate('/dashboard/settings')}
+              onClick={() => navigate(FIRST_SESSION_WORKSPACE_ROUTES.settings)}
               aria-label="Open collaboration settings"
               className="px-4 py-2 rounded-xl border border-brand/40 hover:bg-brand/5"
             >
@@ -271,7 +272,7 @@ export const Product: React.FC = () => {
           <p className="font-medium">{user ? 'Ready to keep shaping your wedding?' : 'Want to see the full flow in action?'}</p>
           {user ? (
             <button
-              onClick={() => navigate('/dashboard/builder')}
+              onClick={() => navigate(FIRST_SESSION_WORKSPACE_ROUTES.builder)}
               aria-label="Open your builder"
               className="px-4 py-1.5 rounded-xl bg-white text-brand font-semibold hover:bg-white/90"
             >
@@ -327,7 +328,7 @@ export const Product: React.FC = () => {
               <div className="flex flex-wrap gap-3">
                 <button onClick={handleSignUp} className="px-5 py-2.5 bg-brand text-paper rounded-xl font-semibold">{user ? 'Continue your site' : 'Start your draft'}</button>
                 {user ? (
-                  <button onClick={() => navigate('/dashboard/builder')} className="group px-5 py-2.5 border-2 border-brand text-brand rounded-xl font-semibold inline-flex items-center gap-2">
+                  <button onClick={() => navigate(FIRST_SESSION_WORKSPACE_ROUTES.builder)} className="group px-5 py-2.5 border-2 border-brand text-brand rounded-xl font-semibold inline-flex items-center gap-2">
                     Edit your site
                     <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
                   </button>
@@ -408,7 +409,7 @@ export const Product: React.FC = () => {
                 <>
                   <button
                     type="button"
-                    onClick={() => navigate('/dashboard/settings')}
+                    onClick={() => navigate(FIRST_SESSION_WORKSPACE_ROUTES.settings)}
                     aria-label="Open collaboration settings"
                     className="rounded-xl bg-brand px-4 py-2.5 text-sm font-semibold text-paper transition hover:bg-brand/90"
                   >
@@ -416,7 +417,7 @@ export const Product: React.FC = () => {
                   </button>
                   <button
                     type="button"
-                    onClick={() => navigate('/dashboard/planning')}
+                    onClick={() => navigate(FIRST_SESSION_WORKSPACE_ROUTES.planning)}
                     aria-label="Open planner workspace"
                     className="rounded-xl border border-border bg-white px-4 py-2.5 text-sm font-medium text-ink transition hover:border-brand/30 hover:text-brand"
                   >
@@ -424,7 +425,7 @@ export const Product: React.FC = () => {
                   </button>
                   <button
                     type="button"
-                    onClick={() => navigate('/dashboard/coordinator')}
+                    onClick={() => navigate(FIRST_SESSION_WORKSPACE_ROUTES.coordinator)}
                     aria-label="Open coordinator workspace"
                     className="rounded-xl border border-border bg-white px-4 py-2.5 text-sm font-medium text-ink transition hover:border-brand/30 hover:text-brand"
                   >
@@ -569,19 +570,19 @@ export const Product: React.FC = () => {
             <button onClick={handleSignUp} aria-label={user ? 'Review your draft' : 'Start your draft'} className="w-full sm:w-auto px-7 py-3.5 bg-brand text-paper font-semibold rounded-xl hover:bg-brand/90 transition-all">{user ? 'Continue your site' : 'Start your draft'}</button>
             {user ? (
               <>
-                <button onClick={() => navigate('/dashboard/builder')} aria-label="Open your builder" className="group w-full sm:w-auto px-7 py-3.5 border-2 border-brand text-brand font-semibold rounded-xl hover:bg-brand/5 transition-all inline-flex items-center justify-center gap-2">
+                <button onClick={() => navigate(FIRST_SESSION_WORKSPACE_ROUTES.builder)} aria-label="Open your builder" className="group w-full sm:w-auto px-7 py-3.5 border-2 border-brand text-brand font-semibold rounded-xl hover:bg-brand/5 transition-all inline-flex items-center justify-center gap-2">
                   Edit your site
                   <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
                 </button>
-                <button onClick={() => navigate('/dashboard/guests')} aria-label="Open guest list" className="group w-full sm:w-auto px-7 py-3.5 border-2 border-brand text-brand font-semibold rounded-xl hover:bg-brand/5 transition-all inline-flex items-center justify-center gap-2">
+                <button onClick={() => navigate(FIRST_SESSION_WORKSPACE_ROUTES.guests)} aria-label="Open guest list" className="group w-full sm:w-auto px-7 py-3.5 border-2 border-brand text-brand font-semibold rounded-xl hover:bg-brand/5 transition-all inline-flex items-center justify-center gap-2">
                   Manage guests
                   <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
                 </button>
-                <button onClick={() => navigate('/dashboard/messages')} aria-label="Open message drafts" className="group w-full sm:w-auto px-7 py-3.5 border-2 border-brand text-brand font-semibold rounded-xl hover:bg-brand/5 transition-all inline-flex items-center justify-center gap-2">
+                <button onClick={() => navigate(FIRST_SESSION_WORKSPACE_ROUTES.messages)} aria-label="Open message drafts" className="group w-full sm:w-auto px-7 py-3.5 border-2 border-brand text-brand font-semibold rounded-xl hover:bg-brand/5 transition-all inline-flex items-center justify-center gap-2">
                   Guest messages
                   <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
                 </button>
-                <button onClick={() => navigate('/dashboard/rsvp-board')} aria-label="Open RSVP board" className="group w-full sm:w-auto px-7 py-3.5 border-2 border-brand text-brand font-semibold rounded-xl hover:bg-brand/5 transition-all inline-flex items-center justify-center gap-2">
+                <button onClick={() => navigate(FIRST_SESSION_WORKSPACE_ROUTES.rsvpBoard)} aria-label="Open RSVP board" className="group w-full sm:w-auto px-7 py-3.5 border-2 border-brand text-brand font-semibold rounded-xl hover:bg-brand/5 transition-all inline-flex items-center justify-center gap-2">
                   Open RSVP board
                   <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
                 </button>
@@ -595,7 +596,7 @@ export const Product: React.FC = () => {
           </div>
           <p className="text-sm text-ink/65">
             Or{' '}
-            <Link to={user ? '/dashboard/builder' : '/templates'} className="text-brand font-semibold hover:underline">
+            <Link to={user ? FIRST_SESSION_WORKSPACE_ROUTES.builder : '/templates'} className="text-brand font-semibold hover:underline">
               {user ? 'edit your site' : 'browse templates'}
             </Link>
           </p>
