@@ -15,6 +15,16 @@ import type { WeddingDataV1 } from '../../types/weddingData';
 import { combineDateAndTimeISO } from './itineraryDateTime';
 import { formatItineraryEventDate, toValidItineraryEventDateOrNull } from './itineraryEventDate';
 import { buildItineraryReadiness } from './itineraryReadiness';
+import {
+  ITINERARY_DELETE_RETRY_ERROR,
+  ITINERARY_GUEST_LIST_RETRY_ERROR,
+  ITINERARY_INVITE_ALL_RETRY_ERROR,
+  ITINERARY_INVITE_UPDATE_RETRY_ERROR,
+  ITINERARY_LOAD_RETRY_ERROR,
+  ITINERARY_REMOVE_ALL_RETRY_ERROR,
+  ITINERARY_SAVE_RETRY_ERROR,
+  mapItineraryError,
+} from './itineraryErrorCopy';
 import { getFlowStatusLabel } from '../../lib/flowLabels';
 
 interface ItineraryEvent {
@@ -316,9 +326,9 @@ export const DashboardItinerary: React.FC = () => {
       );
 
       setEvents(eventsWithCounts);
-    } catch {
+    } catch (error) {
       setEvents([]);
-      alert('Failed to load itinerary events. Please try again.');
+      alert(mapItineraryError(error, ITINERARY_LOAD_RETRY_ERROR));
     } finally {
       setLoading(false);
     }
@@ -513,9 +523,8 @@ export const DashboardItinerary: React.FC = () => {
       setShowEventForm(false);
       setSaveNotice(editingEvent ? 'Event updated.' : 'Event created.');
       loadEvents();
-    } catch (err: unknown) {
-      const message = (err as { message?: string })?.message || 'Failed to save event. Please try again.';
-      setSaveError(message);
+    } catch (error) {
+      setSaveError(mapItineraryError(error, ITINERARY_SAVE_RETRY_ERROR));
     } finally {
       setIsSavingEvent(false);
     }
@@ -537,8 +546,8 @@ export const DashboardItinerary: React.FC = () => {
       if (error) throw error;
 
       loadEvents();
-    } catch {
-      alert('Failed to delete event. Please try again.');
+    } catch (error) {
+      alert(mapItineraryError(error, ITINERARY_DELETE_RETRY_ERROR));
     }
   }
 
@@ -1051,10 +1060,10 @@ function EventGuestManager({ eventId, onClose, onUpdate }: EventGuestManagerProp
 
       setAllGuests(guests || []);
       setInvitedGuestIds(new Set(invitations?.map((i) => i.guest_id) || []));
-    } catch {
+    } catch (error) {
       setAllGuests([]);
       setInvitedGuestIds(new Set());
-      alert('Failed to load event guest list. Please try again.');
+      alert(mapItineraryError(error, ITINERARY_GUEST_LIST_RETRY_ERROR));
     } finally {
       setLoading(false);
     }
@@ -1107,8 +1116,8 @@ function EventGuestManager({ eventId, onClose, onUpdate }: EventGuestManagerProp
       }
 
       onUpdate();
-    } catch {
-      alert('Failed to update invitation. Please try again.');
+    } catch (error) {
+      alert(mapItineraryError(error, ITINERARY_INVITE_UPDATE_RETRY_ERROR));
     }
   }
 
@@ -1126,8 +1135,8 @@ function EventGuestManager({ eventId, onClose, onUpdate }: EventGuestManagerProp
 
       setInvitedGuestIds(new Set(allGuests.map(g => g.id)));
       onUpdate();
-    } catch {
-      alert('Failed to invite all guests. Please try again.');
+    } catch (error) {
+      alert(mapItineraryError(error, ITINERARY_INVITE_ALL_RETRY_ERROR));
     } finally {
       setBulkLoading(false);
     }
@@ -1162,8 +1171,8 @@ function EventGuestManager({ eventId, onClose, onUpdate }: EventGuestManagerProp
 
       setInvitedGuestIds(new Set());
       onUpdate();
-    } catch {
-      alert('Failed to remove all guests. Please try again.');
+    } catch (error) {
+      alert(mapItineraryError(error, ITINERARY_REMOVE_ALL_RETRY_ERROR));
     } finally {
       setBulkLoading(false);
     }
