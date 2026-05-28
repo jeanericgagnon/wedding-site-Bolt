@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { getIsPublishedFromSiteRow, getPublicBuilderProject, getPublicBuilderV2Document, getPublicWeddingData } from './publicSiteProject';
+import { collectPublicLeakValuePaths } from './publicSiteBoundary';
 
 const draftProject = {
   id: 'draft',
@@ -122,6 +123,97 @@ describe('publicSiteProject', () => {
     };
 
     expect(getPublicBuilderV2Document(row)?.pages?.[0]?.slug).toBe('home');
+  });
+
+  it('strips internal boundary fields from public builder projects', () => {
+    const row = {
+      is_published: true,
+      published_json: {
+        ...publishedProject,
+        pages: [{
+          ...publishedProject.pages[0],
+          sections: [{
+            ...publishedProject.pages[0].sections[0],
+            settings: {
+              headline: 'Published headline',
+              heroImage: 'https://xyz.supabase.co/storage/v1/object/sign/site-media/foo.jpg?token=abc',
+              provider: 'openai',
+              bucket: 'site-media',
+              command: 'publish-now',
+              debugInfo: 'trace-id-1',
+            },
+            meta: {
+              inviteToken: 'private-link-token',
+              internalNotes: 'keep this off the guest site',
+            },
+          }],
+        }],
+      },
+    };
+
+    const project = getPublicBuilderProject(row);
+    expect(project?.pages[0].sections[0].settings.headline).toBe('Published headline');
+    expect(project?.pages[0].sections[0].settings.heroImage).toBe(
+      'https://xyz.supabase.co/storage/v1/object/public/site-media/foo.jpg',
+    );
+    expect(project?.pages[0].sections[0].settings).not.toHaveProperty('provider');
+    expect(project?.pages[0].sections[0].settings).not.toHaveProperty('bucket');
+    expect(project?.pages[0].sections[0].settings).not.toHaveProperty('command');
+    expect(project?.pages[0].sections[0].settings).not.toHaveProperty('debugInfo');
+    expect(project?.pages[0].sections[0].meta).not.toHaveProperty('inviteToken');
+    expect(project?.pages[0].sections[0].meta).not.toHaveProperty('internalNotes');
+    expect(collectPublicLeakValuePaths(project)).toEqual([]);
+  });
+
+  it('strips internal boundary fields from public builder v2 documents', () => {
+    const row = {
+      is_published: true,
+      published_json: {
+        version: 'v2',
+        updatedAtISO: '2026-05-27T22:30:00.000Z',
+        pages: [
+          {
+            id: 'home',
+            title: 'Home',
+            slug: 'home',
+            isHome: true,
+            hidden: false,
+            sections: [
+              {
+                id: 'hero-1',
+                type: 'hero',
+                variant: 'default',
+                enabled: true,
+                title: 'Published',
+                subtitle: 'Weekend',
+                provider: 'openai',
+                bucket: 'site-media',
+                blocks: [
+                  {
+                    id: 'photo-1',
+                    type: 'photo',
+                    data: {
+                      imageUrl: 'https://xyz.supabase.co/storage/v1/object/sign/site-media/bar.jpg?token=abc',
+                      debugInfo: 'trace-id-2',
+                    },
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    };
+
+    const document = getPublicBuilderV2Document(row) as unknown as Record<string, unknown>;
+    const section = ((document.pages as Array<Record<string, unknown>>)[0].sections as Array<Record<string, unknown>>)[0];
+    const blockData = ((((section.blocks as Array<Record<string, unknown>>)[0]).data) as Record<string, unknown>);
+
+    expect(section).not.toHaveProperty('provider');
+    expect(section).not.toHaveProperty('bucket');
+    expect(blockData.imageUrl).toBe('https://xyz.supabase.co/storage/v1/object/public/site-media/bar.jpg');
+    expect(blockData).not.toHaveProperty('debugInfo');
+    expect(collectPublicLeakValuePaths(document)).toEqual([]);
   });
 
   it('recognizes published state from published_json metadata even without is_published', () => {
@@ -646,5 +738,36 @@ describe('publicSiteProject', () => {
     };
 
     expect(getPublicWeddingData(row)).toEqual({});
+  });
+
+  it('strips internal boundary fields from public wedding data snapshots', () => {
+    const row = {
+      is_published: true,
+      published_json: {
+        ...publishedProject,
+        weddingDataSnapshot: {
+          ...publishedWeddingData,
+          media: {
+            gallery: [],
+            heroImageUrl: 'https://xyz.supabase.co/storage/v1/object/sign/site-media/bar.jpg?token=abc',
+          },
+          provider: 'openai',
+          debugInfo: 'trace-id-3',
+          internalNotes: 'private ops note',
+          accessToken: 'session-secret',
+        },
+      },
+    };
+
+    const data = getPublicWeddingData(row) as unknown as Record<string, unknown>;
+
+    expect((data.media as Record<string, unknown>).heroImageUrl).toBe(
+      'https://xyz.supabase.co/storage/v1/object/public/site-media/bar.jpg',
+    );
+    expect(data).not.toHaveProperty('provider');
+    expect(data).not.toHaveProperty('debugInfo');
+    expect(data).not.toHaveProperty('internalNotes');
+    expect(data).not.toHaveProperty('accessToken');
+    expect(collectPublicLeakValuePaths(data)).toEqual([]);
   });
 });

@@ -6,6 +6,7 @@ import { builderV2DocumentToBuilderProject, looksLikeBuilderProject, looksLikeBu
 import { buildCoupleDisplayName } from './coupleDisplayName';
 import { safeJsonParse } from './jsonUtils';
 import { rewriteSignedMediaUrlsToPublicDeep } from './mediaUrl';
+import { stripPublicInternalFieldsDeep } from './publicSiteBoundary';
 
 const asRecord = (value: unknown): Record<string, unknown> | null => {
   if (value && typeof value === 'object') return value as Record<string, unknown>;
@@ -171,16 +172,16 @@ export const getPublicBuilderProject = (row: Record<string, unknown>): BuilderPr
   const mergedProject = mergePublishedProjectWithFallback(preferredProject, fallbackProject);
 
   if (mergedProject && getProjectPages(mergedProject).length > 0) {
-    return rewriteSignedMediaUrlsToPublicDeep(mergedProject);
+    return stripPublicInternalFieldsDeep(rewriteSignedMediaUrlsToPublicDeep(mergedProject));
   }
 
   if (preferredSource !== row.site_json) {
     if (fallbackProject && getProjectPages(fallbackProject).length > 0) {
-      return rewriteSignedMediaUrlsToPublicDeep(fallbackProject);
+      return stripPublicInternalFieldsDeep(rewriteSignedMediaUrlsToPublicDeep(fallbackProject));
     }
   }
 
-  return preferredProject ? rewriteSignedMediaUrlsToPublicDeep(preferredProject) : null;
+  return preferredProject ? stripPublicInternalFieldsDeep(rewriteSignedMediaUrlsToPublicDeep(preferredProject)) : null;
 };
 
 export const getPublicBuilderV2Document = (row: Record<string, unknown>): BuilderV2Document | null => {
@@ -188,10 +189,10 @@ export const getPublicBuilderV2Document = (row: Record<string, unknown>): Builde
   const preferredSource = isPublished ? (row.published_json ?? row.site_json) : row.site_json;
   const preferredDoc = toPublicBuilderV2Document(preferredSource);
 
-  if (preferredDoc) return rewriteSignedMediaUrlsToPublicDeep(preferredDoc);
+  if (preferredDoc) return stripPublicInternalFieldsDeep(rewriteSignedMediaUrlsToPublicDeep(preferredDoc));
   if (preferredSource !== row.site_json) {
     const fallbackDoc = toPublicBuilderV2Document(row.site_json);
-    if (fallbackDoc) return rewriteSignedMediaUrlsToPublicDeep(fallbackDoc);
+    if (fallbackDoc) return stripPublicInternalFieldsDeep(rewriteSignedMediaUrlsToPublicDeep(fallbackDoc));
   }
 
   return null;
@@ -214,7 +215,7 @@ export const getPublicWeddingData = (row: Record<string, unknown>): WeddingDataV
   for (const candidate of candidates) {
     const parsed = safeJsonParse<WeddingDataV1 | null>(candidate, null);
     if (parsed) {
-      return rewriteSignedMediaUrlsToPublicDeep(withTruthfulCoupleDisplayName(parsed));
+      return stripPublicInternalFieldsDeep(rewriteSignedMediaUrlsToPublicDeep(withTruthfulCoupleDisplayName(parsed)));
     }
   }
 
