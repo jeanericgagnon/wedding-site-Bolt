@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { CheckCircle, Loader2 } from 'lucide-react';
 import { SectionDefinition, SectionComponentProps } from '../../types';
 import { supabase } from '../../../lib/supabase';
+import { mapEventRsvpSubmitError } from '../../../pages/guestRsvpCopy';
 
 const RsvpEventSchema = z.object({
   id: z.string(),
@@ -92,9 +93,9 @@ const RsvpMultiEvent: React.FC<SectionComponentProps<RsvpMultiEventData>> = ({ d
       if (error) throw error;
 
       setStatus('success');
-    } catch {
+    } catch (error) {
       setStatus('error');
-      setErrorMsg('Something went wrong. Please try again or contact us directly.');
+      setErrorMsg(mapEventRsvpSubmitError(error));
     }
   };
 

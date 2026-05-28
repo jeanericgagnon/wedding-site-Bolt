@@ -1,12 +1,20 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { RsvpInline, RsvpSection } from './RsvpSection';
 import type { SectionInstance } from '../../types/layoutConfig';
 import type { WeddingDataV1 } from '../../types/weddingData';
 
+const { fromMock, maybeSingleMock, insertMock } = vi.hoisted(() => ({
+  fromMock: vi.fn(),
+  maybeSingleMock: vi.fn(),
+  insertMock: vi.fn(),
+}));
+
 vi.mock('../../lib/supabase', () => ({
-  supabase: {},
+  supabase: {
+    from: fromMock,
+  },
 }));
 
 function createWeddingData(): WeddingDataV1 {
@@ -37,6 +45,28 @@ function makeInstance(settings: SectionInstance['settings']): SectionInstance {
 }
 
 describe('RsvpSection', () => {
+  beforeEach(() => {
+    fromMock.mockImplementation((table: string) => {
+      if (table === 'wedding_sites') {
+        return {
+          select: () => ({
+            eq: () => ({
+              maybeSingle: maybeSingleMock,
+            }),
+          }),
+        };
+      }
+      if (table === 'site_rsvps') {
+        return {
+          insert: insertMock,
+        };
+      }
+      throw new Error(`Unexpected table ${table}`);
+    });
+    maybeSingleMock.mockReset();
+    insertMock.mockReset();
+    window.history.replaceState({}, '', '/site/alex-jordan');
+  });
   it('shows default RSVP titles when showTitle is unset in both variants', () => {
     const data = createWeddingData();
 
@@ -100,5 +130,24 @@ describe('RsvpSection', () => {
 
     expect(screen.queryByText('Invalid Date')).not.toBeInTheDocument();
     expect(screen.queryByText(/Kindly respond by/)).not.toBeInTheDocument();
+  });
+
+  it('shows guest-safe submit copy when section RSVP save fails', async () => {
+    const data = createWeddingData();
+    maybeSingleMock.mockResolvedValue({ data: { id: 'site-1' } });
+    insertMock.mockResolvedValue({ error: { message: 'provider timeout token=abc' } });
+
+    render(
+      <RsvpSection
+        data={data}
+        instance={makeInstance({})}
+      />,
+    );
+
+    fireEvent.change(screen.getByPlaceholderText('Your name'), { target: { value: 'Taylor Guest' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Send RSVP' }));
+
+    expect(await screen.findByText('Could not save your RSVP right now. Please try again.')).toBeInTheDocument();
+    expect(screen.queryByText('Something went wrong. Please try again.')).not.toBeInTheDocument();
   });
 });

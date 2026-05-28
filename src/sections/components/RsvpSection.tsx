@@ -5,6 +5,7 @@ import { Calendar } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { readBuilderValue } from '../../lib/weddingProfile';
 import { buildCoupleDisplayName } from '../../lib/coupleDisplayName';
+import { mapRsvpSubmitError } from '../../pages/guestRsvpCopy';
 
 interface Props {
   data: WeddingDataV1;
@@ -71,13 +72,13 @@ function RsvpForm({ onSuccess, dark }: { onSuccess: (attending: boolean) => void
         dietary_notes: form.dietaryNotes || null,
       });
       if (insertError) {
-        setError('Something went wrong. Please try again.');
+        setError(mapRsvpSubmitError(insertError));
         setSubmitting(false);
         return;
       }
       onSuccess(form.attending === 'attending');
-    } catch {
-      setError('Something went wrong. Please try again.');
+    } catch (error) {
+      setError(mapRsvpSubmitError(error));
       setSubmitting(false);
     }
   }
