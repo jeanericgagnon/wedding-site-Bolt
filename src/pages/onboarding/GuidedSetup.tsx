@@ -12,7 +12,11 @@ import { clearAllOnboardingContinuationState } from '../../lib/onboardingContinu
 import * as XLSX from 'xlsx';
 import { resolvePrimaryWeddingSiteId } from '../../lib/guidedSetupSiteResolver';
 import { clearOnboardingEntryReturnPath } from '../../lib/onboardingEntryCleanup';
-import { buildGuidedSetupHydrationErrorMessage, buildGuidedSetupSaveErrorMessage } from '../../lib/guidedSetupErrorCopy';
+import {
+  buildGuidedSetupGuestImportErrorMessage,
+  buildGuidedSetupHydrationErrorMessage,
+  buildGuidedSetupSaveErrorMessage,
+} from '../../lib/guidedSetupErrorCopy';
 import { FIRST_SESSION_WORKSPACE_ROUTES } from '../../lib/firstSessionWorkspaceRoutes';
 
 type Step =
@@ -511,7 +515,7 @@ export const GuidedSetup: React.FC = () => {
 
       setCsvImportResult({ created, updated, invalid });
     } catch (err: unknown) {
-      setCsvError((err as Error).message || 'Failed to import guest file');
+      setCsvError(buildGuidedSetupGuestImportErrorMessage(err));
     } finally {
       setCsvImporting(false);
       if (e.target) e.target.value = '';

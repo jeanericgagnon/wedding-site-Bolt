@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import {
+  buildGuidedSetupGuestImportErrorMessage,
   buildGuidedSetupHydrationErrorMessage,
   buildGuidedSetupSaveErrorMessage,
+  GUIDED_SETUP_GUEST_IMPORT_RETRY_ERROR,
   GUIDED_SETUP_HYDRATION_RETRY_ERROR,
   GUIDED_SETUP_SAVE_RETRY_ERROR,
 } from './guidedSetupErrorCopy';
@@ -27,5 +29,17 @@ describe('guidedSetupErrorCopy', () => {
     expect(buildGuidedSetupSaveErrorMessage('')).toBe(
       `${GUIDED_SETUP_SAVE_RETRY_ERROR} Your progress is still saved on this device, so you can keep going or retry.`,
     );
+  });
+
+  it('keeps safe guest import fallback copy for noisy internal errors', () => {
+    expect(
+      buildGuidedSetupGuestImportErrorMessage(new Error('supabase provider timeout token=abc123 during guest import')),
+    ).toBe(GUIDED_SETUP_GUEST_IMPORT_RETRY_ERROR);
+  });
+
+  it('preserves clear guest-file guidance for safe validation errors', () => {
+    expect(
+      buildGuidedSetupGuestImportErrorMessage(new Error('Spreadsheet has no sheets.')),
+    ).toBe('Spreadsheet has no sheets.');
   });
 });

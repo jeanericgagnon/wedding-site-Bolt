@@ -65,6 +65,7 @@ vi.mock('../../lib/guidedSetupSiteResolver', () => ({ resolvePrimaryWeddingSiteI
 vi.mock('../../lib/signupContinuation', () => ({ writeSignupReturnPath: vi.fn() }));
 vi.mock('../../lib/onboardingEntryCleanup', () => ({ clearOnboardingEntryReturnPath: vi.fn() }));
 vi.mock('../../lib/guidedSetupErrorCopy', () => ({
+  buildGuidedSetupGuestImportErrorMessage: vi.fn(() => 'guest import failed'),
   buildGuidedSetupHydrationErrorMessage: vi.fn(() => 'hydrate failed'),
   buildGuidedSetupSaveErrorMessage: vi.fn(() => 'save failed'),
 }));
@@ -200,5 +201,43 @@ describe('GuidedSetup starter draft wording truth', () => {
       const saved = JSON.parse(window.localStorage.getItem(GUIDED_SETUP_STORAGE_KEY) || '{}');
       expect(saved.formData?.weddingDate).toBe('');
     });
+  });
+
+  it('keeps guest CSV import failures behind onboarding-safe copy', async () => {
+    window.localStorage.setItem(GUIDED_SETUP_STORAGE_KEY, JSON.stringify({
+      currentStep: 'guests',
+      coupleNames: { name1: 'Alex', name2: 'Jordan' },
+      formData: {
+        weddingDate: '',
+        venue: '',
+        city: '',
+        ourStory: '',
+        ceremonyTime: '',
+        receptionTime: '',
+        attire: '',
+        hotelRecommendations: '',
+        parking: '',
+        rsvpDeadline: '',
+        mealOptions: '',
+        registryLinks: '',
+        customFaqs: '',
+        template: 'modern',
+        colorScheme: 'romantic',
+      },
+    }));
+
+    render(<GuidedSetup />);
+
+    const input = document.querySelector('input[type="file"]') as HTMLInputElement | null;
+    expect(input).not.toBeNull();
+
+    const file = new File(['first_name,last_name\nAlex,Jordan'], 'guests.csv', { type: 'text/csv' });
+    vi.spyOn(file, 'text').mockRejectedValueOnce(new Error('provider timeout token=abc during guest import'));
+
+    fireEvent.change(input!, { target: { files: [file] } });
+
+    expect(await screen.findByText('guest import failed')).toBeInTheDocument();
+    expect(screen.queryByText(/provider timeout token=abc/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/failed to import guest file/i)).not.toBeInTheDocument();
   });
 });
