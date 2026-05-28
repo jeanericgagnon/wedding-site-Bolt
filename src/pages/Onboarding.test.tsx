@@ -73,7 +73,7 @@ vi.mock('../components/ui', () => ({
   },
 }));
 
-import { Onboarding, getCreateSiteRsvpDeadline, getDemoPartnerNamesFallback, getOnboardingSubdomain, parsePartnerNames } from './Onboarding';
+import { Onboarding, getCreateSiteRsvpDeadline, getDemoPartnerNamesFallback, getOnboardingCompletionFallbackRoute, getOnboardingSubdomain, parsePartnerNames } from './Onboarding';
 import { buildOnboardingUpdateWithClarifying } from '../lib/buildOnboardingUpdateWithClarifying';
 
 describe('Onboarding partner name truth helpers', () => {
@@ -99,6 +99,10 @@ describe('Onboarding partner name truth helpers', () => {
     }) as Record<string, unknown>;
 
     expect(getCreateSiteRsvpDeadline(onboardingUpdate, { rsvp_deadline: 'not-a-date' })).toBe('2026-05-15');
+  });
+
+  it('keeps the completion fallback route anchored to the overview workspace', () => {
+    expect(getOnboardingCompletionFallbackRoute()).toBe('/dashboard/overview');
   });
 });
 
@@ -209,11 +213,11 @@ describe('Onboarding starter draft wording truth', () => {
     authState.user = { id: 'user-1', email: 'alex@example.com' };
 
     const single = vi.fn(async () => ({ data: { id: 'site-1' }, error: null }));
-    const select = vi.fn(() => ({ single }));
-    const insert = vi.fn(() => ({ select }));
+    const insertSelect = vi.fn(() => ({ single }));
+    const insert = vi.fn(() => ({ select: insertSelect }));
     const maybeSingle = vi.fn(async () => ({ data: null }));
-    const eq = vi.fn(() => ({ maybeSingle }));
-    const existingSiteSelect = vi.fn(() => ({ eq }));
+    const existingSiteEq = vi.fn(() => ({ maybeSingle }));
+    const existingSiteSelect = vi.fn(() => ({ eq: existingSiteEq }));
 
     const fromMock = vi.fn((table: string) => {
       if (table === 'wedding_sites') {
@@ -244,4 +248,5 @@ describe('Onboarding starter draft wording truth', () => {
       expect(navigateMock).toHaveBeenCalledWith('/dashboard/builder');
     });
   });
+
 });

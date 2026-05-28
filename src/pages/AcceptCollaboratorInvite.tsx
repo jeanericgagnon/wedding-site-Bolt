@@ -453,7 +453,7 @@ export const AcceptCollaboratorInvite: React.FC = () => {
             <div className="mt-6 flex flex-wrap gap-3">
               {inviteState === 'accepted' && (
                 <Button type="button" variant="accent" onClick={() => navigate(getCollaboratorRedirectPath(inviteInfo?.role))}>
-                  Go to dashboard
+                  Open dashboard overview
                 </Button>
               )}
               <Link to="/" className="inline-flex items-center rounded-lg border border-border-subtle px-4 py-2 text-sm font-medium text-text-primary hover:bg-surface-subtle">

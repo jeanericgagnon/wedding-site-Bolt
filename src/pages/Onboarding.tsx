@@ -23,6 +23,7 @@ import { writeSignupReturnPath } from '../lib/signupContinuation';
 import { clearAllOnboardingDraftStorage, ONBOARDING_DRAFT_STORAGE_KEY as ONBOARDING_STORAGE_KEY } from '../lib/onboardingDraftCleanup';
 import { clearAllOnboardingContinuationState } from '../lib/onboardingContinuationCleanup';
 import { buildCoupleDisplayName } from '../lib/coupleDisplayName';
+import { FIRST_SESSION_WORKSPACE_ROUTES } from '../lib/firstSessionWorkspaceRoutes';
 
 type ConciergeQuestion = 'partnerNames' | 'partnerLabels' | 'venueLocation' | 'venueName' | 'theme' | 'weekendEvents' | 'ceremonyTime' | 'guestCount' | 'plusOnePolicy' | 'childrenAllowed' | 'rsvpDeadline' | 'mealChoice' | 'story';
 
@@ -53,6 +54,10 @@ export function getCreateSiteRsvpDeadline(
   return (onboardingUpdate.rsvp_deadline as string | null | undefined)
     || (data.rsvp_deadline as string | null | undefined)
     || null;
+}
+
+export function getOnboardingCompletionFallbackRoute(): string {
+  return FIRST_SESSION_WORKSPACE_ROUTES.overview;
 }
 
 
@@ -1207,8 +1212,8 @@ export const Onboarding: React.FC = () => {
       </Card>
 
       <div className="flex flex-col sm:flex-row gap-4 justify-center">
-        <Button variant="outline" size="lg" onClick={() => navigate('/dashboard')}>
-          Go to Dashboard
+        <Button variant="outline" size="lg" onClick={() => navigate(getOnboardingCompletionFallbackRoute())}>
+          Go to dashboard overview
         </Button>
       </div>
     </div>
