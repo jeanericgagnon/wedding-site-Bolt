@@ -66,8 +66,8 @@ export const buildCoordinatorOpsSnapshot = ({
     ? {
         key: 'timeline',
         title: 'Timeline',
-        detail: `${liveEventName} is live right now.`,
-        cta: locked ? 'View live event' : 'Open live event',
+        detail: `${liveEventName} is active right now.`,
+        cta: locked ? 'View active event' : 'Open active event',
         tone: 'success',
         locked,
       }
@@ -83,7 +83,7 @@ export const buildCoordinatorOpsSnapshot = ({
       : {
           key: 'timeline',
           title: 'Timeline',
-          detail: 'No run-of-show event is marked live yet.',
+          detail: 'No run-of-show event is active yet.',
           cta: 'Review timeline',
           tone: 'neutral',
           locked,

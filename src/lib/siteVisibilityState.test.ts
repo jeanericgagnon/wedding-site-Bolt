@@ -12,7 +12,7 @@ describe('getSiteVisibilityState', () => {
   it('returns password-protected live state', () => {
     const result = getSiteVisibilityState({ isPublished: true, privacyMode: 'password_protected', hideFromSearch: true });
     expect(result.state).toBe('private_preview_password');
-    expect(result.shortLabel).toBe('Protected live site');
+    expect(result.shortLabel).toBe('Protected shared site');
     expect(result.isPrivatePreview).toBe(true);
   });
 
@@ -26,7 +26,7 @@ describe('getSiteVisibilityState', () => {
   it('returns public live state', () => {
     const result = getSiteVisibilityState({ isPublished: true, privacyMode: 'public', hideFromSearch: false });
     expect(result.state).toBe('live');
-    expect(result.shortLabel).toBe('Live');
+    expect(result.shortLabel).toBe('Shared');
     expect(result.searchLabel).toBe('Search visibility on');
   });
 });

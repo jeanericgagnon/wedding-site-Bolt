@@ -12,7 +12,8 @@ describe('builderV2SelectionGuidance', () => {
     });
 
     expect(guidance.title).toContain('mixes visible and hidden');
-    expect(guidance.bestNextMove).toContain('show or hide it consistently');
+    expect(guidance.bestNextMove).toContain('guest-facing page');
+    expect(guidance.steps[0]?.detail).toContain('guest-facing and hidden');
   });
 
   it('flags mixed density when visibility is already aligned', () => {

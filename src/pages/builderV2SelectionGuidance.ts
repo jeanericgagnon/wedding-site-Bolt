@@ -57,11 +57,11 @@ export const buildBuilderV2SelectionGuidance = ({
     return {
       title: 'The selection mixes visible and hidden lanes',
       detail: 'This is a good cleanup set, but you should resolve visibility truth before you start changing density or variants together.',
-      bestNextMove: 'Decide whether the whole batch belongs live right now, then show or hide it consistently.',
-      decisionRule: 'Fix visibility first when a batch mixes live lanes and parked lanes.',
-      watchout: 'Batch styling a mixed visibility set makes the page feel tidier in the editor while the live preview is still telling a different story.',
+      bestNextMove: 'Decide whether the whole batch belongs on the guest-facing page right now, then show or hide it consistently.',
+      decisionRule: 'Fix visibility first when a batch mixes guest-facing lanes and parked lanes.',
+      watchout: 'Batch styling a mixed visibility set makes the page feel tidier in the editor while the preview is still telling a different story.',
       steps: [
-        { label: 'Current', detail: 'The selected batch is split between live and hidden lanes.' },
+        { label: 'Current', detail: 'The selected batch is split between guest-facing and hidden lanes.' },
         { label: 'Next', detail: 'Normalize visibility across the batch.' },
         { label: 'Then', detail: 'Only after that, tighten density or ordering.' },
       ],
@@ -72,7 +72,7 @@ export const buildBuilderV2SelectionGuidance = ({
   if (hiddenCount === selectedSections.length) {
     return {
       title: 'The whole batch is hidden from preview',
-      detail: 'These sections are already out of the live page flow, which makes this a good batch for keep-or-cut decisions.',
+      detail: 'These sections are already out of the guest-facing page flow, which makes this a good batch for keep-or-cut decisions.',
       bestNextMove: 'Bring back only the lanes you still want guests to feel, then leave the rest intentionally hidden.',
       decisionRule: 'A hidden batch should return lane by lane, not all at once, unless it clearly forms one coherent story block.',
       watchout: 'Restoring every hidden lane together can recreate the exact clutter you were trying to clean up.',

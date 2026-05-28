@@ -72,8 +72,8 @@ describe('coordinatorOpsSnapshot', () => {
       {
         key: 'timeline',
         title: 'Timeline',
-        detail: 'Cocktail Hour is live right now.',
-        cta: 'View live event',
+        detail: 'Cocktail Hour is active right now.',
+        cta: 'View active event',
         tone: 'success',
         locked: true,
       },

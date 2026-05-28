@@ -16,7 +16,7 @@ export function getPublishStateDescriptor(input: PublishStateInput): PublishStat
     return {
       label: 'Publishing now',
       tone: 'warning',
-      explainer: 'The system is pushing your latest site changes live right now.',
+      explainer: 'The system is publishing your latest site changes for guests right now.',
     };
   }
   if (input.error) {
@@ -28,21 +28,21 @@ export function getPublishStateDescriptor(input: PublishStateInput): PublishStat
   }
   if (input.isPublished && input.hasUnsavedChanges) {
     return {
-      label: 'Live site has older changes',
+      label: 'Shared site has older changes',
       tone: 'warning',
-      explainer: 'Your guests still see the current live version until you publish again.',
+      explainer: 'Your guests still see the current shared version until you publish again.',
     };
   }
   if (input.isPublished) {
     return {
-      label: 'Live and up to date',
+      label: 'Shared and up to date',
       tone: 'success',
-      explainer: 'Your latest saved version is already live for guests.',
+      explainer: 'Your latest saved version is already shared for guests.',
     };
   }
   return {
     label: 'Draft only',
     tone: 'neutral',
-    explainer: 'The site is still draft-only until you publish it for guests.',
+    explainer: 'The site stays draft-only until you share it with guests.',
   };
 }

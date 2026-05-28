@@ -36,7 +36,7 @@ export function getSiteVisibilityState(input: SiteVisibilityInput): SiteVisibili
       label: 'Draft only — visible only to you',
       shortLabel: 'Draft only',
       explainer: 'Draft means only you can see the site while editing.',
-      searchLabel: hideFromSearch ? 'Hidden from search' : 'Not live yet',
+      searchLabel: hideFromSearch ? 'Hidden from search' : 'Draft only',
       isLive: false,
       isPrivatePreview: false,
     };
@@ -45,9 +45,9 @@ export function getSiteVisibilityState(input: SiteVisibilityInput): SiteVisibili
   if (privacyMode === 'password_protected') {
     return {
       state: 'private_preview_password',
-      label: 'Live with password protection',
-      shortLabel: 'Protected live site',
-      explainer: 'The site is live, but guests need the password to open it.',
+      label: 'Shared with password protection',
+      shortLabel: 'Protected shared site',
+      explainer: 'The site is shared, but guests need the password to open it.',
       searchLabel: hideFromSearch ? 'Hidden from search' : 'Search visibility on',
       isLive: true,
       isPrivatePreview: true,
@@ -57,9 +57,9 @@ export function getSiteVisibilityState(input: SiteVisibilityInput): SiteVisibili
   if (privacyMode === 'invite_only') {
     return {
       state: 'private_preview_link',
-      label: 'Live with invite-only access',
-      shortLabel: 'Invite-only live site',
-      explainer: 'The site is live, but only guests with the link can open it.',
+      label: 'Shared with invite-only access',
+      shortLabel: 'Invite-only shared site',
+      explainer: 'The site is shared, but only guests with the link can open it.',
       searchLabel: hideFromSearch ? 'Hidden from search' : 'Search visibility on',
       isLive: true,
       isPrivatePreview: true,
@@ -68,9 +68,9 @@ export function getSiteVisibilityState(input: SiteVisibilityInput): SiteVisibili
 
   return {
     state: 'live',
-    label: 'Live and visible to guests',
-    shortLabel: 'Live',
-    explainer: 'The site is live for guests at your DayOf URL.',
+    label: 'Shared and visible to guests',
+    shortLabel: 'Shared',
+    explainer: 'The site is shared for guests at your DayOf URL.',
     searchLabel: hideFromSearch ? 'Hidden from search' : 'Search visibility on',
     isLive: true,
     isPrivatePreview: false,
@@ -80,8 +80,8 @@ export function getSiteVisibilityState(input: SiteVisibilityInput): SiteVisibili
 
 export function getVisibilityModeOptions() {
   return [
-    { value: 'public' as const, label: 'Public live site', description: 'Anyone with the link can view your site once it is live.' },
-    { value: 'password_protected' as const, label: 'Password-protected live site', description: 'Guests must enter a password before viewing the live site.' },
-    { value: 'invite_only' as const, label: 'Invite-only live site', description: 'Only guests with the link can open the live site.' },
+    { value: 'public' as const, label: 'Public shared site', description: 'Anyone with the link can view your site once it is shared.' },
+    { value: 'password_protected' as const, label: 'Password-protected shared site', description: 'Guests must enter a password before viewing the shared site.' },
+    { value: 'invite_only' as const, label: 'Invite-only shared site', description: 'Only guests with the link can open the shared site.' },
   ];
 }

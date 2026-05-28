@@ -17,8 +17,8 @@ describe('demo dashboard site context', () => {
       siteId: 'demo-site-id',
       role: 'owner',
     });
-    expect(visibility.label).toBe('Live and visible to guests');
+    expect(visibility.label).toBe('Shared and visible to guests');
     expect(visibility.searchLabel).toBe('Search visibility on');
-    expect(visibility.explainer).toBe('The site is live for guests at your DayOf URL.');
+    expect(visibility.explainer).toBe('The site is shared for guests at your DayOf URL.');
   });
 });
