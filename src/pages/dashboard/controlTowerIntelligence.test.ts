@@ -142,6 +142,26 @@ describe('buildControlTowerBriefing', () => {
     expect(briefing.primaryAction).toMatchObject({ target: 'photos' });
   });
 
+  it('keeps guest experience signal copy framed around open guest access for photo sharing', () => {
+    const briefing = buildControlTowerBriefing(makeInput({
+      confirmedGuests: 78,
+      declinedGuests: 14,
+      pendingGuests: 8,
+      contactableGuestCount: 100,
+      itineraryEventCount: 2,
+      registryItemCount: 18,
+      activePhotoAlbumCount: 0,
+      photoAlbumCount: 1,
+      recentRsvpCount: 5,
+      daysUntilWedding: 20,
+      isPublished: true,
+    }));
+
+    expect(briefing.signals.find((signal) => signal.label === 'Guest experience')?.detail).toBe(
+      'Photo sharing is not really open for guests yet.',
+    );
+  });
+
   it('surfaces guest access handoff when a live site is restricted close to the wedding', () => {
     const briefing = buildControlTowerBriefing(makeInput({
       confirmedGuests: 78,

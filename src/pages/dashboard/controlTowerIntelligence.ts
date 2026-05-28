@@ -123,7 +123,7 @@ function buildSignals(input: ControlTowerIntelligenceInput): ControlTowerSignal[
           : input.registryItemCount === 0
           ? 'Registry still needs live items for guests.'
           : input.activePhotoAlbumCount === 0
-            ? 'Photo sharing is not really live yet.'
+            ? 'Photo sharing is not really open for guests yet.'
             : 'Registry, schedule, and photos are ready to support guests.',
       variant: guestExperienceValue === 'Ready' ? 'success' : guestExperienceValue === 'Growing' ? 'warning' : 'error',
     },

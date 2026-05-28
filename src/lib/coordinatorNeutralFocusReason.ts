@@ -7,8 +7,8 @@ export const getCoordinatorNeutralFocusReason = (panelFocus: CoordinatorPanelFoc
     case 'qna':
       return 'The board brought you back to guest Q&A because unresolved questions are still open.';
     case 'timeline':
-      return 'The board brought you back to the timeline because no event is currently marked live.';
+      return 'The board brought you back to the timeline because no event is currently active.';
     default:
-      return 'The board returned you to the neutral live view because no urgent follow-up focus was needed.';
+      return 'The board returned you to the neutral overview because no urgent follow-up focus was needed.';
   }
 };

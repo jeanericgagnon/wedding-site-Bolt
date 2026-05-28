@@ -22,7 +22,7 @@ export const buildCoordinatorTimelineBoard = ({
 }): CoordinatorTimelineBoard => {
   if (events.length === 0) {
     return {
-      liveLabel: 'No event is live yet',
+      liveLabel: 'No event is active yet',
       upNextLabel: 'No up-next event queued',
       progressLabel: 'No events scheduled',
       stateLabel: 'Timeline needs itinerary events',
@@ -36,7 +36,7 @@ export const buildCoordinatorTimelineBoard = ({
   const isComplete = events.length > 0 && doneCount === events.length;
 
   return {
-    liveLabel: liveEvent ? liveEvent.event_name : 'No event is live yet',
+    liveLabel: liveEvent ? liveEvent.event_name : 'No event is active yet',
     upNextLabel: upNextEvent ? upNextEvent.event_name : 'No up-next event queued',
     progressLabel: `${doneCount}/${events.length} complete`,
     stateLabel: liveEvent

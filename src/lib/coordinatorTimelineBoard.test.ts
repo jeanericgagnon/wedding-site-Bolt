@@ -30,7 +30,7 @@ describe('coordinatorTimelineBoard', () => {
       liveEventId: null,
       upNextEventId: 'e2',
     })).toEqual({
-      liveLabel: 'No event is live yet',
+      liveLabel: 'No event is active yet',
       upNextLabel: 'Cocktail Hour',
       progressLabel: '1/3 complete',
       stateLabel: 'Room is waiting on the next event to begin',
@@ -45,7 +45,7 @@ describe('coordinatorTimelineBoard', () => {
       liveEventId: null,
       upNextEventId: null,
     })).toEqual({
-      liveLabel: 'No event is live yet',
+      liveLabel: 'No event is active yet',
       upNextLabel: 'No up-next event queued',
       progressLabel: '3/3 complete',
       stateLabel: 'Run-of-show is complete',
@@ -60,7 +60,7 @@ describe('coordinatorTimelineBoard', () => {
       liveEventId: null,
       upNextEventId: null,
     })).toEqual({
-      liveLabel: 'No event is live yet',
+      liveLabel: 'No event is active yet',
       upNextLabel: 'No up-next event queued',
       progressLabel: 'No events scheduled',
       stateLabel: 'Timeline needs itinerary events',
