@@ -4,6 +4,7 @@ import {
   BUILDER_MEDIA_REFRESH_RETRY_ERROR,
   BUILDER_PUBLISH_RETRY_ERROR,
   BUILDER_SAVE_RETRY_ERROR,
+  getBuilderMediaLibrarySaveRetryError,
   getBuilderMediaUploadRetryError,
   mapBuilderWorkspaceError,
 } from './builderWorkspaceErrorCopy';
@@ -22,5 +23,11 @@ describe('builderWorkspaceErrorCopy', () => {
     expect(getBuilderMediaUploadRetryError('image')).toBe('Photo upload failed. Please try again.');
     expect(getBuilderMediaUploadRetryError('video')).toBe('Video upload failed. Please try again.');
     expect(getBuilderMediaUploadRetryError('document')).toBe('Document upload failed. Please try again.');
+  });
+
+  it('returns asset-specific library-save retry copy', () => {
+    expect(getBuilderMediaLibrarySaveRetryError('image')).toBe('Your photo uploaded, but we could not add it to the media library yet. Please try again.');
+    expect(getBuilderMediaLibrarySaveRetryError('video')).toBe('Your video uploaded, but we could not add it to the media library yet. Please try again.');
+    expect(getBuilderMediaLibrarySaveRetryError('document')).toBe('Your document uploaded, but we could not add it to the media library yet. Please try again.');
   });
 });

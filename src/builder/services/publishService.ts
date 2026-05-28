@@ -1,5 +1,6 @@
 import { BuilderProject } from '../../types/builder/project';
 import { WeddingDataV1 } from '../../types/weddingData';
+import { BUILDER_PUBLISH_RETRY_ERROR, mapBuilderWorkspaceError } from '../components/builderWorkspaceErrorCopy';
 import { builderProjectService } from './builderProjectService';
 import { serializeBuilderProject } from '../serializers/projectSerializer';
 
@@ -27,7 +28,7 @@ export const publishService = {
         success: false,
         publishedAt: '',
         version: project.publishedVersion ?? 0,
-        error: err instanceof Error ? err.message : 'Unknown publish error',
+        error: mapBuilderWorkspaceError(err, BUILDER_PUBLISH_RETRY_ERROR),
       };
     }
   },

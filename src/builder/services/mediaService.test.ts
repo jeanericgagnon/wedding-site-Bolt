@@ -36,7 +36,7 @@ describe('mediaService', () => {
     save.mockRejectedValue(new Error('row insert failed'));
 
     await expect(mediaService.uploadAsset('w1', file)).rejects.toThrow(
-      'Document uploaded, but saving it to your media library failed: row insert failed',
+      'Your document uploaded, but we could not add it to the media library yet. Please try again.',
     );
   });
 
@@ -45,7 +45,7 @@ describe('mediaService', () => {
     upload.mockRejectedValue(new Error('bucket offline'));
 
     await expect(mediaService.uploadAsset('w1', file)).rejects.toThrow(
-      'Upload to storage failed: bucket offline',
+      'Photo upload failed. Please try again.',
     );
     expect(save).not.toHaveBeenCalled();
   });

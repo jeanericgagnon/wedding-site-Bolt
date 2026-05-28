@@ -1,4 +1,8 @@
 import { BuilderMediaAsset, MediaUploadOptions } from '../../types/builder/media';
+import {
+  getBuilderMediaLibrarySaveRetryError,
+  getBuilderMediaUploadRetryError,
+} from '../components/builderWorkspaceErrorCopy';
 import { mediaRepository } from './mediaRepository';
 
 export const mediaService = {
@@ -17,9 +21,8 @@ export const mediaService = {
     let uploaded: { url: string; path: string };
     try {
       uploaded = await mediaRepository.upload(weddingId, file, onProgress);
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Unknown storage error';
-      throw new Error(`Upload to storage failed: ${message}`);
+    } catch {
+      throw new Error(getBuilderMediaUploadRetryError(assetType));
     }
 
     try {
@@ -44,10 +47,8 @@ export const mediaService = {
       });
 
       return asset;
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Unknown database error';
-      const assetLabel = assetType === 'image' ? 'Photo' : assetType === 'video' ? 'Video' : 'Document';
-      throw new Error(`${assetLabel} uploaded, but saving it to your media library failed: ${message}`);
+    } catch {
+      throw new Error(getBuilderMediaLibrarySaveRetryError(assetType));
     }
   },
 

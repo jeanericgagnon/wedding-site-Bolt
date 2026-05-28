@@ -21,3 +21,14 @@ export function getBuilderMediaUploadRetryError(assetType: BuilderMediaAsset['as
       return 'Document upload failed. Please try again.';
   }
 }
+
+export function getBuilderMediaLibrarySaveRetryError(assetType: BuilderMediaAsset['assetType']): string {
+  switch (assetType) {
+    case 'image':
+      return 'Your photo uploaded, but we could not add it to the media library yet. Please try again.';
+    case 'video':
+      return 'Your video uploaded, but we could not add it to the media library yet. Please try again.';
+    default:
+      return 'Your document uploaded, but we could not add it to the media library yet. Please try again.';
+  }
+}
