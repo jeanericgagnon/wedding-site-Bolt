@@ -537,7 +537,7 @@ export const VaultContribute: React.FC = () => {
           if (driveError) {
             setUploadProgress(null);
             setSubmitting(false);
-            setSubmitError(mapVaultAttachmentUploadError(driveError.message));
+            setSubmitError(mapVaultAttachmentUploadError(driveError));
             return;
           }
 
@@ -559,7 +559,7 @@ export const VaultContribute: React.FC = () => {
           if (uploadError) {
             setUploadProgress(null);
             setSubmitting(false);
-            setSubmitError(mapVaultAttachmentUploadError(uploadError.message));
+            setSubmitError(mapVaultAttachmentUploadError(uploadError));
             return;
           }
 

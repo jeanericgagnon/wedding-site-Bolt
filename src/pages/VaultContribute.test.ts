@@ -57,7 +57,7 @@ describe('vault guest-safe copy', () => {
     expect(mapVaultAttachmentUploadError('missing vault-attachments bucket or policy')).toBe(
       VAULT_ATTACHMENT_PAUSED_ERROR,
     );
-    expect(mapVaultAttachmentUploadError('Google Drive upload failed: provider timeout')).toBe(
+    expect(mapVaultAttachmentUploadError(new Error('Google Drive upload failed: provider timeout token=abc'))).toBe(
       'We could not upload that attachment right now. Please try again.',
     );
   });

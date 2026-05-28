@@ -15,8 +15,9 @@ export const VAULT_UPLOAD_READY_COPY = (count: number) =>
 export const VAULT_COMPRESSION_FALLBACK_COPY =
   'We could not compress that video here, so the original file will be uploaded instead.';
 
-export function mapVaultAttachmentUploadError(message?: string | null): string {
-  const trimmed = String(message ?? '').trim();
+export function mapVaultAttachmentUploadError(error?: unknown): string {
+  const raw = error instanceof Error ? error.message : typeof error === 'string' ? error : '';
+  const trimmed = String(raw ?? '').trim();
   if (!trimmed) return 'We could not upload that attachment right now. Please try again.';
   if (/\bbucket\b|\bpolicy\b|\bstorage\b/i.test(trimmed)) {
     return VAULT_ATTACHMENT_PAUSED_ERROR;
