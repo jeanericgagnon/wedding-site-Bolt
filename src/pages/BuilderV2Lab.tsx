@@ -86,6 +86,10 @@ import {
   buildBuilderV2SectionSettingFields,
   updateBuilderV2SectionSetting,
 } from './builderV2SectionSettings';
+import {
+  canRepairBuilderV2SectionStructure,
+  repairBuilderV2SectionStructure,
+} from './builderV2StructureRepair';
 
 type BlockType =
   | 'title'
@@ -1228,6 +1232,25 @@ export const BuilderV2Lab: React.FC = () => {
 
   const addableBlocksForSelected = useMemo(() => SECTION_BLOCK_CATALOG[selected.type] ?? ['title', 'text', 'photo', 'qna'], [selected.type]);
   const selectedBlocks = useMemo(() => sectionBlocks[selected.id] ?? [], [sectionBlocks, selected.id]);
+  const repairSelectedSectionStructure = useCallback(() => {
+    if (!canRepairBuilderV2SectionStructure(selected.type)) {
+      notify('No safe automatic structure repair is available for this section yet');
+      return;
+    }
+
+    const result = repairBuilderV2SectionStructure(selected.type, selectedBlocks);
+    if (!result.changedCount) {
+      notify(result.summary);
+      return;
+    }
+
+    setSectionBlocks((prev) => ({
+      ...prev,
+      [selected.id]: result.blocks as AddedBlock[],
+    }));
+    markSaving();
+    notify(result.summary);
+  }, [markSaving, notify, selected.id, selected.type, selectedBlocks]);
   const selectedBlockWarningFor = useCallback(
     (block: AddedBlock) => getBlockValidationWarning(selected.type, block, selectedBlocks),
     [getBlockValidationWarning, selected.type, selectedBlocks],
@@ -1271,6 +1294,10 @@ export const BuilderV2Lab: React.FC = () => {
   const selectedSectionSettingFields = useMemo(
     () => buildBuilderV2SectionSettingFields(selected.type, selectedBlocks),
     [selected.type, selectedBlocks],
+  );
+  const selectedSectionCanRepairStructure = useMemo(
+    () => canRepairBuilderV2SectionStructure(selected.type),
+    [selected.type],
   );
   const recommendedBlockTypesForSelected = useMemo(
     () => getRecommendedBlockTypes(selected.type, addableBlocksForSelected),
@@ -1618,6 +1645,7 @@ export const BuilderV2Lab: React.FC = () => {
       { id: 'sel-duplicate', group: 'Selection', label: 'Duplicate selected sections', keywords: ['duplicate', 'copy', 'selection', 'batch', 'reuse'], action: () => runCommand('Duplicate selected sections', duplicateSelectedSections) },
       { id: 'sel-remove', group: 'Selection', label: 'Remove selected sections', keywords: ['remove', 'delete', 'selection', 'batch', 'retire'], action: () => runCommand('Remove selected sections', removeSelectedSections) },
       { id: 'sel-restore-starters', group: 'Selection', label: 'Restore starter blocks for selected sections', keywords: ['restore', 'starter', 'reset', 'selection', 'batch', 'repair'], action: () => runCommand('Restore starter blocks for selected sections', restoreSelectedSectionsToStarterBlocks) },
+      ...(selectedSectionCanRepairStructure ? [{ id: 'sel-repair-structure', group: 'Selection', label: 'Repair selected section structure', keywords: ['repair', 'structure', 'metadata', 'menu', 'music', 'video'], action: () => runCommand('Repair selected section structure', repairSelectedSectionStructure) }] : []),
       { id: 'sel-compact', group: 'Selection', label: 'Set selected density: compact', keywords: ['compact', 'density', 'selection', 'batch'], action: () => runCommand('Set selected density: compact', () => setSelectedDensity('compact')) },
       { id: 'sel-comfortable', group: 'Selection', label: 'Set selected density: comfortable', keywords: ['comfortable', 'density', 'selection', 'batch', 'open'], action: () => runCommand('Set selected density: comfortable', () => setSelectedDensity('comfortable')) },
       { id: 'sel-review', group: 'Selection', label: 'Review selected sections in preview', keywords: ['preview', 'selection', 'review', 'batch'], action: () => runCommand('Review selected sections in preview', reviewSelectionInPreview) },
@@ -1645,7 +1673,7 @@ export const BuilderV2Lab: React.FC = () => {
       .filter((x) => x.s > 0)
       .sort((a, b) => b.s - a.s)
       .map((x) => x.item);
-  }, [commandQuery, sections, pages, activePage.id, addPage, addRecommendedBlockPack, addSection, clearSelection, copyHandoffPacket, copyV2Json, downloadV2Json, duplicatePage, duplicateSelectedSections, handoffGuidance.primaryActionLabel, hideSelectedSections, invertSelection, moveSelectedSectionsToPage, openExportPanel, openImportPanel, removeSelectedSections, restoreSelectedSectionsToStarterBlocks, reviewSelectionInPreview, runHandoffAction, selectAllSections, selectPage, setSelectedDensity, showSelectedSections, updateVariant]);
+  }, [commandQuery, sections, pages, activePage.id, addPage, addRecommendedBlockPack, addSection, clearSelection, copyHandoffPacket, copyV2Json, downloadV2Json, duplicatePage, duplicateSelectedSections, handoffGuidance.primaryActionLabel, hideSelectedSections, invertSelection, moveSelectedSectionsToPage, openExportPanel, openImportPanel, removeSelectedSections, repairSelectedSectionStructure, restoreSelectedSectionsToStarterBlocks, reviewSelectionInPreview, runHandoffAction, selectAllSections, selectPage, selectedSectionCanRepairStructure, setSelectedDensity, showSelectedSections, updateVariant]);
   const importGuidance = useMemo(
     () => buildBuilderV2ImportGuidance(lastImportReport, lastImportSource),
     [lastImportReport, lastImportSource],
@@ -2854,6 +2882,24 @@ export const BuilderV2Lab: React.FC = () => {
                             </button>
                           </div>
                         </div>
+                        {selectedSectionCanRepairStructure && (
+                          <div className="rounded-md border border-sky-200 bg-sky-50 px-2.5 py-2">
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="min-w-0">
+                                <p className="text-[11px] uppercase tracking-[0.18em] text-sky-900">Structure repair</p>
+                                <p className="mt-1 text-xs leading-relaxed text-text-primary">
+                                  Re-key course, playlist, or video-group metadata when the section structure has drifted but the real content is still worth keeping.
+                                </p>
+                              </div>
+                              <button
+                                onClick={repairSelectedSectionStructure}
+                                className="shrink-0 rounded-md border border-sky-200 bg-white px-2.5 py-2 text-[11px] font-semibold text-sky-900 hover:bg-sky-100"
+                              >
+                                Repair structure
+                              </button>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
 
