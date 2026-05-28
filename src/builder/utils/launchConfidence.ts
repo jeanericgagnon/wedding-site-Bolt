@@ -129,16 +129,16 @@ export function buildLaunchConfidence(
       label: 'Live and steady',
       tone: 'ready',
       summary: typeof project.publishedVersion === 'number'
-        ? `Version ${project.publishedVersion} is already live, so this is now a polish decision instead of a launch panic.`
-        : 'The guest-facing site is already live, so this is now about making the next update feel intentional.',
-      current: 'Guests can already rely on the live site without waiting for another structural fix.',
+        ? `Version ${project.publishedVersion} is already shared, so this is now a polish decision instead of a launch panic.`
+        : 'The guest-facing site is already shared, so this is now about making the next update feel intentional.',
+      current: 'Guests can already rely on the shared site without waiting for another structural fix.',
       next: 'Preview your changes once, then publish only if this draft meaningfully improves clarity or polish.',
       decisionRule: 'Once the site is already trustworthy for guests, restraint beats motion unless the change clearly improves guest clarity or confidence.',
-      watchout: 'Do not turn a live, trustworthy site into a constant-update habit. Once the public path is steady, extra edits should earn their way in instead of shipping just because they exist.',
+      watchout: 'Do not turn a shared, trustworthy site into a constant-update habit. Once the public path is steady, extra edits should earn their way in instead of shipping just because they exist.',
       sequence: buildLaunchSequence(
-        'Start from the assumption that the live site is already doing its job for guests.',
+        'Start from the assumption that the shared site is already doing its job for guests.',
         'Preview the draft once and decide whether the change clearly improves guest clarity or confidence.',
-        'Then publish deliberately or leave the live version alone if this update is only marginally better.',
+        'Then publish deliberately or leave the shared version alone if this update is only marginally better.',
       ),
       primaryAction: {
         kind: 'preview',

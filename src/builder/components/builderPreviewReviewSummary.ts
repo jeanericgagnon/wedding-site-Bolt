@@ -152,20 +152,20 @@ export function getBuilderPreviewReviewSummary({
         ? 'This mobile pass should tell you whether the next live update earns its way in'
         : 'This mobile pass should be your last honest check before guests see the site',
     summary: isPublished
-      ? 'The site is already live, so preview is now about deciding whether this draft meaningfully improves the guest experience.'
+      ? 'The site is already shared, so preview is now about deciding whether this draft meaningfully improves the guest experience.'
       : 'The essentials are in place, so mobile preview is now the best final truth source before launch.',
     focusTitle: 'Judge the page by guest clarity, not by how much editing time you already spent.',
       focusDetail: isPublished
-        ? 'Only push another live update if the guest-facing read is materially clearer or calmer than what is already public.'
+        ? 'Only push another shared-site update if the guest-facing read is materially clearer or calmer than what is already public.'
         : 'If the phone-sized read feels easy to trust, the next move is to publish from this draft instead of reopening a longer review loop.',
     bestNextMove: isPublished
-      ? 'Compare this mobile read to the standard of your live site, then publish only if the improvement is obvious.'
+      ? 'Compare this mobile read to the standard of your shared site, then publish only if the improvement is obvious.'
       : 'Finish this mobile preview pass and publish from this draft if nothing important is weakening guest trust.',
     decisionRule: isPublished
-      ? 'When the live site is already trustworthy, update only when the new draft clearly improves clarity or confidence.'
+      ? 'When the shared site is already trustworthy, update only when the new draft clearly improves clarity or confidence.'
       : 'When mobile preview feels trustworthy, launch momentum should move toward publish, not another nervous edit lap.',
       watchout: isPublished
-        ? 'Do not publish just because the draft exists. Live updates should earn their way in by improving the guest path.'
+        ? 'Do not publish just because the draft exists. Shared-site updates should earn their way in by improving the guest path.'
         : 'The risk now is reopening the editor for low-value polish after preview already showed the page is steady enough to share.',
     sequence: buildSequence(
       'Read the page once on mobile as if you have never seen the editor.',

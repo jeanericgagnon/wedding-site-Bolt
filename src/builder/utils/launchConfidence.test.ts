@@ -143,4 +143,17 @@ describe('buildLaunchConfidence', () => {
     expect(confidence.decisionRule).toMatch(/restraint beats motion|guest clarity|confidence/i);
     expect(confidence.watchout).toMatch(/constant-update|live/i);
   });
+
+  it('keeps published launch confidence framed around a shared site instead of a live site', () => {
+    const confidence = buildLaunchConfidence({
+      ...baseProject,
+      publishStatus: 'published',
+      publishedVersion: 4,
+      lastPublishedAt: '2026-05-22T00:00:00.000Z',
+    }, baseWeddingData);
+
+    expect(confidence.summary).toMatch(/already shared/i);
+    expect(confidence.current).toMatch(/shared site/i);
+    expect(confidence.watchout).toMatch(/shared, trustworthy site/i);
+  });
 });

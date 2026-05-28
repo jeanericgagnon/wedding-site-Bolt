@@ -391,7 +391,7 @@ export function buildControlTowerBriefing(input: ControlTowerIntelligenceInput):
       eyebrow: 'Control tower briefing',
       title: 'Guest input is arriving, so the next move is to shape it',
       detail: `${pluralize(input.interactiveSuggestionCount, 'guest suggestion')} already came in. This is a good moment to review what guests are telling you and make sure the site still feels cared for.`,
-      focusTitle: 'Use live guest input to refine the story',
+      focusTitle: 'Use real guest input to refine the story',
       focusDetail: 'When guests are already engaging, the best move is to shape the experience with that signal instead of leaving their feedback parked.',
       bestNextMove: 'Review the incoming guest suggestions, make the one visible adjustment that matters most, then re-check the guest-facing story.',
       decisionRule: 'Real guest signals beat hypothetical polish once feedback is already arriving.',
@@ -417,7 +417,7 @@ export function buildControlTowerBriefing(input: ControlTowerIntelligenceInput):
     detail: 'Nothing is obviously drifting right now. Use this moment to keep the guest experience polished and make small quality moves before they become deadline work.',
     focusTitle: 'Use the calm to improve trust, not reopen chaos',
     focusDetail: 'A steady board is the right moment for one clean quality pass, not a random re-opening of solved decisions.',
-    bestNextMove: 'Make one contained quality pass in the live guest experience, then let the board stay calm unless a real signal changes.',
+    bestNextMove: 'Make one contained quality pass in the guest-facing experience, then let the board stay calm unless a real signal changes.',
     decisionRule: 'When the board is calm, restraint beats churn.',
     watchout: 'Do not mistake available time for a reason to reopen every surface. The risk in a calm board is turning quiet momentum back into unnecessary churn.',
     badges: [

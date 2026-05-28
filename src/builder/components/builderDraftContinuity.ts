@@ -52,8 +52,8 @@ function getRevisionDetail(revision: BuilderRevision): string {
 
   if (revision.action === 'publish') {
     return version
-      ? `${pageLabel} · live version ${version}${draftVersion ? ` from draft v${draftVersion}` : ''}`
-      : `${pageLabel} · sent to the live site`;
+      ? `${pageLabel} · shared version ${version}${draftVersion ? ` from draft v${draftVersion}` : ''}`
+      : `${pageLabel} · sent to the shared site`;
   }
 
   if (revision.action === 'rollback') {
@@ -91,15 +91,15 @@ export function buildBuilderDraftContinuityModel({
   if (isPublishing) {
     return {
       badge: 'Publishing now',
-      heading: 'The Builder is sending this draft to the live site.',
+      heading: 'The Builder is sending this draft to the shared site.',
       summary: 'Freeze the draft long enough to let publish truth settle before you second-guess anything.',
-      focusTitle: 'Hold the editor steady while the live update finishes.',
+      focusTitle: 'Hold the editor steady while the shared-site update finishes.',
       focusDetail: 'Publishing is the moment when draft truth and guest truth converge, so the safest move is patience.',
-      bestNextMove: 'Wait for the live update to finish, then confirm the new checkpoint appears in local history.',
+      bestNextMove: 'Wait for the shared-site update to finish, then confirm the new checkpoint appears in local history.',
       decisionRule: 'During publish, avoid new edits until the result is clear.',
-      watchout: 'Changing the draft mid-publish makes it harder to trust which version actually went live.',
+      watchout: 'Changing the draft mid-publish makes it harder to trust which version actually got shared.',
       currentStep: 'Let the publish finish.',
-      nextStep: 'Confirm the live checkpoint and local history agree.',
+      nextStep: 'Confirm the shared checkpoint and local history agree.',
       thenStep: 'Resume editing only if the next improvement is real.',
       primaryAction: { kind: 'none', label: 'Publishing…' },
       events,

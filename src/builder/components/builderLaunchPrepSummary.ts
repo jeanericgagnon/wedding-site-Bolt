@@ -170,24 +170,24 @@ export function getBuilderLaunchPrepSummary({
     return {
       issue,
       checklistItems,
-      headline: isPublished ? 'The live site is steady enough for a deliberate update.' : 'The draft is ready for a calm final review pass.',
+      headline: isPublished ? 'The shared site is steady enough for a deliberate update.' : 'The draft is ready for a calm final review pass.',
       focusTitle: 'Use the launch check as confirmation, not as permission to reopen a nervous polish loop.',
       focusDetail: isPublished
-        ? 'Guests already have a trustworthy live site, so update only if this draft clearly improves clarity or confidence.'
+        ? 'Guests already have a trustworthy shared site, so update only if this draft clearly improves clarity or confidence.'
         : 'The essentials are in place, so the right next move is to verify the guest read once and publish from a stable draft.',
       bestNextMove: isPublished
         ? 'Preview once, then publish only if the update clearly improves the guest path.'
         : 'Run one honest guest-facing pass, then publish from this synchronized draft.',
       decisionRule: isPublished
-        ? 'Once the site is already live, restraint beats motion unless the improvement is obvious.'
+        ? 'Once the site is already shared, restraint beats motion unless the improvement is obvious.'
         : 'When the checklist is clean, trust the draft enough to publish instead of polishing in circles.',
       watchout: isPublished
-        ? 'Do not ship updates just because they exist. Live changes should earn their way in.'
+        ? 'Do not ship updates just because they exist. Shared-site changes should earn their way in.'
         : 'The main risk now is reopening the editor for low-value tweaks after launch truth is already solid.',
       currentStep: 'Treat the draft as ready for final review unless the guest read reveals a real trust gap.',
       nextStep: 'Preview once and make sure the page still feels clear on a phone-sized read.',
       thenStep: isPublished
-        ? 'Publish the update only if it materially improves the live experience.'
+        ? 'Publish the update only if it materially improves the shared guest experience.'
         : 'Publish from this draft instead of reopening a speculative edit lap.',
       blockerHints: getHintsForIssue(issue),
       primaryAction: getActionForIssue(issue, project, activePageId),

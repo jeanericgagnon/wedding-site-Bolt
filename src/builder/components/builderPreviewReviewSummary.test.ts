@@ -95,4 +95,20 @@ describe('getBuilderPreviewReviewSummary', () => {
       label: 'Publish from preview',
     });
   });
+
+  it('keeps published preview review framed around the shared site', () => {
+    const summary = getBuilderPreviewReviewSummary({
+      activePageTitle: 'Home',
+      sectionCount: 6,
+      previewViewport: 'mobile',
+      hasHardPublishBlocker: false,
+      canAutoSaveBeforePublish: false,
+      isDirty: false,
+      isPublished: true,
+    });
+
+    expect(summary.summary).toMatch(/already shared/i);
+    expect(summary.focusDetail).toMatch(/shared-site update/i);
+    expect(summary.bestNextMove).toMatch(/shared site/i);
+  });
 });

@@ -250,4 +250,34 @@ describe('buildControlTowerBriefing', () => {
     expect(briefing.primaryAction).toMatchObject({ label: 'Open legacy site polish', target: 'builder-polish' });
     expect(briefing.sequence[2]?.detail).toMatch(/leave the rest of the system steady/i);
   });
+
+  it('keeps guest-input refinement framed around real guest input and guest-facing experience', () => {
+    const briefing = buildControlTowerBriefing(makeInput({
+      confirmedGuests: 74,
+      declinedGuests: 12,
+      pendingGuests: 14,
+      contactableGuestCount: 100,
+      registryItemCount: 20,
+      activePhotoAlbumCount: 2,
+      photoAlbumCount: 2,
+      interactiveSuggestionCount: 4,
+      recentSiteActivityCount: 2,
+    }));
+
+    expect(briefing.focusTitle).toContain('real guest input');
+
+    const calmBriefing = buildControlTowerBriefing(makeInput({
+      confirmedGuests: 74,
+      declinedGuests: 12,
+      pendingGuests: 14,
+      contactableGuestCount: 100,
+      registryItemCount: 20,
+      activePhotoAlbumCount: 2,
+      photoAlbumCount: 2,
+      interactiveSuggestionCount: 0,
+      recentSiteActivityCount: 0,
+    }));
+
+    expect(calmBriefing.bestNextMove).toMatch(/guest-facing experience/i);
+  });
 });

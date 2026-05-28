@@ -123,4 +123,22 @@ describe('getBuilderLaunchPrepSummary', () => {
     expect(summary.issue?.kind).toBe('missing-event-date');
     expect(summary.blockerHints[0]).toBe('Open event details and add the wedding date before sharing with guests.');
   });
+
+  it('keeps published launch-prep guidance framed around a shared site', () => {
+    const project = createEmptyBuilderProject('w1', 'modern-luxe');
+    project.pages[0].sections = [createDefaultSectionInstance('hero', 'default', 0)];
+    project.pages[0].sections[0].enabled = true;
+
+    const summary = getBuilderLaunchPrepSummary({
+      project,
+      weddingData: createLaunchReadyWeddingData(),
+      isDirty: false,
+      activePageId: project.pages[0].id,
+      isPublished: true,
+    });
+
+    expect(summary.headline).toMatch(/shared site is steady/i);
+    expect(summary.focusDetail).toMatch(/trustworthy shared site/i);
+    expect(summary.thenStep).toMatch(/shared guest experience/i);
+  });
 });

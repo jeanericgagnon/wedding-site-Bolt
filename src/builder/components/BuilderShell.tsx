@@ -325,7 +325,7 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
     }
     if (launchConfidence.primaryAction.kind === 'preview') {
       dispatch(builderActions.setMode('preview'));
-      setPublishNotice('Preview mode is open so you can verify the guest-facing flow before updating the live site.');
+      setPublishNotice('Preview mode is open so you can verify the guest-facing flow before updating the shared site.');
       return;
     }
     void handlePublish();
