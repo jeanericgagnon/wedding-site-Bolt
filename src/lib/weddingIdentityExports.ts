@@ -263,7 +263,7 @@ export function buildWeddingIdentityExportKit(input: WeddingIdentityExportKitInp
       : restrictedAccess
         ? `Pair every guest-facing pack with the ${privacyModeLabel} instructions first, then only share the exports that preserve that exact front-door clarity.`
         : !launchIsLive
-          ? 'Publish the guest-facing site first, then use the share and print packs once the live path is truly ready for guests to follow.'
+          ? 'Publish the guest-facing site first, then use the share and print packs once the guest path is truly ready to share.'
           : 'Start with the share-now pack, then carry the exact same URL and identity forward into print and planner handoff without remixing the guest path.',
     decisionRule: !hasPublicUrl
       ? 'Do not print or share QR-led assets until the public URL is set and guest-safe.'

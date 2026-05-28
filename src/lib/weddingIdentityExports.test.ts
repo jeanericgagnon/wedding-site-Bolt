@@ -82,7 +82,7 @@ describe('weddingIdentityExports', () => {
     expect(kit.handoffSequence[0]?.title).toMatch(/live first/i);
     expect(kit.confidenceDetail).toMatch(/last trust step|live publish/i);
     expect(kit.focusTitle).toMatch(/Make the guest-facing site live/i);
-    expect(kit.bestNextMove).toMatch(/Publish the guest-facing site first|share and print packs/i);
+    expect(kit.bestNextMove).toMatch(/Publish the guest-facing site first|guest path is truly ready to share/i);
     expect(kit.decisionRule).toMatch(/publish before you scale/i);
     expect(kit.watchout).toMatch(/polished dead end/i);
     expect(kit.handoffSequence[1]?.title).toMatch(/after the live publish/i);

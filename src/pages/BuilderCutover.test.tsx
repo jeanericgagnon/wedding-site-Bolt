@@ -188,6 +188,8 @@ describe('BuilderCutover', () => {
     );
 
     expect(await screen.findByText(/quick-edit, photo-tip, or polish workflows/i)).toBeInTheDocument();
+    expect(screen.getByText(/Nothing goes live from this step\. Review the imported structure before treating the V2 copy as the new source of truth\./i)).toBeInTheDocument();
+    expect(screen.queryByText(/launch-ready site/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/launch checklist/i)).not.toBeInTheDocument();
   });
 

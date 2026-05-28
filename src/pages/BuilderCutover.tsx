@@ -223,7 +223,7 @@ export const BuilderCutover: React.FC = () => {
                 Use the setup draft you already have as a V2 starting point. This is useful for structure and page-map work before you treat anything as publish-ready.
               </p>
               <p className="mt-3 text-xs leading-5 text-neutral-600">
-                This does not replace setup completion or create a live launch-ready site by itself.
+                This does not replace setup completion or make the guest-facing site ready to share by itself.
               </p>
               <button
                 type="button"
