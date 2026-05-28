@@ -887,7 +887,7 @@ export default function RSVP() {
       selectGuest(foundGuest, result.existingRsvp, result.rsvpDeadline, result.rsvpQuestions ?? [], result.rsvpMealConfig ?? { enabled: true, options: ['Chicken', 'Beef', 'Fish', 'Vegetarian', 'Vegan'] }, result.householdGuests ?? [], result.musicPlaylistUrl ?? null);
     } catch {
       if (activeLookupRequestRef.current !== requestId) return;
-      setError('An error occurred. Please try again.');
+      setError(mapRsvpLookupError('lookup-failed'));
     } finally {
       if (activeLookupRequestRef.current === requestId) {
         setLoading(false);
@@ -1089,7 +1089,7 @@ export default function RSVP() {
       setStep('success');
     } catch {
       if (activeSubmitRequestRef.current !== requestId) return;
-      setError('Failed to submit RSVP. Please try again.');
+      setError(mapRsvpSubmitError('submit-failed'));
     } finally {
       if (activeSubmitRequestRef.current === requestId) {
         submitInFlightRef.current = false;

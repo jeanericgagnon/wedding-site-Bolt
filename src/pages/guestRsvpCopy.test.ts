@@ -21,7 +21,13 @@ describe('guest RSVP copy', () => {
     expect(mapRsvpLookupError(new Error('Missing Supabase URL'))).toBe(
       'Couldn’t complete that invitation search. Please try again.',
     );
+    expect(mapRsvpLookupError(new Error('An error occurred. Please try again.'))).toBe(
+      'Couldn’t complete that invitation search. Please try again.',
+    );
     expect(mapRsvpSubmitError(new Error('duplicate key value violates row-level security policy'))).toBe(
+      'Could not save your RSVP right now. Please try again.',
+    );
+    expect(mapRsvpSubmitError(new Error('Failed to submit RSVP. Please try again.'))).toBe(
       'Could not save your RSVP right now. Please try again.',
     );
   });
