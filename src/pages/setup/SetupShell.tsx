@@ -8,6 +8,7 @@ import { clearSetupDraft, clearSetupDraftOnly, readSetupDraft, setupDraftProgres
 import { deriveSetupMode, getRecommendedTemplates, SETUP_STYLE_OPTIONS } from '../../lib/setupDraftRecommendations';
 import { buildSetupReviewModel, buildSetupTemplateReason } from '../../lib/setupConcierge';
 import { mapSetupShellSaveError } from '../../lib/setupFlowCopy';
+import { saveBuilderV2SetupBridge } from '../builderV2SetupBridge';
 
 const steps = [
   { key: 'migration', label: 'Migration' },
@@ -152,9 +153,12 @@ export const SetupShell: React.FC<{ step?: string }> = ({ step }) => {
 
       await invokeFunctionOrThrow(supabase, 'setup-bootstrap', draft as unknown as Record<string, unknown>);
 
-      // draft has been committed server-side; keep selected template key but clear raw draft
-      clearSetupDraftOnly();
-      navigate('/builder');
+      // Carry the exact setup answers into the next V2 session before we clear the raw draft.
+      const bridged = saveBuilderV2SetupBridge(draft);
+      if (bridged) {
+        clearSetupDraftOnly();
+      }
+      navigate('/builder-v2-lab');
     } catch (err) {
       setError(mapSetupShellSaveError(err));
     } finally {
@@ -512,7 +516,7 @@ export const SetupShell: React.FC<{ step?: string }> = ({ step }) => {
                 <button type="button" onClick={() => navigate('/templates')} className="rounded border border-neutral-300 px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-100">Choose a different template</button>
                 <button type="button" onClick={resetSetupDraft} className="rounded border border-neutral-300 px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-100">Start over</button>
                 <button type="button" onClick={() => void saveAndGoBuilder()} disabled={saving} className="rounded bg-rose-600 px-4 py-2 text-sm font-medium text-white hover:bg-rose-700 disabled:opacity-60">
-                  {saving ? 'Saving...' : 'Save and build my first draft'}
+                  {saving ? 'Saving...' : 'Save and open Builder V2 draft'}
                 </button>
               </div>
             </div>

@@ -79,6 +79,7 @@ import { buildBuilderV2SetupSeed } from './builderV2SetupSeed';
 import { applyBuilderV2TemplateSeed, buildBuilderV2TemplateApplyPlan } from './builderV2TemplateApply';
 import { buildBuilderV2TemplateSeed } from './builderV2TemplateSeed';
 import { buildBuilderV2PreviewInstances } from './builderV2PreviewProjection';
+import { consumeBuilderV2SetupBridge, readBuilderV2SetupBridge } from './builderV2SetupBridge';
 import {
   createBuilderV2HistorySnapshot,
   listBuilderV2CheckpointSummaries,
@@ -533,7 +534,11 @@ const StructureItem: React.FC<StructureItemProps> = ({ section, selected, multiS
 
 export const BuilderV2Lab: React.FC = () => {
   const initialDraft = useMemo(() => readSetupDraft(), []);
-  const initialSetupSeed = useMemo(() => buildBuilderV2SetupSeed(initialDraft), [initialDraft]);
+  const initialSetupBridgeDraft = useMemo(() => readBuilderV2SetupBridge(), []);
+  const initialSetupSeed = useMemo(
+    () => buildBuilderV2SetupSeed(initialDraft) ?? (initialSetupBridgeDraft ? buildBuilderV2SetupSeed(initialSetupBridgeDraft) : null),
+    [initialDraft, initialSetupBridgeDraft],
+  );
   const initialTemplateSeed = useMemo(() => buildBuilderV2TemplateSeed(initialDraft.selectedTemplateId), [initialDraft]);
   const initialPages = initialSetupSeed?.pages ?? initialTemplateSeed.pages ?? createInitialBuilderV2Pages(INITIAL_SECTIONS);
   const initialSelectedPageId = initialSetupSeed?.selectedPageId ?? initialTemplateSeed.selectedPageId ?? 'home';
@@ -1899,6 +1904,10 @@ export const BuilderV2Lab: React.FC = () => {
     const importSummary = buildBuilderV2ImportReviewSummary(report, sourceLabel);
     notify(repairs > 0 || report.sourceKind !== 'builder-v2' ? importSummary.toastMessage : 'Imported clean V2 layout');
   }, [history, historyIndex, markSaving, notify, pages, sectionBlocks]);
+
+  useEffect(() => {
+    consumeBuilderV2SetupBridge();
+  }, []);
 
   useEffect(() => {
     const upgradeBridge = consumeBuilderV2UpgradeBridge();
