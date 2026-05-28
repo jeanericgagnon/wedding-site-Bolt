@@ -126,11 +126,11 @@ export const RegistryFeature: React.FC = () => {
               </div>
               <h3 className="text-xl font-serif font-bold text-ink mb-3">Auto-Fetch Details</h3>
               <p className="text-ink/70 mb-4">
-                Paste a registry URL and DayOf can often pull in the title, description, and preview image to speed up setup, with manual cleanup when merchants are messy.
+                Paste a registry URL and DayOf can often pull in the core item details to speed up setup. Merchant images and richer metadata work best when the source cooperates, with manual cleanup when it does not.
               </p>
               <ul className="space-y-2 text-sm text-ink/70">
-                <li>• Metadata fetch when available</li>
-                <li>• Preview images when available</li>
+                <li>• Core item details when available</li>
+                <li>• Merchant images when available</li>
                 <li>• Manual override available</li>
               </ul>
             </div>
