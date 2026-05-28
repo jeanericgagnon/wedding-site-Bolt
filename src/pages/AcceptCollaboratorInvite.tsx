@@ -1,12 +1,21 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { AlertCircle, CheckCircle2, Heart, Loader2, LogOut, ShieldCheck, UserPlus } from 'lucide-react';
+import { AlertCircle, Heart, Loader2, LogOut, ShieldCheck, UserPlus } from 'lucide-react';
 import { Button, Card, Input } from '../components/ui';
 import { supabase } from '../lib/supabase';
 import { useAuth, type AuthUser } from '../contexts/AuthContext';
 import { getCollaboratorRedirectPath, getInviteSiteLabel, isInviteEmailMatch, resolveInviteValidationState } from './acceptCollaboratorInviteUtils';
 import { buildCollaboratorRoleGuide } from './collaboratorRoleGuide';
 import { getFlowStatusLabel } from '../lib/flowLabels';
+import {
+  COLLAB_INVITE_EXPIRED_ERROR,
+  COLLAB_INVITE_INCOMPLETE_ERROR,
+  COLLAB_INVITE_INVALID_ERROR,
+  COLLAB_INVITE_REVOKED_ERROR,
+  mapCollaboratorInviteAuthError,
+  mapCollaboratorInviteClaimError,
+  mapCollaboratorInviteLookupError,
+} from './acceptCollaboratorInviteCopy';
 
 type InviteState = 'loading' | 'valid' | 'invalid' | 'expired' | 'accepted' | 'revoked' | 'missing';
 type AuthMode = 'signin' | 'signup';
@@ -49,9 +58,6 @@ export const AcceptCollaboratorInvite: React.FC = () => {
   const [claiming, setClaiming] = useState(false);
   const [claimMessage, setClaimMessage] = useState<string | null>(null);
   const [claimError, setClaimError] = useState<string | null>(null);
-  const [claimStep, setClaimStep] = useState<string | null>(null);
-  const [claimTrace, setClaimTrace] = useState<string[]>([]);
-  const [inviteLookupDebug, setInviteLookupDebug] = useState<string | null>(null);
   const [authMode, setAuthMode] = useState<AuthMode>('signin');
   const [authLoading, setAuthLoading] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
@@ -80,8 +86,6 @@ export const AcceptCollaboratorInvite: React.FC = () => {
       setInviteState('loading');
       setClaimError(null);
       setClaimMessage(null);
-      setInviteLookupDebug(null);
-
       const { data: inviteRows, error } = await supabase
         .from('wedding_site_collaborator_invites')
         .select('id, wedding_site_id, invite_email, invite_name, role, status, expires_at')
@@ -90,7 +94,7 @@ export const AcceptCollaboratorInvite: React.FC = () => {
       if (cancelled) return;
       if (error) {
         setInviteInfo(null);
-        setInviteLookupDebug(error.message || 'Unknown invite lookup error');
+        setClaimError(mapCollaboratorInviteLookupError(error));
         setInviteState('invalid');
         return;
       }
@@ -98,7 +102,6 @@ export const AcceptCollaboratorInvite: React.FC = () => {
       const data = Array.isArray(inviteRows) ? inviteRows[0] : null;
       if (!data) {
         setInviteInfo(null);
-        setInviteLookupDebug(`No invite row matched this token. rows=${Array.isArray(inviteRows) ? inviteRows.length : 'n/a'}`);
         setInviteState('invalid');
         return;
       }
@@ -133,7 +136,6 @@ export const AcceptCollaboratorInvite: React.FC = () => {
       setAuthMode((prev) => prev === 'signin' ? 'signup' : prev);
       setSignInForm((prev) => ({ ...prev, email: nextInviteInfo.invite_email }));
       setSignUpForm((prev) => ({ ...prev, email: nextInviteInfo.invite_email, fullName: prev.fullName || nextInviteInfo.invite_name || '' }));
-      setInviteLookupDebug(`Invite loaded: status=${nextInviteInfo.status}`);
       setInviteState(resolvedState);
     };
 
@@ -143,11 +145,7 @@ export const AcceptCollaboratorInvite: React.FC = () => {
     };
   }, [token]);
 
-  const trace = (msg: string) => {
-    setClaimTrace((prev) => [...prev.slice(-11), `${new Date().toISOString()} ${msg}`]);
-  };
-
-  const claimInvite = async (authUser: AuthUser, currentInvite: InviteInfo) => {
+  const claimInvite = async (_authUser: AuthUser, currentInvite: InviteInfo) => {
     if (!currentInvite?.id || !currentInvite.wedding_site_id || !token) {
       throw new Error('Invite metadata is incomplete.');
     }
@@ -155,45 +153,28 @@ export const AcceptCollaboratorInvite: React.FC = () => {
       throw new Error(`This invite was sent to ${currentInvite.invite_email}. Sign in with that email to claim access.`);
     }
 
-    trace('claimInvite:start');
-    const rpcStart = Date.now();
-    trace('claimInvite:rpc:start');
-    const { data: sessionData } = await supabase.auth.getSession();
-    trace(`claimInvite:session:${sessionData.session ? 'yes' : 'no'}`);
+    await supabase.auth.getSession();
     const { error: claimError } = await supabase.rpc('claim_collaborator_invite', {
       p_invite_token: token,
     });
 
     if (claimError) {
-      trace(`claimInvite:rpc:error:${claimError.message}`);
       throw new Error(`Could not claim invite: ${claimError.message}`);
     }
-
-    const rpcMs = Date.now() - rpcStart;
-    trace(`claimInvite:rpc:done:${rpcMs}ms`);
-    setClaimStep(`Invite claimed in ${rpcMs}ms.`);
   };
 
   const finishClaim = async (authUser: AuthUser, currentInvite: InviteInfo) => {
-    trace('finishClaim:start');
     setClaiming(true);
     setClaimError(null);
-    setClaimStep('Preparing claim…');
     setClaimMessage('Claiming your collaborator access…');
 
     try {
-      setClaimStep('Adding collaborator membership…');
       await claimInvite(authUser, currentInvite);
-      trace('finishClaim:accepted');
       setInviteState('accepted');
-      setClaimStep('Invite accepted. Redirecting…');
       setClaimMessage('Invite accepted. Redirecting to your dashboard…');
-      trace(`finishClaim:navigate:${getCollaboratorRedirectPath(currentInvite.role)}`);
       navigate(getCollaboratorRedirectPath(currentInvite.role), { replace: true });
     } catch (err) {
-      trace(`finishClaim:error:${err instanceof Error ? err.message : 'unknown'}`);
-      setClaimError(err instanceof Error ? err.message : 'Could not claim invite.');
-      setClaimStep(null);
+      setClaimError(mapCollaboratorInviteClaimError(err));
       setClaimMessage(null);
       throw err;
     } finally {
@@ -207,7 +188,6 @@ export const AcceptCollaboratorInvite: React.FC = () => {
 
     const alreadyAccepted = inviteInfo.status === 'accepted';
     if (alreadyAccepted) {
-      trace('finishClaim:accepted');
       setInviteState('accepted');
       setClaimMessage('Invite already accepted. Redirecting to your dashboard…');
       navigate(getCollaboratorRedirectPath(inviteInfo.role), { replace: true });
@@ -237,7 +217,7 @@ export const AcceptCollaboratorInvite: React.FC = () => {
         name: data.user.user_metadata?.name || data.user.email || signInForm.email,
       }, inviteInfo);
     } catch (err) {
-      setAuthError(err instanceof Error ? err.message : 'Could not sign you in right now.');
+      setAuthError(mapCollaboratorInviteAuthError(err, 'Could not sign you in right now. Please try again.'));
     } finally {
       setAuthLoading(false);
     }
@@ -308,7 +288,7 @@ export const AcceptCollaboratorInvite: React.FC = () => {
         name: signedInUser.user_metadata?.name || signUpForm.fullName.trim() || signedInUser.email || signUpForm.email,
       }, inviteInfo);
     } catch (err) {
-      setAuthError(err instanceof Error ? err.message : 'Could not create your account right now.');
+      setAuthError(mapCollaboratorInviteAuthError(err, 'Could not create your account right now. Please try again.'));
     } finally {
       setAuthLoading(false);
     }
@@ -322,7 +302,6 @@ export const AcceptCollaboratorInvite: React.FC = () => {
   };
 
   const inviteIsClaimable = !!inviteInfo && inviteState !== 'missing' && inviteState !== 'invalid' && inviteState !== 'expired' && inviteState !== 'revoked';
-  const debugFlags = `inviteState=${inviteState} inviteInfo=${inviteInfo ? 'yes' : 'no'} authLoading=${authLoading} claiming=${claiming}`;
   const signedInWithInviteEmail = !!user && !!inviteInfo && isInviteEmailMatch(user.email, inviteInfo.invite_email);
   const signedInWithDifferentEmail = !!user && !!inviteInfo && !isInviteEmailMatch(user.email, inviteInfo.invite_email);
 
@@ -380,36 +359,20 @@ export const AcceptCollaboratorInvite: React.FC = () => {
                 </div>
               )}
 
-              {inviteLookupDebug && inviteState === 'valid' && (
-                <p className="text-xs text-text-tertiary">Debug: {inviteLookupDebug}</p>
-              )}
-
               {inviteState === 'missing' && (
-                <p className="text-sm text-error">This invite link is incomplete. Ask the owner to send the full invite URL again.</p>
+                <p className="text-sm text-error">{COLLAB_INVITE_INCOMPLETE_ERROR}</p>
               )}
               {inviteState === 'invalid' && (
-                <div className="space-y-2">
-                  <p className="text-sm text-error">This invite could not be found. Double-check the link or ask for a fresh invite.</p>
-                  {inviteLookupDebug && <p className="text-xs text-text-tertiary">Debug: {inviteLookupDebug}</p>}
-                </div>
+                <p className="text-sm text-error">{claimError || COLLAB_INVITE_INVALID_ERROR}</p>
               )}
               {inviteState === 'expired' && (
-                <div className="space-y-2">
-                  <p className="text-sm text-error">This invite has expired. Ask the owner for a fresh invite link.</p>
-                  {inviteLookupDebug && <p className="text-xs text-text-tertiary">Debug: {inviteLookupDebug}</p>}
-                </div>
+                <p className="text-sm text-error">{COLLAB_INVITE_EXPIRED_ERROR}</p>
               )}
               {inviteState === 'revoked' && (
-                <div className="space-y-2">
-                  <p className="text-sm text-error">This invite is no longer active.</p>
-                  {inviteLookupDebug && <p className="text-xs text-text-tertiary">Debug: {inviteLookupDebug}</p>}
-                </div>
+                <p className="text-sm text-error">{COLLAB_INVITE_REVOKED_ERROR}</p>
               )}
               {inviteState === 'accepted' && (
-                <div className="space-y-2">
-                  <p className="text-sm text-text-primary">This invite has already been claimed. If you already joined, head to your dashboard.</p>
-                  {inviteLookupDebug && <p className="text-xs text-text-tertiary">Debug: {inviteLookupDebug}</p>}
-                </div>
+                <p className="text-sm text-text-primary">This invite has already been claimed. If you already joined, head to your dashboard.</p>
               )}
 
               {inviteInfo && inviteIsClaimable && (
@@ -476,12 +439,6 @@ export const AcceptCollaboratorInvite: React.FC = () => {
             {claimMessage && (
               <div className="mt-4 rounded-lg border border-primary/20 bg-primary/5 px-4 py-3 text-sm text-text-primary">
                 <div>{claimMessage}</div>
-                {claimStep && <div className="mt-1 text-xs text-text-tertiary">Step: {claimStep}</div>}
-                {claimTrace.length > 0 && (
-                  <div className="mt-2 rounded border border-border-subtle bg-white/60 p-2 text-[11px] text-text-tertiary">
-                    {claimTrace.map((line, idx) => <div key={`${idx}-${line}`}>{line}</div>)}
-                  </div>
-                )}
               </div>
             )}
 
@@ -565,7 +522,6 @@ export const AcceptCollaboratorInvite: React.FC = () => {
                       ? 'Use the invited email and password below. We’ll attach access right away.'
                       : 'Create a lightweight collaborator account. This path skips pricing, demo mode, and owner setup.'}
                   </p>
-                  <div className="mt-4 text-[11px] text-text-tertiary">{debugFlags}</div>
                   {inviteIsClaimable && inviteInfo && (
                     <div className="mt-4 flex flex-wrap gap-2 text-xs text-text-secondary">
                       <span className="rounded-full bg-white px-3 py-1">{formatRole(inviteInfo.role)}</span>
