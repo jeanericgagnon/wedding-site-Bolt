@@ -3,7 +3,10 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { QUICK_START_STORAGE_KEY } from '../../lib/quickStartStateTransfer';
 
-const navigateMock = vi.fn();
+const { navigateMock, clearAllOnboardingContinuationStateMock } = vi.hoisted(() => ({
+  navigateMock: vi.fn(),
+  clearAllOnboardingContinuationStateMock: vi.fn(),
+}));
 let authUser: { id: string } | null = null;
 let weddingSiteRow: Record<string, unknown> | null = null;
 
@@ -48,11 +51,16 @@ vi.mock('../../lib/supabase', () => ({
   },
 }));
 
+vi.mock('../../lib/onboardingContinuationCleanup', () => ({
+  clearAllOnboardingContinuationState: clearAllOnboardingContinuationStateMock,
+}));
+
 import { QuickStart } from './QuickStart';
 
 describe('QuickStart flow guards', () => {
   beforeEach(() => {
     navigateMock.mockReset();
+    clearAllOnboardingContinuationStateMock.mockReset();
     authUser = null;
     weddingSiteRow = null;
     window.localStorage.clear();
@@ -213,6 +221,28 @@ describe('QuickStart flow guards', () => {
     expect(screen.getByText('We already have enough to draft. These are just the highest-leverage details the draft still needs.')).toBeInTheDocument();
     expect(screen.queryByText('A few smart follow-ups before we build')).not.toBeInTheDocument();
     expect(screen.queryByText('These are just the highest-leverage details the AI still wants.')).not.toBeInTheDocument();
+  });
+
+  it('sends switch-to-manual-setup into structured onboarding instead of the generic dashboard', async () => {
+    window.localStorage.setItem(QUICK_START_STORAGE_KEY, JSON.stringify({
+      currentIndex: 0,
+      showFollowUps: false,
+      viewState: 'question',
+      initialSetupAnswers: {
+        names: 'Alex & Jordan',
+      },
+      followUpAnswers: {},
+      clarifyingState: null,
+    }));
+
+    render(<QuickStart />);
+
+    expect(await screen.findByDisplayValue('Alex & Jordan')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Switch to manual setup' }));
+
+    expect(clearAllOnboardingContinuationStateMock).toHaveBeenCalledTimes(1);
+    expect(navigateMock).toHaveBeenCalledWith('/onboarding?bypassPayment=1');
+    expect(navigateMock).not.toHaveBeenCalledWith('/dashboard?bypassPayment=1');
   });
 
 

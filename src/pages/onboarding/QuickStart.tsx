@@ -20,7 +20,7 @@ import { writeSignupReturnPath } from '../../lib/signupContinuation';
 import { clearOnboardingEntryReturnPath } from '../../lib/onboardingEntryCleanup';
 import { normalizeQuickStartDraftSnapshot } from '../../lib/quickStartPersistence';
 import { normalizeMeaningfulQuickStartDraftSnapshot, persistQuickStartDraftSnapshot, QUICK_START_STORAGE_KEY } from '../../lib/quickStartStateTransfer';
-import { buildQuickStartEntryPath, buildQuickStartGuestsPath } from '../../lib/quickStartContinuation';
+import { buildQuickStartEntryPath, buildQuickStartGuestsPath, buildQuickStartManualSetupPath } from '../../lib/quickStartContinuation';
 import { clearAllOnboardingContinuationState } from '../../lib/onboardingContinuationCleanup';
 import { hasMeaningfulQuickStartAnswers, mergeQuickStartSeedIntoDraft } from '../../lib/quickStartHydration';
 import { deriveFollowUpAnswersFromClarifyingState } from '../../lib/quickStartClarifyingRestore';
@@ -662,7 +662,7 @@ export const QuickStart: React.FC = () => {
           }}>
             Start over
           </button>
-          <button className="text-[13px] transition-opacity duration-200 hover:opacity-60" style={{ color: MUTED }} onClick={() => { clearAllOnboardingContinuationState(); navigate('/dashboard?bypassPayment=1'); }}>
+          <button className="text-[13px] transition-opacity duration-200 hover:opacity-60" style={{ color: MUTED }} onClick={() => { clearAllOnboardingContinuationState(); navigate(buildQuickStartManualSetupPath()); }}>
             Switch to manual setup
           </button>
         </motion.div>

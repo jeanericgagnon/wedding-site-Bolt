@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   buildQuickStartEntryPath,
   buildQuickStartGuestsPath,
+  buildQuickStartManualSetupPath,
   buildQuickStartOverviewPath,
   buildQuickStartPhotosPath,
   readQuickStartDashboardContinuation,
@@ -13,6 +14,7 @@ describe('quickStartContinuation', () => {
   });
 
   it('keeps the downstream continuation paths stable', () => {
+    expect(buildQuickStartManualSetupPath()).toBe('/onboarding?bypassPayment=1');
     expect(buildQuickStartGuestsPath()).toBe('/dashboard/guests?bypassPayment=1&fromQuickStart=1&next=photos');
     expect(buildQuickStartPhotosPath()).toBe('/dashboard/photos?bypassPayment=1&fromQuickStart=1&next=review');
     expect(buildQuickStartOverviewPath()).toBe('/dashboard/overview?bypassPayment=1&fromQuickStart=1');
