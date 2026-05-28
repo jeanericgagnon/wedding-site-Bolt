@@ -4,6 +4,7 @@ import { getAuthEntryIntent } from './authEntryIntent';
 describe('getAuthEntryIntent', () => {
   it('classifies builder review handoff as the draft-start path', () => {
     expect(getAuthEntryIntent({ explicitReturnPath: '/dashboard/builder' })).toBe('draft-start');
+    expect(getAuthEntryIntent({ explicitReturnPath: '/builder' })).toBe('draft-start');
   });
 
   it('classifies quick-start continuation paths as quick-start intent', () => {

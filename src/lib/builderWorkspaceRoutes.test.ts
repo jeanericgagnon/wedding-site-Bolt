@@ -8,5 +8,7 @@ describe('BUILDER_WORKSPACE_ROUTES', () => {
     expect(BUILDER_WORKSPACE_ROUTES.legacy).toBe('/dashboard/builder-v1');
     expect(BUILDER_WORKSPACE_ROUTES.v2).toBe('/dashboard/builder-v2');
     expect(BUILDER_WORKSPACE_ROUTES.lab).toBe('/builder-v2-lab');
+    expect(BUILDER_WORKSPACE_ROUTES.publicGuide).toBe('/builder');
+    expect(BUILDER_WORKSPACE_ROUTES.publicLegacy).toBe('/builder-v1');
   });
 });

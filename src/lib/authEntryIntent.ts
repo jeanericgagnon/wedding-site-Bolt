@@ -15,7 +15,11 @@ export const getAuthEntryIntent = ({
 }): AuthEntryIntent => {
   const normalizedPath = explicitReturnPath?.trim() || null;
 
-  if (normalizedPath === BUILDER_WORKSPACE_ROUTES.guide || normalizedPath === FIRST_SESSION_WORKSPACE_ROUTES.builder) {
+  if (
+    normalizedPath === BUILDER_WORKSPACE_ROUTES.guide
+    || normalizedPath === BUILDER_WORKSPACE_ROUTES.publicGuide
+    || normalizedPath === FIRST_SESSION_WORKSPACE_ROUTES.builder
+  ) {
     return 'draft-start';
   }
 

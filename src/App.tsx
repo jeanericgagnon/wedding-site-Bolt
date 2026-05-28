@@ -343,7 +343,7 @@ const AppContent = () => {
           }
         />
         <Route
-          path="/builder"
+          path={BUILDER_WORKSPACE_ROUTES.publicGuide}
           element={
             <ProtectedRoute>
               <BuilderCutover />
@@ -351,7 +351,7 @@ const AppContent = () => {
           }
         />
         <Route
-          path="/builder-v1"
+          path={BUILDER_WORKSPACE_ROUTES.publicLegacy}
           element={
             <ProtectedRoute>
               <SiteBuilder />
