@@ -111,6 +111,32 @@ describe('weddingIdentityExports', () => {
     expect(kit.quickPacks.find((pack) => pack.id === 'share-now')?.nextStep).toMatch(/password instructions/i);
   });
 
+  it('does not overclaim broad QR or print readiness for invite-only access', () => {
+    const kit = buildWeddingIdentityExportKit({
+      coupleNames: 'Maya & Leo',
+      publicSiteUrl: 'https://maya-leo.dayof.love',
+      isPublished: true,
+      privacyMode: 'invite_only',
+      weddingDate: '2026-09-12',
+      venueName: 'Garden House',
+    });
+
+    expect(kit.confidenceDetail).toMatch(/direct sharing|invite-only guest access/i);
+    expect(kit.focusTitle).toMatch(/direct guest sharing|invite-only/i);
+    expect(kit.bestNextMove).toMatch(/share invite-only access links directly|planner\/stationer/i);
+    expect(kit.decisionRule).toMatch(/do not turn that route into broad reusable QR or print assets/i);
+    expect(kit.watchout).toMatch(/generic public-looking QR card|not actually usable/i);
+    expect(kit.deliveryNote).toMatch(/direct couple-to-guest sharing/i);
+    expect(kit.warnings).toContain('Invite-only guest access links are not safe for broad QR cards, story graphics, or reusable print signage.');
+    expect(kit.items.find((item) => item.id === 'public-qr-card')).toMatchObject({
+      status: 'needs-info',
+      blockers: ['Invite-only links should be shared directly, not printed into broad QR packs.'],
+    });
+    expect(kit.quickPacks.find((pack) => pack.id === 'share-now')?.readiness).toBe('needs-info');
+    expect(kit.quickPacks.find((pack) => pack.id === 'print-table')?.readiness).toBe('needs-info');
+    expect(kit.quickPacks.find((pack) => pack.id === 'share-now')?.nextStep).toMatch(/share invite-only guest links directly/i);
+  });
+
   it('builds a planner-safe manifest without private guest access tokens', () => {
     const kit = buildWeddingIdentityExportKit({
       coupleNames: 'Maya & Leo',
@@ -167,6 +193,24 @@ describe('weddingIdentityExports', () => {
     expect(html).toContain('data:image/svg+xml;charset=utf-8,');
     expect(html).toContain('https://maya-leo.dayof.love/rsvp');
     expect(html).not.toMatch(/guest_access|service-role|secret/i);
+  });
+
+  it('refuses broad QR and print assets for invite-only sites even when the public URL itself looks safe', () => {
+    expect(buildWeddingIdentityPrintAssets({
+      coupleNames: 'Maya & Leo',
+      publicSiteUrl: 'https://maya-leo.dayof.love',
+      privacyMode: 'invite_only',
+      weddingDate: '2026-09-12',
+      venueName: 'Garden House',
+    })).toEqual([]);
+
+    expect(buildWeddingIdentityStoryGraphic({
+      coupleNames: 'Maya & Leo',
+      publicSiteUrl: 'https://maya-leo.dayof.love',
+      privacyMode: 'invite_only',
+      weddingDate: '2026-09-12',
+      venueName: 'Garden House',
+    })).toBeNull();
   });
 
   it('builds a printable SVG sheet for safe public print assets', () => {
@@ -256,6 +300,17 @@ describe('weddingIdentityExports', () => {
     expect(styleKit.text).toContain('Theme: Coastal Breeze');
     expect(styleKit.text).toContain('Default language: fr');
     expect(styleKit.text).toContain('Background: #eef6f7');
+    expect(styleKit.text).not.toMatch(/token|invite_token|guest_access/i);
+  });
+
+  it('adds an invite-only caution to the planner-facing style kit without leaking tokenized routes', () => {
+    const styleKit = buildWeddingIdentityStyleKit({
+      coupleNames: 'Maya & Leo',
+      publicSiteUrl: 'https://maya-leo.dayof.love',
+      privacyMode: 'invite_only',
+    });
+
+    expect(styleKit.text).toContain('Invite-only guest access should stay in direct sharing, not reusable QR or print packs.');
     expect(styleKit.text).not.toMatch(/token|invite_token|guest_access/i);
   });
 

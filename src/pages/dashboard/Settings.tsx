@@ -700,30 +700,33 @@ export const DashboardSettings: React.FC = () => {
   const weddingIdentityPrintAssets = useMemo(() => buildWeddingIdentityPrintAssets({
     coupleNames: exportCoupleNames,
     publicSiteUrl: exportPublicSiteUrl,
+    privacyMode,
     weddingDate: exportWeddingDate,
     venueName: exportVenueName,
     templateId: currentTemplate,
     templateName: exportTemplateName,
     defaultLanguage,
-  }), [exportCoupleNames, exportPublicSiteUrl, exportWeddingDate, exportVenueName, currentTemplate, exportTemplateName, defaultLanguage]);
+  }), [exportCoupleNames, exportPublicSiteUrl, privacyMode, exportWeddingDate, exportVenueName, currentTemplate, exportTemplateName, defaultLanguage]);
   const weddingIdentityStoryGraphic = useMemo(() => buildWeddingIdentityStoryGraphic({
     coupleNames: exportCoupleNames,
     publicSiteUrl: exportPublicSiteUrl,
+    privacyMode,
     weddingDate: exportWeddingDate,
     venueName: exportVenueName,
     templateId: currentTemplate,
     templateName: exportTemplateName,
     defaultLanguage,
-  }), [exportCoupleNames, exportPublicSiteUrl, exportWeddingDate, exportVenueName, currentTemplate, exportTemplateName, defaultLanguage]);
+  }), [exportCoupleNames, exportPublicSiteUrl, privacyMode, exportWeddingDate, exportVenueName, currentTemplate, exportTemplateName, defaultLanguage]);
   const weddingIdentityStyleKit = useMemo(() => buildWeddingIdentityStyleKit({
     coupleNames: exportCoupleNames,
     publicSiteUrl: exportPublicSiteUrl,
+    privacyMode,
     weddingDate: exportWeddingDate,
     venueName: exportVenueName,
     templateId: currentTemplate,
     templateName: exportTemplateName,
     defaultLanguage,
-  }), [exportCoupleNames, exportPublicSiteUrl, exportWeddingDate, exportVenueName, currentTemplate, exportTemplateName, defaultLanguage]);
+  }), [exportCoupleNames, exportPublicSiteUrl, privacyMode, exportWeddingDate, exportVenueName, currentTemplate, exportTemplateName, defaultLanguage]);
   const plannerRoleOptions = PLANNER_ROLE_OPTIONS.filter((option) => option.value !== 'owner');
 
   const togglePlannerPermission = (key: PlannerPermissionKey) => {
