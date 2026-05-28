@@ -45,6 +45,21 @@ describe('builderV2SectionEditingModel', () => {
     expect(guidance.steps[0].detail).toContain('validation warnings');
   });
 
+  it('keeps hidden-section guidance framed around visible preview state', () => {
+    const guidance = buildBuilderV2SectionEditingGuidance({
+      section: { id: 'story-1', type: 'story', title: 'Story', enabled: false, variant: 'default' },
+      blocks: [{ id: 'b1', type: 'story' }],
+      warningCount: 0,
+      availableBlockTypes: ['story', 'title', 'photo'],
+      recommendedBlockTypes: ['story', 'timelineItem', 'photo'],
+      limitTotal: 10,
+    });
+
+    expect(guidance.detail).toContain('visible reading flow');
+    expect(guidance.mainFocus).toContain('visible page');
+    expect(guidance.steps[0].detail).toContain('visible preview presence');
+  });
+
   it('builds add-block library guidance with recommended blocks first', () => {
     const library = buildBuilderV2AddBlockLibrary({
       query: '',

@@ -9,7 +9,7 @@ export type BuilderV2HandoffPacketEntry = {
   pageTitle: string;
   sectionId: string;
   sectionTitle: string;
-  status: 'live' | 'hidden' | 'warning' | 'empty';
+  status: 'visible' | 'hidden' | 'warning' | 'empty';
   summary: string;
 };
 
@@ -82,12 +82,12 @@ export const buildBuilderV2HandoffPacket = ({
       pageTitle: page.title,
       sectionId: section.id,
       sectionTitle: section.title,
-      status: 'live',
-      summary: `${section.blockCount} block${section.blockCount === 1 ? '' : 's'} in the live flow on ${page.title}`,
+      status: 'visible',
+      summary: `${section.blockCount} block${section.blockCount === 1 ? '' : 's'} in the visible flow on ${page.title}`,
     };
   }));
 
-  const liveCount = entries.filter((entry) => entry.status === 'live').length;
+  const visibleCount = entries.filter((entry) => entry.status === 'visible').length;
   const warningCount = entries.filter((entry) => entry.status === 'warning').length;
   const emptyCount = entries.filter((entry) => entry.status === 'empty').length;
   const hiddenPageCount = pages.filter((page) => page.hidden).length;
@@ -102,8 +102,8 @@ export const buildBuilderV2HandoffPacket = ({
     headline = `${warningCount} visible section${warningCount === 1 ? '' : 's'} still need content cleanup`;
     detail = 'The page map is mostly there; use the packet to focus the last visible warning passes.';
   } else if (hiddenPageCount > 0 || hiddenTitles.length > 0) {
-    headline = `${liveCount} live section${liveCount === 1 ? '' : 's'} with ${hiddenPageCount > 0 ? `${hiddenPageCount} hidden page${hiddenPageCount === 1 ? '' : 's'}` : `${hiddenTitles.length} parked lane${hiddenTitles.length === 1 ? '' : 's'}`}`;
-    detail = 'The packet now shows both the live page flow and the parked backlog so the handoff stays honest across pages.';
+    headline = `${visibleCount} visible section${visibleCount === 1 ? '' : 's'} with ${hiddenPageCount > 0 ? `${hiddenPageCount} hidden page${hiddenPageCount === 1 ? '' : 's'}` : `${hiddenTitles.length} parked lane${hiddenTitles.length === 1 ? '' : 's'}`}`;
+    detail = 'The packet now shows both the visible page flow and the parked backlog so the handoff stays honest across pages.';
   }
 
   const summaryLines = [

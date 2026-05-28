@@ -25,6 +25,8 @@ describe('builder v2 handoff guidance', () => {
     expect(summary.primaryAction).toBe('review-hidden');
     expect(summary.focusSectionId).toBe('hero');
     expect(summary.bestNextMove).toContain('Hero');
+    expect(summary.bestNextMove).toContain('visible page flow');
+    expect(summary.steps[0]?.detail).toContain('visible reading flow');
   });
 
   it('prioritizes empty visible lanes before export', () => {
@@ -47,6 +49,7 @@ describe('builder v2 handoff guidance', () => {
 
     expect(summary.tone).toBe('repair');
     expect(summary.primaryAction).toBe('review-empty');
+    expect(summary.detail).toContain('visible page flow');
     expect(summary.keyStats).toContain('1 empty visible');
   });
 

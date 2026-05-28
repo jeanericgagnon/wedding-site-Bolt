@@ -21,6 +21,7 @@ describe('builderV2SectionLifecycle', () => {
     expect(summary.allowRemoval).toBe(false);
     expect(summary.allowArchive).toBe(true);
     expect(summary.bestNextMove).toContain('Archive');
+    expect(summary.keyStats).toContain('2 visible total');
   });
 
   it('marks hidden-only batches as clean removal candidates', () => {
@@ -39,6 +40,26 @@ describe('builderV2SectionLifecycle', () => {
     expect(summary.allowRemoval).toBe(true);
     expect(summary.allowArchive).toBe(false);
     expect(summary.title).toContain('already archived');
+    expect(summary.steps[0]?.detail).toContain('visible page');
+  });
+
+  it('frames mixed retirement sets around visible and hidden lanes', () => {
+    const summary = buildBuilderV2SectionLifecycleSummary({
+      sections: [
+        { id: 'hero', title: 'Hero', enabled: true },
+        { id: 'story', title: 'Story', enabled: false },
+        { id: 'faq', title: 'FAQ', enabled: true },
+      ],
+      selectedSections: [
+        { id: 'hero', title: 'Hero', enabled: true },
+        { id: 'story', title: 'Story', enabled: false },
+      ],
+    });
+
+    expect(summary.title).toContain('mixes live and archived lanes');
+    expect(summary.detail).toContain('still visible');
+    expect(summary.decisionRule).toContain('visible and hidden sections');
+    expect(summary.steps[0]?.detail).toContain('visible and already hidden lanes');
   });
 
   it('removes selected sections and their blocks while preserving a valid next selection', () => {

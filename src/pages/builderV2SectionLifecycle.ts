@@ -85,7 +85,7 @@ export const buildBuilderV2SectionLifecycleSummary = ({
         { label: 'Next', detail: 'Hide the lanes that should leave the guest flow first.' },
         { label: 'Then', detail: 'Remove only the sections that still feel clearly unnecessary afterward.' },
       ],
-      keyStats: [...keyStats, `${visibleTotalCount} live total`],
+      keyStats: [...keyStats, `${visibleTotalCount} visible total`],
       allowRemoval: false,
       allowArchive: true,
     };
@@ -99,7 +99,7 @@ export const buildBuilderV2SectionLifecycleSummary = ({
       decisionRule: 'Once a lane has stayed hidden and unneeded, removal is usually cleaner than carrying dead structure.',
       watchout: 'Do not remove a hidden lane if it is still your only draft of content you expect to reuse.',
       steps: [
-        { label: 'Current', detail: 'The selected sections are already out of the live page.' },
+        { label: 'Current', detail: 'The selected sections are already out of the visible page.' },
         { label: 'Next', detail: 'Remove the lanes that no longer deserve draft space.' },
         { label: 'Then', detail: 'Keep only the hidden sections that still have real comeback value.' },
       ],
@@ -112,12 +112,12 @@ export const buildBuilderV2SectionLifecycleSummary = ({
   if (hiddenSelectedCount > 0) {
     return {
       title: 'This retirement set mixes live and archived lanes',
-      detail: 'That is workable, but you should normalize what is still live before you make a permanent delete choice.',
+      detail: 'That is workable, but you should normalize what is still visible before you make a permanent delete choice.',
       bestNextMove: 'Archive the visible lanes that no longer belong, then remove the whole retired batch once it is consistently off-stage.',
-      decisionRule: 'Visibility cleanup comes before permanent removal when a batch mixes live and hidden sections.',
-      watchout: 'Deleting a mixed set too early makes it harder to tell which live lane actually needed one last preview pass.',
+      decisionRule: 'Visibility cleanup comes before permanent removal when a batch mixes visible and hidden sections.',
+      watchout: 'Deleting a mixed set too early makes it harder to tell which visible lane actually needed one last preview pass.',
       steps: [
-        { label: 'Current', detail: 'The selected batch is split between live and already hidden lanes.' },
+        { label: 'Current', detail: 'The selected batch is split between visible and already hidden lanes.' },
         { label: 'Next', detail: 'Hide the lanes that should exit the guest flow.' },
         { label: 'Then', detail: 'Remove the retired batch only after the whole set is clearly parked.' },
       ],
@@ -130,19 +130,19 @@ export const buildBuilderV2SectionLifecycleSummary = ({
   return {
     title: selectedCount === 1 ? 'This lane is ready for a keep-or-cut decision' : 'This batch is ready for a coordinated retirement pass',
     detail: selectedCount === 1
-      ? 'The section is still live, so decide whether it should stay visible, be parked, or leave the structure entirely.'
-      : 'These sections are still live, but they are grouped well enough for one deliberate retirement move.',
+      ? 'The section is still visible, so decide whether it should stay visible, be parked, or leave the structure entirely.'
+      : 'These sections are still visible, but they are grouped well enough for one deliberate retirement move.',
     bestNextMove: selectedCount === 1
       ? 'Archive the section first if you want one more preview pass. Remove it only when you are confident the page reads better without it.'
       : 'Archive the batch if you want to test the lighter page first, or remove it if the story is already clearly stronger without these lanes.',
     decisionRule: 'Archive first when uncertainty is high. Remove when the page meaning is clearly cleaner and the content is no longer needed.',
-    watchout: 'Live sections feel more disposable than they are. Always consider whether they hold unique content before you cut them.',
+    watchout: 'Visible sections feel more disposable than they are. Always consider whether they hold unique content before you cut them.',
     steps: [
       { label: 'Current', detail: 'The selected lanes are still active in the page flow.' },
       { label: 'Next', detail: 'Archive first if you want to test the lighter structure safely.' },
       { label: 'Then', detail: 'Remove the lanes only after the simplified page feels decisively better.' },
     ],
-    keyStats: [...keyStats, `${visibleTotalCount} live total`],
+    keyStats: [...keyStats, `${visibleTotalCount} visible total`],
     allowRemoval: true,
     allowArchive: true,
   };

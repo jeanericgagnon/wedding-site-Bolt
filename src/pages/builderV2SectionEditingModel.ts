@@ -117,16 +117,16 @@ export const buildBuilderV2SectionEditingGuidance = ({
   if (!section.enabled) {
     return {
       title: `${section.title} is hidden from preview`,
-      detail: 'This section is out of the live reading flow until you show it again.',
+      detail: 'This section is out of the visible reading flow until you show it again.',
       blockCount: blocks.length,
       warningCount,
       suggestedBlockTypes: recommendedBlockTypes.slice(0, 2),
-      mainFocus: 'Decide whether this section belongs in the live page right now.',
+      mainFocus: 'Decide whether this section belongs in the visible page right now.',
       bestNextMove: 'Show the section again, then check that its first visible blocks earn the space they take up.',
       decisionRule: 'Unhide the section only if it adds a real guest-facing job, not just extra content density.',
       watchout: 'A hidden section with stale content becomes easy to forget and easy to ship half-finished later.',
       steps: [
-        { label: 'Current', detail: 'Hidden section with no live visibility.' },
+        { label: 'Current', detail: 'Hidden section with no visible preview presence.' },
         { label: 'Next', detail: 'Show it again or leave it intentionally out of the page.' },
         { label: 'Then', detail: 'Trim or strengthen the first blocks so the section feels worth keeping.' },
       ],

@@ -59,7 +59,7 @@ export const buildBuilderV2StructureGuidance = ({
   if (!visibleSections.length && hiddenSections.length > 0) {
     return {
       title: 'All structure is hidden from preview',
-      detail: 'The page still has sections, but none of them are currently in the live reading flow.',
+      detail: 'The page still has sections, but none of them are currently in the visible reading flow.',
       bestNextMove: `Restore ${hiddenSections[0]?.title ?? 'the first hidden section'} first so the preview has one trustworthy lane again.`,
       decisionRule: 'Bring back one section that earns the page, then decide whether the others should return or stay intentionally hidden.',
       watchout: 'When every section is hidden, the preview goes calm in a misleading way and makes structure loss look like a clean canvas.',
@@ -78,7 +78,7 @@ export const buildBuilderV2StructureGuidance = ({
 
   if (selectedIsHidden && selectedSection) {
     return {
-      title: `${selectedSection.title} is selected, but it is out of the live page flow`,
+      title: `${selectedSection.title} is selected, but it is out of the visible page flow`,
       detail: 'You are reviewing a hidden section, so structure decisions matter more than cosmetic edits right now.',
       bestNextMove: `Decide whether ${selectedSection.title} should come back into preview before you keep polishing its internals.`,
       decisionRule: 'Edit hidden sections only when you are preparing them to return or confirming they can stay out safely.',
@@ -91,7 +91,7 @@ export const buildBuilderV2StructureGuidance = ({
       keyStats,
       addSectionHeadline: 'Keep add-section choices narrow',
       addSectionDetail: 'If you open the picker now, look only for a section that repairs a missing lane rather than broadening the draft.',
-      previewHeadline: 'Preview is telling the truth about what is live',
+      previewHeadline: 'Preview is telling the truth about what is visible',
       previewDetail: 'Use preview to judge the current visible story, not the hidden section you happen to be editing.',
     };
   }
@@ -99,10 +99,10 @@ export const buildBuilderV2StructureGuidance = ({
   if (hiddenSections.length > 0) {
     return {
       title: 'The page map has hidden lanes to resolve',
-      detail: `There ${hiddenSections.length === 1 ? 'is' : 'are'} ${hiddenSections.length} hidden section${hiddenSections.length === 1 ? '' : 's'} sitting outside the live reading flow.`,
+      detail: `There ${hiddenSections.length === 1 ? 'is' : 'are'} ${hiddenSections.length} hidden section${hiddenSections.length === 1 ? '' : 's'} sitting outside the visible reading flow.`,
       bestNextMove: `Review ${hiddenSections[0]?.title ?? 'the hidden lane'} next so you decide whether it should return, move, or stay intentionally out.`,
       decisionRule: 'Resolve hidden sections before adding fresh structure unless the page is clearly missing a more important guest-facing job.',
-      watchout: 'Hidden lanes tend to accumulate stale ideas, which makes the draft feel more complete than the live page really is.',
+      watchout: 'Hidden lanes tend to accumulate stale ideas, which makes the draft feel more complete than the visible page really is.',
       steps: [
         { label: 'Current', detail: 'Visible structure exists, but some lanes are parked off-stage.' },
         { label: 'Next', detail: 'Review the first hidden section and make an explicit keep-or-cut decision.' },
@@ -112,7 +112,7 @@ export const buildBuilderV2StructureGuidance = ({
       addSectionHeadline: 'Add sections only to close a real gap',
       addSectionDetail: 'The picker is still useful, but hidden-lane cleanup should usually happen before you widen the page further.',
       previewHeadline: 'Preview should confirm the visible story',
-      previewDetail: 'Read the live section order top to bottom and ask whether the current visible flow still earns every lane.',
+      previewDetail: 'Read the visible section order top to bottom and ask whether the current visible flow still earns every lane.',
     };
   }
 

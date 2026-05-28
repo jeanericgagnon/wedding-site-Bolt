@@ -61,11 +61,11 @@ export const buildBuilderV2HandoffGuidance = ({
       title: 'Nothing visible is ready for handoff yet',
       detail: 'The document still has structure, but guests would see an empty site map because every page or section is hidden.',
       mainFocus: 'Bring one trustworthy lane back into preview before exporting anything.',
-      bestNextMove: `Review ${hiddenSections[0]?.title ?? hiddenPages[0]?.title ?? 'the first hidden lane'} and decide whether it should return to the live page flow now.`,
+      bestNextMove: `Review ${hiddenSections[0]?.title ?? hiddenPages[0]?.title ?? 'the first hidden lane'} and decide whether it should return to the visible page flow now.`,
       decisionRule: 'A handoff is only useful once the preview has at least one visible lane that reflects the real document story.',
       watchout: 'A calm empty preview can look “clean” while actually hiding a broken handoff state.',
       steps: [
-        { label: 'Current', detail: 'All pages or sections are hidden from the live reading flow.' },
+        { label: 'Current', detail: 'All pages or sections are hidden from the visible reading flow.' },
         { label: 'Next', detail: 'Restore one high-value lane to preview.' },
         { label: 'Then', detail: 'Export only after the visible page flow is legible again.' },
       ],
@@ -84,7 +84,7 @@ export const buildBuilderV2HandoffGuidance = ({
     return {
       tone: 'repair',
       title: 'A visible section still has no internal content spine',
-      detail: 'The live page flow exists, but one or more visible sections would export as empty shells.',
+      detail: 'The visible page flow exists, but one or more visible sections would export as empty shells.',
       mainFocus: 'Fill the first empty visible lane before polishing anything else.',
       bestNextMove: `Open ${emptyVisibleSections[0]?.title ?? 'the empty section'} and add its first meaningful block spine.`,
       decisionRule: 'Export after every visible section can explain its job with at least one anchor block and one supporting detail.',
@@ -118,7 +118,7 @@ export const buildBuilderV2HandoffGuidance = ({
       steps: [
         { label: 'Current', detail: 'Visible sections still contain incomplete or weakly populated blocks.' },
         { label: 'Next', detail: 'Resolve the warning-bearing blocks in the first affected lane.' },
-        { label: 'Then', detail: 'Export only after the live preview is structurally and textually trustworthy.' },
+        { label: 'Then', detail: 'Export only after the visible preview is structurally and textually trustworthy.' },
       ],
       keyStats: [...keyStats, `${warningCount} warnings`],
       exportHeadline: 'Export is close, but not steady yet',

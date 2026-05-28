@@ -18,6 +18,7 @@ describe('builderV2StructureGuidance', () => {
     });
 
     expect(guidance.title).toContain('hidden from preview');
+    expect(guidance.detail).toContain('visible reading flow');
     expect(guidance.bestNextMove).toContain('Restore Hero');
     expect(guidance.previewHeadline).toContain('visible anchor lane');
   });
@@ -39,6 +40,7 @@ describe('builderV2StructureGuidance', () => {
 
     expect(guidance.title).toContain('hidden lanes');
     expect(guidance.decisionRule).toContain('Resolve hidden sections before adding fresh structure');
+    expect(guidance.previewDetail).toContain('visible section order');
     expect(guidance.keyStats).toContain('1 hidden');
   });
 
