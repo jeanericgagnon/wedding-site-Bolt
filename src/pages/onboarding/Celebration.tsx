@@ -123,16 +123,16 @@ export const Celebration: React.FC = () => {
                   <Sparkles className="w-6 h-6 text-accent" aria-hidden="true" />
                 </div>
                 <h2 className="text-xl font-bold text-text-primary mb-2">
-                  AI setup
+                  AI-assisted setup
                 </h2>
-                <p className="text-xs text-accent font-medium mb-3">Fastest path with AI help</p>
+                <p className="text-xs text-accent font-medium mb-3">Fastest path to a draft with AI help</p>
                 <p className="text-text-secondary text-sm mb-4">
                   Launch the AI-assisted setup flow and let it help shape your first draft fast.
                 </p>
                 <ul className="space-y-2 mb-6">
                   <li className="flex items-center gap-2 text-sm text-text-secondary">
                     <div className="w-1.5 h-1.5 rounded-full bg-accent"></div>
-                    <span>AI-led fastest path</span>
+                    <span>AI-assisted first draft</span>
                   </li>
                   <li className="flex items-center gap-2 text-sm text-text-secondary">
                     <div className="w-1.5 h-1.5 rounded-full bg-accent"></div>
@@ -145,7 +145,7 @@ export const Celebration: React.FC = () => {
                 </ul>
               </div>
               <Button variant="accent" size="lg" fullWidth>
-                Start AI setup
+                Start AI-assisted setup
                 <ArrowRight className="w-5 h-5 ml-2" aria-hidden="true" />
               </Button>
             </div>

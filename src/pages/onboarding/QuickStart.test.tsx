@@ -19,7 +19,10 @@ vi.mock('framer-motion', () => ({
   AnimatePresence: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   motion: new Proxy({}, {
     get: (_, key: string) => {
-      const Component = ({ children, ...props }: any) => React.createElement(key, props, children);
+      const Component = ({
+        children,
+        ...props
+      }: React.PropsWithChildren<Record<string, unknown>>) => React.createElement(key, props, children);
       Component.displayName = `motion.${key}`;
       return Component;
     },
@@ -96,11 +99,11 @@ describe('QuickStart flow guards', () => {
 
     render(<QuickStart />);
 
-    await screen.findByText('A few smart follow-ups before we build');
+    await screen.findByText('A few follow-ups before we build');
     fireEvent.click(screen.getByRole('button', { name: 'Back' }));
 
     expect(await screen.findByText('Want to add your story? (totally optional)')).toBeInTheDocument();
-    expect(screen.queryByText('A few smart follow-ups before we build')).not.toBeInTheDocument();
+    expect(screen.queryByText('A few follow-ups before we build')).not.toBeInTheDocument();
   });
 
   it('does not clobber a blank input when hydration lands after mount', async () => {
@@ -168,6 +171,48 @@ describe('QuickStart flow guards', () => {
 
     expect(await screen.findByRole('button', { name: /About how many guests are you inviting: 100–150/i })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /About how many guests are you inviting: 100-150/i })).not.toBeInTheDocument();
+  });
+
+  it('keeps the AI helper copy framed as assisted draft help instead of a smart autopilot', async () => {
+    window.localStorage.setItem(QUICK_START_STORAGE_KEY, JSON.stringify({
+      currentIndex: 2,
+      showFollowUps: true,
+      viewState: 'followups',
+      initialSetupAnswers: {
+        partnerNames: 'Alex & Jordan',
+        venueLocation: 'January 17, 2027 — Sayulita, Mexico',
+      },
+      followUpAnswers: {},
+      clarifyingState: {
+        clarifying: {
+          mode: 'ask',
+          questions: [
+            {
+              id: 'lodging',
+              category: 'travel',
+              question: 'Where should guests stay?',
+              expectedAnswerType: 'text',
+              targetFields: ['travel.lodging'],
+              affectedSections: ['travel'],
+              skippable: true,
+              round: 1,
+              status: 'pending',
+              answer: '',
+            },
+          ],
+          history: [],
+        },
+        draftOutputs: {},
+      },
+    }));
+
+    render(<QuickStart />);
+
+    expect(await screen.findByText('AI-assisted draft help, with the real product flow behind it')).toBeInTheDocument();
+    expect(screen.getByText('A few follow-ups before we build')).toBeInTheDocument();
+    expect(screen.getByText('We already have enough to draft. These are just the highest-leverage details the draft still needs.')).toBeInTheDocument();
+    expect(screen.queryByText('A few smart follow-ups before we build')).not.toBeInTheDocument();
+    expect(screen.queryByText('These are just the highest-leverage details the AI still wants.')).not.toBeInTheDocument();
   });
 
 

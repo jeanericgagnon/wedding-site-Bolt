@@ -15,8 +15,20 @@ vi.mock('react-router-dom', async () => {
 });
 
 vi.mock('../../components/ui', () => ({
-  Button: ({ children, fullWidth, ...props }: any) => <button {...props}>{children}</button>,
-  Card: ({ children, onClick, ...props }: any) => <div role="button" tabIndex={0} onClick={onClick} onKeyDown={() => {}} {...props}>{children}</div>,
+  Button: ({
+    children,
+    fullWidth,
+    ...props
+  }: React.PropsWithChildren<React.ButtonHTMLAttributes<HTMLButtonElement> & { fullWidth?: boolean }>) => (
+    <button data-full-width={fullWidth ? 'true' : undefined} {...props}>{children}</button>
+  ),
+  Card: ({
+    children,
+    onClick,
+    ...props
+  }: React.PropsWithChildren<React.HTMLAttributes<HTMLDivElement>>) => (
+    <div role="button" tabIndex={0} onClick={onClick} onKeyDown={() => {}} {...props}>{children}</div>
+  ),
 }));
 
 import { Celebration } from './Celebration';
@@ -60,5 +72,16 @@ describe('Celebration', () => {
     render(<Celebration />);
 
     expect(screen.getByText(/days until the big day!/i)).toBeInTheDocument();
+  });
+
+  it('keeps AI setup copy framed as assisted draft help instead of AI-led automation', () => {
+    render(<Celebration />);
+
+    expect(screen.getByText('AI-assisted setup')).toBeInTheDocument();
+    expect(screen.getByText('Fastest path to a draft with AI help')).toBeInTheDocument();
+    expect(screen.getByText('AI-assisted first draft')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Start AI-assisted setup' })).toBeInTheDocument();
+    expect(screen.queryByText('AI setup')).not.toBeInTheDocument();
+    expect(screen.queryByText('AI-led fastest path')).not.toBeInTheDocument();
   });
 });

@@ -509,7 +509,7 @@ export const QuickStart: React.FC = () => {
       <div className="w-full max-w-[560px]">
         <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-16">
           <p className="mb-1 text-[13px] uppercase tracking-wide" style={{ color: WARM }}>Day of Love Setup</p>
-          <p className="text-[13px]" style={{ color: MUTED }}>AI-guided, but with the real product brain behind it</p>
+          <p className="text-[13px]" style={{ color: MUTED }}>AI-assisted draft help, with the real product flow behind it</p>
         </motion.div>
 
         {previousAnswers.length > 0 && (
@@ -616,10 +616,10 @@ export const QuickStart: React.FC = () => {
           ) : (
             <motion.div key="followups" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}>
               <h1 className="mb-4" style={{ fontFamily: "'Playfair Display', serif", fontSize: '42px', lineHeight: '1.2', color: TEXT, fontWeight: 500 }}>
-                A few smart follow-ups before we build
+                A few follow-ups before we build
               </h1>
               <p className="mb-8 text-[14px]" style={{ color: MUTED }}>
-                We already have enough to draft. These are just the highest-leverage details the AI still wants.
+                We already have enough to draft. These are just the highest-leverage details the draft still needs.
               </p>
               <div className="space-y-4">
                 {activeClarifyingQuestions.slice(0, 3).map((question) => (
