@@ -16,6 +16,18 @@ import { buildVaultMemoryCuratorModel } from '../../lib/memoryCurator';
 import { MemoryCuratorCard } from '../../components/dashboard/MemoryCuratorCard';
 import { formatVaultUnlockDate, getVaultUnlockDate, toValidDateOrNull } from './vaultDate';
 import { formatVaultEntryDate } from './vaultEntryTime';
+import {
+  mapVaultDashboardError,
+  mapVaultOauthQueryError,
+  VAULT_ANNIVERSARY_SEND_RETRY_ERROR,
+  VAULT_ATTACHMENT_OPEN_RETRY_ERROR,
+  VAULT_DRIVE_CALLBACK_RETRY_ERROR,
+  VAULT_DRIVE_CONNECT_RETRY_ERROR,
+  VAULT_DRIVE_HEALTH_RETRY_ERROR,
+  VAULT_DRIVE_PROVIDER_SYNC_RETRY_ERROR,
+  VAULT_ENTRY_SAVE_RETRY_ERROR,
+  VAULT_SETTINGS_SAVE_RETRY_ERROR,
+} from './vaultErrorCopy';
 
 const MAX_VAULTS = 5;
 const DEMO_VAULT_STORAGE_KEY = 'dayof_demo_vault_state_v1';
@@ -134,7 +146,7 @@ const EntryForm: React.FC<EntryFormProps> = ({ vaultConfigId, durationYears, onS
         attachment_name: attachmentName.trim() || null,
       });
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Couldn’t save right now. Please try again.');
+      setError(mapVaultDashboardError(err, VAULT_ENTRY_SAVE_RETRY_ERROR));
       setSaving(false);
     }
   }
@@ -280,7 +292,7 @@ const VaultCard: React.FC<VaultCardProps> = ({
       if (url) setResolvedEntryLinks((prev) => ({ ...prev, [entry.id]: url }));
       return url;
     } catch (err) {
-      window.alert(err instanceof Error ? err.message : 'Could not open that attachment right now.');
+      window.alert(mapVaultDashboardError(err, VAULT_ATTACHMENT_OPEN_RETRY_ERROR));
       return null;
     } finally {
       setResolvingEntryId(null);
@@ -563,7 +575,7 @@ const EditVaultModal: React.FC<EditVaultModalProps> = ({ config, hasEntries, onS
       await onSave(config.id, label, durationYears);
       onClose();
     } catch (err) {
-      setLocalError(err instanceof Error ? err.message : 'Could not save your vault changes right now.');
+      setLocalError(mapVaultDashboardError(err, VAULT_SETTINGS_SAVE_RETRY_ERROR));
     } finally {
       setSaving(false);
     }
@@ -729,7 +741,7 @@ export const DashboardVault: React.FC = () => {
       setDriveNeedsReconnect(!!result?.needsReconnect);
       setGoogleDriveConnected(!!result?.healthy && !result?.needsReconnect);
     } catch (err) {
-      setDriveHealthMessage(err instanceof Error ? err.message : 'Drive health check failed.');
+      setDriveHealthMessage(mapVaultDashboardError(err, VAULT_DRIVE_HEALTH_RETRY_ERROR));
       setGoogleDriveConnected(false);
       setDriveNeedsReconnect(true);
     } finally {
@@ -758,7 +770,7 @@ export const DashboardVault: React.FC = () => {
       if (!authUrl) throw new Error('Missing Google OAuth URL.');
       window.location.href = authUrl;
     } catch (err) {
-      toast(err instanceof Error ? err.message : 'Failed to start Google Drive connection.', 'error');
+      toast(mapVaultDashboardError(err, VAULT_DRIVE_CONNECT_RETRY_ERROR), 'error');
     } finally {
       setConnectingDrive(false);
     }
@@ -984,7 +996,7 @@ setWeddingSiteId('demo-site-id');
     const googleState = params.get('state');
 
     if (oauthError) {
-      toast(`Google Drive OAuth was cancelled or failed: ${oauthError}`, 'error');
+      toast(mapVaultOauthQueryError(oauthError), 'error');
       const url = new URL(window.location.href);
       url.searchParams.delete('error');
       url.searchParams.delete('state');
@@ -1005,7 +1017,7 @@ setWeddingSiteId('demo-site-id');
       window.history.replaceState({}, '', url.toString());
 
       if (error) {
-        toast(`Google Drive connection failed: ${error.message}`, 'error');
+        toast(mapVaultDashboardError(error, VAULT_DRIVE_CALLBACK_RETRY_ERROR), 'error');
         return;
       }
 
@@ -1026,7 +1038,7 @@ setWeddingSiteId('demo-site-id');
           checkGoogleDriveHealth();
           loadData();
         } catch (providerErr) {
-          toast(providerErr instanceof Error ? providerErr.message : 'Google Drive connected, but we could not save the vault provider.', 'error');
+          toast(mapVaultDashboardError(providerErr, VAULT_DRIVE_PROVIDER_SYNC_RETRY_ERROR), 'error');
         }
       })();
     });
@@ -1091,7 +1103,7 @@ setWeddingSiteId('demo-site-id');
 
       toast(`Anniversary ${reminderKind} email sent.`);
     } catch (err) {
-      toast(err instanceof Error ? err.message : 'Could not send anniversary reminder.', 'error');
+      toast(mapVaultDashboardError(err, VAULT_ANNIVERSARY_SEND_RETRY_ERROR), 'error');
     } finally {
       setSendingReminderFor(null);
     }
