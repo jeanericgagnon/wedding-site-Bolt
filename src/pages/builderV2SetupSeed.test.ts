@@ -66,5 +66,7 @@ describe('builderV2SetupSeed', () => {
     expect(intake.detail).toContain('setup draft');
     expect(intake.keyStats).toEqual(expect.arrayContaining(['Modern Clean', 'Couple names', 'Wedding location']));
     expect(intake.steps[0]?.detail).toContain('seeded');
+    expect(intake.watchout).toContain('ready to share with guests');
+    expect(intake.watchout).not.toContain('publish-ready');
   });
 });

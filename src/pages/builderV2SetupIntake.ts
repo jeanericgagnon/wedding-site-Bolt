@@ -26,7 +26,7 @@ export const buildBuilderV2SetupIntake = (
     detail: 'The setup draft carried couple, date, location, style, and template intent directly into Builder V2 so you can start from a shaped document instead of the generic lab starter.',
     bestNextMove: 'Review the home page first, then confirm the preview fields still match the actual couple, date, and location before you start deeper page edits.',
     decisionRule: 'Treat setup as a strong starting seed, not final wedding truth. Keep the inherited structure when it helps, but overwrite any placeholder copy the moment real details exist.',
-    watchout: 'Template structure can be directionally right while travel, registry, FAQ, and guest-facing notes are still generic. Do not confuse a better starting page map with finished publish-ready content.',
+    watchout: 'Template structure can be directionally right while travel, registry, FAQ, and guest-facing notes are still generic. Do not confuse a better starting page map with a draft that is ready to share with guests.',
     steps: [
       { label: 'Current', detail: `${seed.templateName} seeded ${pageCount} page${pageCount === 1 ? '' : 's'} and ${sectionCount} sections from setup draft intent.` },
       { label: 'Next', detail: 'Check the preview fields and the first two most guest-visible sections so names, date, and place read like this real couple.' },

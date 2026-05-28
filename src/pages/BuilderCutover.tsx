@@ -220,7 +220,7 @@ export const BuilderCutover: React.FC = () => {
               </div>
               <h2 className="mt-3 text-lg font-semibold text-neutral-950">Open the structured V2 starter now</h2>
               <p className="mt-2 text-sm leading-6 text-neutral-700">
-                Use the setup draft you already have as a V2 starting point. This is useful for structure and page-map work before you treat anything as publish-ready.
+                Use the setup draft you already have as a V2 starting point. This is useful for structure and page-map work before you treat anything as ready to share with guests.
               </p>
               <p className="mt-3 text-xs leading-5 text-neutral-600">
                 This does not replace setup completion or make the guest-facing site ready to share by itself.
