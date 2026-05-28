@@ -89,6 +89,7 @@ import {
   type BuilderV2LaunchGatePreviewCoverage,
   type BuilderV2LaunchGateAction,
 } from './builderV2LaunchGate';
+import { buildBuilderV2ExportGate } from './builderV2ExportGate';
 import {
   buildBuilderV2BlockFieldDescriptors,
   buildBuilderV2BlockFieldOptions,
@@ -1493,6 +1494,14 @@ export const BuilderV2Lab: React.FC = () => {
     }),
     [documentPages],
   );
+  const downloadExportGate = useMemo(
+    () => buildBuilderV2ExportGate({ launchGate, intent: 'download' }),
+    [launchGate],
+  );
+  const copyExportGate = useMemo(
+    () => buildBuilderV2ExportGate({ launchGate, intent: 'copy' }),
+    [launchGate],
+  );
   const currentDocumentSnapshot = useMemo(
     () => documentPages.map((page) => ({
       ...page,
@@ -1749,6 +1758,22 @@ export const BuilderV2Lab: React.FC = () => {
     : launchGate.status === 'review'
       ? 'border-sky-200 bg-sky-50/60'
       : 'border-amber-200 bg-amber-50/60';
+  const runDownloadV2Json = useCallback(() => {
+    if (downloadExportGate.ready) {
+      downloadV2Json();
+      return;
+    }
+
+    runLaunchGateAction();
+  }, [downloadExportGate.ready, downloadV2Json, runLaunchGateAction]);
+  const runCopyV2Json = useCallback(() => {
+    if (copyExportGate.ready) {
+      void copyV2Json();
+      return;
+    }
+
+    runLaunchGateAction();
+  }, [copyExportGate.ready, copyV2Json, runLaunchGateAction]);
   const runLaunchGateChecklistAction = useCallback((action: BuilderV2LaunchGateAction) => {
     switch (action.kind) {
       case 'review-audit-issue':
@@ -1953,8 +1978,8 @@ export const BuilderV2Lab: React.FC = () => {
       }] : []),
       { id: 'export-open', group: 'Handoff', label: 'Open export handoff', keywords: ['export', 'handoff', 'json', 'share'], action: () => runCommand('Open export handoff', openExportPanel) },
       { id: 'launch-review', group: 'Launch', label: launchGate.primaryAction.label, keywords: ['launch', 'preview', 'review', 'gate', 'publish'], action: () => runCommand(launchGate.primaryAction.label, runLaunchGateAction) },
-      { id: 'export-download', group: 'Handoff', label: 'Download layout JSON', keywords: ['export', 'download', 'json', 'handoff'], action: () => runCommand('Download layout JSON', downloadV2Json) },
-      { id: 'export-copy', group: 'Handoff', label: 'Copy layout JSON', keywords: ['copy', 'json', 'handoff', 'clipboard'], action: () => runCommand('Copy layout JSON', () => { void copyV2Json(); }) },
+      { id: 'export-download', group: 'Handoff', label: downloadExportGate.ctaLabel, keywords: ['export', 'download', 'json', 'handoff', 'launch'], action: () => runCommand(downloadExportGate.ctaLabel, runDownloadV2Json) },
+      { id: 'export-copy', group: 'Handoff', label: copyExportGate.ctaLabel, keywords: ['copy', 'json', 'handoff', 'clipboard', 'launch'], action: () => runCommand(copyExportGate.ctaLabel, runCopyV2Json) },
       { id: 'handoff-copy-packet', group: 'Handoff', label: 'Copy handoff packet', keywords: ['copy', 'handoff', 'packet', 'summary', 'clipboard'], action: () => runCommand('Copy handoff packet', () => { void copyHandoffPacket(); }) },
       { id: 'import-open', group: 'Handoff', label: 'Open import layout', keywords: ['import', 'json', 'recover', 'handoff'], action: () => runCommand('Open import layout', openImportPanel) },
       { id: 'handoff-fix', group: 'Handoff', label: handoffGuidance.primaryActionLabel, keywords: ['fix', 'next', 'handoff', 'review', 'document'], action: () => runCommand(handoffGuidance.primaryActionLabel, runHandoffAction) },
@@ -1975,7 +2000,7 @@ export const BuilderV2Lab: React.FC = () => {
       .filter((x) => x.s > 0)
       .sort((a, b) => b.s - a.s)
       .map((x) => x.item);
-  }, [commandQuery, sections, pages, activePage.id, addPage, addRecommendedBlockPack, addSection, checkpointSummaries, clearSelection, copyHandoffPacket, copyV2Json, downloadV2Json, duplicatePage, duplicateSelectedSections, handoffGuidance.primaryActionLabel, hideSelectedSections, invertSelection, launchGate.primaryAction.label, moveSelectedSectionsToPage, openExportPanel, openImportPanel, removeSelectedSections, repairSelectedSectionStructure, restoreCheckpoint, restoreSelectedSectionsToStarterBlocks, reviewSelectionInPreview, runHandoffAction, runLaunchGateAction, saveCheckpoint, selectAllSections, selectPage, selectedSectionCanRepairStructure, setSelectedDensity, showSelectedSections, updateVariant]);
+  }, [commandQuery, sections, pages, activePage.id, addPage, addRecommendedBlockPack, addSection, checkpointSummaries, clearSelection, copyExportGate.ctaLabel, copyHandoffPacket, downloadExportGate.ctaLabel, duplicatePage, duplicateSelectedSections, handoffGuidance.primaryActionLabel, hideSelectedSections, invertSelection, launchGate.primaryAction.label, moveSelectedSectionsToPage, openExportPanel, openImportPanel, removeSelectedSections, repairSelectedSectionStructure, restoreCheckpoint, restoreSelectedSectionsToStarterBlocks, reviewSelectionInPreview, runCopyV2Json, runDownloadV2Json, runHandoffAction, runLaunchGateAction, saveCheckpoint, selectAllSections, selectPage, selectedSectionCanRepairStructure, setSelectedDensity, showSelectedSections, updateVariant]);
   const importGuidance = useMemo(
     () => buildBuilderV2ImportGuidance(lastImportReport, lastImportSource),
     [lastImportReport, lastImportSource],
@@ -2439,13 +2464,13 @@ export const BuilderV2Lab: React.FC = () => {
                 <div className="grid gap-2 md:grid-cols-2">
                   <div className="rounded-md border border-border-subtle bg-surface-subtle px-2.5 py-2">
                     <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary">Export read</p>
-                    <p className="mt-1 text-sm font-semibold text-text-primary">{handoffGuidance.exportHeadline}</p>
-                    <p className="mt-1 text-xs leading-relaxed text-text-secondary">{handoffGuidance.exportDetail}</p>
+                    <p className="mt-1 text-sm font-semibold text-text-primary">{downloadExportGate.ctaLabel}</p>
+                    <p className="mt-1 text-xs leading-relaxed text-text-secondary">{downloadExportGate.detail}</p>
                   </div>
                   <div className="rounded-md border border-border-subtle bg-surface-subtle px-2.5 py-2">
                     <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary">Copy read</p>
-                    <p className="mt-1 text-sm font-semibold text-text-primary">{handoffGuidance.copyHeadline}</p>
-                    <p className="mt-1 text-xs leading-relaxed text-text-secondary">{handoffGuidance.copyDetail}</p>
+                    <p className="mt-1 text-sm font-semibold text-text-primary">{copyExportGate.ctaLabel}</p>
+                    <p className="mt-1 text-xs leading-relaxed text-text-secondary">{copyExportGate.detail}</p>
                   </div>
                 </div>
                 <div className="mt-3 grid gap-2 md:grid-cols-2">
@@ -2458,11 +2483,11 @@ export const BuilderV2Lab: React.FC = () => {
                   <button onClick={() => { void copyHandoffPacket(); }} className="rounded-md border border-border-subtle bg-white px-3 py-2 text-left text-sm font-semibold text-text-primary hover:border-primary/40 hover:bg-primary/5">
                     Copy handoff packet
                   </button>
-                  <button onClick={downloadV2Json} className="rounded-md border border-border-subtle bg-white px-3 py-2 text-left text-sm font-semibold text-text-primary hover:border-primary/40 hover:bg-primary/5">
-                    Download layout JSON
+                  <button onClick={runDownloadV2Json} className="rounded-md border border-border-subtle bg-white px-3 py-2 text-left text-sm font-semibold text-text-primary hover:border-primary/40 hover:bg-primary/5">
+                    {downloadExportGate.ctaLabel}
                   </button>
-                  <button onClick={() => { void copyV2Json(); }} className="rounded-md border border-border-subtle bg-white px-3 py-2 text-left text-sm font-semibold text-text-primary hover:border-primary/40 hover:bg-primary/5">
-                    Copy layout JSON
+                  <button onClick={runCopyV2Json} className="rounded-md border border-border-subtle bg-white px-3 py-2 text-left text-sm font-semibold text-text-primary hover:border-primary/40 hover:bg-primary/5">
+                    {copyExportGate.ctaLabel}
                   </button>
                 </div>
               </div>
@@ -4233,13 +4258,13 @@ export const BuilderV2Lab: React.FC = () => {
                   </div>
                   <div className="rounded-md border border-border-subtle bg-surface-subtle px-3 py-3">
                     <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary">Export read</p>
-                    <p className="mt-1 text-sm font-semibold text-text-primary">{handoffGuidance.exportHeadline}</p>
-                    <p className="mt-1 text-xs leading-relaxed text-text-secondary">{handoffGuidance.exportDetail}</p>
+                    <p className="mt-1 text-sm font-semibold text-text-primary">{downloadExportGate.ctaLabel}</p>
+                    <p className="mt-1 text-xs leading-relaxed text-text-secondary">{downloadExportGate.detail}</p>
                   </div>
                 <div className="rounded-md border border-border-subtle bg-surface-subtle px-3 py-3">
                   <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary">Copy read</p>
-                  <p className="mt-1 text-sm font-semibold text-text-primary">{handoffGuidance.copyHeadline}</p>
-                  <p className="mt-1 text-xs leading-relaxed text-text-secondary">{handoffGuidance.copyDetail}</p>
+                  <p className="mt-1 text-sm font-semibold text-text-primary">{copyExportGate.ctaLabel}</p>
+                  <p className="mt-1 text-xs leading-relaxed text-text-secondary">{copyExportGate.detail}</p>
                 </div>
               </div>
             </div>
@@ -4254,14 +4279,14 @@ export const BuilderV2Lab: React.FC = () => {
                 <button onClick={() => { void copyHandoffPacket(); }} className="rounded-sm border border-border-subtle px-3 py-1.5 text-xs font-medium hover:border-primary/40 hover:bg-primary/5">
                   Copy handoff packet
                 </button>
-                <button onClick={() => { void copyV2Json(); }} disabled={launchGate.status === 'blocked'} className="rounded-sm border border-border-subtle px-3 py-1.5 text-xs font-medium hover:border-primary/40 hover:bg-primary/5 disabled:cursor-not-allowed disabled:opacity-50">
-                  Copy JSON
+                <button onClick={runCopyV2Json} className="rounded-sm border border-border-subtle px-3 py-1.5 text-xs font-medium hover:border-primary/40 hover:bg-primary/5">
+                  {copyExportGate.ctaLabel}
                 </button>
                 <button
-                  onClick={launchGate.status === 'ready' ? downloadV2Json : runLaunchGateAction}
+                  onClick={runDownloadV2Json}
                   className="rounded-sm border border-primary/30 bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary hover:bg-primary/15"
                 >
-                  {launchGate.status === 'ready' ? 'Download JSON' : launchGate.primaryAction.label}
+                  {downloadExportGate.ctaLabel}
                 </button>
               </div>
             </div>
