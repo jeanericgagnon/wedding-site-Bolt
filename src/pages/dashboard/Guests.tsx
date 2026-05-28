@@ -31,6 +31,7 @@ import { resolvePublicSiteSlugFromRow } from '../../lib/publicSiteSlug';
 import { buildGuestOpsCoach, buildGuestOutreachSequence } from '../../lib/guestOpsCoach';
 import { getPlannerHandoffCopy } from '../../lib/plannerHandoffState';
 import { buildGuestContactUpdateUrl, buildRsvpInviteUrl } from '../../lib/publicGuestLinks';
+import { buildGuestContactLinkListPayload } from './guestContactLinkList';
 import * as XLSX from 'xlsx';
 
 interface Guest {
@@ -1810,6 +1811,38 @@ Proceed with send?`)) return;
     }
   }
 
+  async function handleCopyFilteredGuestUpdateLinks() {
+    if (!weddingSiteId) {
+      toast('Missing wedding site context', 'error');
+      return;
+    }
+
+    const { data: siteData, error: siteError } = await supabase
+      .from('wedding_sites')
+      .select('id, site_slug, site_url')
+      .eq('id', weddingSiteId)
+      .maybeSingle();
+
+    const publicSlug = resolvePublicSiteSlugFromRow((siteData as Record<string, unknown> | null) ?? null);
+    if (siteError || !publicSlug) {
+      toast('Set a public site slug before sharing guest update links', 'error');
+      return;
+    }
+
+    if (filteredGuestUpdateRecipients.length === 0) {
+      toast('No guests in this segment have invitation links yet.', 'error');
+      return;
+    }
+
+    const payload = buildGuestContactLinkListPayload(`https://${publicSlug}.dayof.love`, publicSlug, filteredGuestUpdateRecipients);
+    try {
+      await navigator.clipboard.writeText(payload);
+      toast(`Copied ${filteredGuestUpdateRecipients.length} guest update link${filteredGuestUpdateRecipients.length === 1 ? '' : 's'}`, 'success');
+    } catch {
+      window.prompt('Copy guest update links:', payload);
+    }
+  }
+
   async function openItineraryDrawer(guest: GuestWithRSVP) {
     if (!weddingSiteId) return;
     setItineraryDrawerGuest(guest);
@@ -2838,6 +2871,12 @@ Proceed with send?`)) return;
   });
 
   const emailableFilteredGuests = filteredGuests.filter(g => !!g.email && !!g.invite_token);
+  const filteredGuestUpdateRecipients = filteredGuests
+    .filter((guest) => !!guest.invite_token)
+    .map((guest) => ({
+      name: guest.first_name && guest.last_name ? `${guest.first_name} ${guest.last_name}` : guest.name,
+      inviteToken: guest.invite_token!,
+    }));
 
 
   const daysToWedding = getDaysUntilGuestWedding(weddingSiteInfo?.wedding_date);
@@ -4113,7 +4152,13 @@ Proceed with send?`)) return;
                       <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={() => { exportAddressCollectionCSV(); setShowOpsMenu(false); }}>Export addresses (mailing)</button>
                       <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={() => { exportCheckedInCSV(); setShowOpsMenu(false); }}>Export checked-in guests</button>
                       <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={() => { exportThankYouDueCSV(); setShowOpsMenu(false); }}>Export thank-you due</button>
-                      <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={() => { copyContactRequestLink(); setShowOpsMenu(false); }}>Copy address collection link</button>
+                      <button
+                        className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded disabled:opacity-50"
+                        disabled={filteredGuestUpdateRecipients.length === 0}
+                        onClick={() => { handleCopyFilteredGuestUpdateLinks(); setShowOpsMenu(false); }}
+                      >
+                        Copy filtered guest update links
+                      </button>
                       <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={() => { handleCopyNoContactChecklist(); setShowOpsMenu(false); }}>Copy no-contact checklist</button>
                       <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded disabled:opacity-50" disabled={reminderCandidates.length === 0} onClick={() => { copySmsRsvpLinksForFiltered(); setShowOpsMenu(false); }}>Copy SMS RSVP links</button>
                       <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded disabled:opacity-50" disabled={reminderCandidates.length === 0} onClick={() => { handleCopyFilteredEmails(); setShowOpsMenu(false); }}>Copy filtered emails</button>
@@ -4306,7 +4351,12 @@ Proceed with send?`)) return;
                 <p>These guests have no email or phone. Add contact info before reminder campaigns.</p>
                 <div className="flex flex-wrap gap-2">
                   <button onClick={() => handleCopyNoContactChecklist()} className="px-2 py-1 rounded-md border border-warning/30 bg-white text-warning hover:bg-warning/5">Copy follow-up checklist</button>
-                  <button onClick={() => copyContactRequestLink()} className="px-2 py-1 rounded-md border border-warning/30 bg-white text-warning hover:bg-warning/5">Copy guest update link</button>
+                  <button
+                    onClick={() => handleCopyFilteredGuestUpdateLinks()}
+                    className="px-2 py-1 rounded-md border border-warning/30 bg-white text-warning hover:bg-warning/5"
+                  >
+                    Copy guest update links
+                  </button>
                 </div>
               </div>
             )}
