@@ -1,5 +1,14 @@
 import { supabase } from './supabase';
 import { resolveActiveSiteForUser } from './activeSite';
+import {
+  mapStripeBillingLoadError,
+  mapStripeCheckoutStartError,
+  mapStripePaymentStatusError,
+  mapStripeSiteLookupError,
+  mapStripeSmsCreditsCheckoutError,
+  mapStripeSubscriptionCheckoutError,
+  mapStripeVerifyCheckoutError,
+} from './stripeServiceCopy';
 
 type FunctionErrorContextLike = {
   clone?: () => { text?: () => Promise<string> } | Response;
@@ -109,10 +118,10 @@ export async function createCheckoutSession(
 
   if (!out.res.ok) {
     if (out.res.status === 401) throw new SessionExpiredError();
-    throw new Error(out.json.error || out.raw || `Server error (${out.res.status})`);
+    throw new Error(mapStripeCheckoutStartError(out.json.error || out.raw || `Server error (${out.res.status})`));
   }
 
-  if (out.json.error) throw new Error(out.json.error);
+  if (out.json.error) throw new Error(mapStripeCheckoutStartError(out.json.error));
   if (!out.json.url) throw new Error('No checkout URL returned. Please try again.');
 
   return out.json.url;
@@ -160,11 +169,11 @@ export async function createSubscriptionSession(
     if (/401|unauthorized|jwt|token|expired/i.test(message)) {
       throw new SessionExpiredError();
     }
-    throw new Error(message);
+    throw new Error(mapStripeSubscriptionCheckoutError(message));
   }
 
   const json = (data ?? {}) as { url?: string; error?: string };
-  if (json.error) throw new Error(json.error);
+  if (json.error) throw new Error(mapStripeSubscriptionCheckoutError(json.error));
   if (!json.url) throw new Error('No subscription checkout URL returned. Please try again.');
 
   return json.url;
@@ -189,7 +198,7 @@ export async function fetchBillingInfo(userId: string): Promise<BillingInfo | nu
     .eq('id', activeSite.id)
     .maybeSingle();
 
-  if (error) throw new Error(error.message);
+  if (error) throw new Error(mapStripeBillingLoadError(error));
   if (!data) return null;
 
   return {
@@ -228,7 +237,7 @@ export async function verifyCheckoutSession(sessionId: string): Promise<{ paid: 
 
   if (!res.ok) {
     if (res.status === 401) throw new SessionExpiredError();
-    throw new Error(json.error || raw || `Server error (${res.status})`);
+    throw new Error(mapStripeVerifyCheckoutError(json.error || raw || `Server error (${res.status})`));
   }
 
   return { paid: !!json.paid, error: json.error };
@@ -243,7 +252,7 @@ export async function fetchPaymentStatus(userId: string): Promise<'payment_requi
     .limit(1)
     .maybeSingle();
 
-  if (error) throw new Error(error.message);
+  if (error) throw new Error(mapStripePaymentStatusError(error));
   if (!data) return null;
   return data.payment_status as 'payment_required' | 'active' | 'canceled';
 }
@@ -257,7 +266,7 @@ export async function fetchWeddingSiteId(userId: string): Promise<string | null>
     .limit(1)
     .maybeSingle();
 
-  if (error) throw new Error(error.message);
+  if (error) throw new Error(mapStripeSiteLookupError(error));
   return data?.id ?? null;
 }
 
@@ -317,11 +326,11 @@ export async function createSmsCreditsSession(
     if (/401|unauthorized|jwt|token|expired/i.test(message)) {
       throw new SessionExpiredError();
     }
-    throw new Error(message);
+    throw new Error(mapStripeSmsCreditsCheckoutError(message));
   }
 
   const json = (data ?? {}) as { url?: string; error?: string };
-  if (json.error) throw new Error(json.error);
+  if (json.error) throw new Error(mapStripeSmsCreditsCheckoutError(json.error));
   if (!json.url) throw new Error('No checkout URL returned. Please try again.');
 
   return json.url;
