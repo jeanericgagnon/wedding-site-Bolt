@@ -36,6 +36,7 @@ import { buildBuilderV2HandoffGuidance } from './builderV2HandoffGuidance';
 import { buildBuilderV2HandoffPacket } from './builderV2HandoffPacket';
 import { buildBuilderV2StructureGuidance } from './builderV2StructureGuidance';
 import { buildBuilderV2SelectionGuidance } from './builderV2SelectionGuidance';
+import { getBuilderGuideRoute } from './builderCutoverRoute';
 import { cloneBuilderV2Sections } from './builderV2SectionClone';
 import {
   duplicateBuilderV2Block,
@@ -2254,7 +2255,7 @@ export const BuilderV2Lab: React.FC = () => {
               {saveState === 'saved' ? <CheckCircle2 className="w-3.5 h-3.5" /> : null}
               {saveState === 'saved' ? `All changes saved${lastSavedAt ? ` · ${lastSavedAt}` : ''}` : 'Saving...'}
             </span>
-            <Link to="/dashboard/builder" className="text-sm border border-border-subtle rounded-sm px-2 py-1 hover:border-primary/40 inline-flex items-center gap-1">Back to editor guide <ArrowRight className="w-4 h-4" /></Link>
+            <Link to={getBuilderGuideRoute()} className="text-sm border border-border-subtle rounded-sm px-2 py-1 hover:border-primary/40 inline-flex items-center gap-1">Back to editor guide <ArrowRight className="w-4 h-4" /></Link>
             <Link to="/product" className="text-sm text-primary hover:text-primary-hover inline-flex items-center gap-1">Back <ArrowRight className="w-4 h-4" /></Link>
           </div>
         </div>

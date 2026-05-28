@@ -35,6 +35,7 @@ import { getPublishStateDescriptor } from '../../lib/publishState';
 import { SITE_VISIBILITY_COPY } from '../../lib/siteVisibilityState';
 import { getFlowStatusLabel } from '../../lib/flowLabels';
 import { FIRST_SESSION_WORKSPACE_ROUTES } from '../../lib/firstSessionWorkspaceRoutes';
+import { getBuilderV2LabRoute } from '../../pages/builderCutoverRoute';
 import { BuilderPage } from '../../types/builder/project';
 import { getBuilderLaunchPrepSummary } from './builderLaunchPrepSummary';
 import { getBuilderPageEditingSummary } from './builderPageEditingSummary';
@@ -395,7 +396,7 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
 
     if (!saved) return;
     setShowUpgradeReview(false);
-    navigate('/builder-v2-lab');
+    navigate(getBuilderV2LabRoute());
   }, [navigate, projectName, state.project, state.weddingData]);
 
   return (

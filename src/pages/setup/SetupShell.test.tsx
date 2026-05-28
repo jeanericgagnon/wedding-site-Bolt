@@ -4,6 +4,7 @@ import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { emptySetupDraft, readSetupDraft, SELECTED_TEMPLATE_KEY, writeSetupDraft } from '../../lib/setupDraft';
+import { getBuilderV2LabRoute } from '../builderCutoverRoute';
 import { readBuilderV2SetupBridge } from '../builderV2SetupBridge';
 
 const navigateMock = vi.fn();
@@ -74,6 +75,6 @@ describe('SetupShell', () => {
       selectedTemplateId: 'coastal-breeze',
     });
     expect(window.localStorage.getItem(SELECTED_TEMPLATE_KEY)).toBe('coastal-breeze');
-    expect(navigateMock).toHaveBeenCalledWith('/builder-v2-lab');
+    expect(navigateMock).toHaveBeenCalledWith(getBuilderV2LabRoute());
   });
 });
