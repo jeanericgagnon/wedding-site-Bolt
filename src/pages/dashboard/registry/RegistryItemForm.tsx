@@ -9,6 +9,7 @@ import { getSafePublicImageUrl, getSafePublicWebUrl } from '../../../sections/pu
 import { customerSafeErrorMessage } from '../../../lib/customerSafeError';
 import { normalizeRegistryBarcode } from '../../../lib/registryBarcode';
 import { RegistryBarcodeScanner } from './RegistryBarcodeScanner';
+import { REGISTRY_ITEM_SAVE_RETRY_ERROR, safeRegistryDashboardError } from './registryDashboardErrorCopy';
 
 interface Props {
   initial?: RegistryItem | null;
@@ -591,7 +592,7 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [],
         source_type: draft.item_type === 'cash_fund' ? 'cash_fund' : sourceMode,
       }));
     } catch (err: unknown) {
-      setSaveError(customerSafeErrorMessage(err, 'Couldn’t save this gift.'));
+      setSaveError(safeRegistryDashboardError(err, REGISTRY_ITEM_SAVE_RETRY_ERROR));
     } finally {
       setSaving(false);
     }

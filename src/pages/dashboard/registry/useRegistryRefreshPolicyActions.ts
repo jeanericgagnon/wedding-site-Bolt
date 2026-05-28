@@ -1,5 +1,6 @@
 import { getWeddingRefreshWindowDate, parseRefreshWindowEndIso } from '../registryRefreshWindow';
 import { saveRegistryRefreshPolicy } from './registryService';
+import { REGISTRY_REFRESH_POLICY_SAVE_RETRY_ERROR } from './registryDashboardErrorCopy';
 
 interface UseRegistryRefreshPolicyActionsArgs {
   autoRefreshEnabled: boolean;
@@ -83,7 +84,7 @@ export function useRegistryRefreshPolicyActions(args: UseRegistryRefreshPolicyAc
       }, weddingSiteId, 'Registry refresh policy');
       toast('Refresh policy saved.');
     } catch (err) {
-      toast(safeRegistryDashboardError(err, 'Couldn’t save refresh settings right now. Please try again.'), 'error');
+      toast(safeRegistryDashboardError(err, REGISTRY_REFRESH_POLICY_SAVE_RETRY_ERROR), 'error');
     } finally {
       setSavingRefreshPolicy(false);
     }

@@ -2,6 +2,7 @@ import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { RegistryItemForm } from './RegistryItemForm';
+import { REGISTRY_ITEM_SAVE_RETRY_ERROR } from './registryDashboardErrorCopy';
 import type { RegistryItem } from './registryTypes';
 import { fetchUrlPreview, findDuplicateItem, lookupRegistryBarcode } from './registryService';
 
@@ -415,5 +416,24 @@ describe('RegistryItemForm', () => {
 
     await waitFor(() => expect(findDuplicateItem).toHaveBeenCalled());
     expect(screen.getByText(/review the existing gift before keeping another copy/i)).toBeInTheDocument();
+  });
+
+  it('shows shared safe copy when saving a gift fails', async () => {
+    const onSave = vi.fn(async () => {
+      throw new Error('provider timeout token=abc while saving gift');
+    });
+
+    render(
+      <RegistryItemForm
+        existingItems={[]}
+        onSave={onSave}
+        onCancel={vi.fn()}
+      />,
+    );
+
+    await change(screen.getByPlaceholderText('e.g. KitchenAid Stand Mixer'), 'Dinnerware set');
+    await click(screen.getByRole('button', { name: /add to registry/i }));
+
+    await waitFor(() => expect(screen.getByText(REGISTRY_ITEM_SAVE_RETRY_ERROR)).toBeInTheDocument());
   });
 });
