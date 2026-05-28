@@ -4,7 +4,7 @@ import { getBuilderLaunchChecklistRoute } from '../pages/builderCutoverRoute';
 import { buildInvisibleIntelligenceSuggestions } from './invisibleIntelligence';
 
 describe('buildInvisibleIntelligenceSuggestions', () => {
-  it('routes the publish nudge through the shared legacy publish checklist route', () => {
+  it('routes the launch-review nudge through the shared Builder V2 launch route', () => {
     const suggestions = buildInvisibleIntelligenceSuggestions({
       isPublished: false,
       siteSlug: null,
@@ -21,7 +21,8 @@ describe('buildInvisibleIntelligenceSuggestions', () => {
 
     const publishNudge = suggestions.find((suggestion) => suggestion.id === 'site-publish');
     expect(publishNudge).toMatchObject({
-      actionLabel: 'Open publish checklist',
+      detail: 'The public site should have one clean launch review before guests see it.',
+      actionLabel: 'Open launch review',
       href: getBuilderLaunchChecklistRoute(),
     });
   });

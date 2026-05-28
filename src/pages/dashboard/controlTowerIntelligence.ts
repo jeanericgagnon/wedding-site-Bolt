@@ -192,7 +192,7 @@ export function buildControlTowerBriefing(input: ControlTowerIntelligenceInput):
         { label: 'Preview guest-facing flow', detail: 'Walk the real guest path once the blockers are gone so launch confidence comes from lived truth.', status: 'next' },
         { label: 'Publish the live site', detail: 'Only publish once the path guests will actually use feels clean and steady.', status: 'then' },
       ],
-      primaryAction: { label: 'Open launch checklist', target: 'builder-launch' },
+      primaryAction: { label: 'Open launch review', target: 'builder-launch' },
       secondaryAction: { label: 'Check planning', target: 'planning' },
     };
   }

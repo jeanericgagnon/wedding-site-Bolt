@@ -78,7 +78,7 @@ export function buildCoupleFocusModel(input: CoupleFocusInput): CoupleFocusModel
           title: 'Clear the launch blockers',
           detail: `${input.publishBlockerCount} guest-facing blocker${input.publishBlockerCount === 1 ? '' : 's'} still stand between this draft and a confident launch.`,
           target: 'builder-launch',
-          ctaLabel: 'Open launch checklist',
+          ctaLabel: 'Open launch review',
         }),
         step('next', {
           id: 'guests',

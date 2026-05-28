@@ -17,7 +17,7 @@ describe('buildCoupleFocusModel', () => {
 
     expect(model.headline).toMatch(/launch readiness/i);
     expect(model.watchout).toMatch(/polishing around the blockers|safer to share/i);
-    expect(model.steps[0]?.id).toBe('launch');
+    expect(model.steps[0]).toMatchObject({ id: 'launch', ctaLabel: 'Open launch review' });
     expect(model.steps[1]?.id).toBe('guests');
     expect(model.steps[2]).toMatchObject({ id: 'planning', target: 'planning' });
   });

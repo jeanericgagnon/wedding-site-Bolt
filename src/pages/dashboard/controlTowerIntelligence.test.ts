@@ -49,7 +49,7 @@ describe('buildControlTowerBriefing', () => {
     expect(briefing.bestNextMove).toMatch(/publish blockers|preview the live guest path/i);
     expect(briefing.decisionRule).toMatch(/launch truth beats visual polish/i);
     expect(briefing.watchout).toMatch(/design cleanup|guest path is still blocked/i);
-    expect(briefing.primaryAction).toMatchObject({ target: 'builder-launch' });
+    expect(briefing.primaryAction).toMatchObject({ label: 'Open launch review', target: 'builder-launch' });
     expect(briefing.badges).toContain('3 blockers');
     expect(briefing.sequence[0]).toMatchObject({ status: 'current' });
     expect(briefing.sequence[0]?.detail).toMatch(/publish truth gaps/i);

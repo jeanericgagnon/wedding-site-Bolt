@@ -785,9 +785,9 @@ export const DashboardOverview: React.FC = () => {
                   size="sm"
                   className="w-full sm:w-auto"
                   onClick={() => navigate(getBuilderLaunchChecklistRoute())}
-                  title="Open your site editor and go straight to the go-live checklist"
+                  title="Open Builder V2 and go straight to the launch review"
                 >
-                  Open launch checklist
+                  Open launch review
                 </Button>
                 <Button
                   variant="outline"
