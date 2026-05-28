@@ -97,7 +97,7 @@ describe('BuilderPage recovery routes', () => {
     expect(navigateMock).not.toHaveBeenCalledWith('/dashboard');
   });
 
-  it('uses the overview workspace as the error recovery target', async () => {
+  it('uses the overview workspace as the safe error recovery target', async () => {
     maybeSingleMock.mockResolvedValue({
       data: {
         id: 'site-1',
@@ -118,11 +118,35 @@ describe('BuilderPage recovery routes', () => {
     await waitFor(() => {
       expect(loadProjectMock).toHaveBeenCalled();
     });
-    expect(await screen.findByText('Builder connection interrupted')).toBeInTheDocument();
+    expect(await screen.findByText('Site editor unavailable')).toBeInTheDocument();
+    expect(screen.getByText('Unable to load your project right now.')).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Back to dashboard overview' }));
 
     expect(navigateMock).toHaveBeenCalledWith('/dashboard/overview');
     expect(navigateMock).not.toHaveBeenCalledWith('/dashboard');
+  });
+
+  it('does not surface raw provider details on the builder recovery screen', async () => {
+    maybeSingleMock.mockResolvedValue({
+      data: {
+        id: 'site-1',
+        couple_name_1: 'Alex',
+        couple_name_2: 'Jordan',
+      },
+      error: null,
+    });
+    loadProjectMock.mockRejectedValue(new Error('Supabase relation wedding_sites does not exist'));
+    loadWeddingDataMock.mockResolvedValue(null);
+
+    render(
+      <MemoryRouter initialEntries={['/dashboard/builder-v1']}>
+        <BuilderPage />
+      </MemoryRouter>,
+    );
+
+    expect(await screen.findByText('Site editor unavailable')).toBeInTheDocument();
+    expect(screen.getByText('Unable to load your project right now.')).toBeInTheDocument();
+    expect(screen.queryByText(/Supabase relation wedding_sites does not exist/i)).not.toBeInTheDocument();
   });
 });

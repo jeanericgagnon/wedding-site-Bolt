@@ -11,6 +11,7 @@ import { createDefaultSectionInstance } from '../types/builder/section';
 import { supabase } from '../lib/supabase';
 import { FIRST_SESSION_WORKSPACE_ROUTES } from '../lib/firstSessionWorkspaceRoutes';
 import { getTemplatePack } from './constants/builderTemplatePacks';
+import { BUILDER_SAVE_RETRY_ERROR, mapBuilderWorkspaceError } from './components/builderWorkspaceErrorCopy';
 import { readSetupDraft } from '../lib/setupDraft';
 import { applySetupDraftToWeddingData, hasMeaningfulSetupDraft } from './utils/setupDraftHydration';
 import { getBuilderEntryExperience } from './builderEntryExperience';
@@ -130,7 +131,7 @@ export const BuilderPage: React.FC = () => {
       setProject(nextProject);
       setWeddingData(nextWeddingData);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load builder');
+      setError(mapBuilderWorkspaceError(err, BUILDER_SAVE_RETRY_ERROR));
     } finally {
       setLoading(false);
     }
