@@ -38,6 +38,11 @@ import { buildBuilderV2StructureGuidance } from './builderV2StructureGuidance';
 import { buildBuilderV2SelectionGuidance } from './builderV2SelectionGuidance';
 import { cloneBuilderV2Sections } from './builderV2SectionClone';
 import {
+  duplicateBuilderV2Block,
+  moveBuilderV2Block,
+  removeBuilderV2Block,
+} from './builderV2BlockOperations';
+import {
   createBuilderV2Page,
   duplicateBuilderV2Page,
   moveBuilderV2SectionsToPage,
@@ -869,9 +874,15 @@ export const BuilderV2Lab: React.FC = () => {
   };
 
   const removeBlock = (sectionId: string, blockId: string) => {
+    const nextBlocks = removeBuilderV2Block({
+      blocks: sectionBlocks[sectionId] ?? [],
+      blockId,
+    });
+    if (nextBlocks === (sectionBlocks[sectionId] ?? [])) return;
+
     commitWithCheckpoint('Before removing block', pages, {
       ...sectionBlocks,
-      [sectionId]: (sectionBlocks[sectionId] ?? []).filter((b) => b.id !== blockId),
+      [sectionId]: nextBlocks,
     });
     notify('Removed block');
   };
@@ -882,23 +893,18 @@ export const BuilderV2Lab: React.FC = () => {
     const sourceSection = sections.find((x) => x.id === sectionId);
     if (!sourceSection) return;
 
-    commit(pages, (() => {
-      const arr = [...(sectionBlocks[sectionId] ?? [])];
-      const idx = arr.findIndex((b) => b.id === blockId);
-      if (idx < 0) return sectionBlocks;
-      const source = arr[idx];
-      const allowed = canAddBlockToSection(sectionId, sourceSection.type, source.type);
-      if (!allowed.ok) {
-        notify(allowed.reason);
-        return sectionBlocks;
-      }
-      const dup: AddedBlock = {
-        ...source,
-        id: `block-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-      };
-      arr.splice(idx + 1, 0, dup);
-      return { ...sectionBlocks, [sectionId]: arr };
-    })());
+    const result = duplicateBuilderV2Block({
+      blocks: sectionBlocks[sectionId] ?? [],
+      blockId,
+      canAdd: (blockType) => canAddBlockToSection(sectionId, sourceSection.type, blockType),
+    });
+    if (result.blockedReason) {
+      notify(result.blockedReason);
+      return;
+    }
+    if (!result.duplicatedBlockId) return;
+
+    commit(pages, { ...sectionBlocks, [sectionId]: result.blocks });
     notify('Duplicated block');
   };
 
@@ -907,15 +913,13 @@ export const BuilderV2Lab: React.FC = () => {
   };
 
   const moveBlock = (sectionId: string, blockId: string, dir: -1 | 1) => {
-    commit(pages, (() => {
-      const arr = [...(sectionBlocks[sectionId] ?? [])];
-      const idx = arr.findIndex((b) => b.id === blockId);
-      const nextIdx = idx + dir;
-      if (idx < 0 || nextIdx < 0 || nextIdx >= arr.length) return sectionBlocks;
-      const [item] = arr.splice(idx, 1);
-      arr.splice(nextIdx, 0, item);
-      return { ...sectionBlocks, [sectionId]: arr };
-    })());
+    const nextBlocks = moveBuilderV2Block({
+      blocks: sectionBlocks[sectionId] ?? [],
+      blockId,
+      direction: dir,
+    });
+    if (nextBlocks === (sectionBlocks[sectionId] ?? [])) return;
+    commit(pages, { ...sectionBlocks, [sectionId]: nextBlocks });
   };
 
   const commit = useCallback((nextPages: LabPage[], nextSectionBlocks: Record<string, AddedBlock[]> = sectionBlocks) => {
