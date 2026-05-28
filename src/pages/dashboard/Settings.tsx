@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, Button, Input, Select, Badge } from '../../components/ui';
@@ -34,6 +34,7 @@ import { buildSiteAccessPlan } from './siteAccessPlan';
 import { getFlowStatusLabel } from '../../lib/flowLabels';
 import { resolveSettingsTabFromSearch, type SettingsTab } from './settingsTab';
 import { buildCollaboratorRoleGuide } from '../collaboratorRoleGuide';
+import { buildCollaboratorInviteUrl, buildMaskedCollaboratorInvitePath } from '../../lib/collaboratorInviteLink';
 
 
 interface RSVPQuestionSetting {
@@ -176,7 +177,7 @@ export const DashboardSettings: React.FC = () => {
     navigate('/', { replace: true });
   };
 
-  const loadCollaboratorInvites = async (siteId: string) => {
+  const loadCollaboratorInvites = useCallback(async (siteId: string) => {
     const { data: inviteRows, error: inviteLoadError } = await supabase
       .from('wedding_site_collaborator_invites')
       .select('id, invite_email, invite_name, role, status, invited_at, expires_at, permissions')
@@ -185,9 +186,9 @@ export const DashboardSettings: React.FC = () => {
     if (inviteLoadError) throw inviteLoadError;
     setCollaboratorInvites((inviteRows as Array<{ id: string; invite_email: string; invite_name: string | null; role: string; status: string; invited_at: string; expires_at?: string | null; permissions?: PlannerPermissionKey[] }> | null) ?? []);
     setRevealedInviteLinks({});
-  };
+  }, []);
 
-  const loadSiteData = async () => {
+  const loadSiteData = useCallback(async () => {
     if (!user) {
       setWeddingSiteId(null);
       setCoupleNames('');
@@ -301,11 +302,11 @@ export const DashboardSettings: React.FC = () => {
     } catch (err) {
       setAccountError(err instanceof Error ? err.message : 'Could not load settings right now.');
     }
-  };
+  }, [isDemoMode, loadCollaboratorInvites, user]);
 
   useEffect(() => {
     void loadSiteData();
-  }, [user, isDemoMode]);
+  }, [loadSiteData]);
 
   const handleSaveAccount = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -484,7 +485,7 @@ export const DashboardSettings: React.FC = () => {
       });
       if (error) throw error;
       if (!inviteToken) throw new Error('This invite link is not ready yet.');
-      const inviteUrl = `${window.location.origin}/accept-collaborator-invite?token=${String(inviteToken)}`;
+      const inviteUrl = buildCollaboratorInviteUrl(window.location.origin, String(inviteToken));
       await navigator.clipboard.writeText(inviteUrl);
       setPlannerInviteSuccess('Invite link copied.');
       setPlannerInviteError(null);
@@ -505,7 +506,7 @@ export const DashboardSettings: React.FC = () => {
       });
       if (error) throw error;
       if (!inviteToken) throw new Error('This invite link is not ready yet.');
-      const inviteUrl = `${window.location.origin}/accept-collaborator-invite?token=${String(inviteToken)}`;
+      const inviteUrl = buildCollaboratorInviteUrl(window.location.origin, String(inviteToken));
       setRevealedInviteLinks((current) => ({ ...current, [inviteId]: inviteUrl }));
     } catch (err) {
       setPlannerInviteError(err instanceof Error ? err.message : 'Failed to reveal collaborator invite.');
@@ -1328,7 +1329,7 @@ export const DashboardSettings: React.FC = () => {
                                   <p className="mt-1 text-xs text-text-secondary">{invite.invite_email} · {invite.role} · {formatSettingsDate(invite.invited_at)}{invite.expires_at ? ` · expires ${formatSettingsDate(invite.expires_at)}` : ''}</p>
                                   {invite.permissions && invite.permissions.length > 0 && <p className="mt-1 text-[11px] text-text-tertiary">{invite.permissions.join(' · ')}</p>}
                                   <p className="mt-1 text-[11px] text-text-tertiary">
-                                    Invite URL: {revealedInviteLinks[invite.id] ? revealedInviteLinks[invite.id] : '/accept-collaborator-invite?token=••••••••••'}
+                                    Invite URL: {revealedInviteLinks[invite.id] ? revealedInviteLinks[invite.id] : buildMaskedCollaboratorInvitePath()}
                                   </p>
                                 </div>
                                 <div className="flex items-center gap-2">
