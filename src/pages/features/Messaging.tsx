@@ -74,7 +74,7 @@ export const MessagingFeature: React.FC = () => {
               Reach guests clearly
             </h2>
             <p className="text-xl text-ink/70 max-w-3xl mx-auto">
-              Email works well for most updates. Text is there for urgent changes. Either way, the right guests get the right message.
+              Email works well for most updates. Text can support urgent changes once sender setup is ready. Either way, the right guests get the right message.
             </p>
           </div>
 
@@ -98,14 +98,14 @@ export const MessagingFeature: React.FC = () => {
               <div className="p-3 bg-brand/10 rounded-xl w-fit mb-4">
                 <MessageSquare className="w-6 h-6 text-brand" />
               </div>
-              <h3 className="text-xl font-serif font-bold text-ink mb-3">Text credits</h3>
+              <h3 className="text-xl font-serif font-bold text-ink mb-3">Texting, when enabled</h3>
               <p className="text-ink/70 mb-4">
-                For urgent updates like venue changes or weather alerts, purchase SMS credits. No markup, transparent pricing.
+                For urgent updates like venue changes or weather alerts, DayOf can support text once sender setup and delivery readiness are in place. Until then, keep texting plans reviewable instead of pretending the lane is fully live.
               </p>
               <ul className="space-y-2 text-sm text-ink/70">
-                <li>• $0.02 per message</li>
-                <li>• Buy only what you need</li>
-                <li>• International support</li>
+                <li>• SMS credits handled separately from email</li>
+                <li>• Sender setup comes first</li>
+                <li>• Use the lane only when live readiness is confirmed</li>
               </ul>
             </div>
 
@@ -241,7 +241,7 @@ export const MessagingFeature: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-12 text-left">
               {[
                 'Email included',
-                'SMS credits available',
+                'SMS path stays gated until sender setup is ready',
                 'Guest segmentation',
                 'Schedule sends',
                 'Open updates',
@@ -251,7 +251,7 @@ export const MessagingFeature: React.FC = () => {
                 'Reminder drafting + scheduled follow-up',
                 'Opt-out management',
                 'CAN-SPAM compliant',
-                'International support',
+                'Sender setup status stays explicit',
               ].map((feature, idx) => (
                 <div key={idx} className="flex items-start gap-3">
                   <CheckCircle2 className="w-5 h-5 text-success mt-0.5 flex-shrink-0" />
