@@ -1,5 +1,5 @@
 export function getOverviewWebsiteEditorLabel(isPublished: boolean): string {
-  return isPublished ? 'Edit live website' : 'Edit draft before sharing';
+  return isPublished ? 'Edit shared website' : 'Edit draft before sharing';
 }
 
 export function getOverviewDraftVisibilityNote(): string {
@@ -8,4 +8,14 @@ export function getOverviewDraftVisibilityNote(): string {
 
 export function getOverviewRegistryReadinessNote(): string {
   return 'Registry items added so far';
+}
+
+export function getOverviewOpenWebsiteLabel(isPublished: boolean): string {
+  return isPublished ? 'Open shared website' : 'Preview draft website';
+}
+
+export function getOverviewSiteActivityLabel(action: 'publish' | 'rollback' | 'save'): string {
+  if (action === 'publish') return 'Shared guest-facing site';
+  if (action === 'rollback') return 'Restored older version';
+  return 'Saved draft';
 }

@@ -35,7 +35,9 @@ import { calcOverviewDaysUntil, formatOverviewRelativeTime, formatOverviewWeddin
 import { getOverviewFallbackCoupleValue } from './overviewDraftBrief';
 import {
   getOverviewDraftVisibilityNote,
+  getOverviewOpenWebsiteLabel,
   getOverviewRegistryReadinessNote,
+  getOverviewSiteActivityLabel,
   getOverviewWebsiteEditorLabel,
 } from './overviewWebsiteActions';
 import { buildNameChangeOverviewCardModel } from './nameChangeOverviewCard';
@@ -1500,7 +1502,7 @@ export const DashboardOverview: React.FC = () => {
                     {stats?.siteSlug && (
                       <Button variant="accent" size="md" fullWidth onClick={() => window.open(`/site/${stats.siteSlug}`, '_blank')}>
                         <ExternalLink className="w-5 h-5 mr-2" aria-hidden="true" />
-                        {stats.isPublished ? 'Open live website' : 'Preview draft website'}
+                        {getOverviewOpenWebsiteLabel(Boolean(stats.isPublished))}
                       </Button>
                     )}
                     <Button variant="outline" size="md" fullWidth onClick={() => navigate(getBuilderPhotoTipsRoute())}>
@@ -1651,7 +1653,7 @@ export const DashboardOverview: React.FC = () => {
                         <div key={activity.id} className="rounded-lg border border-border-subtle bg-surface-secondary/30 px-3 py-2.5">
                           <div className="flex items-center justify-between gap-3">
                             <div>
-                              <p className="text-sm font-medium text-text-primary capitalize">{activity.action === 'publish' ? 'Published live site' : activity.action === 'rollback' ? 'Restored older version' : 'Saved draft'}</p>
+                              <p className="text-sm font-medium text-text-primary capitalize">{getOverviewSiteActivityLabel(activity.action)}</p>
                               <p className="mt-0.5 text-[11px] text-text-tertiary">{formatOverviewRelativeTime(activity.createdAtISO)} • {activity.actor}</p>
                             </div>
                             <Badge variant={activity.action === 'publish' ? 'success' : activity.action === 'rollback' ? 'warning' : 'secondary'}>
