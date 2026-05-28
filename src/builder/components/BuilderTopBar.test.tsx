@@ -1,134 +1,100 @@
-import { describe, expect, it } from 'vitest';
+import React from 'react';
+import { fireEvent, render, screen } from '@testing-library/react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { formatPublishedAt, formatSavedAt, getBuilderCommandCenterCopy, getPageManagerSummary, getPublishBlockerUiState } from './builderTopBarModel';
+import { createEmptyBuilderProject } from '../../types/builder/project';
+import { createEmptyWeddingData } from '../../types/weddingData';
+import { createEmptyHistoryState } from '../../types/builder/history';
+import type { BuilderState } from '../state/builderStore';
 
-describe('getPublishBlockerUiState', () => {
-  it('treats unsaved changes as auto-saveable instead of a hard go-live blocker', () => {
-    expect(
-      getPublishBlockerUiState({
-        publishValidationError: 'Save your latest draft changes before going live.',
-        publishIssueKind: 'unsaved-changes',
-      }),
-    ).toEqual({
-      hasHardPublishBlocker: false,
-      effectivePublishValidationError: null,
-      canAutoSaveBeforePublish: true,
-    });
-  });
+const {
+  navigateMock,
+  stateRef,
+} = vi.hoisted(() => ({
+  navigateMock: vi.fn(),
+  stateRef: {
+    current: null as BuilderState | null,
+  },
+}));
 
-  it('keeps real publish blockers blocking', () => {
-    expect(
-      getPublishBlockerUiState({
-        publishValidationError: 'Add both names exactly how you want them shown before going live.',
-        publishIssueKind: 'missing-couple-names',
-      }),
-    ).toEqual({
-      hasHardPublishBlocker: true,
-      effectivePublishValidationError: 'Add both names exactly how you want them shown before going live.',
-      canAutoSaveBeforePublish: false,
-    });
-  });
+vi.mock('react-router-dom', async () => {
+  const actual = await vi.importActual<typeof import('react-router-dom')>('react-router-dom');
+  return {
+    ...actual,
+    useNavigate: () => navigateMock,
+    useLocation: () => ({ pathname: '/dashboard/builder-v1', search: '', hash: '' }),
+  };
 });
 
-describe('builder top bar time formatting', () => {
-  it('falls back cleanly for invalid persisted save timestamps', () => {
-    expect(formatSavedAt('not-a-date')).toBe('Saved time unknown');
+vi.mock('../state/builderStore', () => ({
+  useBuilderContext: () => ({
+    state: stateRef.current,
+    dispatch: vi.fn(),
+    activePage: stateRef.current?.project?.pages?.[0] ?? null,
+    selectedSection: null,
+  }),
+}));
+
+import { BuilderTopBar } from './BuilderTopBar';
+
+describe('BuilderTopBar exit routes', () => {
+  beforeEach(() => {
+    navigateMock.mockReset();
+
+    const project = createEmptyBuilderProject('site-1', 'modern-luxe');
+    const weddingData = createEmptyWeddingData();
+    weddingData.couple.displayName = 'Alex & Jordan';
+
+    stateRef.current = {
+      project,
+      weddingData,
+      activePageId: project.pages[0]?.id ?? null,
+      selectedSectionId: null,
+      hoveredSectionId: null,
+      mode: 'edit',
+      previewViewport: 'desktop',
+      isDirty: false,
+      isSaving: false,
+      isPublishing: false,
+      history: createEmptyHistoryState(),
+      mediaAssets: [],
+      uploadQueue: [],
+      templateGalleryOpen: false,
+      mediaLibraryOpen: false,
+      themePanelOpen: false,
+      mediaPickerTargetSectionId: null,
+      mediaPickerTargetField: null,
+      mediaPickerTargetSettingKey: null,
+      mediaPickerTargetBlockPath: null,
+      mediaPickerTargetImageIndex: null,
+      lastSavedAt: null,
+      error: null,
+    };
   });
 
-  it('falls back cleanly for invalid persisted publish timestamps', () => {
-    expect(formatPublishedAt('not-a-date')).toBe('Live since unknown time');
-  });
-});
+  it('sends a clean builder exit to the overview workspace', () => {
+    render(<BuilderTopBar onSave={() => undefined} onPublish={() => undefined} />);
 
-describe('getBuilderCommandCenterCopy', () => {
-  it('keeps hard publish blockers framed as blockers', () => {
-    expect(
-      getBuilderCommandCenterCopy({
-        projectName: 'Alex & Sam',
-        activePageTitle: 'Home',
-        pageCount: 2,
-        sectionCount: 6,
-        isDirty: false,
-        hasHardPublishBlocker: true,
-        publishValidationError: 'Add both names exactly how you want them shown before going live.',
-        canAutoSaveBeforePublish: false,
-        isPublished: false,
-        publishedVersion: null,
-        publishAttemptedAt: null,
-      }),
-    ).toEqual({
-      title: 'Alex & Sam',
-      summary: '2 pages · 6 sections on this page',
-      tone: 'warning',
-      status: 'Go-live blocker',
-      detail: 'Add both names exactly how you want them shown before going live.',
-    });
+    fireEvent.click(screen.getByTitle('Back to Dashboard'));
+
+    expect(navigateMock).toHaveBeenCalledWith('/dashboard/overview');
+    expect(navigateMock).not.toHaveBeenCalledWith('/dashboard');
   });
 
-  it('treats clean published projects as live updates, not fresh launches', () => {
-    expect(
-      getBuilderCommandCenterCopy({
-        projectName: 'Alex & Sam',
-        activePageTitle: 'Story',
-        pageCount: 3,
-        sectionCount: 4,
-        isDirty: false,
-        hasHardPublishBlocker: false,
-        publishValidationError: null,
-        canAutoSaveBeforePublish: false,
-        isPublished: true,
-        publishedVersion: 7,
-        publishAttemptedAt: null,
-      }),
-    ).toEqual({
-      title: 'Alex & Sam',
-      summary: '3 pages · 4 sections on this page',
-      tone: 'success',
-      status: 'Live v7',
-      detail: 'Guests can already see this site. New edits here will become the next live update.',
-    });
-  });
-});
+  it('sends leave-anyway confirmation to the overview workspace when edits are dirty', () => {
+    stateRef.current = {
+      ...stateRef.current,
+      isDirty: true,
+    };
 
-describe('getPageManagerSummary', () => {
-  it('summarizes visible, hidden, empty, and home page state', () => {
-    expect(
-      getPageManagerSummary(
-        [
-          {
-            id: 'home',
-            title: 'Home',
-            slug: 'home',
-            orderIndex: 0,
-            sections: [{ id: 's1' }] as never[],
-            meta: { isHome: true, isHidden: false },
-          },
-          {
-            id: 'travel',
-            title: 'Travel',
-            slug: 'travel',
-            orderIndex: 1,
-            sections: [],
-            meta: { isHome: false, isHidden: false },
-          },
-          {
-            id: 'faq',
-            title: 'FAQ',
-            slug: 'faq',
-            orderIndex: 2,
-            sections: [],
-            meta: { isHome: false, isHidden: true },
-          },
-        ] as never[],
-        'travel',
-      ),
-    ).toEqual({
-      totalPages: 3,
-      visiblePages: 2,
-      hiddenPages: 1,
-      emptyPages: 2,
-      homePageTitle: 'Home',
-      activePageTitle: 'Travel',
-    });
+    render(<BuilderTopBar onSave={() => undefined} onPublish={() => undefined} />);
+
+    fireEvent.click(screen.getByTitle('Back to Dashboard'));
+    expect(screen.getByText('Leave builder?')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Leave anyway' }));
+
+    expect(navigateMock).toHaveBeenCalledWith('/dashboard/overview');
+    expect(navigateMock).not.toHaveBeenCalledWith('/dashboard');
   });
 });

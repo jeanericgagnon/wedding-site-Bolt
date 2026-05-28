@@ -34,6 +34,7 @@ import { selectUndoRedo, selectIsPreviewMode, selectPublishStatus, selectIsDirty
 import { getPublishStateDescriptor } from '../../lib/publishState';
 import { SITE_VISIBILITY_COPY } from '../../lib/siteVisibilityState';
 import { getFlowStatusLabel } from '../../lib/flowLabels';
+import { FIRST_SESSION_WORKSPACE_ROUTES } from '../../lib/firstSessionWorkspaceRoutes';
 import { BuilderPage } from '../../types/builder/project';
 import { getBuilderLaunchPrepSummary } from './builderLaunchPrepSummary';
 import { getBuilderPageEditingSummary } from './builderPageEditingSummary';
@@ -406,7 +407,7 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
             setShowLeaveConfirm(true);
             return;
           }
-          navigate('/dashboard');
+          navigate(FIRST_SESSION_WORKSPACE_ROUTES.overview);
         }}
         title="Back to Dashboard"
         className="flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[12px] text-gray-500 hover:text-gray-800 hover:bg-gray-100 transition-colors flex-shrink-0"
@@ -1721,7 +1722,7 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
               type="button"
               onClick={() => {
                 setShowLeaveConfirm(false);
-                navigate('/dashboard');
+                navigate(FIRST_SESSION_WORKSPACE_ROUTES.overview);
               }}
               className="rounded bg-rose-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-rose-700"
             >
