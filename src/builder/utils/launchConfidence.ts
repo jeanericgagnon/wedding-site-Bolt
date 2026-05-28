@@ -72,7 +72,7 @@ export function buildLaunchConfidence(
 
   if (issue) {
     return {
-      label: issue.kind === 'unsaved-changes' ? 'Almost launch-ready' : 'Launch needs one more pass',
+      label: issue.kind === 'unsaved-changes' ? 'Almost ready to share' : 'Sharing needs one more pass',
       tone: 'warning',
       summary: issue.message,
       current: issue.kind === 'unsaved-changes'
@@ -96,7 +96,7 @@ export function buildLaunchConfidence(
       ),
       primaryAction: {
         kind: issue.kind === 'unsaved-changes' ? 'publish' : 'fix',
-        label: issue.kind === 'unsaved-changes' ? 'Save and publish' : 'Fix launch blockers',
+        label: issue.kind === 'unsaved-changes' ? 'Save and publish' : 'Fix share blockers',
         target: issue.kind === 'unsaved-changes' ? undefined : 'publish-blockers',
       },
     };
@@ -148,7 +148,7 @@ export function buildLaunchConfidence(
   }
 
   return {
-    label: 'Ready for a real launch pass',
+    label: 'Ready for a real final review',
     tone: 'ready',
     summary: 'The draft has the essentials in place, so the best remaining move is one preview pass and a calm publish.',
     current: 'The structure, names, date, venue, and RSVP path are all present enough to support guests well.',

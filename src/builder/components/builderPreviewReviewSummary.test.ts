@@ -35,7 +35,7 @@ describe('getBuilderPreviewReviewSummary', () => {
     expect(summary.badge).toBe('Preview before launch');
     expect(summary.primaryAction).toEqual({
       kind: 'fix-blockers',
-      label: 'Fix launch blockers',
+      label: 'Fix share blockers',
     });
   });
 
@@ -69,6 +69,7 @@ describe('getBuilderPreviewReviewSummary', () => {
     });
 
     expect(summary.badge).toBe('Desktop first pass');
+    expect(summary.heading).toContain('before you share the site');
     expect(summary.primaryAction).toEqual({
       kind: 'switch-viewport',
       label: 'Switch to mobile',
@@ -88,6 +89,7 @@ describe('getBuilderPreviewReviewSummary', () => {
     });
 
     expect(summary.badge).toBe('Final guest rehearsal');
+    expect(summary.watchout).toContain('steady enough to share');
     expect(summary.primaryAction).toEqual({
       kind: 'publish',
       label: 'Publish from preview',

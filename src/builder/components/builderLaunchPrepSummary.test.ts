@@ -84,7 +84,7 @@ describe('getBuilderLaunchPrepSummary', () => {
     expect(summary.checklistItems.find((item) => item.id === 'sections')?.action).toEqual(summary.primaryAction);
   });
 
-  it('treats clean drafts as publish-ready launch prep', () => {
+  it('treats clean drafts as final-review-ready publish prep', () => {
     const project = createEmptyBuilderProject('w1', 'modern-luxe');
     project.pages[0].sections = [createDefaultSectionInstance('hero', 'default', 0)];
     project.pages[0].sections[0].enabled = true;
@@ -98,7 +98,8 @@ describe('getBuilderLaunchPrepSummary', () => {
     });
 
     expect(summary.issue).toBeNull();
-    expect(summary.primaryAction).toEqual({ kind: 'publish', label: 'Publish with confidence' });
+    expect(summary.primaryAction).toEqual({ kind: 'publish', label: 'Publish after final review' });
+    expect(summary.currentStep).toContain('ready for final review');
     expect(summary.blockerHints).toEqual([
       'Use the launch check to confirm the draft, then publish from a stable state.',
     ]);

@@ -90,7 +90,7 @@ describe('buildLaunchConfidence', () => {
   it('encourages a save-and-publish pass when unsaved changes are the only blocker', () => {
     const confidence = buildLaunchConfidence(baseProject, baseWeddingData, { isDirty: true });
 
-    expect(confidence.label).toContain('Almost');
+    expect(confidence.label).toContain('Almost ready to share');
     expect(confidence.primaryAction).toMatchObject({ kind: 'publish' });
     expect(confidence.decisionRule).toMatch(/save state|synchronize/i);
     expect(confidence.watchout).toMatch(/save state|stale/i);
@@ -100,6 +100,7 @@ describe('buildLaunchConfidence', () => {
     const confidence = buildLaunchConfidence(baseProject, baseWeddingData, { isDirty: false });
 
     expect(confidence.tone).toBe('ready');
+    expect(confidence.label).toBe('Ready for a real final review');
     expect(confidence.primaryAction).toMatchObject({ kind: 'publish' });
     expect(confidence.decisionRule).toMatch(/honest preview|polish lap/i);
     expect(confidence.sequence[1]?.detail).toMatch(/mobile|preview/i);

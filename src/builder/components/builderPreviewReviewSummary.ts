@@ -96,7 +96,7 @@ export function getBuilderPreviewReviewSummary({
       ),
       primaryAction: {
         kind: 'fix-blockers',
-        label: 'Fix launch blockers',
+        label: 'Fix share blockers',
       },
     };
   }
@@ -126,11 +126,11 @@ export function getBuilderPreviewReviewSummary({
   if (previewViewport !== 'mobile') {
     return {
       badge: 'Desktop first pass',
-      heading: 'Use mobile as the final guest rehearsal before you go live',
+      heading: 'Use mobile as the final guest rehearsal before you share the site',
       summary: 'This preview is useful, but the last honest launch read still belongs on a phone-sized viewport.',
       focusTitle: 'Move the preview to mobile before you decide the page is ready.',
       focusDetail: 'Guests are most likely to feel friction on a phone, especially around spacing, order, and call-to-action clarity.',
-      bestNextMove: 'Switch to mobile preview and do one last guest read there before you publish or update the live site.',
+      bestNextMove: 'Switch to mobile preview and do one last guest read there before you publish or update the shared site.',
       decisionRule: 'Desktop can confirm structure, but mobile is the final trust check.',
       watchout: 'A page that feels composed on desktop can still feel cramped, vague, or strangely ordered on a phone.',
       sequence: buildSequence(
@@ -148,25 +148,25 @@ export function getBuilderPreviewReviewSummary({
 
   return {
     badge: isPublished ? 'Live update rehearsal' : 'Final guest rehearsal',
-    heading: isPublished
-      ? 'This mobile pass should tell you whether the next live update earns its way in'
-      : 'This mobile pass should be your last honest check before guests see the site',
+      heading: isPublished
+        ? 'This mobile pass should tell you whether the next live update earns its way in'
+        : 'This mobile pass should be your last honest check before guests see the site',
     summary: isPublished
       ? 'The site is already live, so preview is now about deciding whether this draft meaningfully improves the guest experience.'
       : 'The essentials are in place, so mobile preview is now the best final truth source before launch.',
     focusTitle: 'Judge the page by guest clarity, not by how much editing time you already spent.',
-    focusDetail: isPublished
-      ? 'Only push another live update if the guest-facing read is materially clearer or calmer than what is already public.'
-      : 'If the phone-sized read feels easy to trust, the next move is to publish from this draft instead of reopening a longer polish loop.',
+      focusDetail: isPublished
+        ? 'Only push another live update if the guest-facing read is materially clearer or calmer than what is already public.'
+        : 'If the phone-sized read feels easy to trust, the next move is to publish from this draft instead of reopening a longer review loop.',
     bestNextMove: isPublished
       ? 'Compare this mobile read to the standard of your live site, then publish only if the improvement is obvious.'
       : 'Finish this mobile preview pass and publish from this draft if nothing important is weakening guest trust.',
     decisionRule: isPublished
       ? 'When the live site is already trustworthy, update only when the new draft clearly improves clarity or confidence.'
       : 'When mobile preview feels trustworthy, launch momentum should move toward publish, not another nervous edit lap.',
-    watchout: isPublished
-      ? 'Do not publish just because the draft exists. Live updates should earn their way in by improving the guest path.'
-      : 'The risk now is reopening the editor for low-value polish after preview already showed the page is ready enough to trust.',
+      watchout: isPublished
+        ? 'Do not publish just because the draft exists. Live updates should earn their way in by improving the guest path.'
+        : 'The risk now is reopening the editor for low-value polish after preview already showed the page is steady enough to share.',
     sequence: buildSequence(
       'Read the page once on mobile as if you have never seen the editor.',
       isPublished
@@ -174,7 +174,7 @@ export function getBuilderPreviewReviewSummary({
         : 'Notice whether anything still weakens trust, pacing, or clarity.',
       isPublished
         ? 'Then publish the update only if it clearly earns the interruption.'
-        : 'Then publish from this draft instead of letting one more polish lap create churn.',
+        : 'Then publish from this draft instead of letting one more review lap create churn.',
     ),
     primaryAction: {
       kind: 'publish',

@@ -111,7 +111,7 @@ function getActionForIssue(
   project: BuilderProject,
   activePageId?: string | null,
 ): BuilderLaunchPrepAction {
-  if (!issue) return { kind: 'publish', label: 'Publish with confidence' };
+  if (!issue) return { kind: 'publish', label: 'Publish after final review' };
   switch (issue.kind) {
     case 'no-pages':
       return { kind: 'add-page', label: 'Add first page' };
@@ -120,7 +120,7 @@ function getActionForIssue(
     case 'unsaved-changes':
       return { kind: 'save-draft', label: 'Save draft first' };
     default:
-      return { kind: 'fix-blockers', label: 'Fix launch blockers' };
+      return { kind: 'fix-blockers', label: 'Fix share blockers' };
   }
 }
 
@@ -170,7 +170,7 @@ export function getBuilderLaunchPrepSummary({
     return {
       issue,
       checklistItems,
-      headline: isPublished ? 'The live site is steady enough for a deliberate update.' : 'The draft is ready for a calm publish pass.',
+      headline: isPublished ? 'The live site is steady enough for a deliberate update.' : 'The draft is ready for a calm final review pass.',
       focusTitle: 'Use the launch check as confirmation, not as permission to reopen a nervous polish loop.',
       focusDetail: isPublished
         ? 'Guests already have a trustworthy live site, so update only if this draft clearly improves clarity or confidence.'
@@ -184,7 +184,7 @@ export function getBuilderLaunchPrepSummary({
       watchout: isPublished
         ? 'Do not ship updates just because they exist. Live changes should earn their way in.'
         : 'The main risk now is reopening the editor for low-value tweaks after launch truth is already solid.',
-      currentStep: 'Treat the draft as launch-ready unless the guest read reveals a real trust gap.',
+      currentStep: 'Treat the draft as ready for final review unless the guest read reveals a real trust gap.',
       nextStep: 'Preview once and make sure the page still feels clear on a phone-sized read.',
       thenStep: isPublished
         ? 'Publish the update only if it materially improves the live experience.'
@@ -197,7 +197,7 @@ export function getBuilderLaunchPrepSummary({
   return {
     issue,
     checklistItems,
-    headline: 'Launch still needs one more deliberate pass.',
+    headline: 'Sharing still needs one more deliberate pass.',
     focusTitle: issue.kind === 'unsaved-changes'
       ? 'Stabilize the draft before you make any new launch decision.'
       : 'Fix the real guest-facing blocker before you spend energy on polish.',
@@ -209,7 +209,7 @@ export function getBuilderLaunchPrepSummary({
       : issue.message,
     decisionRule: issue.kind === 'unsaved-changes'
       ? 'When save state is the only blocker, synchronize before you rethink anything else.'
-      : 'When a guest-facing basic is still missing, fix that exact gap before you call the draft launchable.',
+      : 'When a guest-facing basic is still missing, fix that exact gap before you treat the draft as ready to share.',
     watchout: issue.kind === 'unsaved-changes'
       ? 'More edits from a dirty draft usually create more uncertainty, not more launch confidence.'
       : 'Visible design progress can hide the fact that the launch basics are still thin.',
