@@ -455,10 +455,11 @@ export const DashboardOverview: React.FC = () => {
     }
   }
 
+  // loadStats intentionally closes over the latest dashboard state helpers here.
   useEffect(() => {
     if (!user) return;
     void loadStats();
-  }, [user, isDemoMode]);
+  }, [user, isDemoMode]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const nameChangeCard = buildNameChangeOverviewCardModel(nameChangeOverviewState);
 
@@ -658,8 +659,8 @@ export const DashboardOverview: React.FC = () => {
     }
 
     const routeByTarget: Record<ControlTowerAction['target'], string> = {
-      'builder-launch': '/dashboard/builder#launch-confidence',
-      'builder-polish': '/dashboard/builder#builder-concierge',
+      'builder-launch': '/dashboard/builder-v1#launch-confidence',
+      'builder-polish': '/dashboard/builder-v1#builder-concierge',
       coordinator: '/dashboard/coordinator',
       guests: '/dashboard/guests',
       itinerary: '/dashboard/itinerary#itinerary-readiness',
@@ -685,7 +686,7 @@ export const DashboardOverview: React.FC = () => {
       messages: '/dashboard/messages',
       registry: '/dashboard/registry',
       photos: '/dashboard/photos',
-      'builder-polish': '/dashboard/builder#builder-concierge',
+      'builder-polish': '/dashboard/builder-v1#builder-concierge',
       settings: '/dashboard/settings?tab=site#guest-access-handoff',
     };
     navigate(routeByTarget[analyticsNextMove.target]);
@@ -693,8 +694,8 @@ export const DashboardOverview: React.FC = () => {
 
   function handleCoupleFocusAction(step: CoupleFocusStep) {
     const routeByTarget: Record<CoupleFocusStep['target'], string> = {
-      'builder-launch': '/dashboard/builder#launch-confidence',
-      'builder-polish': '/dashboard/builder#builder-concierge',
+      'builder-launch': '/dashboard/builder-v1#launch-confidence',
+      'builder-polish': '/dashboard/builder-v1#builder-concierge',
       planning: '/dashboard/planning',
       'planning-tasks': '/dashboard/planning?tab=tasks',
       'planning-vendors': '/dashboard/planning?tab=vendors',
@@ -775,7 +776,7 @@ export const DashboardOverview: React.FC = () => {
                   variant="accent"
                   size="sm"
                   className="w-full sm:w-auto"
-                  onClick={() => navigate('/dashboard/builder?publishNow=1')}
+                  onClick={() => navigate('/dashboard/builder-v1?publishNow=1')}
                   title="Open your site editor and go straight to the go-live checklist"
                 >
                   Open launch checklist
@@ -784,7 +785,7 @@ export const DashboardOverview: React.FC = () => {
                   variant="outline"
                   size="sm"
                   className="w-full sm:w-auto"
-                  onClick={() => navigate('/dashboard/builder?photoTips=1')}
+                  onClick={() => navigate('/dashboard/builder-v1?photoTips=1')}
                   title="Open your site editor with photo tips"
                 >
                   Add photos better
@@ -1484,7 +1485,7 @@ export const DashboardOverview: React.FC = () => {
                         {stats.isPublished ? 'Open live website' : 'Preview draft website'}
                       </Button>
                     )}
-                    <Button variant="outline" size="md" fullWidth onClick={() => navigate('/dashboard/builder?photoTips=1')}>
+                    <Button variant="outline" size="md" fullWidth onClick={() => navigate('/dashboard/builder-v1?photoTips=1')}>
                       <Edit className="w-5 h-5 mr-2" aria-hidden="true" />
                       {stats?.isPublished ? 'Edit live website' : 'Edit draft before you go live'}
                     </Button>

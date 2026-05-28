@@ -1,0 +1,132 @@
+import React from 'react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { createEmptyBuilderProject } from '../types/builder/project';
+import { createEmptyWeddingData } from '../types/weddingData';
+
+const {
+  navigateMock,
+  loadProjectMock,
+  loadWeddingDataMock,
+  saveUpgradeBridgeMock,
+  maybeSingleMock,
+} = vi.hoisted(() => ({
+  navigateMock: vi.fn(),
+  loadProjectMock: vi.fn(),
+  loadWeddingDataMock: vi.fn(),
+  saveUpgradeBridgeMock: vi.fn(),
+  maybeSingleMock: vi.fn(),
+}));
+
+vi.mock('../hooks/useAuth', () => ({
+  useAuth: () => ({
+    user: { id: 'user-1' },
+    isDemoMode: false,
+  }),
+}));
+
+vi.mock('../lib/supabase', () => ({
+  supabase: {
+    from: vi.fn(() => ({
+      select: vi.fn(() => ({
+        eq: vi.fn(() => ({
+          maybeSingle: maybeSingleMock,
+        })),
+      })),
+    })),
+  },
+}));
+
+vi.mock('../builder/services/builderProjectService', () => ({
+  builderProjectService: {
+    loadProject: loadProjectMock,
+    loadWeddingData: loadWeddingDataMock,
+  },
+}));
+
+vi.mock('../builder-v2/upgradeBridge', () => ({
+  saveBuilderV2UpgradeBridge: saveUpgradeBridgeMock,
+}));
+
+vi.mock('react-router-dom', async () => {
+  const actual = await vi.importActual<typeof import('react-router-dom')>('react-router-dom');
+  return {
+    ...actual,
+    useNavigate: () => navigateMock,
+  };
+});
+
+import BuilderCutover from './BuilderCutover';
+import { getLegacyBuilderRoute, hasLegacyBuilderIntent } from './builderCutoverRoute';
+
+describe('BuilderCutover', () => {
+  beforeEach(() => {
+    navigateMock.mockReset();
+    loadProjectMock.mockReset();
+    loadWeddingDataMock.mockReset();
+    saveUpgradeBridgeMock.mockReset();
+    maybeSingleMock.mockReset();
+    window.localStorage.clear();
+    window.sessionStorage.clear();
+  });
+
+  it('detects legacy builder intents that should stay in the current editor', () => {
+    expect(hasLegacyBuilderIntent('?publishNow=1', '')).toBe(true);
+    expect(hasLegacyBuilderIntent('?photoTips=1', '')).toBe(true);
+    expect(hasLegacyBuilderIntent('', '#launch-confidence')).toBe(true);
+    expect(hasLegacyBuilderIntent('', '')).toBe(false);
+    expect(getLegacyBuilderRoute('?publishNow=1', '#launch-confidence')).toBe('/dashboard/builder-v1?publishNow=1#launch-confidence');
+  });
+
+  it('forwards legacy-only launch intents straight to the current editor route', async () => {
+    render(
+      <MemoryRouter initialEntries={['/dashboard/builder?publishNow=1']}>
+        <BuilderCutover />
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      expect(navigateMock).toHaveBeenCalledWith('/dashboard/builder-v1?publishNow=1', { replace: true });
+    });
+    expect(loadProjectMock).not.toHaveBeenCalled();
+  });
+
+  it('opens a working V2 copy with the current draft carried into the upgrade bridge', async () => {
+    const project = createEmptyBuilderProject('site-1', 'modern-luxe');
+    const weddingData = createEmptyWeddingData();
+    weddingData.couple.partner1Name = 'Alex';
+    weddingData.couple.partner2Name = 'Jordan';
+    weddingData.couple.displayName = 'Alex & Jordan';
+
+    maybeSingleMock.mockResolvedValue({
+      data: {
+        id: 'site-1',
+        couple_name_1: 'Alex',
+        couple_name_2: 'Jordan',
+      },
+      error: null,
+    });
+    loadProjectMock.mockResolvedValue(project);
+    loadWeddingDataMock.mockResolvedValue(weddingData);
+    saveUpgradeBridgeMock.mockReturnValue(true);
+
+    render(
+      <MemoryRouter initialEntries={['/dashboard/builder']}>
+        <BuilderCutover />
+      </MemoryRouter>,
+    );
+
+    expect(await screen.findByRole('button', { name: 'Open Builder V2 working copy' })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Open Builder V2 working copy' }));
+
+    expect(saveUpgradeBridgeMock).toHaveBeenCalledWith({
+      sourceName: 'Alex & Jordan builder upgrade',
+      project,
+      weddingData,
+    });
+    expect(navigateMock).toHaveBeenCalledWith('/builder-v2-lab');
+  });
+});

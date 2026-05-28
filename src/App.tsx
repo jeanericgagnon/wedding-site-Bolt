@@ -40,6 +40,7 @@ const DashboardRsvpBoard = lazy(() => import('./pages/dashboard/RsvpBoard').then
 const DashboardCoordinatorMode = lazy(() => import('./pages/dashboard/CoordinatorMode').then(m => ({ default: m.DashboardCoordinatorMode })));
 const DashboardErrorLogs = lazy(() => import('./pages/dashboard/ErrorLogs').then(m => ({ default: m.DashboardErrorLogs })));
 const DashboardAuditLogs = lazy(() => import('./pages/dashboard/AuditLogs').then(m => ({ default: m.DashboardAuditLogs })));
+const BuilderCutover = lazy(() => import('./pages/BuilderCutover').then(m => ({ default: m.BuilderCutover })));
 const SiteBuilder = lazy(() => import('./builder/BuilderPage').then(m => ({ default: m.BuilderPage })));
 const GuestsFeature = lazy(() => import('./pages/features/Guests').then(m => ({ default: m.GuestsFeature })));
 const RSVPFeature = lazy(() => import('./pages/features/RSVP').then(m => ({ default: m.RSVPFeature })));
@@ -208,6 +209,14 @@ const AppContent = () => {
           path="/dashboard/builder"
           element={
             <ProtectedRoute>
+              <BuilderCutover />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/builder-v1"
+          element={
+            <ProtectedRoute>
               <SiteBuilder />
             </ProtectedRoute>
           }
@@ -326,6 +335,14 @@ const AppContent = () => {
         />
         <Route
           path="/builder"
+          element={
+            <ProtectedRoute>
+              <BuilderCutover />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/builder-v1"
           element={
             <ProtectedRoute>
               <SiteBuilder />
