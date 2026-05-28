@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { getFirstRenderablePublicBuilderPage, getPublicBuilderActivePage, getVisiblePublicBuilderPages } from './publicPageSelection';
+import { getFirstRenderablePublicBuilderPage, getNavigablePublicBuilderPages, getPublicBuilderActivePage, getVisiblePublicBuilderPages } from './publicPageSelection';
 import type { BuilderPage } from '../types/builder/project';
 
 const makePage = (overrides: Partial<BuilderPage>): BuilderPage => ({
@@ -21,6 +21,64 @@ describe('publicPageSelection', () => {
     ]);
 
     expect(pages.map((page) => page.slug)).toEqual(['home', 'photos']);
+  });
+
+  it('keeps only visible renderable public pages in the navigable set', () => {
+    const pages = getNavigablePublicBuilderPages([
+      makePage({
+        id: 'home',
+        title: 'Home',
+        slug: 'home',
+        orderIndex: 0,
+        meta: { isHome: true, isHidden: false },
+        sections: [],
+      }),
+      makePage({
+        id: 'travel',
+        title: 'Travel',
+        slug: 'travel',
+        orderIndex: 1,
+        sections: [{
+          id: 'travel-section',
+          type: 'travel',
+          variant: 'default',
+          enabled: true,
+          locked: false,
+          orderIndex: 0,
+          settings: {},
+          styleOverrides: {},
+          bindings: {},
+          meta: {
+            createdAtISO: '2026-05-27T00:00:00.000Z',
+            updatedAtISO: '2026-05-27T00:00:00.000Z',
+          },
+        }],
+      }),
+      makePage({
+        id: 'hidden',
+        title: 'Hidden',
+        slug: 'hidden',
+        orderIndex: 2,
+        meta: { isHome: false, isHidden: true },
+        sections: [{
+          id: 'hidden-section',
+          type: 'story',
+          variant: 'default',
+          enabled: true,
+          locked: false,
+          orderIndex: 0,
+          settings: {},
+          styleOverrides: {},
+          bindings: {},
+          meta: {
+            createdAtISO: '2026-05-27T00:00:00.000Z',
+            updatedAtISO: '2026-05-27T00:00:00.000Z',
+          },
+        }],
+      }),
+    ]);
+
+    expect(pages.map((page) => page.slug)).toEqual(['travel']);
   });
 
   it('prefers an explicit visible page slug', () => {

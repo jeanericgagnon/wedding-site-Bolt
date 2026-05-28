@@ -26,7 +26,7 @@ import { buildCoupleDisplayName } from '../lib/coupleDisplayName';
 import { getPublicBuilderPagesFromV2Document } from '../lib/publicBuilderV2Runtime';
 import { deriveWeddingDataFromBuilderV2Document, mergeWeddingDataWithBuilderV2Supplement } from '../lib/publicBuilderV2WeddingData';
 import { getIsPublishedFromSiteRow, getPublicBuilderProject, getPublicBuilderV2Document, getPublicWeddingData } from '../lib/publicSiteProject';
-import { getFirstRenderablePublicBuilderPage, getPublicBuilderActivePage, getVisiblePublicBuilderPages } from '../lib/publicPageSelection';
+import { getFirstRenderablePublicBuilderPage, getNavigablePublicBuilderPages, getPublicBuilderActivePage, getVisiblePublicBuilderPages } from '../lib/publicPageSelection';
 import { readGuestAccessTokenFromParams, readStoredGuestAccessToken, storeGuestAccessToken } from '../lib/guestAccessTokenParams';
 
 interface PublicItineraryRow {
@@ -583,8 +583,9 @@ export const SiteView: React.FC = () => {
           }));
           const visiblePages = getVisiblePublicBuilderPages(normalizedPages);
           const hasVisibleSections = visiblePages.some((page) => page.sections.some((section) => section.enabled));
-          const initialRenderablePage = getFirstRenderablePublicBuilderPage(visiblePages)
-            ?? getPublicBuilderActivePage(visiblePages, searchParams.get('page'))
+          const navigablePages = getNavigablePublicBuilderPages(normalizedPages);
+          const initialRenderablePage = getPublicBuilderActivePage(navigablePages, searchParams.get('page'))
+            ?? getFirstRenderablePublicBuilderPage(visiblePages)
             ?? visiblePages[0]
             ?? normalizedPages[0]
             ?? null;
@@ -754,7 +755,7 @@ export const SiteView: React.FC = () => {
   }
 
   if (builderSections && builderSections.length > 0 && weddingData) {
-    const visiblePages = builderPages ? getVisiblePublicBuilderPages(builderPages) : [];
+    const visiblePages = builderPages ? getNavigablePublicBuilderPages(builderPages) : [];
     const activeBuilderPage = visiblePages.length > 0
       ? getPublicBuilderActivePage(visiblePages, searchParams.get('page'))
       : null;

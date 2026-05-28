@@ -9,6 +9,10 @@ export const getVisiblePublicBuilderPages = (pages: BuilderPage[]): BuilderPage[
     .filter((page) => page.meta?.isHidden !== true)
 );
 
+export const getNavigablePublicBuilderPages = (pages: BuilderPage[]): BuilderPage[] => (
+  getVisiblePublicBuilderPages(pages).filter(hasRenderableSections)
+);
+
 export const getFirstRenderablePublicBuilderPage = (pages: BuilderPage[]): BuilderPage | null => (
   pages.find(hasRenderableSections) ?? null
 );
