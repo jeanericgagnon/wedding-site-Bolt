@@ -57,8 +57,9 @@ describe('Trust page draft-first CTA', () => {
 
     expect(navigateMock).toHaveBeenCalledWith('/dashboard/builder');
     expect(screen.getByRole('link', { name: 'Open planner workspace' })).toHaveAttribute('href', '/dashboard/planning');
-    fireEvent.click(screen.getByRole('button', { name: 'Open your builder' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Open website editor guide' }));
     expect(navigateMock).toHaveBeenCalledWith('/dashboard/builder');
+    expect(screen.getByRole('button', { name: 'Open website editor guide' })).toHaveTextContent('Review editor options');
     fireEvent.click(screen.getByRole('button', { name: 'Open planner workspace' }));
     expect(navigateMock).toHaveBeenCalledWith('/dashboard/planning');
     fireEvent.click(screen.getByRole('button', { name: 'Open account settings' }));

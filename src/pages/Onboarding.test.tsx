@@ -241,7 +241,7 @@ describe('Onboarding starter draft wording truth', () => {
 
     render(<Onboarding />);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Go to Builder' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Review editor options' }));
 
     await waitFor(() => {
       expect(insert).toHaveBeenCalled();

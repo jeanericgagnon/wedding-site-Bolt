@@ -273,10 +273,10 @@ export const Product: React.FC = () => {
           {user ? (
             <button
               onClick={() => navigate(FIRST_SESSION_WORKSPACE_ROUTES.builder)}
-              aria-label="Open your builder"
+              aria-label="Open website editor guide"
               className="px-4 py-1.5 rounded-xl bg-white text-brand font-semibold hover:bg-white/90"
             >
-              Edit your site
+              Review editor options
             </button>
           ) : (
             <button
@@ -570,8 +570,8 @@ export const Product: React.FC = () => {
             <button onClick={handleSignUp} aria-label={user ? 'Review your draft' : 'Start your draft'} className="w-full sm:w-auto px-7 py-3.5 bg-brand text-paper font-semibold rounded-xl hover:bg-brand/90 transition-all">{user ? 'Continue your site' : 'Start your draft'}</button>
             {user ? (
               <>
-                <button onClick={() => navigate(FIRST_SESSION_WORKSPACE_ROUTES.builder)} aria-label="Open your builder" className="group w-full sm:w-auto px-7 py-3.5 border-2 border-brand text-brand font-semibold rounded-xl hover:bg-brand/5 transition-all inline-flex items-center justify-center gap-2">
-                  Edit your site
+                <button onClick={() => navigate(FIRST_SESSION_WORKSPACE_ROUTES.builder)} aria-label="Open website editor guide" className="group w-full sm:w-auto px-7 py-3.5 border-2 border-brand text-brand font-semibold rounded-xl hover:bg-brand/5 transition-all inline-flex items-center justify-center gap-2">
+                  Review editor options
                   <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
                 </button>
                 <button onClick={() => navigate(FIRST_SESSION_WORKSPACE_ROUTES.guests)} aria-label="Open guest list" className="group w-full sm:w-auto px-7 py-3.5 border-2 border-brand text-brand font-semibold rounded-xl hover:bg-brand/5 transition-all inline-flex items-center justify-center gap-2">

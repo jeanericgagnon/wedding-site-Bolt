@@ -714,7 +714,7 @@ export const Onboarding: React.FC = () => {
         ))}
       </div>
       <div className="mt-3 flex items-center justify-between gap-3 text-xs">
-        <p className="text-text-secondary">Publish becomes available after you finish setup and enter the dashboard/builder.</p>
+        <p className="text-text-secondary">Publish becomes available after you finish setup and review the website editor options.</p>
         {nextSetupItem && (
           <button type="button" onClick={nextSetupItem.action} className="text-primary font-medium hover:text-primary-hover">
             Next: {nextSetupItem.label}
@@ -781,7 +781,7 @@ export const Onboarding: React.FC = () => {
                 Manual Setup
               </h2>
               <p className="text-text-secondary mb-6">
-                Jump straight to the builder and shape the site yourself from the beginning.
+                Jump into the website editor guide and choose the right editing path from the beginning.
               </p>
               <ul className="space-y-3 mb-8">
                 <li className="flex items-start gap-3">
@@ -799,7 +799,7 @@ export const Onboarding: React.FC = () => {
               </ul>
             </div>
             <Button variant="outline" size="lg" fullWidth onClick={handleManualSetup} disabled={loading}>
-              {loading ? 'Setting up...' : 'Go to Builder'}
+              {loading ? 'Setting up...' : 'Review editor options'}
             </Button>
           </div>
         </Card>
@@ -1205,7 +1205,7 @@ export const Onboarding: React.FC = () => {
               Import guest CSV
             </Button>
             <Button variant="outline" size="lg" onClick={() => navigate('/dashboard/builder')}>
-              Review website first
+              Review editor options
             </Button>
           </div>
         </div>

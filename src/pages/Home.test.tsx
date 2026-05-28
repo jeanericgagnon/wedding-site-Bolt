@@ -83,7 +83,7 @@ describe('Home draft-first CTAs', () => {
 
     expect(navigateMock).toHaveBeenCalledWith('/dashboard/builder');
     expect(screen.getAllByRole('button', { name: 'Review your wedding site draft' }).length).toBeGreaterThan(0);
-    expect(screen.getAllByRole('link', { name: 'Open your builder' }).length).toBeGreaterThan(0);
+    expect(screen.getAllByRole('link', { name: 'Open website editor guide' }).length).toBeGreaterThan(0);
     expect(screen.getByRole('link', { name: 'Open planner workspace' })).toHaveAttribute('href', '/dashboard/planning');
     expect(screen.getByRole('button', { name: 'Open your guest list' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Open message drafts' })).toBeInTheDocument();
@@ -91,9 +91,10 @@ describe('Home draft-first CTAs', () => {
     expect(navigateMock).toHaveBeenCalledWith('/dashboard/guests');
     fireEvent.click(screen.getByRole('button', { name: 'Open message drafts' }));
     expect(navigateMock).toHaveBeenCalledWith('/dashboard/messages');
-    fireEvent.click(screen.getAllByRole('link', { name: 'Open your builder' })[0]);
+    fireEvent.click(screen.getAllByRole('link', { name: 'Open website editor guide' })[0]);
     expect(navigateMock).toHaveBeenCalledWith('/dashboard/builder');
-    expect(screen.getAllByRole('link', { name: 'Open your builder' })[0]).toHaveAttribute('href', '/dashboard/builder');
+    expect(screen.getByRole('link', { name: 'Open website editor guide' })).toHaveTextContent('Review editor options');
+    expect(screen.getAllByRole('link', { name: 'Open website editor guide' })[0]).toHaveAttribute('href', '/dashboard/builder');
     const signedInFeatureLinks = screen.getAllByRole('link', { name: 'Explore this feature' });
     expect(signedInFeatureLinks.find((link) => link.getAttribute('href') === '/dashboard/guests')).toBeTruthy();
     expect(signedInFeatureLinks.find((link) => link.getAttribute('href') === '/dashboard/rsvp-board')).toBeTruthy();

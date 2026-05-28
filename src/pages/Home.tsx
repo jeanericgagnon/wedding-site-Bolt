@@ -502,10 +502,10 @@ export const Home: React.FC = () => {
                     <Link
                       to={FIRST_SESSION_WORKSPACE_ROUTES.builder}
                       onClick={() => navigate(FIRST_SESSION_WORKSPACE_ROUTES.builder)}
-                      aria-label="Open your builder"
+                      aria-label="Open website editor guide"
                       className="inline-flex min-h-[48px] items-center justify-center rounded-xl border border-border px-5 py-3 text-sm font-semibold text-ink"
                     >
-                      Edit your site
+                      Review editor options
                     </Link>
                     <Link
                       to={FIRST_SESSION_WORKSPACE_ROUTES.planning}

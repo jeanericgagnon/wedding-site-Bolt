@@ -113,7 +113,7 @@ describe('GuidedSetup starter draft wording truth', () => {
     expect(screen.queryByText(/you'?re all set/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/starter wedding site is ready/i)).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Import guest CSV' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Review website first' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Review editor options' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Go to dashboard overview' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Go to dashboard' })).not.toBeInTheDocument();
   });

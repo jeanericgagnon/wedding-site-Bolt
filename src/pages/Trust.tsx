@@ -292,10 +292,10 @@ export const Trust: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => navigate(FIRST_SESSION_WORKSPACE_ROUTES.builder)}
-                    aria-label="Open your builder"
+                    aria-label="Open website editor guide"
                     className="rounded-xl border border-border bg-surface px-4 py-2.5 text-sm font-medium text-text-primary transition hover:border-primary/30 hover:text-primary"
                   >
-                    Edit your site
+                    Review editor options
                   </button>
                   <button
                     type="button"

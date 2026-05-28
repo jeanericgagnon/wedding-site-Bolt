@@ -94,16 +94,16 @@ describe('Celebration', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Start guided setup' }));
     expect(navigateMock).toHaveBeenCalledWith('/onboarding?bypassPayment=1');
 
-    fireEvent.click(screen.getByRole('button', { name: 'Open builder' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Open editor guide' }));
     expect(navigateMock).toHaveBeenCalledWith('/dashboard/builder?bypassPayment=1');
   });
 
   it('keeps the manual celebration path framed around the builder instead of a generic dashboard', () => {
     render(<Celebration />);
 
-    expect(screen.getByText('Jump straight into the builder and handle every detail yourself.')).toBeInTheDocument();
-    expect(screen.getByText('Go straight to the builder')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Open builder' })).toBeInTheDocument();
+    expect(screen.getByText('Jump into the website editor guide and choose the right editing path yourself.')).toBeInTheDocument();
+    expect(screen.getByText('Go straight to the editor guide')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Open editor guide' })).toBeInTheDocument();
     expect(screen.queryByText('Open dashboard')).not.toBeInTheDocument();
   });
 });

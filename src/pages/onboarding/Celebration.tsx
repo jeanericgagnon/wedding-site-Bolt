@@ -208,7 +208,7 @@ export const Celebration: React.FC = () => {
                 </h2>
                 <p className="text-xs text-text-secondary font-medium mb-3">Start directly in the dashboard</p>
                 <p className="text-text-secondary text-sm mb-4">
-                  Jump straight into the builder and handle every detail yourself.
+                  Jump into the website editor guide and choose the right editing path yourself.
                 </p>
                 <ul className="space-y-2 mb-6">
                   <li className="flex items-center gap-2 text-sm text-text-secondary">
@@ -221,12 +221,12 @@ export const Celebration: React.FC = () => {
                   </li>
                   <li className="flex items-center gap-2 text-sm text-text-secondary">
                     <div className="w-1.5 h-1.5 rounded-full bg-text-secondary"></div>
-                    <span>Go straight to the builder</span>
+                    <span>Go straight to the editor guide</span>
                   </li>
                 </ul>
               </div>
               <Button variant="outline" size="lg" fullWidth>
-                Open builder
+                Open editor guide
                 <ArrowRight className="w-5 h-5 ml-2" aria-hidden="true" />
               </Button>
             </div>

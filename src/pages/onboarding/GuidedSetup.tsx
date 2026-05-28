@@ -1110,7 +1110,7 @@ export const GuidedSetup: React.FC = () => {
                 onClick={() => handleComplete(FIRST_SESSION_WORKSPACE_ROUTES.builder)}
                 disabled={loading}
               >
-                Review website first
+                Review editor options
               </Button>
             </div>
             <Button

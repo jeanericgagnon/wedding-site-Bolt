@@ -142,18 +142,19 @@ describe('Product starter draft truth', () => {
 
     expect(screen.getAllByRole('button', { name: 'Review your draft' }).length).toBeGreaterThan(0);
     expect(screen.queryByRole('button', { name: 'Start your draft' })).not.toBeInTheDocument();
-    expect(screen.getAllByRole('button', { name: 'Open your builder' }).length).toBeGreaterThan(0);
+    expect(screen.getAllByRole('button', { name: 'Open website editor guide' }).length).toBeGreaterThan(0);
     expect(screen.getByText(/Ready to keep shaping your (draft|wedding)\?/i)).toBeInTheDocument();
     expect(screen.queryByText('Want to see the full flow in action?')).not.toBeInTheDocument();
-    expect(screen.getAllByRole('button', { name: 'Open your builder' })[0]).toBeInTheDocument();
+    expect(screen.getAllByRole('button', { name: 'Open website editor guide' })[0]).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Try full demo' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Open your dashboard' })).not.toBeInTheDocument();
 
     fireEvent.click(screen.getAllByRole('button', { name: 'Review your draft' })[0]);
     expect(navigateMock).toHaveBeenCalledWith('/dashboard/builder');
 
-    fireEvent.click(screen.getAllByRole('button', { name: 'Open your builder' })[0]);
+    fireEvent.click(screen.getAllByRole('button', { name: 'Open website editor guide' })[0]);
     expect(navigateMock).toHaveBeenCalledWith('/dashboard/builder');
+    expect(screen.getAllByRole('button', { name: 'Open website editor guide' })[0]).toHaveTextContent('Review editor options');
     fireEvent.click(screen.getByRole('button', { name: 'Open guest list' }));
     expect(navigateMock).toHaveBeenCalledWith('/dashboard/guests');
     fireEvent.click(screen.getByRole('button', { name: 'Open message drafts' }));
