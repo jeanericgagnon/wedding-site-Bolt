@@ -4,6 +4,7 @@ import {
   buildBuilderV2BlockReviewSummary,
   filterBuilderV2Blocks,
 } from './builderV2BlockReviewModel';
+import { removeBuilderV2Block } from './builderV2BlockOperations';
 
 const labels = {
   title: 'Title',
@@ -13,9 +14,9 @@ const labels = {
 };
 
 const blocks = [
-  { id: '1', type: 'title' },
-  { id: '2', type: 'photo' },
-  { id: '3', type: 'faqItem' },
+  { id: '1', type: 'title', content: 'Title' },
+  { id: '2', type: 'photo', content: 'Photo' },
+  { id: '3', type: 'faqItem', content: 'FAQ' },
 ];
 
 const getWarning = (block: { id: string; type: string }) => {
@@ -97,5 +98,24 @@ describe('builderV2BlockReviewModel', () => {
 
     expect(summary.headline).toContain('Full block lane');
     expect(summary.visibleCount).toBe(2);
+  });
+
+  it('drops removed warning blocks from the review lane immediately', () => {
+    const nextBlocks = removeBuilderV2Block({
+      blocks,
+      blockId: '2',
+    });
+
+    const summary = buildBuilderV2BlockReviewSummary({
+      blocks: nextBlocks,
+      query: '',
+      statusFilter: 'all',
+      blockLabels: labels,
+      getWarning,
+    });
+
+    expect(summary.visibleBlocks.map((block) => block.id)).toEqual(['1', '3']);
+    expect(summary.warningVisibleCount).toBe(0);
+    expect(summary.headline).toContain('Full block lane');
   });
 });

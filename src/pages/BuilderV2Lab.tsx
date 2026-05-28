@@ -59,6 +59,7 @@ import {
   buildBuilderV2SectionLifecycleSummary,
   removeBuilderV2Sections,
 } from './builderV2SectionLifecycle';
+import { applyBuilderV2SectionVisibility } from './builderV2SectionVisibilityState';
 import {
   buildBuilderV2StarterBlocks,
   buildBuilderV2SectionStarterSummary,
@@ -1111,28 +1112,46 @@ export const BuilderV2Lab: React.FC = () => {
   }, [commitActivePageSections, notify, sections, selectedIds]);
 
   const hideSelectedSections = useCallback(() => {
-    const selectedSet = new Set(selectedIds);
-    const touchedCount = sections.filter((section) => selectedSet.has(section.id)).length;
-    if (!touchedCount) return;
+    const result = applyBuilderV2SectionVisibility({
+      sections,
+      sectionBlocks,
+      selectedIds,
+      enabled: false,
+    });
+    if (!result.changedIds.length) return;
     commitWithCheckpoint(
-      touchedCount === 1 ? 'Before hiding section' : 'Before hiding selected sections',
+      result.changedIds.length === 1 ? 'Before hiding section' : 'Before hiding selected sections',
       activePage ? pages.map((page) => (
         page.id === activePage.id
           ? {
               ...page,
-              sections: page.sections.map((section) => (
-                selectedSet.has(section.id) ? { ...section, enabled: false } : section
-              )),
+              sections: result.sections,
             }
           : page
       )) : pages,
+      result.sectionBlocks,
     );
     notify('Selected sections hidden');
-  }, [activePage, commitWithCheckpoint, notify, pages, sections, selectedIds]);
+  }, [activePage, commitWithCheckpoint, notify, pages, sectionBlocks, sections, selectedIds]);
 
   const showSelectedSections = useCallback(() => {
-    updateSelectedSections((section) => ({ ...section, enabled: true }), 'Selected sections shown');
-  }, [updateSelectedSections]);
+    const result = applyBuilderV2SectionVisibility({
+      sections,
+      sectionBlocks,
+      selectedIds,
+      enabled: true,
+    });
+    if (!result.changedIds.length) return;
+    commit(
+      activePage ? pages.map((page) => (
+        page.id === activePage.id
+          ? { ...page, sections: result.sections }
+          : page
+      )) : pages,
+      result.sectionBlocks,
+    );
+    notify('Selected sections shown');
+  }, [activePage, commit, notify, pages, sectionBlocks, sections, selectedIds]);
 
   const setSelectedDensity = useCallback((density: 'compact' | 'comfortable') => {
     updateSelectedSections(

@@ -18,7 +18,8 @@ Status: draft (post-lab hardening)
 ### Section-level
 - [ ] selecting section from preview focuses rail
 - [ ] selecting from rail scrolls preview to section
-- [ ] toggling enabled/hidden preserves block stack
+- [x] toggling enabled/hidden preserves block stack
+  - `src/pages/builderV2SectionVisibilityState.test.ts` proves hide/show changes preserve the existing section block storage instead of rewriting or dropping block stacks
 - [x] deleting selected section reselects nearest valid section
   - `src/pages/builderV2SectionLifecycle.test.ts` proves section removal preserves the nearest valid next selection instead of dropping the editor into an orphaned state
 
@@ -31,7 +32,8 @@ Status: draft (post-lab hardening)
   - `src/pages/builderV2BlockEditorState.test.ts` proves collapse toggles only flip the targeted block id while preserving every other block's editor state
 - [x] move up/down updates preview and preserves data
   - `src/pages/builderV2BlockOperations.test.ts` now proves reordered blocks keep their authored payloads intact while the sequence changes
-- [ ] remove block updates preview and validations immediately
+- [x] remove block updates preview and validations immediately
+  - `src/pages/builderV2BlockReviewModel.test.ts` now proves removing a warning block drops it out of the live review lane and clears the visible warning count immediately
 - [x] required-field warnings clear when fixed
   - `src/pages/builderV2BlockValidation.test.ts` proves the live warning layer clears as soon as missing qna/contact data is restored
 
