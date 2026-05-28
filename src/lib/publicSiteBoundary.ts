@@ -21,6 +21,19 @@ const PUBLIC_INTERNAL_FIELD_KEYS = new Set([
   'servicerolekey',
 ]);
 
+const PUBLIC_INTERNAL_KEY_PATTERNS = [
+  /token/,
+  /secret/,
+  /apikey/,
+  /anonkey/,
+  /provider/,
+  /bucket/,
+  /command/,
+  /debug/,
+  /internal(?:error|note)?/,
+  /servicerole/,
+];
+
 const PUBLIC_LEAK_VALUE_PATTERN =
   /\b(provider|bucket|command|internal(?:\s+error|\s+note)?|debug|service[-_\s]*role|access[-_\s]*token|refresh[-_\s]*token|invite[-_\s]*token|secret|api[-_\s]*key|anon[-_\s]*key)\b/i;
 
@@ -29,7 +42,9 @@ function normalizePublicInternalFieldKey(key: string): string {
 }
 
 function isPublicInternalFieldKey(key: string): boolean {
-  return PUBLIC_INTERNAL_FIELD_KEYS.has(normalizePublicInternalFieldKey(key));
+  const normalized = normalizePublicInternalFieldKey(key);
+  return PUBLIC_INTERNAL_FIELD_KEYS.has(normalized)
+    || PUBLIC_INTERNAL_KEY_PATTERNS.some((pattern) => pattern.test(normalized));
 }
 
 export function stripPublicInternalFieldsDeep<T>(value: T): T {

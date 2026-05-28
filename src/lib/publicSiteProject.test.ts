@@ -386,6 +386,40 @@ describe('publicSiteProject', () => {
     expect(getPublicWeddingData(row)?.couple.displayName).toBe('Draft Names');
   });
 
+  it('strips internal boundary fields from public wedding data snapshots', () => {
+    const row = {
+      is_published: false,
+      site_json: draftProject,
+      wedding_data: {
+        ...liveWeddingData,
+        couple: {
+          ...liveWeddingData.couple,
+          guestAccessToken: 'invite-token',
+        },
+        travel: {
+          notes: 'Shuttle leaves at 3:15.',
+          providerPath: '/internal/travel',
+        },
+        media: {
+          gallery: [],
+          heroImageUrl: 'https://xyz.supabase.co/storage/v1/object/sign/site-media/private-hero.jpg?token=abc',
+          debugTraceId: 'trace-1',
+        },
+      },
+    };
+
+    const data = getPublicWeddingData(row) as unknown as Record<string, unknown>;
+
+    expect((data.couple as Record<string, unknown>).displayName).toBe('Draft Names');
+    expect(data.couple).not.toHaveProperty('guestAccessToken');
+    expect(data.travel).not.toHaveProperty('providerPath');
+    expect((data.media as Record<string, unknown>).heroImageUrl).toBe(
+      'https://xyz.supabase.co/storage/v1/object/public/site-media/private-hero.jpg',
+    );
+    expect(data.media).not.toHaveProperty('debugTraceId');
+    expect(collectPublicLeakValuePaths(data)).toEqual([]);
+  });
+
   it('rebuilds a truthful public couple displayName from partner names when the snapshot is blank', () => {
     const row = {
       is_published: false,
