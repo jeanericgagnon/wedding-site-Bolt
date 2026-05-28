@@ -37,7 +37,17 @@ Deno.serve(async (req: Request) => {
       .in("id", uploadIds);
 
     if (uploadsErr || !uploads || uploads.length === 0) {
-      return fail("DB_ERROR", uploadsErr?.message ?? "No uploads found", 400);
+      console.error("PHOTO_UPLOAD_MODERATE_LOOKUP_FAILED", {
+        reason: "PHOTO_UPLOAD_MODERATION_LOOKUP_ERROR",
+      });
+      return fail("DB_ERROR", "Could not update photo moderation. Please try again.", 400);
+    }
+
+    if (uploads.length !== uploadIds.length) {
+      console.error("PHOTO_UPLOAD_MODERATE_PARTIAL_LOOKUP_FAILED", {
+        reason: "PHOTO_UPLOAD_MODERATION_PARTIAL_LOOKUP",
+      });
+      return fail("DB_ERROR", "Could not update photo moderation. Please try again.", 400);
     }
 
     const siteIds = [...new Set(uploads.map((u) => u.wedding_site_id))];
@@ -46,7 +56,14 @@ Deno.serve(async (req: Request) => {
       .select("id,user_id")
       .in("id", siteIds);
 
-    const unauthorized = (sites ?? []).some((s) => s.user_id !== user.id);
+    if (!sites || sites.length !== siteIds.length) {
+      console.error("PHOTO_UPLOAD_MODERATE_SITE_LOOKUP_FAILED", {
+        reason: "PHOTO_UPLOAD_MODERATION_SITE_LOOKUP_ERROR",
+      });
+      return fail("DB_ERROR", "Could not update photo moderation. Please try again.", 400);
+    }
+
+    const unauthorized = sites.some((s) => s.user_id !== user.id);
     if (unauthorized) return fail("FORBIDDEN", "Forbidden", 403);
 
     const allowedPatch: Record<string, unknown> = {};
@@ -70,7 +87,7 @@ Deno.serve(async (req: Request) => {
       return fail("DB_ERROR", "Could not update photo moderation. Please try again.", 400);
     }
 
-    return json({ success: true, updated: uploadIds.length });
+    return json({ success: true, updated: uploads.length });
   } catch {
     console.error("PHOTO_UPLOAD_MODERATE_UNEXPECTED_FAILED", {
       reason: "UNEXPECTED_PHOTO_UPLOAD_MODERATION_FAILURE",
