@@ -28,6 +28,7 @@ import {
   writeLatestStoredPhotoBucketLink,
   writeStoredPhotoBucketLinks,
 } from './photoBucketLinksStorage';
+import { getGuestPhotoShareReadyBuckets } from './guestPhotoShareReadyBuckets';
 
 type ItineraryEvent = {
   id: string;
@@ -517,14 +518,9 @@ export const GuestPhotoSharing: React.FC = () => {
   };
 
   const sendAllActiveBucketRequests = () => {
-    const lines = buckets
-      .filter((a) => a.is_active)
-      .map((a) => {
-        const link = bucketUploadLinks[a.id];
-        if (!link) return null;
-        return `${a.name}: ${makeShareMessage(a.name, link)}`;
-      })
-      .filter((v): v is string => typeof v === 'string');
+    const lines = getGuestPhotoShareReadyBuckets(buckets, bucketUploadLinks).map((bucket) => (
+      `${bucket.name}: ${makeShareMessage(bucket.name, bucket.uploadLink)}`
+    ));
 
     if (lines.length === 0) {
       setError('No active buckets with links available to send.');
@@ -537,35 +533,29 @@ export const GuestPhotoSharing: React.FC = () => {
   };
 
   const copyAllShareMessages = async () => {
-    const lines = buckets
-      .map((a) => {
-        const link = bucketUploadLinks[a.id];
-        if (!link) return null;
-        return `${a.name}: ${makeShareMessage(a.name, link)}`;
-      })
-      .filter((v): v is string => typeof v === 'string');
+    const lines = getGuestPhotoShareReadyBuckets(buckets, bucketUploadLinks).map((bucket) => (
+      `${bucket.name}: ${makeShareMessage(bucket.name, bucket.uploadLink)}`
+    ));
 
     if (lines.length === 0) {
-      setError('No share messages are ready yet. Create links first.');
+      setError('No active bucket share prompts are ready yet. Create or activate links first.');
       return;
     }
 
     await copyText(lines.join('\n\n'), 'all-share-messages');
-    setSuccess(`Copied ${lines.length} share message(s).`);
+    setSuccess(`Copied ${lines.length} active share prompt(s).`);
   };
 
   const copyAllKnownLinks = async () => {
-    const links = buckets
-      .map((a) => bucketUploadLinks[a.id])
-      .filter((v): v is string => typeof v === 'string' && v.length > 0);
+    const links = getGuestPhotoShareReadyBuckets(buckets, bucketUploadLinks).map((bucket) => bucket.uploadLink);
 
     if (links.length === 0) {
-      setError('No upload links are ready yet. Create or refresh links first.');
+      setError('No active bucket links are ready yet. Create or refresh links first.');
       return;
     }
 
     await copyText(links.join('\n'), 'all-links');
-    setSuccess(`Copied ${links.length} link(s).`);
+    setSuccess(`Copied ${links.length} active bucket link(s).`);
   };
 
   const regenerateAllKnownBucketLinks = async () => {
