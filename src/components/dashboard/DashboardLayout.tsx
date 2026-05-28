@@ -178,7 +178,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
     {
       title: 'Core',
       items: [
-        { id: 'builder', label: 'Website', icon: Globe, path: BUILDER_WORKSPACE_ROUTES.guide },
+        { id: 'builder', label: 'Website', icon: Globe, path: BUILDER_WORKSPACE_ROUTES.defaultEditor },
         { id: 'registry', label: 'Registry', icon: Gift, path: '/dashboard/registry' },
         { id: 'guests', label: 'Guests & RSVP', icon: Users, path: '/dashboard/guests' },
         { id: 'itinerary', label: 'Events & Seating', icon: Calendar, path: '/dashboard/itinerary' },

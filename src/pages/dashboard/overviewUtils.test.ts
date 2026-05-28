@@ -29,7 +29,7 @@ describe('overviewUtils', () => {
   });
 
   it('uses plain builder route when already published', () => {
-    expect(getPublishBuilderRoute(true)).toBe('/dashboard/builder');
+    expect(getPublishBuilderRoute(true)).toBe('/dashboard/builder-v2');
   });
 
   it('builds setup checklist publish item with correct action label/route', () => {
@@ -41,7 +41,7 @@ describe('overviewUtils', () => {
     const liveItems = buildSetupChecklist({ ...base, isPublished: true });
     const livePublish = liveItems.find((i) => i.id === 'publish');
     expect(livePublish?.actionLabel).toBe('Open site editor');
-    expect(livePublish?.route).toBe('/dashboard/builder');
+    expect(livePublish?.route).toBe('/dashboard/builder-v2');
   });
 
   it('builds publish readiness blockers in expected priority', () => {
@@ -94,7 +94,7 @@ describe('overviewUtils', () => {
 
     const livePublishedItem = buildPublishReadinessItems({ ...base, isPublished: true }).find((i) => i.id === 'published');
     expect(livePublishedItem?.actionLabel).toBe('Open site editor');
-    expect(livePublishedItem?.route).toBe('/dashboard/builder');
+    expect(livePublishedItem?.route).toBe('/dashboard/builder-v2');
   });
 
   it('keeps archive photo memory copy aligned with photo sharing truth', () => {

@@ -24,7 +24,7 @@ export interface ChecklistItemDef {
 }
 
 export const getPublishBuilderRoute = (isPublished: boolean): string =>
-  isPublished ? BUILDER_WORKSPACE_ROUTES.guide : getBuilderLaunchChecklistRoute();
+  isPublished ? BUILDER_WORKSPACE_ROUTES.defaultEditor : getBuilderLaunchChecklistRoute();
 
 export const buildSetupChecklist = (stats: OverviewChecklistStats): ChecklistItemDef[] => [
   {
