@@ -55,7 +55,9 @@ Status: draft (post-lab hardening)
   - Audience switch: `VITE_BUILDER_V2_AUDIENCE=internal`
   - Internal audience currently means DayOf accounts (`@dayof.love`) plus demo-mode sessions
   - Default remains `all` so current promoted behavior does not change unless we intentionally narrow it
-- [ ] capture telemetry: add/duplicate/remove/import/export failure rates
+- [x] capture telemetry: add/duplicate/remove/import/export failure rates
+  - Session-local internal rollout signal now lives in `src/pages/builderV2RolloutTelemetry.ts`
+  - Builder V2 export review surfaces show the current browser-session failure-rate summary without claiming external analytics coverage
 - [ ] document rollback procedure (`/builder` route hard switch)
 
 ## 5) Exit Criteria

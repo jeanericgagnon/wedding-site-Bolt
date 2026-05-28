@@ -128,6 +128,12 @@ import {
   canRepairBuilderV2SectionStructure,
   repairBuilderV2SectionStructure,
 } from './builderV2StructureRepair';
+import {
+  appendBuilderV2RolloutTelemetryEntry,
+  readBuilderV2RolloutTelemetry,
+  summarizeBuilderV2RolloutTelemetry,
+  writeBuilderV2RolloutTelemetry,
+} from './builderV2RolloutTelemetry';
 
 type BlockType =
   | 'title'
@@ -593,6 +599,7 @@ export const BuilderV2Lab: React.FC = () => {
   const [importError, setImportError] = useState('');
   const [lastImportReport, setLastImportReport] = useState<BuilderV2ImportReport | null>(null);
   const [lastImportSource, setLastImportSource] = useState('Pasted JSON');
+  const [rolloutTelemetry, setRolloutTelemetry] = useState(() => readBuilderV2RolloutTelemetry());
   const [upgradeIntakeState, setUpgradeIntakeState] = useState<{
     sourceName: string;
     report: BuilderV2ImportReport;
@@ -845,6 +852,7 @@ export const BuilderV2Lab: React.FC = () => {
   const addBlockToSection = (blockType: BlockType) => {
     const allowed = canAddBlockToSection(selected.id, selected.type, blockType);
     if (!allowed.ok) {
+      recordRolloutTelemetry({ action: 'add', outcome: 'failure', operation: 'block', reason: allowed.reason });
       notify(allowed.reason);
       return;
     }
@@ -857,6 +865,7 @@ export const BuilderV2Lab: React.FC = () => {
     };
     commit(pages, { ...sectionBlocks, [selected.id]: [...(sectionBlocks[selected.id] ?? []), block] });
     setShowAddBlockPicker(false);
+    recordRolloutTelemetry({ action: 'add', outcome: 'success', operation: 'block' });
     notify(`${BLOCK_LABELS[blockType]} added`);
   };
 
@@ -899,6 +908,7 @@ export const BuilderV2Lab: React.FC = () => {
       ...sectionBlocks,
       [sectionId]: nextBlocks,
     });
+    recordRolloutTelemetry({ action: 'remove', outcome: 'success', operation: 'block' });
     notify('Removed block');
   };
 
@@ -914,12 +924,17 @@ export const BuilderV2Lab: React.FC = () => {
       canAdd: (blockType) => canAddBlockToSection(sectionId, sourceSection.type, blockType),
     });
     if (result.blockedReason) {
+      recordRolloutTelemetry({ action: 'duplicate', outcome: 'failure', operation: 'block', reason: result.blockedReason });
       notify(result.blockedReason);
       return;
     }
-    if (!result.duplicatedBlockId) return;
+    if (!result.duplicatedBlockId) {
+      recordRolloutTelemetry({ action: 'duplicate', outcome: 'failure', operation: 'block', reason: 'Block duplicate did not complete.' });
+      return;
+    }
 
     commit(pages, { ...sectionBlocks, [sectionId]: result.blocks });
+    recordRolloutTelemetry({ action: 'duplicate', outcome: 'success', operation: 'block' });
     notify('Duplicated block');
   };
 
@@ -948,6 +963,16 @@ export const BuilderV2Lab: React.FC = () => {
     setHistoryIndex(nextState.historyIndex);
     markSaving();
   }, [history, historyIndex, markSaving, sectionBlocks]);
+
+  const recordRolloutTelemetry = useCallback((
+    entry: Parameters<typeof appendBuilderV2RolloutTelemetryEntry>[1],
+  ) => {
+    setRolloutTelemetry((prev) => {
+      const next = appendBuilderV2RolloutTelemetryEntry(prev, entry);
+      writeBuilderV2RolloutTelemetry(next);
+      return next;
+    });
+  }, []);
 
   const commitWithCheckpoint = useCallback((
     checkpointLabel: string,
@@ -1150,7 +1175,10 @@ export const BuilderV2Lab: React.FC = () => {
       sectionBlocks,
       selectedIds,
     });
-    if (!result.duplicatedIds.length) return;
+    if (!result.duplicatedIds.length) {
+      recordRolloutTelemetry({ action: 'duplicate', outcome: 'failure', operation: 'section', reason: 'No selected sections were available to duplicate.' });
+      return;
+    }
     setSelectedId(result.duplicatedIds[0]);
     setLastSelectedId(result.duplicatedIds[0]);
     setMultiSelectedIds(result.duplicatedIds.slice(1));
@@ -1159,8 +1187,9 @@ export const BuilderV2Lab: React.FC = () => {
         ? { ...page, sections: result.sections }
         : page
     )) : pages, result.sectionBlocks);
+    recordRolloutTelemetry({ action: 'duplicate', outcome: 'success', operation: 'section' });
     notify(`Duplicated ${result.duplicatedIds.length} section${result.duplicatedIds.length === 1 ? '' : 's'}`);
-  }, [activePage, commit, notify, pages, sectionBlocks, sections, selectedIds]);
+  }, [activePage, commit, notify, pages, recordRolloutTelemetry, sectionBlocks, sections, selectedIds]);
 
   const removeSelectedSections = useCallback(() => {
     const result = removeBuilderV2Sections({
@@ -1171,6 +1200,12 @@ export const BuilderV2Lab: React.FC = () => {
     });
 
     if (!result.removedIds.length) {
+      recordRolloutTelemetry({
+        action: 'remove',
+        outcome: 'failure',
+        operation: 'section',
+        reason: 'Keep at least one section live in the page structure before removing more',
+      });
       notify('Keep at least one section live in the page structure before removing more');
       return;
     }
@@ -1192,7 +1227,8 @@ export const BuilderV2Lab: React.FC = () => {
         ? 'Removed section from the page structure'
         : `Removed ${result.removedIds.length} sections from the page structure`,
     );
-  }, [activePage, commitWithCheckpoint, notify, pages, sectionBlocks, sections, selectedId, selectedIds]);
+    recordRolloutTelemetry({ action: 'remove', outcome: 'success', operation: 'section' });
+  }, [activePage, commitWithCheckpoint, notify, pages, recordRolloutTelemetry, sectionBlocks, sections, selectedId, selectedIds]);
 
   const buildStarterBlocks = useCallback((sectionId: string, sectionType: string) => {
     const availableBlockTypes = SECTION_BLOCK_CATALOG[sectionType] ?? ['title', 'text', 'photo'];
@@ -1226,8 +1262,9 @@ export const BuilderV2Lab: React.FC = () => {
         ? { ...page, sections: next }
         : page
     )) : pages, { ...sectionBlocks, [id]: starterBlocks });
+    recordRolloutTelemetry({ action: 'add', outcome: 'success', operation: 'section' });
     notify(starterBlocks.length > 0 ? `Added ${typeLabel} with ${starterBlocks.length} starter block${starterBlocks.length === 1 ? '' : 's'}` : `Added ${typeLabel}`);
-  }, [activePage, buildStarterBlocks, commit, notify, pages, sectionBlocks, sections]);
+  }, [activePage, buildStarterBlocks, commit, notify, pages, recordRolloutTelemetry, sectionBlocks, sections]);
 
   const addPage = useCallback(() => {
     const pageIndex = pages.length + 1;
@@ -1255,8 +1292,9 @@ export const BuilderV2Lab: React.FC = () => {
     setSelectedId(sectionId);
     setLastSelectedId(sectionId);
     setMultiSelectedIds([]);
+    recordRolloutTelemetry({ action: 'add', outcome: 'success', operation: 'page' });
     notify(`Added ${title}`);
-  }, [buildStarterBlocks, commit, notify, pages, sectionBlocks]);
+  }, [buildStarterBlocks, commit, notify, pages, recordRolloutTelemetry, sectionBlocks]);
 
   const renamePage = useCallback((pageId: string, title: string) => {
     commit(updateBuilderV2Page({
@@ -1295,6 +1333,7 @@ export const BuilderV2Lab: React.FC = () => {
 
   const removePage = useCallback((pageId: string) => {
     if (pages.length <= 1) {
+      recordRolloutTelemetry({ action: 'remove', outcome: 'failure', operation: 'page', reason: 'Keep at least one page in the document' });
       notify('Keep at least one page in the document');
       return;
     }
@@ -1304,8 +1343,9 @@ export const BuilderV2Lab: React.FC = () => {
       const fallbackPageId = nextPages.find((page) => page.isHome)?.id ?? nextPages[0]?.id ?? '';
       selectPage(fallbackPageId);
     }
+    recordRolloutTelemetry({ action: 'remove', outcome: 'success', operation: 'page' });
     notify('Page removed');
-  }, [commitWithCheckpoint, notify, pages, selectPage, selectedPageId]);
+  }, [commitWithCheckpoint, notify, pages, recordRolloutTelemetry, selectPage, selectedPageId]);
 
   const duplicatePage = useCallback((pageId: string) => {
     const result = duplicateBuilderV2Page({
@@ -1314,6 +1354,7 @@ export const BuilderV2Lab: React.FC = () => {
       pageId,
     });
     if (!result.duplicatedPageId) {
+      recordRolloutTelemetry({ action: 'duplicate', outcome: 'failure', operation: 'page', reason: 'We could not duplicate that page yet' });
       notify('We could not duplicate that page yet');
       return;
     }
@@ -1322,8 +1363,9 @@ export const BuilderV2Lab: React.FC = () => {
     setSelectedId(result.duplicatedSectionIds[0] ?? '');
     setLastSelectedId(result.duplicatedSectionIds[0] ?? '');
     setMultiSelectedIds(result.duplicatedSectionIds.slice(1));
+    recordRolloutTelemetry({ action: 'duplicate', outcome: 'success', operation: 'page' });
     notify('Page duplicated');
-  }, [commitWithCheckpoint, notify, pages, sectionBlocks]);
+  }, [commitWithCheckpoint, notify, pages, recordRolloutTelemetry, sectionBlocks]);
 
   const moveSelectedSectionsToPage = useCallback((targetPageId: string) => {
     if (!activePage) return;
@@ -1670,6 +1712,12 @@ export const BuilderV2Lab: React.FC = () => {
     }));
 
     if (!packBlocks.length) {
+      recordRolloutTelemetry({
+        action: 'add',
+        outcome: 'failure',
+        operation: 'recommended-pack',
+        reason: 'No recommended pack is available for this section right now',
+      });
       notify('No recommended pack is available for this section right now');
       return;
     }
@@ -1679,8 +1727,9 @@ export const BuilderV2Lab: React.FC = () => {
       [selected.id]: [...(sectionBlocks[selected.id] ?? []), ...packBlocks],
     });
     setShowAddBlockPicker(false);
+    recordRolloutTelemetry({ action: 'add', outcome: 'success', operation: 'recommended-pack' });
     notify(`Added ${packBlocks.length} recommended block${packBlocks.length === 1 ? '' : 's'}`);
-  }, [addBlockAvailability, addableBlocksForSelected, commit, notify, pages, sectionBlocks, selected.id, selected.type, selectedBlocks]);
+  }, [addBlockAvailability, addableBlocksForSelected, commit, notify, pages, recordRolloutTelemetry, sectionBlocks, selected.id, selected.type, selectedBlocks]);
 
 
   const buildExportDocument = useCallback(() => {
@@ -1712,18 +1761,21 @@ export const BuilderV2Lab: React.FC = () => {
     a.download = `builder-v2-${Date.now()}.json`;
     a.click();
     URL.revokeObjectURL(url);
+    recordRolloutTelemetry({ action: 'export', outcome: 'success', operation: 'download-json' });
     notify('Exported V2 JSON');
-  }, [buildExportDocument, notify]);
+  }, [buildExportDocument, notify, recordRolloutTelemetry]);
 
   const copyV2Json = useCallback(async () => {
     const payload = JSON.stringify(buildExportDocument(), null, 2);
     if (!navigator.clipboard?.writeText) {
+      recordRolloutTelemetry({ action: 'export', outcome: 'failure', operation: 'copy-json', reason: 'Clipboard is unavailable in this browser context' });
       notify('Clipboard is unavailable in this browser context');
       return;
     }
     await navigator.clipboard.writeText(payload);
+    recordRolloutTelemetry({ action: 'export', outcome: 'success', operation: 'copy-json' });
     notify('Copied V2 JSON');
-  }, [buildExportDocument, notify]);
+  }, [buildExportDocument, notify, recordRolloutTelemetry]);
 
   const copyHandoffPacket = useCallback(async () => {
     if (!navigator.clipboard?.writeText) {
@@ -1931,8 +1983,13 @@ export const BuilderV2Lab: React.FC = () => {
 
     const repairs = summarizeImportRepairCount(report);
     const importSummary = buildBuilderV2ImportReviewSummary(report, sourceLabel);
+    recordRolloutTelemetry({
+      action: 'import',
+      outcome: 'success',
+      operation: report.sourceKind === 'builder-v2' ? 'builder-v2-layout' : 'legacy-layout',
+    });
     notify(repairs > 0 || report.sourceKind !== 'builder-v2' ? importSummary.toastMessage : 'Imported clean V2 layout');
-  }, [history, historyIndex, markSaving, notify, pages, sectionBlocks]);
+  }, [history, historyIndex, markSaving, notify, pages, recordRolloutTelemetry, sectionBlocks]);
 
   useEffect(() => {
     consumeBuilderV2SetupBridge();
@@ -1953,6 +2010,7 @@ export const BuilderV2Lab: React.FC = () => {
       setImportError(prepared.error);
       setLastImportSource(upgradeBridge.sourceName);
       setShowImportPanel(true);
+      recordRolloutTelemetry({ action: 'import', outcome: 'failure', operation: 'legacy-layout', reason: prepared.error });
       notify('Could not open that Builder draft in V2 yet. Review the import details and try again.');
       return;
     }
@@ -1960,7 +2018,7 @@ export const BuilderV2Lab: React.FC = () => {
     applyImportedDocument(prepared.doc, prepared.report, upgradeBridge.sourceName, {
       upgradeHydratedWeddingData: Boolean(upgradeBridge.weddingData),
     });
-  }, [applyImportedDocument, notify]);
+  }, [applyImportedDocument, notify, recordRolloutTelemetry]);
   const upgradeIntake = useMemo(
     () => (
       upgradeIntakeState
@@ -1978,12 +2036,17 @@ export const BuilderV2Lab: React.FC = () => {
 
   const importV2Json = () => {
     if (!importDraft.trim()) {
+      recordRolloutTelemetry({ action: 'import', outcome: 'failure', operation: 'builder-v2-layout', reason: 'Paste Builder V2 JSON or upload a file first.' });
       setImportError('Paste Builder V2 JSON or upload a file first.');
       return;
     }
 
     if (preparedImportPreview.state !== 'ready') {
-      setImportError(preparedImportPreview.state === 'invalid' ? preparedImportPreview.error : 'Paste Builder V2 JSON or upload a file first.');
+      const reason = preparedImportPreview.state === 'invalid'
+        ? preparedImportPreview.error
+        : 'Paste Builder V2 JSON or upload a file first.';
+      recordRolloutTelemetry({ action: 'import', outcome: 'failure', operation: 'builder-v2-layout', reason });
+      setImportError(reason);
       return;
     }
 
@@ -2001,9 +2064,19 @@ export const BuilderV2Lab: React.FC = () => {
       setImportError('');
       setLastImportSource(file.name);
     } catch {
+      recordRolloutTelemetry({ action: 'import', outcome: 'failure', operation: 'upload-json', reason: 'We could not read that file yet. Try another JSON export.' });
       setImportError('We could not read that file yet. Try another JSON export.');
     }
   };
+
+  const rolloutTelemetrySummary = useMemo(
+    () => summarizeBuilderV2RolloutTelemetry(rolloutTelemetry),
+    [rolloutTelemetry],
+  );
+  const latestRolloutFailures = useMemo(
+    () => rolloutTelemetry.entries.filter((entry) => entry.outcome === 'failure').slice(-3).reverse(),
+    [rolloutTelemetry.entries],
+  );
 
   const previewInstances: SectionInstance[] = useMemo(() => (
     buildBuilderV2PreviewInstances({
@@ -4380,6 +4453,53 @@ export const BuilderV2Lab: React.FC = () => {
                     </div>
                   ))}
                 </div>
+              </div>
+
+              <div className="rounded-md border border-slate-200 bg-slate-50/70 px-3 py-3">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary">Session rollout signal</p>
+                    <p className="mt-1 text-sm font-semibold text-text-primary">Builder V2 action outcomes for this browser session</p>
+                    <p className="mt-1 text-xs leading-relaxed text-text-secondary">
+                      This is an internal session-only meter for add, duplicate, remove, import, and export outcomes while you review Builder V2. Nothing here claims live product analytics or sends data anywhere.
+                    </p>
+                  </div>
+                  <div className="shrink-0 rounded-full border border-slate-200 bg-white px-2 py-1 text-[10px] text-text-secondary">
+                    {rolloutTelemetry.entries.length} recorded action{rolloutTelemetry.entries.length === 1 ? '' : 's'}
+                  </div>
+                </div>
+                <div className="mt-3 grid gap-2 md:grid-cols-2 xl:grid-cols-5">
+                  {rolloutTelemetrySummary.map((metric) => (
+                    <div key={metric.action} className="rounded-md border border-border-subtle bg-white px-2.5 py-2">
+                      <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary">{metric.label}</p>
+                      <p className="mt-1 text-sm font-semibold text-text-primary">{metric.failureCount}/{metric.totalCount} failures</p>
+                      <p className="mt-1 text-xs leading-relaxed text-text-secondary">
+                        {metric.totalCount > 0
+                          ? `${Math.round(metric.failureRate * 100)}% failure rate in this session`
+                          : 'No attempts recorded in this session'}
+                      </p>
+                      {metric.latestFailureReason && (
+                        <p className="mt-1 text-[11px] leading-relaxed text-amber-900">{metric.latestFailureReason}</p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+                {latestRolloutFailures.length > 0 && (
+                  <div className="mt-3 rounded-md border border-border-subtle bg-white px-2.5 py-2">
+                    <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary">Latest failure notes</p>
+                    <div className="mt-2 space-y-1.5">
+                      {latestRolloutFailures.map((entry, index) => (
+                        <p key={`${entry.recordedAtISO}-${entry.action}-${index}`} className="text-xs leading-relaxed text-text-secondary">
+                          <span className="font-semibold text-text-primary">{entry.action}</span>
+                          {' · '}
+                          {entry.operation}
+                          {' · '}
+                          {entry.reason ?? 'No reason captured'}
+                        </p>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="grid gap-3 md:grid-cols-2">
