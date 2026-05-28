@@ -886,7 +886,7 @@ export const GuestPhotoSharing: React.FC = () => {
             <div className="max-w-2xl">
               <p className="text-xs font-semibold uppercase tracking-[0.24em] text-neutral-500">Memories</p>
               <h1 className="mt-3 text-4xl font-semibold tracking-tight text-neutral-900">Build a beautiful bucket board for every memory you want guests to upload.</h1>
-              <p className="mt-3 text-sm leading-6 text-neutral-600">Start with a blank bucket sheet, create the moments you care about, then share one clean upload dashboard link or QR so guests can send photos without confusion.</p>
+              <p className="mt-3 text-sm leading-6 text-neutral-600">Start with a blank bucket sheet, create the moments you care about, then share one clear photo sharing link or QR so guests can send photos without confusion.</p>
             </div>
             <div className="grid gap-3 sm:grid-cols-3 lg:w-[420px]">
               <div className="rounded-2xl border border-white/70 bg-white/80 p-4">
@@ -1203,7 +1203,7 @@ export const GuestPhotoSharing: React.FC = () => {
             <div className="grid gap-3 lg:grid-cols-[1.4fr_1fr]">
               <div className="rounded-2xl border border-neutral-200 bg-neutral-50/70 p-4">
                 <p className="text-xs font-semibold uppercase tracking-[0.22em] text-neutral-500">Sharing dashboard</p>
-                <p className="mt-2 text-sm text-neutral-700">Copy links, QR codes, and guest-facing prompts without digging through menus.</p>
+                <p className="mt-2 text-sm text-neutral-700">Copy photo sharing links, QR codes, and guest-facing prompts without digging through menus.</p>
                 <div className="mt-3 flex flex-wrap gap-2">
                   <Button size="sm" variant="outline" onClick={() => void copyAllKnownLinks()}>
                     {copied === 'all-links' ? 'Copied all links' : 'Copy all bucket links'}
@@ -1262,7 +1262,7 @@ export const GuestPhotoSharing: React.FC = () => {
             <div className="rounded-[24px] border border-dashed border-neutral-300 bg-gradient-to-br from-neutral-50 to-rose-50/50 p-8">
               <p className="text-xs font-semibold uppercase tracking-[0.24em] text-neutral-500">Blank bucket sheet</p>
               <h3 className="mt-3 text-2xl font-semibold text-neutral-900">Start with the moments you actually want back.</h3>
-              <p className="mt-2 max-w-2xl text-sm leading-6 text-neutral-600">Create a few simple buckets first, then share the upload dashboard link or QR so guests know exactly where to send photos.</p>
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-neutral-600">Create a few simple buckets first, then share the photo sharing link or QR so guests know exactly where to send photos.</p>
               <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                 {['Welcome party', 'Ceremony', 'Dance floor', 'Brunch'].map((suggestion) => (
                   <button
@@ -1314,7 +1314,7 @@ export const GuestPhotoSharing: React.FC = () => {
                             {flaggedCount > 0 && <span className="text-amber-700">{flaggedCount} flagged</span>}
                             {hiddenCount > 0 && <span className="text-neutral-600">{hiddenCount} hidden</span>}
                             <span>slug: {bucket.slug}</span>
-                          {hasShareReadyLink && <span className="text-emerald-700">upload dashboard ready</span>}
+                          {hasShareReadyLink && <span className="text-emerald-700">photo sharing ready</span>}
                           </div>
                         </div>
 
@@ -1331,7 +1331,7 @@ export const GuestPhotoSharing: React.FC = () => {
                           onClick={() => void regenerateLink(bucket.id)}
                         >
                           <LinkIcon className="w-3 h-3 mr-1" />
-                          {workingBucketId === bucket.id ? 'Working...' : 'Refresh upload dashboard link'}
+                          {workingBucketId === bucket.id ? 'Working...' : 'Refresh photo sharing link'}
                         </Button>
                         <Button
                           size="sm"

@@ -335,7 +335,7 @@ export function buildAnalyticsNextMove(input: AnalyticsBaselineInput): Analytics
   if (input.activePhotoAlbumCount === 0) {
     return {
       priorityLabel: 'Guest-facing depth',
-      title: 'Turn on one guest-ready photo path',
+      title: 'Turn on one guest-ready photo sharing path',
       detail: 'Photo contribution is one of the easiest ways to make the guest experience feel alive instead of merely published.',
       whyNow: 'A live memory lane makes the site feel active, not just informative.',
       decisionRule: 'A working contribution path beats a dormant memory promise.',

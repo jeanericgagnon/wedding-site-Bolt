@@ -98,6 +98,22 @@ describe('analyticsBaseline', () => {
     expect(nextMove.decisionRule).toMatch(/refinement beats reopening/i);
   });
 
+  it('frames inactive albums as a guest-ready photo sharing path', () => {
+    const nextMove = buildAnalyticsNextMove(makeInput({
+      confirmedGuests: 70,
+      declinedGuests: 20,
+      pendingGuests: 10,
+      contactableGuests: 96,
+      registryItemCount: 10,
+      photoAlbumCount: 2,
+      activePhotoAlbumCount: 0,
+    }));
+
+    expect(nextMove.target).toBe('photos');
+    expect(nextMove.title).toContain('guest-ready photo sharing path');
+    expect(nextMove.detail).toMatch(/Photo contribution/i);
+  });
+
   it('calls out access handoff when the site is restricted even if the measured baseline is otherwise strong', () => {
     const summary = buildAnalyticsConfidenceSummary(makeInput({
       confirmedGuests: 70,

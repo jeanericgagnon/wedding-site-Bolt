@@ -60,7 +60,7 @@ describe('memoryCurator', () => {
 
     const model = buildPhotoMemoryCuratorModel({
       photoBuckets: buckets,
-      albums: [{ id: 'album-1', title: 'Cocktail Hour', is_active: false }],
+      albums: [{ id: 'album-1', name: 'Cocktail Hour', is_active: false }],
       uploads: [],
       isArchiveLike: false,
     });
