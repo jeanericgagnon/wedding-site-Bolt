@@ -1442,8 +1442,8 @@ export const BuilderV2Lab: React.FC = () => {
 
   const addableBlocksForSelected = useMemo(() => SECTION_BLOCK_CATALOG[selected.type] ?? ['title', 'text', 'photo', 'qna'], [selected.type]);
   const templateApplyPlan = useMemo(
-    () => buildBuilderV2TemplateApplyPlan(selectedTemplateSeedId, pages),
-    [pages, selectedTemplateSeedId],
+    () => buildBuilderV2TemplateApplyPlan(selectedTemplateSeedId, pages, sectionBlocks),
+    [pages, sectionBlocks, selectedTemplateSeedId],
   );
   const selectedBlocks = useMemo(() => sectionBlocks[selected.id] ?? [], [sectionBlocks, selected.id]);
   const repairSelectedSectionStructure = useCallback(() => {
@@ -2388,12 +2388,36 @@ export const BuilderV2Lab: React.FC = () => {
                     ? templateApplyPlan.removedSectionTypes.join(' · ')
                     : 'Nothing drops'}
                 </p>
+                <p className="mt-1 text-xs leading-relaxed text-text-primary">
+                  <span className="font-semibold">Authored blocks at risk:</span>{' '}
+                  {templateApplyPlan.authoredBlockCount > 0
+                    ? `${templateApplyPlan.authoredBlockCount} across ${templateApplyPlan.authoredSectionCount} section${templateApplyPlan.authoredSectionCount === 1 ? '' : 's'}`
+                    : 'No authored blocks yet'}
+                </p>
                 <p className="mt-3 text-xs leading-relaxed text-text-primary">
                   <span className="font-semibold">Decision rule:</span> {templateApplyPlan.decisionRule}
                 </p>
                 <p className="mt-1 text-xs leading-relaxed text-text-primary">
                   <span className="font-semibold">Watchout:</span> {templateApplyPlan.watchout}
                 </p>
+              </div>
+            </div>
+            <div className="mt-3 grid gap-2 lg:grid-cols-2">
+              <div className="rounded-md border border-rose-200 bg-white/80 px-3 py-3">
+                <p className="text-[11px] uppercase tracking-[0.18em] text-rose-900">Current draft order</p>
+                <div className="mt-2 space-y-1.5">
+                  {templateApplyPlan.currentPageSummaries.map((summary) => (
+                    <p key={`current-${summary}`} className="text-xs leading-relaxed text-text-primary">{summary}</p>
+                  ))}
+                </div>
+              </div>
+              <div className="rounded-md border border-rose-200 bg-white/80 px-3 py-3">
+                <p className="text-[11px] uppercase tracking-[0.18em] text-rose-900">Next starter order</p>
+                <div className="mt-2 space-y-1.5">
+                  {templateApplyPlan.nextPageSummaries.map((summary) => (
+                    <p key={`next-${summary}`} className="text-xs leading-relaxed text-text-primary">{summary}</p>
+                  ))}
+                </div>
               </div>
             </div>
             <div className="mt-3 flex flex-wrap items-center gap-2">

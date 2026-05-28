@@ -22,15 +22,22 @@ const currentPages: LabPage[] = [
 
 describe('builderV2TemplateApply', () => {
   it('builds an honest template apply summary against the current draft', () => {
-    const plan = buildBuilderV2TemplateApplyPlan('destination-adventure', currentPages);
+    const plan = buildBuilderV2TemplateApplyPlan('destination-adventure', currentPages, {
+      'story-1': [{ id: 'block-1' }, { id: 'block-2' }],
+      'travel-1': [{ id: 'block-3' }],
+    });
 
     expect(plan.templateId).toBe('destination-adventure');
     expect(plan.currentSectionCount).toBe(5);
     expect(plan.nextSectionCount).toBeGreaterThan(plan.currentSectionCount);
+    expect(plan.authoredBlockCount).toBe(3);
+    expect(plan.authoredSectionCount).toBe(2);
     expect(plan.sharedSectionTypes).toEqual(expect.arrayContaining(['hero', 'story', 'gallery', 'travel', 'faq']));
     expect(plan.addedSectionTypes).toEqual(expect.arrayContaining(['venue', 'accommodations', 'schedule', 'rsvp', 'footer-cta']));
     expect(plan.removedSectionTypes).toEqual([]);
-    expect(plan.watchout).toMatch(/recovery checkpoint/i);
+    expect(plan.currentPageSummaries[0]).toMatch(/Home: Hero -> Story -> Gallery -> Travel -> Faq/i);
+    expect(plan.watchout).toMatch(/clears authored content/i);
+    expect(plan.keyStats).toContain('Resets 3 blocks');
   });
 
   it('treats close structure matches as a lighter reset decision', () => {
@@ -56,6 +63,7 @@ describe('builderV2TemplateApply', () => {
 
     expect(plan.addedSectionTypes).toHaveLength(0);
     expect(plan.removedSectionTypes).toHaveLength(0);
+    expect(plan.authoredBlockCount).toBe(0);
     expect(plan.title).toMatch(/keeps the current section shape fairly steady/i);
     expect(plan.bestNextMove).toMatch(/cleaner starter structure/i);
   });
