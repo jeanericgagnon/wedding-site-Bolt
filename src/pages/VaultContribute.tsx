@@ -15,6 +15,7 @@ import {
   VAULT_COMPRESSION_FALLBACK_COPY,
   VAULT_UPLOAD_READY_COPY,
 } from './vaultContributeCopy';
+import { buildVaultHubPath, buildVaultYearPath } from './vaultContributionPaths';
 
 interface SiteInfo {
   id: string;
@@ -621,11 +622,11 @@ export const VaultContribute: React.FC = () => {
 
   useEffect(() => {
     if (step === 'success' && hasYearParam && siteSlug) {
-      const t = window.setTimeout(() => navigate(`/vault/${siteSlug}`), 1200);
+      const t = window.setTimeout(() => navigate(buildVaultHubPath(siteSlug, params)), 1200);
       return () => window.clearTimeout(t);
     }
     return;
-  }, [step, hasYearParam, siteSlug, navigate]);
+  }, [step, hasYearParam, siteSlug, navigate, params]);
 
   const coupleName = getVaultCoupleName(site);
 
@@ -683,7 +684,7 @@ export const VaultContribute: React.FC = () => {
                 return (
                   <Link
                     key={v.id}
-                    to={`/vault/${siteSlug}/${v.duration_years}`}
+                    to={buildVaultYearPath(siteSlug ?? '', v.duration_years, params)}
                     className="group bg-white/95 backdrop-blur rounded-2xl border border-border-subtle p-5 hover:border-primary/40 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 shadow-sm relative overflow-hidden"
                   >
                     <div className="flex items-center justify-between gap-2">
