@@ -6,6 +6,11 @@ const GUESTS_ALLOW_LIST = [
 ];
 
 export const GUESTS_RSVP_CONFIG_RETRY_ERROR = 'Could not save RSVP settings right now.';
+export const GUESTS_SITE_SETTINGS_LOAD_RETRY_ERROR = 'Could not load guest site settings right now. Please try again.';
+export const GUESTS_RECORDS_LOAD_RETRY_ERROR = 'Could not load guest records right now. Please try again.';
+export const GUESTS_ITINERARY_FILTERS_LOAD_RETRY_ERROR = 'Could not load itinerary filters right now. Please try again.';
+export const GUESTS_RSVP_AUDIT_LOAD_RETRY_ERROR = 'Could not load RSVP audit history right now. Please try again.';
+export const GUESTS_ITINERARY_DETAILS_LOAD_RETRY_ERROR = 'Could not load guest itinerary details right now. Please try again.';
 export const GUESTS_ADD_RETRY_ERROR = 'Could not add that guest right now. Please try again.';
 export const GUESTS_UPDATE_RETRY_ERROR = 'Could not update that guest right now. Please try again.';
 export const GUESTS_PARSE_FILE_RETRY_ERROR = 'Could not read that guest file right now.';

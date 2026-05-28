@@ -37,6 +37,8 @@ import {
   GUESTS_ADD_RETRY_ERROR,
   GUESTS_ASSISTED_RSVP_RETRY_ERROR,
   GUESTS_AUTO_REMINDER_SAVE_RETRY_ERROR,
+  GUESTS_ITINERARY_DETAILS_LOAD_RETRY_ERROR,
+  GUESTS_ITINERARY_FILTERS_LOAD_RETRY_ERROR,
   GUESTS_CHECKIN_CLEAR_RETRY_ERROR,
   GUESTS_CHECKIN_UNDO_RETRY_ERROR,
   GUESTS_CHECKIN_STATUS_RETRY_ERROR,
@@ -50,8 +52,11 @@ import {
   GUESTS_IMPORT_RETRY_ERROR,
   GUESTS_INVITATION_SEND_RETRY_ERROR,
   GUESTS_PARSE_FILE_RETRY_ERROR,
+  GUESTS_RECORDS_LOAD_RETRY_ERROR,
   GUESTS_REMOVE_RETRY_ERROR,
+  GUESTS_RSVP_AUDIT_LOAD_RETRY_ERROR,
   GUESTS_RSVP_CONFIG_RETRY_ERROR,
+  GUESTS_SITE_SETTINGS_LOAD_RETRY_ERROR,
   GUESTS_THANK_YOU_BULK_RETRY_ERROR,
   GUESTS_THANK_YOU_STATUS_RETRY_ERROR,
   GUESTS_UPDATE_RETRY_ERROR,
@@ -559,11 +564,11 @@ export const DashboardGuests: React.FC = () => {
         setWeddingSiteInfo(null);
         setGuests([]);
       }
-    } catch {
+    } catch (error) {
       setWeddingSiteId(null);
       setWeddingSiteInfo(null);
       setGuests([]);
-      toast('Couldn’t load guest site settings right now. Please try again.', 'error');
+      toast(mapGuestDashboardError(error, GUESTS_SITE_SETTINGS_LOAD_RETRY_ERROR), 'error');
     }
   }, [user, isDemoMode]);
 
@@ -630,11 +635,11 @@ export const DashboardGuests: React.FC = () => {
         setRsvpConflicts((conflictsData ?? []) as RsvpConflict[]);
         setRsvpConflictHistory((conflictHistoryData ?? []) as RsvpConflict[]);
       }
-    } catch {
+    } catch (error) {
       setGuests([]);
       setRsvpConflicts([]);
       setRsvpConflictHistory([]);
-      toast('Couldn’t load guest records right now. Please try again.', 'error');
+      toast(mapGuestDashboardError(error, GUESTS_RECORDS_LOAD_RETRY_ERROR), 'error');
     } finally {
       setLoading(false);
     }
@@ -703,9 +708,9 @@ export const DashboardGuests: React.FC = () => {
           next.set(row.event_id, set);
         });
         setEventInviteGuestMap(next);
-      } catch {
+      } catch (error) {
         if (!cancelled) {
-          toast('Couldn’t load itinerary filters right now. Please try again.', 'error');
+          toast(mapGuestDashboardError(error, GUESTS_ITINERARY_FILTERS_LOAD_RETRY_ERROR), 'error');
           setItineraryFilterEvents([]);
           setEventInviteGuestMap(new Map());
         }
@@ -755,10 +760,10 @@ export const DashboardGuests: React.FC = () => {
 
         if (error) throw error;
         if (!cancelled) setRsvpAuditFeed((data ?? []) as GuestAuditEntry[]);
-      } catch {
+      } catch (error) {
         if (!cancelled) {
           setRsvpAuditFeed([]);
-          toast('Couldn’t load RSVP audit history right now. Please try again.', 'error');
+          toast(mapGuestDashboardError(error, GUESTS_RSVP_AUDIT_LOAD_RETRY_ERROR), 'error');
         }
       } finally {
         if (!cancelled) setRsvpAuditLoading(false);
@@ -1929,8 +1934,8 @@ Proceed with send?`)) return;
       if (!isDemoMode) {
         setGuestAuditEntries((auditResult.data ?? []) as GuestAuditEntry[]);
       }
-    } catch {
-      toast('Couldn’t load guest itinerary details right now. Please try again.', 'error');
+    } catch (error) {
+      toast(mapGuestDashboardError(error, GUESTS_ITINERARY_DETAILS_LOAD_RETRY_ERROR), 'error');
     } finally {
       setLoadingDrawer(false);
     }

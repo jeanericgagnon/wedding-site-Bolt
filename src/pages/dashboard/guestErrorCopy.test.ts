@@ -4,6 +4,8 @@ import {
   GUESTS_ADD_RETRY_ERROR,
   GUESTS_ASSISTED_RSVP_RETRY_ERROR,
   GUESTS_AUTO_REMINDER_SAVE_RETRY_ERROR,
+  GUESTS_ITINERARY_DETAILS_LOAD_RETRY_ERROR,
+  GUESTS_ITINERARY_FILTERS_LOAD_RETRY_ERROR,
   GUESTS_CHECKIN_UNDO_RETRY_ERROR,
   GUESTS_CHECKIN_STATUS_RETRY_ERROR,
   GUESTS_CONFLICT_RESOLVE_ALL_RETRY_ERROR,
@@ -15,8 +17,11 @@ import {
   GUESTS_IMPORT_RETRY_ERROR,
   GUESTS_INVITATION_SEND_RETRY_ERROR,
   GUESTS_PARSE_FILE_RETRY_ERROR,
+  GUESTS_RECORDS_LOAD_RETRY_ERROR,
   GUESTS_REMOVE_RETRY_ERROR,
+  GUESTS_RSVP_AUDIT_LOAD_RETRY_ERROR,
   GUESTS_RSVP_CONFIG_RETRY_ERROR,
+  GUESTS_SITE_SETTINGS_LOAD_RETRY_ERROR,
   GUESTS_THANK_YOU_STATUS_RETRY_ERROR,
   GUESTS_UPDATE_RETRY_ERROR,
   mapGuestDashboardError,
@@ -43,6 +48,11 @@ describe('guestErrorCopy', () => {
 
   it('keeps guest-dashboard fallback copy calm and owner-safe', () => {
     expect(GUESTS_RSVP_CONFIG_RETRY_ERROR).toBe('Could not save RSVP settings right now.');
+    expect(GUESTS_SITE_SETTINGS_LOAD_RETRY_ERROR).toBe('Could not load guest site settings right now. Please try again.');
+    expect(GUESTS_RECORDS_LOAD_RETRY_ERROR).toBe('Could not load guest records right now. Please try again.');
+    expect(GUESTS_ITINERARY_FILTERS_LOAD_RETRY_ERROR).toBe('Could not load itinerary filters right now. Please try again.');
+    expect(GUESTS_RSVP_AUDIT_LOAD_RETRY_ERROR).toBe('Could not load RSVP audit history right now. Please try again.');
+    expect(GUESTS_ITINERARY_DETAILS_LOAD_RETRY_ERROR).toBe('Could not load guest itinerary details right now. Please try again.');
     expect(GUESTS_PARSE_FILE_RETRY_ERROR).toBe('Could not read that guest file right now.');
     expect(GUESTS_IMPORT_RETRY_ERROR).toBe('Could not import that guest list right now. Please try again with a clean guest file.');
     expect(GUESTS_UPDATE_RETRY_ERROR).toBe('Could not update that guest right now. Please try again.');
