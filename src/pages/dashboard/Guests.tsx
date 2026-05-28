@@ -32,6 +32,7 @@ import { buildGuestOpsCoach, buildGuestOutreachSequence } from '../../lib/guestO
 import { getPlannerHandoffCopy } from '../../lib/plannerHandoffState';
 import { buildGuestContactUpdateUrl, buildRsvpInviteUrl } from '../../lib/publicGuestLinks';
 import { buildGuestContactLinkListPayload, buildNoContactChecklistPayload } from './guestContactLinkList';
+import { getSmsRsvpLinkCandidates } from './guestReminderCandidates';
 import * as XLSX from 'xlsx';
 
 interface Guest {
@@ -1435,7 +1436,7 @@ export const DashboardGuests: React.FC = () => {
           .select('id, site_slug, site_url')
           .eq('id', weddingSiteId)
           .maybeSingle()
-      : { data: null, error: null };
+      : { data: null };
 
     const publicSlug = resolvePublicSiteSlugFromRow((siteData as Record<string, unknown> | null) ?? null);
     const payload = publicSlug
@@ -2256,8 +2257,7 @@ Proceed with send?`)) return;
       return;
     }
 
-    const rows = reminderCandidates
-      .filter((g) => !!g.invite_token)
+    const rows = smsRsvpLinkCandidates
       .map((g) => {
         const name = (g.first_name || g.last_name) ? `${g.first_name ?? ''} ${g.last_name ?? ''}`.trim() : g.name;
         const link = buildRsvpInviteUrl(`https://${siteData.site_slug}.dayof.love`, g.invite_token!);
@@ -3443,6 +3443,10 @@ Proceed with send?`)) return;
     if (!skipRecentlyInvited) return true;
     return dueReminderGuestIds.has(g.id);
   });
+  const smsRsvpLinkCandidates = getSmsRsvpLinkCandidates(filteredGuests, {
+    skipRecentlyInvited,
+    reminderCadenceMs,
+  });
 
   const dryRunRecipientPreview = reminderCandidates.slice(0, 8).map((g) => (g.first_name || g.last_name) ? `${g.first_name ?? ""} ${g.last_name ?? ""}`.trim() : g.name);
 
@@ -4180,7 +4184,7 @@ Proceed with send?`)) return;
                         Copy filtered guest update links
                       </button>
                       <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={() => { handleCopyNoContactChecklist(); setShowOpsMenu(false); }}>Copy no-contact checklist</button>
-                      <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded disabled:opacity-50" disabled={reminderCandidates.length === 0} onClick={() => { copySmsRsvpLinksForFiltered(); setShowOpsMenu(false); }}>Copy SMS RSVP links</button>
+                      <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded disabled:opacity-50" disabled={smsRsvpLinkCandidates.length === 0} onClick={() => { copySmsRsvpLinksForFiltered(); setShowOpsMenu(false); }}>Copy SMS RSVP links</button>
                       <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded disabled:opacity-50" disabled={reminderCandidates.length === 0} onClick={() => { handleCopyFilteredEmails(); setShowOpsMenu(false); }}>Copy filtered emails</button>
                       <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded disabled:opacity-50" disabled={bulkSending || reminderCandidates.length === 0} onClick={() => { handleSendBulkInvitations(); setShowOpsMenu(false); }} title={reminderCandidates.length === 0 ? 'No eligible recipients in this segment' : undefined}>{bulkSending ? 'Sending…' : `Remind filtered (${reminderCandidates.length})`}</button>
                       <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded disabled:opacity-50" disabled={bulkSending || dueReminderCandidatesGlobal.length === 0} onClick={() => { handleSendDueRemindersNow(); setShowOpsMenu(false); }} title={dueReminderCandidatesGlobal.length === 0 ? 'No guests due for reminders' : undefined}>{bulkSending ? 'Sending…' : `Send due reminders (${dueReminderCandidatesGlobal.length})`}</button>
