@@ -16,6 +16,13 @@ function randomToken(length = 48) {
   return Array.from(bytes).map((b) => chars[b % chars.length]).join("");
 }
 
+function buildUploadUrl(appUrl: string, token: string, albumName?: string | null) {
+  const params = new URLSearchParams({ t: token });
+  const cleanAlbumName = typeof albumName === "string" ? albumName.trim() : "";
+  if (cleanAlbumName) params.set("albumName", cleanAlbumName);
+  return `${appUrl.replace(/\/$/, "")}/photos/upload?${params.toString()}`;
+}
+
 async function refreshAccessToken(refreshToken: string) {
   const clientId = Deno.env.get("GOOGLE_DRIVE_CLIENT_ID");
   const clientSecret = Deno.env.get("GOOGLE_DRIVE_CLIENT_SECRET");
@@ -183,7 +190,7 @@ Deno.serve(async (req: Request) => {
       return fail("DB_ERROR", "Could not create this album. Please try again.", 400);
     }
 
-    const uploadUrl = `${appUrl.replace(/\/$/, "")}/photos/upload?t=${encodeURIComponent(token)}`;
+    const uploadUrl = buildUploadUrl(appUrl, token, created.name as string | null | undefined);
 
     return json({
       album: created,

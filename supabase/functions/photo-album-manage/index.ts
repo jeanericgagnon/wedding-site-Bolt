@@ -25,6 +25,13 @@ function randomToken(length = 48) {
   return Array.from(bytes).map((b) => chars[b % chars.length]).join("");
 }
 
+function buildUploadUrl(appUrl: string, token: string, albumName?: string | null) {
+  const params = new URLSearchParams({ t: token });
+  const cleanAlbumName = typeof albumName === "string" ? albumName.trim() : "";
+  if (cleanAlbumName) params.set("albumName", cleanAlbumName);
+  return `${appUrl.replace(/\/$/, "")}/photos/upload?${params.toString()}`;
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response(null, { status: 200, headers: corsHeaders });
 
@@ -60,7 +67,7 @@ Deno.serve(async (req: Request) => {
 
     const { data: album, error: albumErr } = await admin
       .from("photo_albums")
-      .select("id,wedding_site_id,is_active")
+      .select("id,wedding_site_id,is_active,name")
       .eq("id", albumId)
       .maybeSingle();
 
@@ -123,7 +130,7 @@ Deno.serve(async (req: Request) => {
         return json({ error: "Could not update this album. Please try again." }, 400);
       }
 
-      const uploadUrl = `${appUrl.replace(/\/$/, "")}/photos/upload?t=${encodeURIComponent(token)}`;
+      const uploadUrl = buildUploadUrl(appUrl, token, album.name as string | null | undefined);
       return json({ success: true, albumId, uploadUrl, uploadToken: token });
     }
 

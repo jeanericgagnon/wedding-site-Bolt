@@ -13,10 +13,16 @@ import {
 const supabaseUrl = (import.meta.env.VITE_SUPABASE_URL as string | undefined)?.trim();
 const supabaseAnonKey = (import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined)?.trim();
 
+const readPhotoUploadAlbumLabel = (params: URLSearchParams): string => {
+  const raw = params.get('albumName')?.trim() ?? '';
+  return raw.length > 0 ? raw.slice(0, 120) : '';
+};
+
 export const PhotoUpload: React.FC = () => {
   const params = useMemo(() => new URLSearchParams(window.location.search), []);
   const initialToken = readInviteTokenFromParams(params);
   const siteSlug = params.get('site')?.trim().toLowerCase() ?? '';
+  const albumLabel = readPhotoUploadAlbumLabel(params);
   const previewGuest = params.get('previewGuest')?.trim() ?? '';
   const inviteToken = initialToken;
   const hasInviteAccess = initialToken.trim().length > 0;
@@ -127,10 +133,19 @@ export const PhotoUpload: React.FC = () => {
         <h1 className="text-3xl font-semibold text-gray-900">Share your photos</h1>
         <p className="mt-2 text-base text-gray-700">Upload photos and videos directly to the couple&apos;s shared album.</p>
 
-        {siteSlug && !hasInviteAccess && (
-          <p className="mt-4 rounded-xl border border-rose-100 bg-rose-50/60 px-4 py-3 text-sm text-gray-700">
-            Uploading to {siteSlug}.dayof.love
-          </p>
+        {(albumLabel || (siteSlug && !hasInviteAccess)) && (
+          <div className="mt-4 rounded-2xl border border-rose-100 bg-rose-50/60 px-4 py-3">
+            {albumLabel && (
+              <p className="text-base font-medium text-gray-900">
+                Uploading to the {albumLabel} album
+              </p>
+            )}
+            {siteSlug && !hasInviteAccess && (
+              <p className={`text-sm text-gray-700 ${albumLabel ? 'mt-1' : ''}`}>
+                {albumLabel ? `Hosted at ${siteSlug}.dayof.love` : `Uploading to ${siteSlug}.dayof.love`}
+              </p>
+            )}
+          </div>
         )}
 
         <GuestJourneyCompanion

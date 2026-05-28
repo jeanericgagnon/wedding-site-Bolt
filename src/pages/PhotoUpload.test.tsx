@@ -37,6 +37,24 @@ describe('PhotoUpload guest-safe copy', () => {
     expect(screen.queryByText(/upload token/i)).not.toBeInTheDocument();
   });
 
+  it('shows album context when the upload link carries a friendly album label', () => {
+    window.history.replaceState({}, '', '/photos/upload?invite_token=invite-123&albumName=Welcome%20Dinner');
+
+    render(<PhotoUpload />);
+
+    expect(screen.getByText('Uploading to the Welcome Dinner album')).toBeInTheDocument();
+  });
+
+  it('shows both album and site context when a slug-only upload link includes an album label', () => {
+    window.history.replaceState({}, '', '/photos/upload?site=maya-leo&albumName=Welcome%20Dinner');
+
+    render(<PhotoUpload />);
+
+    expect(screen.getByText('Uploading to the Welcome Dinner album')).toBeInTheDocument();
+    expect(screen.getByText('Hosted at maya-leo.dayof.love')).toBeInTheDocument();
+    expect(screen.getByLabelText(PHOTO_UPLOAD_ACCESS_LABEL)).toBeInTheDocument();
+  });
+
   it('hides the access-code field when the invitation link already carries upload access', () => {
     window.history.replaceState({}, '', '/photos/upload?site=maya-leo&invite_token=invite-123');
 
