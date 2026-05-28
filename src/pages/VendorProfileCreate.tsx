@@ -2,6 +2,11 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { generateVendorProfileDraft, createVendorProfile, type VendorProfile, type VendorProfileDraft } from '../lib/vendorProfiles';
 import { useToast } from '../components/ui/Toast';
+import {
+  mapVendorProfileError,
+  VENDOR_PROFILE_CREATE_RETRY_ERROR,
+  VENDOR_PROFILE_DRAFT_RETRY_ERROR,
+} from './vendorProfileCopy';
 
 function normalizeImageLines(input: string): string[] {
   return input
@@ -44,7 +49,7 @@ export const VendorProfileCreatePage: React.FC = () => {
       setImageEditor([next.hero_image_url, ...next.image_urls].filter(Boolean).join('\n'));
       toast('Vendor draft generated.', 'success');
     } catch (err) {
-      toast(err instanceof Error ? err.message : 'Could not generate vendor draft.', 'error');
+      toast(mapVendorProfileError(err, VENDOR_PROFILE_DRAFT_RETRY_ERROR), 'error');
     } finally {
       setLoading(false);
     }
@@ -58,7 +63,7 @@ export const VendorProfileCreatePage: React.FC = () => {
       setCreatedProfile(created);
       toast('Vendor page created.', 'success');
     } catch (err) {
-      toast(err instanceof Error ? err.message : 'Could not create vendor page.', 'error');
+      toast(mapVendorProfileError(err, VENDOR_PROFILE_CREATE_RETRY_ERROR), 'error');
     } finally {
       setSaving(false);
     }

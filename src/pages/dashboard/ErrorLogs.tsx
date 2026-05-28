@@ -5,6 +5,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { Card } from '../../components/ui/Card';
 import { Link } from 'react-router-dom';
 import { formatErrorLogDateTime, getErrorLogTimestamp } from './errorLogTime';
+import { ERROR_LOGS_LOAD_RETRY_ERROR, mapLogViewerError } from './logViewerCopy';
 
 interface ErrorLogRow {
   id: string;
@@ -58,7 +59,7 @@ export const DashboardErrorLogs: React.FC = () => {
 
       if (!mounted) return;
       if (error) {
-        setError(error.message);
+        setError(mapLogViewerError(error, ERROR_LOGS_LOAD_RETRY_ERROR));
         setLogsLoading(false);
         return;
       }
@@ -88,7 +89,7 @@ export const DashboardErrorLogs: React.FC = () => {
         if (error) throw error;
         if (mounted) setRows((data ?? []) as ErrorLogRow[]);
       } catch (err) {
-        if (mounted) setError(err instanceof Error ? err.message : 'Couldn’t load error logs right now.');
+        if (mounted) setError(mapLogViewerError(err, ERROR_LOGS_LOAD_RETRY_ERROR));
       } finally {
         if (mounted) setLogsLoading(false);
       }

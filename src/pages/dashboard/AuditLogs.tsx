@@ -5,6 +5,7 @@ import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { Card } from '../../components/ui/Card';
 import { useAuth } from '../../hooks/useAuth';
 import { formatAuditLogDateTime } from './auditLogTime';
+import { AUDIT_LOGS_LOAD_RETRY_ERROR, mapLogViewerError } from './logViewerCopy';
 
 interface GuestAuditRow {
   id: string;
@@ -14,6 +15,19 @@ interface GuestAuditRow {
   guest_id: string;
   guest_name?: string;
 }
+
+type GuestAuditSelectRow = {
+  id: string;
+  action: GuestAuditRow['action'];
+  changed_at: string;
+  changed_by: string | null;
+  guest_id: string;
+  guest?: {
+    name?: string | null;
+    first_name?: string | null;
+    last_name?: string | null;
+  } | null;
+};
 
 const actionLabelMap: Record<GuestAuditRow['action'], string> = {
   insert: 'Guest record created',
@@ -58,7 +72,7 @@ export const DashboardAuditLogs: React.FC = () => {
 
         if (error) throw error;
         if (mounted) {
-          const normalized = (data ?? []).map((row: any) => ({
+          const normalized = ((data ?? []) as GuestAuditSelectRow[]).map((row) => ({
             id: row.id,
             action: row.action,
             changed_at: row.changed_at,
@@ -69,7 +83,7 @@ export const DashboardAuditLogs: React.FC = () => {
           setRows(normalized);
         }
       } catch (err) {
-        if (mounted) setError(err instanceof Error ? err.message : 'Could not load audit logs.');
+        if (mounted) setError(mapLogViewerError(err, AUDIT_LOGS_LOAD_RETRY_ERROR));
       } finally {
         if (mounted) setLogsLoading(false);
       }

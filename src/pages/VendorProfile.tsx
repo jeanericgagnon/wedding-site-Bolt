@@ -3,6 +3,11 @@ import { useParams } from 'react-router-dom';
 import { ExternalLink, Instagram } from 'lucide-react';
 import { getVendorProfileBySlug, submitVendorInquiry, type VendorProfile } from '../lib/vendorProfiles';
 import { buildVendorProfileGuide } from './dashboard/planning/vendorDecisionSupport';
+import {
+  mapVendorProfileError,
+  VENDOR_PROFILE_INQUIRY_RETRY_ERROR,
+  VENDOR_PROFILE_LOAD_RETRY_ERROR,
+} from './vendorProfileCopy';
 
 function readSourceLink(profile: VendorProfile, key: 'pinterest_url' | 'tiktok_url' | 'facebook_url' | 'youtube_url'): string | null {
   const value = profile.source_payload?.[key];
@@ -35,7 +40,7 @@ export const VendorProfilePage: React.FC = () => {
       } catch (err) {
         if (cancelled) return;
         setProfile(null);
-        setError(err instanceof Error ? err.message : 'Could not load vendor page.');
+        setError(mapVendorProfileError(err, VENDOR_PROFILE_LOAD_RETRY_ERROR));
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -89,7 +94,7 @@ export const VendorProfilePage: React.FC = () => {
       setSent(true);
       setForm({ name: '', email: '', message: '' });
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not send inquiry.');
+      setError(mapVendorProfileError(err, VENDOR_PROFILE_INQUIRY_RETRY_ERROR));
     } finally {
       setSending(false);
     }
