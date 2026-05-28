@@ -143,7 +143,7 @@ export const MessagingFeature: React.FC = () => {
               <div className="p-3 bg-brand/10 rounded-xl w-fit mb-4">
                 <BarChart className="w-6 h-6 text-brand" />
               </div>
-              <h3 className="text-xl font-serif font-bold text-ink mb-3">Open Tracking</h3>
+              <h3 className="text-xl font-serif font-bold text-ink mb-3">Message visibility</h3>
               <p className="text-ink/70 mb-4">
                 See practical delivery signals first, then use them to decide who still needs follow-up. Measured counts matter more than fake certainty.
               </p>
@@ -244,8 +244,8 @@ export const MessagingFeature: React.FC = () => {
                 'SMS path stays gated until sender setup is ready',
                 'Guest segmentation',
                 'Schedule sends',
-                'Open updates',
-                'Click updates',
+                'Delivery-oriented updates',
+                'Message history',
                 'Message templates',
                 'Custom messages',
                 'Reminder drafting + scheduled follow-up',
