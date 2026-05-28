@@ -324,7 +324,7 @@ export function buildAnalyticsNextMove(input: AnalyticsBaselineInput): Analytics
     return {
       priorityLabel: 'Guest-facing depth',
       title: 'Give guests one stronger gifting signal',
-      detail: 'A small live registry set does more for guest confidence than waiting for a perfect one.',
+      detail: 'A small guest-ready registry set does more for guest confidence than waiting for a perfect one.',
       whyNow: 'Registry readiness is one of the easiest visible signals that the site is genuinely being carried through.',
       decisionRule: 'A small honest registry beats a blank lane that asks guests to guess.',
       ctaLabel: 'Open registry',
@@ -336,8 +336,8 @@ export function buildAnalyticsNextMove(input: AnalyticsBaselineInput): Analytics
     return {
       priorityLabel: 'Guest-facing depth',
       title: 'Turn on one guest-ready photo sharing path',
-      detail: 'Photo contribution is one of the easiest ways to make the guest experience feel alive instead of merely published.',
-      whyNow: 'A live memory lane makes the site feel active, not just informative.',
+      detail: 'Photo contribution is one of the easiest ways to make the guest experience feel welcoming instead of merely published.',
+      whyNow: 'A working memory lane makes the site feel active, not just informative.',
       decisionRule: 'A working contribution path beats a dormant memory promise.',
       ctaLabel: 'Open photos',
       target: 'photos',
@@ -352,7 +352,7 @@ export function buildAnalyticsNextMove(input: AnalyticsBaselineInput): Analytics
         ? 'The guest-facing site is not public, so make sure the real invite path is what guests are receiving instead of a generic broad-share link.'
         : 'The site is password-protected, so the next lift is making sure the password instructions travel with every guest-facing link or print pack.',
       whyNow: 'A good board still fails guests if the wrong access instructions travel with it.',
-      decisionRule: 'Access clarity beats broader sharing when the site is live but still protected.',
+      decisionRule: 'Access clarity beats broader sharing when the site is shared but still protected.',
       ctaLabel: 'Review guest access',
       target: 'settings',
     };
@@ -362,7 +362,7 @@ export function buildAnalyticsNextMove(input: AnalyticsBaselineInput): Analytics
     return {
       priorityLabel: 'Polish window',
       title: 'The measured baseline is healthy enough for a polish pass',
-      detail: 'This is a good moment to improve the live guest-facing story instead of chasing missing basics.',
+      detail: 'This is a good moment to improve the guest-facing story instead of chasing missing basics.',
       whyNow: 'The baseline is finally strong enough that refinement will actually be felt by guests.',
       decisionRule: 'When the measured baseline is calm, refinement beats reopening solved operational work.',
       ctaLabel: 'Open site polish',

@@ -152,7 +152,7 @@ export function buildCoupleFocusModel(input: CoupleFocusInput): CoupleFocusModel
         }),
         step('next', {
           id: 'seating',
-          title: 'Then finish any live guest details',
+          title: 'Then finish any remaining guest-facing details',
           detail: 'Once the guest lane is steadier, seating and day-of readiness become much easier to trust.',
           target: input.seatingUnassignedCount > 0 ? 'seating' : 'coordinator',
           ctaLabel: input.seatingUnassignedCount > 0 ? 'Check seating' : 'Open coordinator mode',
@@ -226,15 +226,15 @@ export function buildCoupleFocusModel(input: CoupleFocusInput): CoupleFocusModel
   if (input.isPublished && isWeddingSoon(input.daysUntilWedding) && restrictedAccess) {
     return {
       headline: 'Guest access is the couple focus now',
-      summary: `The site is live, but it is ${accessLabel}. The next trust move is making sure the right password or invite path travels with every guest-facing handoff.`,
-      watchout: `A live ${accessLabel} site can still feel broken if guest handoff assets, reminders, or print pieces carry inconsistent entry instructions.`,
+      summary: `The site is shared, but it is ${accessLabel}. The next trust move is making sure the right password or invite path travels with every guest-facing handoff.`,
+      watchout: `A shared ${accessLabel} site can still feel broken if guest handoff assets, reminders, or print pieces carry inconsistent entry instructions.`,
       steps: [
         step('current', {
           id: 'launch',
           title: 'Preview the real guest access flow',
           detail: input.privacyMode === 'invite_only'
-            ? 'Open the live flow the same way a guest will, then make sure the invite path is what your reminders and handoff assets actually point to.'
-            : 'Check the live flow with the password gate in mind so links, print packs, and reminders all carry the right instructions.',
+            ? 'Open the shared flow the same way a guest will, then make sure the invite path is what your reminders and handoff assets actually point to.'
+            : 'Check the shared flow with the password gate in mind so links, print packs, and reminders all carry the right instructions.',
           target: 'settings',
           ctaLabel: 'Review access settings',
         }),

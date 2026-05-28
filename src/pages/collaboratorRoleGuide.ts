@@ -77,29 +77,29 @@ export function buildCollaboratorRoleGuide(role?: string | null): CollaboratorRo
   if (role === 'coordinator') {
     return {
       label: 'Coordinator access',
-      focusTitle: 'Protect the live path first',
-      focusDetail: 'This lane is for calm day-of operations: timeline clarity, guest movement, seating stability, and live communication.',
-      nextMove: 'Land in Overview, then move into Coordinator Mode or Itinerary once the real live pressure is visible.',
+      focusTitle: 'Protect the guest-facing path first',
+      focusDetail: 'This lane is for calm day-of operations: timeline clarity, guest movement, seating stability, and guest communication.',
+      nextMove: 'Land in Overview, then move into Coordinator Mode or Itinerary once the real day-of pressure is visible.',
       decisionRule: 'If it affects guest flow or day-of calm, treat it as urgent. If it can wait until after the pressure passes, let it wait.',
-      watchout: 'Do not absorb long-horizon planning truth while the room is live. If a choice can wait until the pressure passes, capture it and hand it back later.',
+      watchout: 'Do not absorb long-horizon planning truth while the room is under pressure. If a choice can wait until the pressure passes, capture it and hand it back later.',
       sequence: [
         {
           id: 'orient',
           status: 'current',
-          title: 'Find the live pressure',
-          detail: 'Use Overview to see whether the room needs timeline clarity, guest movement help, or live communication first.',
+          title: 'Find the day-of pressure',
+          detail: 'Use Overview to see whether the room needs timeline clarity, guest movement help, or guest communication first.',
         },
         {
           id: 'enter',
           status: 'next',
-          title: 'Enter the live control lane',
+          title: 'Enter the day-of control lane',
           detail: 'Move into Coordinator Mode or Itinerary and settle the pressure that is actually shaping the guest experience now.',
         },
         {
           id: 'escalate',
           status: 'then',
           title: 'Let calmer work wait',
-          detail: 'After the live lane is steady, only reopen lower-pressure follow-through if the room truly has space for it.',
+          detail: 'After the active lane is steady, only reopen lower-pressure follow-through if the room truly has space for it.',
         },
       ],
     };

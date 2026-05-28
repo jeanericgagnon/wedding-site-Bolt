@@ -130,6 +130,7 @@ describe('analyticsBaseline', () => {
     expect(nextMove.target).toBe('photos');
     expect(nextMove.title).toContain('guest-ready photo sharing path');
     expect(nextMove.detail).toMatch(/Photo contribution/i);
+    expect(nextMove.whyNow).toMatch(/working memory lane/i);
   });
 
   it('calls out access handoff when the site is restricted even if the measured baseline is otherwise strong', () => {
@@ -159,7 +160,35 @@ describe('analyticsBaseline', () => {
     expect(summary.watchout).toMatch(/QR packs|sloppy|undermine/i);
     expect(nextMove.ctaLabel).toMatch(/review guest access/i);
     expect(nextMove.priorityLabel).toBe('Access handoff');
-    expect(nextMove.decisionRule).toMatch(/Access clarity beats broader sharing/i);
+    expect(nextMove.decisionRule).toMatch(/shared but still protected/i);
     expect(nextMove.target).toBe('settings');
+  });
+
+  it('frames empty registry guidance around a small guest-ready set', () => {
+    const nextMove = buildAnalyticsNextMove(makeInput({
+      confirmedGuests: 70,
+      declinedGuests: 20,
+      pendingGuests: 10,
+      contactableGuests: 96,
+      registryItemCount: 0,
+      activePhotoAlbumCount: 2,
+    }));
+
+    expect(nextMove.target).toBe('registry');
+    expect(nextMove.detail).toMatch(/small guest-ready registry set/i);
+  });
+
+  it('uses guest-facing story language for strong-baseline polish timing', () => {
+    const nextMove = buildAnalyticsNextMove(makeInput({
+      confirmedGuests: 70,
+      declinedGuests: 20,
+      pendingGuests: 10,
+      contactableGuests: 96,
+      registryItemCount: 10,
+      activePhotoAlbumCount: 2,
+    }));
+
+    expect(nextMove.target).toBe('builder-polish');
+    expect(nextMove.detail).toMatch(/improve the guest-facing story/i);
   });
 });

@@ -27,4 +27,16 @@ describe('buildDashboardRoleGuide', () => {
     expect(guide.watchout).toMatch(/shadow ownership|route the question back/i);
     expect(guide.sequence[2]?.detail).toMatch(/couple|owners/i);
   });
+
+  it('keeps coordinator handoff guidance centered on guest-facing day-of pressure', () => {
+    const guide = buildDashboardRoleGuide('coordinator');
+
+    expect(guide.label).toBe('Coordinator handoff');
+    expect(guide.focusTitle).toMatch(/guest-facing path/i);
+    expect(guide.nextMove).toMatch(/day-of pressure/i);
+    expect(guide.decisionRule).toMatch(/guest-facing flow|day-of calm/i);
+    expect(guide.watchout).toMatch(/day-of window|under pressure/i);
+    expect(guide.sequence[0]?.title).toMatch(/day-of pressure/i);
+    expect(guide.sequence[1]?.title).toMatch(/day-of control lane/i);
+  });
 });

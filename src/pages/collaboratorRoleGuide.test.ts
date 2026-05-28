@@ -18,11 +18,12 @@ describe('buildCollaboratorRoleGuide', () => {
     const guide = buildCollaboratorRoleGuide('coordinator');
 
     expect(guide.label).toBe('Coordinator access');
-    expect(guide.focusTitle).toMatch(/live path/i);
+    expect(guide.focusTitle).toMatch(/guest-facing path/i);
     expect(guide.nextMove).toMatch(/Coordinator Mode|Itinerary/i);
     expect(guide.decisionRule).toMatch(/guest flow|day-of calm/i);
-    expect(guide.watchout).toMatch(/long-horizon planning truth|pressure passes/i);
+    expect(guide.watchout).toMatch(/long-horizon planning truth|under pressure/i);
     expect(guide.sequence[1]?.detail).toMatch(/Coordinator Mode|Itinerary|guest experience/i);
+    expect(guide.sequence[0]?.title).toMatch(/day-of pressure/i);
   });
 
   it('keeps viewer guidance explicit about read-only review', () => {

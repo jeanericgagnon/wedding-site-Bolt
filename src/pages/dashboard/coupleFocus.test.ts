@@ -134,7 +134,26 @@ describe('buildCoupleFocusModel', () => {
 
     expect(model.headline).toMatch(/guest access/i);
     expect(model.watchout).toMatch(/entry instructions/i);
+    expect(model.summary).toMatch(/site is shared/i);
     expect(model.steps[0]).toMatchObject({ id: 'launch', target: 'settings' });
+    expect(model.steps[0]?.detail).toMatch(/shared flow/i);
     expect(model.steps[1]?.id).toBe('guests');
+  });
+
+  it('describes the next guest cleanup pass as remaining guest-facing details', () => {
+    const model = buildCoupleFocusModel({
+      daysUntilWedding: 80,
+      isPublished: true,
+      isArchiveLike: false,
+      publishBlockerCount: 0,
+      pendingGuestCount: 3,
+      contactGapCount: 0,
+      overdueTaskCount: 0,
+      dueSoonVendorCount: 0,
+      seatingUnassignedCount: 4,
+      itineraryEventCount: 2,
+    });
+
+    expect(model.steps[1]?.title).toMatch(/remaining guest-facing details/i);
   });
 });
