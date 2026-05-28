@@ -163,14 +163,14 @@ export const buildPhotoMemoryCuratorModel = (args: {
       bestNextMove: 'Upload one favorite couple portrait into Main photo of you two.',
       decisionRule: 'Do not widen guest-facing collection before the signature couple photo feels settled.',
       watchout: 'If you open guest-facing memory lanes before the couple anchor feels unmistakable, every later upload asks guests to guess what story they are helping preserve.',
-      curationNote: 'This is still collection mode. Do not widen the guest upload story until the couple anchor feels unmistakable.',
+      curationNote: 'This is still collection mode. Do not widen the guest photo sharing story until the couple anchor feels unmistakable.',
       badges: [
         `${signatureReadyCount}/2 signature buckets ready`,
         `${activeAlbums.length} live upload bucket${activeAlbums.length === 1 ? '' : 's'}`,
       ],
       qualitySignals: [
         'Hero photo still missing',
-        'Guest upload lanes can stay simple for now',
+        'Guest photo sharing lanes can stay simple for now',
       ],
       sequence: buildMemorySequence(
         {
@@ -183,13 +183,13 @@ export const buildPhotoMemoryCuratorModel = (args: {
         },
         {
           title: 'Open guest-facing memory lanes after the anchor holds',
-          detail: 'Let guest uploads stay simple until the couple story is strong enough to guide the rest of the memory flow.',
+          detail: 'Let guest photo sharing stay simple until the couple story is strong enough to guide the rest of the memory flow.',
         },
       ),
       nextMoves: [
         'Upload one favorite couple portrait into Main photo of you two.',
         'Add a few more couple photos so the story section has real depth.',
-        'Leave guest upload buckets simple until the couple photos feel settled.',
+        'Leave guest photo sharing buckets simple until the couple photos feel settled.',
       ],
     };
   }
@@ -245,7 +245,7 @@ export const buildPhotoMemoryCuratorModel = (args: {
       focusTitle: 'Finish one strong bucket first',
       focusDetail: 'A single complete bucket creates more trust than several half-formed ones.',
       bestNextMove: 'Push one live bucket to at least three strong visible uploads.',
-      decisionRule: 'Push one bucket to “worth revisiting” before you spread attention across every upload lane.',
+      decisionRule: 'Push one bucket to “worth revisiting” before you spread attention across every photo sharing lane.',
       watchout: 'If you spread early uploads across every bucket at once, the whole memory system can look busier without any lane becoming worth revisiting.',
       curationNote: 'You have signal now. The job is turning that signal into one complete, trustworthy memory lane first.',
       badges: [

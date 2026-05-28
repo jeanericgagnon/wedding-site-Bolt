@@ -107,7 +107,7 @@ const featureLinks = [
 const guestSteps = [
   ['Open one wedding link', 'No app or account required for the public guest path.'],
   ['Reply and update details', 'RSVP, meal notes, contact changes, and event visibility stay grounded in the same guest record.'],
-  ['Use it during the weekend', 'Travel, schedule, photo upload, and latest updates remain easy to find from a phone.'],
+  ['Use it during the weekend', 'Travel, schedule, photo sharing, and latest updates remain easy to find from a phone.'],
   ['Come back after', 'Guestbook notes, photo recap, and vault moments keep the wedding from disappearing into old texts.'],
 ] as const;
 

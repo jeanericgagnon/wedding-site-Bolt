@@ -1,6 +1,7 @@
 import React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type { LinkProps } from 'react-router-dom';
 
 const navigateMock = vi.fn();
 const authState = {
@@ -12,7 +13,7 @@ vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual<typeof import('react-router-dom')>('react-router-dom');
   return {
     ...actual,
-    Link: ({ children, to, ...props }: any) => <a href={to} {...props}>{children}</a>,
+    Link: ({ children, to, ...props }: LinkProps) => <a href={to.toString()} {...props}>{children}</a>,
     useNavigate: () => navigateMock,
   };
 });
@@ -31,9 +32,9 @@ vi.mock('../components/layout', () => ({
 }));
 
 vi.mock('../components/marketing/Reveal', () => ({
-  Reveal: ({ children }: any) => <>{children}</>,
-  HeroReveal: ({ children }: any) => <>{children}</>,
-  SlideReveal: ({ children }: any) => <>{children}</>,
+  Reveal: ({ children }: React.PropsWithChildren) => <>{children}</>,
+  HeroReveal: ({ children }: React.PropsWithChildren) => <>{children}</>,
+  SlideReveal: ({ children }: React.PropsWithChildren) => <>{children}</>,
 }));
 
 import { Home } from './Home';
@@ -46,6 +47,8 @@ describe('Home draft-first CTAs', () => {
 
   it('sends anonymous visitors to signup when they start their draft', () => {
     render(<Home />);
+
+    expect(screen.getByText('Travel, schedule, photo sharing, and latest updates remain easy to find from a phone.')).toBeInTheDocument();
 
     fireEvent.click(screen.getAllByRole('button', { name: 'Start your wedding site draft' })[0]);
 
@@ -64,6 +67,8 @@ describe('Home draft-first CTAs', () => {
   it('sends signed-in users straight to the builder when they start their draft', () => {
     authState.user = { id: 'user-1' };
     render(<Home />);
+
+    expect(screen.getByText('Travel, schedule, photo sharing, and latest updates remain easy to find from a phone.')).toBeInTheDocument();
 
     fireEvent.click(screen.getAllByRole('button', { name: 'Review your wedding site draft' })[0]);
 
