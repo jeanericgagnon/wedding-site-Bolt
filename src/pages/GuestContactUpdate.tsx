@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { GuestJourneyCompanion } from '../components/guest/GuestJourneyCompanion';
 import { demoGuests, demoWeddingSite } from '../lib/demoData';
@@ -76,6 +76,72 @@ export const GuestContactUpdate: React.FC = () => {
     !!mailingCountry.trim()
   ), [selectedGuestId, email, phone, rsvpStatus, mailingAddressLine1, mailingCity, mailingPostalCode, mailingCountry]);
 
+  const applyLookupMatches = useCallback((rows: Match[]) => {
+    setMatches(rows);
+    if (rows.length > 0) {
+      setSelectedGuestId(rows[0].id);
+      setSelectedHouseholdSize(rows[0].household_size ?? 1);
+      setQuery(rows[0].name);
+      return;
+    }
+
+    setSelectedGuestId('');
+    setSelectedHouseholdSize(1);
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!inviteToken || !siteRef) return undefined;
+
+    async function prefillGuestFromInvite() {
+      setSearching(true);
+      setResult(null);
+
+      try {
+        if (isDemoSiteRef) {
+          const hit = demoGuests.find((guest) => guest.invite_token === inviteToken);
+          const rows = hit
+            ? [{
+                id: hit.id,
+                name: hit.name,
+                household_id: hit.household_id ?? null,
+                household_size: hit.household_id
+                  ? demoGuests.filter((guest) => guest.household_id === hit.household_id).length
+                  : 1,
+              }]
+            : [];
+
+          if (cancelled) return;
+          applyLookupMatches(rows);
+          if (rows.length === 0) {
+            setResult({ ok: false, message: 'We couldn’t match that invitation link to a guest record. Search your full name below.' });
+          }
+          return;
+        }
+
+        const data = await callPublicFn('guest-contact-lookup', { site_ref: siteRef, invite_token: inviteToken });
+        if (cancelled) return;
+
+        const rows = data.matches ?? [];
+        applyLookupMatches(rows);
+        if (rows.length === 0) {
+          setResult({ ok: false, message: 'We couldn’t match that invitation link to a guest record. Search your full name below.' });
+        }
+      } catch (err) {
+        if (cancelled) return;
+        setResult({ ok: false, message: mapGuestContactLookupError(err) });
+      } finally {
+        if (!cancelled) setSearching(false);
+      }
+    }
+
+    void prefillGuestFromInvite();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [applyLookupMatches, inviteToken, isDemoSiteRef, siteRef]);
+
   async function handleSearch() {
     if (query.trim().length < 2) return;
     setSearching(true);
@@ -86,11 +152,8 @@ export const GuestContactUpdate: React.FC = () => {
     try {
       const data = await callPublicFn('guest-contact-lookup', { site_ref: siteRef, query: query.trim() });
       const rows = data.matches ?? [];
-      setMatches(rows);
-      if (rows.length > 0) {
-        setSelectedGuestId(rows[0].id);
-        setSelectedHouseholdSize(rows[0].household_size ?? 1);
-      } else {
+      applyLookupMatches(rows);
+      if (rows.length === 0) {
         setResult({ ok: false, message: 'No guest record matched that search. Try your full name as it appears on the invitation.' });
       }
     } catch (err) {
@@ -108,11 +171,8 @@ export const GuestContactUpdate: React.FC = () => {
               household_size: guest.household_size ?? 1,
             };
           });
-        setMatches(rows);
-        if (rows.length > 0) {
-          setSelectedGuestId(rows[0].id);
-          setSelectedHouseholdSize(rows[0].household_size ?? 1);
-        } else {
+        applyLookupMatches(rows);
+        if (rows.length === 0) {
           setResult({ ok: false, message: 'No demo guest matched that search. Try a full name from the sample guest list.' });
         }
       } else {
