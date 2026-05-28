@@ -2,17 +2,20 @@ import React, { type ComponentPropsWithoutRef, type ReactNode } from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+const navigateMock = vi.fn();
+const authState = { user: null as { id: string; email?: string | null } | null, isDemoMode: false };
+
 vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual<typeof import('react-router-dom')>('react-router-dom');
   return {
     ...actual,
-    useNavigate: () => vi.fn(),
+    useNavigate: () => navigateMock,
     useSearchParams: () => [new URLSearchParams(''), vi.fn()],
   };
 });
 
 vi.mock('../hooks/useAuth', () => ({
-  useAuth: () => ({ user: null, isDemoMode: false }),
+  useAuth: () => authState,
 }));
 
 vi.mock('../lib/supabase', () => ({
@@ -105,6 +108,9 @@ describe('Onboarding starter draft wording truth', () => {
   };
 
   beforeEach(() => {
+    navigateMock.mockReset();
+    authState.user = null;
+    authState.isDemoMode = false;
     window.localStorage.clear();
   });
 
@@ -197,5 +203,45 @@ describe('Onboarding starter draft wording truth', () => {
     expect(screen.getByText('Suggested starting point')).toBeInTheDocument();
     expect(screen.queryByText('AI guidance state')).not.toBeInTheDocument();
     expect(screen.queryByText('Smart default')).not.toBeInTheDocument();
+  });
+
+  it('sends manual setup straight to the builder after creating the starter site shell', async () => {
+    authState.user = { id: 'user-1', email: 'alex@example.com' };
+
+    const single = vi.fn(async () => ({ data: { id: 'site-1' }, error: null }));
+    const select = vi.fn(() => ({ single }));
+    const insert = vi.fn(() => ({ select }));
+    const maybeSingle = vi.fn(async () => ({ data: null }));
+    const eq = vi.fn(() => ({ maybeSingle }));
+    const existingSiteSelect = vi.fn(() => ({ eq }));
+
+    const fromMock = vi.fn((table: string) => {
+      if (table === 'wedding_sites') {
+        return {
+          insert,
+          select: existingSiteSelect,
+        };
+      }
+      if (table === 'itinerary_events') {
+        return {
+          select: vi.fn(() => ({
+            eq: vi.fn(async () => ({ data: [], error: null })),
+          })),
+        };
+      }
+      throw new Error(`Unexpected table: ${table}`);
+    });
+
+    const { supabase } = await import('../lib/supabase');
+    ((supabase as unknown) as { from: typeof fromMock }).from = fromMock;
+
+    render(<Onboarding />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Go to Builder' }));
+
+    await waitFor(() => {
+      expect(insert).toHaveBeenCalled();
+      expect(navigateMock).toHaveBeenCalledWith('/dashboard/builder');
+    });
   });
 });

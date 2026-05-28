@@ -618,7 +618,7 @@ export const Onboarding: React.FC = () => {
     setLoading(false);
     if (ok) {
       clearSavedOnboardingDraft();
-      navigate('/dashboard');
+      navigate('/dashboard/builder');
     }
   };
 
