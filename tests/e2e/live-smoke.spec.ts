@@ -110,6 +110,24 @@ test.describe('public route smoke basics', () => {
     await expect(page.getByRole('heading', { name: /welcome back/i })).toBeVisible();
   });
 
+  test('protected builder guide route falls back to login when auth is missing', async ({ page }) => {
+    await gotoDom(page, '/dashboard/builder-guide');
+    await expect(page).toHaveURL(/\/login$/);
+    await expect(page.getByRole('heading', { name: /welcome back/i })).toBeVisible();
+  });
+
+  test('public default builder alias still falls back to login when auth is missing', async ({ page }) => {
+    await gotoDom(page, '/builder');
+    await expect(page).toHaveURL(/\/login$/);
+    await expect(page.getByRole('heading', { name: /welcome back/i })).toBeVisible();
+  });
+
+  test('public builder guide alias still falls back to login when auth is missing', async ({ page }) => {
+    await gotoDom(page, '/builder-guide');
+    await expect(page).toHaveURL(/\/login$/);
+    await expect(page.getByRole('heading', { name: /welcome back/i })).toBeVisible();
+  });
+
   test('protected dashboard root falls back to login when auth is missing', async ({ page }) => {
     await gotoDom(page, '/dashboard');
     await expect(page).toHaveURL(/\/login$/);

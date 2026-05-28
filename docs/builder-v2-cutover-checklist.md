@@ -35,7 +35,7 @@ Status: draft (post-lab hardening)
 
 - [x] unit tests for `toBuilderV2Document` and default block mapping
 - [x] unit tests for import sanitization fallback (`unknown block -> text`)
-- [ ] smoke test script path for `/builder-v2-lab`
+- [ ] smoke test script path for `/dashboard/builder` primary route plus `/dashboard/builder-guide` fallback guide
 - [ ] CI gate includes typecheck + build + v2 adapter tests
 
 ## 4) Rollout Strategy
@@ -48,7 +48,7 @@ Status: draft (post-lab hardening)
 
 ## 5) Exit Criteria
 
-Cutover to main `/builder` only when all are true:
+Cutover to main `/dashboard/builder` and `/builder` only when all are true:
 
 - [ ] typecheck/build green
 - [ ] QA checklist fully green

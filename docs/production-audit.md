@@ -24,17 +24,19 @@
 | `/onboarding/guided` | GuidedSetup | Yes | Guided setup |
 | `/dashboard` | DashboardOverview | Yes | Redirects to /dashboard/overview |
 | `/dashboard/overview` | DashboardOverview | Yes | Main dashboard |
-| `/dashboard/builder` | Navigate | Yes | **Redirects to /builder** |
+| `/dashboard/builder` | BuilderV2Lab | Yes | **Primary protected Builder V2 route** |
+| `/dashboard/builder-guide` | BuilderCutover | Yes | **Protected builder cutover guide** |
 | `/dashboard/guests` | DashboardGuests | Yes | Guest management |
 | `/dashboard/itinerary` | DashboardItinerary | Yes | Itinerary |
 | `/dashboard/vault` | DashboardVault | Yes | Photo vault |
 | `/dashboard/registry` | DashboardRegistry | Yes | Registry |
 | `/dashboard/settings` | DashboardSettings | Yes | Settings |
 | `/dashboard/messages` | DashboardMessages | Yes | Messages |
-| `/builder` | BuilderPage | Yes | **Canonical site builder** |
+| `/builder` | BuilderV2Lab | Yes | **Public alias to primary protected Builder V2 route** |
+| `/builder-guide` | BuilderCutover | Yes | **Public alias to protected builder cutover guide** |
 | `*` | Navigate `/` | - | 404 catch-all |
 
-**Builder is unified at `/builder`. Legacy `/dashboard/builder` redirects.**
+**Builder V2 now owns `/dashboard/builder`, with `/builder` as its public alias. The cutover guide remains explicit at `/dashboard/builder-guide` and `/builder-guide`.**
 
 ---
 

@@ -113,8 +113,10 @@ This is an implementation truth, not the ideal final product model. Public wordi
 | `/site/:slug` | Public | Public wedding site |
 | `/login`, `/signup` | Public | Auth pages |
 | `/dashboard` | Protected | Dashboard overview |
-| `/dashboard/builder` | Protected | Redirects to `/builder` |
-| `/builder` | Protected | Site builder |
+| `/dashboard/builder` | Protected | Builder V2 primary editor |
+| `/dashboard/builder-guide` | Protected | Builder cutover guide |
+| `/builder` | Protected | Public alias to Builder V2 primary editor |
+| `/builder-guide` | Protected | Public alias to builder cutover guide |
 | `/dashboard/*` | Protected | Dashboard sub-pages |
 | `*` | Any | Redirect to `/` |
 

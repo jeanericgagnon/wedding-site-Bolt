@@ -12,10 +12,10 @@ const publicRoutes = [
 ];
 
 const protectedRoutes = [
-  '/dashboard', '/dashboard/overview', '/dashboard/builder', '/dashboard/guests', '/dashboard/itinerary',
+  '/dashboard', '/dashboard/overview', '/dashboard/builder', '/dashboard/builder-guide', '/dashboard/guests', '/dashboard/itinerary',
   '/dashboard/planning', '/dashboard/seating', '/dashboard/seating-lookup', '/dashboard/vault',
   '/dashboard/photos', '/dashboard/registry', '/dashboard/settings', '/dashboard/messages',
-  '/dashboard/rsvp-board', '/dashboard/coordinator', '/admin/errors', '/builder', '/setup', '/setup/names',
+  '/dashboard/rsvp-board', '/dashboard/coordinator', '/admin/errors', '/builder', '/builder-guide', '/setup', '/setup/names',
   '/onboarding', '/onboarding/status', '/onboarding/celebration', '/onboarding/quick-start', '/onboarding/guided',
   '/payment-required', '/payment/success'
 ];
