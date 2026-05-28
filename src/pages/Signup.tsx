@@ -13,6 +13,11 @@ import { buildCollaboratorInviteAuthSearch, readCollaboratorInviteAuthParams } f
 import { buildCollaboratorRoleGuide } from './collaboratorRoleGuide';
 import { getFlowStatusLabel } from '../lib/flowLabels';
 import { getAuthEntryIntent } from '../lib/authEntryIntent';
+import {
+  AUTH_GOOGLE_RETRY_ERROR,
+  AUTH_SIGNUP_RETRY_ERROR,
+  mapAuthEntryError,
+} from './authEntryCopy';
 
 const makeBaseSlug = (email: string) => {
   const local = (email.split('@')[0] || 'ourwedding').toLowerCase();
@@ -145,7 +150,7 @@ export const Signup: React.FC = () => {
       });
       if (oauthError) throw oauthError;
     } catch (err: unknown) {
-      setError((err as Error).message || 'Couldn’t start Google sign-in right now. Please try again.');
+      setError(mapAuthEntryError(err, AUTH_GOOGLE_RETRY_ERROR));
       setLoading(false);
     }
   };
@@ -206,7 +211,7 @@ export const Signup: React.FC = () => {
       await ensureMinimalWeddingSite(userId, formData.email);
       navigate(consumeSignupReturnPath() || resolveSignupReturnPath(explicitReturnPath, paymentGateEnabled ? '/payment-required?signup=1' : '/onboarding?signup=1'));
     } catch (err: unknown) {
-      setError((err as Error).message || 'Couldn’t create your account right now. Please try again.');
+      setError(mapAuthEntryError(err, AUTH_SIGNUP_RETRY_ERROR));
     } finally {
       setLoading(false);
     }

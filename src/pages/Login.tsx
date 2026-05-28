@@ -12,6 +12,13 @@ import { normalizeMeaningfulQuickStartDraftSnapshot, persistQuickStartDraftSnaps
 import { buildCollaboratorInviteAuthSearch, readCollaboratorInviteAuthParams } from '../lib/collaboratorInviteAuthParams';
 import { FIRST_SESSION_WORKSPACE_ROUTES } from '../lib/firstSessionWorkspaceRoutes';
 import { getAuthEntryIntent } from '../lib/authEntryIntent';
+import {
+  AUTH_DEMO_RETRY_ERROR,
+  AUTH_GOOGLE_RETRY_ERROR,
+  AUTH_RESET_RETRY_ERROR,
+  AUTH_SIGNIN_RETRY_ERROR,
+  mapAuthEntryError,
+} from './authEntryCopy';
 
 type AuthView = 'login' | 'forgot-password' | 'forgot-sent';
 
@@ -122,14 +129,14 @@ export const Login: React.FC = () => {
         email: formData.email,
         password: formData.password,
       });
-      if (signInError) throw signInError;
+    if (signInError) throw signInError;
       if (hasInviteContext) {
         navigate(`/accept-collaborator-invite${inviteReturnSearch}`, { replace: true });
         return;
       }
       navigate(consumeSignupReturnPath() || resolveLoginReturnPath(getPostLoginRoute(signInData.user?.email), explicitReturnPath));
     } catch (err: unknown) {
-      setError((err as Error).message || 'Couldn’t sign you in right now. Please try again.');
+      setError(mapAuthEntryError(err, AUTH_SIGNIN_RETRY_ERROR));
     } finally {
       setLoading(false);
     }
@@ -142,7 +149,7 @@ export const Login: React.FC = () => {
       await signIn();
       navigate(getPostLoginRoute('demo@dayof.love'));
     } catch (err: unknown) {
-      setError((err as Error).message || 'Couldn’t open demo mode right now. Please try again.');
+      setError(mapAuthEntryError(err, AUTH_DEMO_RETRY_ERROR));
     } finally {
       setDemoLoading(false);
     }
@@ -171,7 +178,7 @@ export const Login: React.FC = () => {
       });
       if (oauthError) throw oauthError;
     } catch (err: unknown) {
-      setError((err as Error).message || 'Couldn’t start Google sign-in right now. Please try again.');
+      setError(mapAuthEntryError(err, AUTH_GOOGLE_RETRY_ERROR));
       setLoading(false);
     }
   };
@@ -187,7 +194,7 @@ export const Login: React.FC = () => {
       if (resetError) throw resetError;
       setView('forgot-sent');
     } catch (err: unknown) {
-      setError((err as Error).message || 'Couldn’t send reset email right now. Please try again.');
+      setError(mapAuthEntryError(err, AUTH_RESET_RETRY_ERROR));
     } finally {
       setLoading(false);
     }

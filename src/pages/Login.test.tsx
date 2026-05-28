@@ -196,6 +196,19 @@ describe('Login quick start handoff', () => {
     });
   });
 
+  it('masks provider-heavy Google auth failures behind calm login copy', async () => {
+    signInWithOAuthMock.mockResolvedValueOnce({
+      error: new Error('functions/v1/google-auth provider timeout with token=abc'),
+    } as never);
+
+    render(<Login />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Continue with Google' }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Couldn’t start Google sign-in right now. Please try again.');
+    expect(screen.getByRole('alert')).not.toHaveTextContent(/provider|token|functions\/v1/i);
+  });
+
 
   it('omits empty onboarding drafts when switching from login to signup', async () => {
     useLocationMock.mockReturnValue({ state: { returnTo: '/onboarding' } });

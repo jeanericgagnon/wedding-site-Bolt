@@ -185,6 +185,19 @@ describe('Signup quick start handoff', () => {
     });
   });
 
+  it('masks provider-heavy Google signup failures behind calm signup copy', async () => {
+    signInWithOAuthMock.mockResolvedValueOnce({
+      error: new Error('Google oauth provider rejected redirect_uri with token=abc'),
+    } as never);
+
+    render(<Signup />);
+
+    fireEvent.click(screen.getByRole('button', { name: /continue with google/i }));
+
+    expect(await screen.findByText('Couldn’t start Google sign-in right now. Please try again.')).toBeInTheDocument();
+    expect(screen.queryByText(/provider|token|redirect_uri/i)).not.toBeInTheDocument();
+  });
+
 
   it('omits empty onboarding drafts when switching from signup to login', async () => {
     useLocationMock.mockReturnValue({ state: { returnTo: '/onboarding' } });
