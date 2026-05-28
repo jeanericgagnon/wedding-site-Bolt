@@ -484,28 +484,28 @@ describe('publishUiHints', () => {
     expect(getPublishBlockedHints('Draft has unsaved changes!!!')).toEqual([
       'Use Fix next to move through the last blockers before the guest-facing launch.',
     ]);
-    expect(getPublishBlockedHints('Live site unchanged — you have new draft edits')).toEqual([
+    expect(getPublishBlockedHints('Shared site unchanged — you have new draft edits')).toEqual([
       'Use Fix next to move through the last blockers before the guest-facing launch.',
     ]);
-    expect(getPublishBlockedHints('Live site unchanged — you have new draft edits.')).toEqual([
+    expect(getPublishBlockedHints('Shared site unchanged — you have new draft edits.')).toEqual([
       'Use Fix next to move through the last blockers before the guest-facing launch.',
     ]);
-    expect(getPublishBlockedHints('Live site unchanged - you have new draft edits')).toEqual([
+    expect(getPublishBlockedHints('Shared site unchanged - you have new draft edits')).toEqual([
       'Use Fix next to move through the last blockers before the guest-facing launch.',
     ]);
-    expect(getPublishBlockedHints('Live site unchanged\n— you have new draft edits!!!')).toEqual([
+    expect(getPublishBlockedHints('Shared site unchanged\n— you have new draft edits!!!')).toEqual([
       'Use Fix next to move through the last blockers before the guest-facing launch.',
     ]);
-    expect(getPublishBlockedHints('Live site unchanged')).toEqual([
+    expect(getPublishBlockedHints('Shared site unchanged')).toEqual([
       'Use Fix next to move through the last blockers before the guest-facing launch.',
     ]);
-    expect(getPublishBlockedHints('Live site unchanged.')).toEqual([
+    expect(getPublishBlockedHints('Shared site unchanged.')).toEqual([
       'Use Fix next to move through the last blockers before the guest-facing launch.',
     ]);
-    expect(getPublishBlockedHints('Live site unchanged!!!')).toEqual([
+    expect(getPublishBlockedHints('Shared site unchanged!!!')).toEqual([
       'Use Fix next to move through the last blockers before the guest-facing launch.',
     ]);
-    expect(getPublishBlockedHints('Live site unchanged:')).toEqual([
+    expect(getPublishBlockedHints('Shared site unchanged:')).toEqual([
       'Use Fix next to move through the last blockers before the guest-facing launch.',
     ]);
     expect(getPublishBlockedHints('Current page has visible sections;')).toEqual([
@@ -768,7 +768,7 @@ describe('publishUiHints', () => {
     expect(getPublishBlockedHints('1 section visible')).toEqual([
       'Use Fix next to move through the last blockers before the guest-facing launch.',
     ]);
-    expect(getPublishBlockedHints('Live site unchanged — you have new draft edits')).toEqual([
+    expect(getPublishBlockedHints('Shared site unchanged — you have new draft edits')).toEqual([
       'Use Fix next to move through the last blockers before the guest-facing launch.',
     ]);
     expect(getPublishBlockedHints('Add at least one venue before going live.')).toEqual([
@@ -788,9 +788,9 @@ describe('publishUiHints', () => {
   it('labels publish status across draft and live states', () => {
     expect(getPublishStatusLabel(false, true)).toBe('Draft has unsaved changes');
     expect(getPublishStatusLabel(false, false)).toBe('Draft only');
-    expect(getPublishStatusLabel(true, true)).toBe('Live site unchanged — you have new draft edits');
-    expect(getPublishStatusLabel(true, false)).toBe('Live site is up to date');
-    expect(getPublishStatusLabel(false, false)).not.toBe('Live site is up to date');
+    expect(getPublishStatusLabel(true, true)).toBe('Shared site unchanged — you have new draft edits');
+    expect(getPublishStatusLabel(true, false)).toBe('Shared site is up to date');
+    expect(getPublishStatusLabel(false, false)).not.toBe('Shared site is up to date');
     expect(getPublishStatusLabel(false, true)).not.toBe('Draft only');
     expect(getPublishStatusLabel(true, true)).not.toBe('Live site is up to date');
   });

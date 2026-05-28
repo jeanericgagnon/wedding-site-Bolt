@@ -69,4 +69,28 @@ describe('builderLaunchBasics', () => {
     expect(summary.completedCount).toBe(3);
     expect(summary.items.find((item) => item.id === 'rsvp')?.done).toBe(false);
   });
+
+  it('keeps basics guidance framed around the shared site and ready reply path', () => {
+    const namesSummary = getBuilderLaunchBasicsSummary({
+      partner1Name: '',
+      partner2Name: '',
+      weddingDate: '2026-11-20',
+      venueName: 'Sunset Estate',
+      venueAddress: '',
+      rsvpEnabled: true,
+    }, 'missing-couple-names');
+
+    expect(namesSummary.bestNextMove).toContain('shared site');
+
+    const rsvpSummary = getBuilderLaunchBasicsSummary({
+      partner1Name: 'Alex',
+      partner2Name: 'Jordan',
+      weddingDate: '2026-11-20',
+      venueName: 'Sunset Estate',
+      venueAddress: '',
+      rsvpEnabled: false,
+    }, 'rsvp-disabled');
+
+    expect(rsvpSummary.decisionRule).toContain('reply path should be ready before launch');
+  });
 });

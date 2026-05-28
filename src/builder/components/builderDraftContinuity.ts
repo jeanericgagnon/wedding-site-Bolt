@@ -156,7 +156,7 @@ export function buildBuilderDraftContinuityModel({
         ? 'When a new idea goes soft, you now have a visible path back to something already strong.'
         : 'Deliberate restore options make it easier to edit boldly without losing the thread.',
       bestNextMove: latestPublishedRevision
-        ? 'Keep editing from the current draft unless the live-ready checkpoint is clearly the better truth to return to.'
+        ? 'Keep editing from the current draft unless the share-ready checkpoint is clearly the better truth to return to.'
         : 'Keep working from this steady draft, knowing the previous checkpoint is there if you need to rewind.',
       decisionRule: 'Restore only when a prior checkpoint is genuinely cleaner than the current direction, not just because doubt showed up.',
       watchout: 'Checkpoint history should reduce thrash, not tempt you into bouncing between versions without a reason.',
@@ -176,7 +176,7 @@ export function buildBuilderDraftContinuityModel({
     summary: 'You are starting from a stable state, even if deeper local checkpoint history has not built up yet.',
     focusTitle: 'Create the next meaningful checkpoint once the current move is real.',
     focusDetail: 'One clean save is better than a cloud of tiny uncertain changes.',
-    bestNextMove: publishedVersion ? 'Keep editing until the next update clearly improves the live site.' : 'Shape one real improvement, then save it as the next checkpoint.',
+    bestNextMove: publishedVersion ? 'Keep editing until the next update clearly improves the shared site.' : 'Shape one real improvement, then save it as the next checkpoint.',
     decisionRule: 'Checkpoint history gets valuable once each save represents a deliberate step forward.',
     watchout: 'Do not save every tiny wobble just to feel active.',
     currentStep: 'Work from this clean baseline.',

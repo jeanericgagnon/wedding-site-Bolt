@@ -102,10 +102,10 @@ export const getBuilderCommandCenterCopy = ({
       title,
       summary: `${pageLabel} · ${sectionLabel}`,
       tone: 'success' as const,
-      status: typeof publishedVersion === 'number' ? `Live v${publishedVersion}` : 'Live',
+      status: typeof publishedVersion === 'number' ? `Shared v${publishedVersion}` : 'Shared',
       detail: publishAttemptedAt
-        ? 'Your latest launch attempt completed. Keep editing here before the next update.'
-        : 'Guests can already see this site. New edits here will become the next live update.',
+        ? 'Your latest share attempt completed. Keep editing here before the next update.'
+        : 'Guests can already see this site. New edits here will become the next shared update.',
     };
   }
 

@@ -147,9 +147,9 @@ export function getBuilderPreviewReviewSummary({
   }
 
   return {
-    badge: isPublished ? 'Live update rehearsal' : 'Final guest rehearsal',
+    badge: isPublished ? 'Shared update rehearsal' : 'Final guest rehearsal',
       heading: isPublished
-        ? 'This mobile pass should tell you whether the next live update earns its way in'
+        ? 'This mobile pass should tell you whether the next shared update earns its way in'
         : 'This mobile pass should be your last honest check before guests see the site',
     summary: isPublished
       ? 'The site is already shared, so preview is now about deciding whether this draft meaningfully improves the guest experience.'

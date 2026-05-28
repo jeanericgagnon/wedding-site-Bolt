@@ -574,7 +574,11 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
           ) : (
             <Globe size={14} />
           )}
-            {state.isPublishing ? 'Sharing live site…' : 'Share with guests'}
+            {state.isPublishing
+              ? 'Sharing site…'
+              : isPublished
+                ? `Update guest-facing site${typeof publishedVersion === 'number' ? ` v${publishedVersion}` : ''}`
+                : 'Share with guests'}
           </button>
         </div>
 
@@ -1303,8 +1307,20 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
               onPublish();
             }}
             disabled={isPublishDisabled}
-            aria-label={hasHardPublishBlocker && effectivePublishValidationError ? `Sharing blocked: ${effectivePublishValidationError}` : canAutoSaveBeforePublish ? 'Save changes and share with guests' : 'Share with guests'}
-              title={hasHardPublishBlocker && effectivePublishValidationError ? `${effectivePublishValidationError} (⌘⇧P)` : canAutoSaveBeforePublish ? 'Save your latest changes, then share with guests (⌘⇧P)' : 'Share with guests (⌘⇧P)'}
+            aria-label={hasHardPublishBlocker && effectivePublishValidationError
+              ? `Sharing blocked: ${effectivePublishValidationError}`
+              : canAutoSaveBeforePublish
+                ? 'Save changes and share with guests'
+                : isPublished
+                  ? `Update guest-facing site${typeof publishedVersion === 'number' ? ` v${publishedVersion}` : ''}`
+                  : 'Share with guests'}
+              title={hasHardPublishBlocker && effectivePublishValidationError
+                ? `${effectivePublishValidationError} (⌘⇧P)`
+                : canAutoSaveBeforePublish
+                  ? 'Save your latest changes, then share with guests (⌘⇧P)'
+                  : isPublished
+                    ? 'Updates the shared version guests can already see (⌘⇧P)'
+                    : 'Share with guests (⌘⇧P)'}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium bg-rose-600 text-white hover:bg-rose-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             {state.isPublishing || state.isSaving ? (
@@ -1313,7 +1329,7 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
               <Globe size={14} />
             )}
             {state.isPublishing
-              ? 'Sharing live site…'
+              ? 'Sharing site…'
               : state.isSaving
                 ? 'Waiting for save…'
                 : isPublished
@@ -1326,7 +1342,7 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
               : canAutoSaveBeforePublish
                 ? 'Save your latest changes, then share with guests (⌘⇧P)'
                 : isPublished
-                ? 'Updates the live version guests can already see (⌘⇧P)'
+                ? 'Updates the shared version guests can already see (⌘⇧P)'
                 : 'Sharing makes your site visible at your guest-facing DayOf URL (⌘⇧P)'}
           </div>
         </div>

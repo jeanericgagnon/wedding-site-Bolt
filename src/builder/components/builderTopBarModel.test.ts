@@ -60,4 +60,23 @@ describe('getBuilderCommandCenterCopy', () => {
 
     expect(copy.status).toBe('Launch blocker');
   });
+
+  it('keeps published command-center status framed around a shared update', () => {
+    const copy = getBuilderCommandCenterCopy({
+      projectName: 'Alex & Jordan',
+      activePageTitle: 'Home',
+      pageCount: 3,
+      sectionCount: 4,
+      isDirty: false,
+      hasHardPublishBlocker: false,
+      publishValidationError: null,
+      canAutoSaveBeforePublish: false,
+      isPublished: true,
+      publishedVersion: 4,
+      publishAttemptedAt: null,
+    });
+
+    expect(copy.status).toBe('Shared v4');
+    expect(copy.detail).toContain('next shared update');
+  });
 });

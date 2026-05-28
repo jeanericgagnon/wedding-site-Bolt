@@ -3,6 +3,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createEmptyBuilderProject } from '../../types/builder/project';
+import { createDefaultSectionInstance } from '../../types/builder/section';
 import { createEmptyWeddingData } from '../../types/weddingData';
 import { createEmptyHistoryState } from '../../types/builder/history';
 import { getBuilderV2Route } from '../../pages/builderCutoverRoute';
@@ -119,6 +120,41 @@ describe('BuilderTopBar exit routes', () => {
 
     expect(screen.getByTitle('Share with guests (⌘⇧P)')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Launch check /i })).toBeInTheDocument();
+  });
+
+  it('keeps published builder sharing status framed around the shared site', () => {
+    const project = createEmptyBuilderProject('site-1', 'modern-luxe');
+    project.pages[0].sections = [createDefaultSectionInstance('hero', 'default', 0)];
+    project.pages[0].sections[0].enabled = true;
+
+    const weddingData = createEmptyWeddingData();
+    weddingData.couple.partner1Name = 'Alex';
+    weddingData.couple.partner2Name = 'Jordan';
+    weddingData.event.weddingDateISO = '2026-09-12T16:00:00.000Z';
+    weddingData.rsvp.enabled = true;
+    weddingData.venues = [{ id: 'venue-1', name: 'Sunset Estate', address: '123 Main St' }];
+
+    stateRef.current = {
+      ...stateRef.current!,
+      project: {
+        ...project,
+        publishStatus: 'published',
+        publishedVersion: 4,
+        lastPublishedAt: '2026-05-22T00:00:00.000Z',
+      },
+      weddingData,
+      activePageId: project.pages[0]?.id ?? null,
+    };
+
+    render(<BuilderTopBar onSave={() => undefined} onPublish={() => undefined} />);
+
+    expect(screen.getAllByRole('button', { name: /Update guest-facing site v4/i })).toHaveLength(2);
+    expect(screen.getAllByText('Shared v4')).toHaveLength(2);
+    expect(
+      screen.getAllByText(
+        'Guests can already see this site. New edits here will become the next shared update.',
+      ),
+    ).toHaveLength(2);
   });
 
   it('shows the repaired checklist action for adding a first page', () => {

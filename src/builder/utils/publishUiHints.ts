@@ -17,9 +17,9 @@ const NON_BLOCKING_PUBLISH_COPY = new Set([
   'ready for final share review',
   'no checks yet',
   'draft only',
-  'live site unchanged',
-  'live site unchanged - you have new draft edits',
-  'live site is up to date',
+  'shared site unchanged',
+  'shared site unchanged - you have new draft edits',
+  'shared site is up to date',
   'guest-facing site',
   'go live',
   'update guest-facing site',
@@ -47,7 +47,7 @@ const isNonBlockingPublishCopy = (normalizedErrorLower: string): boolean => {
   if (/^\d+ pages? ready$/.test(normalizedStatusCopy)) return true;
   if (/^\d+ things? left before guest-facing launch$/.test(normalizedStatusCopy)) return true;
   if (/^draft has unsaved changes$/.test(normalizedStatusCopy)) return true;
-  if (/^live site unchanged(?: — you have new draft edits)?$/.test(normalizedStatusCopy)) return true;
+  if (/^(?:live|shared) site unchanged(?: — you have new draft edits)?$/.test(normalizedStatusCopy)) return true;
   if (/^guest-facing site$/.test(normalizedStatusCopy)) return true;
   return false;
 };
@@ -172,8 +172,8 @@ export const getPublishCtaLabel = (isPublished: boolean): string =>
 export const getPublishStatusLabel = (isPublished: boolean, hasUnsavedChanges: boolean): string => {
   if (!isPublished && hasUnsavedChanges) return 'Draft has unsaved changes';
   if (!isPublished) return 'Draft only';
-  if (hasUnsavedChanges) return 'Live site unchanged — you have new draft edits';
-  return 'Live site is up to date';
+  if (hasUnsavedChanges) return 'Shared site unchanged — you have new draft edits';
+  return 'Shared site is up to date';
 };
 
 export const getPublishProgressLabel = (done: number, total: number): string => {
