@@ -170,7 +170,7 @@ describe('weddingIdentityExports', () => {
     expect(buildWeddingIdentityManifestText(kit)).not.toContain('passwordSession=secret');
   });
 
-  it('builds deterministic public print assets with QR URLs for site, RSVP, and photo upload', () => {
+  it('keeps photo signage on the public wedding hub instead of a generic uploader path', () => {
     const assets = buildWeddingIdentityPrintAssets({
       coupleNames: 'Maya & Leo',
       publicSiteUrl: 'https://maya-leo.dayof.love',
@@ -186,12 +186,16 @@ describe('weddingIdentityExports', () => {
       'table-card',
     ]);
     expect(assets.find((asset) => asset.id === 'rsvp-card')?.url).toBe('https://maya-leo.dayof.love/rsvp');
-    expect(assets.find((asset) => asset.id === 'photo-upload-sign')?.url).toBe('https://maya-leo.dayof.love/photos/upload');
+    expect(assets.find((asset) => asset.id === 'photo-upload-sign')).toMatchObject({
+      url: 'https://maya-leo.dayof.love',
+      instruction: 'Scan for the wedding hub, then open photo sharing from the live guest path.',
+    });
 
     const html = renderWeddingIdentityPrintHtml(assets);
     expect(html).toContain('DayOf wedding identity print pack');
     expect(html).toContain('data:image/svg+xml;charset=utf-8,');
     expect(html).toContain('https://maya-leo.dayof.love/rsvp');
+    expect(html).toContain('Scan for the wedding hub, then open photo sharing from the live guest path.');
     expect(html).not.toMatch(/guest_access|service-role|secret/i);
   });
 

@@ -563,9 +563,7 @@ export function buildWeddingIdentityPrintAssets(input: WeddingIdentityExportKitI
   const dateLabel = formatWeddingDate(input.weddingDate);
   const venueName = cleanPrintText(input.venueName, 'Wedding venue');
   const rsvpUrl = withPath(publicSiteUrl, '/rsvp');
-  const photoUrl = withPath(publicSiteUrl, '/photos/upload');
-
-  if (!isSafePublicQrAssetUrl(rsvpUrl) || !isSafePublicQrAssetUrl(photoUrl)) return [];
+  if (!isSafePublicQrAssetUrl(rsvpUrl)) return [];
 
   return [
     {
@@ -601,8 +599,8 @@ export function buildWeddingIdentityPrintAssets(input: WeddingIdentityExportKitI
       sizeLabel: '8.5 x 11 in',
       title: 'Share your photos',
       subtitle: coupleNames,
-      instruction: 'Scan to upload photos or video without an app.',
-      url: photoUrl,
+      instruction: 'Scan for the wedding hub, then open photo sharing from the live guest path.',
+      url: publicSiteUrl,
     },
     {
       id: 'table-card',
