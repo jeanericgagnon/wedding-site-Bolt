@@ -1,3 +1,4 @@
+import { BUILDER_WORKSPACE_ROUTES } from '../../lib/builderWorkspaceRoutes';
 import { getBuilderLaunchChecklistRoute } from '../builderCutoverRoute';
 
 export interface OverviewChecklistStats {
@@ -23,7 +24,7 @@ export interface ChecklistItemDef {
 }
 
 export const getPublishBuilderRoute = (isPublished: boolean): string =>
-  isPublished ? '/dashboard/builder' : getBuilderLaunchChecklistRoute();
+  isPublished ? BUILDER_WORKSPACE_ROUTES.guide : getBuilderLaunchChecklistRoute();
 
 export const buildSetupChecklist = (stats: OverviewChecklistStats): ChecklistItemDef[] => [
   {

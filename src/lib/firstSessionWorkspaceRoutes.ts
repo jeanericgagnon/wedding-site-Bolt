@@ -1,5 +1,7 @@
+import { BUILDER_WORKSPACE_ROUTES } from './builderWorkspaceRoutes';
+
 export const FIRST_SESSION_WORKSPACE_ROUTES = {
-  builder: '/dashboard/builder',
+  builder: BUILDER_WORKSPACE_ROUTES.guide,
   coordinator: '/dashboard/coordinator',
   guests: '/dashboard/guests',
   itinerary: '/dashboard/itinerary',

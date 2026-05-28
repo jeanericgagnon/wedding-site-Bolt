@@ -458,7 +458,7 @@ export const Onboarding: React.FC = () => {
     setLoading(false);
     if (ok) {
       clearSavedOnboardingDraft();
-      navigate('/dashboard/builder');
+      navigate(FIRST_SESSION_WORKSPACE_ROUTES.builder);
     }
   };
 
@@ -623,7 +623,7 @@ export const Onboarding: React.FC = () => {
     setLoading(false);
     if (ok) {
       clearSavedOnboardingDraft();
-      navigate('/dashboard/builder');
+      navigate(FIRST_SESSION_WORKSPACE_ROUTES.builder);
     }
   };
 
@@ -1204,7 +1204,7 @@ export const Onboarding: React.FC = () => {
             <Button variant="accent" size="lg" onClick={() => navigate('/dashboard/guests')}>
               Import guest CSV
             </Button>
-            <Button variant="outline" size="lg" onClick={() => navigate('/dashboard/builder')}>
+            <Button variant="outline" size="lg" onClick={() => navigate(FIRST_SESSION_WORKSPACE_ROUTES.builder)}>
               Review editor options
             </Button>
           </div>

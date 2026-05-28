@@ -1,18 +1,20 @@
+import { BUILDER_WORKSPACE_ROUTES } from '../lib/builderWorkspaceRoutes';
+
 const LEGACY_INTENT_KEYS = new Set(['publishNow', 'photoTips']);
 
-export const getBuilderGuideRoute = (): string => '/dashboard/builder';
+export const getBuilderGuideRoute = (): string => BUILDER_WORKSPACE_ROUTES.guide;
 
-export const getBuilderV2Route = (): string => '/dashboard/builder-v2';
+export const getBuilderV2Route = (): string => BUILDER_WORKSPACE_ROUTES.v2;
 
-export const getBuilderLaunchChecklistRoute = (): string => '/dashboard/builder-v1?publishNow=1';
+export const getBuilderLaunchChecklistRoute = (): string => `${BUILDER_WORKSPACE_ROUTES.legacy}?publishNow=1`;
 
-export const getBuilderPhotoTipsRoute = (): string => '/dashboard/builder-v1?photoTips=1';
+export const getBuilderPhotoTipsRoute = (): string => `${BUILDER_WORKSPACE_ROUTES.legacy}?photoTips=1`;
 
-export const getBuilderLaunchConfidenceRoute = (): string => '/dashboard/builder-v1#launch-confidence';
+export const getBuilderLaunchConfidenceRoute = (): string => `${BUILDER_WORKSPACE_ROUTES.legacy}#launch-confidence`;
 
-export const getBuilderPolishRoute = (): string => '/dashboard/builder-v1#builder-concierge';
+export const getBuilderPolishRoute = (): string => `${BUILDER_WORKSPACE_ROUTES.legacy}#builder-concierge`;
 
-export const getBuilderV2LabRoute = (): string => '/builder-v2-lab';
+export const getBuilderV2LabRoute = (): string => BUILDER_WORKSPACE_ROUTES.lab;
 
 export function hasLegacyBuilderIntent(search: string, hash: string): boolean {
   const params = new URLSearchParams(search);
@@ -21,5 +23,5 @@ export function hasLegacyBuilderIntent(search: string, hash: string): boolean {
 }
 
 export function getLegacyBuilderRoute(search: string, hash: string): string {
-  return `/dashboard/builder-v1${search}${hash}`;
+  return `${BUILDER_WORKSPACE_ROUTES.legacy}${search}${hash}`;
 }

@@ -25,6 +25,7 @@ import {
 import { useAuth } from '../../hooks/useAuth';
 import { BillingModal } from '../billing/BillingModal';
 import { supabase } from '../../lib/supabase';
+import { BUILDER_WORKSPACE_ROUTES } from '../../lib/builderWorkspaceRoutes';
 import { resolvePublicSiteSlugFromRow } from '../../lib/publicSiteSlug';
 import { getSiteVisibilityState } from '../../lib/siteVisibilityState';
 import { resolveActiveSiteForUser, resolveActiveSiteRoleForUser } from '../../lib/activeSite';
@@ -177,7 +178,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
     {
       title: 'Core',
       items: [
-        { id: 'builder', label: 'Website', icon: Globe, path: '/dashboard/builder' },
+        { id: 'builder', label: 'Website', icon: Globe, path: BUILDER_WORKSPACE_ROUTES.guide },
         { id: 'registry', label: 'Registry', icon: Gift, path: '/dashboard/registry' },
         { id: 'guests', label: 'Guests & RSVP', icon: Users, path: '/dashboard/guests' },
         { id: 'itinerary', label: 'Events & Seating', icon: Calendar, path: '/dashboard/itinerary' },
