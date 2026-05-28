@@ -38,7 +38,7 @@ describe('PhotoUpload guest-safe copy', () => {
   });
 
   it('shows album context when the upload link carries a friendly album label', () => {
-    window.history.replaceState({}, '', '/photos/upload?invite_token=invite-123&albumName=Welcome%20Dinner');
+    window.history.replaceState({}, '', '/photos/upload?t=album-token-123&albumName=Welcome%20Dinner');
 
     render(<PhotoUpload />);
 
@@ -55,8 +55,16 @@ describe('PhotoUpload guest-safe copy', () => {
     expect(screen.getByLabelText(PHOTO_UPLOAD_ACCESS_LABEL)).toBeInTheDocument();
   });
 
-  it('hides the access-code field when the invitation link already carries upload access', () => {
+  it('still asks for the access code when only guest invite context is present', () => {
     window.history.replaceState({}, '', '/photos/upload?site=maya-leo&invite_token=invite-123');
+
+    render(<PhotoUpload />);
+
+    expect(screen.getByLabelText(PHOTO_UPLOAD_ACCESS_LABEL)).toBeInTheDocument();
+  });
+
+  it('hides the access-code field when the upload link already carries a real upload access code', () => {
+    window.history.replaceState({}, '', '/photos/upload?site=maya-leo&t=album-token-123&invite_token=invite-123');
 
     render(<PhotoUpload />);
 
@@ -92,7 +100,7 @@ describe('PhotoUpload guest-safe copy', () => {
     });
     vi.stubGlobal('fetch', fetchMock);
 
-    window.history.replaceState({}, '', '/photos/upload?invite_token=invite-123&site=maya-leo');
+    window.history.replaceState({}, '', '/photos/upload?t=album-token-123&invite_token=invite-123&site=maya-leo');
 
     render(<PhotoUpload />);
 
@@ -122,7 +130,7 @@ describe('PhotoUpload guest-safe copy', () => {
     });
     vi.stubGlobal('fetch', fetchMock);
 
-    window.history.replaceState({}, '', '/photos/upload?invite_token=invite-123&site=maya-leo');
+    window.history.replaceState({}, '', '/photos/upload?t=album-token-123&invite_token=invite-123&site=maya-leo');
 
     render(<PhotoUpload />);
 

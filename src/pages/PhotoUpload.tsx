@@ -1,6 +1,5 @@
 import React, { useMemo, useState } from 'react';
 import { GuestJourneyCompanion } from '../components/guest/GuestJourneyCompanion';
-import { readInviteTokenFromParams } from '../lib/inviteTokenParams';
 import {
   mapPhotoUploadError,
   mapPhotoUploadRuntimeError,
@@ -18,14 +17,26 @@ const readPhotoUploadAlbumLabel = (params: URLSearchParams): string => {
   return raw.length > 0 ? raw.slice(0, 120) : '';
 };
 
+const readPhotoUploadAccessCodeFromParams = (params: URLSearchParams): string => {
+  const explicitAccessCode = params.get('token')?.trim();
+  if (explicitAccessCode) return explicitAccessCode;
+
+  const legacyUploadCode = params.get('t')?.trim();
+  if (legacyUploadCode) return legacyUploadCode;
+
+  return '';
+};
+
+const readPhotoUploadInviteToken = (params: URLSearchParams): string => params.get('invite_token')?.trim() ?? '';
+
 export const PhotoUpload: React.FC = () => {
   const params = useMemo(() => new URLSearchParams(window.location.search), []);
-  const initialToken = readInviteTokenFromParams(params);
+  const initialToken = readPhotoUploadAccessCodeFromParams(params);
   const siteSlug = params.get('site')?.trim().toLowerCase() ?? '';
   const albumLabel = readPhotoUploadAlbumLabel(params);
   const previewGuest = params.get('previewGuest')?.trim() ?? '';
-  const inviteToken = initialToken;
-  const hasInviteAccess = initialToken.trim().length > 0;
+  const inviteToken = readPhotoUploadInviteToken(params);
+  const hasUploadAccess = initialToken.trim().length > 0;
   const isHubEntry = params.get('hub') === '1';
 
   const [token, setToken] = useState(initialToken);
@@ -133,14 +144,14 @@ export const PhotoUpload: React.FC = () => {
         <h1 className="text-3xl font-semibold text-gray-900">Share your photos</h1>
         <p className="mt-2 text-base text-gray-700">Upload photos and videos directly to the couple&apos;s shared album.</p>
 
-        {(albumLabel || (siteSlug && !hasInviteAccess)) && (
+        {(albumLabel || (siteSlug && !hasUploadAccess)) && (
           <div className="mt-4 rounded-2xl border border-rose-100 bg-rose-50/60 px-4 py-3">
             {albumLabel && (
               <p className="text-base font-medium text-gray-900">
                 Uploading to the {albumLabel} album
               </p>
             )}
-            {siteSlug && !hasInviteAccess && (
+            {siteSlug && !hasUploadAccess && (
               <p className={`text-sm text-gray-700 ${albumLabel ? 'mt-1' : ''}`}>
                 {albumLabel ? `Hosted at ${siteSlug}.dayof.love` : `Uploading to ${siteSlug}.dayof.love`}
               </p>
@@ -158,7 +169,7 @@ export const PhotoUpload: React.FC = () => {
         />
 
         <form onSubmit={onSubmit} className="mt-6 space-y-4">
-          {!hasInviteAccess && (
+          {!hasUploadAccess && (
             <div>
               <label htmlFor="photo-upload-token" className="mb-2 block text-base font-medium text-gray-800">{PHOTO_UPLOAD_ACCESS_LABEL}</label>
               <input
