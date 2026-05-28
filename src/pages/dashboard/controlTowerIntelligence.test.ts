@@ -115,6 +115,29 @@ describe('buildControlTowerBriefing', () => {
     expect(briefing.secondaryAction).toMatchObject({ target: 'builder-polish' });
   });
 
+  it('describes inactive photo albums as a photo sharing path for guests', () => {
+    const briefing = buildControlTowerBriefing(makeInput({
+      confirmedGuests: 78,
+      declinedGuests: 14,
+      pendingGuests: 8,
+      contactableGuestCount: 100,
+      itineraryEventCount: 2,
+      registryItemCount: 18,
+      activePhotoAlbumCount: 0,
+      photoAlbumCount: 1,
+      recentRsvpCount: 5,
+      daysUntilWedding: 20,
+      isPublished: true,
+    }));
+
+    expect(briefing.title).toContain('Photo sharing still needs a real guest-ready entry point');
+    expect(briefing.bestNextMove).toMatch(/photo sharing path/i);
+    expect(briefing.sequence[1]).toMatchObject({
+      label: 'Check the guest photo sharing path',
+    });
+    expect(briefing.primaryAction).toMatchObject({ target: 'photos' });
+  });
+
   it('surfaces guest access handoff when a live site is restricted close to the wedding', () => {
     const briefing = buildControlTowerBriefing(makeInput({
       confirmedGuests: 78,

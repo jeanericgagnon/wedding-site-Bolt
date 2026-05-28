@@ -3655,7 +3655,7 @@ export const DashboardMessages: React.FC = () => {
                   {[
                     {
                       label: 'Open Photos',
-                      detail: 'Jump into the upload flow you are messaging about',
+                      detail: 'Jump into the photo sharing path you are messaging about',
                       action: () => navigate('/dashboard/photos'),
                       disabled: false,
                     },
@@ -3679,7 +3679,7 @@ export const DashboardMessages: React.FC = () => {
                     },
                     {
                       label: 'Insert photo template',
-                      detail: 'Drop in an upload request tied to your memories flow',
+                      detail: 'Drop in a photo sharing request tied to your memories flow',
                       action: () => applyComposerTemplate('photo-request', { campaignName: 'Photo request' }),
                       disabled: !canCompose,
                     },
@@ -3710,7 +3710,7 @@ export const DashboardMessages: React.FC = () => {
                   { label: 'Save the Date', detail: 'Early excitement and initial heads-up', templateKey: 'save-the-date' as MessageTemplateKey, campaignName: 'Save the date' },
                   { label: 'RSVP Reminder', detail: 'Nudge people who still have not replied', templateKey: 'rsvp-reminder' as MessageTemplateKey, campaignName: 'RSVP reminder' },
                   { label: 'Week-Of Details', detail: 'Useful logistics right before the event', templateKey: 'event-reminder' as MessageTemplateKey, campaignName: 'Week-of details' },
-                  { label: 'Photo Upload Request', detail: 'Drive guests into your upload flow', templateKey: 'photo-request' as MessageTemplateKey, campaignName: 'Photo request' },
+                  { label: 'Photo Sharing Request', detail: 'Guide guests into your photo sharing path', templateKey: 'photo-request' as MessageTemplateKey, campaignName: 'Photo request' },
                   { label: 'Day-Of Update', detail: 'Fast text-first guest update', templateKey: 'day-of-update' as MessageTemplateKey, campaignName: 'Day-of update' },
                   { label: 'Thank You', detail: 'Close the loop after the celebration', templateKey: 'thank-you' as MessageTemplateKey, campaignName: 'Thank you' },
                 ].map(tpl => (

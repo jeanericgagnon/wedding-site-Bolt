@@ -368,8 +368,8 @@ export function buildControlTowerBriefing(input: ControlTowerIntelligenceInput):
       focusTitle: 'Make memory contribution easy before the moment passes',
       focusDetail: 'A guest-ready photo path is one of the fastest ways to make the site feel active instead of merely informational.',
       bestNextMove: input.photoAlbumCount === 0
-        ? 'Create and activate one guest-ready photo path now, then test the upload flow before you move back into polish.'
-        : 'Turn one existing album on for guests, then verify the upload path while the entry point is still fresh.',
+        ? 'Create and activate one guest-ready photo path now, then test the photo sharing path before you move back into polish.'
+        : 'Turn one existing album on for guests, then verify the photo sharing path while the entry point is still fresh.',
       decisionRule: 'A working contribution path beats a dormant memory promise.',
       watchout: 'Do not leave memory contribution in promise mode. If guests cannot actually upload, the photo lane teaches them that the site is more aspirational than live.',
       badges: [
@@ -379,7 +379,7 @@ export function buildControlTowerBriefing(input: ControlTowerIntelligenceInput):
       signals: buildSignals(input),
       sequence: [
         { label: 'Activate a photo path', detail: 'Open the simplest live contribution path first so the memory layer actually starts moving.', status: 'current' },
-        { label: 'Check the guest upload flow', detail: 'A single working lane teaches you more than several empty promises.', status: 'next' },
+        { label: 'Check the guest photo sharing path', detail: 'A single working lane teaches you more than several empty promises.', status: 'next' },
         { label: 'Return to site polish', detail: 'Once guests are participating, let that real signal shape the next polish decisions.', status: 'then' },
       ],
       primaryAction: { label: 'Review photos', target: 'photos' },
