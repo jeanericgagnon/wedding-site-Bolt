@@ -24,6 +24,11 @@ import { clearAllOnboardingDraftStorage, ONBOARDING_DRAFT_STORAGE_KEY as ONBOARD
 import { clearAllOnboardingContinuationState } from '../lib/onboardingContinuationCleanup';
 import { buildCoupleDisplayName } from '../lib/coupleDisplayName';
 import { FIRST_SESSION_WORKSPACE_ROUTES } from '../lib/firstSessionWorkspaceRoutes';
+import {
+  mapOnboardingError,
+  ONBOARDING_CREATE_SITE_RETRY_ERROR,
+  ONBOARDING_UPDATE_RETRY_ERROR,
+} from './onboardingErrorCopy';
 
 type ConciergeQuestion = 'partnerNames' | 'partnerLabels' | 'venueLocation' | 'venueName' | 'theme' | 'weekendEvents' | 'ceremonyTime' | 'guestCount' | 'plusOnePolicy' | 'childrenAllowed' | 'rsvpDeadline' | 'mealChoice' | 'story';
 
@@ -517,7 +522,7 @@ export const Onboarding: React.FC = () => {
       .eq('user_id', user.id);
 
     if (error) {
-      alert('Failed to update onboarding brief. Please try again.');
+      alert(mapOnboardingError(error, ONBOARDING_UPDATE_RETRY_ERROR));
       return false;
     }
 
@@ -607,8 +612,8 @@ export const Onboarding: React.FC = () => {
       if (error) throw error;
       if (createdSite?.id) await syncOnboardingEventSeeds(createdSite.id, itinerarySeeds);
       return true;
-    } catch {
-      alert('Failed to create wedding site. Please try again.');
+    } catch (error) {
+      alert(mapOnboardingError(error, ONBOARDING_CREATE_SITE_RETRY_ERROR));
       return false;
     }
   };
