@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import { mapEmailServiceError } from './emailServiceCopy';
 
 const FUNCTION_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-wedding-email`;
 
@@ -27,7 +28,7 @@ async function callEmailFunction(payload: object): Promise<void> {
     } catch {
       // ignore parse failure
     }
-    throw new Error(message);
+    throw new Error(mapEmailServiceError(message));
   }
 }
 
