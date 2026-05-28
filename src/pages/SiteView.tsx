@@ -43,6 +43,128 @@ interface PublicItineraryRow {
   is_visible?: boolean | null;
 }
 
+interface PublicSiteMetadata {
+  title: string;
+  description: string;
+  canonicalUrl?: string;
+  imageUrl?: string;
+  noIndex: boolean;
+}
+
+const DEFAULT_SITEVIEW_TITLE = 'DayOf';
+const DEFAULT_SITEVIEW_DESCRIPTION = 'Wedding planning, wedding sites, and guest experience in one calm place.';
+
+function formatWeddingDateForMetadata(iso?: string): string | undefined {
+  if (!iso) return undefined;
+  const parsed = new Date(iso);
+  if (Number.isNaN(parsed.getTime())) return undefined;
+
+  return parsed.toLocaleDateString('en-US', {
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric',
+  });
+}
+
+function buildPublicSiteCanonicalUrl(pageSlug?: string | null): string | undefined {
+  if (typeof window === 'undefined') return undefined;
+
+  const url = new URL(window.location.href);
+  const canonical = new URL(url.origin + url.pathname);
+  const requestedPage = pageSlug?.trim();
+
+  if (requestedPage) canonical.searchParams.set('page', requestedPage);
+
+  return canonical.toString();
+}
+
+export function buildPublicSiteMetadata(input: {
+  weddingData: WeddingDataV1 | null;
+  activePageTitle?: string;
+  pageSlug?: string | null;
+  hideFromSearch: boolean;
+  isComingSoon: boolean;
+  privacyGate: PrivacyGateState;
+  error: string | null;
+}): PublicSiteMetadata {
+  const {
+    weddingData,
+    activePageTitle,
+    pageSlug,
+    hideFromSearch,
+    isComingSoon,
+    privacyGate,
+    error,
+  } = input;
+
+  const coupleName = weddingData?.couple?.displayName?.trim()
+    || buildCoupleDisplayName(weddingData?.couple?.partner1Name ?? '', weddingData?.couple?.partner2Name ?? '', '')
+    || 'Wedding site';
+  const dateLabel = formatWeddingDateForMetadata(weddingData?.event?.weddingDateISO);
+  const venueName = weddingData?.venues.find((venue) => venue.name?.trim())?.name?.trim();
+  const pageTitle = activePageTitle?.trim();
+  const pagePrefix = pageTitle && pageTitle.toLowerCase() !== 'home' ? `${pageTitle} | ` : '';
+  const title = `${pagePrefix}${coupleName}`;
+
+  const descriptionParts = [
+    weddingData?.couple?.story?.trim(),
+    dateLabel,
+    venueName,
+  ].filter((value): value is string => Boolean(value && value.trim()));
+
+  const defaultDescription = dateLabel && venueName
+    ? `Celebrate with ${coupleName} on ${dateLabel} at ${venueName}.`
+    : dateLabel
+      ? `Celebrate with ${coupleName} on ${dateLabel}.`
+      : venueName
+        ? `Celebrate with ${coupleName} at ${venueName}.`
+        : `Celebrate with ${coupleName}.`;
+
+  return {
+    title,
+    description: descriptionParts[0] || defaultDescription,
+    canonicalUrl: buildPublicSiteCanonicalUrl(pageSlug),
+    imageUrl: weddingData?.media?.heroImageUrl?.trim() || undefined,
+    noIndex: hideFromSearch || privacyGate === 'invite_only' || privacyGate === 'password_required' || isComingSoon || Boolean(error),
+  };
+}
+
+function upsertMetaTag(attribute: 'name' | 'property', value: string, content?: string) {
+  if (typeof document === 'undefined') return;
+
+  const selector = `meta[${attribute}="${value}"]`;
+  let meta = document.head.querySelector(selector) as HTMLMetaElement | null;
+  if (!meta) {
+    meta = document.createElement('meta');
+    meta.setAttribute(attribute, value);
+    document.head.appendChild(meta);
+  }
+
+  if (content) {
+    meta.setAttribute('content', content);
+  } else {
+    meta.remove();
+  }
+}
+
+function upsertCanonicalLink(href?: string) {
+  if (typeof document === 'undefined') return;
+
+  let link = document.head.querySelector('link[rel="canonical"]') as HTMLLinkElement | null;
+  if (!href) {
+    link?.remove();
+    return;
+  }
+
+  if (!link) {
+    link = document.createElement('link');
+    link.rel = 'canonical';
+    document.head.appendChild(link);
+  }
+
+  link.href = href;
+}
+
 export function toIsoDateOrUndefined(value?: string | null): string | undefined {
   const trimmed = value?.trim();
   if (!trimmed) return undefined;
@@ -692,14 +814,43 @@ export const SiteView: React.FC = () => {
   }, [i18n, resolvedSlug, searchParams]);
 
   useEffect(() => {
-    if (!hideFromSearch) return;
-    const meta = document.createElement('meta');
-    meta.name = 'robots';
-    meta.content = 'noindex, nofollow';
-    meta.id = 'dayof-noindex';
-    document.head.appendChild(meta);
-    return () => { document.getElementById('dayof-noindex')?.remove(); };
-  }, [hideFromSearch]);
+    const visiblePages = builderPages ? getNavigablePublicBuilderPages(builderPages) : [];
+    const activePage = visiblePages.length > 0
+      ? getPublicBuilderActivePage(visiblePages, searchParams.get('page'))
+      : undefined;
+    const metadata = buildPublicSiteMetadata({
+      weddingData,
+      activePageTitle: activePage?.title,
+      pageSlug: activePage && !activePage.meta.isHome ? activePage.slug : null,
+      hideFromSearch,
+      isComingSoon,
+      privacyGate,
+      error,
+    });
+    const previousTitle = document.title;
+
+    document.title = metadata.title || DEFAULT_SITEVIEW_TITLE;
+    upsertMetaTag('name', 'description', metadata.description || DEFAULT_SITEVIEW_DESCRIPTION);
+    upsertMetaTag('property', 'og:title', metadata.title || DEFAULT_SITEVIEW_TITLE);
+    upsertMetaTag('property', 'og:description', metadata.description || DEFAULT_SITEVIEW_DESCRIPTION);
+    upsertMetaTag('name', 'twitter:title', metadata.title || DEFAULT_SITEVIEW_TITLE);
+    upsertMetaTag('name', 'twitter:description', metadata.description || DEFAULT_SITEVIEW_DESCRIPTION);
+    upsertMetaTag('property', 'og:image', metadata.imageUrl);
+    upsertMetaTag('name', 'twitter:image', metadata.imageUrl);
+    upsertMetaTag('name', 'robots', metadata.noIndex ? 'noindex, nofollow' : 'index, follow');
+    upsertCanonicalLink(metadata.canonicalUrl);
+
+    return () => {
+      document.title = previousTitle || DEFAULT_SITEVIEW_TITLE;
+      upsertMetaTag('name', 'description', DEFAULT_SITEVIEW_DESCRIPTION);
+      upsertMetaTag('property', 'og:title', undefined);
+      upsertMetaTag('property', 'og:description', undefined);
+      upsertMetaTag('name', 'twitter:title', undefined);
+      upsertMetaTag('name', 'twitter:description', undefined);
+      upsertMetaTag('name', 'robots', undefined);
+      upsertCanonicalLink(undefined);
+    };
+  }, [builderPages, error, hideFromSearch, isComingSoon, privacyGate, searchParams, weddingData]);
 
   if (loading) {
     return (

@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import { createEmptyWeddingData } from '../types/weddingData';
 
 vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual<typeof import('react-router-dom')>('react-router-dom');
@@ -64,6 +65,7 @@ vi.mock('../lib/publicSiteProject', () => ({
 }));
 
 import {
+  buildPublicSiteMetadata,
   combineDateAndTime,
   createAlexJordanDemoWeddingData,
   SITE_INVALID_URL_ERROR,
@@ -100,6 +102,70 @@ describe('combineDateAndTime', () => {
 
   it('drops malformed persisted itinerary times instead of producing broken schedule timestamps', () => {
     expect(combineDateAndTime('2027-02-17', '4:30 PM')).toBeUndefined();
+  });
+});
+
+describe('buildPublicSiteMetadata', () => {
+  it('builds a public-facing title, description, and canonical url without leaking invite params', () => {
+    window.history.replaceState({}, '', '/alex-jordan?page=weekend&invite_token=secret&previewGuest=guest-1');
+
+    const metadata = buildPublicSiteMetadata({
+      weddingData: {
+        ...createEmptyWeddingData(),
+        couple: {
+          partner1Name: 'Alex',
+          partner2Name: 'Jordan',
+          displayName: 'Alex & Jordan',
+          story: 'A September weekend in Napa.',
+        },
+        event: {
+          weddingDateISO: '2027-09-14T16:00:00.000Z',
+          timezone: '',
+        },
+        venues: [{ id: 'venue-1', name: 'Main Lawn' }],
+        media: {
+          heroImageUrl: 'https://example.com/hero.jpg',
+          gallery: [],
+        },
+      },
+      activePageTitle: 'Weekend',
+      pageSlug: 'weekend',
+      hideFromSearch: false,
+      isComingSoon: false,
+      privacyGate: 'open',
+      error: null,
+    });
+
+    expect(metadata.title).toBe('Weekend | Alex & Jordan');
+    expect(metadata.description).toBe('A September weekend in Napa.');
+    expect(metadata.canonicalUrl).toBe('http://localhost:3000/alex-jordan?page=weekend');
+    expect(metadata.imageUrl).toBe('https://example.com/hero.jpg');
+    expect(metadata.noIndex).toBe(false);
+  });
+
+  it('marks non-public states as noindex and falls back to calm wedding copy', () => {
+    window.history.replaceState({}, '', '/taylor-riley?invite_token=secret');
+
+    const metadata = buildPublicSiteMetadata({
+      weddingData: {
+        ...createEmptyWeddingData(),
+        couple: {
+          partner1Name: 'Taylor',
+          partner2Name: 'Riley',
+          displayName: 'Taylor & Riley',
+          story: '',
+        },
+      },
+      hideFromSearch: false,
+      isComingSoon: true,
+      privacyGate: 'invite_only',
+      error: null,
+    });
+
+    expect(metadata.title).toBe('Taylor & Riley');
+    expect(metadata.description).toBe('Celebrate with Taylor & Riley.');
+    expect(metadata.canonicalUrl).toBe('http://localhost:3000/taylor-riley');
+    expect(metadata.noIndex).toBe(true);
   });
 });
 
