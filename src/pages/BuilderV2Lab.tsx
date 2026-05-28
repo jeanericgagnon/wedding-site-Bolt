@@ -69,7 +69,6 @@ import {
   createInitialBuilderV2Pages,
   ensureUniqueBuilderV2PageSlug,
   getLabPagesFromBuilderV2Document,
-  normalizeBuilderV2Pages,
   sanitizeBuilderV2PageTitle,
   type LabPage,
   type LabSection,
@@ -77,6 +76,11 @@ import {
 import type { BuilderV2ReviewPageSnapshot } from './builderV2DocumentReviewState';
 import { buildBuilderV2SetupSeed } from './builderV2SetupSeed';
 import { buildBuilderV2PreviewInstances } from './builderV2PreviewProjection';
+import {
+  createBuilderV2HistorySnapshot,
+  pushBuilderV2HistorySnapshot,
+  type BuilderV2HistorySnapshot,
+} from './builderV2History';
 import {
   buildBuilderV2BlockFieldDescriptors,
   buildBuilderV2BlockFieldOptions,
@@ -520,7 +524,12 @@ export const BuilderV2Lab: React.FC = () => {
   const initialPages = initialSetupSeed?.pages ?? createInitialBuilderV2Pages(INITIAL_SECTIONS);
   const initialSelectedPageId = initialSetupSeed?.selectedPageId ?? 'home';
   const initialSelectedSectionId = initialSetupSeed?.selectedSectionId ?? INITIAL_SECTIONS[0].id;
-  const [history, setHistory] = useState<LabPage[][]>([initialPages]);
+  const [history, setHistory] = useState<BuilderV2HistorySnapshot<AddedBlock>[]>([
+    createBuilderV2HistorySnapshot({
+      pages: initialPages,
+      sectionBlocks: {},
+    }),
+  ]);
   const [historyIndex, setHistoryIndex] = useState(0);
   const [selectedPageId, setSelectedPageId] = useState(initialSelectedPageId);
   const [selectedId, setSelectedId] = useState(initialSelectedSectionId);
@@ -564,12 +573,13 @@ export const BuilderV2Lab: React.FC = () => {
   const [addBlockQuery, setAddBlockQuery] = useState('');
   const [blockReviewQuery, setBlockReviewQuery] = useState('');
   const [blockReviewFilter, setBlockReviewFilter] = useState<'all' | 'warnings' | 'healthy'>('all');
-  const [sectionBlocks, setSectionBlocks] = useState<Record<string, AddedBlock[]>>({});
   const [collapsedBlocks, setCollapsedBlocks] = useState<Record<string, boolean>>({});
   const importFileInputRef = useRef<HTMLInputElement | null>(null);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
 
-  const pages = history[historyIndex];
+  const activeSnapshot = history[historyIndex] ?? history[0];
+  const pages = useMemo(() => activeSnapshot?.pages ?? [], [activeSnapshot]);
+  const sectionBlocks = useMemo(() => activeSnapshot?.sectionBlocks ?? {}, [activeSnapshot]);
   const activePage = pages.find((page) => page.id === selectedPageId) ?? pages[0];
   const sections = useMemo(() => activePage?.sections ?? [], [activePage]);
   const selected = sections.find((s) => s.id === selectedId) ?? sections[0];
@@ -791,20 +801,18 @@ export const BuilderV2Lab: React.FC = () => {
       content: BLOCK_DEFAULTS[blockType],
       data: makeDefaultBlockContent(selected.type, blockType),
     };
-    setSectionBlocks((prev) => ({ ...prev, [selected.id]: [...(prev[selected.id] ?? []), block] }));
+    commit(pages, { ...sectionBlocks, [selected.id]: [...(sectionBlocks[selected.id] ?? []), block] });
     setShowAddBlockPicker(false);
-    markSaving();
     notify(`${BLOCK_LABELS[blockType]} added`);
   };
 
   const updateBlockData = (sectionId: string, blockId: string, patch: Partial<AddedBlockContent>) => {
-    setSectionBlocks((prev) => ({
-      ...prev,
-      [sectionId]: (prev[sectionId] ?? []).map((b) =>
+    commit(pages, {
+      ...sectionBlocks,
+      [sectionId]: (sectionBlocks[sectionId] ?? []).map((b) =>
         b.id === blockId ? { ...b, data: { ...normalizeBlockData(b), ...patch } } : b
       ),
-    }));
-    markSaving();
+    });
   };
 
   const updateBlockField = (
@@ -820,19 +828,17 @@ export const BuilderV2Lab: React.FC = () => {
     key: string,
     value: string | boolean,
   ) => {
-    setSectionBlocks((prev) => ({
-      ...prev,
-      [selected.id]: updateBuilderV2SectionSetting(selected.type, prev[selected.id] ?? [], key, value) as AddedBlock[],
-    }));
-    markSaving();
+    commit(pages, {
+      ...sectionBlocks,
+      [selected.id]: updateBuilderV2SectionSetting(selected.type, sectionBlocks[selected.id] ?? [], key, value) as AddedBlock[],
+    });
   };
 
   const removeBlock = (sectionId: string, blockId: string) => {
-    setSectionBlocks((prev) => ({
-      ...prev,
-      [sectionId]: (prev[sectionId] ?? []).filter((b) => b.id !== blockId),
-    }));
-    markSaving();
+    commit(pages, {
+      ...sectionBlocks,
+      [sectionId]: (sectionBlocks[sectionId] ?? []).filter((b) => b.id !== blockId),
+    });
     notify('Removed block');
   };
 
@@ -842,24 +848,23 @@ export const BuilderV2Lab: React.FC = () => {
     const sourceSection = sections.find((x) => x.id === sectionId);
     if (!sourceSection) return;
 
-    setSectionBlocks((prev) => {
-      const arr = [...(prev[sectionId] ?? [])];
+    commit(pages, (() => {
+      const arr = [...(sectionBlocks[sectionId] ?? [])];
       const idx = arr.findIndex((b) => b.id === blockId);
-      if (idx < 0) return prev;
+      if (idx < 0) return sectionBlocks;
       const source = arr[idx];
       const allowed = canAddBlockToSection(sectionId, sourceSection.type, source.type);
       if (!allowed.ok) {
         notify(allowed.reason);
-        return prev;
+        return sectionBlocks;
       }
       const dup: AddedBlock = {
         ...source,
         id: `block-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
       };
       arr.splice(idx + 1, 0, dup);
-      return { ...prev, [sectionId]: arr };
-    });
-    markSaving();
+      return { ...sectionBlocks, [sectionId]: arr };
+    })());
     notify('Duplicated block');
   };
 
@@ -868,24 +873,28 @@ export const BuilderV2Lab: React.FC = () => {
   };
 
   const moveBlock = (sectionId: string, blockId: string, dir: -1 | 1) => {
-    setSectionBlocks((prev) => {
-      const arr = [...(prev[sectionId] ?? [])];
+    commit(pages, (() => {
+      const arr = [...(sectionBlocks[sectionId] ?? [])];
       const idx = arr.findIndex((b) => b.id === blockId);
       const nextIdx = idx + dir;
-      if (idx < 0 || nextIdx < 0 || nextIdx >= arr.length) return prev;
+      if (idx < 0 || nextIdx < 0 || nextIdx >= arr.length) return sectionBlocks;
       const [item] = arr.splice(idx, 1);
       arr.splice(nextIdx, 0, item);
-      return { ...prev, [sectionId]: arr };
-    });
-    markSaving();
+      return { ...sectionBlocks, [sectionId]: arr };
+    })());
   };
 
-  const commit = useCallback((next: LabPage[]) => {
-    const trimmed = history.slice(0, historyIndex + 1);
-    setHistory([...trimmed, normalizeBuilderV2Pages(next)]);
-    setHistoryIndex(trimmed.length);
+  const commit = useCallback((nextPages: LabPage[], nextSectionBlocks: Record<string, AddedBlock[]> = sectionBlocks) => {
+    const nextState = pushBuilderV2HistorySnapshot({
+      history,
+      historyIndex,
+      nextPages,
+      nextSectionBlocks,
+    });
+    setHistory(nextState.history);
+    setHistoryIndex(nextState.historyIndex);
     markSaving();
-  }, [history, historyIndex, markSaving]);
+  }, [history, historyIndex, markSaving, sectionBlocks]);
 
   const commitActivePageSections = useCallback((nextSections: LabSection[]) => {
     if (!activePage) return;
@@ -962,13 +971,16 @@ export const BuilderV2Lab: React.FC = () => {
       selectedIds,
     });
     if (!result.duplicatedIds.length) return;
-    setSectionBlocks(result.sectionBlocks);
     setSelectedId(result.duplicatedIds[0]);
     setLastSelectedId(result.duplicatedIds[0]);
     setMultiSelectedIds(result.duplicatedIds.slice(1));
-    commitActivePageSections(result.sections);
+    commit(activePage ? pages.map((page) => (
+      page.id === activePage.id
+        ? { ...page, sections: result.sections }
+        : page
+    )) : pages, result.sectionBlocks);
     notify(`Duplicated ${result.duplicatedIds.length} section${result.duplicatedIds.length === 1 ? '' : 's'}`);
-  }, [commitActivePageSections, notify, sectionBlocks, sections, selectedIds]);
+  }, [activePage, commit, notify, pages, sectionBlocks, sections, selectedIds]);
 
   const removeSelectedSections = useCallback(() => {
     const result = removeBuilderV2Sections({
@@ -983,17 +995,20 @@ export const BuilderV2Lab: React.FC = () => {
       return;
     }
 
-    setSectionBlocks(result.sectionBlocks);
     setSelectedId(result.nextSelectedId ?? '');
     setLastSelectedId(result.nextSelectedId ?? '');
     setMultiSelectedIds([]);
-    commitActivePageSections(result.sections);
+    commit(activePage ? pages.map((page) => (
+      page.id === activePage.id
+        ? { ...page, sections: result.sections }
+        : page
+    )) : pages, result.sectionBlocks);
     notify(
       result.removedIds.length === 1
         ? 'Removed section from the page structure'
         : `Removed ${result.removedIds.length} sections from the page structure`,
     );
-  }, [commitActivePageSections, notify, sectionBlocks, sections, selectedId, selectedIds]);
+  }, [activePage, commit, notify, pages, sectionBlocks, sections, selectedId, selectedIds]);
 
   const buildStarterBlocks = useCallback((sectionId: string, sectionType: string) => {
     const availableBlockTypes = SECTION_BLOCK_CATALOG[sectionType] ?? ['title', 'text', 'photo'];
@@ -1019,10 +1034,13 @@ export const BuilderV2Lab: React.FC = () => {
     const next = [...sections, { id, type: normalizedType, title: typeLabel, subtitle: '', variant: variant ?? 'default', enabled: true, density: 'comfortable' as const }];
     const starterBlocks = buildStarterBlocks(id, normalizedType);
     setSelectedId(id);
-    setSectionBlocks((prev) => ({ ...prev, [id]: starterBlocks }));
-    commitActivePageSections(next);
+    commit(activePage ? pages.map((page) => (
+      page.id === activePage.id
+        ? { ...page, sections: next }
+        : page
+    )) : pages, { ...sectionBlocks, [id]: starterBlocks });
     notify(starterBlocks.length > 0 ? `Added ${typeLabel} with ${starterBlocks.length} starter block${starterBlocks.length === 1 ? '' : 's'}` : `Added ${typeLabel}`);
-  }, [buildStarterBlocks, commitActivePageSections, notify, sections]);
+  }, [activePage, buildStarterBlocks, commit, notify, pages, sectionBlocks, sections]);
 
   const addPage = useCallback(() => {
     const pageIndex = pages.length + 1;
@@ -1047,14 +1065,13 @@ export const BuilderV2Lab: React.FC = () => {
         density: 'comfortable',
       }],
     };
-    setSectionBlocks((prev) => ({ ...prev, [sectionId]: buildStarterBlocks(sectionId, 'hero') }));
-    commit([...pages, nextPage]);
+    commit([...pages, nextPage], { ...sectionBlocks, [sectionId]: buildStarterBlocks(sectionId, 'hero') });
     setSelectedPageId(pageId);
     setSelectedId(sectionId);
     setLastSelectedId(sectionId);
     setMultiSelectedIds([]);
     notify(`Added ${title}`);
-  }, [buildStarterBlocks, commit, notify, pages]);
+  }, [buildStarterBlocks, commit, notify, pages, sectionBlocks]);
 
   const renamePage = useCallback((pageId: string, title: string) => {
     const nextTitle = sanitizeBuilderV2PageTitle(title, 'Page');
@@ -1116,8 +1133,7 @@ export const BuilderV2Lab: React.FC = () => {
       notify('We could not duplicate that page yet');
       return;
     }
-    setSectionBlocks(result.sectionBlocks);
-    commit(result.pages);
+    commit(result.pages, result.sectionBlocks);
     setSelectedPageId(result.duplicatedPageId);
     setSelectedId(result.duplicatedSectionIds[0] ?? '');
     setLastSelectedId(result.duplicatedSectionIds[0] ?? '');
@@ -1138,8 +1154,7 @@ export const BuilderV2Lab: React.FC = () => {
       notify('Pick sections from the current page before you move them');
       return;
     }
-    setSectionBlocks(result.sectionBlocks);
-    commit(result.pages);
+    commit(result.pages, result.sectionBlocks);
     setSelectedPageId(targetPageId);
     setSelectedId(result.movedSectionIds[0] ?? '');
     setLastSelectedId(result.movedSectionIds[0] ?? '');
@@ -1165,14 +1180,13 @@ export const BuilderV2Lab: React.FC = () => {
       return;
     }
 
-    setSectionBlocks(result.sectionBlocks);
-    markSaving();
+    commit(pages, result.sectionBlocks);
     notify(
       result.restoredSectionIds.length === 1
         ? `Restored ${result.restoredBlockCount} starter block${result.restoredBlockCount === 1 ? '' : 's'}`
         : `Restored starter blocks across ${result.restoredSectionIds.length} sections`,
     );
-  }, [buildStarterBlocks, markSaving, notify, sectionBlocks, sections, selectedIds]);
+  }, [buildStarterBlocks, commit, notify, pages, sectionBlocks, sections, selectedIds]);
 
   const renameSelected = (title: string) => {
     commitActivePageSections(sections.map((s) => (s.id === selected.id ? { ...s, title } : s)));
@@ -1296,13 +1310,12 @@ export const BuilderV2Lab: React.FC = () => {
       return;
     }
 
-    setSectionBlocks((prev) => ({
-      ...prev,
+    commit(pages, {
+      ...sectionBlocks,
       [selected.id]: result.blocks as AddedBlock[],
-    }));
-    markSaving();
+    });
     notify(result.summary);
-  }, [markSaving, notify, selected.id, selected.type, selectedBlocks]);
+  }, [commit, notify, pages, sectionBlocks, selected.id, selected.type, selectedBlocks]);
   const selectedBlockWarningFor = useCallback(
     (block: AddedBlock) => getBlockValidationWarning(selected.type, block, selectedBlocks),
     [getBlockValidationWarning, selected.type, selectedBlocks],
@@ -1429,14 +1442,13 @@ export const BuilderV2Lab: React.FC = () => {
       return;
     }
 
-    setSectionBlocks((prev) => ({
-      ...prev,
-      [selected.id]: [...(prev[selected.id] ?? []), ...packBlocks],
-    }));
+    commit(pages, {
+      ...sectionBlocks,
+      [selected.id]: [...(sectionBlocks[selected.id] ?? []), ...packBlocks],
+    });
     setShowAddBlockPicker(false);
-    markSaving();
     notify(`Added ${packBlocks.length} recommended block${packBlocks.length === 1 ? '' : 's'}`);
-  }, [addBlockAvailability, addableBlocksForSelected, markSaving, notify, selected.id, selected.type, selectedBlocks]);
+  }, [addBlockAvailability, addableBlocksForSelected, commit, notify, pages, sectionBlocks, selected.id, selected.type, selectedBlocks]);
 
 
   const buildExportDocument = useCallback(() => {
@@ -1564,13 +1576,15 @@ export const BuilderV2Lab: React.FC = () => {
       ]),
     ) as Record<string, AddedBlock[]>;
 
-    setHistory([nextPages]);
+    setHistory([createBuilderV2HistorySnapshot({
+      pages: nextPages,
+      sectionBlocks: nextBlocks,
+    })]);
     setHistoryIndex(0);
     setSelectedPageId(nextPages[0]?.id ?? '');
     setSelectedId(nextPages[0]?.sections[0]?.id ?? '');
     setLastSelectedId(nextPages[0]?.sections[0]?.id ?? '');
     setMultiSelectedIds([]);
-    setSectionBlocks(nextBlocks);
     setCollapsedBlocks({});
     setLastImportReport(report);
     setLastImportSource(sourceLabel);
