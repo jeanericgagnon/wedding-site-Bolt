@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { GuestJourneyCompanion } from '../components/guest/GuestJourneyCompanion';
 import { demoGuests, demoWeddingSite } from '../lib/demoData';
+import { mapGuestContactLookupError, mapGuestContactSubmitError } from './guestContactUpdateCopy';
 
 type Match = {
   id: string;
@@ -114,7 +115,7 @@ export const GuestContactUpdate: React.FC = () => {
           setResult({ ok: false, message: 'No demo guest matched that search. Try a full name from the sample guest list.' });
         }
       } else {
-        setResult({ ok: false, message: err instanceof Error ? err.message : 'Couldn’t complete that search. Please try again.' });
+        setResult({ ok: false, message: mapGuestContactLookupError(err) });
       }
     } finally {
       setSearching(false);
@@ -146,7 +147,7 @@ export const GuestContactUpdate: React.FC = () => {
       }
       setResult({ ok: true, message: 'Thanks! Your information has been updated.' });
     } catch (err) {
-      setResult({ ok: false, message: err instanceof Error ? err.message : 'Could not send your update right now.' });
+      setResult({ ok: false, message: mapGuestContactSubmitError(err) });
     } finally {
       setLoading(false);
     }

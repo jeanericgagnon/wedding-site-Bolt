@@ -12,6 +12,7 @@ import { CheckCircle, Search, AlertCircle, User } from 'lucide-react';
 import { demoGuests, demoRSVPs } from '../lib/demoData';
 import { DEMO_MODE } from '../config/env';
 import { formatRsvpDeadline, isRsvpDeadlinePassed } from './rsvpDeadline';
+import { RSVP_MISSING_INVITATION_DETAIL_ERROR } from './rsvpGuestCopy';
 
 const RSVP_FN_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/validate-rsvp-token`;
 const ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
@@ -990,7 +991,7 @@ export default function RSVP() {
 
       if (!guest.invite_token) {
         if (activeSubmitRequestRef.current !== requestId) return;
-        setError('Your invitation is missing a secure token. Please use the RSVP link from your invitation email.');
+        setError(RSVP_MISSING_INVITATION_DETAIL_ERROR);
         return;
       }
 
