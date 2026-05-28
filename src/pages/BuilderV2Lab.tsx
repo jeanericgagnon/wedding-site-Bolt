@@ -84,6 +84,7 @@ import {
   pushBuilderV2HistorySnapshot,
   type BuilderV2HistorySnapshot,
 } from './builderV2History';
+import { buildBuilderV2LaunchGate } from './builderV2LaunchGate';
 import {
   buildBuilderV2BlockFieldDescriptors,
   buildBuilderV2BlockFieldOptions,
@@ -569,6 +570,10 @@ export const BuilderV2Lab: React.FC = () => {
   const [pinnedCommands] = useState<string[]>(['Add section: Hero', 'Select section: Hero']);
   const [showQuickHelp, setShowQuickHelp] = useState(false);
   const [previewDevice, setPreviewDevice] = useState<'desktop' | 'mobile'>('desktop');
+  const [previewReviewedSnapshots, setPreviewReviewedSnapshots] = useState<{ desktop: string; mobile: string }>({
+    desktop: '',
+    mobile: '',
+  });
   const [previewScale, setPreviewScale] = useState(100);
   const [focusPreview, setFocusPreview] = useState(false);
   const [showMinimap, setShowMinimap] = useState(false);
@@ -583,6 +588,7 @@ export const BuilderV2Lab: React.FC = () => {
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
 
   const activeSnapshot = history[historyIndex] ?? history[0];
+  const activeSnapshotId = activeSnapshot?.id ?? '';
   const pages = useMemo(() => activeSnapshot?.pages ?? [], [activeSnapshot]);
   const sectionBlocks = useMemo(() => activeSnapshot?.sectionBlocks ?? {}, [activeSnapshot]);
   const activePage = pages.find((page) => page.id === selectedPageId) ?? pages[0];
@@ -1443,6 +1449,22 @@ export const BuilderV2Lab: React.FC = () => {
     }),
     [documentPages, previewDevice],
   );
+  const previewReviewed = useMemo(
+    () => ({
+      desktop: Boolean(activeSnapshotId) && previewReviewedSnapshots.desktop === activeSnapshotId,
+      mobile: Boolean(activeSnapshotId) && previewReviewedSnapshots.mobile === activeSnapshotId,
+    }),
+    [activeSnapshotId, previewReviewedSnapshots.desktop, previewReviewedSnapshots.mobile],
+  );
+  const launchGate = useMemo(
+    () => buildBuilderV2LaunchGate({
+      pages: documentPages,
+      audit: documentAudit,
+      previewDevice,
+      previewReviewed,
+    }),
+    [documentAudit, documentPages, previewDevice, previewReviewed],
+  );
   const handoffPacket = useMemo(
     () => buildBuilderV2HandoffPacket({
       pages: documentPages,
@@ -1616,6 +1638,19 @@ export const BuilderV2Lab: React.FC = () => {
     setShowExportPanel(true);
   }, []);
 
+  const markPreviewReviewed = useCallback((device: 'desktop' | 'mobile') => {
+    if (!activeSnapshotId) {
+      notify('Preview review state is not ready yet');
+      return;
+    }
+
+    setPreviewReviewedSnapshots((prev) => ({
+      ...prev,
+      [device]: activeSnapshotId,
+    }));
+    notify(`Marked ${device} preview checked for this revision`);
+  }, [activeSnapshotId, notify]);
+
   const runHandoffAction = useCallback(() => {
     switch (handoffGuidance.primaryAction) {
       case 'review-hidden':
@@ -1659,6 +1694,25 @@ export const BuilderV2Lab: React.FC = () => {
     setShowProperties(true);
     setPropertyTab('content');
   }, [focusSectionById, scrollToPreviewSection]);
+
+  const runLaunchGateAction = useCallback(() => {
+    switch (launchGate.primaryAction.kind) {
+      case 'review-audit-issue':
+        reviewDocumentAuditIssue(launchGate.primaryAction.issue);
+        break;
+      case 'switch-preview-device':
+        setPreviewDevice(launchGate.primaryAction.device);
+        setFocusPreview(true);
+        setShowMinimap(launchGate.primaryAction.device === 'mobile');
+        break;
+      case 'mark-preview-reviewed':
+        markPreviewReviewed(launchGate.primaryAction.device);
+        break;
+      case 'open-export':
+        setShowExportPanel(true);
+        break;
+    }
+  }, [launchGate.primaryAction, markPreviewReviewed, reviewDocumentAuditIssue]);
 
   const applyImportedDocument = useCallback((
     doc: BuilderV2Document,
@@ -1838,6 +1892,7 @@ export const BuilderV2Lab: React.FC = () => {
         action: () => runCommand(`Restore checkpoint: ${latestCheckpoint.label}`, () => restoreCheckpoint(latestCheckpoint.id)),
       }] : []),
       { id: 'export-open', group: 'Handoff', label: 'Open export handoff', keywords: ['export', 'handoff', 'json', 'share'], action: () => runCommand('Open export handoff', openExportPanel) },
+      { id: 'launch-review', group: 'Launch', label: launchGate.primaryAction.label, keywords: ['launch', 'preview', 'review', 'gate', 'publish'], action: () => runCommand(launchGate.primaryAction.label, runLaunchGateAction) },
       { id: 'export-download', group: 'Handoff', label: 'Download layout JSON', keywords: ['export', 'download', 'json', 'handoff'], action: () => runCommand('Download layout JSON', downloadV2Json) },
       { id: 'export-copy', group: 'Handoff', label: 'Copy layout JSON', keywords: ['copy', 'json', 'handoff', 'clipboard'], action: () => runCommand('Copy layout JSON', () => { void copyV2Json(); }) },
       { id: 'handoff-copy-packet', group: 'Handoff', label: 'Copy handoff packet', keywords: ['copy', 'handoff', 'packet', 'summary', 'clipboard'], action: () => runCommand('Copy handoff packet', () => { void copyHandoffPacket(); }) },
@@ -1860,7 +1915,7 @@ export const BuilderV2Lab: React.FC = () => {
       .filter((x) => x.s > 0)
       .sort((a, b) => b.s - a.s)
       .map((x) => x.item);
-  }, [commandQuery, sections, pages, activePage.id, addPage, addRecommendedBlockPack, addSection, checkpointSummaries, clearSelection, copyHandoffPacket, copyV2Json, downloadV2Json, duplicatePage, duplicateSelectedSections, handoffGuidance.primaryActionLabel, hideSelectedSections, invertSelection, moveSelectedSectionsToPage, openExportPanel, openImportPanel, removeSelectedSections, repairSelectedSectionStructure, restoreCheckpoint, restoreSelectedSectionsToStarterBlocks, reviewSelectionInPreview, runHandoffAction, saveCheckpoint, selectAllSections, selectPage, selectedSectionCanRepairStructure, setSelectedDensity, showSelectedSections, updateVariant]);
+  }, [commandQuery, sections, pages, activePage.id, addPage, addRecommendedBlockPack, addSection, checkpointSummaries, clearSelection, copyHandoffPacket, copyV2Json, downloadV2Json, duplicatePage, duplicateSelectedSections, handoffGuidance.primaryActionLabel, hideSelectedSections, invertSelection, launchGate.primaryAction.label, moveSelectedSectionsToPage, openExportPanel, openImportPanel, removeSelectedSections, repairSelectedSectionStructure, restoreCheckpoint, restoreSelectedSectionsToStarterBlocks, reviewSelectionInPreview, runHandoffAction, runLaunchGateAction, saveCheckpoint, selectAllSections, selectPage, selectedSectionCanRepairStructure, setSelectedDensity, showSelectedSections, updateVariant]);
   const importGuidance = useMemo(
     () => buildBuilderV2ImportGuidance(lastImportReport, lastImportSource),
     [lastImportReport, lastImportSource],
@@ -2802,7 +2857,10 @@ export const BuilderV2Lab: React.FC = () => {
               <div className="flex items-center gap-2">
                 <div className="flex items-center gap-1.5">
                   {(['desktop','mobile'] as const).map((d) => (
-                    <button key={d} onClick={() => setPreviewDevice(d)} className={`text-[11px] px-2 py-1 border rounded ${previewDevice === d ? 'border-primary/50 bg-primary/10 text-primary' : ''}`}>{d}</button>
+                    <button key={d} onClick={() => setPreviewDevice(d)} className={`text-[11px] px-2 py-1 border rounded inline-flex items-center gap-1 ${previewDevice === d ? 'border-primary/50 bg-primary/10 text-primary' : ''}`}>
+                      {d}
+                      {previewReviewed[d] && <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />}
+                    </button>
                   ))}
                 </div>
                 <select value={previewScale} onChange={(e) => setPreviewScale(Number(e.target.value))} className="text-[11px] border rounded px-2 py-1 bg-white">
@@ -2878,6 +2936,104 @@ export const BuilderV2Lab: React.FC = () => {
                 </div>
               </div>
             )}
+            <div className={`mb-2 rounded-md border px-3 py-2.5 ${
+              launchGate.status === 'ready'
+                ? 'border-emerald-200 bg-emerald-50/60'
+                : launchGate.status === 'review'
+                  ? 'border-sky-200 bg-sky-50/60'
+                  : 'border-amber-200 bg-amber-50/60'
+            }`}>
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary">Launch gate</p>
+                  <p className="mt-1 text-sm font-semibold text-text-primary">{launchGate.headline}</p>
+                  <p className="mt-1 text-xs leading-relaxed text-text-secondary">{launchGate.detail}</p>
+                </div>
+                <div className="flex flex-wrap gap-1.5 text-[10px]">
+                  {launchGate.keyStats.map((stat) => (
+                    <span key={stat} className="rounded-full border border-border-subtle bg-white px-2 py-1 text-text-secondary">
+                      {stat}
+                    </span>
+                  ))}
+                </div>
+              </div>
+              <div className="mt-3 grid gap-2 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)]">
+                <div className="rounded-md border border-border-subtle bg-white px-2.5 py-2.5">
+                  <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary">Checklist</p>
+                  <div className="mt-2 space-y-2">
+                    {launchGate.checklistItems.map((item) => (
+                      (() => {
+                        const action = item.action;
+
+                        return (
+                          <div key={item.id} className="rounded-md border border-border-subtle bg-surface-subtle px-2.5 py-2">
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="min-w-0">
+                                <div className="flex items-center gap-2">
+                                  <span className={`rounded-full border px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-[0.14em] ${
+                                    item.done
+                                      ? 'border-emerald-200 bg-emerald-50 text-emerald-800'
+                                      : 'border-amber-200 bg-amber-50 text-amber-800'
+                                  }`}>
+                                    {item.done ? 'done' : 'next'}
+                                  </span>
+                                  <p className="text-xs font-semibold text-text-primary">{item.label}</p>
+                                </div>
+                                <p className="mt-1 text-xs leading-relaxed text-text-secondary">{item.detail}</p>
+                              </div>
+                              {action && (
+                                <button
+                                  onClick={() => {
+                                    if (action.kind === 'review-audit-issue') {
+                                      reviewDocumentAuditIssue(action.issue);
+                                      return;
+                                    }
+                                    if (action.kind === 'switch-preview-device') {
+                                      setPreviewDevice(action.device);
+                                      setFocusPreview(true);
+                                      setShowMinimap(action.device === 'mobile');
+                                      return;
+                                    }
+                                    if (action.kind === 'mark-preview-reviewed') {
+                                      markPreviewReviewed(action.device);
+                                      return;
+                                    }
+                                    setShowExportPanel(true);
+                                  }}
+                                  className="shrink-0 rounded-md border border-border-subtle bg-white px-2 py-1.5 text-[11px] font-semibold text-text-primary hover:border-primary/40 hover:bg-primary/5"
+                                >
+                                  {action.label}
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })()
+                    ))}
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <div className="rounded-md border border-border-subtle bg-white px-2.5 py-2">
+                    <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary">Best next move</p>
+                    <p className="mt-1 text-xs leading-relaxed text-text-primary">{launchGate.bestNextMove}</p>
+                  </div>
+                  <div className="rounded-md border border-border-subtle bg-white px-2.5 py-2">
+                    <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary">Decision rule</p>
+                    <p className="mt-1 text-xs leading-relaxed text-text-primary">{launchGate.decisionRule}</p>
+                  </div>
+                  <div className="rounded-md border border-border-subtle bg-white px-2.5 py-2">
+                    <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary">Watchout</p>
+                    <p className="mt-1 text-xs leading-relaxed text-text-primary">{launchGate.watchout}</p>
+                  </div>
+                  <button
+                    onClick={runLaunchGateAction}
+                    className="w-full rounded-md border border-primary/30 bg-primary/10 px-3 py-2 text-left text-sm font-semibold text-primary hover:bg-primary/15"
+                  >
+                    {launchGate.primaryAction.label}
+                  </button>
+                </div>
+              </div>
+            </div>
             <div className="mb-2 rounded-md border border-border-subtle bg-white px-3 py-2.5">
               <div className="grid gap-2 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
                 <div>
