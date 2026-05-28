@@ -11,9 +11,9 @@ import { GUIDED_SETUP_STORAGE_KEY, normalizeGuidedSetupDraftSnapshot, type Guide
 import { clearAllOnboardingContinuationState } from '../../lib/onboardingContinuationCleanup';
 import * as XLSX from 'xlsx';
 import { resolvePrimaryWeddingSiteId } from '../../lib/guidedSetupSiteResolver';
-import { writeSignupReturnPath } from '../../lib/signupContinuation';
 import { clearOnboardingEntryReturnPath } from '../../lib/onboardingEntryCleanup';
 import { buildGuidedSetupHydrationErrorMessage, buildGuidedSetupSaveErrorMessage } from '../../lib/guidedSetupErrorCopy';
+import { FIRST_SESSION_WORKSPACE_ROUTES } from '../../lib/firstSessionWorkspaceRoutes';
 
 type Step =
   | 'welcome'
@@ -314,7 +314,10 @@ export const GuidedSetup: React.FC = () => {
     await handleNext();
   };
 
-  const handleComplete = async () => {
+  const handleComplete = async (
+    destination: string = FIRST_SESSION_WORKSPACE_ROUTES.overview,
+    navigationState?: Record<string, unknown>,
+  ) => {
     setLoading(true);
     setError('');
 
@@ -353,11 +356,7 @@ export const GuidedSetup: React.FC = () => {
       if (updateError) throw updateError;
 
       clearAllOnboardingContinuationState();
-      navigate('/dashboard', {
-        state: {
-          showWelcome: true,
-        }
-      });
+      navigate(destination, navigationState ? { state: navigationState } : undefined);
     } catch (err: unknown) {
         setError(buildGuidedSetupSaveErrorMessage((err as Error).message || 'Could not finish setup right now.'));
     } finally {
@@ -1093,14 +1092,37 @@ export const GuidedSetup: React.FC = () => {
               </div>
             )}
 
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Button
+                variant="accent"
+                size="lg"
+                onClick={() => handleComplete(FIRST_SESSION_WORKSPACE_ROUTES.guests, {
+                  showWelcome: true,
+                  nextStep: 'guest-import',
+                })}
+                disabled={loading}
+              >
+                {loading ? 'Saving your starter draft...' : 'Import guest CSV'}
+              </Button>
+              <Button
+                variant="outline"
+                size="lg"
+                onClick={() => handleComplete(FIRST_SESSION_WORKSPACE_ROUTES.builder)}
+                disabled={loading}
+              >
+                Review website first
+              </Button>
+            </div>
             <Button
-              variant="accent"
+              variant="ghost"
               size="lg"
               fullWidth
-              onClick={handleComplete}
+              onClick={() => handleComplete(FIRST_SESSION_WORKSPACE_ROUTES.overview, {
+                showWelcome: true,
+              })}
               disabled={loading}
             >
-              {loading ? 'Creating your starter site...' : 'Go to dashboard'}
+              Go to dashboard overview
             </Button>
           </div>
         );
