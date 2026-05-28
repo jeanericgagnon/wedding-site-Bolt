@@ -106,6 +106,10 @@ import {
   createBuilderV2SelectAllState,
 } from './builderV2SelectionState';
 import {
+  buildBuilderV2RailSelectionIntent,
+  resolveBuilderV2PreviewSelectionIntent,
+} from './builderV2SelectionInteraction';
+import {
   createBuilderV2HistorySnapshot,
   listBuilderV2CheckpointSummaries,
   pushBuilderV2ChangeWithCheckpoint,
@@ -678,36 +682,33 @@ export const BuilderV2Lab: React.FC = () => {
   }, [lastSelectedId, scrollToPreviewSection, sections]);
 
   const handlePreviewSectionClick = (id: string, type: string, e: React.MouseEvent<HTMLDivElement>) => {
-    if (e.shiftKey) {
-      selectSection(id, false, true, false, true);
-      setPrimedPreviewSectionId(null);
-      window.setTimeout(() => scrollRailToSectionType(type), 0);
-      return;
-    }
+    const intent = resolveBuilderV2PreviewSelectionIntent({
+      sectionId: id,
+      primedPreviewSectionId,
+      shiftKey: e.shiftKey,
+      metaKey: e.metaKey,
+      ctrlKey: e.ctrlKey,
+    });
 
-    if (e.metaKey || e.ctrlKey) {
-      selectSection(id, true, false, false, true);
-      setPrimedPreviewSectionId(null);
-      window.setTimeout(() => scrollRailToSectionType(type), 0);
-      return;
-    }
-
-    if (primedPreviewSectionId === id) {
-      selectSection(id, false, false, false, true);
+    selectSection(id, intent.additive, intent.range, intent.scrollPreview, intent.openEditor);
+    if (intent.openEditor) {
       setShowStructure(false);
       setShowProperties(true);
       setPropertyTab('content');
-      setPrimedPreviewSectionId(null);
+    } else {
+      setShowStructure(false);
+      setShowProperties(false);
+      setShowAddBlockPicker(false);
+      notify('Section selected. Click again to open editor.');
+    }
+    setPrimedPreviewSectionId(intent.nextPrimedId);
+    if (intent.focusRail) {
       window.setTimeout(() => scrollRailToSectionType(type), 0);
-      return;
     }
 
-    selectSection(id, false, false, true, false);
-    setShowStructure(false);
-    setShowProperties(false);
-    setShowAddBlockPicker(false);
-    setPrimedPreviewSectionId(id);
-    notify('Section selected. Click again to open editor.');
+    if (intent.openEditor) {
+      return;
+    }
   };
 
 
@@ -3061,7 +3062,10 @@ export const BuilderV2Lab: React.FC = () => {
                       multiSelected={multiSelectedIds.includes(s.id)}
                       isFirst={idx === 0}
                       isLast={idx === sections.length - 1}
-                      onSelect={() => selectSection(s.id, false, false, true)}
+                      onSelect={() => {
+                        const intent = buildBuilderV2RailSelectionIntent();
+                        selectSection(s.id, intent.additive, intent.range, intent.scrollPreview);
+                      }}
                       onSelectAdditive={() => selectSection(s.id, true)}
                       onSelectRange={() => selectSection(s.id, false, true)}
                       onMoveUp={() => moveSection(s.id, -1)}

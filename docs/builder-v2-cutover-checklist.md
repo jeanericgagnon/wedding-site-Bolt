@@ -16,8 +16,10 @@ Status: draft (post-lab hardening)
 ## 2) Editor Behavior QA
 
 ### Section-level
-- [ ] selecting section from preview focuses rail
-- [ ] selecting from rail scrolls preview to section
+- [x] selecting section from preview focuses rail
+  - `src/pages/builderV2SelectionInteraction.test.ts` proves preview selections always carry a rail-focus intent, including the first click before editor-open mode
+- [x] selecting from rail scrolls preview to section
+  - `src/pages/builderV2SelectionInteraction.test.ts` proves the primary rail selection path stays wired to preview scrolling
 - [x] toggling enabled/hidden preserves block stack
   - `src/pages/builderV2SectionVisibilityState.test.ts` proves hide/show changes preserve the existing section block storage instead of rewriting or dropping block stacks
 - [x] deleting selected section reselects nearest valid section
