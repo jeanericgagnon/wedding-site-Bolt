@@ -94,6 +94,7 @@ import {
   pushBuilderV2ChangeWithCheckpoint,
   pushBuilderV2CheckpointSnapshot,
   pushBuilderV2HistorySnapshot,
+  resolveBuilderV2CheckpointRestoreTarget,
   type BuilderV2HistorySnapshot,
 } from './builderV2History';
 import {
@@ -1022,16 +1023,21 @@ export const BuilderV2Lab: React.FC = () => {
     const checkpoint = history[checkpointIndex];
     setHistoryIndex(checkpointIndex);
     setSelectedCheckpointId(checkpointId);
-    const checkpointPageId = checkpoint?.pages[0]?.id ?? '';
-    const checkpointSectionId = checkpoint?.pages[0]?.sections[0]?.id ?? '';
-    if (checkpointPageId) setSelectedPageId(checkpointPageId);
-    if (checkpointSectionId) {
-      setSelectedId(checkpointSectionId);
-      setLastSelectedId(checkpointSectionId);
+    const restoreTarget = checkpoint
+      ? resolveBuilderV2CheckpointRestoreTarget({
+          snapshot: checkpoint,
+          preferredPageId: selectedPageId,
+          preferredSectionId: selectedId,
+        })
+      : null;
+    if (restoreTarget?.pageId) setSelectedPageId(restoreTarget.pageId);
+    if (restoreTarget?.sectionId) {
+      setSelectedId(restoreTarget.sectionId);
+      setLastSelectedId(restoreTarget.sectionId);
       setMultiSelectedIds([]);
     }
     notify(`Restored checkpoint: ${checkpoint?.label ?? 'Checkpoint'}`);
-  }, [history, notify]);
+  }, [history, notify, selectedId, selectedPageId]);
 
   const formatCheckpointTime = useCallback((value: string) => {
     if (!value) return '';

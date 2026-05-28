@@ -7,6 +7,7 @@ import {
   pushBuilderV2ChangeWithCheckpoint,
   pushBuilderV2HistorySnapshot,
   pushBuilderV2CheckpointSnapshot,
+  resolveBuilderV2CheckpointRestoreTarget,
 } from './builderV2History';
 
 describe('builderV2History', () => {
@@ -198,5 +199,104 @@ describe('builderV2History', () => {
     expect(result.history[2]?.sectionBlocks.home?.[0]?.data?.text).toBe('After');
     expect(result.checkpointId).toBe(result.history[1]?.id);
     expect(result.historyIndex).toBe(2);
+  });
+
+  it('keeps the current page and section focused when a restored checkpoint still contains them', () => {
+    const snapshot = createBuilderV2CheckpointSnapshot({
+      pages: [
+        {
+          id: 'home',
+          title: 'Home',
+          slug: 'home',
+          isHome: true,
+          hidden: false,
+          sections: [
+            {
+              id: 'hero',
+              type: 'hero',
+              title: 'Hero',
+              subtitle: '',
+              variant: 'default',
+              enabled: true,
+              density: 'comfortable',
+            },
+          ],
+        },
+        {
+          id: 'travel',
+          title: 'Travel',
+          slug: 'travel',
+          isHome: false,
+          hidden: false,
+          sections: [
+            {
+              id: 'travel-notes',
+              type: 'travel',
+              title: 'Travel notes',
+              subtitle: '',
+              variant: 'default',
+              enabled: true,
+              density: 'comfortable',
+            },
+          ],
+        },
+      ],
+      sectionBlocks: {},
+      label: 'Before restore',
+    });
+
+    expect(resolveBuilderV2CheckpointRestoreTarget({
+      snapshot,
+      preferredPageId: 'travel',
+      preferredSectionId: 'travel-notes',
+    })).toEqual({
+      pageId: 'travel',
+      sectionId: 'travel-notes',
+    });
+  });
+
+  it('falls back to the restored page first section when the previous section no longer exists', () => {
+    const snapshot = createBuilderV2CheckpointSnapshot({
+      pages: [
+        {
+          id: 'travel',
+          title: 'Travel',
+          slug: 'travel',
+          isHome: false,
+          hidden: false,
+          sections: [
+            {
+              id: 'travel-notes',
+              type: 'travel',
+              title: 'Travel notes',
+              subtitle: '',
+              variant: 'default',
+              enabled: true,
+              density: 'comfortable',
+            },
+            {
+              id: 'hotel-card',
+              type: 'accommodations',
+              title: 'Hotel card',
+              subtitle: '',
+              variant: 'default',
+              enabled: true,
+              density: 'comfortable',
+            },
+          ],
+        },
+      ],
+      sectionBlocks: {},
+      label: 'Before restore',
+    });
+
+    expect(resolveBuilderV2CheckpointRestoreTarget({
+      snapshot,
+      preferredPageId: 'travel',
+      preferredSectionId: 'removed-section',
+    })).toEqual({
+      pageId: 'travel',
+      sectionId: 'travel-notes',
+    });
   });
 });

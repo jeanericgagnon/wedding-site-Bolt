@@ -38,6 +38,11 @@ export type BuilderV2CheckpointSummary = {
   status: 'current' | 'past' | 'ahead';
 };
 
+export type BuilderV2CheckpointRestoreTarget = {
+  pageId: string;
+  sectionId: string;
+};
+
 const makeSnapshotId = () => `snapshot-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 const makeSnapshotTimestamp = () => new Date().toISOString();
 
@@ -204,3 +209,33 @@ export const listBuilderV2CheckpointSummaries = <TBlock extends HistoryBlock>(
   ))
   .filter((summary): summary is BuilderV2CheckpointSummary => Boolean(summary))
   .reverse();
+
+export const resolveBuilderV2CheckpointRestoreTarget = <TBlock extends HistoryBlock>({
+  snapshot,
+  preferredPageId,
+  preferredSectionId,
+}: {
+  snapshot: BuilderV2HistorySnapshot<TBlock>;
+  preferredPageId?: string | null;
+  preferredSectionId?: string | null;
+}): BuilderV2CheckpointRestoreTarget | null => {
+  const pages = snapshot.pages;
+  if (!pages.length) return null;
+
+  const fallbackPage = pages[0] ?? null;
+  const preferredPage = preferredPageId
+    ? pages.find((page) => page.id === preferredPageId) ?? null
+    : null;
+  const page = preferredPage ?? fallbackPage;
+  if (!page) return null;
+
+  const fallbackSection = page.sections[0]?.id ?? '';
+  const preferredSection = preferredSectionId
+    ? page.sections.find((section) => section.id === preferredSectionId)?.id ?? ''
+    : '';
+
+  return {
+    pageId: page.id,
+    sectionId: preferredSection || fallbackSection,
+  };
+};
