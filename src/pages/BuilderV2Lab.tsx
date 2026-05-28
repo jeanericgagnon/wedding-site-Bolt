@@ -38,8 +38,11 @@ import { buildBuilderV2StructureGuidance } from './builderV2StructureGuidance';
 import { buildBuilderV2SelectionGuidance } from './builderV2SelectionGuidance';
 import { cloneBuilderV2Sections } from './builderV2SectionClone';
 import {
+  createBuilderV2Page,
   duplicateBuilderV2Page,
   moveBuilderV2SectionsToPage,
+  removeBuilderV2Page,
+  updateBuilderV2Page,
 } from './builderV2PageOperations';
 import {
   buildBuilderV2SectionLifecycleSummary,
@@ -1203,16 +1206,14 @@ export const BuilderV2Lab: React.FC = () => {
     const pageIndex = pages.length + 1;
     const baseTitle = pageIndex === 1 ? 'Home' : `Page ${pageIndex}`;
     const title = sanitizeBuilderV2PageTitle(baseTitle, `Page ${pageIndex}`);
-    const slug = ensureUniqueBuilderV2PageSlug(title, pages);
     const pageId = `page-${Date.now()}`;
-    const sectionId = `${slug}-hero`;
-    const nextPage: LabPage = {
-      id: pageId,
+    const sectionSlugBase = ensureUniqueBuilderV2PageSlug(title, pages);
+    const sectionId = `${sectionSlugBase}-hero`;
+    const nextPages = createBuilderV2Page({
+      pages,
+      pageId,
       title,
-      slug,
-      isHome: false,
-      hidden: false,
-      sections: [{
+      initialSections: [{
         id: sectionId,
         type: 'hero',
         title: 'Hero',
@@ -1221,8 +1222,8 @@ export const BuilderV2Lab: React.FC = () => {
         enabled: true,
         density: 'comfortable',
       }],
-    };
-    commit([...pages, nextPage], { ...sectionBlocks, [sectionId]: buildStarterBlocks(sectionId, 'hero') });
+    });
+    commit(nextPages, { ...sectionBlocks, [sectionId]: buildStarterBlocks(sectionId, 'hero') });
     setSelectedPageId(pageId);
     setSelectedId(sectionId);
     setLastSelectedId(sectionId);
@@ -1231,39 +1232,37 @@ export const BuilderV2Lab: React.FC = () => {
   }, [buildStarterBlocks, commit, notify, pages, sectionBlocks]);
 
   const renamePage = useCallback((pageId: string, title: string) => {
-    const nextTitle = sanitizeBuilderV2PageTitle(title, 'Page');
-    const page = pages.find((entry) => entry.id === pageId);
-    if (!page) return;
-    const nextSlug = ensureUniqueBuilderV2PageSlug(nextTitle, pages, pageId);
-    commit(pages.map((entry) => (
-      entry.id === pageId
-        ? { ...entry, title: nextTitle, slug: nextSlug }
-        : entry
-    )));
+    commit(updateBuilderV2Page({
+      pages,
+      pageId,
+      patch: { title },
+    }));
   }, [commit, pages]);
 
   const updatePageSlug = useCallback((pageId: string, slug: string) => {
-    commit(pages.map((entry) => (
-      entry.id === pageId
-        ? { ...entry, slug: ensureUniqueBuilderV2PageSlug(slug || entry.title, pages, pageId) }
-        : entry
-    )));
+    commit(updateBuilderV2Page({
+      pages,
+      pageId,
+      patch: { slug },
+    }));
   }, [commit, pages]);
 
   const togglePageVisibility = useCallback((pageId: string) => {
-    commitWithCheckpoint('Before changing page visibility', pages.map((entry) => (
-      entry.id === pageId
-        ? { ...entry, hidden: entry.isHome ? false : !entry.hidden }
-        : entry
-    )));
+    const page = pages.find((entry) => entry.id === pageId);
+    if (!page) return;
+    commitWithCheckpoint('Before changing page visibility', updateBuilderV2Page({
+      pages,
+      pageId,
+      patch: { hidden: page.isHome ? false : !page.hidden },
+    }));
   }, [commitWithCheckpoint, pages]);
 
   const setHomePage = useCallback((pageId: string) => {
-    commit(pages.map((entry) => ({
-      ...entry,
-      isHome: entry.id === pageId,
-      hidden: entry.id === pageId ? false : entry.hidden,
-    })));
+    commit(updateBuilderV2Page({
+      pages,
+      pageId,
+      patch: { isHome: true },
+    }));
     notify('Home page updated');
   }, [commit, notify, pages]);
 
@@ -1272,10 +1271,11 @@ export const BuilderV2Lab: React.FC = () => {
       notify('Keep at least one page in the document');
       return;
     }
-    const nextPages = pages.filter((page) => page.id !== pageId);
+    const nextPages = removeBuilderV2Page({ pages, pageId });
     commitWithCheckpoint('Before removing page', nextPages);
     if (selectedPageId === pageId) {
-      selectPage(nextPages[0]?.id ?? '');
+      const fallbackPageId = nextPages.find((page) => page.isHome)?.id ?? nextPages[0]?.id ?? '';
+      selectPage(fallbackPageId);
     }
     notify('Page removed');
   }, [commitWithCheckpoint, notify, pages, selectPage, selectedPageId]);

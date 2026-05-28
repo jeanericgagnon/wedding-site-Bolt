@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
-import { duplicateBuilderV2Page, moveBuilderV2SectionsToPage } from './builderV2PageOperations';
+import {
+  createBuilderV2Page,
+  duplicateBuilderV2Page,
+  moveBuilderV2SectionsToPage,
+  removeBuilderV2Page,
+  updateBuilderV2Page,
+} from './builderV2PageOperations';
 import type { LabPage } from './builderV2PageState';
 
 type BlockLike = {
@@ -91,5 +97,62 @@ describe('builderV2PageOperations', () => {
     expect(result.pages).toBe(pages);
     expect(result.sectionBlocks).toBe(sectionBlocks);
     expect(result.movedSectionIds).toEqual([]);
+  });
+
+  it('promotes another page to visible home when the current home page is removed', () => {
+    const result = removeBuilderV2Page({
+      pages: makePages(),
+      pageId: 'home',
+    });
+
+    expect(result).toHaveLength(1);
+    expect(result[0]).toMatchObject({
+      id: 'travel',
+      isHome: true,
+      hidden: false,
+      slug: 'travel',
+    });
+  });
+
+  it('keeps one visible home page when page metadata changes', () => {
+    const afterSetHome = updateBuilderV2Page({
+      pages: makePages(),
+      pageId: 'travel',
+      patch: { isHome: true },
+    });
+
+    expect(afterSetHome.map((page) => ({ id: page.id, isHome: page.isHome, hidden: page.hidden }))).toEqual([
+      { id: 'home', isHome: false, hidden: false },
+      { id: 'travel', isHome: true, hidden: false },
+    ]);
+
+    const afterDuplicateSlug = updateBuilderV2Page({
+      pages: afterSetHome,
+      pageId: 'travel',
+      patch: { slug: 'home' },
+    });
+
+    expect(afterDuplicateSlug.find((page) => page.id === 'travel')?.slug).toBe('home-2');
+  });
+
+  it('adds pages with normalized slug and preserved home-page integrity', () => {
+    const result = createBuilderV2Page({
+      pages: makePages(),
+      pageId: 'faq',
+      title: 'FAQ & Details',
+      initialSections: [
+        { id: 'faq-hero', type: 'faq', title: 'FAQ', variant: 'default', enabled: true, density: 'comfortable' },
+      ],
+    });
+
+    expect(result).toHaveLength(3);
+    expect(result.find((page) => page.id === 'faq')).toMatchObject({
+      title: 'FAQ & Details',
+      slug: 'faq-details',
+      isHome: false,
+      hidden: false,
+    });
+    expect(result.filter((page) => page.isHome)).toHaveLength(1);
+    expect(result.find((page) => page.id === 'home')?.hidden).toBe(false);
   });
 });

@@ -1,4 +1,9 @@
-import { ensureUniqueBuilderV2PageSlug, sanitizeBuilderV2PageTitle, type LabPage } from './builderV2PageState';
+import {
+  ensureUniqueBuilderV2PageSlug,
+  normalizeBuilderV2Pages,
+  sanitizeBuilderV2PageTitle,
+  type LabPage,
+} from './builderV2PageState';
 
 type SectionLike = LabPage['sections'][number];
 
@@ -37,6 +42,24 @@ export type BuilderV2DuplicatePageResult<TPage extends LabPage = LabPage, TBlock
   sectionBlocks: Record<string, TBlock[]>;
   duplicatedPageId: string | null;
   duplicatedSectionIds: string[];
+};
+
+type CreatePageParams<TPage extends LabPage = LabPage> = {
+  pages: TPage[];
+  pageId: string;
+  title: string;
+  initialSections: TPage['sections'];
+};
+
+type UpdatePageParams<TPage extends LabPage = LabPage> = {
+  pages: TPage[];
+  pageId: string;
+  patch: Partial<Pick<TPage, 'title' | 'slug' | 'isHome' | 'hidden'>>;
+};
+
+type RemovePageParams<TPage extends LabPage = LabPage> = {
+  pages: TPage[];
+  pageId: string;
 };
 
 const slugToken = (value: string) => value
@@ -80,6 +103,70 @@ const makeCopySectionTitle = (title: string, existingTitles: Set<string>) => {
   return next;
 };
 
+export const createBuilderV2Page = <TPage extends LabPage>({
+  pages,
+  pageId,
+  title,
+  initialSections,
+}: CreatePageParams<TPage>): TPage[] => {
+  const nextTitle = sanitizeBuilderV2PageTitle(title, `Page ${pages.length + 1}`);
+  const nextPage = {
+    id: pageId,
+    title: nextTitle,
+    slug: ensureUniqueBuilderV2PageSlug(nextTitle, pages),
+    isHome: false,
+    hidden: false,
+    sections: initialSections,
+  } as TPage;
+
+  return normalizeBuilderV2Pages([...pages, nextPage]) as TPage[];
+};
+
+export const updateBuilderV2Page = <TPage extends LabPage>({
+  pages,
+  pageId,
+  patch,
+}: UpdatePageParams<TPage>): TPage[] => {
+  const page = pages.find((entry) => entry.id === pageId);
+  if (!page) return pages;
+
+  const nextTitle = patch.title !== undefined
+    ? sanitizeBuilderV2PageTitle(patch.title, page.title || 'Page')
+    : page.title;
+  const requestedSlug = patch.slug !== undefined
+    ? patch.slug || nextTitle
+    : page.slug;
+  const nextSlug = ensureUniqueBuilderV2PageSlug(requestedSlug, pages, pageId);
+
+  return normalizeBuilderV2Pages(
+    pages.map((entry) => (
+      entry.id === pageId
+        ? {
+            ...entry,
+            title: nextTitle,
+            slug: nextSlug,
+            isHome: patch.isHome ?? entry.isHome,
+            hidden: patch.isHome === true ? false : (patch.hidden ?? entry.hidden),
+          }
+        : {
+            ...entry,
+            isHome: patch.isHome === true ? false : entry.isHome,
+          }
+    )),
+  ) as TPage[];
+};
+
+export const removeBuilderV2Page = <TPage extends LabPage>({
+  pages,
+  pageId,
+}: RemovePageParams<TPage>): TPage[] => {
+  if (pages.length <= 1) return pages;
+
+  return normalizeBuilderV2Pages(
+    pages.filter((page) => page.id !== pageId),
+  ) as TPage[];
+};
+
 export const moveBuilderV2SectionsToPage = <TPage extends LabPage, TBlock extends BlockLike>({
   pages,
   sectionBlocks,
@@ -120,7 +207,7 @@ export const moveBuilderV2SectionsToPage = <TPage extends LabPage, TBlock extend
   }) as TPage[];
 
   return {
-    pages: nextPages,
+    pages: normalizeBuilderV2Pages(nextPages) as TPage[],
     sectionBlocks,
     movedSectionIds: movedSections.map((section) => section.id),
     targetPageId,
@@ -182,7 +269,7 @@ export const duplicateBuilderV2Page = <TPage extends LabPage, TBlock extends Blo
   nextPages.splice(pageIndex + 1, 0, duplicatedPage);
 
   return {
-    pages: nextPages as TPage[],
+    pages: normalizeBuilderV2Pages(nextPages as TPage[]) as TPage[],
     sectionBlocks: nextBlocks,
     duplicatedPageId,
     duplicatedSectionIds: duplicatedSections.map((section) => section.id),
