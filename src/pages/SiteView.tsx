@@ -27,7 +27,7 @@ import { getPublicBuilderPagesFromV2Document } from '../lib/publicBuilderV2Runti
 import { deriveWeddingDataFromBuilderV2Document, mergeWeddingDataWithBuilderV2Supplement } from '../lib/publicBuilderV2WeddingData';
 import { getIsPublishedFromSiteRow, getPublicBuilderProject, getPublicBuilderV2Document, getPublicWeddingData } from '../lib/publicSiteProject';
 import { getPublicBuilderActivePage, getVisiblePublicBuilderPages } from '../lib/publicPageSelection';
-import { readGuestAccessTokenFromParams } from '../lib/guestAccessTokenParams';
+import { readGuestAccessTokenFromParams, readStoredGuestAccessToken, storeGuestAccessToken } from '../lib/guestAccessTokenParams';
 
 interface PublicItineraryRow {
   id?: string;
@@ -519,7 +519,7 @@ export const SiteView: React.FC = () => {
           }
         } else if (privacyMode === 'invite_only') {
           const urlToken = readGuestAccessTokenFromParams(searchParams);
-          const storedToken = sessionStorage.getItem(`dayof_invite_token_${resolvedSlug}`);
+          const storedToken = readStoredGuestAccessToken(sessionStorage, resolvedSlug);
           const tokenToCheck = urlToken || storedToken;
           const hasInviteAccess = tokenToCheck
             ? await siteRepository.verifyPublicInviteAccess(resolvedSlug, tokenToCheck)
@@ -529,8 +529,8 @@ export const SiteView: React.FC = () => {
             setLoading(false);
             return;
           }
-          if (urlToken) {
-            sessionStorage.setItem(`dayof_invite_token_${resolvedSlug}`, urlToken);
+          if (tokenToCheck) {
+            storeGuestAccessToken(sessionStorage, resolvedSlug, tokenToCheck);
           }
         }
 
