@@ -22,6 +22,20 @@ export const readStoredPhotoBucketLinks = (): Record<string, string> => {
 export const readStoredPhotoBucketLinkList = (): string[] =>
   Object.values(readStoredPhotoBucketLinks()).filter((value): value is string => typeof value === 'string' && value.length > 0);
 
+export const resolveLatestStoredPhotoBucketLink = (
+  preferredLink: string,
+  links: Record<string, string>,
+): string => {
+  const knownLinks = Object.values(links).filter((value): value is string => typeof value === 'string' && value.length > 0);
+  const trimmedPreferredLink = preferredLink.trim();
+
+  if (trimmedPreferredLink && knownLinks.includes(trimmedPreferredLink)) {
+    return trimmedPreferredLink;
+  }
+
+  return knownLinks[0] ?? '';
+};
+
 export const writeStoredPhotoBucketLinks = (value: Record<string, string>) => {
   const serialized = JSON.stringify(value);
 

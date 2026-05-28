@@ -5,6 +5,7 @@ import {
   LATEST_PHOTO_BUCKET_LINK_STORAGE_KEY,
   PHOTO_BUCKET_LINKS_STORAGE_KEY,
   readLatestStoredPhotoBucketLink,
+  resolveLatestStoredPhotoBucketLink,
   readStoredPhotoBucketLinkList,
   readStoredPhotoBucketLinks,
   writeLatestStoredPhotoBucketLink,
@@ -42,5 +43,23 @@ describe('photoBucketLinksStorage', () => {
 
     expect(readLatestStoredPhotoBucketLink()).toBe('https://new.example/latest');
     expect(localStorage.getItem(LATEST_PHOTO_BUCKET_LINK_STORAGE_KEY)).toBe('https://new.example/latest');
+  });
+
+  it('keeps the preferred latest link only when it still exists in the stored bucket links', () => {
+    expect(
+      resolveLatestStoredPhotoBucketLink('https://new.example/b', {
+        a: 'https://new.example/a',
+        b: 'https://new.example/b',
+      }),
+    ).toBe('https://new.example/b');
+
+    expect(
+      resolveLatestStoredPhotoBucketLink('https://stale.example/old', {
+        a: 'https://new.example/a',
+        b: 'https://new.example/b',
+      }),
+    ).toBe('https://new.example/a');
+
+    expect(resolveLatestStoredPhotoBucketLink('https://stale.example/old', {})).toBe('');
   });
 });

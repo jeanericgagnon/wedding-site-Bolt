@@ -23,6 +23,7 @@ import { formatGuestPhotoEventDate, getSuggestedGuestPhotoWindowStart } from './
 import { getBulkGuestPhotoModerationTargets, getVisibleGuestPhotoUploads } from './guestPhotoModerationTargets';
 import {
   readLatestStoredPhotoBucketLink,
+  resolveLatestStoredPhotoBucketLink,
   readStoredPhotoBucketLinks,
   writeLatestStoredPhotoBucketLink,
   writeStoredPhotoBucketLinks,
@@ -299,6 +300,7 @@ export const GuestPhotoSharing: React.FC = () => {
         const nextLinks = Object.fromEntries(
           Object.entries(prev).filter(([bucketId, link]) => liveBucketIds.has(bucketId) && typeof link === 'string' && link.length > 0)
         );
+        setLatestUploadUrl((current) => resolveLatestStoredPhotoBucketLink(current, nextLinks));
         return JSON.stringify(prev) === JSON.stringify(nextLinks) ? prev : nextLinks;
       });
 
@@ -586,6 +588,7 @@ export const GuestPhotoSharing: React.FC = () => {
 
       if (Object.keys(updated).length > 0) {
         setBucketUploadLinks((prev) => ({ ...prev, ...updated }));
+        setLatestUploadUrl(Object.values(updated).at(-1) ?? '');
       }
       setSuccess(`Rotated ${Object.keys(updated).length} link(s).`);
     } catch (err: unknown) {
@@ -688,6 +691,7 @@ export const GuestPhotoSharing: React.FC = () => {
 
       if (Object.keys(links).length > 0) {
         setBucketUploadLinks((prev) => ({ ...prev, ...links }));
+        setLatestUploadUrl(Object.values(links).at(-1) ?? '');
       }
 
       await load();
