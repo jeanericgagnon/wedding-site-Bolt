@@ -117,12 +117,12 @@ function buildSignals(input: ControlTowerIntelligenceInput): ControlTowerSignal[
           ? `${pluralize(input.activePhotoAlbumCount, 'album')} already carrying memories.`
           : 'No active memory album is guiding guests yet.'
         : restrictedAccess
-          ? `The guest-facing path is live, but it still depends on ${input.privacyMode === 'invite_only' ? 'invite-only routing' : 'password instructions'} traveling with it.`
+          ? `The guest-facing path is shared, but it still depends on ${input.privacyMode === 'invite_only' ? 'invite-only routing' : 'password instructions'} traveling with it.`
         : input.itineraryEventCount === 0
           ? 'Guests still need a real public schedule to trust.'
-          : input.registryItemCount === 0
-          ? 'Registry still needs live items for guests.'
-          : input.activePhotoAlbumCount === 0
+        : input.registryItemCount === 0
+          ? 'Registry still needs guest-ready items.'
+        : input.activePhotoAlbumCount === 0
             ? 'Photo sharing is not really open for guests yet.'
             : 'Registry, schedule, and photos are ready to support guests.',
       variant: guestExperienceValue === 'Ready' ? 'success' : guestExperienceValue === 'Growing' ? 'warning' : 'error',
@@ -179,9 +179,9 @@ export function buildControlTowerBriefing(input: ControlTowerIntelligenceInput):
       detail: `${pluralize(input.publishBlockerCount, 'publish blocker')} still stand between this site and a clean guest-facing launch. With the date getting closer, the best use of time is clearing those blockers before polishing extras.`,
       focusTitle: 'Clear the blockers before you polish',
       focusDetail: 'When the date is close and the site is still not fully live, quality polish comes second to getting the launch path truly ready.',
-      bestNextMove: 'Clear the remaining publish blockers, then preview the live guest path before you spend any more attention on secondary polish.',
-      decisionRule: 'Launch truth beats visual polish when guests still do not have a clean live path.',
-      watchout: 'Do not let a near-launch site drift into endless design cleanup while the guest path is still blocked. If guests cannot move through the live path cleanly, polish is not the work yet.',
+      bestNextMove: 'Clear the remaining publish blockers, then preview the real guest-facing path before you spend any more attention on secondary polish.',
+      decisionRule: 'Launch truth beats visual polish when guests still do not have a clean guest-facing path.',
+      watchout: 'Do not let a near-launch site drift into endless design cleanup while the guest path is still blocked. If guests cannot move through the guest-facing path cleanly, polish is not the work yet.',
       badges: [
         `${pluralize(input.publishBlockerCount, 'blocker')}`,
         input.daysUntilWedding === 0 ? 'Wedding day' : `${input.daysUntilWedding} days left`,
@@ -190,7 +190,7 @@ export function buildControlTowerBriefing(input: ControlTowerIntelligenceInput):
       sequence: [
         { label: 'Clear launch blockers', detail: 'Remove the remaining publish truth gaps before you spend energy on anything secondary.', status: 'current' },
         { label: 'Preview guest-facing flow', detail: 'Walk the real guest path once the blockers are gone so launch confidence comes from lived truth.', status: 'next' },
-        { label: 'Publish the live site', detail: 'Only publish once the path guests will actually use feels clean and steady.', status: 'then' },
+        { label: 'Share the guest-facing site', detail: 'Only publish once the path guests will actually use feels clean and steady.', status: 'then' },
       ],
       primaryAction: { label: 'Open launch review', target: 'builder-launch' },
       secondaryAction: { label: 'Check planning', target: 'planning' },
@@ -201,12 +201,12 @@ export function buildControlTowerBriefing(input: ControlTowerIntelligenceInput):
     return {
       eyebrow: 'Control tower briefing',
       title: 'Guest access instructions are part of readiness now',
-      detail: `The site is live, but it is ${accessLabel}. The most useful next move is making sure every reminder, print pack, and coordinator handoff carries the right access path so guests are not stranded.`,
+      detail: `The site is shared, but it is ${accessLabel}. The most useful next move is making sure every reminder, print pack, and coordinator handoff carries the right access path so guests are not stranded.`,
       focusTitle: 'Treat access instructions like part of the product',
-      focusDetail: 'A restricted live site only feels trustworthy if every handoff carries the right path with it, not just the pretty URL.',
+      focusDetail: 'A restricted shared site only feels trustworthy if every handoff carries the right path with it, not just the pretty URL.',
       bestNextMove: 'Verify the exact guest access path in settings, then reuse that same route in reminders, QR packs, and coordinator handoffs.',
-      decisionRule: 'Access clarity beats launch aesthetics when the site is live but not openly public.',
-      watchout: 'Do not assume a live restricted site explains itself. If reminders, printed packs, or helpers carry the wrong path, guests will experience the site as broken even when the page itself is fine.',
+      decisionRule: 'Access clarity beats launch aesthetics when the site is shared but not openly public.',
+      watchout: 'Do not assume a restricted shared site explains itself. If reminders, printed packs, or helpers carry the wrong path, guests will experience the site as broken even when the page itself is fine.',
       badges: [
         accessLabel,
         input.daysUntilWedding === 0 ? 'Wedding day' : `${input.daysUntilWedding} days left`,
@@ -337,7 +337,7 @@ export function buildControlTowerBriefing(input: ControlTowerIntelligenceInput):
     return {
       eyebrow: 'Control tower briefing',
       title: 'Guests can reach the site, but the gifting lane still feels empty',
-      detail: 'Registry is one of the easiest trust-building surfaces for guests. Even a small live set is better than making visitors guess what is ready yet.',
+      detail: 'Registry is one of the easiest trust-building surfaces for guests. Even a small guest-ready set is better than making visitors guess what is ready yet.',
       focusTitle: 'Use the registry to make the site feel real',
       focusDetail: 'Guests read an empty gifting lane as uncertainty, so even a small truthful registry does more good than waiting for perfection.',
       bestNextMove: 'Publish a small truthful set of registry items now, then check the guest-facing page before you widen the list.',
@@ -349,7 +349,7 @@ export function buildControlTowerBriefing(input: ControlTowerIntelligenceInput):
       ],
       signals: buildSignals(input),
       sequence: [
-        { label: 'Add live registry items', detail: 'Use one honest gifting path to make the site feel more real right away.', status: 'current' },
+        { label: 'Add guest-ready registry items', detail: 'Use one honest gifting path to make the site feel more real right away.', status: 'current' },
         { label: 'Check the guest-facing page', detail: 'Let the first few gifts carry clarity before you expand the list for its own sake.', status: 'next' },
         { label: 'Return to broader polish', detail: 'Broaden the lane only once the initial registry path already feels dependable.', status: 'then' },
       ],
@@ -371,14 +371,14 @@ export function buildControlTowerBriefing(input: ControlTowerIntelligenceInput):
         ? 'Create and activate one guest-ready photo sharing path now, then test the photo sharing path before you move back into polish.'
         : 'Turn one existing album on for guests, then verify the photo sharing path while the entry point is still fresh.',
       decisionRule: 'A working contribution path beats a dormant memory promise.',
-      watchout: 'Do not leave memory contribution in promise mode. If guests cannot actually upload, the photo lane teaches them that the site is more aspirational than live.',
+      watchout: 'Do not leave memory contribution in promise mode. If guests cannot actually upload, the photo lane teaches them that the site is more aspirational than usable.',
       badges: [
         `${input.activePhotoAlbumCount}/${input.photoAlbumCount} active`,
         `${pluralize(input.interactiveSuggestionCount, 'guest prompt')}`,
       ],
       signals: buildSignals(input),
       sequence: [
-        { label: 'Activate a photo sharing path', detail: 'Open the simplest live contribution path first so the memory layer actually starts moving.', status: 'current' },
+        { label: 'Activate a photo sharing path', detail: 'Open the simplest guest contribution path first so the memory layer actually starts moving.', status: 'current' },
         { label: 'Check the guest photo sharing path', detail: 'A single working lane teaches you more than several empty promises.', status: 'next' },
         { label: 'Return to legacy site polish', detail: 'Once guests are participating, let that real signal shape the next polish decisions.', status: 'then' },
       ],
@@ -386,7 +386,6 @@ export function buildControlTowerBriefing(input: ControlTowerIntelligenceInput):
       secondaryAction: { label: 'Open legacy site polish', target: 'builder-polish' },
     };
   }
-
   if (input.interactiveSuggestionCount > 0) {
     return {
       eyebrow: 'Control tower briefing',

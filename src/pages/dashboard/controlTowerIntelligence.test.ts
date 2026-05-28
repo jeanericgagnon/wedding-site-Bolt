@@ -46,13 +46,14 @@ describe('buildControlTowerBriefing', () => {
     expect(briefing.title).toContain('Launch readiness');
     expect(briefing.focusTitle).toContain('Clear the blockers');
     expect(briefing.focusDetail).toMatch(/date is close|launch path/i);
-    expect(briefing.bestNextMove).toMatch(/publish blockers|preview the live guest path/i);
+    expect(briefing.bestNextMove).toMatch(/publish blockers|preview the real guest-facing path/i);
     expect(briefing.decisionRule).toMatch(/launch truth beats visual polish/i);
     expect(briefing.watchout).toMatch(/design cleanup|guest path is still blocked/i);
     expect(briefing.primaryAction).toMatchObject({ label: 'Open launch review', target: 'builder-launch' });
     expect(briefing.badges).toContain('3 blockers');
     expect(briefing.sequence[0]).toMatchObject({ status: 'current' });
     expect(briefing.sequence[0]?.detail).toMatch(/publish truth gaps/i);
+    expect(briefing.sequence[2]).toMatchObject({ label: 'Share the guest-facing site' });
   });
 
   it('prioritizes RSVP follow-up when replies are lagging', () => {
@@ -184,6 +185,30 @@ describe('buildControlTowerBriefing', () => {
     expect(briefing.watchout).toMatch(/wrong path|site as broken/i);
     expect(briefing.primaryAction).toMatchObject({ target: 'settings' });
     expect(briefing.secondaryAction).toMatchObject({ target: 'messages' });
+    expect(briefing.detail).toContain('The site is shared');
+    expect(briefing.focusDetail).toContain('restricted shared site');
+  });
+
+  it('keeps registry fallback guidance framed around guest-ready items, not live items', () => {
+    const briefing = buildControlTowerBriefing(makeInput({
+      confirmedGuests: 78,
+      declinedGuests: 14,
+      pendingGuests: 8,
+      contactableGuestCount: 100,
+      itineraryEventCount: 2,
+      registryItemCount: 0,
+      activePhotoAlbumCount: 2,
+      photoAlbumCount: 2,
+      recentRsvpCount: 5,
+      daysUntilWedding: 60,
+      isPublished: true,
+    }));
+
+    expect(briefing.detail).toContain('small guest-ready set');
+    expect(briefing.sequence[0]).toMatchObject({ label: 'Add guest-ready registry items' });
+    expect(briefing.signals.find((signal) => signal.label === 'Guest experience')?.detail).toBe(
+      'Registry still needs guest-ready items.',
+    );
   });
 
   it('points guest prompt review back to the overview suggestions lane', () => {
