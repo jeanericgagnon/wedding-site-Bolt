@@ -21,6 +21,7 @@ import { parseDatetimeLocalToIso, toDatetimeLocalOrEmpty } from './guestPhotoDat
 import { formatGuestPhotoDate, formatGuestPhotoDateTime, getGuestPhotoSortTime, toGuestPhotoCsvTimestamp } from './guestPhotoUploadTime';
 import { formatGuestPhotoEventDate, getSuggestedGuestPhotoWindowStart } from './guestPhotoEventDate';
 import { getBulkGuestPhotoModerationTargets, getVisibleGuestPhotoUploads } from './guestPhotoModerationTargets';
+import { readStoredPhotoBucketLinks, writeStoredPhotoBucketLinks } from './photoBucketLinksStorage';
 
 type ItineraryEvent = {
   id: string;
@@ -62,27 +63,6 @@ type SlideshowFrame = {
   caption: string;
 };
 
-const PHOTO_ALBUM_LINKS_STORAGE_KEY = 'dayof.photoBucketLinks';
-
-const readStoredBucketLinks = (): Record<string, string> => {
-  try {
-    const raw = localStorage.getItem(PHOTO_ALBUM_LINKS_STORAGE_KEY);
-    if (!raw) return {};
-    const parsed = JSON.parse(raw) as Record<string, string>;
-    return parsed && typeof parsed === 'object' ? parsed : {};
-  } catch {
-    return {};
-  }
-};
-
-const writeStoredBucketLinks = (value: Record<string, string>) => {
-  try {
-    localStorage.setItem(PHOTO_ALBUM_LINKS_STORAGE_KEY, JSON.stringify(value));
-  } catch {
-    // ignore
-  }
-};
-
 export const GuestPhotoSharing: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -108,7 +88,7 @@ export const GuestPhotoSharing: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'paused'>('all');
 
   const [latestUploadUrl, setLatestUploadUrl] = useState<string>('');
-  const [bucketUploadLinks, setBucketUploadLinks] = useState<Record<string, string>>(() => readStoredBucketLinks());
+  const [bucketUploadLinks, setBucketUploadLinks] = useState<Record<string, string>>(() => readStoredPhotoBucketLinks());
   const [copied, setCopied] = useState<string>('');
   const [workingBucketId, setWorkingBucketId] = useState<string>('');
 
@@ -141,7 +121,7 @@ export const GuestPhotoSharing: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    writeStoredBucketLinks(bucketUploadLinks);
+    writeStoredPhotoBucketLinks(bucketUploadLinks);
   }, [bucketUploadLinks]);
 
   const invokeOrThrow = async (fnName: string, body: Record<string, unknown>) => {

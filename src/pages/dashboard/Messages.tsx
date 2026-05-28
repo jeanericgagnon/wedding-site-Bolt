@@ -23,6 +23,7 @@ import { formatMessageEventOptionLabel } from './messageEventDate';
 import { formatMessageHistoryDate, formatMessageHistoryDateTime, getMessageHistoryTimestamp } from './messageHistoryTime';
 import { formatScheduledMessageDateTime, parseScheduleInputToIso, toScheduleInputValue } from './messageScheduleTime';
 import { getMessageTemplateCoupleLabel } from './messageTemplateVariables';
+import { readStoredPhotoBucketLinkList } from './photoBucketLinksStorage';
 
 const BULK_SEND_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-bulk-message`;
 const DEMO_MESSAGES_STORAGE_KEY = 'dayof.demo.messages.history';
@@ -1456,13 +1457,7 @@ export const DashboardMessages: React.FC = () => {
   };
 
   const knownPhotoLinksCount = useMemo(() => {
-    try {
-      const raw = localStorage.getItem('dayof.photoAlbumLinks');
-      if (!raw) return 0;
-      return Object.values(JSON.parse(raw) as Record<string, string>).filter(Boolean).length;
-    } catch {
-      return 0;
-    }
+    return readStoredPhotoBucketLinkList().length;
   }, []);
 
   const applyTemplateVariables = (text: string) => {
@@ -1470,15 +1465,8 @@ export const DashboardMessages: React.FC = () => {
     const rsvpLink = `${window.location.origin}/rsvp`;
 
     let photoLink = `${window.location.origin}/photos/upload`;
-    try {
-      const raw = localStorage.getItem('dayof.photoAlbumLinks');
-      if (raw) {
-        const links = Object.values(JSON.parse(raw) as Record<string, string>).filter(Boolean);
-        if (links.length > 0) photoLink = links[0] as string;
-      }
-    } catch {
-      // ignore and fallback
-    }
+    const links = readStoredPhotoBucketLinkList();
+    if (links.length > 0) photoLink = links[0];
 
     return text
       .replace(/\[COUPLE\]/g, couple)
