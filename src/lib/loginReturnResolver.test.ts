@@ -12,6 +12,11 @@ describe('loginReturnResolver', () => {
     expect(resolveLoginReturnPath('/dashboard/overview')).toBe('/onboarding/quick-start?bypassPayment=1');
   });
 
+  it('prefers an explicit safe return path over stored continuation and generic fallback', () => {
+    writeSignupReturnPath('/onboarding/quick-start?bypassPayment=1');
+    expect(resolveLoginReturnPath('/dashboard/overview', '/dashboard/builder')).toBe('/dashboard/builder');
+  });
+
   it('uses the generic fallback when no saved continuation exists', () => {
     expect(resolveLoginReturnPath('/dashboard/overview')).toBe('/dashboard/overview');
   });

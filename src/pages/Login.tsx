@@ -79,7 +79,7 @@ export const Login: React.FC = () => {
       const { data } = await supabase.auth.getSession();
       if (!mounted) return;
       if (data.session && oauthSource === 'google') {
-        const to = consumeSignupReturnPath() || resolveLoginReturnPath(getPostLoginRoute(data.session.user.email));
+        const to = consumeSignupReturnPath() || resolveLoginReturnPath(getPostLoginRoute(data.session.user.email), explicitReturnPath);
         setNotice('Google sign-in successful. Redirecting…');
         navigate(to, { replace: true });
       }
@@ -90,7 +90,7 @@ export const Login: React.FC = () => {
     const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
       if (!mounted) return;
       if (event === 'SIGNED_IN') {
-        const to = consumeSignupReturnPath() || resolveLoginReturnPath(getPostLoginRoute(session?.user?.email));
+        const to = consumeSignupReturnPath() || resolveLoginReturnPath(getPostLoginRoute(session?.user?.email), explicitReturnPath);
         if (oauthSource === 'google') {
           setNotice('Google sign-in successful. Redirecting…');
         }
@@ -123,7 +123,7 @@ export const Login: React.FC = () => {
         navigate(`/accept-collaborator-invite${inviteReturnSearch}`, { replace: true });
         return;
       }
-      navigate(consumeSignupReturnPath() || resolveLoginReturnPath(getPostLoginRoute(signInData.user?.email)));
+      navigate(consumeSignupReturnPath() || resolveLoginReturnPath(getPostLoginRoute(signInData.user?.email), explicitReturnPath));
     } catch (err: unknown) {
       setError((err as Error).message || 'Couldn’t sign you in right now. Please try again.');
     } finally {
@@ -148,11 +148,10 @@ export const Login: React.FC = () => {
     setLoading(true);
     setError('');
     try {
+      const savedReturnPath = resolveLoginReturnPath(getPostLoginRoute(formData.email), explicitReturnPath);
       const redirectPath = hasInviteContext
         ? `/accept-collaborator-invite${inviteReturnSearch}&oauth=google`
-        : '/login?oauth=google';
-
-      const savedReturnPath = resolveLoginReturnPath(getPostLoginRoute(formData.email));
+        : savedReturnPath;
       if (!hasInviteContext && savedReturnPath) {
         writeSignupReturnPath(savedReturnPath);
       }

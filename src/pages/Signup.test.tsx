@@ -149,6 +149,42 @@ describe('Signup quick start handoff', () => {
     });
   });
 
+  it('returns account creation to the builder when signup started from start draft', async () => {
+    useLocationMock.mockReturnValue({ state: { returnTo: '/dashboard/builder' } });
+
+    render(<Signup />);
+
+    fireEvent.change(screen.getByLabelText(/^email/i), { target: { value: 'alex@example.com' } });
+    fireEvent.change(screen.getByLabelText(/^password$/i), { target: { value: 'StrongPassword123!' } });
+    fireEvent.change(screen.getByLabelText(/^confirm password$/i), { target: { value: 'StrongPassword123!' } });
+    fireEvent.submit(screen.getByRole('button', { name: /create account/i }).closest('form')!);
+
+    await waitFor(() => {
+      expect(signUpMock).toHaveBeenCalledWith({
+        email: 'alex@example.com',
+        password: 'StrongPassword123!',
+      });
+      expect(navigateMock).toHaveBeenCalledWith('/dashboard/builder');
+    });
+  });
+
+  it('uses the builder callback path for Google signup when signup started from start draft', async () => {
+    useLocationMock.mockReturnValue({ state: { returnTo: '/dashboard/builder' } });
+
+    render(<Signup />);
+
+    fireEvent.click(screen.getByRole('button', { name: /continue with google/i }));
+
+    await waitFor(() => {
+      expect(signInWithOAuthMock).toHaveBeenCalledWith(expect.objectContaining({
+        provider: 'google',
+        options: expect.objectContaining({
+          redirectTo: 'http://localhost:3000/dashboard/builder',
+        }),
+      }));
+    });
+  });
+
 
   it('omits empty onboarding drafts when switching from signup to login', async () => {
     useLocationMock.mockReturnValue({ state: { returnTo: '/onboarding' } });

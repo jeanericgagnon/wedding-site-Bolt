@@ -161,6 +161,41 @@ describe('Login quick start handoff', () => {
     expect(state).toEqual({ returnTo: '/dashboard/builder' });
   });
 
+  it('returns password login to the builder when the user came from start draft', async () => {
+    useLocationMock.mockReturnValue({ state: { returnTo: '/dashboard/builder' } });
+
+    render(<Login />);
+
+    fireEvent.change(screen.getByLabelText(/^email/i), { target: { value: 'alex@example.com' } });
+    fireEvent.change(screen.getByLabelText(/^password/i), { target: { value: 'StrongPassword123!' } });
+    fireEvent.submit(screen.getByRole('button', { name: /^sign in$/i }).closest('form')!);
+
+    await waitFor(() => {
+      expect(signInWithPasswordMock).toHaveBeenCalledWith({
+        email: 'alex@example.com',
+        password: 'StrongPassword123!',
+      });
+      expect(navigateMock).toHaveBeenCalledWith('/dashboard/builder');
+    });
+  });
+
+  it('uses the builder callback path for Google login when the user came from start draft', async () => {
+    useLocationMock.mockReturnValue({ state: { returnTo: '/dashboard/builder' } });
+
+    render(<Login />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Continue with Google' }));
+
+    await waitFor(() => {
+      expect(signInWithOAuthMock).toHaveBeenCalledWith(expect.objectContaining({
+        provider: 'google',
+        options: expect.objectContaining({
+          redirectTo: 'http://localhost:3000/dashboard/builder',
+        }),
+      }));
+    });
+  });
+
 
   it('omits empty onboarding drafts when switching from login to signup', async () => {
     useLocationMock.mockReturnValue({ state: { returnTo: '/onboarding' } });
