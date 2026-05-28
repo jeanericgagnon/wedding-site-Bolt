@@ -10,7 +10,7 @@ import { GuestJourneyCompanion } from '../components/guest/GuestJourneyCompanion
 import { LanguageSwitcher } from '../components/ui/LanguageSwitcher';
 import { CheckCircle, Search, AlertCircle, User } from 'lucide-react';
 import { demoGuests, demoRSVPs } from '../lib/demoData';
-import { readInviteTokenFromParams } from '../lib/inviteTokenParams';
+import { buildCanonicalInviteTokenSearch, readInviteTokenFromParams } from '../lib/inviteTokenParams';
 import { DEMO_MODE } from '../config/env';
 import { formatRsvpDeadline, isRsvpDeadlinePassed } from './rsvpDeadline';
 import {
@@ -453,6 +453,7 @@ export default function RSVP() {
   const siteSlug = searchParams.get('site')?.trim().toLowerCase() ?? '';
   const previewGuest = searchParams.get('previewGuest')?.trim() ?? '';
   const inviteToken = readInviteTokenFromParams(searchParams);
+  const canonicalInviteSearch = buildCanonicalInviteTokenSearch(searchParams);
   const [step, setStep] = useState<'search' | 'pick' | 'form' | 'success'>('search');
   const [searchValue, setSearchValue] = useState('');
   const [guest, setGuest] = useState<Guest | null>(null);
@@ -533,6 +534,17 @@ export default function RSVP() {
   });
 
   const activeToken = inviteToken;
+
+  useEffect(() => {
+    const currentSearch = searchParams.toString();
+    const normalizedSearch = canonicalInviteSearch.startsWith('?')
+      ? canonicalInviteSearch.slice(1)
+      : canonicalInviteSearch;
+
+    if (normalizedSearch !== currentSearch) {
+      navigate(`/rsvp${canonicalInviteSearch}`, { replace: true });
+    }
+  }, [canonicalInviteSearch, navigate, searchParams]);
 
   const normalizedCurrentRsvpSnapshot = useMemo(() => {
     if (!guest) return null;

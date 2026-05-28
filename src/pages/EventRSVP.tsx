@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Calendar, Clock, MapPin, Check, X, ExternalLink, AlertCircle, Loader2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { Button } from '../components/ui/Button';
@@ -7,7 +7,7 @@ import { Card } from '../components/ui/Card';
 import { Input } from '../components/ui/Input';
 import { Textarea } from '../components/ui/Textarea';
 import { Header, Footer } from '../components/layout';
-import { readInviteTokenFromParams } from '../lib/inviteTokenParams';
+import { buildCanonicalInviteTokenSearch, readInviteTokenFromParams } from '../lib/inviteTokenParams';
 import { formatEventRsvpDate } from './eventRsvpDate';
 import {
   mapEventRsvpLoadError,
@@ -147,8 +147,10 @@ function invalidateEventRsvpSubmitState(
 }
 
 export default function EventRSVP() {
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const token = readInviteTokenFromParams(searchParams);
+  const canonicalInviteSearch = buildCanonicalInviteTokenSearch(searchParams);
 
   const [guest, setGuest] = useState<Guest | null>(null);
   const [invitations, setInvitations] = useState<EventInvitation[]>([]);
@@ -168,6 +170,17 @@ export default function EventRSVP() {
   const ignoreNextLocalContinuityEventRef = useRef(false);
   const tokenLinkedSessionRef = useRef(false);
   const loadInFlightRef = useRef(false);
+
+  useEffect(() => {
+    const currentSearch = searchParams.toString();
+    const normalizedSearch = canonicalInviteSearch.startsWith('?')
+      ? canonicalInviteSearch.slice(1)
+      : canonicalInviteSearch;
+
+    if (normalizedSearch !== currentSearch) {
+      navigate(`/events${canonicalInviteSearch}`, { replace: true });
+    }
+  }, [canonicalInviteSearch, navigate, searchParams]);
 
   useEffect(() => {
     if (token) {
