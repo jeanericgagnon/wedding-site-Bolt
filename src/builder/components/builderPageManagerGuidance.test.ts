@@ -14,8 +14,7 @@ describe('getBuilderPageManagerGuidance', () => {
   });
 
   it('prioritizes empty pages before more map churn', () => {
-    expect(
-      getBuilderPageManagerGuidance(
+    const guidance = getBuilderPageManagerGuidance(
         [
           {
             id: 'home',
@@ -35,14 +34,16 @@ describe('getBuilderPageManagerGuidance', () => {
           },
         ] as never[],
         'travel',
-      ),
-    ).toMatchObject({
+      );
+
+    expect(guidance).toMatchObject({
       focusTitle: 'Travel needs an anchor before the map grows',
       primaryAction: {
         kind: 'fill-empty-page',
         pageId: 'travel',
       },
     });
+    expect(guidance.decisionRule).toContain('visible gap');
   });
 
   it('prioritizes restoring a hidden home page before broader map work', () => {

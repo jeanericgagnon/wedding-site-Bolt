@@ -52,6 +52,23 @@ describe('getBuilderSectionRecoverySummary', () => {
     expect(summary.focusTitle).toContain('all hidden');
     expect(summary.primaryAction.kind).toBe('review-hidden');
     expect(summary.watchout).toContain('abandoned work');
+    expect(summary.watchout).toContain('visible work');
+  });
+
+  it('keeps hidden-backlog drift framed around the visible story', () => {
+    const summary = getBuilderSectionRecoverySummary([
+      { id: 'hero-1', type: 'hero', enabled: true, settings: { title: 'Welcome' }, bindings: {}, styleOverrides: {} },
+      { id: 'venue-1', type: 'venue', enabled: true, settings: { title: 'Venue Details' }, bindings: {}, styleOverrides: {} },
+      { id: 'schedule-1', type: 'schedule', enabled: true, settings: { title: 'Weekend Schedule' }, bindings: {}, styleOverrides: {} },
+      { id: 'travel-1', type: 'travel', enabled: true, settings: { title: 'Travel & Stay' }, bindings: {}, styleOverrides: {} },
+      { id: 'rsvp-1', type: 'rsvp', enabled: true, settings: { title: 'RSVP' }, bindings: {}, styleOverrides: {} },
+      { id: 'faq-1', type: 'faq', enabled: true, settings: { title: 'FAQ' }, bindings: {}, styleOverrides: {} },
+      { id: 'registry-1', type: 'registry', enabled: true, settings: { title: 'Registry' }, bindings: {}, styleOverrides: {} },
+      { id: 'story-1', type: 'story', enabled: false, settings: { title: 'Our Story' }, bindings: {}, styleOverrides: {} },
+    ]);
+
+    expect(summary.focusTitle).toContain('hidden sections still need a decision');
+    expect(summary.watchout).toContain('visible story');
   });
 
   it('pushes empty-section recovery before missing-essential expansion', () => {

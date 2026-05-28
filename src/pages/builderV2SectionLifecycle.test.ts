@@ -22,6 +22,7 @@ describe('builderV2SectionLifecycle', () => {
     expect(summary.allowArchive).toBe(true);
     expect(summary.bestNextMove).toContain('Archive');
     expect(summary.keyStats).toContain('2 visible total');
+    expect(summary.decisionRule).toContain('visible lane');
   });
 
   it('marks hidden-only batches as clean removal candidates', () => {
@@ -56,7 +57,7 @@ describe('builderV2SectionLifecycle', () => {
       ],
     });
 
-    expect(summary.title).toContain('mixes live and archived lanes');
+    expect(summary.title).toContain('mixes visible and archived lanes');
     expect(summary.detail).toContain('still visible');
     expect(summary.decisionRule).toContain('visible and hidden sections');
     expect(summary.steps[0]?.detail).toContain('visible and already hidden lanes');

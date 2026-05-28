@@ -1208,9 +1208,9 @@ export const BuilderV2Lab: React.FC = () => {
         action: 'remove',
         outcome: 'failure',
         operation: 'section',
-        reason: 'Keep at least one section live in the page structure before removing more',
+        reason: 'Keep at least one section visible in the page structure before removing more',
       });
-      notify('Keep at least one section live in the page structure before removing more');
+      notify('Keep at least one section visible in the page structure before removing more');
       return;
     }
 
@@ -2326,7 +2326,7 @@ export const BuilderV2Lab: React.FC = () => {
         <div className="h-[var(--topbar-h)] px-2 md:px-3 border-b border-border-subtle bg-white flex items-center justify-between gap-4">
           <div>
             <p className="text-xs uppercase updates-[0.2em] text-primary font-semibold">Site editor</p>
-            <h1 className="text-lg md:text-xl font-semibold mt-0.5">Structured editing with live preview</h1>
+            <h1 className="text-lg md:text-xl font-semibold mt-0.5">Structured editing with visible preview</h1>
             <p className="text-text-secondary mt-0.5 text-xs max-w-2xl">Shape your website quickly, keep the structure clean, and see changes as you go.</p>
           </div>
           <div className="flex items-center gap-2">
@@ -3419,7 +3419,7 @@ export const BuilderV2Lab: React.FC = () => {
               <div className={`mx-auto bg-white border border-border-subtle overflow-hidden ${previewDevice === 'desktop' ? 'w-full max-w-[1240px]' : 'w-[430px] max-w-full'}`} style={{ transform: `scale(${previewScale / 100})`, transformOrigin: 'top center' }}>
                 {activePage.hidden && (
                   <div className="border-b border-border-subtle bg-amber-50 px-5 py-4">
-                    <p className="text-sm font-semibold text-amber-900">This page is hidden from the live navigation.</p>
+                    <p className="text-sm font-semibold text-amber-900">This page is hidden from the visible navigation.</p>
                     <p className="mt-1 text-xs leading-relaxed text-amber-900/80">
                       Keep shaping the structure here, then show the page again when you are ready for it to join the guest path.
                     </p>
@@ -3429,7 +3429,7 @@ export const BuilderV2Lab: React.FC = () => {
                   <div className="border-b border-border-subtle bg-white px-5 py-6">
                     <p className="text-sm font-semibold text-text-primary">No visible sections on this page yet.</p>
                     <p className="mt-1 text-xs leading-relaxed text-text-secondary">
-                      Add a first section or show a hidden lane so this page has a live reading order again.
+                      Add a first section or show a hidden lane so this page has a visible reading order again.
                     </p>
                   </div>
                 )}
@@ -4474,7 +4474,7 @@ export const BuilderV2Lab: React.FC = () => {
                     <p className="text-[11px] uppercase tracking-[0.18em] text-text-tertiary">Session rollout signal</p>
                     <p className="mt-1 text-sm font-semibold text-text-primary">Builder V2 action outcomes for this browser session</p>
                     <p className="mt-1 text-xs leading-relaxed text-text-secondary">
-                      This is an internal session-only meter for add, duplicate, remove, import, and export outcomes while you review Builder V2. Nothing here claims live product analytics or sends data anywhere.
+                      This is an internal session-only meter for add, duplicate, remove, import, and export outcomes while you review Builder V2. Nothing here claims shipped product analytics or sends data anywhere.
                     </p>
                   </div>
                   <div className="shrink-0 rounded-full border border-slate-200 bg-white px-2 py-1 text-[10px] text-text-secondary">

@@ -124,7 +124,7 @@ export function getBuilderPageManagerGuidance(
       focusTitle: `${fallbackPage.title} needs an anchor before the map grows`,
       focusDetail: 'An empty page creates navigation without substance. Give it one clear section so guests know why the page exists.',
       bestNextMove: `Add a hero or other anchor section to ${fallbackPage.title} before you spend energy on more pages or polish.`,
-      decisionRule: 'Fill the emptiest live gap in the site map before expanding breadth.',
+      decisionRule: 'Fill the emptiest visible gap in the site map before expanding breadth.',
       watchout: 'A page list can look complete even while guests still hit dead ends.',
       currentStep: `Treat ${fallbackPage.title} as the next page that needs a real first impression.`,
       nextStep: `Add the first section and read the page in the canvas before touching the rest of the map.`,

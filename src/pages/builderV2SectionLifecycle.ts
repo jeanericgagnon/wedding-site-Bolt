@@ -78,7 +78,7 @@ export const buildBuilderV2SectionLifecycleSummary = ({
       title: 'This selection is the whole page structure',
       detail: 'Removing every section would leave the page empty, so this batch needs a gentler cleanup move.',
       bestNextMove: 'Archive the lanes you want to park first, then rebuild or remove sections one pass at a time.',
-      decisionRule: 'Do not remove the entire page structure in one action. Keep at least one live lane or add a replacement first.',
+      decisionRule: 'Do not remove the entire page structure in one action. Keep at least one visible lane or add a replacement first.',
       watchout: 'A full-page delete is fast, but it turns recovery into reconstruction.',
       steps: [
         { label: 'Current', detail: 'Every page lane is in the retirement set.' },
@@ -111,7 +111,7 @@ export const buildBuilderV2SectionLifecycleSummary = ({
 
   if (hiddenSelectedCount > 0) {
     return {
-      title: 'This retirement set mixes live and archived lanes',
+      title: 'This retirement set mixes visible and archived lanes',
       detail: 'That is workable, but you should normalize what is still visible before you make a permanent delete choice.',
       bestNextMove: 'Archive the visible lanes that no longer belong, then remove the whole retired batch once it is consistently off-stage.',
       decisionRule: 'Visibility cleanup comes before permanent removal when a batch mixes visible and hidden sections.',
