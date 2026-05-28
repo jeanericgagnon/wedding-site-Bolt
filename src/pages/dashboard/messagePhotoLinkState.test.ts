@@ -20,16 +20,16 @@ describe('getMessagePhotoLinkState', () => {
     });
   });
 
-  it('falls back to the generic upload route when no active links are available', () => {
+  it('falls back to the public wedding hub when no active links are available', () => {
     expect(getMessagePhotoLinkState({
       buckets: [{ id: 'paused', is_active: false }],
       storedLinks: {
         paused: 'https://dayof.love/photos/upload?bucket=paused',
       },
-      fallbackLink: 'https://dayof.love/photos/upload',
+      fallbackLink: 'https://dayof.love/site/maya-leo',
     })).toEqual({
       knownPhotoLinksCount: 0,
-      preferredPhotoLink: 'https://dayof.love/photos/upload',
+      preferredPhotoLink: 'https://dayof.love/site/maya-leo',
     });
   });
 

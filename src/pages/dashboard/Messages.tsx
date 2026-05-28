@@ -25,6 +25,7 @@ import { formatScheduledMessageDateTime, parseScheduleInputToIso, toScheduleInpu
 import { getMessageTemplateCoupleLabel } from './messageTemplateVariables';
 import { readStoredPhotoBucketLinks } from './photoBucketLinksStorage';
 import { getMessagePhotoLinkState } from './messagePhotoLinkState';
+import { resolvePublicSiteSlugFromRow } from '../../lib/publicSiteSlug';
 
 const BULK_SEND_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-bulk-message`;
 const DEMO_MESSAGES_STORAGE_KEY = 'dayof.demo.messages.history';
@@ -428,7 +429,7 @@ const COMPOSER_TEMPLATES: ComposerTemplate[] = [
     defaultChannel: 'email',
     build: ({ applyTemplateVariables }) => ({
       subject: applyTemplateVariables('Share your photos with us 📸'),
-      body: applyTemplateVariables('We made a photo upload link so everyone can share their favorite moments from the event. Upload here: [PHOTO LINK]'),
+      body: applyTemplateVariables('We made a place where everyone can share their favorite moments from the event. Open photo sharing here: [PHOTO LINK]'),
     }),
   },
   {
@@ -1493,11 +1494,16 @@ export const DashboardMessages: React.FC = () => {
     };
   };
 
+  const publicSiteSlug = useMemo(
+    () => resolvePublicSiteSlugFromRow((weddingSite as Record<string, unknown> | null) ?? null),
+    [weddingSite],
+  );
+
   const photoLinkState = useMemo(() => getMessagePhotoLinkState({
     buckets: photoBuckets,
     storedLinks: readStoredPhotoBucketLinks(),
-    fallbackLink: `${window.location.origin}/photos/upload`,
-  }), [photoBuckets]);
+    fallbackLink: publicSiteSlug ? `${window.location.origin}/site/${publicSiteSlug}` : window.location.origin,
+  }), [photoBuckets, publicSiteSlug]);
 
   const applyTemplateVariables = (text: string) => {
     const couple = getMessageTemplateCoupleLabel(weddingSite?.couple_first_name, weddingSite?.couple_second_name);
