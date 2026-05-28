@@ -104,7 +104,8 @@ export const PhotoUpload: React.FC = () => {
 
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        throw new Error(mapPhotoUploadError(data?.code, data?.error));
+        setError(mapPhotoUploadError(data?.code, data?.error));
+        return;
       }
 
       const uploaded = Array.isArray(data.uploaded) ? data.uploaded : [];

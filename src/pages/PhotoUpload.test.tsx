@@ -7,6 +7,7 @@ import {
   mapPhotoUploadRuntimeError,
   PHOTO_UPLOAD_ACCESS_LABEL,
   PHOTO_UPLOAD_ACCESS_PLACEHOLDER,
+  PHOTO_UPLOAD_LIMITS_ERROR,
   PHOTO_UPLOAD_MISSING_ACCESS_ERROR,
   PHOTO_UPLOAD_RETRY_ERROR,
   PHOTO_UPLOAD_UNAVAILABLE_ERROR,
@@ -84,6 +85,12 @@ describe('PhotoUpload guest-safe copy', () => {
     expect(mapPhotoUploadError('INVALID_TOKEN')).toBe('This upload link is invalid. Ask the couple for a fresh link.');
   });
 
+  it('keeps upload-limit failures guest-safe instead of echoing server detail', () => {
+    expect(mapPhotoUploadError('FILE_TOO_LARGE', 'Supabase storage bucket rejected 52MB upload')).toBe(
+      PHOTO_UPLOAD_LIMITS_ERROR,
+    );
+  });
+
   it('keeps runtime upload failures guest-safe instead of echoing internal fetch details', () => {
     expect(mapPhotoUploadRuntimeError(new Error('Supabase storage bucket policy denied upload'))).toBe(
       PHOTO_UPLOAD_RETRY_ERROR,
@@ -148,6 +155,32 @@ describe('PhotoUpload guest-safe copy', () => {
     });
     expect(screen.queryByText('party.jpg')).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Upload more' })).not.toBeInTheDocument();
+
+    vi.unstubAllGlobals();
+  });
+
+  it('shows specific invalid-link guidance instead of collapsing it into a generic retry', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: false,
+      json: async () => ({
+        code: 'INVALID_TOKEN',
+        error: 'invite token expired in supabase',
+      }),
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    window.history.replaceState({}, '', '/photos/upload?t=bad-upload-code&invite_token=invite-123&site=maya-leo');
+
+    render(<PhotoUpload />);
+
+    fireEvent.change(screen.getByLabelText('Files'), {
+      target: { files: [new File(['one'], 'party.jpg', { type: 'image/jpeg' })] },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Upload files' }));
+
+    expect(await screen.findByText('This upload link is invalid. Ask the couple for a fresh link.')).toBeInTheDocument();
+    expect(screen.queryByText(PHOTO_UPLOAD_RETRY_ERROR)).not.toBeInTheDocument();
+    expect(screen.queryByText(/supabase|token expired/i)).not.toBeInTheDocument();
 
     vi.unstubAllGlobals();
   });

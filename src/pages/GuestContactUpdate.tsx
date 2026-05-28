@@ -5,6 +5,8 @@ import { demoGuests, demoWeddingSite } from '../lib/demoData';
 import { readInviteTokenFromParams } from '../lib/inviteTokenParams';
 import {
   GUEST_CONTACT_INVITE_REQUIRED_ERROR,
+  GUEST_CONTACT_LOOKUP_RETRY_ERROR,
+  GUEST_CONTACT_SUBMIT_RETRY_ERROR,
   mapGuestContactLookupError,
   mapGuestContactSubmitError,
 } from './guestContactUpdateCopy';
@@ -28,17 +30,17 @@ type DemoGuestLike = {
   household_size?: number;
 };
 
-async function callPublicFn(name: string, body: unknown) {
+async function callPublicFn(name: string, body: unknown, fallback: string) {
   const base = (import.meta.env.VITE_SUPABASE_URL as string | undefined)?.trim();
-  if (!base) throw new Error('Missing Supabase URL');
+  if (!base) throw new Error(fallback);
   const res = await fetch(`${base}/functions/v1/${name}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
   });
   const json = (await res.json().catch(() => ({}))) as PublicFnSuccess;
-  if (!res.ok) throw new Error(json.error || `Request failed (${res.status})`);
-  if (json.error) throw new Error(json.error);
+  if (!res.ok) throw new Error(fallback);
+  if (json.error) throw new Error(fallback);
   return json;
 }
 
@@ -124,7 +126,11 @@ export const GuestContactUpdate: React.FC = () => {
           return;
         }
 
-        const data = await callPublicFn('guest-contact-lookup', { site_ref: siteRef, invite_token: inviteToken });
+        const data = await callPublicFn(
+          'guest-contact-lookup',
+          { site_ref: siteRef, invite_token: inviteToken },
+          GUEST_CONTACT_LOOKUP_RETRY_ERROR,
+        );
         if (cancelled) return;
 
         const rows = data.matches ?? [];
@@ -159,7 +165,11 @@ export const GuestContactUpdate: React.FC = () => {
     setSelectedGuestId('');
     setSelectedHouseholdSize(1);
     try {
-      const data = await callPublicFn('guest-contact-lookup', { site_ref: siteRef, query: query.trim() });
+      const data = await callPublicFn(
+        'guest-contact-lookup',
+        { site_ref: siteRef, query: query.trim() },
+        GUEST_CONTACT_LOOKUP_RETRY_ERROR,
+      );
       const rows = data.matches ?? [];
       applyLookupMatches(rows);
       if (rows.length === 0) {
@@ -199,22 +209,26 @@ export const GuestContactUpdate: React.FC = () => {
     setResult(null);
     try {
       if (!isDemoSiteRef) {
-        await callPublicFn('guest-contact-submit', {
-          site_ref: siteRef,
-          guest_id: selectedGuestId,
-          invite_token: inviteToken,
-          apply_household: applyHousehold,
-          email: email.trim() || null,
-          phone: phone.trim() || null,
-          rsvp_status: rsvpStatus || null,
-          sms_consent: smsConsent,
-          mailing_address_line1: mailingAddressLine1.trim() || null,
-          mailing_address_line2: mailingAddressLine2.trim() || null,
-          mailing_city: mailingCity.trim() || null,
-          mailing_state: mailingState.trim() || null,
-          mailing_postal_code: mailingPostalCode.trim() || null,
-          mailing_country: mailingCountry.trim() || null,
-        });
+        await callPublicFn(
+          'guest-contact-submit',
+          {
+            site_ref: siteRef,
+            guest_id: selectedGuestId,
+            invite_token: inviteToken,
+            apply_household: applyHousehold,
+            email: email.trim() || null,
+            phone: phone.trim() || null,
+            rsvp_status: rsvpStatus || null,
+            sms_consent: smsConsent,
+            mailing_address_line1: mailingAddressLine1.trim() || null,
+            mailing_address_line2: mailingAddressLine2.trim() || null,
+            mailing_city: mailingCity.trim() || null,
+            mailing_state: mailingState.trim() || null,
+            mailing_postal_code: mailingPostalCode.trim() || null,
+            mailing_country: mailingCountry.trim() || null,
+          },
+          GUEST_CONTACT_SUBMIT_RETRY_ERROR,
+        );
       }
       setResult({ ok: true, message: 'Thanks! Your information has been updated.' });
     } catch (err) {

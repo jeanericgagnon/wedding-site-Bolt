@@ -4,6 +4,7 @@ export const PHOTO_UPLOAD_ACCESS_LABEL = 'Upload access code';
 export const PHOTO_UPLOAD_ACCESS_PLACEHOLDER = 'Paste your access code';
 export const PHOTO_UPLOAD_MISSING_ACCESS_ERROR = 'An upload access code is required.';
 export const PHOTO_UPLOAD_UNAVAILABLE_ERROR = 'Photo uploads are unavailable right now. Please try again soon.';
+export const PHOTO_UPLOAD_LIMITS_ERROR = 'Your upload exceeds the allowed limits.';
 export const PHOTO_UPLOAD_RETRY_ERROR = 'We could not upload those files right now. Please try again.';
 
 export const mapPhotoUploadError = (code?: string, fallback?: string): string => {
@@ -19,7 +20,7 @@ export const mapPhotoUploadError = (code?: string, fallback?: string): string =>
     case 'FILE_TOO_LARGE':
     case 'TOTAL_TOO_LARGE':
     case 'TOO_MANY_FILES':
-      return fallback || 'Your upload exceeds the allowed limits.';
+      return PHOTO_UPLOAD_LIMITS_ERROR;
     case 'UNSUPPORTED_FILE_TYPE':
       return 'Unsupported file type. Please upload photos or videos only.';
     default:
