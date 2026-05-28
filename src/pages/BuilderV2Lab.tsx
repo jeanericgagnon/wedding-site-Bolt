@@ -3295,6 +3295,16 @@ export const BuilderV2Lab: React.FC = () => {
                                     onChange={(e) => updateBlockField(selected.id, block.id, field.key, e.target.value)}
                                     className={`${baseClassName} ${field.key === 'text' || field.key === 'answer' || field.key === 'note' ? 'min-h-20' : 'min-h-16'}`}
                                   />
+                                ) : field.options ? (
+                                  <select
+                                    value={value}
+                                    onChange={(e) => updateBlockField(selected.id, block.id, field.key, e.target.value)}
+                                    className={baseClassName}
+                                  >
+                                    {field.options.map((option) => (
+                                      <option key={option.value} value={option.value}>{option.label}</option>
+                                    ))}
+                                  </select>
                                 ) : (
                                   <input
                                     type={field.inputType ?? 'text'}

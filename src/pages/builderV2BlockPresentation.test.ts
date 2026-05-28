@@ -33,6 +33,14 @@ describe('builderV2BlockPresentation', () => {
 
     expect(titleFields.map((field) => field.label)).toEqual(['Side heading', 'Side key']);
     expect(photoFields.map((field) => field.label)).toContain('Side key');
+    expect(titleFields.find((field) => field.key === 'subtitle')?.options).toEqual([
+      { value: 'bridal-title', label: 'Partner one heading' },
+      { value: 'groom-title', label: 'Partner two heading' },
+    ]);
+    expect(photoFields.find((field) => field.key === 'subtitle')?.options).toEqual([
+      { value: 'bridal-party', label: 'Partner one side' },
+      { value: 'groom-party', label: 'Partner two side' },
+    ]);
   });
 
   it('builds music playlist link editor fields', () => {

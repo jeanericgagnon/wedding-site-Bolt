@@ -26,6 +26,7 @@ export type BuilderV2BlockFieldDescriptor = {
   label: string;
   multiline?: boolean;
   inputType?: 'text' | 'url' | 'email' | 'tel';
+  options?: Array<{ value: string; label: string }>;
 };
 
 export type BuilderV2BlockPreviewSummary = {
@@ -41,6 +42,16 @@ const joinParts = (values: Array<string | undefined>) => values.filter(Boolean).
 
 const hasAnyStructuredPhotoText = (data: BuilderV2BlockContentLike) =>
   Boolean(data.title || data.role || data.note || data.subtitle);
+
+const WEDDING_PARTY_SIDE_OPTIONS = [
+  { value: 'bridal-title', label: 'Partner one heading' },
+  { value: 'groom-title', label: 'Partner two heading' },
+] satisfies Array<{ value: string; label: string }>;
+
+const WEDDING_PARTY_MEMBER_OPTIONS = [
+  { value: 'bridal-party', label: 'Partner one side' },
+  { value: 'groom-party', label: 'Partner two side' },
+] satisfies Array<{ value: string; label: string }>;
 
 export const buildBuilderV2BlockFieldDescriptors = (
   sectionType: string,
@@ -84,6 +95,9 @@ export const buildBuilderV2BlockFieldDescriptors = (
         ...(data.subtitle ? [{
           key: 'subtitle',
           label: sectionType === 'wedding-party' ? 'Side key' : 'Group key',
+          ...(sectionType === 'wedding-party'
+            ? { options: WEDDING_PARTY_MEMBER_OPTIONS }
+            : {}),
         } satisfies BuilderV2BlockFieldDescriptor] : []),
         { key: 'imageUrl', label: 'Image URL', inputType: 'url' },
         { key: 'caption', label: 'Caption' },
@@ -114,7 +128,7 @@ export const buildBuilderV2BlockFieldDescriptors = (
     if (sectionType === 'wedding-party') {
       return [
         { key: 'text', label: 'Side heading' },
-        { key: 'subtitle', label: 'Side key' },
+        { key: 'subtitle', label: 'Side key', options: WEDDING_PARTY_SIDE_OPTIONS },
       ];
     }
 
