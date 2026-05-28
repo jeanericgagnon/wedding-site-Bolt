@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { getPublicBuilderActivePage, getVisiblePublicBuilderPages } from './publicPageSelection';
+import { getFirstRenderablePublicBuilderPage, getPublicBuilderActivePage, getVisiblePublicBuilderPages } from './publicPageSelection';
 import type { BuilderPage } from '../types/builder/project';
 
 const makePage = (overrides: Partial<BuilderPage>): BuilderPage => ({
@@ -39,5 +39,36 @@ describe('publicPageSelection', () => {
     ]);
 
     expect(getPublicBuilderActivePage(pages, 'missing')?.slug).toBe('home');
+  });
+
+  it('finds the first renderable visible page when the home page is structurally empty', () => {
+    const pages = getVisiblePublicBuilderPages([
+      makePage({ id: 'home', title: 'Home', slug: 'home', orderIndex: 0, meta: { isHome: true, isHidden: false }, sections: [] }),
+      makePage({
+        id: 'weekend',
+        title: 'Weekend',
+        slug: 'weekend',
+        orderIndex: 1,
+        sections: [{
+          id: 'story',
+          type: 'story',
+          variant: 'default',
+          enabled: true,
+          locked: false,
+          orderIndex: 0,
+          settings: {},
+          styleOverrides: {},
+          bindings: {},
+          meta: {
+            createdAtISO: '2026-05-27T00:00:00.000Z',
+            updatedAtISO: '2026-05-27T00:00:00.000Z',
+          },
+        }],
+      }),
+    ]);
+
+    expect(getFirstRenderablePublicBuilderPage(pages)?.slug).toBe('weekend');
+    expect(getPublicBuilderActivePage(pages)?.slug).toBe('weekend');
+    expect(getPublicBuilderActivePage(pages, 'home')?.slug).toBe('home');
   });
 });

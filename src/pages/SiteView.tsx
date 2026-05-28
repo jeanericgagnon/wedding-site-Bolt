@@ -26,7 +26,7 @@ import { buildCoupleDisplayName } from '../lib/coupleDisplayName';
 import { getPublicBuilderPagesFromV2Document } from '../lib/publicBuilderV2Runtime';
 import { deriveWeddingDataFromBuilderV2Document, mergeWeddingDataWithBuilderV2Supplement } from '../lib/publicBuilderV2WeddingData';
 import { getIsPublishedFromSiteRow, getPublicBuilderProject, getPublicBuilderV2Document, getPublicWeddingData } from '../lib/publicSiteProject';
-import { getPublicBuilderActivePage, getVisiblePublicBuilderPages } from '../lib/publicPageSelection';
+import { getFirstRenderablePublicBuilderPage, getPublicBuilderActivePage, getVisiblePublicBuilderPages } from '../lib/publicPageSelection';
 import { readGuestAccessTokenFromParams, readStoredGuestAccessToken, storeGuestAccessToken } from '../lib/guestAccessTokenParams';
 
 interface PublicItineraryRow {
@@ -577,13 +577,17 @@ export const SiteView: React.FC = () => {
         }
 
         if (siteJson && siteJson.pages?.length > 0) {
-          const homePage = siteJson.pages.find(p => p.id === 'home') ?? siteJson.pages[0];
           const normalizedPages = siteJson.pages.map((page) => ({
             ...page,
             sections: normalizeSectionVariants(page.sections ?? []),
           }));
           const visiblePages = getVisiblePublicBuilderPages(normalizedPages);
           const hasVisibleSections = visiblePages.some((page) => page.sections.some((section) => section.enabled));
+          const initialRenderablePage = getFirstRenderablePublicBuilderPage(visiblePages)
+            ?? getPublicBuilderActivePage(visiblePages, searchParams.get('page'))
+            ?? visiblePages[0]
+            ?? normalizedPages[0]
+            ?? null;
 
           if (!hasVisibleSections) {
             if (resolvedSlug === 'alex-jordan-demo') {
@@ -634,7 +638,7 @@ export const SiteView: React.FC = () => {
           }
 
           setBuilderPages(normalizedPages);
-          setBuilderSections(normalizeSectionVariants(homePage.sections.filter(s => s.enabled)));
+          setBuilderSections(normalizeSectionVariants(initialRenderablePage?.sections.filter((section) => section.enabled) ?? []));
           setWeddingData(wData);
         } else {
           const parsedWData = rawBuilderV2Document

@@ -1,11 +1,16 @@
 import type { BuilderPage } from '../types/builder/project';
 
 const normalizePublicPageSlug = (value: string | null | undefined) => value?.trim().toLowerCase() ?? '';
+const hasRenderableSections = (page: BuilderPage) => page.sections.some((section) => section.enabled);
 
 export const getVisiblePublicBuilderPages = (pages: BuilderPage[]): BuilderPage[] => (
   [...pages]
     .sort((a, b) => a.orderIndex - b.orderIndex)
     .filter((page) => page.meta?.isHidden !== true)
+);
+
+export const getFirstRenderablePublicBuilderPage = (pages: BuilderPage[]): BuilderPage | null => (
+  pages.find(hasRenderableSections) ?? null
 );
 
 export const getPublicBuilderActivePage = (
@@ -20,5 +25,8 @@ export const getPublicBuilderActivePage = (
     if (explicit) return explicit;
   }
 
-  return pages.find((page) => page.meta?.isHome) ?? pages[0] ?? null;
+  const homePage = pages.find((page) => page.meta?.isHome) ?? null;
+  if (homePage && hasRenderableSections(homePage)) return homePage;
+
+  return getFirstRenderablePublicBuilderPage(pages) ?? homePage ?? pages[0] ?? null;
 };
