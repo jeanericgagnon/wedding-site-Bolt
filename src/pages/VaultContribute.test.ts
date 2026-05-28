@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { getContributionWindow, getVaultCoupleName, getVaultUnlockAtIso, getVaultUnlockYear } from './VaultContribute';
+import { getVaultAttachmentStatusCopy, mapVaultAttachmentUploadError, mapVaultContributionSaveError } from './vaultContributeCopy';
 
 describe('getVaultCoupleName', () => {
   it('keeps a single partner name truthful instead of showing a broken ampersand', () => {
@@ -38,5 +39,34 @@ describe('getVaultUnlockAtIso', () => {
 describe('getContributionWindow', () => {
   it('ignores impossible persisted wedding dates instead of enforcing a fake upload window', () => {
     expect(getContributionWindow('2027-02-30')).toEqual({ canSubmit: true, message: null });
+  });
+});
+
+describe('vault guest-safe copy', () => {
+  it('keeps attachment upload failures guest-safe instead of leaking provider or bucket details', () => {
+    expect(mapVaultAttachmentUploadError('missing vault-attachments bucket or policy')).toBe(
+      'Photo and video uploads are temporarily unavailable for this vault. You can still leave a written message right now.',
+    );
+    expect(mapVaultAttachmentUploadError('Google Drive upload failed: provider timeout')).toBe(
+      'We could not upload that attachment right now. Please try again.',
+    );
+  });
+
+  it('keeps save failures guest-safe instead of exposing internal details', () => {
+    expect(mapVaultContributionSaveError(new Error('duplicate key value violates row-level security policy'))).toBe(
+      'Could not save your message right now. Please try again.',
+    );
+  });
+
+  it('describes attachment readiness without provider-specific language', () => {
+    expect(getVaultAttachmentStatusCopy({
+      vault_storage_provider: 'google_drive',
+      vault_google_drive_connected: false,
+    })).toBe('Photo and video uploads are not available for this vault yet. You can still leave a written message.');
+
+    expect(getVaultAttachmentStatusCopy({
+      vault_storage_provider: 'supabase',
+      vault_google_drive_connected: false,
+    })).toBe('Photo, video, and voice attachments are ready for this vault.');
   });
 });

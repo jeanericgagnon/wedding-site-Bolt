@@ -1,10 +1,16 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+/* eslint-disable react-refresh/only-export-components */
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Lock, Heart, Send, CheckCircle, AlertCircle, Loader2, Mic, Square } from 'lucide-react';
 import { GuestJourneyCompanion } from '../components/guest/GuestJourneyCompanion';
 import { supabase } from '../lib/supabase';
 import { DEMO_MODE } from '../config/env';
 import { buildCoupleDisplayName } from '../lib/coupleDisplayName';
+import {
+  getVaultAttachmentStatusCopy,
+  mapVaultAttachmentUploadError,
+  mapVaultContributionSaveError,
+} from './vaultContributeCopy';
 
 interface SiteInfo {
   id: string;
@@ -139,7 +145,7 @@ export const VaultContribute: React.FC = () => {
 
   const submittedKey = `${VAULT_SUBMITTED_KEY_PREFIX}${siteSlug ?? 'unknown'}`;
 
-  function loadSubmittedYears() {
+  const loadSubmittedYears = useCallback(() => {
     try {
       const raw = localStorage.getItem(submittedKey);
       const parsed = raw ? JSON.parse(raw) as number[] : [];
@@ -147,7 +153,7 @@ export const VaultContribute: React.FC = () => {
     } catch {
       setSubmittedYears([]);
     }
-  }
+  }, [submittedKey]);
 
   function markSubmitted(years: number) {
     try {
@@ -264,20 +270,7 @@ export const VaultContribute: React.FC = () => {
     };
   }, []);
 
-  useEffect(() => {
-    if (!siteSlug) {
-      setStep('invalid');
-      return;
-    }
-    if (hasYearParam && (vaultYear === null || Number.isNaN(vaultYear))) {
-      setStep('invalid');
-      return;
-    }
-    loadSubmittedYears();
-    loadData();
-  }, [siteSlug, year]);
-
-  async function loadData() {
+  const loadData = useCallback(async () => {
     const { data: siteData, error: siteError } = await supabase
       .from('wedding_sites')
       .select('id, couple_name_1, couple_name_2, wedding_date, is_published, vault_storage_provider, vault_google_drive_connected')
@@ -366,7 +359,20 @@ export const VaultContribute: React.FC = () => {
     setVaultOptions(options);
     setVaultConfig(options[0]);
     setStep('hub');
-  }
+  }, [hasYearParam, siteSlug, vaultYear]);
+
+  useEffect(() => {
+    if (!siteSlug) {
+      setStep('invalid');
+      return;
+    }
+    if (hasYearParam && (vaultYear === null || Number.isNaN(vaultYear))) {
+      setStep('invalid');
+      return;
+    }
+    loadSubmittedYears();
+    void loadData();
+  }, [hasYearParam, loadData, loadSubmittedYears, siteSlug, vaultYear]);
 
 
   async function compressVideoTo720p(input: File): Promise<File> {
@@ -526,7 +532,7 @@ export const VaultContribute: React.FC = () => {
           if (driveError) {
             setUploadProgress(null);
             setSubmitting(false);
-            setSubmitError(`Google Drive upload failed: ${driveError.message}`);
+            setSubmitError(mapVaultAttachmentUploadError(driveError.message));
             return;
           }
 
@@ -548,9 +554,7 @@ export const VaultContribute: React.FC = () => {
           if (uploadError) {
             setUploadProgress(null);
             setSubmitting(false);
-            setSubmitError(uploadError.message?.includes('bucket')
-              ? 'Media upload is not configured yet (missing vault-attachments bucket or policy).'
-              : `Upload failed: ${uploadError.message}`);
+            setSubmitError(mapVaultAttachmentUploadError(uploadError.message));
             return;
           }
 
@@ -607,7 +611,7 @@ export const VaultContribute: React.FC = () => {
     setUploadProgress(null);
     setCompressionStatus(null);
     if (error) {
-      setSubmitError(`Could not save your message right now: ${error.message}`);
+      setSubmitError(mapVaultContributionSaveError(error));
     } else {
       markSubmitted(vaultConfig.duration_years);
       setStep('success');
@@ -772,11 +776,6 @@ export const VaultContribute: React.FC = () => {
                 <> The vault opens in <strong className="text-stone-700">{unlockYear}</strong>.</>
               )}
             </p>
-            {DEMO_MODE && (
-              <p className="text-[11px] mt-2 inline-flex items-center px-2 py-1 rounded-full border border-warning/30 bg-warning/10 text-warning font-medium">
-                Demo mode: uploads and provider actions may be simulated
-              </p>
-            )}
           </div>
 
           <div className="bg-white/95 backdrop-blur rounded-3xl shadow-xl border border-border-subtle p-5 sm:p-6 md:p-8 relative overflow-hidden transition-shadow duration-300 hover:shadow-2xl">
@@ -790,10 +789,7 @@ export const VaultContribute: React.FC = () => {
             />
             <form onSubmit={handleSubmit} className="space-y-5 md:space-y-5.5">
               <div className="text-xs rounded-xl px-3 py-2 border bg-stone-50 border-stone-200 text-stone-600">
-                Storage destination: <strong className="text-stone-800">{usingGoogleDrive ? 'Google Drive' : 'Secure vault storage'}</strong>
-                {usingGoogleDrive && !site?.vault_google_drive_connected && (
-                  <span className="text-red-600"> · Not connected yet (ask the couple to connect Google Drive in Vault settings).</span>
-                )}
+                <strong className="text-stone-800">{getVaultAttachmentStatusCopy(site)}</strong>
               </div>
               {contributionWindow.message && (
                 <div className={`text-xs rounded-xl px-3 py-2 border ${contributionWindow.canSubmit ? 'bg-primary/5 border-primary/20 text-primary' : 'bg-warning/10 border-warning/30 text-warning'}`}>

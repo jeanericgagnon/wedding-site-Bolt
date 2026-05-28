@@ -1,29 +1,14 @@
 import React, { useMemo, useState } from 'react';
 import { GuestJourneyCompanion } from '../components/guest/GuestJourneyCompanion';
+import {
+  mapPhotoUploadError,
+  PHOTO_UPLOAD_ACCESS_LABEL,
+  PHOTO_UPLOAD_ACCESS_PLACEHOLDER,
+  PHOTO_UPLOAD_MISSING_ACCESS_ERROR,
+} from './photoUploadCopy';
 
 const supabaseUrl = (import.meta.env.VITE_SUPABASE_URL as string | undefined)?.trim();
 const supabaseAnonKey = (import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined)?.trim();
-
-const mapUploadError = (code?: string, fallback?: string): string => {
-  switch (code) {
-    case 'INVALID_TOKEN':
-      return 'This upload link is invalid. Ask the couple for a fresh link.';
-    case 'ALBUM_INACTIVE':
-      return 'This album is currently paused.';
-    case 'ALBUM_NOT_OPEN':
-      return 'This album is not open for uploads yet.';
-    case 'ALBUM_CLOSED':
-      return 'This album is closed for uploads.';
-    case 'FILE_TOO_LARGE':
-    case 'TOTAL_TOO_LARGE':
-    case 'TOO_MANY_FILES':
-      return fallback || 'Your upload exceeds the allowed limits.';
-    case 'UNSUPPORTED_FILE_TYPE':
-      return 'Unsupported file type. Please upload photos or videos only.';
-    default:
-      return fallback || 'Upload failed. Please try again.';
-  }
-};
 
 export const PhotoUpload: React.FC = () => {
   const params = useMemo(() => new URLSearchParams(window.location.search), []);
@@ -57,7 +42,7 @@ export const PhotoUpload: React.FC = () => {
     }
 
     if (!token.trim() && !siteSlug) {
-      setError('Upload token is required.');
+      setError(PHOTO_UPLOAD_MISSING_ACCESS_ERROR);
       return;
     }
 
@@ -88,7 +73,7 @@ export const PhotoUpload: React.FC = () => {
 
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        throw new Error(mapUploadError(data?.code, data?.error));
+        throw new Error(mapPhotoUploadError(data?.code, data?.error));
       }
 
       const uploaded = Array.isArray(data.uploaded) ? data.uploaded : [];
@@ -134,13 +119,13 @@ export const PhotoUpload: React.FC = () => {
         <form onSubmit={onSubmit} className="mt-6 space-y-4">
           {!siteSlug && (
             <div>
-              <label className="mb-2 block text-base font-medium text-gray-800">Upload token</label>
+              <label htmlFor="photo-upload-token" className="mb-2 block text-base font-medium text-gray-800">{PHOTO_UPLOAD_ACCESS_LABEL}</label>
               <input
                 id="photo-upload-token"
                 value={token}
                 onChange={(e) => setToken(e.target.value)}
                 className="w-full rounded-xl border border-gray-300 px-4 py-3 text-base"
-                placeholder="Paste upload token"
+                placeholder={PHOTO_UPLOAD_ACCESS_PLACEHOLDER}
                 required
               />
             </div>
