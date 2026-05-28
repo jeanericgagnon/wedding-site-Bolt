@@ -7,6 +7,7 @@ import { TEMPLATE_USE_CASE_PACKS } from '../../builder/constants/templateUseCase
 import { clearSetupDraft, clearSetupDraftOnly, readSetupDraft, setupDraftProgress, type SetupDraft, writeSetupDraft } from '../../lib/setupDraft';
 import { deriveSetupMode, getRecommendedTemplates, SETUP_STYLE_OPTIONS } from '../../lib/setupDraftRecommendations';
 import { buildSetupReviewModel, buildSetupTemplateReason } from '../../lib/setupConcierge';
+import { mapSetupShellSaveError } from '../../lib/setupFlowCopy';
 
 const steps = [
   { key: 'migration', label: 'Migration' },
@@ -155,7 +156,7 @@ export const SetupShell: React.FC<{ step?: string }> = ({ step }) => {
       clearSetupDraftOnly();
       navigate('/builder');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not save your setup right now.');
+      setError(mapSetupShellSaveError(err));
     } finally {
       setSaving(false);
     }

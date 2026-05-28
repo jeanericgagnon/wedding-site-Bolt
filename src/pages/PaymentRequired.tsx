@@ -7,6 +7,11 @@ import { supabase } from '../lib/supabase';
 import { AuthSupportLinks } from '../components/auth/AuthSupportLinks';
 import { createCheckoutSession, fetchPaymentStatus, fetchWeddingSiteId, SessionExpiredError } from '../lib/stripeService';
 import { clearAllOnboardingContinuationState } from '../lib/onboardingContinuationCleanup';
+import {
+  mapPaymentCheckoutError,
+  mapPaymentSiteSetupError,
+  mapPaymentStatusError,
+} from '../lib/setupFlowCopy';
 
 const FEATURES = [
   'Your own wedding website with custom URL',
@@ -70,7 +75,7 @@ export const PaymentRequired: React.FC = () => {
     ensureMinimalWeddingSite(user.id, user.email)
       .then(id => setWeddingSiteId(id))
       .catch((err: unknown) => {
-        setError((err as Error).message || 'Could not finish setting up your account right now.');
+        setError(mapPaymentSiteSetupError(err));
       });
   }, [user]);
 
@@ -91,7 +96,7 @@ export const PaymentRequired: React.FC = () => {
         navigate('/login?reason=session_expired', { replace: true });
         return;
       }
-      setError(err instanceof Error ? err.message : 'Could not start checkout right now. Please try again.');
+      setError(mapPaymentCheckoutError(err));
       setLoading(false);
     }
   };
@@ -119,7 +124,7 @@ export const PaymentRequired: React.FC = () => {
         setError('Payment not confirmed yet. If you just paid, please wait a moment and try again.');
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not check payment status right now.');
+      setError(mapPaymentStatusError(err));
     } finally {
       setCheckingStatus(false);
     }

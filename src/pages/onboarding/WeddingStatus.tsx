@@ -5,6 +5,7 @@ import { Button, Card, Input, AddressInput } from '../../components/ui';
 import { supabase } from '../../lib/supabase';
 import { parseExpectedGuestCount } from '../../lib/weddingStatusGuestCount';
 import { clearOnboardingEntryReturnPath } from '../../lib/onboardingEntryCleanup';
+import { mapWeddingStatusSaveError } from '../../lib/setupFlowCopy';
 
 type PlanningStatus = 'not_engaged' | 'just_engaged' | 'venue_booked' | 'invitations_sent';
 
@@ -128,7 +129,7 @@ export const WeddingStatus: React.FC = () => {
         }
       });
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Failed to update status. Please try again.');
+      setError(mapWeddingStatusSaveError(err));
     } finally {
       setLoading(false);
     }

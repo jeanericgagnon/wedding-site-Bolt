@@ -4,6 +4,7 @@ import { Button } from '../ui';
 import { useAuth } from '../../hooks/useAuth';
 import { supabase } from '../../lib/supabase';
 import { createCheckoutSession } from '../../lib/stripeService';
+import { mapBillingUpgradeError } from '../../lib/setupFlowCopy';
 
 interface BillingModalProps {
   onClose: () => void;
@@ -50,7 +51,7 @@ export const BillingModal: React.FC<BillingModalProps> = ({ onClose, currentPlan
       );
       window.location.href = url;
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not start checkout. Please try again.');
+      setError(mapBillingUpgradeError(err));
       setLoading(false);
     }
   };
