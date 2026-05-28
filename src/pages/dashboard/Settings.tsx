@@ -31,6 +31,7 @@ import { formatSettingsDate } from './settingsDate';
 import { SETTINGS_SITE_SELECT } from './settingsSiteSelect';
 import { SettingsIdentityExportsPanel } from './SettingsIdentityExportsPanel';
 import { buildSiteAccessPlan } from './siteAccessPlan';
+import { DASHBOARD_WORKSPACE_REQUIRED_RETRY_ERROR } from '../../lib/supportSurfaceErrorCopy';
 import { getFlowStatusLabel } from '../../lib/flowLabels';
 import { resolveSettingsTabFromSearch, type SettingsTab } from './settingsTab';
 import { buildCollaboratorRoleGuide } from '../collaboratorRoleGuide';
@@ -586,40 +587,40 @@ export const DashboardSettings: React.FC = () => {
       if (!cleaned) { setSlugError('URL cannot be empty.'); setSlugSaving(false); return; }
 
       let targetSiteId = weddingSiteId;
-      if (!targetSiteId && user?.id) {
-        const { data: fallbackSite, error: fallbackSiteError } = await supabase
-          .from('wedding_sites')
-          .select('id')
-          .eq('id', (await resolveActiveSiteForUser(user.id))?.id ?? '')
-          .maybeSingle();
-        if (fallbackSiteError) throw fallbackSiteError;
-        targetSiteId = (fallbackSite?.id as string | null) ?? null;
-        if (targetSiteId) setWeddingSiteId(targetSiteId);
-      }
-      if (!targetSiteId) {
-        setSlugError('Could not find your website right now. Refresh and try again.');
-        setSlugSaving(false);
-        return;
-      }
-
-      const { data: existing, error: existingError } = await supabase
+    if (!targetSiteId && user?.id) {
+      const { data: fallbackSite, error: fallbackSiteError } = await supabase
         .from('wedding_sites')
         .select('id')
-        .eq('site_slug', cleaned)
+        .eq('id', (await resolveActiveSiteForUser(user.id))?.id ?? '')
         .maybeSingle();
-      if (existingError) throw existingError;
-      if (existing && existing.id !== targetSiteId) {
-        setSlugError('That URL is already taken. Please choose another.');
-        setSlugSaving(false);
-        return;
-      }
-      const { error } = await supabase
-        .from('wedding_sites')
-        .update({ site_slug: cleaned })
-        .eq('id', targetSiteId);
-      if (error) throw error;
-      setSiteSlug(cleaned);
-      setSlugSuccess(`Site URL updated to /${cleaned}`);
+      if (fallbackSiteError) throw fallbackSiteError;
+      targetSiteId = (fallbackSite?.id as string | null) ?? null;
+      if (targetSiteId) setWeddingSiteId(targetSiteId);
+    }
+    if (!targetSiteId) {
+      setSlugError(DASHBOARD_WORKSPACE_REQUIRED_RETRY_ERROR);
+      setSlugSaving(false);
+      return;
+    }
+
+    const { data: existing, error: existingError } = await supabase
+      .from('wedding_sites')
+      .select('id')
+      .eq('site_slug', cleaned)
+      .maybeSingle();
+    if (existingError) throw existingError;
+    if (existing && existing.id !== targetSiteId) {
+      setSlugError('That URL is already taken. Please choose another.');
+      setSlugSaving(false);
+      return;
+    }
+    const { error } = await supabase
+      .from('wedding_sites')
+      .update({ site_slug: cleaned })
+      .eq('id', targetSiteId);
+    if (error) throw error;
+    setSiteSlug(cleaned);
+    setSlugSuccess(`Site URL updated to /${cleaned}`);
     } catch (err) {
       setSlugError(mapSettingsError(err, SETTINGS_SLUG_SAVE_RETRY_ERROR));
     } finally {

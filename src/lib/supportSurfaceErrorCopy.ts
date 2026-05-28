@@ -2,6 +2,8 @@ import { customerSafeErrorMessage } from './customerSafeError';
 
 export const OVERVIEW_BRIEF_REFRESH_RETRY_ERROR = 'Could not refresh your draft from the saved brief right now.';
 export const OVERVIEW_SUGGESTION_HIDE_RETRY_ERROR = 'Could not hide that suggestion right now.';
+export const OVERVIEW_LOAD_RETRY_ERROR = "We couldn't load your overview right now. Please refresh and try again.";
+export const DASHBOARD_WORKSPACE_REQUIRED_RETRY_ERROR = "We couldn't find your website workspace right now. Please refresh and try again.";
 export const GUEST_PHOTO_SHARING_LOAD_RETRY_ERROR = 'Could not load photo sharing right now.';
 export const BUILDER_CUTOVER_OPEN_RETRY_ERROR = 'Could not open the builder right now.';
 export const GUEST_PHOTO_REMOVE_RETRY_ERROR = 'Could not remove that photo right now.';

@@ -60,6 +60,7 @@ import { buildOverviewThroughline } from './overviewThroughline';
 import { getFlowStatusLabel } from '../../lib/flowLabels';
 import {
   mapSupportSurfaceError,
+  OVERVIEW_LOAD_RETRY_ERROR,
   OVERVIEW_BRIEF_REFRESH_RETRY_ERROR,
   OVERVIEW_SUGGESTION_HIDE_RETRY_ERROR,
 } from '../../lib/supportSurfaceErrorCopy';
@@ -467,8 +468,8 @@ export const DashboardOverview: React.FC = () => {
         contactableGuestCount,
         recentRsvps,
       });
-    } catch {
-      setError('Could not load your overview right now.');
+    } catch (error) {
+      setError(mapSupportSurfaceError(error, OVERVIEW_LOAD_RETRY_ERROR));
     } finally {
       setLoading(false);
     }

@@ -2,8 +2,10 @@ import { describe, expect, it } from 'vitest';
 
 import {
   BUILDER_CUTOVER_OPEN_RETRY_ERROR,
+  DASHBOARD_WORKSPACE_REQUIRED_RETRY_ERROR,
   GUEST_PHOTO_CREATE_BUCKET_RETRY_ERROR,
   GUEST_PHOTO_SHARING_LOAD_RETRY_ERROR,
+  OVERVIEW_LOAD_RETRY_ERROR,
   OVERVIEW_BRIEF_REFRESH_RETRY_ERROR,
   mapSupportSurfaceError,
 } from './supportSurfaceErrorCopy';
@@ -29,6 +31,8 @@ describe('supportSurfaceErrorCopy', () => {
 
   it('keeps support-surface recovery copy calm and customer-safe', () => {
     expect(OVERVIEW_BRIEF_REFRESH_RETRY_ERROR).toBe('Could not refresh your draft from the saved brief right now.');
+    expect(OVERVIEW_LOAD_RETRY_ERROR).toBe("We couldn't load your overview right now. Please refresh and try again.");
+    expect(DASHBOARD_WORKSPACE_REQUIRED_RETRY_ERROR).toBe("We couldn't find your website workspace right now. Please refresh and try again.");
     expect(GUEST_PHOTO_SHARING_LOAD_RETRY_ERROR).toBe('Could not load photo sharing right now.');
     expect(GUEST_PHOTO_CREATE_BUCKET_RETRY_ERROR).toBe('Could not create that photo bucket right now.');
   });

@@ -57,6 +57,7 @@ import {
   GUESTS_UPDATE_RETRY_ERROR,
   mapGuestDashboardError,
 } from './guestErrorCopy';
+import { DASHBOARD_WORKSPACE_REQUIRED_RETRY_ERROR } from '../../lib/supportSurfaceErrorCopy';
 import * as XLSX from 'xlsx';
 
 interface Guest {
@@ -2415,7 +2416,7 @@ Proceed with send?`)) return;
       if (resolvedSiteId) setWeddingSiteId(resolvedSiteId);
     }
     if (!resolvedSiteId && !isDemoMode) {
-      toast('Could not find your website right now. Refresh and try again.', 'error');
+      toast(DASHBOARD_WORKSPACE_REQUIRED_RETRY_ERROR, 'error');
       return;
     }
 

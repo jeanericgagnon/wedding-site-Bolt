@@ -26,6 +26,7 @@ import {
   mapItineraryError,
 } from './itineraryErrorCopy';
 import { getFlowStatusLabel } from '../../lib/flowLabels';
+import { DASHBOARD_WORKSPACE_REQUIRED_RETRY_ERROR } from '../../lib/supportSurfaceErrorCopy';
 
 interface ItineraryEvent {
   id: string;
@@ -442,7 +443,7 @@ export const DashboardItinerary: React.FC = () => {
         .single();
 
       if (!site) {
-        setSaveError('Could not find your website right now. Please refresh and try again.');
+        setSaveError(DASHBOARD_WORKSPACE_REQUIRED_RETRY_ERROR);
         return;
       }
 
