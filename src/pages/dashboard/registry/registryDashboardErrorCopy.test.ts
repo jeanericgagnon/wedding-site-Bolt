@@ -4,6 +4,7 @@ import {
   REGISTRY_DASHBOARD_ITEMS_LOAD_RETRY_ERROR,
   REGISTRY_DASHBOARD_LOAD_ERROR,
   REGISTRY_DASHBOARD_SETUP_RETRY_ERROR,
+  REGISTRY_BARCODE_LOOKUP_RETRY_ERROR,
   REGISTRY_REFRESH_POLICY_SAVE_RETRY_ERROR,
   REGISTRY_DUPLICATE_MERGE_RETRY_ERROR,
   REGISTRY_DUPLICATE_REVIEW_COPY_RETRY_ERROR,
@@ -11,6 +12,7 @@ import {
   REGISTRY_ITEM_SAVE_RETRY_ERROR,
   REGISTRY_ITEM_PURCHASE_RETRY_ERROR,
   REGISTRY_ITEM_PURCHASE_RESET_RETRY_ERROR,
+  REGISTRY_LINK_AUTOFILL_RETRY_ERROR,
   REGISTRY_METADATA_REFRESH_RETRY_ERROR,
   REGISTRY_METADATA_REIMPORT_RETRY_ERROR,
   REGISTRY_THANK_YOU_SAVE_RETRY_ERROR,
@@ -42,6 +44,8 @@ describe('registryDashboardErrorCopy', () => {
     expect(REGISTRY_DASHBOARD_SETUP_RETRY_ERROR).toBe('Could not finish setup right now. Please try again.');
     expect(REGISTRY_DASHBOARD_LOAD_ERROR).toBe('Could not load registry right now. Try again in a moment.');
     expect(REGISTRY_REFRESH_POLICY_SAVE_RETRY_ERROR).toBe('Could not save refresh settings right now. Please try again.');
+    expect(REGISTRY_BARCODE_LOOKUP_RETRY_ERROR).toBe('We could not look up that barcode right now. You can still enter the gift details by hand.');
+    expect(REGISTRY_LINK_AUTOFILL_RETRY_ERROR).toBe('We could not fill this automatically. You can still add the details by hand.');
     expect(REGISTRY_METADATA_REFRESH_RETRY_ERROR).toBe('Could not refresh gift details right now. Please try again.');
     expect(REGISTRY_METADATA_REIMPORT_RETRY_ERROR).toBe('Could not refresh this gift right now. Try Edit if the store page is light on details.');
     expect(REGISTRY_DUPLICATE_REVIEW_COPY_RETRY_ERROR).toBe('Could not copy the duplicate review list right now.');

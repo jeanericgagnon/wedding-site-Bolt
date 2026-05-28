@@ -6,10 +6,14 @@ import { normalizeUrl, isValidUrl } from '../../../lib/urlUtils';
 import type { RegistryBarcodeLookupResult, RegistryItem, RegistryItemDraft, RegistryPreview, MetadataConfidence, RegistrySourceType } from './registryTypes';
 import { computeConfidence, deriveRegistryStoreNameFromUrl, getRegistryLinkOnlyTitle, isBadRegistryProductTitle } from './registryTypes';
 import { getSafePublicImageUrl, getSafePublicWebUrl } from '../../../sections/publicLinks';
-import { customerSafeErrorMessage } from '../../../lib/customerSafeError';
 import { normalizeRegistryBarcode } from '../../../lib/registryBarcode';
 import { RegistryBarcodeScanner } from './RegistryBarcodeScanner';
-import { REGISTRY_ITEM_SAVE_RETRY_ERROR, safeRegistryDashboardError } from './registryDashboardErrorCopy';
+import {
+  REGISTRY_BARCODE_LOOKUP_RETRY_ERROR,
+  REGISTRY_ITEM_SAVE_RETRY_ERROR,
+  REGISTRY_LINK_AUTOFILL_RETRY_ERROR,
+  safeRegistryDashboardError,
+} from './registryDashboardErrorCopy';
 
 interface Props {
   initial?: RegistryItem | null;
@@ -414,7 +418,7 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [],
       }
     } catch (error) {
       setBarcodeLookup(null);
-      setBarcodeLookupError(customerSafeErrorMessage(error, 'We could not look up that barcode. You can still enter the gift details by hand.'));
+      setBarcodeLookupError(safeRegistryDashboardError(error, REGISTRY_BARCODE_LOOKUP_RETRY_ERROR));
     } finally {
       setBarcodeLookingUp(false);
     }
@@ -520,7 +524,7 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [],
         };
       });
     } catch (err: unknown) {
-      setFetchError(customerSafeErrorMessage(err, 'We could not fill this automatically. You can still add the details by hand.'));
+      setFetchError(safeRegistryDashboardError(err, REGISTRY_LINK_AUTOFILL_RETRY_ERROR));
       setDraft(prev => ({
         ...prev,
         item_url: prev.item_url || normalized,

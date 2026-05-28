@@ -2,7 +2,11 @@ import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { RegistryItemForm } from './RegistryItemForm';
-import { REGISTRY_ITEM_SAVE_RETRY_ERROR } from './registryDashboardErrorCopy';
+import {
+  REGISTRY_BARCODE_LOOKUP_RETRY_ERROR,
+  REGISTRY_ITEM_SAVE_RETRY_ERROR,
+  REGISTRY_LINK_AUTOFILL_RETRY_ERROR,
+} from './registryDashboardErrorCopy';
 import type { RegistryItem } from './registryTypes';
 import { fetchUrlPreview, findDuplicateItem, lookupRegistryBarcode } from './registryService';
 
@@ -416,6 +420,45 @@ describe('RegistryItemForm', () => {
 
     await waitFor(() => expect(findDuplicateItem).toHaveBeenCalled());
     expect(screen.getByText(/review the existing gift before keeping another copy/i)).toBeInTheDocument();
+  });
+
+  it('shows shared safe copy when barcode lookup fails', async () => {
+    vi.mocked(lookupRegistryBarcode).mockRejectedValueOnce(new Error('provider timeout token=abc'));
+
+    render(
+      <RegistryItemForm
+        existingItems={[]}
+        onSave={vi.fn(async () => {})}
+        onCancel={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /scan barcode/i }));
+    fireEvent.change(screen.getByPlaceholderText(/upc, ean, gtin, or isbn/i), {
+      target: { value: '036000291452' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: /^look up$/i }));
+
+    await waitFor(() => expect(screen.getByText(REGISTRY_BARCODE_LOOKUP_RETRY_ERROR)).toBeInTheDocument());
+  });
+
+  it('shows shared safe copy when link autofill fails', async () => {
+    vi.mocked(fetchUrlPreview).mockRejectedValueOnce(new Error('provider timeout token=abc'));
+
+    render(
+      <RegistryItemForm
+        existingItems={[]}
+        onSave={vi.fn(async () => {})}
+        onCancel={vi.fn()}
+      />,
+    );
+
+    fireEvent.change(screen.getByPlaceholderText(/amazon\.com\/product/i), {
+      target: { value: 'https://example.com/product' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: /fill details/i }));
+
+    await waitFor(() => expect(screen.getByText(REGISTRY_LINK_AUTOFILL_RETRY_ERROR)).toBeInTheDocument());
   });
 
   it('shows shared safe copy when saving a gift fails', async () => {
