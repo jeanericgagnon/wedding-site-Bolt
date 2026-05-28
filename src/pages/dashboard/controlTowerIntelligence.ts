@@ -329,7 +329,7 @@ export function buildControlTowerBriefing(input: ControlTowerIntelligenceInput):
         { label: 'Return to live-day polish', detail: 'Only after the schedule is trustworthy should the softer guest-facing layers regain attention.', status: 'then' },
       ],
       primaryAction: { label: 'Open itinerary', target: 'itinerary' },
-      secondaryAction: { label: 'Open site polish', target: 'builder-polish' },
+      secondaryAction: { label: 'Open legacy site polish', target: 'builder-polish' },
     };
   }
 
@@ -354,7 +354,7 @@ export function buildControlTowerBriefing(input: ControlTowerIntelligenceInput):
         { label: 'Return to broader polish', detail: 'Broaden the lane only once the initial registry path already feels dependable.', status: 'then' },
       ],
       primaryAction: { label: 'Open registry', target: 'registry' },
-      secondaryAction: { label: 'Open site polish', target: 'builder-polish' },
+      secondaryAction: { label: 'Open legacy site polish', target: 'builder-polish' },
     };
   }
 
@@ -380,10 +380,10 @@ export function buildControlTowerBriefing(input: ControlTowerIntelligenceInput):
       sequence: [
         { label: 'Activate a photo sharing path', detail: 'Open the simplest live contribution path first so the memory layer actually starts moving.', status: 'current' },
         { label: 'Check the guest photo sharing path', detail: 'A single working lane teaches you more than several empty promises.', status: 'next' },
-        { label: 'Return to site polish', detail: 'Once guests are participating, let that real signal shape the next polish decisions.', status: 'then' },
+        { label: 'Return to legacy site polish', detail: 'Once guests are participating, let that real signal shape the next polish decisions.', status: 'then' },
       ],
       primaryAction: { label: 'Review photos', target: 'photos' },
-      secondaryAction: { label: 'Open site polish', target: 'builder-polish' },
+      secondaryAction: { label: 'Open legacy site polish', target: 'builder-polish' },
     };
   }
 
@@ -431,7 +431,7 @@ export function buildControlTowerBriefing(input: ControlTowerIntelligenceInput):
       { label: 'Review guests if needed', detail: 'If a real guest signal rises, let it redirect the next move instead of reopening everything by default.', status: 'next' },
       { label: 'Leave the board calm', detail: 'Once that contained move is done, leave the rest of the system steady until reality changes.', status: 'then' },
     ],
-    primaryAction: { label: 'Open site polish', target: 'builder-polish' },
+    primaryAction: { label: 'Open legacy site polish', target: 'builder-polish' },
     secondaryAction: { label: 'Review guests', target: 'guests' },
   };
 }

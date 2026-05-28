@@ -36,8 +36,9 @@ describe('buildCoupleFocusModel', () => {
     });
 
     expect(model.headline).toMatch(/planning pressure/i);
-    expect(model.watchout).toMatch(/real deadlines|productive-feeling detour/i);
+    expect(model.watchout).toMatch(/real deadlines|legacy site polish lane|productive-feeling detour/i);
     expect(model.steps[0]).toMatchObject({ id: 'planning', target: 'planning-tasks' });
+    expect(model.steps[2]).toMatchObject({ id: 'polish', target: 'builder-polish', ctaLabel: 'Return to legacy site polish' });
   });
 
   it('routes vendor pressure to the vendor planning lane', () => {
@@ -91,7 +92,28 @@ describe('buildCoupleFocusModel', () => {
     expect(model.headline).toMatch(/weekend timeline/i);
     expect(model.watchout).toMatch(/itinerary spine|site never clearly explained/i);
     expect(model.steps[0]).toMatchObject({ id: 'itinerary', target: 'itinerary' });
-    expect(model.steps[1]?.id).toBe('launch');
+    expect(model.steps[1]).toMatchObject({ id: 'launch', target: 'builder-polish', ctaLabel: 'Open legacy site polish' });
+  });
+
+  it('keeps calm-window polish actions explicit about the legacy editor lane', () => {
+    const model = buildCoupleFocusModel({
+      daysUntilWedding: 80,
+      isPublished: true,
+      isArchiveLike: false,
+      publishBlockerCount: 0,
+      pendingGuestCount: 0,
+      contactGapCount: 0,
+      overdueTaskCount: 0,
+      dueSoonVendorCount: 0,
+      seatingUnassignedCount: 0,
+      itineraryEventCount: 2,
+    });
+
+    expect(model.steps[0]).toMatchObject({
+      id: 'polish',
+      target: 'builder-polish',
+      ctaLabel: 'Open legacy site polish',
+    });
   });
 
   it('surfaces restricted guest access as the couple focus when the site is live and the wedding is close', () => {

@@ -112,7 +112,7 @@ describe('buildControlTowerBriefing', () => {
 
     expect(briefing.title).toContain('guest-facing schedule');
     expect(briefing.primaryAction).toMatchObject({ target: 'itinerary' });
-    expect(briefing.secondaryAction).toMatchObject({ target: 'builder-polish' });
+    expect(briefing.secondaryAction).toMatchObject({ label: 'Open legacy site polish', target: 'builder-polish' });
   });
 
   it('describes inactive photo albums as a photo sharing path for guests', () => {
@@ -202,7 +202,7 @@ describe('buildControlTowerBriefing', () => {
     expect(briefing.bestNextMove).toMatch(/contained quality pass|board stay calm/i);
     expect(briefing.decisionRule).toMatch(/restraint beats churn/i);
     expect(briefing.watchout).toMatch(/available time|unnecessary churn/i);
-    expect(briefing.primaryAction).toMatchObject({ target: 'builder-polish' });
+    expect(briefing.primaryAction).toMatchObject({ label: 'Open legacy site polish', target: 'builder-polish' });
     expect(briefing.sequence[2]?.detail).toMatch(/leave the rest of the system steady/i);
   });
 });

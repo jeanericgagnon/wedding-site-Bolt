@@ -104,7 +104,7 @@ export function buildCoupleFocusModel(input: CoupleFocusInput): CoupleFocusModel
     return {
       headline: 'Planning pressure is the main couple focus',
       summary: 'The site is not the thing slipping now. Clearing the operational pressure will buy back more calm than more website tweaks.',
-      watchout: 'If real deadlines are still pulling focus, using site polish as a productive-feeling detour can leave the calendar just as risky and the couple more tired.',
+      watchout: 'If real deadlines are still pulling focus, using the legacy site polish lane as a productive-feeling detour can leave the calendar just as risky and the couple more tired.',
       steps: [
         step('current', {
           id: 'planning',
@@ -129,7 +129,7 @@ export function buildCoupleFocusModel(input: CoupleFocusInput): CoupleFocusModel
           title: 'Then use polish as a reward, not a detour',
           detail: 'That is the moment for copy and visual polish, not while real deadlines are still pulling focus.',
           target: 'builder-polish',
-          ctaLabel: 'Return to site polish',
+          ctaLabel: 'Return to legacy site polish',
         }),
       ],
     };
@@ -160,7 +160,7 @@ export function buildCoupleFocusModel(input: CoupleFocusInput): CoupleFocusModel
         step('then', {
           id: 'polish',
           title: 'Then return to polish with confidence',
-          detail: 'That is when the site polish actually helps instead of covering for unanswered guest basics.',
+          detail: 'That is when the legacy site polish lane actually helps instead of covering for unanswered guest basics.',
           target: 'settings',
           ctaLabel: 'Review access settings',
         }),
@@ -210,7 +210,7 @@ export function buildCoupleFocusModel(input: CoupleFocusInput): CoupleFocusModel
           title: 'Preview the guest-facing schedule',
           detail: 'Once the anchors are in, check the public timeline and make sure guests can understand the flow without asking you to decode it.',
           target: 'builder-polish',
-          ctaLabel: 'Open site polish',
+          ctaLabel: 'Open legacy site polish',
         }),
         step('then', {
           id: 'day-of',
@@ -274,7 +274,7 @@ export function buildCoupleFocusModel(input: CoupleFocusInput): CoupleFocusModel
           title: 'Then use polish very selectively',
           detail: 'Only make changes that clearly reduce guest confusion or day-of friction.',
           target: 'builder-polish',
-          ctaLabel: 'Open site polish',
+          ctaLabel: 'Open legacy site polish',
         }),
       ],
     };
@@ -290,7 +290,7 @@ export function buildCoupleFocusModel(input: CoupleFocusInput): CoupleFocusModel
         title: 'Strengthen the guest-facing quality',
         detail: 'Use this calm window to make the site feel clearer, warmer, and easier to trust.',
         target: 'builder-polish',
-        ctaLabel: 'Open site polish',
+        ctaLabel: 'Open legacy site polish',
       }),
       step('next', {
         id: 'planning',
