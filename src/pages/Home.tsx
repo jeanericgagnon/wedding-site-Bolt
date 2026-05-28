@@ -25,7 +25,7 @@ const detailImage = asset('photos/engagement/053d97ba-331e-4d85-93f9-7986e70e287
 
 const heroStats = [
   ['Site', 'Templates, travel, registry, and RSVP in one public home.'],
-  ['Guests', 'Households, messages, meals, seating, and check-in stay connected.'],
+  ['Guests', 'Households, RSVP details, review-before-send updates, seating, and check-in stay connected.'],
   ['After', 'Photos, guestbook, vault, recap, and name-change follow-through.'],
 ] as const;
 
@@ -183,7 +183,7 @@ export const Home: React.FC = () => {
               </HeroReveal>
               <HeroReveal delay={0.16}>
                 <p className="mt-6 max-w-2xl text-lg leading-relaxed text-white opacity-90 md:text-xl">
-                  Build the wedding site, manage the guest list, run RSVP and messages, collect photos, and hand the day-of details to the right people from one place.
+                  Build the wedding site, manage the guest list, run RSVP and guest updates, open photo sharing, and hand the day-of details to the right people from one place.
                 </p>
               </HeroReveal>
               <HeroReveal delay={0.24}>
@@ -453,7 +453,7 @@ export const Home: React.FC = () => {
                   Simple, honest pricing.
                 </h2>
                 <p className="mt-4 max-w-2xl text-base leading-relaxed text-ink/72">
-                  $49 flat fee for two years. Auto-renew stays off by default. You get the website, RSVP, guests, messaging, seating, registry, itinerary, photos, and day-of coordination in one place.
+                  $49 flat fee for two years. Auto-renew stays off by default. You get the website, RSVP, guests, review-before-send messaging, seating, registry, itinerary, photo sharing, and day-of coordination in one place.
                 </p>
               </div>
             </Reveal>
@@ -464,7 +464,7 @@ export const Home: React.FC = () => {
                   <span className="text-sm text-ink/64">for two years</span>
                 </div>
                 <ul className="mt-6 grid gap-3 text-sm text-ink/72">
-                  {['Wedding website and templates', 'Guest list, RSVP, messages, and seating', 'Photos, guestbook, registry, itinerary, and coordinator tools', 'No surprise auto-renewal'].map((item) => (
+                  {['Wedding website and templates', 'Guest list, RSVP, message drafts, and seating', 'Photo sharing, guestbook, registry, itinerary, and coordinator tools', 'No surprise auto-renewal'].map((item) => (
                     <li key={item} className="flex gap-2">
                       <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-brand" />
                       <span>{item}</span>
