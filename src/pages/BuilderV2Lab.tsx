@@ -102,6 +102,10 @@ import {
   type BuilderV2LaunchGatePreviewCoverage,
   type BuilderV2LaunchGateAction,
 } from './builderV2LaunchGate';
+import {
+  buildBuilderV2PreviewCoverage,
+  buildBuilderV2PreviewReviewKey,
+} from './builderV2PreviewReviewState';
 import { buildBuilderV2ExportGate } from './builderV2ExportGate';
 import {
   buildBuilderV2BlockFieldDescriptors,
@@ -617,7 +621,6 @@ export const BuilderV2Lab: React.FC = () => {
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
 
   const activeSnapshot = history[historyIndex] ?? history[0];
-  const activeSnapshotId = activeSnapshot?.id ?? '';
   const pages = useMemo(() => activeSnapshot?.pages ?? [], [activeSnapshot]);
   const sectionBlocks = useMemo(() => activeSnapshot?.sectionBlocks ?? {}, [activeSnapshot]);
   const activePage = pages.find((page) => page.id === selectedPageId) ?? pages[0];
@@ -1515,26 +1518,19 @@ export const BuilderV2Lab: React.FC = () => {
     [documentPages, previewDevice],
   );
   const previewReviewed = useMemo<Record<'desktop' | 'mobile', BuilderV2LaunchGatePreviewCoverage>>(() => {
-    const visiblePages = documentPages.filter((page) => !page.hidden && page.sections.some((section) => section.enabled));
-    const buildCoverage = (device: 'desktop' | 'mobile'): BuilderV2LaunchGatePreviewCoverage => {
-      const reviewedMap = previewReviewedSnapshots[device];
-      const reviewedPages = visiblePages.filter((page) => Boolean(activeSnapshotId) && reviewedMap[page.id] === activeSnapshotId);
-      const nextPage = visiblePages.find((page) => !reviewedPages.some((reviewed) => reviewed.id === page.id)) ?? null;
-
-      return {
-        reviewedPageCount: reviewedPages.length,
-        totalPageCount: visiblePages.length,
-        currentPageReviewed: Boolean(activeSnapshotId) && reviewedMap[activePage.id] === activeSnapshotId,
-        nextPageId: nextPage?.id ?? null,
-        nextPageTitle: nextPage?.title ?? null,
-      };
-    };
-
     return {
-      desktop: buildCoverage('desktop'),
-      mobile: buildCoverage('mobile'),
+      desktop: buildBuilderV2PreviewCoverage({
+        pages: documentPages,
+        reviewedPages: previewReviewedSnapshots.desktop,
+        activePageId: activePage.id,
+      }),
+      mobile: buildBuilderV2PreviewCoverage({
+        pages: documentPages,
+        reviewedPages: previewReviewedSnapshots.mobile,
+        activePageId: activePage.id,
+      }),
     };
-  }, [activePage.id, activeSnapshotId, documentPages, previewReviewedSnapshots]);
+  }, [activePage.id, documentPages, previewReviewedSnapshots]);
   const launchGate = useMemo(
     () => buildBuilderV2LaunchGate({
       pages: documentPages,
@@ -1727,7 +1723,8 @@ export const BuilderV2Lab: React.FC = () => {
   }, []);
 
   const markPreviewReviewed = useCallback((device: 'desktop' | 'mobile') => {
-    if (!activeSnapshotId) {
+    const activeReviewPage = documentPages.find((page) => page.id === activePage.id) ?? null;
+    if (!activeReviewPage) {
       notify('Preview review state is not ready yet');
       return;
     }
@@ -1736,11 +1733,11 @@ export const BuilderV2Lab: React.FC = () => {
       ...prev,
       [device]: {
         ...prev[device],
-        [activePage.id]: activeSnapshotId,
+        [activePage.id]: buildBuilderV2PreviewReviewKey(activeReviewPage),
       },
     }));
     notify(`Marked ${activePage.title} checked on ${device}`);
-  }, [activePage.id, activePage.title, activeSnapshotId, notify]);
+  }, [activePage.id, activePage.title, documentPages, notify]);
 
   const runHandoffAction = useCallback(() => {
     switch (handoffGuidance.primaryAction) {
