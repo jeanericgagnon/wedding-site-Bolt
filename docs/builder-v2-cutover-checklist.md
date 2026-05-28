@@ -36,6 +36,10 @@ Status: draft (post-lab hardening)
 - [x] unit tests for `toBuilderV2Document` and default block mapping
 - [x] unit tests for import sanitization fallback (`unknown block -> text`)
 - [ ] smoke test script path for `/dashboard/builder` primary route plus `/dashboard/builder-guide` fallback guide
+  - Dedicated command paths now exist:
+    - `npm run proof:v1:builder-v2-cutover`
+    - `npm run test:e2e:builder-cutover`
+  - Keep this open until a current signed browser run is logged against both routes.
 - [ ] CI gate includes typecheck + build + v2 adapter tests
 
 ## 4) Rollout Strategy
