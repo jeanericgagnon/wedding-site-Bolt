@@ -6,6 +6,7 @@ import {
   getFirstIncompleteChecklistItem,
   getArchivePhotoMemoryCopy,
   getIncompleteChecklistItems,
+  getOverviewPublishActionLabel,
   getPublishBuilderRoute,
   type OverviewChecklistStats,
 } from './overviewUtils';
@@ -35,7 +36,8 @@ describe('overviewUtils', () => {
   it('builds setup checklist publish item with correct action label/route', () => {
     const draftItems = buildSetupChecklist(base);
     const draftPublish = draftItems.find((i) => i.id === 'publish');
-    expect(draftPublish?.actionLabel).toBe('Go live');
+    expect(draftPublish?.label).toBe('Share with guests once');
+    expect(draftPublish?.actionLabel).toBe('Open launch review');
     expect(draftPublish?.route).toBe('/dashboard/builder?publishNow=1');
 
     const liveItems = buildSetupChecklist({ ...base, isPublished: true });
@@ -89,12 +91,18 @@ describe('overviewUtils', () => {
 
   it('switches published readiness route/action once published toggles true', () => {
     const draftPublishedItem = buildPublishReadinessItems(base).find((i) => i.id === 'published');
-    expect(draftPublishedItem?.actionLabel).toBe('Go live');
+    expect(draftPublishedItem?.label).toBe('Website has been shared with guests once');
+    expect(draftPublishedItem?.actionLabel).toBe('Open launch review');
     expect(draftPublishedItem?.route).toBe('/dashboard/builder?publishNow=1');
 
     const livePublishedItem = buildPublishReadinessItems({ ...base, isPublished: true }).find((i) => i.id === 'published');
     expect(livePublishedItem?.actionLabel).toBe('Open site editor');
     expect(livePublishedItem?.route).toBe('/dashboard/builder');
+  });
+
+  it('keeps the draft publish CTA framed as review instead of immediate go-live', () => {
+    expect(getOverviewPublishActionLabel(false)).toBe('Open launch review');
+    expect(getOverviewPublishActionLabel(true)).toBe('Open site editor');
   });
 
   it('keeps archive photo memory copy aligned with photo sharing truth', () => {

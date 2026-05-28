@@ -26,6 +26,9 @@ export interface ChecklistItemDef {
 export const getPublishBuilderRoute = (isPublished: boolean): string =>
   isPublished ? BUILDER_WORKSPACE_ROUTES.defaultEditor : getBuilderLaunchChecklistRoute();
 
+export const getOverviewPublishActionLabel = (isPublished: boolean): string =>
+  isPublished ? 'Open site editor' : 'Open launch review';
+
 export const buildSetupChecklist = (stats: OverviewChecklistStats): ChecklistItemDef[] => [
   {
     id: 'names',
@@ -64,9 +67,9 @@ export const buildSetupChecklist = (stats: OverviewChecklistStats): ChecklistIte
   },
   {
     id: 'publish',
-    label: 'Go live once',
+    label: 'Share with guests once',
     done: stats.isPublished,
-    actionLabel: stats.isPublished ? 'Open site editor' : 'Go live',
+    actionLabel: getOverviewPublishActionLabel(stats.isPublished),
     route: getPublishBuilderRoute(stats.isPublished),
   },
 ];
@@ -109,9 +112,9 @@ export const buildPublishReadinessItems = (stats: OverviewChecklistStats): Check
   },
   {
     id: 'published',
-    label: 'Website has gone live once',
+    label: 'Website has been shared with guests once',
     done: Boolean(stats.isPublished),
-    actionLabel: stats.isPublished ? 'Open site editor' : 'Go live',
+    actionLabel: getOverviewPublishActionLabel(stats.isPublished),
     route: getPublishBuilderRoute(stats.isPublished),
   },
 ];
