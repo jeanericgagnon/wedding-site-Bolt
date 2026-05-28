@@ -2,16 +2,16 @@ import { describe, expect, it } from 'vitest';
 import { buildSiteAccessPlan } from './siteAccessPlan';
 
 describe('buildSiteAccessPlan', () => {
-  it('keeps launch-first guidance when the site is not live yet', () => {
+  it('keeps launch-first guidance when the site is still draft-only', () => {
     const plan = buildSiteAccessPlan({
       isPublished: false,
       privacyMode: 'password_protected',
       siteSlug: 'maya-leo',
     });
 
-    expect(plan.focusTitle).toMatch(/launch the live guest path/i);
-    expect(plan.bestNextMove).toMatch(/Publish the live guest-facing site/i);
-    expect(plan.decisionRule).toMatch(/clear live path/i);
+    expect(plan.focusTitle).toMatch(/launch the real guest-facing path/i);
+    expect(plan.bestNextMove).toMatch(/Publish the guest-facing site/i);
+    expect(plan.decisionRule).toMatch(/clear guest-facing path/i);
     expect(plan.watchout).toMatch(/dead end/i);
     expect(plan.steps[0]).toMatchObject({ status: 'current', id: 'publish' });
     expect(plan.steps[1]?.title).toMatch(/password/i);
@@ -19,7 +19,7 @@ describe('buildSiteAccessPlan', () => {
     expect(plan.sequence[0]?.title).toMatch(/front door|launch/i);
   });
 
-  it('pushes password handoff first for a protected live site', () => {
+  it('pushes password handoff first for a protected shared site', () => {
     const plan = buildSiteAccessPlan({
       isPublished: true,
       privacyMode: 'password_protected',
@@ -34,7 +34,7 @@ describe('buildSiteAccessPlan', () => {
     expect(plan.sequence[1]?.detail).toMatch(/reminders|QR cards|handoff/i);
   });
 
-  it('pushes the invite-only path first for an invite-only live site', () => {
+  it('pushes the invite-only path first for an invite-only shared site', () => {
     const plan = buildSiteAccessPlan({
       isPublished: true,
       privacyMode: 'invite_only',
@@ -47,10 +47,10 @@ describe('buildSiteAccessPlan', () => {
     expect(plan.watchout).toMatch(/generic fallback link/i);
     expect(plan.steps[0]).toMatchObject({ status: 'current', id: 'access' });
     expect(plan.steps[0]?.title).toMatch(/invite-only path/i);
-    expect(plan.sequence[2]?.detail).toMatch(/stable live experience|worth the change/i);
+    expect(plan.sequence[2]?.detail).toMatch(/stable shared experience|worth the change/i);
   });
 
-  it('treats a public live site as a consistency and restraint problem, not an access problem', () => {
+  it('treats a public shared site as a consistency and restraint problem, not an access problem', () => {
     const plan = buildSiteAccessPlan({
       isPublished: true,
       privacyMode: 'public',
@@ -62,6 +62,6 @@ describe('buildSiteAccessPlan', () => {
     expect(plan.watchout).toMatch(/alternate links|mixed instructions/i);
     expect(plan.steps[0]).toMatchObject({ status: 'current', id: 'share' });
     expect(plan.steps[1]?.title).toMatch(/republish/i);
-    expect(plan.sequence[0]?.detail).toMatch(/same live URL|trustworthy route/i);
+    expect(plan.sequence[0]?.detail).toMatch(/same shared URL|trustworthy route/i);
   });
 });

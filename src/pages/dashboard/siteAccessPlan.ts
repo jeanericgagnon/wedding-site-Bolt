@@ -42,17 +42,17 @@ export function buildSiteAccessPlan(input: SiteAccessPlanInput): SiteAccessPlanM
 
   if (!input.isPublished) {
     return {
-      focusTitle: 'Launch the live guest path before you optimize access language',
-      focusDetail: 'Until the site is genuinely live, every access decision is still theoretical. Make the guest-facing route real first, then lock the handoff around it.',
-      bestNextMove: 'Publish the live guest-facing site before you polish password, invite, or print-pack language.',
-      decisionRule: 'A clear live path beats polished access instructions that still point to a draft.',
-      watchout: 'If you start printing cards or sharing reminders before the live path exists, guests will remember the dead end longer than the later fix.',
+      focusTitle: 'Launch the real guest-facing path before you optimize access language',
+      focusDetail: 'Until the site is genuinely shared, every access decision is still theoretical. Make the guest-facing route real first, then lock the handoff around it.',
+      bestNextMove: 'Publish the guest-facing site before you polish password, invite, or print-pack language.',
+      decisionRule: 'A clear guest-facing path beats polished access instructions that still point to a draft.',
+      watchout: 'If you start printing cards or sharing reminders before the guest-facing path exists, guests will remember the dead end longer than the later fix.',
       steps: [
         {
           id: 'publish',
           status: 'current',
-          title: 'Make the guest-facing site live',
-          detail: 'Finish the live publish first so the URL and access rules point to something guests can actually trust.',
+          title: 'Make the guest-facing site real',
+          detail: 'Finish the publish first so the URL and access rules point to something guests can actually trust.',
         },
         {
           id: 'access',
@@ -63,32 +63,32 @@ export function buildSiteAccessPlan(input: SiteAccessPlanInput): SiteAccessPlanM
               ? 'Confirm the password instructions'
               : 'Generate the invite-only path',
           detail: input.privacyMode === 'public'
-            ? 'Once the live site is up, check that the public path is the one you want guests to see.'
+            ? 'Once the shared site is up, check that the public path is the one you want guests to see.'
             : input.privacyMode === 'password_protected'
-              ? 'Once the site is live, make sure the password guests need is ready to travel with every reminder and print pack.'
-              : 'Once the site is live, save settings so the invite-only path exists before you start sharing it.',
+              ? 'Once the site is shared, make sure the password guests need is ready to travel with every reminder and print pack.'
+              : 'Once the site is shared, save settings so the invite-only path exists before you start sharing it.',
         },
         {
           id: 'share',
           status: 'then',
           title: 'Share one consistent guest path',
-          detail: 'Only after the live site and access rules are steady should guest-facing handoff links, QR cards, and reminders fan out broadly.',
+          detail: 'Only after the shared site and access rules are steady should guest-facing handoff links, QR cards, and reminders fan out broadly.',
         },
       ],
       sequence: buildSiteAccessSequence(
         {
           id: 'publish',
           title: 'Launch the real guest front door',
-          detail: 'Make the site genuinely live first so every later access choice points to a route guests can actually trust.',
+          detail: 'Make the site genuinely shared first so every later access choice points to a route guests can actually trust.',
         },
         {
           id: 'access',
           title: input.privacyMode === 'public' ? 'Confirm the open route' : input.privacyMode === 'password_protected' ? 'Lock the protected instructions' : 'Create the invite-only route',
           detail: input.privacyMode === 'public'
-            ? 'Once live, confirm the public route is the exact one you want every guest-facing asset to inherit.'
+            ? 'Once shared, confirm the public route is the exact one you want every guest-facing asset to inherit.'
             : input.privacyMode === 'password_protected'
-              ? 'Once live, make the password instructions travel with the route before you widen the handoff.'
-              : 'Once live, create and save the invite-only path before you print or send anything that depends on it.',
+              ? 'Once shared, make the password instructions travel with the route before you widen the handoff.'
+              : 'Once shared, create and save the invite-only path before you print or send anything that depends on it.',
         },
         {
           id: 'share',
@@ -102,7 +102,7 @@ export function buildSiteAccessPlan(input: SiteAccessPlanInput): SiteAccessPlanM
   if (!hasLiveUrl || !hasInvitePath) {
     return {
       focusTitle: 'Finish the real guest route before you broaden the handoff',
-      focusDetail: 'The site may be live, but guests still need a path that actually works end to end. Tighten the route first, then let reminders and packs inherit it.',
+      focusDetail: 'The site may be shared, but guests still need a path that actually works end to end. Tighten the route first, then let reminders and packs inherit it.',
       bestNextMove: 'Finish the missing guest URL or invite path before you let any reminder, QR, or print asset reuse it.',
       decisionRule: 'Never scale a guest handoff that still depends on a missing URL or missing invite path.',
       watchout: 'A half-working route is worse than a delayed one, because every reused pack teaches guests to trust a path that still breaks.',
@@ -112,8 +112,8 @@ export function buildSiteAccessPlan(input: SiteAccessPlanInput): SiteAccessPlanM
           status: 'current',
           title: 'Finish the guest access setup',
           detail: !hasLiveUrl
-            ? 'The site is live, but it still needs a stable guest-facing URL before your access guidance feels trustworthy.'
-            : 'The site is live, but the invite-only guest path still needs to be generated before you share it.',
+            ? 'The site is shared, but it still needs a stable guest-facing URL before your access guidance feels trustworthy.'
+            : 'The site is shared, but the invite-only guest path still needs to be generated before you share it.',
         },
         {
           id: 'share',
@@ -124,7 +124,7 @@ export function buildSiteAccessPlan(input: SiteAccessPlanInput): SiteAccessPlanM
         {
           id: 'publish',
           status: 'then',
-          title: 'Leave the live layer steady',
+          title: 'Leave the shared layer steady',
           detail: 'After that, the right move is usually restraint: let the guest-facing route stay stable unless something important changed.',
         },
       ],
@@ -141,7 +141,7 @@ export function buildSiteAccessPlan(input: SiteAccessPlanInput): SiteAccessPlanM
         },
         {
           id: 'publish',
-          title: 'Then leave the live layer steady',
+          title: 'Then leave the shared layer steady',
           detail: 'After the route is fixed, protect the now-working front door instead of reopening churn around it.',
         },
       ),
@@ -151,7 +151,7 @@ export function buildSiteAccessPlan(input: SiteAccessPlanInput): SiteAccessPlanM
   if (input.privacyMode === 'public') {
     return {
       focusTitle: 'Reuse one public path everywhere guests touch the wedding',
-      focusDetail: 'Once the site is live and public, the work becomes consistency and restraint: one URL, one expectation, and no accidental secret-route language.',
+      focusDetail: 'Once the site is shared and public, the work becomes consistency and restraint: one URL, one expectation, and no accidental secret-route language.',
       bestNextMove: 'Reuse the same public URL across reminders, QR packs, and planner handoffs instead of inventing alternate routes.',
       decisionRule: 'Consistency beats novelty once the public guest path is already working.',
       watchout: 'The main risk now is accidental creativity: alternate links, old drafts, or mixed instructions can make a public path feel less trustworthy than it really is.',
@@ -159,7 +159,7 @@ export function buildSiteAccessPlan(input: SiteAccessPlanInput): SiteAccessPlanM
         {
           id: 'share',
           status: 'current',
-          title: 'Use the live public path consistently',
+          title: 'Use the shared public path consistently',
           detail: 'Your guest-facing route is open and stable, so the best move is reusing the same URL across reminders, QR cards, and planner handoffs.',
         },
         {
@@ -179,12 +179,12 @@ export function buildSiteAccessPlan(input: SiteAccessPlanInput): SiteAccessPlanM
         {
           id: 'share',
           title: 'Keep one public path everywhere',
-          detail: 'Use the same live URL across reminders, QR packs, and planner handoffs so guests learn one trustworthy route.',
+          detail: 'Use the same shared URL across reminders, QR packs, and planner handoffs so guests learn one trustworthy route.',
         },
         {
           id: 'publish',
           title: 'Republish only for clearer guest trust',
-          detail: 'If you change the live site, do it because guest clarity improves, not because editing time is available.',
+          detail: 'If you change the shared site, do it because guest clarity improves, not because editing time is available.',
         },
         {
           id: 'access',
@@ -207,7 +207,7 @@ export function buildSiteAccessPlan(input: SiteAccessPlanInput): SiteAccessPlanM
           id: 'access',
           status: 'current',
           title: 'Carry the password instructions everywhere',
-          detail: 'The live site is ready, but guests still need the password. Make sure reminders, print packs, and planner handoffs all include it clearly.',
+          detail: 'The shared site is ready, but guests still need the password. Make sure reminders, print packs, and planner handoffs all include it clearly.',
         },
         {
           id: 'share',
@@ -218,7 +218,7 @@ export function buildSiteAccessPlan(input: SiteAccessPlanInput): SiteAccessPlanM
         {
           id: 'publish',
           status: 'then',
-          title: 'Keep the live layer steady',
+          title: 'Keep the shared layer steady',
           detail: 'After the access instructions are aligned, only republish when the guest-facing experience materially improves.',
         },
       ],
@@ -235,7 +235,7 @@ export function buildSiteAccessPlan(input: SiteAccessPlanInput): SiteAccessPlanM
         },
         {
           id: 'publish',
-          title: 'Then keep the live layer steady',
+          title: 'Then keep the shared layer steady',
           detail: 'After access clarity is solved, republish only when the guest-facing experience materially improves.',
         },
       ),
@@ -253,7 +253,7 @@ export function buildSiteAccessPlan(input: SiteAccessPlanInput): SiteAccessPlanM
         id: 'access',
         status: 'current',
         title: 'Share the invite-only path, not a generic broad-share link',
-        detail: 'The live site is ready, but guests still need the invite-only route. Make sure that exact path is what gets sent and printed.',
+        detail: 'The shared site is ready, but guests still need the invite-only route. Make sure that exact path is what gets sent and printed.',
       },
       {
         id: 'share',
@@ -264,7 +264,7 @@ export function buildSiteAccessPlan(input: SiteAccessPlanInput): SiteAccessPlanM
       {
         id: 'publish',
         status: 'then',
-        title: 'Leave the live experience stable',
+        title: 'Leave the shared experience stable',
         detail: 'After the route is aligned, the best move is usually to avoid extra churn unless a guest-facing improvement is clearly worth it.',
       },
     ],
@@ -281,7 +281,7 @@ export function buildSiteAccessPlan(input: SiteAccessPlanInput): SiteAccessPlanM
       },
       {
         id: 'publish',
-        title: 'Then protect the stable live experience',
+        title: 'Then protect the stable shared experience',
         detail: 'After the route is aligned, resist extra churn unless a guest-facing improvement is clearly worth the change.',
       },
     ),
