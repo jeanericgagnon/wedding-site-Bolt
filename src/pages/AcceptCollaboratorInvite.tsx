@@ -149,7 +149,7 @@ export const AcceptCollaboratorInvite: React.FC = () => {
     if (!currentInvite?.id || !currentInvite.wedding_site_id || !token) {
       throw new Error('Invite metadata is incomplete.');
     }
-    if (!isInviteEmailMatch(authUser.email, currentInvite.invite_email)) {
+    if (!isInviteEmailMatch(_authUser.email, currentInvite.invite_email)) {
       throw new Error(`This invite was sent to ${currentInvite.invite_email}. Sign in with that email to claim access.`);
     }
 

@@ -5,11 +5,19 @@ type VaultAttachmentSiteState = {
   vault_google_drive_connected?: boolean;
 } | null;
 
+export const VAULT_ATTACHMENT_PAUSED_ERROR =
+  'Photo, video, and voice uploads are temporarily unavailable for this vault. You can still leave a written message.';
+export const VAULT_ATTACHMENT_READY_COPY = 'Photo, video, and voice attachments are ready for this vault.';
+export const VAULT_UPLOAD_READY_COPY = (count: number) =>
+  `Ready to save: ${count} ${count === 1 ? 'file' : 'files'} will be added to this vault.`;
+export const VAULT_COMPRESSION_FALLBACK_COPY =
+  'We could not compress that video here, so the original file will be uploaded instead.';
+
 export function mapVaultAttachmentUploadError(message?: string | null): string {
   const trimmed = String(message ?? '').trim();
   if (!trimmed) return 'We could not upload that attachment right now. Please try again.';
   if (/\bbucket\b|\bpolicy\b|\bstorage\b/i.test(trimmed)) {
-    return 'Photo and video uploads are temporarily unavailable for this vault. You can still leave a written message right now.';
+    return VAULT_ATTACHMENT_PAUSED_ERROR;
   }
   return 'We could not upload that attachment right now. Please try again.';
 }
@@ -20,7 +28,7 @@ export function mapVaultContributionSaveError(error: unknown): string {
 
 export function getVaultAttachmentStatusCopy(site: VaultAttachmentSiteState): string {
   if (site?.vault_storage_provider === 'google_drive' && !site.vault_google_drive_connected) {
-    return 'Photo and video uploads are not available for this vault yet. You can still leave a written message.';
+    return VAULT_ATTACHMENT_PAUSED_ERROR;
   }
-  return 'Photo, video, and voice attachments are ready for this vault.';
+  return VAULT_ATTACHMENT_READY_COPY;
 }

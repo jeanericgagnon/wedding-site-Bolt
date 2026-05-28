@@ -4,9 +4,11 @@ import { describe, expect, it, vi } from 'vitest';
 import PhotoUpload from './PhotoUpload';
 import {
   mapPhotoUploadError,
+  mapPhotoUploadRuntimeError,
   PHOTO_UPLOAD_ACCESS_LABEL,
   PHOTO_UPLOAD_ACCESS_PLACEHOLDER,
   PHOTO_UPLOAD_MISSING_ACCESS_ERROR,
+  PHOTO_UPLOAD_RETRY_ERROR,
   PHOTO_UPLOAD_UNAVAILABLE_ERROR,
 } from './photoUploadCopy';
 
@@ -36,5 +38,11 @@ describe('PhotoUpload guest-safe copy', () => {
 
   it('maps invalid upload links to guest-safe guidance', () => {
     expect(mapPhotoUploadError('INVALID_TOKEN')).toBe('This upload link is invalid. Ask the couple for a fresh link.');
+  });
+
+  it('keeps runtime upload failures guest-safe instead of echoing internal fetch details', () => {
+    expect(mapPhotoUploadRuntimeError(new Error('Supabase storage bucket policy denied upload'))).toBe(
+      PHOTO_UPLOAD_RETRY_ERROR,
+    );
   });
 });

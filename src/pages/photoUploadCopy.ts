@@ -1,7 +1,10 @@
+import { customerSafeErrorMessage } from '../lib/customerSafeError';
+
 export const PHOTO_UPLOAD_ACCESS_LABEL = 'Upload access code';
 export const PHOTO_UPLOAD_ACCESS_PLACEHOLDER = 'Paste your access code';
 export const PHOTO_UPLOAD_MISSING_ACCESS_ERROR = 'An upload access code is required.';
 export const PHOTO_UPLOAD_UNAVAILABLE_ERROR = 'Photo uploads are unavailable right now. Please try again soon.';
+export const PHOTO_UPLOAD_RETRY_ERROR = 'We could not upload those files right now. Please try again.';
 
 export const mapPhotoUploadError = (code?: string, fallback?: string): string => {
   switch (code) {
@@ -20,6 +23,9 @@ export const mapPhotoUploadError = (code?: string, fallback?: string): string =>
     case 'UNSUPPORTED_FILE_TYPE':
       return 'Unsupported file type. Please upload photos or videos only.';
     default:
-      return fallback || 'Upload failed. Please try again.';
+      return customerSafeErrorMessage(fallback, PHOTO_UPLOAD_RETRY_ERROR);
   }
 };
+
+export const mapPhotoUploadRuntimeError = (error: unknown): string =>
+  customerSafeErrorMessage(error, PHOTO_UPLOAD_RETRY_ERROR);

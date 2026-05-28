@@ -10,6 +10,9 @@ import {
   getVaultAttachmentStatusCopy,
   mapVaultAttachmentUploadError,
   mapVaultContributionSaveError,
+  VAULT_ATTACHMENT_PAUSED_ERROR,
+  VAULT_COMPRESSION_FALLBACK_COPY,
+  VAULT_UPLOAD_READY_COPY,
 } from './vaultContributeCopy';
 
 interface SiteInfo {
@@ -479,14 +482,10 @@ export const VaultContribute: React.FC = () => {
           try {
             file = await compressVideoTo720p(file);
             setCompressionStatus(null);
-          } catch (err) {
+          } catch {
             setCompressionStatus(null);
             // Fallback: keep original file upload instead of blocking submit.
-            setSubmitError(
-              err instanceof Error
-                ? `${err.message} Uploading original video instead.`
-                : 'Compression failed. Uploading original video instead.'
-            );
+            setSubmitError(VAULT_COMPRESSION_FALLBACK_COPY);
           }
         }
 
@@ -504,7 +503,7 @@ export const VaultContribute: React.FC = () => {
           if (!site.vault_google_drive_connected) {
             setUploadProgress(null);
             setSubmitting(false);
-            setSubmitError('Google Drive is not connected for this vault yet. Ask the couple to connect Drive in Vault settings.');
+            setSubmitError(VAULT_ATTACHMENT_PAUSED_ERROR);
             return;
           }
 
@@ -515,7 +514,7 @@ export const VaultContribute: React.FC = () => {
               const idx = result.indexOf(',');
               resolve(idx >= 0 ? result.slice(idx + 1) : result);
             };
-            reader.onerror = () => reject(new Error('Failed to read file for Google Drive upload.'));
+            reader.onerror = () => reject(new Error('Failed to read file for upload.'));
             reader.readAsDataURL(file);
           });
 
@@ -988,7 +987,7 @@ export const VaultContribute: React.FC = () => {
 
               {!submitting && form.media_type !== 'text' && selectedFiles.length > 0 && (
                 <p className="text-xs text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-xl px-3 py-2 font-medium">
-                  Ready to save: {selectedFiles.length} {selectedFiles.length === 1 ? 'file' : 'files'} will be uploaded to {usingGoogleDrive ? 'Google Drive' : 'vault storage'}.
+                  {VAULT_UPLOAD_READY_COPY(selectedFiles.length)}
                 </p>
               )}
 
@@ -1004,7 +1003,7 @@ export const VaultContribute: React.FC = () => {
                 )}
               </button>
               {usingGoogleDrive && !site?.vault_google_drive_connected && (
-                <p className="text-xs text-red-600 mt-2">Submissions are temporarily paused until the couple reconnects Google Drive.</p>
+                <p className="text-xs text-red-600 mt-2">{VAULT_ATTACHMENT_PAUSED_ERROR}</p>
               )}
             </form>
           </div>

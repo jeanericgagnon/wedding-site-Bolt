@@ -1,7 +1,15 @@
 import { describe, expect, it } from 'vitest';
 
 import { getContributionWindow, getVaultCoupleName, getVaultUnlockAtIso, getVaultUnlockYear } from './VaultContribute';
-import { getVaultAttachmentStatusCopy, mapVaultAttachmentUploadError, mapVaultContributionSaveError } from './vaultContributeCopy';
+import {
+  getVaultAttachmentStatusCopy,
+  mapVaultAttachmentUploadError,
+  mapVaultContributionSaveError,
+  VAULT_ATTACHMENT_PAUSED_ERROR,
+  VAULT_ATTACHMENT_READY_COPY,
+  VAULT_COMPRESSION_FALLBACK_COPY,
+  VAULT_UPLOAD_READY_COPY,
+} from './vaultContributeCopy';
 
 describe('getVaultCoupleName', () => {
   it('keeps a single partner name truthful instead of showing a broken ampersand', () => {
@@ -45,7 +53,7 @@ describe('getContributionWindow', () => {
 describe('vault guest-safe copy', () => {
   it('keeps attachment upload failures guest-safe instead of leaking provider or bucket details', () => {
     expect(mapVaultAttachmentUploadError('missing vault-attachments bucket or policy')).toBe(
-      'Photo and video uploads are temporarily unavailable for this vault. You can still leave a written message right now.',
+      VAULT_ATTACHMENT_PAUSED_ERROR,
     );
     expect(mapVaultAttachmentUploadError('Google Drive upload failed: provider timeout')).toBe(
       'We could not upload that attachment right now. Please try again.',
@@ -62,11 +70,19 @@ describe('vault guest-safe copy', () => {
     expect(getVaultAttachmentStatusCopy({
       vault_storage_provider: 'google_drive',
       vault_google_drive_connected: false,
-    })).toBe('Photo and video uploads are not available for this vault yet. You can still leave a written message.');
+    })).toBe(VAULT_ATTACHMENT_PAUSED_ERROR);
 
     expect(getVaultAttachmentStatusCopy({
       vault_storage_provider: 'supabase',
       vault_google_drive_connected: false,
-    })).toBe('Photo, video, and voice attachments are ready for this vault.');
+    })).toBe(VAULT_ATTACHMENT_READY_COPY);
+  });
+
+  it('keeps upload progress and fallback copy free of storage-provider language', () => {
+    expect(VAULT_UPLOAD_READY_COPY(2)).toBe('Ready to save: 2 files will be added to this vault.');
+    expect(VAULT_UPLOAD_READY_COPY(2)).not.toMatch(/google drive|storage/i);
+    expect(VAULT_COMPRESSION_FALLBACK_COPY).toBe(
+      'We could not compress that video here, so the original file will be uploaded instead.',
+    );
   });
 });

@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { GuestJourneyCompanion } from '../components/guest/GuestJourneyCompanion';
 import {
   mapPhotoUploadError,
+  mapPhotoUploadRuntimeError,
   PHOTO_UPLOAD_ACCESS_LABEL,
   PHOTO_UPLOAD_ACCESS_PLACEHOLDER,
   PHOTO_UPLOAD_MISSING_ACCESS_ERROR,
@@ -90,7 +91,7 @@ export const PhotoUpload: React.FC = () => {
       setNote('');
       setGuestEmail('');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Upload failed.');
+      setError(mapPhotoUploadRuntimeError(err));
     } finally {
       setIsUploading(false);
     }
