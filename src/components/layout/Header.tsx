@@ -3,6 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Heart, Menu, X } from 'lucide-react';
 import { Button } from '../ui';
 import { useAuth } from '../../hooks/useAuth';
+import { FIRST_SESSION_WORKSPACE_ROUTES } from '../../lib/firstSessionWorkspaceRoutes';
 import { useToast } from '../ui/Toast';
 
 interface HeaderProps {
@@ -34,7 +35,7 @@ export const Header: React.FC<HeaderProps> = ({ variant = 'marketing' }) => {
     setDemoLoading(true);
     try {
       await signIn();
-      navigate('/dashboard');
+      navigate(FIRST_SESSION_WORKSPACE_ROUTES.overview);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Demo login failed. Please try again.';
       toast(message, 'error');

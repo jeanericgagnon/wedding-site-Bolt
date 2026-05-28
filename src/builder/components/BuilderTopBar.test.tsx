@@ -83,7 +83,7 @@ describe('BuilderTopBar exit routes', () => {
 
   it('sends leave-anyway confirmation to the overview workspace when edits are dirty', () => {
     stateRef.current = {
-      ...stateRef.current,
+      ...stateRef.current!,
       isDirty: true,
     };
 
