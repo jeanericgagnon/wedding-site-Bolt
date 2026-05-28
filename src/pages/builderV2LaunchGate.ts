@@ -273,7 +273,7 @@ export const buildBuilderV2LaunchGate = ({
     headline: 'The document is in a healthy launch-review state',
     detail: 'Visible structure is carrying real content, warnings are cleared, and every visible page has been checked on both preview sizes against the current document state.',
     bestNextMove: 'Open the export handoff, then share or publish from this revision instead of reopening a speculative polish lap.',
-    decisionRule: 'When the launch checklist is clean, trust the document enough to move it forward instead of searching for nervous extras.',
+    decisionRule: 'When the launch review is clean, trust the document enough to move it forward instead of searching for nervous extras.',
     watchout: 'The main risk now is reopening the draft for low-value tweaks that create fresh review debt.',
     keyStats,
     checklistItems,

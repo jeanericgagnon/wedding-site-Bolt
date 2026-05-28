@@ -154,6 +154,7 @@ describe('buildBuilderV2LaunchGate', () => {
       label: 'Open export handoff',
     });
     expect(summary.checklistItems.every((item) => item.done)).toBe(true);
+    expect(summary.decisionRule).toContain('launch review');
   });
 
   it('keeps launch review in caution mode when watch-level audit debt remains', () => {

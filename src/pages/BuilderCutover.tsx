@@ -247,7 +247,7 @@ export const BuilderCutover: React.FC = () => {
           <p className="text-sm font-semibold uppercase tracking-[0.18em] text-rose-700">Builder cutover</p>
           <h1 className="mt-2 text-3xl font-semibold text-neutral-950">Choose the right editor for the next step</h1>
           <p className="mt-3 text-sm leading-6 text-neutral-600">
-            Builder V2 is the structured editing lane we are deepening. The current editor still holds a few live launch and quick-edit workflows, so this route keeps the handoff honest instead of pretending the switch is already finished.
+            Builder V2 is the structured editing lane we are deepening. The current editor still holds a few live quick-edit, photo-tip, and polish workflows, so this route keeps the handoff honest instead of pretending the switch is already finished.
           </p>
         </div>
 
@@ -315,7 +315,7 @@ export const BuilderCutover: React.FC = () => {
             </div>
             <h2 className="mt-3 text-lg font-semibold text-neutral-950">Continue in the live legacy editor</h2>
             <p className="mt-2 text-sm leading-6 text-neutral-700">
-              Use the current editor when you need the existing quick-edit, launch checklist, or photo-tip workflows that still live there today.
+              Use the current editor when you need the existing quick-edit, photo-tip, or polish workflows that still live there today.
             </p>
             <p className="mt-3 text-xs leading-5 text-neutral-600">
               This keeps the current editor available as the fallback while the V2 route becomes the clearer default entry point.

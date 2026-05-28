@@ -168,6 +168,29 @@ describe('BuilderCutover', () => {
     expect(navigateMock).toHaveBeenCalledWith(getBuilderV2Route());
   });
 
+  it('keeps the legacy editor description honest about the workflows that still live there', async () => {
+    maybeSingleMock.mockResolvedValue({
+      data: {
+        id: 'site-1',
+        couple_name_1: 'Alex',
+        couple_name_2: 'Jordan',
+      },
+      error: null,
+    });
+    loadProjectMock.mockResolvedValue(createEmptyBuilderProject('site-1', 'modern-luxe'));
+    loadWeddingDataMock.mockResolvedValue(createEmptyWeddingData());
+    saveUpgradeBridgeMock.mockReturnValue(true);
+
+    render(
+      <MemoryRouter initialEntries={['/dashboard/builder-guide']}>
+        <BuilderCutover />
+      </MemoryRouter>,
+    );
+
+    expect(await screen.findByText(/quick-edit, photo-tip, or polish workflows/i)).toBeInTheDocument();
+    expect(screen.queryByText(/launch checklist/i)).not.toBeInTheDocument();
+  });
+
   it('sends builder recovery back to the overview workspace instead of the generic dashboard route', async () => {
     maybeSingleMock.mockRejectedValue(new Error('Failed to fetch project data'));
 
