@@ -7,6 +7,7 @@ import { Card } from '../components/ui/Card';
 import { Input } from '../components/ui/Input';
 import { Textarea } from '../components/ui/Textarea';
 import { Header, Footer } from '../components/layout';
+import { readInviteTokenFromParams } from '../lib/inviteTokenParams';
 import { formatEventRsvpDate } from './eventRsvpDate';
 import {
   mapEventRsvpLoadError,
@@ -147,7 +148,7 @@ function invalidateEventRsvpSubmitState(
 
 export default function EventRSVP() {
   const [searchParams] = useSearchParams();
-  const token = searchParams.get('token');
+  const token = readInviteTokenFromParams(searchParams);
 
   const [guest, setGuest] = useState<Guest | null>(null);
   const [invitations, setInvitations] = useState<EventInvitation[]>([]);

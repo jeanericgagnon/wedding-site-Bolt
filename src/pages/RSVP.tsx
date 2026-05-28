@@ -10,6 +10,7 @@ import { GuestJourneyCompanion } from '../components/guest/GuestJourneyCompanion
 import { LanguageSwitcher } from '../components/ui/LanguageSwitcher';
 import { CheckCircle, Search, AlertCircle, User } from 'lucide-react';
 import { demoGuests, demoRSVPs } from '../lib/demoData';
+import { readInviteTokenFromParams } from '../lib/inviteTokenParams';
 import { DEMO_MODE } from '../config/env';
 import { formatRsvpDeadline, isRsvpDeadlinePassed } from './rsvpDeadline';
 import {
@@ -451,6 +452,7 @@ export default function RSVP() {
   const [searchParams] = useSearchParams();
   const siteSlug = searchParams.get('site')?.trim().toLowerCase() ?? '';
   const previewGuest = searchParams.get('previewGuest')?.trim() ?? '';
+  const inviteToken = readInviteTokenFromParams(searchParams);
   const [step, setStep] = useState<'search' | 'pick' | 'form' | 'success'>('search');
   const [searchValue, setSearchValue] = useState('');
   const [guest, setGuest] = useState<Guest | null>(null);
@@ -515,11 +517,11 @@ export default function RSVP() {
     setFormStep(1);
     setActivePredictionIndex(-1);
     tokenLinkedSessionRef.current = false;
-    setSearchValue(preserveToken ? (searchParams.get('token') ?? '') : '');
-    if (!preserveToken && searchParams.get('token')) {
+    setSearchValue(preserveToken ? inviteToken : '');
+    if (!preserveToken && inviteToken) {
       navigate('/rsvp', { replace: true });
     }
-  }, [invalidateActiveSubmit, navigate, searchParams]);
+  }, [invalidateActiveSubmit, inviteToken, navigate]);
 
   const [formData, setFormData] = useState({
     attending: true,
@@ -530,7 +532,7 @@ export default function RSVP() {
     notes: '',
   });
 
-  const activeToken = searchParams.get('token');
+  const activeToken = inviteToken;
 
   const normalizedCurrentRsvpSnapshot = useMemo(() => {
     if (!guest) return null;

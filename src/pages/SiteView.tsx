@@ -27,6 +27,7 @@ import { getPublicBuilderPagesFromV2Document } from '../lib/publicBuilderV2Runti
 import { deriveWeddingDataFromBuilderV2Document, mergeWeddingDataWithBuilderV2Supplement } from '../lib/publicBuilderV2WeddingData';
 import { getIsPublishedFromSiteRow, getPublicBuilderProject, getPublicBuilderV2Document, getPublicWeddingData } from '../lib/publicSiteProject';
 import { getPublicBuilderActivePage, getVisiblePublicBuilderPages } from '../lib/publicPageSelection';
+import { readInviteTokenFromParams } from '../lib/inviteTokenParams';
 
 interface PublicItineraryRow {
   id?: string;
@@ -509,9 +510,9 @@ export const SiteView: React.FC = () => {
             return;
           }
         } else if (privacyMode === 'invite_only') {
-          const urlToken = searchParams.get('token');
+          const urlToken = readInviteTokenFromParams(searchParams);
           const storedToken = sessionStorage.getItem(`dayof_invite_token_${resolvedSlug}`);
-          const tokenToCheck = urlToken ?? storedToken;
+          const tokenToCheck = urlToken || storedToken;
           const hasInviteAccess = tokenToCheck
             ? await siteRepository.verifyPublicInviteAccess(resolvedSlug, tokenToCheck)
             : false;

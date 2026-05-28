@@ -276,7 +276,7 @@ export function buildGuestJourneyLinks(context: GuestJourneyContext): GuestJourn
   const hubParams = new URLSearchParams();
   appendPreviewParams(hubParams, previewGuest, 'public');
   if (inviteToken) {
-    hubParams.set('token', inviteToken);
+    hubParams.set('invite_token', inviteToken);
   }
   links.push({
     key: 'hub',
@@ -287,7 +287,7 @@ export function buildGuestJourneyLinks(context: GuestJourneyContext): GuestJourn
   const travelParams = new URLSearchParams();
   appendPreviewParams(travelParams, previewGuest, 'travel');
   if (inviteToken) {
-    travelParams.set('token', inviteToken);
+    travelParams.set('invite_token', inviteToken);
   }
   links.push({
     key: 'travel',
@@ -298,7 +298,7 @@ export function buildGuestJourneyLinks(context: GuestJourneyContext): GuestJourn
   const rsvpParams = new URLSearchParams();
   rsvpParams.set('site', normalizedSlug);
   if (inviteToken) {
-    rsvpParams.set('token', inviteToken);
+    rsvpParams.set('invite_token', inviteToken);
   }
   links.push({
     key: 'rsvp',
@@ -309,7 +309,7 @@ export function buildGuestJourneyLinks(context: GuestJourneyContext): GuestJourn
   const photoParams = new URLSearchParams();
   photoParams.set('site', normalizedSlug);
   if (inviteToken) {
-    photoParams.set('t', inviteToken);
+    photoParams.set('invite_token', inviteToken);
   }
   if (isHubEntry) {
     photoParams.set('hub', '1');
@@ -323,6 +323,9 @@ export function buildGuestJourneyLinks(context: GuestJourneyContext): GuestJourn
 
   const contactParams = new URLSearchParams();
   appendPreviewParams(contactParams, previewGuest, 'contact');
+  if (inviteToken) {
+    contactParams.set('invite_token', inviteToken);
+  }
   links.push({
     key: 'contact',
     label: 'Update details',

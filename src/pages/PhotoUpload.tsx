@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { GuestJourneyCompanion } from '../components/guest/GuestJourneyCompanion';
+import { readInviteTokenFromParams } from '../lib/inviteTokenParams';
 import {
   mapPhotoUploadError,
   mapPhotoUploadRuntimeError,
@@ -14,10 +15,10 @@ const supabaseAnonKey = (import.meta.env.VITE_SUPABASE_ANON_KEY as string | unde
 
 export const PhotoUpload: React.FC = () => {
   const params = useMemo(() => new URLSearchParams(window.location.search), []);
-  const initialToken = params.get('t')?.trim() ?? '';
+  const initialToken = readInviteTokenFromParams(params);
   const siteSlug = params.get('site')?.trim().toLowerCase() ?? '';
   const previewGuest = params.get('previewGuest')?.trim() ?? '';
-  const inviteToken = params.get('invite_token')?.trim() || initialToken;
+  const inviteToken = initialToken;
   const isHubEntry = params.get('hub') === '1';
 
   const [token, setToken] = useState(initialToken);

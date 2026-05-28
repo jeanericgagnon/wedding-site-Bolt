@@ -43,10 +43,10 @@ describe('GuestJourneyCompanion', () => {
     expect(screen.getByText('Then')).toBeInTheDocument();
     expect(screen.getByText(/Correct the details cleanly/i)).toBeInTheDocument();
     expect(screen.getByText(/Return to the real wedding task/i)).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Wedding hub' })).toHaveAttribute('href', '/site/ericandkaras?previewGuest=guest-42&previewSurface=public&token=invite-123');
-    expect(screen.getByRole('link', { name: 'Travel details' })).toHaveAttribute('href', '/site/ericandkaras?previewGuest=guest-42&previewSurface=travel&token=invite-123#travel');
-    expect(screen.getByRole('link', { name: 'RSVP' })).toHaveAttribute('href', '/rsvp?site=ericandkaras&token=invite-123');
-    expect(screen.getByRole('link', { name: 'Upload photos' })).toHaveAttribute('href', '/photos/upload?site=ericandkaras&t=invite-123&hub=1&previewGuest=guest-42&previewSurface=photos');
+    expect(screen.getByRole('link', { name: 'Wedding hub' })).toHaveAttribute('href', '/site/ericandkaras?previewGuest=guest-42&previewSurface=public&invite_token=invite-123');
+    expect(screen.getByRole('link', { name: 'Travel details' })).toHaveAttribute('href', '/site/ericandkaras?previewGuest=guest-42&previewSurface=travel&invite_token=invite-123#travel');
+    expect(screen.getByRole('link', { name: 'RSVP' })).toHaveAttribute('href', '/rsvp?site=ericandkaras&invite_token=invite-123');
+    expect(screen.getByRole('link', { name: 'Upload photos' })).toHaveAttribute('href', '/photos/upload?site=ericandkaras&invite_token=invite-123&hub=1&previewGuest=guest-42&previewSurface=photos');
     expect(screen.getByText('Done')).toBeInTheDocument();
     expect(screen.getByText('Here now')).toBeInTheDocument();
     expect(screen.getByText('Next up')).toBeInTheDocument();
