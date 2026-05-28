@@ -68,6 +68,13 @@ import { shouldResetCoordinatorSummaryFeedback } from '../../lib/coordinatorSumm
 import { createCoordinatorSummaryFeedback, type CoordinatorSummaryFeedback } from '../../lib/coordinatorSummaryFeedback';
 import { getCoordinatorSummaryFeedbackTone } from '../../lib/coordinatorSummaryFeedbackTone';
 import { getCoordinatorSummaryFeedbackEmphasis } from '../../lib/coordinatorSummaryFeedbackEmphasis';
+import {
+  COORDINATOR_ALERT_RETRY_ERROR,
+  COORDINATOR_CHECKIN_RETRY_ERROR,
+  COORDINATOR_QNA_ANSWER_RETRY_ERROR,
+  COORDINATOR_QNA_SAVE_RETRY_ERROR,
+  mapCoordinatorError,
+} from './coordinatorErrorCopy';
 import { getCoordinatorSummaryFeedbackLayout } from '../../lib/coordinatorSummaryFeedbackLayout';
 import { getCoordinatorSummaryFeedbackCopy } from '../../lib/coordinatorSummaryFeedbackCopy';
 import { getCoordinatorSummaryFeedbackBadge } from '../../lib/coordinatorSummaryFeedbackBadge';
@@ -488,7 +495,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
         .eq('id', guest.id)
         .eq('wedding_site_id', siteId);
       if (error) {
-        toast(error.message || 'Could not update check-in right now.', 'error');
+        toast(mapCoordinatorError(error, COORDINATOR_CHECKIN_RETRY_ERROR), 'error');
         return;
       }
 
@@ -1273,7 +1280,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
       });
       toast(scheduledFor ? 'Coordinator alert scheduled.' : 'Coordinator alert queued.', 'success');
     } catch (err) {
-      toast(err instanceof Error ? err.message : 'Could not queue that alert right now.', 'error');
+      toast(mapCoordinatorError(err, COORDINATOR_ALERT_RETRY_ERROR), 'error');
     } finally {
       setAlertBusy(false);
     }
@@ -1297,7 +1304,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
         .select('id, question, answer, status')
         .single();
       if (error) {
-        toast(error.message || 'Could not save that question.', 'error');
+        toast(mapCoordinatorError(error, COORDINATOR_QNA_SAVE_RETRY_ERROR), 'error');
         return;
       }
       if (data) {
@@ -1711,7 +1718,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
         status: nextItem.status,
       }).eq('id', id);
       if (error) {
-        toast(error.message || 'Could not save that answer.', 'error');
+        toast(mapCoordinatorError(error, COORDINATOR_QNA_ANSWER_RETRY_ERROR), 'error');
         return;
       }
     }
