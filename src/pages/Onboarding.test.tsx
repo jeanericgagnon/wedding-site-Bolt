@@ -1,5 +1,5 @@
-import React from 'react';
-import { render, screen, waitFor } from '@testing-library/react';
+import React, { type ComponentPropsWithoutRef, type ReactNode } from 'react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('react-router-dom', async () => {
@@ -19,12 +19,55 @@ vi.mock('../lib/supabase', () => ({
   supabase: {},
 }));
 
+type ChildrenProps = {
+  children?: ReactNode;
+};
+
 vi.mock('../components/ui', () => ({
-  Button: ({ children, ...props }: any) => <button {...props}>{children}</button>,
-  Input: (props: any) => <input {...props} />,
-  Textarea: (props: any) => <textarea {...props} />,
-  Select: ({ children, ...props }: any) => <select {...props}>{children}</select>,
-  Card: ({ children, ...props }: any) => <div {...props}>{children}</div>,
+  Button: ({
+    children,
+    variant,
+    size,
+    fullWidth,
+    ...props
+  }: ChildrenProps & ComponentPropsWithoutRef<'button'> & {
+    variant?: string;
+    size?: string;
+    fullWidth?: boolean;
+  }) => {
+    void variant;
+    void size;
+    void fullWidth;
+    return <button {...props}>{children}</button>;
+  },
+  Input: (props: ComponentPropsWithoutRef<'input'>) => <input {...props} />,
+  Textarea: (props: ComponentPropsWithoutRef<'textarea'>) => <textarea {...props} />,
+  Select: ({
+    children,
+    variant,
+    size,
+    ...props
+  }: ChildrenProps & ComponentPropsWithoutRef<'select'> & {
+    variant?: string;
+    size?: string;
+  }) => {
+    void variant;
+    void size;
+    return <select {...props}>{children}</select>;
+  },
+  Card: ({
+    children,
+    variant,
+    padding,
+    ...props
+  }: ChildrenProps & ComponentPropsWithoutRef<'div'> & {
+    variant?: string;
+    padding?: string;
+  }) => {
+    void variant;
+    void padding;
+    return <div {...props}>{children}</div>;
+  },
 }));
 
 import { Onboarding, getCreateSiteRsvpDeadline, getDemoPartnerNamesFallback, getOnboardingSubdomain, parsePartnerNames } from './Onboarding';
@@ -57,6 +100,10 @@ describe('Onboarding partner name truth helpers', () => {
 });
 
 describe('Onboarding starter draft wording truth', () => {
+  const writeDraft = (draft: Record<string, unknown>) => {
+    window.localStorage.setItem('dayoflove:onboarding-draft', JSON.stringify(draft));
+  };
+
   beforeEach(() => {
     window.localStorage.clear();
   });
@@ -102,5 +149,53 @@ describe('Onboarding starter draft wording truth', () => {
     expect(screen.getByText('Starter draft only (fastest)')).toBeInTheDocument();
     expect(screen.getByText('Answer a few questions and we will generate a strong starting draft. You can keep refining it in the dashboard before you decide to publish.')).toBeInTheDocument();
     expect(screen.queryByText(/ready to publish/i)).not.toBeInTheDocument();
+  });
+
+  it('restores follow-up review copy as draft help instead of smart AI build language', async () => {
+    writeDraft({
+      step: 'quick-3',
+      conversationIndex: 8,
+      initialSetupAnswers: {
+        names: 'Alex & Jordan',
+        whenWhere: '2027-01-17 — Beach Town',
+        venueNameOrTbd: 'Ocean House',
+        style: 'Coastal',
+        weekendEventsRaw: 'Welcome dinner and wedding',
+        guestCountBand: '50-100',
+        plusOnePolicy: 'some',
+        rsvpDeadline: '2026-12-01',
+      },
+      followUpAnswers: {
+        'story-detail': 'We met on a rainy Tuesday.',
+      },
+      showFollowUpReview: true,
+    });
+
+    render(<Onboarding />);
+
+    expect(await screen.findByText('A few follow-ups before we build')).toBeInTheDocument();
+    expect(screen.getByText('We already have enough to generate a strong baseline draft. These are the highest-leverage details that would make it feel more personal.')).toBeInTheDocument();
+    expect(screen.queryByText('A few smart follow-ups before we build')).not.toBeInTheDocument();
+  });
+
+  it('restores theme guidance with draft-safe labels instead of AI-led defaults', async () => {
+    render(<Onboarding />);
+
+    fireEvent.click(screen.getByRole('button', { name: /start guided setup/i }));
+    fireEvent.change(screen.getByPlaceholderText('Alex & Jordan'), {
+      target: { name: 'partnerNames', value: 'Alex & Jordan' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: /continue/i }));
+    fireEvent.click(screen.getByRole('button', { name: /continue/i }));
+    fireEvent.change(screen.getByPlaceholderText('January 17, 2027 — Sayulita, Mexico'), {
+      target: { name: 'venueLocation', value: '2027-01-17 — Beach Town' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: /continue/i }));
+    fireEvent.click(screen.getByRole('button', { name: /skip for now/i }));
+
+    expect(await screen.findByText('Draft guidance state')).toBeInTheDocument();
+    expect(screen.getByText('Suggested starting point')).toBeInTheDocument();
+    expect(screen.queryByText('AI guidance state')).not.toBeInTheDocument();
+    expect(screen.queryByText('Smart default')).not.toBeInTheDocument();
   });
 });

@@ -917,8 +917,8 @@ export const Onboarding: React.FC = () => {
           <div className="space-y-6">
             <div>
               <p className="text-xs uppercase tracking-[0.18em] text-text-tertiary">Optional refinement</p>
-              <h3 className="mt-2 text-2xl font-bold text-text-primary">A few smart follow-ups before we build</h3>
-              <p className="mt-2 text-text-secondary">We already have enough to generate a strong baseline site. These are the highest-leverage details that would make it feel more personal.</p>
+              <h3 className="mt-2 text-2xl font-bold text-text-primary">A few follow-ups before we build</h3>
+              <p className="mt-2 text-text-secondary">We already have enough to generate a strong baseline draft. These are the highest-leverage details that would make it feel more personal.</p>
               <div className="mt-4 grid gap-3 sm:grid-cols-3">
                 <div className="rounded-2xl bg-surface px-4 py-3 border border-border">
                   <p className="text-xs uppercase tracking-[0.18em] text-text-tertiary mb-1">This round</p>
@@ -1001,7 +1001,7 @@ export const Onboarding: React.FC = () => {
                   <p className="text-sm text-text-primary">{getQuestionPreview()}</p>
                 </div>
                 <div className="rounded-2xl border border-border bg-surface px-4 py-3">
-                  <p className="text-xs uppercase tracking-[0.18em] text-text-tertiary mb-1">AI guidance state</p>
+                  <p className="text-xs uppercase tracking-[0.18em] text-text-tertiary mb-1">Draft guidance state</p>
                   <p className="text-sm text-text-primary">Intent: {onboardingSession.currentIntent}</p>
                   <p className="mt-1 text-xs text-text-secondary">Confidence: {Math.round(onboardingSession.confidence * 100)}%</p>
                   {onboardingSession.suggestedPrompt && (
@@ -1030,7 +1030,7 @@ export const Onboarding: React.FC = () => {
                 )}
                 {currentQuestion.key === 'theme' && getThemeHint() !== formData.theme && (
                   <div className="rounded-2xl bg-surface px-4 py-3 border border-border">
-                    <p className="text-xs uppercase tracking-[0.18em] text-text-tertiary mb-1">Smart default</p>
+                    <p className="text-xs uppercase tracking-[0.18em] text-text-tertiary mb-1">Suggested starting point</p>
                     <p className="text-sm text-text-primary">Based on the venue details so far, <span className="font-medium">{getThemeHint()}</span> looks like the best starting direction.</p>
                   </div>
                 )}
