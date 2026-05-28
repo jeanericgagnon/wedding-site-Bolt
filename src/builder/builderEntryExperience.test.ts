@@ -38,6 +38,7 @@ describe('getBuilderEntryExperience', () => {
     });
 
     expect(experience.title).toBe('Builder connection interrupted');
+    expect(experience.detail).toBe('The Builder could not reconnect cleanly right now. Please try again.');
     expect(experience.primaryActionLabel).toBe('Try again');
     expect(experience.decisionRule).toContain('Retry transient connection problems');
   });
@@ -49,6 +50,7 @@ describe('getBuilderEntryExperience', () => {
     });
 
     expect(experience.title).toBe('Builder access needs to be refreshed');
+    expect(experience.detail).toBe('The Builder needs a fresh account check before it can reopen your draft.');
     expect(experience.primaryActionLabel).toBe('Back to dashboard overview');
     expect(experience.secondaryActionLabel).toBe('Try again');
   });
@@ -61,5 +63,16 @@ describe('getBuilderEntryExperience', () => {
 
     expect(experience.secondaryActionLabel).toBe('Back to dashboard overview');
     expect(experience.secondaryActionLabel).not.toBe('Back to dashboard');
+    expect(experience.detail).toBe('Unable to load your project right now.');
+  });
+
+  it('does not surface raw provider details in the builder recovery copy', () => {
+    const experience = getBuilderEntryExperience({
+      mode: 'error',
+      errorMessage: 'Supabase relation wedding_sites does not exist',
+    });
+
+    expect(experience.detail).toBe('Unable to load your project right now.');
+    expect(experience.detail).not.toContain('Supabase');
   });
 });

@@ -149,7 +149,7 @@ export function getBuilderEntryExperience({
   if (lowerError.includes('fetch') || lowerError.includes('network') || lowerError.includes('timed out')) {
     return {
       title: 'Builder connection interrupted',
-      detail: normalizedError,
+      detail: 'The Builder could not reconnect cleanly right now. Please try again.',
       focusTitle: 'Treat this like a connection recovery, not a broken draft.',
       focusDetail: 'Your next move is to reconnect cleanly so you can verify the project state before changing anything.',
       bestNextMove: 'Retry the Builder load once, then fall back to the dashboard if the connection still does not settle.',
@@ -166,7 +166,7 @@ export function getBuilderEntryExperience({
   if (lowerError.includes('auth') || lowerError.includes('jwt') || lowerError.includes('permission')) {
     return {
       title: 'Builder access needs to be refreshed',
-      detail: normalizedError,
+      detail: 'The Builder needs a fresh account check before it can reopen your draft.',
       focusTitle: 'Re-enter the Builder from a clean account state.',
       focusDetail: 'This looks more like an access handoff issue than a content or design issue.',
       bestNextMove: 'Go back to the dashboard, reopen the Builder, and make sure you are still in the right account and wedding workspace.',
@@ -182,7 +182,7 @@ export function getBuilderEntryExperience({
 
   return {
     title: 'Site editor unavailable',
-    detail: normalizedError,
+    detail: 'Unable to load your project right now.',
     focusTitle: 'Recover the editor calmly and keep the next step small.',
     focusDetail: 'This is a recovery moment, not a sign that you need to rethink the whole draft.',
     bestNextMove: 'Retry the Builder once, and if it still fails, return to the dashboard so you can reopen it from a stable route.',
