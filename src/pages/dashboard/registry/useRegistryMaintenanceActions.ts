@@ -11,6 +11,13 @@ import { buildRegistryRefreshFields, getRegistryRefreshSourceUrl } from './regis
 import { buildDemoRegistryRepairPatch } from './registryDemoRepair';
 import { buildRegistryRepairRunSummary, buildRegistryRepairRunToast, type RegistryRepairRunSummary } from './registryRepairSummary';
 import { buildRegistryTruthSweepPrediction } from './registryTruthSweep';
+import {
+  REGISTRY_DUPLICATE_MERGE_RETRY_ERROR,
+  REGISTRY_DUPLICATE_REVIEW_COPY_RETRY_ERROR,
+  REGISTRY_METADATA_REFRESH_RETRY_ERROR,
+  REGISTRY_METADATA_REIMPORT_RETRY_ERROR,
+  safeRegistryDashboardError,
+} from './registryDashboardErrorCopy';
 
 const WEEKLY_REFRESH_MS = 1000 * 60 * 60 * 24 * 7;
 const getBackoffMs = (failCount: number) => Math.min(WEEKLY_REFRESH_MS * 4, Math.max(6 * 60 * 60 * 1000, (2 ** Math.min(5, failCount)) * 60 * 60 * 1000));
@@ -78,6 +85,7 @@ export function useRegistryMaintenanceActions(args: UseRegistryMaintenanceAction
     logRegistryAction,
     weddingSiteId,
   } = args;
+  void setBulkImportOpen;
 
   const [autoRefreshing, setAutoRefreshing] = useState(false);
   const [bulkImportBusy, setBulkImportBusy] = useState(false);
@@ -184,8 +192,16 @@ export function useRegistryMaintenanceActions(args: UseRegistryMaintenanceAction
         toast('No new details found — details are up to date');
       }
       return true;
-    } catch {
-      if (!silent) toast(replaceExisting ? 'Couldn’t refresh this gift right now. Try Edit if the store page is light on details.' : 'Couldn’t refresh gift details right now. Please try again.', 'error');
+    } catch (error) {
+      if (!silent) {
+        toast(
+          safeRegistryDashboardError(
+            error,
+            replaceExisting ? REGISTRY_METADATA_REIMPORT_RETRY_ERROR : REGISTRY_METADATA_REFRESH_RETRY_ERROR,
+          ),
+          'error',
+        );
+      }
       return false;
     }
   }
@@ -247,9 +263,9 @@ export function useRegistryMaintenanceActions(args: UseRegistryMaintenanceAction
         toast('Clipboard was blocked, so the duplicate review list downloaded.');
       }
       return result;
-    } catch {
+    } catch (error) {
       if (!isCurrentDuplicateReviewCopy()) return null;
-      toast('Couldn’t copy the duplicate review list right now.', 'error');
+      toast(safeRegistryDashboardError(error, REGISTRY_DUPLICATE_REVIEW_COPY_RETRY_ERROR), 'error');
       return null;
     }
   }
@@ -310,9 +326,9 @@ export function useRegistryMaintenanceActions(args: UseRegistryMaintenanceAction
         getOwnerRegistryDisplayTitle(group.primaryItem.item_name, group.primaryItem),
       );
       toast(`Merged ${group.secondaryItems.length + 1} duplicate gifts into "${getOwnerRegistryDisplayTitle(group.primaryItem.item_name, group.primaryItem)}".`);
-    } catch {
+    } catch (error) {
       if (!isCurrentDuplicateMerge()) return;
-      toast('Couldn’t merge those duplicate gifts right now. Please try again.', 'error');
+      toast(safeRegistryDashboardError(error, REGISTRY_DUPLICATE_MERGE_RETRY_ERROR), 'error');
     } finally {
       if (isCurrentDuplicateMerge()) setMergingDuplicateGroupId(null);
     }
