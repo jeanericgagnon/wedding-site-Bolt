@@ -213,7 +213,7 @@ export const GuidedSetup: React.FC = () => {
         }
       } catch (err: unknown) {
         if (!hasLocalDraft) {
-          setError(buildGuidedSetupHydrationErrorMessage((err as Error).message));
+          setError(buildGuidedSetupHydrationErrorMessage(err));
         }
       }
     };
@@ -299,7 +299,7 @@ export const GuidedSetup: React.FC = () => {
         setCurrentStep(nextStep);
       }
     } catch (err: unknown) {
-        setError(buildGuidedSetupSaveErrorMessage((err as Error).message));
+        setError(buildGuidedSetupSaveErrorMessage(err));
     }
   };
 
@@ -358,7 +358,7 @@ export const GuidedSetup: React.FC = () => {
       clearAllOnboardingContinuationState();
       navigate(destination, navigationState ? { state: navigationState } : undefined);
     } catch (err: unknown) {
-        setError(buildGuidedSetupSaveErrorMessage((err as Error).message || 'Could not finish setup right now.'));
+        setError(buildGuidedSetupSaveErrorMessage(err));
     } finally {
       setLoading(false);
     }
