@@ -182,7 +182,7 @@ export function getGuestJourneyCopy(surface: GuestJourneySurface): GuestJourneyC
         helperBadges: ['Keepsake mode', 'Hub nearby', 'Photos nearby'],
         focusTitle: 'Honor the long story without hiding the live one',
         focusDetail: 'Keepsake mode can feel softer and more reflective, but reopening the wedding path should still be obvious whenever the guest needs it.',
-        bestNextMove: 'Leave one anniversary note or memory, then reopen the wedding hub or photo path the moment a practical task comes back into view.',
+        bestNextMove: 'Leave one anniversary note or memory, then reopen the wedding hub or photo sharing path the moment a practical task comes back into view.',
         decisionRule: 'Memory should extend the wedding experience, not obscure the practical path back into it.',
         watchout: 'If keepsake mode makes the live wedding path feel buried, memory starts competing with continuity instead of enriching it.',
         sequence: [
@@ -193,7 +193,7 @@ export function getGuestJourneyCopy(surface: GuestJourneySurface): GuestJourneyC
           },
           {
             status: 'next',
-            title: 'Reopen the wedding hub or photo path when the live story returns',
+            title: 'Reopen the wedding hub or photo sharing path when the live story returns',
             detail: 'If guests need something practical again, make the active wedding surfaces easy to reenter immediately.',
           },
           {

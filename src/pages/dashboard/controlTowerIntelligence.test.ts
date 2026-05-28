@@ -131,7 +131,11 @@ describe('buildControlTowerBriefing', () => {
     }));
 
     expect(briefing.title).toContain('Photo sharing still needs a real guest-ready entry point');
+    expect(briefing.focusDetail).toContain('guest-ready photo sharing path');
     expect(briefing.bestNextMove).toMatch(/photo sharing path/i);
+    expect(briefing.sequence[0]).toMatchObject({
+      label: 'Activate a photo sharing path',
+    });
     expect(briefing.sequence[1]).toMatchObject({
       label: 'Check the guest photo sharing path',
     });
