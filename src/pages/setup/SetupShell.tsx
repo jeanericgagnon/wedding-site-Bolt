@@ -509,7 +509,7 @@ export const SetupShell: React.FC<{ step?: string }> = ({ step }) => {
               </div>
 
               <div className="rounded-lg border border-neutral-200 bg-neutral-50 p-3 text-xs text-neutral-600">
-                {setupMode.destination ? 'Next after setup: confirm travel details, hotel guidance, and weekend events before deciding the site is ready to publish.' : setupMode.weekend ? 'Next after setup: add your full weekend schedule so guests can follow the flow clearly.' : 'Next after setup: finish the main event details, RSVP settings, and guest list before you treat the site as launch-ready.'} {setupMode.bilingual ? 'Keep bilingual guest copy in mind while you fill out FAQs and key guest guidance.' : ''} {setupMode.interfaith ? 'Add a short ceremony note early so guests understand the traditions being honored.' : ''}
+                {setupMode.destination ? 'Next after setup: confirm travel details, hotel guidance, and weekend events before treating the draft as ready to share with guests.' : setupMode.weekend ? 'Next after setup: add your full weekend schedule so guests can follow the flow clearly.' : 'Next after setup: finish the main event details, RSVP settings, and guest list before you treat the draft as ready to share with guests.'} {setupMode.bilingual ? 'Keep bilingual guest copy in mind while you fill out FAQs and key guest guidance.' : ''} {setupMode.interfaith ? 'Add a short ceremony note early so guests understand the traditions being honored.' : ''}
               </div>
 
               <div className="flex flex-wrap items-center gap-2">

@@ -110,8 +110,11 @@ describe('GuidedSetup starter draft wording truth', () => {
     });
 
     expect(screen.getByText("We drafted the core pages from what you shared. Review the starter draft in your dashboard, tighten the details, and only publish once you're ready to share it with guests.")).toBeInTheDocument();
+    expect(screen.getByText('Refine access, preview, and share when ready')).toBeInTheDocument();
+    expect(screen.getByText('Set the guest-facing access you want, then share once the draft feels solid')).toBeInTheDocument();
     expect(screen.queryByText(/you'?re all set/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/starter wedding site is ready/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/go live when ready/i)).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Import guest CSV' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Review editor options' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Go to dashboard overview' })).toBeInTheDocument();

@@ -1079,8 +1079,8 @@ export const GuidedSetup: React.FC = () => {
                     <span className="text-xs font-bold text-primary">3</span>
                   </div>
                   <div>
-                    <p className="font-medium text-text-primary">Refine access, preview, and go live when ready</p>
-                    <p className="text-sm text-text-secondary">Set the guest-facing access you want, then share once the site feels solid</p>
+                    <p className="font-medium text-text-primary">Refine access, preview, and share when ready</p>
+                    <p className="text-sm text-text-secondary">Set the guest-facing access you want, then share once the draft feels solid</p>
                   </div>
                 </li>
               </ul>

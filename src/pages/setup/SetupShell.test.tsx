@@ -77,4 +77,29 @@ describe('SetupShell', () => {
     expect(window.localStorage.getItem(SELECTED_TEMPLATE_KEY)).toBe('coastal-breeze');
     expect(navigateMock).toHaveBeenCalledWith(getBuilderV2Route());
   });
+
+  it('keeps the review handoff framed as draft truth instead of launch-ready copy', () => {
+    writeSetupDraft({
+      ...emptySetupDraft,
+      migrationSource: 'other',
+      partnerOneFirstName: 'Alex',
+      partnerTwoFirstName: 'Jordan',
+      weddingDate: '2026-09-18',
+      weddingCity: 'Napa',
+      weddingRegion: 'CA',
+      guestEstimateBand: '100to200',
+      stylePreferences: ['Romantic'],
+      selectedTemplateId: 'modern-luxe',
+    });
+
+    render(
+      <MemoryRouter>
+        <SetupShell step="review" />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByText(/finish the main event details, RSVP settings, and guest list before you treat the draft as ready to share with guests\./i)).toBeInTheDocument();
+    expect(screen.queryByText(/launch-ready/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/ready to publish/i)).not.toBeInTheDocument();
+  });
 });
