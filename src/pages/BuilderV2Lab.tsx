@@ -86,6 +86,7 @@ import {
 } from './builderV2History';
 import {
   buildBuilderV2LaunchGate,
+  type BuilderV2LaunchGatePreviewCoverage,
   type BuilderV2LaunchGateAction,
 } from './builderV2LaunchGate';
 import {
@@ -573,9 +574,12 @@ export const BuilderV2Lab: React.FC = () => {
   const [pinnedCommands] = useState<string[]>(['Add section: Hero', 'Select section: Hero']);
   const [showQuickHelp, setShowQuickHelp] = useState(false);
   const [previewDevice, setPreviewDevice] = useState<'desktop' | 'mobile'>('desktop');
-  const [previewReviewedSnapshots, setPreviewReviewedSnapshots] = useState<{ desktop: string; mobile: string }>({
-    desktop: '',
-    mobile: '',
+  const [previewReviewedSnapshots, setPreviewReviewedSnapshots] = useState<{
+    desktop: Record<string, string>;
+    mobile: Record<string, string>;
+  }>({
+    desktop: {},
+    mobile: {},
   });
   const [previewScale, setPreviewScale] = useState(100);
   const [focusPreview, setFocusPreview] = useState(false);
@@ -1452,21 +1456,36 @@ export const BuilderV2Lab: React.FC = () => {
     }),
     [documentPages, previewDevice],
   );
-  const previewReviewed = useMemo(
-    () => ({
-      desktop: Boolean(activeSnapshotId) && previewReviewedSnapshots.desktop === activeSnapshotId,
-      mobile: Boolean(activeSnapshotId) && previewReviewedSnapshots.mobile === activeSnapshotId,
-    }),
-    [activeSnapshotId, previewReviewedSnapshots.desktop, previewReviewedSnapshots.mobile],
-  );
+  const previewReviewed = useMemo<Record<'desktop' | 'mobile', BuilderV2LaunchGatePreviewCoverage>>(() => {
+    const visiblePages = documentPages.filter((page) => !page.hidden && page.sections.some((section) => section.enabled));
+    const buildCoverage = (device: 'desktop' | 'mobile'): BuilderV2LaunchGatePreviewCoverage => {
+      const reviewedMap = previewReviewedSnapshots[device];
+      const reviewedPages = visiblePages.filter((page) => Boolean(activeSnapshotId) && reviewedMap[page.id] === activeSnapshotId);
+      const nextPage = visiblePages.find((page) => !reviewedPages.some((reviewed) => reviewed.id === page.id)) ?? null;
+
+      return {
+        reviewedPageCount: reviewedPages.length,
+        totalPageCount: visiblePages.length,
+        currentPageReviewed: Boolean(activeSnapshotId) && reviewedMap[activePage.id] === activeSnapshotId,
+        nextPageId: nextPage?.id ?? null,
+        nextPageTitle: nextPage?.title ?? null,
+      };
+    };
+
+    return {
+      desktop: buildCoverage('desktop'),
+      mobile: buildCoverage('mobile'),
+    };
+  }, [activePage.id, activeSnapshotId, documentPages, previewReviewedSnapshots]);
   const launchGate = useMemo(
     () => buildBuilderV2LaunchGate({
       pages: documentPages,
       audit: documentAudit,
       previewDevice,
+      activePageId: activePage.id,
       previewReviewed,
     }),
-    [documentAudit, documentPages, previewDevice, previewReviewed],
+    [activePage.id, documentAudit, documentPages, previewDevice, previewReviewed],
   );
   const handoffPacket = useMemo(
     () => buildBuilderV2HandoffPacket({
@@ -1649,10 +1668,13 @@ export const BuilderV2Lab: React.FC = () => {
 
     setPreviewReviewedSnapshots((prev) => ({
       ...prev,
-      [device]: activeSnapshotId,
+      [device]: {
+        ...prev[device],
+        [activePage.id]: activeSnapshotId,
+      },
     }));
-    notify(`Marked ${device} preview checked for this revision`);
-  }, [activeSnapshotId, notify]);
+    notify(`Marked ${activePage.title} checked on ${device}`);
+  }, [activePage.id, activePage.title, activeSnapshotId, notify]);
 
   const runHandoffAction = useCallback(() => {
     switch (handoffGuidance.primaryAction) {
@@ -1703,6 +1725,12 @@ export const BuilderV2Lab: React.FC = () => {
       case 'review-audit-issue':
         reviewDocumentAuditIssue(launchGate.primaryAction.issue);
         break;
+      case 'review-preview-page':
+        selectPage(launchGate.primaryAction.pageId, true);
+        setPreviewDevice(launchGate.primaryAction.device);
+        setFocusPreview(true);
+        setShowMinimap(launchGate.primaryAction.device === 'mobile');
+        break;
       case 'switch-preview-device':
         setPreviewDevice(launchGate.primaryAction.device);
         setFocusPreview(true);
@@ -1715,7 +1743,7 @@ export const BuilderV2Lab: React.FC = () => {
         setShowExportPanel(true);
         break;
     }
-  }, [launchGate.primaryAction, markPreviewReviewed, reviewDocumentAuditIssue]);
+  }, [launchGate.primaryAction, markPreviewReviewed, reviewDocumentAuditIssue, selectPage]);
   const launchGateExportTone = launchGate.status === 'ready'
     ? 'border-emerald-200 bg-emerald-50/60'
     : launchGate.status === 'review'
@@ -1725,6 +1753,12 @@ export const BuilderV2Lab: React.FC = () => {
     switch (action.kind) {
       case 'review-audit-issue':
         reviewDocumentAuditIssue(action.issue);
+        break;
+      case 'review-preview-page':
+        selectPage(action.pageId, true);
+        setPreviewDevice(action.device);
+        setFocusPreview(true);
+        setShowMinimap(action.device === 'mobile');
         break;
       case 'switch-preview-device':
         setPreviewDevice(action.device);
@@ -1738,7 +1772,7 @@ export const BuilderV2Lab: React.FC = () => {
         setShowExportPanel(true);
         break;
     }
-  }, [markPreviewReviewed, reviewDocumentAuditIssue]);
+  }, [markPreviewReviewed, reviewDocumentAuditIssue, selectPage]);
 
   const applyImportedDocument = useCallback((
     doc: BuilderV2Document,
@@ -2885,7 +2919,7 @@ export const BuilderV2Lab: React.FC = () => {
                   {(['desktop','mobile'] as const).map((d) => (
                     <button key={d} onClick={() => setPreviewDevice(d)} className={`text-[11px] px-2 py-1 border rounded inline-flex items-center gap-1 ${previewDevice === d ? 'border-primary/50 bg-primary/10 text-primary' : ''}`}>
                       {d}
-                      {previewReviewed[d] && <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />}
+                      {previewReviewed[d].currentPageReviewed && <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />}
                     </button>
                   ))}
                 </div>

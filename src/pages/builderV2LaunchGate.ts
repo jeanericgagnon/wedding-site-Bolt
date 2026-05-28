@@ -3,6 +3,7 @@ import type { BuilderV2ReviewPageSnapshot } from './builderV2DocumentReviewState
 
 export type BuilderV2LaunchGateAction =
   | { kind: 'review-audit-issue'; label: string; issue: BuilderV2DocumentAuditIssue }
+  | { kind: 'review-preview-page'; label: string; device: 'desktop' | 'mobile'; pageId: string; pageTitle: string }
   | { kind: 'switch-preview-device'; label: string; device: 'desktop' | 'mobile' }
   | { kind: 'mark-preview-reviewed'; label: string; device: 'desktop' | 'mobile' }
   | { kind: 'open-export'; label: string };
@@ -27,46 +28,84 @@ export type BuilderV2LaunchGateSummary = {
   primaryAction: BuilderV2LaunchGateAction;
 };
 
+export type BuilderV2LaunchGatePreviewCoverage = {
+  reviewedPageCount: number;
+  totalPageCount: number;
+  currentPageReviewed: boolean;
+  nextPageId: string | null;
+  nextPageTitle: string | null;
+};
+
 type Params = {
   pages: BuilderV2ReviewPageSnapshot[];
   audit: BuilderV2DocumentAudit;
   previewDevice: 'desktop' | 'mobile';
-  previewReviewed: {
-    desktop: boolean;
-    mobile: boolean;
-  };
+  activePageId: string;
+  previewReviewed: Record<'desktop' | 'mobile', BuilderV2LaunchGatePreviewCoverage>;
 };
 
-const getAuditAction = (
-  issue: BuilderV2DocumentAuditIssue,
-): BuilderV2LaunchGateAction => ({
+const getAuditAction = (issue: BuilderV2DocumentAuditIssue): BuilderV2LaunchGateAction => ({
   kind: 'review-audit-issue',
   label: issue.actionLabel,
   issue,
 });
 
-const getPreviewAction = (
+const getPreviewCoverageDetail = (
+  coverage: BuilderV2LaunchGatePreviewCoverage,
   device: 'desktop' | 'mobile',
-  currentDevice: 'desktop' | 'mobile',
-): BuilderV2LaunchGateAction => (
-  device === currentDevice
-    ? { kind: 'mark-preview-reviewed', label: `Mark ${device} checked`, device }
-    : { kind: 'switch-preview-device', label: `Switch to ${device}`, device }
-);
+) => {
+  if (!coverage.totalPageCount) {
+    return `No visible pages are left to review on ${device}.`;
+  }
+
+  return coverage.currentPageReviewed
+    ? `${coverage.reviewedPageCount} of ${coverage.totalPageCount} visible page${coverage.totalPageCount === 1 ? '' : 's'} have been checked on ${device}.`
+    : `${coverage.reviewedPageCount} of ${coverage.totalPageCount} visible page${coverage.totalPageCount === 1 ? '' : 's'} have been checked on ${device}, and this page is still unreviewed.`;
+};
+
+const getPreviewReviewAction = ({
+  device,
+  currentDevice,
+  currentPageId,
+  coverage,
+}: {
+  device: 'desktop' | 'mobile';
+  currentDevice: 'desktop' | 'mobile';
+  currentPageId: string;
+  coverage: BuilderV2LaunchGatePreviewCoverage;
+}): BuilderV2LaunchGateAction => {
+  if (coverage.nextPageId && coverage.nextPageId !== currentPageId) {
+    return {
+      kind: 'review-preview-page',
+      label: `Review ${coverage.nextPageTitle ?? 'next page'} on ${device}`,
+      device,
+      pageId: coverage.nextPageId,
+      pageTitle: coverage.nextPageTitle ?? 'Next page',
+    };
+  }
+
+  if (device !== currentDevice) {
+    return { kind: 'switch-preview-device', label: `Switch to ${device}`, device };
+  }
+
+  return { kind: 'mark-preview-reviewed', label: `Mark ${device} checked`, device };
+};
 
 export const buildBuilderV2LaunchGate = ({
   pages,
   audit,
   previewDevice,
+  activePageId,
   previewReviewed,
 }: Params): BuilderV2LaunchGateSummary => {
-  const visibleSections = pages.flatMap((page) => (
-    page.hidden ? [] : page.sections.filter((section) => section.enabled)
-  ));
+  const visiblePages = pages.filter((page) => !page.hidden && page.sections.some((section) => section.enabled));
+  const visibleSections = visiblePages.flatMap((page) => page.sections.filter((section) => section.enabled));
   const visibleNonEmptySections = visibleSections.filter((section) => section.blockCount > 0);
   const criticalIssue = audit.issues.find((issue) => issue.severity === 'critical') ?? null;
   const warningIssue = audit.issues.find((issue) => issue.severity === 'warning') ?? null;
   const watchIssue = audit.issues.find((issue) => issue.severity === 'watch') ?? null;
+  const desktopCoverage = previewReviewed.desktop;
+  const mobileCoverage = previewReviewed.mobile;
 
   const checklistItems: BuilderV2LaunchGateChecklistItem[] = [
     {
@@ -99,24 +138,35 @@ export const buildBuilderV2LaunchGate = ({
     {
       id: 'desktop',
       label: 'Desktop preview checked',
-      done: previewReviewed.desktop,
-      detail: previewReviewed.desktop
-        ? 'Desktop preview has been checked against the current document state.'
-        : 'Launch confidence still needs one honest desktop preview pass.',
-      action: previewReviewed.desktop ? null : getPreviewAction('desktop', previewDevice),
+      done: desktopCoverage.reviewedPageCount === desktopCoverage.totalPageCount,
+      detail: getPreviewCoverageDetail(desktopCoverage, 'desktop'),
+      action: desktopCoverage.reviewedPageCount === desktopCoverage.totalPageCount
+        ? null
+        : getPreviewReviewAction({
+            device: 'desktop',
+            currentDevice: previewDevice,
+            currentPageId: activePageId,
+            coverage: desktopCoverage,
+          }),
     },
     {
       id: 'mobile',
       label: 'Mobile preview checked',
-      done: previewReviewed.mobile,
-      detail: previewReviewed.mobile
-        ? 'Mobile preview has been checked against the current document state.'
-        : 'Launch confidence still needs one honest mobile preview pass.',
-      action: previewReviewed.mobile ? null : getPreviewAction('mobile', previewDevice),
+      done: mobileCoverage.reviewedPageCount === mobileCoverage.totalPageCount,
+      detail: getPreviewCoverageDetail(mobileCoverage, 'mobile'),
+      action: mobileCoverage.reviewedPageCount === mobileCoverage.totalPageCount
+        ? null
+        : getPreviewReviewAction({
+            device: 'mobile',
+            currentDevice: previewDevice,
+            currentPageId: activePageId,
+            coverage: mobileCoverage,
+          }),
     },
   ];
 
   const keyStats = [
+    `${visiblePages.length} visible page${visiblePages.length === 1 ? '' : 's'}`,
     `${visibleSections.length} visible lane${visibleSections.length === 1 ? '' : 's'}`,
     `${audit.criticalCount} critical`,
     `${audit.warningCount} warning${audit.warningCount === 1 ? '' : 's'}`,
@@ -139,7 +189,12 @@ export const buildBuilderV2LaunchGate = ({
       checklistItems,
       primaryAction: criticalIssue
         ? getAuditAction(criticalIssue)
-        : getPreviewAction(previewDevice, previewDevice),
+        : getPreviewReviewAction({
+            device: previewDevice,
+            currentDevice: previewDevice,
+            currentPageId: activePageId,
+            coverage: previewReviewed[previewDevice],
+          }),
     };
   }
 
@@ -157,31 +212,45 @@ export const buildBuilderV2LaunchGate = ({
     };
   }
 
-  if (!previewReviewed.desktop) {
+  if (desktopCoverage.reviewedPageCount !== desktopCoverage.totalPageCount) {
     return {
       status: 'review',
       headline: 'Desktop preview still needs a deliberate check',
-      detail: 'Structure is stable enough to review, but launch confidence is incomplete until the current desktop read is checked against this exact document revision.',
-      bestNextMove: 'Read the desktop preview top to bottom, then mark it checked once the flow still feels honest.',
-      decisionRule: 'Desktop review is where rhythm, hierarchy, and page-level pacing get their clearest first pass.',
-      watchout: 'Do not let mobile-only confidence stand in for a desktop pass when the page is getting dense.',
+      detail: 'Structure is stable enough to review, but launch confidence is incomplete until every visible page has a desktop pass against this exact document revision.',
+      bestNextMove: desktopCoverage.nextPageTitle
+        ? `Open ${desktopCoverage.nextPageTitle} on desktop, read it top to bottom, and mark it checked once the flow still feels honest.`
+        : 'Read the current desktop preview top to bottom, then mark it checked once the flow still feels honest.',
+      decisionRule: 'Desktop review is where page rhythm, hierarchy, and multi-page pacing get their clearest first pass.',
+      watchout: 'Do not let mobile-only confidence stand in for a desktop pass when the document spans multiple guest-facing pages.',
       keyStats,
       checklistItems,
-      primaryAction: getPreviewAction('desktop', previewDevice),
+      primaryAction: getPreviewReviewAction({
+        device: 'desktop',
+        currentDevice: previewDevice,
+        currentPageId: activePageId,
+        coverage: desktopCoverage,
+      }),
     };
   }
 
-  if (!previewReviewed.mobile) {
+  if (mobileCoverage.reviewedPageCount !== mobileCoverage.totalPageCount) {
     return {
       status: 'review',
       headline: 'Mobile preview still needs a deliberate check',
-      detail: 'The document is structurally healthy, but launch confidence is still missing the tighter screen where stacking and repetition show up fastest.',
-      bestNextMove: 'Switch to mobile preview, read the page in one pass, and mark it checked once the guest story still holds.',
-      decisionRule: 'Mobile review is the honest last gate for dense or emotionally important guest pages.',
+      detail: 'The document is structurally healthy, but launch confidence is still missing the tighter screen where stacking and repetition show up fastest across the visible page set.',
+      bestNextMove: mobileCoverage.nextPageTitle
+        ? `Open ${mobileCoverage.nextPageTitle} on mobile, read it in one pass, and mark it checked once the guest story still holds.`
+        : 'Switch to mobile preview, read the current page in one pass, and mark it checked once the guest story still holds.',
+      decisionRule: 'Mobile review is the honest last gate for dense or emotionally important multi-page guest reads.',
       watchout: 'Desktop can flatter a long page that starts feeling repetitive or top-heavy on a phone.',
       keyStats,
       checklistItems,
-      primaryAction: getPreviewAction('mobile', previewDevice),
+      primaryAction: getPreviewReviewAction({
+        device: 'mobile',
+        currentDevice: previewDevice,
+        currentPageId: activePageId,
+        coverage: mobileCoverage,
+      }),
     };
   }
 
@@ -189,7 +258,7 @@ export const buildBuilderV2LaunchGate = ({
     return {
       status: 'review',
       headline: `${audit.watchCount} confidence review${audit.watchCount === 1 ? '' : 's'} still deserve a final pass`,
-      detail: 'Nothing is structurally broken, and both preview sizes were checked, but a few pages or lanes still want an intentional confidence read.',
+      detail: 'Nothing is structurally broken, and all visible pages were checked on both preview sizes, but a few pages or lanes still want an intentional confidence read.',
       bestNextMove: watchIssue.detail,
       decisionRule: 'Watch-level issues do not block structure, but they should still earn an explicit yes or no before export.',
       watchout: 'Minor review debt tends to linger because the document already feels close enough.',
@@ -202,7 +271,7 @@ export const buildBuilderV2LaunchGate = ({
   return {
     status: 'ready',
     headline: 'The document is in a healthy launch-review state',
-    detail: 'Visible structure is carrying real content, warnings are cleared, and both preview sizes were checked against the current document state.',
+    detail: 'Visible structure is carrying real content, warnings are cleared, and every visible page has been checked on both preview sizes against the current document state.',
     bestNextMove: 'Open the export handoff, then share or publish from this revision instead of reopening a speculative polish lap.',
     decisionRule: 'When the launch checklist is clean, trust the document enough to move it forward instead of searching for nervous extras.',
     watchout: 'The main risk now is reopening the draft for low-value tweaks that create fresh review debt.',

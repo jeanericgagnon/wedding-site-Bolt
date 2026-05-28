@@ -24,6 +24,26 @@ const createPages = (): BuilderV2ReviewPageSnapshot[] => [
   },
 ];
 
+const createCoverage = ({
+  reviewedPageCount,
+  totalPageCount = 1,
+  currentPageReviewed = reviewedPageCount >= totalPageCount,
+  nextPageId = currentPageReviewed ? null : 'home',
+  nextPageTitle = currentPageReviewed ? null : 'Home',
+}: {
+  reviewedPageCount: number;
+  totalPageCount?: number;
+  currentPageReviewed?: boolean;
+  nextPageId?: string | null;
+  nextPageTitle?: string | null;
+}) => ({
+  reviewedPageCount,
+  totalPageCount,
+  currentPageReviewed,
+  nextPageId,
+  nextPageTitle,
+});
+
 describe('buildBuilderV2LaunchGate', () => {
   it('routes critical blockers through the exact audit issue', () => {
     const pages: BuilderV2ReviewPageSnapshot[] = [
@@ -51,7 +71,11 @@ describe('buildBuilderV2LaunchGate', () => {
       pages,
       audit,
       previewDevice: 'desktop',
-      previewReviewed: { desktop: false, mobile: false },
+      activePageId: 'home',
+      previewReviewed: {
+        desktop: createCoverage({ reviewedPageCount: 0, currentPageReviewed: false }),
+        mobile: createCoverage({ reviewedPageCount: 0, currentPageReviewed: false }),
+      },
     });
 
     expect(summary.status).toBe('blocked');
@@ -70,7 +94,11 @@ describe('buildBuilderV2LaunchGate', () => {
       pages,
       audit,
       previewDevice: 'desktop',
-      previewReviewed: { desktop: true, mobile: false },
+      activePageId: 'home',
+      previewReviewed: {
+        desktop: createCoverage({ reviewedPageCount: 1 }),
+        mobile: createCoverage({ reviewedPageCount: 0, currentPageReviewed: false }),
+      },
     });
 
     expect(summary.status).toBe('review');
@@ -91,7 +119,11 @@ describe('buildBuilderV2LaunchGate', () => {
       pages,
       audit,
       previewDevice: 'mobile',
-      previewReviewed: { desktop: true, mobile: false },
+      activePageId: 'home',
+      previewReviewed: {
+        desktop: createCoverage({ reviewedPageCount: 1 }),
+        mobile: createCoverage({ reviewedPageCount: 0, currentPageReviewed: false }),
+      },
     });
 
     expect(summary.primaryAction).toEqual({
@@ -109,7 +141,11 @@ describe('buildBuilderV2LaunchGate', () => {
       pages,
       audit,
       previewDevice: 'mobile',
-      previewReviewed: { desktop: true, mobile: true },
+      activePageId: 'home',
+      previewReviewed: {
+        desktop: createCoverage({ reviewedPageCount: 1 }),
+        mobile: createCoverage({ reviewedPageCount: 1 }),
+      },
     });
 
     expect(summary.status).toBe('ready');
@@ -146,7 +182,11 @@ describe('buildBuilderV2LaunchGate', () => {
       pages,
       audit,
       previewDevice: 'mobile',
-      previewReviewed: { desktop: true, mobile: true },
+      activePageId: 'home',
+      previewReviewed: {
+        desktop: createCoverage({ reviewedPageCount: 1 }),
+        mobile: createCoverage({ reviewedPageCount: 1 }),
+      },
     });
 
     expect(summary.status).toBe('review');
@@ -154,5 +194,62 @@ describe('buildBuilderV2LaunchGate', () => {
       kind: 'review-audit-issue',
       label: 'Review on mobile',
     });
+  });
+
+  it('routes review to the next unreviewed visible page on the missing device', () => {
+    const pages: BuilderV2ReviewPageSnapshot[] = [
+      ...createPages(),
+      {
+        id: 'travel',
+        title: 'Travel',
+        slug: 'travel',
+        hidden: false,
+        isHome: false,
+        sections: [
+          {
+            id: 'travel-section',
+            title: 'Travel',
+            type: 'travel',
+            enabled: true,
+            blockCount: 3,
+            warningCount: 0,
+          },
+        ],
+      },
+    ];
+    const audit = buildBuilderV2DocumentAudit({ pages, previewDevice: 'desktop' });
+
+    const summary = buildBuilderV2LaunchGate({
+      pages,
+      audit,
+      previewDevice: 'desktop',
+      activePageId: 'home',
+      previewReviewed: {
+        desktop: createCoverage({
+          reviewedPageCount: 1,
+          totalPageCount: 2,
+          currentPageReviewed: true,
+          nextPageId: 'travel',
+          nextPageTitle: 'Travel',
+        }),
+        mobile: createCoverage({
+          reviewedPageCount: 1,
+          totalPageCount: 2,
+          currentPageReviewed: true,
+          nextPageId: 'travel',
+          nextPageTitle: 'Travel',
+        }),
+      },
+    });
+
+    expect(summary.status).toBe('review');
+    expect(summary.primaryAction).toEqual({
+      kind: 'review-preview-page',
+      label: 'Review Travel on desktop',
+      device: 'desktop',
+      pageId: 'travel',
+      pageTitle: 'Travel',
+    });
+    expect(summary.checklistItems.find((item) => item.id === 'desktop')?.done).toBe(false);
   });
 });
