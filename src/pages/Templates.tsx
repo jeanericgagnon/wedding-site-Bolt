@@ -146,19 +146,24 @@ export const Templates: React.FC = () => {
           <span className="rounded bg-brand/5 border border-brand/20 px-2 py-0.5 text-xs text-brand">Best for {tpl.bestFor[0] ?? (tpl.styleTags[0] ?? 'all styles')}</span>
         </div>
         {manifest && (
-          <div className="mt-3 rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2">
-            <div className="flex flex-wrap items-center gap-2 text-[11px]">
-              <span className={`rounded-full px-2 py-0.5 font-medium ${manifest.previewStatus === 'verified' ? 'border border-emerald-200 bg-emerald-50 text-emerald-700' : 'border border-amber-200 bg-amber-50 text-amber-700'}`}>{manifest.previewLabel}</span>
-              <span className="text-neutral-600">{manifest.sectionsIncluded} starter sections</span>
-              <span className="text-neutral-600">{manifest.modulesIncluded} modules</span>
-            </div>
-            <p className="mt-1 text-[11px] text-neutral-600">{manifest.previewDetail}</p>
-            {!manifest.templateExistsInBuilder && (
-              <p className="mt-1 text-[11px] text-amber-700">Builder pack mapping still needs stronger support coverage.</p>
-            )}
-            {manifest.highlightedSections.length > 0 && (
-              <p className="mt-1 text-[11px] text-neutral-600">Starts with {manifest.highlightedSections.join(' · ')}</p>
-            )}
+            <div className="mt-3 rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2">
+              <div className="flex flex-wrap items-center gap-2 text-[11px]">
+                <span className={`rounded-full px-2 py-0.5 font-medium ${manifest.previewStatus === 'verified' ? 'border border-emerald-200 bg-emerald-50 text-emerald-700' : 'border border-amber-200 bg-amber-50 text-amber-700'}`}>{manifest.previewLabel}</span>
+                <span className={`rounded-full px-2 py-0.5 font-medium ${manifest.compatibilityStatus === 'risk' ? 'border border-amber-200 bg-amber-50 text-amber-700' : 'border border-sky-200 bg-sky-50 text-sky-700'}`}>{manifest.compatibilityLabel}</span>
+                <span className="text-neutral-600">{manifest.sectionsIncluded} starter sections</span>
+                <span className="text-neutral-600">{manifest.modulesIncluded} modules</span>
+              </div>
+              <p className="mt-1 text-[11px] text-neutral-600">{manifest.previewDetail}</p>
+              <p className="mt-1 text-[11px] text-neutral-600">{manifest.compatibilityDetail}</p>
+              {!manifest.templateExistsInBuilder && (
+                <p className="mt-1 text-[11px] text-amber-700">Builder pack mapping still needs stronger support coverage.</p>
+              )}
+              {manifest.normalizedVariantCount > 0 && (
+                <p className="mt-1 text-[11px] text-sky-700">{manifest.normalizedVariantCount} starter variant {manifest.normalizedVariantCount === 1 ? 'normalizes' : 'normalize'} into builder-native V2 behavior.</p>
+              )}
+              {manifest.highlightedSections.length > 0 && (
+                <p className="mt-1 text-[11px] text-neutral-600">Starts with {manifest.highlightedSections.join(' · ')}</p>
+              )}
             {tpl.styleTags.some((tag) => ['Destination'].includes(tag)) && (
               <p className="mt-2 text-[11px] text-brand">First use-case pack: {TEMPLATE_USE_CASE_PACKS.find((pack) => pack.id === 'destination')?.label}</p>
             )}

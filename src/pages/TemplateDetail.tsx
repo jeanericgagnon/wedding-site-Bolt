@@ -30,7 +30,7 @@ export const TemplateDetail: React.FC = () => {
     .filter((t) => t.styleTags.some((tag) => tpl.styleTags.includes(tag)))
     .slice(0, 3);
 
-  const useTemplate = (id = tpl.id) => {
+  const applyTemplate = (id = tpl.id) => {
     selectSetupDraftTemplate(id);
     navigate('/setup/names');
   };
@@ -115,6 +115,7 @@ export const TemplateDetail: React.FC = () => {
                 <div className="flex flex-wrap items-center gap-2">
                   <p className="text-xs font-semibold uppercase updates-wide text-neutral-500">Support manifest</p>
                   <span className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${supportManifest.previewStatus === 'verified' ? 'border border-emerald-200 bg-emerald-50 text-emerald-700' : 'border border-amber-200 bg-amber-50 text-amber-700'}`}>{supportManifest.previewLabel}</span>
+                  <span className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${supportManifest.compatibilityStatus === 'risk' ? 'border border-amber-200 bg-amber-50 text-amber-700' : 'border border-sky-200 bg-sky-50 text-sky-700'}`}>{supportManifest.compatibilityLabel}</span>
                   <span className="rounded-full border border-neutral-200 bg-white px-2 py-0.5 text-[11px] text-neutral-700">{supportManifest.sectionsIncluded} starter sections</span>
                   <span className="rounded-full border border-neutral-200 bg-white px-2 py-0.5 text-[11px] text-neutral-700">{supportManifest.modulesIncluded} modules</span>
                 </div>
@@ -130,6 +131,10 @@ export const TemplateDetail: React.FC = () => {
                   <div>
                     <p className="text-xs font-semibold uppercase updates-wide text-neutral-500 mb-2">What is verified</p>
                     <p className="mb-2 text-xs text-neutral-600">{supportManifest.previewDetail}</p>
+                    <p className="mb-2 text-xs text-neutral-600">{supportManifest.compatibilityDetail}</p>
+                    {supportManifest.normalizedVariantCount > 0 && (
+                      <p className="mb-2 text-xs text-sky-700">{supportManifest.normalizedVariantCount} starter variant {supportManifest.normalizedVariantCount === 1 ? 'normalizes' : 'normalize'} into builder-native V2 behavior.</p>
+                    )}
                     <ul className="space-y-1 text-xs text-neutral-700">
                       {supportManifest.supportNotes.map((note) => <li key={note}>• {note}</li>)}
                     </ul>
@@ -159,7 +164,7 @@ export const TemplateDetail: React.FC = () => {
           </div>
 
           <div className="mt-6 flex items-center gap-2">
-            <button onClick={() => useTemplate()} className="rounded bg-rose-600 px-4 py-2 text-sm font-medium text-white hover:bg-rose-700">Use this template</button>
+            <button onClick={() => applyTemplate()} className="rounded bg-rose-600 px-4 py-2 text-sm font-medium text-white hover:bg-rose-700">Use this template</button>
             <Link to="/templates" className="rounded border border-neutral-300 px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-100">Back to gallery</Link>
           </div>
 
@@ -180,7 +185,7 @@ export const TemplateDetail: React.FC = () => {
                       </p>
                       <button
                         type="button"
-                        onClick={() => useTemplate(rel.id)}
+                        onClick={() => applyTemplate(rel.id)}
                         className="mt-1.5 w-full rounded border border-rose-200 bg-rose-50 px-2 py-1 text-xs font-medium text-rose-700 hover:bg-rose-100"
                       >
                         Use this
@@ -194,7 +199,7 @@ export const TemplateDetail: React.FC = () => {
         </div>
       </div>
       <div className="fixed bottom-3 left-3 right-3 md:hidden z-20">
-        <button onClick={() => useTemplate()} className="w-full rounded-xl bg-rose-600 px-4 py-3 text-sm font-semibold text-white shadow-lg hover:bg-rose-700">Use this template</button>
+        <button onClick={() => applyTemplate()} className="w-full rounded-xl bg-rose-600 px-4 py-3 text-sm font-semibold text-white shadow-lg hover:bg-rose-700">Use this template</button>
       </div>
     </div>
   );

@@ -50,6 +50,10 @@ const manifests: Record<string, TemplateSupportManifest | null> = {
     sectionsIncluded: 8,
     modulesIncluded: 5,
     highlightedSections: ['Travel', 'Schedule'],
+    compatibilityStatus: 'verified',
+    compatibilityLabel: 'V2 compatibility verified',
+    compatibilityDetail: 'Ready',
+    normalizedVariantCount: 0,
     supportNotes: [],
   },
   'garden-romance': {
@@ -62,6 +66,10 @@ const manifests: Record<string, TemplateSupportManifest | null> = {
     sectionsIncluded: 5,
     modulesIncluded: 2,
     highlightedSections: ['Story'],
+    compatibilityStatus: 'risk',
+    compatibilityLabel: 'V2 compatibility needs review',
+    compatibilityDetail: 'Needs review',
+    normalizedVariantCount: 0,
     supportNotes: [],
   },
 };
