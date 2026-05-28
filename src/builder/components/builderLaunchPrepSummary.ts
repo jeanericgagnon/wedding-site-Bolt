@@ -66,7 +66,7 @@ function getHintsForIssue(issue: PublishIssue | null): string[] {
       ];
     case 'missing-event-date':
       return [
-        'Open event details and add the wedding date before going live.',
+        'Open event details and add the wedding date before sharing with guests.',
         'A guest should not have to infer timing from context or other pages.',
       ];
     case 'missing-venue':

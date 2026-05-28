@@ -10,9 +10,11 @@ import type { BuilderState } from '../state/builderStore';
 
 const {
   navigateMock,
+  dispatchMock,
   stateRef,
 } = vi.hoisted(() => ({
   navigateMock: vi.fn(),
+  dispatchMock: vi.fn(),
   stateRef: {
     current: null as BuilderState | null,
   },
@@ -30,7 +32,7 @@ vi.mock('react-router-dom', async () => {
 vi.mock('../state/builderStore', () => ({
   useBuilderContext: () => ({
     state: stateRef.current,
-    dispatch: vi.fn(),
+    dispatch: dispatchMock,
     activePage: stateRef.current?.project?.pages?.[0] ?? null,
     selectedSection: null,
   }),
@@ -41,6 +43,7 @@ import { BuilderTopBar } from './BuilderTopBar';
 describe('BuilderTopBar exit routes', () => {
   beforeEach(() => {
     navigateMock.mockReset();
+    dispatchMock.mockReset();
 
     const project = createEmptyBuilderProject('site-1', 'modern-luxe');
     const weddingData = createEmptyWeddingData();
@@ -109,5 +112,34 @@ describe('BuilderTopBar exit routes', () => {
 
     expect(navigateMock).toHaveBeenCalledWith(getBuilderV2Route());
     expect(navigateMock).not.toHaveBeenCalledWith('/builder-v2-lab');
+  });
+
+  it('uses share-ready publish labels for unpublished drafts', () => {
+    render(<BuilderTopBar onSave={() => undefined} onPublish={() => undefined} />);
+
+    expect(screen.getByTitle('Share with guests (⌘⇧P)')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Launch check /i })).toBeInTheDocument();
+  });
+
+  it('shows the repaired checklist action for adding a first page', () => {
+    const project = createEmptyBuilderProject('site-1', 'modern-luxe');
+    project.pages = [];
+    const weddingData = createEmptyWeddingData();
+    weddingData.couple.displayName = 'Alex & Jordan';
+
+    stateRef.current = {
+      ...stateRef.current!,
+      project,
+      weddingData,
+      activePageId: null,
+    };
+
+    render(<BuilderTopBar onSave={() => undefined} onPublish={() => undefined} />);
+
+    fireEvent.click(screen.getByRole('button', { name: /Share checklist/i }));
+
+    fireEvent.click(screen.getAllByRole('button', { name: 'Add first page' }).at(-1)!);
+
+    expect(dispatchMock).toHaveBeenCalled();
   });
 });

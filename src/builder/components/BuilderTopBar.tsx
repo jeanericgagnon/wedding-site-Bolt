@@ -574,7 +574,7 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
           ) : (
             <Globe size={14} />
           )}
-          {state.isPublishing ? 'Going live…' : 'Go live'}
+            {state.isPublishing ? 'Sharing live site…' : 'Share with guests'}
           </button>
         </div>
 
@@ -952,22 +952,19 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
                       {item.detail ? <span className={item.done ? 'text-gray-500' : 'text-amber-700'}> — {item.detail}</span> : null}
                     </span>
                   </span>
-                  {!item.done && item.label === 'Latest edits are saved' && (
+                  {!item.done && item.id === 'saved' && (
                     <button onClick={() => { onSave(); setShowPublishChecklist(false); }} className="rounded border border-gray-200 bg-gray-50 px-1.5 py-0.5 text-[10px] font-medium text-gray-700 transition-colors hover:bg-gray-100">Save now</button>
                   )}
-                  {!item.done && item.label === 'No active go-live blockers' && onFixPublishBlockers && (
-                    <button onClick={() => { handleFixNext(); setShowPublishChecklist(false); }} className="rounded border border-amber-300 bg-amber-50 px-1.5 py-0.5 text-[10px] font-medium text-amber-800 transition-colors hover:bg-amber-100">Fix this</button>
-                  )}
-                  {!item.done && item.label === 'No active go-live blockers' && publishIssueKind === 'no-enabled-sections' && onFixPublishBlockers && (
+                  {!item.done && item.id === 'sections' && publishIssueKind === 'no-enabled-sections' && onFixPublishBlockers && (
                     <button onClick={() => { handleFixNext(); setShowPublishChecklist(false); }} className="rounded border border-sky-300 bg-sky-50 px-1.5 py-0.5 text-[10px] font-medium text-sky-800 transition-colors hover:bg-sky-100">Open section</button>
                   )}
-                  {!item.done && item.label === 'No active go-live blockers' && publishIssueKind === 'no-pages' && onFixPublishBlockers && (
+                  {!item.done && item.id === 'page' && publishIssueKind === 'no-pages' && onFixPublishBlockers && (
                     <button onClick={() => { handleFixNext(); setShowPublishChecklist(false); }} className="rounded border border-sky-300 bg-sky-50 px-1.5 py-0.5 text-[10px] font-medium text-sky-800 transition-colors hover:bg-sky-100">Choose a design</button>
                   )}
-                  {!item.done && item.label === 'No active go-live blockers' && ['missing-couple-names', 'missing-event-date', 'missing-venue', 'rsvp-disabled'].includes(publishIssueKind ?? '') && onFixPublishBlockers && (
+                  {!item.done && ['names', 'date', 'venue', 'rsvp'].includes(item.id) && ['missing-couple-names', 'missing-event-date', 'missing-venue', 'rsvp-disabled'].includes(publishIssueKind ?? '') && onFixPublishBlockers && (
                     <button onClick={() => { handleFixNext(); setShowPublishChecklist(false); }} className="rounded border border-sky-300 bg-sky-50 px-1.5 py-0.5 text-[10px] font-medium text-sky-800 transition-colors hover:bg-sky-100">Open guidance</button>
                   )}
-                  {!item.done && item.label === 'At least one page exists' && (
+                  {!item.done && item.id === 'page' && (
                     <button
                       onClick={() => {
                         dispatch(builderActions.addPage('Home'));
@@ -1122,7 +1119,7 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
             </div>
 
             <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
-              <p className="text-[11px] text-gray-500">Apply the draft basics here, then save before you go live.</p>
+              <p className="text-[11px] text-gray-500">Apply the draft basics here, then save before sharing with guests.</p>
               <div className="flex items-center gap-2">
                 <button
                   type="button"
@@ -1306,8 +1303,8 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
               onPublish();
             }}
             disabled={isPublishDisabled}
-            aria-label={hasHardPublishBlocker && effectivePublishValidationError ? `Go live blocked: ${effectivePublishValidationError}` : canAutoSaveBeforePublish ? 'Save changes and go live' : 'Go live'}
-              title={hasHardPublishBlocker && effectivePublishValidationError ? `${effectivePublishValidationError} (⌘⇧P)` : canAutoSaveBeforePublish ? 'Save your latest changes, then go live (⌘⇧P)' : 'Go live (⌘⇧P)'}
+            aria-label={hasHardPublishBlocker && effectivePublishValidationError ? `Sharing blocked: ${effectivePublishValidationError}` : canAutoSaveBeforePublish ? 'Save changes and share with guests' : 'Share with guests'}
+              title={hasHardPublishBlocker && effectivePublishValidationError ? `${effectivePublishValidationError} (⌘⇧P)` : canAutoSaveBeforePublish ? 'Save your latest changes, then share with guests (⌘⇧P)' : 'Share with guests (⌘⇧P)'}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium bg-rose-600 text-white hover:bg-rose-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             {state.isPublishing || state.isSaving ? (
@@ -1316,21 +1313,21 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
               <Globe size={14} />
             )}
             {state.isPublishing
-              ? 'Going live…'
+              ? 'Sharing live site…'
               : state.isSaving
                 ? 'Waiting for save…'
                 : isPublished
                   ? `Update guest-facing site${typeof publishedVersion === 'number' ? ` v${publishedVersion}` : ''}`
-                  : 'Go live'}
+                  : 'Share with guests'}
           </button>
           <div className="absolute top-full right-0 mt-1.5 px-2 py-1 bg-gray-900 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 max-w-[260px] text-center">
             {hasHardPublishBlocker && effectivePublishValidationError
               ? effectivePublishValidationError
               : canAutoSaveBeforePublish
-                ? 'Save your latest changes, then go live (⌘⇧P)'
+                ? 'Save your latest changes, then share with guests (⌘⇧P)'
                 : isPublished
                 ? 'Updates the live version guests can already see (⌘⇧P)'
-                : 'Going live makes your site visible at your guest-facing DayOf URL (⌘⇧P)'}
+                : 'Sharing makes your site visible at your guest-facing DayOf URL (⌘⇧P)'}
           </div>
         </div>
       </div>

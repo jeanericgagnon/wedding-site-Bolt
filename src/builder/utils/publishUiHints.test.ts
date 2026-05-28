@@ -730,15 +730,15 @@ describe('publishUiHints', () => {
   });
 
   it('labels publish CTA across draft and live states', () => {
-    expect(getPublishCtaLabel(false)).toBe('Go live');
+    expect(getPublishCtaLabel(false)).toBe('Share with guests');
     expect(getPublishCtaLabel(true)).toBe('Update guest-facing site');
   });
 
   it('does not mistake publish CTA copy for a blocker', () => {
-    expect(getPublishBlockedHints('Go live')).toEqual([
+    expect(getPublishBlockedHints('Share with guests')).toEqual([
       'Use Fix next to move through the last blockers before the guest-facing launch.',
     ]);
-    expect(getPublishBlockedHints('Go live.')).toEqual([
+    expect(getPublishBlockedHints('Share with guests.')).toEqual([
       'Use Fix next to move through the last blockers before the guest-facing launch.',
     ]);
     expect(getPublishBlockedHints('Update guest-facing site')).toEqual([

@@ -167,7 +167,7 @@ export const getPublishBlockedHints = (publishValidationError?: string | null): 
 };
 
 export const getPublishCtaLabel = (isPublished: boolean): string =>
-  isPublished ? 'Update guest-facing site' : 'Go live';
+  isPublished ? 'Update guest-facing site' : 'Share with guests';
 
 export const getPublishStatusLabel = (isPublished: boolean, hasUnsavedChanges: boolean): string => {
   if (!isPublished && hasUnsavedChanges) return 'Draft has unsaved changes';
