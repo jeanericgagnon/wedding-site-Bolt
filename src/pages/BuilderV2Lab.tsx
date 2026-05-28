@@ -75,6 +75,7 @@ import {
 } from './builderV2PageState';
 import type { BuilderV2ReviewPageSnapshot } from './builderV2DocumentReviewState';
 import { buildBuilderV2SetupSeed } from './builderV2SetupSeed';
+import { buildBuilderV2TemplateSeed } from './builderV2TemplateSeed';
 import { buildBuilderV2PreviewInstances } from './builderV2PreviewProjection';
 import {
   createBuilderV2HistorySnapshot,
@@ -529,10 +530,12 @@ const StructureItem: React.FC<StructureItemProps> = ({ section, selected, multiS
 };
 
 export const BuilderV2Lab: React.FC = () => {
-  const initialSetupSeed = useMemo(() => buildBuilderV2SetupSeed(readSetupDraft()), []);
-  const initialPages = initialSetupSeed?.pages ?? createInitialBuilderV2Pages(INITIAL_SECTIONS);
-  const initialSelectedPageId = initialSetupSeed?.selectedPageId ?? 'home';
-  const initialSelectedSectionId = initialSetupSeed?.selectedSectionId ?? INITIAL_SECTIONS[0].id;
+  const initialDraft = useMemo(() => readSetupDraft(), []);
+  const initialSetupSeed = useMemo(() => buildBuilderV2SetupSeed(initialDraft), [initialDraft]);
+  const initialTemplateSeed = useMemo(() => buildBuilderV2TemplateSeed(initialDraft.selectedTemplateId), [initialDraft]);
+  const initialPages = initialSetupSeed?.pages ?? initialTemplateSeed.pages ?? createInitialBuilderV2Pages(INITIAL_SECTIONS);
+  const initialSelectedPageId = initialSetupSeed?.selectedPageId ?? initialTemplateSeed.selectedPageId ?? 'home';
+  const initialSelectedSectionId = initialSetupSeed?.selectedSectionId ?? initialTemplateSeed.selectedSectionId ?? INITIAL_SECTIONS[0].id;
   const [history, setHistory] = useState<BuilderV2HistorySnapshot<AddedBlock>[]>([
     createBuilderV2HistorySnapshot({
       id: '',

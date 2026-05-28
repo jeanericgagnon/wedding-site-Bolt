@@ -1,9 +1,12 @@
-import { getTemplate } from '../templates/registry';
 import { deriveSetupMode } from '../lib/setupDraftRecommendations';
 import type { SetupDraft } from '../lib/setupDraft';
 import { buildCoupleDisplayName } from '../lib/coupleDisplayName';
-import { createInitialBuilderV2Pages, type LabPage, type LabSection } from './builderV2PageState';
+import type { LabPage } from './builderV2PageState';
 import { getInitialBuilderV2LabPreviewFields, type BuilderV2LabPreviewFields } from './builderV2LabPreview';
+import {
+  buildBuilderV2TemplateSeed,
+  getBuilderV2TemplateSectionTitle,
+} from './builderV2TemplateSeed';
 
 export type BuilderV2SetupSeed = {
   sourceName: string;
@@ -16,12 +19,6 @@ export type BuilderV2SetupSeed = {
   hydratedFields: string[];
   setupFacts: string[];
 };
-
-const titleCaseWords = (value: string) => value
-  .split(/[-\s]+/)
-  .filter(Boolean)
-  .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-  .join(' ');
 
 const formatWeddingDateLabel = (weddingDate: string) => {
   const parsed = new Date(`${weddingDate}T12:00:00`);
@@ -114,20 +111,7 @@ const buildSectionSubtitle = (
     case 'video':
       return 'Films + clips';
     default:
-      return titleCaseWords(type);
-  }
-};
-
-const buildSectionTitle = (type: string) => {
-  switch (type) {
-    case 'footer-cta':
-      return 'Closing CTA';
-    case 'rsvp':
-      return 'RSVP';
-    case 'faq':
-      return 'FAQ';
-    default:
-      return titleCaseWords(type);
+      return getBuilderV2TemplateSectionTitle(type);
   }
 };
 
@@ -149,7 +133,6 @@ export const buildBuilderV2SetupSeed = (
 ): BuilderV2SetupSeed | null => {
   if (!hasMeaningfulSetupDraftForBuilderV2(draft)) return null;
 
-  const template = getTemplate(draft.selectedTemplateId);
   const dateLabel = draft.dateKnown ? formatWeddingDateLabel(draft.weddingDate) : '';
   const displayName = buildCoupleDisplayName(
     `${draft.partnerOneFirstName} ${draft.partnerOneLastName}`.trim(),
@@ -157,18 +140,12 @@ export const buildBuilderV2SetupSeed = (
     fallbackPreview.coupleDisplayName,
   );
   const setupMode = deriveSetupMode(draft);
-
-  const sections: LabSection[] = template.defaultLayout.sections.map((section, index) => ({
-    id: `${String(section.type).replace(/[^a-z0-9-]/gi, '').toLowerCase() || 'section'}-${index + 1}`,
-    type: String(section.type),
-    title: buildSectionTitle(String(section.type)),
-    subtitle: buildSectionSubtitle(String(section.type), draft, displayName, dateLabel),
-    variant: section.variant || 'default',
-    enabled: section.enabled !== false,
+  const templateSeed = buildBuilderV2TemplateSeed(draft.selectedTemplateId, {
     density: setupMode.destination || setupMode.weekend ? 'comfortable' : 'compact',
-  }));
-
-  const pages = createInitialBuilderV2Pages(sections);
+    sectionTitle: getBuilderV2TemplateSectionTitle,
+    sectionSubtitle: (type) => buildSectionSubtitle(type, draft, displayName, dateLabel),
+  });
+  const pages = templateSeed.pages;
   const travelSeed = buildTravelSeed(draft, fallbackPreview);
   const previewFields: BuilderV2LabPreviewFields = {
     ...fallbackPreview,
@@ -196,7 +173,7 @@ export const buildBuilderV2SetupSeed = (
   ].filter(Boolean);
 
   const setupFacts = [
-    template.name,
+    templateSeed.templateName,
     draft.dateKnown && dateLabel ? dateLabel : draft.dateKnown ? '' : 'Date still flexible',
     buildLocationLabel(draft),
     draft.stylePreferences.length > 0 ? draft.stylePreferences.join(', ') : '',
@@ -205,11 +182,11 @@ export const buildBuilderV2SetupSeed = (
 
   return {
     sourceName: 'Setup draft',
-    templateId: template.id,
-    templateName: template.name,
+    templateId: templateSeed.templateId,
+    templateName: templateSeed.templateName,
     pages,
-    selectedPageId: pages[0]?.id ?? 'home',
-    selectedSectionId: sections[0]?.id ?? 'hero-1',
+    selectedPageId: templateSeed.selectedPageId,
+    selectedSectionId: templateSeed.selectedSectionId,
     previewFields,
     hydratedFields,
     setupFacts,
