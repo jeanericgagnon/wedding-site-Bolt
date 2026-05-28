@@ -39,10 +39,14 @@ describe('Trust page draft-first CTA', () => {
 
     fireEvent.click(screen.getAllByRole('button', { name: 'Start your draft' })[0]);
 
-    expect(navigateMock).toHaveBeenCalledWith('/signup');
+    expect(navigateMock).toHaveBeenCalledWith('/signup', {
+      state: { returnTo: '/dashboard/builder' },
+    });
     expect(screen.getByRole('link', { name: 'See product tour' })).toHaveAttribute('href', '/product');
     fireEvent.click(screen.getAllByRole('button', { name: 'Start your draft' })[1]);
-    expect(navigateMock).toHaveBeenCalledWith('/signup');
+    expect(navigateMock).toHaveBeenCalledWith('/signup', {
+      state: { returnTo: '/dashboard/builder' },
+    });
   });
 
   it('sends signed-in visitors to live trust workspaces from the trust CTA', () => {

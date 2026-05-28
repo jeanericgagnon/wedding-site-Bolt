@@ -58,7 +58,9 @@ describe('Home draft-first CTAs', () => {
 
     fireEvent.click(screen.getAllByRole('button', { name: 'Start your wedding site draft' })[0]);
 
-    expect(navigateMock).toHaveBeenCalledWith('/signup');
+    expect(navigateMock).toHaveBeenCalledWith('/signup', {
+      state: { returnTo: '/dashboard/builder' },
+    });
     expect(screen.getAllByRole('button', { name: 'Start your wedding site draft' }).length).toBeGreaterThan(0);
     const anonymousFeatureLinks = screen.getAllByRole('link', { name: 'Explore this feature' });
     expect(anonymousFeatureLinks.find((link) => link.getAttribute('href') === '/product')).toBeTruthy();

@@ -4,7 +4,7 @@ import { Header, Footer } from '../components/layout';
 import { useAuth } from '../hooks/useAuth';
 import { useToast } from '../components/ui/Toast';
 import { SITE_TRUST_COPY } from '../lib/siteTrustCopy';
-import { FIRST_SESSION_WORKSPACE_ROUTES } from '../lib/firstSessionWorkspaceRoutes';
+import { FIRST_SESSION_WORKSPACE_ROUTES, getFirstSessionSignupState } from '../lib/firstSessionWorkspaceRoutes';
 import { DEMO_MODE } from '../config/env';
 import { ArrowRight, Calendar, CheckCircle2, Mail, Shield, Users, Wallet } from 'lucide-react';
 import { SlideReveal } from '../components/marketing/Reveal';
@@ -160,7 +160,7 @@ export const Product: React.FC = () => {
       return;
     }
 
-    navigate('/signup');
+    navigate('/signup', { state: getFirstSessionSignupState() });
   };
 
   const handleLaunchStepReview = () => {
@@ -169,7 +169,7 @@ export const Product: React.FC = () => {
       return;
     }
 
-    navigate('/signup');
+    navigate('/signup', { state: getFirstSessionSignupState() });
   };
 
   const handleDemoLogin = async () => {

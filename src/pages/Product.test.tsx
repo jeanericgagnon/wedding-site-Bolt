@@ -122,7 +122,9 @@ describe('Product starter draft truth', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Review draft privacy + share settings' }));
 
-    expect(navigateMock).toHaveBeenCalledWith('/signup');
+    expect(navigateMock).toHaveBeenCalledWith('/signup', {
+      state: { returnTo: '/dashboard/builder' },
+    });
   });
 
   it('sends signed-in users straight to the builder when they review draft privacy and share settings', () => {

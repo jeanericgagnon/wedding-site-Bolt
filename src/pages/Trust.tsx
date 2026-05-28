@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Footer, Header } from '../components/layout';
 import { useAuth } from '../hooks/useAuth';
 import { SITE_TRUST_COPY } from '../lib/siteTrustCopy';
-import { FIRST_SESSION_WORKSPACE_ROUTES } from '../lib/firstSessionWorkspaceRoutes';
+import { FIRST_SESSION_WORKSPACE_ROUTES, getFirstSessionSignupState } from '../lib/firstSessionWorkspaceRoutes';
 
 const TRUST_PILLARS = [
   {
@@ -121,7 +121,7 @@ export const Trust: React.FC = () => {
       return;
     }
 
-    navigate('/signup');
+    navigate('/signup', { state: getFirstSessionSignupState() });
   };
 
   return (
@@ -349,7 +349,7 @@ export const Trust: React.FC = () => {
               ) : (
                 <button
                   type="button"
-                  onClick={() => navigate('/signup')}
+                  onClick={() => navigate('/signup', { state: getFirstSessionSignupState() })}
                   className="rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-primary/90"
                 >
                   Start your draft

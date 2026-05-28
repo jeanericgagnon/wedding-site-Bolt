@@ -12,3 +12,7 @@ export const FIRST_SESSION_WORKSPACE_ROUTES = {
   seating: '/dashboard/seating',
   settings: '/dashboard/settings',
 } as const;
+
+export const getFirstSessionSignupState = () => ({
+  returnTo: FIRST_SESSION_WORKSPACE_ROUTES.builder,
+});

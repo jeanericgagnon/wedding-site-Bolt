@@ -16,7 +16,7 @@ import { HeroReveal, Reveal } from '../components/marketing/Reveal';
 import { useToast } from '../components/ui/Toast';
 import { useAuth } from '../hooks/useAuth';
 import { SITE_TRUST_COPY } from '../lib/siteTrustCopy';
-import { FIRST_SESSION_WORKSPACE_ROUTES } from '../lib/firstSessionWorkspaceRoutes';
+import { FIRST_SESSION_WORKSPACE_ROUTES, getFirstSessionSignupState } from '../lib/firstSessionWorkspaceRoutes';
 import { DEMO_MODE } from '../config/env';
 
 const asset = (path: string) => `${import.meta.env.BASE_URL}${path}`;
@@ -138,7 +138,7 @@ export const Home: React.FC = () => {
       navigate(FIRST_SESSION_WORKSPACE_ROUTES.builder);
       return;
     }
-    navigate('/signup');
+    navigate('/signup', { state: getFirstSessionSignupState() });
   };
 
   const handleDemoLogin = async () => {

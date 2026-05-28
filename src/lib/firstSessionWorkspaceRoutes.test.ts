@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { FIRST_SESSION_WORKSPACE_ROUTES } from './firstSessionWorkspaceRoutes';
+import { FIRST_SESSION_WORKSPACE_ROUTES, getFirstSessionSignupState } from './firstSessionWorkspaceRoutes';
 
 describe('FIRST_SESSION_WORKSPACE_ROUTES', () => {
   it('keeps the signed-in couple start paths on the live dashboard routes', () => {
@@ -11,5 +11,11 @@ describe('FIRST_SESSION_WORKSPACE_ROUTES', () => {
     expect(FIRST_SESSION_WORKSPACE_ROUTES.messages).toBe('/dashboard/messages');
     expect(FIRST_SESSION_WORKSPACE_ROUTES.rsvpBoard).toBe('/dashboard/rsvp-board');
     expect(FIRST_SESSION_WORKSPACE_ROUTES.coordinator).toBe('/dashboard/coordinator');
+  });
+
+  it('keeps signed-out start-draft handoff aimed at the live builder path', () => {
+    expect(getFirstSessionSignupState()).toEqual({
+      returnTo: '/dashboard/builder',
+    });
   });
 });
