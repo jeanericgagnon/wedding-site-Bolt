@@ -132,6 +132,44 @@ export const pushBuilderV2CheckpointSnapshot = <TBlock extends HistoryBlock>({
   };
 };
 
+export const pushBuilderV2ChangeWithCheckpoint = <TBlock extends HistoryBlock>({
+  history,
+  historyIndex,
+  currentPages,
+  currentSectionBlocks,
+  checkpointLabel,
+  nextPages,
+  nextSectionBlocks,
+}: {
+  history: BuilderV2HistorySnapshot<TBlock>[];
+  historyIndex: number;
+  currentPages: LabPage[];
+  currentSectionBlocks: Record<string, TBlock[]>;
+  checkpointLabel: string;
+  nextPages: LabPage[];
+  nextSectionBlocks: Record<string, TBlock[]>;
+}) => {
+  const checkpointState = pushBuilderV2CheckpointSnapshot({
+    history,
+    historyIndex,
+    pages: currentPages,
+    sectionBlocks: currentSectionBlocks,
+    label: checkpointLabel,
+  });
+  const nextState = pushBuilderV2HistorySnapshot({
+    history: checkpointState.history,
+    historyIndex: checkpointState.historyIndex,
+    nextPages,
+    nextSectionBlocks,
+  });
+
+  return {
+    history: nextState.history,
+    historyIndex: nextState.historyIndex,
+    checkpointId: checkpointState.history[checkpointState.historyIndex]?.id ?? '',
+  };
+};
+
 export const listBuilderV2CheckpointSummaries = <TBlock extends HistoryBlock>(
   history: BuilderV2HistorySnapshot<TBlock>[],
 ): BuilderV2CheckpointSummary[] => history

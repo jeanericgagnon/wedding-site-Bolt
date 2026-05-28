@@ -79,6 +79,7 @@ import { buildBuilderV2PreviewInstances } from './builderV2PreviewProjection';
 import {
   createBuilderV2HistorySnapshot,
   listBuilderV2CheckpointSummaries,
+  pushBuilderV2ChangeWithCheckpoint,
   pushBuilderV2CheckpointSnapshot,
   pushBuilderV2HistorySnapshot,
   type BuilderV2HistorySnapshot,
@@ -839,7 +840,7 @@ export const BuilderV2Lab: React.FC = () => {
   };
 
   const removeBlock = (sectionId: string, blockId: string) => {
-    commit(pages, {
+    commitWithCheckpoint('Before removing block', pages, {
       ...sectionBlocks,
       [sectionId]: (sectionBlocks[sectionId] ?? []).filter((b) => b.id !== blockId),
     });
@@ -899,6 +900,28 @@ export const BuilderV2Lab: React.FC = () => {
     setHistoryIndex(nextState.historyIndex);
     markSaving();
   }, [history, historyIndex, markSaving, sectionBlocks]);
+
+  const commitWithCheckpoint = useCallback((
+    checkpointLabel: string,
+    nextPages: LabPage[],
+    nextSectionBlocks: Record<string, AddedBlock[]> = sectionBlocks,
+  ) => {
+    const nextState = pushBuilderV2ChangeWithCheckpoint({
+      history,
+      historyIndex,
+      currentPages: pages,
+      currentSectionBlocks: sectionBlocks,
+      checkpointLabel,
+      nextPages,
+      nextSectionBlocks,
+    });
+    setHistory(nextState.history);
+    setHistoryIndex(nextState.historyIndex);
+    if (nextState.checkpointId) {
+      setSelectedCheckpointId(nextState.checkpointId);
+    }
+    markSaving();
+  }, [history, historyIndex, markSaving, pages, sectionBlocks]);
 
   const checkpointSummaries = useMemo(
     () => listBuilderV2CheckpointSummaries(history),
@@ -986,8 +1009,24 @@ export const BuilderV2Lab: React.FC = () => {
   }, [commitActivePageSections, notify, sections, selectedIds]);
 
   const hideSelectedSections = useCallback(() => {
-    updateSelectedSections((section) => ({ ...section, enabled: false }), 'Selected sections hidden');
-  }, [updateSelectedSections]);
+    const selectedSet = new Set(selectedIds);
+    const touchedCount = sections.filter((section) => selectedSet.has(section.id)).length;
+    if (!touchedCount) return;
+    commitWithCheckpoint(
+      touchedCount === 1 ? 'Before hiding section' : 'Before hiding selected sections',
+      activePage ? pages.map((page) => (
+        page.id === activePage.id
+          ? {
+              ...page,
+              sections: page.sections.map((section) => (
+                selectedSet.has(section.id) ? { ...section, enabled: false } : section
+              )),
+            }
+          : page
+      )) : pages,
+    );
+    notify('Selected sections hidden');
+  }, [activePage, commitWithCheckpoint, notify, pages, sections, selectedIds]);
 
   const showSelectedSections = useCallback(() => {
     updateSelectedSections((section) => ({ ...section, enabled: true }), 'Selected sections shown');
@@ -1044,17 +1083,21 @@ export const BuilderV2Lab: React.FC = () => {
     setSelectedId(result.nextSelectedId ?? '');
     setLastSelectedId(result.nextSelectedId ?? '');
     setMultiSelectedIds([]);
-    commit(activePage ? pages.map((page) => (
+    commitWithCheckpoint(
+      result.removedIds.length === 1 ? 'Before removing section' : 'Before removing selected sections',
+      activePage ? pages.map((page) => (
       page.id === activePage.id
         ? { ...page, sections: result.sections }
         : page
-    )) : pages, result.sectionBlocks);
+      )) : pages,
+      result.sectionBlocks,
+    );
     notify(
       result.removedIds.length === 1
         ? 'Removed section from the page structure'
         : `Removed ${result.removedIds.length} sections from the page structure`,
     );
-  }, [activePage, commit, notify, pages, sectionBlocks, sections, selectedId, selectedIds]);
+  }, [activePage, commitWithCheckpoint, notify, pages, sectionBlocks, sections, selectedId, selectedIds]);
 
   const buildStarterBlocks = useCallback((sectionId: string, sectionType: string) => {
     const availableBlockTypes = SECTION_BLOCK_CATALOG[sectionType] ?? ['title', 'text', 'photo'];
@@ -1140,12 +1183,12 @@ export const BuilderV2Lab: React.FC = () => {
   }, [commit, pages]);
 
   const togglePageVisibility = useCallback((pageId: string) => {
-    commit(pages.map((entry) => (
+    commitWithCheckpoint('Before changing page visibility', pages.map((entry) => (
       entry.id === pageId
         ? { ...entry, hidden: entry.isHome ? false : !entry.hidden }
         : entry
     )));
-  }, [commit, pages]);
+  }, [commitWithCheckpoint, pages]);
 
   const setHomePage = useCallback((pageId: string) => {
     commit(pages.map((entry) => ({
@@ -1162,12 +1205,12 @@ export const BuilderV2Lab: React.FC = () => {
       return;
     }
     const nextPages = pages.filter((page) => page.id !== pageId);
-    commit(nextPages);
+    commitWithCheckpoint('Before removing page', nextPages);
     if (selectedPageId === pageId) {
       selectPage(nextPages[0]?.id ?? '');
     }
     notify('Page removed');
-  }, [commit, notify, pages, selectPage, selectedPageId]);
+  }, [commitWithCheckpoint, notify, pages, selectPage, selectedPageId]);
 
   const duplicatePage = useCallback((pageId: string) => {
     const result = duplicateBuilderV2Page({
@@ -1179,13 +1222,13 @@ export const BuilderV2Lab: React.FC = () => {
       notify('We could not duplicate that page yet');
       return;
     }
-    commit(result.pages, result.sectionBlocks);
+    commitWithCheckpoint('Before duplicating page', result.pages, result.sectionBlocks);
     setSelectedPageId(result.duplicatedPageId);
     setSelectedId(result.duplicatedSectionIds[0] ?? '');
     setLastSelectedId(result.duplicatedSectionIds[0] ?? '');
     setMultiSelectedIds(result.duplicatedSectionIds.slice(1));
     notify('Page duplicated');
-  }, [commit, notify, pages, sectionBlocks]);
+  }, [commitWithCheckpoint, notify, pages, sectionBlocks]);
 
   const moveSelectedSectionsToPage = useCallback((targetPageId: string) => {
     if (!activePage) return;
@@ -1200,7 +1243,7 @@ export const BuilderV2Lab: React.FC = () => {
       notify('Pick sections from the current page before you move them');
       return;
     }
-    commit(result.pages, result.sectionBlocks);
+    commitWithCheckpoint('Before moving selected sections', result.pages, result.sectionBlocks);
     setSelectedPageId(targetPageId);
     setSelectedId(result.movedSectionIds[0] ?? '');
     setLastSelectedId(result.movedSectionIds[0] ?? '');
@@ -1210,7 +1253,7 @@ export const BuilderV2Lab: React.FC = () => {
         ? 'Moved section to another page'
         : `Moved ${result.movedSectionIds.length} sections to another page`,
     );
-  }, [activePage, commit, notify, pages, sectionBlocks, selectedIds]);
+  }, [activePage, commitWithCheckpoint, notify, pages, sectionBlocks, selectedIds]);
 
   const restoreSelectedSectionsToStarterBlocks = useCallback(() => {
     const result = restoreBuilderV2SectionStarterBlocks({
@@ -1226,13 +1269,17 @@ export const BuilderV2Lab: React.FC = () => {
       return;
     }
 
-    commit(pages, result.sectionBlocks);
+    commitWithCheckpoint(
+      result.restoredSectionIds.length === 1 ? 'Before restoring starter blocks' : 'Before restoring starter blocks in batch',
+      pages,
+      result.sectionBlocks,
+    );
     notify(
       result.restoredSectionIds.length === 1
         ? `Restored ${result.restoredBlockCount} starter block${result.restoredBlockCount === 1 ? '' : 's'}`
         : `Restored starter blocks across ${result.restoredSectionIds.length} sections`,
     );
-  }, [buildStarterBlocks, commit, notify, pages, sectionBlocks, sections, selectedIds]);
+  }, [buildStarterBlocks, commitWithCheckpoint, notify, pages, sectionBlocks, sections, selectedIds]);
 
   const renameSelected = (title: string) => {
     commitActivePageSections(sections.map((s) => (s.id === selected.id ? { ...s, title } : s)));
@@ -1356,12 +1403,12 @@ export const BuilderV2Lab: React.FC = () => {
       return;
     }
 
-    commit(pages, {
+    commitWithCheckpoint('Before repairing section structure', pages, {
       ...sectionBlocks,
       [selected.id]: result.blocks as AddedBlock[],
     });
     notify(result.summary);
-  }, [commit, notify, pages, sectionBlocks, selected.id, selected.type, selectedBlocks]);
+  }, [commitWithCheckpoint, notify, pages, sectionBlocks, selected.id, selected.type, selectedBlocks]);
   const selectedBlockWarningFor = useCallback(
     (block: AddedBlock) => getBlockValidationWarning(selected.type, block, selectedBlocks),
     [getBlockValidationWarning, selected.type, selectedBlocks],
@@ -1622,11 +1669,18 @@ export const BuilderV2Lab: React.FC = () => {
       ]),
     ) as Record<string, AddedBlock[]>;
 
-    setHistory([createBuilderV2HistorySnapshot({
-      pages: nextPages,
-      sectionBlocks: nextBlocks,
-    })]);
-    setHistoryIndex(0);
+    const nextState = pushBuilderV2ChangeWithCheckpoint({
+      history,
+      historyIndex,
+      currentPages: pages,
+      currentSectionBlocks: sectionBlocks,
+      checkpointLabel: `Before import: ${sourceLabel}`,
+      nextPages,
+      nextSectionBlocks: nextBlocks,
+    });
+    setHistory(nextState.history);
+    setHistoryIndex(nextState.historyIndex);
+    setSelectedCheckpointId(nextState.checkpointId);
     setSelectedPageId(nextPages[0]?.id ?? '');
     setSelectedId(nextPages[0]?.sections[0]?.id ?? '');
     setLastSelectedId(nextPages[0]?.sections[0]?.id ?? '');
@@ -1652,7 +1706,7 @@ export const BuilderV2Lab: React.FC = () => {
     const repairs = summarizeImportRepairCount(report);
     const importSummary = buildBuilderV2ImportReviewSummary(report, sourceLabel);
     notify(repairs > 0 || report.sourceKind !== 'builder-v2' ? importSummary.toastMessage : 'Imported clean V2 layout');
-  }, [markSaving, notify]);
+  }, [history, historyIndex, markSaving, notify, pages, sectionBlocks]);
 
   useEffect(() => {
     const upgradeBridge = consumeBuilderV2UpgradeBridge();

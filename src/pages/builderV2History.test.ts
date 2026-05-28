@@ -4,6 +4,7 @@ import {
   createBuilderV2CheckpointSnapshot,
   createBuilderV2HistorySnapshot,
   listBuilderV2CheckpointSummaries,
+  pushBuilderV2ChangeWithCheckpoint,
   pushBuilderV2HistorySnapshot,
   pushBuilderV2CheckpointSnapshot,
 } from './builderV2History';
@@ -150,5 +151,49 @@ describe('builderV2History', () => {
     expect(snapshot.label).toBe('Before restore');
     expect(snapshot.pages[0]?.title).toBe('Home');
     expect(snapshot.sectionBlocks.hero?.[0]?.data?.text).toBe('Original');
+  });
+
+  it('can append a checkpoint and the next change together for risky edits', () => {
+    const base = createBuilderV2HistorySnapshot({
+      pages: [{
+        id: 'page-1',
+        title: 'Home',
+        slug: 'home',
+        isHome: true,
+        hidden: false,
+        sections: [],
+      }],
+      sectionBlocks: {
+        home: [{ id: 'block-1', type: 'text', content: 'Home', data: { text: 'Before' } }],
+      },
+    });
+
+    const result = pushBuilderV2ChangeWithCheckpoint({
+      history: [base],
+      historyIndex: 0,
+      currentPages: base.pages,
+      currentSectionBlocks: base.sectionBlocks,
+      checkpointLabel: 'Before risky cleanup',
+      nextPages: [{
+        id: 'page-1',
+        title: 'Home',
+        slug: 'home',
+        isHome: true,
+        hidden: false,
+        sections: [],
+      }],
+      nextSectionBlocks: {
+        home: [{ id: 'block-1', type: 'text', content: 'Home', data: { text: 'After' } }],
+      },
+    });
+
+    expect(result.history).toHaveLength(3);
+    expect(result.history[1]).toMatchObject({
+      label: 'Before risky cleanup',
+      isCheckpoint: true,
+    });
+    expect(result.history[2]?.sectionBlocks.home?.[0]?.data?.text).toBe('After');
+    expect(result.checkpointId).toBe(result.history[1]?.id);
+    expect(result.historyIndex).toBe(2);
   });
 });
