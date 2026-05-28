@@ -19,3 +19,17 @@ export const getGuestPhotoShareReadyBuckets = <T extends GuestPhotoShareBucket>(
     readyBuckets.push({ ...bucket, uploadLink });
     return readyBuckets;
   }, []);
+
+export const resolvePreferredGuestPhotoShareReadyLink = (
+  preferredLink: string,
+  readyBuckets: GuestPhotoShareReadyBucket[],
+): string => {
+  const readyLinks = readyBuckets.map((bucket) => bucket.uploadLink);
+  const trimmedPreferredLink = preferredLink.trim();
+
+  if (trimmedPreferredLink && readyLinks.includes(trimmedPreferredLink)) {
+    return trimmedPreferredLink;
+  }
+
+  return readyLinks[0] ?? '';
+};

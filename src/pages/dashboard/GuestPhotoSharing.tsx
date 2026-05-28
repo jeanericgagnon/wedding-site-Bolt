@@ -28,7 +28,7 @@ import {
   writeLatestStoredPhotoBucketLink,
   writeStoredPhotoBucketLinks,
 } from './photoBucketLinksStorage';
-import { getGuestPhotoShareReadyBuckets } from './guestPhotoShareReadyBuckets';
+import { getGuestPhotoShareReadyBuckets, resolvePreferredGuestPhotoShareReadyLink } from './guestPhotoShareReadyBuckets';
 import { buildGuestPhotoBucketMessagingPath, buildGuestPhotoShareMessage } from './guestPhotoMessagingLink';
 import { getGuestPhotoBucketShareLink } from './guestPhotoBucketShareState';
 
@@ -303,7 +303,11 @@ export const GuestPhotoSharing: React.FC = () => {
         const nextLinks = Object.fromEntries(
           Object.entries(prev).filter(([bucketId, link]) => liveBucketIds.has(bucketId) && typeof link === 'string' && link.length > 0)
         );
-        setLatestUploadUrl((current) => resolveLatestStoredPhotoBucketLink(current, nextLinks));
+        const nextReadyBuckets = getGuestPhotoShareReadyBuckets(nextBuckets, nextLinks);
+        setLatestUploadUrl((current) => resolvePreferredGuestPhotoShareReadyLink(
+          resolveLatestStoredPhotoBucketLink(current, nextLinks),
+          nextReadyBuckets,
+        ));
         return JSON.stringify(prev) === JSON.stringify(nextLinks) ? prev : nextLinks;
       });
 
@@ -507,6 +511,11 @@ export const GuestPhotoSharing: React.FC = () => {
     return events.filter((e) => !linked.has(e.id));
   }, [events, buckets]);
 
+  const shareReadyBuckets = useMemo(
+    () => getGuestPhotoShareReadyBuckets(buckets, bucketUploadLinks),
+    [buckets, bucketUploadLinks],
+  );
+
   const bucketCardTone = (bucketName: string) => {
     const name = bucketName.toLowerCase();
     if (/ceremony|vows|aisle/.test(name)) return 'Save the quiet, meaningful moments.';
@@ -517,7 +526,7 @@ export const GuestPhotoSharing: React.FC = () => {
   };
 
   const sendAllActiveBucketRequests = () => {
-    const lines = getGuestPhotoShareReadyBuckets(buckets, bucketUploadLinks).map((bucket) => (
+    const lines = shareReadyBuckets.map((bucket) => (
       `${bucket.name}: ${buildGuestPhotoShareMessage(bucket.name, bucket.uploadLink)}`
     ));
 
@@ -532,7 +541,7 @@ export const GuestPhotoSharing: React.FC = () => {
   };
 
   const copyAllShareMessages = async () => {
-    const lines = getGuestPhotoShareReadyBuckets(buckets, bucketUploadLinks).map((bucket) => (
+    const lines = shareReadyBuckets.map((bucket) => (
       `${bucket.name}: ${buildGuestPhotoShareMessage(bucket.name, bucket.uploadLink)}`
     ));
 
@@ -546,7 +555,7 @@ export const GuestPhotoSharing: React.FC = () => {
   };
 
   const copyAllKnownLinks = async () => {
-    const links = getGuestPhotoShareReadyBuckets(buckets, bucketUploadLinks).map((bucket) => bucket.uploadLink);
+    const links = shareReadyBuckets.map((bucket) => bucket.uploadLink);
 
     if (links.length === 0) {
       setError('No active bucket links are ready yet. Create or refresh links first.');
@@ -576,8 +585,13 @@ export const GuestPhotoSharing: React.FC = () => {
       }
 
       if (Object.keys(updated).length > 0) {
-        setBucketUploadLinks((prev) => ({ ...prev, ...updated }));
-        setLatestUploadUrl(Object.values(updated).at(-1) ?? '');
+        setBucketUploadLinks((prev) => {
+          const nextLinks = { ...prev, ...updated };
+          const nextReadyBuckets = getGuestPhotoShareReadyBuckets(buckets, nextLinks);
+          const newestUpdatedLink = Object.values(updated).at(-1) ?? '';
+          setLatestUploadUrl(resolvePreferredGuestPhotoShareReadyLink(newestUpdatedLink, nextReadyBuckets));
+          return nextLinks;
+        });
       }
       setSuccess(`Rotated ${Object.keys(updated).length} link(s).`);
     } catch (err: unknown) {
@@ -588,17 +602,12 @@ export const GuestPhotoSharing: React.FC = () => {
   };
 
   const exportSharePackCsv = () => {
-    const rows = buckets
-      .map((a) => {
-        const link = bucketUploadLinks[a.id] || '';
-        return {
-          name: a.name,
-          status: a.is_active ? 'active' : 'paused',
-          upload_link: link,
-          suggested_message: link ? buildGuestPhotoShareMessage(a.name, link) : '',
-        };
-      })
-      .filter((r) => r.upload_link);
+    const rows = shareReadyBuckets.map((bucket) => ({
+      name: bucket.name,
+      status: 'active',
+      upload_link: bucket.uploadLink,
+      suggested_message: buildGuestPhotoShareMessage(bucket.name, bucket.uploadLink),
+    }));
 
     if (rows.length === 0) return;
 
