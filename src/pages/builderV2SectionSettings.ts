@@ -12,7 +12,8 @@ export type BuilderV2SectionSettingsBlock = {
 export type BuilderV2SectionSettingField = {
   key: string;
   label: string;
-  kind: 'text' | 'boolean';
+  kind: 'text' | 'boolean' | 'select';
+  options?: Array<{ label: string; value: string }>;
   value: string | boolean;
 };
 
@@ -66,7 +67,12 @@ export const getBuilderV2NamedSettingBoolean = (
   return undefined;
 };
 
-const sectionSettingDefinitions: Record<string, Array<{ key: string; label: string; kind: 'text' | 'boolean' }>> = {
+const sectionSettingDefinitions: Record<string, Array<{
+  key: string;
+  label: string;
+  kind: 'text' | 'boolean' | 'select';
+  options?: Array<{ label: string; value: string }>;
+}>> = {
   accommodations: [
     { key: 'eyebrow', label: 'Eyebrow', kind: 'text' },
     { key: 'showTitle', label: 'Show title', kind: 'boolean' },
@@ -79,7 +85,20 @@ const sectionSettingDefinitions: Record<string, Array<{ key: string; label: stri
   'dress-code': [
     { key: 'eyebrow', label: 'Eyebrow', kind: 'text' },
     { key: 'showTitle', label: 'Show title', kind: 'boolean' },
-    { key: 'presetCode', label: 'Preset code', kind: 'text' },
+    {
+      key: 'presetCode',
+      label: 'Preset code',
+      kind: 'select',
+      options: [
+        { label: 'Custom', value: '' },
+        { label: 'Black Tie', value: 'black-tie' },
+        { label: 'Black Tie Optional', value: 'black-tie-optional' },
+        { label: 'Cocktail', value: 'cocktail' },
+        { label: 'Garden Party', value: 'garden-party' },
+        { label: 'Semi-Formal', value: 'semi-formal' },
+        { label: 'Casual', value: 'casual' },
+      ],
+    },
     { key: 'colorNote', label: 'Color note', kind: 'text' },
   ],
   directions: [
@@ -95,12 +114,38 @@ const sectionSettingDefinitions: Record<string, Array<{ key: string; label: stri
   ],
   quotes: [
     { key: 'eyebrow', label: 'Eyebrow', kind: 'text' },
-    { key: 'columns', label: 'Columns', kind: 'text' },
-    { key: 'background', label: 'Background', kind: 'text' },
+    {
+      key: 'columns',
+      label: 'Columns',
+      kind: 'select',
+      options: [
+        { label: '2 columns', value: '2' },
+        { label: '3 columns', value: '3' },
+      ],
+    },
+    {
+      key: 'background',
+      label: 'Background',
+      kind: 'select',
+      options: [
+        { label: 'White', value: 'white' },
+        { label: 'Soft', value: 'soft' },
+        { label: 'Dark', value: 'dark' },
+      ],
+    },
   ],
   video: [
     { key: 'eyebrow', label: 'Eyebrow', kind: 'text' },
-    { key: 'background', label: 'Background', kind: 'text' },
+    {
+      key: 'background',
+      label: 'Background',
+      kind: 'select',
+      options: [
+        { label: 'White', value: 'white' },
+        { label: 'Soft', value: 'soft' },
+        { label: 'Dark', value: 'dark' },
+      ],
+    },
   ],
   'wedding-party': [
     { key: 'showTitle', label: 'Show title', kind: 'boolean' },
@@ -119,6 +164,7 @@ export const buildBuilderV2SectionSettingFields = (
     key: definition.key,
     label: definition.label,
     kind: definition.kind,
+    options: definition.options,
     value: definition.kind === 'boolean'
       ? (getBuilderV2NamedSettingBoolean(blocks, definition.label) ?? true)
       : definition.key === 'bridalTitle'

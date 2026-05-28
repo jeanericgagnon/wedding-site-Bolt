@@ -3090,6 +3090,21 @@ export const BuilderV2Lab: React.FC = () => {
                                   className="h-4 w-4 rounded border-border-subtle text-primary focus:ring-primary/20"
                                 />
                               </label>
+                            ) : field.kind === 'select' ? (
+                              <label key={field.key} className="block">
+                                <span className="text-[11px] text-text-tertiary">{field.label}</span>
+                                <select
+                                  value={String(field.value ?? '')}
+                                  onChange={(e) => updateSelectedSectionSetting(field.key, e.target.value)}
+                                  className="mt-1 w-full border rounded-md px-3 py-2.5 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+                                >
+                                  {(field.options ?? []).map((option) => (
+                                    <option key={`${field.key}-${option.value || 'empty'}`} value={option.value}>
+                                      {option.label}
+                                    </option>
+                                  ))}
+                                </select>
+                              </label>
                             ) : (
                               <label key={field.key} className="block">
                                 <span className="text-[11px] text-text-tertiary">{field.label}</span>

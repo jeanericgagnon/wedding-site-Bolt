@@ -20,6 +20,28 @@ describe('builderV2SectionSettings', () => {
     ]);
   });
 
+  it('surfaces native select options for structured section settings', () => {
+    const fields = buildBuilderV2SectionSettingFields('dress-code', [
+      { id: 'preset', type: 'qna', data: { question: 'Preset code', answer: 'cocktail' } },
+    ]);
+
+    expect(fields.find((field) => field.key === 'presetCode')).toEqual({
+      key: 'presetCode',
+      label: 'Preset code',
+      kind: 'select',
+      options: [
+        { label: 'Custom', value: '' },
+        { label: 'Black Tie', value: 'black-tie' },
+        { label: 'Black Tie Optional', value: 'black-tie-optional' },
+        { label: 'Cocktail', value: 'cocktail' },
+        { label: 'Garden Party', value: 'garden-party' },
+        { label: 'Semi-Formal', value: 'semi-formal' },
+        { label: 'Casual', value: 'casual' },
+      ],
+      value: 'cocktail',
+    });
+  });
+
   it('reads wedding-party side headings from structured title blocks', () => {
     const fields = buildBuilderV2SectionSettingFields('wedding-party', [
       { id: 'eyebrow', type: 'qna', data: { question: 'Eyebrow', answer: 'Meet the crew' } },
@@ -96,5 +118,35 @@ describe('builderV2SectionSettings', () => {
     expect(cleared).toEqual([
       { id: 'other', type: 'photo', data: { title: 'Avery', subtitle: 'bridal-party' } },
     ]);
+  });
+
+  it('reads select-backed quotes settings from named blocks', () => {
+    const fields = buildBuilderV2SectionSettingFields('quotes', [
+      { id: 'columns', type: 'qna', data: { question: 'Columns', answer: '2' } },
+      { id: 'background', type: 'qna', data: { question: 'Background', answer: 'dark' } },
+    ]);
+
+    expect(fields.find((field) => field.key === 'columns')).toEqual({
+      key: 'columns',
+      label: 'Columns',
+      kind: 'select',
+      options: [
+        { label: '2 columns', value: '2' },
+        { label: '3 columns', value: '3' },
+      ],
+      value: '2',
+    });
+
+    expect(fields.find((field) => field.key === 'background')).toEqual({
+      key: 'background',
+      label: 'Background',
+      kind: 'select',
+      options: [
+        { label: 'White', value: 'white' },
+        { label: 'Soft', value: 'soft' },
+        { label: 'Dark', value: 'dark' },
+      ],
+      value: 'dark',
+    });
   });
 });
