@@ -36,6 +36,26 @@ import { buildSeatingInsightCard } from './seating/seatingIntelligence';
 import { getFlowStatusLabel } from '../../lib/flowLabels';
 import { buildDayOfRelayModel, type DayOfRelayStep } from './dayOfRelay';
 import { DayOfRelayCard } from './DayOfRelayCard';
+import {
+  mapSeatingDashboardError,
+  SEATING_ADD_TABLE_RETRY_ERROR,
+  SEATING_ASSIGN_GUEST_RETRY_ERROR,
+  SEATING_AUTO_CREATE_TABLES_RETRY_ERROR,
+  SEATING_AUTO_SEAT_RETRY_ERROR,
+  SEATING_BULK_CHECKIN_RETRY_ERROR,
+  SEATING_CHECKIN_RETRY_ERROR,
+  SEATING_CLEAR_SEAT_RETRY_ERROR,
+  SEATING_DATA_LOAD_RETRY_ERROR,
+  SEATING_DELETE_TABLE_RETRY_ERROR,
+  SEATING_DRIFT_CHECK_RETRY_ERROR,
+  SEATING_EVENTS_LOAD_RETRY_ERROR,
+  SEATING_RESET_RETRY_ERROR,
+  SEATING_RESIZE_TABLE_RETRY_ERROR,
+  SEATING_ROTATE_ITEM_RETRY_ERROR,
+  SEATING_TABLE_POSITION_SAVE_RETRY_ERROR,
+  SEATING_UNASSIGN_GUEST_RETRY_ERROR,
+  SEATING_UPDATE_TABLE_RETRY_ERROR,
+} from './seatingErrorCopy';
 
 const UNASSIGNED_DROPPABLE = 'unassigned-pool';
 type TableShape = 'round' | 'rectangle' | 'bar' | 'dj_booth' | 'dance_floor';
@@ -776,8 +796,8 @@ export const DashboardSeating: React.FC = () => {
         ) ?? events[0];
         setSelectedEventId(best.id);
       }
-    } catch {
-      toast('Couldn’t load events right now. Please try again.', 'error');
+    } catch (error) {
+      toast(mapSeatingDashboardError(error, SEATING_EVENTS_LOAD_RETRY_ERROR), 'error');
     } finally {
       setLoading(false);
     }
@@ -854,8 +874,8 @@ export const DashboardSeating: React.FC = () => {
       setCounters(ctrs);
       const invalid = assignmentsData.filter(a => !a.is_valid).length;
       setInvalidCount(invalid);
-    } catch {
-      toast('Couldn’t load seating data right now. Please try again.', 'error');
+    } catch (error) {
+      toast(mapSeatingDashboardError(error, SEATING_DATA_LOAD_RETRY_ERROR), 'error');
     } finally {
       setLoadingSeating(false);
     }
@@ -883,8 +903,8 @@ export const DashboardSeating: React.FC = () => {
       }
       setAssignments((prev) => prev.filter((item) => item.id !== assignment.id));
       setSeatPicker(null);
-    } catch {
-      toast('Couldn’t clear that seat. Please try again.', 'error');
+    } catch (error) {
+      toast(mapSeatingDashboardError(error, SEATING_CLEAR_SEAT_RETRY_ERROR), 'error');
     }
   }
 
@@ -952,8 +972,8 @@ export const DashboardSeating: React.FC = () => {
         return [...next, assignment];
       });
       setSeatPicker(null);
-    } catch {
-      toast('Couldn’t assign that guest. Please try again.', 'error');
+    } catch (error) {
+      toast(mapSeatingDashboardError(error, SEATING_ASSIGN_GUEST_RETRY_ERROR), 'error');
     }
   }
 
@@ -971,8 +991,8 @@ export const DashboardSeating: React.FC = () => {
           await unassignGuest(seatingEvent.id, guestId);
         }
         setAssignments(prev => prev.filter(a => a.guest_id !== guestId));
-      } catch {
-        toast('Couldn’t unassign that guest. Please try again.', 'error');
+      } catch (error) {
+        toast(mapSeatingDashboardError(error, SEATING_UNASSIGN_GUEST_RETRY_ERROR), 'error');
       }
       return;
     }
@@ -998,8 +1018,8 @@ export const DashboardSeating: React.FC = () => {
         await unassignGuest(seatingEvent.id, guestId);
       }
       setAssignments(prev => prev.filter(a => a.guest_id !== guestId));
-    } catch {
-      toast('Couldn’t unassign that guest. Please try again.', 'error');
+    } catch (error) {
+      toast(mapSeatingDashboardError(error, SEATING_UNASSIGN_GUEST_RETRY_ERROR), 'error');
     }
   }, [seatingEvent, toast, isDemoMode]);
 
@@ -1026,8 +1046,8 @@ export const DashboardSeating: React.FC = () => {
       setTables(prev => [...prev, created]);
       setAddingTable(false);
       toast('Table added', 'success');
-    } catch {
-      toast('Couldn’t add that table. Please try again.', 'error');
+    } catch (error) {
+      toast(mapSeatingDashboardError(error, SEATING_ADD_TABLE_RETRY_ERROR), 'error');
     }
   }
 
@@ -1037,8 +1057,8 @@ export const DashboardSeating: React.FC = () => {
         await updateTable(id, tableData);
       }
       setTables(prev => prev.map(t => t.id === id ? { ...t, ...tableData } : t));
-    } catch {
-      toast('Couldn’t update that table. Please try again.', 'error');
+    } catch (error) {
+      toast(mapSeatingDashboardError(error, SEATING_UPDATE_TABLE_RETRY_ERROR), 'error');
     }
   }
 
@@ -1049,8 +1069,8 @@ export const DashboardSeating: React.FC = () => {
         await updateTable(id, patch);
       }
       setTables(prev => prev.map(t => t.id === id ? { ...t, ...patch } : t));
-    } catch {
-      toast('Couldn’t resize that table. Please try again.', 'error');
+    } catch (error) {
+      toast(mapSeatingDashboardError(error, SEATING_RESIZE_TABLE_RETRY_ERROR), 'error');
     }
   }
 
@@ -1069,8 +1089,8 @@ export const DashboardSeating: React.FC = () => {
       if (!isDemoMode) {
         await updateTable(id, { rotation_deg: next });
       }
-    } catch {
-      toast('Couldn’t rotate this layout item. Please try again.', 'error');
+    } catch (error) {
+      toast(mapSeatingDashboardError(error, SEATING_ROTATE_ITEM_RETRY_ERROR), 'error');
     }
   }
 
@@ -1113,8 +1133,8 @@ export const DashboardSeating: React.FC = () => {
           layout_x: moved?.layout_x ?? ctx.originX,
           layout_y: moved?.layout_y ?? ctx.originY,
         });
-      } catch {
-        toast('Couldn’t save that table position. Please try again.', 'error');
+      } catch (error) {
+        toast(mapSeatingDashboardError(error, SEATING_TABLE_POSITION_SAVE_RETRY_ERROR), 'error');
       }
     };
 
@@ -1130,8 +1150,8 @@ export const DashboardSeating: React.FC = () => {
       setTables(prev => prev.filter(t => t.id !== id));
       setAssignments(prev => prev.filter(a => a.table_id !== id));
       toast('Table deleted', 'success');
-    } catch {
-      toast('Couldn’t remove that table. Please try again.', 'error');
+    } catch (error) {
+      toast(mapSeatingDashboardError(error, SEATING_DELETE_TABLE_RETRY_ERROR), 'error');
     }
   }
 
@@ -1145,8 +1165,8 @@ export const DashboardSeating: React.FC = () => {
       setAssignments([]);
       setShowResetConfirm(false);
       toast('Seating reset', 'success');
-    } catch {
-      toast('Couldn’t reset seating right now. Please try again.', 'error');
+    } catch (error) {
+      toast(mapSeatingDashboardError(error, SEATING_RESET_RETRY_ERROR), 'error');
     } finally {
       setSeatingBusyAction(null);
     }
@@ -1175,8 +1195,8 @@ export const DashboardSeating: React.FC = () => {
       setTables(prev => [...prev, ...created]);
       setShowAutoTablesModal(false);
       toast(`Created ${created.length} tables`, 'success');
-    } catch {
-      toast('Couldn’t auto-create tables right now. Please try again.', 'error');
+    } catch (error) {
+      toast(mapSeatingDashboardError(error, SEATING_AUTO_CREATE_TABLES_RETRY_ERROR), 'error');
     } finally {
       setSeatingBusyAction(null);
     }
@@ -1245,8 +1265,8 @@ export const DashboardSeating: React.FC = () => {
       } else {
         toast(`Seated ${newAssignments.length} guest${newAssignments.length !== 1 ? 's' : ''}`, 'success');
       }
-    } catch {
-      toast('Couldn’t auto-seat guests right now. Please try again.', 'error');
+    } catch (error) {
+      toast(mapSeatingDashboardError(error, SEATING_AUTO_SEAT_RETRY_ERROR), 'error');
     } finally {
       setSeatingBusyAction(null);
     }
@@ -1266,8 +1286,8 @@ export const DashboardSeating: React.FC = () => {
       } else {
         toast('All assignments are valid', 'success');
       }
-    } catch {
-      toast('Couldn’t run the seating check right now. Please try again.', 'error');
+    } catch (error) {
+      toast(mapSeatingDashboardError(error, SEATING_DRIFT_CHECK_RETRY_ERROR), 'error');
     }
   }
 
@@ -1297,7 +1317,7 @@ export const DashboardSeating: React.FC = () => {
           // fall through
         }
       }
-      toast('Couldn’t update check-in right now. Please try again.', 'error');
+      toast(mapSeatingDashboardError(err, SEATING_CHECKIN_RETRY_ERROR), 'error');
     }
   }
 
@@ -1341,7 +1361,7 @@ export const DashboardSeating: React.FC = () => {
           // fall through
         }
       }
-      toast('Couldn’t update those arrivals right now. Please try again.', 'error');
+      toast(mapSeatingDashboardError(err, SEATING_BULK_CHECKIN_RETRY_ERROR), 'error');
     }
   }
 
