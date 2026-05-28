@@ -249,7 +249,7 @@ export const Product: React.FC = () => {
           </button>
           {user && (
             <button
-              onClick={() => navigate('/settings')}
+              onClick={() => navigate('/dashboard/settings')}
               aria-label="Open collaboration settings"
               className="px-4 py-2 rounded-xl border border-brand/40 hover:bg-brand/5"
             >
@@ -408,7 +408,7 @@ export const Product: React.FC = () => {
                 <>
                   <button
                     type="button"
-                    onClick={() => navigate('/settings')}
+                    onClick={() => navigate('/dashboard/settings')}
                     aria-label="Open collaboration settings"
                     className="rounded-xl bg-brand px-4 py-2.5 text-sm font-semibold text-paper transition hover:bg-brand/90"
                   >

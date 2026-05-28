@@ -79,7 +79,7 @@ describe('Product starter draft truth', () => {
     expect(screen.getAllByRole('button', { name: 'Open collaboration settings' }).length).toBe(2);
     fireEvent.click(screen.getAllByRole('button', { name: 'Open collaboration settings' })[0]);
 
-    expect(navigateMock).toHaveBeenCalledWith('/settings');
+    expect(navigateMock).toHaveBeenCalledWith('/dashboard/settings');
     expect(screen.queryByRole('button', { name: 'Invite planner' })).not.toBeInTheDocument();
   });
 
@@ -183,7 +183,7 @@ describe('Product starter draft truth', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Open collaboration settings' }));
 
-    expect(navigateMock).toHaveBeenCalledWith('/settings');
+    expect(navigateMock).toHaveBeenCalledWith('/dashboard/settings');
   });
 
   it('gives signed-in couples a planner shortcut inside the command preview', () => {
