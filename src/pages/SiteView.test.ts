@@ -63,7 +63,18 @@ vi.mock('../lib/publicSiteProject', () => ({
   getPublicWeddingData: vi.fn(() => null),
 }));
 
-import { combineDateAndTime, createAlexJordanDemoWeddingData, toIsoDateOrUndefined } from './SiteView';
+import {
+  combineDateAndTime,
+  createAlexJordanDemoWeddingData,
+  SITE_INVALID_URL_ERROR,
+  SITE_INVITE_ONLY_HELP,
+  SITE_LOAD_RETRY_ERROR,
+  SITE_NOT_FOUND_ERROR,
+  SITE_PASSWORD_MISMATCH_ERROR,
+  SITE_PASSWORD_RETRY_ERROR,
+  SITE_SETUP_PENDING_ERROR,
+  toIsoDateOrUndefined,
+} from './SiteView';
 
 describe('createAlexJordanDemoWeddingData', () => {
   it('skips invalid demo wedding dates instead of crashing public demo hydration', () => {
@@ -89,5 +100,17 @@ describe('combineDateAndTime', () => {
 
   it('drops malformed persisted itinerary times instead of producing broken schedule timestamps', () => {
     expect(combineDateAndTime('2027-02-17', '4:30 PM')).toBeUndefined();
+  });
+});
+
+describe('SiteView public-safe copy', () => {
+  it('keeps public gate and load errors guest-safe and calm', () => {
+    expect(SITE_PASSWORD_MISMATCH_ERROR).toBe('That password did not match. Please try again.');
+    expect(SITE_PASSWORD_RETRY_ERROR).toBe('We could not check that password right now. Please try again.');
+    expect(SITE_INVALID_URL_ERROR).toBe('This wedding page link is not valid.');
+    expect(SITE_NOT_FOUND_ERROR).toBe('This wedding page could not be found.');
+    expect(SITE_SETUP_PENDING_ERROR).toBe('This wedding page is still being set up. Please check back soon.');
+    expect(SITE_LOAD_RETRY_ERROR).toBe('We could not load this wedding page right now. Please try again.');
+    expect(SITE_INVITE_ONLY_HELP).toBe('If you received an invitation, check your email for the wedding access link from the couple.');
   });
 });

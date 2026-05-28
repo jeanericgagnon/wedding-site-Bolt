@@ -112,4 +112,16 @@ describe('AcceptCollaboratorInvite guest-safe boundary', () => {
       expect(screen.queryByText(/claiming=/i)).not.toBeInTheDocument();
     });
   });
+
+  it('accepts the invite_token parameter for backward-compatible collaborator links', async () => {
+    inviteRowsQueue.push({ data: [], error: null });
+
+    render(
+      <MemoryRouter initialEntries={['/accept-collaborator-invite?invite_token=compat-token']}>
+        <AcceptCollaboratorInvite />
+      </MemoryRouter>,
+    );
+
+    expect(await screen.findByText('This invite could not be found. Double-check the link or ask for a fresh invite.')).toBeInTheDocument();
+  });
 });

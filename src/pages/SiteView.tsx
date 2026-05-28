@@ -242,6 +242,14 @@ const PageRendererFromDB: React.FC<{ siteId: string; siteSlug: string; weddingDa
 
 type PrivacyGateState = 'loading' | 'open' | 'password_required' | 'invite_only' | 'unlocked';
 
+export const SITE_PASSWORD_MISMATCH_ERROR = 'That password did not match. Please try again.';
+export const SITE_PASSWORD_RETRY_ERROR = 'We could not check that password right now. Please try again.';
+export const SITE_INVALID_URL_ERROR = 'This wedding page link is not valid.';
+export const SITE_NOT_FOUND_ERROR = 'This wedding page could not be found.';
+export const SITE_SETUP_PENDING_ERROR = 'This wedding page is still being set up. Please check back soon.';
+export const SITE_LOAD_RETRY_ERROR = 'We could not load this wedding page right now. Please try again.';
+export const SITE_INVITE_ONLY_HELP = 'If you received an invitation, check your email for the wedding access link from the couple.';
+
 const PasswordGate: React.FC<{
   onSubmit: (pw: string) => void;
   error: string | null;
@@ -330,7 +338,7 @@ const InviteOnlyGate: React.FC = () => {
             <p className="text-stone-500 leading-relaxed">{t('site.invite_only_subtitle')}</p>
           </div>
           <p className="text-sm text-stone-500">
-            If you received an invitation, check your email for the private link from the couple.
+            {SITE_INVITE_ONLY_HELP}
           </p>
           <div className="flex items-center gap-2">
             <div className="flex-1 h-px bg-stone-200" />
@@ -435,10 +443,10 @@ export const SiteView: React.FC = () => {
         sessionStorage.setItem(STORAGE_KEY, '1');
         setPrivacyGate('unlocked');
       } else {
-        setPasswordGateError('Incorrect password. Please try again.');
+        setPasswordGateError(SITE_PASSWORD_MISMATCH_ERROR);
       }
     } catch {
-      setPasswordGateError('Could not verify that password right now. Please try again.');
+      setPasswordGateError(SITE_PASSWORD_RETRY_ERROR);
     } finally {
       setPasswordGateChecking(false);
     }
@@ -463,7 +471,7 @@ export const SiteView: React.FC = () => {
       clearSiteState();
 
       if (!resolvedSlug) {
-        setError('Invalid site URL');
+        setError(SITE_INVALID_URL_ERROR);
         setLoading(false);
         return;
       }
@@ -472,7 +480,7 @@ export const SiteView: React.FC = () => {
         const data = await siteRepository.fetchPublicSiteBySlug(resolvedSlug);
 
         if (!data) {
-          setError('Wedding site not found');
+          setError(SITE_NOT_FOUND_ERROR);
           setLoading(false);
           return;
         }
@@ -641,7 +649,7 @@ export const SiteView: React.FC = () => {
           const lConfig = safeJsonParse<LayoutConfigV1 | null>(data.layout_config, null);
 
           if (!rawWData || !lConfig) {
-            setError('This wedding site is still being set up. Check back soon!');
+            setError(SITE_SETUP_PENDING_ERROR);
             setLoading(false);
             return;
           }
@@ -657,7 +665,7 @@ export const SiteView: React.FC = () => {
         }
       } catch {
         clearSiteState();
-        setError('Failed to load wedding site');
+        setError(SITE_LOAD_RETRY_ERROR);
       } finally {
         setLoading(false);
       }

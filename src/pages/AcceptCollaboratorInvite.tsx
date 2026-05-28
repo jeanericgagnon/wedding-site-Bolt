@@ -4,6 +4,7 @@ import { AlertCircle, Heart, Loader2, LogOut, ShieldCheck, UserPlus } from 'luci
 import { Button, Card, Input } from '../components/ui';
 import { supabase } from '../lib/supabase';
 import { useAuth, type AuthUser } from '../contexts/AuthContext';
+import { readInviteTokenFromParams } from '../lib/inviteTokenParams';
 import { getCollaboratorRedirectPath, getInviteSiteLabel, isInviteEmailMatch, resolveInviteValidationState } from './acceptCollaboratorInviteUtils';
 import { buildCollaboratorRoleGuide } from './collaboratorRoleGuide';
 import { getFlowStatusLabel } from '../lib/flowLabels';
@@ -50,7 +51,7 @@ const formatRole = (role: string) => role.replace(/_/g, ' ').replace(/\b\w/g, (c
 export const AcceptCollaboratorInvite: React.FC = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const token = searchParams.get('token');
+  const token = readInviteTokenFromParams(searchParams);
   const { user, signOut } = useAuth();
 
   const [inviteState, setInviteState] = useState<InviteState>('loading');

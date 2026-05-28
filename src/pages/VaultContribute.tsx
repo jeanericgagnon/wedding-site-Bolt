@@ -6,6 +6,7 @@ import { GuestJourneyCompanion } from '../components/guest/GuestJourneyCompanion
 import { supabase } from '../lib/supabase';
 import { DEMO_MODE } from '../config/env';
 import { buildCoupleDisplayName } from '../lib/coupleDisplayName';
+import { readInviteTokenFromParams } from '../lib/inviteTokenParams';
 import {
   getVaultAttachmentStatusCopy,
   mapVaultAttachmentUploadError,
@@ -143,7 +144,7 @@ export const VaultContribute: React.FC = () => {
   const hasYearParam = typeof year === 'string' && year.length > 0;
   const vaultYear = hasYearParam ? parseInt(year ?? '0', 10) : null;
   const previewGuest = params.get('previewGuest')?.trim() ?? '';
-  const inviteToken = params.get('invite_token')?.trim() ?? '';
+  const inviteToken = readInviteTokenFromParams(params);
 
 
   const submittedKey = `${VAULT_SUBMITTED_KEY_PREFIX}${siteSlug ?? 'unknown'}`;

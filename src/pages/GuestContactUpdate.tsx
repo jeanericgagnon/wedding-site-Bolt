@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { GuestJourneyCompanion } from '../components/guest/GuestJourneyCompanion';
 import { demoGuests, demoWeddingSite } from '../lib/demoData';
+import { readInviteTokenFromParams } from '../lib/inviteTokenParams';
 import { mapGuestContactLookupError, mapGuestContactSubmitError } from './guestContactUpdateCopy';
 
 type Match = {
@@ -43,7 +44,7 @@ export const GuestContactUpdate: React.FC = () => {
   const siteRef = token; // now interpreted as site id/slug
   const isDemoSiteRef = siteRef === demoWeddingSite.id || siteRef.toLowerCase() === 'demo';
   const previewGuest = params.get('previewGuest')?.trim() ?? '';
-  const inviteToken = params.get('invite_token')?.trim() ?? '';
+  const inviteToken = readInviteTokenFromParams(params);
 
   const [query, setQuery] = useState('');
   const [matches, setMatches] = useState<Match[]>([]);
