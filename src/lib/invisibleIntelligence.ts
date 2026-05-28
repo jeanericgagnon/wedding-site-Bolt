@@ -1,3 +1,5 @@
+import { getBuilderLaunchChecklistRoute } from '../pages/builderCutoverRoute';
+
 export type IntelligenceArea =
   | 'builder'
   | 'timeline'
@@ -473,7 +475,7 @@ export function buildInvisibleIntelligenceSuggestions(input: {
       title: 'Worth checking',
       detail: 'The public site should have one clean publish pass before guests see it.',
       actionLabel: 'Open publish checklist',
-      href: '/dashboard/builder-v1?publishNow=1',
+      href: getBuilderLaunchChecklistRoute(),
       source: 'deterministic',
       confidence: 0.95,
     });

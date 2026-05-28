@@ -1,4 +1,5 @@
 import { FIRST_SESSION_WORKSPACE_ROUTES } from './firstSessionWorkspaceRoutes';
+import { BUILDER_WORKSPACE_ROUTES } from './builderWorkspaceRoutes';
 import { buildQuickStartEntryPath } from './quickStartContinuation';
 
 export type AuthEntryIntent = 'default' | 'draft-start' | 'quick-start' | 'onboarding';
@@ -14,7 +15,7 @@ export const getAuthEntryIntent = ({
 }): AuthEntryIntent => {
   const normalizedPath = explicitReturnPath?.trim() || null;
 
-  if (normalizedPath === FIRST_SESSION_WORKSPACE_ROUTES.builder) {
+  if (normalizedPath === BUILDER_WORKSPACE_ROUTES.guide || normalizedPath === FIRST_SESSION_WORKSPACE_ROUTES.builder) {
     return 'draft-start';
   }
 

@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import { ToastProvider } from './components/ui/Toast';
+import { BUILDER_WORKSPACE_ROUTES } from './lib/builderWorkspaceRoutes';
 
 const Home = lazy(() => import('./pages/Home').then(m => ({ default: m.Home })));
 const Product = lazy(() => import('./pages/Product').then(m => ({ default: m.Product })));
@@ -84,9 +85,9 @@ const AppContent = () => {
         <Route path="/product" element={<Product />} />
         <Route path="/templates" element={<Templates />} />
         <Route path="/templates/:templateId" element={<TemplateDetail />} />
-        <Route path="/builder-v2-lab" element={<BuilderV2Lab />} />
+        <Route path={BUILDER_WORKSPACE_ROUTES.lab} element={<BuilderV2Lab />} />
         <Route
-          path="/dashboard/builder-v2"
+          path={BUILDER_WORKSPACE_ROUTES.v2}
           element={
             <ProtectedRoute>
               <BuilderV2Lab />
@@ -214,7 +215,7 @@ const AppContent = () => {
           }
         />
         <Route
-          path="/dashboard/builder"
+          path={BUILDER_WORKSPACE_ROUTES.guide}
           element={
             <ProtectedRoute>
               <BuilderCutover />
@@ -222,7 +223,7 @@ const AppContent = () => {
           }
         />
         <Route
-          path="/dashboard/builder-v1"
+          path={BUILDER_WORKSPACE_ROUTES.legacy}
           element={
             <ProtectedRoute>
               <SiteBuilder />
