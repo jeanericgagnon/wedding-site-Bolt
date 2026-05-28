@@ -1,5 +1,7 @@
 import { getTemplate } from '../templates/registry';
 import { createInitialBuilderV2Pages, type LabPage, type LabSection } from './builderV2PageState';
+import { resolveBuilderVariant } from '../lib/sectionVariantCompatibility';
+import type { SectionType } from '../types/layoutConfig';
 
 export type BuilderV2TemplateSeed = {
   templateId: string;
@@ -94,7 +96,7 @@ export const buildBuilderV2TemplateSeed = (
     type: String(section.type),
     title: sectionTitle(String(section.type)),
     subtitle: sectionSubtitle(String(section.type)),
-    variant: section.variant || 'default',
+    variant: resolveBuilderVariant(String(section.type) as SectionType, section.variant || 'default'),
     enabled: section.enabled !== false,
     density,
   }));

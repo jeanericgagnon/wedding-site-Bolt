@@ -8,7 +8,7 @@ import { StorySection, StoryCentered, StorySplit, StoryTimeline } from './compon
 import { VenueSection, VenueCard } from './components/VenueSection';
 import { ScheduleSection, ScheduleTimeline, ScheduleDayTabs } from './components/ScheduleSection';
 import { TravelSection, TravelCards, TravelLocalGuide } from './components/TravelSection';
-import { RegistrySection, RegistryGrid, RegistryFundHighlight } from './components/RegistrySection';
+import { RegistryGrid, RegistryFundHighlight } from './components/RegistrySection';
 import { RsvpSection, RsvpInline } from './components/RsvpSection';
 import { FaqSection, FaqAccordion, FaqIconGrid } from './components/FaqSection';
 import { GallerySection, GalleryMasonry } from './components/GallerySection';
@@ -230,7 +230,13 @@ export const SECTION_REGISTRY: Record<SectionType, SectionDefinition> = {
 
 function normalizeLegacySectionType(type: SectionType): SectionType {
   const normalizedType = typeof type === 'string' ? type.trim().toLowerCase().replace(/[^a-z0-9]/g, '') : type;
-  return (normalizedType === 'registrysection' ? 'registry' : normalizedType) as SectionType;
+  const aliases: Record<string, SectionType> = {
+    registrysection: 'registry',
+    weddingparty: 'wedding-party',
+    dresscode: 'dress-code',
+    footercta: 'footer-cta',
+  };
+  return (aliases[String(normalizedType)] ?? normalizedType) as SectionType;
 }
 
 function normalizeLegacyRegistryVariant(variant: string): string {

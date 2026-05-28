@@ -1,4 +1,7 @@
 import { describe, expect, it } from 'vitest';
+import { getAllTemplates } from '../templates/registry';
+import { getSectionVariants } from '../sections/sectionRegistry';
+import type { SectionType } from '../types/layoutConfig';
 
 import {
   buildBuilderV2TemplateSeed,
@@ -9,6 +12,9 @@ import {
 describe('builderV2TemplateSeed', () => {
   it('builds a real V2 page spine directly from a template id', () => {
     const seed = buildBuilderV2TemplateSeed('destination-adventure');
+    const variantsByType = Object.fromEntries(
+      seed.pages[0]?.sections.map((section) => [section.type, section.variant]) ?? [],
+    );
 
     expect(seed.templateId).toBe('destination-adventure');
     expect(seed.templateName).toBe('Destination Adventure');
@@ -25,6 +31,18 @@ describe('builderV2TemplateSeed', () => {
       'faq',
       'footer-cta',
     ]);
+    expect(variantsByType).toMatchObject({
+      hero: 'fullbleed',
+      travel: 'cards',
+      story: 'timeline',
+      venue: 'card',
+      accommodations: 'cards',
+      schedule: 'timeline',
+      gallery: 'masonry',
+      rsvp: 'inline',
+      faq: 'accordion',
+      'footer-cta': 'default',
+    });
     expect(seed.selectedSectionId).toBe('hero-1');
   });
 
@@ -46,5 +64,20 @@ describe('builderV2TemplateSeed', () => {
     expect(getBuilderV2TemplateSectionTitle('footer-cta')).toBe('Closing CTA');
     expect(getBuilderV2TemplateSectionSubtitle('wedding-party')).toBe('The people standing with us');
     expect(getBuilderV2TemplateSectionSubtitle('video')).toBe('Films + clips');
+  });
+
+  it('keeps every shipped template on builder-supported variants when seeding V2 documents', () => {
+    for (const template of getAllTemplates()) {
+      const seed = buildBuilderV2TemplateSeed(template.id);
+      const sections = seed.pages.flatMap((page) => page.sections);
+
+      expect(sections, `seeded sections missing for ${template.id}`).not.toHaveLength(0);
+      for (const section of sections) {
+        expect(
+          getSectionVariants(section.type as SectionType),
+          `unsupported builder variant for ${template.id}:${section.type}`,
+        ).toContain(section.variant);
+      }
+    }
   });
 });

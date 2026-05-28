@@ -1,4 +1,5 @@
 import { SectionType } from '../types/layoutConfig';
+import { resolveCanonicalRegistrySectionInput } from '../sections/registry';
 
 const LEGACY_SELECTOR_VARIANTS: Record<SectionType, string[]> = {
   hero: ['default', 'minimal', 'fullbleed', 'countdown'],
@@ -49,6 +50,7 @@ const VARIANT_ALIASES: Partial<Record<SectionType, Record<string, string>>> = {
     cinematic: 'default',
     classic: 'default',
     playful: 'default',
+    cards: 'card',
     mapFirst: 'default',
     detailsFirst: 'card',
     splitMap: 'default',
@@ -59,6 +61,7 @@ const VARIANT_ALIASES: Partial<Record<SectionType, Record<string, string>>> = {
     classic: 'default',
     playful: 'default',
     agendaCards: 'dayTabs',
+    itinerary: 'timeline',
     program: 'default',
   },
   travel: {
@@ -141,6 +144,76 @@ const VARIANT_ALIASES: Partial<Record<SectionType, Record<string, string>>> = {
   },
 };
 
+const CANONICAL_VARIANT_ALIASES: Partial<Record<SectionType, Record<string, string>>> = {
+  hero: {
+    fullBleed: 'fullbleed',
+  },
+  story: {
+    twoColumn: 'split',
+  },
+  venue: {
+    mapFirst: 'default',
+    splitMap: 'default',
+    detailsFirst: 'card',
+  },
+  schedule: {
+    agendaCards: 'dayTabs',
+  },
+  travel: {
+    list: 'default',
+    hotelBlock: 'cards',
+    thingsToDo: 'localGuide',
+    compact: 'default',
+    tiers: 'cards',
+    mapPins: 'localGuide',
+    splitAirHotel: 'cards',
+  },
+  registry: {
+    cards: 'cards',
+    featured: 'featured',
+  },
+  rsvp: {
+    multiEvent: 'inline',
+  },
+  faq: {
+    accordion: 'accordion',
+  },
+  gallery: {
+    masonry: 'masonry',
+    grid: 'default',
+    filmStrip: 'default',
+    polaroid: 'masonry',
+    carousel: 'default',
+    spotlight: 'default',
+    mosaic: 'default',
+    categorized: 'default',
+  },
+  countdown: {
+    simple: 'default',
+  },
+  'wedding-party': {
+    storyBios: 'default',
+    splitSides: 'default',
+    scroll: 'default',
+  },
+  'dress-code': {
+    moodBoard: 'default',
+  },
+  accommodations: {
+    cards: 'cards',
+  },
+  contact: {
+    form: 'default',
+    interactiveHub: 'default',
+  },
+  'footer-cta': {
+    rsvpPush: 'default',
+  },
+  quotes: {
+    guestbook: 'featured',
+  },
+};
+
 const normalizeVariantKey = (value: unknown) => typeof value === 'string'
   ? value.toLowerCase().replace(/[^a-z0-9]/g, '')
   : '';
@@ -164,6 +237,16 @@ export function resolveBuilderVariant(type: SectionType, variant: unknown): stri
   const supportedByKey = new Map(supported.map((supportedVariant) => [normalizeVariantKey(supportedVariant), supportedVariant]));
   const canonicalVariant = supportedByKey.get(normalizedVariantKey) ?? normalizedVariant;
   if (supported.includes(canonicalVariant)) return canonicalVariant;
+
+  if (normalizedVariantKey) {
+    const runtimeCanonicalVariant = resolveCanonicalRegistrySectionInput(normalizedType, normalizedVariant).variant;
+    const runtimeAlias = CANONICAL_VARIANT_ALIASES[normalizedType]?.[runtimeCanonicalVariant];
+    if (runtimeAlias) {
+      const resolvedRuntimeAlias = supportedByKey.get(normalizeVariantKey(runtimeAlias))
+        ?? (supported.includes(runtimeAlias) ? runtimeAlias : undefined);
+      if (resolvedRuntimeAlias) return resolvedRuntimeAlias;
+    }
+  }
 
   const aliases = VARIANT_ALIASES[normalizedType] ?? {};
   const alias = aliases[canonicalVariant]

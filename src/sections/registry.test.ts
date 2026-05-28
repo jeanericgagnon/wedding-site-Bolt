@@ -5,7 +5,7 @@ import { getAllTemplates, getCanonicalTemplateSourceId, getTemplate, resolveCano
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { getSectionComponent, getSectionVariants } from './sectionRegistry';
-import { RegistryFundHighlight, RegistryGrid, RegistrySection } from './components/RegistrySection';
+import { RegistryFundHighlight, RegistryGrid } from './components/RegistrySection';
 
 const EXPECTED_ALIAS_TARGETS: Array<{ type: string; variant: string; expectedResolvedVariant: string }> = [
   { type: 'venue', variant: 'banner', expectedResolvedVariant: 'splitMap' },
@@ -356,7 +356,10 @@ describe('sections registry resolution', () => {
   it('keeps legacy section registry runtime tolerant of registrysection type drift', () => {
     const legacyRegistry = readFileSync(resolve(__dirname, './sectionRegistry.tsx'), 'utf8');
     expect(legacyRegistry).toContain("function normalizeLegacySectionType(type: SectionType): SectionType {");
-    expect(legacyRegistry).toContain("return (normalizedType === 'registrysection' ? 'registry' : normalizedType) as SectionType;");
+    expect(legacyRegistry).toContain("registrysection: 'registry'");
+    expect(legacyRegistry).toContain("weddingparty: 'wedding-party'");
+    expect(legacyRegistry).toContain("dresscode: 'dress-code'");
+    expect(legacyRegistry).toContain("footercta: 'footer-cta'");
     expect(legacyRegistry).toContain("function normalizeLegacyRegistryVariant(variant: string): string {");
     expect(legacyRegistry).toContain("const normalizedVariant = normalizedType === 'registry' ? normalizeLegacyRegistryVariant(variant) : variant;");
   });
@@ -465,7 +468,7 @@ describe('sections registry resolution', () => {
     expect(registryLinkCarryover).toContain('function extractRegistryUrlTokens(line: string): CarryoverRegistryToken[] {');
     expect(registryLinkCarryover).toContain('/\\[[^\\]]+\\]\\((https?:\\/\\/[^)]+|www\\.[^)]+)\\)/gi');
     expect(registryLinkCarryover).toContain('/<(https?:\\/\\/[^>]+|www\\.[^>]+)>/gi');
-    expect(registryLinkCarryover).toContain('/[\"\'](https?:\\/\\/[^\"\']+|www\\.[^\"\']+)[\"\']/gi');
+    expect(registryLinkCarryover).toContain(`/["'](https?:\\/\\/[^"']+|www\\.[^"']+)["']/gi`);
     expect(registryLinkCarryover).toContain('.matchAll(pattern)');
     expect(registryLinkCarryover).toContain(".split('\\n')");
     expect(registryLinkCarryover).toContain("let pendingSourceLabel: string | undefined;");
