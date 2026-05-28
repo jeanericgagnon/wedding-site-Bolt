@@ -25,4 +25,16 @@ describe('Guests feature page truth', () => {
     expect(screen.queryByText('Auto-detect column mappings')).not.toBeInTheDocument();
     expect(screen.queryByText('CSV import + export')).not.toBeInTheDocument();
   });
+
+  it('routes feature-page CTAs to real next steps', () => {
+    render(
+      <MemoryRouter>
+        <GuestsFeature />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getAllByRole('link', { name: 'Start your website' })[0]).toHaveAttribute('href', '/signup');
+    expect(screen.getByRole('link', { name: 'See how Dayof works' })).toHaveAttribute('href', '/product');
+    expect(screen.getByRole('link', { name: 'Explore more features' })).toHaveAttribute('href', '/product');
+  });
 });

@@ -25,4 +25,16 @@ describe('Registry feature page truth', () => {
     expect(screen.queryByText('Metadata fetch when available')).not.toBeInTheDocument();
     expect(screen.queryByText('Preview images when available')).not.toBeInTheDocument();
   });
+
+  it('routes feature-page CTAs to real next steps', () => {
+    render(
+      <MemoryRouter>
+        <RegistryFeature />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getAllByRole('link', { name: 'Start your website' })[0]).toHaveAttribute('href', '/signup');
+    expect(screen.getByRole('link', { name: 'See how Dayof works' })).toHaveAttribute('href', '/product');
+    expect(screen.getByRole('link', { name: 'Explore more features' })).toHaveAttribute('href', '/product');
+  });
 });

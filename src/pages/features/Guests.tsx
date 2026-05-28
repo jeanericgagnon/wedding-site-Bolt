@@ -249,7 +249,7 @@ export const GuestsFeature: React.FC = () => {
                   <ArrowRight className="w-5 h-5 ml-2" />
                 </Button>
               </Link>
-              <Link to="/features">
+              <Link to="/product">
                 <Button variant="outline" size="lg">
                   Explore more features
                 </Button>

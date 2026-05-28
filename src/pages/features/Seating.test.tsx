@@ -23,4 +23,16 @@ describe('Seating feature page truth', () => {
     expect(screen.queryByText('Save multiple layouts')).not.toBeInTheDocument();
     expect(screen.queryByText('Reassign in one click')).not.toBeInTheDocument();
   });
+
+  it('routes feature-page CTAs to real next steps', () => {
+    render(
+      <MemoryRouter>
+        <SeatingFeature />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getAllByRole('link', { name: 'Start your website' })[0]).toHaveAttribute('href', '/signup');
+    expect(screen.getByRole('link', { name: 'See how Dayof works' })).toHaveAttribute('href', '/product');
+    expect(screen.getByRole('link', { name: 'Explore more features' })).toHaveAttribute('href', '/product');
+  });
 });

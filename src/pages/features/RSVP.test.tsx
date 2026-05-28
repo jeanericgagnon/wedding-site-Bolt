@@ -25,4 +25,16 @@ describe('RSVP feature page truth', () => {
     expect(screen.queryByText('Automated RSVP reminder campaigns are in rollout. Core RSVP flow is live today; reminder scheduling is being enabled in phases.')).not.toBeInTheDocument();
     expect(screen.queryByText('Reminder scheduling in rollout')).not.toBeInTheDocument();
   });
+
+  it('routes feature-page CTAs to real next steps', () => {
+    render(
+      <MemoryRouter>
+        <RSVPFeature />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getAllByRole('link', { name: 'Start your website' })[0]).toHaveAttribute('href', '/signup');
+    expect(screen.getByRole('link', { name: 'See how Dayof works' })).toHaveAttribute('href', '/product');
+    expect(screen.getByRole('link', { name: 'Explore more features' })).toHaveAttribute('href', '/product');
+  });
 });

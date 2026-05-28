@@ -44,4 +44,12 @@ describe('MessagingFeature', () => {
     expect(screen.queryByText('Compliance with email best practices.')).not.toBeInTheDocument();
     expect(screen.queryByText('CAN-SPAM compliant')).not.toBeInTheDocument();
   });
+
+  it('routes feature-page CTAs to real next steps', () => {
+    render(<MessagingFeature />);
+
+    expect(screen.getAllByRole('link', { name: 'Start your website' })[0]).toHaveAttribute('href', '/signup');
+    expect(screen.getByRole('link', { name: 'See how Dayof works' })).toHaveAttribute('href', '/product');
+    expect(screen.getByRole('link', { name: 'Explore more features' })).toHaveAttribute('href', '/product');
+  });
 });
