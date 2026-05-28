@@ -202,7 +202,7 @@ export const buildPhotoMemoryCuratorModel = (args: {
       detail: 'The private bucket board has enough direction now. The next step is turning that into one or two clear guest photo sharing moments instead of a long list of options.',
       focusTitle: 'Open one guest lane on purpose',
       focusDetail: 'The private story is strong enough now that one clear photo sharing moment will help more than adding lots of options.',
-      bestNextMove: 'Create the first live bucket for the one moment you care about most.',
+      bestNextMove: 'Create the first guest-ready bucket for the one moment you care about most.',
       decisionRule: 'Launch the clearest guest photo sharing path first, then add more only when the first one proves useful.',
       watchout: 'The easy mistake here is opening several buckets at once and teaching guests that every moment matters equally, which usually makes none of them feel memorable.',
       curationNote: 'The visual story is strong enough to open one clear photo sharing lane without overwhelming guests.',
@@ -221,7 +221,7 @@ export const buildPhotoMemoryCuratorModel = (args: {
         },
         {
           title: 'Check whether that lane teaches the right behavior',
-          detail: 'Once the first bucket is live, use it to learn what guests actually contribute before adding more choices.',
+          detail: 'Once the first bucket is active, use it to learn what guests actually contribute before adding more choices.',
         },
         {
           title: 'Expand only after the first lane proves useful',
@@ -229,7 +229,7 @@ export const buildPhotoMemoryCuratorModel = (args: {
         },
       ),
       nextMoves: [
-        'Create the first live bucket for the one moment you care about most.',
+        'Create the first guest-ready bucket for the one moment you care about most.',
         'Only add more guest buckets when the first one has a clear purpose.',
         'Keep the photo sharing path obvious: one link, one QR, one expectation.',
       ],
@@ -244,7 +244,7 @@ export const buildPhotoMemoryCuratorModel = (args: {
       detail: 'Guests are sending photos, but no active bucket has enough visible uploads to feel slideshow-ready yet. A little curation now will give the memory flow some shape.',
       focusTitle: 'Finish one strong bucket first',
       focusDetail: 'A single complete bucket creates more trust than several half-formed ones.',
-      bestNextMove: 'Push one live bucket to at least three strong visible uploads.',
+      bestNextMove: 'Push one active bucket to at least three strong visible uploads.',
       decisionRule: 'Push one bucket to “worth revisiting” before you spread attention across every photo sharing lane.',
       watchout: 'If you spread early uploads across every bucket at once, the whole memory system can look busier without any lane becoming worth revisiting.',
       curationNote: 'You have signal now. The job is turning that signal into one complete, trustworthy memory lane first.',
@@ -271,7 +271,7 @@ export const buildPhotoMemoryCuratorModel = (args: {
         },
       ),
       nextMoves: [
-        'Push one live bucket to at least three strong visible uploads.',
+        'Push one active bucket to at least three strong visible uploads.',
         'Hide or review the flagged uploads before you export anything.',
         'Once one bucket feels solid, preview the slideshow before adding more complexity.',
       ],
@@ -324,7 +324,7 @@ export const buildPhotoMemoryCuratorModel = (args: {
     eyebrow: 'Memory curator',
     readinessLabel: 'Curation-ready',
     title: 'The memory flow is balanced enough to start curating, not just collecting',
-    detail: 'You have the couple anchors, live guest paths, and enough uploads to make this feel intentional. The next wins are about taste and continuity, not more buckets.',
+    detail: 'You have the couple anchors, guest-facing paths, and enough uploads to make this feel intentional. The next wins are about taste and continuity, not more buckets.',
     focusTitle: 'Curate depth, not volume',
     focusDetail: 'The system is healthy enough that restraint will usually improve it more than expansion.',
     bestNextMove: 'Preview the slideshow while the best moments are still easy to spot.',

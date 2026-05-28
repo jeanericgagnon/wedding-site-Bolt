@@ -15,15 +15,15 @@ describe('getPlannerHandoffCopy', () => {
     expect(model.sequence[0]?.title).toMatch(/operational pressure/i);
   });
 
-  it('keeps coordinator guidance centered on live flow', () => {
+  it('keeps coordinator guidance centered on guest-facing day-of flow', () => {
     const model = getPlannerHandoffCopy('coordinator', 'coordinator');
 
-    expect(model.focusTitle).toMatch(/live flow/i);
+    expect(model.focusTitle).toMatch(/guest-facing flow/i);
     expect(model.focusDetail).toMatch(/timeline decisions|day-of updates/i);
-    expect(model.nextMove).toMatch(/live pressure that guests can already feel/i);
-    expect(model.decisionRule).toMatch(/live guest flow/i);
-    expect(model.watchout).toMatch(/absorbs broader planning truth|team loses clarity/i);
-    expect(model.sequence[1]?.detail).toMatch(/real time|live lane|broader planning/i);
+    expect(model.nextMove).toMatch(/day-of pressure that guests can already feel/i);
+    expect(model.decisionRule).toMatch(/guest-facing flow/i);
+    expect(model.watchout).toMatch(/day-of pressure|team loses clarity/i);
+    expect(model.sequence[1]?.detail).toMatch(/real-time pressure|broader planning/i);
   });
 
   it('keeps viewer guidance in a review-only posture', () => {

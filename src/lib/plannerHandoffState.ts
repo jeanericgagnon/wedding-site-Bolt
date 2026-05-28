@@ -28,7 +28,7 @@ function getSurfaceDetail(surface: PlannerHandoffSurface) {
       return 'guest communications, reminders, and day-of updates';
     case 'coordinator':
     default:
-      return 'live guest movement, timeline decisions, and day-of updates';
+      return 'guest-facing movement, timeline decisions, and day-of updates';
   }
 }
 
@@ -101,29 +101,29 @@ export function getPlannerHandoffCopy(role: PlannerAccessRole, surface: PlannerH
     return {
       title: 'Coordinator handling live operations',
       detail: 'This view is for real-time event support, not broad planning ownership.',
-      focusTitle: 'Protect live flow over broad editing',
+      focusTitle: 'Protect guest-facing flow over broad editing',
       focusDetail: `Use this lane to stabilize ${surfaceDetail} in real time without reopening wider planning or ownership decisions.`,
-      nextMove: 'Start with the live pressure that guests can already feel, then hand broader planning truth back once the moment is calm.',
-      decisionRule: 'If it affects live guest flow, handle it now. If it changes broader ownership or planning truth, hand it back.',
-      watchout: 'If the coordinator lane absorbs broader planning truth during live pressure, guests lose calm now and the team loses clarity later.',
+      nextMove: 'Start with the day-of pressure that guests can already feel, then hand broader planning truth back once the moment is calm.',
+      decisionRule: 'If it affects guest-facing flow, handle it now. If it changes broader ownership or planning truth, hand it back.',
+      watchout: 'If the coordinator lane absorbs broader planning truth during day-of pressure, guests lose calm now and the team loses clarity later.',
       sequence: [
         {
           id: 'orient',
           status: 'current',
-          title: 'Find the live pressure guests can feel',
-          detail: `Start with the piece of ${surfaceDetail} that is already shaping the live guest experience.`,
+          title: 'Find the day-of pressure guests can feel',
+          detail: `Start with the piece of ${surfaceDetail} that is already shaping the guest-facing experience.`,
         },
         {
           id: 'enter',
           status: 'next',
-          title: 'Stabilize the live lane',
+          title: 'Stabilize the active lane',
           detail: 'Use this surface to calm the real-time pressure before you reopen any broader planning questions.',
         },
         {
           id: 'handoff',
           status: 'then',
           title: 'Return broader truth once calm is back',
-          detail: 'After the live lane is steady, hand planning or ownership-level changes back instead of absorbing them here.',
+          detail: 'After the active lane is steady, hand planning or ownership-level changes back instead of absorbing them here.',
         },
       ],
     };

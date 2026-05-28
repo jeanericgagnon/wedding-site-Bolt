@@ -70,7 +70,7 @@ describe('weddingIdentityExports', () => {
     expect(kit.quickPacks.find((pack) => pack.id === 'print-table')?.nextStep).toMatch(/Add the date, venue, and public site/i);
   });
 
-  it('keeps the export handoff honest when the public URL exists but the site is not live yet', () => {
+  it('keeps the export handoff honest when the public URL exists but the site is still draft-only', () => {
     const kit = buildWeddingIdentityExportKit({
       coupleNames: 'Maya & Leo',
       publicSiteUrl: 'https://maya-leo.dayof.love',
@@ -79,15 +79,15 @@ describe('weddingIdentityExports', () => {
       venueName: 'Garden House',
     });
 
-    expect(kit.handoffSequence[0]?.title).toMatch(/live first/i);
-    expect(kit.confidenceDetail).toMatch(/last trust step|live publish/i);
-    expect(kit.focusTitle).toMatch(/Make the guest-facing site live/i);
+    expect(kit.handoffSequence[0]?.title).toMatch(/share.*first/i);
+    expect(kit.confidenceDetail).toMatch(/last trust step|share/i);
+    expect(kit.focusTitle).toMatch(/Share the guest-facing site/i);
     expect(kit.bestNextMove).toMatch(/Publish the guest-facing site first|guest path is truly ready to share/i);
-    expect(kit.decisionRule).toMatch(/publish before you scale/i);
+    expect(kit.decisionRule).toMatch(/draft-only|share the site before you scale/i);
     expect(kit.watchout).toMatch(/polished dead end/i);
-    expect(kit.handoffSequence[1]?.title).toMatch(/after the live publish/i);
+    expect(kit.handoffSequence[1]?.title).toMatch(/after the first real share pass/i);
     expect(kit.quickPacks.find((pack) => pack.id === 'share-now')?.readiness).toBe('ready');
-    expect(kit.quickPacks.find((pack) => pack.id === 'share-now')?.nextStep).toMatch(/Publish the live site once/i);
+    expect(kit.quickPacks.find((pack) => pack.id === 'share-now')?.nextStep).toMatch(/Share the guest-facing site once/i);
   });
 
   it('keeps guest-facing export guidance honest when the site is access-restricted', () => {
@@ -189,14 +189,14 @@ describe('weddingIdentityExports', () => {
     expect(assets.find((asset) => asset.id === 'photo-upload-sign')).toMatchObject({
       label: 'Photo sharing sign',
       url: 'https://maya-leo.dayof.love',
-      instruction: 'Scan for the wedding hub, then open photo sharing from the live guest path.',
+      instruction: 'Scan for the wedding hub, then open photo sharing from the guest-facing path.',
     });
 
     const html = renderWeddingIdentityPrintHtml(assets);
     expect(html).toContain('DayOf wedding identity print pack');
     expect(html).toContain('data:image/svg+xml;charset=utf-8,');
     expect(html).toContain('https://maya-leo.dayof.love/rsvp');
-    expect(html).toContain('Scan for the wedding hub, then open photo sharing from the live guest path.');
+    expect(html).toContain('Scan for the wedding hub, then open photo sharing from the guest-facing path.');
     expect(html).not.toMatch(/guest_access|service-role|secret/i);
   });
 

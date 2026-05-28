@@ -236,7 +236,7 @@ export function buildWeddingIdentityExportKit(input: WeddingIdentityExportKitInp
       : restrictedAccess
         ? `The packs themselves are ready, but the guest experience still depends on clean ${privacyModeLabel} instructions traveling with them.`
       : !launchIsLive
-        ? 'The URL, print assets, and story pack are lined up. One live publish is the last trust step before wide sharing.'
+        ? 'The URL, print assets, and story pack are lined up. One real share pass is the last trust step before wide sharing.'
         : 'The site, print assets, and share packs are aligned enough to hand off to guests, planners, and stationers without extra translation.',
     focusTitle: !hasPublicUrl
       ? 'Give the kit one trustworthy public URL'
@@ -244,8 +244,8 @@ export function buildWeddingIdentityExportKit(input: WeddingIdentityExportKitInp
         ? 'Use direct guest sharing instead of broad invite-only print packs'
       : restrictedAccess
         ? 'Keep access instructions traveling with every pack'
-        : !launchIsLive
-          ? 'Make the guest-facing site live before volume sharing'
+      : !launchIsLive
+          ? 'Share the guest-facing site before volume sharing'
           : 'Carry one wedding identity across every handoff',
     focusDetail: !hasPublicUrl
       ? 'The design system is ready, but the exports will still feel provisional until one guest-safe URL anchors every QR and printed cue.'
@@ -254,7 +254,7 @@ export function buildWeddingIdentityExportKit(input: WeddingIdentityExportKitInp
       : restrictedAccess
         ? `These assets are ready, but the guest experience still depends on making the ${privacyModeLabel} instructions impossible to miss.`
         : !launchIsLive
-          ? 'The packs already agree with each other; the last missing ingredient is a live destination behind every QR and short URL.'
+          ? 'The packs already agree with each other; the last missing ingredient is a guest-safe destination behind every QR and short URL.'
           : 'This is the stage where consistency matters more than invention: the same URL, tone, and access story should show up everywhere.',
     bestNextMove: !hasPublicUrl
       ? 'Set the clean public URL first, then regenerate the guest-facing QR and print packs once every asset can point to the same trustworthy path.'
@@ -272,7 +272,7 @@ export function buildWeddingIdentityExportKit(input: WeddingIdentityExportKitInp
       : restrictedAccess
         ? `When access is ${privacyModeLabel}, clarity beats aesthetics: the right password or invite path has to travel with every export.`
         : !launchIsLive
-          ? 'If the packs are ready but the site is not live, publish before you scale the handoff.'
+          ? 'If the packs are ready but the site is still draft-only, share the site before you scale the handoff.'
           : 'Once the public path is trustworthy, reuse the same identity everywhere instead of improvising by channel.',
     watchout: !hasPublicUrl
       ? 'If you print or circulate the kit before the public URL exists, guests will learn the broken route faster than they learn the correction.'
@@ -281,7 +281,7 @@ export function buildWeddingIdentityExportKit(input: WeddingIdentityExportKitInp
       : restrictedAccess
         ? `The biggest failure mode now is forgetting to pair the ${privacyModeLabel} instructions with the share pack guests actually open first.`
         : !launchIsLive
-          ? 'The packs can look finished before the live site is real, which is exactly how couples end up handing guests a polished dead end.'
+          ? 'The packs can look finished before the guest-facing site is truly ready, which is exactly how couples end up handing guests a polished dead end.'
           : 'Once the handoff is working, the risk is channel drift: alternate URLs, old assets, or remixed wording can quietly weaken trust.',
     deliveryNote: input.privacyMode === 'invite_only'
       ? 'Use planner-facing identity exports freely, but keep invite-only guest access links in direct couple-to-guest sharing instead of reusable public packs.'
@@ -311,7 +311,7 @@ export function buildWeddingIdentityExportKit(input: WeddingIdentityExportKitInp
           : restrictedAccess
             ? 'Confirm the guest access instructions first'
           : !launchIsLive
-            ? 'Make the guest-facing site live first'
+            ? 'Share the guest-facing site first'
             : 'Share one safe guest-facing pack',
         detail: !hasPublicUrl
           ? 'The public site URL is the first ingredient for safe QR cards, story graphics, and RSVP handoff.'
@@ -320,7 +320,7 @@ export function buildWeddingIdentityExportKit(input: WeddingIdentityExportKitInp
           : restrictedAccess
             ? `These packs point to a ${privacyModeLabel} site, so make sure guests will receive the right password or invite path before you share them widely.`
           : !launchIsLive
-            ? 'The URL is set, but the guest-facing site still needs one live publish before print and share packs feel trustworthy.'
+            ? 'The URL is set, but the guest-facing site still needs one real share pass before print and share packs feel trustworthy.'
             : 'Lead with the share graphic, RSVP card, and public QR so every guest-facing surface starts from the same URL.',
       },
       {
@@ -331,7 +331,7 @@ export function buildWeddingIdentityExportKit(input: WeddingIdentityExportKitInp
           : input.privacyMode === 'invite_only'
             ? 'Use print for context, not the private front door'
           : !launchIsLive
-            ? 'Share and print after the live publish'
+            ? 'Share and print after the first real share pass'
             : hasDate && hasVenue
               ? 'Carry the same identity into print'
               : 'Finish the print details next',
@@ -340,7 +340,7 @@ export function buildWeddingIdentityExportKit(input: WeddingIdentityExportKitInp
           : input.privacyMode === 'invite_only'
             ? 'Keep printed identity materials focused on context and brand consistency, while the actual invite-only route stays in direct guest handoff.'
           : !launchIsLive
-            ? 'Once the live publish is up, use the share pack, table card, insert, and photo sharing sign from the same guest-safe URL.'
+            ? 'Once the first real share pass is up, use the share pack, table card, insert, and photo sharing sign from the same guest-safe URL.'
             : hasDate && hasVenue
               ? 'Once the share pack is steady, use the table card, insert, and photo sharing sign so print surfaces stay aligned.'
               : 'Add the date, venue, and public site so welcome-table and signage assets stop feeling provisional.',
@@ -359,11 +359,11 @@ export function buildWeddingIdentityExportKit(input: WeddingIdentityExportKitInp
         detail: hasPublicUrl
           ? restrictedAccess
             ? privacyModeLabel === 'invite-only'
-              ? 'The share pack can still support planner or stationer context, but invite-only guest access should be sent directly instead of turned into broad reusable assets.'
-              : 'The share pack is assembled, but it should travel with the password instructions so guests are not stranded.'
+            ? 'The share pack can still support planner or stationer context, but invite-only guest access should be sent directly instead of turned into broad reusable assets.'
+            : 'The share pack is assembled, but it should travel with the password instructions so guests are not stranded.'
             : launchIsLive
             ? 'Use the share graphic, RSVP card, and public QR card when you need one fast guest-facing set.'
-            : 'The share pack is assembled, but it should wait until the guest-facing site has one real live publish.'
+            : 'The share pack is assembled, but it should wait until the guest-facing site has one real share pass.'
           : 'Set the public site URL first so the guest-facing share pack can be generated safely.',
         readiness: hasBroadShareUrl ? 'ready' : 'needs-info',
         bestFor: 'Best when you need one quick guest-facing kit for text, DM, or email right now.',
@@ -377,7 +377,7 @@ export function buildWeddingIdentityExportKit(input: WeddingIdentityExportKitInp
               : 'Share the password instructions with the pack so guests can actually use the link you hand them.'
             : launchIsLive
             ? 'Send the share graphic first, then reuse the same URL on RSVP and QR surfaces.'
-            : 'Publish the live site once, then send the share graphic so every guest-facing link resolves with confidence.'
+            : 'Share the guest-facing site once, then send the share graphic so every guest-facing link resolves with confidence.'
           : 'Set the public site URL so the guest-facing share pack is safe to copy or print.',
       },
       {
@@ -599,7 +599,7 @@ export function buildWeddingIdentityPrintAssets(input: WeddingIdentityExportKitI
       sizeLabel: '8.5 x 11 in',
       title: 'Share your photos',
       subtitle: coupleNames,
-      instruction: 'Scan for the wedding hub, then open photo sharing from the live guest path.',
+          instruction: 'Scan for the wedding hub, then open photo sharing from the guest-facing path.',
       url: publicSiteUrl,
     },
     {
