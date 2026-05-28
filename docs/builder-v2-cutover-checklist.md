@@ -40,7 +40,9 @@ Status: draft (post-lab hardening)
     - `npm run proof:v1:builder-v2-cutover`
     - `npm run test:e2e:builder-cutover`
   - Keep this open until a current signed browser run is logged against both routes.
-- [ ] CI gate includes typecheck + build + v2 adapter tests
+- [x] CI gate includes typecheck + build + v2 adapter tests
+  - Local/CI command: `npm run proof:v1:builder-v2-ci-gate`
+  - Workflow hook: `.github/workflows/ci-hardpass.yml` -> `Builder V2 cutover gate`
 
 ## 4) Rollout Strategy
 

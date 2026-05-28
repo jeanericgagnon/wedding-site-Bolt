@@ -37,6 +37,9 @@ jobs:
       - name: Typecheck
         run: npm run typecheck
 
+      - name: Builder V2 cutover gate
+        run: npm run proof:v1:builder-v2-ci-gate
+
       - name: Hardpass core (tests/build/csv/checkin)
         run: npm test && npm run build && npm run smoke:csvmapper && npm run smoke:checkin
 
