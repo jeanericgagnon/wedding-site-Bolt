@@ -57,6 +57,10 @@ Status: draft (post-lab hardening)
   - Dedicated command paths now exist:
     - `npm run proof:v1:builder-v2-cutover`
     - `npm run test:e2e:builder-cutover`
+  - Localhost signed-owner coverage now has a dedicated spec:
+    - `tests/e2e/builder-cutover-local-auth.spec.ts`
+    - `scripts/playwright-builder-cutover-smoke.mjs` includes it automatically when `PLAYWRIGHT_BASE_URL` points at localhost
+  - Current local execution note (2026-05-28 PT): the signed-local smoke spec parses, but Chromium launch is still environment-blocked here by `bootstrap_check_in ... MachPortRendezvousServer ... Permission denied (1100)` before the first page opens
   - Keep this open until a current signed browser run is logged against both routes.
 - [x] CI gate includes typecheck + build + v2 adapter tests
   - Local/CI command: `npm run proof:v1:builder-v2-ci-gate`
