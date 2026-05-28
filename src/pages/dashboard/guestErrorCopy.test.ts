@@ -4,10 +4,18 @@ import {
   GUESTS_ADD_RETRY_ERROR,
   GUESTS_ASSISTED_RSVP_RETRY_ERROR,
   GUESTS_AUTO_REMINDER_SAVE_RETRY_ERROR,
+  GUESTS_CHECKIN_UNDO_RETRY_ERROR,
   GUESTS_CHECKIN_STATUS_RETRY_ERROR,
+  GUESTS_CONFLICT_RESOLVE_ALL_RETRY_ERROR,
+  GUESTS_CONFLICT_RESOLVE_RETRY_ERROR,
   GUESTS_EVENT_INVITE_RETRY_ERROR,
+  GUESTS_HOUSEHOLD_MERGE_RETRY_ERROR,
+  GUESTS_HOUSEHOLD_REASSIGN_RETRY_ERROR,
+  GUESTS_HOUSEHOLD_SPLIT_RETRY_ERROR,
   GUESTS_IMPORT_RETRY_ERROR,
+  GUESTS_INVITATION_SEND_RETRY_ERROR,
   GUESTS_PARSE_FILE_RETRY_ERROR,
+  GUESTS_REMOVE_RETRY_ERROR,
   GUESTS_RSVP_CONFIG_RETRY_ERROR,
   GUESTS_THANK_YOU_STATUS_RETRY_ERROR,
   GUESTS_UPDATE_RETRY_ERROR,
@@ -40,8 +48,16 @@ describe('guestErrorCopy', () => {
     expect(GUESTS_UPDATE_RETRY_ERROR).toBe('Could not update that guest right now. Please try again.');
     expect(GUESTS_THANK_YOU_STATUS_RETRY_ERROR).toBe('Could not update thank-you status right now.');
     expect(GUESTS_CHECKIN_STATUS_RETRY_ERROR).toBe('Could not update guest check-in right now.');
+    expect(GUESTS_CHECKIN_UNDO_RETRY_ERROR).toBe('Could not undo that guest check-in right now.');
     expect(GUESTS_EVENT_INVITE_RETRY_ERROR).toBe('Could not update that event invitation right now.');
     expect(GUESTS_ASSISTED_RSVP_RETRY_ERROR).toBe('Could not save that assisted RSVP right now.');
     expect(GUESTS_AUTO_REMINDER_SAVE_RETRY_ERROR).toBe('Could not save auto reminder settings right now.');
+    expect(GUESTS_CONFLICT_RESOLVE_RETRY_ERROR).toBe('Could not resolve that RSVP conflict right now.');
+    expect(GUESTS_CONFLICT_RESOLVE_ALL_RETRY_ERROR).toBe('Could not resolve those RSVP conflicts right now.');
+    expect(GUESTS_INVITATION_SEND_RETRY_ERROR).toBe('Could not send that invitation right now. Please try again.');
+    expect(GUESTS_HOUSEHOLD_MERGE_RETRY_ERROR).toBe('Could not merge those guests into one household right now.');
+    expect(GUESTS_HOUSEHOLD_SPLIT_RETRY_ERROR).toBe('Could not remove that guest from the household right now.');
+    expect(GUESTS_HOUSEHOLD_REASSIGN_RETRY_ERROR).toBe('Could not move that guest to a different household right now.');
+    expect(GUESTS_REMOVE_RETRY_ERROR).toBe('Could not remove that guest right now. Please try again.');
   });
 });

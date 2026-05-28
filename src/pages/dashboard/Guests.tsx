@@ -38,11 +38,19 @@ import {
   GUESTS_ASSISTED_RSVP_RETRY_ERROR,
   GUESTS_AUTO_REMINDER_SAVE_RETRY_ERROR,
   GUESTS_CHECKIN_CLEAR_RETRY_ERROR,
+  GUESTS_CHECKIN_UNDO_RETRY_ERROR,
   GUESTS_CHECKIN_STATUS_RETRY_ERROR,
+  GUESTS_CONFLICT_RESOLVE_ALL_RETRY_ERROR,
+  GUESTS_CONFLICT_RESOLVE_RETRY_ERROR,
   GUESTS_DELETE_ALL_RETRY_ERROR,
   GUESTS_EVENT_INVITE_RETRY_ERROR,
+  GUESTS_HOUSEHOLD_MERGE_RETRY_ERROR,
+  GUESTS_HOUSEHOLD_REASSIGN_RETRY_ERROR,
+  GUESTS_HOUSEHOLD_SPLIT_RETRY_ERROR,
   GUESTS_IMPORT_RETRY_ERROR,
+  GUESTS_INVITATION_SEND_RETRY_ERROR,
   GUESTS_PARSE_FILE_RETRY_ERROR,
+  GUESTS_REMOVE_RETRY_ERROR,
   GUESTS_RSVP_CONFIG_RETRY_ERROR,
   GUESTS_THANK_YOU_BULK_RETRY_ERROR,
   GUESTS_THANK_YOU_STATUS_RETRY_ERROR,
@@ -814,7 +822,7 @@ export const DashboardGuests: React.FC = () => {
       setRsvpConflictHistory((prev) => prev.map((c) => c.id === conflictId ? { ...c, resolved: true, resolved_at: new Date().toISOString() } : c));
       toast('RSVP conflict marked resolved', 'success');
     } catch {
-      toast('Failed to resolve RSVP conflict', 'error');
+      toast(GUESTS_CONFLICT_RESOLVE_RETRY_ERROR, 'error');
     } finally {
       setResolvingConflictId(null);
     }
@@ -836,7 +844,7 @@ export const DashboardGuests: React.FC = () => {
       setRsvpConflictHistory((prev) => prev.map((c) => ids.includes(c.id) ? { ...c, resolved: true, resolved_at: new Date().toISOString() } : c));
       toast(`${ids.length} RSVP conflict${ids.length === 1 ? '' : 's'} resolved`, 'success');
     } catch {
-      toast('Failed to resolve RSVP conflicts', 'error');
+      toast(GUESTS_CONFLICT_RESOLVE_ALL_RETRY_ERROR, 'error');
     } finally {
       setResolvingConflictId(null);
     }
@@ -1185,7 +1193,7 @@ export const DashboardGuests: React.FC = () => {
       await fetchGuests();
       toast('Guest removed', 'success');
     } catch {
-      toast('Failed to remove guest. Please try again.', 'error');
+      toast(GUESTS_REMOVE_RETRY_ERROR, 'error');
     } finally {
       setDeletingGuestId(null);
     }
@@ -1208,7 +1216,7 @@ export const DashboardGuests: React.FC = () => {
       toast(`Undid check-in for ${lastCheckIn.guestName}`, 'success');
       setLastCheckIn(null);
     } catch {
-      toast('Failed to undo last check-in', 'error');
+      toast(GUESTS_CHECKIN_UNDO_RETRY_ERROR, 'error');
     }
   };
 
@@ -1376,7 +1384,7 @@ export const DashboardGuests: React.FC = () => {
 
       toast(`Invitation sent to ${guestName}`, 'success');
     } catch {
-      toast('Failed to send invitation. Please try again.', 'error');
+      toast(GUESTS_INVITATION_SEND_RETRY_ERROR, 'error');
     } finally {
       setSendingInviteId(null);
     }
@@ -1766,7 +1774,7 @@ Proceed with send?`)) return;
       setSelectedGuestIds(new Set());
       toast(`${ids.length} guests merged into one household`, 'success');
     } catch {
-      toast('Failed to merge guests', 'error');
+      toast(GUESTS_HOUSEHOLD_MERGE_RETRY_ERROR, 'error');
     } finally {
       setHouseholdBusy(false);
     }
@@ -1785,7 +1793,7 @@ Proceed with send?`)) return;
       await fetchGuests();
       toast('Guest removed from household', 'success');
     } catch {
-      toast('Failed to remove from household', 'error');
+      toast(GUESTS_HOUSEHOLD_SPLIT_RETRY_ERROR, 'error');
     } finally {
       setHouseholdBusy(false);
     }
@@ -1803,7 +1811,7 @@ Proceed with send?`)) return;
       await fetchGuests();
       toast('Guest reassigned', 'success');
     } catch {
-      toast('Failed to reassign guest', 'error');
+      toast(GUESTS_HOUSEHOLD_REASSIGN_RETRY_ERROR, 'error');
     }
   }
 

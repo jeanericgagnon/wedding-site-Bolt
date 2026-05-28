@@ -15,9 +15,17 @@ export const GUESTS_THANK_YOU_STATUS_RETRY_ERROR = 'Could not update thank-you s
 export const GUESTS_THANK_YOU_BULK_RETRY_ERROR = 'Could not update thank-you statuses right now.';
 export const GUESTS_CHECKIN_CLEAR_RETRY_ERROR = 'Could not clear guest check-ins right now.';
 export const GUESTS_CHECKIN_STATUS_RETRY_ERROR = 'Could not update guest check-in right now.';
+export const GUESTS_CHECKIN_UNDO_RETRY_ERROR = 'Could not undo that guest check-in right now.';
 export const GUESTS_EVENT_INVITE_RETRY_ERROR = 'Could not update that event invitation right now.';
 export const GUESTS_ASSISTED_RSVP_RETRY_ERROR = 'Could not save that assisted RSVP right now.';
 export const GUESTS_AUTO_REMINDER_SAVE_RETRY_ERROR = 'Could not save auto reminder settings right now.';
+export const GUESTS_CONFLICT_RESOLVE_RETRY_ERROR = 'Could not resolve that RSVP conflict right now.';
+export const GUESTS_CONFLICT_RESOLVE_ALL_RETRY_ERROR = 'Could not resolve those RSVP conflicts right now.';
+export const GUESTS_INVITATION_SEND_RETRY_ERROR = 'Could not send that invitation right now. Please try again.';
+export const GUESTS_HOUSEHOLD_MERGE_RETRY_ERROR = 'Could not merge those guests into one household right now.';
+export const GUESTS_HOUSEHOLD_SPLIT_RETRY_ERROR = 'Could not remove that guest from the household right now.';
+export const GUESTS_HOUSEHOLD_REASSIGN_RETRY_ERROR = 'Could not move that guest to a different household right now.';
+export const GUESTS_REMOVE_RETRY_ERROR = 'Could not remove that guest right now. Please try again.';
 
 export function mapGuestDashboardError(error: unknown, fallback: string): string {
   return customerSafeErrorMessage(error, fallback, { allow: GUESTS_ALLOW_LIST });
