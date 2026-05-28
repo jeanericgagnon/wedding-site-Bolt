@@ -356,13 +356,11 @@ export function createAlexJordanDemoWeddingData(overrides: Partial<typeof demoWe
       id: 'demo-registry-1',
       label: 'Registry',
       url: 'https://example.com/registry/alex-jordan',
-      type: 'registry',
     },
     {
       id: 'demo-registry-2',
       label: 'Experiences Fund',
       url: 'https://example.com/fund/alex-jordan',
-      type: 'cash',
     },
   ];
   data.registry.notes = 'Your presence is the best gift. If you would like to celebrate with something extra, these are the places we will keep updated.';
@@ -371,7 +369,6 @@ export function createAlexJordanDemoWeddingData(overrides: Partial<typeof demoWe
     {
       id: 'demo-gallery-1',
       url: site.hero_image_url,
-      alt: 'Alex and Jordan walking together in the garden.',
       caption: 'A quiet moment before the weekend begins.',
     },
   ];

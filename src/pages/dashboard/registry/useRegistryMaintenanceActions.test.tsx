@@ -10,6 +10,7 @@ import {
 } from './registryDashboardErrorCopy';
 import { useRegistryMaintenanceActions } from './useRegistryMaintenanceActions';
 import type { RegistryDuplicateGroup } from './duplicateRegistryItems';
+import type { RegistryImportBatchRecord } from './registryService';
 import type { RegistryItem } from './registryTypes';
 
 const copyTextOrDownloadMock = vi.mocked(copyTextOrDownload);
@@ -89,13 +90,17 @@ function makeDuplicateGroup(primaryItem = makeItem()): RegistryDuplicateGroup {
     canonical_url: 'https://shop.example.com/dinner-plates-duplicate',
     item_url: 'https://shop.example.com/dinner-plates-duplicate',
   });
+  const totalPurchased = primaryItem.quantity_purchased + secondary.quantity_purchased;
+  const mergedQuantityNeeded = Math.max(1, primaryItem.quantity_needed, secondary.quantity_needed, totalPurchased);
 
   return {
     id: 'group-1',
     primaryItem,
     secondaryItems: [secondary],
     items: [primaryItem, secondary],
-    signals: [{ kind: 'canonical_url', label: 'Matching link', value: 'https://shop.example.com/dinner-plates' }],
+    signals: [{ kind: 'canonical-url', label: 'Matching link', value: 'https://shop.example.com/dinner-plates' }],
+    mergedQuantityNeeded,
+    mergedQuantityPurchased: Math.min(mergedQuantityNeeded, totalPurchased),
   };
 }
 
@@ -113,8 +118,8 @@ function renderActions(overrides: {
     const [items, setItems] = React.useState<RegistryItem[]>(overrides.items ?? [makeItem()]);
     const [bulkImportOpen, setBulkImportOpen] = React.useState(false);
     const [bulkUrls, setBulkUrls] = React.useState('');
-    const [latestImportBatchSummary, setLatestImportBatchSummary] = React.useState(null);
-    const [recentImportBatchesSummary, setRecentImportBatchesSummary] = React.useState(null);
+    const [latestImportBatchSummary, setLatestImportBatchSummary] = React.useState<RegistryImportBatchRecord | null>(null);
+    const [recentImportBatchesSummary, setRecentImportBatchesSummary] = React.useState<RegistryImportBatchRecord[] | null>(null);
     const [monthlyRefreshCount, setMonthlyRefreshCount] = React.useState(0);
     const [monthlyRefreshMonth, setMonthlyRefreshMonth] = React.useState<string | null>(null);
     void bulkImportOpen;
