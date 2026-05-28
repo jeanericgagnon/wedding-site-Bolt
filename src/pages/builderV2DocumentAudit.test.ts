@@ -80,6 +80,7 @@ describe('builder v2 document audit', () => {
     expect(audit.issues.some((issue) => issue.actionLabel === 'Review on mobile')).toBe(true);
     expect(audit.issues.some((issue) => issue.actionLabel === 'Review hidden lane')).toBe(true);
     expect(audit.issues.some((issue) => issue.actionLabel === 'Review hidden page')).toBe(true);
+    expect(audit.issues.some((issue) => issue.title.includes('visible site map'))).toBe(true);
   });
 
   it('reports a clean audit when no issues remain', () => {

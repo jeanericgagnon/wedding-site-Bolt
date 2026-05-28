@@ -65,7 +65,7 @@ export function getBuilderEntryExperience({
     if (isDemoMode) {
       return {
         title: 'Opening the demo builder',
-        detail: 'We are loading a sample wedding site so you can explore the editor without touching live data.',
+        detail: 'We are loading a sample wedding site so you can explore the editor without touching real couple data.',
         focusTitle: 'Use this run to learn the editing rhythm, not to polish every detail.',
         focusDetail: 'The goal here is to understand page flow, section editing, and publish readiness before you move back to your real draft.',
         bestNextMove: 'Scan one page, open one section, and test one publish-related action so the Builder feels legible fast.',
@@ -122,7 +122,7 @@ export function getBuilderEntryExperience({
         bestNextMove: 'Resume setup and finish the missing details so Dayof can generate the first builder-ready version of your site.',
         decisionRule: 'Complete setup when there is still no site record, even if you already know the design direction.',
         watchout: 'Opening the Builder again before setup finishes will just send you back into the same dead-end state.',
-        currentStep: 'You have a partial setup draft but no live site yet.',
+        currentStep: 'You have a partial setup draft but no site record yet.',
         nextStep: 'Finish setup and let Dayof create the first site draft.',
         thenStep: 'Return here once the site exists and refine from the generated starting point.',
         primaryActionLabel: 'Resume setup',

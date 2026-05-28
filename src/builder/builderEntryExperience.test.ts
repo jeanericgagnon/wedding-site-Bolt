@@ -28,7 +28,22 @@ describe('getBuilderEntryExperience', () => {
     });
 
     expect(experience.title).toBe('Opening the demo builder');
+    expect(experience.detail).toContain('real couple data');
     expect(experience.bestNextMove).toContain('Scan one page');
+  });
+
+  it('keeps no-site setup handoff framed around a missing site record', () => {
+    const experience = getBuilderEntryExperience({
+      mode: 'no-site',
+      draft: {
+        ...emptySetupDraft,
+        partnerOneFirstName: 'Maya',
+        partnerTwoFirstName: 'Jordan',
+        selectedTemplateId: 'modern-luxe',
+      },
+    });
+
+    expect(experience.currentStep).toBe('You have a partial setup draft but no site record yet.');
   });
 
   it('classifies connection failures as retry-first recovery', () => {

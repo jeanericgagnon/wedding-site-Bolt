@@ -41,7 +41,7 @@ export const buildBuilderV2DocumentAudit = ({
         sectionId: page.sections[0]?.id ?? page.id,
         sectionTitle: page.sections[0]?.title ?? page.title,
         severity: 'watch',
-        title: `${page.title} is hidden from the live site map`,
+        title: `${page.title} is hidden from the visible site map`,
         detail: 'Make sure this page is intentionally parked and not just forgotten outside the current guest flow.',
         actionLabel: 'Review hidden page',
       });
