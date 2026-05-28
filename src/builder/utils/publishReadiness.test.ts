@@ -28,7 +28,7 @@ describe('publishReadiness', () => {
 
     const issue = getPublishIssue(project);
     expect(issue?.kind).toBe('no-pages');
-    expect(getPublishValidationError(project)).toBe('Add at least one page before going live.');
+    expect(getPublishValidationError(project)).toBe('Add at least one page before sharing with guests.');
   });
 
   it('returns no-enabled-sections issue when sections are all disabled', () => {
@@ -43,7 +43,7 @@ describe('publishReadiness', () => {
       expect(issue.firstPageId).toBe(pageId);
       expect(issue.firstSectionId).toBe('sec1');
     }
-    expect(getPublishValidationError(project)).toBe('Turn on at least one section before going live.');
+    expect(getPublishValidationError(project)).toBe('Turn on at least one section before sharing with guests.');
   });
 
   it('treats non-boolean enabled section flags as disabled for publish truth', () => {
@@ -63,7 +63,7 @@ describe('publishReadiness', () => {
       id: 'sections',
       label: 'At least one section is turned on',
       done: false,
-      detail: 'Turn on a section before going live.',
+      detail: 'Turn on a section before sharing with guests.',
     });
     expect(buildPublishReadiness(project).find((item) => item.id === 'current-page')).toEqual({
       id: 'current-page',
@@ -154,7 +154,7 @@ describe('publishReadiness', () => {
 
     const issue = getPublishIssue(project, data);
     expect(issue?.kind).toBe('missing-couple-names');
-    expect(getPublishValidationError(project, data)).toBe('Add both names exactly how you want them shown before going live.');
+    expect(getPublishValidationError(project, data)).toBe('Add both names exactly how you want them shown before sharing with guests.');
   });
 
   it('passes data preflight when names/date/venue/rsvp are configured', () => {
@@ -183,13 +183,13 @@ describe('publishReadiness', () => {
 
     expect(getPublishIssue(project, data, { isDirty: true })?.kind).toBe('unsaved-changes');
     expect(getPublishIssue(project, data, { isDirty: false })).toBeNull();
-    expect(getPublishValidationError(project, data, { isDirty: true })).toBe('Save your latest draft changes before going live.');
+    expect(getPublishValidationError(project, data, { isDirty: true })).toBe('Save your latest draft changes before sharing with guests.');
     expect(getPublishValidationError(project, data, { isDirty: false })).toBeNull();
     expect(buildPublishReadiness(project, data, { isDirty: true }).find((item) => item.id === 'saved')).toEqual({
       id: 'saved',
       label: 'Latest edits are saved',
       done: false,
-      detail: 'Save your latest draft changes before going live.',
+      detail: 'Save your latest draft changes before sharing with guests.',
     });
   });
 
@@ -203,7 +203,7 @@ describe('publishReadiness', () => {
     data.rsvp.enabled = true;
 
     expect(getPublishIssue(project, data)?.kind).toBe('missing-event-date');
-    expect(getPublishValidationError(project, data)).toBe('Add your wedding date before going live.');
+    expect(getPublishValidationError(project, data)).toBe('Add your wedding date before sharing with guests.');
   });
 
   it('blocks publish when venue is missing even if names, date, and RSVP are configured', () => {
@@ -216,7 +216,7 @@ describe('publishReadiness', () => {
     data.rsvp.enabled = true;
 
     expect(getPublishIssue(project, data)?.kind).toBe('missing-venue');
-    expect(getPublishValidationError(project, data)).toBe('Add at least one venue name or address before going live.');
+    expect(getPublishValidationError(project, data)).toBe('Add at least one venue name or address before sharing with guests.');
   });
 
   it('blocks publish when RSVP is disabled even if names, date, and venue are configured', () => {
@@ -230,7 +230,7 @@ describe('publishReadiness', () => {
     data.rsvp.enabled = false;
 
     expect(getPublishIssue(project, data)?.kind).toBe('rsvp-disabled');
-    expect(getPublishValidationError(project, data)).toBe('Turn RSVP on before going live.');
+    expect(getPublishValidationError(project, data)).toBe('Turn RSVP on before sharing with guests.');
   });
 
   it('blocks publish when persisted wedding data is missing the RSVP enabled flag', () => {
@@ -245,7 +245,7 @@ describe('publishReadiness', () => {
     delete data.rsvp.enabled;
 
     expect(getPublishIssue(project, data)?.kind).toBe('rsvp-disabled');
-    expect(getPublishValidationError(project, data)).toBe('Turn RSVP on before going live.');
+    expect(getPublishValidationError(project, data)).toBe('Turn RSVP on before sharing with guests.');
   });
 
   it('blocks publish when persisted wedding data is missing the RSVP object entirely', () => {
@@ -260,7 +260,7 @@ describe('publishReadiness', () => {
     delete data.rsvp;
 
     expect(getPublishIssue(project, data)?.kind).toBe('rsvp-disabled');
-    expect(getPublishValidationError(project, data)).toBe('Turn RSVP on before going live.');
+    expect(getPublishValidationError(project, data)).toBe('Turn RSVP on before sharing with guests.');
   });
 
   it('blocks publish when persisted wedding data has a non-object RSVP shape', () => {
@@ -295,7 +295,7 @@ describe('publishReadiness', () => {
     delete data.venues;
 
     expect(getPublishIssue(project, data)?.kind).toBe('missing-venue');
-    expect(getPublishValidationError(project, data)).toBe('Add at least one venue name or address before going live.');
+    expect(getPublishValidationError(project, data)).toBe('Add at least one venue name or address before sharing with guests.');
   });
 
   it('blocks publish when persisted wedding data is missing the couple object entirely', () => {
@@ -309,7 +309,7 @@ describe('publishReadiness', () => {
     delete data.couple;
 
     expect(getPublishIssue(project, data)?.kind).toBe('missing-couple-names');
-    expect(getPublishValidationError(project, data)).toBe('Add both names exactly how you want them shown before going live.');
+    expect(getPublishValidationError(project, data)).toBe('Add both names exactly how you want them shown before sharing with guests.');
   });
 
   it('blocks publish when persisted wedding data has a non-object couple shape', () => {
@@ -343,7 +343,7 @@ describe('publishReadiness', () => {
     delete data.event;
 
     expect(getPublishIssue(project, data)?.kind).toBe('missing-event-date');
-    expect(getPublishValidationError(project, data)).toBe('Add your wedding date before going live.');
+    expect(getPublishValidationError(project, data)).toBe('Add your wedding date before sharing with guests.');
   });
 
   it('blocks publish when persisted wedding data has a non-object event shape', () => {
@@ -829,7 +829,7 @@ describe('publishReadiness', () => {
       id: 'saved',
       label: 'Latest edits are saved',
       done: false,
-      detail: 'Save your latest draft changes before going live.',
+      detail: 'Save your latest draft changes before sharing with guests.',
     });
   });
 
@@ -1307,7 +1307,7 @@ describe('publishReadiness', () => {
 
     expect(getPublishIssue(project)).toEqual({
       kind: 'no-enabled-sections',
-      message: 'Turn on at least one section before going live.',
+      message: 'Turn on at least one section before sharing with guests.',
       firstPageId: 'page-1',
       firstSectionId: 'sec-1',
     });
@@ -1390,7 +1390,7 @@ describe('publishReadiness', () => {
 
     expect(getPublishIssue(project)).toEqual({
       kind: 'no-enabled-sections',
-      message: 'Turn on at least one section before going live.',
+      message: 'Turn on at least one section before sharing with guests.',
       firstSectionId: undefined,
       firstPageId: undefined,
     });
@@ -1398,7 +1398,7 @@ describe('publishReadiness', () => {
       id: 'sections',
       label: 'At least one section is turned on',
       done: false,
-      detail: 'Turn on a section before going live.',
+      detail: 'Turn on a section before sharing with guests.',
     });
   });
 
@@ -1409,7 +1409,7 @@ describe('publishReadiness', () => {
 
     expect(getPublishIssue(project)).toEqual({
       kind: 'no-enabled-sections',
-      message: 'Turn on at least one section before going live.',
+      message: 'Turn on at least one section before sharing with guests.',
       firstSectionId: undefined,
       firstPageId: undefined,
     });
@@ -1417,7 +1417,7 @@ describe('publishReadiness', () => {
       id: 'sections',
       label: 'At least one section is turned on',
       done: false,
-      detail: 'Turn on a section before going live.',
+      detail: 'Turn on a section before sharing with guests.',
     });
   });
 
@@ -1612,7 +1612,7 @@ describe('publishReadiness', () => {
 
     expect(getPublishIssue(project)).toEqual({
       kind: 'no-pages',
-      message: 'Add at least one page before going live.',
+      message: 'Add at least one page before sharing with guests.',
     });
   });
 
@@ -1623,7 +1623,7 @@ describe('publishReadiness', () => {
 
     expect(getPublishIssue(project)).toEqual({
       kind: 'no-pages',
-      message: 'Add at least one page before going live.',
+      message: 'Add at least one page before sharing with guests.',
     });
     expect(buildPublishReadiness(project).find((item) => item.id === 'page')).toEqual({
       id: 'page',
@@ -1640,7 +1640,7 @@ describe('publishReadiness', () => {
 
     expect(getPublishIssue(project)).toEqual({
       kind: 'no-pages',
-      message: 'Add at least one page before going live.',
+      message: 'Add at least one page before sharing with guests.',
     });
     expect(buildPublishReadiness(project).find((item) => item.id === 'page')).toEqual({
       id: 'page',
@@ -1657,7 +1657,7 @@ describe('publishReadiness', () => {
 
     expect(getPublishIssue(project)).toEqual({
       kind: 'no-pages',
-      message: 'Add at least one page before going live.',
+      message: 'Add at least one page before sharing with guests.',
     });
     expect(buildPublishReadiness(project).find((item) => item.id === 'page')).toEqual({
       id: 'page',
@@ -1682,7 +1682,7 @@ describe('publishReadiness', () => {
 
     expect(getPublishIssue(project)).toEqual({
       kind: 'no-enabled-sections',
-      message: 'Turn on at least one section before going live.',
+      message: 'Turn on at least one section before sharing with guests.',
       firstPageId: '42',
       firstSectionId: 'sec-1',
     });

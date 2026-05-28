@@ -76,6 +76,8 @@ describe('BuilderTopBar exit routes', () => {
   it('sends a clean builder exit to the overview workspace', () => {
     render(<BuilderTopBar onSave={() => undefined} onPublish={() => undefined} />);
 
+    expect(screen.getByRole('button', { name: /Share checklist/i })).toBeInTheDocument();
+
     fireEvent.click(screen.getByTitle('Back to Dashboard'));
 
     expect(navigateMock).toHaveBeenCalledWith('/dashboard/overview');

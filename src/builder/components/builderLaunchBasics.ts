@@ -216,7 +216,7 @@ export function getBuilderLaunchBasicsSummary(
         totalCount,
         focusTitle: completedCount === totalCount
           ? 'The launch basics are in a healthy place.'
-          : 'Use this lane to close the quiet gaps before go-live.',
+          : 'Use this lane to close the quiet gaps before sharing with guests.',
         focusDetail: completedCount === totalCount
           ? 'Names, date, venue, and RSVP are all set, so the remaining questions are about page quality rather than missing fundamentals.'
           : 'These are the few draft-level facts that most directly shape whether the site feels trustworthy on first read.',

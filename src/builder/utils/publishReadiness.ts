@@ -96,7 +96,7 @@ export const getPublishIssue = (
   const normalizedPages = getNormalizedPages(project);
 
   if (!normalizedPages.length) {
-    return { kind: 'no-pages', message: 'Add at least one page before going live.' };
+    return { kind: 'no-pages', message: 'Add at least one page before sharing with guests.' };
   }
 
   const firstSection = normalizedPages.flatMap((p) =>
@@ -106,7 +106,7 @@ export const getPublishIssue = (
   if (!hasEnabledSection) {
     return {
       kind: 'no-enabled-sections',
-      message: 'Turn on at least one section before going live.',
+      message: 'Turn on at least one section before sharing with guests.',
       firstSectionId: firstSection?.sectionId,
       firstPageId: firstSection?.pageId,
     };
@@ -119,25 +119,25 @@ export const getPublishIssue = (
     const hasPartner1 = hasNonEmptyString(couple?.partner1Name);
     const hasPartner2 = hasNonEmptyString(couple?.partner2Name);
     if (!hasPartner1 || !hasPartner2) {
-      return { kind: 'missing-couple-names', message: 'Add both names exactly how you want them shown before going live.' };
+      return { kind: 'missing-couple-names', message: 'Add both names exactly how you want them shown before sharing with guests.' };
     }
 
     if (!hasNonEmptyString(event?.weddingDateISO)) {
-      return { kind: 'missing-event-date', message: 'Add your wedding date before going live.' };
+      return { kind: 'missing-event-date', message: 'Add your wedding date before sharing with guests.' };
     }
 
     const hasVenue = getSortedNormalizedVenues(weddingData).some((v) => hasNonEmptyString(v?.name) || hasNonEmptyString(v?.address));
     if (!hasVenue) {
-      return { kind: 'missing-venue', message: 'Add at least one venue name or address before going live.' };
+      return { kind: 'missing-venue', message: 'Add at least one venue name or address before sharing with guests.' };
     }
 
     if (rsvp?.enabled !== true) {
-      return { kind: 'rsvp-disabled', message: 'Turn RSVP on before going live.' };
+      return { kind: 'rsvp-disabled', message: 'Turn RSVP on before sharing with guests.' };
     }
   }
 
   if (options?.isDirty === true) {
-    return { kind: 'unsaved-changes', message: 'Save your latest draft changes before going live.' };
+    return { kind: 'unsaved-changes', message: 'Save your latest draft changes before sharing with guests.' };
   }
 
   return null;
@@ -186,7 +186,7 @@ export const buildPublishReadiness = (
       id: 'sections',
       label: 'At least one section is turned on',
       done: enabledSectionCount > 0,
-      detail: enabledSectionCount > 0 ? `${enabledSectionCount} section${enabledSectionCount === 1 ? '' : 's'} visible` : 'Turn on a section before going live.',
+      detail: enabledSectionCount > 0 ? `${enabledSectionCount} section${enabledSectionCount === 1 ? '' : 's'} visible` : 'Turn on a section before sharing with guests.',
     },
     {
       id: 'names',
@@ -216,7 +216,7 @@ export const buildPublishReadiness = (
       id: 'saved',
       label: 'Latest edits are saved',
       done: !hasUnsavedChanges,
-      detail: hasUnsavedChanges ? 'Save your latest draft changes before going live.' : 'Everything is saved.',
+      detail: hasUnsavedChanges ? 'Save your latest draft changes before sharing with guests.' : 'Everything is saved.',
     },
     {
       id: 'current-page',

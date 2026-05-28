@@ -935,7 +935,7 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
           }`}
         >
           <CheckCircle2 size={12} />
-          Go-live checklist {checklistDoneCount}/{checklistItems.length}
+          Share checklist {checklistDoneCount}/{checklistItems.length}
         </button>
 
         {showPublishChecklist && (

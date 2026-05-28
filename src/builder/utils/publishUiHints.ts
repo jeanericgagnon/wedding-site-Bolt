@@ -75,6 +75,7 @@ export const getPublishBlockedHints = (publishValidationError?: string | null): 
     || normalizedErrorLower.includes('turn on section')
     || normalizedErrorLower.includes('turn on sections')
     || normalizedErrorLower.includes('turn on content for')
+    || normalizedErrorLower.includes('turn on at least one section before sharing with guests')
   ) {
     return [
       'Select a section on the canvas.',
@@ -96,6 +97,10 @@ export const getPublishBlockedHints = (publishValidationError?: string | null): 
     || normalizedErrorLower.includes('both couple names exactly how you want')
     || normalizedErrorLower.includes('both names exactly how you want')
     || normalizedErrorLower.includes('add both names exactly how you want')
+    || normalizedErrorLower.includes('add both partner names before sharing with guests')
+    || normalizedErrorLower.includes('add both couple names before sharing with guests')
+    || normalizedErrorLower.includes('add both partners before sharing with guests')
+    || normalizedErrorLower.includes('add both names exactly how you want them shown before sharing with guests')
   ) {
     return [
       'Open your couple details.',
@@ -114,6 +119,8 @@ export const getPublishBlockedHints = (publishValidationError?: string | null): 
     || normalizedErrorLower.includes('choose your date')
     || normalizedErrorLower.includes('wedding date before going live')
     || normalizedErrorLower.includes('event date before going live')
+    || normalizedErrorLower.includes('wedding date before sharing with guests')
+    || normalizedErrorLower.includes('event date before sharing with guests')
   ) {
     return [
       'Open event details.',
@@ -129,6 +136,7 @@ export const getPublishBlockedHints = (publishValidationError?: string | null): 
     || normalizedErrorLower.includes('venue address')
     || normalizedErrorLower.includes('venue details missing')
     || normalizedErrorLower.includes('add at least one location')
+    || normalizedErrorLower.includes('venue name or address before sharing with guests')
   ) {
     return [
       'Add at least one venue name or address.',
@@ -138,6 +146,8 @@ export const getPublishBlockedHints = (publishValidationError?: string | null): 
   if (
     normalizedErrorLower.includes('save your latest draft changes before going live')
     || normalizedErrorLower.includes('save your latest changes before going live')
+    || normalizedErrorLower.includes('save your latest draft changes before sharing with guests')
+    || normalizedErrorLower.includes('save your latest changes before sharing with guests')
   ) {
     return [
       'Save your draft before trying again.',

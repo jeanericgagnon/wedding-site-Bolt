@@ -224,6 +224,17 @@ describe('publishUiHints', () => {
     ]);
   });
 
+  it('understands the newer share-with-guests blocker phrasing from publish readiness', () => {
+    expect(getPublishBlockedHints('Save your latest draft changes before sharing with guests.')).toEqual([
+      'Save your draft before trying again.',
+      'Then re-open publish and review the remaining checks.',
+    ]);
+    expect(getPublishBlockedHints('Add your wedding date before sharing with guests.')).toEqual([
+      'Open event details.',
+      'Add your wedding date before sharing with guests.',
+    ]);
+  });
+
   it('does not mistake the date success detail for a blocker', () => {
     expect(getPublishBlockedHints('Date is ready.')).toEqual([
       'Use Fix next to move through the last blockers before the guest-facing launch.',

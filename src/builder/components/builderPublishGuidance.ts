@@ -5,7 +5,7 @@ export const getPublishGuidance = (issue: ReturnType<typeof getPublishIssue>): {
 
   if (issue.kind === 'no-pages') {
     return {
-      notice: 'Opened designs so you can add a starting point before going live.',
+      notice: 'Opened designs so you can add a starting point before sharing with guests.',
       error: `${issue.message} Choose a starting design or add a page first.`,
     };
   }
@@ -33,14 +33,14 @@ export const getPublishGuidance = (issue: ReturnType<typeof getPublishIssue>): {
 
   if (issue.kind === 'missing-venue') {
     return {
-      notice: 'Add at least one venue before going live.',
+      notice: 'Add at least one venue before sharing with guests.',
       error: issue.message,
     };
   }
 
   if (issue.kind === 'rsvp-disabled') {
     return {
-      notice: 'Turn RSVP on in settings or remove the RSVP button before going live.',
+      notice: 'Turn RSVP on in settings or remove the RSVP button before sharing with guests.',
       error: issue.message,
     };
   }

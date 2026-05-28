@@ -11,7 +11,7 @@ describe('getBuilderCommandCenterCopy', () => {
       sectionCount: 4,
       isDirty: false,
       hasHardPublishBlocker: false,
-      publishValidationError: 'Save your latest draft changes before going live.',
+      publishValidationError: 'Save your latest draft changes before sharing with guests.',
       canAutoSaveBeforePublish: true,
       isPublished: false,
       publishedVersion: null,
