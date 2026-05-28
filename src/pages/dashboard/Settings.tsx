@@ -35,6 +35,7 @@ import { getFlowStatusLabel } from '../../lib/flowLabels';
 import { resolveSettingsTabFromSearch, type SettingsTab } from './settingsTab';
 import { buildCollaboratorRoleGuide } from '../collaboratorRoleGuide';
 import { buildCollaboratorInviteUrl, buildMaskedCollaboratorInvitePath } from '../../lib/collaboratorInviteLink';
+import { buildInviteOnlySiteAccessUrl } from '../../lib/publicGuestLinks';
 
 
 interface RSVPQuestionSetting {
@@ -664,7 +665,7 @@ export const DashboardSettings: React.FC = () => {
 
   const copyInviteLink = async () => {
     if (!guestAccessToken || !siteSlug) return;
-    const url = `${window.location.origin}/site/${siteSlug}?token=${guestAccessToken}`;
+    const url = buildInviteOnlySiteAccessUrl(window.location.origin, siteSlug, guestAccessToken);
     try {
       await navigator.clipboard.writeText(url);
       setPrivacyCopied(true);
@@ -1683,7 +1684,7 @@ export const DashboardSettings: React.FC = () => {
                           {guestAccessToken && siteSlug ? (
                             <div className="flex items-center gap-2">
                               <code className="flex-1 text-xs bg-background border border-border rounded-lg px-3 py-2 text-text-secondary truncate">
-                                {`${window.location.origin}/site/${siteSlug}?token=${guestAccessToken.slice(0, 12)}…`}
+                                {`${window.location.origin}/site/${siteSlug}?guest_access_token=${guestAccessToken.slice(0, 12)}…`}
                               </code>
                               <Button type="button" variant="outline" size="sm" onClick={copyInviteLink}>
                                 {privacyCopied ? <CheckCheck className="w-4 h-4 text-success" /> : <Copy className="w-4 h-4" />}

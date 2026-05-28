@@ -30,6 +30,7 @@ import { sendWeddingInvitation } from '../../lib/emailService';
 import { resolvePublicSiteSlugFromRow } from '../../lib/publicSiteSlug';
 import { buildGuestOpsCoach, buildGuestOutreachSequence } from '../../lib/guestOpsCoach';
 import { getPlannerHandoffCopy } from '../../lib/plannerHandoffState';
+import { buildRsvpInviteUrl } from '../../lib/publicGuestLinks';
 import * as XLSX from 'xlsx';
 
 interface Guest {
@@ -2201,7 +2202,7 @@ Proceed with send?`)) return;
       .filter((g) => !!g.invite_token)
       .map((g) => {
         const name = (g.first_name || g.last_name) ? `${g.first_name ?? ''} ${g.last_name ?? ''}`.trim() : g.name;
-        const link = `https://${siteData.site_slug}.dayof.love/rsvp?token=${g.invite_token}`;
+        const link = buildRsvpInviteUrl(`https://${siteData.site_slug}.dayof.love`, g.invite_token!);
         return `${name}: ${link}`;
       });
 
@@ -4784,7 +4785,7 @@ Proceed with send?`)) return;
                   {itineraryDrawerGuest.invite_token && (
                     <button
                       onClick={async () => {
-                        const inviteLink = `${window.location.origin}/rsvp/${itineraryDrawerGuest.invite_token}`;
+                        const inviteLink = buildRsvpInviteUrl(window.location.origin, itineraryDrawerGuest.invite_token!);
                         try {
                           await navigator.clipboard.writeText(inviteLink);
                           toast('Copied RSVP link', 'success');
