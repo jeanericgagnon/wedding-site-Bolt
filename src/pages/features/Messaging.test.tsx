@@ -2,6 +2,10 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
+vi.mock('../../hooks/useAuth', () => ({
+  useAuth: () => ({ user: null }),
+}));
+
 vi.mock('react-router-dom', () => ({
   Link: ({ children, to }: React.PropsWithChildren<{ to: string }>) => <a href={to}>{children}</a>,
 }));
@@ -45,7 +49,7 @@ describe('MessagingFeature', () => {
     expect(screen.queryByText('CAN-SPAM compliant')).not.toBeInTheDocument();
   });
 
-  it('routes feature-page CTAs to real next steps', () => {
+  it('routes signed-out feature-page CTAs to real next steps', () => {
     render(<MessagingFeature />);
 
     expect(screen.getAllByRole('link', { name: 'Start your website' })[0]).toHaveAttribute('href', '/signup');

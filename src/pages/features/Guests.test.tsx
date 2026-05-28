@@ -3,6 +3,10 @@ import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
 
+vi.mock('../../hooks/useAuth', () => ({
+  useAuth: () => ({ user: null }),
+}));
+
 vi.mock('../../components/layout', () => ({
   Header: () => <div>Header</div>,
   Footer: () => <div>Footer</div>,
@@ -26,7 +30,7 @@ describe('Guests feature page truth', () => {
     expect(screen.queryByText('CSV import + export')).not.toBeInTheDocument();
   });
 
-  it('routes feature-page CTAs to real next steps', () => {
+  it('routes signed-out feature-page CTAs to real next steps', () => {
     render(
       <MemoryRouter>
         <GuestsFeature />

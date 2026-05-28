@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom';
 import { GUEST_COMMUNICATION_FLOW } from '../../lib/guestCommunicationFlow';
 import { Header, Footer } from '../../components/layout';
 import { Button } from '../../components/ui';
+import { useAuth } from '../../hooks/useAuth';
+import { getFeaturePageFooterCtas, getFeaturePageHeroCtas } from './featurePageCtas';
 import {
   Mail,
   MessageSquare,
@@ -18,6 +20,10 @@ import {
 } from 'lucide-react';
 
 export const MessagingFeature: React.FC = () => {
+  const { user } = useAuth();
+  const heroCtas = getFeaturePageHeroCtas('messaging', Boolean(user));
+  const footerCtas = getFeaturePageFooterCtas('messaging', Boolean(user));
+
   return (
     <div className="min-h-screen flex flex-col bg-paper text-ink">
       <Header />
@@ -35,14 +41,14 @@ export const MessagingFeature: React.FC = () => {
               Keep guests in the loop with email and text that feel organized, timely, and easy to send.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link to="/signup">
+              <Link to={heroCtas.primary.to} state={heroCtas.primary.state}>
                 <Button variant="accent" size="lg">
-                  Start your website
+                  {heroCtas.primary.label}
                 </Button>
               </Link>
-              <Link to="/product">
+              <Link to={heroCtas.secondary.to}>
                 <Button variant="outline" size="lg">
-                  See how Dayof works
+                  {heroCtas.secondary.label}
                 </Button>
               </Link>
             </div>
@@ -261,15 +267,15 @@ export const MessagingFeature: React.FC = () => {
             </div>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link to="/signup">
+              <Link to={footerCtas.primary.to} state={footerCtas.primary.state}>
                 <Button variant="accent" size="lg">
-                  Start your website
+                  {footerCtas.primary.label}
                   <ArrowRight className="w-5 h-5 ml-2" />
                 </Button>
               </Link>
-              <Link to="/product">
+              <Link to={footerCtas.secondary.to}>
                 <Button variant="outline" size="lg">
-                  Explore more features
+                  {footerCtas.secondary.label}
                 </Button>
               </Link>
             </div>
