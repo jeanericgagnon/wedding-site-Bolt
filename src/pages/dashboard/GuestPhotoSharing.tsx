@@ -20,6 +20,7 @@ import { MemoryCuratorCard } from '../../components/dashboard/MemoryCuratorCard'
 import { parseDatetimeLocalToIso, toDatetimeLocalOrEmpty } from './guestPhotoDateTime';
 import { formatGuestPhotoDate, formatGuestPhotoDateTime, getGuestPhotoSortTime, toGuestPhotoCsvTimestamp } from './guestPhotoUploadTime';
 import { formatGuestPhotoEventDate, getSuggestedGuestPhotoWindowStart } from './guestPhotoEventDate';
+import { getBulkGuestPhotoModerationTargets, getVisibleGuestPhotoUploads } from './guestPhotoModerationTargets';
 
 type ItineraryEvent = {
   id: string;
@@ -359,13 +360,11 @@ export const GuestPhotoSharing: React.FC = () => {
 
   const recentByBucket = useMemo(() => {
     const m = new Map<string, PhotoUploadRow[]>();
-    uploads
-      .filter((u) => (showHidden || !u.is_hidden) && (!showFlaggedOnly || u.is_flagged))
-      .forEach((u) => {
-        const arr = m.get(u.photo_bucket_id) ?? [];
-        if (arr.length < 5) arr.push(u);
-        m.set(u.photo_bucket_id, arr);
-      });
+    getVisibleGuestPhotoUploads(uploads, { showHidden, showFlaggedOnly }).forEach((u) => {
+      const arr = m.get(u.photo_bucket_id) ?? [];
+      if (arr.length < 5) arr.push(u);
+      m.set(u.photo_bucket_id, arr);
+    });
     return m;
   }, [uploads, showHidden, showFlaggedOnly]);
 
@@ -712,9 +711,9 @@ export const GuestPhotoSharing: React.FC = () => {
   };
 
   const setUploadsHiddenByFilter = async (hide: boolean) => {
-    const target = uploads.filter((u) => (showFlaggedOnly ? u.is_flagged : true) && (showHidden || !u.is_hidden));
+    const target = getBulkGuestPhotoModerationTargets(uploads, { showHidden, showFlaggedOnly }, { type: 'hide', hidden: hide });
     if (target.length === 0) {
-      setSuccess('No uploads match current filters.');
+      setSuccess(`No visible uploads need to be ${hide ? 'hidden' : 'unhidden'}.`);
       return;
     }
 
@@ -733,9 +732,9 @@ export const GuestPhotoSharing: React.FC = () => {
   };
 
   const setUploadsFlaggedByFilter = async (flagged: boolean) => {
-    const target = uploads.filter((u) => (showHidden || !u.is_hidden));
+    const target = getBulkGuestPhotoModerationTargets(uploads, { showHidden, showFlaggedOnly }, { type: 'flag', flagged });
     if (target.length === 0) {
-      setSuccess('No uploads match current filters.');
+      setSuccess(`No visible uploads need to be ${flagged ? 'flagged' : 'unflagged'}.`);
       return;
     }
 
