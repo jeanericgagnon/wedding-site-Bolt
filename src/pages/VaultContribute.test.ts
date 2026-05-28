@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest';
 
-import { getContributionWindow, getVaultCoupleName, getVaultUnlockAtIso, getVaultUnlockYear } from './VaultContribute';
+import {
+  getContributionWindow,
+  getVaultCoupleName,
+  getVaultUnlockAtIso,
+  getVaultUnlockYear,
+  VAULT_CONTRIBUTE_SAVE_ERROR_BODY,
+  VAULT_CONTRIBUTE_SAVE_ERROR_TITLE,
+} from './VaultContribute';
 import {
   areVaultAttachmentsAvailable,
   getVaultAllowedContributionMediaTypes,
@@ -109,5 +116,10 @@ describe('vault guest-safe copy', () => {
     expect(VAULT_COMPRESSION_FALLBACK_COPY).toBe(
       'We could not compress that video here, so the original file will be uploaded instead.',
     );
+  });
+
+  it('keeps the failure state title direct and recovery-oriented', () => {
+    expect(VAULT_CONTRIBUTE_SAVE_ERROR_TITLE).toBe('We couldn’t save your note right now.');
+    expect(VAULT_CONTRIBUTE_SAVE_ERROR_BODY).toBe('Please try again.');
   });
 });

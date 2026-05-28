@@ -41,6 +41,8 @@ const DEMO_VAULT_STORAGE_KEY = 'dayof_demo_vault_state_v1';
 const MAX_UPLOAD_MB_BY_TYPE: Record<'photo' | 'video' | 'voice', number> = { photo: 8, video: 35, voice: 12 };
 const VAULT_SUBMITTED_KEY_PREFIX = 'vault_submitted_years_';
 const DEMO_WEDDING_DATE = '2026-02-23';
+export const VAULT_CONTRIBUTE_SAVE_ERROR_TITLE = 'We couldn’t save your note right now.';
+export const VAULT_CONTRIBUTE_SAVE_ERROR_BODY = 'Please try again.';
 
 function normalizeVaultWeddingDate(value: string | null | undefined): string | null {
   const trimmed = value?.trim() || '';
@@ -751,8 +753,8 @@ export const VaultContribute: React.FC = () => {
           <div className="w-14 h-14 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4 border border-red-200">
             <AlertCircle className="w-6 h-6 text-red-500" />
           </div>
-          <h1 className="text-xl font-semibold text-stone-800 mb-2">Something went wrong</h1>
-          <p className="text-stone-500 text-sm mb-6">Your message couldn't be saved. Please try again.</p>
+          <h1 className="text-xl font-semibold text-stone-800 mb-2">{VAULT_CONTRIBUTE_SAVE_ERROR_TITLE}</h1>
+          <p className="text-stone-500 text-sm mb-6">{VAULT_CONTRIBUTE_SAVE_ERROR_BODY}</p>
           <button
             onClick={() => setStep('form')}
             className="px-5 py-2.5 bg-gradient-to-r from-primary to-primary-hover text-white rounded-xl text-sm font-semibold hover:from-primary-hover hover:to-primary transition-all shadow"

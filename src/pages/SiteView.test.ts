@@ -68,6 +68,7 @@ import {
   buildPublicSiteMetadata,
   combineDateAndTime,
   createAlexJordanDemoWeddingData,
+  SITE_LOAD_ERROR_TITLE,
   SITE_INVALID_URL_ERROR,
   SITE_INVITE_ONLY_HELP,
   SITE_LOAD_RETRY_ERROR,
@@ -177,6 +178,7 @@ describe('SiteView public-safe copy', () => {
     expect(SITE_NOT_FOUND_ERROR).toBe('This wedding page could not be found.');
     expect(SITE_SETUP_PENDING_ERROR).toBe('This wedding page is still being set up. Please check back soon.');
     expect(SITE_LOAD_RETRY_ERROR).toBe('We could not load this wedding page right now. Please try again.');
+    expect(SITE_LOAD_ERROR_TITLE).toBe('We couldn’t open this wedding page right now.');
     expect(SITE_INVITE_ONLY_HELP).toBe('If you received an invitation, check your email for the wedding access link from the couple.');
   });
 });

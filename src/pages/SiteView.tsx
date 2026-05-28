@@ -370,6 +370,7 @@ export const SITE_INVALID_URL_ERROR = 'This wedding page link is not valid.';
 export const SITE_NOT_FOUND_ERROR = 'This wedding page could not be found.';
 export const SITE_SETUP_PENDING_ERROR = 'This wedding page is still being set up. Please check back soon.';
 export const SITE_LOAD_RETRY_ERROR = 'We could not load this wedding page right now. Please try again.';
+export const SITE_LOAD_ERROR_TITLE = 'We couldn’t open this wedding page right now.';
 export const SITE_INVITE_ONLY_HELP = 'If you received an invitation, check your email for the wedding access link from the couple.';
 
 const PasswordGate: React.FC<{
@@ -888,7 +889,7 @@ export const SiteView: React.FC = () => {
       <div className="min-h-screen flex items-center justify-center bg-background px-4">
         <div className="max-w-md w-full bg-surface border border-border-subtle rounded-xl p-6 text-center">
           <AlertCircle className="w-14 h-14 text-error mx-auto mb-3" />
-          <h1 className="text-xl font-semibold text-text-primary mb-2">Something went wrong</h1>
+          <h1 className="text-xl font-semibold text-text-primary mb-2">{SITE_LOAD_ERROR_TITLE}</h1>
           <p className="text-text-secondary">{error}</p>
         </div>
       </div>
