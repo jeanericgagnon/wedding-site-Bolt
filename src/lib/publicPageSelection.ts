@@ -22,7 +22,7 @@ export const getPublicBuilderActivePage = (
   const normalizedRequestedSlug = normalizePublicPageSlug(requestedSlug);
   if (normalizedRequestedSlug) {
     const explicit = pages.find((page) => normalizePublicPageSlug(page.slug) === normalizedRequestedSlug);
-    if (explicit) return explicit;
+    if (explicit && hasRenderableSections(explicit)) return explicit;
   }
 
   const homePage = pages.find((page) => page.meta?.isHome) ?? null;

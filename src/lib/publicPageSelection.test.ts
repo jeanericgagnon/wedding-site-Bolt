@@ -25,8 +25,49 @@ describe('publicPageSelection', () => {
 
   it('prefers an explicit visible page slug', () => {
     const pages = getVisiblePublicBuilderPages([
-      makePage({ id: 'home', title: 'Home', slug: 'home', orderIndex: 0, meta: { isHome: true, isHidden: false } }),
-      makePage({ id: 'travel', title: 'Travel', slug: 'travel', orderIndex: 1 }),
+      makePage({
+        id: 'home',
+        title: 'Home',
+        slug: 'home',
+        orderIndex: 0,
+        meta: { isHome: true, isHidden: false },
+        sections: [{
+          id: 'hero',
+          type: 'hero',
+          variant: 'default',
+          enabled: true,
+          locked: false,
+          orderIndex: 0,
+          settings: {},
+          styleOverrides: {},
+          bindings: {},
+          meta: {
+            createdAtISO: '2026-05-27T00:00:00.000Z',
+            updatedAtISO: '2026-05-27T00:00:00.000Z',
+          },
+        }],
+      }),
+      makePage({
+        id: 'travel',
+        title: 'Travel',
+        slug: 'travel',
+        orderIndex: 1,
+        sections: [{
+          id: 'travel-section',
+          type: 'travel',
+          variant: 'default',
+          enabled: true,
+          locked: false,
+          orderIndex: 0,
+          settings: {},
+          styleOverrides: {},
+          bindings: {},
+          meta: {
+            createdAtISO: '2026-05-27T00:00:00.000Z',
+            updatedAtISO: '2026-05-27T00:00:00.000Z',
+          },
+        }],
+      }),
     ]);
 
     expect(getPublicBuilderActivePage(pages, 'travel')?.slug).toBe('travel');
@@ -34,8 +75,49 @@ describe('publicPageSelection', () => {
 
   it('falls back to the home page when the requested slug is missing', () => {
     const pages = getVisiblePublicBuilderPages([
-      makePage({ id: 'home', title: 'Home', slug: 'home', orderIndex: 0, meta: { isHome: true, isHidden: false } }),
-      makePage({ id: 'travel', title: 'Travel', slug: 'travel', orderIndex: 1 }),
+      makePage({
+        id: 'home',
+        title: 'Home',
+        slug: 'home',
+        orderIndex: 0,
+        meta: { isHome: true, isHidden: false },
+        sections: [{
+          id: 'hero',
+          type: 'hero',
+          variant: 'default',
+          enabled: true,
+          locked: false,
+          orderIndex: 0,
+          settings: {},
+          styleOverrides: {},
+          bindings: {},
+          meta: {
+            createdAtISO: '2026-05-27T00:00:00.000Z',
+            updatedAtISO: '2026-05-27T00:00:00.000Z',
+          },
+        }],
+      }),
+      makePage({
+        id: 'travel',
+        title: 'Travel',
+        slug: 'travel',
+        orderIndex: 1,
+        sections: [{
+          id: 'travel-section',
+          type: 'travel',
+          variant: 'default',
+          enabled: true,
+          locked: false,
+          orderIndex: 0,
+          settings: {},
+          styleOverrides: {},
+          bindings: {},
+          meta: {
+            createdAtISO: '2026-05-27T00:00:00.000Z',
+            updatedAtISO: '2026-05-27T00:00:00.000Z',
+          },
+        }],
+      }),
     ]);
 
     expect(getPublicBuilderActivePage(pages, 'missing')?.slug).toBe('home');
@@ -69,6 +151,63 @@ describe('publicPageSelection', () => {
 
     expect(getFirstRenderablePublicBuilderPage(pages)?.slug).toBe('weekend');
     expect(getPublicBuilderActivePage(pages)?.slug).toBe('weekend');
-    expect(getPublicBuilderActivePage(pages, 'home')?.slug).toBe('home');
+    expect(getPublicBuilderActivePage(pages, 'home')?.slug).toBe('weekend');
+  });
+
+  it('falls back to a renderable page when the requested visible page is structurally empty', () => {
+    const pages = getVisiblePublicBuilderPages([
+      makePage({
+        id: 'home',
+        title: 'Home',
+        slug: 'home',
+        orderIndex: 0,
+        meta: { isHome: true, isHidden: false },
+        sections: [{
+          id: 'hero',
+          type: 'hero',
+          variant: 'default',
+          enabled: true,
+          locked: false,
+          orderIndex: 0,
+          settings: {},
+          styleOverrides: {},
+          bindings: {},
+          meta: {
+            createdAtISO: '2026-05-27T00:00:00.000Z',
+            updatedAtISO: '2026-05-27T00:00:00.000Z',
+          },
+        }],
+      }),
+      makePage({
+        id: 'weekend',
+        title: 'Weekend',
+        slug: 'weekend',
+        orderIndex: 1,
+        sections: [],
+      }),
+      makePage({
+        id: 'travel',
+        title: 'Travel',
+        slug: 'travel',
+        orderIndex: 2,
+        sections: [{
+          id: 'travel-section',
+          type: 'travel',
+          variant: 'default',
+          enabled: true,
+          locked: false,
+          orderIndex: 0,
+          settings: {},
+          styleOverrides: {},
+          bindings: {},
+          meta: {
+            createdAtISO: '2026-05-27T00:00:00.000Z',
+            updatedAtISO: '2026-05-27T00:00:00.000Z',
+          },
+        }],
+      }),
+    ]);
+
+    expect(getPublicBuilderActivePage(pages, 'weekend')?.slug).toBe('home');
   });
 });
