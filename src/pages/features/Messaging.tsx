@@ -130,11 +130,11 @@ export const MessagingFeature: React.FC = () => {
               </div>
               <h3 className="text-xl font-serif font-bold text-ink mb-3">Schedule Sends</h3>
               <p className="text-ink/70 mb-4">
-                Write messages now, send later. Schedule for optimal timing across timezones.
+                Write messages now and queue a send time when the plan is clear. The scheduler helps with timing, but we do not market it as a perfect timezone engine.
               </p>
               <ul className="space-y-2 text-sm text-ink/70">
                 <li>• Schedule for future date/time</li>
-                <li>• Timezone-aware delivery</li>
+                <li>• Review the planned send time</li>
                 <li>• Edit before send</li>
               </ul>
             </div>
@@ -160,12 +160,12 @@ export const MessagingFeature: React.FC = () => {
               </div>
               <h3 className="text-xl font-serif font-bold text-ink mb-3">Consent Management</h3>
               <p className="text-ink/70 mb-4">
-                Respect guest preferences. Built-in opt-out and unsubscribe. Compliance with email best practices.
+                Respect guest preferences with unsubscribe and contact-preference basics. Broader texting compliance still depends on the sender-ready lane being truly live.
               </p>
               <ul className="space-y-2 text-sm text-ink/70">
-                <li>• One-click unsubscribe</li>
+                <li>• One-click email unsubscribe</li>
                 <li>• Communication preferences</li>
-                <li>• CAN-SPAM compliant</li>
+                <li>• Texting consent stays gated with sender readiness</li>
               </ul>
             </div>
           </div>
@@ -250,7 +250,7 @@ export const MessagingFeature: React.FC = () => {
                 'Custom messages',
                 'Reminder drafting + scheduled follow-up',
                 'Opt-out management',
-                'CAN-SPAM compliant',
+                'Email unsubscribe stays explicit',
                 'Sender setup status stays explicit',
               ].map((feature, idx) => (
                 <div key={idx} className="flex items-start gap-3">
