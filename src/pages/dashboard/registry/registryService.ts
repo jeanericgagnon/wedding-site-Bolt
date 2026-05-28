@@ -10,16 +10,17 @@ import {
 } from './registryTypes';
 import {
   MAX_REGISTRY_ITEMS,
-  MAX_REGISTRY_SORT_LOOKUP_ROWS,
   REGISTRY_DASHBOARD_SITE_SELECT,
   REGISTRY_ITEM_SELECT,
 } from './registryQueries';
-
-const REGISTRY_PREVIEW_ERROR_COPY = 'Couldn’t fill in gift details from that link. You can still add the item by hand.';
-const REGISTRY_LOAD_ERROR_COPY = 'Couldn’t load registry items. Please refresh and try again.';
-const REGISTRY_SAVE_ERROR_COPY = 'Couldn’t save this gift. Please try again.';
-const REGISTRY_DELETE_ERROR_COPY = 'Couldn’t remove that gift. Please try again.';
-const REGISTRY_PURCHASE_ERROR_COPY = 'Couldn’t update that gift right now. Please try again.';
+import {
+  REGISTRY_BARCODE_LOOKUP_RETRY_ERROR,
+  REGISTRY_DASHBOARD_ITEMS_LOAD_RETRY_ERROR,
+  REGISTRY_ITEM_DELETE_RETRY_ERROR,
+  REGISTRY_ITEM_PURCHASE_RETRY_ERROR,
+  REGISTRY_ITEM_SAVE_RETRY_ERROR,
+  REGISTRY_LINK_AUTOFILL_RETRY_ERROR,
+} from './registryDashboardErrorCopy';
 
 export interface RegistryImportBatchItemRecord {
   id: string;
@@ -93,7 +94,7 @@ export async function fetchRegistryItems(weddingSiteId: string): Promise<Registr
     .order('created_at', { ascending: true })
     .limit(MAX_REGISTRY_ITEMS);
 
-  if (error) throw new Error(REGISTRY_LOAD_ERROR_COPY);
+  if (error) throw new Error(REGISTRY_DASHBOARD_ITEMS_LOAD_RETRY_ERROR);
   return ((data ?? []) as RegistryItem[]).map(normalizeRegistryItem);
 }
 
@@ -254,7 +255,7 @@ export async function createRegistryItem(
     },
   });
 
-  if (error) throw new Error(REGISTRY_SAVE_ERROR_COPY);
+  if (error) throw new Error(REGISTRY_ITEM_SAVE_RETRY_ERROR);
   return normalizeRegistryItem(data as RegistryItem);
 }
 
@@ -268,7 +269,7 @@ export async function updateRegistryItem(
     p_payload: fields,
   });
 
-  if (error) throw new Error(REGISTRY_SAVE_ERROR_COPY);
+  if (error) throw new Error(REGISTRY_ITEM_SAVE_RETRY_ERROR);
   return normalizeRegistryItem(data as RegistryItem);
 }
 
@@ -283,7 +284,7 @@ export async function mergeDuplicateRegistryItems(
     p_payload: fields,
   });
 
-  if (error) throw new Error(REGISTRY_SAVE_ERROR_COPY);
+  if (error) throw new Error(REGISTRY_ITEM_SAVE_RETRY_ERROR);
   return normalizeRegistryItem(data as RegistryItem);
 }
 
@@ -291,7 +292,7 @@ export async function deleteRegistryItem(id: string): Promise<void> {
   const { error } = await supabase.rpc('registry_item_delete', {
     p_item_id: id,
   });
-  if (error) throw new Error(REGISTRY_DELETE_ERROR_COPY);
+  if (error) throw new Error(REGISTRY_ITEM_DELETE_RETRY_ERROR);
 }
 
 export async function reorderRegistryItems(
@@ -302,7 +303,7 @@ export async function reorderRegistryItems(
     p_wedding_site_id: weddingSiteId,
     p_ordered_ids: orderedIds,
   });
-  if (error) throw new Error(REGISTRY_SAVE_ERROR_COPY);
+  if (error) throw new Error(REGISTRY_ITEM_SAVE_RETRY_ERROR);
 }
 
 export async function fetchUrlPreview(url: string, forceRefresh = false): Promise<RegistryPreview> {
@@ -340,11 +341,11 @@ export async function fetchUrlPreview(url: string, forceRefresh = false): Promis
       resp = await invoke();
     }
   } catch {
-    throw new Error(REGISTRY_PREVIEW_ERROR_COPY);
+    throw new Error(REGISTRY_LINK_AUTOFILL_RETRY_ERROR);
   }
 
   if (!resp.ok) {
-    throw new Error(REGISTRY_PREVIEW_ERROR_COPY);
+    throw new Error(REGISTRY_LINK_AUTOFILL_RETRY_ERROR);
   }
 
   const result = await resp.json() as RegistryPreview;
@@ -385,13 +386,13 @@ export async function lookupRegistryBarcode(barcode: string): Promise<RegistryBa
       response = await invoke();
     }
   } catch {
-    throw new Error('Couldn’t look up that barcode right now.');
+    throw new Error(REGISTRY_BARCODE_LOOKUP_RETRY_ERROR);
   }
 
   const payload = await response.json().catch(() => ({} as RegistryBarcodeLookupResult));
 
   if (!response.ok) {
-    throw new Error(payload?.error || 'Couldn’t look up that barcode right now.');
+    throw new Error(REGISTRY_BARCODE_LOOKUP_RETRY_ERROR);
   }
 
   return payload as RegistryBarcodeLookupResult;
@@ -438,7 +439,7 @@ export async function publicFetchRegistryItems(
     .order('created_at', { ascending: true })
     .limit(MAX_REGISTRY_ITEMS);
 
-  if (error) throw new Error(REGISTRY_LOAD_ERROR_COPY);
+  if (error) throw new Error(REGISTRY_DASHBOARD_ITEMS_LOAD_RETRY_ERROR);
   return ((data ?? []) as RegistryItem[]).map(normalizeRegistryItem);
 }
 
@@ -452,7 +453,7 @@ export async function ownerMarkPurchased(
     p_increment_by: incrementBy,
   });
 
-  if (error) throw new Error(REGISTRY_PURCHASE_ERROR_COPY);
+  if (error) throw new Error(REGISTRY_ITEM_PURCHASE_RETRY_ERROR);
   return normalizeRegistryItem(data as RegistryItem);
 }
 
@@ -466,7 +467,7 @@ export async function publicIncrementPurchase(
     p_increment_by: 1,
   });
 
-  if (error) throw new Error(REGISTRY_PURCHASE_ERROR_COPY);
+  if (error) throw new Error(REGISTRY_ITEM_PURCHASE_RETRY_ERROR);
   return normalizeRegistryItem(data as RegistryItem);
 }
 

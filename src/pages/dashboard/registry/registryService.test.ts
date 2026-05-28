@@ -8,6 +8,7 @@ import {
   deleteRegistryItem,
   fetchUrlPreview,
   findDuplicateItem,
+  lookupRegistryBarcode,
   mergeDuplicateRegistryItems,
   ownerMarkPurchased,
   publicIncrementPurchase,
@@ -16,6 +17,13 @@ import {
   updateRegistryItem,
   updateRegistryRefreshBudget,
 } from './registryService';
+import {
+  REGISTRY_BARCODE_LOOKUP_RETRY_ERROR,
+  REGISTRY_ITEM_DELETE_RETRY_ERROR,
+  REGISTRY_ITEM_PURCHASE_RETRY_ERROR,
+  REGISTRY_ITEM_SAVE_RETRY_ERROR,
+  REGISTRY_LINK_AUTOFILL_RETRY_ERROR,
+} from './registryDashboardErrorCopy';
 import { MAX_REGISTRY_ITEMS, MAX_REGISTRY_SORT_LOOKUP_ROWS } from './registryQueries';
 
 const mockRpcResult = {
@@ -101,13 +109,13 @@ describe('fetchUrlPreview', () => {
       text: () => Promise.resolve('Rate limit exceeded'),
     });
     vi.stubGlobal('fetch', mockFetch);
-    await expect(fetchUrlPreview('https://amazon.com/dp/B001')).rejects.toThrow('Couldn’t fill in gift details from that link. You can still add the item by hand.');
+    await expect(fetchUrlPreview('https://amazon.com/dp/B001')).rejects.toThrow(REGISTRY_LINK_AUTOFILL_RETRY_ERROR);
   });
 
   it('throws on network failure', async () => {
     const mockFetch = vi.fn().mockRejectedValue(new Error('Network error'));
     vi.stubGlobal('fetch', mockFetch);
-    await expect(fetchUrlPreview('https://amazon.com/dp/B001')).rejects.toThrow('Couldn’t fill in gift details from that link. You can still add the item by hand.');
+    await expect(fetchUrlPreview('https://amazon.com/dp/B001')).rejects.toThrow(REGISTRY_LINK_AUTOFILL_RETRY_ERROR);
   });
 
   it('does not expose raw preview error details to owner-facing callers', async () => {
@@ -121,7 +129,7 @@ describe('fetchUrlPreview', () => {
     });
     vi.stubGlobal('fetch', mockFetch);
 
-    await expect(fetchUrlPreview('https://amazon.com/dp/B001')).rejects.toThrow('Couldn’t fill in gift details from that link. You can still add the item by hand.');
+    await expect(fetchUrlPreview('https://amazon.com/dp/B001')).rejects.toThrow(REGISTRY_LINK_AUTOFILL_RETRY_ERROR);
     await expect(fetchUrlPreview('https://amazon.com/dp/B001')).rejects.not.toThrow(/database|service role|select \*/i);
   });
 
@@ -488,6 +496,13 @@ describe('registry owner write RPCs', () => {
     });
   });
 
+  it('uses shared safe copy when registry item create fails', async () => {
+    mockRpcResult.data = null;
+    mockRpcResult.error = { message: 'provider timeout token=abc' };
+
+    await expect(createRegistryItem('site-1', { item_name: 'Mixer' })).rejects.toThrow(REGISTRY_ITEM_SAVE_RETRY_ERROR);
+  });
+
   it('routes registry item update through the item write RPC', async () => {
     mockRpcResult.data = {
       id: 'item-1',
@@ -510,12 +525,25 @@ describe('registry owner write RPCs', () => {
     });
   });
 
+  it('uses shared safe copy when registry item update fails', async () => {
+    mockRpcResult.data = null;
+    mockRpcResult.error = { message: 'provider timeout token=abc' };
+
+    await expect(updateRegistryItem('item-1', { item_name: 'Updated Mixer' })).rejects.toThrow(REGISTRY_ITEM_SAVE_RETRY_ERROR);
+  });
+
   it('routes registry item delete through the delete RPC', async () => {
     await expect(deleteRegistryItem('item-1')).resolves.toBeUndefined();
 
     expect(rpcMock).toHaveBeenCalledWith('registry_item_delete', {
       p_item_id: 'item-1',
     });
+  });
+
+  it('uses shared safe copy when registry item delete fails', async () => {
+    mockRpcResult.error = { message: 'provider timeout token=abc' };
+
+    await expect(deleteRegistryItem('item-1')).rejects.toThrow(REGISTRY_ITEM_DELETE_RETRY_ERROR);
   });
 
   it('routes registry reorder through the reorder RPC', async () => {
@@ -525,6 +553,12 @@ describe('registry owner write RPCs', () => {
       p_wedding_site_id: 'site-1',
       p_ordered_ids: ['item-2', 'item-1'],
     });
+  });
+
+  it('uses shared safe copy when registry reorder fails', async () => {
+    mockRpcResult.error = { message: 'provider timeout token=abc' };
+
+    await expect(reorderRegistryItems('site-1', ['item-2', 'item-1'])).rejects.toThrow(REGISTRY_ITEM_SAVE_RETRY_ERROR);
   });
 });
 
@@ -545,6 +579,20 @@ describe('publicIncrementPurchase', () => {
     expect(result.quantity_purchased).toBe(3);
     expect(result.purchase_status).toBe('purchased');
     expect(result.purchaser_name).toBe('Alex');
+  });
+
+  it('uses shared safe copy when owner purchase update fails', async () => {
+    mockRpcResult.data = null;
+    mockRpcResult.error = { message: 'provider timeout token=abc' };
+
+    await expect(ownerMarkPurchased('item-1', 1)).rejects.toThrow(REGISTRY_ITEM_PURCHASE_RETRY_ERROR);
+  });
+
+  it('uses shared safe copy when public purchase update fails', async () => {
+    mockRpcResult.data = null;
+    mockRpcResult.error = { message: 'provider timeout token=abc' };
+
+    await expect(publicIncrementPurchase('item-1', 'Alex')).rejects.toThrow(REGISTRY_ITEM_PURCHASE_RETRY_ERROR);
   });
 });
 
@@ -577,5 +625,24 @@ describe('purchase status logic', () => {
       quantityPurchased: 0,
       purchaseStatus: 'available',
     });
+  });
+});
+describe('lookupRegistryBarcode', () => {
+  beforeEach(() => {
+    vi.stubGlobal('fetch', vi.fn());
+  });
+
+  it('does not expose raw barcode provider errors to owner-facing callers', async () => {
+    const mockFetch = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 500,
+      json: () => Promise.resolve({
+        error: 'provider timeout token=abc with barcode vendor trace',
+      }),
+    });
+    vi.stubGlobal('fetch', mockFetch);
+
+    await expect(lookupRegistryBarcode('036000291452')).rejects.toThrow(REGISTRY_BARCODE_LOOKUP_RETRY_ERROR);
+    await expect(lookupRegistryBarcode('036000291452')).rejects.not.toThrow(/token=abc|provider timeout|vendor trace/i);
   });
 });
