@@ -52,6 +52,11 @@ import { buildCoupleFocusModel, type CoupleFocusStep } from './coupleFocus';
 import { resolveBuilderWorkflowRoute } from './builderWorkflowRoutes';
 import { buildOverviewThroughline } from './overviewThroughline';
 import { getFlowStatusLabel } from '../../lib/flowLabels';
+import {
+  mapSupportSurfaceError,
+  OVERVIEW_BRIEF_REFRESH_RETRY_ERROR,
+  OVERVIEW_SUGGESTION_HIDE_RETRY_ERROR,
+} from '../../lib/supportSurfaceErrorCopy';
 
 const DEFAULT_NAME_CHANGE_INSIGHTS: NameChangeOverviewInsights = {
   coreChainLabel: 'Certificate, SSA, and DMV stay together so the legal identity chain does not drift.',
@@ -171,7 +176,7 @@ export const DashboardOverview: React.FC = () => {
       if (updateError) throw updateError;
       await loadStats();
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to refresh draft from brief';
+      const message = mapSupportSurfaceError(err, OVERVIEW_BRIEF_REFRESH_RETRY_ERROR);
       alert(message);
     } finally {
       setRefreshingBrief(false);
@@ -546,7 +551,7 @@ export const DashboardOverview: React.FC = () => {
   const hideSuggestion = async (id: string) => {
     const { error } = await supabase.from('interactive_suggestions').update({ is_hidden: true }).eq('id', id);
     if (error) {
-      toast(error.message || 'Could not hide that suggestion.', 'error');
+      toast(mapSupportSurfaceError(error, OVERVIEW_SUGGESTION_HIDE_RETRY_ERROR), 'error');
       return;
     }
     setInteractiveSuggestions((prev) => prev.filter((s) => s.id !== id));

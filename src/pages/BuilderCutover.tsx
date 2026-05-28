@@ -9,6 +9,7 @@ import { builderProjectService } from '../builder/services/builderProjectService
 import { getBuilderEntryExperience } from '../builder/builderEntryExperience';
 import { buildBuilderV2UpgradeGuidance } from '../builder/components/builderV2UpgradeGuidance';
 import { saveBuilderV2UpgradeBridge } from '../builder-v2/upgradeBridge';
+import { BUILDER_CUTOVER_OPEN_RETRY_ERROR, mapSupportSurfaceError } from '../lib/supportSurfaceErrorCopy';
 import {
   getBuilderV2IntentRoute,
   getBuilderV2Route,
@@ -95,7 +96,7 @@ export const BuilderCutover: React.FC = () => {
         if (!cancelled) {
           setLoadState({
             kind: 'error',
-            message: error instanceof Error ? error.message : 'Could not open the builder right now.',
+            message: mapSupportSurfaceError(error, BUILDER_CUTOVER_OPEN_RETRY_ERROR),
           });
         }
       }

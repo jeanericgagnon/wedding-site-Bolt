@@ -35,6 +35,20 @@ import {
   buildGuestPhotoShareMessage,
 } from './guestPhotoMessagingLink';
 import { getGuestPhotoBucketShareLink } from './guestPhotoBucketShareState';
+import {
+  GUEST_PHOTO_BUCKET_STATUS_RETRY_ERROR,
+  GUEST_PHOTO_BULK_MODERATION_RETRY_ERROR,
+  GUEST_PHOTO_CREATE_BUCKET_RETRY_ERROR,
+  GUEST_PHOTO_ITINERARY_BUCKETS_RETRY_ERROR,
+  GUEST_PHOTO_REGENERATE_LINK_RETRY_ERROR,
+  GUEST_PHOTO_REMOVE_RETRY_ERROR,
+  GUEST_PHOTO_ROTATE_LINKS_RETRY_ERROR,
+  GUEST_PHOTO_SAVE_WINDOW_RETRY_ERROR,
+  GUEST_PHOTO_SHARING_LOAD_RETRY_ERROR,
+  GUEST_PHOTO_STATUS_RETRY_ERROR,
+  GUEST_PHOTO_UPLOAD_RETRY_ERROR,
+  mapSupportSurfaceError,
+} from '../../lib/supportSurfaceErrorCopy';
 
 type ItineraryEvent = {
   id: string;
@@ -198,7 +212,7 @@ export const GuestPhotoSharing: React.FC = () => {
       setSuccess('Photo removed from bucket.');
     } catch (err) {
       setPhotoBuckets(previousBuckets);
-      setError((err as Error)?.message || 'Failed to remove photo bucket item.');
+      setError(mapSupportSurfaceError(err, GUEST_PHOTO_REMOVE_RETRY_ERROR));
     } finally {
       setSubmitting(false);
     }
@@ -236,7 +250,7 @@ export const GuestPhotoSharing: React.FC = () => {
       setSuccess(placementSummary ? `Photo bucket updated. Current auto-placement: ${placementSummary}.` : 'Photo bucket updated.');
     } catch (err) {
       setPhotoBuckets(previousBuckets);
-      setError((err as Error)?.message || 'Failed to upload photo bucket items.');
+      setError(mapSupportSurfaceError(err, GUEST_PHOTO_UPLOAD_RETRY_ERROR));
     } finally {
       setSubmitting(false);
       setPendingBucket(null);
@@ -336,7 +350,7 @@ export const GuestPhotoSharing: React.FC = () => {
       setBuckets([]);
       setUploads([]);
       setWindowDrafts({});
-      setError((err as Error)?.message || 'Failed to load photo sharing.');
+      setError(mapSupportSurfaceError(err, GUEST_PHOTO_SHARING_LOAD_RETRY_ERROR));
     } finally {
       setLoading(false);
     }
@@ -603,7 +617,7 @@ export const GuestPhotoSharing: React.FC = () => {
       }
       setSuccess(`Rotated ${Object.keys(updated).length} link(s).`);
     } catch (err: unknown) {
-      setError((err as Error)?.message || 'Failed to rotate links.');
+      setError(mapSupportSurfaceError(err, GUEST_PHOTO_ROTATE_LINKS_RETRY_ERROR));
     } finally {
       setBulkRegenerating(false);
     }
@@ -703,7 +717,7 @@ export const GuestPhotoSharing: React.FC = () => {
       await load();
       setSuccess(`Created ${created.length} bucket(s) from itinerary events.`);
     } catch (err: unknown) {
-      setError((err as Error)?.message || 'Failed to create itinerary buckets.');
+      setError(mapSupportSurfaceError(err, GUEST_PHOTO_ITINERARY_BUCKETS_RETRY_ERROR));
     } finally {
       setBulkCreating(false);
     }
@@ -724,7 +738,7 @@ export const GuestPhotoSharing: React.FC = () => {
       await load();
       setSuccess(`${hide ? 'Hidden' : 'Unhidden'} ${ids.length} upload(s) from current view.`);
     } catch (err: unknown) {
-      setError((err as Error)?.message || 'Bulk moderation failed.');
+      setError(mapSupportSurfaceError(err, GUEST_PHOTO_BULK_MODERATION_RETRY_ERROR));
     } finally {
       setBulkModerating(false);
     }
@@ -745,7 +759,7 @@ export const GuestPhotoSharing: React.FC = () => {
       await load();
       setSuccess(`${flagged ? 'Flagged' : 'Unflagged'} ${ids.length} upload(s) from current view.`);
     } catch (err: unknown) {
-      setError((err as Error)?.message || 'Bulk moderation failed.');
+      setError(mapSupportSurfaceError(err, GUEST_PHOTO_BULK_MODERATION_RETRY_ERROR));
     } finally {
       setBulkModerating(false);
     }
@@ -757,7 +771,7 @@ export const GuestPhotoSharing: React.FC = () => {
       await invokeOrThrow('photo-upload-moderate', { uploadIds: [uploadId], patch });
       await load();
     } catch (err: unknown) {
-      setError((err as Error)?.message || 'Failed to update upload moderation status.');
+      setError(mapSupportSurfaceError(err, GUEST_PHOTO_STATUS_RETRY_ERROR));
     }
   };
 
@@ -768,7 +782,7 @@ export const GuestPhotoSharing: React.FC = () => {
       await invokeOrThrow('photo-album-manage', { action: 'set_active', albumId: bucketId, isActive });
       await load();
     } catch (err: unknown) {
-      setError((err as Error)?.message || 'Failed to update bucket status.');
+      setError(mapSupportSurfaceError(err, GUEST_PHOTO_BUCKET_STATUS_RETRY_ERROR));
     } finally {
       setWorkingBucketId('');
     }
@@ -788,7 +802,7 @@ export const GuestPhotoSharing: React.FC = () => {
       setSuccess('Bucket link regenerated. Old link is now invalid.');
       await load();
     } catch (err: unknown) {
-      setError((err as Error)?.message || 'Failed to regenerate upload link.');
+      setError(mapSupportSurfaceError(err, GUEST_PHOTO_REGENERATE_LINK_RETRY_ERROR));
     } finally {
       setWorkingBucketId('');
     }
@@ -832,7 +846,7 @@ export const GuestPhotoSharing: React.FC = () => {
       setSuccess('Upload window saved.');
       await load();
     } catch (err: unknown) {
-      setError((err as Error)?.message || 'Failed to save upload window.');
+      setError(mapSupportSurfaceError(err, GUEST_PHOTO_SAVE_WINDOW_RETRY_ERROR));
     } finally {
       setWorkingBucketId('');
     }
@@ -867,7 +881,7 @@ export const GuestPhotoSharing: React.FC = () => {
       setSuccess(`Bucket "${data.bucket.name}" created.`);
       await load();
     } catch (err: unknown) {
-      setError((err as Error)?.message || 'Failed to create bucket.');
+      setError(mapSupportSurfaceError(err, GUEST_PHOTO_CREATE_BUCKET_RETRY_ERROR));
     } finally {
       setSubmitting(false);
     }
