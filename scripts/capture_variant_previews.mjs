@@ -8,10 +8,28 @@ const repoRoot = path.resolve(path.dirname(new URL(import.meta.url).pathname), '
 const manifestPath = path.join(repoRoot, 'public', 'variant-previews', 'manifest.json');
 const outDir = path.join(repoRoot, 'public', 'variant-previews');
 const baseUrl = process.env.PREVIEW_BASE_URL || 'http://127.0.0.1:4173';
+const isLocalBaseUrl = /127\.0\.0\.1|localhost/i.test(baseUrl);
 
 const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
 
+async function assertLocalBaseUrlReady(url) {
+  try {
+    const response = await fetch(url, { signal: AbortSignal.timeout(1_500) });
+    if (response.ok) return;
+    throw new Error(`received HTTP ${response.status}`);
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : String(error);
+    throw new Error(
+      `Variant preview capture requires a running preview/dev server at ${url}. Start the local runtime first, then rerun this capture. (${detail})`,
+    );
+  }
+}
+
 async function run() {
+  if (isLocalBaseUrl) {
+    await assertLocalBaseUrlReady(baseUrl);
+  }
+
   fs.mkdirSync(outDir, { recursive: true });
   const browser = await chromium.launch({ headless: true });
   const page = await browser.newPage({ viewport: { width: 960, height: 540 } });

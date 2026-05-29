@@ -1,8 +1,11 @@
+#!/usr/bin/env node
+
 import { chromium } from 'playwright';
 import fs from 'node:fs/promises';
 
 const BASE_URL = process.env.BASE_URL || 'http://127.0.0.1:4173';
 const OUT_JSON = 'tmp/fullsite-feature-smoke-results.json';
+const isLocalBaseUrl = /127\.0\.0\.1|localhost/i.test(BASE_URL);
 
 const publicRoutes = [
   '/', '/product', '/templates', '/builder-v2-lab', '/variant-preview-capture', '/template-scroll-capture',
@@ -32,7 +35,24 @@ function sanitizeError(error) {
   return String(error || '').slice(0, 500);
 }
 
+async function assertLocalBaseUrlReady(url) {
+  try {
+    const response = await fetch(url, { signal: AbortSignal.timeout(1_500) });
+    if (response.ok) return;
+    throw new Error(`received HTTP ${response.status}`);
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : String(error);
+    throw new Error(
+      `Full-site feature smoke requires a running preview/dev server at ${url}. Start the local runtime first, then rerun this proof. (${detail})`,
+    );
+  }
+}
+
 async function run() {
+  if (isLocalBaseUrl) {
+    await assertLocalBaseUrlReady(BASE_URL);
+  }
+
   const browser = await chromium.launch({ headless: true });
   const context = await browser.newContext();
   const page = await context.newPage();

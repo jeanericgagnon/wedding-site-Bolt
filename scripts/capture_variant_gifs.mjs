@@ -9,10 +9,24 @@ const manifestPath = path.join(repoRoot, 'public', 'variant-previews', 'manifest
 const outDir = path.join(repoRoot, 'public', 'variant-previews-gif');
 const tmpDir = path.join(repoRoot, '.tmp', 'variant-gif-frames');
 const baseUrl = process.env.PREVIEW_BASE_URL || 'http://127.0.0.1:4173';
+const isLocalBaseUrl = /127\.0\.0\.1|localhost/i.test(baseUrl);
 
 const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
 
 function ensureDir(p) { fs.mkdirSync(p, { recursive: true }); }
+
+async function assertLocalBaseUrlReady(url) {
+  try {
+    const response = await fetch(url, { signal: AbortSignal.timeout(1_500) });
+    if (response.ok) return;
+    throw new Error(`received HTTP ${response.status}`);
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : String(error);
+    throw new Error(
+      `Variant GIF capture requires a running preview/dev server at ${url}. Start the local runtime first, then rerun this capture. (${detail})`,
+    );
+  }
+}
 
 function ffmpegGif(inputPattern, outputGif) {
   const res = spawnSync('ffmpeg', ['-y', '-framerate', '12', '-i', inputPattern, '-vf', 'fps=12,scale=960:540:flags=lanczos', '-loop', '0', outputGif], { stdio: 'inherit' });
@@ -20,6 +34,10 @@ function ffmpegGif(inputPattern, outputGif) {
 }
 
 async function run() {
+  if (isLocalBaseUrl) {
+    await assertLocalBaseUrlReady(baseUrl);
+  }
+
   ensureDir(outDir);
   ensureDir(tmpDir);
   const browser = await chromium.launch({ headless: true });
