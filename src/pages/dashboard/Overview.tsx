@@ -31,6 +31,7 @@ import { hasRespondedRsvpStatus, isAttendingRsvpStatus, isDeclinedRsvpStatus, is
 import { writeOnboardingResumeTarget } from '../../lib/onboardingResumeStorage';
 import { useToast } from '../../components/ui/Toast';
 import { buildGuestOpsCoach } from '../../lib/guestOpsCoach';
+import { getOverviewHideFromSearch, getOverviewPrivacyMode } from './overviewVisibility';
 import { calcOverviewDaysUntil, formatOverviewRelativeTime, formatOverviewWeddingDate, getOverviewTimestamp } from './overviewDate';
 import { getOverviewFallbackCoupleValue } from './overviewDraftBrief';
 import {
@@ -306,7 +307,7 @@ export const DashboardOverview: React.FC = () => {
 
       const { data: ownedSite, error: siteErr } = await supabase
         .from('wedding_sites')
-.select('id, site_slug, site_url, is_published, site_json, updated_at, template_id, wedding_data, onboarding_answers, couple_name_1, couple_name_2, venue_name, wedding_date, venue_date, wedding_location')
+        .select('id, site_slug, site_url, is_published, privacy_mode, hide_from_search, site_json, updated_at, template_id, wedding_data, onboarding_answers, couple_name_1, couple_name_2, venue_name, wedding_date, venue_date, wedding_location')
         .eq('user_id', user.id)
         .maybeSingle();
 
@@ -327,7 +328,7 @@ export const DashboardOverview: React.FC = () => {
         if (collaboratorLink?.wedding_site_id) {
           const { data: collaboratorSite, error: collaboratorSiteErr } = await supabase
             .from('wedding_sites')
-            .select('id, site_slug, site_url, is_published, site_json, updated_at, template_id, wedding_data, onboarding_answers, couple_name_1, couple_name_2, venue_name, wedding_date, venue_date, wedding_location')
+            .select('id, site_slug, site_url, is_published, privacy_mode, hide_from_search, site_json, updated_at, template_id, wedding_data, onboarding_answers, couple_name_1, couple_name_2, venue_name, wedding_date, venue_date, wedding_location')
             .eq('id', collaboratorLink.wedding_site_id)
             .maybeSingle();
 
@@ -433,8 +434,8 @@ export const DashboardOverview: React.FC = () => {
       }
 
       const siteJson = (site?.site_json as Record<string, unknown> | null) ?? null;
-      const privacyMode = 'public';
-      const hideFromSearch = siteJson?.hide_from_search === true;
+      const privacyMode = getOverviewPrivacyMode(site?.privacy_mode);
+      const hideFromSearch = getOverviewHideFromSearch(site as { hide_from_search?: unknown } | null, siteJson);
       const isPublished = Boolean(
         site?.is_published === true ||
           siteJson?.publishStatus === 'published' ||
