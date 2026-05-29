@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 import { chromium } from 'playwright';
 import { createClient } from '@supabase/supabase-js';
 import fs from 'node:fs';
@@ -8,6 +10,7 @@ const ownerEmail = process.argv[3] || 'test@gmail.com';
 const ownerPassword = process.argv[4] || '12345678';
 const collaboratorEmail = process.argv[5] || 'test1@gmail.com';
 const collaboratorPassword = process.argv[6] || '12345678';
+const isLocalBaseUrl = /127\.0\.0\.1|localhost/i.test(baseUrl);
 
 const envFiles = ['.env', '.env.local', '.env.production', '.env.production.local', '.vercel/.env.production.local'];
 
@@ -37,6 +40,23 @@ const getEnv = (key, fallback = '') => {
   return fallback;
 };
 const adminSupabase = createClient(getEnv('VITE_SUPABASE_URL'), getEnv('VITE_SUPABASE_ANON_KEY'));
+
+async function assertLocalBaseUrlReady(url) {
+  try {
+    const response = await fetch(url, { signal: AbortSignal.timeout(1_500) });
+    if (response.ok) return;
+    throw new Error(`received HTTP ${response.status}`);
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : String(error);
+    throw new Error(
+      `Collaborator invite/claim browser proof requires a running preview/dev server at ${url}. Start the local runtime first, then rerun this proof. (${detail})`,
+    );
+  }
+}
+
+if (isLocalBaseUrl) {
+  await assertLocalBaseUrlReady(baseUrl);
+}
 
 const browser = await chromium.launch({ headless: true });
 const ownerContext = await browser.newContext();
