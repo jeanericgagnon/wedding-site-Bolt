@@ -7,6 +7,7 @@ import { supabase } from '../lib/supabase';
 import { AuthSupportLinks } from '../components/auth/AuthSupportLinks';
 import { createCheckoutSession, fetchPaymentStatus, fetchWeddingSiteId, SessionExpiredError } from '../lib/stripeService';
 import { clearAllOnboardingContinuationState } from '../lib/onboardingContinuationCleanup';
+import { isPaymentBypassAllowed } from '../lib/paymentGate';
 import {
   mapPaymentCheckoutError,
   mapPaymentSiteSetupError,
@@ -62,7 +63,7 @@ const ensureMinimalWeddingSite = async (userId: string, email?: string | null): 
 
 export const PaymentRequired: React.FC = () => {
   const { user } = useAuth();
-  const paymentBypassAllowed = true;
+  const paymentBypassAllowed = isPaymentBypassAllowed();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [checkingStatus, setCheckingStatus] = useState(false);
@@ -254,7 +255,7 @@ export const PaymentRequired: React.FC = () => {
 
           <div className="px-6 py-4 bg-surface-subtle border-t border-border">
             <p className="text-xs text-text-tertiary text-center">
-              Secure payment powered by Stripe. We never store your card details.
+              Secure payment. We never store your card details.
             </p>
             <AuthSupportLinks />
           </div>
