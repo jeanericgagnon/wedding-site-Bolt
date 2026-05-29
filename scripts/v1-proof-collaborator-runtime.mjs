@@ -3,6 +3,7 @@
 import { execSync } from 'node:child_process';
 
 const baseUrl = process.env.PLAYWRIGHT_BASE_URL || 'http://127.0.0.1:4173';
+const isLocalBaseUrl = /127\.0\.0\.1|localhost/i.test(baseUrl);
 const ownerEmail = process.env.V1_OWNER_EMAIL || '';
 const ownerPassword = process.env.V1_OWNER_PASSWORD || '';
 const collaboratorEmail = process.env.V1_COLLABORATOR_EMAIL || '';
@@ -19,6 +20,19 @@ function classifyBlocker() {
   }
 
   return { blocked: false, blockerType: null, message: null, recommendation: null };
+}
+
+async function assertLocalBaseUrlReady(url) {
+  try {
+    const response = await fetch(url, { signal: AbortSignal.timeout(1_500) });
+    if (response.ok) return;
+    throw new Error(`received HTTP ${response.status}`);
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : String(error);
+    throw new Error(
+      `Runtime collaborator proof requires a running preview/dev server at ${url}. Start the local runtime first, then rerun this proof. (${detail})`,
+    );
+  }
 }
 
 function runRuntimeInviteFlow() {
@@ -112,6 +126,16 @@ const output = blocker.blocked
       results: [],
     }
   : (() => {
+      return { deferred: true };
+    })();
+
+if (!blocker.blocked && isLocalBaseUrl) {
+  await assertLocalBaseUrlReady(baseUrl);
+}
+
+const finalOutput = blocker.blocked
+  ? output
+  : (() => {
       const result = runRuntimeInviteFlow();
       return {
         ok: result.ok,
@@ -132,5 +156,5 @@ const output = blocker.blocked
       };
     })();
 
-console.log(JSON.stringify(output, null, 2));
-if (!output.ok && !output.blocked) process.exit(1);
+console.log(JSON.stringify(finalOutput, null, 2));
+if (!finalOutput.ok && !finalOutput.blocked) process.exit(1);
