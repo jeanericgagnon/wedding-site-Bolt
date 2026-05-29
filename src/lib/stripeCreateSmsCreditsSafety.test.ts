@@ -6,6 +6,8 @@ describe("stripe-create-sms-credits safety", () => {
   it("keeps unexpected failures guest-safe", () => {
     const functionSource = readFileSync(join(process.cwd(), "supabase/functions/stripe-create-sms-credits/index.ts"), "utf8");
 
+    expect(functionSource).toContain('const SMS_SENDING_ENABLED = smsSendingEnabledRaw === "true"');
+    expect(functionSource).toContain('JSON.stringify({ error: "SMS credits are not available in this workspace yet." })');
     expect(functionSource).toContain('console.error("STRIPE_CREATE_SMS_CREDITS_UNEXPECTED_FAILED"');
     expect(functionSource).toContain('reason: "UNEXPECTED_STRIPE_CREATE_SMS_CREDITS_FAILURE"');
     expect(functionSource).toContain('JSON.stringify({ error: "Could not start SMS credits checkout. Please try again." })');

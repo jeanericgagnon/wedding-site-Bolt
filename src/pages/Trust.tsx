@@ -2,6 +2,7 @@ import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Footer, Header } from '../components/layout';
 import { useAuth } from '../hooks/useAuth';
+import { SMS_PUBLIC_LOCK_COPY } from '../lib/smsLaunchReadiness';
 import { SITE_TRUST_COPY } from '../lib/siteTrustCopy';
 import { FIRST_SESSION_WORKSPACE_ROUTES, getFirstSessionSignupState } from '../lib/firstSessionWorkspaceRoutes';
 
@@ -86,7 +87,7 @@ const V1_SLICE_STATUS = [
     status: 'Review before send',
     tone: 'risk',
     done: 'Draft/schedule/history surface exists with tighter access truth.',
-    missing: 'Texts stay locked until sender setup, consent, and delivery readiness are complete.',
+    missing: SMS_PUBLIC_LOCK_COPY,
   },
   {
     name: 'Seating',

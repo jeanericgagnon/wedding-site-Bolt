@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Header, Footer } from '../components/layout';
 import { useAuth } from '../hooks/useAuth';
 import { useToast } from '../components/ui/Toast';
+import { SMS_PUBLIC_LOCK_COPY } from '../lib/smsLaunchReadiness';
 import { SITE_TRUST_COPY } from '../lib/siteTrustCopy';
 import { FIRST_SESSION_WORKSPACE_ROUTES, getFirstSessionSignupState } from '../lib/firstSessionWorkspaceRoutes';
 import { DEMO_MODE } from '../config/env';
@@ -117,7 +118,7 @@ const V1_SLICE_STATUS = [
     status: 'Review before send',
     tone: 'risk',
     done: 'Drafts, scheduled sends, and message history are there with review-before-send control.',
-    missing: 'Texts stay locked until sender setup, consent, and delivery readiness are complete.',
+    missing: SMS_PUBLIC_LOCK_COPY,
   },
   {
     name: 'Seating',

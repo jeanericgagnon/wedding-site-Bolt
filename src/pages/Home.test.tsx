@@ -54,6 +54,8 @@ describe('Home draft-first CTAs', () => {
     expect(screen.getByText('$49 flat fee for two years. Auto-renew stays off by default. You get the website, RSVP, guests, review-before-send messaging, seating, registry, itinerary, photo sharing, and day-of coordination in one place.')).toBeInTheDocument();
     expect(screen.getByText('Guest list, RSVP, message drafts, and seating')).toBeInTheDocument();
     expect(screen.getByText('Photo sharing, guestbook, registry, itinerary, and coordinator tools')).toBeInTheDocument();
+    expect(screen.getByText('Texts stay locked until sender setup, consent, and delivery readiness are complete.')).toBeInTheDocument();
+    expect(screen.queryByText('Texts stay locked until sender setup is connected.')).not.toBeInTheDocument();
     expect(screen.queryByText('Build the wedding site, manage the guest list, run RSVP and messages, collect photos, and hand the day-of details to the right people from one place.')).not.toBeInTheDocument();
 
     fireEvent.click(screen.getAllByRole('button', { name: 'Start your wedding site draft' })[0]);
@@ -78,6 +80,7 @@ describe('Home draft-first CTAs', () => {
 
     expect(screen.getByText('Travel, schedule, photo sharing, and latest updates remain easy to find from a phone.')).toBeInTheDocument();
     expect(screen.getByText('Build the wedding site, manage the guest list, run RSVP and guest updates, open photo sharing, and hand the day-of details to the right people from one place.')).toBeInTheDocument();
+    expect(screen.getByText('Texts stay locked until sender setup, consent, and delivery readiness are complete.')).toBeInTheDocument();
 
     fireEvent.click(screen.getAllByRole('button', { name: 'Review your wedding site draft' })[0]);
 

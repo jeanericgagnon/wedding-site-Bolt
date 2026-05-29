@@ -15,6 +15,7 @@ import { Footer, Header } from '../components/layout';
 import { HeroReveal, Reveal } from '../components/marketing/Reveal';
 import { useToast } from '../components/ui/Toast';
 import { useAuth } from '../hooks/useAuth';
+import { SMS_PUBLIC_LOCK_COPY } from '../lib/smsLaunchReadiness';
 import { SITE_TRUST_COPY } from '../lib/siteTrustCopy';
 import { FIRST_SESSION_WORKSPACE_ROUTES, getFirstSessionSignupState } from '../lib/firstSessionWorkspaceRoutes';
 import { DEMO_MODE } from '../config/env';
@@ -122,7 +123,7 @@ const templateCards = [
 const trustPoints = [
   'Private editing before sharing.',
   'Guest access truth stays visible.',
-  'Texts stay locked until sender setup is connected.',
+  SMS_PUBLIC_LOCK_COPY,
   'Messages stay editable before send.',
   'Auto-renew stays off by default.',
 ] as const;

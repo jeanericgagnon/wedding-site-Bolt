@@ -14,6 +14,11 @@ const PACKS: Record<string, { credits: number; envKey: string }> = {
   sms_1000: { credits: 1000, envKey: "STRIPE_SMS_PRICE_ID_1000" },
 };
 
+const smsSendingEnabledRaw = String(Deno.env.get("SMS_SENDING_ENABLED") ?? "").trim().toLowerCase();
+const SMS_SENDING_ENABLED = smsSendingEnabledRaw === "true"
+  || smsSendingEnabledRaw === "1"
+  || smsSendingEnabledRaw === "yes";
+
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response(null, { status: 200, headers: corsHeaders });
 
@@ -47,6 +52,13 @@ Deno.serve(async (req: Request) => {
     const packDef = PACKS[pack];
     if (!packDef) {
       return new Response(JSON.stringify({ error: "Invalid pack" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
+    if (!SMS_SENDING_ENABLED) {
+      return new Response(JSON.stringify({ error: "SMS credits are not available in this workspace yet." }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     const priceId = Deno.env.get(packDef.envKey);

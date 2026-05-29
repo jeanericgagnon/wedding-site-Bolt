@@ -15,6 +15,11 @@ interface SendBulkPayload {
 
 type SiteMessagingRole = "owner" | "planner" | "coordinator" | "viewer";
 
+const smsSendingEnabledRaw = String(Deno.env.get("SMS_SENDING_ENABLED") ?? "").trim().toLowerCase();
+const SMS_SENDING_ENABLED = smsSendingEnabledRaw === "true"
+  || smsSendingEnabledRaw === "1"
+  || smsSendingEnabledRaw === "yes";
+
 async function sendViaTwilio(opts: {
   accountSid: string;
   authToken: string;
@@ -321,6 +326,14 @@ async function deliverMessage(opts: {
   };
 
   if (channel === "sms") {
+    if (!SMS_SENDING_ENABLED) {
+      return {
+        ok: false,
+        status: 403,
+        body: { error: "Texting stays locked until sender setup, consent, opt-out, and delivery readiness are complete." },
+      };
+    }
+
     if (!twilioSid || !twilioToken || !twilioFrom) {
       return { ok: false, status: 500, body: { error: "SMS provider not configured (Twilio env missing)" } };
     }

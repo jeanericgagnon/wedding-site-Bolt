@@ -26,6 +26,7 @@ import { getMessageTemplateCoupleLabel } from './messageTemplateVariables';
 import { readStoredPhotoBucketLinks } from './photoBucketLinksStorage';
 import { buildPhotoRequestTemplateBody, getMessagePhotoLinkState } from './messagePhotoLinkState';
 import { resolvePublicSiteSlugFromRow } from '../../lib/publicSiteSlug';
+import { SMS_CREDITS_LOCK_COPY, SMS_SENDING_ENABLED, SMS_WORKSPACE_LOCK_COPY } from '../../lib/smsLaunchReadiness';
 import {
   getDeliveryFailureReason,
   getDeliverySkipReason,
@@ -1077,6 +1078,10 @@ export const DashboardMessages: React.FC = () => {
 
   async function handleBuySmsPack(pack: 'sms_100' | 'sms_500' | 'sms_1000') {
     if (!weddingSite) return;
+    if (!SMS_SENDING_ENABLED) {
+      toast(SMS_WORKSPACE_LOCK_COPY, 'info');
+      return;
+    }
     setBuyingPack(pack);
     try {
       const base = window.location.origin;
@@ -1566,6 +1571,11 @@ export const DashboardMessages: React.FC = () => {
       }
 
       if (formData.channel === 'sms' && !saveAsDraft) {
+        if (!SMS_SENDING_ENABLED) {
+          toast(SMS_WORKSPACE_LOCK_COPY, 'error');
+          setSending(false);
+          return;
+        }
         if (!smsCreditsSufficient) {
           toast(`Not enough SMS credits. Need ${smsCreditsNeeded}, have ${smsCredits}.`, 'error');
           setSending(false);
@@ -3200,12 +3210,17 @@ export const DashboardMessages: React.FC = () => {
                     <div>
                       <p className="text-xs font-semibold uppercase tracking-[0.22em] text-text-tertiary">SMS credits</p>
                       <p className="mt-2 text-2xl font-semibold text-text-primary">{smsCredits}</p>
-                      <p className="mt-1 text-xs text-text-secondary">About 1 credit per guest for each text.</p>
+                      <p className="mt-1 text-xs text-text-secondary">
+                        {SMS_SENDING_ENABLED ? 'About 1 credit per guest for each text.' : SMS_CREDITS_LOCK_COPY}
+                      </p>
                       <p className="text-xs text-text-tertiary">Credits expire 12 months after purchase{smsExpiringSoon > 0 ? ` • ${smsExpiringSoon} expiring in 30 days` : ''}</p>
+                      {!SMS_SENDING_ENABLED && (
+                        <p className="mt-2 text-xs text-warning">{SMS_WORKSPACE_LOCK_COPY}</p>
+                      )}
                     </div>
                     <div className="flex flex-col gap-2">
-                      <Button size="sm" variant="outline" onClick={() => handleBuySmsPack('sms_100')} disabled={buyingPack !== null}>{buyingPack === 'sms_100' ? 'Opening…' : 'Buy 100'}</Button>
-                      <Button size="sm" variant="outline" onClick={() => handleBuySmsPack('sms_500')} disabled={buyingPack !== null}>{buyingPack === 'sms_500' ? 'Opening…' : 'Buy 500'}</Button>
+                      <Button size="sm" variant="outline" onClick={() => handleBuySmsPack('sms_100')} disabled={buyingPack !== null || !SMS_SENDING_ENABLED}>{buyingPack === 'sms_100' ? 'Opening…' : 'Buy 100'}</Button>
+                      <Button size="sm" variant="outline" onClick={() => handleBuySmsPack('sms_500')} disabled={buyingPack !== null || !SMS_SENDING_ENABLED}>{buyingPack === 'sms_500' ? 'Opening…' : 'Buy 500'}</Button>
                     </div>
                   </div>
                 </div>
@@ -3223,7 +3238,11 @@ export const DashboardMessages: React.FC = () => {
                 </div>
               </div>
               {smsTransactions.length === 0 ? (
-                <p className="text-xs text-text-tertiary">No credit activity yet. Buy credits when you’re ready to send texts.</p>
+                <p className="text-xs text-text-tertiary">
+                  {SMS_SENDING_ENABLED
+                    ? 'No credit activity yet. Buy credits when you’re ready to send texts.'
+                    : 'No credit activity yet. Texting stays locked here until sender setup, consent, opt-out, and delivery readiness are complete.'}
+                </p>
               ) : (
                 <>
                   <div className="mb-3 rounded-2xl border border-border-subtle bg-surface-subtle/30 px-4 py-3">
@@ -3299,10 +3318,23 @@ export const DashboardMessages: React.FC = () => {
                   <label className="block text-sm font-medium text-text-primary mb-2">Channel</label>
                   <div className="inline-flex rounded-lg border border-border overflow-hidden bg-white">
                     <button type="button" className={`px-3 py-1.5 text-sm ${formData.channel === 'email' ? 'bg-primary/10 text-primary' : 'text-text-secondary'}`} onClick={() => setFormData({ ...formData, channel: 'email' })}>Email</button>
-                    <button type="button" className={`px-3 py-1.5 text-sm border-l border-border ${formData.channel === 'sms' ? 'bg-primary/10 text-primary' : 'text-text-secondary'}`} onClick={() => setFormData({ ...formData, channel: 'sms' })}>SMS</button>
+                    <button type="button" className={`px-3 py-1.5 text-sm border-l border-border ${formData.channel === 'sms' ? 'bg-primary/10 text-primary' : 'text-text-secondary'}`} onClick={() => setFormData({ ...formData, channel: 'sms' })}>
+                      {SMS_SENDING_ENABLED ? 'SMS' : 'SMS (locked)'}
+                    </button>
                   </div>
                   {formData.channel === 'sms' && (
-                    <p className="text-xs text-text-tertiary mt-1">Texts use your credit balance and send when text setup is ready.</p>
+                    <div className="mt-1 space-y-2">
+                      <p className="text-xs text-text-tertiary">
+                        {SMS_SENDING_ENABLED
+                          ? 'Texts use your credit balance and send when text setup is ready.'
+                          : 'Text drafts stay reviewable here, but live sends and credit purchases stay off until texting readiness is complete.'}
+                      </p>
+                      {!SMS_SENDING_ENABLED && (
+                        <div className="rounded-lg border border-warning/20 bg-warning-light px-3 py-2 text-sm text-warning">
+                          {SMS_WORKSPACE_LOCK_COPY}
+                        </div>
+                      )}
+                    </div>
                   )}
                 </div>
 
@@ -3341,8 +3373,12 @@ export const DashboardMessages: React.FC = () => {
                       {unreachableRecipients > 0 ? `${unreachableRecipients} missing ${formData.channel === 'sms' ? 'phone numbers' : 'email addresses'}` : `Everyone in this group is reachable by ${formData.channel === 'sms' ? 'text' : 'email'}`}
                     </span>
                     {formData.channel === 'sms' && (
-                      <span className={`inline-flex items-center px-2 py-1 text-xs rounded-full border ${smsCreditsSufficient ? 'border-success/30 bg-success-light text-success' : 'border-error/30 bg-error-light text-error'}`}>
-                        {smsCreditsSufficient ? 'Enough credits' : `Need ${smsCreditsNeeded - smsCredits} more credits`}
+                      <span className={`inline-flex items-center px-2 py-1 text-xs rounded-full border ${
+                        SMS_SENDING_ENABLED
+                          ? smsCreditsSufficient ? 'border-success/30 bg-success-light text-success' : 'border-error/30 bg-error-light text-error'
+                          : 'border-warning/20 bg-warning-light text-warning'
+                      }`}>
+                        {SMS_SENDING_ENABLED ? (smsCreditsSufficient ? 'Enough credits' : `Need ${smsCreditsNeeded - smsCredits} more credits`) : 'SMS locked'}
                       </span>
                     )}
                   </div>
@@ -3491,7 +3527,9 @@ export const DashboardMessages: React.FC = () => {
                       <p className="text-xs font-semibold uppercase tracking-[0.22em] text-text-tertiary">Delivery summary</p>
                       <p className="mt-2 font-medium text-text-primary">What happens next</p>
                       <p className="text-text-secondary mt-1">
-                        {formData.scheduleType === 'later' && formData.scheduleDate && formData.scheduleTime
+                        {formData.channel === 'sms' && !SMS_SENDING_ENABLED
+                          ? `SMS draft stays reviewable for ${activeRecipients} reachable recipient${activeRecipients !== 1 ? 's' : ''} until texting readiness is complete.`
+                          : formData.scheduleType === 'later' && formData.scheduleDate && formData.scheduleTime
                           ? isPastScheduledTime(`${formData.scheduleDate}T${formData.scheduleTime}:00`)
                             ? `Will send right away because that time has already passed — ${activeRecipients} recipient${activeRecipients !== 1 ? 's' : ''}`
                             : `Scheduled for ${formatScheduledDate(`${formData.scheduleDate}T${formData.scheduleTime}:00`)} — ${activeRecipients} recipient${activeRecipients !== 1 ? 's' : ''}`
@@ -3514,7 +3552,9 @@ export const DashboardMessages: React.FC = () => {
 
                 {activeRecipients > 0 && (
                   <div className="text-xs text-text-tertiary bg-surface-subtle border border-border rounded-lg px-3 py-2">
-                    {formData.scheduleType === 'now'
+                    {formData.channel === 'sms' && !SMS_SENDING_ENABLED
+                      ? 'Texting stays reviewable here, but live SMS remains locked until sender setup, consent, opt-out, and delivery readiness are complete.'
+                      : formData.scheduleType === 'now'
                       ? `When you click Send, this ${formData.channel === 'sms' ? 'text' : 'email'} will go out right away to ${activeRecipients} recipient${activeRecipients !== 1 ? 's' : ''}.`
                       : `Scheduled messages will send at your chosen time to everyone who still matches this group.`}
                   </div>
@@ -3529,7 +3569,14 @@ export const DashboardMessages: React.FC = () => {
                   </div>
                 )}
 
-                {formData.channel === 'sms' && activeRecipients > 0 && !smsCreditsSufficient && (
+                {formData.channel === 'sms' && activeRecipients > 0 && !SMS_SENDING_ENABLED && (
+                  <div className="flex items-center gap-3 p-3 bg-warning-light border border-warning/20 rounded-lg text-sm text-warning">
+                    <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                    <span>{SMS_WORKSPACE_LOCK_COPY}</span>
+                  </div>
+                )}
+
+                {formData.channel === 'sms' && activeRecipients > 0 && SMS_SENDING_ENABLED && !smsCreditsSufficient && (
                   <div className="flex items-center justify-between gap-3 p-3 bg-error-light border border-error/20 rounded-lg text-sm text-error">
                     <span>Not enough text credits yet: need {smsCreditsNeeded}, have {smsCredits}.</span>
                     <Button size="sm" variant="outline" onClick={() => handleBuySmsPack('sms_100')} disabled={buyingPack !== null}>Buy credits</Button>
@@ -3551,7 +3598,7 @@ export const DashboardMessages: React.FC = () => {
                     type="submit"
                     variant="primary"
                     fullWidth
-                    disabled={sending || activeRecipients === 0 || (formData.channel === 'email' && !emailCapacityEnough)}
+                    disabled={sending || activeRecipients === 0 || (formData.channel === 'email' && !emailCapacityEnough) || (formData.channel === 'sms' && !SMS_SENDING_ENABLED)}
                   >
                     {sending ? 'Processing...' : (
                       formData.scheduleType === 'later' && !selectedScheduleIsPast ? (
