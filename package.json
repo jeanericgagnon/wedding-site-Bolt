@@ -26,7 +26,7 @@
     "test:coverage": "vitest run --coverage",
     "test:unit": "vitest run src",
     "test:builder-v2": "vitest run src/builder-v2/contracts.test.ts src/builder-v2/adapter.test.ts src/builder-v2/importPrepare.test.ts src/builder-v2/importSanitize.test.ts src/builder-v2/upgradeBridge.test.ts src/builder-v2/validate.test.ts",
-    "test:security": "vitest run src/lib/launchEdgeFunctions.test.ts src/lib/publicSiteAccess.test.ts src/lib/publicSiteProject.test.ts src/lib/serviceWorkerSafety.test.ts src/lib/aiProviderKeySecurity.test.ts src/lib/aiExposureProofScript.test.ts src/lib/settingsErrorSafety.test.ts src/lib/serviceRoleAuthorizationDisposition.test.ts src/lib/registryPreviewUrlNormalizer.test.ts src/lib/emailSafety.test.ts src/pages/RSVP.test.tsx src/pages/EventRSVP.test.tsx",
+    "test:security": "vitest run src/lib/publicSiteBoundary.test.ts src/lib/publicSiteProject.test.ts src/lib/guestContactLookupSafety.test.ts src/lib/guestContactSubmitSafety.test.ts src/lib/sendWeddingEmailSafety.test.ts src/lib/processEmailQueueSafety.test.ts src/lib/sendBulkMessageSafety.test.ts src/lib/openaiClientSafety.test.ts src/pages/SiteView.test.ts src/pages/RSVP.test.tsx src/pages/EventRSVP.test.tsx src/pages/GuestContactUpdate.test.tsx src/pages/PhotoUpload.test.tsx src/pages/VaultContribute.test.ts",
     "test:smoke": "npm run smoke:registry && npm run smoke:rsvp && npm run smoke:csvmapper && npm run smoke:checkin && npm run smoke:messages && npm run smoke:site",
     "test:integration": "npm run proof:v1:canonical-smoke && npm run proof:v1:guests-rsvp-ops && npm run proof:v1:registry && npm run proof:v1:seating-continuity && npm run proof:v1:comms-center",
     "test:e2e": "npx playwright test --workers=1 tests/e2e",

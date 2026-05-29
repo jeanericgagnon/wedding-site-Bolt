@@ -1,0 +1,32 @@
+rules:
+  - id: dayof-no-dangerous-html-on-launch-surfaces
+    languages: [typescript, tsx, javascript, jsx]
+    message: Keep dangerous HTML out of launch-critical guest and public surfaces.
+    severity: ERROR
+    pattern: dangerouslySetInnerHTML
+    paths:
+      include:
+        - src/pages/**
+        - src/lib/**
+
+  - id: dayof-no-browser-openai-key
+    languages: [typescript, tsx, javascript, jsx]
+    message: Browser code must not rely on Vite-exposed OpenAI key variables.
+    severity: ERROR
+    pattern-either:
+      - pattern: VITE_OPENAI_API_KEY
+      - pattern: VITE_OPENAI_MODEL
+    paths:
+      include:
+        - src/**
+
+  - id: dayof-no-service-role-in-browser-src
+    languages: [typescript, tsx, javascript, jsx]
+    message: Browser source must not reference service-role keys.
+    severity: ERROR
+    pattern-either:
+      - pattern: SUPABASE_SERVICE_ROLE_KEY
+      - pattern: service_role
+    paths:
+      include:
+        - src/**
