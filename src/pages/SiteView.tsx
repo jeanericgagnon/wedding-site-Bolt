@@ -274,7 +274,7 @@ function createDemoFallbackSections(templateId = 'modern-luxe'): BuilderSectionI
   }));
 }
 
-function normalizeSectionVariants(sections: BuilderSectionInstance[]): BuilderSectionInstance[] {
+export function normalizeSectionVariants(sections: BuilderSectionInstance[]): BuilderSectionInstance[] {
   return sections.map((section) => {
     const supported = getSectionVariants(section.type);
     if (supported.includes(section.variant)) return section;

@@ -68,6 +68,7 @@ import {
   buildPublicSiteMetadata,
   combineDateAndTime,
   createAlexJordanDemoWeddingData,
+  normalizeSectionVariants,
   SITE_LOAD_ERROR_TITLE,
   SITE_INVALID_URL_ERROR,
   SITE_INVITE_ONLY_HELP,
@@ -178,6 +179,68 @@ describe('buildPublicSiteMetadata', () => {
     expect(metadata.description).toBe('Celebrate with Taylor & Riley.');
     expect(metadata.canonicalUrl).toBe('http://localhost:3000/taylor-riley');
     expect(metadata.noIndex).toBe(true);
+  });
+});
+
+describe('normalizeSectionVariants', () => {
+  it('falls back unsupported builder variants to guest-safe public variants', () => {
+    const normalized = normalizeSectionVariants([
+      {
+        id: 'hero-1',
+        type: 'hero',
+        variant: 'video',
+        enabled: true,
+        locked: false,
+        orderIndex: 0,
+        settings: {},
+        styleOverrides: {},
+        bindings: {},
+        meta: { createdAtISO: '2026-05-28T00:00:00.000Z', updatedAtISO: '2026-05-28T00:00:00.000Z' },
+      },
+      {
+        id: 'registry-1',
+        type: 'registry',
+        variant: 'luxury',
+        enabled: true,
+        locked: false,
+        orderIndex: 1,
+        settings: {},
+        styleOverrides: {},
+        bindings: {},
+        meta: { createdAtISO: '2026-05-28T00:00:00.000Z', updatedAtISO: '2026-05-28T00:00:00.000Z' },
+      },
+      {
+        id: 'gallery-1',
+        type: 'gallery',
+        variant: 'fullwidth',
+        enabled: true,
+        locked: false,
+        orderIndex: 2,
+        settings: {},
+        styleOverrides: {},
+        bindings: {},
+        meta: { createdAtISO: '2026-05-28T00:00:00.000Z', updatedAtISO: '2026-05-28T00:00:00.000Z' },
+      },
+      {
+        id: 'story-1',
+        type: 'story',
+        variant: 'editorial',
+        enabled: true,
+        locked: false,
+        orderIndex: 3,
+        settings: {},
+        styleOverrides: {},
+        bindings: {},
+        meta: { createdAtISO: '2026-05-28T00:00:00.000Z', updatedAtISO: '2026-05-28T00:00:00.000Z' },
+      },
+    ]);
+
+    expect(normalized.map((section) => section.variant)).toEqual([
+      'default',
+      'featured',
+      'default',
+      'default',
+    ]);
   });
 });
 
