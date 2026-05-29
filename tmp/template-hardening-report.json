@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-03-22T18:56:12.299Z",
+  "generatedAt": "2026-05-29T01:35:31.648Z",
   "baseUrl": "http://127.0.0.1:4173",
   "templateAudit": {
     "total": 35,
@@ -15,7 +15,7 @@
           "sayulita"
         ],
         "leakHits": [],
-        "sectionHash": "91a95c618be40d42465488c5169c2f0ddd10b927287ffe4e323db6a76d4b071d",
+        "sectionHash": "0ae971d0124da1b08a915803f037659916699a0e34b435a4ba895c6f3666840c",
         "distinct": true,
         "pass": true
       },
@@ -26,7 +26,7 @@
           "sayulita"
         ],
         "leakHits": [],
-        "sectionHash": "84b047a6e852da6b7eb8247976ad35fbf328d837f72f003bd943688c6fb6dc7e",
+        "sectionHash": "f8251fc50b095cadf5fda9e18c49d6d0952cb50221a7307615b335597da1c034",
         "distinct": true,
         "pass": true
       },
@@ -37,7 +37,7 @@
           "sayulita"
         ],
         "leakHits": [],
-        "sectionHash": "96cc8386302c51b78e61d23db167d8004d2bc6a993eec96b2ea1a8c708f0713d",
+        "sectionHash": "8654daa175da740985703d1f6e055dbf0e695cfa482d1a5ba5edfc454b4646ad",
         "distinct": true,
         "pass": true
       },
@@ -48,7 +48,7 @@
           "sayulita"
         ],
         "leakHits": [],
-        "sectionHash": "1c5066e800bb73620617e750a19819b01fe56486fc4c16f574b8a55ce51ce7c3",
+        "sectionHash": "e5a07119afa6389fff47f782c2ea80c7adac426b61d929fdafcf2142cdf6d2f0",
         "distinct": true,
         "pass": true
       },
@@ -59,7 +59,7 @@
           "sayulita"
         ],
         "leakHits": [],
-        "sectionHash": "bbb1eef7249880c9475c438daae3aec3a6a9ac4fc293df50c43b847df328115a",
+        "sectionHash": "c3176695ffc25b331f0f5ec90194e321cff141a6311e7a18d0f7fd642bccf209",
         "distinct": true,
         "pass": true
       },
@@ -70,7 +70,7 @@
           "sayulita"
         ],
         "leakHits": [],
-        "sectionHash": "51418aa245ac0791bcc2a3f7a8827f8f31607b480d7bf8a846fd8d95c9393260",
+        "sectionHash": "3a60fb74c0437304e54810a6c7a703c1cbbedf972d217d82060687e385c9ae64",
         "distinct": true,
         "pass": true
       },
@@ -81,7 +81,7 @@
           "sayulita"
         ],
         "leakHits": [],
-        "sectionHash": "0514a7fe2a489534a84591fb579c1e8a7eb4df8ecaeeaa8085e2e85d7f55b7f6",
+        "sectionHash": "6e9364847f7f91a8d04f008c817abbee98f09842540a05de54bbbb310dfc9e3e",
         "distinct": true,
         "pass": true
       },
@@ -92,7 +92,7 @@
           "sayulita"
         ],
         "leakHits": [],
-        "sectionHash": "ae2f39881697e3eecfde0f344a6ba52e19e3e0b73ff87c7b6fe7dc26d10f833e",
+        "sectionHash": "9da296169c3497fa5effc05803e2dc91fe4b1b01d08375f92c7f76ad0113f5e1",
         "distinct": true,
         "pass": true
       },
@@ -103,7 +103,7 @@
           "sayulita"
         ],
         "leakHits": [],
-        "sectionHash": "eaa39360d4e64d39f35859735a5809479c364ac5795d18ebe4a42158dca205fb",
+        "sectionHash": "271ad1fc13fc8e54646d9934e7c4abb3fb562e67dbd9db1b1eee64b530e9cdfc",
         "distinct": true,
         "pass": true
       },
@@ -114,7 +114,7 @@
           "sayulita"
         ],
         "leakHits": [],
-        "sectionHash": "3fa90adaf2d69fa971b12bd866eea1e58d7c7114a9c0be051dffb1397fcbeb3d",
+        "sectionHash": "296670a95d67cd7a03adf6fba3fbd959f180f54a78e2bec7357010e0c187ef1e",
         "distinct": true,
         "pass": true
       },
@@ -125,7 +125,7 @@
           "sayulita"
         ],
         "leakHits": [],
-        "sectionHash": "6d5dba8c842f08b175a92479ba0d719162ba14c0a326f959905ffd7db0773613",
+        "sectionHash": "29061056dec215ea2365872d3f67612d26316631506095b9f37bbf581891a394",
         "distinct": true,
         "pass": true
       },
@@ -136,7 +136,7 @@
           "sayulita"
         ],
         "leakHits": [],
-        "sectionHash": "b2e39c2d673be5e7b39aea4d7d4ab688a2771c40d1dd603cd4c1a567f59b5393",
+        "sectionHash": "a8c4dd15eec1eaaeabd245eae3a3e9b3656b95cb5bc077d1860a58dffc791b9b",
         "distinct": true,
         "pass": true
       },
@@ -147,7 +147,7 @@
           "sayulita"
         ],
         "leakHits": [],
-        "sectionHash": "ad90b68e158e4f4be3dfaf9d329d04ead1559807c199c7e868587a8827438a1d",
+        "sectionHash": "4be175e4f29e4ec00aa928618192df6b84494c1aafbb693ed7c2810fd9a8fb6b",
         "distinct": true,
         "pass": true
       },
@@ -158,7 +158,7 @@
           "sayulita"
         ],
         "leakHits": [],
-        "sectionHash": "03558ade5c5ddaf45a4c4d46c7767dcfe750931f72db7a665cca360fc9c46589",
+        "sectionHash": "06345865979cf54336f303f3db9de0cb65d2b16351a4e978adcd97d79b5655a9",
         "distinct": true,
         "pass": true
       },
@@ -169,7 +169,7 @@
           "sayulita"
         ],
         "leakHits": [],
-        "sectionHash": "b812dee11f1345b51d2d4dd74d57f36d324d8e84b8937a8eac63eefa6d839f64",
+        "sectionHash": "53f3af568123ccad1f5afcea7ebd6b79087685c924a70278454d8eb37d5d1bb9",
         "distinct": true,
         "pass": true
       },
@@ -180,7 +180,7 @@
           "sayulita"
         ],
         "leakHits": [],
-        "sectionHash": "646b0438aece4c051ec1719cb695db06e6f5b9788aea0d48a252b5455e12e277",
+        "sectionHash": "a3b48c5c3248cc9aa69170f23ef676c196cad2290ac98038618dd2fe19238d9b",
         "distinct": true,
         "pass": true
       },
@@ -191,7 +191,7 @@
           "sayulita"
         ],
         "leakHits": [],
-        "sectionHash": "5ac91d9f16783b30303e5a62d1844b6e4606f18bd3a55878849396d5187e8c5a",
+        "sectionHash": "af20932d53a8a5dd99afd528401e76c343812c0f4fab332f9d33b70225add217",
         "distinct": true,
         "pass": true
       },
@@ -202,7 +202,7 @@
           "sayulita"
         ],
         "leakHits": [],
-        "sectionHash": "5ebbc4a47c141b20db0974c4aa08fc85249ba091ba68e44db114a239912e58d9",
+        "sectionHash": "7f8805516e13775ce35a8c57d8116307310d183a76fce6e2d7e2665ade870ff5",
         "distinct": true,
         "pass": true
       },
@@ -213,7 +213,7 @@
           "sayulita"
         ],
         "leakHits": [],
-        "sectionHash": "016a60109d550883b72afcf84fe3f9583a4044dbe0bfed97260848c4ba4d84d1",
+        "sectionHash": "1544d228aef896ace2a32b5cad077cdfa4ad88cb791bbeb8726e2f532ae8a20d",
         "distinct": true,
         "pass": true
       },
@@ -224,7 +224,7 @@
           "sayulita"
         ],
         "leakHits": [],
-        "sectionHash": "d500a1e773e5914b1e30fbcc74c1de2c8b0556dd5bbab0ac977f7a7cc62600d4",
+        "sectionHash": "63a48a0e5ba8bf90c55c2b97b000b59b8c2179b9931ae2056af59c4b9a17dbe6",
         "distinct": true,
         "pass": true
       },
@@ -235,7 +235,7 @@
           "sayulita"
         ],
         "leakHits": [],
-        "sectionHash": "7cb3e2baa80dc7903c238078e38da04967ca294dcc9adaeacd0ea7c110b51f1a",
+        "sectionHash": "ca970598b6015d0e0f309d176c0ee5cc0b85369ff65d716f538983b5b85d6ea0",
         "distinct": true,
         "pass": true
       },
@@ -246,7 +246,7 @@
           "sayulita"
         ],
         "leakHits": [],
-        "sectionHash": "1e66ef5fd7b5698d1411938c2d24d22a4aaacee010b49bd936e5e1ca1c6dc9da",
+        "sectionHash": "e3496ce5d4751ded3e9c9e95c07504da6129f8f594629b348f0ec36641d075a2",
         "distinct": true,
         "pass": true
       },
@@ -257,7 +257,7 @@
           "sayulita"
         ],
         "leakHits": [],
-        "sectionHash": "72932a6153318add92704003a998e0f6f8d2bbbbb05827141c13441434777d87",
+        "sectionHash": "6b3507a19884c65b458e8cd79e3450f7ea48769b9902e59405bfaac4db111fc7",
         "distinct": true,
         "pass": true
       },
@@ -268,7 +268,7 @@
           "sayulita"
         ],
         "leakHits": [],
-        "sectionHash": "0294eaf6f4e6ac050f289061125d06dfa70f6f774f4525fc5d2f7803000c2157",
+        "sectionHash": "45b9d0fe2233183f7dc99af1bed87f333e010a74c354a3a25e2739e04e12edde",
         "distinct": true,
         "pass": true
       },
@@ -279,7 +279,7 @@
           "sayulita"
         ],
         "leakHits": [],
-        "sectionHash": "a0d4d844432d7a8ae8d38d099457eded69ae21b79c8e57f47da998f61c88ec78",
+        "sectionHash": "693fc2e114602346855e4f3fc6eb88f9fe75ba2a522f375fbd81a19265c8ebfe",
         "distinct": true,
         "pass": true
       },
@@ -290,7 +290,7 @@
           "sayulita"
         ],
         "leakHits": [],
-        "sectionHash": "88aca787dc91bc43cf876bc81e43767a771af285177628bdeaaa639afb8fdabd",
+        "sectionHash": "a7a53308ec75a2abe5fad2ebca3a4fa1a1dcb24fe1f3fc30f8b2339106d3b10f",
         "distinct": true,
         "pass": true
       },
@@ -301,7 +301,7 @@
           "sayulita"
         ],
         "leakHits": [],
-        "sectionHash": "eb072c49448db5069eedaa6548b04742d284c4a8bdf548445c4b9942cdc81306",
+        "sectionHash": "d92b83f2e8faca3fa6ae441bfbc01024b326a9fb5f1bf1f23709c8c65f5b3416",
         "distinct": true,
         "pass": true
       },
@@ -312,7 +312,7 @@
           "sayulita"
         ],
         "leakHits": [],
-        "sectionHash": "eb70b3949b5c016c93819ed335937e5371c3334b4df0441a5a76a11aca761cb5",
+        "sectionHash": "4ddaff5dde5b23ae7d4f4fc4946950558912aca044a591c730fe15672d110a7d",
         "distinct": true,
         "pass": true
       },
@@ -323,7 +323,7 @@
           "sayulita"
         ],
         "leakHits": [],
-        "sectionHash": "89c6af293ee6de4cfdaf1c99caa462d254db06e60478d626c2b5bf76c774d847",
+        "sectionHash": "492b7b1678837e2ddc0ea35413bec64fa2264ddfdd1de7acfa31917441d53408",
         "distinct": true,
         "pass": true
       },
@@ -334,7 +334,7 @@
           "sayulita"
         ],
         "leakHits": [],
-        "sectionHash": "8dbfbc6e5ec439071500affeb13129ce952d19c7573a0c80330cbeafe8af2a5a",
+        "sectionHash": "51c725078b95ccab264fa95539150a0b3b8090ec34fd218918d68e2e5e453018",
         "distinct": true,
         "pass": true
       },
@@ -345,7 +345,7 @@
           "sayulita"
         ],
         "leakHits": [],
-        "sectionHash": "4165d5b957eabeddf7f01830760d14645d0b3c858b90e78a4773d07f40cc12de",
+        "sectionHash": "21532be4da5af2d8b57d37d5a3babcf63def04a0756afe8cb332223ebd9d7d43",
         "distinct": true,
         "pass": true
       },
@@ -356,7 +356,7 @@
           "sayulita"
         ],
         "leakHits": [],
-        "sectionHash": "7aeb11b99dc05aae414750c95c05e2ac66d4d33ed462d7691d3de653935583f9",
+        "sectionHash": "6141efb79570be7d797422e05e3d74679c7e8f3836efdb8286daaa6b0cdff097",
         "distinct": true,
         "pass": true
       },
@@ -367,7 +367,7 @@
           "sayulita"
         ],
         "leakHits": [],
-        "sectionHash": "6efe3526883de0435951758a8d53553927254ed034b45baaeb35bae6aecab314",
+        "sectionHash": "9309adba57f3bf5a6973f78083971afde74fe404f8cd60d5e334154932a01191",
         "distinct": true,
         "pass": true
       },
@@ -378,7 +378,7 @@
           "sayulita"
         ],
         "leakHits": [],
-        "sectionHash": "c5f48e5351f5254971c4755b27a5b5288828058d39c98b021cadd14bb32e75fc",
+        "sectionHash": "eaab388e96c8b874d162e62b51aebfaffdee844d6937211d91a34be24d5783ea",
         "distinct": true,
         "pass": true
       },
@@ -389,7 +389,7 @@
           "sayulita"
         ],
         "leakHits": [],
-        "sectionHash": "c9aecbeb83b47addcec04ee442f3d20679fd7ecdc964f3d71d345dd065d945fd",
+        "sectionHash": "1449b7533c576347ca346d018e10b5d9d0c8c94a9456fce0faa44c63cf18a05f",
         "distinct": true,
         "pass": true
       }
