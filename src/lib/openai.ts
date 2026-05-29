@@ -3,15 +3,14 @@ import { z } from 'zod';
 const OPENAI_API_URL = 'https://api.openai.com/v1/responses';
 
 const getEnvValue = (key: string) => {
-  const viteValue = typeof import.meta !== 'undefined' && import.meta.env ? import.meta.env[key] : undefined;
   const processValue = typeof process !== 'undefined' ? process.env[key] : undefined;
-  return (viteValue || processValue || '').trim();
+  return (processValue || '').trim();
 };
 
-const getOpenAiApiKey = () => getEnvValue('VITE_OPENAI_API_KEY');
-const getOpenAiModel = () => getEnvValue('VITE_OPENAI_MODEL') || 'gpt-4.1-mini';
+const getOpenAiApiKey = () => getEnvValue('OPENAI_API_KEY');
+const getOpenAiModel = () => getEnvValue('OPENAI_MODEL') || 'gpt-4.1-mini';
 
-export const isOpenAiForcedOff = () => getEnvValue('VITE_FORCE_DETERMINISTIC_AI') === 'true' || getEnvValue('VITEST') === 'true';
+export const isOpenAiForcedOff = () => getEnvValue('FORCE_DETERMINISTIC_AI') === 'true' || getEnvValue('VITEST') === 'true';
 export const isOpenAiConfigured = () => Boolean(getOpenAiApiKey()) && !isOpenAiForcedOff();
 export const getOpenAiRuntimeConfig = () => ({
   configured: isOpenAiConfigured(),
@@ -21,7 +20,7 @@ export const getOpenAiRuntimeConfig = () => ({
 
 export class OpenAiNotConfiguredError extends Error {
   constructor() {
-    super('OpenAI API key is not configured. Set VITE_OPENAI_API_KEY to enable model-backed intelligence.');
+    super('Model-backed AI is not configured for this environment.');
   }
 }
 
