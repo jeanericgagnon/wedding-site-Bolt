@@ -1148,7 +1148,9 @@ describe('EventRSVP token trust continuity', () => {
     fireEvent.click(screen.getAllByRole('button', { name: /RSVP for this event|Update my RSVP/ })[1]);
     expect(screen.getByRole('heading', { name: 'Reception', level: 3 })).toBeInTheDocument();
 
-    await new Promise((resolve) => window.setTimeout(resolve, 2100));
+    await act(async () => {
+      await new Promise((resolve) => window.setTimeout(resolve, 2100));
+    });
 
     expect(screen.getByRole('heading', { name: 'Reception', level: 3 })).toBeInTheDocument();
   }, 10000);
@@ -1219,7 +1221,10 @@ describe('EventRSVP token trust continuity', () => {
 
     expect(screen.getByRole('button', { name: 'Submit RSVP' })).not.toBeDisabled();
 
-    resolveFirstInsert({ error: null });
+    await act(async () => {
+      resolveFirstInsert({ error: null });
+      await Promise.resolve();
+    });
   });
 
   it('keeps a reopened event form open when an older event load is invalidated on close', async () => {
@@ -1288,7 +1293,10 @@ describe('EventRSVP token trust continuity', () => {
       expect(screen.getByText("You're in!")).toBeInTheDocument();
     });
 
-    firstSubmitRequest.resolve({ error: null });
+    await act(async () => {
+      firstSubmitRequest.resolve({ error: null });
+      await Promise.resolve();
+    });
   });
 
   it('clears event RSVP errors when the guest closes the form', async () => {
@@ -2309,7 +2317,10 @@ describe('EventRSVP token trust continuity', () => {
       expect(screen.getByText("You're in!")).toBeInTheDocument();
     });
 
-    firstSubmitRequest.resolve({ error: null });
+    await act(async () => {
+      firstSubmitRequest.resolve({ error: null });
+      await Promise.resolve();
+    });
   });
 
   it('allows a new event RSVP submit after a prior submit is invalidated by token change', async () => {
@@ -2391,7 +2402,10 @@ describe('EventRSVP token trust continuity', () => {
       expect(screen.getByText("You're in!")).toBeInTheDocument();
     });
 
-    firstSubmitRequest.resolve({ error: null });
+    await act(async () => {
+      firstSubmitRequest.resolve({ error: null });
+      await Promise.resolve();
+    });
   });
 
   it('clears stale submit errors when the guest edits the event RSVP before retrying', async () => {
