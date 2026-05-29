@@ -160,6 +160,51 @@ const sourceChecks = [
       'These are just the highest-leverage details the AI still wants.',
     ],
   },
+  {
+    id: 'terms-privacy-clarify-ai-scope',
+    label: 'Privacy and terms clarify mixed model-backed versus deterministic AI scope',
+    file: 'src/pages/Privacy.tsx',
+    required: true,
+    mustContain: [
+      'Some Day of Love features use AI or model-backed tools to help interpret setup answers, propose content, and generate draft copy.',
+      'Other helper lanes are deterministic and grounded in the project details you already entered',
+    ],
+  },
+  {
+    id: 'terms-clarify-ai-scope',
+    label: 'Terms clarify mixed model-backed versus deterministic AI scope',
+    file: 'src/pages/Terms.tsx',
+    required: true,
+    mustContain: [
+      'Some lanes may use server-side model-backed tools when configured, while others remain deterministic helpers.',
+    ],
+  },
+  {
+    id: 'memory-recap-no-ai-overclaim',
+    label: 'Deterministic recap coaching stays out of AI-labeled owner copy',
+    file: 'src/lib/memoryCurator.ts',
+    required: true,
+    mustContain: [
+      'Generate the first recap draft while the collection is still compact.',
+    ],
+    mustNotContain: [
+      'Generate the first AI recap while the collection is still compact.',
+    ],
+  },
+  {
+    id: 'canonical-ai-contract-doc',
+    label: 'Canonical AI product contract doc exists and classifies lanes',
+    file: 'docs/ai-product-contract.md',
+    required: true,
+    mustContain: [
+      '## Model-backed server lanes',
+      '## Deterministic or reviewable lanes',
+      '## Intentionally non-AI lanes',
+      'Quick Start orchestration may use a server-side model when configured.',
+      'Generated wedding-site copy remains a grounded draft helper.',
+      'Planner suggestions, invisible-intelligence nudges, and recap coaching are deterministic helpers',
+    ],
+  },
 ];
 
 const results = [
@@ -185,6 +230,7 @@ const output = {
     deterministicOrFallback: [
       'Quick Start extraction and wedding-site draft generation fall back cleanly when model-backed AI is unavailable.',
       'Customer-facing onboarding copy stays framed as assisted draft help instead of autonomous automation.',
+      'Deterministic helper lanes are now explicitly classified in product/legal copy and the AI contract doc.',
     ],
     customerSafety: [
       'Public leak boundaries remain active.',
@@ -194,14 +240,14 @@ const output = {
   },
   automatedCoverage: [
     'AI-assisted onboarding copy stays grounded instead of overclaiming automation.',
+    'Product/legal copy now distinguishes model-backed lanes from deterministic helper lanes.',
     'Deterministic Quick Start and wedding-draft fallbacks remain usable.',
     'Public surfaces still strip internal-looking provider/token/debug values.',
     'Photo and album safety rails keep errors customer-safe.',
     'OpenAI client path no longer relies on browser-exposed Vite key variables.',
   ],
   stillManualProofNeeded: [
-    'Server-side secure-model/live-readback proof for any retained model-backed routes must stay green where those routes still exist.',
-    'Cross-surface AI claims matrix and final release copy review still need human readback before V2 signoff.',
+    'Server-side secure-model/live-readback proof for any retained model-backed routes must stay green where those routes still exist after future provider, secret, or deploy changes.',
   ],
   results,
 };

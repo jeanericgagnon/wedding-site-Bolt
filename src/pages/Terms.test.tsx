@@ -15,6 +15,7 @@ describe('Terms page truth', () => {
 
     expect(screen.getByText(/Day of Love may generate draft copy, structure, or setup suggestions\./)).toBeInTheDocument();
     expect(screen.getByText(/You are responsible for reviewing, editing, and approving any content before publishing it or sharing it with guests\./)).toBeInTheDocument();
+    expect(screen.getByText(/Some lanes may use server-side model-backed tools when configured, while others remain deterministic helpers\./)).toBeInTheDocument();
     expect(screen.getByText(/Paid features may require an active subscription or completed purchase\./)).toBeInTheDocument();
     expect(screen.getByText(/We do not guarantee uninterrupted availability/)).toBeInTheDocument();
     expect(screen.queryByText(/guaranteed uninterrupted availability/i)).not.toBeInTheDocument();

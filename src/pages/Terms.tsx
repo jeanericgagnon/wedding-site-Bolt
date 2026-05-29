@@ -40,6 +40,9 @@ export const Terms: React.FC = () => {
             Day of Love may generate draft copy, structure, or setup suggestions. Generated output is provided for convenience.
             You are responsible for reviewing, editing, and approving any content before publishing it or sharing it with guests.
           </p>
+          <p className="text-text-secondary">
+            Some lanes may use server-side model-backed tools when configured, while others remain deterministic helpers. We do not promise that every suggestion is produced by a live model-backed system.
+          </p>
         </section>
 
         <section className="space-y-3">

@@ -44,6 +44,9 @@ export const Privacy: React.FC = () => {
             Some Day of Love features use AI or model-backed tools to help interpret setup answers, propose content, and generate draft copy.
             You are responsible for reviewing generated outputs before publishing or sharing them with guests.
           </p>
+          <p className="text-text-secondary">
+            Other helper lanes are deterministic and grounded in the project details you already entered, so we do not treat every suggestion as a live model-backed system.
+          </p>
         </section>
 
         <section className="space-y-3">

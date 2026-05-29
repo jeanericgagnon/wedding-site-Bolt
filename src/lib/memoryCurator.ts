@@ -370,7 +370,10 @@ export const buildVaultMemoryCuratorModel = (args: {
   const { configs, entries, isArchiveLike, driveConnectedHealthy } = args;
   const enabledVaults = configs.filter((config) => config.is_enabled);
   const guestEntries = entries.filter((entry) => isGuestVaultAuthor(entry.author_name));
-  const recapEntries = entries.filter((entry) => (entry.title || '').toLowerCase().includes('ai recap'));
+  const recapEntries = entries.filter((entry) => {
+    const normalized = (entry.title || '').toLowerCase();
+    return normalized.includes('recap draft') || normalized.includes('ai recap');
+  });
   const photoEntries = entries.filter((entry) => {
     const media = (entry.media_type || '').toLowerCase();
     const file = (entry.attachment_name || '').toLowerCase();
@@ -510,7 +513,7 @@ export const buildVaultMemoryCuratorModel = (args: {
       detail: 'The vault is carrying a real story now. A recap will help you turn scattered notes and photos into something you can revisit later without digging through everything.',
       focusTitle: 'Synthesize while the archive is still compact',
       focusDetail: 'This is the moment where one recap can give the collection shape before it becomes harder to hold in your head.',
-      bestNextMove: 'Generate the first AI recap while the collection is still compact.',
+      bestNextMove: 'Generate the first recap draft while the collection is still compact.',
       decisionRule: 'Once the vault has enough material, synthesis beats adding raw volume for a while.',
       watchout: 'If you keep collecting without synthesizing, the archive may gain volume faster than it gains meaning, which makes revisiting it feel heavier instead of richer.',
       curationNote: 'This is the point where synthesis becomes more valuable than collecting even more raw material.',
@@ -537,7 +540,7 @@ export const buildVaultMemoryCuratorModel = (args: {
         },
       ),
       nextMoves: [
-        'Generate the first AI recap while the collection is still compact.',
+        'Generate the first recap draft while the collection is still compact.',
         'Use photo-first mode if the visual memories are stronger than the written ones.',
         'Refresh the recap later instead of trying to make it perfect in one pass.',
       ],

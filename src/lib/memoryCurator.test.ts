@@ -88,11 +88,11 @@ describe('memoryCurator', () => {
     expect(model.title).toContain('first recap');
     expect(model.readinessLabel).toBe('Recap-ready');
     expect(model.focusTitle).toBe('Synthesize while the archive is still compact');
-    expect(model.bestNextMove).toContain('Generate the first AI recap');
+    expect(model.bestNextMove).toContain('Generate the first recap draft');
     expect(model.decisionRule).toMatch(/synthesis beats adding raw volume/i);
     expect(model.watchout).toMatch(/collecting without synthesizing|gain meaning/i);
     expect(model.sequence[1]?.detail).toMatch(/compact|revisit-worthy|story/i);
     expect(model.curationNote).toMatch(/synthesis|more valuable/i);
-    expect(model.nextMoves[0]).toContain('Generate the first AI recap');
+    expect(model.nextMoves[0]).toContain('Generate the first recap draft');
   });
 });
