@@ -9,6 +9,7 @@ const templateManifestPath = path.join(repoRoot, 'public', 'template-previews', 
 const variantManifestPath = path.join(repoRoot, 'public', 'variant-previews', 'manifest.json');
 const outPath = path.join(repoRoot, 'tmp', 'template-hardening-report.json');
 const baseUrl = process.env.AUDIT_BASE_URL || 'http://127.0.0.1:4173';
+const isLocalBaseUrl = /127\.0\.0\.1|localhost/i.test(baseUrl);
 
 function readJson(p) {
   return JSON.parse(fs.readFileSync(p, 'utf8'));
@@ -16,6 +17,19 @@ function readJson(p) {
 
 function sha(text) {
   return crypto.createHash('sha256').update(text).digest('hex');
+}
+
+async function assertLocalBaseUrlReady(url) {
+  try {
+    const response = await fetch(url, { signal: AbortSignal.timeout(1_500) });
+    if (response.ok) return;
+    throw new Error(`received HTTP ${response.status}`);
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : String(error);
+    throw new Error(
+      `Template hardening audit requires a running preview/dev server at ${url}. Start the local runtime first, then rerun this audit. (${detail})`,
+    );
+  }
 }
 
 const templateManifest = readJson(templateManifestPath);
@@ -30,6 +44,10 @@ const leakTokens = [
 ];
 
 const requiredTokens = ['kara & eric', 'sayulita'];
+
+if (isLocalBaseUrl) {
+  await assertLocalBaseUrlReady(baseUrl);
+}
 
 const browser = await chromium.launch({ headless: true });
 const page = await browser.newPage({ viewport: { width: 1440, height: 2200 } });
