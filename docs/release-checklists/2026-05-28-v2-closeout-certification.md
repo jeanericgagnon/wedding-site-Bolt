@@ -21,7 +21,7 @@ This packet is the human-readable signoff artifact for:
 
 ## Local proof bundle
 
-The final local closeout bundle is expected to pass from `main` before V2 is called closed locally:
+The final local closeout bundle was rerun green from `main` on `2026-05-28 11:49 PM PT` before V2 was called closed locally:
 
 ```bash
 npm run proof:v1:launch-closeout
@@ -45,7 +45,13 @@ That bundle reruns:
 - proof-board freshness plus raw/markdown render
 - `git diff --check`
 
-Repo-wide quiet lint was attempted on 2026-05-28 and failed on pre-existing debt outside this batch. The failures were concentrated in legacy import/recovery files, duplicate `* 3.ts` artifacts, and large dashboard modules with old unused-variable / `any` / empty-block debt. No new lint debt from this closeout batch was introduced, and touched-file lint passed.
+The refreshed local bundle passed against a real localhost preview runtime and ended with `PASS`.
+
+Repo-wide quiet lint is also green on the current closeout baseline:
+
+```bash
+npm run lint -- --quiet
+```
 
 ## Honest narrowed claims
 
