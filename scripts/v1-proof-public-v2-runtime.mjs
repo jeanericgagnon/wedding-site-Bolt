@@ -5,6 +5,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 const baseUrl = process.argv[2] || process.env.PLAYWRIGHT_BASE_URL || 'https://dayof.love';
+const isLocalBaseUrl = /127\.0\.0\.1|localhost/i.test(baseUrl);
 const templateAuditReportPath = path.join(process.cwd(), 'tmp', 'template-hardening-report.json');
 
 const commands = [
@@ -12,6 +13,23 @@ const commands = [
   `PLAYWRIGHT_BASE_URL=${JSON.stringify(baseUrl)} npm run test:e2e:public-quality`,
   `AUDIT_BASE_URL=${JSON.stringify(baseUrl)} node scripts/run_template_hardening_audit.mjs`,
 ];
+
+async function assertLocalBaseUrlReady(url) {
+  try {
+    const response = await fetch(url, { signal: AbortSignal.timeout(1_500) });
+    if (response.ok) return;
+    throw new Error(`received HTTP ${response.status}`);
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : String(error);
+    throw new Error(
+      `Public V2 runtime proof requires a running preview/dev server at ${url}. Start the local runtime first, then rerun this proof. (${detail})`,
+    );
+  }
+}
+
+if (isLocalBaseUrl) {
+  await assertLocalBaseUrlReady(baseUrl);
+}
 
 for (const command of commands) {
   execSync(command, { stdio: 'inherit', shell: '/bin/zsh' });
