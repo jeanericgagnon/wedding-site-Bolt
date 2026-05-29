@@ -9,12 +9,26 @@ const registryPath = path.join(repoRoot, 'src', 'templates', 'registry.ts');
 const outDir = path.join(repoRoot, 'public', 'template-previews-gif');
 const tmpDir = path.join(repoRoot, '.tmp', 'template-gif-frames');
 const baseUrl = process.env.PREVIEW_BASE_URL || 'http://127.0.0.1:4173';
+const isLocalBaseUrl = /127\.0\.0\.1|localhost/i.test(baseUrl);
 
 const registrySrc = fs.readFileSync(registryPath, 'utf8');
 const templateIds = Array.from(new Set([...registrySrc.matchAll(/id:\s*'([^']+)'/g)].map((m) => m[1])));
 
 function ensureDir(p) {
   fs.mkdirSync(p, { recursive: true });
+}
+
+async function assertLocalBaseUrlReady(url) {
+  try {
+    const response = await fetch(url, { signal: AbortSignal.timeout(1_500) });
+    if (response.ok) return;
+    throw new Error(`received HTTP ${response.status}`);
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : String(error);
+    throw new Error(
+      `Template scroll GIF capture requires a running preview/dev server at ${url}. Start the local runtime first, then rerun this capture. (${detail})`,
+    );
+  }
 }
 
 function runFfmpeg(inputPattern, outputGif) {
@@ -54,6 +68,10 @@ async function captureTemplate(page, templateId) {
 }
 
 async function run() {
+  if (isLocalBaseUrl) {
+    await assertLocalBaseUrlReady(baseUrl);
+  }
+
   ensureDir(outDir);
   ensureDir(tmpDir);
 
