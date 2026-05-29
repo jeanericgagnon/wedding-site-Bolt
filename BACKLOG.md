@@ -2,23 +2,24 @@
 
 ## Quick Read
 
-- Last updated: `2026-05-15 03:39 PM PDT`
-- Latest shipped batch: `fix guest-hub travel invite handoff`
-- Latest backlog-cleanup state: top-of-file scan is current through the latest shipped registry active-proof-lane closure batch
+- Last updated: `2026-05-28 11:54 PM PDT`
+- Latest shipped batch: `proof-board current-state and certification sync`
+- Latest backlog-cleanup state: top-of-file scan is current through the refreshed local V2 closeout proof, board sync, certification sync, and raw-board verification batch
 - Open backlog lanes: `0`
-- Current session blocker: even a minimal `chromium.launch()` plus `/login` navigation now goes silent in this saturated session, and the same silent hang now blocks the remaining guest-preview live rerun too, so the remaining browser-proof gaps are currently isolated to generic headless browser startup in this session
+- Current session blocker: none active on the local V2 closeout lane
 - Current transport blocker: none active right now
 - Blocked this session:
-  - `npx vitest run src/pages/dashboard/registry/RegistryDashboardRouteContent.test.tsx` still stalls without producing useful output in this session
+  - none
 - Work source-code next:
-  - `none active`: guest-preview and QR wait on a fresh browser-capable session, travel now waits on the next approved deploy plus browser rerun for the guest-hub invite handoff fix, messaging waits on a safe provider-backed live-send lane, and photo memory now waits on the next approved deploy before the final live rerun
+  - `none active`: local V2 closeout proof, board truth, and certification packet are aligned; future work starts only with an approved remote-release pass or a newly discovered regression
 - First code retry after the current guest-preview session defer batch:
-  - keep the guest-preview and QR lanes deferred until a fresh session can launch headless browser proof cleanly
-  - treat the guest-preview desktop/mobile rerun and the QR live day-of update/status/handoff/map readback as the remaining browser-proof gaps once browser startup is usable again
+  - if we explicitly move into a remote-release pass, rerun the live-only lanes first
+  - `npm run proof:v1:client-rls-matrix -- --require-live`
+  - `npm run proof:v1:registry-preview-ssrf -- --require-live`
 - Best place to scan after each batch:
   - `Quick Read` for the newest timestamp and latest shipped batch
   - `Recent Shipped Work` for the most recent visible progress by lane
-  - `What's Left Now` for the real open work
+  - `Current Canonical Status` for the exact local closeout truth
 
 ## Recent Shipped Work
 
