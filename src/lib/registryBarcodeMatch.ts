@@ -159,7 +159,11 @@ function mergeRetailerOptions(products: RegistryBarcodeProductMatch[]) {
         || a.sourceRank - b.sourceRank
         || String(a.label).localeCompare(String(b.label));
     })
-    .map(({ sourceRank: _sourceRank, ...option }) => ({ ...option, is_best_match: false }));
+    .map((option) => {
+      const { sourceRank, ...rest } = option;
+      void sourceRank;
+      return { ...rest, is_best_match: false };
+    });
 
   if (options.length > 0) {
     options[0].is_best_match = true;

@@ -5,7 +5,9 @@ interface GalleryCarouselProps {
   section: Section;
 }
 
-export default function GalleryCarousel({ section }: GalleryCarouselProps) {
+export default function GalleryCarousel({ section: _section }: GalleryCarouselProps) {
+  void _section;
+
   const images = [
     'https://images.pexels.com/photos/1024967/pexels-photo-1024967.jpeg',
     'https://images.pexels.com/photos/2253870/pexels-photo-2253870.jpeg',

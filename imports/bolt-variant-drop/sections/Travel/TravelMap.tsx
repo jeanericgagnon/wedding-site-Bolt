@@ -5,7 +5,9 @@ interface TravelMapProps {
   section: Section;
 }
 
-export default function TravelMap({ section }: TravelMapProps) {
+export default function TravelMap({ section: _section }: TravelMapProps) {
+  void _section;
+
   return (
     <section className="py-24 bg-gradient-to-b from-blue-50 to-white">
       <div className="max-w-7xl mx-auto px-4">

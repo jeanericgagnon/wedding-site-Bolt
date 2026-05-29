@@ -13,7 +13,6 @@ Deno.serve(async (req: Request) => {
   try {
     const body = await req.json().catch(() => ({}));
     const siteRef = String(body.site_ref ?? "").trim();
-    const query = String(body.query ?? "").trim();
     const inviteToken = String(body.invite_token ?? body.inviteToken ?? "").trim();
 
     if (!siteRef || !inviteToken) {

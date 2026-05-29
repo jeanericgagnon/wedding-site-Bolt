@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { runOpenAiStructuredPrompt, isOpenAiConfigured, getOpenAiRuntimeConfig } from './openai';
 import { WeddingProfile, buildWeddingDataPatchFromProfile, mergeWeddingDataFromProfile } from './weddingProfile';
-import { buildWeddingCopySystemPrompt, buildWeddingCopyUserPrompt, buildWeddingCopySectionPayloadPrompt, buildWeddingCopyCriticPayloadPrompt, buildSectionInstructionMap, buildWeddingCopyCriticPrompt } from './aiDraftPrompts';
+import { buildWeddingCopySystemPrompt, buildWeddingCopySectionPayloadPrompt, buildWeddingCopyCriticPayloadPrompt, buildSectionInstructionMap, buildWeddingCopyCriticPrompt } from './aiDraftPrompts';
 import { scoreCopyLine } from './aiCopyScore';
 
 export type DraftGenerationResult = {

@@ -127,20 +127,18 @@ export default function TemplateScrollCapture() {
     ];
 
     data.registry = {
-      enabled: true,
-      intro: 'Registry items are placeholder examples right now.',
-      items: [
-        { id: 'r1', title: 'Honeymoon Dinner', description: 'A special dinner in Sayulita', type: 'cash', amount: 120 },
-        { id: 'r2', title: 'Snorkel Excursion', description: 'Adventure day for two', type: 'cash', amount: 180 },
-        { id: 'r3', title: 'Home Upgrade Fund', description: 'Contribute to our first home upgrades', type: 'cash', amount: 250 },
+      notes: 'Registry links are placeholder examples right now.',
+      links: [
+        { id: 'r1', label: 'Honeymoon Dinner', url: 'https://example.com/registry/honeymoon-dinner' },
+        { id: 'r2', label: 'Snorkel Excursion', url: 'https://example.com/registry/snorkel-excursion' },
+        { id: 'r3', label: 'Home Upgrade Fund', url: 'https://example.com/registry/home-upgrade-fund' },
       ],
-    } as any;
+    };
 
     data.rsvp = {
       enabled: true,
-      intro: 'Please RSVP as soon as you can so we can plan accordingly.',
-      mealOptions: ['Steak', 'Fish', 'Vegetarian'],
-    } as any;
+      deadlineISO: '2026-12-15T23:59:59-07:00',
+    };
 
     return data;
   }, [photos, templateId]);

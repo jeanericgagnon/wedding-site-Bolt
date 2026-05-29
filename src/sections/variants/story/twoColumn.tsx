@@ -1,6 +1,6 @@
 import React from 'react';
 import { z } from 'zod';
-import { SectionDefinition, SectionComponentProps, parseSectionData } from '../../types';
+import { SectionDefinition, SectionComponentProps } from '../../types';
 
 export const storyTwoColumnSchema = z.object({
   eyebrow: z.string().default('Our Story'),

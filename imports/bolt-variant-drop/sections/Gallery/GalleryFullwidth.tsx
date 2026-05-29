@@ -4,7 +4,9 @@ interface GalleryFullwidthProps {
   section: Section;
 }
 
-export default function GalleryFullwidth({ section }: GalleryFullwidthProps) {
+export default function GalleryFullwidth({ section: _section }: GalleryFullwidthProps) {
+  void _section;
+
   const images = [
     'https://images.pexels.com/photos/1024967/pexels-photo-1024967.jpeg',
     'https://images.pexels.com/photos/2253870/pexels-photo-2253870.jpeg',

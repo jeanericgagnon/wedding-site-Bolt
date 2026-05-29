@@ -63,11 +63,9 @@ import { getCoordinatorAlertOverrideTargetLabel } from '../../lib/coordinatorAle
 import { getCoordinatorAlertOverrideCurrentLabel } from '../../lib/coordinatorAlertOverrideCurrentLabel';
 import { shouldResetCoordinatorAlertOverride } from '../../lib/coordinatorAlertOverrideReset';
 import { getCoordinatorAlertSummaryStateLabel } from '../../lib/coordinatorAlertSummaryStateLabel';
-import { getCoordinatorAlertSummaryTransitionLabel } from '../../lib/coordinatorAlertSummaryTransitionLabel';
 import { shouldResetCoordinatorSummaryFeedback } from '../../lib/coordinatorSummaryFeedbackReset';
 import { createCoordinatorSummaryFeedback, type CoordinatorSummaryFeedback } from '../../lib/coordinatorSummaryFeedback';
 import { getCoordinatorSummaryFeedbackTone } from '../../lib/coordinatorSummaryFeedbackTone';
-import { getCoordinatorSummaryFeedbackEmphasis } from '../../lib/coordinatorSummaryFeedbackEmphasis';
 import {
   COORDINATOR_ALERT_RETRY_ERROR,
   COORDINATOR_CHECKIN_RETRY_ERROR,
@@ -106,8 +104,6 @@ import { getCoordinatorStablePromptState } from '../../lib/coordinatorStableProm
 import { getCoordinatorStablePromptTarget } from '../../lib/coordinatorStablePromptTarget';
 import { getCoordinatorStablePromptTargetLabel } from '../../lib/coordinatorStablePromptTargetLabel';
 import { getCoordinatorStandingPromptBadge } from '../../lib/coordinatorStandingPromptBadge';
-import { getCoordinatorStandingPromptReason } from '../../lib/coordinatorStandingPromptReason';
-import { getCoordinatorStandingPromptReasonTightened } from '../../lib/coordinatorStandingPromptReasonTighten';
 import { getCoordinatorStandingPromptCopy } from '../../lib/coordinatorStandingPromptCopy';
 import { getCoordinatorStandingPromptMode } from '../../lib/coordinatorStandingPromptMode';
 import { getCoordinatorStandingPromptSecondaryState } from '../../lib/coordinatorStandingPromptSecondaryState';
@@ -131,18 +127,17 @@ import { buildDayOfBrainBriefing, type DayOfBrainAction } from './dayOfBrain';
 import { DayOfBrainCard } from './DayOfBrainCard';
 import { buildDayOfRelayModel, type DayOfRelayStep } from './dayOfRelay';
 import { DayOfRelayCard } from './DayOfRelayCard';
-
-
 type AudienceOption = { value: string; label: string; count: number };
-
 type EventLite = {
   id: string;
   event_name: string;
   start_time: string | null;
 };
-
+type EventInvitationLite = {
+  event_id: string;
+  guest_id: string;
+};
 type TimelineState = 'up-next' | 'live' | 'done';
-
 type AlertLog = {
   id: string;
   subject: string;
@@ -151,15 +146,12 @@ type AlertLog = {
   queuedAt: string;
   sendAt?: string | null;
 };
-
 type QnaItem = {
   id: string;
   question: string;
   status: 'new' | 'answered';
   answer?: string | null;
 };
-
-
 export const DashboardCoordinatorMode: React.FC = () => {
   const { user, isDemoMode } = useAuth();
   const { toast } = useToast();
@@ -195,7 +187,6 @@ export const DashboardCoordinatorMode: React.FC = () => {
   const [alertOverrideUpdatedAt, setAlertOverrideUpdatedAt] = useState<number | null>(null);
   const [overrideCueShownAt, setOverrideCueShownAt] = useState<number | null>(null);
   const [summaryFeedbackShownAt, setSummaryFeedbackShownAt] = useState<number | null>(null);
-  const [previousAlertAligned, setPreviousAlertAligned] = useState<boolean | null>(null);
   const [summaryFeedback, setSummaryFeedback] = useState<CoordinatorSummaryFeedback | null>(null);
   const [checkInQuery, setCheckInQuery] = useState('');
   const [checkInFilter, setCheckInFilter] = useState<CoordinatorCheckInFilter>('arrivals');
@@ -211,7 +202,6 @@ export const DashboardCoordinatorMode: React.FC = () => {
     scheduleDate: '',
     scheduleTime: '',
   });
-
   useEffect(() => {
     let mounted = true;
     const run = async () => {
@@ -232,7 +222,6 @@ export const DashboardCoordinatorMode: React.FC = () => {
           setEventGuestIds({ e1: new Set(['1', '2']) });
           return;
         }
-
         const activeSite = await resolveActiveSiteForUser(user.id);
         const resolvedSiteId = activeSite?.id ?? null;
         if (!resolvedSiteId) return;
@@ -240,12 +229,10 @@ export const DashboardCoordinatorMode: React.FC = () => {
         setSiteId(resolvedSiteId);
         setActiveSiteRole(activeSite?.role ?? 'owner');
         setCoordinatorRole(activeSite?.role ?? 'owner');
-
         const [{ data: guestsData }, { data: eventsData }] = await Promise.all([
           supabase.from('guests').select('id, first_name, last_name, name, rsvp_status, checked_in_at').eq('wedding_site_id', resolvedSiteId),
           supabase.from('itinerary_events').select('id, event_name, start_time').eq('wedding_site_id', resolvedSiteId).order('start_time', { ascending: true }),
         ]);
-
         const eventIds = ((eventsData as EventLite[]) || []).map((e) => e.id);
         let inviteMap: Record<string, Set<string>> = {};
         if (eventIds.length > 0) {
@@ -255,19 +242,17 @@ export const DashboardCoordinatorMode: React.FC = () => {
             .in('event_id', eventIds);
           inviteMap = {};
           eventIds.forEach((id) => { inviteMap[id] = new Set<string>(); });
-          (inviteRows ?? []).forEach((row: any) => {
+          (inviteRows ?? []).forEach((row: EventInvitationLite) => {
             if (!inviteMap[row.event_id]) inviteMap[row.event_id] = new Set<string>();
-            inviteMap[row.event_id].add(row.guest_id as string);
+            inviteMap[row.event_id].add(row.guest_id);
           });
         }
-
         const { data: qnaData } = await supabase
           .from('guest_qna_items')
           .select('id, question, answer, status, created_at')
           .eq('wedding_site_id', resolvedSiteId)
           .order('created_at', { ascending: false })
           .limit(30);
-
         if (!mounted) return;
         setGuests((guestsData as GuestLiteForCoordinator[]) || []);
         setEvents((eventsData as EventLite[]) || []);
@@ -287,11 +272,9 @@ export const DashboardCoordinatorMode: React.FC = () => {
         if (mounted) setLoading(false);
       }
     };
-
     void run();
     return () => { mounted = false; };
   }, [user, isDemoMode]);
-
   useEffect(() => {
     if (!siteId) return;
     try {
@@ -311,7 +294,6 @@ export const DashboardCoordinatorMode: React.FC = () => {
       const storedRole = readPlannerAccessRole('coordinator', siteId);
       if (activeSiteRole === 'owner' && storedRole) setCoordinatorRole(storedRole);
       if (activeSiteRole !== 'owner') setCoordinatorRole(activeSiteRole);
-
       const rawSessionState = localStorage.getItem(`dayof.coordinator.session.${siteId}`);
       const sessionState = normalizeCoordinatorModeSessionState(rawSessionState ? JSON.parse(rawSessionState) : null);
       setCheckInFilter(sessionState.checkInFilter);
@@ -320,50 +302,48 @@ export const DashboardCoordinatorMode: React.FC = () => {
       setPanelFocus(sessionState.panelFocus);
       setAlertChannelFilter(sessionState.alertChannelFilter);
       setAlertTimingFilter(sessionState.alertTimingFilter);
-
       const rawDraftState = localStorage.getItem(`dayof.coordinator.draft.${siteId}`);
       const draftState = normalizeCoordinatorDraftState(rawDraftState ? JSON.parse(rawDraftState) : null);
       setAlertForm((prev) => ({ ...prev, ...draftState.alertForm }));
       setQnaDraftAnswers(draftState.qnaDraftAnswers);
       setQnaInput(draftState.qnaInput);
-
       const rawActiveWorkState = localStorage.getItem(`dayof.coordinator.active.${siteId}`);
       const activeWorkState = normalizeCoordinatorActiveWorkState(rawActiveWorkState ? JSON.parse(rawActiveWorkState) : null);
       setActiveQnaId(activeWorkState.activeQnaId);
-
       const rawGuestWorkState = localStorage.getItem(`dayof.coordinator.guest.${siteId}`);
       const guestWorkState = normalizeCoordinatorGuestWorkState(rawGuestWorkState ? JSON.parse(rawGuestWorkState) : null);
       setActiveGuestId(guestWorkState.activeGuestId);
-
       const rawTimelineWorkState = localStorage.getItem(`dayof.coordinator.timelinework.${siteId}`);
       const timelineWorkState = normalizeCoordinatorTimelineWorkState(rawTimelineWorkState ? JSON.parse(rawTimelineWorkState) : null);
       setActiveTimelineEventId(timelineWorkState.activeTimelineEventId);
-
       const rawCommandState = localStorage.getItem(`dayof.coordinator.command.${siteId}`);
       const savedCommandState = normalizeCoordinatorCommandState(rawCommandState ? JSON.parse(rawCommandState) : null);
       setCommandSource(savedCommandState.source);
-
       const rawAlertIntentState = localStorage.getItem(`dayof.coordinator.alertintent.${siteId}`);
       const alertIntentState = normalizeCoordinatorAlertIntentState(rawAlertIntentState ? JSON.parse(rawAlertIntentState) : null);
       setLastAlertSuggestionKey(alertIntentState.lastSuggestionKey);
-    } catch {}
+    } catch {
+      // Ignore malformed local coordinator state snapshots and continue with defaults.
+    }
   }, [siteId, activeSiteRole]);
-
   useEffect(() => {
     if (!siteId) return;
-    try { localStorage.setItem(`dayof.timeline.${siteId}`, JSON.stringify(timelineState)); } catch {}
+    try { localStorage.setItem(`dayof.timeline.${siteId}`, JSON.stringify(timelineState)); } catch {
+      // Ignore local persistence failures for timeline state.
+    }
   }, [siteId, timelineState]);
-
   useEffect(() => {
     if (!siteId) return;
-    try { localStorage.setItem(`dayof.alertlog.${siteId}`, JSON.stringify(alertLog)); } catch {}
+    try { localStorage.setItem(`dayof.alertlog.${siteId}`, JSON.stringify(alertLog)); } catch {
+      // Ignore local persistence failures for alert log state.
+    }
   }, [siteId, alertLog]);
-
   useEffect(() => {
     if (!siteId) return;
-    try { localStorage.setItem(`dayof.qna.${siteId}`, JSON.stringify(qnaItems)); } catch {}
+    try { localStorage.setItem(`dayof.qna.${siteId}`, JSON.stringify(qnaItems)); } catch {
+      // Ignore local persistence failures for Q&A state.
+    }
   }, [siteId, qnaItems]);
-
   useEffect(() => {
     if (!siteId) return;
     if (activeSiteRole !== 'owner') return;
@@ -373,7 +353,6 @@ export const DashboardCoordinatorMode: React.FC = () => {
       // noop
     }
   }, [siteId, coordinatorRole, activeSiteRole]);
-
   useEffect(() => {
     if (!siteId) return;
     try {
@@ -385,9 +364,10 @@ export const DashboardCoordinatorMode: React.FC = () => {
         alertChannelFilter,
         alertTimingFilter,
       }));
-    } catch {}
+    } catch {
+      // Ignore local persistence failures for coordinator panel filters.
+    }
   }, [siteId, checkInFilter, checkInQuery, checkInReviewOnly, panelFocus, alertChannelFilter, alertTimingFilter]);
-
   useEffect(() => {
     if (!siteId) return;
     try {
@@ -396,42 +376,45 @@ export const DashboardCoordinatorMode: React.FC = () => {
         qnaDraftAnswers,
         qnaInput,
       }));
-    } catch {}
+    } catch {
+      // Ignore local persistence failures for draft state.
+    }
   }, [siteId, alertForm, qnaDraftAnswers, qnaInput]);
-
   useEffect(() => {
     if (!siteId) return;
     try {
       localStorage.setItem(`dayof.coordinator.active.${siteId}`, JSON.stringify({
         activeQnaId,
       }));
-    } catch {}
+    } catch {
+      // Ignore local persistence failures for active Q&A selection.
+    }
   }, [siteId, activeQnaId]);
-
   useEffect(() => {
     if (!siteId) return;
     try {
       localStorage.setItem(`dayof.coordinator.guest.${siteId}`, JSON.stringify({
         activeGuestId,
       }));
-    } catch {}
+    } catch {
+      // Ignore local persistence failures for active guest selection.
+    }
   }, [siteId, activeGuestId]);
-
   useEffect(() => {
     if (!siteId) return;
     try {
       localStorage.setItem(`dayof.coordinator.timelinework.${siteId}`, JSON.stringify({
         activeTimelineEventId,
       }));
-    } catch {}
+    } catch {
+      // Ignore local persistence failures for active timeline event selection.
+    }
   }, [siteId, activeTimelineEventId]);
-
   useEffect(() => {
     if (!activeTimelineEventId) return;
     if (events.some((event) => event.id === activeTimelineEventId)) return;
     setActiveTimelineEventId(null);
   }, [events, activeTimelineEventId]);
-
   useEffect(() => {
     if (!siteId) return;
     try {
@@ -441,18 +424,20 @@ export const DashboardCoordinatorMode: React.FC = () => {
         checkInFilter,
         checkInReviewOnly,
       }));
-    } catch {}
+    } catch {
+      // Ignore local persistence failures for command state.
+    }
   }, [siteId, commandSource, panelFocus, checkInFilter, checkInReviewOnly]);
-
   useEffect(() => {
     if (!siteId) return;
     try {
       localStorage.setItem(`dayof.coordinator.alertintent.${siteId}`, JSON.stringify({
         lastSuggestionKey: lastAlertSuggestionKey,
       }));
-    } catch {}
+    } catch {
+      // Ignore local persistence failures for alert intent state.
+    }
   }, [siteId, lastAlertSuggestionKey]);
-
   const stats = useMemo(() => {
     const total = guests.length;
     const confirmed = guests.filter((g) => isAttendingRsvpStatus(g.rsvp_status)).length;
@@ -460,15 +445,12 @@ export const DashboardCoordinatorMode: React.FC = () => {
     const checkedIn = guests.filter((g) => !!g.checked_in_at).length;
     return { total, confirmed, pending, checkedIn };
   }, [guests]);
-
   const toggleCheckIn = async (guest: GuestLiteForCoordinator) => {
     if (!canCheckIn) {
       toast('Your collaborator role cannot update coordinator check-in.', 'info');
       return;
     }
-
     if (checkInBusyGuestId === guest.id) return;
-
     const next = guest.checked_in_at ? null : new Date().toISOString();
     const removesFromCurrentQueue = !guest.checked_in_at && (checkInFilter !== 'checked-in');
     const nextFocusGuestId = getNextCoordinatorCheckInFocusId({
@@ -476,9 +458,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
       activeGuestId: guest.id,
       removeActiveGuest: removesFromCurrentQueue,
     });
-
     setCheckInBusyGuestId(guest.id);
-
     try {
       if (isDemoMode) {
         setGuests((prev) => prev.map((g) => (g.id === guest.id ? { ...g, checked_in_at: next } : g)));
@@ -486,9 +466,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
         toast(next ? 'Guest checked in. Door focus moved to the next guest.' : 'Guest moved back to arrivals.', 'success');
         return;
       }
-
       if (!siteId) return;
-
       const { error } = await supabase
         .from('guests')
         .update({ checked_in_at: next })
@@ -498,7 +476,6 @@ export const DashboardCoordinatorMode: React.FC = () => {
         toast(mapCoordinatorError(error, COORDINATOR_CHECKIN_RETRY_ERROR), 'error');
         return;
       }
-
       setGuests((prev) => prev.map((g) => (g.id === guest.id ? { ...g, checked_in_at: next } : g)));
       setActiveGuestId(nextFocusGuestId);
       toast(next ? 'Guest checked in. Door focus moved to the next guest.' : 'Guest moved back to arrivals.', 'success');
@@ -506,7 +483,6 @@ export const DashboardCoordinatorMode: React.FC = () => {
       setCheckInBusyGuestId((current) => (current === guest.id ? null : current));
     }
   };
-
   const sortedGuests = [...guests].sort((a, b) => {
     const aChecked = !!a.checked_in_at;
     const bChecked = !!b.checked_in_at;
@@ -516,13 +492,11 @@ export const DashboardCoordinatorMode: React.FC = () => {
     if (al !== bl) return al.localeCompare(bl);
     return (a.name || '').toLowerCase().localeCompare((b.name || '').toLowerCase());
   });
-
   const eventAudienceOptions: AudienceOption[] = events.map((e) => ({
     value: `event:${e.id}`,
     label: `${e.event_name}${e.start_time ? ` — ${formatCoordinatorEventDateTime(e.start_time)}` : ''}`,
     count: eventGuestIds[e.id]?.size ?? 0,
   }));
-
   const alertAudienceCount = (() => {
     if (alertForm.audience.startsWith('event:')) {
       const eventId = alertForm.audience.replace('event:', '');
@@ -532,13 +506,11 @@ export const DashboardCoordinatorMode: React.FC = () => {
     if (alertForm.audience === 'pending') return guests.filter((g) => isPendingRsvpStatus(g.rsvp_status)).length;
     return guests.length;
   })();
-
   const canCheckIn = canManageCoordinatorCheckIn(coordinatorRole);
   const canEditTimeline = canManageCoordinatorTimeline(coordinatorRole);
   const canEditQna = canManageCoordinatorQna(coordinatorRole);
   const canSendAlerts = canSendImmediateCoordinatorAlerts(coordinatorRole);
   const canScheduleAlerts = canScheduleCoordinatorAlerts(coordinatorRole);
-
   const qnaCounts = useMemo(() => getCoordinatorQnaCounts(qnaItems), [qnaItems]);
   const filteredQnaItems = useMemo(() => filterCoordinatorQnaItems(qnaItems, qnaFilter), [qnaItems, qnaFilter]);
   const activeQnaItem = useMemo(() => qnaItems.find((item) => item.id === activeQnaId) ?? null, [qnaItems, activeQnaId]);
@@ -555,11 +527,9 @@ export const DashboardCoordinatorMode: React.FC = () => {
     activeItem: activeQnaItem,
     activeDraftStateLabel: activeQnaDraftStateLabel,
   }), [qnaItems, activeQnaItem, activeQnaDraftStateLabel]);
-
   useEffect(() => {
     setActiveQnaId((prev) => resolveCoordinatorQnaFocusAfterItemsChange(qnaItems, prev));
   }, [qnaItems]);
-
   useEffect(() => {
     setActiveTimelineEventId((prev) => resolveCoordinatorTimelineFocusAfterStateChange({
       events,
@@ -567,12 +537,9 @@ export const DashboardCoordinatorMode: React.FC = () => {
       activeTimelineEventId: prev,
     }));
   }, [events, timelineState]);
-
   const alertValidationError = useMemo(() => validateCoordinatorAlertForm(alertForm, alertAudienceCount), [alertForm, alertAudienceCount]);
-
   useEffect(() => {
     if (canSendAlerts && (canScheduleAlerts || alertForm.scheduleType !== 'later')) return;
-
     setAlertForm((prev) => {
       if (!canSendAlerts && prev.scheduleType === 'now') return prev;
       if (canSendAlerts && prev.scheduleType !== 'later') return prev;
@@ -584,7 +551,6 @@ export const DashboardCoordinatorMode: React.FC = () => {
       };
     });
   }, [canSendAlerts, canScheduleAlerts, alertForm.scheduleType]);
-
   const handoffCopy = {
     title: coordinatorRole === 'viewer' ? 'Viewer handoff' : coordinatorRole === 'coordinator' ? 'Coordinator handoff' : 'Planner handoff',
     detail: coordinatorRole === 'viewer'
@@ -594,15 +560,12 @@ export const DashboardCoordinatorMode: React.FC = () => {
         : 'Run the room, keep communications aligned, and escalate only the decisions that need the couple.'
   };
   const roleCapabilities = useMemo(() => buildCoordinatorRoleCapabilities(coordinatorRole), [coordinatorRole]);
-
   const liveEventId = useMemo(() => getCoordinatorLiveEventId(events, timelineState), [events, timelineState]);
   const upNextEventId = useMemo(() => getCoordinatorUpNextEventId(events, timelineState), [events, timelineState]);
-
   const liveEventAudience = useMemo(() => {
     const live = events.find((e) => e.id === liveEventId);
     return live ? `event:${live.id}` : null;
   }, [events, liveEventId]);
-
   const liveEvent = useMemo(() => events.find((event) => event.id === liveEventId) ?? null, [events, liveEventId]);
   const upNextEvent = useMemo(() => events.find((event) => event.id === upNextEventId) ?? null, [events, upNextEventId]);
   const alertSuggestions = useMemo(() => buildCoordinatorAlertSuggestions({ liveEvent, upNextEvent }), [liveEvent, upNextEvent]);
@@ -636,13 +599,8 @@ export const DashboardCoordinatorMode: React.FC = () => {
     aligned: alertTargetCue.aligned,
     laneLabel: alertLaneLabel,
   }), [alertTargetCue.aligned, alertLaneLabel]);
-  const alertSummaryTransitionLabel = useMemo(() => getCoordinatorAlertSummaryTransitionLabel({
-    previousAligned: previousAlertAligned,
-    currentAligned: alertTargetCue.aligned,
-  }), [previousAlertAligned, alertTargetCue.aligned]);
   const summaryFeedbackTone = useMemo(() => summaryFeedback ? getCoordinatorSummaryFeedbackTone(summaryFeedback.kind) : null, [summaryFeedback]);
   const summaryFeedbackBadge = useMemo(() => summaryFeedback ? getCoordinatorSummaryFeedbackBadge({ kind: summaryFeedback.kind, panelFocus: summaryFeedback.panelFocus }) : null, [summaryFeedback]);
-  const summaryFeedbackEmphasis = useMemo(() => summaryFeedback ? getCoordinatorSummaryFeedbackEmphasis(summaryFeedback.kind) : null, [summaryFeedback]);
   const summaryFeedbackLayout = useMemo(() => summaryFeedback ? getCoordinatorSummaryFeedbackLayout(summaryFeedback.kind) : null, [summaryFeedback]);
   const summaryFeedbackCopy = useMemo(() => summaryFeedback ? getCoordinatorSummaryFeedbackCopy({ kind: summaryFeedback.kind, label: summaryFeedback.label }) : null, [summaryFeedback]);
   const executionBoard = useMemo(() => buildCoordinatorExecutionBoard(summaryFeedback), [summaryFeedback]);
@@ -670,7 +628,6 @@ export const DashboardCoordinatorMode: React.FC = () => {
     });
   }, [summaryFeedback]);
   const overrideBadgeToneClassName = useMemo(() => getCoordinatorCommandBadgeTone({ tone: 'warning' }), []);
-
   useEffect(() => {
     if (shouldResetCoordinatorAlertOverride({
       overrideLabel: alertOverrideLabelState,
@@ -681,7 +638,6 @@ export const DashboardCoordinatorMode: React.FC = () => {
       setOverrideCueShownAt(null);
     }
   }, [alertOverrideLabelState, alertTargetCue.aligned]);
-
   useEffect(() => {
     if (!preferredAlertSuggestion) return;
     setAlertForm((prev) => {
@@ -694,7 +650,6 @@ export const DashboardCoordinatorMode: React.FC = () => {
       };
     });
   }, [preferredAlertSuggestion, liveEventAudience]);
-
   const alertStats = useMemo(() => {
     const total = alertLog.length;
     const scheduled = alertLog.filter((a) => !!a.sendAt).length;
@@ -726,8 +681,6 @@ export const DashboardCoordinatorMode: React.FC = () => {
     alertLog,
   ]);
   const alertActivityBoard = useMemo(() => buildCoordinatorAlertActivityBoard(alertLog), [alertLog]);
-
-
   const nextArrivals = useMemo(
     () => sortedGuests.filter((g) => !g.checked_in_at && getCoordinatorDoorStatus(g) === 'ready').slice(0, 5),
     [sortedGuests],
@@ -758,7 +711,6 @@ export const DashboardCoordinatorMode: React.FC = () => {
     role: coordinatorRole,
     capabilities: roleCapabilities,
   }), [coordinatorRole, roleCapabilities]);
-
   const checkInQueue = useMemo(() => {
     const base = filterCoordinatorCheckInQueue(sortedGuests, checkInQuery, checkInFilter);
     return checkInReviewOnly ? base.filter((guest) => getCoordinatorDoorStatus(guest) === 'watch') : base;
@@ -897,7 +849,6 @@ export const DashboardCoordinatorMode: React.FC = () => {
           ? qnaItems.find((item) => item.id === activeQnaId)?.question ?? null
           : null,
   }), [panelFocus, sortedGuests, activeGuestId, events, activeTimelineEventId, qnaItems, activeQnaId]);
-
   const liveIssues = useMemo(() => buildCoordinatorEscalations({
     guests,
     qnaItems,
@@ -1012,28 +963,24 @@ export const DashboardCoordinatorMode: React.FC = () => {
     () => (activeTimelineEventState ? getCoordinatorTimelineCorrectionAction(activeTimelineEventState) : null),
     [activeTimelineEventState],
   );
-
   useEffect(() => {
     if (commandSource !== 'primary-action') return;
     if (primaryAction.key !== 'all-clear') return;
     setCommandSource(null);
     setNeutralFocusReason(getCoordinatorNeutralFocusReason(panelFocus));
   }, [commandSource, primaryAction.key, panelFocus]);
-
   useEffect(() => {
     if (commandSource !== 'escalation') return;
     if (liveIssues.length > 0) return;
     setCommandSource(null);
     setNeutralFocusReason(getCoordinatorNeutralFocusReason(panelFocus));
   }, [commandSource, liveIssues.length, panelFocus]);
-
   useEffect(() => {
     if (commandSource !== 'correction') return;
     if (correctionCues.length > 0) return;
     setCommandSource(null);
     setNeutralFocusReason(getCoordinatorNeutralFocusReason(panelFocus));
   }, [commandSource, correctionCues.length, panelFocus]);
-
   const filteredAlertLog = useMemo(
     () => alertLog.filter((a) => {
       if (alertChannelFilter !== 'all' && a.channel !== alertChannelFilter) return false;
@@ -1044,7 +991,6 @@ export const DashboardCoordinatorMode: React.FC = () => {
     [alertLog, alertChannelFilter, alertTimingFilter],
   );
   const filteredAlertLogView = useMemo(() => buildCoordinatorAlertLogView(filteredAlertLog), [filteredAlertLog]);
-
   const clearCoordinatorTransientState = () => {
     setNeutralFocusReason(null);
     setSummaryFeedback(null);
@@ -1056,51 +1002,43 @@ export const DashboardCoordinatorMode: React.FC = () => {
     setCommandJumpPanelFocus(null);
     setCommandJumpTargetId(null);
   };
-
   const focusCoordinatorAlertLane = () => {
     clearCoordinatorTransientState();
     setPanelFocus('timeline');
     setCommandSource(null);
   };
-
   const focusCoordinatorCheckInLane = () => {
     clearCoordinatorTransientState();
     setPanelFocus('check-in');
     setCommandSource(null);
   };
-
   const focusCoordinatorTimelineLane = () => {
     clearCoordinatorTransientState();
     setPanelFocus('timeline');
     setCommandSource(null);
   };
-
   const jumpToTimelineEvent = (eventId: string | null | undefined) => {
     if (!eventId) return;
     focusCoordinatorTimelineLane();
     setActiveTimelineEventId(eventId);
   };
-
   const focusFirstCoordinatorQueueGuest = () => {
     const firstGuest = checkInQueue[0];
     if (!firstGuest) return;
     focusCoordinatorCheckInLane();
     setActiveGuestId(firstGuest.id);
   };
-
   const focusFirstCoordinatorOpenQna = () => {
     const nextQnaId = getFirstOpenCoordinatorQnaId(qnaItems) ?? qnaItems[0]?.id ?? null;
     if (!nextQnaId) return;
     focusCoordinatorQnaLane();
     setActiveQnaId(nextQnaId);
   };
-
   const focusCoordinatorQnaLane = () => {
     clearCoordinatorTransientState();
     setPanelFocus('qna');
     setCommandSource(null);
   };
-
   const focusNextCoordinatorQna = () => {
     const nextQnaId = getFirstOpenCoordinatorQnaId(qnaItems) ?? qnaItems[0]?.id ?? null;
     if (!nextQnaId) return;
@@ -1108,7 +1046,6 @@ export const DashboardCoordinatorMode: React.FC = () => {
     setQnaFilter('open');
     setActiveQnaId(nextQnaId);
   };
-
   const runDayOfBrainAction = (action: DayOfBrainAction) => {
     if (action.target === 'coordinator') {
       if (liveIssues.length > 0 || checkInWatchCount > 0 || nextArrivals.length > 0) {
@@ -1128,32 +1065,26 @@ export const DashboardCoordinatorMode: React.FC = () => {
       setActiveTimelineEventId(liveEventId ?? upNextEventId ?? activeTimelineEventId);
       return;
     }
-
     if (action.target === 'messages') {
       focusCoordinatorAlertLane();
       return;
     }
-
     if (action.target === 'seating') {
       window.location.assign('/dashboard/seating');
       return;
     }
-
     if (action.target === 'guests') {
       window.location.assign('/dashboard/guests');
       return;
     }
-
     if (action.target === 'planning') {
       window.location.assign('/dashboard/planning');
       return;
     }
-
     if (action.target === 'itinerary') {
       window.location.assign('/dashboard/itinerary#itinerary-readiness');
     }
   };
-
   const runDayOfRelayAction = (step: DayOfRelayStep) => {
     if (step.target === 'coordinator') {
       if (liveIssues.length > 0 || checkInWatchCount > 0 || nextArrivals.length > 0) {
@@ -1170,26 +1101,21 @@ export const DashboardCoordinatorMode: React.FC = () => {
       focusCoordinatorTimelineLane();
       return;
     }
-
     if (step.target === 'check-in') {
       focusCoordinatorCheckInLane();
       setCheckInFilter('arrivals');
       return;
     }
-
     if (step.target === 'messages') {
       focusCoordinatorAlertLane();
       return;
     }
-
     if (step.target === 'guests') {
       window.location.assign('/dashboard/guests');
       return;
     }
-
     window.location.assign('/dashboard/seating');
   };
-
   const jumpToOpsSnapshotLane = (key: 'check-in' | 'timeline' | 'qna' | 'alerting') => {
     if (key === 'check-in') {
       focusCoordinatorCheckInLane();
@@ -1203,7 +1129,6 @@ export const DashboardCoordinatorMode: React.FC = () => {
       }
       return;
     }
-
     if (key === 'timeline') {
       focusCoordinatorTimelineLane();
       if (liveEventId) {
@@ -1215,19 +1140,16 @@ export const DashboardCoordinatorMode: React.FC = () => {
       }
       return;
     }
-
     if (key === 'qna') {
       focusCoordinatorQnaLane();
       if (qnaBoardTargetId) setActiveQnaId(qnaBoardTargetId);
       return;
     }
-
     focusCoordinatorAlertLane();
     if (preferredAlertSuggestion && !alertTargetCue.aligned && canSendAlerts) {
       setAlertForm((prev) => applyCoordinatorAlertSuggestion({ form: prev, suggestion: preferredAlertSuggestion }));
     }
   };
-
   const sendDayOfAlert = async () => {
     if (!siteId) return;
     if (!canSendAlerts) {
@@ -1244,7 +1166,6 @@ export const DashboardCoordinatorMode: React.FC = () => {
     }
     const scheduledFor = resolveCoordinatorScheduledFor(alertForm);
     const status = scheduledFor ? 'scheduled' : 'queued';
-
     setAlertBusy(true);
     try {
       if (!isDemoMode) {
@@ -1261,7 +1182,6 @@ export const DashboardCoordinatorMode: React.FC = () => {
         });
         if (error) throw error;
       }
-
       setAlertLog((prev) => appendCoordinatorAlertLogItem(prev, {
         id: `${Date.now()}`,
         subject: alertForm.subject.trim(),
@@ -1270,7 +1190,6 @@ export const DashboardCoordinatorMode: React.FC = () => {
         queuedAt: new Date().toISOString(),
         sendAt: scheduledFor,
       }));
-      setPreviousAlertAligned(alertTargetCue.aligned);
       setAlertOverrideLabelState(alertTargetCue.aligned ? null : alertOverrideLabel);
       setAlertForm((prev) => {
         const reset = resetCoordinatorAlertFormAfterSend(prev);
@@ -1285,18 +1204,14 @@ export const DashboardCoordinatorMode: React.FC = () => {
       setAlertBusy(false);
     }
   };
-
   const addQnaItem = async () => {
     if (!canEditQna) {
       toast('Your collaborator role cannot add guest questions here.', 'info');
       return;
     }
-
     const q = qnaInput.trim();
     if (!q) return;
-
     focusCoordinatorQnaLane();
-
     if (!isDemoMode && siteId) {
       const { data, error } = await supabase
         .from('guest_qna_items')
@@ -1315,8 +1230,6 @@ export const DashboardCoordinatorMode: React.FC = () => {
     }
     setQnaInput('');
   };
-
-
   const escalateDoorReview = (guest: GuestLiteForCoordinator) => {
     if (!canEditQna) {
       toast('Your collaborator role cannot escalate door issues into guest Q&A.', 'info');
@@ -1329,11 +1242,6 @@ export const DashboardCoordinatorMode: React.FC = () => {
     setActiveQnaId(getFirstOpenCoordinatorQnaId(qnaItems));
     toast('Door issue moved into guest Q&A triage.', 'success');
   };
-
-
-
-
-
   const revisitNeutralFocus = () => {
     const target = resolveCoordinatorNeutralFocusTarget(panelFocus);
     clearCoordinatorTransientState();
@@ -1347,31 +1255,24 @@ export const DashboardCoordinatorMode: React.FC = () => {
       setActiveQnaId(getFirstOpenCoordinatorQnaId(qnaItems));
     }
   };
-
-
-
   const jumpToStablePrompt = () => {
     const target = getCoordinatorStablePromptTarget(priorityCommandLabel);
     setPanelFocus(target.panelFocus);
     setCheckInReviewOnly(target.reviewOnly);
-
     if (priorityCommandLabel === 'Check-in') {
       setCheckInFilter('arrivals');
       if (checkInBoardTargetId) setActiveGuestId(checkInBoardTargetId);
       return;
     }
-
     if (priorityCommandLabel === 'Timeline') {
       if (timelineBoardTargetId) setActiveTimelineEventId(timelineBoardTargetId);
       return;
     }
-
     if (priorityCommandLabel === 'Q&A') {
       const nextQnaId = qnaBoardTargetId ?? getFirstOpenCoordinatorQnaId(qnaItems);
       setActiveQnaId(nextQnaId);
     }
   };
-
   const jumpToCommandSummaryItem = (label: 'Check-in' | 'Timeline' | 'Q&A' | 'Alerting') => {
     const target = getCoordinatorCommandSummaryTarget(label);
     clearCoordinatorTransientState();
@@ -1407,8 +1308,6 @@ export const DashboardCoordinatorMode: React.FC = () => {
     setSummaryFeedback(createCoordinatorSummaryFeedback({ label: jumpLabel, panelFocus: null, targetId: null, kind: 'jump' }));
     setSummaryFeedbackShownAt(Date.now());
   };
-
-
   useEffect(() => {
     if (shouldResetCoordinatorCommandJumpLabel({
       jumpLabel: commandJumpLabel,
@@ -1420,8 +1319,6 @@ export const DashboardCoordinatorMode: React.FC = () => {
       setCommandJumpTargetId(null);
     }
   }, [commandJumpLabel, commandJumpPanelFocus, panelFocus]);
-
-
   useEffect(() => {
     const currentTargetId = panelFocus === 'check-in'
       ? activeGuestId
@@ -1430,7 +1327,6 @@ export const DashboardCoordinatorMode: React.FC = () => {
         : panelFocus === 'qna'
           ? activeQnaId
           : null;
-
     if (shouldResetCoordinatorCommandJumpLabelForTargetChange({
       jumpLabel: commandJumpLabel,
       panelFocus,
@@ -1444,8 +1340,6 @@ export const DashboardCoordinatorMode: React.FC = () => {
       setCommandJumpTargetId(null);
     }
   }, [commandJumpLabel, commandJumpPanelFocus, commandJumpTargetId, panelFocus, activeGuestId, activeTimelineEventId, activeQnaId]);
-
-
   const returnToBoardTarget = () => {
     clearCoordinatorTransientState();
     if (panelFocus === 'check-in' && checkInBoardTargetId) {
@@ -1472,8 +1366,6 @@ export const DashboardCoordinatorMode: React.FC = () => {
       setOverrideCueShownAt(null);
     }
   };
-
-
   useEffect(() => {
     const currentTargetId = panelFocus === 'check-in'
       ? activeGuestId
@@ -1482,7 +1374,6 @@ export const DashboardCoordinatorMode: React.FC = () => {
         : panelFocus === 'qna'
           ? activeQnaId
           : null;
-
     const boardTargetId = panelFocus === 'check-in'
       ? checkInBoardTargetId
       : panelFocus === 'timeline'
@@ -1490,7 +1381,6 @@ export const DashboardCoordinatorMode: React.FC = () => {
         : panelFocus === 'qna'
           ? qnaBoardTargetId
           : null;
-
     if (shouldResetCoordinatorManualOverride({
       manualOverrideLabel,
       panelFocus,
@@ -1512,7 +1402,6 @@ export const DashboardCoordinatorMode: React.FC = () => {
       }
     }
   }, [manualOverrideLabel, panelFocus, activeGuestId, activeTimelineEventId, activeQnaId, checkInBoardTargetId, timelineBoardTargetId, qnaBoardTargetId]);
-
   useEffect(() => {
     const currentTargetId = panelFocus === 'check-in'
       ? activeGuestId
@@ -1521,7 +1410,6 @@ export const DashboardCoordinatorMode: React.FC = () => {
         : panelFocus === 'qna'
           ? activeQnaId
           : null;
-
     const boardTargetId = panelFocus === 'check-in'
       ? checkInBoardTargetId
       : panelFocus === 'timeline'
@@ -1529,19 +1417,14 @@ export const DashboardCoordinatorMode: React.FC = () => {
         : panelFocus === 'qna'
           ? qnaBoardTargetId
           : null;
-
     if (!panelFocus || !currentTargetId || !boardTargetId || currentTargetId === boardTargetId) return;
-
     const nextManualOverrideLabel = getCoordinatorManualOverrideLabel(panelFocus);
     if (!nextManualOverrideLabel || manualOverrideLabel === nextManualOverrideLabel) return;
-
     const nextManualOverrideTime = Date.now();
     setManualOverrideLabel(nextManualOverrideLabel);
     setManualOverrideUpdatedAt(nextManualOverrideTime);
     setOverrideCueShownAt(nextManualOverrideTime);
   }, [manualOverrideLabel, panelFocus, activeGuestId, activeTimelineEventId, activeQnaId, checkInBoardTargetId, timelineBoardTargetId, qnaBoardTargetId]);
-
-
   useEffect(() => {
     const currentTargetId = panelFocus === 'check-in'
       ? activeGuestId
@@ -1550,7 +1433,6 @@ export const DashboardCoordinatorMode: React.FC = () => {
         : panelFocus === 'qna'
           ? activeQnaId
           : null;
-
     if (shouldResetCoordinatorSummaryFeedback({
       feedbackLabel: summaryFeedback?.label ?? null,
       panelFocus,
@@ -1562,8 +1444,6 @@ export const DashboardCoordinatorMode: React.FC = () => {
       setSummaryFeedbackShownAt(null);
     }
   }, [summaryFeedback, panelFocus, activeGuestId, activeTimelineEventId, activeQnaId]);
-
-
   useEffect(() => {
     const timer = window.setTimeout(() => {
       if (shouldExpireCoordinatorOverrideCue({
@@ -1579,10 +1459,8 @@ export const DashboardCoordinatorMode: React.FC = () => {
         setOverrideCueShownAt(null);
       }
     }, 5000);
-
     return () => window.clearTimeout(timer);
   }, [overrideCueShownAt, summaryFeedback]);
-
   useEffect(() => {
     if (!summaryFeedback) return;
     const timer = window.setTimeout(() => {
@@ -1595,10 +1473,8 @@ export const DashboardCoordinatorMode: React.FC = () => {
         setSummaryFeedbackShownAt(null);
       }
     }, 5000);
-
     return () => window.clearTimeout(timer);
   }, [summaryFeedback, summaryFeedbackShownAt]);
-
   const returnToBoard = () => {
     const next = resolveCoordinatorReturnToBoardState({
       hasDoorReview: guests.some((guest) => getCoordinatorDoorStatus(guest) === 'watch'),
@@ -1614,7 +1490,6 @@ export const DashboardCoordinatorMode: React.FC = () => {
       setActiveQnaId(getFirstOpenCoordinatorQnaId(qnaItems));
     }
   };
-
   const runPrimaryAction = () => {
     const target = resolveCoordinatorPrimaryActionTarget(primaryAction);
     clearCoordinatorTransientState();
@@ -1641,7 +1516,6 @@ export const DashboardCoordinatorMode: React.FC = () => {
       }
     }
   };
-
   const runTimelineAction = (eventId: string, nextState: TimelineState | null) => {
     if (!nextState || !canEditTimeline) return;
     clearCoordinatorTransientState();
@@ -1678,29 +1552,24 @@ export const DashboardCoordinatorMode: React.FC = () => {
     }
     setPanelFocus('timeline');
   };
-
   const selectTimelineState = (eventId: string, nextState: TimelineState) => {
     runTimelineAction(eventId, nextState);
   };
-
   const runCorrectionCue = (cue: (typeof correctionCues)[number]) => {
     const target = resolveCoordinatorCorrectionCueTarget(cue);
     clearCoordinatorTransientState();
     setCommandSource('correction');
     setPanelFocus(target.panelFocus);
     setCheckInReviewOnly(target.reviewOnly);
-
     if (cue.key === 'undo-check-in') {
       setCheckInFilter('checked-in');
       if (correctionGuestId) setActiveGuestId(correctionGuestId);
       return;
     }
-
     if (cue.key === 'reopen-event' && correctionEventId) {
       setActiveTimelineEventId(correctionEventId);
     }
   };
-
   const saveQnaAnswer = async (id: string) => {
     if (!canEditQna) {
       toast('Your collaborator role cannot edit guest questions here.', 'info');
@@ -1711,7 +1580,6 @@ export const DashboardCoordinatorMode: React.FC = () => {
     const nextItems = updateCoordinatorQnaItem(qnaItems, id, draftAnswer);
     const nextItem = nextItems.find((item) => item.id === id);
     if (!nextItem) return;
-
     if (!isDemoMode) {
       const { error } = await supabase.from('guest_qna_items').update({
         answer: nextItem.answer ?? null,
@@ -1722,13 +1590,11 @@ export const DashboardCoordinatorMode: React.FC = () => {
         return;
       }
     }
-
     setQnaItems(nextItems);
     setQnaDraftAnswers((prev) => ({ ...prev, [id]: nextItem.answer || '' }));
     setActiveQnaId(nextItem.status === 'answered' ? getNextCoordinatorQnaFocusId(nextItems, id) : id);
     toast(nextItem.status === 'answered' ? 'Guest question answered.' : 'Guest question reopened.', 'success');
   };
-
   return (
     <DashboardLayout currentPage="planning">
       <div className="max-w-6xl mx-auto space-y-5">
@@ -1754,7 +1620,6 @@ export const DashboardCoordinatorMode: React.FC = () => {
             )}
           </div>
         </div>
-
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           <div className="lg:col-span-2 grid grid-cols-2 md:grid-cols-4 gap-3">
             {[
@@ -1769,11 +1634,9 @@ export const DashboardCoordinatorMode: React.FC = () => {
               </div>
             ))}
           </div>
-
           <div className="space-y-4">
             <DayOfRelayCard relay={dayOfRelay} onAction={runDayOfRelayAction} />
             <DayOfBrainCard briefing={dayOfBrainBriefing} onAction={runDayOfBrainAction} />
-
             <div className="rounded-2xl border border-border/35 bg-white shadow-[0_4px_14px_rgba(15,23,42,0.05)] p-4">
               <p className="text-sm font-medium text-text-primary mb-2">Attention now</p>
               <p className="text-[11px] text-text-tertiary mb-2">This pulls together the live exceptions the coordinator should resolve first.</p>
@@ -1888,13 +1751,11 @@ export const DashboardCoordinatorMode: React.FC = () => {
             </div>
           </div>
         </div>
-
         <div className="rounded-lg border border-primary/20 bg-primary/5 px-3 py-2 text-xs text-primary">
           <p className="font-medium">{handoffCopy.title}</p>
           <p className="mt-1 text-primary/80">{handoffCopy.detail}</p>
           <p className="mt-2 text-primary/70">Final couple decisions still sit above this workspace when something needs approval.</p>
         </div>
-
         <div className="rounded-lg border border-border/35 bg-white px-3 py-3 shadow-[0_4px_14px_rgba(15,23,42,0.05)]">
           <div className="flex items-center justify-between gap-3">
             <div>
@@ -1950,13 +1811,11 @@ export const DashboardCoordinatorMode: React.FC = () => {
             ))}
           </div>
         </div>
-
         <div className="rounded-lg border border-border/35 bg-white px-3 py-2 shadow-[0_4px_14px_rgba(15,23,42,0.05)]">
           <div className="flex items-center justify-between gap-3 mb-2">
             <p className="text-xs font-medium text-text-primary">Live command summary</p>
             <p className="text-[11px] text-text-tertiary">What the board thinks matters right now</p>
           </div>
-
           {summaryDisplayCue ? (
             <div className="mb-3 space-y-2">
               <div>
@@ -1993,7 +1852,6 @@ export const DashboardCoordinatorMode: React.FC = () => {
                   </div>
                 )}
               </div>
-
               <div>
                 <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-text-tertiary">{standingPromptMode === 'secondary' ? 'Next up' : 'Standing prompt'}</p>
                 <button
@@ -2023,7 +1881,6 @@ export const DashboardCoordinatorMode: React.FC = () => {
               </button>
             </div>
           )}
-
           <div className="mb-3 rounded-lg border border-border/50 bg-surface-subtle/30 px-3 py-2">
             <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
               <div>
@@ -2163,7 +2020,6 @@ export const DashboardCoordinatorMode: React.FC = () => {
               </button>
             ))}
           </div>
-
           <div className="mt-3 grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-4">
             {commandDeckItems.map((item) => (
               <button
@@ -2184,7 +2040,6 @@ export const DashboardCoordinatorMode: React.FC = () => {
               </button>
             ))}
           </div>
-
           <div className="mt-3 grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-4">
             {opsSnapshotItems.map((item) => (
               <button
@@ -2207,14 +2062,12 @@ export const DashboardCoordinatorMode: React.FC = () => {
             ))}
           </div>
         </div>
-
         {coordinatorRole !== 'owner' && (
           <PlannerHandoffCard
             tone={coordinatorRole === 'planner' ? 'planner' : coordinatorRole === 'coordinator' ? 'coordinator' : 'viewer'}
             handoff={plannerHandoff}
           />
         )}
-
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           <div className={`lg:col-span-2 rounded-2xl border bg-white shadow-[0_4px_14px_rgba(15,23,42,0.05)] overflow-hidden ${panelFocus === 'check-in' ? 'border-primary/40 ring-2 ring-primary/10' : 'border-border/35'}`}>
             <div className="px-4 py-3 border-b border-border/60 space-y-3">
@@ -2365,7 +2218,14 @@ export const DashboardCoordinatorMode: React.FC = () => {
                       )}
                       <button
                         type="button"
-                          onClick={(e) => { e.stopPropagation(); focusCoordinatorCheckInLane(); setActiveGuestId(g.id); canCheckIn && void toggleCheckIn(g); }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            focusCoordinatorCheckInLane();
+                            setActiveGuestId(g.id);
+                            if (canCheckIn) {
+                              void toggleCheckIn(g);
+                            }
+                          }}
                         disabled={!canCheckIn || doorStatus === 'watch' || checkInBusyGuestId === g.id}
                         className={`px-3 py-1.5 text-xs rounded-md border disabled:opacity-40 ${g.checked_in_at ? 'border-success/40 text-success bg-success/5' : doorStatus === 'watch' ? 'border-amber-200 text-amber-700 bg-amber-50' : 'border-border text-text-secondary bg-white'}`}
                       >
@@ -2377,7 +2237,6 @@ export const DashboardCoordinatorMode: React.FC = () => {
               })}
             </div>
           </div>
-
           <div className="rounded-2xl border border-border/35 bg-white shadow-[0_4px_14px_rgba(15,23,42,0.05)] p-4 space-y-4">
             <div>
               <p className="text-sm font-medium text-text-primary mb-2">Run-of-show timeline{panelFocus === 'timeline' ? ' · focus' : ''}{activeTimelineEventId ? ` · ${getCoordinatorActiveTargetLabel('timeline')}` : ''}{timelineTargetState.label ? ` · ${timelineTargetState.label}` : ''}</p>
@@ -2551,11 +2410,9 @@ export const DashboardCoordinatorMode: React.FC = () => {
                 )}
               </div>
             </div>
-
             <div className="border-t border-border/60 pt-3">
               <p className="text-sm font-medium text-text-primary mb-1">Day-of message</p>
               <p className="text-[11px] text-text-tertiary mb-2">Use quick actions and filters to send updates to the right guests fast.</p>
-
               <div className="grid grid-cols-2 md:grid-cols-5 gap-2 mb-3">
                 {[
                   ['Queued', alertStats.total],
@@ -2622,7 +2479,6 @@ export const DashboardCoordinatorMode: React.FC = () => {
                     body: alertForm.body,
                     audience: alertForm.audience,
                   });
-
                   return (
                     <button
                       key={suggestion.key}
@@ -2677,7 +2533,6 @@ export const DashboardCoordinatorMode: React.FC = () => {
                   </button>
                 ))}
               </div>
-
               <fieldset disabled={!canSendAlerts} className="space-y-2.5">
                 <Input
                   value={alertForm.subject}
@@ -2808,7 +2663,6 @@ export const DashboardCoordinatorMode: React.FC = () => {
                 )}
               </fieldset>
             </div>
-
             <div className="border-t border-border/60 pt-3">
               <div className="mb-2 flex items-center justify-between gap-3">
                 <p className="text-sm font-medium text-text-primary">Guest questions{panelFocus === 'qna' ? ' · focus' : ''}{activeQnaId ? ` · ${getCoordinatorActiveTargetLabel('qna')}` : ''}{qnaTargetState.label ? ` · ${qnaTargetState.label}` : ''}</p>
@@ -2989,5 +2843,4 @@ export const DashboardCoordinatorMode: React.FC = () => {
     </DashboardLayout>
   );
 };
-
 export default DashboardCoordinatorMode;

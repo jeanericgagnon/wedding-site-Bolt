@@ -5,7 +5,9 @@ interface FooterClassicProps {
   section: Section;
 }
 
-export default function FooterClassic({ section }: FooterClassicProps) {
+export default function FooterClassic({ section: _section }: FooterClassicProps) {
+  void _section;
+
   return (
     <footer className="py-12 bg-gray-900 text-white">
       <div className="max-w-4xl mx-auto px-4 text-center">

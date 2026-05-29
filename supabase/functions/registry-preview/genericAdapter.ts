@@ -139,6 +139,7 @@ export class GenericAdapter implements RetailerAdapter {
   hostnames = /.*/; // Matches all
 
   canHandle(url: string): boolean {
+    void url;
     return true; // Generic adapter handles everything
   }
 
@@ -206,7 +207,7 @@ export class GenericAdapter implements RetailerAdapter {
   /**
    * Parse JSON-LD Product schema
    */
-  private parseJsonLd(jsonLd: any, canonical: string, hostname: string): ProductData | null {
+  private parseJsonLd(jsonLd: Record<string, unknown>, canonical: string, hostname: string): ProductData | null {
     try {
       const titleCandidate = this.pickBestTitle([jsonLd.name, jsonLd.alternateName, jsonLd.headline], hostname);
       if (!titleCandidate) return null;

@@ -5,7 +5,9 @@ interface RegistryMinimalProps {
   section: Section;
 }
 
-export default function RegistryMinimal({ section }: RegistryMinimalProps) {
+export default function RegistryMinimal({ section: _section }: RegistryMinimalProps) {
+  void _section;
+
   return (
     <section className="py-24 bg-gray-50">
       <div className="max-w-3xl mx-auto px-4 text-center">

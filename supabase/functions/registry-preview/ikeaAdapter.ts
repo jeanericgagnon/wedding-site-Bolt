@@ -48,13 +48,13 @@ export class IkeaAdapter implements RetailerAdapter {
     return this.createFallback(url, normalized.canonical);
   }
 
-  private parseJsonLd(jsonLd: any, canonical: string): ProductData | null {
-    const title = this.cleanIkeaTitle((jsonLd?.name ?? '').toString());
+  private parseJsonLd(jsonLd: Record<string, unknown>, canonical: string): ProductData | null {
+    const title = this.cleanIkeaTitle((jsonLd.name ?? '').toString());
     if (!title) return null;
 
     const missing: string[] = [];
 
-    let image = jsonLd?.image;
+    let image = jsonLd.image;
     if (Array.isArray(image)) image = image[0];
     if (typeof image === 'object') image = image.url || image.contentUrl;
     if (!image) missing.push('image');
@@ -131,7 +131,7 @@ export class IkeaAdapter implements RetailerAdapter {
   private cleanIkeaTitle(input: string): string {
     return input
       .replace(/\s*[|\\-–—]\s*IKEA.*$/i, '')
-      .replace(/^IKEA\s*[:\-]\s*/i, '')
+      .replace(/^IKEA\s*[:-]\s*/i, '')
       .replace(/\s*-\s*buy online.*$/i, '')
       .replace(/\s*-\s*shop online.*$/i, '')
       .replace(/\s+/g, ' ')

@@ -4,7 +4,9 @@ interface GalleryClassicProps {
   section: Section;
 }
 
-export default function GalleryClassic({ section }: GalleryClassicProps) {
+export default function GalleryClassic({ section: _section }: GalleryClassicProps) {
+  void _section;
+
   const images = [
     'https://images.pexels.com/photos/1444442/pexels-photo-1444442.jpeg',
     'https://images.pexels.com/photos/265722/pexels-photo-265722.jpeg',

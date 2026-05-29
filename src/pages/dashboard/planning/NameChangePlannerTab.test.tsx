@@ -80,7 +80,7 @@ describe('NameChangePlannerTab', () => {
     const draft = makeDraft();
     const onDraftChange = vi.fn();
 
-    const view = render(
+    render(
       <NameChangePlannerTab
         draft={draft}
         documents={[]}
@@ -527,7 +527,7 @@ describe('NameChangePlannerTab', () => {
       } : step),
     };
 
-    const view = render(
+    render(
       <NameChangePlannerTab
         draft={draft}
         documents={[]}

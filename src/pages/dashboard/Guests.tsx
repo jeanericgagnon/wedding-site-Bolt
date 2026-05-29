@@ -1,14 +1,13 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
-import { PLANNER_ROLE_OPTIONS, canEditPlannerSurface, derivePlannerRoleFromPermissions, readPlannerAccessRole, writePlannerAccessRole, type PlannerAccessRole } from '../../lib/plannerAccess';
+import { canEditPlannerSurface, readPlannerAccessRole, writePlannerAccessRole, type PlannerAccessRole } from '../../lib/plannerAccess';
 import { resolveActiveSiteForUser } from '../../lib/activeSite';
 import { formatGuestOpsDate, formatGuestOpsDateTime, formatGuestOpsRelativeTime, getGuestOpsTimestamp } from './guestOpsTime';
 import { formatGuestEventDate } from './guestEventDate';
 import { getDaysUntilGuestWedding } from './guestWeddingDate';
 import { getRsvpFallbackState } from '../../lib/rsvpFallbackState';
 import { getInviteLifecycleState } from '../../lib/inviteLifecycle';
-import { getGuestLifecycleStage } from '../../lib/guestLifecycleStage';
 import { getPlusOneState } from '../../lib/plusOneState';
 import { getPerEventRsvpState } from '../../lib/perEventRsvpState';
 import { getRsvpExceptionStates } from '../../lib/rsvpExceptionState';
@@ -16,11 +15,10 @@ import { hasRespondedRsvpStatus, isAttendingRsvpStatus, isDeclinedRsvpStatus, is
 import { extractDietaryNote } from '../../lib/dietaryNotes';
 import { deriveInviteEvents } from '../../lib/rsvpEventFallback';
 import { deleteEventRsvpByInvitationId, deleteEventRsvpsByInvitationIds, getEventRsvpSnapshotsByInvitationIds, restoreEventRsvpSnapshots, type EventRsvpSnapshot } from '../../lib/eventRsvpCleanup';
-import { findCsvHeaderIndex, normalizeCsvHeader } from '../../lib/csvHeaderMatcher';
 import { DashboardStateBlock } from '../../components/dashboard/DashboardStateBlock';
 import { PlannerHandoffCard } from '../../components/dashboard/PlannerHandoffCard';
 import { Card, Button, Badge, Input, Select, Textarea } from '../../components/ui';
-import { Download, UserPlus, CheckCircle2, XCircle, Clock, X, Upload, Users, Mail, AlertCircle, Merge, Scissors, Home, CalendarDays, ChevronRight, Loader2, Copy, ChevronDown, PlusCircle, Pencil, Trash2 } from 'lucide-react';
+import { UserPlus, CheckCircle2, XCircle, Clock, X, Upload, Users, Mail, AlertCircle, Merge, Home, CalendarDays, ChevronRight, Loader2, Copy, ChevronDown, PlusCircle, Pencil, Trash2 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../hooks/useAuth';
 import { useToast } from '../../components/ui/Toast';
@@ -47,8 +45,6 @@ import {
   GUESTS_DELETE_ALL_RETRY_ERROR,
   GUESTS_EVENT_INVITE_RETRY_ERROR,
   GUESTS_HOUSEHOLD_MERGE_RETRY_ERROR,
-  GUESTS_HOUSEHOLD_REASSIGN_RETRY_ERROR,
-  GUESTS_HOUSEHOLD_SPLIT_RETRY_ERROR,
   GUESTS_IMPORT_RETRY_ERROR,
   GUESTS_INVITATION_SEND_RETRY_ERROR,
   GUESTS_PARSE_FILE_RETRY_ERROR,
@@ -307,7 +303,6 @@ export const DashboardGuests: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState<'all' | 'confirmed' | 'declined' | 'pending' | 'checked-in' | 'thank-you-due' | 'due-reminder' | 'missing-address' | 'ceremony-no' | 'reception-no' | 'missing-meal' | 'plusone-missing' | 'pending-no-email' | 'manual-follow-up' | 'manual-handled' | 'no-contact'>('all');
   const [extraFilters, setExtraFilters] = useState<string[]>([]);
-  const [extraFilterDraft, setExtraFilterDraft] = useState<string>('');
   const [itineraryFilterEvents, setItineraryFilterEvents] = useState<ItineraryEvent[]>([]);
   const [eventInviteGuestMap, setEventInviteGuestMap] = useState<Map<string, Set<string>>>(new Map());
 
@@ -512,7 +507,9 @@ export const DashboardGuests: React.FC = () => {
           setRsvpMealEnabled(typeof parsedM.enabled === 'boolean' ? parsedM.enabled : true);
           setRsvpMealOptions(Array.isArray(parsedM.options) ? parsedM.options.filter((x: unknown): x is string => typeof x === 'string' && x.trim().length > 0) : ['Chicken','Beef','Fish','Vegetarian','Vegan']);
         }
-      } catch {}
+      } catch {
+        // Ignore malformed demo RSVP config snapshots and keep seeded demo defaults.
+      }
       rsvpConfigLoadedRef.current = true;
       return;
     }
@@ -1398,26 +1395,6 @@ export const DashboardGuests: React.FC = () => {
 
 
 
-  const handleCopyOpsSummary = async () => {
-    const summary = [
-      `RSVP Ops Summary (${new Date().toLocaleString()})`,
-      `Segment: ${segmentLabelMap[filterStatus] || filterStatus}`,
-      `Eligible reminders: ${reminderCandidates.length}`,
-      `No response: ${rsvpOps.noResponse}`,
-      `Missing meal: ${rsvpOps.missingMeal}`,
-      `Plus-one missing: ${rsvpOps.plusOneMissingName}`,
-      `Pending no email: ${rsvpOps.pendingNoEmail}`,
-      `No contact: ${contactStats.withNoContact}`,
-    ].join('\n');
-
-    try {
-      await navigator.clipboard.writeText(summary);
-      toast('Copied RSVP ops summary', 'success');
-    } catch {
-      window.prompt('Copy RSVP ops summary:', summary);
-    }
-  };
-
   const handleCopyExceptionChecklist = async () => {
     const lines = filteredGuests.flatMap((guest) => {
       const states = exceptionStateByGuest.get(guest.id) || [];
@@ -1510,13 +1487,6 @@ export const DashboardGuests: React.FC = () => {
     setSearchQuery('');
   };
 
-
-  const saveCurrentSegment = () => {
-    const label = `${segmentLabelMap[filterStatus] || filterStatus} (${filteredGuests.length})`;
-    const seg = { id: Date.now(), label, filter: filterStatus, createdAt: new Date().toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) };
-    setSavedSegments((prev) => [seg, ...prev.filter((x) => x.filter !== filterStatus)].slice(0, 12));
-    toast('Segment saved', 'success');
-  };
 
   const addFollowUpTask = (text: string) => {
     const task = { id: Date.now(), text, createdAt: new Date().toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) };
@@ -1786,41 +1756,6 @@ Proceed with send?`)) return;
     }
   }
 
-  async function handleSplitFromHousehold(guestId: string) {
-    if (!weddingSiteId || isDemoMode) return;
-    setHouseholdBusy(true);
-    try {
-      const { error } = await supabase
-        .from('guests')
-        .update({ household_id: null })
-        .eq('id', guestId)
-        .eq('wedding_site_id', weddingSiteId);
-      if (error) throw error;
-      await fetchGuests();
-      toast('Guest removed from household', 'success');
-    } catch {
-      toast(GUESTS_HOUSEHOLD_SPLIT_RETRY_ERROR, 'error');
-    } finally {
-      setHouseholdBusy(false);
-    }
-  }
-
-  async function handleReassignHousehold(guestId: string, newHouseholdId: string) {
-    if (!weddingSiteId || isDemoMode) return;
-    try {
-      const { error } = await supabase
-        .from('guests')
-        .update({ household_id: newHouseholdId || null })
-        .eq('id', guestId)
-        .eq('wedding_site_id', weddingSiteId);
-      if (error) throw error;
-      await fetchGuests();
-      toast('Guest reassigned', 'success');
-    } catch {
-      toast(GUESTS_HOUSEHOLD_REASSIGN_RETRY_ERROR, 'error');
-    }
-  }
-
   const persistReminderSettings = async (patch: { reminder_cadence_days?: 1 | 3 | 7; auto_reminders_enabled?: boolean }) => {
     if (!weddingSiteId || isDemoMode) return;
     const { error } = await supabase
@@ -1918,7 +1853,7 @@ Proceed with send?`)) return;
           .select('event_id')
           .eq('guest_id', guest.id),
         isDemoMode
-          ? Promise.resolve({ data: [], error: null } as any)
+          ? Promise.resolve({ data: [] as GuestAuditEntry[], error: null })
           : supabase
               .from('guest_audit_logs')
               .select('id, action, changed_at, changed_by, old_data, new_data')
@@ -3120,21 +3055,6 @@ Proceed with send?`)) return;
   })]));
 
 
-  const householdStateByGuest = new Map(filteredGuests.map((guest) => {
-    const householdMembers = guest.household_id ? filteredGuests.filter((member) => member.household_id === guest.household_id) : [];
-    const mixedResponses = householdMembers.length > 1 && new Set(householdMembers.map((member) => member.rsvp_status)).size > 1;
-    const unnamedPlusOne = Boolean(guest.plus_one_allowed && guest.rsvp?.attending && !guest.rsvp?.plus_one_name);
-    const state = mixedResponses
-      ? 'Mixed household responses'
-      : unnamedPlusOne
-        ? 'Plus-one unresolved'
-        : householdMembers.length > 1
-          ? 'Grouped household'
-          : 'Standalone guest';
-    return [guest.id, state] as const;
-  }));
-
-
   const mealSummary = {
     withMealChoice: filteredGuests.filter((guest) => Boolean(guest.rsvp?.meal_choice)).length,
     missingMealChoice: filteredGuests.filter((guest) => isAttendingRsvpStatus(guest.rsvp_status) && !guest.rsvp?.meal_choice).length,
@@ -3215,13 +3135,6 @@ Proceed with send?`)) return;
       }
     : null;
 
-  const rsvpCompleteness = Math.max(0, 100 - Math.min(100, (
-    (rsvpOps.noResponse * 0.55) +
-    (rsvpOps.missingMeal * 0.25) +
-    (rsvpOps.plusOneMissingName * 0.2)
-  )));
-
-
   const campaignReadiness = Math.max(
     0,
     Math.min(
@@ -3279,21 +3192,6 @@ Proceed with send?`)) return;
     'manual-follow-up': 'Manual Follow-up',
     'manual-handled': 'Handled Manually',
     'no-contact': 'No Contact Info',
-  };
-
-  const labelForFilter = (filter: string) => {
-    if (segmentLabelMap[filter]) return segmentLabelMap[filter];
-    if (filter.startsWith('event-invited:')) {
-      const eventId = filter.replace('event-invited:', '');
-      const name = effectiveItineraryEvents.find((e) => e.id === eventId)?.event_name ?? 'Event';
-      return `${name}: Invited`;
-    }
-    if (filter.startsWith('event-not-invited:')) {
-      const eventId = filter.replace('event-not-invited:', '');
-      const name = effectiveItineraryEvents.find((e) => e.id === eventId)?.event_name ?? 'Event';
-      return `${name}: Not invited`;
-    }
-    return filter;
   };
 
   const getStatusBadge = (status: string) => {
@@ -3433,7 +3331,6 @@ Proceed with send?`)) return;
   const [skipRecentlyInvited, setSkipRecentlyInvited] = useState(true);
   const [reminderCadenceDays, setReminderCadenceDays] = useState<1 | 3 | 7>(3);
   const [autoRemindersEnabled, setAutoRemindersEnabled] = useState(false);
-  const [showExportMenu, setShowExportMenu] = useState(false);
   const [showOpsMenu, setShowOpsMenu] = useState(false);
   const [showCampaignModal, setShowCampaignModal] = useState(false);
   const [showNuclearDeleteModal, setShowNuclearDeleteModal] = useState(false);
@@ -3463,7 +3360,7 @@ Proceed with send?`)) return;
 
   const dueReminderCandidatesGlobal = guests.filter((g) => !!g.email && !!g.invite_token && isDueReminder(g));
 
-  const reminderCandidates = emailableFilteredGuests.filter((g: any) => {
+  const reminderCandidates = emailableFilteredGuests.filter((g) => {
     if (!skipRecentlyInvited) return true;
     return dueReminderGuestIds.has(g.id);
   });
@@ -4308,7 +4205,7 @@ Proceed with send?`)) return;
                       <label className="text-xs text-text-secondary w-28">Campaign preset</label>
                       <select
                         value={campaignPreset}
-                        onChange={(e) => applyCampaignPreset(e.target.value as any)}
+                        onChange={(e) => applyCampaignPreset(e.target.value as 'pending' | 'missing-meal' | 'plusone-missing' | 'ceremony-no' | 'reception-no' | 'pending-no-email')}
                         className="text-xs border border-border rounded-md px-2 py-1.5 bg-white text-text-primary"
                       >
                         <option value="pending">Pending responses ({rsvpOps.noResponse})</option>
@@ -4570,7 +4467,8 @@ Proceed with send?`)) return;
                             className={`flex items-center gap-3 px-5 py-3 transition-colors cursor-pointer ${isSelected ? 'bg-primary/5' : 'hover:bg-surface-subtle'}`}
                             onClick={() => setSelectedGuestIds(prev => {
                               const next = new Set(prev);
-                              isSelected ? next.delete(guest.id) : next.add(guest.id);
+                              if (isSelected) next.delete(guest.id);
+                              else next.add(guest.id);
                               return next;
                             })}
                           >

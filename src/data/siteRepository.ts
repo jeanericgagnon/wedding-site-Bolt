@@ -128,7 +128,9 @@ export const siteRepository = {
   },
 
   async upsertSection(section: PersistedSection): Promise<PersistedSection> {
-    const { created_at: _ca, updated_at: _ua, ...rest } = section;
+    const { created_at, updated_at, ...rest } = section;
+    void created_at;
+    void updated_at;
     const { data, error } = await supabase
       .from('sections')
       .upsert({ ...rest, updated_at: new Date().toISOString() })

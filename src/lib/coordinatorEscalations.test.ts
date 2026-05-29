@@ -3,9 +3,18 @@ import { buildCoordinatorEscalations } from './coordinatorEscalations';
 
 describe('buildCoordinatorEscalations', () => {
   it('adds judgment framing to door exceptions', () => {
+    type TestGuest = {
+      id: string;
+      name: string;
+      first_name: string | null;
+      last_name: string | null;
+      rsvp_status: string;
+      checked_in_at: string | null;
+    };
+
     const escalations = buildCoordinatorEscalations({
       guests: [
-        { id: 'g1', name: 'Alex', rsvp_status: 'pending', checked_in_at: null } as any,
+        { id: 'g1', name: 'Alex', first_name: 'Alex', last_name: null, rsvp_status: 'pending', checked_in_at: null } as TestGuest,
       ],
       qnaItems: [],
       events: [],

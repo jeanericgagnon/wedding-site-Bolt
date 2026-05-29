@@ -110,7 +110,9 @@ export const WeddingPartySection: React.FC<Props> = ({ data, instance }) => {
   );
 };
 
-export const WeddingPartyGrid: React.FC<Props> = ({ data, instance }) => {
+export const WeddingPartyGrid: React.FC<Props> = ({ data: _data, instance }) => {
+  void _data;
+
   const { settings } = instance;
   const { bridal, groomsmen } = getPartyMembers(settings);
   const all = [...bridal, ...groomsmen];

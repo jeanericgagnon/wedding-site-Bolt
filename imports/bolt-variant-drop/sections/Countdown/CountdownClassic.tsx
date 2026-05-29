@@ -4,7 +4,9 @@ interface CountdownClassicProps {
   section: Section;
 }
 
-export default function CountdownClassic({ section }: CountdownClassicProps) {
+export default function CountdownClassic({ section: _section }: CountdownClassicProps) {
+  void _section;
+
   return (
     <section className="py-24 bg-gradient-to-br from-rose-500 to-pink-500 text-white">
       <div className="max-w-4xl mx-auto px-4 text-center">

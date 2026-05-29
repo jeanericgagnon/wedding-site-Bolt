@@ -5,7 +5,9 @@ interface FooterExpandedProps {
   section: Section;
 }
 
-export default function FooterExpanded({ section }: FooterExpandedProps) {
+export default function FooterExpanded({ section: _section }: FooterExpandedProps) {
+  void _section;
+
   return (
     <footer className="py-16 bg-gradient-to-br from-gray-900 to-black text-white">
       <div className="max-w-6xl mx-auto px-4">

@@ -188,7 +188,6 @@ function dedupeNormalizedRegistryLinks(links: CarryoverRegistryLink[]): Carryove
       continue;
     }
 
-    const existingInferredLabel = inferSourceLabel(existing.url);
     if (!existing.sourceLabel && link.sourceLabel) {
       deduped.set(link.url, link);
     } else if (link.sourceLabel && isWeakInferredSourceLabel(existing.url, existing.sourceLabel) && link.sourceLabel !== existing.sourceLabel) {
@@ -266,7 +265,6 @@ export function mergeRegistrySourceLabels(
       continue;
     }
 
-    const inferredMergedLabel = inferSourceLabel(existingMerged.url);
     if (
       nextLink.sourceLabel
       && isWeakInferredSourceLabel(existingMerged.url, existingMerged.sourceLabel)

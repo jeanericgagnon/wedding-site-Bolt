@@ -5,7 +5,9 @@ interface RSVPFormProps {
   section: Section;
 }
 
-export default function RSVPForm({ section }: RSVPFormProps) {
+export default function RSVPForm({ section: _section }: RSVPFormProps) {
+  void _section;
+
   return (
     <section className="py-24 bg-gradient-to-br from-gray-900 to-gray-800 text-white">
       <div className="max-w-3xl mx-auto px-4">

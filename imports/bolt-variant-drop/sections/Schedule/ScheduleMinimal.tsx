@@ -4,7 +4,9 @@ interface ScheduleMinimalProps {
   section: Section;
 }
 
-export default function ScheduleMinimal({ section }: ScheduleMinimalProps) {
+export default function ScheduleMinimal({ section: _section }: ScheduleMinimalProps) {
+  void _section;
+
   const events = [
     { time: '3:30 PM', title: 'Guest Arrival' },
     { time: '4:00 PM', title: 'Ceremony' },

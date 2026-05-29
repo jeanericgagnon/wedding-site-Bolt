@@ -16,6 +16,22 @@ type LookupRow = {
   rsvp_status?: string | null;
 };
 
+type SeatingAssignmentRow = {
+  guest_id: string;
+  seat_index: number | null;
+  checked_in_at: string | null;
+  guests?: {
+    first_name?: string | null;
+    last_name?: string | null;
+    name?: string | null;
+    email?: string | null;
+    rsvp_status?: string | null;
+  } | null;
+  seating_tables?: {
+    table_name?: string | null;
+  } | null;
+};
+
 export const DashboardSeatingLookup: React.FC = () => {
   const { user, isDemoMode } = useAuth();
   const [loading, setLoading] = useState(true);
@@ -66,7 +82,7 @@ export const DashboardSeatingLookup: React.FC = () => {
           .eq('is_valid', true)
           .order('updated_at', { ascending: false });
 
-        const mapped: LookupRow[] = ((assignments || []) as any[]).map((a) => {
+        const mapped: LookupRow[] = ((assignments || []) as SeatingAssignmentRow[]).map((a) => {
           const g = a.guests || {};
           const full_name = (g.first_name || g.last_name)
             ? `${g.first_name ?? ''} ${g.last_name ?? ''}`.trim()

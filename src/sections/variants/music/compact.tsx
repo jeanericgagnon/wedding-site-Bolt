@@ -1,6 +1,6 @@
 import React from 'react';
 import { z } from 'zod';
-import { Music, Play } from 'lucide-react';
+import { Music } from 'lucide-react';
 import { SectionDefinition, SectionComponentProps } from '../../types';
 
 const SongSchema = z.object({

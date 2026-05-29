@@ -306,7 +306,6 @@ test('limited collaborator can write allowed guest records but cannot directly w
     const search = new URLSearchParams(params);
     return `${supabaseUrl}/rest/v1/${table}${search.toString() ? `?${search.toString()}` : ''}`;
   };
-  const rpcUrl = (fn: string) => `${supabaseUrl}/rest/v1/rpc/${fn}`;
   const functionUrl = (functionName: string) => `${supabaseUrl}/functions/v1/${functionName}`;
 
   const restFetch = async (token: string, url: string, init: RequestInit = {}) => fetch(url, {

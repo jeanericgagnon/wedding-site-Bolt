@@ -4,7 +4,9 @@ interface GalleryMasonryProps {
   section: Section;
 }
 
-export default function GalleryMasonry({ section }: GalleryMasonryProps) {
+export default function GalleryMasonry({ section: _section }: GalleryMasonryProps) {
+  void _section;
+
   const images = [
     { src: 'https://images.pexels.com/photos/1444442/pexels-photo-1444442.jpeg', tall: true },
     { src: 'https://images.pexels.com/photos/265722/pexels-photo-265722.jpeg', tall: false },

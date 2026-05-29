@@ -5,7 +5,9 @@ interface FAQGridProps {
   section: Section;
 }
 
-export default function FAQGrid({ section }: FAQGridProps) {
+export default function FAQGrid({ section: _section }: FAQGridProps) {
+  void _section;
+
   const faqs = [
     {
       icon: Clock,

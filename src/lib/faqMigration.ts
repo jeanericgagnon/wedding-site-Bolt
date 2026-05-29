@@ -4,13 +4,13 @@ export interface FaqMigrationLine {
 }
 
 function normalizeQuestion(question: string): string {
-  const trimmed = question.trim().replace(/^[\-•*\s]+/, '').replace(/:+$/, '').trim();
+  const trimmed = question.trim().replace(/^[-•*\s]+/, '').replace(/:+$/, '').trim();
   if (!trimmed) return '';
   return trimmed.endsWith('?') ? trimmed : `${trimmed}?`;
 }
 
 function normalizeAnswer(answer: string): string {
-  return answer.trim().replace(/^[\-•*\s]+/, '').replace(/^:+/, '').trim();
+  return answer.trim().replace(/^[-•*\s]+/, '').replace(/^:+/, '').trim();
 }
 
 export function shapeImportedFaqLines(raw: string | null | undefined): FaqMigrationLine[] {

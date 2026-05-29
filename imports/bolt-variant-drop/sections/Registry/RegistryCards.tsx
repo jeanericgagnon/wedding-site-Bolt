@@ -5,7 +5,9 @@ interface RegistryCardsProps {
   section: Section;
 }
 
-export default function RegistryCards({ section }: RegistryCardsProps) {
+export default function RegistryCards({ section: _section }: RegistryCardsProps) {
+  void _section;
+
   return (
     <section className="py-24 bg-gradient-to-b from-rose-50 to-white">
       <div className="max-w-6xl mx-auto px-4">

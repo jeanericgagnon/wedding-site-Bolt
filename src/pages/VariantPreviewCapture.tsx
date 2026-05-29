@@ -59,7 +59,7 @@ function pickPhotos(pool: PreviewPhoto[], sectionType: BuilderSectionType, varia
   }
 
   const ranked = candidatePool
-    .filter((p) => preferred.includes(p.orientation as any))
+    .filter((p) => preferred.includes(p.orientation as 'portrait' | 'landscape' | 'square'))
     .sort((a, b) => {
       const ba = priorityBuckets.indexOf(a.bucket);
       const bb = priorityBuckets.indexOf(b.bucket);
@@ -116,8 +116,6 @@ export default function VariantPreviewCapture() {
 
   const section = React.useMemo(() => {
     const s = createDefaultSectionInstance(safeType, variant, 0);
-    const picks = pickPhotos(photos, safeType, variant);
-
     const headerPhoto = GLOBAL_HEADER_PHOTO;
     (s.settings as Record<string, unknown>).backgroundImage = headerPhoto;
     (s.settings as Record<string, unknown>).imageUrl = headerPhoto;

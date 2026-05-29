@@ -48,7 +48,7 @@ export class AmazonAdapter implements RetailerAdapter {
     return this.createFallback(url, normalized.canonical);
   }
 
-  private parseJsonLd(jsonLd: any, canonical: string): ProductData | null {
+  private parseJsonLd(jsonLd: Record<string, unknown>, canonical: string): ProductData | null {
     const title = this.cleanAmazonTitle((jsonLd?.name ?? '').toString());
     if (!title) return null;
 

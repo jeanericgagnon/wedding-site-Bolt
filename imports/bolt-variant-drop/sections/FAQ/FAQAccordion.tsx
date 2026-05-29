@@ -5,7 +5,9 @@ interface FAQAccordionProps {
   section: Section;
 }
 
-export default function FAQAccordion({ section }: FAQAccordionProps) {
+export default function FAQAccordion({ section: _section }: FAQAccordionProps) {
+  void _section;
+
   const faqs = [
     {
       question: 'What should I wear?',

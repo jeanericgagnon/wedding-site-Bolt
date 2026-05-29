@@ -5,7 +5,9 @@ interface ScheduleCardsProps {
   section: Section;
 }
 
-export default function ScheduleCards({ section }: ScheduleCardsProps) {
+export default function ScheduleCards({ section: _section }: ScheduleCardsProps) {
+  void _section;
+
   const events = [
     { time: '3:30 PM', title: 'Guest Arrival', icon: Clock, color: 'blue' },
     { time: '4:00 PM', title: 'Ceremony', icon: Camera, color: 'rose' },

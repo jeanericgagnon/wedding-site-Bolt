@@ -174,7 +174,6 @@ export const planFollowUpQuestions = (
     .filter((eventTitle) => !isVagueEventTitle(eventTitle))
     .filter((eventTitle) => !isUndecidedValue(eventTitle));
   const howWeMet = (snapshot.howWeMet || '').trim();
-  const storyDetail = (snapshot.storyDetail || '').trim();
   const storyWordCount = howWeMet.split(/\s+/).filter(Boolean).length;
   const isThinStory = storyWordCount < 8;
   const mentionsDigitalOrigin = /hinge|bumble|tinder|online|app|instagram|dm|texted/i.test(howWeMet);
@@ -204,7 +203,6 @@ export const planFollowUpQuestions = (
   if ((!snapshot.travelNotes || isDestinationLike) && hasVenue && !hasUndecidedTravel && eventLocationCandidates.length <= 2 && !hasVagueEventTitles) neededKeys.add('location-why');
   if (!hasRegistry && eventLocationCandidates.length <= 1 && rawEventTitles.length <= 1) neededKeys.add('registry-posture');
 
-  const needsEventStructure = neededKeys.has('event-structure');
   const shouldUseEventCluster = eventLocationCandidates.length > 0;
   const eventClusterLabels = eventLocationCandidates.slice(0, Math.min(2, eventLocationCandidates.length)).map((value) => humanizeEventTitle(value).toLowerCase());
   const shouldSuppressEventStructure = shouldUseEventCluster && !hasVagueEventTitles && eventClusterLabels.every((label) => !/wedding|ceremony|reception/.test(label));

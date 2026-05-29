@@ -1075,7 +1075,6 @@ function buildAccountUpdateTemplates(
   return templateConfig.map((template) => {
     const readiness = resolvePlanSequenceStatus(template.dependsOnStepIds, steps);
     const blockingProofHopLabel = getDefaultAccountUpdateBlockingProofHopLabel(template.id, readiness);
-    const fallbackBlockingProofHopLabel = getFallbackBlockingProofHopLabel(readiness, blockingProofHopLabel);
     const readinessLabel = getAccountUpdateTemplateReadinessLabel(readiness, blockingProofHopLabel);
     const readinessSpecificProof = template.id === 'template-payroll'
       ? getReadinessChecklistLine(readiness, {

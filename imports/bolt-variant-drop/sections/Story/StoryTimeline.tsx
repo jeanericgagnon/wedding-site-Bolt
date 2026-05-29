@@ -5,7 +5,9 @@ interface StoryTimelineProps {
   section: Section;
 }
 
-export default function StoryTimeline({ section }: StoryTimelineProps) {
+export default function StoryTimeline({ section: _section }: StoryTimelineProps) {
+  void _section;
+
   const events = [
     { year: '2018', title: 'First Meeting', description: 'Our paths crossed at a mutual friend\'s party' },
     { year: '2019', title: 'First Date', description: 'A perfect evening that turned into many more' },

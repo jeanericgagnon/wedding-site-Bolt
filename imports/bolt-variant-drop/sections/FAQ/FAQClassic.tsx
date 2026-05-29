@@ -5,7 +5,9 @@ interface FAQClassicProps {
   section: Section;
 }
 
-export default function FAQClassic({ section }: FAQClassicProps) {
+export default function FAQClassic({ section: _section }: FAQClassicProps) {
+  void _section;
+
   const faqs = [
     { question: 'What should I wear?', answer: 'The dress code is formal attire. Please no jeans or casual wear.' },
     { question: 'Can I bring a plus one?', answer: 'Please refer to your invitation. If you have a plus one, it will be noted there.' },

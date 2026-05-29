@@ -5,7 +5,9 @@ interface TravelCompactProps {
   section: Section;
 }
 
-export default function TravelCompact({ section }: TravelCompactProps) {
+export default function TravelCompact({ section: _section }: TravelCompactProps) {
+  void _section;
+
   return (
     <section className="py-20 bg-gray-900 text-white">
       <div className="max-w-5xl mx-auto px-4">

@@ -5,7 +5,9 @@ interface RegistryClassicProps {
   section: Section;
 }
 
-export default function RegistryClassic({ section }: RegistryClassicProps) {
+export default function RegistryClassic({ section: _section }: RegistryClassicProps) {
+  void _section;
+
   return (
     <section className="py-24 bg-gradient-to-b from-gray-50 to-white">
       <div className="max-w-4xl mx-auto px-4 text-center">

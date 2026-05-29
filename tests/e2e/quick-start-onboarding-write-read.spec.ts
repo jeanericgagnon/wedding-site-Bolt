@@ -218,7 +218,8 @@ test('quick-start AI onboarding creates an editable starter site and guest impor
     expect(JSON.stringify(site.site_json || {})).toContain('concierge-brief');
   } finally {
     if (originalSite?.id) {
-      const { id: _id, ...restoreFields } = originalSite;
+      const { id, ...restoreFields } = originalSite;
+      void id;
       await restFetch(restUrl('wedding_sites', { id: `eq.${String(originalSite.id)}` }), {
         method: 'PATCH',
         headers: { Prefer: 'return=minimal' },

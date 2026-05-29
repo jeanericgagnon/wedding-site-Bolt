@@ -24,6 +24,8 @@ function getContacts(settings: SectionInstance['settings']): ContactPerson[] {
 }
 
 export const ContactSection: React.FC<Props> = ({ data: _data, instance }) => {
+  void _data;
+
   const { settings } = instance;
   const contacts = getContacts(settings);
   const eyebrow = readBuilderValue(settings.eyebrow as string | { value: string } | undefined, 'Need help?');
@@ -110,6 +112,8 @@ export const ContactSection: React.FC<Props> = ({ data: _data, instance }) => {
 };
 
 export const ContactMinimal: React.FC<Props> = ({ data: _data, instance }) => {
+  void _data;
+
   const { settings } = instance;
   const contacts = getContacts(settings);
   const title = readBuilderValue(settings.title as string | { value: string } | undefined, 'Have questions?');

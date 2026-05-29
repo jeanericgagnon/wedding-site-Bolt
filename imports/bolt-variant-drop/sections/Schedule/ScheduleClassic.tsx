@@ -5,7 +5,9 @@ interface ScheduleClassicProps {
   section: Section;
 }
 
-export default function ScheduleClassic({ section }: ScheduleClassicProps) {
+export default function ScheduleClassic({ section: _section }: ScheduleClassicProps) {
+  void _section;
+
   const events = [
     { time: '3:30 PM', title: 'Guest Arrival', description: 'Please arrive early to find your seats' },
     { time: '4:00 PM', title: 'Ceremony', description: 'The celebration begins' },

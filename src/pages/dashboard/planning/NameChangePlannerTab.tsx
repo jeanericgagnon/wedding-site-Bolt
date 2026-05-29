@@ -6,18 +6,13 @@ import { buildNameChangeBankExecutionSnapshot } from '../../../lib/nameChange/ba
 import { buildNameChangeAutofillPrepSnapshot } from '../../../lib/nameChange/autofill';
 import {
   buildNameChangeActionFeed,
-  ensureTerminalPeriod,
-  getAccountUpdateTemplateAudienceLine,
   getAccountUpdateTemplateContextLines,
   getAccountUpdateTemplateCopyButtonLabel,
   getAccountUpdateTemplateMessageLine,
-  getAccountUpdateTemplateReadinessLine,
   getAccountUpdateTemplateStatusLabel,
-  getAccountUpdateTemplateStatusLine,
   getExecutionNextActionDetail,
   sanitizeAccountUpdateTemplateText,
 } from '../../../lib/nameChange/actionFeed';
-import { getFallbackBlockingProofHopLabel } from '../../../lib/nameChange/engine';
 import { createDraftNameChangeDocument, normalizeDraftNameChangeDocumentId, upsertDraftNameChangeExtractedField } from '../../../lib/nameChange/intakeDraft';
 import { buildNameChangeCourtesyExecutionSnapshot } from '../../../lib/nameChange/courtesyFlow';
 import { NAME_CHANGE_DOCUMENT_CONTRACTS } from '../../../lib/nameChange/documentContract';
@@ -177,10 +172,6 @@ function getActionFeedCtaLabel(intent: 'open_execution_card' | 'open_document_re
   if (intent === 'open_document_repair') return 'Open document repair';
   if (intent === 'open_account_update_template') return 'Open update template';
   return 'Open execution card';
-}
-
-function getEffectiveBlockingProofHopLabel(template: NonNullable<NameChangePlan['summary']['accountUpdateTemplates']>[number]) {
-  return getFallbackBlockingProofHopLabel(template.readiness, template.blockingProofHopLabel);
 }
 
 function getAccountUpdateTemplateStatusChip(template: NonNullable<NameChangePlan['summary']['accountUpdateTemplates']>[number]) {

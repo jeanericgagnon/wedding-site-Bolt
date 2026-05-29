@@ -2,7 +2,6 @@ import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import {
   DndContext,
   DragEndEvent,
-  DragOverEvent,
   DragStartEvent,
   DragOverlay,
   PointerSensor,
@@ -11,7 +10,7 @@ import {
   useDroppable,
   useDraggable,
 } from '@dnd-kit/core';
-import { Users, Download, Wand2, Plus, Edit2, Trash2, X, AlertTriangle, RotateCcw, RotateCw, TableProperties, CheckCircle2, RefreshCw } from 'lucide-react';
+import { Users, Download, Plus, Edit2, Trash2, X, AlertTriangle, RotateCcw, RotateCw, TableProperties, CheckCircle2, RefreshCw } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { useToast } from '../../components/ui/Toast';
@@ -30,7 +29,7 @@ import {
   loadTables, createTable, updateTable, deleteTable, loadAssignments,
   assignGuestToTable, unassignGuest, resetSeating, getEligibleGuests,
   getEventCounters, autoCreateTables, autoSeatGuests, exportSeatingCSV,
-  exportPlaceCardsCSV, downloadCSV, invalidateDriftedAssignments, setGuestCheckedIn,
+  downloadCSV, invalidateDriftedAssignments, setGuestCheckedIn,
 } from './seating/seatingService';
 import { buildSeatingInsightCard } from './seating/seatingIntelligence';
 import { getFlowStatusLabel } from '../../lib/flowLabels';
@@ -59,6 +58,14 @@ import {
 
 const UNASSIGNED_DROPPABLE = 'unassigned-pool';
 type TableShape = 'round' | 'rectangle' | 'bar' | 'dj_booth' | 'dance_floor';
+type DemoItineraryEventRecord = Partial<Pick<ItineraryEvent, 'id' | 'event_name' | 'event_date' | 'start_time' | 'location_name'>>;
+type DemoSeatingStateRecord = Record<string, { tables?: SeatingTable[]; assignments?: SeatingAssignment[] }>;
+
+function isCompleteDemoItineraryEvent(
+  event: DemoItineraryEventRecord,
+): event is DemoItineraryEventRecord & Pick<ItineraryEvent, 'id' | 'event_name' | 'event_date'> {
+  return Boolean(event.id && event.event_name && event.event_date);
+}
 
 function getShapeLabel(shape: TableShape): string {
   switch (shape) {
@@ -424,8 +431,6 @@ function TableCard({
                     const seatsRight = Math.ceil((total - seatsTop) / 3);
                     const seatsBottom = Math.ceil((total - seatsTop - seatsRight) / 2);
                     const seatsLeft = total - seatsTop - seatsRight - seatsBottom;
-                    const slotW = 74;
-                    const slotH = 34;
                     const edgeGap = 20;
                     const centerX = (rectSize.width + 110) / 2;
                     const centerY = (rectSize.height + 110) / 2;
@@ -540,7 +545,7 @@ function TableForm({ initial, onSave, onCancel }: {
   const [shape, setShape] = useState<TableShape>((initial?.table_shape as TableShape) ?? 'round');
   const [layoutWidth, setLayoutWidth] = useState(initial?.layout_width ?? 260);
   const [layoutHeight, setLayoutHeight] = useState(initial?.layout_height ?? 150);
-  const [notes, setNotes] = useState(initial?.notes ?? '');
+  const [notes] = useState(initial?.notes ?? '');
   const autoSaveTimerRef = useRef<number | null>(null);
 
   function buildPayload() {
@@ -643,7 +648,6 @@ function TableForm({ initial, onSave, onCancel }: {
   );
 }
 
-const DEMO_EVENT_ID = 'demo-event-reception';
 const DEMO_SEATING_EVENT_ID = 'demo-seating-event';
 const DEMO_ITINERARY_STORAGE_KEY = 'dayof.demo.itinerary.events';
 const DEMO_SEATING_STORAGE_KEY = 'dayof.demo.seating.state';
@@ -693,7 +697,9 @@ export const DashboardSeating: React.FC = () => {
   );
 
   function loadDemoItineraryEventsFromStorage() {
-    const fallbackEvents: ItineraryEvent[] = demoEvents.map((e: any) => ({
+    const fallbackEvents: ItineraryEvent[] = (demoEvents as DemoItineraryEventRecord[])
+      .filter(isCompleteDemoItineraryEvent)
+      .map((e) => ({
       id: e.id,
       event_name: e.event_name,
       event_date: e.event_date,
@@ -705,16 +711,20 @@ export const DashboardSeating: React.FC = () => {
     try {
       const raw = localStorage.getItem(DEMO_ITINERARY_STORAGE_KEY);
       if (raw) {
-        const parsed = JSON.parse(raw) as Array<any>;
-        parsedEvents = (Array.isArray(parsed) ? parsed : []).map((e) => ({
-          id: e.id,
-          event_name: e.event_name,
-          event_date: e.event_date,
-          start_time: e.start_time || '18:00',
-          location_name: e.location_name || '',
-        })).filter((e) => e.id && e.event_name && e.event_date);
+        const parsed = JSON.parse(raw) as DemoItineraryEventRecord[];
+        parsedEvents = (Array.isArray(parsed) ? parsed : [])
+          .filter(isCompleteDemoItineraryEvent)
+          .map((e) => ({
+            id: e.id,
+            event_name: e.event_name,
+            event_date: e.event_date,
+            start_time: e.start_time || '18:00',
+            location_name: e.location_name || '',
+          }));
       }
-    } catch {}
+    } catch {
+      // Ignore malformed local demo itinerary snapshots and fall back to seeded demo events.
+    }
 
     return parsedEvents.length > 0 ? parsedEvents : fallbackEvents;
   }
@@ -738,10 +748,12 @@ export const DashboardSeating: React.FC = () => {
   function writeDemoSeatingState(eventId: string, tablesData: SeatingTable[], assignmentsData: SeatingAssignment[]) {
     try {
       const raw = localStorage.getItem(DEMO_SEATING_STORAGE_KEY);
-      const parsed = raw ? JSON.parse(raw) as Record<string, any> : {};
+      const parsed: DemoSeatingStateRecord = raw ? JSON.parse(raw) as DemoSeatingStateRecord : {};
       parsed[eventId] = { tables: tablesData, assignments: assignmentsData };
       localStorage.setItem(DEMO_SEATING_STORAGE_KEY, JSON.stringify(parsed));
-    } catch {}
+    } catch {
+      // Ignore local demo persistence failures; they should not block in-memory seating edits.
+    }
   }
 
   useEffect(() => {
@@ -1398,11 +1410,6 @@ export const DashboardSeating: React.FC = () => {
     downloadCSV(csv, `seating-${selectedEvent?.event_name ?? 'event'}.csv`);
   }
 
-  function handleExportPlaceCards() {
-    const csv = exportPlaceCardsCSV(allGuests, tables, assignments);
-    downloadCSV(csv, 'place-cards.csv');
-  }
-
   function handleExportExcel() {
     const selectedEvent = itineraryEvents.find(e => e.id === selectedEventId);
     const eventName = selectedEvent?.event_name ?? 'Event';
@@ -1444,65 +1451,6 @@ export const DashboardSeating: React.FC = () => {
 
     const safeName = (eventName || 'event').replace(/[^a-z0-9-_]+/gi, '-').toLowerCase();
     XLSX.writeFile(wb, `seating-${safeName}.xlsx`);
-  }
-
-  function handlePrint() {
-    window.print();
-  }
-
-  function handleExportPDF() {
-    const selectedEvent = itineraryEvents.find(e => e.id === selectedEventId);
-    const eventName = selectedEvent?.event_name ?? 'Event';
-    const now = new Date().toLocaleString();
-
-    const tableBlocks = tables.map((table) => {
-      const tableGuests = allGuests.filter(g =>
-        assignments.some(a => a.table_id === table.id && a.guest_id === g.id)
-      );
-      const rows = tableGuests.map((g) => {
-        const assignment = assignments.find(a => a.table_id === table.id && a.guest_id === g.id);
-        return `<tr><td>${g.full_name}</td><td>${g.email ?? ''}</td><td>${assignment?.checked_in_at ? 'Yes' : 'No'}</td></tr>`;
-      }).join('');
-
-      return `
-        <section style="margin-bottom:18px; page-break-inside:avoid;">
-          <h3 style="margin:0 0 8px 0;">${table.table_name} (${tableGuests.length}/${table.capacity})</h3>
-          <table style="width:100%; border-collapse:collapse; font-size:12px;">
-            <thead>
-              <tr>
-                <th style="text-align:left; border-bottom:1px solid #ddd; padding:6px;">Guest</th>
-                <th style="text-align:left; border-bottom:1px solid #ddd; padding:6px;">Email</th>
-                <th style="text-align:left; border-bottom:1px solid #ddd; padding:6px;">Arrived</th>
-              </tr>
-            </thead>
-            <tbody>${rows || '<tr><td colspan="3" style="padding:8px; color:#666;">No guests assigned</td></tr>'}</tbody>
-          </table>
-        </section>
-      `;
-    }).join('');
-
-    const html = `
-      <html>
-        <head><title>Seating Export - ${eventName}</title></head>
-        <body style="font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif; padding:24px; color:#111;">
-          <h1 style="margin:0 0 6px 0;">Seating Report — ${eventName}</h1>
-          <p style="margin:0 0 14px 0; color:#555;">Created ${now}</p>
-          <p style="margin:0 0 20px 0; color:#333;">Attending: ${counters?.attending ?? 0} · Seated: ${counters?.seated ?? 0} · Arrived: ${arrivedCount}</p>
-          ${tableBlocks || '<p>No tables yet.</p>'}
-        </body>
-      </html>
-    `;
-
-    const w = window.open('', '_blank', 'noopener,noreferrer,width=1000,height=900');
-    if (!w) {
-      toast('Popup blocked. Please allow popups to export PDF.', 'error');
-      return;
-    }
-    w.document.open();
-    w.document.write(html);
-    w.document.close();
-    w.focus();
-    w.print();
   }
 
   const selectedItineraryEvent = itineraryEvents.find(e => e.id === selectedEventId);

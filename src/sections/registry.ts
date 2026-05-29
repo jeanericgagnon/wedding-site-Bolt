@@ -59,7 +59,7 @@ import { videoInlineDefinition } from './variants/video/inline';
 
 type RegistryKey = string;
 
-const SECTION_REGISTRY = new Map<RegistryKey, SectionDefinition<any>>();
+const SECTION_REGISTRY = new Map<RegistryKey, SectionDefinition>();
 
 const VARIANT_FALLBACKS: Record<string, Record<string, string>> = {
   hero: {
@@ -355,8 +355,11 @@ export function resolveCanonicalRegistrySectionInput(type: unknown, variant: unk
   };
 }
 
-function registerDefinition<T>(def: SectionDefinition<T>): void {
-  SECTION_REGISTRY.set(makeKey(def.type, def.variant), def as SectionDefinition<any>);
+function registerDefinition<T extends Record<string, unknown>>(def: SectionDefinition<T>): void {
+  SECTION_REGISTRY.set(
+    makeKey(def.type, def.variant),
+    def as unknown as SectionDefinition<Record<string, unknown>>,
+  );
 }
 
 function cloneSectionDefinitionValue<T>(value: T): T {

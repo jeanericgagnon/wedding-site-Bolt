@@ -10,7 +10,6 @@ import {
 } from './registryCleanupReport';
 import {
   buildRegistryCleanupGroups,
-  REGISTRY_CLEANUP_GROUPS,
   type RegistryCleanupFocus,
 } from './registryCleanupGroups';
 import { buildRegistryMaintenanceReportText } from './registryMaintenanceReport';
@@ -812,7 +811,6 @@ export function RegistryDashboardRouteContent(props: {
       ].join(' · ');
   const recentPurchasedCount = props.recentActivity.filter((item) => item.purchase_status === 'purchased').length;
   const recentPartialCount = props.recentActivity.filter((item) => item.purchase_status === 'partial').length;
-  const recentAvailableCount = props.recentActivity.filter((item) => item.purchase_status === 'available').length;
   const recentActivityGuide = props.recentActivity.length === 0
     ? {
         focusTitle: 'Use activity as confirmation, not entertainment',

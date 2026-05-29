@@ -9,7 +9,7 @@ import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../hooks/useAuth';
 import { demoEvents, demoGuests, demoWeddingSite } from '../../lib/demoData';
 import { createSmsCreditsSession } from '../../lib/stripeService';
-import { canComposeDashboardMessages, canEditPlannerSurface, derivePlannerRoleFromPermissions, readPlannerAccessRole, writePlannerAccessRole, type PlannerAccessRole } from '../../lib/plannerAccess';
+import { canComposeDashboardMessages, readPlannerAccessRole, writePlannerAccessRole, type PlannerAccessRole } from '../../lib/plannerAccess';
 import { resolveActiveSiteForUser } from '../../lib/activeSite';
 import { GUEST_COMMUNICATION_FLOW } from '../../lib/guestCommunicationFlow';
 import { buildRsvpReminderDraft } from '../../lib/reminderDraftHelper';
@@ -51,17 +51,13 @@ import {
   MESSAGES_UNSCHEDULE_RETRY_ERROR,
   MESSAGES_WORKSPACE_LOAD_RETRY_ERROR,
 } from './messagesErrorCopy';
-
 const BULK_SEND_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-bulk-message`;
 const DEMO_MESSAGES_STORAGE_KEY = 'dayof.demo.messages.history';
 const RSVP_CONTINUITY_EVENT = 'dayof:rsvp-updated';
 const RSVP_CONTINUITY_STORAGE_KEY = 'dayof.rsvp.updatedAt';
-
 // Optional table: can be missing in lean deployments.
 // Start unknown, then permanently disable after one confirmed missing-table miss.
 let hasMessageDeliveriesTable: boolean | null = null;
-
-
 function buildDemoMessageSeed(): Message[] {
   const now = Date.now();
   const iso = (ms: number) => new Date(ms).toISOString();
@@ -124,7 +120,6 @@ function buildDemoMessageSeed(): Message[] {
     },
   ];
 }
-
 function readDemoMessages(): Message[] {
   try {
     const raw = localStorage.getItem(DEMO_MESSAGES_STORAGE_KEY);
@@ -135,13 +130,13 @@ function readDemoMessages(): Message[] {
     return buildDemoMessageSeed();
   }
 }
-
 function writeDemoMessages(items: Message[]) {
   try {
     localStorage.setItem(DEMO_MESSAGES_STORAGE_KEY, JSON.stringify(items));
-  } catch {}
+  } catch {
+    // Ignore demo history persistence failures; the in-memory state still supports local workflows.
+  }
 }
-
 async function triggerBulkSend(messageId: string): Promise<{ delivered: number; failed: number; skipped?: number; total: number; status: string }> {
   const { data: { session } } = await supabase.auth.getSession();
   const token = session?.access_token ?? import.meta.env.VITE_SUPABASE_ANON_KEY;
@@ -159,7 +154,6 @@ async function triggerBulkSend(messageId: string): Promise<{ delivered: number; 
   }
   return res.json();
 }
-
 async function triggerScheduledDispatch(limit = 10): Promise<{ processed: number; sent: number; failed: number; partial: number; skippedMessages: number; skippedRecipients: number }> {
   const { data: { session } } = await supabase.auth.getSession();
   const token = session?.access_token ?? import.meta.env.VITE_SUPABASE_ANON_KEY;
@@ -177,7 +171,6 @@ async function triggerScheduledDispatch(limit = 10): Promise<{ processed: number
   }
   return res.json();
 }
-
 interface Message {
   id: string;
   subject: string;
@@ -192,7 +185,6 @@ interface Message {
   delivered_count?: number | null;
   failed_count?: number | null;
 }
-
 interface Guest {
   id: string;
   email: string | null;
@@ -202,7 +194,6 @@ interface Guest {
   last_name: string | null;
   name: string;
 }
-
 interface WeddingSite {
   id: string;
   couple_first_name: string | null;
@@ -212,12 +203,10 @@ interface WeddingSite {
   wedding_date?: string | null;
   sms_credits_balance?: number;
 }
-
 interface PhotoBucketSummary {
   id: string;
   is_active: boolean;
 }
-
 interface SmsCreditTransaction {
   id: string;
   credits_delta: number;
@@ -226,19 +215,42 @@ interface SmsCreditTransaction {
   expires_at?: string | null;
   remaining_credits?: number | null;
 }
-
+type DemoWeddingSiteRecord = {
+  id: string;
+  couple_first_name?: string | null;
+  couple_second_name?: string | null;
+  couple_name_1?: string | null;
+  couple_name_2?: string | null;
+  couple_email?: string | null;
+};
+type DemoGuestRecord = {
+  id: string;
+  email?: string | null;
+  phone?: string | null;
+  rsvp_status?: string | null;
+  first_name?: string | null;
+  last_name?: string | null;
+  name: string;
+};
+type ItineraryEventRow = {
+  id: string;
+  event_name: string;
+  event_date: string;
+};
+type EventInvitationRow = {
+  event_id: string;
+  guest_id: string;
+};
 interface AudienceOption {
   value: string;
   label: string;
   count: number;
 }
-
 interface Toast {
   id: number;
   message: string;
   type: 'success' | 'error' | 'info';
 }
-
 interface DeliveryRow {
   id: string;
   message_id: string;
@@ -250,34 +262,26 @@ interface DeliveryRow {
   recipient_email: string;
   recipient_name?: string | null;
 }
-
 type ChannelType = 'email' | 'sms';
-
 const DELIVERY_ACTIVE_STATUSES = ['queued', 'sending', 'sent', 'partial', 'failed'] as const;
 const DELIVERY_COMPLETED_STATUSES = ['sent', 'partial', 'failed'] as const;
 const EMAIL_CAP_CONSUMING_STATUSES = ['queued', 'sent', 'partial'] as const;
-
 function isDeliveryActiveStatus(status: string | null | undefined): boolean {
   return DELIVERY_ACTIVE_STATUSES.includes((status ?? '') as (typeof DELIVERY_ACTIVE_STATUSES)[number]);
 }
-
 function isDeliveryCompletedStatus(status: string | null | undefined): boolean {
   return DELIVERY_COMPLETED_STATUSES.includes((status ?? '') as (typeof DELIVERY_COMPLETED_STATUSES)[number]);
 }
-
 function isEmailCapConsumingStatus(status: string | null | undefined): boolean {
   return EMAIL_CAP_CONSUMING_STATUSES.includes((status ?? '') as (typeof EMAIL_CAP_CONSUMING_STATUSES)[number]);
 }
-
 function canRetryMessageStatus(status: string | null | undefined): boolean {
   return status === 'failed';
 }
-
 function getDeliveryScopedRows(messages: Message[], deliveries: DeliveryRow[], predicate: (message: Message) => boolean): DeliveryRow[] {
   const allowedMessageIds = new Set(messages.filter(predicate).map((message) => message.id));
   return deliveries.filter((delivery) => allowedMessageIds.has(delivery.message_id));
 }
-
 type MessageTemplateKey =
   | 'blank'
   | 'save-the-date'
@@ -286,7 +290,6 @@ type MessageTemplateKey =
   | 'day-of-update'
   | 'photo-request'
   | 'thank-you';
-
 interface ComposerTemplate {
   key: MessageTemplateKey;
   label: string;
@@ -301,7 +304,6 @@ interface ComposerTemplate {
     photoLink: string;
   }) => { subject: string; body: string };
 }
-
 interface SavedComposerTemplate {
   id: string;
   name: string;
@@ -316,29 +318,24 @@ interface SavedComposerTemplate {
   createdAt: string;
   updatedAt?: string;
 }
-
 function isSavedTemplateScheduleUsable(template: SavedComposerTemplate): boolean {
   return template.scheduleType === 'later'
     && !!template.scheduleDate
     && !!template.scheduleTime
     && !isPastScheduledTime(`${template.scheduleDate}T${template.scheduleTime}:00`);
 }
-
 const SAVED_COMPOSER_TEMPLATES_STORAGE_KEY = 'dayof.savedComposerTemplates.v1';
-
 function readSavedComposerTemplates(): SavedComposerTemplate[] {
   try {
     const raw = localStorage.getItem(SAVED_COMPOSER_TEMPLATES_STORAGE_KEY);
     if (!raw) return [];
     const parsed = JSON.parse(raw);
     if (!Array.isArray(parsed)) return [];
-
     return normalizeSavedComposerTemplates(parsed.filter(isValidSavedComposerTemplate));
   } catch {
     return [];
   }
 }
-
 function normalizeSavedComposerTemplates(items: SavedComposerTemplate[]): SavedComposerTemplate[] {
   return items.map((item) => {
     const createdAt = typeof item?.createdAt === 'string' ? item.createdAt : new Date().toISOString();
@@ -356,7 +353,6 @@ function normalizeSavedComposerTemplates(items: SavedComposerTemplate[]): SavedC
     } as SavedComposerTemplate;
   });
 }
-
 function isValidSavedComposerTemplate(item: unknown): item is SavedComposerTemplate {
   if (!item || typeof item !== 'object') return false;
   const candidate = item as Record<string, unknown>;
@@ -368,7 +364,6 @@ function isValidSavedComposerTemplate(item: unknown): item is SavedComposerTempl
     && typeof candidate.audience === 'string'
     && typeof candidate.campaignName === 'string';
 }
-
 function writeSavedComposerTemplates(items: SavedComposerTemplate[]) {
   try {
     localStorage.setItem(SAVED_COMPOSER_TEMPLATES_STORAGE_KEY, JSON.stringify(items.slice(0, 12)));
@@ -377,11 +372,9 @@ function writeSavedComposerTemplates(items: SavedComposerTemplate[]) {
     return false;
   }
 }
-
 function normalizeSavedTemplateName(name: string): string {
   return name.trim().toLowerCase();
 }
-
 const COMPOSER_TEMPLATES: ComposerTemplate[] = [
   {
     key: 'blank',
@@ -470,21 +463,16 @@ const COMPOSER_TEMPLATES: ComposerTemplate[] = [
     }),
   },
 ];
-
-
 function isPastScheduledTime(scheduledFor: string | null): boolean {
   if (!scheduledFor) return false;
   return new Date(scheduledFor) < new Date();
 }
-
 function hasReachableEmail(email: string | null | undefined): boolean {
   return !!email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
-
 function hasReachablePhone(phone: string | null | undefined): boolean {
   return !!phone?.trim();
 }
-
 function formatScheduledDate(scheduledFor: string): string {
   const d = new Date(scheduledFor);
   const local = d.toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' });
@@ -493,7 +481,6 @@ function formatScheduledDate(scheduledFor: string): string {
   const absOffset = Math.abs(utcOffset);
   return `${local} (UTC${sign}${absOffset})`;
 }
-
 const ToastList: React.FC<{ toasts: Toast[] }> = ({ toasts }) => (
   <div className="fixed bottom-6 right-6 z-50 space-y-2 pointer-events-none">
     {toasts.map(t => (
@@ -512,7 +499,6 @@ const ToastList: React.FC<{ toasts: Toast[] }> = ({ toasts }) => (
     ))}
   </div>
 );
-
 function getStatusBadge(message: Message) {
   switch (message.status) {
     case 'draft':
@@ -533,7 +519,6 @@ function getStatusBadge(message: Message) {
       return null;
   }
 }
-
 function getAudienceLabel(message: Message): string {
   const audience = message.audience_filter ?? (message.recipient_filter?.audience as string) ?? 'all';
   if (typeof audience === 'string' && audience.startsWith('event:')) {
@@ -546,66 +531,53 @@ function getAudienceLabel(message: Message): string {
     default: return 'All guests';
   }
 }
-
 function getRecipientCount(message: Message): number {
   return message.recipient_count ?? (message.recipient_filter?.recipient_count as number) ?? 0;
 }
-
 function getSkippedCount(message: Message, deliveries: DeliveryRow[]): number {
   const fromDeliveries = deliveries.filter((delivery) => delivery.message_id === message.id && delivery.status === 'skipped').length;
   if (fromDeliveries > 0) return fromDeliveries;
   const fallback = message.recipient_filter?.skipped_count;
   return typeof fallback === 'number' ? fallback : 0;
 }
-
 function getUnreachedCount(message: Message, deliveries?: DeliveryRow[]): number {
   const total = getRecipientCount(message);
   const delivered = Number(message.delivered_count ?? 0);
   const failed = Number(message.failed_count ?? 0);
   const skipped = deliveries ? getSkippedCount(message, deliveries) : 0;
   const reachable = message.recipient_filter?.reachable_count;
-
   if (typeof reachable === 'number' && (!deliveries || deliveries.length === 0)) {
     return Math.max(reachable - delivered - failed, 0);
   }
-
   return Math.max(total - delivered - failed - skipped, 0);
 }
-
 function getCampaignThreadKey(message: Message): string {
   return getCampaignName(message) ?? message.subject ?? message.id;
 }
-
 function isAttendingStatus(status: string | null | undefined): boolean {
   return status === 'confirmed' || status === 'attending' || status === 'accepted';
 }
-
 function isDeclinedStatus(status: string | null | undefined): boolean {
   return status === 'declined' || status === 'not_attending';
 }
-
 function isPendingStatus(status: string | null | undefined): boolean {
   return !status || status === 'pending';
 }
-
 function getCampaignTypeLabel(message: Message): string | null {
   const raw = message.recipient_filter?.campaignType as string | undefined;
   if (!raw) return null;
   if (raw === 'save-the-date') return 'Save-the-date';
   return raw;
 }
-
 function getCampaignName(message: Message): string | null {
   const raw = message.recipient_filter?.campaignName;
   return typeof raw === 'string' && raw.trim().length > 0 ? raw.trim() : null;
 }
-
 function getTemplateKey(message: Message): MessageTemplateKey {
   const raw = message.recipient_filter?.templateKey;
   if (typeof raw !== 'string') return 'blank';
   return (COMPOSER_TEMPLATES.some((tpl) => tpl.key === raw) ? raw : 'blank') as MessageTemplateKey;
 }
-
 interface MessageDetailModalProps {
   message: Message;
   deliveries: DeliveryRow[];
@@ -617,7 +589,6 @@ interface MessageDetailModalProps {
   onCancelSchedule: (message: Message) => Promise<void>;
   onLoadIntoComposer: (message: Message, mode: 'edit' | 'duplicate') => void;
 }
-
 const MessageDetailModal: React.FC<MessageDetailModalProps> = ({ message, deliveries, canManageCampaigns, onClose, onRetry, onSendScheduledNow, onReschedule, onCancelSchedule, onLoadIntoComposer }) => {
   const [retrying, setRetrying] = React.useState(false);
   const [sendingScheduledNow, setSendingScheduledNow] = React.useState(false);
@@ -629,7 +600,6 @@ const MessageDetailModal: React.FC<MessageDetailModalProps> = ({ message, delive
   const audienceLabel = getAudienceLabel(message);
   const campaignName = getCampaignName(message);
   const campaignType = getCampaignTypeLabel(message);
-
   const sentDate = message.sent_at
     ? formatMessageHistoryDateTime(message.sent_at, { dateStyle: 'long', timeStyle: 'short' }, 'Sent time unavailable')
     : null;
@@ -662,7 +632,6 @@ const MessageDetailModal: React.FC<MessageDetailModalProps> = ({ message, delive
       return map;
     }, new Map<string, number>()).entries(),
   ).sort((a, b) => b[1] - a[1]).slice(0, 3);
-
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
       <div className="bg-surface rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col border border-border">
@@ -698,7 +667,6 @@ const MessageDetailModal: React.FC<MessageDetailModalProps> = ({ message, delive
             <X className="w-4 h-4" />
           </button>
         </div>
-
         <div className="px-6 py-4 border-b border-border flex-shrink-0 bg-surface-subtle">
           <div className="grid grid-cols-3 gap-4 text-sm">
             <div>
@@ -718,7 +686,6 @@ const MessageDetailModal: React.FC<MessageDetailModalProps> = ({ message, delive
             </div>
           </div>
         </div>
-
         <div className="flex-1 overflow-y-auto px-6 py-5 space-y-4">
           <div className="prose prose-sm max-w-none">
             <div className="bg-surface-subtle rounded-xl border border-border p-5">
@@ -728,7 +695,6 @@ const MessageDetailModal: React.FC<MessageDetailModalProps> = ({ message, delive
               </div>
             </div>
           </div>
-
           {message.status === 'scheduled' && (
             <div className="rounded-xl border border-border bg-surface-subtle p-4">
               <div className="flex items-start justify-between gap-3">
@@ -791,7 +757,6 @@ const MessageDetailModal: React.FC<MessageDetailModalProps> = ({ message, delive
               </div>
             </div>
           )}
-
           {failedDeliveries.length > 0 && (
             <div className="rounded-xl border border-rose-200 bg-rose-50 p-4">
               <div className="flex items-start justify-between gap-3">
@@ -801,7 +766,6 @@ const MessageDetailModal: React.FC<MessageDetailModalProps> = ({ message, delive
                 </div>
                 <span className="rounded-full border border-rose-200 bg-white px-2 py-0.5 text-[11px] font-medium text-rose-700">{failedDeliveries.length} failed</span>
               </div>
-
               {topFailureReasons.length > 0 && (
                 <div className="mt-3 space-y-1">
                   {topFailureReasons.map(([reason, count]) => (
@@ -812,7 +776,6 @@ const MessageDetailModal: React.FC<MessageDetailModalProps> = ({ message, delive
                   ))}
                 </div>
               )}
-
               <div className="mt-3 rounded-lg border border-rose-100 bg-white/80">
                 <div className="flex items-center justify-between px-3 py-2 border-b border-rose-100">
                   <p className="text-xs font-medium text-rose-900">Failed recipients</p>
@@ -835,7 +798,6 @@ const MessageDetailModal: React.FC<MessageDetailModalProps> = ({ message, delive
               </div>
             </div>
           )}
-
           {skippedDeliveries.length > 0 && (
             <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
               <div className="flex items-start justify-between gap-3">
@@ -845,7 +807,6 @@ const MessageDetailModal: React.FC<MessageDetailModalProps> = ({ message, delive
                 </div>
                 <span className="rounded-full border border-amber-200 bg-white px-2 py-0.5 text-[11px] font-medium text-amber-700">{skippedDeliveries.length} skipped</span>
               </div>
-
               {topSkipReasons.length > 0 && (
                 <div className="mt-3 space-y-1">
                   {topSkipReasons.map(([reason, count]) => (
@@ -856,7 +817,6 @@ const MessageDetailModal: React.FC<MessageDetailModalProps> = ({ message, delive
                   ))}
                 </div>
               )}
-
               <div className="mt-3 rounded-lg border border-amber-100 bg-white/80">
                 <div className="flex items-center justify-between px-3 py-2 border-b border-amber-100">
                   <p className="text-xs font-medium text-amber-900">Skipped recipients</p>
@@ -880,7 +840,6 @@ const MessageDetailModal: React.FC<MessageDetailModalProps> = ({ message, delive
             </div>
           )}
         </div>
-
         {(message.delivered_count != null || message.failed_count != null) && (
           <div className="px-6 py-3 border-t border-border flex-shrink-0 bg-surface-subtle">
             <div className="flex gap-6 text-sm">
@@ -988,7 +947,6 @@ const MessageDetailModal: React.FC<MessageDetailModalProps> = ({ message, delive
     </div>
   );
 };
-
 export const DashboardMessages: React.FC = () => {
   const { user, isDemoMode } = useAuth();
   const location = useLocation();
@@ -1021,7 +979,6 @@ export const DashboardMessages: React.FC = () => {
   const [historyDeliveryFilter, setHistoryDeliveryFilter] = useState<'all' | 'delivered' | 'failed' | 'skipped' | 'unreached'>('all');
   const [historyCampaignFilter, setHistoryCampaignFilter] = useState<string>('');
   const [historySearch, setHistorySearch] = useState('');
-
   const [formData, setFormData] = useState({
     campaignName: '',
     templateKey: 'blank' as MessageTemplateKey,
@@ -1033,11 +990,9 @@ export const DashboardMessages: React.FC = () => {
     scheduleDate: '',
     scheduleTime: '',
   });
-
   useEffect(() => {
     const loaded = readSavedComposerTemplates();
     setSavedTemplates(loaded);
-
     try {
       const raw = localStorage.getItem(SAVED_COMPOSER_TEMPLATES_STORAGE_KEY);
       const parsed = raw ? JSON.parse(raw) : null;
@@ -1052,15 +1007,15 @@ export const DashboardMessages: React.FC = () => {
       // ignore normalization persistence issues
     }
   }, []);
-
   useEffect(() => {
     if (!weddingSite?.id) return;
     try {
       const raw = readPlannerAccessRole('messages', weddingSite.id);
       if (raw) setMessagesRole(raw);
-    } catch {}
+    } catch {
+      // Ignore corrupt local role preferences and keep the default dashboard access state.
+    }
   }, [weddingSite?.id]);
-
   useEffect(() => {
     if (!weddingSite?.id) return;
     try {
@@ -1069,13 +1024,11 @@ export const DashboardMessages: React.FC = () => {
       // noop
     }
   }, [weddingSite?.id, messagesRole]);
-
   function toast(message: string, type: Toast['type'] = 'success') {
     const id = Date.now();
     setToasts(prev => [...prev, { id, message, type }]);
     setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 4000);
   }
-
   async function handleBuySmsPack(pack: 'sms_100' | 'sms_500' | 'sms_1000') {
     if (!weddingSite) return;
     if (!SMS_SENDING_ENABLED) {
@@ -1095,19 +1048,18 @@ export const DashboardMessages: React.FC = () => {
       setBuyingPack(null);
     }
   }
-
   const fetchWeddingSite = useCallback(async () => {
     if (isDemoMode) {
+      const demoSite = demoWeddingSite as DemoWeddingSiteRecord;
       setWeddingSite({
-        id: demoWeddingSite.id,
-        couple_first_name: (demoWeddingSite as any).couple_first_name ?? (demoWeddingSite as any).couple_name_1 ?? null,
-        couple_second_name: (demoWeddingSite as any).couple_second_name ?? (demoWeddingSite as any).couple_name_2 ?? null,
-        couple_email: (demoWeddingSite as any).couple_email ?? null,
+        id: demoSite.id,
+        couple_first_name: demoSite.couple_first_name ?? demoSite.couple_name_1 ?? null,
+        couple_second_name: demoSite.couple_second_name ?? demoSite.couple_name_2 ?? null,
+        couple_email: demoSite.couple_email ?? null,
         sms_credits_balance: 250,
       });
       return;
     }
-
     if (!user) {
       setWeddingSite(null);
       setMessages([]);
@@ -1120,11 +1072,9 @@ export const DashboardMessages: React.FC = () => {
       setLoading(false);
       return;
     }
-
     const activeSite = await resolveActiveSiteForUser(user.id);
     setActiveSiteRole(activeSite?.role ?? 'owner');
     setMessagesRole(activeSite?.role ?? 'owner');
-
     const { data, error } = await supabase
       .from('wedding_sites')
       .select('id, couple_first_name, couple_second_name, couple_email, sms_credits_balance')
@@ -1155,7 +1105,6 @@ export const DashboardMessages: React.FC = () => {
       setEventGuestIds({});
     }
   }, [user, isDemoMode]);
-
   const fetchMessages = useCallback(async () => {
     if (!weddingSite) return;
     if (isDemoMode) {
@@ -1179,14 +1128,13 @@ export const DashboardMessages: React.FC = () => {
       setLoading(false);
     }
   }, [weddingSite, isDemoMode]);
-
   const fetchGuests = useCallback(async () => {
     if (!weddingSite) return;
     if (isDemoMode) {
-      setGuests(demoGuests.map((g) => ({
+      setGuests((demoGuests as DemoGuestRecord[]).map((g) => ({
         id: g.id,
         email: g.email ?? null,
-        phone: (g as any).phone ?? null,
+        phone: g.phone ?? null,
         rsvp_status: g.rsvp_status ?? 'pending',
         first_name: g.first_name ?? null,
         last_name: g.last_name ?? null,
@@ -1210,29 +1158,24 @@ export const DashboardMessages: React.FC = () => {
       setGuests([]);
     }
   }, [weddingSite, isDemoMode]);
-
   const fetchDeliveries = useCallback(async () => {
     if (!weddingSite) return;
     if (isDemoMode) {
       setDeliveries([]);
       return;
     }
-
     const prioritizedMessageIds = viewingMessage
       ? [viewingMessage.id, ...messages.filter((m) => m.id !== viewingMessage.id).slice(0, 49).map((m) => m.id)]
       : messages.slice(0, 50).map((m) => m.id);
-
     const messageIds = Array.from(new Set(prioritizedMessageIds));
     if (messageIds.length === 0) {
       setDeliveries([]);
       return;
     }
-
     if (hasMessageDeliveriesTable === false) {
       setDeliveries([]);
       return;
     }
-
     try {
       const { data, error } = await supabase
         .from('message_deliveries')
@@ -1240,7 +1183,6 @@ export const DashboardMessages: React.FC = () => {
         .in('message_id', messageIds)
         .order('attempted_at', { ascending: false })
         .limit(500);
-
       if (error) {
         const msg = (error.message || '').toLowerCase();
         if (msg.includes('message_deliveries') || msg.includes('does not exist') || msg.includes('404')) {
@@ -1251,7 +1193,6 @@ export const DashboardMessages: React.FC = () => {
         setDeliveries([]);
         return;
       }
-
       hasMessageDeliveriesTable = true;
       setDeliveries((data as DeliveryRow[]) || []);
     } catch (error) {
@@ -1259,11 +1200,9 @@ export const DashboardMessages: React.FC = () => {
       setDeliveries([]);
     }
   }, [weddingSite, isDemoMode, messages]);
-
   const fetchItinerarySegments = useCallback(async () => {
     if (!weddingSite) return;
     try {
-
     if (isDemoMode) {
       const total = demoGuests.length;
       const demoEventList = (demoEvents && demoEvents.length > 0)
@@ -1273,14 +1212,12 @@ export const DashboardMessages: React.FC = () => {
             { id: 'demo-event-ceremony', event_name: 'Ceremony', event_date: new Date().toISOString().slice(0, 10) },
             { id: 'demo-event-reception', event_name: 'Reception', event_date: new Date().toISOString().slice(0, 10) },
           ];
-
       const options = demoEventList.map((e, idx) => ({
         value: `event:${e.id}`,
         label: formatMessageEventOptionLabel(e.event_name, e.event_date),
         count: Math.max(0, total - idx * 8),
       }));
       setItineraryAudienceOptions(options);
-
       const map: Record<string, Set<string>> = {};
       for (const e of demoEventList) {
         map[e.id] = new Set(demoGuests.map((g) => g.id));
@@ -1288,39 +1225,35 @@ export const DashboardMessages: React.FC = () => {
       setEventGuestIds(map);
       return;
     }
-
     const { data: events, error: eventsError } = await supabase
       .from('itinerary_events')
       .select('id, event_name, event_date')
       .eq('wedding_site_id', weddingSite.id)
       .order('event_date', { ascending: true });
     if (eventsError) throw eventsError;
-
     if (!events || events.length === 0) {
       setItineraryAudienceOptions([]);
       setEventGuestIds({});
       return;
     }
-
-    const eventIds = events.map((e: any) => e.id);
+    const eventRows = (events ?? []) as ItineraryEventRow[];
+    const eventIds = eventRows.map((event) => event.id);
     const { data: invites, error: invitesError } = await supabase
       .from('event_invitations')
       .select('event_id, guest_id')
       .in('event_id', eventIds);
     if (invitesError) throw invitesError;
-
     const map: Record<string, Set<string>> = {};
-    for (const e of events as any[]) map[e.id] = new Set<string>();
-    for (const row of (invites ?? []) as any[]) {
+    for (const event of eventRows) map[event.id] = new Set<string>();
+    for (const row of (invites ?? []) as EventInvitationRow[]) {
       if (!map[row.event_id]) map[row.event_id] = new Set<string>();
       map[row.event_id].add(row.guest_id);
     }
     setEventGuestIds(map);
-
-    const options: AudienceOption[] = (events as any[]).map((e) => ({
-      value: `event:${e.id}`,
-      label: formatMessageEventOptionLabel(e.event_name, e.event_date),
-      count: map[e.id]?.size ?? 0,
+    const options: AudienceOption[] = eventRows.map((event) => ({
+      value: `event:${event.id}`,
+      label: formatMessageEventOptionLabel(event.event_name, event.event_date),
+      count: map[event.id]?.size ?? 0,
     }));
     setItineraryAudienceOptions(options);
     } catch (error) {
@@ -1329,31 +1262,25 @@ export const DashboardMessages: React.FC = () => {
       setEventGuestIds({});
     }
   }, [weddingSite, isDemoMode]);
-
   const fetchPhotoBuckets = useCallback(async () => {
     if (!weddingSite) return;
-
     if (isDemoMode) {
       setPhotoBuckets(null);
       return;
     }
-
     const { data, error } = await supabase
       .from('photo_buckets')
       .select('id,is_active')
       .eq('wedding_site_id', weddingSite.id);
-
     if (error) {
       setPhotoBuckets([]);
       return;
     }
-
     setPhotoBuckets((data ?? []).map((bucket) => ({
       id: bucket.id,
       is_active: bucket.is_active,
     })));
   }, [weddingSite, isDemoMode]);
-
   const fetchSmsExpiryPreview = useCallback(async () => {
     if (!weddingSite) return;
     if (isDemoMode) {
@@ -1364,7 +1291,6 @@ export const DashboardMessages: React.FC = () => {
       ]);
       return;
     }
-
     try {
       const cutoff = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
       const [expiringResult, txResult] = await Promise.all([
@@ -1381,15 +1307,16 @@ export const DashboardMessages: React.FC = () => {
           .order('created_at', { ascending: false })
           .limit(8),
       ]);
-
       if (expiringResult.error || txResult.error) {
         toast(mapMessagesError(expiringResult.error || txResult.error, MESSAGES_SMS_ACTIVITY_LOAD_RETRY_ERROR), 'error');
         setSmsExpiringSoon(0);
         setSmsTransactions([]);
         return;
       }
-
-      const soon = (expiringResult.data ?? []).reduce((sum, row: any) => sum + Number(row.remaining_credits ?? 0), 0);
+      const soon = (expiringResult.data ?? []).reduce(
+        (sum, row) => sum + Number(row.remaining_credits ?? 0),
+        0,
+      );
       setSmsExpiringSoon(soon);
       setSmsTransactions((txResult.data ?? []) as SmsCreditTransaction[]);
     } catch (error) {
@@ -1398,14 +1325,12 @@ export const DashboardMessages: React.FC = () => {
       setSmsTransactions([]);
     }
   }, [weddingSite, isDemoMode]);
-
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const prefillSubject = params.get('prefillSubject');
     const prefillBody = params.get('prefillBody');
     const smsCreditsStatus = params.get('smsCredits');
     if (!prefillSubject && !prefillBody && !smsCreditsStatus) return;
-
     if (prefillSubject || prefillBody) {
       setEditingMessageId(null);
       setFormData((prev) => ({
@@ -1416,7 +1341,6 @@ export const DashboardMessages: React.FC = () => {
       }));
       setShowRecipientPreview(true);
     }
-
     if (smsCreditsStatus === 'success') {
       toast('SMS credit purchase complete. Refreshing your balance now.', 'success');
       void fetchWeddingSite();
@@ -1424,7 +1348,6 @@ export const DashboardMessages: React.FC = () => {
     } else if (smsCreditsStatus === 'cancel') {
       toast('SMS credit checkout was canceled.', 'info');
     }
-
     const cleanedParams = new URLSearchParams(location.search);
     cleanedParams.delete('prefillSubject');
     cleanedParams.delete('prefillBody');
@@ -1438,7 +1361,6 @@ export const DashboardMessages: React.FC = () => {
       { replace: true },
     );
   }, [location.pathname, location.search, navigate, fetchWeddingSite, fetchSmsExpiryPreview]);
-
   useEffect(() => { fetchWeddingSite(); }, [fetchWeddingSite]);
   useEffect(() => {
     if (weddingSite) {
@@ -1449,34 +1371,27 @@ export const DashboardMessages: React.FC = () => {
       fetchPhotoBuckets();
     }
   }, [weddingSite, fetchMessages, fetchGuests, fetchSmsExpiryPreview, fetchItinerarySegments, fetchPhotoBuckets]);
-
   useEffect(() => {
     if (!weddingSite || isDemoMode) return;
-
     const refreshGuestMessageContinuity = () => {
       void fetchGuests();
       void fetchMessages();
     };
-
     const handleRsvpContinuityUpdate = () => {
       refreshGuestMessageContinuity();
     };
-
     const handleStorage = (event: StorageEvent) => {
       if (event.key !== RSVP_CONTINUITY_STORAGE_KEY || !event.newValue) return;
       refreshGuestMessageContinuity();
     };
-
     const handleVisibilityChange = () => {
       if (document.visibilityState !== 'visible') return;
       refreshGuestMessageContinuity();
     };
-
     window.addEventListener('focus', refreshGuestMessageContinuity);
     window.addEventListener(RSVP_CONTINUITY_EVENT, handleRsvpContinuityUpdate);
     window.addEventListener('storage', handleStorage);
     document.addEventListener('visibilitychange', handleVisibilityChange);
-
     return () => {
       window.removeEventListener('focus', refreshGuestMessageContinuity);
       window.removeEventListener(RSVP_CONTINUITY_EVENT, handleRsvpContinuityUpdate);
@@ -1484,18 +1399,15 @@ export const DashboardMessages: React.FC = () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, [weddingSite, isDemoMode, fetchGuests, fetchMessages]);
-
   useEffect(() => {
     if (weddingSite && messages.length > 0) {
       fetchDeliveries();
     }
   }, [weddingSite, messages, fetchDeliveries]);
-
   useEffect(() => {
     if (!isDemoMode) return;
     writeDemoMessages(messages);
   }, [isDemoMode, messages]);
-
   const getRecipients = (audience: string): Guest[] => {
     if (audience.startsWith('event:')) {
       const eventId = audience.replace('event:', '');
@@ -1510,35 +1422,29 @@ export const DashboardMessages: React.FC = () => {
       default: return guests;
     }
   };
-
   const getAudienceSnapshot = (audience: string, channel: 'email' | 'sms') => {
     const recipients = getRecipients(audience);
     const reachableCount = channel === 'sms'
       ? recipients.filter((guest) => hasReachablePhone(guest.phone)).length
       : recipients.filter((guest) => hasReachableEmail(guest.email)).length;
-
     return {
       totalAudienceCount: recipients.length,
       reachableCount,
       skippedCount: Math.max(recipients.length - reachableCount, 0),
     };
   };
-
   const publicSiteSlug = useMemo(
     () => resolvePublicSiteSlugFromRow((weddingSite as Record<string, unknown> | null) ?? null),
     [weddingSite],
   );
-
   const photoLinkState = useMemo(() => getMessagePhotoLinkState({
     buckets: photoBuckets,
     storedLinks: readStoredPhotoBucketLinks(),
     fallbackLink: publicSiteSlug ? `${window.location.origin}/site/${publicSiteSlug}` : '',
   }), [photoBuckets, publicSiteSlug]);
-
   const applyTemplateVariables = (text: string) => {
     const couple = getMessageTemplateCoupleLabel(weddingSite?.couple_first_name, weddingSite?.couple_second_name);
     const rsvpLink = `${window.location.origin}/rsvp`;
-
     return text
       .replace(/\[COUPLE\]/g, couple)
       .replace(/\[RSVP LINK\]/g, rsvpLink)
@@ -1547,9 +1453,7 @@ export const DashboardMessages: React.FC = () => {
       .replace(/\[VENUE\]/g, 'our venue')
       .replace(/\[ADD DETAILS\]/g, 'timeline, parking, dress code, and arrival instructions');
   };
-
   const selectedTemplate = COMPOSER_TEMPLATES.find((tpl) => tpl.key === formData.templateKey) ?? COMPOSER_TEMPLATES[0];
-
   const handleSendMessage = async (e: React.FormEvent, saveAsDraft = false) => {
     e.preventDefault();
     if (!weddingSite) return;
@@ -1561,7 +1465,6 @@ export const DashboardMessages: React.FC = () => {
         ? recipients.filter(g => hasReachablePhone(g.phone)).length
         : recipients.filter(g => hasReachableEmail(g.email)).length;
       const skippedRecipientCount = Math.max(totalAudienceCount - recipientCount, 0);
-
       if (recipientCount === 0 && !saveAsDraft) {
         toast(formData.channel === 'sms'
           ? 'No recipients have reachable phone numbers. Add phone numbers to your guests first.'
@@ -1569,7 +1472,6 @@ export const DashboardMessages: React.FC = () => {
         setSending(false);
         return;
       }
-
       if (formData.channel === 'sms' && !saveAsDraft) {
         if (!SMS_SENDING_ENABLED) {
           toast(SMS_WORKSPACE_LOCK_COPY, 'error');
@@ -1582,13 +1484,11 @@ export const DashboardMessages: React.FC = () => {
           return;
         }
       }
-
       const requestedScheduledFor = !saveAsDraft && formData.scheduleType === 'later' && formData.scheduleDate && formData.scheduleTime
         ? `${formData.scheduleDate}T${formData.scheduleTime}:00`
         : null;
       const isScheduled = !!requestedScheduledFor && !isPastScheduledTime(requestedScheduledFor);
       const isSendNow = !saveAsDraft && !isScheduled;
-
       const status = saveAsDraft ? 'draft' : isScheduled ? 'scheduled' : 'queued';
       const scheduledFor = isScheduled ? requestedScheduledFor : null;
       const campaignName = formData.campaignName.trim();
@@ -1605,10 +1505,8 @@ export const DashboardMessages: React.FC = () => {
         campaignType: selectedTemplate.campaignType ?? null,
         templateKey: formData.templateKey,
       };
-
       let inserted: { id: string } | null = null;
       const isEditingExistingMessage = !!editingMessageId;
-
       if (isDemoMode) {
         inserted = { id: editingMessageId ?? `demo-msg-${Date.now()}` };
         const demoMessage: Message = {
@@ -1632,7 +1530,6 @@ export const DashboardMessages: React.FC = () => {
       } else {
         if (isEditingExistingMessage) {
           inserted = { id: editingMessageId };
-
           const { error } = await supabase
             .from('messages')
             .update({
@@ -1648,9 +1545,7 @@ export const DashboardMessages: React.FC = () => {
               sending_finished_at: null,
             })
             .eq('id', editingMessageId);
-
           if (error) throw error;
-
           void supabase
             .from('messages')
             .update({
@@ -1675,10 +1570,8 @@ export const DashboardMessages: React.FC = () => {
             }])
             .select('id')
             .single();
-
           if (error) throw error;
           inserted = data;
-
           // Non-blocking enrichment for optional columns.
           void supabase
             .from('messages')
@@ -1690,23 +1583,19 @@ export const DashboardMessages: React.FC = () => {
             .eq('id', inserted.id);
         }
       }
-
       setShowRecipientPreview(false);
       setEditingMessageId(null);
       setFormData({ campaignName: '', templateKey: 'blank', subject: '', body: '', audience: 'all', channel: formData.channel, scheduleType: 'now', scheduleDate: '', scheduleTime: '' });
-
       if (saveAsDraft) {
         toast(isEditingExistingMessage ? 'Draft updated' : 'Saved as draft', 'info');
         await fetchMessages();
         return;
       }
-
       if (isScheduled) {
         toast(`${isEditingExistingMessage ? 'Updated' : 'Scheduled'} for ${formatScheduledMessageDateTime(scheduledFor)} — ${recipientCount} recipient${recipientCount !== 1 ? 's' : ''}`, 'info');
         await fetchMessages();
         return;
       }
-
       if (isSendNow && inserted?.id) {
         if (isDemoMode) {
           if (skippedRecipientCount > 0) {
@@ -1716,8 +1605,6 @@ export const DashboardMessages: React.FC = () => {
           }
           return;
         }
-
-
         toast(`Sending to ${recipientCount} guest${recipientCount !== 1 ? 's' : ''}…`, 'info');
         await fetchMessages();
         try {
@@ -1744,16 +1631,13 @@ export const DashboardMessages: React.FC = () => {
       setSending(false);
     }
   };
-
   function loadMessageIntoComposer(message: Message, mode: 'edit' | 'duplicate') {
     if (!canComposeDashboardMessages(messagesRole)) {
       toast('Your collaborator role cannot edit campaigns from Messaging.', 'info');
       return;
     }
-
     const scheduledInputValue = toScheduleInputValue(message.scheduled_for);
     const [scheduleDate = '', scheduleTime = ''] = scheduledInputValue ? scheduledInputValue.split('T') : [];
-
     setEditingMessageId(mode === 'edit' ? message.id : null);
     setFormData({
       campaignName: mode === 'duplicate'
@@ -1772,18 +1656,14 @@ export const DashboardMessages: React.FC = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
     toast(mode === 'edit' ? 'Loaded into composer for editing.' : 'Copied into composer as a new message.', 'info');
   }
-
   function startFollowUpFromCampaignThread(mode: 'reminder' | 'day-of' | 'thank-you') {
     if (!canComposeDashboardMessages(messagesRole)) {
       toast('Your collaborator role cannot create follow-up campaigns from Messaging.', 'info');
       return;
     }
-
     if (!activeCampaignLatestMessage) return;
-
     const audience = activeCampaignLatestMessage.audience_filter ?? (activeCampaignLatestMessage.recipient_filter?.audience as string) ?? 'all';
     const campaignBase = getCampaignName(activeCampaignLatestMessage) ?? activeCampaignThread?.name ?? activeCampaignLatestMessage.subject;
-
     if (mode === 'reminder') {
       applyComposerTemplate('rsvp-reminder', {
         audience,
@@ -1798,7 +1678,6 @@ export const DashboardMessages: React.FC = () => {
       toast('Loaded thread follow-up reminder into composer.', 'info');
       return;
     }
-
     if (mode === 'day-of') {
       applyComposerTemplate('day-of-update', {
         audience,
@@ -1813,7 +1692,6 @@ export const DashboardMessages: React.FC = () => {
       toast('Loaded thread day-of update into composer.', 'info');
       return;
     }
-
     applyComposerTemplate('thank-you', {
       audience,
       channel: 'email',
@@ -1826,34 +1704,27 @@ export const DashboardMessages: React.FC = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
     toast('Loaded thread thank-you into composer.', 'info');
   }
-
   function startScheduledFollowUpFromCampaignThread(mode: 'reminder' | 'day-of' | 'thank-you') {
     if (!canComposeDashboardMessages(messagesRole)) {
       toast('Your collaborator role cannot schedule follow-up campaigns from Messaging.', 'info');
       return;
     }
-
     if (!activeCampaignLatestMessage) return;
-
     const now = new Date();
     const scheduledAt = new Date(now);
-
     if (mode === 'day-of') {
       scheduledAt.setHours(now.getHours() + 2);
     } else {
       scheduledAt.setDate(now.getDate() + 1);
       scheduledAt.setHours(10, 0, 0, 0);
     }
-
     const yyyy = scheduledAt.getFullYear();
     const mm = String(scheduledAt.getMonth() + 1).padStart(2, '0');
     const dd = String(scheduledAt.getDate()).padStart(2, '0');
     const hh = String(scheduledAt.getHours()).padStart(2, '0');
     const min = String(scheduledAt.getMinutes()).padStart(2, '0');
-
     const audience = activeCampaignLatestMessage.audience_filter ?? (activeCampaignLatestMessage.recipient_filter?.audience as string) ?? 'all';
     const campaignBase = getCampaignName(activeCampaignLatestMessage) ?? activeCampaignThread?.name ?? activeCampaignLatestMessage.subject;
-
     if (mode === 'reminder') {
       applyComposerTemplate('rsvp-reminder', {
         audience,
@@ -1868,7 +1739,6 @@ export const DashboardMessages: React.FC = () => {
       toast(`Loaded scheduled reminder for ${formatScheduledMessageDateTime(`${yyyy}-${mm}-${dd}T${hh}:${min}:00`)}.`, 'info');
       return;
     }
-
     if (mode === 'day-of') {
       applyComposerTemplate('day-of-update', {
         audience,
@@ -1883,7 +1753,6 @@ export const DashboardMessages: React.FC = () => {
       toast(`Loaded scheduled day-of update for ${formatScheduledMessageDateTime(`${yyyy}-${mm}-${dd}T${hh}:${min}:00`)}.`, 'info');
       return;
     }
-
     applyComposerTemplate('thank-you', {
       audience,
       channel: 'email',
@@ -1896,20 +1765,17 @@ export const DashboardMessages: React.FC = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
     toast(`Loaded scheduled thank-you for ${formatScheduledMessageDateTime(`${yyyy}-${mm}-${dd}T${hh}:${min}:00`)}.`, 'info');
   }
-
   async function handleRetry(message: Message) {
     if (!canComposeDashboardMessages(messagesRole)) {
       toast('Your collaborator role cannot retry campaign sends.', 'info');
       return;
     }
-
     if (!canRetryMessageStatus(message.status)) {
       toast(message.status === 'partial'
         ? 'Partial campaigns are not retried in-place here because that can duplicate sends. Duplicate the campaign and target the missed guests instead.'
         : 'Only failed campaigns can be retried from this control.', 'info');
       return;
     }
-
     setRetryingMessageId(message.id);
     try {
       if (isDemoMode) {
@@ -1919,7 +1785,6 @@ export const DashboardMessages: React.FC = () => {
           ? recipients.filter((guest) => hasReachablePhone(guest.phone)).length
           : recipients.filter((guest) => hasReachableEmail(guest.email)).length;
         const skippedCount = Math.max(recipients.length - deliveredCount, 0);
-
         setMessages((prev) => prev.map((item) => (
           item.id === message.id
             ? {
@@ -1938,13 +1803,11 @@ export const DashboardMessages: React.FC = () => {
               }
             : item
         )));
-
         toast(skippedCount > 0
           ? `Retry finished in demo: delivered ${deliveredCount} • skipped ${skippedCount}.`
           : `Retry finished in demo: delivered ${deliveredCount}.`, skippedCount > 0 ? 'info' : 'success');
         return;
       }
-
       const { error } = await supabase
         .from('messages')
         .update({ status: 'queued', sent_at: null, failed_count: 0, delivered_count: 0 })
@@ -1981,13 +1844,11 @@ export const DashboardMessages: React.FC = () => {
       setRetryingMessageId(null);
     }
   }
-
   async function handleSendScheduledNow(message: Message) {
     if (!canComposeDashboardMessages(messagesRole)) {
       toast('Your collaborator role cannot send campaigns from Messaging.', 'info');
       return;
     }
-
     if (isDemoMode) {
       const audience = message.audience_filter ?? (message.recipient_filter?.audience as string) ?? 'all';
       const recipients = getRecipients(audience);
@@ -1995,7 +1856,6 @@ export const DashboardMessages: React.FC = () => {
         ? recipients.filter((guest) => hasReachablePhone(guest.phone)).length
         : recipients.filter((guest) => hasReachableEmail(guest.email)).length;
       const skippedCount = Math.max(recipients.length - deliveredCount, 0);
-
       setMessages((prev) => prev.map((item) => (
         item.id === message.id
           ? {
@@ -2019,7 +1879,6 @@ export const DashboardMessages: React.FC = () => {
         : `Scheduled message sent in demo: delivered ${deliveredCount}.`, skippedCount > 0 ? 'info' : 'success');
       return;
     }
-
     let deliveryTriggered = false;
     try {
       const { error } = await supabase
@@ -2027,7 +1886,6 @@ export const DashboardMessages: React.FC = () => {
         .update({ scheduled_for: new Date().toISOString() })
         .eq('id', message.id);
       if (error) throw error;
-
       toast('Sending scheduled message now…', 'info');
       const result = await triggerBulkSend(message.id);
       const skipped = result.skipped ?? 0;
@@ -2052,18 +1910,15 @@ export const DashboardMessages: React.FC = () => {
       toast(mapMessagesError(err, MESSAGES_SCHEDULED_SEND_RETRY_ERROR), 'error');
     }
   }
-
   async function handleRescheduleMessage(message: Message, scheduledFor: string) {
     if (!canComposeDashboardMessages(messagesRole)) {
       toast('Your collaborator role cannot reschedule campaigns.', 'info');
       return;
     }
-
     if (isPastScheduledTime(scheduledFor)) {
       toast('Pick a future time to reschedule. Use send now if you want it to go immediately.', 'error');
       return;
     }
-
     if (isDemoMode) {
       const audience = message.audience_filter ?? (message.recipient_filter?.audience as string) ?? 'all';
       const snapshot = getAudienceSnapshot(audience, message.channel === 'sms' ? 'sms' : 'email');
@@ -2086,7 +1941,6 @@ export const DashboardMessages: React.FC = () => {
       toast(`Rescheduled for ${formatScheduledMessageDateTime(scheduledFor)}.`, 'success');
       return;
     }
-
     try {
       const audience = message.audience_filter ?? (message.recipient_filter?.audience as string) ?? 'all';
       const snapshot = getAudienceSnapshot(audience, message.channel === 'sms' ? 'sms' : 'email');
@@ -2099,7 +1953,6 @@ export const DashboardMessages: React.FC = () => {
         })
         .eq('id', message.id);
       if (error) throw error;
-
       void supabase
         .from('messages')
         .update({
@@ -2112,20 +1965,17 @@ export const DashboardMessages: React.FC = () => {
           },
         })
         .eq('id', message.id);
-
       toast(`Rescheduled for ${formatScheduledMessageDateTime(scheduledFor)}.`, 'success');
       await fetchMessages();
     } catch (err) {
       toast(mapMessagesError(err, MESSAGES_RESCHEDULE_RETRY_ERROR), 'error');
     }
   }
-
   async function handleCancelSchedule(message: Message) {
     if (!canComposeDashboardMessages(messagesRole)) {
       toast('Your collaborator role cannot change scheduled campaigns.', 'info');
       return;
     }
-
     if (isDemoMode) {
       const audience = message.audience_filter ?? (message.recipient_filter?.audience as string) ?? 'all';
       const snapshot = getAudienceSnapshot(audience, message.channel === 'sms' ? 'sms' : 'email');
@@ -2148,7 +1998,6 @@ export const DashboardMessages: React.FC = () => {
       toast('Scheduled campaign moved back to draft.', 'info');
       return;
     }
-
     try {
       const audience = message.audience_filter ?? (message.recipient_filter?.audience as string) ?? 'all';
       const snapshot = getAudienceSnapshot(audience, message.channel === 'sms' ? 'sms' : 'email');
@@ -2160,7 +2009,6 @@ export const DashboardMessages: React.FC = () => {
         })
         .eq('id', message.id);
       if (error) throw error;
-
       void supabase
         .from('messages')
         .update({
@@ -2173,14 +2021,12 @@ export const DashboardMessages: React.FC = () => {
           },
         })
         .eq('id', message.id);
-
       toast('Scheduled campaign moved back to draft.', 'info');
       await fetchMessages();
     } catch (err) {
       toast(mapMessagesError(err, MESSAGES_UNSCHEDULE_RETRY_ERROR), 'error');
     }
   }
-
   const campaignStatusSummary = useMemo(() => {
     const buckets = {
       draft: 0,
@@ -2196,29 +2042,24 @@ export const DashboardMessages: React.FC = () => {
     });
     return buckets;
   }, [messages, viewingMessage]);
-
   async function handleRunDueScheduledMessages() {
     if (!canComposeDashboardMessages(messagesRole)) {
       toast('Your collaborator role cannot run scheduled sends.', 'info');
       return;
     }
-
     if (isDemoMode) {
       const dueIds = messages
         .filter((m) => m.status === 'scheduled' && isPastScheduledTime(m.scheduled_for))
         .map((m) => m.id);
-
       if (dueIds.length === 0) {
         toast('No scheduled messages are due right now.', 'info');
         return;
       }
-
       setProcessingScheduled(true);
       try {
         let skippedRecipients = 0;
         setMessages((prev) => prev.map((message) => {
           if (!dueIds.includes(message.id)) return message;
-
           const audience = message.audience_filter ?? (message.recipient_filter?.audience as string) ?? 'all';
           const recipients = getRecipients(audience);
           const deliveredCount = message.channel === 'sms'
@@ -2226,7 +2067,6 @@ export const DashboardMessages: React.FC = () => {
             : recipients.filter((guest) => hasReachableEmail(guest.email)).length;
           const skippedCount = Math.max(recipients.length - deliveredCount, 0);
           skippedRecipients += skippedCount;
-
           return {
             ...message,
             status: skippedCount > 0 ? 'partial' : 'sent',
@@ -2248,7 +2088,6 @@ export const DashboardMessages: React.FC = () => {
       }
       return;
     }
-
     setProcessingScheduled(true);
     try {
       const result = await triggerScheduledDispatch(10);
@@ -2266,7 +2105,6 @@ export const DashboardMessages: React.FC = () => {
       setProcessingScheduled(false);
     }
   }
-
   const audienceOptions = [
     { value: 'all', label: 'All Guests', count: guests.length },
     { value: 'attending', label: 'Attending Only', count: guests.filter(g => isAttendingStatus(g.rsvp_status)).length },
@@ -2274,9 +2112,7 @@ export const DashboardMessages: React.FC = () => {
     { value: 'declined', label: 'Declined', count: guests.filter(g => isDeclinedStatus(g.rsvp_status)).length },
     ...itineraryAudienceOptions,
   ];
-
   const selectedAudience = audienceOptions.find(opt => opt.value === formData.audience);
-
   function applyComposerTemplate(templateKey: MessageTemplateKey, overrides?: Partial<typeof formData>) {
     setEditingMessageId(null);
     const template = COMPOSER_TEMPLATES.find((tpl) => tpl.key === templateKey) ?? COMPOSER_TEMPLATES[0];
@@ -2289,7 +2125,6 @@ export const DashboardMessages: React.FC = () => {
       applyTemplateVariables,
       photoLink: photoLinkState.preferredPhotoLink,
     });
-
     setFormData((prev) => ({
       ...prev,
       ...overrides,
@@ -2300,7 +2135,6 @@ export const DashboardMessages: React.FC = () => {
       campaignName: overrides?.campaignName ?? (template.key === 'blank' ? prev.campaignName : template.label),
     }));
   }
-
   function runMessageOpsCoachPlay(play: ReturnType<typeof buildMessageOpsCoach>['plays'][number]) {
     if (play.action === 'open-partial') {
       if (reviewCandidates[0]) {
@@ -2311,7 +2145,6 @@ export const DashboardMessages: React.FC = () => {
       }
       return;
     }
-
     if (play.action === 'open-failed') {
       if (retryCandidates[0]) {
         setViewingMessage(retryCandidates[0]);
@@ -2321,22 +2154,18 @@ export const DashboardMessages: React.FC = () => {
       }
       return;
     }
-
     if (play.action === 'run-due-scheduled') {
       void handleRunDueScheduledMessages();
       return;
     }
-
     if (play.action === 'open-guests') {
       navigate('/dashboard/guests');
       return;
     }
-
     if (!canCompose) {
       toast('Composer actions stay with the couple or planner in this access view.', 'info');
       return;
     }
-
     if (play.action === 'compose-rsvp-reminder') {
       applyComposerTemplate('rsvp-reminder', {
         audience: 'not_responded',
@@ -2351,7 +2180,6 @@ export const DashboardMessages: React.FC = () => {
       toast('Loaded an RSVP reminder into the composer.', 'info');
       return;
     }
-
     if (play.action === 'compose-day-of-update') {
       applyComposerTemplate('day-of-update', {
         audience: 'attending',
@@ -2366,21 +2194,17 @@ export const DashboardMessages: React.FC = () => {
       toast('Loaded a day-of update into the composer.', 'info');
     }
   }
-
   function runGuestOutreachStep(step: ReturnType<typeof buildGuestOutreachSequence>['steps'][number]) {
     if (step.area === 'guests') {
       navigate('/dashboard/guests');
       return;
     }
-
     if (!step.playAction || step.playAction === 'none') return;
-
     const matchingPlay = messageOpsCoach.plays.find((play) => play.action === step.playAction);
     if (matchingPlay) {
       runMessageOpsCoachPlay(matchingPlay);
       return;
     }
-
     if (step.playAction === 'compose-rsvp-reminder') {
       runMessageOpsCoachPlay({
         id: 'send-rsvp-reminder',
@@ -2392,7 +2216,6 @@ export const DashboardMessages: React.FC = () => {
       });
       return;
     }
-
     if (step.playAction === 'compose-day-of-update') {
       runMessageOpsCoachPlay({
         id: 'stage-day-of-update',
@@ -2404,28 +2227,23 @@ export const DashboardMessages: React.FC = () => {
       });
       return;
     }
-
     if (step.playAction === 'run-due-scheduled') {
       void handleRunDueScheduledMessages();
       return;
     }
-
     if (step.playAction === 'open-partial') {
       setHistoryStatusFilter('partial');
       setHistoryChannelFilter('all');
       return;
     }
-
     if (step.playAction === 'open-failed') {
       setHistoryStatusFilter('failed');
       setHistoryChannelFilter('all');
     }
   }
-
   function applySavedTemplate(template: SavedComposerTemplate) {
     setEditingMessageId(null);
     const savedScheduleIsUsable = isSavedTemplateScheduleUsable(template);
-
     setFormData((prev) => ({
       ...prev,
       campaignName: template.campaignName || template.name,
@@ -2442,20 +2260,16 @@ export const DashboardMessages: React.FC = () => {
       ? `Loaded template “${template.name}”.`
       : `Loaded template “${template.name}” without its old send time.`, 'info');
   }
-
   function saveCurrentComposerAsTemplate() {
     const subject = formData.subject.trim();
     const body = formData.body.trim();
     const name = formData.campaignName.trim() || subject || selectedTemplate.label;
     const normalizedName = normalizeSavedTemplateName(name);
-
     if (!subject && !body) {
       toast('Add a subject or message body before saving a reusable template.', 'error');
       return;
     }
-
     const existingTemplate = savedTemplates.find((item) => normalizeSavedTemplateName(item.name) === normalizedName);
-
     const next: SavedComposerTemplate = {
       id: existingTemplate?.id ?? `saved-template-${Date.now()}`,
       name,
@@ -2470,7 +2284,6 @@ export const DashboardMessages: React.FC = () => {
       createdAt: existingTemplate?.createdAt ?? new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
-
     const updated = [next, ...savedTemplates.filter((item) => normalizeSavedTemplateName(item.name) !== normalizedName)].slice(0, 12);
     const persisted = writeSavedComposerTemplates(updated);
     if (!persisted) {
@@ -2480,7 +2293,6 @@ export const DashboardMessages: React.FC = () => {
     setSavedTemplates(updated);
     toast(`${existingTemplate ? 'Updated' : 'Saved'} reusable template “${name}”.`, 'success');
   }
-
   function deleteSavedTemplate(templateId: string) {
     const updated = savedTemplates.filter((item) => item.id !== templateId);
     const persisted = writeSavedComposerTemplates(updated);
@@ -2491,14 +2303,12 @@ export const DashboardMessages: React.FC = () => {
     setSavedTemplates(updated);
     toast('Removed saved template.', 'info');
   }
-
   const applySaveTheDatePreset = () => {
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
     const yyyy = tomorrow.getFullYear();
     const mm = String(tomorrow.getMonth() + 1).padStart(2, '0');
     const dd = String(tomorrow.getDate()).padStart(2, '0');
-
     applyComposerTemplate('save-the-date', {
       audience: 'all',
       channel: 'email',
@@ -2509,19 +2319,15 @@ export const DashboardMessages: React.FC = () => {
     });
     toast('Save-the-date preset loaded (scheduled for tomorrow at 10:00).', 'success');
   };
-
   const quickCreateSaveTheDateCampaign = async () => {
     applySaveTheDatePreset();
-
     if (!weddingSite?.id) {
       toast('Save-the-date draft loaded. Wedding site context missing for instant campaign creation.', 'error');
       return;
     }
-
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
     tomorrow.setHours(10, 0, 0, 0);
-
     const payload = {
       wedding_site_id: weddingSite.id,
       channel: 'email',
@@ -2542,7 +2348,6 @@ export const DashboardMessages: React.FC = () => {
       scheduled_for: tomorrow.toISOString(),
       status: 'scheduled',
     };
-
     let created = false;
     try {
       if (isDemoMode) {
@@ -2570,7 +2375,6 @@ export const DashboardMessages: React.FC = () => {
         created = true;
         await fetchMessages();
       }
-
       toast('Save-the-date campaign scheduled for tomorrow at 10:00.', 'success');
     } catch (err) {
       const message = mapMessagesError(err, MESSAGES_SAVE_THE_DATE_RETRY_ERROR);
@@ -2582,18 +2386,6 @@ export const DashboardMessages: React.FC = () => {
       );
     }
   };
-
-  const applyEventReminderDraft = () => {
-    applyComposerTemplate('event-reminder', {
-      channel: 'email',
-      scheduleType: 'now',
-      scheduleDate: '',
-      scheduleTime: '',
-      campaignName: selectedAudience?.value?.startsWith('event:') ? `${selectedAudience.label} reminder` : 'Event reminder',
-    });
-    toast('Event reminder draft loaded.', 'info');
-  };
-
   const applyDayOfDraft = () => {
     applyComposerTemplate('day-of-update', {
       channel: 'sms',
@@ -2604,7 +2396,6 @@ export const DashboardMessages: React.FC = () => {
     });
     toast('Day-of update draft loaded.', 'info');
   };
-
   const applyDayOfAlertPreset = () => {
     applyDayOfDraft();
   };
@@ -2625,7 +2416,6 @@ export const DashboardMessages: React.FC = () => {
   const remainingEmailRecipients = Math.max(HARD_EMAIL_CAP - usedEmailRecipients, 0);
   const emailCapacityAfterSend = Math.max(remainingEmailRecipients - recipientsWithEmail, 0);
   const emailCapacityEnough = recipientsWithEmail <= remainingEmailRecipients;
-
   const audienceReachability = useMemo(() => {
     const allRecipients = getRecipients(formData.audience);
     const withEmail = allRecipients.filter((guest) => hasReachableEmail(guest.email)).length;
@@ -2636,7 +2426,6 @@ export const DashboardMessages: React.FC = () => {
       missingPhone: Math.max(allRecipients.length - withPhone, 0),
     };
   }, [formData.audience, guests, eventGuestIds]);
-
   const deliveryStats = useMemo(() => {
     const sentish = messages.filter((m) => isDeliveryCompletedStatus(m.status));
     const delivered = sentish.reduce((sum, m) => sum + (m.delivered_count ?? 0), 0);
@@ -2652,9 +2441,7 @@ export const DashboardMessages: React.FC = () => {
       active: messages.filter((m) => m.status === 'queued' || m.status === 'sending').length,
     };
   }, [messages]);
-
   const canCompose = canComposeDashboardMessages(messagesRole);
-
   const filteredHistory = useMemo(() => messages.filter((m) => {
     if (historyStatusFilter === 'active') {
       if (!(m.status === 'queued' || m.status === 'sending')) return false;
@@ -2678,7 +2465,6 @@ export const DashboardMessages: React.FC = () => {
     }
     return true;
   }), [messages, deliveries, historyStatusFilter, historyChannelFilter, historyAudienceFilter, historyCampaignFilter, historyDeliveryFilter, historySearch]);
-
   const audienceBreakdown = useMemo(() => {
     const map = new Map<string, number>();
     messages.forEach((m) => {
@@ -2687,40 +2473,14 @@ export const DashboardMessages: React.FC = () => {
     });
     return Array.from(map.entries()).sort((a, b) => b[1] - a[1]).slice(0, 4);
   }, [messages]);
-
   const retryCandidates = useMemo(
     () => messages.filter((m) => m.status === 'failed').slice(0, 5),
     [messages],
   );
-
   const reviewCandidates = useMemo(
     () => messages.filter((m) => m.status === 'partial').slice(0, 5),
     [messages],
   );
-
-  const segmentPerformance = useMemo(() => {
-    const eventLabelById = new Map<string, string>();
-    itineraryAudienceOptions.forEach((opt) => {
-      const id = opt.value.replace('event:', '');
-      eventLabelById.set(id, opt.label);
-    });
-
-    const map = new Map<string, { sent: number; failed: number; targeted: number }>();
-    messages.forEach((m) => {
-      const audience = m.audience_filter ?? '';
-      if (!audience.startsWith('event:')) return;
-      const eventId = audience.replace('event:', '');
-      const key = eventLabelById.get(eventId) ?? eventId;
-      const prev = map.get(key) ?? { sent: 0, failed: 0, targeted: 0 };
-      if (m.status === 'sent' || m.status === 'partial') prev.sent += 1;
-      if (m.status === 'failed') prev.failed += 1;
-      prev.targeted += getRecipientCount(m);
-      map.set(key, prev);
-    });
-
-    return Array.from(map.entries()).sort((a, b) => b[1].targeted - a[1].targeted).slice(0, 4);
-  }, [messages, itineraryAudienceOptions]);
-
   const historyStatusCounts = useMemo(() => ({
     sent: messages.filter((m) => m.status === 'sent').length,
     active: messages.filter((m) => m.status === 'queued' || m.status === 'sending').length,
@@ -2729,7 +2489,6 @@ export const DashboardMessages: React.FC = () => {
     failed: messages.filter((m) => m.status === 'failed').length,
     draft: messages.filter((m) => m.status === 'draft').length,
   }), [messages]);
-
   const channelBreakdown = useMemo(() => {
     const init = {
       email: { sent: 0, scheduled: 0, failed: 0, partial: 0, targeted: 0 },
@@ -2747,7 +2506,6 @@ export const DashboardMessages: React.FC = () => {
     });
     return init;
   }, [messages]);
-
   const deliveryHealth = useMemo(() => {
     const deliveryActiveMessages = messages.filter((m) => isDeliveryActiveStatus(m.status));
     const deliveryActiveRows = getDeliveryScopedRows(messages, deliveries, (message) => isDeliveryActiveStatus(message.status));
@@ -2763,7 +2521,6 @@ export const DashboardMessages: React.FC = () => {
     const reviewBacklog = messages.filter((m) => m.status === 'partial').length;
     return { successRate, failRate, skipped, skippedRate, overdueScheduled, retryBacklog, reviewBacklog };
   }, [messages, deliveries]);
-
   const guestOpsCoach = useMemo(() => buildGuestOpsCoach({
     totalGuests: guests.length,
     attendingGuests: guests.filter((guest) => isAttendingStatus(guest.rsvp_status)).length,
@@ -2773,7 +2530,6 @@ export const DashboardMessages: React.FC = () => {
     missingMealChoices: 0,
     missingPlusOneNames: 0,
   }), [guests]);
-
   const messageOpsCoach = useMemo(() => buildMessageOpsCoach({
     totalGuests: guests.length,
     attendingGuests: guests.filter((guest) => isAttendingStatus(guest.rsvp_status)).length,
@@ -2815,7 +2571,6 @@ export const DashboardMessages: React.FC = () => {
     sentDayOfCount: messages.filter((message) => (message.status === 'sent' || message.status === 'partial') && getCampaignTypeLabel(message) === 'day-of-update').length,
     overdueDayOfCount: messages.filter((message) => message.status === 'scheduled' && getCampaignTypeLabel(message) === 'day-of-update' && isPastScheduledTime(message.scheduled_for)).length,
   }), [guests, itineraryAudienceOptions.length, messages, weddingSite?.venue_name, weddingSite?.wedding_date]);
-
   const campaignThreads = useMemo(() => {
     const map = new Map<string, {
       key: string;
@@ -2828,7 +2583,6 @@ export const DashboardMessages: React.FC = () => {
       latestStatus: string;
       latestAt: number;
     }>();
-
     messages.forEach((message) => {
       const key = getCampaignThreadKey(message);
       const latestAt = Math.max(
@@ -2846,7 +2600,6 @@ export const DashboardMessages: React.FC = () => {
         latestStatus: message.status,
         latestAt,
       };
-
       prev.count += 1;
       prev.delivered += Number(message.delivered_count ?? 0);
       prev.failed += Number(message.failed_count ?? 0);
@@ -2858,12 +2611,10 @@ export const DashboardMessages: React.FC = () => {
       }
       map.set(key, prev);
     });
-
     return Array.from(map.values())
       .sort((a, b) => b.latestAt - a.latestAt)
       .slice(0, 5);
   }, [messages, deliveries]);
-
   const activeCampaignThread = useMemo(() => {
     if (historyCampaignFilter) {
       return campaignThreads.find((thread) => thread.name === historyCampaignFilter) ?? null;
@@ -2872,7 +2623,6 @@ export const DashboardMessages: React.FC = () => {
     if (!query) return null;
     return campaignThreads.find((thread) => thread.name.toLowerCase() === query) ?? null;
   }, [campaignThreads, historyCampaignFilter, historySearch]);
-
   const activeCampaignMessages = useMemo(() => {
     if (!activeCampaignThread) return [] as Message[];
     return messages
@@ -2889,9 +2639,7 @@ export const DashboardMessages: React.FC = () => {
         return bTime - aTime;
       });
   }, [messages, activeCampaignThread]);
-
   const activeCampaignLatestMessage = activeCampaignMessages[0] ?? null;
-
   const providerTelemetry = useMemo(() => {
     const completedDeliveryRows = getDeliveryScopedRows(messages, deliveries, (message) => isDeliveryCompletedStatus(message.status));
     const attempted = completedDeliveryRows.filter((d) => d.status === 'sent' || d.status === 'failed');
@@ -2912,7 +2660,6 @@ export const DashboardMessages: React.FC = () => {
     const sentRate = attempted.length > 0 ? Math.round((sent / attempted.length) * 100) : 0;
     return { attempted: attempted.length, sent, failed, skipped, withProviderId, sentRate, errorTop };
   }, [messages, deliveries]);
-
   if (loading) {
     return (
       <DashboardLayout currentPage="messages">
@@ -2922,7 +2669,6 @@ export const DashboardMessages: React.FC = () => {
       </DashboardLayout>
     );
   }
-
   return (
     <DashboardLayout currentPage="messages">
       <div className="max-w-7xl mx-auto space-y-8">
@@ -2986,14 +2732,12 @@ export const DashboardMessages: React.FC = () => {
             </div>
           </div>
         </div>
-
         {messagesRole !== 'owner' && (
           <PlannerHandoffCard
             tone={messagesRole === 'planner' ? 'planner' : messagesRole === 'coordinator' ? 'coordinator' : 'viewer'}
             handoff={plannerHandoff}
           />
         )}
-
         <div className="rounded-[28px] border border-border-subtle bg-white p-5 shadow-sm">
           <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
             <div>
@@ -3012,7 +2756,6 @@ export const DashboardMessages: React.FC = () => {
             ))}
           </div>
         </div>
-
         <div className="rounded-[28px] border border-border-subtle bg-white p-5 shadow-sm">
           <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
             <div className="max-w-3xl">
@@ -3059,7 +2802,6 @@ export const DashboardMessages: React.FC = () => {
             ))}
           </div>
         </div>
-
         <div className="rounded-[28px] border border-border-subtle bg-white p-5 shadow-sm">
           <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
             <div className="max-w-3xl">
@@ -3125,7 +2867,6 @@ export const DashboardMessages: React.FC = () => {
             </div>
           )}
         </div>
-
         <div className="rounded-[28px] border border-border-subtle bg-white p-5 shadow-sm">
           <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
             <div className="max-w-3xl">
@@ -3171,7 +2912,6 @@ export const DashboardMessages: React.FC = () => {
             ))}
           </div>
         </div>
-
         <div className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Card variant="bordered" padding="lg" className="border-border-subtle shadow-sm overflow-hidden">
@@ -3226,7 +2966,6 @@ export const DashboardMessages: React.FC = () => {
                 </div>
               </div>
             </Card>
-
             <Card variant="bordered" padding="lg" className="border-border-subtle shadow-sm overflow-hidden">
               <div className="-mx-6 -mt-6 mb-4 border-b border-border-subtle bg-surface-subtle/40 px-6 py-5">
                 <div className="flex items-center justify-between gap-3">
@@ -3268,8 +3007,6 @@ export const DashboardMessages: React.FC = () => {
             </Card>
           </div>
         </div>
-
-
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2">
             <Card variant="bordered" padding="lg" className="overflow-hidden border-border-subtle shadow-sm">
@@ -3313,7 +3050,6 @@ export const DashboardMessages: React.FC = () => {
                     <span className="text-xs text-text-tertiary self-center">Keeps a lightweight reusable version in this browser for fast repeat campaigns.</span>
                   </div>
                 </div>
-
                 <div className="rounded-2xl border border-border-subtle bg-surface-subtle/30 p-4">
                   <label className="block text-sm font-medium text-text-primary mb-2">Channel</label>
                   <div className="inline-flex rounded-lg border border-border overflow-hidden bg-white">
@@ -3337,7 +3073,6 @@ export const DashboardMessages: React.FC = () => {
                     </div>
                   )}
                 </div>
-
                 <div className="rounded-2xl border border-border-subtle bg-surface-subtle/30 p-4">
                   <label className="block text-sm font-medium text-text-primary mb-2">Who should get this?</label>
                   {audienceOptions.some((a) => a.value.startsWith('event:')) && (
@@ -3383,7 +3118,6 @@ export const DashboardMessages: React.FC = () => {
                     )}
                   </div>
                 </div>
-
                 {formData.channel === 'email' && (
                   <div>
                     <label className="block text-sm font-medium text-text-primary mb-2">
@@ -3397,7 +3131,6 @@ export const DashboardMessages: React.FC = () => {
                     />
                   </div>
                 )}
-
                 <div>
                   <label className="block text-sm font-medium text-text-primary mb-2">
                     Message <span className="text-error">*</span>
@@ -3413,7 +3146,6 @@ export const DashboardMessages: React.FC = () => {
                     Include the details guests need most, like time, place, or dress code.
                   </p>
                 </div>
-
                 <div className="rounded-2xl border border-border-subtle bg-surface-subtle/30 p-4">
                   <label className="block text-sm font-medium text-text-primary mb-2">When should it send?</label>
                   <div className="flex gap-4 mb-4">
@@ -3440,7 +3172,6 @@ export const DashboardMessages: React.FC = () => {
                       Schedule
                     </button>
                   </div>
-
                   {formData.scheduleType === 'later' && (
                     <div className="space-y-3">
                       <div className="grid grid-cols-2 gap-4 p-4 bg-surface-subtle rounded-lg border border-border">
@@ -3487,7 +3218,6 @@ export const DashboardMessages: React.FC = () => {
                     </div>
                   )}
                 </div>
-
                 <div className="overflow-hidden rounded-2xl border border-border-subtle bg-white">
                   <button
                     type="button"
@@ -3519,7 +3249,6 @@ export const DashboardMessages: React.FC = () => {
                     </div>
                   )}
                 </div>
-
                 <div className="rounded-2xl border border-primary/20 bg-primary-light/40 p-4">
                   <div className="flex items-start gap-3">
                     <Mail className="w-5 h-5 text-primary mt-0.5" />
@@ -3538,7 +3267,6 @@ export const DashboardMessages: React.FC = () => {
                     </div>
                   </div>
                 </div>
-
                 <div className="grid gap-3 md:grid-cols-2">
                   <div className="rounded-xl border border-border-subtle bg-surface-subtle/30 px-4 py-3 text-sm">
                     <p className="text-xs font-semibold uppercase tracking-[0.22em] text-text-tertiary">Email reachability</p>
@@ -3549,7 +3277,6 @@ export const DashboardMessages: React.FC = () => {
                     <p className="mt-2 text-text-primary">{audienceReachability.total - audienceReachability.missingPhone} reachable · {audienceReachability.missingPhone} missing phone</p>
                   </div>
                 </div>
-
                 {activeRecipients > 0 && (
                   <div className="text-xs text-text-tertiary bg-surface-subtle border border-border rounded-lg px-3 py-2">
                     {formData.channel === 'sms' && !SMS_SENDING_ENABLED
@@ -3559,7 +3286,6 @@ export const DashboardMessages: React.FC = () => {
                       : `Scheduled messages will send at your chosen time to everyone who still matches this group.`}
                   </div>
                 )}
-
                 {activeRecipients === 0 && !sending && formData.audience !== '' && (
                   <div className="flex items-center gap-2 p-3 bg-warning-light border border-warning/20 rounded-lg text-sm text-warning">
                     <AlertCircle className="w-4 h-4 flex-shrink-0" />
@@ -3568,21 +3294,18 @@ export const DashboardMessages: React.FC = () => {
                       : 'No guests in this group have email addresses yet. Add email addresses before sending.'}
                   </div>
                 )}
-
                 {formData.channel === 'sms' && activeRecipients > 0 && !SMS_SENDING_ENABLED && (
                   <div className="flex items-center gap-3 p-3 bg-warning-light border border-warning/20 rounded-lg text-sm text-warning">
                     <AlertCircle className="w-4 h-4 flex-shrink-0" />
                     <span>{SMS_WORKSPACE_LOCK_COPY}</span>
                   </div>
                 )}
-
                 {formData.channel === 'sms' && activeRecipients > 0 && SMS_SENDING_ENABLED && !smsCreditsSufficient && (
                   <div className="flex items-center justify-between gap-3 p-3 bg-error-light border border-error/20 rounded-lg text-sm text-error">
                     <span>Not enough text credits yet: need {smsCreditsNeeded}, have {smsCredits}.</span>
                     <Button size="sm" variant="outline" onClick={() => handleBuySmsPack('sms_100')} disabled={buyingPack !== null}>Buy credits</Button>
                   </div>
                 )}
-
                 {formData.channel === 'email' && activeRecipients > 0 && (
                   <div className={`flex items-center justify-between gap-3 p-3 rounded-lg text-sm border ${emailCapacityEnough ? 'bg-success-light border-success/20 text-success' : 'bg-error-light border-error/20 text-error'}`}>
                     <span>
@@ -3592,7 +3315,6 @@ export const DashboardMessages: React.FC = () => {
                     </span>
                   </div>
                 )}
-
                 <div className="flex gap-3">
                   <Button
                     type="submit"
@@ -3621,7 +3343,6 @@ export const DashboardMessages: React.FC = () => {
                 </fieldset>
               </form>
             </Card>
-
             <Card variant="bordered" padding="lg" className="overflow-hidden border-border-subtle shadow-sm mt-6">
               <div className="-mx-6 -mt-6 mb-6 border-b border-border-subtle bg-surface-subtle/40 px-6 py-5">
                 <p className="text-xs font-semibold uppercase tracking-[0.24em] text-text-tertiary">Reusable templates</p>
@@ -3673,7 +3394,6 @@ export const DashboardMessages: React.FC = () => {
               )}
             </Card>
           </div>
-
           <div className="lg:col-span-1 space-y-6 lg:sticky lg:top-24 self-start">
             <Card variant="bordered" padding="lg" className="border-border-subtle shadow-sm overflow-hidden">
               <div className="-mx-6 -mt-6 mb-5 border-b border-border-subtle bg-surface-subtle/40 px-6 py-5">
@@ -3719,7 +3439,6 @@ export const DashboardMessages: React.FC = () => {
                     <p className="text-sm text-text-secondary">Active Photo Links</p>
                   </div>
                 </div>
-
                 <div className="pt-2">
                   <p className="text-xs font-semibold uppercase tracking-[0.22em] text-text-tertiary mb-2">Launchpad</p>
                   <div className="grid gap-2 sm:grid-cols-2">
@@ -3770,7 +3489,6 @@ export const DashboardMessages: React.FC = () => {
                 </div>
               </div>
             </Card>
-
             <Card variant="bordered" padding="lg" className="border-border-subtle shadow-sm overflow-hidden">
               <div className="-mx-6 -mt-6 mb-5 border-b border-border-subtle bg-surface-subtle/40 px-6 py-5">
                 <p className="text-xs font-semibold uppercase tracking-[0.24em] text-text-tertiary">Starting points</p>
@@ -3800,7 +3518,6 @@ export const DashboardMessages: React.FC = () => {
             </Card>
           </div>
         </div>
-
         <Card variant="bordered" padding="lg" className="border-border-subtle shadow-sm overflow-hidden">
           <div className="-mx-6 -mt-6 mb-5 border-b border-border-subtle bg-surface-subtle/40 px-6 py-5">
             <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-3">
@@ -3846,7 +3563,6 @@ export const DashboardMessages: React.FC = () => {
             </div>
             </div>
           </div>
-
           <div className="flex flex-wrap gap-2 mb-4">
             <button type="button" onClick={() => { setHistoryStatusFilter('failed'); setHistoryChannelFilter('all'); setHistoryDeliveryFilter('failed'); }} className="text-[11px] px-3 py-1.5 rounded-full border border-border-subtle bg-surface-subtle/30 text-text-secondary hover:border-primary/40 hover:text-primary">Show failed</button>
             <button type="button" onClick={() => { setHistoryDeliveryFilter('skipped'); setHistoryStatusFilter('all'); setHistoryChannelFilter('all'); }} className="text-[11px] px-3 py-1.5 rounded-full border border-border-subtle bg-surface-subtle/30 text-text-secondary hover:border-primary/40 hover:text-primary">Show skipped</button>
@@ -3856,14 +3572,12 @@ export const DashboardMessages: React.FC = () => {
             <button type="button" onClick={() => { setHistoryStatusFilter('all'); setHistoryChannelFilter('email'); }} className="text-[11px] px-3 py-1.5 rounded-full border border-border-subtle bg-surface-subtle/30 text-text-secondary hover:border-primary/40 hover:text-primary">Email only</button>
             <button type="button" onClick={() => { setHistoryStatusFilter('all'); setHistoryChannelFilter('all'); setHistoryAudienceFilter('all'); setHistoryDeliveryFilter('all'); setHistoryCampaignFilter(''); setHistorySearch(''); }} className="text-[11px] px-3 py-1.5 rounded-full border border-border-subtle bg-white text-text-secondary hover:border-primary/40 hover:text-primary">Reset filters</button>
           </div>
-
           {historyCampaignFilter && (
             <div className="mb-4 flex items-center gap-2 text-xs text-text-tertiary">
               <span className="rounded-full border border-primary/20 bg-primary-light/40 px-3 py-1 text-primary">Campaign thread: {historyCampaignFilter}</span>
               <button type="button" onClick={() => setHistoryCampaignFilter('')} className="text-primary hover:underline">Clear</button>
             </div>
           )}
-
           <div className="grid grid-cols-2 md:grid-cols-5 gap-2 mb-4">
             {[
               ['Sent', historyStatusCounts.sent],
@@ -3878,11 +3592,9 @@ export const DashboardMessages: React.FC = () => {
               </div>
             ))}
           </div>
-
           <div className="rounded-2xl border border-border-subtle bg-surface-subtle/30 px-4 py-3 text-[11px] text-text-secondary mb-4">
             Delivery health is based on message and delivery logs available in this workspace. Use it to spot what needs attention quickly, not as a full system-of-record reporting screen.
           </div>
-
           <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-4">
             {[
               {
@@ -3913,7 +3625,6 @@ export const DashboardMessages: React.FC = () => {
               </div>
             ))}
           </div>
-
           {audienceBreakdown.length > 0 && (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-4">
               {audienceBreakdown.map(([label, count]) => (
@@ -3924,7 +3635,6 @@ export const DashboardMessages: React.FC = () => {
               ))}
             </div>
           )}
-
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mb-4">
             {(['email', 'sms'] as const).map((channel) => (
               <div key={channel} className="rounded-lg border border-border/35 bg-white shadow-[0_4px_14px_rgba(15,23,42,0.04)] px-3 py-2.5">
@@ -3938,7 +3648,6 @@ export const DashboardMessages: React.FC = () => {
               </div>
             ))}
           </div>
-
           <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-4">
             {[
               {
@@ -3973,7 +3682,6 @@ export const DashboardMessages: React.FC = () => {
               </div>
             ))}
           </div>
-
           <div className="mb-4 flex flex-wrap gap-2 text-xs text-text-tertiary">
             <span className="rounded-full border border-border-subtle bg-surface-subtle px-3 py-1">Drafts {campaignStatusSummary.draft}</span>
             <span className="rounded-full border border-border-subtle bg-surface-subtle px-3 py-1">Scheduled {campaignStatusSummary.scheduled}</span>
@@ -3981,7 +3689,6 @@ export const DashboardMessages: React.FC = () => {
             <span className="rounded-full border border-border-subtle bg-surface-subtle px-3 py-1">Partial {campaignStatusSummary.partial}</span>
             <span className="rounded-full border border-border-subtle bg-surface-subtle px-3 py-1">Failed {campaignStatusSummary.failed}</span>
           </div>
-
           {campaignThreads.length > 0 && (
             <div className="mb-4 rounded-2xl border border-border-subtle bg-white p-4 shadow-[0_4px_14px_rgba(15,23,42,0.04)]">
               <div className="flex items-center justify-between gap-3 mb-3">
@@ -4016,7 +3723,6 @@ export const DashboardMessages: React.FC = () => {
               </div>
             </div>
           )}
-
           {activeCampaignThread && (
             <div className="mb-4 rounded-2xl border border-primary/20 bg-primary-light/30 p-4">
               <div className="flex items-center justify-between gap-3">
@@ -4133,8 +3839,6 @@ export const DashboardMessages: React.FC = () => {
               )}
             </div>
           )}
-
-
           {retryCandidates.length > 0 && (
             <div className="rounded-2xl border border-warning/20 bg-warning/5 p-4 mb-4">
               <div className="flex items-center justify-between mb-3 gap-3">
@@ -4167,7 +3871,6 @@ export const DashboardMessages: React.FC = () => {
               </div>
             </div>
           )}
-
           {reviewCandidates.length > 0 && (
             <div className="rounded-2xl border border-accent/20 bg-accent/5 p-4 mb-4">
               <div className="flex items-center justify-between mb-3 gap-3">
@@ -4198,8 +3901,6 @@ export const DashboardMessages: React.FC = () => {
               </div>
             </div>
           )}
-
-
           {filteredHistory.length === 0 ? (
             <div className="rounded-[24px] border border-border-subtle bg-surface-subtle/30 py-14 text-center">
               <Mail className="w-12 h-12 text-text-tertiary mx-auto mb-4" />
@@ -4285,7 +3986,6 @@ export const DashboardMessages: React.FC = () => {
                       </span>
                     </div>
                     </button>
-
                     {(message.status === 'scheduled' || message.status === 'failed' || message.status === 'partial') && (
                       <div className="mt-4 flex flex-wrap gap-2 border-t border-border-subtle pt-3">
                         {message.status === 'scheduled' && (
@@ -4321,7 +4021,6 @@ export const DashboardMessages: React.FC = () => {
           )}
         </Card>
       </div>
-
       {viewingMessage && (
         <MessageDetailModal
           message={viewingMessage}
@@ -4335,7 +4034,6 @@ export const DashboardMessages: React.FC = () => {
           onLoadIntoComposer={loadMessageIntoComposer}
         />
       )}
-
       <ToastList toasts={toasts} />
     </DashboardLayout>
   );

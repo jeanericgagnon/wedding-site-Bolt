@@ -54,7 +54,7 @@ export const mergeOnboardingFollowUpAnswers = ({
   formData: ReturnType<typeof initialSetupAnswersToOnboardingFormShape>;
 }): OnboardingFollowUpMergeResult => {
   let nextAnswers = { ...initialSetupAnswers };
-  let nextFollowUps: InitialSetupFollowUpAnswers = {
+  const nextFollowUps: InitialSetupFollowUpAnswers = {
     ...initialSetupFollowUps,
     eventLocations: { ...initialSetupFollowUps.eventLocations },
     eventTimes: { ...initialSetupFollowUps.eventTimes },

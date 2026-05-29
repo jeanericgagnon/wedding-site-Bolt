@@ -407,14 +407,14 @@ function normalizeDraftDateValue(value: string) {
     return normalizeIsoParts(year, month, day);
   }
 
-  const monthFirstNumericMatch = suffixStrippedTimestampValue.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})$/);
+  const monthFirstNumericMatch = suffixStrippedTimestampValue.match(/^(\d{1,2})[/.-](\d{1,2})[/.-](\d{4})$/);
   if (monthFirstNumericMatch) {
     const [, month, day, year] = monthFirstNumericMatch;
     const normalizedValue = normalizeIsoParts(year, month, day);
     if (normalizedValue) return normalizedValue;
   }
 
-  const yearFirstNumericMatch = suffixStrippedTimestampValue.match(/^(\d{4})[\/\-.](\d{1,2})[\/\-.](\d{1,2})$/);
+  const yearFirstNumericMatch = suffixStrippedTimestampValue.match(/^(\d{4})[/.-](\d{1,2})[/.-](\d{1,2})$/);
   if (yearFirstNumericMatch) {
     const [, year, month, day] = yearFirstNumericMatch;
     const normalizedValue = normalizeIsoParts(year, month, day);
@@ -610,7 +610,7 @@ function normalizeDraftReferenceNumberValue(value: string) {
     .replace(DRAFT_WRAPPING_CHAR_PATTERN, '')
     .toUpperCase()
     .replace(/[–—−]/g, '-')
-    .replace(/\s*([\-/#])\s*/g, '$1')
+    .replace(/\s*([-/#])\s*/g, '$1')
     .replace(/\s+/g, ' ')
     .trim();
 }
@@ -651,6 +651,7 @@ function getDraftNameChangeDocumentIntakeStatus(kind: NameChangeDocumentInput['d
 }
 
 function getDraftNameChangeExtractionConfidence(kind: NameChangeDocumentInput['document_kind']) {
+  void kind;
   return null;
 }
 
@@ -750,7 +751,7 @@ export function upsertDraftNameChangeExtractedField(
 ): NameChangeExtractedFieldInput[] {
   const normalizedDocumentId = normalizeDraftNameChangeDocumentId(documentId);
   const persistedDocumentId = options?.preserveExactDocumentId ? documentId?.trim() || null : null;
-  const targetDocumentId = persistedDocumentId && !/^draft(?:$|\s*[\/_-]?)/i.test(persistedDocumentId)
+  const targetDocumentId = persistedDocumentId && !/^draft(?:$|\s*[/_-]?)/i.test(persistedDocumentId)
     ? persistedDocumentId
     : normalizedDocumentId;
   const matchesTargetDocument = (candidateDocumentId: string | null | undefined) => (
@@ -1010,7 +1011,7 @@ function resolveDraftSnapshotDocumentId(
   const trimmedDocumentId = documentId?.trim() || null;
   if (!trimmedDocumentId) return null;
   if (/^(?:blob|data):/i.test(trimmedDocumentId)) return null;
-  if (/^draft(?:$|\s*[\/_-]?)/i.test(trimmedDocumentId)) {
+  if (/^draft(?:$|\s*[/_-]?)/i.test(trimmedDocumentId)) {
     return normalizeDraftNameChangeDocumentId(trimmedDocumentId, fallbackKind);
   }
 

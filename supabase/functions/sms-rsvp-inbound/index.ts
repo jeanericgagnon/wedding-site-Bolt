@@ -12,6 +12,9 @@ const TWILIO_XML_HEADERS = {
   "Content-Type": "application/xml; charset=utf-8",
 };
 
+type DeliveryRow = { message_id: string | null };
+type GuestLookupRow = { id: string; wedding_site_id: string; first_name: string | null; phone?: string | null };
+
 function normalizePhone(input: string): string {
   const cleaned = (input || "").replace(/[^\d+]/g, "").trim();
   if (!cleaned) return "";
@@ -103,7 +106,9 @@ Deno.serve(async (req: Request) => {
       .order("created_at", { ascending: false })
       .limit(20);
 
-    const messageIds = (deliveryRows || []).map((r: any) => r.message_id).filter(Boolean);
+    const messageIds = ((deliveryRows || []) as DeliveryRow[])
+      .map((row) => row.message_id)
+      .filter((messageId): messageId is string => Boolean(messageId));
 
     let weddingSiteId: string | null = null;
     if (messageIds.length > 0) {
@@ -134,7 +139,7 @@ Deno.serve(async (req: Request) => {
         .eq("phone", fromNorm)
         .limit(2);
       if ((data || []).length === 1) {
-        guest = data![0] as any;
+        guest = data![0] as GuestLookupRow;
         weddingSiteId = guest.wedding_site_id;
       }
     }

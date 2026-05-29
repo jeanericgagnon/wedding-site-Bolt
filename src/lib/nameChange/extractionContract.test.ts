@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildNameChangeExtractionContractSnapshot, getDocumentCapturedFieldKeys, getDocumentLinkedCapturedFieldKeys, getVerifiedDocumentFieldValue, getVerifiedDocumentLinkedFieldValue, hasAnyDocumentLinkedFieldValue, hasAnyLinkedDocumentFieldValue, hasVerifiedDocumentLinkedFieldValue, hasVerifiedLinkedDocumentFieldValue } from './extractionContract';
+import { buildNameChangeExtractionContractSnapshot, getDocumentCapturedFieldKeys, getDocumentLinkedCapturedFieldKeys, getVerifiedDocumentFieldValue, getVerifiedDocumentLinkedFieldValue, hasAnyLinkedDocumentFieldValue, hasVerifiedDocumentLinkedFieldValue, hasVerifiedLinkedDocumentFieldValue } from './extractionContract';
 import type { NameChangeCaseInput, NameChangeDocumentInput, NameChangeExtractedFieldInput } from './types';
 
 function makeCase(overrides: Partial<NameChangeCaseInput> = {}): NameChangeCaseInput {

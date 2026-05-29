@@ -1,6 +1,6 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
-import { normalizeUrl, isSameProduct } from './urlNormalizer.ts';
+import { normalizeUrl } from './urlNormalizer.ts';
 import { TargetAdapter } from './targetAdapter.ts';
 import { AmazonAdapter } from './amazonAdapter.ts';
 import { WalmartAdapter } from './walmartAdapter.ts';
@@ -780,7 +780,7 @@ Deno.serve(async (req: Request) => {
     return new Response(JSON.stringify({ ...result, cached: false }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
-  } catch (_err: unknown) {
+  } catch {
     console.error("REGISTRY_PREVIEW_UNEXPECTED_FAILED", { reason: "PREVIEW_FETCH_FAILED" });
     return new Response(
       JSON.stringify({

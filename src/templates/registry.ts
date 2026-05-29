@@ -16,10 +16,6 @@ export interface TemplateDefinition {
   };
 }
 
-function normalizeRegistryTemplateVariant(variant: string): string {
-  return resolveCanonicalRegistrySectionInput('registry', variant).variant;
-}
-
 function normalizeTemplateIdKey(templateId: unknown): string {
   return typeof templateId === 'string'
     ? templateId.trim().toLowerCase().replace(/[^a-z0-9]/g, '')

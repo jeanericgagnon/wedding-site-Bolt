@@ -5,7 +5,9 @@ interface TravelClassicProps {
   section: Section;
 }
 
-export default function TravelClassic({ section }: TravelClassicProps) {
+export default function TravelClassic({ section: _section }: TravelClassicProps) {
+  void _section;
+
   return (
     <section className="py-24 bg-white">
       <div className="max-w-6xl mx-auto px-4">

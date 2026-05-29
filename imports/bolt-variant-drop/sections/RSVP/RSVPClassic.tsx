@@ -5,7 +5,9 @@ interface RSVPClassicProps {
   section: Section;
 }
 
-export default function RSVPClassic({ section }: RSVPClassicProps) {
+export default function RSVPClassic({ section: _section }: RSVPClassicProps) {
+  void _section;
+
   return (
     <section className="py-24 bg-gradient-to-b from-rose-50 to-pink-50">
       <div className="max-w-2xl mx-auto px-4">

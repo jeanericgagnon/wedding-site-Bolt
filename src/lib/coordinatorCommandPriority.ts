@@ -11,6 +11,8 @@ export const getCoordinatorCommandPriority = ({
   qnaLabel: string | null;
   alertAligned: boolean;
 }): CoordinatorCommandSummaryLabel => {
+  void alertAligned;
+
   if (checkInLabel === 'Working board target' || checkInLabel === 'Board target available') {
     return 'Check-in';
   }

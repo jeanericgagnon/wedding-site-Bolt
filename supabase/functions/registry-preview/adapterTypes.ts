@@ -44,6 +44,8 @@ export interface RetailerAdapter {
   parse(context: AdapterContext): Promise<ProductData | null>;
 }
 
+type JsonLdNode = Record<string, unknown>;
+
 /**
  * Normalize heterogeneous availability strings into a stable, UI-friendly vocabulary.
  */
@@ -85,7 +87,7 @@ export function normalizeAvailability(input?: string | null): string | undefined
 /**
  * Extract JSON-LD Product schema from HTML
  */
-export function extractJsonLdProduct(html: string): any | null {
+export function extractJsonLdProduct(html: string): JsonLdNode | null {
   try {
     const jsonLdMatch = html.match(
       /<script[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi
@@ -102,13 +104,18 @@ export function extractJsonLdProduct(html: string): any | null {
         const items = Array.isArray(data) ? data : [data];
 
         for (const item of items) {
-          if (item['@type'] === 'Product' || item['@type']?.includes('Product')) {
+          if (item['@type'] === 'Product' || String(item['@type'] ?? '').includes('Product')) {
             return item;
           }
           // Handle nested graph structures
-          if (item['@graph']) {
-            const product = item['@graph'].find(
-              (g: any) => g['@type'] === 'Product' || g['@type']?.includes('Product')
+          const graph = Array.isArray(item['@graph']) ? item['@graph'] : null;
+          if (graph) {
+            const product = graph.find(
+              (g): g is JsonLdNode =>
+                typeof g === 'object' &&
+                g !== null &&
+                ('@type' in g) &&
+                (g['@type'] === 'Product' || String(g['@type'] ?? '').includes('Product'))
             );
             if (product) return product;
           }

@@ -66,10 +66,14 @@ export class TargetAdapter implements RetailerAdapter {
     return this.createFallback(url, normalized.canonical);
   }
 
+  private asRecord(value: unknown): Record<string, unknown> | null {
+    return typeof value === 'object' && value !== null ? value as Record<string, unknown> : null;
+  }
+
   /**
    * Extract __NEXT_DATA__ from Target's Next.js app
    */
-  private extractNextData(html: string): any | null {
+  private extractNextData(html: string): Record<string, unknown> | null {
     try {
       const match = html.match(/<script id="__NEXT_DATA__"[^>]*>([\s\S]*?)<\/script>/i);
       if (!match) return null;
@@ -84,23 +88,33 @@ export class TargetAdapter implements RetailerAdapter {
   /**
    * Parse __NEXT_DATA__ structure
    */
-  private parseNextData(nextData: any, canonical: string): ProductData | null {
+  private parseNextData(nextData: Record<string, unknown>, canonical: string): ProductData | null {
     try {
       // Target's Next.js data structure can vary, look for product info
-      const props = nextData?.props?.pageProps;
+      const props = this.asRecord(this.asRecord(nextData.props)?.pageProps);
       if (!props) return null;
 
       // Common paths where product data might be
-      const product =
+      const product = this.asRecord(
         props.product ||
-        props.initialData?.product ||
-        props.data?.product ||
-        props.productDetails?.product;
+        this.asRecord(props.initialData)?.product ||
+        this.asRecord(props.data)?.product ||
+        this.asRecord(props.productDetails)?.product,
+      );
 
       if (!product) return null;
 
-      const title = product.title || product.name || product.item?.product_description?.title;
-      const rawPrice = product.price?.current_retail || product.price?.current || product.price;
+      const fallbackTitle = this.asRecord(this.asRecord(product.item)?.product_description)?.title;
+      const title =
+        typeof product.title === 'string'
+          ? product.title
+          : typeof product.name === 'string'
+            ? product.name
+            : typeof fallbackTitle === 'string'
+              ? fallbackTitle
+              : null;
+      const priceContainer = this.asRecord(product.price);
+      const rawPrice = priceContainer?.current_retail || priceContainer?.current || product.price;
       const priceRecord = typeof rawPrice === 'object' && rawPrice !== null
         ? rawPrice as {
           value?: string | number | null;
@@ -114,10 +128,14 @@ export class TargetAdapter implements RetailerAdapter {
           ? rawPrice
           : Number.parseFloat(String(priceRecord?.value || priceRecord?.amount || rawPrice || '')),
       );
+      const productImagesRaw = product.images;
+      const productImages = this.asRecord(Array.isArray(productImagesRaw) ? productImagesRaw[0] : null);
+      const itemImagesRaw = this.asRecord(this.asRecord(product.item)?.enrichment)?.images;
+      const itemEnrichment = this.asRecord(Array.isArray(itemImagesRaw) ? itemImagesRaw[0] : null);
       const image =
-        product.images?.[0]?.base_url ||
-        product.image ||
-        product.item?.enrichment?.images?.[0]?.base_url;
+        productImages?.base_url ||
+        (typeof product.image === 'string' ? product.image : undefined) ||
+        itemEnrichment?.base_url;
 
       if (!title) return null;
 
@@ -142,11 +160,11 @@ export class TargetAdapter implements RetailerAdapter {
 
       return {
         title,
-        image_url: image || undefined,
+        image_url: typeof image === 'string' ? image : undefined,
         price_label: priceLabel || undefined,
         price_amount: priceAmount,
         currency,
-        availability: normalizeAvailability(product.availability),
+        availability: normalizeAvailability(typeof product.availability === 'string' ? product.availability : undefined),
         store_name: 'Target',
         canonical_url: canonical,
         confidence_score: missing.length === 0 ? 0.95 : 0.75,
@@ -162,16 +180,19 @@ export class TargetAdapter implements RetailerAdapter {
   /**
    * Parse JSON-LD Product schema
    */
-  private parseJsonLd(jsonLd: any, canonical: string): ProductData | null {
+  private parseJsonLd(jsonLd: Record<string, unknown>, canonical: string): ProductData | null {
     try {
-      const title = jsonLd.name;
+      const title = typeof jsonLd.name === 'string' ? jsonLd.name : null;
       if (!title) return null;
       if (this.looksLikeSkuTitle(title)) return null;
 
       const missing: string[] = [];
       let image = jsonLd.image;
       if (Array.isArray(image)) image = image[0];
-      if (typeof image === 'object') image = image.url || image.contentUrl;
+      if (typeof image === 'object' && image !== null) {
+        const imageRecord = image as Record<string, unknown>;
+        image = imageRecord.url || imageRecord.contentUrl;
+      }
       if (!image) missing.push('image');
 
       let priceLabel = '';
@@ -179,9 +200,10 @@ export class TargetAdapter implements RetailerAdapter {
       let currency = 'USD';
 
       const offers = Array.isArray(jsonLd.offers) ? jsonLd.offers[0] : jsonLd.offers;
-      if (offers?.price) {
-        priceAmount = this.sanitizePrice(parseFloat(offers.price));
-        currency = offers.priceCurrency || 'USD';
+      const offerRecord = this.asRecord(offers);
+      if (offerRecord?.price) {
+        priceAmount = this.sanitizePrice(parseFloat(String(offerRecord.price)));
+        currency = typeof offerRecord.priceCurrency === 'string' ? offerRecord.priceCurrency : 'USD';
         if (priceAmount) {
           priceLabel = `$${priceAmount.toFixed(2)}`;
         } else {
@@ -193,11 +215,11 @@ export class TargetAdapter implements RetailerAdapter {
 
       return {
         title,
-        image_url: image || undefined,
+        image_url: typeof image === 'string' ? image : undefined,
         price_label: priceLabel || undefined,
         price_amount: priceAmount,
         currency,
-        availability: normalizeAvailability(offers?.availability),
+        availability: normalizeAvailability(typeof offerRecord?.availability === 'string' ? offerRecord.availability : undefined),
         store_name: 'Target',
         canonical_url: canonical,
         confidence_score: missing.length === 0 ? 0.9 : 0.7,

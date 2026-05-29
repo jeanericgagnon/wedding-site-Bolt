@@ -1,6 +1,6 @@
 import React from 'react';
 import { z } from 'zod';
-import { SectionDefinition, SectionComponentProps, parseSectionData } from '../../types';
+import { SectionDefinition, SectionComponentProps } from '../../types';
 
 export const heroFullBleedSchema = z.object({
   headline: z.string().default(''),

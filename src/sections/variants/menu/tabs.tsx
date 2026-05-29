@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { z } from 'zod';
-import { Utensils, Leaf, AlertCircle } from 'lucide-react';
+import { Utensils, AlertCircle } from 'lucide-react';
 import { SectionDefinition, SectionComponentProps } from '../../types';
 
 const MenuItemSchema = z.object({

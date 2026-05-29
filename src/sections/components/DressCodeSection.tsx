@@ -43,6 +43,8 @@ const DRESS_CODE_PRESETS: Record<string, { label: string; description: string; s
 };
 
 export const DressCodeSection: React.FC<Props> = ({ data: _data, instance }) => {
+  void _data;
+
   const { settings } = instance;
   const presetKey = (settings.presetCode as string) || '';
   const preset = DRESS_CODE_PRESETS[presetKey];
@@ -108,6 +110,8 @@ export const DressCodeSection: React.FC<Props> = ({ data: _data, instance }) => 
 };
 
 export const DressCodeBanner: React.FC<Props> = ({ data: _data, instance }) => {
+  void _data;
+
   const { settings } = instance;
   const presetKey = (settings.presetCode as string) || '';
   const preset = DRESS_CODE_PRESETS[presetKey];

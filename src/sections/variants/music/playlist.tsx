@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { z } from 'zod';
-import { Music, Play, ExternalLink, Plus } from 'lucide-react';
+import { Music, Play, ExternalLink } from 'lucide-react';
 import { SectionDefinition, SectionComponentProps } from '../../types';
 
 const TrackSchema = z.object({

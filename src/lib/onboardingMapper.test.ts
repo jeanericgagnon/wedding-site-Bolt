@@ -14,8 +14,13 @@ describe('buildOnboardingUpdateData', () => {
     expect(result.wedding_date).toBeNull();
     expect(result.venue_date).toBeNull();
     expect(result.rsvp_deadline).toBeNull();
-    expect((result.wedding_data as any).event.weddingDateISO).toBeUndefined();
-    expect((result.wedding_data as any).rsvp.deadlineISO).toBeUndefined();
+    const weddingData = result.wedding_data as {
+      event?: { weddingDateISO?: string };
+      rsvp?: { deadlineISO?: string };
+    };
+
+    expect(weddingData.event?.weddingDateISO).toBeUndefined();
+    expect(weddingData.rsvp?.deadlineISO).toBeUndefined();
   });
 
   it('keeps valid onboarding date inputs intact', () => {
@@ -30,7 +35,12 @@ describe('buildOnboardingUpdateData', () => {
     expect(result.wedding_date).toBe('2026-06-20');
     expect(result.venue_date).toBe('2026-06-20');
     expect(result.rsvp_deadline).toBe('2026-05-15');
-    expect((result.wedding_data as any).event.weddingDateISO).toBe('2026-06-20');
-    expect((result.wedding_data as any).rsvp.deadlineISO).toBe('2026-05-15');
+    const weddingData = result.wedding_data as {
+      event?: { weddingDateISO?: string };
+      rsvp?: { deadlineISO?: string };
+    };
+
+    expect(weddingData.event?.weddingDateISO).toBe('2026-06-20');
+    expect(weddingData.rsvp?.deadlineISO).toBe('2026-05-15');
   });
 });
