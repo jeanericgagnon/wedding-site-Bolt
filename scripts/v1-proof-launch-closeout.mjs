@@ -4,6 +4,7 @@ import { execSync } from 'node:child_process';
 import fs from 'node:fs';
 
 const baseUrl = process.env.PLAYWRIGHT_BASE_URL || 'http://127.0.0.1:4173';
+const isLocalBaseUrl = /127\.0\.0\.1|localhost/i.test(baseUrl);
 const releasePacketPath = 'docs/release-checklists/2026-05-28-v2-closeout-certification.md';
 const builderRollbackPath = 'docs/builder-v2-cutover-checklist.md';
 
@@ -125,6 +126,19 @@ const sourceChecks = [
   },
 ];
 
+async function assertLocalBaseUrlReady(url) {
+  try {
+    const response = await fetch(url, { signal: AbortSignal.timeout(1_500) });
+    if (response.ok) return;
+    throw new Error(`received HTTP ${response.status}`);
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : String(error);
+    throw new Error(
+      `Local V2 closeout proof requires a running preview/dev server at ${url}. Start the local runtime first, then rerun this proof. (${detail})`,
+    );
+  }
+}
+
 function runCommandStep(step) {
   execSync(step.command, {
     stdio: 'inherit',
@@ -141,6 +155,11 @@ function runSourceCheck(step) {
       throw new Error(`${step.file} is missing required text: ${text}`);
     }
   }
+}
+
+if (isLocalBaseUrl) {
+  console.log(`\n[launch-closeout] Local runtime preflight`);
+  await assertLocalBaseUrlReady(baseUrl);
 }
 
 for (const step of commandSteps) {
