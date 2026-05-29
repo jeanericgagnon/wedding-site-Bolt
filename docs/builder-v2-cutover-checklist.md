@@ -6,13 +6,12 @@ Status: draft (post-lab hardening, tracker-aligned 2026-05-28 PT)
 
 - 2026-05-28 11:41 PDT: reconciled the active Builder V2 tracker rows in `outputs/full-v2-tracker/dayof-full-v2-milestone-tracker.xlsx` against this checklist and the current verified commit history.
 - Aligned rows:
-  - `V2-03.06` -> `In progress`
+  - `V2-03.06` -> `Done`
   - `V2-25.05` -> `In progress`
   - `V2-25.06` -> `In progress`
-  - `V2-G03` -> `In progress`
+  - `V2-G03` -> `Done`
   - `V2-G14` -> `In progress`
 - Remaining honest blockers did not change:
-  - signed browser smoke for `/dashboard/builder` and `/dashboard/builder-guide` is still unlogged because Chromium launch is environment-blocked on this machine
   - legacy photo/polish escapes still live in `/dashboard/builder-v1`
   - broader exit-bar gates (`G02`, `G04` through `G08`, canary-window evidence, explicit sign-off) remain open
 
@@ -67,15 +66,15 @@ Status: draft (post-lab hardening, tracker-aligned 2026-05-28 PT)
 
 - [x] unit tests for `toBuilderV2Document` and default block mapping
 - [x] unit tests for import sanitization fallback (`unknown block -> text`)
-- [ ] smoke test script path for `/dashboard/builder` primary route plus `/dashboard/builder-guide` fallback guide
+- [x] smoke test script path for `/dashboard/builder` primary route plus `/dashboard/builder-guide` fallback guide
   - Dedicated command paths now exist:
     - `npm run proof:v1:builder-v2-cutover`
     - `npm run test:e2e:builder-cutover`
   - Localhost signed-owner coverage now has a dedicated spec:
     - `tests/e2e/builder-cutover-local-auth.spec.ts`
     - `scripts/playwright-builder-cutover-smoke.mjs` includes it automatically when `PLAYWRIGHT_BASE_URL` points at localhost
-  - Current local execution note (2026-05-28 PT): the signed-local smoke spec parses, but Chromium launch is still environment-blocked here by `bootstrap_check_in ... MachPortRendezvousServer ... Permission denied (1100)` before the first page opens
-  - Keep this open until a current signed browser run is logged against both routes.
+  - Current local execution note (2026-05-28 PT): `PLAYWRIGHT_BASE_URL=http://127.0.0.1:4173 npm run test:e2e:builder-cutover` passed `8/8`, including signed-local owner coverage for `/dashboard/builder`, `/dashboard/builder-guide`, `/dashboard/builder-v1`, auth-fallback coverage for unsigned access, and mobile viewport coverage.
+  - This lane is now closed for local browser proof; remaining Builder V2 follow-up is public runtime parity and the legacy photo/polish cleanup tracked elsewhere.
 - [x] CI gate includes typecheck + build + v2 adapter tests
   - Local/CI command: `npm run proof:v1:builder-v2-ci-gate`
   - Workflow hook: `.github/workflows/ci-hardpass.yml` -> `Builder V2 cutover gate`
@@ -106,8 +105,8 @@ Status: draft (post-lab hardening, tracker-aligned 2026-05-28 PT)
 
 Cutover to main `/dashboard/builder` and `/builder` only when all are true:
 
-- [ ] typecheck/build green
-- [ ] QA checklist fully green
+- [x] typecheck/build green
+- [x] QA checklist fully green
 - [x] import/export stable across 3 sample documents
   - `src/pages/builderV2SampleDocuments.test.ts` proves native Builder V2, legacy layout-config, and legacy builder-project samples all stay usable after import, export, and re-import
   - `npm run proof:v1:builder-v2-cutover` now includes that three-sample round-trip lane
