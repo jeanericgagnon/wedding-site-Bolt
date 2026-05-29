@@ -238,7 +238,7 @@ Yes. The launch-critical hardening lane is closed, the blocker-fix runtime is li
 
 | Field | Current State |
 | --- | --- |
-| Current date/time | `2026-05-26 12:43 PM PDT` |
+| Current date/time | `2026-05-28 05:58 PM PT` |
 | Branch | `main` |
 | Latest verified Git SHA | `6b6f2069a` |
 | Latest verified commit message | `Merge pull request #97 from jeanericgagnon/codex-newer-ui-recovery` |
@@ -250,9 +250,9 @@ Yes. The launch-critical hardening lane is closed, the blocker-fix runtime is li
 | Production-ready | `YES FOR THE CURRENT PUBLIC / GUEST / RSVP LAUNCH SCOPE` |
 | Reason production-ready is claimed | Production now serves the merged newer public UI on `dayof.love`, canonical public smoke is green on the real alias, `npm run smoke:rsvp` and `npm run smoke:site` are green, and `npm run proof:v1:guests-rsvp-ops` is green on the live runtime. |
 | Current blockers | No active automated blockers remain on the current public / guest / RSVP launch bar. The remaining note is manual proof hygiene: keep the canonical couple-path route notes and wording/runtime evidence fresh after approved frontend deploys. |
-| Current proof state | Fresh green proof now covers the current public launch bar honestly: `PLAYWRIGHT_BASE_URL=https://dayof.love npm run proof:v1:canonical-smoke`, `npm run proof:v1:guests-rsvp-ops`, `npm run smoke:rsvp`, `npm run smoke:site`, and `npm run build`. The merged newer UI recovery also passed PR #97 hardpass plus both Vercel previews before deploy. |
+| Current proof state | Fresh green proof still covers the current public launch bar honestly: `PLAYWRIGHT_BASE_URL=https://dayof.love npm run proof:v1:canonical-smoke`, `npm run proof:v1:guests-rsvp-ops`, `npm run smoke:rsvp`, `npm run smoke:site`, and `npm run build`. Local V2 closeout proof maintenance also restored `npm run proof:v1:ai-product-readiness` and refreshed proof-board freshness without changing deployed launch claims. |
 | Current deployment state | The latest verified deployed frontend runtime is [dayof.love](https://dayof.love) via Vercel production deploy `dpl_DYBXMvyB4fgNGCNcYQLh7bS5Ytn1`. The richer newer Home/Product/Trust surface, signup/support/refund routes, quick-start bypass gating, RSVP helper copy, guest-contact lookup placeholder, and tokenless site-photo-upload guest path now match the current launch-proof expectations on the live alias. |
-| Current next actions | Keep the canonical couple-path route notes and wording/runtime proof fresh after future approved frontend deploys, rerun `npm run proof:v1:board:freshness` whenever this launch-state block changes, and treat the remaining backlog below as broader product work rather than active launch blockers. |
+| Current next actions | Keep the canonical couple-path route notes and wording/runtime proof fresh after future approved frontend deploys, keep local V2 proof infrastructure honest as closeout work continues, rerun `npm run proof:v1:board:freshness` whenever this launch-state block changes, and treat the remaining backlog below as broader product work rather than active launch blockers. |
 
 Blunt status:
 - `P1-04 Public section DTO minimization` is still closed.
