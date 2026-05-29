@@ -807,10 +807,11 @@ export const VaultContribute: React.FC = () => {
                 </div>
               )}
               <div>
-                <label className="block text-sm font-medium text-stone-700 mb-1.5">
+                <label htmlFor="vault-author-name" className="block text-sm font-medium text-stone-700 mb-1.5">
                   Your name <span className="text-red-500">*</span>
                 </label>
                 <input
+                  id="vault-author-name"
                   type="text"
                   value={form.author_name}
                   onChange={e => setForm({ ...form, author_name: e.target.value })}
@@ -825,10 +826,11 @@ export const VaultContribute: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-stone-700 mb-1.5">
+                <label htmlFor="vault-message-title" className="block text-sm font-medium text-stone-700 mb-1.5">
                   Title <span className="text-stone-400 font-normal">(optional)</span>
                 </label>
                 <input
+                  id="vault-message-title"
                   type="text"
                   value={form.title}
                   onChange={e => setForm({ ...form, title: e.target.value })}
@@ -838,10 +840,11 @@ export const VaultContribute: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-stone-700 mb-1.5">
+                <label htmlFor="vault-message-content" className="block text-sm font-medium text-stone-700 mb-1.5">
                   Your message <span className="text-red-500">*</span>
                 </label>
                 <textarea
+                  id="vault-message-content"
                   value={form.content}
                   onChange={e => setForm({ ...form, content: e.target.value })}
                   rows={6}

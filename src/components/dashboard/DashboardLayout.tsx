@@ -232,7 +232,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
   const roleGuide = useMemo(() => buildDashboardRoleGuide(role), [role]);
 
   return (
-    <div className="min-h-screen bg-background flex">
+    <div className="min-h-screen bg-background flex overflow-x-hidden">
       <aside
         className={`
           fixed inset-y-0 left-0 z-50 w-64 bg-surface border-r border-border-subtle
@@ -378,7 +378,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
         </div>
       </aside>
 
-      <div className="flex-1 min-w-0">
+      <div className="flex-1 min-w-0 overflow-x-hidden">
         <header className="sticky top-0 z-30 border-b border-border-subtle bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
           <div className="flex items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8">
             <div className="flex items-center gap-3">

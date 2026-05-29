@@ -104,6 +104,7 @@
     "proof:v1:performance-budget": "node scripts/v1-proof-performance-budget.mjs",
     "proof:v1:public-v2-runtime": "node scripts/v1-proof-public-v2-runtime.mjs",
     "proof:v1:guest-journey": "npm test -- --run src/lib/guestJourney.test.ts src/pages/guestContactUpdateCopy.test.ts src/pages/rsvpGuestCopy.test.ts src/pages/vaultContributionPaths.test.ts && npm run test:e2e:guest-journey",
+    "proof:v1:whole-product-polish": "node scripts/v1-proof-whole-product-polish.mjs",
     "proof:v1:registry-public-parity": "node scripts/v1-proof-registry-public-parity.mjs",
     "proof:v1:billing-entitlement-trust": "node scripts/v1-proof-billing-entitlement-trust.mjs",
     "proof:v1:sms-disabled-state": "node scripts/v1-proof-sms-disabled-state.mjs",
