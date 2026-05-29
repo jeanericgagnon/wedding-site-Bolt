@@ -34,6 +34,7 @@
     "smoke:web": "bash scripts/smoke-sites.sh",
     "test:e2e:live": "node scripts/playwright-live-smoke.mjs",
     "test:e2e:builder-cutover": "node scripts/playwright-builder-cutover-smoke.mjs",
+    "test:e2e:first-session": "node scripts/playwright-first-session-smoke.mjs",
     "test:e2e:public-quality": "npx playwright test --workers=1 tests/e2e/public-site-quality.spec.ts",
     "test:e2e:confirm-dialog": "npx playwright test tests/e2e/dashboard-confirm-dialog.spec.ts",
     "test:e2e:invite-claim": "node scripts/playwright-invite-claim-debug.mjs",
