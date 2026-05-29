@@ -34,3 +34,4 @@ assets/photos/raw-engagement-*/
 
 # deploy guard runtime artifacts
 .tmp/
+test-results/
