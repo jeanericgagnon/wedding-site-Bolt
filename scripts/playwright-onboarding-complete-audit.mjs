@@ -1,8 +1,11 @@
+#!/usr/bin/env node
+
 import { chromium } from 'playwright';
 
 const baseUrl = process.argv[2] || 'http://127.0.0.1:4178';
 const email = process.argv[3] || 'test@gmail.com';
 const password = process.argv[4] || '12345678';
+const isLocalBaseUrl = /127\.0\.0\.1|localhost/i.test(baseUrl);
 
 const values = [
   'Eric & Kara',
@@ -26,6 +29,23 @@ const result = {
   finalUrl: '',
   error: null,
 };
+
+async function assertLocalBaseUrlReady(url) {
+  try {
+    const response = await fetch(url, { signal: AbortSignal.timeout(1_500) });
+    if (response.ok) return;
+    throw new Error(`received HTTP ${response.status}`);
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : String(error);
+    throw new Error(
+      `Onboarding completion audit browser proof requires a running preview/dev server at ${url}. Start the local runtime first, then rerun this proof. (${detail})`,
+    );
+  }
+}
+
+if (isLocalBaseUrl) {
+  await assertLocalBaseUrlReady(baseUrl);
+}
 
 const browser = await chromium.launch({ headless: true });
 const page = await browser.newPage({ viewport: { width: 1440, height: 1200 } });
